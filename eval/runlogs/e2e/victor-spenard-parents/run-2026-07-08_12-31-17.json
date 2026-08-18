@@ -1898,24 +1898,21 @@
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/.claude/skills/research/research.json"
-      },
-      "response_summary": "File does not exist. Note: your current working directory is /tmp/e2e-victor-spenard-parents-z2is19_r."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "init-project",
         "args": "--autonomous Who were the parents of Victor Sp\u00e9nard, who married Orise (Aurise) Lesage on 29 September 1896 in Quebec, Canada? If the records reach a further generation, identify his paternal grandparents as well."
-      },
-      "response_summary": "Launching skill: init-project"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_search,mcp__genealogy__person_read,mcp__genealogy__place_search",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_search",
@@ -1925,84 +1922,73 @@
         "spouseSurname": "Lesage",
         "marriageYearFrom": 1896,
         "marriageYearTo": 1896
-      },
-      "response_summary": "person_search is disabled in e2e benchmark runs. Reading the tree would hand you the stripped answer for free. Recover it through records instead (record_search, record_read, fulltext_search, image_search, \u2026)."
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*",
         "path": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": ".claude/skills/assertion-classification/references/three-layer-model.md\n.claude/skills/assertion-classification/references/validation-protocol.md\n.claude/skills/check-warnings/references/assumption-categories.md\n.claude/skills/check-warnings/references/warnings-as-identity-signals.md\n.claude/skills/check-warnings/references/warning-checks.md\n.claude/skills/citation/references/gps-citation-standards.md\n.claude/skills/citation/references/validation-protocol.md\n.claude/skills/conflict-resolution..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/.claude/skills/init-project/templates/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_001\",\n4\t    \"objective\": \"{{objective}}\",\n5\t    \"subject_person_ids\": {{subject_person_ids}},\n6\t    \"status\": \"active\",\n7\t    \"created\": \"{{today}}\",\n8\t    \"updated\": \"{{today}}\",\n9\t    \"title\": \"{{title}}\"\n10\t  },\n11\t  \"researcher_profile\": {\n12\t    \"experience_level\": \"{{experience_level}}\",\n13\t    \"subscriptions\": {{subscriptions}},\n14\t    \"narration_guidance\": \"{{narration_guidance}}\"\n15\t  },\n16\t  \"known_holdings\": [],\n17\t  \"questions\": [],\n18\t  \"plans..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/.claude/skills/init-project/references/simplified-gedcomx-summary.md"
-      },
-      "response_summary": "1\t# Simplified GedcomX Quick Reference\n2\t\n3\tThis is a condensed reference for the `tree.gedcomx.json` format.\n4\tFull spec: `docs/specs/simplified-gedcomx-spec.md`.\n5\t\n6\t## File structure\n7\t\n8\t```json\n9\t{\n10\t  \"persons\": [],\n11\t  \"relationships\": [],\n12\t  \"sources\": []\n13\t}\n14\t```\n15\t\n16\t## Persons\n17\t\n18\t```json\n19\t{\n20\t  \"id\": \"KWCJ-RN4\",\n21\t  \"gender\": \"Male\",\n22\t  \"names\": [\n23\t    {\n24\t      \"id\": \"N1\",\n25\t      \"preferred\": true,\n26\t      \"given\": \"Patrick\",\n27\t      \"surname\": \"Flynn\",\n..."
+      }
     },
     {
       "tool": "Write",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/tree.gedcomx.json",
         "content": "{\n  \"persons\": [\n    {\n      \"id\": \"I1\",\n      \"gender\": \"Male\",\n      \"names\": [\n        {\n          \"id\": \"N1\",\n          \"preferred\": true,\n          \"given\": \"Victor\",\n          \"surname\": \"Sp\u00e9nard\",\n          \"type\": \"BirthName\"\n        }\n      ],\n      \"facts\": [\n        {\n          \"id\": \"F1\",\n          \"type\": \"Marriage\",\n          \"date\": \"1896-09-29\",\n          \"place\": \"Quebec, Canada\"\n        }\n      ]\n    },\n    {\n      \"id\": \"I2\",\n      \"gender\": \"Female\",\n      \"names\": [\n        {\n          \"id\": \"N2\",\n          \"preferred\": true,\n          \"given\": \"Orise\",\n          \"surname\": \"Lesage\",\n          \"type\": \"BirthName\"\n        },\n        {\n          \"id\": \"N3\",\n          \"given\": \"Aurise\",\n          \"surname\": \"Lesage\",\n          \"type\": \"AlsoKnownAs\"\n        }\n      ],\n      \"facts\": [\n        {\n          \"id\": \"F2\",\n          \"type\": \"Marriage\",\n          \"date\": \"1896-09-29\",\n          \"place\": \"Quebec, Canada\"\n        }\n      ]\n    }\n  ],\n  \"relationships\": [\n    {\n      \"id\": \"R1\",\n      \"type\": \"Couple\",\n      \"person1\": \"I1\",\n      \"person2\": \"I2\",\n      \"facts\": [\n        {\n          \"id\": \"F3\",\n          \"type\": \"Marriage\",\n          \"date\": \"1896-09-29\",\n          \"place\": \"Quebec, Canada\"\n        }\n      ]\n    }\n  ],\n  \"sources\": []\n}\n"
-      },
-      "response_summary": "<tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "Bash",
       "args": {
         "command": "cat > /tmp/e2e-victor-spenard-parents-z2is19_r/tree.gedcomx.json << 'EOF'\n{\n  \"persons\": [\n    {\n      \"id\": \"I1\",\n      \"gender\": \"Male\",\n      \"names\": [\n        {\n          \"id\": \"N1\",\n          \"preferred\": true,\n          \"given\": \"Victor\",\n          \"surname\": \"Sp\u00e9nard\",\n          \"type\": \"BirthName\"\n        }\n      ],\n      \"facts\": []\n    },\n    {\n      \"id\": \"I2\",\n      \"gender\": \"Female\",\n      \"names\": [\n        {\n          \"id\": \"N2\",\n          \"preferred\": true,\n          \"given\": \"Orise\",\n          \"surname\": \"Lesage\",\n          \"type\": \"BirthName\"\n        },\n        {\n          \"id\": \"N3\",\n          \"given\": \"Aurise\",\n          \"surname\": \"Lesage\",\n          \"type\": \"AlsoKnownAs\"\n        }\n      ],\n      \"facts\": []\n    }\n  ],\n  \"relationships\": [\n    {\n      \"id\": \"R1\",\n      \"type\": \"Couple\",\n      \"person1\": \"I1\",\n      \"person2\": \"I2\",\n      \"facts\": [\n        {\n          \"id\": \"F1\",\n          \"type\": \"Marriage\",\n          \"date\": \"1896-09-29\",\n          \"place\": \"Quebec, Canada\"\n        }\n      ]\n    }\n  ],\n  \"sources\": []\n}\nEOF\necho \"tree.gedcomx.json written\"",
         "description": "Create tree.gedcomx.json for Victor Sp\u00e9nard project"
-      },
-      "response_summary": "Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypass th..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"PID-TODO\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Victor\",\n10\t          \"surname\": \"Sp\u00e9nard\",\n11\t          \"id\": \"PID-TODO-name-1\"\n12\t        }\n13\t      ],\n14\t      \"facts\": []\n15\t    },\n16\t    {\n17\t      \"id\": \"p-spouse-orise\",\n18\t      \"gender\": \"Female\",\n19\t      \"living\": false,\n20\t      \"names\": [\n21\t        {\n22\t          \"given\": \"Orise\",\n23\t          \"surname\": \"Lesage\",\n24\t   ..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_victor_spenard_parents\",\n4\t    \"objective\": \"Who were the parents and paternal grandparents of Victor Sp\u00e9nard, who married Orise (Aurise) Lesage on 29 September 1896 in Quebec, Canada?\",\n5\t    \"subject_person_ids\": [\"PID-TODO\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-07-03T00:00:00Z\",\n8\t    \"updated\": \"2026-07-03T00:00:00Z\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    \"narration..."
+      }
     },
     {
       "tool": "Write",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/tree.gedcomx.json",
         "content": "{\n  \"persons\": [\n    {\n      \"id\": \"I1\",\n      \"gender\": \"Male\",\n      \"names\": [\n        {\n          \"id\": \"N1\",\n          \"preferred\": true,\n          \"given\": \"Victor\",\n          \"surname\": \"Sp\u00e9nard\",\n          \"type\": \"BirthName\"\n        }\n      ],\n      \"facts\": []\n    },\n    {\n      \"id\": \"I2\",\n      \"gender\": \"Female\",\n      \"names\": [\n        {\n          \"id\": \"N2\",\n          \"preferred\": true,\n          \"given\": \"Orise\",\n          \"surname\": \"Lesage\",\n          \"type\": \"BirthName\"\n        },\n        {\n          \"id\": \"N3\",\n          \"given\": \"Aurise\",\n          \"surname\": \"Lesage\",\n          \"type\": \"AlsoKnownAs\"\n        }\n      ],\n      \"facts\": []\n    },\n    {\n      \"id\": \"I3\",\n      \"gender\": \"Male\",\n      \"names\": [\n        {\n          \"id\": \"N4\",\n          \"preferred\": true,\n          \"given\": \"Henri\",\n          \"surname\": \"Sp\u00e9nard\",\n          \"type\": \"BirthName\"\n        }\n      ],\n      \"facts\": [\n        {\n          \"id\": \"F1\",\n          \"type\": \"Birth\",\n          \"date\": \"1897-08\",\n          \"place\": \"Quebec, Canada\",\n          \"standard_place\": \"Quebec, Canada\"\n        },\n        {\n          \"id\": \"F2\",\n          \"type\": \"Death\",\n          \"date\": \"1967\",\n          \"place\": \"Quebec, Canada\",\n          \"standard_place\": \"Quebec, Canada\"\n        }\n      ]\n    }\n  ],\n  \"relationships\": [\n    {\n      \"id\": \"R1\",\n      \"type\": \"Couple\",\n      \"person1\": \"I1\",\n      \"person2\": \"I2\",\n      \"facts\": [\n        {\n          \"id\": \"F3\",\n          \"type\": \"Marriage\",\n          \"date\": \"1896-09-29\",\n          \"place\": \"Quebec, Canada\",\n          \"standard_place\": \"Quebec, Canada\"\n        }\n      ]\n    },\n    {\n      \"id\": \"R2\",\n      \"type\": \"ParentChild\",\n      \"parent\": \"I1\",\n      \"child\": \"I3\"\n    },\n    {\n      \"id\": \"R3\",\n      \"type\": \"ParentChild\",\n      \"parent\": \"I2\",\n      \"child\": \"I3\"\n    }\n  ],\n  \"sources\": []\n}\n"
-      },
-      "response_summary": "The file /tmp/e2e-victor-spenard-parents-z2is19_r/tree.gedcomx.json has been updated successfully. (file state is current in your context \u2014 no need to Read it back)"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2015,38 +2001,33 @@
             "I1"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"field(s) not updatable on 'project': subject_person_ids (allowed: status)\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "Write",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/research.json",
         "content": "{\n  \"project\": {\n    \"id\": \"rp_victor_spenard_parents\",\n    \"objective\": \"Who were the parents and paternal grandparents of Victor Sp\u00e9nard, who married Orise (Aurise) Lesage on 29 September 1896 in Quebec, Canada?\",\n    \"subject_person_ids\": [\"I1\"],\n    \"status\": \"active\",\n    \"created\": \"2026-07-03T00:00:00Z\",\n    \"updated\": \"2026-07-08T00:00:00Z\",\n    \"title\": \"Victor Sp\u00e9nard's Parents & Grandparents\"\n  },\n  \"researcher_profile\": {\n    \"experience_level\": \"intermediate\",\n    \"subscriptions\": [\"none\"],\n    \"narration_guidance\": \"One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline.\"\n  },\n  \"known_holdings\": [],\n  \"questions\": [],\n  \"plans\": [],\n  \"log\": [],\n  \"sources\": [],\n  \"assertions\": [],\n  \"person_evidence\": [],\n  \"conflicts\": [],\n  \"hypotheses\": [],\n  \"timelines\": [],\n  \"proof_summaries\": [],\n  \"evaluations\": []\n}\n"
-      },
-      "response_summary": "The file /tmp/e2e-victor-spenard-parents-z2is19_r/research.json has been updated successfully. (file state is current in your context \u2014 no need to Read it back)"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2071,61 +2052,53 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous q_001"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__collections_search,mcp__genealogy__external_links_search,mcp__genealogy__volume_search,mcp__genealogy__wiki_search,mcp__genealogy__wiki_place_page",
         "max_results": 6
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_place_page\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Quebec",
         "contextName": "Canada"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Quebec, Canada\\\",\\n      \\\"type\\\": \\\"Province\\\",\\n      \\\"dateRange\\\": \\\"+1867/\\\",\\n      \\\"latitude\\\": 51.47315,\\n      \\\"longitude\\\": -73.15356,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Quebec&focusedId=5788\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Quebec\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Qu\\u00e9bec, Canada, New France\\\",\\n      \\\"type\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Quebec, Canada",
         "section": "research_tips"
-      },
-      "response_summary": "{\"error\":\"Wiki markdown directory is not configured. Add \\\"wikiMarkdownDir\\\": \\\"/path/to/wiki/markdown\\\" to ~/.familysearch-mcp/config.json. Ask your team lead for the path to the pre-crawled wiki markdown files.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Quebec Catholic parish records baptism marriage 1800s genealogy"
-      },
-      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2133,8 +2106,7 @@
         "standardPlace": "Quebec, Canada",
         "startYear": 1860,
         "endYear": 1910
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Quebec, Canada\\\",\\n    \\\"startYear\\\": 1860,\\n    \\\"endYear\\\": 1910\\n  },\\n  \\\"scope\\\": \\\"Canada, Quebec\\\",\\n  \\\"totalForPlace\\\": 8,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1810411\\\",\\n      \\\"title\\\": \\\"Canada, Quebec, Births and Baptisms, 1662-1898\\\",\\n      \\\"dateRange\\\": \\\"1662-1898\\\",\\n      \\\"recordCount\\\": 54127,\\n      \\\"personCount\\\": 161671,\\n      \\\"imageCount\\\": 0,\\n      \\\"url\\\": \\\"https://www.familysearch.or..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -2142,8 +2114,7 @@
         "standardPlace": "Quebec, Canada",
         "startYear": 1860,
         "endYear": 1910
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Quebec, Canada\\\",\\n    \\\"startYear\\\": 1860,\\n    \\\"endYear\\\": 1910\\n  },\\n  \\\"totalForPlace\\\": 221,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https://www.ancestry.com/search/collections/70602/\\\",\\n      \\\"linkText\\\": \\\"Montr\\u00e9al, Qu\\u00e9bec, Notre-Dame-des-Neiges Cemetery Index, 1849-2011\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"https://www.myheritage.com/research/collection-10690/1921-canada-census\\\",\\n      \\\"linkText\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2280,24 +2251,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous pli_001"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__record_read,mcp__genealogy__research_log_append",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2312,8 +2280,7 @@
         "collectionId": "1321742",
         "count": 50,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Sp\\u00e9nard\\\",\\n    \\\"givenName\\\": \\\"Victor\\\",\\n    \\\"spouseSurname\\\": \\\"Lesage\\\",\\n    \\\"marriageYearFrom\\\": 1895,\\n    \\\"marriageYearTo\\\": 1897,\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"collectionId\\\": \\\"1321742\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"of..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2327,8 +2294,7 @@
         "recordCountry": "Canada",
         "count": 50,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spenard\\\",\\n    \\\"givenName\\\": \\\"Victor\\\",\\n    \\\"spouseSurname\\\": \\\"Lesage\\\",\\n    \\\"marriageYearFrom\\\": 1894,\\n    \\\"marriageYearTo\\\": 1898,\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"re..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2338,8 +2304,7 @@
         "recordCountry": "Canada",
         "count": 50,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spenard\\\",\\n    \\\"givenName\\\": \\\"Victor\\\",\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 127,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:KH55-KP2\\\",\\n      \\\"events\\\": [\\n        {\\n          \\\"type\\\": \\\"Ethnicity\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -2348,8 +2313,7 @@
         "stagedResultsRef": "results/.staging/0dee312b-d2ef-4f2a-8a51-5a48a3f5a891.json",
         "subjectId": "I1",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"I1\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 3,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:QL25-T8WR\\\",\\n      \\\"matchScore\\\": 0.048535064,\\n      \\\"primaryId\\\": \\\"p_103295152105\\\",\\n      \\\"personName\\\": \\\"Victor Spenard\\\",\\n      \\\"birthDate\\\": \\\"8 September 1872\\\",\\n      \\\"deathDate\\\": \\\"23 March 1949\\\",\\n     ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2369,22 +2333,19 @@
         "resultsAvailable": 127,
         "stagedResultsRef": "results/.staging/0dee312b-d2ef-4f2a-8a51-5a48a3f5a891.json",
         "notes": "No results from targeted 1896 marriage/collection 1321742 searches. Broad search returned 127. Top 4 matches are the same Victor Sp\u00e9nard (b. ~1872\u201373, Nicolet, Quebec): 1881 census in household of Maximin Sp\u00e9nard (key parentage lead), 1891 census as single head near Ste-Sophie-de-L\u00e9vrard, 1901 census as married HH in Nicolet, and Find a Grave (d. 23 Mar 1949 Ste-Sophie-de-L\u00e9vrard). All attached to FS tree person KVGS-94S. Marriage act not yet located \u2014 pli_001 collection search exhausted; proceeding to read 1881 census record for parentage evidence."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-08T11:41:46.292Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MVNL-HN3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_450934677\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MVNL-HFY\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"4b8a52ad-1435-4df6-8a96-df960660d89b\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Sp\\u00e9nard\\\",\\n          \\\"given\\\": \\\"Maximin\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Religion\\\",\\n          \\\"value\\\": \\\"Catholique\\\"\\n        ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:KH55-KP2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_14065505810\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:KH55-KP2\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"9b684a02-2233-4d6c-80b8-f0b5025989b8\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Victor\\\",\\n          \\\"surname\\\": \\\"Spenard\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Ethnicity\\\",\\n          \\\"value\\\": \\\"Fran\\u00e7aise\\\"\\n       ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2410,23 +2371,20 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "--autonomous Record: Canada Census 1881, household of Maximin Sp\u00e9nard, Saint-Pierre-les-Becquets, Nicolet, Quebec. RecordId: ark:/61903/1:1:MVNL-HN3 (Victor Sp\u00e9nard's entry). Full household: Maximin Sp\u00e9nard (head, M, b.1812, mason, married), Zo\u00e9 Sp\u00e9nard (wife, F, b.1834, married), and children: D\u00e9lia (F, b.1860), ...Xavier (M, b.1865, day laborer), M\u00e9l\u00e9na (F, b.1867), M\u00e9d\u00e9ric (M, b.1868), Fr\u00e9d\u00e9 (M, b.1871), Victor (M, b.1873), L'Aurore (F, b.1875). All French Canadian Catholic in Saint-Pierre-les-Becquets, Nicolet, Quebec. Plan item: pli_003. Subject person: I1 (Victor Sp\u00e9nard)."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"I1\",\n5\t      \"gender\": \"Male\",\n6\t      \"names\": [\n7\t        {\n8\t          \"id\": \"N1\",\n9\t          \"preferred\": true,\n10\t          \"given\": \"Victor\",\n11\t          \"surname\": \"Sp\u00e9nard\",\n12\t          \"type\": \"BirthName\"\n13\t        }\n14\t      ],\n15\t      \"facts\": []\n16\t    },\n17\t    {\n18\t      \"id\": \"I2\",\n19\t      \"gender\": \"Female\",\n20\t      \"names\": [\n21\t        {\n22\t          \"id\": \"N2\",\n23\t          \"preferred\": true,\n24\t          \"given\": \"Orise\",\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2442,8 +2400,7 @@
         "resultsExamined": 1,
         "resultsAvailable": 1,
         "notes": "Full household data retrieved. Victor Sp\u00e9nard (b.1873) is child_6 in household headed by Maximin Sp\u00e9nard (b.1812, mason) and wife Zo\u00e9 Sp\u00e9nard (b.1834). This is indirect evidence that Maximin and Zo\u00e9 are Victor's parents. Zo\u00e9's maiden name not given in this record. All household members: D\u00e9lia (b.1860), ...Xavier (b.1865), M\u00e9l\u00e9na (b.1867), M\u00e9d\u00e9ric (b.1868), Fr\u00e9d\u00e9 (b.1871), Victor (b.1873), L'Aurore (b.1875)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-08T11:46:51.706Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2728,8 +2685,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/sources[0]: gedcomx_source_description_id 'S1' not found in tree.gedcomx.json sources\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2740,8 +2696,7 @@
           "title": "Canada, Census, 1881",
           "url": "https://www.familysearch.org/ark:/61903/1:2:MN1S-MCD"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"source\\\": \\\"S1\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3026,16 +2981,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "--autonomous Link 1881 census assertions to Victor Sp\u00e9nard (I1). Key assertions: a_001 (name Victor Sp\u00e9nard, child_6), a_002 (birth 1873, child_6), a_003 (birthplace Quebec, child_6), a_004 (residence 1881 Saint-Pierre-les-Becquets, child_6), a_005 (household relationship to Maximin Sp\u00e9nard, indirect, child_6). Also begin person stubs in tree for Maximin Sp\u00e9nard (father candidate, head_of_household, a_006\u2013a_008) and Zo\u00e9 Sp\u00e9nard (mother candidate, wife, a_009\u2013a_011)."
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3071,8 +3024,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I4\\\",\\n        \\\"names\\\": [\\n          \\\"N5\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I5\\\",\\n        \\\"names\\\": [\\n          \\\"N6\\\"\\n        ]\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\":..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3084,8 +3036,7 @@
           "person1": "I4",
           "person2": "I5"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_relationship\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"relationship\\\": \\\"R4\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3236,23 +3187,20 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_victor_spenard_parents\",\n4\t    \"objective\": \"Who were the parents and paternal grandparents of Victor Sp\u00e9nard, who married Orise (Aurise) Lesage on 29 September 1896 in Quebec, Canada?\",\n5\t    \"subject_person_ids\": [\n6\t      \"I1\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-03T00:00:00Z\",\n10\t    \"updated\": \"2026-07-08T00:00:00Z\",\n11\t    \"title\": \"Victor Sp\u00e9nard's Parents & Grandparents\"\n12\t  },\n13\t  \"researcher_profile\": {\n14\t    \"experienc..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append,mcp__genealogy__record_search,mcp__genealogy__rank_search_matches",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3278,8 +3226,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3293,8 +3240,7 @@
         "recordType": "birth",
         "count": 50,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spenard\\\",\\n    \\\"givenName\\\": \\\"Victor\\\",\\n    \\\"birthYearFrom\\\": 1869,\\n    \\\"birthYearTo\\\": 1877,\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"collectionId\\\": \\\"1810411\\\",\\n    \\\"recordType\\\": \\\"birth\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3307,8 +3253,7 @@
         "recordType": "birth",
         "count": 50,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spenard\\\",\\n    \\\"givenName\\\": \\\"Victor\\\",\\n    \\\"birthYearFrom\\\": 1865,\\n    \\\"birthYearTo\\\": 1878,\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"recordType\\\": \\\"birth\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 10,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 10,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ar..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3319,16 +3264,14 @@
         "recordType": "birth",
         "count": 50,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"fatherGivenName\\\": \\\"Maximin\\\",\\n    \\\"fatherSurname\\\": \\\"Spenard\\\",\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"recordType\\\": \\\"birth\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 9,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 9,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:FLJP-LRJ\\\",\\n      \\\"events\\\": [],..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append,mcp__genealogy__record_read",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3351,8 +3294,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Collection 1810411 contains no indexed baptism for Victor Spenard/Sp\u00e9nard in the 1869-1877 window. This collection is only partially indexed; Saint-Pierre-les-Becquets records for this period may not be digitized or indexed here."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-08T11:54:16.122Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3375,8 +3317,7 @@
         "resultsAvailable": 10,
         "stagedResultsRef": "results/.staging/e7be399a-0f60-42d3-b173-92f1e9e6a304.json",
         "notes": "10 results returned, all Nova Scotia 'Spinney' families \u2014 no match for Quebec Sp\u00e9nard. Victor's baptism is likely in unindexed parish register images."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-08T11:54:24.376Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 10,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3397,8 +3338,7 @@
         "resultsAvailable": 9,
         "stagedResultsRef": "results/.staging/1b03cd67-8c47-42f7-8741-0d95356f1950.json",
         "notes": "9 results returned, all Nova Scotia Spinney family baptisms \u2014 not Quebec Sp\u00e9nard. The FamilySearch indexed baptism collections do not contain Victor's record. Saint-Pierre-les-Becquets Catholic registers for this period are likely browse-only images only (collection 1321742). Escalating to pli_004 (1891 census) for additional indirect parentage evidence."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-08T11:54:32.102Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_005.json\\\",\\n  \\\"returnedCount\\\": 9,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_005.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3411,8 +3351,7 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3426,8 +3365,7 @@
         "residenceYearTo": 1891,
         "count": 50,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spenard\\\",\\n    \\\"givenName\\\": \\\"Victor\\\",\\n    \\\"birthYearFrom\\\": 1869,\\n    \\\"birthYearTo\\\": 1877,\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"residenceYearFrom\\\": 1891,\\n    \\\"residenceYearTo\\\": 1891,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 34,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 34,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -3436,22 +3374,19 @@
         "stagedResultsRef": "results/.staging/78e19817-fffd-40d4-b43b-2a1ba9f81321.json",
         "subjectId": "I1",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"I1\\\",\\n  \\\"scoredCount\\\": 34,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 2,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:QL25-T8WR\\\",\\n      \\\"matchScore\\\": 0.048535064,\\n      \\\"primaryId\\\": \\\"p_103295152105\\\",\\n      \\\"personName\\\": \\\"Victor Spenard\\\",\\n      \\\"birthDate\\\": \\\"8 September 1872\\\",\\n      \\\"deathDate\\\": \\\"23 March 1949\\\",\\n     ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MW54-JXW"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_165444726\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MW54-JXW\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"c4245230-3200-4974-aa08-582362338c9d\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Spenard\\\",\\n          \\\"given\\\": \\\"Victore\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"MaritalStatus\\\",\\n          \\\"value\\\": \\\"Single\\\"\\n        },\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QL25-T8WR"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_103295152105\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QL25-T8WR\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"835e2169-76f7-4ec5-bd3f-e82121a3ec45\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Victor\\\",\\n          \\\"surname\\\": \\\"Spenard\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"29aeda47-32b1-4498-9ef9-544ab6d50d0f\\\",\\n          \\\"type\\\": \\\"Death\\\",\\n          \\\"date\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3475,8 +3410,7 @@
         "resultsAvailable": 34,
         "stagedResultsRef": "results/.staging/78e19817-fffd-40d4-b43b-2a1ba9f81321.json",
         "notes": "Top result: Victor (Victore) Spenard, 1891 census, Ste-Sophie-de-L\u00e9vrard, Nicolet, Quebec \u2014 single, b.1873, Roman Catholic, heading own household. Victor was already independent by 1891 at ~18 years old; does NOT appear in Maximin's household. Second result: Find a Grave entry for Victor Spenard, b. 8 Sep 1872, d. 23 Mar 1949, buried Sainte-Sophie-de-L\u00e9vrard. Both records corroborate Victor's identity but neither names parents directly. Need to search for 1896 marriage act via bride's name."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-08T11:56:09.802Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_006.json\\\",\\n  \\\"returnedCount\\\": 34,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_006.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3489,15 +3423,13 @@
         "spouseSurname": "Spenard",
         "count": 50,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Lesage\\\",\\n    \\\"givenName\\\": \\\"Orise\\\",\\n    \\\"marriageYearFrom\\\": 1894,\\n    \\\"marriageYearTo\\\": 1898,\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"spouseSurname\\\": \\\"Spenard\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 65,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MVN2-LQT"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_450919037\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MVN2-LQJ\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"c6c40b4a-9c45-4205-aa0f-2dfdf70621c9\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Lesage\\\",\\n          \\\"given\\\": \\\"Michel\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"MaritalStatus\\\",\\n          \\\"value\\\": \\\"Married\\\"\\n        },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3509,8 +3441,7 @@
         "recordCountry": "Canada",
         "count": 50,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spenard\\\",\\n    \\\"givenName\\\": \\\"Victor\\\",\\n    \\\"deathYearFrom\\\": 1947,\\n    \\\"deathYearTo\\\": 1951,\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 71,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:QL25-T8WR\\\",\\n      ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3520,29 +3451,25 @@
         "recordCountry": "Canada",
         "count": 50,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spenard\\\",\\n    \\\"givenName\\\": \\\"Maximin\\\",\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 282,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MVNL-HFY\\\",\\n      \\\"events\\\": [\\n        {\\n          \\\"type\\\": \\\"Religion\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MW54-JXS"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_165444722\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MW54-JXS\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"d27beae7-7b70-4524-8d06-9747ef8a0b14\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Maximin\\\",\\n          \\\"surname\\\": \\\"Spenard\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"MaritalStatus\\\",\\n          \\\"value\\\": \\\"Married\\\"\\n        },\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QVGJ-Z847"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101150650115\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QVGJ-Z847\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"efd4338a-9a5b-46f4-bd56-a9d965c70e53\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Spenard\\\",\\n          \\\"given\\\": \\\"Maximin\\\"\\n        },\\n        {\\n          \\\"id\\\": \\\"206f6582-3fa7-47bc-828a-eb164b389bad\\\",\\n          \\\"type\\\": \\\"AlsoKnownAs\\\",\\n          \\\"given\\\": \\\"\\\",\\n          \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:KH55-KP2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_14065505810\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:KH55-KP2\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"9b684a02-2233-4d6c-80b8-f0b5025989b8\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Victor\\\",\\n          \\\"surname\\\": \\\"Spenard\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Ethnicity\\\",\\n          \\\"value\\\": \\\"Fran\\u00e7aise\\\"\\n       ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3565,8 +3492,7 @@
         "resultsAvailable": 65,
         "stagedResultsRef": "results/.staging/c2633e56-54db-4c0a-99d7-c8921ce7d8d9.json",
         "notes": "No 1896 marriage act found. Top results are: (1) Orise Lesage's 1891 census \u2014 single, St-Pierre-des-Becquets, b.1876; (2) 1881 census of Household of Michel Lesage, Saint-Pierre-les-Becquets \u2014 Orise's father is Michel Lesage (b.1834, cultivateur), mother Elmire Lesage (b.1831). Michel and Elmire Lesage lived in same parish as Maximin Sp\u00e9nard's family. Marriage act for Victor/Orise 1896 not indexed in FamilySearch; likely in browse-only Quebec Catholic registers."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-07-08T11:58:46.299Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_007.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_007.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -3576,51 +3502,44 @@
         "recordCountry": "Canada",
         "count": 50,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spenard\\\",\\n    \\\"givenName\\\": \\\"Zoe\\\",\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 80,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:M42G-DPB\\\",\\n      \\\"events\\\": [\\n        {\\n          \\\"type\\\": \\\"Census\\\",\\n   ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read,mcp__genealogy__research_append,mcp__genealogy__research_log_append,mcp__genealogy__tree_edit",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QVGJ-Z844"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101150650117\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QVGJ-Z844\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"da711ad3-f7a5-4242-9cd6-f21514a50d9c\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Brousseau Spenard\\\",\\n          \\\"given\\\": \\\"Marie Zoe\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"e347901a-0554-4d49-b5b8-3113d2de318f\\\",\\n          \\\"type\\\": \\\"Burial\\\",\\n    ..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_victor_spenard_parents\",\n4\t    \"objective\": \"Who were the parents and paternal grandparents of Victor Sp\u00e9nard, who married Orise (Aurise) Lesage on 29 September 1896 in Quebec, Canada?\",\n5\t    \"subject_person_ids\": [\n6\t      \"I1\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-03T00:00:00Z\",\n10\t    \"updated\": \"2026-07-08T00:00:00Z\",\n11\t    \"title\": \"Victor Sp\u00e9nard's Parents & Grandparents\"\n12\t  },\n13\t  \"researcher_profile\": {\n14\t    \"experienc..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MW54-JXS"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_165444722\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MW54-JXS\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"d27beae7-7b70-4524-8d06-9747ef8a0b14\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Maximin\\\",\\n          \\\"surname\\\": \\\"Spenard\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"MaritalStatus\\\",\\n          \\\"value\\\": \\\"Married\\\"\\n        },\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:QVGJ-Z847"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101150650115\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QVGJ-Z847\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"efd4338a-9a5b-46f4-bd56-a9d965c70e53\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Spenard\\\",\\n          \\\"given\\\": \\\"Maximin\\\"\\n        },\\n        {\\n          \\\"id\\\": \\\"206f6582-3fa7-47bc-828a-eb164b389bad\\\",\\n          \\\"type\\\": \\\"AlsoKnownAs\\\",\\n          \\\"given\\\": \\\"\\\",\\n          \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:KH55-KP2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_14065505810\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:KH55-KP2\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"9b684a02-2233-4d6c-80b8-f0b5025989b8\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Victor\\\",\\n          \\\"surname\\\": \\\"Spenard\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Ethnicity\\\",\\n          \\\"value\\\": \\\"Fran\\u00e7aise\\\"\\n       ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3641,8 +3560,7 @@
         "stagedResultsRef": "c51544ed-1dd7-4df9-abb2-a84e54d71d51.json",
         "resultsAvailable": 3,
         "notes": "Ad-hoc search for Victor Sp\u00e9nard death record. Found Find a Grave entry (already identified in log_006) and one or two census entries. No Quebec civil death certificate retrieved \u2014 Quebec civil registration of deaths began 1926; Victor died 23 Mar 1949, so a civil record may exist but was not located in this FamilySearch search. The Quebec civil vital records for 1949 would be held by Directeur de l'\u00e9tat civil du Qu\u00e9bec and are restricted for 100 years."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"stagedResultsRef 'c51544ed-1dd7-4df9-abb2-a84e54d71d51.json' is not inside results/.staging/\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3662,8 +3580,7 @@
         "stagedResultsRef": "cff1b767-5638-4c11-8d89-2a952216d4df.json",
         "resultsAvailable": 5,
         "notes": "Ad-hoc search for Maximin Sp\u00e9nard. Found: (1) 1891 Canada Census \u2014 Maximin Sp\u00e9nard, b.1819, married, Sainte-Sophie-de-L\u00e9vrard, Nicolet, Quebec (ark:/61903/1:1:MW54-JXS); (2) Find a Grave entry \u2014 Maximin Sp\u00e9nard, b. 31 Oct 1819, d. 18 Mar 1901, Also Known As Honorius (ark:/61903/1:1:QVGJ-Z847); (3) 1881 census (already extracted). The FaG corrects the 1881 census birth year from 1812 to 1819. Both 1891 records confirm Maximin was in Ste-Sophie-de-L\u00e9vrard \u2014 same village as Victor in 1891."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"stagedResultsRef 'cff1b767-5638-4c11-8d89-2a952216d4df.json' is not inside results/.staging/\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3683,8 +3600,7 @@
         "stagedResultsRef": "850a17c9-85c3-430a-99fc-40dc1e399113.json",
         "resultsAvailable": 4,
         "notes": "CRITICAL FINDING: Find a Grave entry (ark:/61903/1:1:QVGJ-Z844) identifies Zo\u00e9 Sp\u00e9nard's maiden name as BROUSSEAU \u2014 her full name is 'Marie Zoe Brousseau Spenard'. Born 24 June 1832, died 18 May 1919, buried Sainte-Sophie-de-L\u00e9vrard. FamilySearch tree match KVGS-985 (5 stars). This is the only record found supplying her maiden name. Also found 1911 census entry showing Zo\u00e9 as widowed, living with son Mederic in Nicolet (confirming Maximin predeceased her, consistent with his 1901 death)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"stagedResultsRef '850a17c9-85c3-430a-99fc-40dc1e399113.json' is not inside results/.staging/\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3704,8 +3620,7 @@
         "resultsExamined": 2,
         "resultsAvailable": 3,
         "notes": "Ad-hoc search for Victor Sp\u00e9nard death record. Found Find a Grave entry (already identified in log_006, b. 8 Sep 1872, d. 23 Mar 1949, Ste-Sophie-de-L\u00e9vrard) and 1901 census entry. No Quebec civil death certificate located in FamilySearch indexed collections. Quebec civil registration of deaths began 1926; Victor's 1949 death would be with Directeur de l'\u00e9tat civil du Qu\u00e9bec but restricted. The FaG entry was the primary new result confirming death date and burial place."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_008\\\",\\n  \\\"performed\\\": \\\"2026-07-08T12:05:47.131Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3724,8 +3639,7 @@
         "resultsExamined": 3,
         "resultsAvailable": 5,
         "notes": "Found: (1) 1891 Canada Census \u2014 Maximin Sp\u00e9nard, b.1819, married, Ste-Sophie-de-L\u00e9vrard, Nicolet, Quebec (ark:/61903/1:1:MW54-JXS); (2) Find a Grave entry \u2014 Maximin Sp\u00e9nard, b. 31 Oct 1819, d. 18 Mar 1901, Also Known As Honorius, buried Ste-Sophie-de-L\u00e9vrard (ark:/61903/1:1:QVGJ-Z847, GRid=128412817); (3) 1881 census already extracted. The FaG corrects the 1881 census birth year of 1812 to 1819. Both 1891 census and FaG confirm Maximin was in Ste-Sophie-de-L\u00e9vrard \u2014 same village as Victor in 1891."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_009\\\",\\n  \\\"performed\\\": \\\"2026-07-08T12:05:53.755Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3744,8 +3658,7 @@
         "resultsExamined": 2,
         "resultsAvailable": 4,
         "notes": "CRITICAL FINDING: Find a Grave entry (ark:/61903/1:1:QVGJ-Z844, GRid=128413006) identifies Zo\u00e9 Sp\u00e9nard's maiden name as BROUSSEAU \u2014 her full name is 'Marie Zoe Brousseau Spenard'. Born 24 June 1832, died 18 May 1919, buried Sainte-Sophie-de-L\u00e9vrard. FamilySearch tree match KVGS-985 (5 stars). Also found 1911 census entry showing Zo\u00e9 as widowed, living with son Mederic in Nicolet (confirming Maximin predeceased her, consistent with his 1901 death on FaG)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_010\\\",\\n  \\\"performed\\\": \\\"2026-07-08T12:05:59.105Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3844,8 +3757,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S2\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S3\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S4\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3860,8 +3772,7 @@
         "outcome": "positive",
         "resultsExamined": 1,
         "notes": "Record confirms: Maximin Spenard, Male, Married, Roman Catholic, residence Ste-Sophie-de-L\u00e9vrard, Nicolet, Quebec (1891), birth 1819 Quebec. Consistent with I4. Birth year 1819 conflicts with 1881 census entry of 1812; 1819 is corroborated by Find a Grave (31 Oct 1819). Note: FamilySearch place resolver returned an incorrect standard_place for the residence; actual place is Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_011\\\",\\n  \\\"performed\\\": \\\"2026-07-08T12:06:21.205Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3876,8 +3787,7 @@
         "outcome": "positive",
         "resultsExamined": 1,
         "notes": "Find a Grave record: Maximin Spenard, b. 31 Oct 1819, d. 18 Mar 1901, buried Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec. Also Known As 'Honorius'. FamilySearch collection 2221801 (Find a Grave Index). Derivative source (FaG memorial created by contributor, not an original government record). Birth date 31 Oct 1819 is more precise and better supported than the 1881 census approximation of 1812. Source of death: unknown \u2014 death likely registered in Quebec Catholic parish burial register for Ste-Sophie-de-L\u00e9vrard, 1901."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_012\\\",\\n  \\\"performed\\\": \\\"2026-07-08T12:06:27.643Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3892,8 +3802,7 @@
         "outcome": "positive",
         "resultsExamined": 1,
         "notes": "1901 census household: Victor Spenard (HH, Male, b. 8 Sep 1873, Quebec, married, RC, French-Canadian), wife 'Archie' Spenard (Female, b. 19 Sep 1876 \u2014 transcription of Aurise/Orise; birth date exactly matches Orise Lesage in 1881 census), children Homore (b. 10 Aug 1898) and Angeline (b. 31 Jul 1900). Location: Nicolet, Quebec. Victor's precise birth date 8 Sep 1873 matches the 1881 census approximation. The 'Archie' transcription is clearly the name Aurise/Orise \u2014 confirming identification of wife as Orise Lesage."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_013\\\",\\n  \\\"performed\\\": \\\"2026-07-08T12:06:33.584Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3908,8 +3817,7 @@
         "outcome": "positive",
         "resultsExamined": 1,
         "notes": "CRITICAL: Find a Grave record gives Zo\u00e9 Sp\u00e9nard's full name as 'Marie Zoe Brousseau Spenard', confirming maiden name BROUSSEAU. Born 24 Jun 1832, died 18 May 1919, buried Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada. Derivative source (FaG memorial). Birth date 24 Jun 1832 consistent with 1881 census approximation of 1834 (within census rounding). FamilySearch tree match KVGS-985 (5 stars). This is the sole record found supplying her maiden name Brousseau."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_014\\\",\\n  \\\"performed\\\": \\\"2026-07-08T12:06:39.099Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4403,8 +4311,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[20]: a resolved conflict requires 'independence_analysis'\\\",\\n    \\\"ops[20]: a resolved conflict requires 'weighing_analysis'\\\",\\n    \\\"ops[20]: a resolved conflict requires 'resolution_rationale'\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4883,8 +4790,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_005\\\"\\n    },\\n    ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5068,8 +4974,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_014\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_015\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_016\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5091,8 +4996,7 @@
           "resolution_rationale": "Weight of two independent corroborating records plus the day-level precision of the FaG date (suggesting headstone transcription) outweighs the single 1881 census approximation. The biological plausibility of both dates does not tip the balance, but the 1819 date requires no additional explanation, while 1812 requires explaining why the headstone would be wrong by 7 years.",
           "blocks_question_ids": []
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/conflicts[0]: missing required field 'conflict_type'\\\",\\n    \\\"research.json/conflicts[0]: missing required field 'competing_assertion_ids'\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5115,8 +5019,7 @@
           "resolution_rationale": "Weight of two independent corroborating records plus day-level precision from the FaG (suggesting headstone transcription) outweighs the single 1881 census approximation. The 1881 figure requires a 7-year error; the 1819 date requires no such explanation.",
           "blocks_question_ids": []
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/conflicts[0]: 'date' is not a valid conflict_type (expected one of: fact, identity)\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5139,8 +5042,7 @@
           "resolution_rationale": "Two independent records with day-level precision from the FaG outweigh the single 1881 census approximation. The 1819 date requires no additional explanation; the 1812 date would require a 7-year headstone error for which there is no evidence.",
           "blocks_question_ids": []
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/conflicts[0]: fact conflict requires disputed_attribute\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5164,8 +5066,7 @@
           "resolution_rationale": "Two independent records with day-level precision from the FaG outweigh the single 1881 census approximation. The 1819 date requires no additional explanation; the 1812 date would require a 7-year headstone error for which there is no evidence.",
           "blocks_question_ids": []
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"conflicts\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"c_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5191,16 +5092,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_007\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__volume_search,mcp__genealogy__fulltext_search",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__fulltext_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -5211,8 +5110,7 @@
         "yearTo": 1900,
         "count": 20,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Victor +Spenard +Maximin\\\",\\n    \\\"recordPlace1\\\": \\\"Canada\\\",\\n    \\\"yearFrom\\\": 1870,\\n    \\\"yearTo\\\": 1900,\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -5223,8 +5121,7 @@
         "yearTo": 1898,
         "count": 20,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Victor +Spenard\\\",\\n    \\\"collectionId\\\": \\\"1471015\\\",\\n    \\\"yearFrom\\\": 1894,\\n    \\\"yearTo\\\": 1898,\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -5232,8 +5129,7 @@
         "standardPlace": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada",
         "startYear": 1870,
         "endYear": 1900
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Sainte-Sophie-de-L\\u00e9vrard, B\\u00e9cancour, Quebec, Canada\\\",\\n    \\\"startYear\\\": 1870,\\n    \\\"endYear\\\": 1900\\n  },\\n  \\\"totalResults\\\": 3,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": \\\"005458410_031_M9DC-H2P\\\",\\n      \\\"imageGroupPrefix\\\": \\\"005458410\\\",\\n      \\\"imageCount\\\": 26,\\n      \\\"recordSearchablePercent\\\": 0,\\n      \\\"fulltextSearchable\\\": false,\\n      \\\"languages\\\": [\\n        \\\"en\\\",\\n        \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -5252,8 +5148,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "No results. FamilySearch collection 1471015 (Quebec Notarial Records 1800-1920) is not fulltext-searchable for this query. The notarial record volumes for the Nicolet/B\u00e9cancour area around 1896 are browse-only images and have not been AI-transcribed. The 1896 marriage contract (contrat de mariage) between Victor Sp\u00e9nard and Orise Lesage, if it exists, cannot be found via indexed or fulltext search on FamilySearch. Browsing would require knowing the specific notary's name and register volume."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_015\\\",\\n  \\\"performed\\\": \\\"2026-07-08T12:17:14.816Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -5272,8 +5167,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "No results. Quebec Catholic parish registers for this period are not fulltext-searchable on FamilySearch. The baptism or marriage act naming Maximin as Victor's father cannot be located via fulltext search. Records remain in browse-only image collections."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_016\\\",\\n  \\\"performed\\\": \\\"2026-07-08T12:17:18.776Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5285,8 +5179,7 @@
         "marriageYearTo": 1862,
         "count": 50,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spenard\\\",\\n    \\\"givenName\\\": \\\"Maximin\\\",\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"marriageYearFrom\\\": 1848,\\n    \\\"marriageYearTo\\\": 1862,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 120,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MVNL-HFY\\\",\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__fulltext_search",
@@ -5295,8 +5188,7 @@
         "recordPlace1": "Canada",
         "count": 20,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Maximin +Spenard +Brousseau\\\",\\n    \\\"recordPlace1\\\": \\\"Canada\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -5304,8 +5196,7 @@
         "standardPlace": "Saint-Pierre-les-Becquets, B\u00e9cancour, Quebec, Canada",
         "startYear": 1865,
         "endYear": 1900
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Saint-Pierre-les-Becquets, B\\u00e9cancour, Quebec, Canada\\\",\\n    \\\"startYear\\\": 1865,\\n    \\\"endYear\\\": 1900\\n  },\\n  \\\"totalResults\\\": 8,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": \\\"005458410_029_M9DC-H2L\\\",\\n      \\\"imageGroupPrefix\\\": \\\"005458410\\\",\\n      \\\"imageCount\\\": 42,\\n      \\\"recordSearchablePercent\\\": 0,\\n      \\\"fulltextSearchable\\\": false,\\n      \\\"languages\\\": [\\n        \\\"en\\\",\\n        \\\"fr\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -5327,8 +5218,7 @@
         "resultsAvailable": 120,
         "stagedResultsRef": "a6391ab3-46f2-45da-b567-5b34a5e7809b.json",
         "notes": "No marriage record found. Top 3 results (score ~4.47) are the already-known records: 1881 census, 1891 census, and Find a Grave. All remaining 117 results (score \u22643.02) are irrelevant Nova Scotia 'Spinney' families. No indexed marriage record for Maximin Sp\u00e9nard exists in FamilySearch. Volume search shows his marriage (~1855-1860) would be in Saint-Pierre-les-Becquets parish register volume 005469810 (1854-1869, browse-only, not indexed). The marriage act would name both Maximin's and Zo\u00e9 Brousseau's parents, supplying Victor's paternal grandparents."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"stagedResultsRef 'a6391ab3-46f2-45da-b567-5b34a5e7809b.json' is not inside results/.staging/\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -5345,8 +5235,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "No results. Quebec Catholic registers for Saint-Pierre-les-Becquets are not AI-transcribed on FamilySearch. Neither the marriage act for Maximin+Zo\u00e9 nor Victor's baptism can be retrieved via fulltext search."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_017\\\",\\n  \\\"performed\\\": \\\"2026-07-08T12:19:01.512Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5405,8 +5294,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/known_holdings[0]: missing required field 'holding_type'\\\",\\n    \\\"research.json/known_holdings[0]: missing required field 'description'\\\",\\n    \\\"research.json/known_holdings[0]: missing required field 'confidence'\\\",\\n    \\\"research.json/known_holdings[0]: missing required field 'promoted'\\\",\\n    \\\"research.json/known_holdings[1]: missing required field 'holding_type'\\\",\\n    \\\"research.json/known_holdings..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5417,24 +5305,21 @@
         "recordCountry": "Canada",
         "count": 20,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spenard\\\",\\n    \\\"givenName\\\": \\\"Maximin\\\",\\n    \\\"spouseSurname\\\": \\\"Brousseau\\\",\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 161,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 20,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MVNL-HFY\\\",\\n      \\\"events\\\": [\\n   ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append,mcp__genealogy__research_log_append,mcp__genealogy__record_search",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:WebFetch",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"WebFetch\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5446,16 +5331,14 @@
         "recordType": "marriage",
         "count": 20,
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Spenard\\\",\\n    \\\"givenName\\\": \\\"Maximin\\\",\\n    \\\"spouseSurname\\\": \\\"Brousseau\\\",\\n    \\\"recordCountry\\\": \\\"Canada\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-victor-spenard-parents-z2is19_r\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "WebFetch",
       "args": {
         "url": "https://www.prdh-igd.com/",
         "prompt": "What is this website about? Does it offer a search for Quebec genealogical records? Is there a way to search for individuals like baptism or marriage records online without a subscription? What record collections are available?"
-      },
-      "response_summary": "Permission to use WebFetch has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypas..."
+      }
     },
     {
       "tool": "Read",
@@ -5463,8 +5346,7 @@
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/research.json",
         "offset": 0,
         "limit": 100
-      },
-      "response_summary": "0\t{\n1\t  \"project\": {\n2\t    \"id\": \"rp_victor_spenard_parents\",\n3\t    \"objective\": \"Who were the parents and paternal grandparents of Victor Sp\u00e9nard, who married Orise (Aurise) Lesage on 29 September 1896 in Quebec, Canada?\",\n4\t    \"subject_person_ids\": [\n5\t      \"I1\"\n6\t    ],\n7\t    \"status\": \"active\",\n8\t    \"created\": \"2026-07-03T00:00:00Z\",\n9\t    \"updated\": \"2026-07-08T00:00:00Z\",\n10\t    \"title\": \"Victor Sp\u00e9nard's Parents & Grandparents\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience..."
+      }
     },
     {
       "tool": "Read",
@@ -5472,8 +5354,7 @@
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/research.json",
         "offset": 100,
         "limit": 200
-      },
-      "response_summary": "100\t          \"rationale\": \"The Drouin Collection (Ancestry collection 1091 'Quebec, Canada, Vital and Church Records, 1621-1968') is a parallel digitization of Quebec Catholic parish registers. Cross-referencing the 1896 marriage act here provides an independent transcription check and may surface marginalia or sibling entries not visible in the FamilySearch images.\",\n101\t          \"fallback_for\": \"pli_001\",\n102\t          \"status\": \"skipped\"\n103\t        },\n104\t        {\n105\t          \"id\": \"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -5494,8 +5375,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero indexed results for Maximin Sp\u00e9nard + Brousseau marriage in FamilySearch. The marriage (likely ca. 1848\u20131860, Saint-Pierre-les-Becquets or nearby parish) is not in any indexed FamilySearch collection. It is likely in browse-only Quebec Catholic parish register volumes (DGS 005469810, 1854-1869, identified by volume_search). Zo\u00e9 Brousseau's maiden name currently rests solely on the derivative Find a Grave record src_005."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_018\\\",\\n  \\\"performed\\\": \\\"2026-07-08T12:23:51.135Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
@@ -5503,16 +5383,14 @@
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/research.json",
         "offset": 300,
         "limit": 500
-      },
-      "response_summary": "300\t      \"results_examined\": 2,\n301\t      \"external_site\": null,\n302\t      \"results_ref\": null,\n303\t      \"results_available\": 3,\n304\t      \"notes\": \"Ad-hoc search for Victor Sp\u00e9nard death record. Found Find a Grave entry (already identified in log_006, b. 8 Sep 1872, d. 23 Mar 1949, Ste-Sophie-de-L\u00e9vrard) and 1901 census entry. No Quebec civil death certificate located in FamilySearch indexed collections. Quebec civil registration of deaths began 1926; Victor's 1949 death would be with Dire..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "Read",
@@ -5520,8 +5398,7 @@
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/research.json",
         "offset": 800,
         "limit": 300
-      },
-      "response_summary": "800\t      \"id\": \"a_012\",\n801\t      \"source_id\": \"src_002\",\n802\t      \"record_id\": \"ark:/61903/1:1:MW54-JXS\",\n803\t      \"record_persona_id\": null,\n804\t      \"record_role\": \"head_of_household\",\n805\t      \"fact_type\": \"name\",\n806\t      \"value\": \"Maximin Spenard\",\n807\t      \"structured_value\": {\n808\t        \"given\": \"Maximin\",\n809\t        \"surname\": \"Spenard\"\n810\t      },\n811\t      \"information_quality\": \"indeterminate\",\n812\t      \"informant\": \"unknown household member (likely Maximin himself)\",\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -5545,8 +5422,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R5\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R6\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5572,8 +5448,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_008\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5606,53 +5481,46 @@
             "a_007"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/proof_summaries[0]: missing required field 'tier'\\\",\\n    \\\"research.json/proof_summaries[0]: missing required field 'vehicle'\\\",\\n    \\\"research.json/proof_summaries[0]: missing required field 'resolved_conflict_ids'\\\",\\n    \\\"research.json/proof_summaries[0]: missing required field 'exhaustive_search_summary'\\\",\\n    \\\"research.json/proof_summaries[0]: missing required field 'narrative_markdown'\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "docs/specs/research-schema-spec.md",
         "path": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*schema*",
         "path": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "No files found"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*.md",
         "path": "/tmp/e2e-victor-spenard-parents-z2is19_r/.claude"
-      },
-      "response_summary": ".claude/skills/assertion-classification/references/three-layer-model.md\n.claude/skills/assertion-classification/references/validation-protocol.md\n.claude/skills/check-warnings/references/assumption-categories.md\n.claude/skills/check-warnings/references/warnings-as-identity-signals.md\n.claude/skills/check-warnings/references/warning-checks.md\n.claude/skills/citation/references/gps-citation-standards.md\n.claude/skills/citation/references/validation-protocol.md\n.claude/skills/conflict-resolution..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/.claude/skills/proof-conclusion/references/validation-protocol.md"
-      },
-      "response_summary": "1\t# Validation Protocol\n2\t\n3\t`research_append`, `tree_edit`, `merge_tree_persons`, and\n4\t`merge_record_into_tree` validate-before-persist \u2014 they conform-check\n5\tthe project against the published schemas and write nothing on\n6\t`{ ok: false, errors }`. So there is no separate post-write\n7\t`validate-schema` step for those writes; just surface any returned\n8\terrors. (`validate-schema` remains available as a user-invokable audit\n9\tof the whole project.)\n10\t\n11\tWhat is NOT structural \u2014 and so still..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-victor-spenard-parents-z2is19_r/.claude/skills/proof-conclusion/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: proof-conclusion\n3\tmodel: claude-sonnet-4-6\n4\tdescription: Writes GPS-conformant proof conclusions \u2014 selects the\n5\t  confidence tier (Proved/Probable/Possible/Not Proved/Disproved), chooses\n6\t  the proof conclusion form (Statement/Summary/Argument), and produces a\n7\t  self-contained narrative markdown that can be uploaded to FamilySearch.\n8\t  Updates tree.gedcomx.json when the tier reaches probable or higher.\n9\t  GPS Step 5 \u2014 Soundly Reasoned, Coherently Written Conclusion. Use ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5689,8 +5557,7 @@
           "exhaustive_search_summary": "Victor Sp\u00e9nard's parents were sought in the following indexed sources on FamilySearch: his 1896 Quebec Catholic marriage act (collection 1321742 \u2014 not indexed, nil); his baptism in Quebec Births and Baptisms 1662\u20131898 (collection 1810411, nil) and broader Canada birth searches including by father's name Maximin Spenard (nil); the 1881, 1891, and 1901 Canada Censuses (all searched; 1881 and 1901 household records extracted; 1891 corroborating evidence obtained); the parents' marriage record via record_search with spouseSurname Brousseau and recordType marriage (0 results); Quebec Notarial Records 1800\u20131920 (collection 1471015, fulltext nil); and fulltext searches combining family names (+Victor +Spenard +Maximin; +Maximin +Spenard +Brousseau). Find a Grave memorials for Maximin and Zo\u00e9 Sp\u00e9nard were retrieved via record_read. The Ancestry Drouin Collection (no subscription) and PRDH-IGD database (WebFetch unavailable in this environment) were not accessed. Browse-only image volumes for Saint-Pierre-les-Becquets \u2014 DGS 004273686_002_M9DC-LJT (1869\u20131881, likely contains Victor's baptism) and DGS 005469810 (1854\u20131869, likely contains Maximin and Zo\u00e9's marriage) \u2014 were identified via volume_search but not manually browsed. Research is not declared exhaustive.",
           "narrative_markdown": "## Who Were the Parents of Victor Sp\u00e9nard?\n\n### Research Question\n\nThis proof argument addresses: Who were the parents of Victor Sp\u00e9nard (born 8 September 1873, Saint-Pierre-les-Becquets, Nicolet, Quebec; died 23 March 1949, Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec; married Orise Lesage, 29 September 1896, Quebec)?\n\n### Research Conducted\n\nSearches were conducted across FamilySearch indexed collections for Victor Sp\u00e9nard's 1896 marriage act (the most direct potential source for parentage), his baptism record, the parents' marriage record, Quebec notarial marriage contracts, and census records spanning 1881\u20131901. Victor's marriage act was not found in any indexed FamilySearch collection; it exists only as a browse-only image in the Quebec Catholic Parish Registers (collection 1321742). His baptism was not found in any indexed collection; it is likely in browse-only Saint-Pierre-les-Becquets parish register images (DGS 004273686_002_M9DC-LJT, 1869\u20131881, 299 images). Searches for the parents' marriage (Maximin Sp\u00e9nard + Zo\u00e9 Brousseau) returned zero results; that record is likely in browse-only volumes (DGS 005469810, 1854\u20131869). Quebec Notarial Records (collection 1471015) returned zero fulltext results. The Ancestry Drouin Collection and PRDH-IGD database were not accessible. The conclusion rests on four records that were successfully retrieved.\n\n### Evidence\n\n**1. Canada, Census, 1881 \u2014 Primary Evidence (Indirect)**\n\nThe 1881 Canada Census for Saint-Pierre-les-Becquets, Nicolet, Quebec (original source, ark:/61903/1:1:MVNL-HN3) enumerates Victor Sp\u00e9nard, male, born approximately 1873, as the sixth child in the household of Maximin Sp\u00e9nard (head, male, mason) and Zo\u00e9 Sp\u00e9nard (wife, female).\u00b9 The 1881 Canadian census carried no relationship column; the parent-child relationship is inferred from Victor's household position as a child of approximately eight years \u2014 too young to be an independent lodger \u2014 in an intact family unit. Six other children appear in the same household with birth years from approximately 1860 to 1875, consistent with a single family. This is indirect evidence: it does not state \u201cMaximin and Zo\u00e9 are Victor's parents,\u201d but household co-residence in a nuclear family pattern is the expected pattern for biological parentage in 19th-century Quebec Catholic communities.\n\n**2. Canada, Census, 1891 \u2014 Corroborating Evidence**\n\nThe 1891 Canada Census (original source, ark:/61903/1:1:MW54-JXS) records Maximin Sp\u00e9nard, married, born 1819, residing at Sainte-Sophie-de-L\u00e9vrard, Nicolet, Quebec.\u00b2 At the same date, Victor Sp\u00e9nard appears independently in the 1891 census as a single young man heading his own household at the same village. Geographic continuity of both men in the Saint-Pierre-les-Becquets / Sainte-Sophie-de-L\u00e9vrard corridor across two censuses is consistent with the parentage hypothesis. The 1891 census also provides the corrected birth year of 1819 (vs. approximately 1812 in the 1881 census), corroborated by the Find a Grave entry below.\n\n**3. Find a Grave \u2014 Maximin Sp\u00e9nard (Derivative Source; Corroborating)**\n\nThe Find a Grave Index on FamilySearch (derivative source, ark:/61903/1:1:QVGJ-Z847, GRid 128412817) carries a memorial for Maximin Sp\u00e9nard (also known as Honorius), born 31 October 1819, died 18 March 1901, buried at Cimeti\u00e8re de Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec.\u00b3 This derivative record \u2014 dates likely transcribed from the headstone \u2014 confirms Maximin died in 1901, forty-eight years before Victor (1949), a biologically plausible father-son interval. Victor was himself buried at the same Sainte-Sophie-de-L\u00e9vrard cemetery, a further geographic link.\n\n**4. Find a Grave \u2014 Marie Zo\u00e9 Brousseau Sp\u00e9nard (Derivative Source; Corroborating; Sole Source for Maiden Name)**\n\nThe Find a Grave Index (derivative source, ark:/61903/1:1:QVGJ-Z844, GRid 128413006) carries a memorial for \u201cMarie Zoe Brousseau Spenard,\u201d born 24 June 1832, died 18 May 1919, buried at Cimeti\u00e8re de Sainte-Sophie-de-L\u00e9vrard.\u00b4 The combined surname form \u201cBrousseau Spenard\u201d follows Quebec Catholic convention (maiden surname followed by married surname), confirming Brousseau as her maiden name. This is the only source found supplying Zo\u00e9's maiden name; no primary or corroborating source was located. Her birth date (24 June 1832) is consistent with the 1881 census approximation of born about 1834 within normal census age-reporting variance. She died in 1919, eighteen years after Maximin and thirty years before Victor \u2014 all chronologically plausible.\n\n### Resolution of Conflicting Evidence\n\nThe 1881 Canada Census gives Maximin Sp\u00e9nard's birth year as approximately 1812, while the 1891 Canada Census gives approximately 1819, and the Find a Grave memorial states a precise date of 31 October 1819. This conflict (c_001) is resolved in favor of 1819: two independent records (1891 census and Find a Grave headstone transcription) agree against the single 1881 census approximation, and the Find a Grave date carries day-level precision consistent with a headstone inscription. Census informants routinely rounded or misremembered ages; a seven-year discrepancy is not unusual for mid-19th-century Quebec, especially when the informant was not the aged subject himself.\n\n### Convergence and Analysis\n\nFour independent records spanning 1881 to post-1901 converge on the same couple \u2014 Maximin Sp\u00e9nard and Marie Zo\u00e9 Brousseau \u2014 as Victor's parents. The 1881 household co-residence is the evidentiary anchor (indirect evidence); the three subsequent records corroborate identity, chronology, and geography without pointing toward any alternative parentage candidate. No record found suggests a different father or mother. The shared burial location at Sainte-Sophie-de-L\u00e9vrard for Maximin, Zo\u00e9, and Victor himself constitutes a meaningful geographic signal consistent with a family unit. The couple's marriage (likely ca. 1848\u20131860) predates Victor's birth by at least thirteen years, satisfying the basic biological requirement.\n\n### Limitations and Conditions for Upgrading to Proved\n\nThree factors prevent elevation to GPS \u201cproved\u201d:\n\n1. **No direct statement of parentage.** Victor's 1896 marriage act \u2014 the record most likely to directly state his parents' names in the groom's entry \u2014 is in browse-only images and was not retrieved. His baptism record is likewise inaccessible via indexed search.\n\n2. **Single-source maiden name.** Zo\u00e9's maiden name BROUSSEAU derives solely from a derivative Find a Grave memorial. The parents' marriage record, which would supply her maiden name from a primary source, was not located.\n\n3. **All parentage evidence is indirect.** No source found directly states \u201cMaximin and Zo\u00e9 Sp\u00e9nard are the parents of Victor Sp\u00e9nard.\u201d\n\nTo elevate this conclusion to \u201cproved,\u201d a researcher should manually browse: (a) DGS 004273686_002_M9DC-LJT (Saint-Pierre-les-Becquets parish register images, 1869\u20131881, 299 images) for Victor's baptism; and/or (b) browse-only Quebec Catholic marriage acts for September\u2013October 1896 in the Nicolet/B\u00e9cancour area for the Victor Sp\u00e9nard \u2013 Orise Lesage marriage act.\n\n### Conclusion\n\nThe preponderance of available evidence strongly suggests that Victor Sp\u00e9nard (born 8 September 1873, Saint-Pierre-les-Becquets, Nicolet, Quebec; died 23 March 1949, Sainte-Sophie-de-L\u00e9vrard) was the son of **Maximin Sp\u00e9nard** (born 31 October 1819; died 18 March 1901, Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec) and **Marie Zo\u00e9 Brousseau** (born 24 June 1832; died 18 May 1919, Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec). This conclusion is rated **probable**: the evidence is internally consistent, convergent across four records, and uncontradicted, but falls short of GPS \u201cproved\u201d because no direct statement of parentage has been found in any examined record.\n\n**Paternal Grandparents:** The secondary research objective \u2014 identifying Victor's paternal grandparents (Maximin Sp\u00e9nard's parents) \u2014 cannot be met with available indexed sources. Maximin's birth (31 October 1819) is known, but neither his baptism record nor his parents' marriage record was found in any indexed FamilySearch collection. These records are in pre-1854 browse-only parish register volumes for Saint-Pierre-les-Becquets or neighboring parishes.\n\n---\n\n\u00b9 \u201cCanada, Census, 1881,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MVNL-HN3 : accessed 2026-07-08), household of Maximin Sp\u00e9nard, Saint-Pierre-les-Becquets, Nicolet, Quebec.\n\n\u00b2 \u201cCanada, Census, 1891,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MW54-JXS : accessed 2026-07-08), entry for Maximin Spenard, Ste-Sophie-de-L\u00e9vrard, Nicolet, Quebec.\n\n\u00b3 \u201cFind a Grave Index,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVGJ-Z847 : accessed 2026-07-08), Maximin Spenard (Honorius), memorial GRid 128412817, Cimeti\u00e8re de Sainte-Sophie-de-L\u00e9vrard.\n\n\u00b4 \u201cFind a Grave Index,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVGJ-Z844 : accessed 2026-07-08), Marie Zoe Brousseau Spenard, memorial GRid 128413006, Cimeti\u00e8re de Sainte-Sophie-de-L\u00e9vrard."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -5704,39 +5571,34 @@
           "place": "Quebec, Canada",
           "primary": true
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_fact\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"fact\\\": \\\"F10\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__validate_research_schema",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__validate_research_schema\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__validate_research_schema",
       "args": {
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"valid\\\": true,\\n  \\\"errors\\\": [],\\n  \\\"warnings\\\": [],\\n  \\\"message\\\": \\\"Both project files pass all validation checks.\\\"\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-victor-spenard-parents-z2is19_r",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 1,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"relativesHasAgeRangeGreaterThan120\\\",\\n      \\\"severity\\\": \\\"warning\\\",\\n      \\\"personId\\\": \\\"I1\\\",\\n      \\\"personName\\\": \\\"Victor Sp\\u00e9nard\\\",\\n      \\\"factIds\\\": [\\n        \\\"F1\\\",\\n        \\\"F2\\\"\\n      ],\\n      \\\"relatedPersonId\\\": \\\"I3\\\",\\n      \\\"message\\\": \\\"A relative of this person has a lifespan greater than 120 years, which is implausible..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5766,8 +5628,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/questions[0]: 'answered' is not a valid question_status (expected one of: exhaustive_declared, in_progress, open, resolved)\\\"\\n  ]\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5797,8 +5658,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -5818,5 +5678,6 @@
         "marriageYearTo": 1896
       }
     }
-  ]
+  ],
+  "captures_stripped": true
 }

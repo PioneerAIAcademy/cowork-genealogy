@@ -14,7 +14,10 @@ docs/plan/eval-runlog-versioning.md §C6:
              reference it, and warns when that skill's run log is now stale
              (#1094 — see rule2_fixture_touched for why it only warns).
     Rule 3   the same run log's .ann.json has corrections for every
-             (test_id, dimension_source, dimension_name) triple. An edited
+             (test_id, dimension_source, dimension_name) triple of the tests
+             named in its `review_sample` (5 per run), each carrying a
+             comment unless it is a confirmed pass. A run log with no
+             `review_sample` owes every dimension of every test. An edited
              annotation gates; a pruned (deleted) one does not.
     Rule 4   no two unit-test files share a `test.id`.
 
@@ -41,6 +44,7 @@ from harness.snapshot import (  # noqa: E402
     diff_snapshot_vs_disk,
     hash_file,
 )
+from harness.review_sample import zero_dimension_test_ids  # noqa: E402
 from harness.versioning import classify  # noqa: E402
 
 
@@ -386,14 +390,31 @@ def rule2b_judge_prompt(skill: str, log: dict, filename: str) -> None:
         )
 
 
+def _is_confirmed_non_failing(correction: dict) -> bool:
+    """A grade the reviewer agreed with that asserts nothing went wrong.
+
+    A pass (3 -> 3) or an N/A (null -> null, the dimension never applied). Both
+    are exempt from the comment rule: 8,717 of 9,753 corrections are 3 -> 3 and
+    700 more are null -> null, 91% of those silent today. A confirmed 2 or 1 is
+    NOT exempt — agreeing something went wrong is exactly when to say what.
+    """
+    llm, corrected = correction.get("llm_score"), correction.get("corrected_score")
+    return llm == corrected and llm in (3, None)
+
+
 def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) -> int:
-    """Rule 3 (blocking): every dimension has a correction entry in .ann.json."""
+    """Rule 3 (blocking): every dimension of each sampled test has a correction
+    entry in .ann.json, and each that is not a confirmed pass carries a comment.
+
+    Falls back to the pre-sampling every-dimension rule when the run log has no
+    `review_sample`, or when the one it has cannot be trusted (see the three
+    guards below)."""
     ann_filename = filename.removesuffix(".json") + ".ann.json"
     ann_path = skill_dir / ann_filename
     if not ann_path.exists():
         gh_error(
             f"skill `{skill}`: latest run log `{filename}` has no annotation file "
-            f"(`{ann_filename}` missing). Review every dimension before opening "
+            f"(`{ann_filename}` missing). Review the sampled tests before opening "
             f"the PR.",
         )
         return 1
@@ -439,19 +460,123 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
         (c["test_id"], c["dimension_source"], c["dimension_name"])
         for c in corrections
     }
+    tests = log.get("tests") or []
+
+    # A test whose judge was skipped (validators failed, or the run aborted)
+    # carries no dimensions, so the loop below asks nothing of it — and the
+    # sampler drops it from every slot. Excluded is not unnoticed: warn, because
+    # an ungraded test is a signal, not an absence, and silently dropping it is
+    # how a run with nothing gradeable would pass rule 3 on an empty annotation.
+    ungraded = zero_dimension_test_ids(tests)
+    if ungraded:
+        gh_warning(
+            f"skill `{skill}`: {len(ungraded)} test(s) in `{filename}` produced "
+            f"no graded dimensions, so nothing is required of them here: "
+            f"{', '.join(ungraded[:5])}. Read their `aborted_reason` / validator "
+            f"results before treating this run as a clean pass.",
+        )
+
+    # `review_sample` names the tests this run's annotation must cover. Absent
+    # on every run log written before sampling shipped, and on any scratch or
+    # partial write — those keep the original every-dimension rule, which is
+    # what makes this change retroactively safe for all 109 committed
+    # annotations.
+    failed = False
+    review_sample = log.get("review_sample")
+    if review_sample is None:
+        required_test_ids = None
+    else:
+        required_test_ids = set(review_sample.get("tests") or [])
+        # This is a blocking rule reading a field committed in the same PR, so
+        # it must fail CLOSED on anything it cannot trust. `{"tests": []}` would
+        # otherwise turn rule 3 off entirely and pass an empty `.ann.json` with
+        # no error and no warning; an id that names no test in this run log is
+        # the same hole with extra steps. Either falls back to the
+        # every-dimension rule rather than being believed.
+        gradeable = {
+            t["test_id"]
+            for t in tests
+            if t.get("outcome_summary", {}).get("aggregated_dimensions")
+        }
+        unknown = required_test_ids - {t["test_id"] for t in tests}
+        if not required_test_ids or unknown:
+            reason = (
+                "is empty" if not required_test_ids
+                else f"names {len(unknown)} test(s) not in this run log "
+                     f"({', '.join(sorted(unknown)[:3])})"
+            )
+            gh_warning(
+                f"skill `{skill}`: `{filename}`'s `review_sample` {reason}; "
+                f"ignoring it and requiring every dimension. The harness writes "
+                f"this field — a hand-edited one is not trusted.",
+            )
+            required_test_ids = None
+        elif not required_test_ids & gradeable:
+            gh_warning(
+                f"skill `{skill}`: `{filename}`'s `review_sample` names only "
+                f"tests with no graded dimensions, so it would require nothing; "
+                f"requiring every dimension instead.",
+            )
+            required_test_ids = None
+
     missing: list[tuple[str, str, str]] = []
-    for t in log.get("tests") or []:
+    for t in tests:
+        if required_test_ids is not None and t["test_id"] not in required_test_ids:
+            continue
         for d in t.get("outcome_summary", {}).get("aggregated_dimensions") or []:
             key = (t["test_id"], d["source"], d["name"])
             if key not in have:
                 missing.append(key)
+    # A sampled cell needs a written comment unless it is a confirmed pass
+    # (judge 3, human agrees 3). Sampling cut the pass ~3x so the remaining
+    # cells would actually be read, and a sentence is what makes that real —
+    # but 8,717 of 9,753 corrections in the corpus (89.4%) are 3 -> 3, so
+    # requiring one there costs ~26 of every ~29 sentences to describe the
+    # cells least likely to carry anything. Exempting them takes a run from
+    # ~29 sentences to ~3.
+    #
+    # The known cost, accepted: a shared false negative lives exactly in a
+    # confirmed 3 (ut_search_records_013 was judge-3 / human-3 five times on
+    # runs that violated the skill's own prohibitions). A comment mandate was
+    # never a strong guard there — "looks fine" satisfies it — so the targeted
+    # slot, not this rule, is what has to catch that class.
+    #
+    # Scoped to sampled tests: nothing is asked of the others, so a stray
+    # correction there is a bonus, not a debt.
+    if required_test_ids is not None:
+        uncommented = [
+            (c["test_id"], c["dimension_source"], c["dimension_name"])
+            for c in corrections
+            if c["test_id"] in required_test_ids
+            and not (c.get("comment") or "").strip()
+            and not _is_confirmed_non_failing(c)
+        ]
+        if uncommented:
+            shown = ", ".join(f"{t}/{s}/{n}" for t, s, n in sorted(uncommented)[:5])
+            gh_error(
+                f"skill `{skill}`: annotation `{ann_filename}` has "
+                f"{len(uncommented)} sampled correction(s) with no comment "
+                f"(e.g., {shown}). Five tests are sampled per run so each one "
+                f"gets read — write a sentence on any dimension that is not a "
+                f"confirmed pass (judge 3, you agree 3).",
+            )
+            # Fall through rather than returning: an annotation can be missing
+            # dimensions AND missing comments, and reporting only the first
+            # sends the author round a second CI cycle to discover the rest.
+            failed = True
+
     if not missing:
-        return 0
+        return 1 if failed else 0
     sample = ", ".join(f"{tid}/{src}/{name}" for tid, src, name in missing[:5])
+    scope = (
+        "every dimension"
+        if required_test_ids is None
+        else f"every dimension of the {len(required_test_ids)} sampled test(s)"
+    )
     gh_error(
         f"skill `{skill}`: annotation `{ann_filename}` is incomplete — "
         f"{len(missing)} dimension(s) are unreviewed (e.g., {sample}). "
-        f"Review every dimension in the CRUD UI before opening the PR.",
+        f"Review {scope} in the CRUD UI before opening the PR.",
     )
     return 1
 

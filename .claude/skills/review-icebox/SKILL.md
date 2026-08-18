@@ -76,8 +76,7 @@ gh issue view <N> --repo PioneerAIAcademy/cowork-genealogy --json state,closedAt
 
 A closed blocker is the strongest promote signal in the pool — it means the
 reason for iceboxing is gone and nobody noticed. Known chains in the seed batch:
-**#1155 → #1073**, **#1153 → a retention gate**, **#1154 → the same gate**,
-**#1145 → #913**.
+**#1155 → #1073**, **#1145 → #913**.
 
 Check the reverse too: an item may have acquired a *new* blocker since filing.
 That is a leave, with the blocker named.

@@ -516,7 +516,10 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 > `references/` file or a comment — arms `.github/workflows/check-runlogs.yml`,
 > which **blocks the PR** unless the newest full-skill run log's snapshot matches
 > your branch and its `.ann.json` carries a correction for every dimension of
-> every test. Annotations are written **only** through the CRUD UI (`make
+> each **sampled** test — the tests named in the run log's `review_sample` (5
+> per run). A run log without that field, which is every one written before
+> sampling shipped, still owes every dimension of every test.
+> Annotations are written **only** through the CRUD UI (`make
 > eval-ui`); hand-writing them is forbidden. A behavior-neutral edit can instead
 > take the `eval-cosmetic-skip` label from a senior, which relaxes **the snapshot
 > rule only** — the annotation rule still runs against the prior run log — and
@@ -958,7 +961,10 @@ search tool → disk → log-append and never round-trips through the model**
 `research_append` (and its lane-scoped variant `extraction_append`, §5.3),
 `research_log_append`, `tree_edit`, `tree_correct`, `merge_tree_persons`,
 `tree_forget`, and `materialize_facts` each **validate the whole project in
-memory and write nothing on failure.** The tools assign all ids; callers never
+memory and block only on errors the call itself introduces** — pre-existing
+schema drift in a section the call does not touch is demoted to a warning rather
+than freezing the write (`validation/introduced-errors.ts`); a call that
+introduces an error still writes nothing. The tools assign all ids; callers never
 predict them.
 
 `validate_research_schema` is a read-only check for files touched *outside* the

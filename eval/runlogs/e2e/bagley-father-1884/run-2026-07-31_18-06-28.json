@@ -2108,45 +2108,39 @@
       "args": {
         "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_query\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__project_context\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[],\\\"persons\\\":[{\\\"id\\\":\\\"MJDL-Q8B\\\",\\\"name\\\":\\\"William A. Bagley\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"L528-9HM\\\",\\\"name\\\":\\\"Eva Belle Bagley\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"KHY4-7VP\\\",\\\"name\\\":\\\"Ann Tillotson\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"LVDV-6MK\\\",\\\"name\\\":\\\"Sarah Sally Andrews\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]}],\\\"sources\\\":[],\\\"localitie..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous Objective: Who was the father of William A. Bagley, born about 1815 and died 31 May 1884 in Topsham, Orange County, Vermont? Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2171,39 +2165,34 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"q_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "locality-guide",
         "args": "--autonomous Topsham, Orange County, Vermont, USA. Time period: 1815\u20131884. Research objective: identify the father of William A. Bagley (born ~1815, died 31 May 1884 in Topsham). Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "Launching skill: locality-guide"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__place_search_all",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search_all\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search_all",
       "args": {
         "placeName": "Topsham, Orange County, Vermont"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"results\\\":[{\\\"standardPlace\\\":\\\"Topsham, Orange, Vermont, United States\\\",\\\"type\\\":\\\"Town\\\",\\\"latitude\\\":44.1331,\\\"longitude\\\":-72.2515,\\\"familysearchUrl\\\":\\\"https://www.familysearch.org/en/research/places/?text=Topsham&focusedId=5405424\\\",\\\"wikipediaUrl\\\":\\\"https://en.wikipedia.org/wiki/Topsham,_Vermont\\\"},{\\\"standardPlace\\\":\\\"Topsham, Orange, Republic of Vermont\\\",\\\"type\\\":\\\"Town\\\",\\\"dateRange\\\":\\\"/+1791\\\",\\\"latitude\\\":44.12806,\\\"longitude\\\":-72.25556,\\\"familys..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_population,mcp__genealogy__collections_search,mcp__genealogy__volume_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search,mcp__genealogy__wiki_place_page",
         "max_results": 6
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_population\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_place_page\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -2211,47 +2200,41 @@
         "standardPlace": "Topsham, Orange, Vermont, United States",
         "startYear": 1815,
         "endYear": 1884
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"error\\\":\\\"Place not found\\\",\\\"place_id\\\":\\\"1355104\\\"}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Vermont genealogy records Orange County vital records census probate"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":\\\"Vermont genealogy records Orange County vital records census probate\\\",\\\"total_chunks_searched\\\":1240565,\\\"results\\\":[{\\\"rank\\\":1,\\\"relevance_score\\\":0.859375,\\\"chunk_text\\\":\\\"* **1760-1954** [Vermont Vital Records, 1760-1954](https://www.familysearch.org/search/collection/1784223) at FamilySearch \\u2014 [How to Use this Collection](https://www.familysearch.org/en/wiki/Vermont_Vital_Records_-_FamilySearch_Historical_Records \\\\\\\"Vermont Vital Records - F..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Vermont, United States",
         "section": "home"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/Vermont,_United_States_Genealogy\\\",\\\"content\\\":\\\"# Vermont, United States Genealogy\\\\n\\\\n\\\\n\\\\n[United States](https://www.familysearch.org/en/wiki/United_States_Genealogy \\\\\\\"United States Genealogy\\\\\\\")\\\\n\\\\n[New England](https://www.familysearch.org/en/wiki/New_England \\\\\\\"New England\\\\\\\")\\\\n\\\\nVermont\\\\n\\\\n|  |\\\\n| --- |\\\\n| **Vermont Wiki Topics** |\\\\n| [Vermont flag.png](https://www.familysearch.org/en/wiki/index..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Vermont, United States",
         "section": "getting_started"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/Vermont_Getting_Started\\\",\\\"content\\\":\\\"# Vermont Getting Started\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| [**Vermont Wiki Topics**](https://www.familysearch.org/en/wiki/Vermont,_United_States_Genealogy \\\\\\\"Vermont, United States Genealogy\\\\\\\") |\\\\n| [Vermont flag.png](https://www.familysearch.org/en/wiki/index.php?title=File:Vermont_flag.png&filetimestamp=20080821015625& \\\\\\\"Vermont flag.png\\\\\\\") |\\\\n| **Beginning Research** |\\\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Vermont, United States",
         "section": "online_records"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/Vermont_Online_Genealogy_Records\\\",\\\"content\\\":\\\"# Vermont Online Genealogy Records\\\\n\\\\n\\\\n\\\\n[United States](https://www.familysearch.org/en/wiki/United_States_Genealogy \\\\\\\"United States Genealogy\\\\\\\")\\\\n\\\\n[Vermont](https://www.familysearch.org/en/wiki/Vermont,_United_States_Genealogy \\\\\\\"Vermont, United States Genealogy\\\\\\\")\\\\n\\\\nOnline Genealogy Records\\\\n\\\\n|  |  |  |  |  |  |\\\\n| --- | --- | --- | --- | --- | -..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Vermont, United States",
         "section": "research_tips"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"url\\\":\\\"https://www.familysearch.org/en/wiki/Vermont_Research_Tips_and_Strategies\\\",\\\"content\\\":\\\"# Vermont Research Tips and Strategies\\\\n\\\\n\\\\n\\\\n|  |\\\\n| --- |\\\\n| [**Vermont Wiki Topics**](https://www.familysearch.org/en/wiki/Vermont,_United_States_Genealogy \\\\\\\"Vermont, United States Genealogy\\\\\\\") |\\\\n| [Vermont flag.png](https://www.familysearch.org/en/wiki/index.php?title=File:Vermont_flag.png&filetimestamp=20080821015625& \\\\\\\"Vermont flag.png\\\\\\\") |\\\\n| ..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2259,8 +2242,7 @@
         "standardPlace": "Topsham, Orange, Vermont, United States",
         "startYear": 1815,
         "endYear": 1884
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Topsham, Orange, Vermont, United States\\\",\\\"startYear\\\":1815,\\\"endYear\\\":1884},\\\"scope\\\":\\\"Vermont\\\",\\\"totalForPlace\\\":22,\\\"results\\\":[{\\\"id\\\":\\\"1879935\\\",\\\"title\\\":\\\"Vermont, Addison County and District Probate Files, 1845-1915\\\",\\\"dateRange\\\":\\\"1845-1915\\\",\\\"recordCount\\\":0,\\\"personCount\\\":0,\\\"imageCount\\\":54451,\\\"url\\\":\\\"https://www.familysearch.org/search/collection/1879935\\\"},{\\\"id\\\":\\\"1935045\\\",\\\"title\\\":\\\"Vermont, Bennington Co..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -2269,8 +2251,7 @@
         "startYear": 1815,
         "endYear": 1884,
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Topsham, Orange, Vermont, United States\\\",\\\"startYear\\\":1815,\\\"endYear\\\":1884},\\\"totalForPlace\\\":292,\\\"returned\\\":50,\\\"results\\\":[{\\\"url\\\":\\\"https://www.findmypast.com/search/results?datasetname=united%20states%2c%20passenger%20and%20crew%20lists&datasettitle=new%20england%20passenger%20and%20crew%20lists&sid=999\\\",\\\"linkText\\\":\\\"United States, Passenger and Crew Lists\\\"},{\\\"url\\\":\\\"https://www.americanancestors.org/search/databasesea..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -2278,8 +2259,7 @@
         "standardPlace": "Topsham, Orange, Vermont, United States",
         "startYear": 1815,
         "endYear": 1884
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"standardPlace\\\":\\\"Topsham, Orange, Vermont, United States\\\",\\\"startYear\\\":1815,\\\"endYear\\\":1884},\\\"totalResults\\\":19,\\\"results\\\":[{\\\"imageGroupNumber\\\":\\\"007814131_002_M9ZV-457\\\",\\\"imageGroupPrefix\\\":\\\"007814131\\\",\\\"imageCount\\\":405,\\\"recordSearchablePercent\\\":0,\\\"fulltextSearchable\\\":true,\\\"languages\\\":[\\\"en\\\"],\\\"coverages\\\":[{\\\"place\\\":\\\"Topsham, Orange, Vermont, United States\\\",\\\"dateRange\\\":\\\"1864\\u20131869\\\",\\\"recordType\\\":\\\"Land records\\\"}],\\\"vol..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2397,30 +2377,26 @@
           ],
           "source": "locality-guide"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"localities\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"loc_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous Question q_001: \"What does William A. Bagley's death record of 31 May 1884 in Topsham, Orange County, Vermont say about his parentage?\" Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq. Key locality facts: Topsham, Orange County, VT. Vermont death records pre-1919 unlikely to name parents; statewide registration began 1857. Topsham vital records indexed on FamilySearch (collections 1784223, 2075288, 1987653; IGNs 005464890, 005487650, 007728020). Bradford District probate (collection 1807377, browse-only). US federal censuses 1820-1880 indexed. Pre-1857 town records IGN 005464260 (full-text searchable). Land records volumes full-text searchable. Gazetteer of Orange County 1762-1888 (FS catalog 3417524)."
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2587,24 +2563,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plans\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pl_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_001\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_002\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_003\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_004\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pli_005\\\"},{\\\"section\\\":\\\"plan_item..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous Execute plan item pli_001 for question q_001. Search FamilySearch for William A. Bagley's death record of 31 May 1884 in Topsham, Orange County, Vermont. Search collections: 1784223 (Vermont Vital Records 1760-1954) and 1675549 (Vermont Deaths and Burials 1871-1965). Subject: William A. Bagley, male, born ~1815, died 31 May 1884, Topsham, Orange County, Vermont. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2618,8 +2591,7 @@
         "collectionId": "1784223",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "subjectId": "MJDL-Q8B"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"query\\\":{\\\"surname\\\":\\\"Bagley\\\",\\\"givenName\\\":\\\"William\\\",\\\"deathYearFrom\\\":1884,\\\"deathYearTo\\\":1884,\\\"deathPlace\\\":\\\"Vermont\\\",\\\"recordType\\\":\\\"death\\\",\\\"collectionId\\\":\\\"1784223\\\",\\\"projectPath\\\":\\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq\\\",\\\"subjectId\\\":\\\"MJDL-Q8B\\\"},\\\"totalMatches\\\":15,\\\"paginationCappedAt\\\":4999,\\\"returned\\\":15,\\\"offset\\\":0,\\\"hasMore\\\":false,\\\"results\\\":[{\\\"recordId\\\":\\\"ark:/61903/1:1:XF8X-MVK..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2627,8 +2599,7 @@
         "recordId": "ark:/61903/1:1:XF8X-MVK",
         "resultsRef": "results/.staging/cad381a1-eec6-40cc-9c0b-1d68e87c82d2.json",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"persons\\\":[{\\\"id\\\":\\\"p_10579788559\\\",\\\"ark\\\":\\\"ark:/61903/1:1:XF8X-MVK\\\",\\\"gender\\\":\\\"Male\\\",\\\"names\\\":[{\\\"type\\\":\\\"BirthName\\\",\\\"surname\\\":\\\"Bagley\\\",\\\"given\\\":\\\"Willaim A.\\\"}],\\\"facts\\\":[{\\\"type\\\":\\\"Birth\\\",\\\"date\\\":\\\"1815\\\",\\\"standard_date\\\":\\\"1815\\\",\\\"place\\\":\\\"Topsham\\\",\\\"standard_place\\\":\\\"Topsham, Orange, Vermont, United States\\\"},{\\\"type\\\":\\\"Death\\\",\\\"primary\\\":true,\\\"date\\\":\\\"1884\\\",\\\"standard_date\\\":\\\"1884\\\",\\\"place\\\":\\\"Vermont, United States\\\",\\\"standa..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2641,8 +2612,7 @@
         "resultsAvailable": 15,
         "stagedResultsRef": "results/.staging/cad381a1-eec6-40cc-9c0b-1d68e87c82d2.json",
         "notes": "Top match (matchScore 0.895, already attached to subject MJDL-Q8B): \"Willaim A. Bagley\" (index typo), born 1815 Topsham VT, died 31 May 1884 Vermont \u2014 record ark:/61903/1:1:XF8X-MVK in collection 1784223. Record reads the full record and names BOTH parents: father David Bagley, mother Sarah A. (no maiden name). This directly answers q_001 and the research objective. 14 other Bagley results are lower-scoring relatives or non-matches."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"logId\\\":\\\"log_001\\\",\\\"performed\\\":\\\"2026-07-31T17:36:55.211Z\\\",\\\"resultsRef\\\":\\\"results/log_001.json\\\",\\\"returnedCount\\\":15,\\\"filesWritten\\\":[\\\"research.json\\\",\\\"results/log_001.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2655,16 +2625,14 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "--autonomous Extract all assertions from the following FamilySearch record for question q_001.\n\nrecordId: ark:/61903/1:1:XF8X-MVK\nlogId: log_001\nresultsRef: results/log_001.json\nprojectPath: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq\n\nRecord content (from record_read):\nCollection: Vermont, Vital Records, 1760-1954 (collection 1784223)\nRecord title: \"Entry for Willaim A. Bagley and David Bagley, 1884\"\nSource URL: https://www.familysearch.org/ark:/61903/1:2:9F8P-M9C\nImage ARK: ark:/61903/3:1:S3HT-DYK4-VTM\n\nPersons in record:\n1. p_10579788559 \u2014 Willaim A. Bagley (Male), Birth: 1815, Topsham, Orange, Vermont, United States; Death: 1884, Vermont, United States \u2014 PRINCIPAL (death record subject)\n2. p_10579788560 \u2014 David Bagley (Male) \u2014 Father\n3. p_10579788561 \u2014 Sarah A. [Bagley] (Female) \u2014 Mother\n\nRelationships: David Bagley + Sarah A. are a Couple; both are ParentChild parents of Willaim A. Bagley.\n\nResearch subject in tree: William A. Bagley, MJDL-Q8B\nOther tree persons: Eva Belle Bagley (L528-9HM), Ann Tillotson (KHY4-7VP), Sarah Sally Andrews (LVDV-6MK)\n\nNote: This is a death record from Vermont Vital Records 1760-1954. The record names both parents. Vermont statewide registration began 1857; this 1884 death record is from the post-1857 period. The informant proximity for parent information on a death record is typically family_not_present or unknown (a relative reporting post-mortem). The death date/place information is primary (recorded at time of event); parentage information is secondary (informant reporting from memory)."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "Agent",
@@ -2672,15 +2640,13 @@
         "description": "Extract assertions from William A. Bagley 1884 death record",
         "subagent_type": "record-extractor",
         "prompt": "Extract all GPS-conformant assertions from the following FamilySearch record into research.json and tree.gedcomx.json.\n\n**projectPath:** /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq\n**recordId:** ark:/61903/1:1:XF8X-MVK\n**logId:** log_001\n**resultsRef:** results/log_001.json\n**Question this record bears on:** q_001 \u2014 \"What does William A. Bagley's death record of 31 May 1884 in Topsham, Orange County, Vermont say about his parentage?\"\n\n**Record content** (already read via record_read from staged sidecar):\n\nCollection: Vermont, Vital Records, 1760-1954 (FamilySearch collection 1784223)\nRecord title: \"Entry for Willaim A. Bagley and David Bagley, 1884\"\nSource citation: \"Vermont, Vital Records, 1760-1954\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XF8X-MVK : Fri Mar 08 11:49:43 UTC 2024), Entry for Willaim A. Bagley and David Bagley, 1884.\nSource URL / image: https://www.familysearch.org/ark:/61903/1:2:9F8P-M9C\nImage ARK: ark:/61903/3:1:S3HT-DYK4-VTM\n\n**Persons in record:**\n1. p_10579788559 \u2014 \"Willaim A. Bagley\" (Male; note index typo \u2014 correct name is William A. Bagley)\n   - Birth: 1815, Topsham, Orange, Vermont, United States\n   - Death: 1884, Vermont, United States\n   - Role: PRINCIPAL (the deceased whose death this record documents)\n\n2. p_10579788560 \u2014 \"David Bagley\" (Male)\n   - Role: Father of the deceased (ParentChild relationship)\n\n3. p_10579788561 \u2014 \"Sarah A.\" (Female; no maiden surname given in the record)\n   - Role: Mother of the deceased (ParentChild relationship)\n\n**Relationships in record:**\n- David Bagley + Sarah A. \u2192 Couple\n- David Bagley \u2192 ParentChild parent of Willaim A. Bagley\n- Sarah A. \u2192 ParentChild parent of Willaim A. Bagley\n\n**Tree context:**\n- Research subject William A. Bagley is in the tree as MJDL-Q8B (Male)\n- Other tree persons (do NOT link to these without strong evidence): Eva Belle Bagley (L528-9HM, Female), Ann Tillotson (KHY4-7VP, Female), Sarah Sally Andrews (LVDV-6MK, Female)\n- David Bagley and Sarah A. are NOT currently in the tree\n\n**Classification guidance (GPS three-layer):**\n- This is a DEATH record (original document; source classification: original)\n- Death date/place facts for the deceased: information quality = primary (recorded at event); informant_proximity = official_duty (registrar)\n- Parentage facts (David Bagley father, Sarah A. mother): information quality = secondary (reported by a relative post-mortem, not recorded at time of birth); informant_proximity = family_not_present or unknown (a relative or neighbor reporting the death and providing parent names from memory)\n- Evidence type for parentage: DIRECT (the record explicitly names the father and mother)\n- Evidence type for death date/place: DIRECT\n\n**Important notes:**\n- Do NOT create person_evidence links \u2014 identity resolution belongs to the person-evidence skill\n- Do NOT instruct tree corrections \u2014 just extract assertions\n- The \"1884\" death date in the indexed record is the year; the known death date from other knowledge is 31 May 1884 \u2014 record what the indexed record actually states\n- Include a negative evidence assertion if the record does not provide the mother's maiden name (it doesn't \u2014 only \"Sarah A.\" with no maiden name)\n- Extract relationship assertions (ParentChild, Couple) as well as vital facts"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All 16 ops (1 source + 15 assertions) persisted successfully with no validation warnings.\\n\\n**Extraction summary:**\\n\\nSource: src_001 / S1 \\u2014 action: created. Vermont, Vital Records, 1760-1954, death register entry for William A. Bagley, 1884. Source classification: original (Vermont statewide registration; image not separately examined from sidecar \\u2014 note this limitation for downstream exhaustiveness analysis).\\n\\nAssertions by record role (15 total):\\n-..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"What does William A. Bagley's death record of 31 May 1884 in Topsham, Orange County, Vermont say about his parentage?\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"MJDL-Q8B\\\",\\\"name\\\":\\\"William A. Bagley\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"L528-9HM\\\",\\\"name\\\":\\\"Eva Belle Bagley\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"KHY4-7VP\\\",\\\"name\\\":\\\"Ann Tillotson\\\",\\\"gender\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3041,8 +3007,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[15]: record_persona_id omitted \\u2014 multiple personas in this record (p_10579788559, p_10579788560, p_10579788561) and the batch spans multiple record_roles/record_ids, so the omission is ambiguous; supply record_persona_id per assertion (the searched persona is 'p_10579788559')\\\"],\\\"opsReceived\\\":16}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3404,8 +3369,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_001\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_001\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_002\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_003\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_004\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_005\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"o..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3418,31 +3382,27 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "--autonomous Link assertions from src_001 (log_001, record ark:/61903/1:1:XF8X-MVK, Vermont Vital Records 1760-1954) to tree persons. Question q_001. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq\n\nRecord has three personas:\n1. p_10579788559 \u2014 William A. Bagley (deceased, principal) \u2014 likely matches tree person MJDL-Q8B (William A. Bagley, Male)\n2. p_10579788560 \u2014 David Bagley (father) \u2014 not yet in tree; create stub if confirmed\n3. p_10579788561 \u2014 Sarah A. (mother, no maiden name) \u2014 not yet in tree; create stub if confirmed\n\nAll roles in the record should be linked. Also build out the household skeleton (ParentChild edges: David Bagley \u2192 William A. Bagley, Sarah A. \u2192 William A. Bagley; Couple edge: David Bagley + Sarah A.)."
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__same_person,mcp__genealogy__materialize_facts,mcp__genealogy__merge_warnings,mcp__genealogy__tree_edit",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__merge_warnings\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq/.claude/skills/person-evidence/references/evidence-standards.md"
-      },
-      "response_summary": "1\t# Evidence Standards for Identity Resolution\n2\t\n3\tThese standards from the Genealogical Proof Standard (GPS) govern how\n4\tevidence should be evaluated during identity resolution.\n5\t\n6\t## Assumptions (GPS Standard 45)\n7\t\n8\tWhen linking records to persons, you inevitably make assumptions.\n9\tRecognize and categorize them:\n10\t\n11\t### Fundamental Assumptions\n12\t\n13\tConcepts generally accepted as true. Incorporate these into reasoning\n14\twithout needing supporting evidence.\n15\t\n16\t- People cannot..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -3450,15 +3410,13 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "section": "assertions",
         "recordId": "ark:/61903/1:1:XF8X-MVK"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":15,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:XF8X-MVK\\\",\\\"record_persona_id\\\":\\\"p_10579788559\\\",\\\"record_role\\\":\\\"deceased\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"William A. Bagley\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"William A.\\\",\\\"surname\\\":\\\"Bagley\\\"},\\\"information_quality\\\":\\\"secondary\\\",\\\"informant\\\":\\\"unknown household member or neighbor reporting the death\\\",\\\"informant_proximity\\\":\\\"unknown\\\",\\\"..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"MJDL-Q8B\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"William A.\",\n11\t          \"surname\": \"Bagley\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"Abt 1815\",\n19\t          \"standard_date\": \"Abt 1815\",\n20\t          \"place\": \"West Topsham, Orange, ..."
+      }
     },
     {
       "tool": "mcp__genealogy__merge_warnings",
@@ -3544,16 +3502,14 @@
             "p_10579788561"
           ]
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"candidateGedcomx/persons[0]/names[0]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[0]/facts[0]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[0]/facts[1]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[1]/names[0]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[2]/names[0]: missing required field 'id'\\\",\\\"candidateGedcomx/persons[2]/names[0]: missing required field 'surname'\\\",\\\"candidateGedcomx/..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__materialize_facts",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__materialize_facts\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -3575,8 +3531,7 @@
             "recordRole": "mother_of_deceased"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"personId\\\":\\\"MJDL-Q8B\\\",\\\"created\\\":false,\\\"factsAdded\\\":0,\\\"factsEnriched\\\":2,\\\"namesAdded\\\":0,\\\"refsAttached\\\":3,\\\"conflicts_surfaced\\\":[]},{\\\"personId\\\":\\\"I1\\\",\\\"created\\\":true,\\\"factsAdded\\\":0,\\\"factsEnriched\\\":0,\\\"namesAdded\\\":1,\\\"refsAttached\\\":1,\\\"conflicts_surfaced\\\":[]},{\\\"personId\\\":\\\"LVDV-6MK\\\",\\\"created\\\":false,\\\"factsAdded\\\":0,\\\"factsEnriched\\\":0,\\\"namesAdded\\\":1,\\\"refsAttached\\\":1,\\\"conflicts_surfaced\\\":[]}],\\\"filesWritten\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -3584,8 +3539,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "section": "assertions",
         "recordId": "ark:/61903/1:1:XF8X-MVK"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":15,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:XF8X-MVK\\\",\\\"record_persona_id\\\":\\\"p_10579788559\\\",\\\"record_role\\\":\\\"deceased\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"William A. Bagley\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"William A.\\\",\\\"surname\\\":\\\"Bagley\\\"},\\\"information_quality\\\":\\\"secondary\\\",\\\"informant\\\":\\\"unknown household member or neighbor reporting the death\\\",\\\"informant_proximity\\\":\\\"unknown\\\",\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3793,16 +3747,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_001\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_002\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_003\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_004\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_005\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_0..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3828,40 +3780,35 @@
             "sourceAssertionId": "a_011"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"operation\\\":\\\"add_relationship\\\",\\\"assignedIds\\\":{\\\"relationship\\\":\\\"R7\\\"}},{\\\"operation\\\":\\\"add_relationship\\\",\\\"assignedIds\\\":{\\\"relationship\\\":\\\"R8\\\"}}],\\\"filesWritten\\\":[\\\"tree.gedcomx.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "personId": "MJDL-Q8B"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"warningCount\\\":2,\\\"warnings\\\":[{\\\"scoreType\\\":\\\"COHERENCE\\\",\\\"issueType\\\":\\\"hasEventBeforeBirth365_2\\\",\\\"severity\\\":\\\"error\\\",\\\"personId\\\":\\\"MJDL-Q8B\\\",\\\"personName\\\":\\\"William A. Bagley\\\",\\\"factIds\\\":[\\\"ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100\\\",\\\"ddb21ddf-0042-4808-af3c-5b2e94e08922\\\",\\\"28119bdf-00ed-4c5f-a9fc-9b39c096b055\\\"],\\\"message\\\":\\\"An event is dated more than 2 years before this person's earliest birth-like fact.\\\"},{\\\"scoreType\\\":\\\"COHERENCE\\\",\\\"issueType\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"warningCount\\\":1,\\\"warnings\\\":[{\\\"scoreType\\\":\\\"COHERENCE\\\",\\\"issueType\\\":\\\"relativesDeathRangeGreaterThan2\\\",\\\"severity\\\":\\\"warning\\\",\\\"personId\\\":\\\"I1\\\",\\\"personName\\\":\\\"David Bagley\\\",\\\"factIds\\\":[\\\"af27bdb3-0190-4145-8100-880432d43893\\\",\\\"fc30de70-823f-4852-91a3-ec94704349dc\\\"],\\\"relatedPersonId\\\":\\\"LVDV-6MK\\\",\\\"message\\\":\\\"A relative of this person has a death-date range greater than 2 years, suggesting unreconciled death records.\\\"}]}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "personId": "LVDV-6MK"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"warningCount\\\":2,\\\"warnings\\\":[{\\\"scoreType\\\":\\\"COHERENCE\\\",\\\"issueType\\\":\\\"deathRangeGreaterThan2\\\",\\\"severity\\\":\\\"warning\\\",\\\"personId\\\":\\\"LVDV-6MK\\\",\\\"personName\\\":\\\"Sarah Sally Andrews\\\",\\\"factIds\\\":[\\\"af27bdb3-0190-4145-8100-880432d43893\\\",\\\"fc30de70-823f-4852-91a3-ec94704349dc\\\"],\\\"message\\\":\\\"This person's death-like dates span more than 2 years \\u2014 likely unreconciled conflicting records.\\\"},{\\\"scoreType\\\":\\\"COHERENCE\\\",\\\"issueType\\\":\\\"hasBlankName\\\",\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3877,8 +3824,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[0]: section 'plan_items' requires a 'planId'\\\",\\\"worked example for 'plan_items':\\\\nresearch_append({\\\\n  projectPath: \\\\\\\"<absolute-path-to-project-directory>\\\\\\\",\\\\n  section: \\\\\\\"plan_items\\\\\\\",\\\\n  op: \\\\\\\"update\\\\\\\",\\\\n  planId: \\\\\\\"pl_001\\\\\\\",\\\\n  entryId: \\\\\\\"<existing-id>\\\\\\\",\\\\n  fields: { /* only the fields you are changing */ }\\\\n})\\\"],\\\"opsReceived\\\":1}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3895,16 +3841,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_001\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "--autonomous Evaluate whether q_001 is sufficiently answered to support a proof conclusion. Question: \"What does William A. Bagley's death record of 31 May 1884 in Topsham, Orange County, Vermont say about his parentage?\" Evidence gathered: one death record (ark:/61903/1:1:XF8X-MVK, Vermont Vital Records 1760-1954, src_001) naming David Bagley as father and Sarah A. as mother; 15 assertions (a_001\u2013a_015); 20 person-evidence links (pe_001\u2013pe_020). Plan pli_001 completed; pli_002\u2013pli_010 remain planned. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4002,8 +3946,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"research.json/plans[0]/items[1]: unexpected property 'skip_reason' (plan items allow only id, sequence, record_type, jurisdiction, date_range, repository, rationale, fallback_for, status)\\\",\\\"research.json/plans[0]/items[2]: unexpected property 'skip_reason' (plan items allow only id, sequence, record_type, jurisdiction, date_range, repository, rationale, fallback_for, status)\\\",\\\"research.json/plans[0]/items[3]: unexpected property 'skip..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4092,8 +4035,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_002\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_003\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_004\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_005\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_006\\\"},{\\\"section\\\":\\\"plan_items\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"pli_007\\\"},{\\\"section\\\":\\\"pla..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4125,24 +4067,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"q_001\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion",
         "args": "--autonomous Write the GPS-conformant proof conclusion for q_001: \"What does William A. Bagley's death record of 31 May 1884 in Topsham, Orange County, Vermont say about his parentage?\" Evidence: src_001 (Vermont Vital Records 1760-1954, ark:/61903/1:1:XF8X-MVK) \u2014 15 assertions (a_001\u2013a_015), 20 person-evidence links (pe_001\u2013pe_020). Key finding: Father = David Bagley (I1), Mother = Sarah A. (probable = LVDV-6MK / Sarah Sally Andrews). Single-source secondary information for parentage; original image not consulted. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "section": "sources"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"sources\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"src_001\\\",\\\"citation\\\":\\\"\\\\\\\"Vermont, Vital Records, 1760-1954,\\\\\\\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XF8X-MVK : accessed 31 July 2026), Entry for Willaim A. Bagley and David Bagley, 1884; image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HT-DYK4-VTM).\\\",\\\"citation_detail\\\":{\\\"who\\\":\\\"William A. Bagley (deceased) and David Bagley (father)\\\",\\\"what\\\":\\\"Death..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4150,23 +4089,20 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "section": "questions",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"questions\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"What does William A. Bagley's death record of 31 May 1884 in Topsham, Orange County, Vermont say about his parentage?\\\",\\\"rationale\\\":\\\"William's 1884 death record is the most direct primary source likely to name his parents. Vermont maintained vital records from 1857 onward; FamilySearch indexes and original town-clerk volumes cover this period. Answering this question fi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"MJDL-Q8B\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"William A.\",\n11\t          \"surname\": \"Bagley\",\n12\t          \"sources\": [\n13\t            {\n14\t              \"ref\": \"S1\",\n15\t              \"quality\": 3\n16\t            }\n17\t          ]\n18\t        }\n19\t      ],\n20\t      \"facts\": [\n21\t        {\n22\t          \"id\": \"ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100\",\n23\t          \"..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_correct",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4199,8 +4135,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"proof_summaries\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"ps_001\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_correct",
@@ -4223,8 +4158,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"operation\\\":\\\"update_fact\\\"},{\\\"operation\\\":\\\"update_source\\\"}],\\\"filesWritten\\\":[\\\"tree.gedcomx.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -4232,15 +4166,13 @@
         "description": "GPS mentor proof-critique for ps_001",
         "subagent_type": "gps-mentor",
         "prompt": "Mandatory proof-critique for proof summary ps_001 in project at /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq.\n\nQuestion q_001: \"What does William A. Bagley's death record of 31 May 1884 in Topsham, Orange County, Vermont say about his parentage?\"\n\nProof summary ps_001: tier=probable, vehicle=summary. Key finding: Vermont death record (Vermont Vital Records 1760-1954, ark:/61903/1:1:XF8X-MVK) names David Bagley as father and Sarah A. as mother of William A. Bagley. 15 assertions (a_001\u2013a_015), 20 person-evidence links (pe_001\u2013pe_020). Single source; secondary information for parentage; original image not consulted.\n\nPlease review ps_001 against the GPS five components and provide your verdict. Record your evaluation in research.json via research_append to the evaluations[] section. This is an autonomous run \u2014 please complete the evaluation and write the result without waiting for user input."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"# Mentor review: proof-critique on ps_001\\n\\n## What you've done well\\nThe three-layer classification here is genuinely well done \\u2014 a_006, a_008, and a_010 all correctly hold \\\"direct evidence type\\\" (the record names David Bagley outright) separate from \\\"secondary information quality\\\" (the death informant wasn't present at William's 1815 birth). That's a distinction beginners often blur, and you got it right five times over. Your tier language is honest too:..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"What does William A. Bagley's death record of 31 May 1884 in Topsham, Orange County, Vermont say about his parentage?\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"MJDL-Q8B\\\",\\\"name\\\":\\\"William A. Bagley\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[\\\"S1\\\"]},{\\\"id\\\":\\\"L528-9HM\\\",\\\"name\\\":\\\"Eva Belle Bagley\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"KHY4-7VP\\\",\\\"name\\\":\\\"Ann Tillotson\\\",\\\"ge..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4249,8 +4181,7 @@
         "section": "evaluations",
         "targetId": "ps_001",
         "focus": "proof-critique"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"evaluations\\\",\\\"count\\\":0,\\\"items\\\":[],\\\"truncated\\\":false}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4258,8 +4189,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "section": "proof_summaries",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"proof_summaries\\\",\\\"count\\\":1,\\\"items\\\":[{\\\"id\\\":\\\"ps_001\\\",\\\"question_id\\\":\\\"q_001\\\",\\\"tier\\\":\\\"probable\\\",\\\"vehicle\\\":\\\"summary\\\",\\\"supporting_assertion_ids\\\":[\\\"a_001\\\",\\\"a_003\\\",\\\"a_004\\\",\\\"a_005\\\",\\\"a_006\\\",\\\"a_007\\\",\\\"a_008\\\",\\\"a_010\\\",\\\"a_012\\\",\\\"a_014\\\",\\\"a_015\\\"],\\\"resolved_conflict_ids\\\":[],\\\"exhaustive_search_summary\\\":\\\"Searched FamilySearch collection 1784223 (Vermont, Vital Records, 1760\\u20131954) via record_search (log_001)..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4267,24 +4197,21 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "section": "assertions",
         "questionId": "q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":12,\\\"items\\\":[{\\\"id\\\":\\\"a_001\\\",\\\"record_id\\\":\\\"ark:/61903/1:1:XF8X-MVK\\\",\\\"record_persona_id\\\":\\\"p_10579788559\\\",\\\"record_role\\\":\\\"deceased\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"William A. Bagley\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"William A.\\\",\\\"surname\\\":\\\"Bagley\\\"},\\\"information_quality\\\":\\\"secondary\\\",\\\"informant\\\":\\\"unknown household member or neighbor reporting the death\\\",\\\"informant_proximity\\\":\\\"unknown\\\",\\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "section": "conflicts"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"conflicts\\\",\\\"count\\\":0,\\\"items\\\":[],\\\"truncated\\\":false}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "section": "hypotheses"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"hypotheses\\\",\\\"count\\\":0,\\\"items\\\":[],\\\"truncated\\\":false}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4292,8 +4219,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "section": "person_evidence",
         "personId": "LVDV-6MK"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"person_evidence\\\",\\\"count\\\":5,\\\"items\\\":[{\\\"id\\\":\\\"pe_009\\\",\\\"assertion_id\\\":\\\"a_007\\\",\\\"person_id\\\":\\\"LVDV-6MK\\\",\\\"confidence\\\":\\\"probable\\\",\\\"rationale\\\":\\\"Relationship assertion 'child of Sarah A.' bears on the mother. LVDV-6MK (Sarah Sally Andrews, b.1777 Gloucester MA, d.19 Mar 1847 Topsham VT) is already linked as parent of MJDL-Q8B via tree relationship R4. Name 'Sarah A.' matches: 'Sarah' matches, 'A.' is consistent with 'Andrews' ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4301,15 +4227,13 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "section": "person_evidence",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"person_evidence\\\",\\\"count\\\":5,\\\"items\\\":[{\\\"id\\\":\\\"pe_007\\\",\\\"assertion_id\\\":\\\"a_006\\\",\\\"person_id\\\":\\\"I1\\\",\\\"confidence\\\":\\\"probable\\\",\\\"rationale\\\":\\\"Relationship assertion 'child of David Bagley' also bears on David Bagley as the named father. I1 is a new stub person minted from persona p_10579788560 (father_of_deceased) via materialize_facts. No prior tree person for David Bagley existed; this record is the single source. Direct eviden..."
+      }
     },
     {
       "tool": "mcp__genealogy__validate_research_schema",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"valid\\\":true,\\\"errors\\\":[],\\\"warnings\\\":[],\\\"message\\\":\\\"Both project files pass all validation checks.\\\"}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4361,8 +4285,7 @@
           "timestamp": "2026-07-31T00:00:00Z",
           "superseded_by": null
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"evaluations\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"ev_001\\\",\\\"filesWritten\\\":[\\\"research.json\\\",\\\"evaluations/proof-critique-ps_001-2026-07-31T00-00-00.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4415,8 +4338,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":false,\\\"errors\\\":[\\\"ops[1]: research.json/hypotheses[0]: missing required field 'claim'\\\",\\\"ops[1]: research.json/hypotheses[0]: missing required field 'contradicting_assertion_ids'\\\",\\\"ops[1]: research.json/hypotheses[0]: missing required field 'ruled_out'\\\",\\\"ops[1]: research.json/hypotheses[0]: missing required field 'related_question_ids'\\\",\\\"ops[1]: research.json/hypotheses[0]: unexpected property 'question_id' (hypotheses allow only id, claim, status, ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4465,8 +4387,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"proof_summaries\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"ps_001\\\"},{\\\"section\\\":\\\"hypotheses\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"h_001\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -4474,8 +4395,7 @@
         "description": "Read original Vermont death register image",
         "subagent_type": "image-reader",
         "prompt": "Read the FamilySearch image at ARK ark:/61903/3:1:S3HT-DYK4-VTM. I am looking for the death register entry for William A. Bagley (died approximately 31 May 1884, Topsham, Orange County, Vermont) \u2014 specifically whether the original register page contains fields for the deceased's father's name and mother's name, and if so, what names appear in those fields. Project path for saving the image: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Image ID: ark:/61903/3:1:S3HT-DYK4-VTM \\u2014 Vermont Death Register, male decedents, Topsham area, 1884, English.\\n\\nSaved image: images/ark_61903_3_1_S3HT-DYK4-VTM.jpg\\n\\n---\\n\\nFull Transcription\\n\\nDEATH \\u2014 MALE\\n\\nFull Name of Deceased: Bagley, William A. [entry no. 91]\\n\\nUsual Residence: [blank]\\n\\nIf in Hospital or Institution, Its Name: [blank]\\n\\nColor: [blank]\\nAge: 69 Yrs. 11 Mos. 6 Days\\nMarital status: Single / Married / Widowed / Divorced [not cle..."
+      }
     },
     {
       "tool": "mcp__genealogy__image_transcribe",
@@ -4483,16 +4403,14 @@
         "ark": "ark:/61903/3:1:S3HT-DYK4-VTM",
         "lookingFor": "death register entry for William A. Bagley, died approximately 31 May 1884, Topsham, Orange County, Vermont \u2014 father's name and mother's name fields",
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"transcription\\\":\\\"DEATH\\u2014MALE\\\\n\\\\nFull Name of Deceased    Bagley, William A.     91\\\\n\\\\nUsual Residence\\\\n\\\\nIf in Hospital or Institution, Its Name\\\\n\\\\nColor                     Age 69 Yrs. 11 Mos. 6 Days      Single\\\\n                                                            Married\\\\nOccupation                Mechanic                          Widowed\\\\n                                                            Divorced\\\\nBirthplace                To..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4506,8 +4424,7 @@
         "resultsExamined": 1,
         "planItemId": null,
         "notes": "Original register image for William A. Bagley death record (indexed as ark:/61903/1:1:XF8X-MVK, src_001). Image saved to images/ark_61903_3_1_S3HT-DYK4-VTM.jpg. Consulted to verify parentage fields per GPS mentor recommendation. Register page confirmed to include explicit printed columns for Father's Name and Mother's Maiden Name \u2014 the record genuinely contains these fields (not a FamilySearch Family Tree merge artifact). Image reads: Father's Name = David Bagley; Mother's Maiden Name = Sarah A. (no surname recorded). Additional facts from image not in indexed entry: Age at death = 69 years 11 months 6 days (calculates birth ~25 May 1814, slightly earlier than indexed 'Abt 1815'); Occupation = Mechanic; Cause of death = Old age; Town clerk = J.R. McLane. Parentage data confirmed consistent with indexed entry.\""
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"logId\\\":\\\"log_002\\\",\\\"performed\\\":\\\"2026-07-31T18:00:40.155Z\\\",\\\"resultsRef\\\":null,\\\"returnedCount\\\":null,\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -4515,15 +4432,13 @@
         "description": "Extract assertions from original Vermont death register image",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from the original register image for William A. Bagley's 1884 Vermont death record.\n\nprojectPath: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq\nrecordId: ark:/61903/3:1:S3HT-DYK4-VTM\nlogId: log_002\nimage_filename: images/ark_61903_3_1_S3HT-DYK4-VTM.jpg\n\nThis is the original register image (NOT the indexed entry \u2014 that is src_001, ark:/61903/1:1:XF8X-MVK, already extracted with 15 assertions). The original image is a better source than the index and provides additional facts not in the indexed entry.\n\nFull transcription from the image:\nDEATH \u2014 MALE\nFull Name of Deceased: Bagley, William A. [entry no. 91]\nColor: [blank]\nAge: 69 Yrs. 11 Mos. 6 Days\nMarital status: [not clearly marked]\nOccupation: Mechanic\nBirthplace: Topsham\nFather's Name: David Bagley\nFather's Birthplace: [blank]\nMother's Maiden Name: Sarah A.\nMother's Birthplace: [blank]\nDate of Death: 1884, Month May, Day 31\nDisease Causing Death: Old age\nContributing Disease: [blank]\nMedical Attendant: [blank]\nTown: Topsham\nSigned: J.R. McLane, Town Clerk\n\nResearch subject in tree: William A. Bagley, MJDL-Q8B\nOther tree persons: I1 (David Bagley, father \u2014 new stub), LVDV-6MK (Sarah Sally Andrews, probable mother)\n\nKey points for extraction:\n- Source classification: original (this is the original register page, not a derivative index)\n- The record has three personas: deceased (William A. Bagley), father_of_deceased (David Bagley), mother_of_deceased (Sarah A.)\n- Age 69y 11m 6d at death 31 May 1884 calculates a birth date of approximately 25 May 1814 \u2014 this is more precise than the indexed 'Abt 1815' but is a calculated/derived date from reported age (use date_certainty: 'calculated' on birth year)\n- The town clerk J.R. McLane signed the entry \u2014 for death date/place information, the informant is 'civil registrar' with informant_proximity 'official_duty' (primary information); for parentage and age, the informant is 'unknown household member' with proximity 'family_not_present' (secondary information)\n- Occupation 'Mechanic' is a new fact not in the indexed entry\n- Cause of death 'Old age' is a new fact not in the indexed entry\n- Do NOT create duplicate assertions for facts already in src_001 if the values agree \u2014 the extractor should either refine in place or note the confirmation. If you create a new source for this image, keep it as a separate source entry.\n\nOpen research question ids: q_001"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"All 12 assertions persisted successfully. Here is the extraction summary:\\n\\n**Source:** src_002 / S2 (created new \\u2014 action: `created`)\\nImage ark: ark:/61903/3:1:S3HT-DYK4-VTM, original Vermont town clerk death register, Topsham, entry no. 91, signed J.R. McLane.\\n\\n**Assertions written: 12 across 3 personas**\\n\\n- `deceased` (William A. Bagley): 9 assertions \\u2014 name (a_016), sex (a_017), age (a_018), birth/date calculated (a_019), birth/place (a_020), occ..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"projectStatus\\\":\\\"active\\\",\\\"openQuestions\\\":[{\\\"id\\\":\\\"q_001\\\",\\\"question\\\":\\\"What does William A. Bagley's death record of 31 May 1884 in Topsham, Orange County, Vermont say about his parentage?\\\"}],\\\"persons\\\":[{\\\"id\\\":\\\"MJDL-Q8B\\\",\\\"name\\\":\\\"William A. Bagley\\\",\\\"gender\\\":\\\"Male\\\",\\\"sourceRefs\\\":[\\\"S1\\\"]},{\\\"id\\\":\\\"L528-9HM\\\",\\\"name\\\":\\\"Eva Belle Bagley\\\",\\\"gender\\\":\\\"Female\\\",\\\"sourceRefs\\\":[]},{\\\"id\\\":\\\"KHY4-7VP\\\",\\\"name\\\":\\\"Ann Tillotson\\\",\\\"ge..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -4782,8 +4697,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"sources\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"src_002\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_016\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_017\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_018\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_019\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"a_020\\\"},{\\\"section\\\":\\\"assertions\\\",\\\"o..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_query",
@@ -4791,8 +4705,7 @@
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "section": "assertions",
         "recordId": "ark:/61903/3:1:S3HT-DYK4-VTM"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"section\\\":\\\"assertions\\\",\\\"count\\\":11,\\\"items\\\":[{\\\"id\\\":\\\"a_016\\\",\\\"record_id\\\":\\\"ark:/61903/3:1:S3HT-DYK4-VTM\\\",\\\"record_role\\\":\\\"deceased\\\",\\\"fact_type\\\":\\\"name\\\",\\\"value\\\":\\\"Bagley, William A.\\\",\\\"structured_value\\\":{\\\"given\\\":\\\"William A.\\\",\\\"surname\\\":\\\"Bagley\\\"},\\\"information_quality\\\":\\\"indeterminate\\\",\\\"informant\\\":\\\"unknown\\\",\\\"informant_proximity\\\":\\\"unknown\\\",\\\"informant_bias_notes\\\":\\\"Town clerk J.R. McLane recorded the entry; the person ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4910,8 +4823,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_021\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_022\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_023\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_024\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_025\\\"},{\\\"section\\\":\\\"person_evidence\\\",\\\"op\\\":\\\"append\\\",\\\"entryId\\\":\\\"pe_0..."
+      }
     },
     {
       "tool": "mcp__genealogy__materialize_facts",
@@ -4934,16 +4846,14 @@
             "recordRole": "mother_of_deceased"
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"personId\\\":\\\"MJDL-Q8B\\\",\\\"created\\\":false,\\\"factsAdded\\\":2,\\\"factsEnriched\\\":3,\\\"namesAdded\\\":0,\\\"refsAttached\\\":6,\\\"conflicts_surfaced\\\":[]},{\\\"personId\\\":\\\"I1\\\",\\\"created\\\":false,\\\"factsAdded\\\":0,\\\"factsEnriched\\\":0,\\\"namesAdded\\\":0,\\\"refsAttached\\\":1,\\\"conflicts_surfaced\\\":[]},{\\\"personId\\\":\\\"LVDV-6MK\\\",\\\"created\\\":false,\\\"factsAdded\\\":0,\\\"factsEnriched\\\":0,\\\"namesAdded\\\":0,\\\"refsAttached\\\":1,\\\"conflicts_surfaced\\\":[]}],\\\"filesWritten..."
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq",
         "personId": "MJDL-Q8B"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"warningCount\\\":2,\\\"warnings\\\":[{\\\"scoreType\\\":\\\"COHERENCE\\\",\\\"issueType\\\":\\\"hasEventBeforeBirth365_2\\\",\\\"severity\\\":\\\"error\\\",\\\"personId\\\":\\\"MJDL-Q8B\\\",\\\"personName\\\":\\\"William A. Bagley\\\",\\\"factIds\\\":[\\\"ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100\\\",\\\"ddb21ddf-0042-4808-af3c-5b2e94e08922\\\",\\\"28119bdf-00ed-4c5f-a9fc-9b39c096b055\\\",\\\"F1\\\",\\\"F2\\\"],\\\"message\\\":\\\"An event is dated more than 2 years before this person's earliest birth-like fact.\\\"},{\\\"scoreType\\\":\\\"COHERENCE\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4959,16 +4869,14 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"proof_summaries\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"ps_001\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous q_001 has been answered at probable tier by proof summary ps_001. The death record (Vermont Vital Records 1760-1954, ark:/61903/1:1:XF8X-MVK) and its original register image (ark:/61903/3:1:S3HT-DYK4-VTM) both name David Bagley as father and Sarah A. as mother of William A. Bagley. Mark q_001 as resolved with resolution_assertion_ids a_006 and a_010 (the direct parentage assertions). Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-bagley-father-1884-qy0vjrwq. After marking resolved, if no further open questions remain, mark project status completed."
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4996,8 +4904,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\\"ok\\\":true,\\\"results\\\":[{\\\"section\\\":\\\"questions\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"q_001\\\"},{\\\"section\\\":\\\"project\\\",\\\"op\\\":\\\"update\\\",\\\"entryId\\\":\\\"project\\\"}],\\\"filesWritten\\\":[\\\"research.json\\\"],\\\"validation\\\":{\\\"valid\\\":true,\\\"warnings\\\":[]}}\"}]"
+      }
     }
   ],
   "error": null,
@@ -5276,5 +5183,6 @@
       "required_skill": "person-evidence",
       "question_id": null
     }
-  ]
+  ],
+  "captures_stripped": true
 }

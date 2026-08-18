@@ -1687,60 +1687,52 @@
       "args": {
         "query": "select:mcp__genealogy__project_context",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__project_context\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"GP3R-215\\\",\\n      \\\"name\\\": \\\"Christina Schreck\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"MR8C-B1W\\\",\\n      \\\"name\\\": \\\"Adam Schreck\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"LHVD-BKT\\\",\\n      \\\"name\\\": \\\"Hugh Clark\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_clark_migration\",\n4\t    \"objective\": \"Did Christiana Clark (nee Schreck, b.1783), widow of William Clark of Coshocton County, Ohio, migrate from Ohio to Wisconsin?\",\n5\t    \"subject_person_ids\": [\n6\t      \"GP3R-215\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-22\",\n10\t    \"updated\": \"2026-07-22\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n1..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous Project objective: Did Christiana Clark (nee Schreck, b.1783), widow of William Clark of Coshocton County, Ohio, migrate from Ohio to Wisconsin? Subject: GP3R-215 (Christina Schreck). The tree has her plus William Clark and several children but no research done yet. Derive the first research question."
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Bash",
       "args": {
         "command": "ls /tmp/e2e-clark-migration-s93om7qz/.claude/skills/question-selection/references/ 2>/dev/null || echo \"No references directory found\"",
         "description": "Check for reference files"
-      },
-      "response_summary": "pedigree-analysis.md\nquestion-formulation.md\nvalidation-protocol.md"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -1765,40 +1757,35 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "locality-guide",
         "args": "--autonomous Question q_001: Where did Christiana Clark (n\u00e9e Schreck, b. 1783), widow of William Clark of Coshocton County, Ohio, reside in the 1850 United States census? Target jurisdictions: Coshocton County, Ohio (primary starting location) and Wisconsin (migration destination). Time period: 1783\u20131870 (subject's likely lifespan). Need locality guide entries for both jurisdictions to inform the research plan."
-      },
-      "response_summary": "Launching skill: locality-guide"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__place_search,mcp__genealogy__place_search_all,mcp__genealogy__collections_search,mcp__genealogy__volume_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_place_page,mcp__genealogy__wiki_search,mcp__genealogy__place_population",
         "max_results": 8
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search_all\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_place_page\"}, {\"type\": \"tool_reference\", \"tool_na..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search_all",
       "args": {
         "placeName": "Coshocton County",
         "contextName": "Ohio"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Coshocton, Ohio, United States\\\",\\n      \\\"type\\\": \\\"County\\\",\\n      \\\"dateRange\\\": \\\"+1810/\\\",\\n      \\\"latitude\\\": 40.26778,\\n      \\\"longitude\\\": -81.85667,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Coshocton&focusedId=393221\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Coshocton_County,_Ohio\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Coshocton, Cosh..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search_all",
       "args": {
         "placeName": "Wisconsin",
         "contextName": "United States"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Wisconsin, United States\\\",\\n      \\\"type\\\": \\\"State\\\",\\n      \\\"dateRange\\\": \\\"+1836/\\\",\\n      \\\"latitude\\\": 44.5,\\n      \\\"longitude\\\": -90,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Wisconsin&focusedId=372\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Wisconsin\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Wisconsin Township, Jackson, Minnesota, United S..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -1806,8 +1793,7 @@
         "standardPlace": "Coshocton, Ohio, United States",
         "startYear": 1810,
         "endYear": 1870
-      },
-      "response_summary": "{\"error\":\"Population API error: 502 Bad Gateway\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__place_population",
@@ -1815,8 +1801,7 @@
         "standardPlace": "Wisconsin, United States",
         "startYear": 1836,
         "endYear": 1870
-      },
-      "response_summary": "{\"error\":\"Population API error: 502 Bad Gateway\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1824,8 +1809,7 @@
         "standardPlace": "Coshocton, Ohio, United States",
         "startYear": 1783,
         "endYear": 1870
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Coshocton, Ohio, United States\\\",\\n    \\\"startYear\\\": 1783,\\n    \\\"endYear\\\": 1870\\n  },\\n  \\\"scope\\\": \\\"Ohio\\\",\\n  \\\"totalForPlace\\\": 60,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"3315268\\\",\\n      \\\"title\\\": \\\"Ohio, Athens County, Deceased Veteran Grave Registration Card File Index, 1819-1936\\\",\\n      \\\"dateRange\\\": \\\"1819-1936\\\",\\n      \\\"recordCount\\\": 5588,\\n      \\\"personCount\\\": 5591,\\n      \\\"imageCount\\\": 5546,\\n..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -1833,8 +1817,7 @@
         "standardPlace": "Wisconsin, United States",
         "startYear": 1836,
         "endYear": 1870
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Wisconsin, United States\\\",\\n    \\\"startYear\\\": 1836,\\n    \\\"endYear\\\": 1870\\n  },\\n  \\\"scope\\\": \\\"Wisconsin\\\",\\n  \\\"totalForPlace\\\": 34,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1946789\\\",\\n      \\\"title\\\": \\\"Wisconsin, Birth Index, 1820-1907\\\",\\n      \\\"dateRange\\\": \\\"1820-1907\\\",\\n      \\\"recordCount\\\": 985659,\\n      \\\"personCount\\\": 985659,\\n      \\\"imageCount\\\": 0,\\n      \\\"url\\\": \\\"https://www.familysearch.org/sear..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -1842,8 +1825,7 @@
         "standardPlace": "Coshocton, Ohio, United States",
         "startYear": 1783,
         "endYear": 1870
-      },
-      "response_summary": "<persisted-output>\nOutput too large (55KB). Full output saved to: /home/francishappy/.claude/projects/-tmp-e2e-clark-migration-s93om7qz/787f5986-a432-45f7-88cc-09323c97ddca/tool-results/toolu_01ShJb8eY1KPF8WSf5iBFC7Z.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Coshocton, Ohio, United States\\\",\\n    \\\"startYear\\\": 1783,\\n    \\\"endYear\\\": 1870\\n  },\\n  \\\"totalResults\\\": 2611,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__volume_search",
@@ -1851,8 +1833,7 @@
         "standardPlace": "Wisconsin, United States",
         "startYear": 1836,
         "endYear": 1870
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Wisconsin, United States\\\",\\n    \\\"startYear\\\": 1836,\\n    \\\"endYear\\\": 1870\\n  },\\n  \\\"totalResults\\\": 15443,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": \\\"007709901_030_M922-7J7\\\",\\n      \\\"imageGroupPrefix\\\": \\\"007709901\\\",\\n      \\\"imageCount\\\": 3,\\n      \\\"recordSearchablePercent\\\": 0,\\n      \\\"fulltextSearchable\\\": true,\\n      \\\"languages\\\": [\\n        \\\"en\\\"\\n      ],\\n      \\\"coverages\\\": [\\n        {\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -1860,8 +1841,7 @@
         "standardPlace": "Coshocton, Ohio, United States",
         "startYear": 1783,
         "endYear": 1870
-      },
-      "response_summary": "<persisted-output>\nOutput too large (59.6KB). Full output saved to: /home/francishappy/.claude/projects/-tmp-e2e-clark-migration-s93om7qz/787f5986-a432-45f7-88cc-09323c97ddca/tool-results/toolu_016YL5Yu7GqEqaYgm7QpDKYP.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Coshocton, Ohio, United States\\\",\\n    \\\"startYear\\\": 1783,\\n    \\\"endYear\\\": 1870\\n  },\\n  \\\"totalForPlace\\\": 464,\\n  \\\"returned\\\": 373,\\n  \\\"results\\\": [\\n    {\\n    ..."
+      }
     },
     {
       "tool": "mcp__genealogy__external_links_search",
@@ -1869,86 +1849,75 @@
         "standardPlace": "Wisconsin, United States",
         "startYear": 1836,
         "endYear": 1870
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Wisconsin, United States\\\",\\n    \\\"startYear\\\": 1836,\\n    \\\"endYear\\\": 1870\\n  },\\n  \\\"totalForPlace\\\": 280,\\n  \\\"returned\\\": 240,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https://www.myheritage.com/research/collection-20762/wisconsin-central-wisconsin-court-registrations\\\",\\n      \\\"linkText\\\": \\\"Wisconsin, Central Wisconsin Court Registrations, 1837-Onward\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"https://www.archives.gov/re..."
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Coshocton County Ohio genealogy records research"
-      },
-      "response_summary": "{\"error\":\"wiki-query-api error: 502\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_search",
       "args": {
         "query": "Wisconsin genealogy records research census vital records"
-      },
-      "response_summary": "{\"error\":\"wiki-query-api error: 502\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Ohio, United States",
         "section": "home"
-      },
-      "response_summary": "{\"error\":\"wiki-query-api error: 502\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Ohio, United States",
         "section": "getting_started"
-      },
-      "response_summary": "{\"error\":\"wiki-query-api error: 502\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Ohio, United States",
         "section": "online_records"
-      },
-      "response_summary": "{\"error\":\"wiki-query-api error: 502\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Ohio, United States",
         "section": "research_tips"
-      },
-      "response_summary": "{\"error\":\"wiki-query-api error: 502\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Wisconsin, United States",
         "section": "home"
-      },
-      "response_summary": "{\"error\":\"wiki-query-api error: 502\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Wisconsin, United States",
         "section": "getting_started"
-      },
-      "response_summary": "{\"error\":\"wiki-query-api error: 502\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Wisconsin, United States",
         "section": "online_records"
-      },
-      "response_summary": "{\"error\":\"wiki-query-api error: 502\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__wiki_place_page",
       "args": {
         "standardPlace": "Wisconsin, United States",
         "section": "research_tips"
-      },
-      "response_summary": "{\"error\":\"wiki-query-api error: 502\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2066,8 +2035,7 @@
           ],
           "source": "locality-guide"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"localities\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"loc_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2191,30 +2159,26 @@
           ],
           "source": "locality-guide"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"localities\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"loc_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan",
         "args": "--autonomous Create research plan for q_001: \"Where did Christiana Clark (n\u00e9e Schreck, b. 1783), widow of William Clark of Coshocton County, Ohio, reside in the 1850 United States census?\" Locality guides available: loc_001 (Coshocton County, Ohio) and loc_002 (Wisconsin). Subject person: GP3R-215. Key collections identified: Ohio County Marriages 1789-2016, Ohio County Death Records 1840-2001, Ohio Probate Records 1789-1996, Ohio Tax Records 1800-1887, Wisconsin State Census 1855 (col. 1443825), Wisconsin Death Index 1820-1907, Wisconsin Probate Estate Files 1848-1948. The 1850 federal census is fully indexed on FamilySearch and Ancestry \u2014 start there."
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/.claude/skills/research-plan/references/planning-standards.md"
-      },
-      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2336,24 +2300,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "--autonomous Execute pli_001: Search the 1850 US Federal Census on FamilySearch for Christiana Clark (n\u00e9e Schreck, b. ~1783, age ~67 in 1850), widow of William Clark of Coshocton County, Ohio. Question q_001. Plan pl_001. Also execute pli_002 (1840 Federal Census, Coshocton County, Ohio) and pli_004 (Ohio Tax Records 1800-1887, Coshocton County, col. 1473259). Subject GP3R-215. Search under Clark and Schreck/Shreck variants, age 60-70, birthplace Pennsylvania or Germany. If found in Wisconsin, that is direct evidence of migration. If found in Ohio, that establishes she had not yet migrated by 1850."
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
         "max_results": 4
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2369,8 +2330,7 @@
         "residenceYearTo": 1850,
         "count": 50,
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Clark\\\",\\n    \\\"surnameAlt\\\": \\\"Schreck\\\",\\n    \\\"givenName\\\": \\\"Christiana\\\",\\n    \\\"sex\\\": \\\"Female\\\",\\n    \\\"birthYearFrom\\\": 1778,\\n    \\\"birthYearTo\\\": 1790,\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-clark-migration-s93om7qz\\\"\\n  },\\n  \\\"totalMatches\\\": 26,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 26,\\n  \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2383,8 +2343,7 @@
         "residenceYearTo": 1840,
         "count": 50,
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Clark\\\",\\n    \\\"givenName\\\": \\\"William\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residencePlace\\\": \\\"Coshocton, Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1840,\\n    \\\"residenceYearTo\\\": 1840,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-clark-migration-s93om7qz\\\"\\n  },\\n  \\\"totalMatches\\\": 13,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 13,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recor..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -2393,8 +2352,7 @@
         "stagedResultsRef": "results/.staging/15fef4dc-7974-49f7-84c0-60e6b9d8679b.json",
         "subjectId": "GP3R-215",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"GP3R-215\\\",\\n  \\\"scoredCount\\\": 26,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 3,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MXSY-YPS\\\",\\n      \\\"matchScore\\\": 0.0018042902,\\n      \\\"primaryId\\\": \\\"p_342573992\\\",\\n      \\\"personName\\\": \\\"Christian Clark\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"birthDate\\\": \\\"1788\\\",\\n      \\\"birthPlace\\\": \\\"Pe..."
+      }
     },
     {
       "tool": "mcp__genealogy__rank_search_matches",
@@ -2403,8 +2361,7 @@
         "stagedResultsRef": "results/.staging/3d3520f3-ceda-4187-9096-49c910264a63.json",
         "subjectId": "GP3R-215",
         "checkAttachments": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"GP3R-215\\\",\\n  \\\"scoredCount\\\": 13,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 9,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:68MW-4L87\\\",\\n      \\\"matchScore\\\": 0.000019630012,\\n      \\\"primaryId\\\": \\\"p_292334068235\\\",\\n      \\\"personName\\\": \\\"Mrs Clark\\\",\\n      \\\"collectionTitle\\\": \\\"United States City and Business Directories, ca. 1749 - c..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2430,8 +2387,7 @@
         "resultsAvailable": 26,
         "stagedResultsRef": "results/.staging/15fef4dc-7974-49f7-84c0-60e6b9d8679b.json",
         "notes": "26 results returned. No Wisconsin results in top 26. Top candidates: (1) 'Christian Clark' f, b.1788 PA, Harrison Twp, Carroll Co, Ohio (adj. Coshocton) \u2014 in Matthew Clark household; (2) 'Christena Clark' f, b.1787 VA, Cambridge, Guernsey Co, Ohio (adj. Coshocton) \u2014 heading own household. Subject unresolvable for match scoring. Need to read both records to examine household composition."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-23T09:48:31.772Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 26,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2453,8 +2409,7 @@
         "resultsAvailable": 13,
         "stagedResultsRef": "results/.staging/3d3520f3-ceda-4187-9096-49c910264a63.json",
         "notes": "5 William Clark households in Coshocton Co, Ohio in 1840: Perry Twp (New Guilford), Bethlehem Twp, Linton Twp (x2), Jackson Twp. In 1840 only HoH named; need to read households to find one with woman aged ~57 (b.~1783) and matching children. Subject unresolvable for match scoring."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-23T09:48:36.619Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n  \\\"returnedCount\\\": 13,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_002.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2480,8 +2435,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2489,8 +2443,7 @@
         "recordId": "ark:/61903/1:1:MXS1-6XW",
         "resultsRef": "results/log_001.json",
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_342615126\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MXS1-6XW\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Christena\\\",\\n          \\\"surname\\\": \\\"Clark\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": \\\"White\\\"\\n        },\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1787..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2498,8 +2451,7 @@
         "recordId": "ark:/61903/1:1:MXSY-YPS",
         "resultsRef": "results/log_001.json",
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_342573992\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MXSY-YPS\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Clark\\\",\\n          \\\"given\\\": \\\"Christian\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": \\\"White\\\"\\n        },\\n        {\\n          \\\"type\\\": \\\"Census\\\",\\n          \\\"primary\\\": tr..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2516,8 +2468,7 @@
         "residenceYearTo": 1850,
         "count": 50,
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Clark\\\",\\n    \\\"givenName\\\": \\\"Christina\\\",\\n    \\\"givenNameAlt\\\": \\\"Christiana\\\",\\n    \\\"sex\\\": \\\"Female\\\",\\n    \\\"birthYearFrom\\\": 1775,\\n    \\\"birthYearTo\\\": 1793,\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residencePlace\\\": \\\"Wisconsin\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-clark-migration-s93om7qz\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationC..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2532,8 +2483,7 @@
         "residenceYearTo": 1850,
         "count": 50,
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Schreck\\\",\\n    \\\"givenName\\\": \\\"Christiana\\\",\\n    \\\"sex\\\": \\\"Female\\\",\\n    \\\"birthYearFrom\\\": 1775,\\n    \\\"birthYearTo\\\": 1793,\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-clark-migration-s93om7qz\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2546,8 +2496,7 @@
         "residenceYearTo": 1850,
         "count": 50,
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Clark\\\",\\n    \\\"givenName\\\": \\\"Samuel\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residencePlace\\\": \\\"Wisconsin\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-clark-migration-s93om7qz\\\"\\n  },\\n  \\\"totalMatches\\\": 50,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2555,8 +2504,7 @@
         "recordId": "ark:/61903/1:1:XHRF-FXW",
         "resultsRef": "results/log_002.json",
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10421068926\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XHRF-FXW\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"William\\\",\\n          \\\"surname\\\": \\\"Clark\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Census\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"1840\\\",\\n          \\\"standard_date\\\": \\\"1840\\\",\\n          \\\"place\\\": \\\"New Guilford, Perr..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2579,8 +2527,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results for Christina/Christiana Clark in Wisconsin 1850 census. Confirms no indexed record found for subject under Clark surname in Wisconsin in 1850. Absence is meaningful: either she had not migrated by 1850, was unlisted/unindexed, or was in another state. Will search Ohio (Coshocton) and FAN cluster next."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-23T09:50:13.786Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2602,8 +2549,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results for Christiana Schreck (maiden name) in 1850 census. Expected \u2014 she would be listed as Clark by 1850 \u2014 but confirms no cross-listing or maiden-name entry. No Schreck households found in any state."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-23T09:50:17.492Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2625,8 +2571,7 @@
         "resultsAvailable": 50,
         "stagedResultsRef": "results/.staging/98705fba-9c82-4705-b53e-0ff4842cc567.json",
         "notes": "50 results for Samuel Clark in Wisconsin 1850; all have birthplaces of New York, Vermont, Massachusetts, England \u2014 none from Ohio. No Ohio-born Samuel Clark matches the expected child of William and Christiana Clark of Coshocton County. FAN search for this child name inconclusive in Wisconsin."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-23T09:50:21.056Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_005.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_005.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2640,8 +2585,7 @@
         "birthPlace": "Ohio",
         "count": 50,
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Clark\\\",\\n    \\\"givenName\\\": \\\"Hugh\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residencePlace\\\": \\\"Wisconsin\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"birthPlace\\\": \\\"Ohio\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-clark-migration-s93om7qz\\\"\\n  },\\n  \\\"totalMatches\\\": 29,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 29,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2655,8 +2599,7 @@
         "birthPlace": "Ohio",
         "count": 50,
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Clark\\\",\\n    \\\"givenName\\\": \\\"Joseph\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residencePlace\\\": \\\"Wisconsin\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"birthPlace\\\": \\\"Ohio\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-clark-migration-s93om7qz\\\"\\n  },\\n  \\\"totalMatches\\\": 72,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2671,8 +2614,7 @@
         "residenceYearTo": 1850,
         "count": 50,
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Clark\\\",\\n    \\\"givenName\\\": \\\"Christiana\\\",\\n    \\\"givenNameAlt\\\": \\\"Christina\\\",\\n    \\\"sex\\\": \\\"Female\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residencePlace\\\": \\\"Coshocton, Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-clark-migration-s93om7qz\\\"\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 2,\\n  \\\"offset\\\": ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2686,16 +2628,14 @@
         "birthPlace": "Ohio",
         "count": 50,
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Clark\\\",\\n    \\\"givenName\\\": \\\"James\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residencePlace\\\": \\\"Wisconsin\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"birthPlace\\\": \\\"Ohio\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-clark-migration-s93om7qz\\\"\\n  },\\n  \\\"totalMatches\\\": 90,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append,mcp__genealogy__record_read,mcp__genealogy__rank_search_matches",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2718,8 +2658,7 @@
         "stagedResultsRef": "results/.staging/25651d2d-e175-48e5-909c-96edd92dd810.json",
         "planItemId": "pli_006",
         "notes": "FAN search for Hugh Clark (tree: LHVD-BKT) in Wisconsin 1850. No direct match for Hugh Clark b.ca.1805 Ohio. Only relevant hit: 'Wm H Clark' (b.1841 Ohio) in Lucius Clark household, Winneconne, Winnebago County \u2014 likely a child of a sibling, not the subject. Lucius Clark household warrants a full read."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-23T09:53:13.671Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_006.json\\\",\\n  \\\"returnedCount\\\": 29,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_006.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2742,8 +2681,7 @@
         "stagedResultsRef": "results/.staging/60f57fc6-f5a8-4f7f-82c5-84bf4e506556.json",
         "planItemId": "pli_006",
         "notes": "FAN search for Joseph Clark (tree: LZLH-PPW, b.ca.1816 Ohio) in Wisconsin 1850. Strong match: Joseph Clark, male, b.1816 Ohio, head of household in Monroe, Green County, Wisconsin (ark:/61903/1:1:M4DJ-878). Household also contains James Clark b.1847 Ohio (matching tree's James A Clark ML82-DNJ). Full household read needed \u2014 Christiana (age ~67) may appear as a widowed mother in this household."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-07-23T09:53:18.909Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_007.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_007.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2765,8 +2703,7 @@
         "stagedResultsRef": "results/.staging/fbfe4e09-ef49-4f8c-b5c5-16063a006114.json",
         "planItemId": "pli_001",
         "notes": "Direct search for Christiana Clark in Coshocton County, Ohio 1850. Both results are far too young (b.1836, b.1841) \u2014 not the subject (b.ca.1783). Subject either migrated before 1850, appears under a variant name, or is enumerated in a child's household under that child's surname. Negative result for own-household search confirmed."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_008\\\",\\n  \\\"performed\\\": \\\"2026-07-23T09:53:23.796Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_008.json\\\",\\n  \\\"returnedCount\\\": 2,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_008.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2789,8 +2726,7 @@
         "stagedResultsRef": "results/.staging/296bb9ab-47e9-4e25-9567-cd254533b875.json",
         "planItemId": "pli_006",
         "notes": "FAN search for James Clark (tree: ML82-DNJ) in Wisconsin 1850. Multiple candidates: (1) James Clark b.1831 Ohio, Spring Grove, Green County \u2014 too old for tree's James A Clark; (2) James Clark b.1847 Ohio, Decatur, Green County, in Alexander Clark household \u2014 possible; (3) James Clark b.1843 Ohio, Lucius Clark household, Winneconne, Winnebago County. The Green County cluster (Green County appears in Joseph Clark and other results) is geographically coherent. Household reads needed."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_009\\\",\\n  \\\"performed\\\": \\\"2026-07-23T09:53:28.758Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_009.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_009.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2798,8 +2734,7 @@
         "recordId": "ark:/61903/1:1:M4DJ-878",
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz",
         "resultsRef": "results/.staging/60f57fc6-f5a8-4f7f-82c5-84bf4e506556.json"
-      },
-      "response_summary": "{\"error\":\"stagedResultsRef 'results/.staging/60f57fc6-f5a8-4f7f-82c5-84bf4e506556.json' does not exist or is invalid JSON.\"}"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2807,16 +2742,14 @@
         "recordId": "ark:/61903/1:1:M4DJ-878",
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz",
         "resultsRef": "results/log_007.json"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_180289061\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:M4DJ-878\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Joseph\\\",\\n          \\\"surname\\\": \\\"Clark\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Census\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"1850\\\",\\n          \\\"standard_date\\\": \\\"1850\\\",\\n          \\\"pla..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2829,8 +2762,7 @@
         "recordCountry": "United States",
         "count": 10,
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Clark\\\",\\n    \\\"givenName\\\": \\\"Lucius\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"residencePlace\\\": \\\"Wisconsin\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"count\\\": 10,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-clark-migration-s93om7qz\\\"\\n  },\\n  \\\"totalMatches\\\": 7344,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 10,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"r..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2844,8 +2776,7 @@
         "recordCountry": "United States",
         "count": 50,
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Clark\\\",\\n    \\\"givenName\\\": \\\"William\\\",\\n    \\\"birthPlace\\\": \\\"Ohio\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"residencePlace\\\": \\\"Wisconsin\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-clark-migration-s93om7qz\\\"\\n  },\\n  \\\"totalMatches\\\": 29465,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2857,8 +2788,7 @@
         "recordCountry": "United States",
         "count": 50,
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Clark\\\",\\n    \\\"givenName\\\": \\\"Christiana\\\",\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-clark-migration-s93om7qz\\\"\\n  },\\n  \\\"totalMatches\\\": 128300,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MDSD-7..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2872,15 +2802,13 @@
         "recordCountry": "United States",
         "count": 50,
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Clark\\\",\\n    \\\"givenName\\\": \\\"Christina\\\",\\n    \\\"birthYearFrom\\\": 1775,\\n    \\\"birthYearTo\\\": 1795,\\n    \\\"residenceYearFrom\\\": 1850,\\n    \\\"residenceYearTo\\\": 1850,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-clark-migration-s93om7qz\\\"\\n  },\\n  \\\"totalMatches\\\": 33861,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 50,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": true,\\n  \\\"results\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MXS1-6XW"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_342615126\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MXS1-6XW\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"512db684-3b57-4bac-9dbe-44b66ccee128\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Christena\\\",\\n          \\\"surname\\\": \\\"Clark\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": \\\"White\\\"\\n        },\\n        ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
@@ -2888,22 +2816,19 @@
         "recordId": "ark:/61903/1:1:M4DR-5WN",
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz",
         "resultsRef": "results/log_006.json"
-      },
-      "response_summary": "{\"error\":\"record 'ark:/61903/1:1:M4DR-5WN' was not found in staged results 'results/log_006.json'. Do a live read (omit `resultsRef`) instead, or verify the ref/id.\"}"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"GP3R-215\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Christina\",\n11\t          \"surname\": \"Schreck\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"d1738e1f-4a38-424f-96c7-cab0262660c4\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"29 January 1783\",\n19\t          \"standard_date\": \"29 Jan 1783\",\n20\t          \"place\": \"Pennsylvan..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:M4DR-5WN"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_180516796\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:M4DR-5WN\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"1571b0cb-fea8-4e1a-bf94-052dd23255b6\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Clark\\\",\\n          \\\"given\\\": \\\"Lucius\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"b7d52e6c-c02f-47d5-afb8-408610aad233\\\",\\n          \\\"type\\\": \\\"Birth..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2925,8 +2850,7 @@
         "stagedResultsRef": "results/.staging/af7ca995-f336-4057-8bb0-1b0f4f4c168b.json",
         "planItemId": "pli_006",
         "notes": "FAN search for Lucius Clark in Winneconne, Winnebago County WI 1850 (confirmed ARK ark:/61903/1:1:M4DR-5WN, b.1809 Vermont \u2014 does NOT match Ohio-born Clark children). Household at ark:/61903/1:2:MWXV-79H contains Wm H Clark b.1841 Ohio. Total matches dominated by non-relevant entries. Lucius Clark b.Vermont likely a different family; the Ohio-born member in his household is a possible nephew of the William Clark family."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_010\\\",\\n  \\\"performed\\\": \\\"2026-07-23T09:56:26.964Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_010.json\\\",\\n  \\\"returnedCount\\\": 10,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_010.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2947,8 +2871,7 @@
         "stagedResultsRef": "results/.staging/09151747-1672-4cfd-a919-5b7661bbd736.json",
         "planItemId": "pli_001",
         "notes": "Nationwide search for Christiana Clark in 1850 census. No match for subject (b.ca.1783 Ohio) found indexed as 'Christiana Clark'. Only Ohio hits are too young (b.1836 Jefferson Twp Coshocton, b.1841 Pike Twp Coshocton). CRITICAL LEAD: Christena Clark b.1787 Virginia, Cambridge, Guernsey County, Ohio (ark:/61903/1:1:MXS1-6XW) \u2014 heading own household with John Clark b.1822 Ohio and Sanfrancisco Clark b.1849 Ohio. Guernsey County is adjacent to Coshocton. Birth year 4 years off from tree estimate; birthplace Virginia vs expected Pennsylvania is discrepant but census age/place errors common for elderly women. This is the highest-probability candidate found so far for subject remaining in Ohio."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_011\\\",\\n  \\\"performed\\\": \\\"2026-07-23T09:56:33.947Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_011.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_011.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2971,22 +2894,19 @@
         "stagedResultsRef": "results/.staging/c468b274-5168-41cc-a8ba-ffd36f8563cd.json",
         "planItemId": "pli_001",
         "notes": "Birth-year scoped variant search (Christina Clark, b.1775-1795). Top Ohio hits: Christena Clark b.1787 Virginia in Guernsey County (same as above). Harrison Twp Carroll County hit (Christian Clark, female, b.1788 PA) not relevant. Notable non-census hit: Christina Clark (b.1789 Virginia, widowed) death record in Westland Twp, Guernsey County, Ohio (died 13 Jan 1876) \u2014 ark:/61903/1:1:F6KV-648. This death record suggests a Christena/Christina Clark b.1789 Virginia died in Guernsey County 1876, which could be the same person as the 1850 Cambridge, Guernsey County household (b.1787 same person, rounding). This is additional corroboration for the Guernsey County candidate. Also notable: ark:/61903/1:1:K89P-DJ6 \u2014 1890 Civil War Veterans census entry for William W Clark lists Christina Clark (presumably his wife or widow)."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_012\\\",\\n  \\\"performed\\\": \\\"2026-07-23T09:56:43.247Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_012.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_012.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:Q2SS-JR34"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_102110701597\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:Q2SS-JR34\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"3b9cbfdc-f63e-47fb-850e-18dc6e05488c\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Schreck Clark\\\",\\n          \\\"given\\\": \\\"Christiana\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"e2a7de23-8935-4434-bdab-33051478b349\\\",\\n          \\\"type\\\": \\\"Burial\\\",\\n       ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:XHTC-MJ6"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10421703523\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XHTC-MJ6\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"5681fb1c-8772-4fba-aad3-26bc766f2c88\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Christena\\\",\\n          \\\"surname\\\": \\\"Clark\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"71aabfaf-84fc-423f-844f-303029cd5588\\\",\\n          \\\"type\\\": \\\"Census\\\",\\n          \\\"primar..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3009,8 +2929,7 @@
         "stagedResultsRef": "results/.staging/a9281d68-eb36-4881-b087-60147adef461.json",
         "planItemId": "pli_006",
         "notes": "FAN search for William W Clark (tree: LHVD-B5S, b.1813 Franklin Twp Coshocton) in Wisconsin 1850. Top hits are William Clark b.1833 Ohio in Whitewater, Walworth WI (too young) and Wm H Clark b.1841 Ohio in Lucius Clark household Winneconne (already examined). No match for William W Clark b.1813. Tree shows William W Clark resided in Linton Twp, Coshocton in 1860 and Franklin Twp, Coshocton in 1870 \u2014 he stayed in Ohio. The 'William Wellington Clark' in Wisconsin marriage record is a different person. Negative for this FAN lead in Wisconsin."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_013\\\",\\n  \\\"performed\\\": \\\"2026-07-23T09:58:17.905Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_013.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_013.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3026,8 +2945,7 @@
         "resultsAvailable": 1,
         "planItemId": "pli_001",
         "notes": "Find a Grave Index (ark:/61903/1:1:Q2SS-JR34, memorial #154768466): 'Christiana Schreck Clark', born 29 Jan 1783, DEATH: 1849, BURIAL: Coshocton, Coshocton, Ohio. This is a derivative/compiled source (secondary information) but directly confirms she died in 1849 \u2014 before the June 1850 census. This explains the failure to find her in any 1850 census search. She did not migrate to Wisconsin; she died in Coshocton County, Ohio in 1849. This is the key finding for q_001: she is not in the 1850 census because she was deceased."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_014\\\",\\n  \\\"performed\\\": \\\"2026-07-23T10:00:09.066Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -3043,8 +2961,7 @@
         "resultsAvailable": 1,
         "planItemId": "pli_002",
         "notes": "1840 US Census (ark:/61903/1:1:XHTC-MJ6): Christena Clark, head of household, Fallsbury Township, Licking, Ohio. This is the last known census enumeration of the subject while alive. She was in Licking County (adjacent to Coshocton) in 1840, having moved from Pike Twp, Coshocton County where she appeared in 1820, 1830, and 1831-1838 tax records. She apparently moved back toward Coshocton before her death in 1849 (burial at West Carlisle Cemetery, Coshocton). Important context: 1840 census names only the head of household \u2014 no members listed; the household composition must be inferred from tick marks."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_015\\\",\\n  \\\"performed\\\": \\\"2026-07-23T10:00:14.168Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Read",
@@ -3052,16 +2969,14 @@
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/research.json",
         "offset": 0,
         "limit": 150
-      },
-      "response_summary": "0\t{\n1\t  \"project\": {\n2\t    \"id\": \"rp_clark_migration\",\n3\t    \"objective\": \"Did Christiana Clark (nee Schreck, b.1783), widow of William Clark of Coshocton County, Ohio, migrate from Ohio to Wisconsin?\",\n4\t    \"subject_person_ids\": [\n5\t      \"GP3R-215\"\n6\t    ],\n7\t    \"status\": \"active\",\n8\t    \"created\": \"2026-07-22\",\n9\t    \"updated\": \"2026-07-22\"\n10\t  },\n11\t  \"researcher_profile\": {\n12\t    \"experience_level\": \"intermediate\",\n13\t    \"subscriptions\": [],\n14\t    \"narration_guidance\": \"concise\"\n15..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3132,8 +3047,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n..."
+      }
     },
     {
       "tool": "Agent",
@@ -3141,15 +3055,13 @@
         "description": "Extract Find a Grave record for Christiana Schreck Clark",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from this FamilySearch Find a Grave index record into research.json and tree.gedcomx.json.\n\n**Project path:** /tmp/e2e-clark-migration-s93om7qz\n\n**Research context:** We are researching q_001 \u2014 \"Where did Christiana Clark (n\u00e9e Schreck, b. 1783), widow of William Clark of Coshocton County, Ohio, reside in the 1850 United States census?\" The key finding is that she DIED IN 1849, before the census. This Find a Grave record is the primary source confirming her death date.\n\n**Log entry ID:** log_014 (no results sidecar \u2014 this was a direct record read)\n\n**Record ID:** ark:/61903/1:1:Q2SS-JR34\n\n**Record content (already retrieved):**\n- Collection: Find a Grave Index (FamilySearch collection 2221801)\n- Citation: \"Find a Grave Index\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q2SS-JR34 : Thu Jul 16 00:15:53 UTC 2026), Entry for Christiana Schreck Clark.\n- Source URL: http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=154768466\n- Record URL: https://www.familysearch.org/ark:/61903/1:2:QLMM-1HWJ\n- Person: Christiana Schreck Clark (p_102110701597, ark:/61903/1:1:Q2SS-JR34)\n- BIRTH: 29 Jan 1783\n- DEATH: 1849 (year only)\n- BURIAL: Coshocton, Coshocton, Ohio, United States of America\n\n**Subject in tree:** GP3R-215 (Christina Schreck, the research subject \u2014 widow of William Clark)\n\n**Classification guidance:**\n- Source classification: DERIVATIVE (Find a Grave is a compiled index of memorial entries, not an original record)\n- For birth date (29 Jan 1783): Information quality = SECONDARY (retrospectively recorded on a memorial, long after the event); Evidence type = DIRECT (directly states birth date)\n- For death date (1849): Information quality = SECONDARY (compiled memorial); Evidence type = DIRECT (directly states death year)\n- For burial place (Coshocton, Ohio): Information quality = SECONDARY; Evidence type = DIRECT\n\n**Instructions:**\n1. Use mcp__genealogy__project_context to read the project state\n2. Use mcp__genealogy__extraction_append to write:\n   a. One sources op creating the source entry with sourceDescription = {title: \"Christiana Schreck Clark, 'Find a Grave Index'\", url: \"https://www.familysearch.org/ark:/61903/1:1:Q2SS-JR34\"}\n   b. One assertion op for birth (type: Birth, value: \"29 January 1783\", place: \"Pennsylvania, United States\" \u2014 from tree context, not this record which omits place; or use null place for birth if the record itself has no birthplace listed)\n   c. One assertion op for death (type: Death, date: \"1849\", date_certainty: \"estimated\" since only year given, place: null since no death place on record)\n   d. One assertion op for burial (type: Burial, place: \"Coshocton, Coshocton, Ohio, United States\")\n3. All assertions should reference log_entry_id: \"log_014\" and person_id: \"GP3R-215\"\n4. The record has no birthplace listed \u2014 extract only birth date if appropriate, or skip birth if the record provides no birthplace information you're uncertain about. Focus on death and burial which are the key new facts.\n\nNote: The tree already has a birth record (baptism at Rehrersburg, Berks County, PA, 2 March 1783) \u2014 so the birth date from this Find a Grave is corroborating information, not the primary source for birth."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Persisted successfully. Here is the compact summary:\\n\\n**Source:** src_001 / S1 \\u2014 created (new source, no prior extraction for this record)\\n\\n**Assertions written: 3 total, all role `deceased`**\\n- a_001: `birth`, date \\\"29 Jan 1783\\\" \\u2014 secondary / family_not_present / direct\\n- a_002: `death`, date \\\"1849\\\", certainty `estimated` \\u2014 secondary / family_not_present / direct\\n- a_003: `burial`, place resolved to \\\"Coshocton, Ohio, United States\\\" \\u201..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"Where did Christiana Clark (n\\u00e9e Schreck, b. 1783), widow of William Clark of Coshocton County, Ohio, reside in the 1850 United States censu\\u2026\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"GP3R-215\\\",\\n      \\\"name\\\": \\\"Christina Schreck\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n    ..."
+      }
     },
     {
       "tool": "Agent",
@@ -3157,23 +3069,20 @@
         "description": "Extract 1840 census record for Christena Clark",
         "subagent_type": "record-extractor",
         "prompt": "Extract all assertions from this FamilySearch 1840 US census record into research.json and tree.gedcomx.json.\n\n**Project path:** /tmp/e2e-clark-migration-s93om7qz\n\n**Research context:** We are researching q_001 \u2014 \"Where did Christiana Clark (n\u00e9e Schreck, b. 1783), widow of William Clark of Coshocton County, Ohio, reside in the 1850 United States census?\" The subject died in 1849. This 1840 census record shows her last known location in a federal census \u2014 Fallsbury Township, Licking County, Ohio. This is important because it shows she had moved from Coshocton County (where she appeared 1820-1838) to Licking County by 1840, before her death in 1849. The 1840 census is a secondary finding for the question but important contextual evidence.\n\n**Log entry ID:** log_015 (no results sidecar \u2014 this was a direct record read)\n\n**Record ID:** ark:/61903/1:1:XHTC-MJ6\n\n**Record content (already retrieved):**\n- Collection: United States, Census, 1840 (FamilySearch collection 1786457)\n- Citation: \"United States, Census, 1840\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XHTC-MJ6 : Sun Mar 10 00:11:23 UTC 2024), Entry for Christena Clark, 1840.\n- Record household URL: https://www.familysearch.org/ark:/61903/1:2:1TLM-646\n- Image: https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBW-L29\n- Person: Christena Clark (p_10421703523, ark:/61903/1:1:XHTC-MJ6)\n- CENSUS: 1840, Fallsbury Township, Licking, Ohio, United States\n- (Note: 1840 census only names the head of household; other members appear as tick marks. The name \"Christena Clark\" is the head.)\n\n**Subject in tree:** GP3R-215 (Christina Schreck, the research subject)\n\n**Classification guidance:**\n- Source classification: DERIVATIVE (FamilySearch index of the original 1840 census)\n- Census residence (1840, Fallsbury Twp, Licking, Ohio): Information quality = PRIMARY (self-reported at census time); Evidence type = DIRECT (directly states her residence in 1840)\n- Informant proximity: SELF (she is the head of household providing the information)\n\n**Instructions:**\n1. Use mcp__genealogy__project_context to read the project state\n2. Use mcp__genealogy__extraction_append to write:\n   a. One sources op creating the source entry with sourceDescription = {title: \"Christena Clark, 'United States, Census, 1840'\", url: \"https://www.familysearch.org/ark:/61903/1:1:XHTC-MJ6\"}\n   b. One assertion op for census residence (type: Residence or Census, date: \"1840\", place: \"Fallsbury Township, Licking, Ohio, United States\", standard_place needs to be resolved)\n3. All assertions should reference log_entry_id: \"log_015\" and person_id: \"GP3R-215\"\n4. Use place_search if needed to resolve the standard_place for Fallsbury Township, Licking County, Ohio\n\n**Important:** The tree (tree.gedcomx.json) already has a Residence fact for 1840 in Fallsbury Township, Licking, Ohio attached to GP3R-215. The extraction should still write a proper source and assertion in research.json pointing to this specific census record, creating the formal GPS citation chain."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Persisted cleanly. Here is the extraction summary:\\n\\n**Source:** src_002 / S2 \\u2014 created (new). Source classification: derivative (FamilySearch index; original image not examined).\\n\\n**Assertions written: 2, both for record_role `head_of_household`**\\n- a_004: `name` \\u2014 \\\"Christena Clark\\\" (direct; indeterminate quality; informant unknown household member at household_member proximity). Extracted for q_001. Note: \\\"Christena\\\" is an indexer's spelling vari..."
+      }
     },
     {
       "tool": "mcp__genealogy__project_context",
       "args": {
         "projectPath": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"Where did Christiana Clark (n\\u00e9e Schreck, b. 1783), widow of William Clark of Coshocton County, Ohio, reside in the 1850 United States censu\\u2026\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"GP3R-215\\\",\\n      \\\"name\\\": \\\"Christina Schreck\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n    ..."
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "Fallsbury Township",
         "contextName": "Licking County, Ohio"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Fallsbury Township, Licking, Ohio, United States\\\",\\n      \\\"type\\\": \\\"Township\\\",\\n      \\\"dateRange\\\": \\\"+1825/\\\",\\n      \\\"latitude\\\": 40.2022,\\n      \\\"longitude\\\": -82.2306,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Fallsbury%20Township&focusedId=4813462\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Fallsbury_Township,_Licking_County,_Ohio\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3268,15 +3177,13 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[1]: log entry 'log_014' (record_search) returned results but staged no sidecar (results_ref is null) \\u2014 record_persona_id cannot be resolved and would be lost. Re-run the search WITH projectPath so the results are staged, then re-append.\\\",\\n    \\\"ops[2]: log entry 'log_014' (record_search) returned results but staged no sidecar (results_ref is null) \\u2014 record_persona_id cannot be resolved and would be lost. Re..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:Q2SS-JR34"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_102110701597\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:Q2SS-JR34\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"3b9cbfdc-f63e-47fb-850e-18dc6e05488c\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Schreck Clark\\\",\\n          \\\"given\\\": \\\"Christiana\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"e2a7de23-8935-4434-bdab-33051478b349\\\",\\n          \\\"type\\\": \\\"Burial\\\",\\n       ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3355,8 +3262,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[1]: log entry 'log_015' (record_search) returned results but staged no sidecar (results_ref is null) \\u2014 record_persona_id cannot be resolved and would be lost. Re-run the search WITH projectPath so the results are staged, then re-append.\\\",\\n    \\\"ops[2]: log entry 'log_015' (record_search) returned results but staged no sidecar (results_ref is null) \\u2014 record_persona_id cannot be resolved and would be lost. Re..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3448,8 +3354,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    }\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__extraction_append",
@@ -3526,32 +3431,28 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_005\\\"\\n    }\\n  ],\\n  \\\"sourceDescriptionId\\\": \\\"S2\\\",\\n  \\\"sourceReuse\\\": {\\n    \\\"action\\\": \\\"created\\\",\\n    \\\"srcId\\\": \\..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "--autonomous Project path: /tmp/e2e-clark-migration-s93om7qz. Subject: GP3R-215 (Christina Schreck Clark). Newly extracted assertions from log_014 (Find a Grave, ark:/61903/1:1:Q2SS-JR34) and log_015 (1840 census, ark:/61903/1:1:XHTC-MJ6): a_001 (birth 29 Jan 1783, derivative/secondary/direct), a_002 (death 1849, derivative/secondary/direct), a_003 (burial Coshocton Ohio, derivative/secondary/direct), a_004 (name Christena Clark, derivative/indeterminate/direct), a_005 (residence Fallsbury Twp Licking Ohio 1840, derivative/primary/direct). All assertions are about GP3R-215. Please link these assertions to person GP3R-215 via person_evidence entries in research.json. No identity conflict expected \u2014 the 1840 census head 'Christena Clark' in Fallsbury Twp is the same person as the tree's GP3R-215 (Christina Schreck/Clark) based on: (1) baptism record confirms birth 29 Jan/2 March 1783 Berks County PA; (2) 1820 and 1830 census in Coshocton; (3) tax records in Coshocton 1831-1838; (4) consistent geographic progression; (5) estate record confirms she died (C Clark decd). The Find a Grave (Christiana Schreck Clark, death 1849, Coshocton) matches precisely. Autonomous mode \u2014 do not pause."
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "--autonomous Project path: /tmp/e2e-clark-migration-s93om7qz. Subject: GP3R-215 (Christina Schreck / Christiana Clark n\u00e9e Schreck, b. 29 Jan 1783 Berks County PA). \n\nAssertions to link (all from previously extracted records, all about GP3R-215):\n- a_001: birth 29 Jan 1783 (from Find a Grave src_001, secondary/direct)\n- a_002: death year ~1849 (from Find a Grave src_001, secondary/direct)  \n- a_003: burial Coshocton County OH (from Find a Grave src_001, secondary/direct)\n- a_004: name \"Christena Clark\" (from 1840 census src_002, indeterminate/direct)\n- a_005: residence Fallsbury Twp, Licking County, OH 1840 (from 1840 census src_002, primary/direct)\n\nIdentity reasoning:\n- Find a Grave memorial \"Christiana Schreck Clark\" (ark:/61903/1:1:Q2SS-JR34): the compound surname \"Schreck Clark\" is unique, matches subject exactly; birth date 29 Jan 1783 matches exactly. STRONG match \u2192 confident.\n- 1840 census \"Christena Clark\" in Fallsbury Twp, Licking County, OH: name variant (Christena/Christiana/Christina well-documented for this subject); geographic progression consistent (Coshocton 1820-1838 \u2192 Licking by 1840); household composition plausible. MODERATE-STRONG match \u2192 probable.\n\nLink all five assertions to GP3R-215. No new persons need to be created."
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/research.json",
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_clark_migration\",\n4\t    \"objective\": \"Did Christiana Clark (nee Schreck, b.1783), widow of William Clark of Coshocton County, Ohio, migrate from Ohio to Wisconsin?\",\n5\t    \"subject_person_ids\": [\n6\t      \"GP3R-215\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-22\",\n10\t    \"updated\": \"2026-07-22\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n1..."
+      }
     },
     {
       "tool": "Read",
@@ -3559,8 +3460,7 @@
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/research.json",
         "limit": 200,
         "offset": 100
-      },
-      "response_summary": "100\t        {\n101\t          \"id\": \"pli_006\",\n102\t          \"sequence\": 6,\n103\t          \"record_type\": \"census\",\n104\t          \"jurisdiction\": \"United States\",\n105\t          \"date_range\": \"1850\",\n106\t          \"repository\": \"FamilySearch\",\n107\t          \"rationale\": \"FAN cluster search: locate the Clark children (Hugh, Samuel, Joseph, William W., James A., John Allen, Margaret, Mary J., Elizabeth, Nancy) in the 1850 federal census. If Christiana lived with an adult child \u2014 common for elderly ..."
+      }
     },
     {
       "tool": "Read",
@@ -3568,16 +3468,14 @@
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/research.json",
         "limit": 300,
         "offset": 300
-      },
-      "response_summary": "300\t      \"results_available\": 2,\n301\t      \"notes\": \"Direct search for Christiana Clark in Coshocton County, Ohio 1850. Both results are far too young (b.1836, b.1841) \u2014 not the subject (b.ca.1783). Subject either migrated before 1850, appears under a variant name, or is enumerated in a child's household under that child's surname. Negative result for own-household search confirmed.\"\n302\t    },\n303\t    {\n304\t      \"id\": \"log_009\",\n305\t      \"plan_item_id\": \"pli_006\",\n306\t      \"performed\": \"..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3640,23 +3538,20 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "--autonomous Project path: /tmp/e2e-clark-migration-s93om7qz. Question q_001: \"Where did Christiana Clark (n\u00e9e Schreck, b. 1783), widow of William Clark of Coshocton County, Ohio, reside in the 1850 United States census?\"\n\nAll plan items are completed or skipped (pl_001, pli_001\u2013pli_007). Evaluate whether the research meets GPS exhaustiveness for this question.\n\nEvidence gathered:\n1. Find a Grave Index (ark:/61903/1:1:Q2SS-JR34, derivative/secondary): \"Christiana Schreck Clark,\" born 29 Jan 1783, death 1849, burial Coshocton County, Ohio \u2192 she died before the 1850 census (a_001\u2013a_003, pe_001\u2013pe_003, confident)\n2. 1840 US Census (ark:/61903/1:1:XHTC-MJ6, derivative/primary-for-residence): \"Christena Clark\" head of household, Fallsbury Twp, Licking County, Ohio \u2192 last known alive census enumeration (a_004\u2013a_005, pe_004\u2013pe_005, confident)\n3. Estate land record (tree source 79HC-QMK): \"A Shrake, Administrator of C Clark, decd. Estate to Joseph Clark\" \u2014 independent corroboration of her death; estate settled to her son Joseph Clark who was in Monroe, Green County, Wisconsin in 1850\n4. Joseph Clark household (ark:/61903/1:1:M4DJ-878): read in full \u2014 Christiana NOT present in Joseph's Wisconsin household\n5. Negative results: exhaustive 1850 census search under Clark and Schreck variants, nationwide and Wisconsin-specific, all returned no match for Christiana b.ca.1783 (log_001\u2013log_013)\n6. Children's 1850 locations: Joseph Clark (WI), Samuel Clark (IA), William W Clark (OH), James A Clark (OH), John Allen Clark (IL) \u2014 she was not found in any of their households\n\nResearch gap acknowledged: No original death record (Coshocton County death register, probate filing, or gravestone) has been directly examined. Find a Grave is derivative. The estate record is a pre-existing tree source, not extracted through this project's search process."
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3698,31 +3593,27 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "proof-conclusion",
         "args": "--autonomous Project path: /tmp/e2e-clark-migration-s93om7qz. Question q_001: \"Where did Christiana Clark (n\u00e9e Schreck, b. 1783), widow of William Clark of Coshocton County, Ohio, reside in the 1850 United States census?\" Status: exhaustive_declared.\n\nWrite the proof summary for this question. Subject: GP3R-215.\n\nCentral conclusion: Christiana Clark (n\u00e9e Schreck, b. 29 Jan 1783, Berks County, PA) did NOT migrate to Wisconsin. She died in 1849 in Coshocton County, Ohio, before the June 1850 federal census was taken. She therefore does not appear in the 1850 census \u2014 not because of indexing failure or migration, but because she was deceased.\n\nEvidence on hand:\n1. Find a Grave Index (ark:/61903/1:1:Q2SS-JR34, src_001, derivative/secondary): \"Christiana Schreck Clark,\" born 29 Jan 1783, death 1849, burial Coshocton County, Ohio (a_001, a_002, a_003 \u2014 pe_001\u2013pe_003, confident)\n2. 1840 US Census (ark:/61903/1:1:XHTC-MJ6, src_002, derivative/primary-for-residence): \"Christena Clark,\" head of household, Fallsbury Twp, Licking County, Ohio (a_004, a_005 \u2014 pe_004\u2013pe_005, confident) \u2014 last known alive census record\n3. Estate land record (tree source 79HC-QMK): \"A Shrake, Administrator of C Clark, decd. Estate to Joseph Clark\" \u2014 original legal instrument, independent corroboration of her death\n4. Joseph Clark household (ark:/61903/1:1:M4DJ-878): read in full \u2014 Christiana NOT present\n5. Negative: exhaustive nationwide 1850 census search (13 log entries, all name variants) \u2014 no result\n\nProof tier: PROBABLE (derivative death source + original legal corroboration + exhaustive negative evidence; no original death record with primary information examined; Ohio pre-1856 county death registration non-existent)\n\nKey facts to encode in tree:\n- Death year 1849 confirmed (already in tree as fact from SSTQ-GW6 source)\n- Burial: West Carlisle Cemetery, Coshocton County, Ohio (already in tree)\n- She did NOT migrate to Wisconsin\n\nThe objective of the project is also answered by this conclusion: she did NOT migrate from Ohio to Wisconsin."
-      },
-      "response_summary": "Launching skill: proof-conclusion"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
-      },
-      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/tree.gedcomx.json",
         "limit": 80
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"GP3R-215\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Christina\",\n11\t          \"surname\": \"Schreck\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"d1738e1f-4a38-424f-96c7-cab0262660c4\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"29 January 1783\",\n19\t          \"standard_date\": \"29 Jan 1783\",\n20\t          \"place\": \"Pennsylvan..."
+      }
     },
     {
       "tool": "Read",
@@ -3730,24 +3621,21 @@
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/tree.gedcomx.json",
         "limit": 80,
         "offset": 80
-      },
-      "response_summary": "80\t          \"id\": \"0f35021c-740a-4798-b7da-4c121e17d0b6\",\n81\t          \"type\": \"Burial\",\n82\t          \"date\": \"1849\",\n83\t          \"standard_date\": \"1849\",\n84\t          \"place\": \"West Carlisle Cemetery, West Carlisle, Coshocton, Ohio, United States\",\n85\t          \"standard_place\": \"West Carlisle Cemetery, West Carlisle, Coshocton, Ohio, United States\"\n86\t        }\n87\t      ]\n88\t    },\n89\t    {\n90\t      \"id\": \"MR8C-B1W\",\n91\t      \"gender\": \"Male\",\n92\t      \"living\": false,\n93\t      \"names\": [..."
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "tree.gedcomx.json",
         "path": "/tmp/e2e-clark-migration-s93om7qz"
-      },
-      "response_summary": "tree.gedcomx.json"
+      }
     },
     {
       "tool": "Bash",
       "args": {
         "command": "python3 -c \"\nimport json\nwith open('/tmp/e2e-clark-migration-s93om7qz/tree.gedcomx.json') as f:\n    tree = json.load(f)\n# Show source descriptions\nprint('=== SOURCE DESCRIPTIONS ===')\nfor sd in tree.get('sourceDescriptions', []):\n    print(f\\\"  id={sd.get('id')}, title={sd.get('titles', [{}])[0].get('value','?')[:80]}\\\")\nprint()\n# Show GP3R-215 sources\nfor p in tree.get('persons', []):\n    if p['id'] == 'GP3R-215':\n        print('=== GP3R-215 sources ===')\n        for s in p.get('sources', []):\n            print(f\\\"  ref={s.get('description')}\\\")\n        print('=== GP3R-215 facts ===')\n        for f in p.get('facts', []):\n            print(f\\\"  id={f.get('id')}, type={f.get('type')}, date={f.get('date','')}, place={str(f.get('place',''))[:50]}\\\")\n        break\n\"\n",
         "description": "Inspect tree source descriptions and GP3R-215's sources and facts"
-      },
-      "response_summary": "Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypass th..."
+      }
     },
     {
       "tool": "Read",
@@ -3755,8 +3643,7 @@
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/tree.gedcomx.json",
         "limit": 100,
         "offset": 500
-      },
-      "response_summary": "500\t        {\n501\t          \"id\": \"N10\",\n502\t          \"given\": \"William\",\n503\t          \"surname\": \"Clark\"\n504\t        }\n505\t      ],\n506\t      \"facts\": [\n507\t        {\n508\t          \"id\": \"f383e570-f7dd-416a-8bff-6649fecf4bc4\",\n509\t          \"type\": \"Birth\",\n510\t          \"date\": \"24 February 1825\",\n511\t          \"standard_date\": \"24 Feb 1825\",\n512\t          \"place\": \"Pike Township, Coshocton, Ohio, United States\",\n513\t          \"standard_place\": \"Pike Township, Coshocton, Ohio, United Stat..."
+      }
     },
     {
       "tool": "Read",
@@ -3764,8 +3651,7 @@
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/tree.gedcomx.json",
         "limit": 60,
         "offset": 700
-      },
-      "response_summary": "700\t          \"type\": \"Residence\",\n701\t          \"date\": \"1860\",\n702\t          \"standard_date\": \"1860\",\n703\t          \"place\": \"Pike Township, Coshocton, Ohio, United States\",\n704\t          \"standard_place\": \"Pike Township, Coshocton, Ohio, United States\"\n705\t        },\n706\t        {\n707\t          \"id\": \"f0667c24-a346-4d2c-8565-4a3905005b2b\",\n708\t          \"type\": \"Residence\",\n709\t          \"date\": \"1870\",\n710\t          \"standard_date\": \"1870\",\n711\t          \"place\": \"Pike Township, Coshocton..."
+      }
     },
     {
       "tool": "Grep",
@@ -3774,8 +3660,7 @@
         "path": "/tmp/e2e-clark-migration-s93om7qz/tree.gedcomx.json",
         "output_mode": "content",
         "context": 2
-      },
-      "response_summary": "1302-    },\n1303-    {\n1304:      \"id\": \"S1\",\n1305-      \"title\": \"Christiana Schreck Clark, 'Find a Grave Index'\",\n1306-      \"url\": \"https://www.familysearch.org/ark:/61903/1:1:Q2SS-JR34\"\n1307-    },\n1308-    {\n1309:      \"id\": \"S2\",\n1310-      \"title\": \"Christena Clark, 'United States, Census, 1840'\",\n1311-      \"url\": \"https://www.familysearch.org/ark:/61903/1:1:XHTC-MJ6\""
+      }
     },
     {
       "tool": "Grep",
@@ -3784,16 +3669,14 @@
         "path": "/tmp/e2e-clark-migration-s93om7qz/tree.gedcomx.json",
         "output_mode": "content",
         "context": 1
-      },
-      "response_summary": "3-    {\n4:      \"id\": \"GP3R-215\",\n5-      \"gender\": \"Female\",\n--\n1032-      \"person1\": \"KGCJ-XPW\",\n1033:      \"person2\": \"GP3R-215\",\n1034-      \"facts\": [\n--\n1052-      \"parent\": \"MR8C-B1W\",\n1053:      \"child\": \"GP3R-215\",\n1054-      \"subtype\": \"Biological\"\n--\n1059-      \"parent\": \"MR8C-B1J\",\n1060:      \"child\": \"GP3R-215\",\n1061-      \"subtype\": \"Biological\"\n--\n1071-      \"type\": \"ParentChild\",\n1072:      \"parent\": \"GP3R-215\",\n1073-      \"child\": \"GDSY-XBT\"\n--\n1084-      \"type\": \"ParentChild\"..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__tree_correct",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3816,8 +3699,7 @@
           "exhaustive_search_summary": "Thirteen FamilySearch 1850 U.S. Federal Census searches covered: nationwide search under Clark and Schreck/Shreck variants with birth-year filter; Wisconsin-specific searches under Clark variants; Coshocton County, Ohio direct search; and FAN-cluster searches for all known children (Joseph, Samuel, Hugh, James, William, John Allen Clark) in Wisconsin, Iowa, Illinois, and Ohio. Joseph Clark's Monroe, Green County, Wisconsin household (ark:/61903/1:1:M4DJ-878) was read in full. The 1840 U.S. census was searched and produced the subject's last confirmed living enumeration (Fallsbury Twp, Licking County, Ohio). Find a Grave was queried for death/burial (derivative source, death year 1849). An estate land record (tree source 79HC-QMK) independently corroborates death. Ohio pre-1856 county death records (not systematically created; genuinely inaccessible for an 1849 death), Coshocton County probate records (browse-only on FamilySearch; skipped as plan items were superseded by death finding), and Wisconsin 1855 state census (irrelevant given 1849 death) were not individually searched. The main outstanding source for an original primary-information death record is Coshocton County probate/estate filings.",
           "narrative_markdown": "## Proof Summary: 1850 Census Residence and Migration of Christiana Clark (n\u00e9e Schreck), Coshocton County, Ohio\n\n**Question:** Where did Christiana Clark (n\u00e9e Schreck, born 29 January 1783, Berks County, Pennsylvania), widow of William Clark of Coshocton County, Ohio, reside in the 1850 United States census?\n\n**Conclusion (Probable):** The preponderance of evidence strongly suggests that Christiana Clark did not appear in the 1850 United States census because she had died in 1849, before the census was taken. She did not migrate from Ohio to Wisconsin. Two partially independent sources \u2014 a derivative memorial index and an original legal instrument \u2014 establish her death, and an exhaustive systematic search of the 1850 census under all name variants in all jurisdictions produced no surviving enumeration.\n\n---\n\n### Evidence Assessed\n\n**1. Find a Grave Index \u2014 derivative, secondary information, direct evidence.**\n\nA FamilySearch-indexed Find a Grave memorial (ark:/61903/1:1:Q2SS-JR34, memorial no. 154768466) records the deceased as \u201cChristiana Schreck Clark,\u201d born 29 January 1783, death year 1849, burial at Coshocton County, Ohio.\u00b9 The compound double surname \u201cSchreck Clark\u201d \u2014 maiden name followed by married name \u2014 uniquely identifies the research subject. The recorded birth date (29 January 1783) matches the subject\u2019s baptismal record (Berks County, Pennsylvania, 2 March 1783) exactly. **Source classification:** derivative / secondary information (retrospectively compiled by an unknown contributor whose source materials are unidentified) / direct evidence of death year and burial location. The basis for the death year 1849 in the original memorial is unknown; corroboration from an original record is needed to advance this fact beyond probable.\n\n**2. 1840 United States Federal Census \u2014 derivative, primary information, direct evidence.**\n\nThe 1840 federal census (ark:/61903/1:1:XHTC-MJ6) records \u201cChristena Clark\u201d as head of household in Fallsbury Township, Licking County, Ohio.\u00b2 \u201cChristena\u201d is an orthographic variant of \u201cChristiana\u201d and \u201cChristina,\u201d documented for this subject. As a widow, Christiana headed her own household by 1840. Licking County adjoins Coshocton County, consistent with her documented 1820 and 1830 residences in Pike Township, Coshocton County. This entry is the last known census enumeration of the subject while alive, placing her in Ohio nine years before her recorded death. **Source classification:** derivative (a FamilySearch-indexed transcription of NARA microfilm M704, roll 662) / primary information (enumerator visited and recorded the household) / direct evidence of 1840 Ohio residence.\n\n**3. Estate Land Record \u2014 original legal instrument, primary information, indirect evidence.**\n\nA land transfer document (FamilySearch tree source ark:/61903/3:2:79HC-QMK) reads: \u201cA Shrake, Administrator of C Clark, decd. Estate to Joseph Clark.\u201d This original county-recorded legal instrument independently establishes that Christiana Clark was deceased before the estate was settled. The beneficiary was Joseph Clark, Christiana\u2019s son, then residing in Monroe Township, Green County, Wisconsin in 1850. **Source classification:** original / primary information (the county recorder\u2019s legal act is the record itself) / indirect evidence of death (estate administration legally presupposes the decedent\u2019s prior death). This source is independent of the Find a Grave entry, with no shared derivation chain.\n\n**4. Joseph Clark Household, 1850 \u2014 negative evidence.**\n\nThe 1850 federal census household of Joseph Clark in Monroe Township, Green County, Wisconsin (ark:/61903/1:1:M4DJ-878) was read in full. Christiana does not appear. Joseph was the son most likely to host his widowed mother if she had migrated west \u2014 the estate transferred property specifically to him. Her absence is negative evidence against migration to Wisconsin.\n\n**5. Systematic Negative 1850 Census Search.**\n\nThirteen searches of the FamilySearch 1850 United States Federal Census (log_001 through log_013) covered: (a) nationwide search under Clark and Schreck variants, birth year approximately 1783; (b) Wisconsin-specific search; (c) Coshocton County, Ohio direct search; (d) FAN-cluster searches for all known children in Wisconsin, Iowa, Illinois, and Ohio. No match for a woman born approximately 1783, identified as Christiana/Christena Clark, was found anywhere in the 1850 census.\n\n---\n\n### Alternative Candidate Evaluated and Rejected\n\nOne candidate emerged: \u201cChristena Clark,\u201d female, born about 1787 in Virginia, head of household in Cambridge, Guernsey County, Ohio (ark:/61903/1:1:MXS1-6XW), with co-residents John Clark (born 1822, Ohio) and Sanfrancisco Clark (born 1849, Ohio). This candidate is rejected on three independent grounds: (1) the recorded birthplace \u201cVirginia\u201d directly conflicts with the research subject\u2019s documented Berks County, Pennsylvania birth \u2014 beyond ordinary census age-rounding error; (2) the co-resident \u201cJohn Clark, born 1822\u201d does not correspond to any known child \u2014 the subject\u2019s son John Allen Clark was born 1817 and was residing in Jo Daviess County, Illinois in 1850; and (3) the estate land record independently corroborates the subject\u2019s death prior to 1850. The Guernsey County \u201cChristena Clark\u201d is a different individual.\n\n---\n\n### Research Limitations\n\nNo original record with primary information specifically about Christiana Clark\u2019s death has been examined. Ohio did not have statutory county death registration before 1856; a 1849 Coshocton County death record is genuinely inaccessible rather than merely unsearched. The death year accordingly rests on Find a Grave (derivative/secondary) and the estate land record (indirect evidence). To advance the conclusion to proved, future research could include: examination of the original Find a Grave memorial (GRid 154768466) to identify the contributor\u2019s source(s); or a search of surviving Coshocton County probate records for an estate administration filing, which would constitute an original record corroborating death and potentially dating it.\n\n---\n\n### Conclusion\n\nThe evidence strongly suggests that **Christiana Clark (n\u00e9e Schreck, born 29 January 1783, Berks County, Pennsylvania), widow of William Clark of Coshocton County, Ohio, did not reside in the 1850 United States census because she had died in 1849, prior to the census enumeration date of 1 June 1850.** She did not migrate from Ohio to Wisconsin. This conclusion is supported at the **probable** tier: two partially independent sources (Find a Grave, derivative/secondary; an estate land record, original/primary-indirect) agree she was deceased, and an exhaustive negative search of the 1850 census under all name variants and across all children\u2019s households in Wisconsin, Iowa, Illinois, and Ohio found no trace of her. One alternative candidate was evaluated and rejected on three independent grounds. A search of Coshocton County probate records could advance the tier.\n\n\u00b9 \u201cFind a Grave Index,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q2SS-JR34 : accessed 23 July 2026), entry for Christiana Schreck Clark; citing Find a Grave memorial 154768466.\n\u00b2 \u201cUnited States, Census, 1840,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XHTC-MJ6 : accessed 23 July 2026), entry for Christena Clark, 1840; citing NARA microfilm publication M704, roll 662."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3838,8 +3720,7 @@
             }
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_fact\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"fact\\\": \\\"F1\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_correct",
@@ -3850,8 +3731,7 @@
         "source": {
           "citation": "\"Find a Grave Index,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q2SS-JR34 : accessed 23 July 2026), entry for Christiana Schreck Clark; citing Find a Grave memorial 154768466."
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"update_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3860,8 +3740,7 @@
         "section": "project",
         "op": "update",
         "fields": {}
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Agent",
@@ -3870,16 +3749,14 @@
         "subagent_type": "gps-mentor",
         "prompt": "Perform an advisory GPS review of proof summary ps_001 in the research project at /tmp/e2e-clark-migration-s93om7qz.\n\nProject question q_001: \"Where did Christiana Clark (n\u00e9e Schreck, b. 1783), widow of William Clark of Coshocton County, Ohio, reside in the 1850 United States census?\"\n\nProof summary ps_001 was just written: tier = probable, vehicle = summary.\n\nConclusion: Christiana Clark did not appear in the 1850 census because she died in 1849 before the enumeration. She did not migrate to Wisconsin.\n\nKey evidence:\n- Find a Grave Index (ark:/61903/1:1:Q2SS-JR34, derivative/secondary): \"Christiana Schreck Clark,\" death 1849, burial Coshocton County, Ohio (a_001\u2013a_003)\n- 1840 US Census (ark:/61903/1:1:XHTC-MJ6, derivative/primary-for-residence): \"Christena Clark,\" Fallsbury Twp, Licking County, Ohio (a_004\u2013a_005)\n- Estate land record (tree source 79HC-QMK): \"A Shrake, Administrator of C Clark, decd. Estate to Joseph Clark\" (original, independent corroboration of death)\n- Exhaustive negative 1850 census search (13 log entries, all variants, nationwide + Wisconsin-specific + FAN cluster)\n- Joseph Clark Wisconsin household read: Christiana not present\n\nPlease read ps_001 and the research.json to evaluate:\n1. Is the tier (probable) correctly calibrated?\n2. Does the narrative meet GPS Component 5 (soundly reasoned, coherently written)?\n3. Are there any GPS gaps the researcher should address?\n4. What would advance the tier toward proved?\n\nThis is advisory only \u2014 do not modify any files. Append your evaluation to research.json evaluations[] if applicable.",
         "run_in_background": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"Async agent launched successfully.\\nagentId: aaf233ddae7546bc3 (internal ID - do not mention to user. Use SendMessage with to: 'aaf233ddae7546bc3' to continue this agent.)\\nThe agent is working in the background. You will be notified automatically when it completes.\\nDo not duplicate this agent's work \\u2014 avoid working with the same files or topics it is using. Work on non-overlapping tasks, or briefly tell the user what you launched and end your response.\\noutpu..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection",
         "args": "--autonomous Project path: /tmp/e2e-clark-migration-s93om7qz.\n\nProof summary ps_001 has just been written at tier=probable for q_001. The proof concludes: Christiana Clark died in 1849 in Ohio and did not migrate to Wisconsin. The project objective (\"Did Christiana Clark migrate from Ohio to Wisconsin?\") is now answered: NO, she did not \u2014 she died before the 1850 census.\n\nPlease:\n1. Mark q_001 as resolved (status: resolved, resolution_assertion_ids: [a_002, a_003])\n2. Evaluate whether the objective is fully answered at a defensible tier (probable)\n3. If the objective is answered, set project.status = \"completed\"\n\nNo new questions should be created \u2014 the objective is fully answered by ps_001 at probable tier. Do NOT spawn corroboration questions (the tier-upgrade guidance in question-selection prohibits spawning a new question just to move from probable to proved)."
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
@@ -3887,8 +3764,7 @@
         "file_path": "/tmp/e2e-clark-migration-s93om7qz/research.json",
         "limit": 50,
         "offset": 1
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_clark_migration\",\n4\t    \"objective\": \"Did Christiana Clark (nee Schreck, b.1783), widow of William Clark of Coshocton County, Ohio, migrate from Ohio to Wisconsin?\",\n5\t    \"subject_person_ids\": [\n6\t      \"GP3R-215\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-22\",\n10\t    \"updated\": \"2026-07-23\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n1..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3916,8 +3792,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     }
   ],
   "error": null,
@@ -4129,5 +4004,6 @@
       ],
       "transcript": "agent-aaf233ddae7546bc3.jsonl"
     }
-  ]
+  ],
+  "captures_stripped": true
 }

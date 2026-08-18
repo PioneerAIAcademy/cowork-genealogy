@@ -1,0 +1,358 @@
+{
+  "persons": [
+    {
+      "id": "P873-TWP",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Roz\u00e1l",
+          "surname": "S\u00e1rm\u00e1n"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0e92e801-02a2-4a75-94b9-d8976af1d996",
+          "type": "Birth",
+          "date": "1872. szeptember 27.",
+          "standard_date": "27 1872",
+          "place": "Livada, Arad, Rom\u00e1nia",
+          "standard_place": "Livada, Arad, Romania"
+        },
+        {
+          "id": "c804071e-3ae0-4f5a-8db0-be54253f51dd",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PZ4D-4KF",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Istv\u00e1n",
+          "surname": "Juh\u00e1sz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "26101c6e-c112-46f0-b13d-5804903e95a0",
+          "type": "Birth",
+          "date": "1868. augusztus 14.",
+          "standard_date": "14 1868",
+          "place": "Toront\u00e1l, Magyarorsz\u00e1g Limara",
+          "standard_place": "Toront\u00e1l, Hungary"
+        },
+        {
+          "id": "f8123867-9526-4108-ac22-7f0aafc5096b",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PZH3-WD7",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Istv\u00e1n",
+          "surname": "Juh\u00e1sz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "11aaa817-b474-4615-985a-b0ac06bf4823",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P87Q-2VC",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Katalin",
+          "surname": "Majt\u00e9nyi"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ad67982e-58a2-4561-bc4b-6f44c19037cf",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GG3F-1XM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "\u00c1gnes",
+          "surname": "Juh\u00e1sz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6fefaab1-c44b-42eb-8a8e-dea07f9c5e72",
+          "type": "Birth",
+          "date": "1894. \u00e1prilis 13.",
+          "standard_date": "13 1894",
+          "place": "Zim\u00e1ndudvar"
+        },
+        {
+          "id": "fd6a38d6-d2b1-4e55-8899-4e2a88a50193",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PZ4D-2LS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Veronika",
+          "surname": "Juh\u00e1sz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2daadfc2-0214-4fa3-a914-06a03f4218c0",
+          "type": "Death"
+        },
+        {
+          "id": "3151750b-5b32-43e5-8009-3848a964ee4a",
+          "type": "LifeSketch",
+          "value": "Vera n\u00e9nihez ker\u00fclt csabai tata fiatal kor\u00e1ban, ott lakott, T\u00e1ncsics u. 41. (kb)laktak."
+        }
+      ]
+    },
+    {
+      "id": "PZ4D-W99",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Antal",
+          "surname": "Juh\u00e1sz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "36e6515c-c3d4-49a0-ba65-2557e6de176a",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PZ4D-81P",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "J\u00e1nos",
+          "surname": "Juh\u00e1sz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "12e4feec-f67a-4843-993f-26a4d5c67e36",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "P87Q-VF6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "J\u00f3zsef",
+          "surname": "S\u00e1rm\u00e1n"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3ce33561-bcab-448e-bc19-9238b949d349",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N10",
+          "type": "BirthName",
+          "given": "Viktoria",
+          "surname": "Juhasz",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Christening",
+          "date": "1892",
+          "place": "Kiszombor, Toront\u00e1l, Hungary",
+          "standard_place": "Kiszombor, Toront\u00e1l, Hungary",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N11",
+          "type": "BirthName",
+          "given": "Roz\u00e1lia",
+          "surname": "Juh\u00e1sz",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Christening",
+          "date": "1890",
+          "place": "Kiszombor, Toront\u00e1l, Hungary",
+          "standard_place": "Kiszombor, Toront\u00e1l, Hungary",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "PZ4D-4KF",
+      "person2": "P873-TWP"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "P87Q-VF6",
+      "person2": "P87Q-2VC"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "P87Q-VF6",
+      "child": "P873-TWP"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "P87Q-2VC",
+      "child": "P873-TWP"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "PZ4D-4KF",
+      "child": "GG3F-1XM"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "P873-TWP",
+      "child": "GG3F-1XM"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "PZ4D-4KF",
+      "child": "PZ4D-W99"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "P873-TWP",
+      "child": "PZ4D-W99"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "PZ4D-4KF",
+      "child": "PZH3-WD7"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "P873-TWP",
+      "child": "PZH3-WD7"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "PZ4D-4KF",
+      "child": "PZ4D-81P"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "P873-TWP",
+      "child": "PZ4D-81P"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "PZ4D-4KF",
+      "child": "PZ4D-2LS"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "P873-TWP",
+      "child": "PZ4D-2LS"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "Entry for Juhasz Viktoria, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XZ6D-FZR"
+    },
+    {
+      "id": "S2",
+      "title": "Entry for Juh\u00e1sz Roz\u00e1lia, \"Hungary, Catholic Church Records, 1636-1895\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XZ6D-HRF"
+    }
+  ]
+}

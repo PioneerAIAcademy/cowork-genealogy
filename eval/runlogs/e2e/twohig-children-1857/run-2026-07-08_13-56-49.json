@@ -1945,58 +1945,50 @@
       "args": {
         "query": "select:TodoWrite",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"TodoWrite\"}]"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "/tmp/e2e-twohig-children-1857-41ugtqq3/**/*.json"
-      },
-      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json\ntree.gedcomx.json"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-twohig-children-1857-41ugtqq3/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_twohig_children_1857\",\n4\t    \"objective\": \"Did Stephen Joseph Twohig have any children beyond the two already linked in the FamilySearch tree (Genevieve \\\"Jennie\\\" Ballard and Robert P. Twohig)?\",\n5\t    \"subject_person_ids\": [\"GQV2-NKK\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-07-07T00:00:00Z\",\n8\t    \"updated\": \"2026-07-07T00:00:00Z\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    ..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-twohig-children-1857-41ugtqq3/tree.gedcomx.json"
-      },
-      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"GQV2-NKK\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Stephen Joseph\",\n10\t          \"surname\": \"Twohig\",\n11\t          \"id\": \"GQV2-NKK-name-1\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"02918dd4-3ad9-4923-a783-832c2ea4c5f6\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"08 Feb 1857\",\n19\t          \"standard_date\": \"8 Feb 1857\",\n20\t          \"place\": \"..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "question-selection"
-      },
-      "response_summary": "Launching skill: question-selection"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-twohig-children-1857-41ugtqq3/.claude/skills/question-selection/references/question-formulation.md"
-      },
-      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-twohig-children-1857-41ugtqq3/.claude/skills/question-selection/references/pedigree-analysis.md"
-      },
-      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2021,31 +2013,27 @@
             "stop_criteria": null
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-plan"
-      },
-      "response_summary": "Launching skill: research-plan"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__collections_search,mcp__genealogy__place_search",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__place_search",
       "args": {
         "placeName": "The Bronx",
         "contextName": "New York"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"The, Danan\\u00e9, Tonkpi, Montagnes, C\\u00f4te d'Ivoire\\\",\\n      \\\"type\\\": \\\"Village\\\",\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=The&focusedId=12340684\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Th\\u00e9, Ni\\u00e8vre, France\\\",\\n      \\\"type\\\": \\\"Populated Place\\\",\\n      \\\"latitude\\\": 46.91449,\\n      \\\"longitude\\\": 3.09194,\\n      \\\"familysearchUrl\\\": \\\"https://www..."
+      }
     },
     {
       "tool": "mcp__genealogy__collections_search",
@@ -2053,15 +2041,13 @@
         "standardPlace": "New York, United States",
         "startYear": 1880,
         "endYear": 1910
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"New York, United States\\\",\\n    \\\"startYear\\\": 1880,\\n    \\\"endYear\\\": 1910\\n  },\\n  \\\"scope\\\": \\\"New York\\\",\\n  \\\"totalForPlace\\\": 65,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"4460198\\\",\\n      \\\"title\\\": \\\"New York, Birth Indexes outside of New York City, 1881-1942\\\",\\n      \\\"dateRange\\\": \\\"1881-1942\\\",\\n      \\\"recordCount\\\": 59306,\\n      \\\"personCount\\\": 59306,\\n      \\\"imageCount\\\": 78929,\\n      \\\"url\\\": \\\"https:/..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-twohig-children-1857-41ugtqq3/.claude/skills/research-plan/references/record-type-guide.md"
-      },
-      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2153,24 +2139,21 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "search-records",
         "args": "Execute pli_001: 1900 U.S. federal census for Stephen Joseph Twohig, Bronx/New York area. Subject born 8 Feb 1857. Known children Jennie (~1886) and Robert (~1889). Check variant spellings: Twohig, Twohy, Twoig, Toohig, Toohey."
-      },
-      "response_summary": "Launching skill: search-records"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__same_person,mcp__genealogy__source_attachments,mcp__genealogy__record_read,mcp__genealogy__research_log_append",
         "max_results": 5
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__source_attachments\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -2184,8 +2167,7 @@
         "birthYearFrom": 1852,
         "birthYearTo": 1862,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohig\\\",\\n    \\\"givenName\\\": \\\"Stephen\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1900,\\n    \\\"residenceYearTo\\\": 1900,\\n    \\\"residencePlace\\\": \\\"New York\\\",\\n    \\\"birthYearFrom\\\": 1852,\\n    \\\"birthYearTo\\\": 1862,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 2,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -2290,8 +2272,7 @@
           ]
         },
         "primaryId2": "GQV2-NKK"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"matched\\\": true,\\n  \\\"score\\\": 0.8553296,\\n  \\\"queryArk\\\": \\\"ark:/61903/1:1:MS2W-GPL\\\",\\n  \\\"candidateArk\\\": \\\"ark:/61903/4:1:MMMM-MMM\\\",\\n  \\\"apiTitle\\\": \\\"Matches for ark:/61903/1:1:MS2W-GPL\\\",\\n  \\\"updated\\\": \\\"2026-07-08T13:00:53.681Z\\\",\\n  \\\"confidence\\\": 4\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__source_attachments",
@@ -2303,8 +2284,7 @@
           "ark:/61903/1:1:MS2W-GP5",
           "ark:/61903/1:1:62YQ-ZQP5"
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"attachments\\\": {\\n    \\\"ark:/61903/1:1:MS2W-GPL\\\": [\\n      {\\n        \\\"personId\\\": \\\"KCF4-NQ3\\\",\\n        \\\"tags\\\": [\\n          \\\"Gender\\\",\\n          \\\"Birth\\\",\\n          \\\"Name\\\"\\n        ]\\n      }\\n    ],\\n    \\\"ark:/61903/1:1:MS2W-GPG\\\": [\\n      {\\n        \\\"personId\\\": \\\"K41T-SRF\\\",\\n        \\\"tags\\\": [\\n          \\\"Gender\\\",\\n          \\\"Birth\\\",\\n          \\\"Name\\\"\\n        ]\\n      }\\n    ],\\n    \\\"ark:/61903/1:1:MS2W-GPP\\\": [\\n      {\\n        ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -2328,8 +2308,7 @@
         "resultsAvailable": 2,
         "stagedResultsRef": "results/.staging/ce32e670-daf5-4bbe-8c83-756f5080367c.json",
         "notes": "Strong match (score 0.855): 'Household of Steven Twohig, 1900' (ark:/61903/1:1:MS2W-GPL), Bronx, NY. Household shows 3 children: Janette Twohig (b. Aug 1884, F), Florence Twohig (b. Jun 1886, F), Robert Twohig (b. Mar 1889, M), plus an unattached unknown 5th person (ark:/61903/1:1:62YQ-ZQP5). Tree currently links only 2 children (Genevieve/Jennie b.~1886, Robert b.~1889). Janette (b.1884) appears to be a previously unrecognized child. Stephen listed as widowed in 1900. Marriage fact on record dated 1884. Record attached in FS tree to KCF4-NQ3 (not GQV2-NKK) \u2014 possible duplicate tree profile. 2nd result was a city directory (1899-1900), not a census."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:01:25.871Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 2,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -2342,31 +2321,27 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:MS2W-GPL"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_64982511\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MS2W-GPL\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"e0bdbc4c-593c-4e4c-bd99-fa53293fc849\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Steven\\\",\\n          \\\"surname\\\": \\\"Twohig\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"80a21315-8c2d-40f2-a728-8e16ad32db75\\\",\\n          \\\"type\\\": \\\"Censu..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "record-extraction",
         "args": "Extract assertions from the 1900 U.S. Census record for the Twohig household. Record ID: ark:/61903/1:1:MS2W-GPL. Collection: \"United States, Census, 1900\" (collectionId 1325221). Citation: \"United States, Census, 1900\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL : Fri Apr 25 18:59:17 UTC 2025), Entry for Steven Twohig and Janette Twohig, 1900.\n\nHousehold (all in The Bronx, New York City, NY):\n1. Steven Twohig (head) \u2014 Male, born Feb 1856, NY, widowed, white. Record persona ark:/61903/1:1:MS2W-GPL. Tree person GQV2-NKK.\n2. Janette Twohig (daughter) \u2014 Female, born Aug 1884, NY, single, white. Record persona ark:/61903/1:1:MS2W-GPG. NOT currently in our tree.\n3. Florence Twohig (daughter) \u2014 Female, born Jun 1886, NY, single, white. Record persona ark:/61903/1:1:MS2W-GPP. NOT currently in our tree (tree has Genevieve \"Jennie\" Ballard b.1886 as a child but attached to different FS profile MYGV-NVS).\n4. Robert Twohig (son) \u2014 Male, born Mar 1889, NY, single, white. Record persona ark:/61903/1:1:MS2W-GP5. Tree person GT51-LBD (but attached to different FS profile MB45-TP7).\n5. Unnamed couple entity \u2014 marriage 1884 (represents Stephen's deceased wife; no name/dates in record; listed as widower).\n\nRecord also contains: Couple relationship between Steven and unnamed entity, dated marriage 1884. Three ParentChild relationships: Steven \u2192 Janette, Steven \u2192 Florence, Steven \u2192 Robert.\n\nResearch objective: determine whether Stephen had children beyond Genevieve \"Jennie\" Ballard and Robert P. Twohig. This record is the primary evidence \u2014 extract all household-member assertions including the parent-child relationships."
-      },
-      "response_summary": "Launching skill: record-extraction"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -2409,8 +2384,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_source\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"source\\\": \\\"S1\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I1\\\",\\n        \\\"names\\\": [\\n          \\\"N1\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I2\\\",\\n        \\\"names\\\": [\\n          \\\"N2\\\"\\n        ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3008,8 +2982,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -3033,8 +3006,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R1\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R2\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3047,16 +3019,14 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "assertion-classification",
         "args": "Classify all assertions a_001 through a_024 from src_001 (1900 U.S. Census, Twohig household). Focus especially on the children's relationship assertions (a_011, a_017, a_023) and birth assertions, which are central to q_001."
-      },
-      "response_summary": "Launching skill: assertion-classification"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3151,78 +3121,68 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_008\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_009\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_011\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_014\\\"\\n    },\\n..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "check-warnings",
         "args": "Check persons GQV2-NKK, I1, I2, GT51-LBD after adding Janette (I1, b.Aug 1884) and Florence (I2, b.Jun 1886) as new children of Stephen Twohig (GQV2-NKK, b.8 Feb 1857)."
-      },
-      "response_summary": "Launching skill: check-warnings"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings,mcp__genealogy__person_quality",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_quality\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3",
         "personId": "GQV2-NKK"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3",
         "personId": "I1"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3",
         "personId": "I2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3",
         "personId": "GT51-LBD"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_quality",
       "args": {
         "personId": "GQV2-NKK"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"personId\\\": \\\"GQV2-NKK\\\",\\n  \\\"segment\\\": \\\"United States 1850 - 1925\\\",\\n  \\\"overallScore\\\": 0.9477586788001348,\\n  \\\"issueCount\\\": 5,\\n  \\\"categories\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COMPLETENESS\\\",\\n      \\\"count\\\": 1,\\n      \\\"score\\\": 0.9130434782608695\\n    },\\n    {\\n      \\\"scoreType\\\": \\\"VERIFIABILITY\\\",\\n      \\\"count\\\": 1,\\n      \\\"score\\\": 1\\n    },\\n    {\\n      \\\"scoreType\\\": \\\"CONSISTENCY\\\",\\n      \\\"count\\\": 3,\\n      \\\"score\\\": 0.930232558..."
+      }
     },
     {
       "tool": "mcp__genealogy__person_quality",
       "args": {
         "personId": "GT51-LBD"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"personId\\\": \\\"GT51-LBD\\\",\\n  \\\"segment\\\": \\\"United States 1850 - 1925\\\",\\n  \\\"overallScore\\\": 0.7619047619047619,\\n  \\\"issueCount\\\": 5,\\n  \\\"categories\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COMPLETENESS\\\",\\n      \\\"count\\\": 2,\\n      \\\"score\\\": 0.7142857142857143\\n    },\\n    {\\n      \\\"scoreType\\\": \\\"VERIFIABILITY\\\",\\n      \\\"count\\\": 2,\\n      \\\"score\\\": 0.5714285714285714\\n    },\\n    {\\n      \\\"scoreType\\\": \\\"CONSISTENCY\\\",\\n      \\\"count\\\": 0,\\n      \\\"sco..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "person-evidence",
         "args": "Link all assertions from the 1900 census (a_001\u2013a_024, src_001) to their respective tree persons. Head of household assertions (a_001\u2013a_006, record_persona_id p_64982511) \u2192 GQV2-NKK (Stephen). Child_1 assertions (a_007\u2013a_012, p_64982512) \u2192 I1 (Janette Twohig, new stub). Child_2 assertions (a_013\u2013a_018, p_64982513) \u2192 I2 (Florence Twohig, new stub) \u2014 note identity uncertainty with GJGC-RJZ (Genevieve Jennie Ballard, b.1886). Child_3 assertions (a_019\u2013a_024, p_64982514) \u2192 GT51-LBD (Robert P. Twohig)."
-      },
-      "response_summary": "Launching skill: person-evidence"
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -3543,8 +3503,7 @@
         },
         "primaryId2": "GQV2-NKK",
         "matchRelatives": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"matchRelatives\\\": true,\\n  \\\"matches\\\": [\\n    {\\n      \\\"role\\\": \\\"child\\\",\\n      \\\"targetId\\\": \\\"p_64982514\\\",\\n      \\\"candidateId\\\": \\\"GT51-LBD\\\",\\n      \\\"score\\\": 0.99506277,\\n      \\\"preScore\\\": 0.92,\\n      \\\"confidence\\\": 5\\n    },\\n    {\\n      \\\"role\\\": \\\"child\\\",\\n      \\\"targetId\\\": \\\"p_64982512\\\",\\n      \\\"candidateId\\\": \\\"I1\\\",\\n      \\\"score\\\": 0.99506277,\\n      \\\"preScore\\\": 0.8,\\n      \\\"confidence\\\": 5\\n    },\\n    {\\n      \\\"role\\\": \\\"ch..."
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -3620,8 +3579,7 @@
           "relationships": []
         },
         "primaryId2": "GJGC-RJZ"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"matched\\\": false,\\n  \\\"score\\\": 0.0031873006,\\n  \\\"queryArk\\\": \\\"ark:/61903/1:1:MS2W-GPP\\\",\\n  \\\"candidateArk\\\": \\\"ark:/61903/4:1:MMMM-MMM\\\",\\n  \\\"apiTitle\\\": \\\"Matches for ark:/61903/1:1:MS2W-GPP\\\",\\n  \\\"updated\\\": \\\"2026-07-08T13:14:21.520Z\\\"\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3926,45 +3884,39 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-twohig-children-1857-41ugtqq3/research.json"
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_twohig_children_1857\",\n4\t    \"objective\": \"Did Stephen Joseph Twohig have any children beyond the two already linked in the FamilySearch tree (Genevieve \\\"Jennie\\\" Ballard and Robert P. Twohig)?\",\n5\t    \"subject_person_ids\": [\n6\t      \"GQV2-NKK\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-07T00:00:00Z\",\n10\t    \"updated\": \"2026-07-07T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscript..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-twohig-children-1857-41ugtqq3/.claude/skills/conflict-resolution"
-      },
-      "response_summary": "EISDIR: illegal operation on a directory, read '/tmp/e2e-twohig-children-1857-41ugtqq3/.claude/skills/conflict-resolution'"
+      }
     },
     {
       "tool": "Glob",
       "args": {
         "pattern": "**/*",
         "path": "/tmp/e2e-twohig-children-1857-41ugtqq3/.claude/skills/conflict-resolution"
-      },
-      "response_summary": ".claude/skills/conflict-resolution/references/historical-contradictions.md\n.claude/skills/conflict-resolution/references/resolution-writing.md\n.claude/skills/conflict-resolution/references/weighing-evidence.md\n.claude/skills/conflict-resolution/references/places-guidance.md\n.claude/skills/conflict-resolution/references/validation-protocol.md\n.claude/skills/conflict-resolution/SKILL.md"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-twohig-children-1857-41ugtqq3/.claude/skills/conflict-resolution/SKILL.md"
-      },
-      "response_summary": "1\t---\n2\tname: conflict-resolution\n3\tmodel: claude-sonnet-4-6\n4\tallowed-tools:\n5\t  - place_search\n6\t  - place_search_all\n7\t  - place_distance\n8\t  - research_append\n9\t  - convert_calendar\n10\tdescription: >-\n11\t  Identifies and resolves conflicting genealogical evidence \u2014 both fact-level\n12\t  conflicts (three different birthplaces) and identity-level conflicts where\n13\t  multiple candidate persons or records genuinely compete (e.g. two same-named\n14\t  people in one county). Performs source indep..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -3989,8 +3941,7 @@
             "q_001"
           ]
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"conflicts\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"c_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4003,16 +3954,14 @@
         "fields": {
           "status": "skipped"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4027,8 +3976,7 @@
         "birthYearTo": 1862,
         "collectionId": "1529100",
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohig\\\",\\n    \\\"givenName\\\": \\\"Stephen\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1892,\\n    \\\"residenceYearTo\\\": 1892,\\n    \\\"residencePlace\\\": \\\"New York\\\",\\n    \\\"birthYearFrom\\\": 1852,\\n    \\\"birthYearTo\\\": 1862,\\n    \\\"collectionId\\\": \\\"1529100\\\",\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offs..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4042,8 +3990,7 @@
         "birthYearFrom": 1852,
         "birthYearTo": 1862,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Toohig\\\",\\n    \\\"givenName\\\": \\\"Stephen\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1892,\\n    \\\"residenceYearTo\\\": 1892,\\n    \\\"residencePlace\\\": \\\"New York\\\",\\n    \\\"birthYearFrom\\\": 1852,\\n    \\\"birthYearTo\\\": 1862,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4057,8 +4004,7 @@
         "birthYearFrom": 1852,
         "birthYearTo": 1862,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohy\\\",\\n    \\\"givenName\\\": \\\"Stephen\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1892,\\n    \\\"residenceYearTo\\\": 1892,\\n    \\\"residencePlace\\\": \\\"New York\\\",\\n    \\\"birthYearFrom\\\": 1852,\\n    \\\"birthYearTo\\\": 1862,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4070,30 +4016,26 @@
         "recordCountry": "United States",
         "recordSubdivision": "New York",
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "Error: result (98,120 characters) exceeds maximum allowed tokens. Output has been saved to /home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783516930465.txt.\nFormat: JSON array with schema: [{type: string, text: string}]\nUse offset and limit parameters to read specific portions of the file, search within it for specific content, and jq to make structured queries.\nREQUIREMENTS FOR SUMMARIZA..."
+      }
     },
     {
       "tool": "Bash",
       "args": {
         "command": "jq '.[0].text | fromjson | {totalMatches, returned, results: [.results[:5][] | {primaryId, arkUrl, record: {title: .title, collectionName: .collectionName}, person: {name: .person.name, birthDate: .person.birthDate, birthPlace: .person.birthPlace}}]}' /home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783516930465.txt 2>/dev/null | head -80"
-      },
-      "response_summary": "(Bash completed with no output)"
+      }
     },
     {
       "tool": "Bash",
       "args": {
         "command": "python3 -c \"\nimport json\nwith open('/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783516930465.txt') as f:\n    data = json.load(f)\ntext = data[0]['text']\nobj = json.loads(text)\nprint('totalMatches:', obj.get('totalMatches'))\nprint('returned:', obj.get('returned'))\nstaged = obj.get('staged')\nprint('staged:', staged)\nfor r in obj.get('results', [])[:8]:\n    p = r.get('person', {})\n    print('---')\n    print('ark:', r.get('arkUrl'))\n    print('title:', r.get('title'))\n    print('collection:', r.get('collectionName'))\n    print('name:', p.get('name'))\n    print('birth:', p.get('birthDate'), p.get('birthPlace'))\n    print('primaryId:', r.get('primaryId'))\n\" 2>&1"
-      },
-      "response_summary": "Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypass th..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783516930465.txt",
         "limit": 100
-      },
-      "response_summary": "File content (34379 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Read",
@@ -4101,8 +4043,7 @@
         "file_path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783516930465.txt",
         "limit": 300,
         "offset": 0
-      },
-      "response_summary": "File content (34379 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     },
     {
       "tool": "Grep",
@@ -4111,8 +4052,7 @@
         "path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783516930465.txt",
         "output_mode": "content",
         "head_limit": 30
-      },
-      "response_summary": "4:[Omitted long matching line]"
+      }
     },
     {
       "tool": "Grep",
@@ -4121,8 +4061,7 @@
         "path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783516930465.txt",
         "output_mode": "content",
         "context": 1
-      },
-      "response_summary": "No matches found"
+      }
     },
     {
       "tool": "Grep",
@@ -4131,8 +4070,7 @@
         "path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783516930465.txt",
         "output_mode": "content",
         "head_limit": 5
-      },
-      "response_summary": "4:[Omitted long matching line]"
+      }
     },
     {
       "tool": "Grep",
@@ -4140,8 +4078,7 @@
         "pattern": "New York State Census",
         "path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783516930465.txt",
         "output_mode": "count"
-      },
-      "response_summary": "No matches found\n\nFound 0 total occurrences across 0 files."
+      }
     },
     {
       "tool": "Grep",
@@ -4149,8 +4086,7 @@
         "pattern": "1892",
         "path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783516930465.txt",
         "output_mode": "count"
-      },
-      "response_summary": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783516930465.txt:1\n\nFound 1 total occurrence across 1 file."
+      }
     },
     {
       "tool": "Grep",
@@ -4158,8 +4094,7 @@
         "pattern": "1857|Bronx|West Farms|Westchester",
         "path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783516930465.txt",
         "output_mode": "count"
-      },
-      "response_summary": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783516930465.txt:1\n\nFound 1 total occurrence across 1 file."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4168,8 +4103,7 @@
         "givenName": "Stephen",
         "collectionId": "1529100",
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohig\\\",\\n    \\\"givenName\\\": \\\"Stephen\\\",\\n    \\\"collectionId\\\": \\\"1529100\\\",\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4177,8 +4111,7 @@
         "surname": "Twohig",
         "collectionId": "1529100",
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "<persisted-output>\nOutput too large (66.6KB). Full output saved to: /home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/toolu_013xEMWqiYcaP3aM5zNNae2A.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohig\\\",\\n    \\\"collectionId\\\": \\\"1529100\\\",\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 36,\\n  \\\"paginationCappedAt\\\": ..."
+      }
     },
     {
       "tool": "Grep",
@@ -4186,8 +4119,7 @@
         "pattern": "Bronx|West Farms|New York City",
         "path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/toolu_013xEMWqiYcaP3aM5zNNae2A.json",
         "output_mode": "count"
-      },
-      "response_summary": "No matches found\n\nFound 0 total occurrences across 0 files."
+      }
     },
     {
       "tool": "Grep",
@@ -4196,16 +4128,14 @@
         "path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/toolu_013xEMWqiYcaP3aM5zNNae2A.json",
         "output_mode": "content",
         "head_limit": 5
-      },
-      "response_summary": "4:[Omitted long matching line]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__research_log_append",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4228,8 +4158,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results for Stephen Twohig in NY State Census 1892 (collection 1529100) with exact parameters."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:24:54.637Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4255,8 +4184,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results for variant spellings Toohig and Twohy + Stephen in 1892 NY census. Neither variant found Stephen in New York."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:25:00.445Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4273,8 +4201,7 @@
         "resultsExamined": 20,
         "resultsAvailable": 36,
         "notes": "Coverage check: 36 Twohig records exist in collection 1529100, all from Brooklyn (Kings County) \u2014 zero from the Bronx or New York City proper. The 1892 NY State Census on FamilySearch does not appear to cover the Bronx district. Stephen Twohig's household in the Bronx is not indexed in this collection. Absence is a collection-coverage gap, not evidence of non-residence. The Bronx portion of the 1892 NY State Census may be on Ancestry or undigitized."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:25:08.285Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4287,8 +4214,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -4303,8 +4229,7 @@
         "birthYearTo": 1862,
         "collectionId": "1463113",
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohig\\\",\\n    \\\"givenName\\\": \\\"Stephen\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1905,\\n    \\\"residenceYearTo\\\": 1905,\\n    \\\"residencePlace\\\": \\\"New York\\\",\\n    \\\"birthYearFrom\\\": 1852,\\n    \\\"birthYearTo\\\": 1862,\\n    \\\"collectionId\\\": \\\"1463113\\\",\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 1,\\n  \\\"offs..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -4328,8 +4253,7 @@
         "resultsAvailable": 1,
         "stagedResultsRef": "results/.staging/1c65679a-fdaa-4c47-872a-54763cc6d4db.json",
         "notes": "Strong match: 'Household of Stephen W Twohig, 1905 NY State Census' (ark:/61903/1:1:SP6F-ZXY), Bronx, AD 35, ED 50. Children: Jennie L (b.1884 F), Florence (b.1886 F), Robert (b.1889 M). Janette from 1900 census (b. Aug 1884) appears to now go by 'Jennie L' \u2014 same birth year. GJGC-RJZ (Genevieve 'Jennie' Ballard, b.1886) remains absent. Florence still in household (marries Feurfile between 1905-1910 per existing tree source 7964-Z1W). treeMatches for Stephen: KCF4-NQ3 (5 stars), KCVD-9WP (4 stars), GQV2-NKK (0 stars) \u2014 possible duplicate tree issue."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:26:34.434Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_005.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_005.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -4342,16 +4266,14 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_004\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__same_person",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__same_person\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -4681,8 +4603,7 @@
           ]
         },
         "primaryId2": "GQV2-NKK"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"matched\\\": false,\\n  \\\"score\\\": -99,\\n  \\\"queryArk\\\": \\\"ark:/61903/1:1:SP6F-ZXY\\\",\\n  \\\"candidateArk\\\": \\\"ark:/61903/4:1:MMMM-MMM\\\",\\n  \\\"apiTitle\\\": \\\"Matches for ark:/61903/1:1:SP6F-ZXY\\\",\\n  \\\"updated\\\": \\\"2026-07-08T13:27:54.629Z\\\"\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__same_person",
@@ -4961,31 +4882,27 @@
         },
         "primaryId2": "GQV2-NKK",
         "matchRelatives": true
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"matchRelatives\\\": true,\\n  \\\"matches\\\": [\\n    {\\n      \\\"role\\\": \\\"child\\\",\\n      \\\"targetId\\\": \\\"p_2027844450\\\",\\n      \\\"candidateId\\\": \\\"GT51-LBD\\\",\\n      \\\"score\\\": 0.78915566,\\n      \\\"preScore\\\": 0.92,\\n      \\\"confidence\\\": 3\\n    },\\n    {\\n      \\\"role\\\": \\\"child\\\",\\n      \\\"targetId\\\": \\\"p_2027844449\\\",\\n      \\\"candidateId\\\": \\\"I2\\\",\\n      \\\"score\\\": 0.78915566,\\n      \\\"preScore\\\": 0.8,\\n      \\\"confidence\\\": 3\\n    },\\n    {\\n      \\\"role\\\": ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:SP6F-ZXY"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_2027844447\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:SP6F-ZXY\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"23c845c4-1571-45dd-8b7c-fc82716f56d8\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Twohig\\\",\\n          \\\"given\\\": \\\"Stephen W\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": \\\"W\\\"\\n        },\\n        {\\n ..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__tree_edit",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__tree_edit",
@@ -4996,8 +4913,7 @@
           "title": "New York, State Census, 1905",
           "url": "https://www.familysearch.org/search/collection/1463113"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"source\\\": \\\"S2\\\"\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5399,8 +5315,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_025\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_026\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_027\\\"\\n    },\\n ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5624,8 +5539,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_028\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_029\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_030\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5661,8 +5575,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"conflicts\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"c_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5676,8 +5589,7 @@
         "birthYearFrom": 1852,
         "birthYearTo": 1862,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohig\\\",\\n    \\\"givenName\\\": \\\"Stephen\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"residenceYearFrom\\\": 1880,\\n    \\\"residenceYearTo\\\": 1880,\\n    \\\"residencePlace\\\": \\\"New York\\\",\\n    \\\"birthYearFrom\\\": 1852,\\n    \\\"birthYearTo\\\": 1862,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 3,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 3,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -5700,8 +5612,7 @@
         "resultsAvailable": 3,
         "stagedResultsRef": "results/.staging/74783472-b530-4fad-b830-7ce7784fe0a2.json",
         "notes": "Collection mismatch: all 3 results are from US City and Business Directories (collection 3754697), not the 1880 census. None are relevant. Will retry with specific 1880 census collection ID."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:35:03.198Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_006.json\\\",\\n  \\\"returnedCount\\\": 3,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_006.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5713,8 +5624,7 @@
         "birthYearFrom": 1852,
         "birthYearTo": 1862,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohig\\\",\\n    \\\"givenName\\\": \\\"Stephen\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"residencePlace\\\": \\\"New York\\\",\\n    \\\"birthYearFrom\\\": 1852,\\n    \\\"birthYearTo\\\": 1862,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5723,8 +5633,7 @@
         "givenName": "Stephen",
         "collectionId": "1417683",
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "Error: result (224,241 characters) exceeds maximum allowed tokens. Output has been saved to /home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783517717455.txt.\nFormat: JSON array with schema: [{type: string, text: string}]\nUse offset and limit parameters to read specific portions of the file, search within it for specific content, and jq to make structured queries.\nREQUIREMENTS FOR SUMMARIZ..."
+      }
     },
     {
       "tool": "Grep",
@@ -5732,8 +5641,7 @@
         "pattern": "Stephen|Bronx|West Farms",
         "path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783517717455.txt",
         "output_mode": "count"
-      },
-      "response_summary": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783517717455.txt:1\n\nFound 1 total occurrence across 1 file."
+      }
     },
     {
       "tool": "Grep",
@@ -5741,8 +5649,7 @@
         "pattern": "totalMatches|returned",
         "path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783517717455.txt",
         "output_mode": "count"
-      },
-      "response_summary": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783517717455.txt:1\n\nFound 1 total occurrence across 1 file."
+      }
     },
     {
       "tool": "Grep",
@@ -5750,8 +5657,7 @@
         "pattern": "\\\"Stephen",
         "path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783517717455.txt",
         "output_mode": "count"
-      },
-      "response_summary": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783517717455.txt:1\n\nFound 1 total occurrence across 1 file."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5763,8 +5669,7 @@
         "birthYearFrom": 1815,
         "birthYearTo": 1825,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohig\\\",\\n    \\\"givenName\\\": \\\"Patrick\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"residencePlace\\\": \\\"New York\\\",\\n    \\\"birthYearFrom\\\": 1815,\\n    \\\"birthYearTo\\\": 1825,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 1,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MZDP..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -5784,8 +5689,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results for Stephen Twohig in 1880 US Census collection (1417683) with NY residence. Also tried Patrick Twohig (b.1819, father) - returned only a phonetic mis-match (Edwin Twiggs). Suggests the Twohig family may be indexed under a spelling variant in this collection."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:36:13.886Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5794,8 +5698,7 @@
         "collectionId": "1417683",
         "residencePlace": "New York",
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "Error: result (218,095 characters) exceeds maximum allowed tokens. Output has been saved to /home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783517781680.txt.\nFormat: JSON array with schema: [{type: string, text: string}]\nUse offset and limit parameters to read specific portions of the file, search within it for specific content, and jq to make structured queries.\nREQUIREMENTS FOR SUMMARIZ..."
+      }
     },
     {
       "tool": "Grep",
@@ -5803,8 +5706,7 @@
         "pattern": "West Farms|Bronx|Stephen|Pat Twohig",
         "path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783517781680.txt",
         "output_mode": "count"
-      },
-      "response_summary": "No matches found\n\nFound 0 total occurrences across 0 files."
+      }
     },
     {
       "tool": "Grep",
@@ -5812,8 +5714,7 @@
         "pattern": "totalMatches|Twohig",
         "path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783517781680.txt",
         "output_mode": "count"
-      },
-      "response_summary": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783517781680.txt:1\n\nFound 1 total occurrence across 1 file."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5824,8 +5725,7 @@
         "birthYearFrom": 1814,
         "birthYearTo": 1825,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Toohig\\\",\\n    \\\"givenName\\\": \\\"Patrick\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"birthYearFrom\\\": 1814,\\n    \\\"birthYearTo\\\": 1825,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5835,16 +5735,14 @@
         "collectionId": "1417683",
         "birthPlace": "Ireland",
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohy\\\",\\n    \\\"givenName\\\": \\\"Patrick\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"birthPlace\\\": \\\"Ireland\\\",\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 3,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 3,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MDXM-FKB\\\",\\n      \\\"events\\\": [\\n        {\\n          \\\"type\\\": \\\"C..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-twohig-children-1857-41ugtqq3/research.json",
         "limit": 100
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_twohig_children_1857\",\n4\t    \"objective\": \"Did Stephen Joseph Twohig have any children beyond the two already linked in the FamilySearch tree (Genevieve \\\"Jennie\\\" Ballard and Robert P. Twohig)?\",\n5\t    \"subject_person_ids\": [\n6\t      \"GQV2-NKK\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-07T00:00:00Z\",\n10\t    \"updated\": \"2026-07-07T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscript..."
+      }
     },
     {
       "tool": "Read",
@@ -5852,8 +5750,7 @@
         "file_path": "/tmp/e2e-twohig-children-1857-41ugtqq3/research.json",
         "offset": 100,
         "limit": 150
-      },
-      "response_summary": "100\t      ]\n101\t    }\n102\t  ],\n103\t  \"log\": [\n104\t    {\n105\t      \"id\": \"log_001\",\n106\t      \"plan_item_id\": \"pli_001\",\n107\t      \"performed\": \"2026-07-08T13:01:25.871Z\",\n108\t      \"tool\": \"record_search\",\n109\t      \"query\": {\n110\t        \"surname\": \"Twohig\",\n111\t        \"givenName\": \"Stephen\",\n112\t        \"recordType\": \"census\",\n113\t        \"residenceYearFrom\": 1900,\n114\t        \"residenceYearTo\": 1900,\n115\t        \"residencePlace\": \"New York\",\n116\t        \"birthYearFrom\": 1852,\n117\t        ..."
+      }
     },
     {
       "tool": "Read",
@@ -5861,16 +5758,14 @@
         "file_path": "/tmp/e2e-twohig-children-1857-41ugtqq3/research.json",
         "offset": 250,
         "limit": 100
-      },
-      "response_summary": "250\t      },\n251\t      \"outcome\": \"negative\",\n252\t      \"results_examined\": 0,\n253\t      \"external_site\": null,\n254\t      \"results_ref\": null,\n255\t      \"results_available\": 0,\n256\t      \"notes\": \"Zero results for Stephen Twohig in 1880 US Census collection (1417683) with NY residence. Also tried Patrick Twohig (b.1819, father) - returned only a phonetic mis-match (Edwin Twiggs). Suggests the Twohig family may be indexed under a spelling variant in this collection.\"\n257\t    }\n258\t  ],\n259\t  \"..."
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_append,mcp__genealogy__research_log_append",
         "max_results": 3
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -5883,8 +5778,7 @@
         "fields": {
           "status": "in_progress"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_005\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5896,8 +5790,7 @@
         "birthYearFrom": 1852,
         "birthYearTo": 1862,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Toohig\\\",\\n    \\\"givenName\\\": \\\"Stephen\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"residencePlace\\\": \\\"New York\\\",\\n    \\\"birthYearFrom\\\": 1852,\\n    \\\"birthYearTo\\\": 1862,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5909,8 +5802,7 @@
         "birthYearFrom": 1814,
         "birthYearTo": 1824,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohig\\\",\\n    \\\"givenName\\\": \\\"Patrick\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"residencePlace\\\": \\\"New York\\\",\\n    \\\"birthYearFrom\\\": 1814,\\n    \\\"birthYearTo\\\": 1824,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5922,8 +5814,7 @@
         "birthYearFrom": 1852,
         "birthYearTo": 1862,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohy\\\",\\n    \\\"givenName\\\": \\\"Stephen\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"residencePlace\\\": \\\"New York\\\",\\n    \\\"birthYearFrom\\\": 1852,\\n    \\\"birthYearTo\\\": 1862,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5935,8 +5826,7 @@
         "birthYearFrom": 1814,
         "birthYearTo": 1824,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Toohig\\\",\\n    \\\"givenName\\\": \\\"Patrick\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"residencePlace\\\": \\\"New York\\\",\\n    \\\"birthYearFrom\\\": 1814,\\n    \\\"birthYearTo\\\": 1824,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5944,8 +5834,7 @@
         "surname": "Twohig",
         "collectionId": "1417683",
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "Error: result (248,119 characters) exceeds maximum allowed tokens. Output has been saved to /home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783518029616.txt.\nFormat: JSON array with schema: [{type: string, text: string}]\nUse offset and limit parameters to read specific portions of the file, search within it for specific content, and jq to make structured queries.\nREQUIREMENTS FOR SUMMARIZ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5953,15 +5842,13 @@
         "surname": "Twohy",
         "collectionId": "1417683",
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "Error: result (241,372 characters) exceeds maximum allowed tokens. Output has been saved to /home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783518031244.txt.\nFormat: JSON array with schema: [{type: string, text: string}]\nUse offset and limit parameters to read specific portions of the file, search within it for specific content, and jq to make structured queries.\nREQUIREMENTS FOR SUMMARIZ..."
+      }
     },
     {
       "tool": "Bash",
       "args": {
         "command": "jq -r '.[0].text' /home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783518029616.txt | python3 -c \"\nimport json, sys\ndata = json.load(sys.stdin)\nresults = data.get('results', [])\nprint(f'Total matches: {data.get(\\\"totalMatches\\\")}')\nprint(f'Returned: {data.get(\\\"returned\\\")}')\nprint()\nfor r in results[:30]:\n    name = r.get('name','')\n    birth = r.get('birthDate','')\n    res = r.get('residencePlace','')\n    score = r.get('relevanceScore','')\n    ark = r.get('arkUrl','')\n    print(f'{name} | birth:{birth} | res:{res} | score:{score}')\n\"\n"
-      },
-      "response_summary": "Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypass th..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5972,8 +5859,7 @@
         "birthYearFrom": 1852,
         "birthYearTo": 1862,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohig\\\",\\n    \\\"givenName\\\": \\\"Stephen\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"birthYearFrom\\\": 1852,\\n    \\\"birthYearTo\\\": 1862,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 4,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 4,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MN7S-S2T\\\",\\n      \\\"events\\\": [\\n        {..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5984,8 +5870,7 @@
         "birthYearFrom": 1814,
         "birthYearTo": 1824,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Twohig\\\",\\n    \\\"givenName\\\": \\\"Patrick\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"birthYearFrom\\\": 1814,\\n    \\\"birthYearTo\\\": 1824,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -5996,8 +5881,7 @@
         "birthYearFrom": 1852,
         "birthYearTo": 1862,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Tuohy\\\",\\n    \\\"givenName\\\": \\\"Stephen\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"birthYearFrom\\\": 1852,\\n    \\\"birthYearTo\\\": 1862,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 3,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 3,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:M8YH-ZRK\\\",\\n      \\\"events\\\": [\\n        {\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -6008,16 +5892,14 @@
         "birthYearFrom": 1814,
         "birthYearTo": 1824,
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "<persisted-output>\nOutput too large (57KB). Full output saved to: /home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/toolu_01Q5xs9LLDWCGzSHp8H8u2CM.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Tuohy\\\",\\n    \\\"givenName\\\": \\\"Patrick\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"birthYearFrom\\\": 1814,\\n    \\\"birthYearTo\\\": 1824,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-tw..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/toolu_01Q5xs9LLDWCGzSHp8H8u2CM.json",
         "limit": 200
-      },
-      "response_summary": "1\t[\n2\t  {\n3\t    \"type\": \"text\",\n4\t    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Tuohy\\\",\\n    \\\"givenName\\\": \\\"Patrick\\\",\\n    \\\"collectionId\\\": \\\"1417683\\\",\\n    \\\"birthYearFrom\\\": 1814,\\n    \\\"birthYearTo\\\": 1824,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-twohig-children-1857-41ugtqq3\\\"\\n  },\\n  \\\"totalMatches\\\": 6,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 6,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MZFQ-YNZ\\\",\\n      \\\"eve..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6037,8 +5919,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results \u2014 variant spelling Toohig + Stephen in 1880 census (collection 1417683) with NY residence filter."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_008\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:42:32.500Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6058,8 +5939,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results \u2014 searching for father Patrick Twohig (b.1819 Cork) as head of household in 1880 census (collection 1417683) with NY residence filter."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_009\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:42:37.507Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6079,8 +5959,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results \u2014 variant spelling Twohy + Stephen in 1880 census with NY residence filter."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_010\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:42:42.582Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6100,8 +5979,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results \u2014 variant spelling Toohig for father Patrick in 1880 census with NY filter."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_011\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:42:48.172Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6121,8 +5999,7 @@
         "resultsAvailable": 4,
         "stagedResultsRef": "results/.staging/83b1891c-6ea6-4e0f-94c6-63fb6780986d.json",
         "notes": "4 results returned without NY geographic filter, but none match Stephen Twohig of Bronx: results are in Maryland (Twigg), West Virginia (Twohig), Vermont (Twigg), and California (Twiligan). The Twohig family does not appear in the 1880 census index for any NY location under this spelling."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_012\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:42:55.513Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_012.json\\\",\\n  \\\"returnedCount\\\": 4,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_012.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6141,8 +6018,7 @@
         "resultsExamined": 0,
         "resultsAvailable": 0,
         "notes": "Zero results for Patrick Twohig (b.1819) without geographic filter in 1880 census. Confirms surname 'Twohig' for Patrick is not indexed in this collection."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_013\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:43:00.946Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6162,8 +6038,7 @@
         "resultsAvailable": 3,
         "stagedResultsRef": "results/.staging/b89274be-43f6-49ab-9fba-3d5e8dc7d95e.json",
         "notes": "3 results for Tuohy + Stephen, none in NY: Nebraska (Touhey, b.1855 NY \u2014 different family), California (Chinese miner \u2014 no match), Illinois (Tuohey \u2014 no match). Irish variant 'Tuohy' also fails to locate Stephen in NY."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_014\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:43:08.540Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_014.json\\\",\\n  \\\"returnedCount\\\": 3,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_014.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6183,8 +6058,7 @@
         "resultsAvailable": 6,
         "stagedResultsRef": "results/.staging/287fc8c0-e449-41f0-9842-59db3808e44a.json",
         "notes": "6 results for Tuohy + Patrick (b.1814-1824), none match Patrick Twohig of Bronx: Flushing Queens NY (b.1817, different family/location), Bradford PA (b.1819 \u2014 birth year matches but wife is Mary b.1829 not Mary b.1826 O'Connell, and in Pennsylvania), Minnesota, Boston MA, Schuyler County NY, Lowell MA. After 9+ FamilySearch variants (Twohig, Toohig, Twohy, Tuohy; Stephen and Patrick; with and without NY filter), the Twohig family from West Farms/Bronx is not locatable in FamilySearch's 1880 census index. Probable cause: indexing gap or highly unusual transcription of the surname in the original schedule."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_015\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:43:19.430Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_015.json\\\",\\n  \\\"returnedCount\\\": 6,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_015.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6216,8 +6090,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6230,23 +6103,20 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_005\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__record_read",
         "max_results": 1
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:2WGS-CB2"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_14743682960\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:2WGS-CB2\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"fb7028a6-e46c-4473-832d-0c97a3ae2dab\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Stephen J.\\\",\\n          \\\"surname\\\": \\\"Twohig\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": \\\"White\\\"\\n        },\\n      ..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_log_append",
@@ -6262,8 +6132,7 @@
         "resultsExamined": 1,
         "resultsAvailable": 1,
         "notes": "Death record for Stephen J. Twohig, 18 Jan 1920, Bronx NY. Confirms: b.8 Feb 1857, widowed, occupation Builder, parents Patrick Twohig (b. Ireland) and Mary O'Connell (b. Ireland). No surviving children are named in the indexed record. Record corroborates Stephen's identity and parentage."
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_016\\\",\\n  \\\"performed\\\": \\\"2026-07-08T13:47:32.286Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6517,8 +6386,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_040\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_041\\\"\\n    },\\..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6625,8 +6493,7 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_046\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_047\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_048\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6639,62 +6506,54 @@
         "fields": {
           "status": "completed"
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_006\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "check-warnings",
         "args": "Check GQV2-NKK after adding death record assertions (a_040\u2013a_048) confirming birth 8 Feb 1857 and death 18 Jan 1920 Bronx NY."
-      },
-      "response_summary": "Launching skill: check-warnings"
+      }
     },
     {
       "tool": "ToolSearch",
       "args": {
         "query": "select:mcp__genealogy__person_warnings,mcp__genealogy__person_quality",
         "max_results": 2
-      },
-      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_quality\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_warnings",
       "args": {
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3",
         "personId": "GQV2-NKK"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__person_quality",
       "args": {
         "personId": "GQV2-NKK"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"personId\\\": \\\"GQV2-NKK\\\",\\n  \\\"segment\\\": \\\"United States 1850 - 1925\\\",\\n  \\\"overallScore\\\": 0.9477586788001348,\\n  \\\"issueCount\\\": 5,\\n  \\\"categories\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COMPLETENESS\\\",\\n      \\\"count\\\": 1,\\n      \\\"score\\\": 0.9130434782608695\\n    },\\n    {\\n      \\\"scoreType\\\": \\\"VERIFIABILITY\\\",\\n      \\\"count\\\": 1,\\n      \\\"score\\\": 1\\n    },\\n    {\\n      \\\"scoreType\\\": \\\"CONSISTENCY\\\",\\n      \\\"count\\\": 3,\\n      \\\"score\\\": 0.930232558..."
+      }
     },
     {
       "tool": "Skill",
       "args": {
         "skill": "research-exhaustiveness",
         "args": "Evaluate whether research on q_001 is exhaustive enough to support a proof conclusion about Stephen Joseph Twohig's children (b.8 Feb 1857, d.18 Jan 1920, Bronx NY). Evidence gathered: 1900 US census (src_001) showing 3 children \u2014 Janette b.Aug 1884, Florence b.Jun 1886, Robert b.Mar 1889; 1905 NY State Census (src_002) corroborating the same 3 children (Jennie L b.1884, Florence b.1886, Robert b.1889); death record (src_003, SVMY-C2J) confirming Stephen's identity and parents but not listing children. 1892 NY State Census has a collection coverage gap (Bronx not indexed on FamilySearch). 1880 US Census exhausted across 9+ name variants with no result. GJGC-RJZ (Genevieve 'Jennie' Ballard, b.1886, already in tree as Stephen's child) is absent from both the 1900 and 1905 censuses. Two conflicts documented: c_001 (Florence Twohig in 1900 census is NOT GJGC-RJZ \u2014 different people, unresolved identity split); c_002 (Jennie L in 1905 = Janette from 1900 = I1, resolved)."
-      },
-      "response_summary": "Launching skill: research-exhaustiveness"
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-twohig-children-1857-41ugtqq3/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
-      },
-      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/tmp/e2e-twohig-children-1857-41ugtqq3/research.json",
         "limit": 110
-      },
-      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_twohig_children_1857\",\n4\t    \"objective\": \"Did Stephen Joseph Twohig have any children beyond the two already linked in the FamilySearch tree (Genevieve \\\"Jennie\\\" Ballard and Robert P. Twohig)?\",\n5\t    \"subject_person_ids\": [\n6\t      \"GQV2-NKK\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-07T00:00:00Z\",\n10\t    \"updated\": \"2026-07-07T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscript..."
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6736,8 +6595,7 @@
             }
           }
         }
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+      }
     },
     {
       "tool": "mcp__genealogy__research_append",
@@ -6790,15 +6648,13 @@
             }
           }
         ]
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_007\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_008\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_009\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n  ..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_read",
       "args": {
         "recordId": "ark:/61903/1:1:M5HH-9QF"
-      },
-      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_589897032\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:M5HH-9QD\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"4035ac6e-7c6c-4860-96b2-c0fcb5edf3f0\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"George E\\\",\\n          \\\"surname\\\": \\\"Feurfile\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"d86f9867-b5b1-47f6-8f66-4c91dcfb2126\\\",\\n          \\\"type\\\": \\\"..."
+      }
     },
     {
       "tool": "mcp__genealogy__record_search",
@@ -6811,16 +6667,14 @@
         "residenceYearTo": 1900,
         "residencePlace": "New York",
         "projectPath": "/tmp/e2e-twohig-children-1857-41ugtqq3"
-      },
-      "response_summary": "Error: result (189,397 characters) exceeds maximum allowed tokens. Output has been saved to /home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783518768942.txt.\nFormat: JSON array with schema: [{type: string, text: string}]\nUse offset and limit parameters to read specific portions of the file, search within it for specific content, and jq to make structured queries.\nREQUIREMENTS FOR SUMMARIZ..."
+      }
     },
     {
       "tool": "Read",
       "args": {
         "file_path": "/home/francishappy/.claude/projects/-tmp-e2e-twohig-children-1857-41ugtqq3/f6f93c0d-614e-44c7-b80d-c9616f78c1fb/tool-results/mcp-genealogy-record_search-1783518768942.txt",
         "limit": 100
-      },
-      "response_summary": "File content (60893 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+      }
     }
   ],
   "error": "wall-clock timeout after 3600s",
@@ -6829,5 +6683,6 @@
     "era": "1880s",
     "geography": "US-NY"
   },
-  "blocked_tree_reads": []
+  "blocked_tree_reads": [],
+  "captures_stripped": true
 }

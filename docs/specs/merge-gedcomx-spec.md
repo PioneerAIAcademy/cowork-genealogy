@@ -225,7 +225,9 @@ Sequence inside each tool:
 3. **`merge_tree_persons` only:** remap `research.json` person-id references from
    each collapsed id → its survivor id (§10).
 4. **Validate the in-memory result** with the project validator before anything
-   touches disk. If invalid, **write nothing** and return the errors (§8).
+   touches disk. If the merge introduces an error, **write nothing** and return
+   the errors (§8); a pre-existing error the merge did not introduce rides as a
+   warning.
 5. Persist. `merge_record_into_tree` writes **only `tree.gedcomx.json`**
    (`research.json` is unchanged — see §10). `merge_tree_persons` writes **both**
    files **both-or-neither** (write both temps → rename both back-to-back). Note:
@@ -481,7 +483,7 @@ Tool-level (the rows above are the pure core's throws):
 | `projectPath` has no `tree.gedcomx.json`, or it is invalid JSON | clear input error before merging; write nothing |
 | `merge_tree_persons` and `research.json` is missing/invalid | clear input error; write nothing |
 | `candidateGedcomx` is not valid SimplifiedGedcomX | clear input error (reuse the exported `validateGedcomx`, `validate-project-refactor-spec.md` §10); write nothing |
-| Merge result fails project validation | **write nothing**; return `{ ok: false, errors }` (§5b.2 step 4) |
+| Merge result carries a **merge-introduced** validation error | **write nothing**; return `{ ok: false, errors }` (§5b.2 step 4). A pre-existing error rides as a warning; for `merge_warnings` a drift-only project returns `{ ok: true }` |
 | A `merges` survivor id not found in the **on-disk** tree | staleness error (§5b.1); write nothing |
 
 ---

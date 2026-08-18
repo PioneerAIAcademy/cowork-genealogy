@@ -412,12 +412,15 @@ describe("research_log_append", () => {
     expect(research.log).toHaveLength(3);
   });
 
-  it("writes nothing and leaves no orphan sidecar when the would-be project is invalid", async () => {
-    // Pre-existing dangling subject ref makes validation fail on append.
+  it("a pre-existing unrelated error rides as a warning and does not block the append (#1572)", async () => {
+    // subject_person_ids points at a person absent from the tree — a pre-existing
+    // project error this append never touches. Before #1572 it froze the append
+    // (and every other writing tool); now the append succeeds and the drift is
+    // surfaced as a warning, not a block. Rollback + sidecar cleanup on a GENUINE
+    // (call-introduced) failure is covered by the batch invalid-outcome test below.
     const research = baseResearch();
     (research.project as any).subject_person_ids = ["GHOST"];
     await writeProject(research);
-    const researchBefore = await readFile(join(dir, "research.json"), "utf-8");
 
     const handle = await stageSearchResults({
       projectPath: dir,
@@ -434,12 +437,15 @@ describe("research_log_append", () => {
       stagedResultsRef: handle!.resultsRef,
     });
 
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.errors.join(" ")).toMatch(/GHOST/);
-    // research.json untouched and no orphan sidecar left behind.
-    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(researchBefore);
-    expect(await exists("results/log_001.json")).toBe(false);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // The pre-existing drift is surfaced as a summary line (count + pointer),
+    // not swallowed and not a per-error wall.
+    expect(result.validation.warnings.join(" ")).toMatch(/1 pre-existing schema error/);
+    expect(result.validation.warnings.join(" ")).toMatch(/validate_research_schema/);
+    // ...and the entry was written with its sidecar finalized, not rolled back.
+    expect((await readJson("research.json")).log).toHaveLength(1);
+    expect(await exists("results/log_001.json")).toBe(true);
   });
 
   it("rejects a stagedResultsRef outside results/.staging/", async () => {
