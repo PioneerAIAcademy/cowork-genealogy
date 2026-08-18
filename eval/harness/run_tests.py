@@ -15,7 +15,9 @@ Exit codes:
      (`not_runnable` — missing scenario, invalid test JSON, OR calling a tool
      that doesn't exist at all — Type 1 unmatched_tool_call)
   3  any test was aborted for an execution reason
-     (max_turns / wall clock / tool calls / tokens / error)
+     (max_turns / wall clock / tool calls / tokens / error).
+     Also returned when the abort-storm breaker trips (--no-abort-breaker
+     to override).
   130  the run was interrupted with Ctrl-C (SIGINT). Completed tests are
      saved as a partial `scratch_<ts>.json` run log per skill; in-flight tests
      are NOT cancelled — the pool joins them (#1016 measured ~2 min) — and
@@ -224,6 +226,13 @@ def _build_parser() -> argparse.ArgumentParser:
             "value on a big box, or 1 to force serial execution."
         ),
     )
+    parser.add_argument(
+        "--no-abort-breaker",
+        action="store_true",
+        help="Disable the suite-level abort-storm breaker. Use when you know "
+        "the environment is healthy and want the suite to finish despite "
+        "transient aborts crossing the threshold.",
+    )
     return parser
 
 
@@ -279,6 +288,22 @@ _GB_PER_SLOT = 2.0
 # assume the worst case and run serially. Safest default; override with
 # --concurrency on a box you know is bigger.
 _FALLBACK_CONCURRENCY = 1
+
+# Suite-level abort-storm breaker (#1600). Trips when both arms hold:
+#   - at least _BREAKER_MIN_COUNT completed tests aborted with a transient
+#     reason (error | sdk_stream_silence), AND
+#   - those aborts are >= _BREAKER_RATIO of completed tests so far.
+# The count floor stops a 2-test suite tripping at 1/2; the ratio stops a
+# 100-test suite tripping on 4 scattered flakes. Against the committed
+# corpus (1840 tests, 2026-08-14): worst single log is 2 transient aborts
+# in 16 tests (research-plan); this never fires. Re-tally before changing.
+_BREAKER_MIN_COUNT = 4
+_BREAKER_RATIO = 0.20
+# Must match RETRYABLE_ABORT_REASONS in orchestrator.py
+# (_execute_skill_with_retry:695). Duplicated here because that constant
+# is function-local; no test enforces the match — a divergence is a latent
+# bug. Promote it to module scope and import it if a third consumer appears.
+_TRANSIENT_ABORT_REASONS = frozenset({"error", "sdk_stream_silence"})
 
 
 def _est_test_seconds(spec, actuals: dict[str, float] | None = None) -> float:
@@ -838,6 +863,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     stop_submitting = False
     interrupted = False
+    transient_abort_count = 0
+    breaker_tripped = False
     total = len(specs)
     done_n = 0
 
@@ -1020,6 +1047,28 @@ def main(argv: list[str] | None = None) -> int:
                             saw_corpus_issue = True
                         else:
                             saw_exec_abort = True
+                            if (
+                                not args.no_abort_breaker
+                                and not breaker_tripped
+                                and reason in _TRANSIENT_ABORT_REASONS
+                            ):
+                                transient_abort_count += 1
+                                if (
+                                    transient_abort_count >= _BREAKER_MIN_COUNT
+                                    and transient_abort_count / done_n >= _BREAKER_RATIO
+                                ):
+                                    breaker_tripped = True
+                                    stop_submitting = True
+                                    print(
+                                        f"\n  ! abort-storm breaker tripped: "
+                                        f"{transient_abort_count} transient aborts in "
+                                        f"{done_n} completed tests "
+                                        f"({transient_abort_count / done_n:.0%}). "
+                                        f"Not starting more tests.\n"
+                                        f"    Pass --no-abort-breaker to override.",
+                                        file=sys.stderr,
+                                        flush=True,
+                                    )
                     elif outcome in {"fail", "xpass"}:
                         saw_fail_or_xpass = True
 
@@ -1127,6 +1176,11 @@ def main(argv: list[str] | None = None) -> int:
             "Run stopped by a harness error — keeping the tests that finished. "
             f"({type(harness_error).__name__}: {harness_error})"
         )
+    if breaker_tripped:
+        print(
+            f"Abort-storm breaker: {transient_abort_count} transient aborts in "
+            f"{done_n} tests — keeping the tests that finished."
+        )
 
     _print_timing_report(list(results_by_index.values()), elapsed_total)
     _print_summary(rows)
@@ -1141,7 +1195,7 @@ def main(argv: list[str] | None = None) -> int:
     # operator watching a crashed suite sit there presses Ctrl-C and sets both
     # — and "the harness broke" is the more actionable of the two facts. This
     # also preserves the pre-#943 code, which returned 1 for that state.
-    if interrupted or harness_error is not None:
+    if interrupted or harness_error is not None or breaker_tripped:
         promoted = False
         for skill, pp in partial_paths.items():
             if pp.exists():
@@ -1150,7 +1204,11 @@ def main(argv: list[str] | None = None) -> int:
                 promoted = True
         if not promoted:
             print("  (no tests finished — nothing to save)")
-        return 1 if harness_error is not None else 130
+        if harness_error is not None:
+            return 1
+        if breaker_tripped:
+            return 3
+        return 130  # interrupted
 
     # --- Write one run log per skill --------------------------------------
     written_paths: list[Path] = []

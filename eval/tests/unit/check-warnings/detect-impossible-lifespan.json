@@ -4,7 +4,7 @@
     "skill": "check-warnings",
     "name": "Detect an implausible lifespan over 120 years (Fundamental violation)",
     "type": "positive",
-    "description": "User asks to check Patrick. The tool returns hasAgeRangeGreaterThan120 -- the gap between his earliest possible birth year and latest possible death year exceeds 120 years. The skill should report this as Critical and recognize it as a strong signal of either a wrong vital date or two distinct individuals merged into one profile. Tests the severity classification rubric dimension (Fundamental -> error / Critical).",
+    "description": "User asks to check Patrick. The tool returns hasAgeRangeGreaterThan120 -- the gap between his earliest possible birth year and latest possible death year exceeds 120 years. The skill should report this as Critical and recognize it as a strong signal of either a wrong vital date or two distinct individuals merged into one profile. Tests the severity classification rubric dimension (Fundamental -> contradiction / Critical).",
     "tags": ["positive", "detection", "fundamental", "lifespan", "critical"]
   },
   "input": {

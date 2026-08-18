@@ -6,7 +6,10 @@ import type { Question } from '../../lib/schema'
 import styles from './QuestionsSection.module.css'
 
 function QuestionCard({ question }: { question: Question }): React.JSX.Element {
-  const { exhaustive_declaration } = question
+  const exhaustive_declaration = question.exhaustive_declaration
+  const dependsOn = question.depends_on ?? []
+  const unblocks = question.unblocks ?? []
+  const resolutionAssertionIds = question.resolution_assertion_ids ?? []
 
   return (
     <Card
@@ -16,7 +19,7 @@ function QuestionCard({ question }: { question: Question }): React.JSX.Element {
         <>
           <StatusBadge value={question.status} />
           <StatusBadge value={question.priority} />
-          {exhaustive_declaration.declared && <StatusBadge value="exhaustive" color="blue" />}
+          {exhaustive_declaration?.declared && <StatusBadge value="exhaustive" color="blue" />}
         </>
       }
       summary={question.rationale}
@@ -33,40 +36,40 @@ function QuestionCard({ question }: { question: Question }): React.JSX.Element {
         <div className={styles.fieldValue}>{question.selection_basis.replace(/_/g, ' ')}</div>
       </div>
 
-      {question.depends_on.length > 0 && (
+      {dependsOn.length > 0 && (
         <div className={styles.field}>
           <div className={styles.fieldLabel}>Depends On</div>
           <div className={styles.linkList}>
-            {question.depends_on.map((id) => (
+            {dependsOn.map((id) => (
               <CrossLink key={id} id={id} />
             ))}
           </div>
         </div>
       )}
 
-      {question.unblocks.length > 0 && (
+      {unblocks.length > 0 && (
         <div className={styles.field}>
           <div className={styles.fieldLabel}>Unblocks</div>
           <div className={styles.linkList}>
-            {question.unblocks.map((id) => (
+            {unblocks.map((id) => (
               <CrossLink key={id} id={id} />
             ))}
           </div>
         </div>
       )}
 
-      {question.resolution_assertion_ids.length > 0 && (
+      {resolutionAssertionIds.length > 0 && (
         <div className={styles.field}>
           <div className={styles.fieldLabel}>Resolution Assertions</div>
           <div className={styles.linkList}>
-            {question.resolution_assertion_ids.map((id) => (
+            {resolutionAssertionIds.map((id) => (
               <CrossLink key={id} id={id} />
             ))}
           </div>
         </div>
       )}
 
-      {exhaustive_declaration.declared && exhaustive_declaration.stop_criteria && (
+      {exhaustive_declaration?.declared && exhaustive_declaration.stop_criteria && (
         <dl className={styles.stopCriteria}>
           {Object.entries(exhaustive_declaration.stop_criteria).map(([key, value]) => (
             <div key={key}>
