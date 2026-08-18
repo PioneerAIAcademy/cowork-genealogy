@@ -46,6 +46,7 @@ const grab = (re, label) => {
 // scriptBody() dedents to column 0, so a top-level `}` in column 0 ends a function.
 const loadSrc = grab(/async function loadCodeowners\(\) \{[\s\S]*?\n\}/, 'loadCodeowners');
 const ownersSrc = grab(/^function ownersOf\(file, rules\) \{[\s\S]*?\n\}/m, 'ownersOf');
+const queueSrc  = grab(/^function queueTeamOf\(file, rules\) \{[\s\S]*?\n\}/m, 'queueTeamOf');
 
 // loadCodeowners() reads the default branch over the API; here it reads disk.
 const stubGithub = `
@@ -60,8 +61,8 @@ const stubGithub = `
   const owner = 'o', repo = 'r';
 `;
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-const { loadCodeowners, ownersOf } = await new AsyncFunction('require',
-  `${stubGithub}${loadSrc}\n${ownersSrc}\nreturn { loadCodeowners, ownersOf };`)(
+const { loadCodeowners, ownersOf, queueTeamOf } = await new AsyncFunction('require',
+  `${stubGithub}${loadSrc}\n${ownersSrc}\n${queueSrc}\nreturn { loadCodeowners, ownersOf, queueTeamOf };`)(
   (await import('node:module')).createRequire(import.meta.url));
 
 const { rules, unknown } = await loadCodeowners();
@@ -78,10 +79,31 @@ if (unknown.length) {
   console.log(`ok    all ${rules.length} CODEOWNERS rules are shapes senior-queue.yml can resolve`);
 }
 
-// 2. Who reviews what, stated as a table so a reordering that inverts
-//    last-match-wins fails here rather than in review. `null` means no senior
-//    team is required — the two ordinary approvals still are.
 const D = 'senior-developers', G = 'senior-genealogists';
+const SENIORS = [D, G];
+
+// 2. Every rule names BOTH senior teams. A rule's owners are an OR, so this is
+//    what lets a senior of either kind approve a PR that spans both. A line
+//    that drops one silently re-narrows who can unblock a merge, and nothing
+//    downstream would say so: the PR just sits at REVIEW_REQUIRED with the
+//    "wrong" senior's approval on it.
+{
+  const before = failures;
+  for (const r of rules) {
+    const missing = SENIORS.filter(t => !r.teams.includes(t));
+    if (missing.length) {
+      fail(`${r.pattern} names [${r.teams.join(', ')}] — every rule must name both ` +
+           `senior teams, missing ${missing.join(', ')}`);
+    }
+  }
+  if (failures === before) console.log(`ok    all ${rules.length} rules name both senior teams`);
+}
+
+// 3. Which QUEUE each path lands in, stated as a table so a reordering that
+//    inverts last-match-wins fails here rather than in review. This is the
+//    FIRST-listed team, which is what senior-queue.yml labels for — widening
+//    who may approve must not change who gets queued. `null` means no senior
+//    team is required, and no label; the two ordinary approvals still are.
 const TABLE = [
   // Code and the infra that breaks silently.
   ['packages/engine/mcp-server/src/index.ts', D],
@@ -111,12 +133,16 @@ const TABLE = [
   ['.gitignore', null],
   ['scripts/test.sh', null],
 ];
-for (const [file, want] of TABLE) {
-  const got = ownersOf(file, rules);
-  const ok = want === null ? got.length === 0 : got.length === 1 && got[0] === want;
-  if (!ok) fail(`${file} routes to [${got.join(', ') || 'no senior team'}], expected ${want ?? 'no senior team'}`);
+{
+  const before = failures;
+  for (const [file, want] of TABLE) {
+    const got = queueTeamOf(file, rules);
+    if (got !== want) {
+      fail(`${file} queues to ${got ?? 'no senior team'}, expected ${want ?? 'no senior team'}`);
+    }
+  }
+  if (failures === before) console.log(`ok    ${TABLE.length} queue-routing assertions`);
 }
-if (!failures) console.log(`ok    ${TABLE.length} routing assertions`);
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall checks passed');
 process.exit(failures ? 1 : 0);

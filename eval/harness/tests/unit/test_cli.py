@@ -1591,3 +1591,172 @@ def test_harness_error_keeps_completed_tests_as_scratch_and_exits_1(
     assert scratch[0].name in _out
     # 6. We must NOT mint a releasable candidate from a crashed run.
     assert list(out_dir.glob("v*.json")) == []
+
+
+def test_abort_storm_breaker_trips_and_writes_scratch_not_release(
+    tmp_path, monkeypatch, capsys
+):
+    """When transient aborts cross the threshold the breaker trips, no more
+    tests are submitted, and the run writes a scratch log — never a
+    releasable v{N}."""
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    n_tests = 10
+    for i in range(n_tests):
+        (skill_dir / f"t{i}.json").write_text(json.dumps({
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                      "type": "positive", "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "judge_context": [],
+        }), encoding="utf-8")
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    _stub_anthropic_ok(monkeypatch)
+
+    counter = {"n": 0}
+
+    def fake_run(spec, **kwargs):
+        counter["n"] += 1
+        # 3 pass, then 7 transient aborts. After 8 completions (3 pass + 5
+        # aborted) the threshold holds: 5 >= 4 count floor, 5/8 = 62.5% >= 20%.
+        if counter["n"] <= 3:
+            return _stub_log(spec.id, spec.skill, "pass")
+        return _stub_log(
+            spec.id, spec.skill, "aborted",
+            aborted_reason="sdk_stream_silence",
+        )
+
+    def fake_partial_write(log, *, runlogs_root, skill, timestamp):
+        out = Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"n_tests": len(log["tests"])}), encoding="utf-8")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_partial_runlog", fake_partial_write)
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(runlogs),
+        "--concurrency", "1",
+    ])
+
+    # 1. Exit code 3 (execution abort, same as a plain exec abort).
+    assert rc == 3
+    out_dir = runlogs / "unit" / "skill-a"
+    combined = capsys.readouterr()
+
+    # 2. One scratch log was promoted from the partial.
+    scratch = list(out_dir.glob("scratch_*.json"))
+    assert len(scratch) == 1, "completed tests should be promoted to a scratch log"
+
+    # 3. No releasable v{N} was minted — the key assertion.
+    assert list(out_dir.glob("v*.json")) == [], \
+        "breaker must NOT mint a releasable run log"
+
+    # 4. The breaker message appeared.
+    assert "abort-storm breaker" in (combined.out + combined.err)
+
+    # 5. The partial dotfile was cleaned up (promoted, not left behind).
+    assert list(out_dir.glob(".partial_*")) == []
+
+    # 6. Not all 10 tests were submitted — the breaker stopped early.
+    assert counter["n"] < n_tests
+
+
+def test_abort_storm_breaker_does_not_trip_on_cap_aborts(
+    tmp_path, monkeypatch, capsys
+):
+    """Non-transient abort reasons (e.g. max_turns) do not contribute to the
+    breaker. With only 1 transient abort the count floor (4) is not met, so
+    the breaker stays off and a releasable v{N} is written."""
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    for i in range(5):
+        (skill_dir / f"t{i}.json").write_text(json.dumps({
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                      "type": "positive", "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "judge_context": [],
+        }), encoding="utf-8")
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    _stub_anthropic_ok(monkeypatch)
+
+    # 3 pass, 1 transient abort, 1 non-transient abort.
+    outcomes = [
+        ("pass", None),
+        ("pass", None),
+        ("pass", None),
+        ("aborted", "sdk_stream_silence"),
+        ("aborted", "max_turns"),
+    ]
+    counter = {"n": 0}
+
+    def fake_run(spec, **kwargs):
+        outcome, reason = outcomes[counter["n"]]
+        counter["n"] += 1
+        return _stub_log(spec.id, spec.skill, outcome, aborted_reason=reason)
+
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
+        out = Path(runlogs_root) / "unit" / log["skill"] / filename
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("{}", encoding="utf-8")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json",
+    )
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(runlogs),
+        "--concurrency", "1",
+    ])
+
+    # 1. Exit code 3 — there IS an exec abort, but the breaker didn't trip.
+    assert rc == 3
+    out_dir = runlogs / "unit" / "skill-a"
+    combined = capsys.readouterr()
+
+    # 2. A releasable v{N} WAS written (breaker did not fire).
+    assert len(list(out_dir.glob("v*.json"))) == 1
+
+    # 3. No scratch log — normal completion path.
+    assert list(out_dir.glob("scratch_*.json")) == []
+
+    # 4. The breaker message did NOT appear.
+    assert "abort-storm breaker" not in (combined.out + combined.err)
+
+    # 5. All 5 tests were submitted.
+    assert counter["n"] == 5
