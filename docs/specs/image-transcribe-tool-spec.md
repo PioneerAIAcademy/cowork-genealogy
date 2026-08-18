@@ -351,6 +351,24 @@ Worst case for one `image_transcribe` is therefore 90 + 90 + 180 = **360s**,
 inside the e2e harness's 600s inactivity window — and a timeout returns as a
 `tool_result`, which re-arms that window.
 
+**This 360s worst case is unreachable in Cowork.** The device bridge caps every
+MCP call at 60s (a client-side ceiling this repo does not set and cannot change
+from the plugin or the `.mcpb` — see `docs/architecture.md`, "Other environment
+differences that bite"), so a Cowork transcription slower than a minute is
+aborted long before either budget above fires. Measured over the committed e2e
+corpus (2026-08-17, by then grown to 132 healthy calls from the n=89 that sized
+180s below), 13 (9.8%) ran past 60s — a floor, since the corpus carries no
+bridge hop. The 90/90/180 budgets hold only on the
+paths that honour them — verified over stdio for the harnesses and the hosted
+control plane; whether the desktop `.mcpb` is bridged too is unverified, so the
+ceiling may apply to every Cowork session. This is a documented
+environment property, not a tool defect: raising
+`OCR_TIMEOUT_MS` recovers nothing there, and lowering it would lose the tail
+everywhere else. A per-install `ocrTimeoutMs` override and a one-retry carve-out
+in the `image-reader` agent were both weighed against this write-down and dropped
+— the first recovers nothing until a config file is hand-edited, the second costs
+two fresh eval suites (lead decision, 2026-08-17).
+
 **Where 180s comes from.** Measured across every `image_transcribe` call in the
 committed e2e run logs (n=101, matched to its own `tool_result` in
 `usage.timeline`): p50 36s, p90 98s, p95 114s, max 316s. That tail is not the
