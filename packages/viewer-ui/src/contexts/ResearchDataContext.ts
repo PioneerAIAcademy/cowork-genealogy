@@ -52,6 +52,13 @@ export interface ResearchDataState {
 
 export const ResearchDataContext = createContext<ResearchDataState | null>(null)
 
+/** A section that is missing, null, or not an array yet (a half-written file)
+ *  becomes an empty list rather than a `for...of` TypeError. `?? []` is not
+ *  enough: it passes a non-array through. */
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : []
+}
+
 export function buildIndex(
   research: ResearchData | null,
   gedcomx: GedcomxData | null
@@ -59,36 +66,39 @@ export function buildIndex(
   const map = new Map<string, IndexEntry>()
   if (!research) return map
 
-  // Guard every array with `?? []`. buildIndex runs in the provider's useMemo,
-  // which is ABOVE the section error boundary, so a partial/older research.json
-  // missing any section here would throw and blank the whole viewer with nothing
-  // to catch it (issue #1317).
+  // buildIndex runs in the provider's useMemo, which is ABOVE the section error
+  // boundary, so ANYTHING that throws here blanks the whole viewer with nothing
+  // to catch it (issue #1317). A partial write is not just a missing section:
+  // it is also a half-written entry (`[null]`) or a section that is not an array
+  // yet (`{}`), both of which `?? []` lets straight through into `for...of`.
+  // `asArray` + the optional `?.id` below cover all three shapes.
   const sections: [string, unknown[]][] = [
-    ['known_holdings', research.known_holdings ?? []],
-    ['questions', research.questions ?? []],
-    ['plans', research.plans ?? []],
-    ['log', research.log ?? []],
-    ['sources', research.sources ?? []],
-    ['assertions', research.assertions ?? []],
-    ['person_evidence', research.person_evidence ?? []],
-    ['conflicts', research.conflicts ?? []],
-    ['hypotheses', research.hypotheses ?? []],
-    ['timelines', research.timelines ?? []],
-    ['proof_summaries', research.proof_summaries ?? []],
-    ['evaluations', research.evaluations ?? []]
+    ['known_holdings', asArray(research.known_holdings)],
+    ['questions', asArray(research.questions)],
+    ['plans', asArray(research.plans)],
+    ['log', asArray(research.log)],
+    ['sources', asArray(research.sources)],
+    ['assertions', asArray(research.assertions)],
+    ['person_evidence', asArray(research.person_evidence)],
+    ['conflicts', asArray(research.conflicts)],
+    ['hypotheses', asArray(research.hypotheses)],
+    ['timelines', asArray(research.timelines)],
+    ['proof_summaries', asArray(research.proof_summaries)],
+    ['evaluations', asArray(research.evaluations)]
   ]
 
   for (const [section, items] of sections) {
     for (const item of items) {
-      const id = (item as { id?: string }).id
+      const id = (item as { id?: string } | null)?.id
       if (id) map.set(id, { item, section })
     }
   }
 
   // Also index plan items (nested inside plans)
-  for (const plan of research.plans ?? []) {
-    for (const planItem of plan.items ?? []) {
-      if (planItem?.id) map.set(planItem.id, { item: planItem, section: 'plan_items' })
+  for (const plan of asArray(research.plans)) {
+    for (const planItem of asArray((plan as { items?: unknown })?.items)) {
+      const id = (planItem as { id?: string } | null)?.id
+      if (id) map.set(id, { item: planItem, section: 'plan_items' })
     }
   }
 
@@ -99,14 +109,16 @@ export function buildIndex(
 
   // Index GedcomX entities
   if (gedcomx) {
-    for (const person of gedcomx.persons) {
-      map.set(person.id, { item: person, section: 'gedcomx_persons' })
-    }
-    for (const rel of gedcomx.relationships) {
-      map.set(rel.id, { item: rel, section: 'gedcomx_relationships' })
-    }
-    for (const src of gedcomx.sources) {
-      map.set(src.id, { item: src, section: 'gedcomx_sources' })
+    const gxSections: [string, unknown[]][] = [
+      ['gedcomx_persons', asArray(gedcomx.persons)],
+      ['gedcomx_relationships', asArray(gedcomx.relationships)],
+      ['gedcomx_sources', asArray(gedcomx.sources)]
+    ]
+    for (const [section, items] of gxSections) {
+      for (const item of items) {
+        const id = (item as { id?: string } | null)?.id
+        if (id) map.set(id, { item, section })
+      }
     }
   }
 
