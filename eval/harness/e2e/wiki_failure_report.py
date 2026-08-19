@@ -1,8 +1,8 @@
 """Why wiki and pop-stats calls fail, over committed e2e runs — issue #1552.
 
-The headline "28% of wiki calls and 35% of place_population calls fail" is
-correctly scoped (it counts connectivity failures) but it conflates five
-different causes under one number, and the fix for each is different. This report
+The blended failure-rate headline — one number that counted connectivity
+failures — is correctly scoped but conflates five different causes under it, and
+the fix for each is different (run this report for the current split). This report
 splits every `wiki_search` / `wiki_read` / `wiki_place_page` / `place_population`
 call in the committed corpus into a fixed taxonomy, then reports the split three
 ways — by cause, by day, and by the run log's committing author.
@@ -35,7 +35,7 @@ and is printed with one example, never silently absorbed.
    keys are real JSON keys (`orchestrator.py::_summarize_tool_response`). Every
    matcher here is a BARE substring for that reason — a quoted-key match
    (`'"error":"Place not found"'`) misses the escaped form and undercounts. This
-   was not hypothetical: matching quoted keys dropped 42 of ~35 `Place not found`
+   was not hypothetical: matching quoted keys dropped 42 real `Place not found`
    responses into `unclassified` in the first cut of this file.
 
 2. **Past 14 days the captures are STRIPPED, not just windowed out.** The e2e
@@ -132,9 +132,11 @@ _FAILURE_MATCHERS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("Could not reach wiki-query-api", "Population data service is unavailable"),
     ),
     ("legacy_markdown_dir", ("Wiki markdown directory is not configured",)),
-    # Generic across both services, exactly like `unreachable`: a 5xx from the
-    # wiki API and a 5xx from the Pop Stats API are the same cause.
-    ("upstream_5xx", ("wiki-query-api error:", "Population API error:")),
+    # A 5xx from either service — the same cause. Both tools format the failure
+    # as `... error: {status}` (wiki-*.ts, place-population.ts:48), so the needle
+    # pins the leading `5` to keep a 4xx out of a bucket named 5xx; a non-5xx
+    # upstream status is rare and falls to `unclassified` honestly.
+    ("upstream_5xx", ("wiki-query-api error: 5", "Population API error: 5")),
     ("no_wiki_page", ("No wiki page found for",)),
     ("unresolvable_place", ("to a single FamilySearch place",)),
     # place-population.ts passes the upstream 200 body through unread, so a place

@@ -603,7 +603,7 @@ e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (is
 	# Pure analysis, no API: reads committed run JSONs. Splits every wiki_search/
 	# wiki_read/wiki_place_page/place_population call into a fixed taxonomy and
 	# reports it by cause, by day, and by the run log's committing author, so the
-	# blended "28%/35% fail" headline separates into service reach, corpus data
+	# blended failure headline separates into service reach, corpus data
 	# gaps, and client-side. The 14-day default IS the useful horizon: it reads
 	# response_summary, which the e2e capture strip drops past 14 days, so older
 	# runs report only as a stripped-and-unclassifiable count. SINCE=all shows

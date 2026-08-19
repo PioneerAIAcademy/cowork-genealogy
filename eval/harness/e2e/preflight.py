@@ -16,8 +16,8 @@ Checks, in order:
   6. Wiki + pop services  — the wiki-query-api and Pop Stats bases answer (WARN only)
 
 Check 6 is WARN-only by design (issue #1552): the services are a public tailnet
-that is *expected* to be reachable, but a per-machine setup defect silently makes
-28%/35% of wiki/pop-stats calls fail — the agent then ships a thinner locality
+that is *expected* to be reachable, but a per-machine setup defect silently fails
+a large share of wiki/pop-stats calls — the agent then ships a thinner locality
 answer and the operator sees nothing. A warning up front spares an hour spent on
 a run whose locality half will be empty. It never FAILs, because a run without
 these services is degraded, not aborted.
@@ -419,9 +419,15 @@ def _probe_url(url: str) -> tuple[bool, str]:
     """(reachable, detail) for a plain GET. ANY HTTP answer — even 404/405 for a
     bare GET against an API root — proves reachability; only a transport failure
     (refused, DNS, timeout) means unreachable."""
+    import socket
     import urllib.error
     import urllib.request
 
+    # `urlopen(timeout=)` bounds connect/read but NOT DNS resolution, so a
+    # blackholed resolver would stall past it. Bound getaddrinfo too by setting
+    # the socket default for the duration of the probe, then restoring it.
+    prev = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(_WIKI_POP_TIMEOUT_S)
     try:
         with urllib.request.urlopen(url, timeout=_WIKI_POP_TIMEOUT_S) as r:
             return True, f"HTTP {getattr(r, 'status', '?')}"
@@ -429,6 +435,8 @@ def _probe_url(url: str) -> tuple[bool, str]:
         return True, f"HTTP {e.code}"
     except Exception as e:  # noqa: BLE001 — URLError, timeout, anything: unreachable
         return False, type(e).__name__
+    finally:
+        socket.setdefaulttimeout(prev)
 
 
 def _check_wiki_pop_services(

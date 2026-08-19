@@ -61,6 +61,16 @@ def test_each_service_failure_bucket_in_both_shapes():
         assert classify(tool, _envelope(doc)) == expected, f"escaped {expected}"
 
 
+def test_upstream_5xx_is_a_5xx_not_any_upstream_status():
+    """The bucket is named 5xx. Both tools format the failure as `... error:
+    {status}`, so a 4xx must not land here — the needle pins the leading 5."""
+    assert classify("place_population", '{"error":"Population API error: 500 Internal Server Error"}') == "upstream_5xx"
+    assert classify("wiki_place_page", '{"error":"wiki-query-api error: 503"}') == "upstream_5xx"
+    # A 4xx upstream status is NOT a 5xx and must not be bucketed as one.
+    assert classify("place_population", '{"error":"Population API error: 404 Not Found"}') != "upstream_5xx"
+    assert classify("wiki_place_page", '{"error":"wiki-query-api error: 429"}') != "upstream_5xx"
+
+
 def test_place_not_found_survives_the_escaped_envelope():
     """The exact bug the first cut had: the wrapped shape escapes the quotes, so
     a quoted-key match misses it and it falls through to `unclassified`."""
