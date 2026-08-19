@@ -182,7 +182,14 @@ describe('buildFeedbackZip — size budgets follow the server convention', () =>
 
     // research.json — the file that actually matters — always survives.
     expect(zip.file('research.json')).not.toBeNull()
-  })
+    // Measured, not guessed: this test genuinely zips 45 MB of incompressible
+    // bytes. ~2.4s alone, ~8.4s under `make test-all` (turbo runs every
+    // workspace suite at once), against vitest's 5s default — so it failed on a
+    // clean tree for anyone running the full gate while passing in isolation.
+    // The 45 MB is load-bearing (3 x 15 MB against the 35 MB budget), so the
+    // budget to raise is the clock's. DEFLATE dominates the cost, not the
+    // fixture: generating the noise is only ~340ms of it.
+  }, 30_000)
 
   it('keeps a bundle that fits entirely intact', async () => {
     await writeFile(join(folder, 'small.bin'), noise(1024))
