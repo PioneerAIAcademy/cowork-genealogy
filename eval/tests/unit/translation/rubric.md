@@ -1,4 +1,4 @@
-# Translation Rubric
+﻿# Translation Rubric
 
 Grading dimensions for translation unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
@@ -22,7 +22,7 @@ Did the skill flag ambiguous words, archaic spellings, or abbreviations rather t
 
 Did the skill identify and explain genealogically significant terms (relationship words, legal terms, religious terminology) rather than providing a generic translation?
 
-- **pass:** Genealogically significant terms are explained when their translation would lose context — e.g., "Pate" (godfather) is translated and the relationship's research significance is noted.
+- **pass:** Genealogically significant terms are explained when their translation would lose context â€” e.g., "Pate" (godfather) is translated and the relationship's research significance is noted.
 - **partial:** Significant terms are translated but their genealogical implications (kinship structure, legal status, sacrament-tied dating) aren't flagged.
 - **fail:** Translation is purely literal; the genealogist would have to research the cultural/legal context themselves.
 
@@ -38,6 +38,6 @@ Did the skill close with both required workflow handoff offers using the canonic
 
 Where the response includes specific dates in a structured assertions section, are those dates expressed in ISO 8601 format (YYYY-MM-DD) alongside the prose form?
 
-- **pass:** Every date assertion includes both the human-readable prose form and the ISO 8601 parenthetical � e.g., "15 March 1845 (1845-03-15)".
+- **pass:** Every date assertion includes both the human-readable prose form and the ISO 8601 parenthetical — e.g., "15 March 1845 (1845-03-15)".
 - **partial:** At least one date assertion includes ISO format but one or more do not.
 - **fail:** No date assertions include ISO 8601 format; dates appear in prose form only.
