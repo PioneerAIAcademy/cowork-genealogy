@@ -183,7 +183,7 @@ Do NOT call data "unsourced" — it IS sourced to the FamilySearch tree. `qualit
 
 **Simplified GedcomX rules:** gender as flat string (`Male`/`Female`/`Unknown`); names with `given`, `surname`, optional `preferred: true`; facts with PascalCase `type`; ParentChild uses `parent`/`child`; Couple uses `person1`/`person2`; `preferred`/`primary` omit-when-false.
 
-**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, it fixes a surname in that woman's **parental line**, but does not by itself tell you *which* parent carries it. Assuming it is the father assumes patrilineal surname descent without evidence — an unsound assumption of exactly the kind `check-warnings/references/assumption-categories.md` names as its canonical example ("a bride's surname is the same as her parents' surname"); unsound assumptions need positive evidence, not a default. Create one stub for that parent, sex left unspecified, linked via a `ParentChild` relationship — do not label or default it as "father." **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "N1", "preferred": true, "given": "", "surname": "Donovan"}`.
+**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, it fixes a surname in that woman's **parental line**, but does not by itself tell you *which* parent carries it. Assuming it is the father assumes patrilineal surname descent without evidence — an unsound assumption of exactly the kind `check-warnings/references/assumption-categories.md` names as its canonical example ("a bride's surname is the same as her parents' surname"); unsound assumptions need positive evidence, not a default. Create one stub for that parent, sex left unspecified, linked via a `ParentChild` relationship — do not label or default it as "father." **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "N1", "preferred": true, "given": "", "surname": "Donovan"}`. **Set this person's `gender` to `"Unknown"` — do NOT omit the key.** `gender` is required on every person; a stub missing it fails the write for both project files, not just this person.
 
 **Stub only the people the user actually named or directly implied — no others.** A stated maiden name implies exactly one new person: that woman's parent (not specifically her father).
 
@@ -194,7 +194,7 @@ Worked example: "the maternal grandmother of Sarah Hennessy; Sarah's mother's ma
 **DO create:**
 - **Sarah Hennessy** — named by the user.
 - **Mary Donovan** — named (full name stated).
-- **Mary Donovan's parent** — surname `Donovan`, `given: ""`, sex unspecified. Maiden name fixes the surname in her parental line, not which parent carries it.
+- **Mary Donovan's parent** — surname `Donovan`, `given: ""`, `gender: "Unknown"`. Maiden name fixes the surname in her parental line, not which parent carries it.
 
 **Do NOT create:**
 - Sarah's father — never mentioned, surname not implied.
