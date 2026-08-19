@@ -783,9 +783,10 @@ explicitly with the Agent tool.
 - **`skill-improver`** — report-only. Proposes evidence-cited `SKILL.md` edits
   from a skill's latest annotated run log. `/improve-skill <skill>`.
 - **`task-reviewer`** — read-only. Vets one Backlog/Ready issue before it is
-  handed to a junior developer working with Claude Code: staleness, whether the
-  premise was already refuted, the blast radius the issue omits, what verifies
-  the change, and which decisions are the lead's. Fanned out one-per-issue by
+  handed to a junior working with Claude Code: staleness, whether the premise
+  was already refuted, whether the population it rests on has any instances at
+  all, the blast radius the issue omits, what verifies the change, and which
+  decisions are the lead's. Fanned out one-per-issue by
   the `review-ready` skill; never edits an issue, the board, or any code.
   Spec: `docs/specs/task-review-spec.md`.
 
