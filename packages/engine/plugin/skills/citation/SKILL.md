@@ -102,6 +102,18 @@ refinement. Prioritize:
   Explained patterns
 - Sources the user specifically asks about
 
+**Read the files directly. Do not reach for `project_context` here.** That
+tool returns a compact projection built for a different job, and its
+per-source shape carries only `id`, `repository`,
+`gedcomx_source_description_id`, the covered `record_id`s and an assertion
+count. It omits every field this skill works on — `citation`,
+`citation_detail`, `notes`, `access_date`, `url` — and it does not carry the
+GedcomX `author` this skill needs for `who`. Working from the projection
+would hide exactly the on-file detail the source fidelity rules require you
+to find: a certificate number recorded only in a source's `notes` is
+invisible there, and a locator you cannot see is a locator you are one step
+from inventing.
+
 ### 2. Refine citation_detail
 
 For each source, ensure all six `citation_detail` fields are
