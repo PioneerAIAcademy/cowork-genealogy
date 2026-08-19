@@ -94,7 +94,7 @@
       }
     },
     "researcher_profile": {
-      "description": "Per-project context about the researcher. Written once by init-project after a short two-question interview. Read by every skill — experience_level drives narration density via narration_guidance, and subscriptions guides search-external-sites prioritization. All fields optional; absence falls back to default narration. To update mid-project, edit this section directly.",
+      "description": "Per-project context about the researcher. Written once by init-project after a short interview, asked non-blocking in the same opening turn as the project's research objective. Read by every skill — experience_level drives narration density via narration_guidance, and subscriptions (framed to the researcher as access) guides search-external-sites prioritization. All fields optional; absence falls back to default narration. To update mid-project, edit this section directly.",
       "type": "object",
       "additionalProperties": false,
       "properties": {

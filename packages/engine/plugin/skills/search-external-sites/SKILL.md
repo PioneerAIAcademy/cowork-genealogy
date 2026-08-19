@@ -97,8 +97,10 @@ the same search would be captured normally.
 
 ## Before you search
 
-**Check subscriptions.** Read `researcher_profile.subscriptions` in
-`research.json`. Use it as a tie-breaker, never as a gate.
+**Check access.** Read `researcher_profile.subscriptions` in
+`research.json` — the researcher's access, whether by paid subscription,
+FamilySearch-partnership access, or a library/family-history-centre
+account. Use it as a tie-breaker, never as a gate.
 
 | Site | Subscription value |
 |------|-------------------|
@@ -109,13 +111,14 @@ the same search would be captured normally.
 | Newspapers.com | `Newspapers.com` |
 
 - If a plan item is repository-agnostic, prefer a site the researcher
-  subscribes to — that search is immediately actionable.
-- If the user explicitly names an unsubscribed site, **generate the URL
-  anyway** and add one line: "You don't have a [SITE] subscription on
-  file — the link will hit a login wall or a limited-results preview.
-  Continue, or pick a subscribed site?" Flag, don't block.
+  has access to — that search is immediately actionable.
+- If the user explicitly names a site they don't have access to on file,
+  **generate the URL anyway** and add one line: "You don't have access
+  to [SITE] on file — the link will hit a login wall or a
+  limited-results preview. Continue, or pick a site you have access
+  to?" Flag, don't block.
 - Profile absent or `subscriptions: ["none"]` → treat all sites equally,
-  don't pester about subscriptions.
+  don't pester about access.
 - FindAGrave is always worth generating — basic search is free.
 
 **Classify the target.** Is the collection an index (a pointer, not

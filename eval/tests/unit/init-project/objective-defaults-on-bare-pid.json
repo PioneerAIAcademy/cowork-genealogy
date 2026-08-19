@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_init_project_010",
+    "skill": "init-project",
+    "name": "A fully-silent user still gets both files written with all three opening-turn defaults",
+    "type": "positive",
+    "description": "The user supplies only a bare FamilySearch person ID -- no objective, no experience level, no access. Per the unified opening-turn rule, init-project asks all three alongside the person ID request, but does not stop and wait -- it proceeds in the same pass, storing all three verbatim defaults (generic objective, intermediate, none) rather than inventing anything, and completes initialization (both project files written). The exact stored values are validator-checked, not left to judge interpretation.",
+    "tags": ["initialization", "objective-default", "opening-turn-all-defaults", "issue-1320", "issue-1510"]
+  },
+  "input": {
+    "user_message": "Start a new research project. FamilySearch person ID LZNY-BRF.",
+    "scenario": null
+  },
+  "mcp_fixtures": ["person-read-flynn"],
+  "judge_context": [
+    "Should ask the user what they want to research (the objective) in the opening turn, alongside proceeding with the rest of initialization -- asking is expected, but it must not be the only thing that happens this turn.",
+    "The exact stored objective, experience_level, and subscriptions values are checked by a deterministic validator, not by this judge -- do not re-derive them yourself. Score Correctness/Completeness on whether the skill's *behavior* (asking, not blocking, completing the pass) matches, not on re-checking the literal field values.",
+    "The final summary should clearly state that all three (objective, experience level, access) were defaulted, in language a researcher would understand -- not just silently write the defaults with no acknowledgement.",
+    "This is not a refusal -- init-project is still the correct skill for this request, and the single-pass completion is the point: the opening turn asks its questions and finishes the project in the same response."
+  ]
+}
