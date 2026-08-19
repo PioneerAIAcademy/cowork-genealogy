@@ -5,7 +5,7 @@
     "name": "How-to question without naming the wiki",
     "type": "positive",
     "description": "The user asks a generic 'how do I find [record type]' genealogy how-to question without explicitly naming the FamilySearch wiki. search-familysearch-wiki should activate — the FamilySearch Research Wiki is the source for research methods/how-to. This is the search-fs-wiki side of the search-fs-wiki-vs-locality-guide separation: a how-to/method question routes here, while a 'what records exist for [place]' records-availability survey routes to locality-guide (see the reciprocal negative test in each skill).",
-    "tags": ["fs-wiki", "how-to", "implicit-trigger", "vs-locality-guide"]
+    "tags": ["fs-wiki", "how-to", "implicit-trigger", "vs-locality-guide", "slug-german-church-records"]
   },
   "input": {
     "user_message": "How do I find German church records for my ancestors?",

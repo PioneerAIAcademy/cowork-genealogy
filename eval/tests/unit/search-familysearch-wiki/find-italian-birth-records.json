@@ -6,7 +6,7 @@
     "type": "positive",
     "holdout": true,
     "description": "The happy path: the user explicitly names the FamilySearch wiki and asks a how-to research question. Exercises the core workflow — call wiki_search, synthesize the ranked sections, and save a markdown file with cited sources.",
-    "tags": ["fs-wiki", "how-to", "happy-path"]
+    "tags": ["fs-wiki", "how-to", "happy-path", "slug-italian-birth-records"]
   },
   "input": {
     "user_message": "Search the FamilySearch wiki for guidance on how to find Italian birth records",
