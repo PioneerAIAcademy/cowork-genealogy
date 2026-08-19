@@ -317,9 +317,84 @@ def test_the_live_check_uses_the_wall_with_teardown_grace_included():
     )
 
 
-def test_mcp_connection_check_is_last_in_checks():
-    """It spawns a process and depends on the three before it."""
-    assert pf.CHECKS[-1][1] is pf._check_mcp_connection
+def test_mcp_connection_check_follows_the_static_checks():
+    """It spawns a process and depends on the three before it, so it must come
+    after them — and before the WARN-only network probe appended last."""
+    names = [c[1] for c in pf.CHECKS]
+    assert pf._check_mcp_connection in names
+    assert names.index(pf._check_mcp_connection) > names.index(pf._check_harness_deps)
+
+
+# --- check 6: wiki + population service reachability (#1552) ----------
+#
+# WARN-only and prober-injected, so no arm hits the network. The point pinned
+# here is that it NEVER FAILs — a run without these services is degraded, not
+# aborted, so a FAIL would block a run the operator was entitled to make.
+
+
+def test_wiki_pop_ok_when_both_reachable():
+    status, detail = pf._check_wiki_pop_services(prober=lambda url: (True, "HTTP 200"))
+    assert status == "OK"
+    assert "reachable" in detail
+
+
+def test_wiki_pop_warns_when_a_service_is_unreachable():
+    status, detail = pf._check_wiki_pop_services(
+        prober=lambda url: (False, "URLError")
+    )
+    assert status == "WARN"
+    # The issue's exact operator-facing sentence must survive verbatim.
+    assert "will fail for the whole run" in detail
+    assert "report it before spending an hour" in detail
+
+
+def test_wiki_pop_never_fails_whatever_the_probe_says():
+    for outcome in [(True, "HTTP 200"), (False, "timeout"), (True, "HTTP 404")]:
+        status, _ = pf._check_wiki_pop_services(prober=lambda url, o=outcome: o)
+        assert status in ("OK", "WARN")
+        assert status != "FAIL"
+
+
+def test_wiki_pop_warns_when_a_base_url_cannot_be_resolved(monkeypatch, tmp_path):
+    monkeypatch.setattr(pf, "FS_CONFIG", tmp_path / "absent.json")
+    monkeypatch.setattr(pf, "_WIKI_CONFIG_TS", tmp_path / "absent-config.ts")
+    monkeypatch.setattr(pf, "_POP_CONFIG_TS", tmp_path / "absent-pop.ts")
+    status, detail = pf._check_wiki_pop_services(prober=_probe_never_called)
+    assert status == "WARN"
+    assert "Could not resolve" in detail
+
+
+def _probe_never_called(url):
+    raise AssertionError("must not probe when the base URL is unresolved")
+
+
+def test_resolve_base_prefers_the_per_user_override(monkeypatch, tmp_path):
+    cfg = tmp_path / "config.json"
+    cfg.write_text('{"wikiApiUrl": "http://localhost:8000/"}', encoding="utf-8")
+    monkeypatch.setattr(pf, "FS_CONFIG", cfg)
+    got = pf._resolve_service_base("wikiApiUrl", tmp_path / "unused.ts", "DEFAULT_WIKI_API_URL")
+    assert got == "http://localhost:8000"  # trailing slash stripped
+
+
+def test_resolve_base_falls_back_to_the_ts_default(monkeypatch, tmp_path):
+    """With no override, the compiled-in TS default is the source of truth, so a
+    rotation of that constant is followed without editing this test: it asserts the
+    resolver returns whatever the TS currently declares, not a fixed URL."""
+    import re
+
+    monkeypatch.setattr(pf, "FS_CONFIG", tmp_path / "absent.json")
+    got = pf._resolve_service_base(
+        "wikiApiUrl", pf._WIKI_CONFIG_TS, "DEFAULT_WIKI_API_URL"
+    )
+    declared = (
+        re.search(
+            r'DEFAULT_WIKI_API_URL\s*=\s*"([^"]+)"',
+            pf._WIKI_CONFIG_TS.read_text(encoding="utf-8"),
+        )
+        .group(1)
+        .rstrip("/")
+    )
+    assert got == declared and got.startswith("https://")
 
 
 def test_main_passes_skip_through_without_failing_or_warning(monkeypatch, capsys):
