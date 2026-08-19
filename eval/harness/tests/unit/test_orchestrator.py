@@ -263,6 +263,8 @@ import asyncio
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from harness import orchestrator
 from harness.auth import AuthConfig
 from harness.judge import JudgeError
@@ -819,6 +821,35 @@ def test_skill_retry_recovers_after_transient_error(tmp_path, monkeypatch):
     assert result.aborted_reason is None
 
 
+def test_a_recursionerror_from_the_body_is_not_swallowed(tmp_path, monkeypatch):
+    """The tempdir-cleanup `except RecursionError` must not also swallow one
+    raised from build_workspace/run_skill INSIDE the block.
+
+    It used to. Attempt 1 aborts retryably, attempt 2 raises RecursionError
+    from the body, the except swallows it, and the loop returns attempt 1's
+    result stamped `attempts=2` — silently, no exception and no warning. That
+    is corrupted eval data, not a lost run, which is why this raises instead.
+    """
+    _stub_workspace_helpers(monkeypatch)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    calls = {"n": 0}
+
+    async def fake_run_skill(**kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return _retry_stub_result(aborted_reason="error")
+        raise RecursionError("locked-file cleanup lookalike, raised from the body")
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    with pytest.raises(RecursionError):
+        asyncio.run(orchestrator._execute_skill_with_retry(
+            run_index=0, spec=_positive_spec(), paths=paths,
+            skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+            base_delay=0,
+        ))
+
+
 def test_skill_retry_gives_up_after_attempts(tmp_path, monkeypatch):
     """When every attempt errors, _execute_skill_with_retry returns the
     last errored result after `attempts` tries — it does not loop
@@ -862,6 +893,111 @@ def test_skill_retry_does_not_retry_execution_cap_abort(tmp_path, monkeypatch):
     ))
     assert calls["n"] == 1
     assert result.aborted_reason == "max_turns"
+
+
+# --- zero-progress wall-clock timeouts are a startup stall, not a slow test --
+
+
+def _timeout_result(usage):
+    from harness.skill_runner import SkillRunResult
+    return SkillRunResult(
+        text_response="", skills_invoked=[], tool_calls=[],
+        duration_ms=1_900_000.0, usage=usage,
+        aborted_reason="max_wall_clock_seconds",
+        error="wall-clock timeout after 1500s", attempted_mcp_calls=[],
+    )
+
+
+def test_zero_progress_timeout_is_retryable():
+    """The 2026-08-15 signature: the whole wall-clock budget elapsed without a
+    single assistant turn, so the SDK subprocess hung during startup — the
+    same transient the `error` path already retries. `num_turns` here is
+    written by skill_runner's timeout handler, NOT read off a ResultMessage
+    (which never arrives on this path); see test_skill_runner.py for the
+    producer-side coverage."""
+    usage = {"num_turns": 0}
+    assert orchestrator._is_zero_progress_timeout(_timeout_result(usage)) is True
+    assert orchestrator._is_retryable_abort(_timeout_result(usage)) is True
+
+
+def test_timeout_with_no_turn_count_is_not_retried():
+    """Fails CLOSED. A missing `num_turns` means the recording handler did not
+    run, so a stall is indistinguishable from slow work — and retrying a slow
+    test burns the full cap once per attempt at 3x the tokens. This is the
+    case the first version of the guard got wrong: `usage` is empty on the
+    timeout path unless explicitly populated, so treating falsy as
+    zero-progress retried EVERY wall-clock abort."""
+    assert orchestrator._is_zero_progress_timeout(_timeout_result({})) is False
+    assert orchestrator._is_retryable_abort(_timeout_result({})) is False
+
+
+@pytest.mark.parametrize("usage", [{"num_turns": 1}, {"num_turns": 7}, {"num_turns": 40}])
+def test_a_genuinely_slow_test_is_still_not_retried(usage):
+    """A test that timed out MID-WORK stays non-retryable — retrying would
+    burn the same budget twice. This is the line that keeps the fix narrow."""
+    assert orchestrator._is_zero_progress_timeout(_timeout_result(usage)) is False
+    assert orchestrator._is_retryable_abort(_timeout_result(usage)) is False
+
+
+def test_other_cap_aborts_are_never_retried_even_with_no_progress():
+    """`max_turns` / `max_tool_calls` with an empty usage dict must NOT be
+    swept in — the new predicate keys on the wall-clock reason specifically."""
+    from harness.skill_runner import SkillRunResult
+    for reason in ("max_turns", "max_tool_calls", "max_input_tokens_per_turn"):
+        r = SkillRunResult(
+            text_response="", skills_invoked=[], tool_calls=[],
+            duration_ms=1.0, usage={}, aborted_reason=reason,
+            error=f"{reason} exceeded", attempted_mcp_calls=[],
+        )
+        assert orchestrator._is_retryable_abort(r) is False, reason
+
+
+def test_skill_retry_recovers_a_zero_progress_timeout(tmp_path, monkeypatch):
+    """End to end through the retry loop: the stalled attempt is retried and
+    the recovered attempt's result is returned. Without this, both tests that
+    hit the stall on 2026-08-15 were simply lost from a paid suite run."""
+    _stub_workspace_helpers(monkeypatch)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    calls = {"n": 0}
+
+    async def fake_run_skill(**kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return _timeout_result({"num_turns": 0, "duration_api_ms": 0})
+        return _retry_stub_result()
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    result, _b, _a = asyncio.run(orchestrator._execute_skill_with_retry(
+        run_index=0, spec=_positive_spec(), paths=paths,
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        base_delay=0,
+    ))
+    assert calls["n"] == 2
+    assert result.aborted_reason is None
+    assert result.attempts == 2
+
+
+def test_skill_retry_does_not_retry_a_slow_wall_clock_abort(tmp_path, monkeypatch):
+    """The counterpart: a wall-clock abort WITH progress returns on the first
+    attempt, exactly as before this change."""
+    _stub_workspace_helpers(monkeypatch)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    calls = {"n": 0}
+
+    async def fake_run_skill(**kwargs):
+        calls["n"] += 1
+        return _timeout_result({"num_turns": 9, "duration_api_ms": 800_000})
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    result, _b, _a = asyncio.run(orchestrator._execute_skill_with_retry(
+        run_index=0, spec=_positive_spec(), paths=paths,
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        base_delay=0,
+    ))
+    assert calls["n"] == 1
+    assert result.aborted_reason == "max_wall_clock_seconds"
 
 
 # --- aborted ------------------------------------------------------------

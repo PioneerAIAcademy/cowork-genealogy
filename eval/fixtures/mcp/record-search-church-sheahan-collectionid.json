@@ -1,16 +1,16 @@
 {
   "tool": "record_search",
-  "description": "FamilySearch record search returning a Schuylkill County, Pennsylvania church membership record for Michael Sheahan, ~1881, scoped to collectionId 1401638 ('Pennsylvania, Church and Town Records, 1708-1985' -- the real id from collections-search-schuylkill). Small bounded fixture authored for ut_search_records_t9p (issue #1319 companion test) -- not carved from a real case. record_search has no 'recordType' filter parameter (verified against packages/engine/mcp-server/src/tools/record-search.ts) -- this fixture anchors on the collectionId a well-formed search would use instead.",
+  "description": "FamilySearch record search returning a Schuylkill County, Pennsylvania church membership record for Michael Sheahan, ~1881, scoped to collectionId SYNTH-PA-CHURCH ('Pennsylvania, Schuylkill County Church Records (synthetic test fixture)' -- a synthetic, non-colliding id shared with the other Sheahan PA fixtures). Small bounded fixture authored for ut_search_records_t9p (issue #1319 companion test) -- not carved from a real case. record_search has no 'recordType' filter parameter (verified against packages/engine/mcp-server/src/tools/record-search.ts) -- this fixture anchors on the collectionId a well-formed search would use instead.",
   "args": {
     "surname": "~Sheahan",
     "givenName": "~Michael",
-    "collectionId": "1401638"
+    "collectionId": "SYNTH-PA-CHURCH"
   },
   "response": {
     "query": {
       "surname": "Sheahan",
       "givenName": "Michael",
-      "collectionId": "1401638"
+      "collectionId": "SYNTH-PA-CHURCH"
     },
     "totalMatches": 1,
     "paginationCappedAt": 100,
@@ -28,8 +28,8 @@
         "birthPlace": null,
         "events": [],
         "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:QK7T-CH1",
-        "collectionId": "1401638",
-        "collectionTitle": "Pennsylvania, Church and Town Records, 1708-1985",
+        "collectionId": "SYNTH-PA-CHURCH",
+        "collectionTitle": "Pennsylvania, Schuylkill County Church Records (synthetic test fixture)",
         "recordTitle": "Michael Sheahan, parish membership record, Schuylkill County, Pennsylvania, 1881",
         "treeMatches": [],
         "primaryId": "P1",

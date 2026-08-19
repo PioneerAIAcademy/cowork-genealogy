@@ -31,6 +31,7 @@ from pathlib import Path
 
 from websockets.asyncio.server import serve
 
+from .agent.errors import classify, operator_log
 from .agent.real_agent import TRANSIENT_KINDS
 
 PORT = int(os.environ.get("WS_PORT", "8080"))
@@ -158,8 +159,12 @@ class Hub:
                 text=True, encoding="utf-8", bufsize=1,
             )
         except Exception as exc:
-            print(f"[ws] agent_runner spawn failed: {exc}", flush=True)
-            await self.broadcast({"type": "status", "state": "chat_error", "message": str(exc)})
+            # This `message` is rendered by ChatPane as `Chat unavailable: …`,
+            # so a bare str(exc) put a raw OSError in front of the user (#1126).
+            classification = classify(exc)
+            print(operator_log("spawn_runner", classification, exc=exc), flush=True)
+            await self.broadcast({"type": "status", "state": "chat_error",
+                                  "message": classification})
             return
         self._proc = proc
 
@@ -219,11 +224,21 @@ class Hub:
         if proc is self._proc:
             self._proc = None
             self._turn_active = False  # the turn can't finish; unstick reconnects too
+            # These two broadcasts are ONE bubble to the reader, so they are
+            # worded together (#1126): the retry framing is kept — a crashed
+            # runner genuinely does respawn on the next message (send_input) —
+            # and only the raw exit code moves to the operator log. Rewording
+            # just one of them would make the user read "restart it" and then
+            # "report it", with an exit code in between.
+            print(operator_log("runner_exit", "agent process exited",
+                               detail=f"code={code}"), flush=True)
             await self.broadcast({"type": "agent_event", "event": {"kind": "error",
-                "text": f"The agent process exited unexpectedly (code {code}). "
-                        "Send another message to restart it."}})
+                "text": "The agent stopped unexpectedly. Nothing you did caused "
+                        "this — send another message to restart it, and report "
+                        "it if it keeps happening."}})
             await self.broadcast({"type": "agent_event", "event": {"kind": "turn_done"}})
-            await self.broadcast({"type": "status", "state": "chat_error", "message": f"agent exited ({code})"})
+            await self.broadcast({"type": "status", "state": "chat_error",
+                                  "message": "the agent stopped unexpectedly"})
 
     async def send_input(self, raw: str) -> None:
         if self._proc is None or self._proc.poll() is not None:

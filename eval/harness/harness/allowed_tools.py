@@ -22,6 +22,18 @@ the session *has*. The harness narrows for real to keep tests honest about
 that declaration — which is why a gap here shows up as a test-only failure
 with no product symptom, and why the fix is measured against production
 rather than against what feels safe (issue #1012).
+
+**And `allowed-tools` is a GRANT, not a restriction.** Claude Code documents
+it as "tools Claude can use without asking permission during the turn that
+invokes this skill"; the field that removes a tool from the pool is
+`disallowed-tools`, which no skill in this repo declares. Omission denies
+nothing anywhere. anthropics/claude-code#37683 -- that `allowed-tools` does
+not restrict tool access -- is closed as not planned. So deriving a deny list
+as this list's complement does not merely narrow more than production: it
+inverts the field's meaning. Retiring that narrowing is issue #1748; see
+CLAUDE.md, "The eval harness emulates production's permission model", for the
+boundary (a deny that hides the answer is a fixture and stays; a deny that
+changes what the agent may do is a distortion and goes).
 """
 
 from __future__ import annotations

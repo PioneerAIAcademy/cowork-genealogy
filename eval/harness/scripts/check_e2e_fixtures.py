@@ -11,10 +11,12 @@ exempt: there is nothing to grade. Scoped to PR-added run logs via
 ``git diff --diff-filter=A`` (BASE_SHA / HEAD_SHA), mirroring check_runlogs.py
 rule 1; skipped when run outside a PR (env unset), so local runs still work.
 
-This gate checks annotation *presence*, not content. Content validity (drift /
-incomplete / malformed) is the maintainer's ``calibrate_judge --dry-run`` step
-and the loader's own classification — kept out of CI so this check stays
-stdlib-only and never needs the harness venv.
+The grading gate checks annotation *presence*, not content. Deeper content
+validity (drift / incomplete / malformed) is the maintainer's
+``calibrate_judge --dry-run`` step and the loader's own classification — kept
+out of CI so this script stays stdlib-only and never needs the harness venv.
+The one content check that lives here is the component-derivation drift warning
+below: it is pure stdlib JSON arithmetic, so it meets the same constraint.
 
 ## Unresolved-draft check (WARN only)
 
@@ -31,6 +33,22 @@ warning was removed for re-flagging every un-run fixture in the repo on every
 e2e PR; this one can only fire on a fixture the PR itself committed a run for,
 so it stays silent until someone actually does the thing worth flagging.
 
+## Component-derivation drift check (WARN only)
+
+``apply_component_derivation`` (e2e/judge.py, e2e-test-spec.md §3.4.2) recomputes
+a finding's ``matched`` from its own ``components``, but only for ``relationship``
+findings. A ``source``, ``fact`` or ``person`` finding keeps whatever ``matched``
+the judge wrote — even when its ``components``, sitting in the same object in the
+format the derivation consumes, resolve to a different label — and nothing reports
+it (issue #1721). This warns, for **every finding type**, when a PR-added run log
+carries such a finding (stored ``matched`` != ``derive_matched(components)``) so
+the reviewer can confirm the label. It does **not** widen the derivation:
+``source``/``fact``/``person`` cannot be calibrated against the committed corpus,
+so the disagreement is reported, not corrected. Warn-only, never blocks. Findings
+derivation already reconciled (``matched_model`` present) and ``avoid`` findings
+(whose ``matched`` is not a link tally) are skipped; ``fact`` is *not* skipped —
+it is excluded from the derivation, not from this report.
+
 ## Not gated: fixture validity
 
 Whether a fixture has a committed *passing* run log (proof it is solvable from
@@ -44,6 +62,7 @@ Self-contained — stdlib only. Run by .github/workflows/check-e2e-fixtures.yml.
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -164,6 +183,131 @@ def check_added_runlogs_resolved(added: list[Path]) -> list[str]:
 
 
 # --------------------------------------------------------------------------- #
+# Component-derivation drift check (warn only): a finding's stored `matched`
+# disagrees with the label its own `components` roll up to
+# --------------------------------------------------------------------------- #
+
+# Hand-kept in sync with `derive_matched` in eval/harness/e2e/judge.py. That
+# module imports `anthropic`, so importing it here would drag the harness venv
+# into a check the workflow runs on a bare `python` (stdlib only). The tally is
+# a few lines of pure JSON arithmetic, so it is duplicated rather than imported;
+# e2e-test-spec.md §3.4.2 is the shared contract both obey.
+def derive_matched(components: list[dict] | None) -> str | None:
+    """Roll a finding's ``link`` components up to a ``matched`` label, or return
+    ``None`` when it carries no ``link`` components (nothing to derive).
+
+    - ``false``   — any link contradicted, or no link supported
+    - ``true``    — every link supported
+    - ``partial`` — anything in between
+    """
+    links = [
+        c for c in (components or [])
+        if isinstance(c, dict) and c.get("kind") == "link"
+    ]
+    if not links:
+        return None
+    statuses = [c.get("status") for c in links]
+    if "contradicted" in statuses:
+        return "false"
+    supported = sum(1 for s in statuses if s == "supported")
+    if supported == 0:
+        return "false"
+    if supported == len(statuses):
+        return "true"
+    return "partial"
+
+
+def avoid_finding_ids(slug: str) -> set[str]:
+    """``id``s of ``avoid``-polarity findings in the fixture's
+    expected-findings.json.
+
+    For an ``avoid`` finding ``matched: "true"`` means "correctly declined to
+    assert", which is not a link tally, so the drift check skips them — matching
+    ``apply_component_derivation``'s own polarity exclusion. This is the *only*
+    type/polarity the check skips: the issue's decision is to flag disagreements
+    for **every finding type** (``source``, ``fact`` and ``person`` alike), and
+    only ``avoid``'s ``matched`` semantics make the link tally meaningless. In
+    particular ``fact`` is *not* excluded here — it is excluded from the
+    *derivation* (judge.py), but the report still surfaces its disagreements.
+
+    Returns an empty set when the fixture is missing or its JSON is unreadable or
+    wrong-shaped — the check then evaluates every finding, erring toward
+    surfacing rather than hiding a disagreement."""
+    ef = REPO_ROOT / "eval" / "tests" / "e2e" / slug / "expected-findings.json"
+    try:
+        data = json.loads(ef.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return set()
+    findings = data.get("findings") if isinstance(data, dict) else None
+    if not isinstance(findings, list):
+        return set()
+    return {
+        str(f.get("id"))
+        for f in findings
+        if isinstance(f, dict) and str(f.get("polarity", "recover")) == "avoid"
+    }
+
+
+def check_matched_vs_components(added: list[Path]) -> list[str]:
+    """Warn-only: a PR-added run log whose judge left a finding's ``matched``
+    disagreeing with the label its own ``components`` roll up to.
+
+    ``apply_component_derivation`` reconciles this automatically, but only for
+    ``relationship`` findings (e2e-test-spec.md §3.4.2). A ``source``, ``fact``
+    or ``person`` finding keeps whatever ``matched`` the judge wrote even when its
+    own ``components`` resolve to a different label, and nothing reports it
+    (issue #1721). This surfaces that disagreement, for **every finding type**,
+    without widening the derivation.
+
+    Skipped per finding when: it was already derived (``matched_model`` present —
+    the stored ``matched`` is the derived value), it is an ``avoid`` finding
+    (its ``matched`` is not a link tally), it has no ``matched`` to compare, or
+    it carries no ``link`` components (nothing to derive). ``fact`` is *not*
+    skipped — it is excluded from the derivation, not from this report. Malformed
+    or wrong-shaped logs are skipped, never raised on.
+    """
+    warnings: list[str] = []
+    avoid_by_slug: dict[str, set[str]] = {}
+    for rel in added:
+        try:
+            data = json.loads((REPO_ROOT / rel).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        judge_output = data.get("judge_output")
+        per_finding = (
+            judge_output.get("per_finding") if isinstance(judge_output, dict) else None
+        )
+        if not isinstance(per_finding, list):
+            continue
+        slug = rel.parts[3] if len(rel.parts) >= 4 else ""
+        if slug not in avoid_by_slug:
+            avoid_by_slug[slug] = avoid_finding_ids(slug)
+        avoid_ids = avoid_by_slug[slug]
+        for entry in per_finding:
+            # Short-circuit isinstance first so `in`/`get` never hit a non-dict.
+            if not isinstance(entry, dict) or "matched_model" in entry or "matched" not in entry:
+                continue
+            fid = str(entry.get("finding_id"))
+            if fid in avoid_ids:
+                continue
+            derived = derive_matched(entry.get("components"))
+            if derived is None:
+                continue
+            stored = entry.get("matched")
+            if stored != derived:
+                warnings.append(
+                    f"run log '{rel}' finding {fid}: the judge emitted "
+                    f"matched={stored!r} but its own components resolve to "
+                    f"{derived!r}. Component derivation is relationship-only "
+                    f"(e2e-test-spec.md §3.4.2), so this finding's label was "
+                    f"trusted as the judge wrote it — confirm it is right."
+                )
+    return warnings
+
+
+# --------------------------------------------------------------------------- #
 # CLI
 # --------------------------------------------------------------------------- #
 
@@ -177,6 +321,11 @@ def main() -> int:
     # --- Unresolved-draft check (warn only) — runs first so its output is
     # --- visible even when the blocking gate below fails the job.
     for w in check_added_runlogs_resolved(added):
+        print(f"::warning::{w}")
+        print(f"  ! {w}", file=sys.stderr)
+
+    # --- Component-derivation drift (warn only) — matched vs its own components.
+    for w in check_matched_vs_components(added):
         print(f"::warning::{w}")
         print(f"  ! {w}", file=sys.stderr)
 

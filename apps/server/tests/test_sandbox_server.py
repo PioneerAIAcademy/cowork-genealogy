@@ -327,3 +327,94 @@ def test_heartbeat_keeps_an_idle_socket_warm(ws_server):
             await ws2.close()
 
     asyncio.run(drive())
+
+
+# --- #1126: the two sandbox_server strings a user actually reads ------------
+#
+# Both reach the browser, and `ChatPane` renders the `chat_error` status as
+# `Chat unavailable: ${message}` — so a bare `str(exc)` there put a raw OSError
+# in front of a paying user, which is the leak #1126 closes. Review of #1724
+# found both edits untested: reverting either left all 200 tests green.
+
+
+def _broadcasts(hub) -> list[dict]:
+    """Capture what the Hub would send, instead of opening a socket."""
+    sent: list[dict] = []
+
+    async def fake_broadcast(msg):
+        sent.append(msg)
+
+    hub.broadcast = fake_broadcast
+    return sent
+
+
+def test_a_spawn_failure_does_not_put_the_raw_exception_in_front_of_the_user(monkeypatch):
+    """`ChatPane` prefixes this with "Chat unavailable: ", so whatever is here is
+    read verbatim by the user.
+
+    `monkeypatch`, not `importlib.reload`: reloading the module rebinds the
+    objects other modules already hold, which leaked into `test_v1_api.py` and
+    reddened six unrelated tests when the two files ran in one session.
+    """
+    import app.sandbox_server as ss
+    from app.agent.errors import MISCONFIGURED, UNEXPECTED
+
+    hub = ss.Hub()
+    sent = _broadcasts(hub)
+
+    def boom(*a, **kw):
+        raise OSError(13, "Permission denied: '/usr/bin/python3.12'")
+
+    monkeypatch.setattr(ss.subprocess, "Popen", boom)
+    asyncio.run(hub.ensure_started())
+
+    statuses = [m for m in sent if m.get("type") == "status"]
+    assert statuses, "a failed spawn told the user nothing"
+    message = statuses[-1]["message"]
+    assert message in (MISCONFIGURED, UNEXPECTED), (
+        f"raw exception text reached the user: {message!r}"
+    )
+    assert "Permission denied" not in message
+    assert "/usr/bin" not in message
+
+
+def test_an_agent_exit_keeps_the_retry_framing_and_drops_the_exit_code():
+    """The error event and the chat_error status are ONE bubble to the reader.
+
+    The retry framing is kept — a crashed runner genuinely does respawn on the
+    next message (`send_input`) — but the raw exit code moves to the operator
+    log, and the two must not contradict each other.
+    """
+    import app.sandbox_server as ss
+
+    class FakeProc:
+        def poll(self):
+            return -9
+
+    hub = ss.Hub()
+    proc = FakeProc()
+    hub._proc = proc
+    hub._turn_active = True
+    sent = _broadcasts(hub)
+
+    q: asyncio.Queue = asyncio.Queue()
+    q.put_nowait(None)
+    asyncio.run(hub._pump(q, proc))
+
+    errors = [
+        m for m in sent
+        if m.get("type") == "agent_event" and m["event"].get("kind") == "error"
+    ]
+    assert errors, "the agent died and the user was told nothing"
+    text = errors[-1]["event"]["text"]
+    assert "-9" not in text and "code" not in text.lower(), (
+        f"the raw exit code reached the user: {text!r}"
+    )
+    assert "send another message" in text.lower(), (
+        "the retry framing was lost — a crashed runner does respawn on the next message"
+    )
+
+    statuses = [m for m in sent if m.get("type") == "status"]
+    assert statuses and "-9" not in statuses[-1]["message"]
+    # The turn is unstuck either way, or the UI spins forever.
+    assert hub._turn_active is False

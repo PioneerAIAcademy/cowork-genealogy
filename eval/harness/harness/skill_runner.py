@@ -41,7 +41,11 @@ from claude_agent_sdk import (
 )
 
 from harness.auth import AuthConfig, env_for_sdk
-from harness.context_policy import subagent_only_denial, subagent_only_violation
+from harness.context_policy import (
+    protected_file_denial,
+    subagent_only_denial,
+    subagent_only_violation,
+)
 from harness.mock_mcp import create_mock_server
 from harness.skill_stubs import stub_denial
 
@@ -279,6 +283,14 @@ class SkillRunResult:
     # denied call, and grading routing by transcript inference is what made
     # ut_015 detect the violation ~1-in-8.
     blocked_context_calls: list[dict[str, Any]] = field(default_factory=list)
+    # Raw Write/Edit/NotebookEdit calls to a protected project file
+    # (research.json / tree.gedcomx.json) the main thread tried and was denied,
+    # as {"tool", "args"} (see harness.context_policy.protected_file_denial).
+    # Empty is the healthy case. Like blocked_context_calls, the hook blocks the
+    # call so it never reaches `tool_calls` — this is the only place the raw-write
+    # attempt is visible, and the universal validator asserts it stays empty
+    # (issue #1493).
+    blocked_protected_writes: list[dict[str, Any]] = field(default_factory=list)
     # One entry per Skill call whose input carried the skill name under no key
     # this harness reads, holding that input's actual keys. Non-empty means the
     # SDK's Skill-tool contract moved and `skills_invoked` is undercounting.
@@ -371,6 +383,8 @@ async def run_skill(
     _stub_skills = stub_skills or {}
     # Main-thread calls to subagent-only tools, denied by the hook below.
     blocked_context_calls: list[dict[str, Any]] = []
+    # Raw writes to a protected project file, denied by the hook below.
+    blocked_protected_writes: list[dict[str, Any]] = []
     # Skill calls whose name we couldn't read (see read_skill_tool_input).
     unread_skill_calls: list[list[str]] = []
     # Every built-in (non-MCP) tool call, for telemetry only — see
@@ -431,6 +445,28 @@ async def run_skill(
                 }
             )
             return subagent_only_denial(violation)
+        # Protected-file lockdown: deny a raw Write/Edit/NotebookEdit to
+        # research.json / tree.gedcomx.json — creates included — which must go
+        # through the MCP writer tools that validate before persisting (issue
+        # #1493). Denies identically to the three shipping copies (no
+        # bootstrap-create exemption): `project_create` (#1690) now seeds both
+        # files in one validated call, so no skill raw-creates them. The decision
+        # (protected basename? — with the never-raise fail-open) lives in the
+        # unit-tested `protected_file_denial`; here we only record the block.
+        # Checked BEFORE the max_tool_calls counter for the same reason as the
+        # block above — a denied call never executes, so it must not consume the
+        # budget.
+        protected_denial = protected_file_denial(
+            tool_name, input_data.get("tool_input")
+        )
+        if protected_denial is not None:
+            blocked_protected_writes.append(
+                {
+                    "tool": tool_name,
+                    "args": dict(input_data.get("tool_input") or {}),
+                }
+            )
+            return protected_denial
         # Count MCP tool calls toward max_tool_calls. Block over-limit calls
         # with a permission deny so the SDK doesn't actually execute them; the
         # outer loop reads tool_call_count after the iteration ends and sets
@@ -486,6 +522,15 @@ async def run_skill(
     text_chunks: list[str] = []
     attempted_mcp_calls: list[dict[str, Any]] = []
     usage: dict[str, Any] = {}
+    # Turns counted as they stream, NOT read back off the ResultMessage.
+    # `usage` is populated only in the ResultMessage branch below, and a
+    # wall-clock timeout cancels this coroutine before that message ever
+    # arrives — so on the timeout path `usage` is always `{}` and cannot tell
+    # a run that did work from one that never started. This counter is the
+    # only progress signal that survives cancellation, and the retry guard
+    # in the orchestrator depends on it (`_is_zero_progress_timeout`).
+    # A mutable holder because the nested consumer rebinds `usage` wholesale.
+    turns_seen: dict[str, int] = {"n": 0}
     aborted_reason: str | None = None
     error: str | None = None
     # The query() async generator, hoisted so the finally below can close it
@@ -522,6 +567,7 @@ async def run_skill(
             if routing_resolved["v"]:
                 return
             if isinstance(message, AssistantMessage):
+                turns_seen["n"] += 1
                 for block in message.content:
                     if isinstance(block, TextBlock):
                         text_chunks.append(block.text)
@@ -570,6 +616,13 @@ async def run_skill(
     except asyncio.TimeoutError:
         aborted_reason = "max_wall_clock_seconds"
         error = f"wall-clock timeout after {max_wall_clock_seconds}s"
+        # No ResultMessage arrived (the wait_for cancelled the consumer), so
+        # `usage` is empty. Record the turns actually streamed so the caller
+        # can tell a slow run from one that never started — without this the
+        # orchestrator's zero-progress retry guard would fire on EVERY
+        # wall-clock abort and retry slow tests until the attempt budget ran
+        # out, at 3x the tokens.
+        usage["num_turns"] = turns_seen["n"]
     except _LimitExceeded as e:
         aborted_reason = e.reason
         if e.reason == "sdk_stream_silence":
@@ -627,6 +680,7 @@ async def run_skill(
         error=error,
         attempted_mcp_calls=attempted_mcp_calls,
         blocked_context_calls=blocked_context_calls,
+        blocked_protected_writes=blocked_protected_writes,
         registered_mcp_tools=set(tools_by_name.keys()),
         unread_skill_calls=unread_skill_calls,
         builtin_tool_calls=builtin_tool_calls,

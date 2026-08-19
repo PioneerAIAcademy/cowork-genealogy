@@ -274,7 +274,11 @@ happens to appear:
   Correctness and Completeness are a full pass. Do not lower them because
   the decline was terse, because the skill performed the handoff by
   invoking the correct skill, or because that other skill's work appears
-  in the transcript below. Not doing the under-test skill's task is the
+  in the transcript below. You are grading the *decision* to route, not the
+  work of the skill routed to. Do not fail the base dimensions because the
+  records, translation, or other result the user asked for is missing or thin
+  here — producing it is the routed-to skill's job, graded by its own tests,
+  never here. Not doing the under-test skill's task is the
   correct outcome — do not both credit the routing and penalize the base
   dimensions for "not declining thoroughly enough."
 - **Wrongly performing the task → score 1 (fail).** If the skill instead
