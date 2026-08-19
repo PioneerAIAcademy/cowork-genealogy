@@ -12,13 +12,13 @@
     "totalForPlace": 2,
     "results": [
       {
-        "id": "1401638",
-        "title": "Pennsylvania, Church and Town Records, 1708-1985",
+        "id": "SYNTH-PA-CHURCH",
+        "title": "Pennsylvania, Schuylkill County Church Records (synthetic test fixture)",
         "dateRange": "1708-1985",
         "recordCount": 1245830,
         "personCount": 982415,
         "imageCount": 607220,
-        "url": "https://www.familysearch.org/search/collection/1401638"
+        "url": "https://www.familysearch.org/search/collection/SYNTH-PA-CHURCH"
       },
       {
         "id": "1999196",
