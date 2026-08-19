@@ -61,19 +61,32 @@ objective copied into the title field) is a weakness.
 
 ## Researcher-profile interview & normalization
 
-When the user supplies experience level and subscriptions, are they mapped
+When the user supplies experience level and access, are they mapped
 to the correct `experience_level`, normalized to the canonical subscription
 enum, and stored with the verbatim `narration_guidance` for that level? When
-no answers are available (single-turn), is the documented default used?
+no answers are available (single-turn), is the documented default used? The
+research objective shares this same opening-turn, non-blocking shape (issue
+#1510): when unanswered, does the skill ask it alongside the profile
+questions, proceed in the same pass, and store the generic default rather
+than a hallucinated specific direction?
 
 - **pass:** `experience_level` correct; `subscriptions` normalized to the
   canonical enum (case-folded, aliases mapped, deduped, `["none"]` when none);
   `narration_guidance` is the verbatim table text for the level. Single-turn
   with no answers → `intermediate` / `["none"]` default, noted as editable.
+  Objective defaulting: when no objective is stated, the agent asks in the
+  opening turn, does not block, and writes the stated generic default —
+  never a hallucinated specific direction — in the same single pass as the
+  profile defaults.
 - **partial:** Mapping correct but normalization imperfect (an un-mapped alias,
   a missed dedupe) or `narration_guidance` paraphrased rather than verbatim.
-- **fail:** Wrong experience level, subscriptions left as raw user text, or
-  `narration_guidance` invented rather than drawn from the table.
+  Objective asked and defaulted correctly, but the summary doesn't clearly
+  state it was defaulted.
+- **fail:** Wrong experience level, subscriptions left as raw user text,
+  `narration_guidance` invented rather than drawn from the table, the
+  objective is invented/hallucinated from person data instead of using the
+  generic default, or any of the three questions is silently skipped
+  (asked-and-then-blocked, or defaulted without being asked first).
 
 ## Place standardization
 

@@ -445,7 +445,8 @@ workflow itself or building one of its skills.
 Per-project context about the researcher (experience level, paid
 subscriptions, derived narration guidance) lives in a
 `researcher_profile` section of `research.json`. `init-project` writes
-it after a short two-question interview at project start. Every
+it after a short opening-turn interview, asked non-blocking alongside
+the project's research objective at project start. Every
 `SKILL.md` opens with a one-line `**Narration:**` instruction that
 tells Claude to read `researcher_profile.narration_guidance` and apply
 it as the narration style for that invocation.
