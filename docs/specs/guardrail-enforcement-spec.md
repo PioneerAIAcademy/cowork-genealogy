@@ -999,6 +999,16 @@ this section before reopening one.
   completion instrument — but it is the first of the four, and the route is now
   demonstrated rather than argued.
 
+  **Two things the first paid run taught, both worth keeping.** The agent is
+  pinned to the model the doctrine ran under *before* the fold, not to the model
+  the nearest analogue uses: the 2026-08-19 run pinned `claude-sonnet-5` and so
+  moved the doctrine and changed its executor in one step, which makes a
+  regression unattributable. And the routing skill holds `project_context`
+  only — with a query tool it read `conflicts` itself and concluded a conflict
+  was "collateral" before delegating, deciding the agent's preconditions gate
+  from the one participant that cannot see the evidence. A thin caller needs to
+  be thin in capability, not just in wording.
+
   **This is the only route that reopens §7.** An agent is the one form a
   guardrail skill can take that emits a completion signal (`SubagentStop`) and
   carries an `agent_id`, which is what §7's success gate has never had. Weigh

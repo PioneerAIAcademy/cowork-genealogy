@@ -16,7 +16,6 @@ description: Writes GPS-conformant proof conclusions — selects the tier
   wants to select the next question (use question-selection), or wants to
   classify evidence (use record-extraction, which owns classification).
 allowed-tools:
-  - research_query
   - project_context
 ---
 
@@ -26,7 +25,9 @@ allowed-tools:
 
 ## 1. Identify the question
 
-Resolve the user's request to ONE `q_` id in `research.json`. If the request names no question and more than one is open, ask which before proceeding.
+Resolve the user's request to ONE `q_` id via `project_context`. If the request names no question and more than one is open, ask which before proceeding.
+
+**Read nothing else, and judge nothing.** Do not query assertions, conflicts, person_evidence, or existing summaries, and do not form a view on whether the question is ready to conclude. The preconditions gate — classification, identity links, and unresolved conflicts — belongs to the agent, which declines and routes when it fails. A conflict you judge "collateral" from out here is the gate being decided by the one participant that cannot see the evidence.
 
 ## 2. Delegate the conclusion
 
@@ -55,3 +56,4 @@ Then recommend the next step: more open questions → question-selection; all re
 - Never write `research.json` yourself. The agent writes the summary and the question's resolution together, in one batch — do not resolve the question here, and do not split the two into separate calls.
 - Never resolve a conflict here — recommend conflict-resolution.
 - Never append a second `proof_summary` for a `question_id` that already has one.
+- Never decide, on the agent's behalf, that a precondition does not apply. If the agent declines and routes, relay that — it is the correct outcome, not a failure to work around.

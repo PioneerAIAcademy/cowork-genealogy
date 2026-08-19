@@ -16,7 +16,7 @@ description: >-
   question-selection), or to declare exhaustiveness (research-exhaustiveness
   owns that field). It DOES resolve the question it concluded, in the same
   batch as the summary.
-model: claude-sonnet-5
+model: claude-sonnet-4-6
 tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
