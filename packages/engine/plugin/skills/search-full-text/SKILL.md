@@ -95,9 +95,17 @@ Read `references/query-syntax.md` for operator details and wildcards.
 **Critical rules:**
 - **Always use `+` to require terms.** Default is OR, which returns
   millions of irrelevant results.
-- **Search by name only first.** Do NOT include place in the initial
-  query — place matches collection metadata and causes false
-  positives. Apply place as a post-search filter.
+- **Search by name only first.** Do NOT send `recordPlace0/1/2/3`,
+  `yearFrom`/`yearTo`, or `recordType` on the first `fulltext_search`
+  call for a query — these are post-search filters (see the decision
+  ladder below), whether the value would have gone into `keywords`
+  text or a structured argument; both count as "the initial query."
+  Place risks false positives (matches collection metadata, not
+  document content). Date/record-type risk false negatives instead: a
+  document's real date may not match its collection's metadata date
+  (see references/transcription-quirks.md), so filtering on the first
+  call can silently exclude the right record. Apply all three only
+  once the unfiltered hit count is known.
 - **Do NOT scope a full-text search to a record `collectionId`.** The
   FTS corpus is partitioned into its own auto-generated collections;
   a `collectionId` guessed from `record_search` (or from a collections
