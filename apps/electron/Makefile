@@ -41,14 +41,24 @@ check:                        ## Run typecheck + lint + tests
 build:                        ## Production build (typecheck + compile)
 	npm run build
 
+# Each build target runs check-packaged afterwards. These three shell
+# `npm run build:*`, which is the invocation that shipped an unlaunchable app
+# (#1070) — electron-builder logs the missing dependencies at WARN, so the build
+# succeeds and only this check turns it into a failure.
 build-linux:                  ## Build Linux AppImage
 	npm run build:linux
+	$(MAKE) check-packaged
 
 build-mac:                    ## Build macOS DMG (arm64 + x64)
 	npm run build:mac
+	$(MAKE) check-packaged
 
 build-win:                    ## Build Windows NSIS installer
 	npm run build:win
+	$(MAKE) check-packaged
+
+check-packaged:               ## Verify the packaged app contains its main-process deps
+	node scripts/check-packaged-deps.mjs
 
 preview:                      ## Preview the production build
 	npm start
@@ -75,5 +85,5 @@ clean:                        ## Remove build artifacts
 help:                         ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: dev dev-sample dev-debug dev-debug-sample test test-watch typecheck lint format check build build-linux build-mac build-win preview ab-connect ab-snapshot ab-screenshot ab-tabs clean help
+.PHONY: dev dev-sample dev-debug dev-debug-sample test test-watch typecheck lint format check build build-linux build-mac build-win check-packaged preview ab-connect ab-snapshot ab-screenshot ab-tabs clean help
 .DEFAULT_GOAL := help

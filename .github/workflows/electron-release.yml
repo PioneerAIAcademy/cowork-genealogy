@@ -83,6 +83,19 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # The gate this workflow was missing (#1070). electron-builder logs a
+      # dependency it could not resolve at WARN, so a packaged app with none of
+      # its main-process modules is a GREEN build that opens no window and prints
+      # nothing. Runs on every leg and every trigger — a tag push is exactly when
+      # shipping an unlaunchable artifact costs the most.
+      #
+      # No per-OS asar path: the script finds every app.asar under dist/ itself,
+      # which also covers mac emitting one per architecture, and hard-fails when
+      # it finds none rather than passing on an empty search.
+      - name: Verify the packaged app has its dependencies
+        working-directory: apps/electron
+        run: node scripts/check-packaged-deps.mjs
+
       # Keep the dry-run output so you can download + smoke-test installers
       # straight off the Actions run (only on manual dispatch; tag pushes publish
       # to the Release instead).
