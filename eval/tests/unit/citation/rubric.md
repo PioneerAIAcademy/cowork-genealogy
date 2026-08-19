@@ -34,19 +34,11 @@ Is the source classified at the source level (original/derivative/authored), not
 
 When the skill correctly creates or modifies **no** source (e.g., a URL-only input it cannot persist, or a request it routes elsewhere), there is no `source_classification` to evaluate and no conflation can occur — score this a **pass** (the dimension's failure mode did not arise), not partial. An absent classification that *should* have been present is the only thing that lowers this dimension.
 
+*Note for auditors: this dimension scores 3 whenever no source was created or modified — that is the expected reading on those runs, not evidence that anything was examined. Do not read a run of 3s here as coverage. The sibling invariant that the skill never creates a new `src_` entry is enforced separately and deterministically by `test_does_not_add_new_source_entries`, which runs on every test regardless of this rubric — it is not a graded dimension here.*
+
 - **pass:** `source_classification` reflects the source itself (the death certificate is original); information quality is reserved for assertions (the father's name reported by a son-in-law is secondary). Also pass when no source was created/modified and so none was due.
 - **partial:** Source classification mostly right but blurred in one place (a death certificate labeled "secondary" because the informant was distant).
 - **fail:** The two layers are systematically conflated, or `source_classification` is omitted.
-
-## Does not create new source entries
-
-The skill must only refine existing `src_` entries — it must never create a new source entry, even if the user implies a new record should be added.
-
-*Note for auditors: this dimension is invariant-shaped — it has no partial state, and the routing-independent enforcement is the deterministic validator `test_does_not_add_new_source_entries`. A run of 3s here is the expected reading, not evidence that anything was examined. The same is true of "Source vs information distinction", which scores 3 whenever no source was created or modified. Do not read either dimension as coverage.*
-
-- **pass:** All writes are in-place updates to existing `src_` entries. No new `src_` id appears in `research.json` after the skill runs.
-- **partial:** N/A — this invariant has no partial state.
-- **fail:** A new `src_` entry is created, or the skill attempts to insert a new source into the `sources` array.
 
 ## Source fidelity — no fabricated detail
 
