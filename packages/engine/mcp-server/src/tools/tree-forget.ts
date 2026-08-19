@@ -34,8 +34,7 @@ import type {
 } from "../types/gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import { atomicWriteJson, readProjectJson, fileExists } from "../utils/project-io.js";
-import { formatIssues } from "./merge-shared.js";
+import { atomicWriteJson, readProjectJson, fileExists, formatIssues } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "../utils/date-helpers.js";

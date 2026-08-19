@@ -166,7 +166,10 @@ function setupIPC(): void {
       }
 
       const result = await res.json().catch(() => ({}))
-      return { ok: true, filename: built.filename, ...result }
+      if (result.ok !== true) {
+        throw new Error(`Feedback endpoint rejected the upload: ${result.error || 'unknown error'}`)
+      }
+      return { ok: true, filename: built.filename }
     }
   )
 
