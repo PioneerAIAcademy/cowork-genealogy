@@ -356,9 +356,12 @@ MCP call at 60s (a client-side ceiling this repo does not set and cannot change
 from the plugin or the `.mcpb` — see `docs/architecture.md`, "Other environment
 differences that bite"), so a Cowork transcription slower than a minute is
 aborted long before either budget above fires. Measured over the committed e2e
-corpus (2026-08-17, by then grown to 132 healthy calls from the n=89 that sized
-180s below), 13 (9.8%) ran past 60s — a floor, since the corpus carries no
-bridge hop. The 90/90/180 budgets hold only on the
+corpus as of commit b065b687^ (2026-08-16), 13 of 132 healthy calls (9.8%) ran
+past 60s — a floor, since the corpus carries no bridge hop. Counted by issue
+#1638's script, which is not the method that produced the n=101/n=89 below.
+Re-running it today reports 13 of 144 (9.0%): PR #1682 strips
+`response_summary` past 14 days, so its errored-call filter no longer sees
+most of the corpus. The 90/90/180 budgets hold only on the
 paths that honour them — verified over stdio for the harnesses and the hosted
 control plane; whether the desktop `.mcpb` is bridged too is unverified, so the
 ceiling may apply to every Cowork session. This is a documented

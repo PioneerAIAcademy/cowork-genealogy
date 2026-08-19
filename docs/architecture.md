@@ -1295,7 +1295,8 @@ Other environment differences that bite:
   register the server over stdio and are **not** capped (two committed e2e run
   logs carry `image_transcribe`'s own 180s timeout as a result, so a call ran
   past 60s there). `image_transcribe`'s `OCR_TIMEOUT_MS = 180s` is the first
-  budget this bites (measured 2026-08-17: 9.8% of healthy calls exceed 60s), but
+  budget this bites (9.8% of healthy calls exceed 60s, measured over the corpus
+  as of 2026-08-16 — see the spec's Timeout budget section), but
   it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
   budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
   above the ceiling too. **No automated check reaches this** — neither harness
