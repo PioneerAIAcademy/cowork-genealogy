@@ -1,4 +1,4 @@
-﻿# Translation Rubric
+# Translation Rubric
 
 Grading dimensions for translation unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
