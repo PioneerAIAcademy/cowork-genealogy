@@ -69,7 +69,7 @@ jobs:
           # packages/schema/ mirror skips this job and reports success — the
           # lint dark in exactly the case it exists to catch. engine-tests.yml
           # lists the same path for the same reason.
-          PATTERNS: '^apps/web/|^apps/electron/|^packages/schema/|^packages/viewer-ui/|^docs/specs/schemas/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^turbo\.json$|^tsconfig\.base\.json$|^\.github/workflows/js-tests\.yml$'
+          PATTERNS: '^apps/web/|^apps/electron/|^packages/schema/|^packages/viewer-ui/|^docs/specs/schemas/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^turbo\.json$|^tsconfig\.base\.json$|^\.github/workflows/js-tests\.yml$|^\.github/workflows/electron-release\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \

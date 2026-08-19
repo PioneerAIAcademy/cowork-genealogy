@@ -67,6 +67,21 @@ describe('electron packaging contract (#1070)', () => {
     ).toBe(root.packageManager)
   })
 
+  it('runs the packaged-deps check in the release workflow', () => {
+    // The assertions above guard the build:* scripts, and electron-release.yml
+    // uses NONE of them — it calls `pnpm build && pnpm exec electron-builder`
+    // directly, so it inherits none of that wiring. Its own verify step is the
+    // only thing standing between a tag push and an upload of an app carrying
+    // none of its dependencies, and nothing else asserts that step is still
+    // there.
+    const workflow = readFileSync(join(REPO_ROOT, '.github/workflows/electron-release.yml'), 'utf8')
+    expect(
+      workflow,
+      'electron-release.yml no longer runs check-packaged, so a tag push can upload an ' +
+        'app carrying none of its dependencies (#1070)'
+    ).toContain('npm run check-packaged')
+  })
+
   it('runs the packaged-deps check after every packaging script', () => {
     // The gate is only worth having where the broken invocation actually runs.
     // `build:unpack` is the one the issue reproduces with, and the README points
