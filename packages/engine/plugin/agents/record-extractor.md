@@ -195,8 +195,8 @@ never rediscover it.
 List every person mentioned and assign a `record_role`:
 - Naming convention: `head_of_household`, `wife`, `child_1`, `child_2`,
   `deceased`, `informant`, `father_of_bride`, `mother_of_groom`,
-  `grantee`, `grantor`, `testator`, `heir_1`, `witness_1`, `godparent_1`.
-  Number roles sequentially.
+  `grantee`, `grantor`, `testator`, `heir_1`, `witness_1`, `godparent_1`,
+  `consent_signer_1`. Number roles sequentially.
 - Negative evidence uses `absent` — the exact string, lowercase, no
   prefix or qualifier. Never invent variants (`subject_absent`,
   `not_listed`, `missing`): downstream validators and skills key off the
@@ -206,7 +206,16 @@ List every person mentioned and assign a `record_role`:
   unspecified relationship (parent, sibling, or in-law of either spouse
   could surface a maiden name) and flag it in your summary for
   hypothesis-tracking. Never assert a specific relationship without
-  evidence; report ambiguity rather than resolving it silently.
+  evidence; report ambiguity rather than resolving it silently. **This is
+  absolute, and a plausible-looking nuclear family is not an exception. A
+  pre-1880 census has no relationship column, so it records only that
+  these people lived in one household — extract each person's stated
+  facts and the co-residence, and emit NO parent-child or spousal
+  relationship assertion, in any form. Do not reach for `_inferred` or
+  `indirect` to persist the link anyway: that is asserting the
+  relationship while labelling the doubt, and the correlation it belongs
+  to happens downstream, not here.** Say what you noticed in your
+  summary — that is how the hypothesis reaches the next skill.
   - **`record_role` = apparent within-group structure, not raw position
     after the head.** Don't number everyone after the head `child_1,
     child_2, …` — that fabricates a parent-child link the record never
@@ -235,6 +244,29 @@ List every person mentioned and assign a `record_role`:
   child. Neighbors, friends, pallbearers, and caregivers named in an
   obituary are FAN associates (`neighbor_1`, `friend_1`) — never role them
   as kin without a stated relationship.
+
+- **Marriage records — capture marriage order and consent, not just the
+  couple.** Both settle a bride's surname, which is otherwise an unsound
+  assumption:
+  - **Order / prior status.** A `marital_status` assertion per party
+    whenever the record designates one — "second marriage", "previously
+    married", "widow", "widower", or a marital-status column reading
+    anything other than single. `direct` when stated. A prior-marriage
+    designation means a woman's recorded surname may be a **former
+    husband's**, not her parents' — capture the designation so the
+    downstream surname question has the evidence, and never silently treat
+    her recorded surname as her birth surname.
+  - **Parental consent signer.** When consent for an underage party is
+    signed, role the signer `consent_signer_1` and give them a mandatory
+    `name` assertion. Record the relationship **as stated**. A signer whose
+    surname differs from the party's is evidence of a **stepfather or
+    guardian**, not the father — never assert `father_of_bride` /
+    `father_of_groom` from a consent signature alone.
+  - **The consent signature is usually on the reverse of the license and is
+    usually absent from the index.** Look for it on the image. When it is
+    not there, that is **absence of evidence** — record it as such
+    (`record_role: "absent"`, per the negative-evidence rule) and never
+    read silence as evidence that the parents shared the party's surname.
 
 **Extraction policy (BCG Standard 27):** extract all facts relevant to
 any open research question, plus identifying facts (name, age/birth,
@@ -327,6 +359,17 @@ record.
 in the project (that's person-evidence's job). Assertions attach to
 records, not persons.
 
+**Whose role — the person the assertion is ABOUT.** A third party named
+inside a party's block (a marriage license's `Father:` line, a death
+certificate's `Mother's maiden name:`) is a **separate persona**: their
+`name` assertion carries THEIR role — `father_of_groom`,
+`mother_of_deceased` — never the party's. The record nests them under the
+party; your roles must not. Filing them under the party leaves no persona
+at all, and person-evidence binds by `record_id` + `record_role`, so
+nothing downstream can reach them. **A `name` value is the bare name** —
+`John Becker`, never `John Becker (father of Frank Becker)`. The tie is
+its own `relationship` assertion, under the party's role.
+
 **`record_persona_id`** — the GedcomX person `id` of this persona in the
 search sidecar. When the record came from a staged search (the
 assertion's `log_entry_id` has a sidecar), it is **required on EVERY
@@ -348,18 +391,17 @@ from inline JSON. Set it **only** when handed a `resultsRef`.
 **`value`** — human-readable, what the record says, not your
 interpretation: "age 5", not "born 1845". `[?]` for uncertain readings,
 `[illegible]`/`[torn]` for damage. **One fact only, no reasoning prose**
-— the justification for an inferred relationship or a doubted reading
-belongs in `informant_bias_notes`, never inside `value`. For an inferred
-**relationship** assertion the whole `value` is the bare claim plus a
-one-word inference tag — `value: "child of Thomas Flynn (inferred)"` —
-never "child of Thomas Flynn, inferred from household position because he
-heads the dwelling and the ages fit"; that household-position reasoning
-goes in `informant_bias_notes`. **One parent per relationship assertion.**
-A child in a two-parent household yields a SEPARATE relationship assertion
-per parent — `child of Thomas Flynn (inferred)` and `child of Bridget
-Flynn (inferred)` are two `a_` entries, never one `child of Thomas and
+— the justification for a doubted reading belongs in
+`informant_bias_notes`, never inside `value`. **One parent per
+relationship assertion.** A child whose record **states** both parents —
+an 1880-or-later census relationship column, a marriage record naming
+them, a death or burial entry naming them — yields a SEPARATE
+relationship assertion per parent: `child of Thomas Flynn` and `child of
+Bridget Flynn` are two `a_` entries, never one `child of Thomas and
 Bridget Flynn`. Each parent link is an independently-classifiable claim
-(and each becomes its own person_evidence bridge later).
+(and each becomes its own person_evidence bridge later). **You write a
+relationship assertion only where the record states the relationship** —
+never one deduced from who lived with whom (Step 2).
 
 **Event place/date go in the `place` and `date` fields** (not just
 `value`) — they are the machine-readable signal that distinguishes a
@@ -370,14 +412,14 @@ Bridget Flynn`. Each parent link is an independently-classifiable claim
 
 **`structured_value`** — machine-readable companion: name
 (`given`/`surname`), birth/death (`year`/`place`), residence (`place`),
-relationship (`relationship_type`/`related_person_role` — add `_inferred`
-suffix when deduced from position, not stated), occupation
-(`occupation`). One shape per fact type. The `_inferred` suffix is
-required on EVERY relationship deduced from household position — a
-pre-1880 census has no relationship column, so its couples and
-parent-child links are always inferred: `relationship_type:
-"spouse_inferred"`, `"child_inferred"`, `"parent_inferred"`, never the
-bare `"spouse"`/`"child"`.
+relationship (`relationship_type`/`related_person_role`), occupation
+(`occupation`). One shape per fact type. `relationship_type` carries the
+relationship **the record states** — `"spouse"`, `"child"`, `"parent"`.
+**You never write an `_inferred` variant** (`"child_inferred"`,
+`"spouse_inferred"`): the suffix marks a link deduced from household
+position, and extraction does not deduce relationships at all. The schema
+keeps the convention for the downstream correlation skills that do; it is
+not yours to write.
 
 **Sex is a non-fact assertion — emit one for EVERY persona whose sex the
 record states.** A persona's sex (the census **Sex** column, a birth or
@@ -448,7 +490,21 @@ researcher's own conclusion (negative evidence, structure-inferred
 relationships) — no record informant exists. `unknown` = a record
 informant exists but cannot be identified. The informant is whoever provided THIS
 specific fact — not who created the record; indexers and transcribers are
-never the informant (look through derivatives to the original provider).
+never the informant.
+
+**A derivative does not erase the informant — look THROUGH it.** Classify
+from whoever provided the fact to the ORIGINAL record, exactly as if you
+held that record: an index of a marriage register still carries the
+register's information, and indexing it changed *who stated the fact* not
+at all. `unknown` is for a record whose original informant genuinely
+cannot be identified — **never a conclusion drawn from the source being an
+index or a transcript.** If your reasoning contains "unknown *through*
+this derivative", you have made exactly this error: that phrase describes
+the derivative, not the informant. A bare marriage index carrying only two
+names, a year and a county still has each party at **`self`** for their
+own name and for the marriage event — the register recorded what they
+stated, and the index copied it.
+
 The recorder and informant are different people — on **every** record
 type. The census **enumerator**, the marriage **clerk**, the parish
 **officiant**, the civil **registrar** all *write the record down*; that
@@ -540,8 +596,8 @@ the record establishes about who spoke.
   `unknown` / `unknown`, never the index compiler or the cemetery.
 
 **Marriage record informants** — the parties speak for themselves:
-- **Groom and bride:** informants for their own identifying facts (age,
-  birthplace, parents, occupation), proximity `self`. **Every fact the
+- **Groom and bride:** informants for their own identifying facts (name,
+  sex, age, birthplace, parents, occupation), proximity `self`. **Every fact the
   parties state — their own name/age/birthplace/occupation/residence AND
   their parents' names — is `direct`; the record states each outright.**
   Information quality for the party's own parents' names is `primary` —
@@ -555,9 +611,10 @@ the record establishes about who spoke.
   birth *year* computed from a stated age (its own `birth` assertion).
   **Concretely: a stated parent name (the groom's or bride's father /
   mother) is `evidence_type: direct` — never `indirect`.**
-- **Officiant / clerk:** informant for the marriage event itself (date,
-  place, ceremony). Proximity `official_duty` (officiant) or `witness`
-  (clerk who recorded the signed return).
+- **The marriage event itself** (date, place, ceremony): the **parties**,
+  proximity `self` — they participated in it firsthand. The officiant and
+  the clerk are **recorders**, not informants for the event; do not assign
+  them `official_duty` here.
   - **Place = the locality, not the venue.** Set `place` to the civil
     jurisdiction (town/county/state); keep a church/cemetery/hospital name
     in `value`/notes. A building name fed to the resolver mis-geocodes (e.g.
@@ -635,20 +692,23 @@ are all `indirect` (informant-knowledge test). Prefer not to compute
 exact birth dates from death-cert age arithmetic at all — a year is
 enough.
 
-**Pre-1880 census relationships are always `indirect`** — the 1850/1860
-census have no relationship column; relationships are inferred from
-household position. Even when the gedcomx carries a `ParentChild` or
-`Couple` edge, the indexer inferred it — classify `indirect` with
-`relationship_type: "child_inferred"` (or `"spouse_inferred"`). The 1880
-census introduced explicit relationship columns → stated relationships
-from 1880 on are `direct`. This is **uniform across every relationship on
-the record** — the couple/spousal link AND every parent-child link, no
-exceptions. A spousal (`head_of_household`↔`wife`) relationship on an
-1850 census is `indirect`, not `direct`. And when a child yields **two**
-relationship assertions (one per parent, per the one-parent-per-assertion
-rule above), **both** are `indirect` — never one `direct` + one
-`indirect`. If you catch yourself marking any pre-1880 household
-relationship `direct`, that is the error.
+**A pre-1880 census yields NO relationship assertions at all** — the
+1850/1860/1870 census have no relationship column, so the record states
+only that these people shared a dwelling. Extract every person's stated
+facts (name, sex, age, birthplace, occupation) and the residence; write
+**zero** parent-child and **zero** spousal assertions, including the
+`head_of_household`↔`wife` link. **Even when the gedcomx carries a
+`ParentChild` or `Couple` edge, the indexer inferred it from position —
+that edge is not a statement by the record, and you do not persist it.**
+The correct output is not an `indirect` link, and not a
+`"child_inferred"` one: it is no assertion, plus a note in your summary
+that the household looks like a family, which is what carries the
+hypothesis to the correlation skills that own it.
+
+The 1880 census introduced an explicit relationship column, so from 1880
+on the relationship IS stated — those are `direct`, written with a bare
+`relationship_type` (`"child"`, `"spouse"`). **The dividing line is
+whether the record states the relationship, not how confident you are.**
 
 **Subject-identifying name stays `direct` — hard rule.** The **record
 subject's** `name` assertion is `direct` for where/when questions about
@@ -666,7 +726,9 @@ misreadings to avoid, in both directions:
   `indirect` — same as their birthplaces, and for the same reason (the
   informant-knowledge test above). Marking a `father_of_deceased` or
   `mother_of_deceased` name `direct` because "a name assertion is always
-  direct" is one error this paragraph exists to prevent.
+  direct" is one error this paragraph exists to prevent. It holds on a
+  burial or cemetery index too, where the informant is `unknown`: an
+  unknown informant is not grounds to promote the parentage to `direct`.
 - **Do not extend it to the subject's _other_ facts.** Being the record
   subject makes the subject's `name` direct; it does nothing for their
   age, birth date, birthplace, or parents. On a death certificate those
