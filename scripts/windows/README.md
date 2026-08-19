@@ -34,6 +34,7 @@ there.
 | `make server-test` | `scripts\windows\server-test.bat` | Control-plane tests (pytest) |
 | `make engine-test` | `scripts\windows\engine-test.bat` | Engine unit tests (vitest) |
 | `make eval-ui-test` | `scripts\windows\eval-ui-test.bat` | Eval CRUD UI tests (vitest) |
+| `make judge-report` | `scripts\windows\judge-report.bat` | Non-discrimination scan of the unit eval judge over committed run logs (no API calls) |
 | `make harness-test` | `scripts\windows\harness-test.bat` | Eval harness tests (pytest) |
 | `make harness-lint` | `scripts\windows\harness-lint.bat` | Harness ruff check |
 | `make agent-smoke` | `scripts\windows\agent-smoke.bat` | Plugin agent registration smoke test |

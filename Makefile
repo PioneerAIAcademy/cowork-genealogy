@@ -538,6 +538,13 @@ e2e-author: ## Fixture-authoring script, for developers: make e2e-author ARGS="s
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
 	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
 
+.PHONY: judge-report
+judge-report: ## Non-discrimination scan of the UNIT judge over committed run logs: make judge-report | SKILL=<name>. Reads committed JSON only — no API calls, no cost.
+	# A rubric dimension whose score never varies grades nothing, whatever it is
+	# nominally measuring. Pairs with /audit-rubric, which checks one skill at a
+	# time by LLM judgment; this is the mechanical corpus-wide half.
+	cd eval/harness && uv run python -m judge_report $(if $(SKILL),--skill $(SKILL),) $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-calibrate
 e2e-calibrate: ## Run judge calibration against committed run annotations (maintainer step; needs an API key)
 	cd eval/harness && uv run python -m e2e.calibrate_judge
@@ -609,6 +616,13 @@ e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #
 	cd eval/harness && uv run python -m e2e.nudge_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-detector-diff
+e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API. Reusable across detector corrections: runs a locally-
+	# defined pre-fix replica and the real, current implementation over every
+	# applicable committed run, and reports every run where the two disagree.
+	cd eval/harness && uv run python -m e2e.detector_before_after_report --detector $(DETECTOR) $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-latency
 e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD
