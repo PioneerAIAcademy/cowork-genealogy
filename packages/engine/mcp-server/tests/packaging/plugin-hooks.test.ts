@@ -270,6 +270,24 @@ describe("the guard script's decisions", () => {
     expect(out).toEqual({});
   });
 
+  it("permits the owning agent's real shape — summary + resolve in ONE batch", () => {
+    // This is what the agent actually emits: the conclusion and its question
+    // resolution as one all-or-nothing write. A permit proven only against the
+    // single-op form would leave the shipped call path untested.
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: {
+        ops: [
+          { section: "proof_summaries", op: "append", entry: {} },
+          { section: "questions", op: "update", entryId: "q_001", fields: { status: "resolved" } },
+        ],
+      },
+      agent_id: "agent-1",
+      agent_type: OWNER,
+    });
+    expect(out).toEqual({});
+  });
+
   it.each([
     // Every other section is untouched — only this one is routed.
     ["assertions on the main thread", { section: "assertions", op: "append" }],

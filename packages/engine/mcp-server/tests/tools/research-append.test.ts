@@ -828,6 +828,81 @@ describe("research_append (Phase 3)", () => {
     expect(r.ok && singleOk(r).entryId).toBe("ps_001");
   });
 
+
+  // The conclusion and its resolution are ONE write — the shape proof-conclusion
+  // emits. Both properties below are load-bearing and neither is obvious:
+  //
+  //  - Order matters WITHIN the batch. The resolve gate reads the project as the
+  //    batch applies, not a pre-call snapshot, so the summary op satisfies it for
+  //    an op later in the same call. Reverse them and it refuses.
+  //  - All-or-nothing means a question is never left resolved with nothing behind
+  //    it. That is the reason for one call rather than two.
+  it("accepts a proof summary and its question resolve in ONE batch", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "proof_summaries",
+          op: "append",
+          entry: {
+            question_id: "q_001",
+            tier: "probable",
+            vehicle: "summary",
+            supporting_assertion_ids: ["a_001"],
+            resolved_conflict_ids: [],
+            exhaustive_search_summary: "Searched census + vitals",
+            narrative_markdown: "## Conclusion\n...",
+          },
+        },
+        {
+          section: "questions",
+          op: "update",
+          entryId: "q_001",
+          fields: { status: "resolved", resolution_assertion_ids: ["a_001"] },
+        },
+      ],
+    });
+    expect(r.ok, `batch was refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    const after = await readResearch();
+    expect(after.proof_summaries).toHaveLength(1);
+    expect(after.questions[0].status).toBe("resolved");
+  });
+
+  it("refuses the same two ops in the reverse order, and writes nothing", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "questions",
+          op: "update",
+          entryId: "q_001",
+          fields: { status: "resolved", resolution_assertion_ids: ["a_001"] },
+        },
+        {
+          section: "proof_summaries",
+          op: "append",
+          entry: {
+            question_id: "q_001",
+            tier: "probable",
+            vehicle: "summary",
+            supporting_assertion_ids: ["a_001"],
+            resolved_conflict_ids: [],
+            exhaustive_search_summary: "Searched census + vitals",
+            narrative_markdown: "## Conclusion\n...",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    // The message must teach the ordering, since that is the whole fix.
+    expect(r.errors.join(" ")).toContain("order the proof_summaries append BEFORE");
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
   // docs/specs/guardrail-enforcement-spec.md §5 — tier/exhaustiveness cross-field guardrail.
   it("rejects tier 'proved' when the question's exhaustive_declaration.declared is false", async () => {
     await writeProject(); // phase3Research(): q_001 defaults to exhaustive_declaration.declared: false

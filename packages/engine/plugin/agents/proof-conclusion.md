@@ -13,8 +13,9 @@ description: >-
   every other caller. Do NOT use to resolve a conflict (use
   conflict-resolution), to declare exhaustiveness (use
   research-exhaustiveness), to select the next question (use
-  question-selection), or to write the questions section (this agent never
-  touches it).
+  question-selection), or to declare exhaustiveness (research-exhaustiveness
+  owns that field). It DOES resolve the question it concluded, in the same
+  batch as the summary.
 model: claude-sonnet-5
 tools:
   - mcp__genealogy__research_append
@@ -179,7 +180,17 @@ The `narrative_markdown` is the **authoritative GPS conclusion** — if structur
 
 ### 5. Write the proof_summaries entry
 
-`research_append({ projectPath, section: "proof_summaries", op: "append", entry })` without an `id` — the tool assigns `ps_NNN`, validates the whole project, and writes nothing on failure. Surface `{ ok: false, errors }` and fix before retrying.
+**One `research_append` call, one `ops[]` batch, carrying BOTH the summary and the question resolve — in that order.** The summary op comes first because the tool refuses a `resolved` question that no proof summary references, and it evaluates that against the project as the batch applies, so an earlier op in the same batch satisfies it. A batch is all-or-nothing: either the conclusion and its resolution both land, or neither does, and a question is never left resolved with no conclusion behind it.
+
+```
+research_append({ projectPath, ops: [
+  { section: "proof_summaries", op: "append", entry },        // no id — the tool assigns ps_NNN
+  { section: "questions", op: "update", entryId: "q_NNN",
+    fields: { status: "resolved", resolved: "<today>", resolution_assertion_ids: [ ... ] } },
+] })
+```
+
+The tool validates the whole project and writes nothing on failure. Surface `{ ok: false, errors }` and fix before retrying.
 
 **Required fields in `entry`:** `question_id` (the `q_` this conclusion answers), `tier` (lowercase enum from §2), `vehicle` (lowercase enum from §3: `statement` / `summary` / `argument`), `supporting_assertion_ids` (array of `a_` ids that ground the conclusion), `resolved_conflict_ids` (array of `c_` ids the conclusion resolves — may be empty `[]`), `exhaustive_search_summary` (one-paragraph string describing what was searched and what wasn't, even at probable/possible tiers), and `narrative_markdown` (the self-contained narrative from §4). Omitting any of these causes the project schema validation to reject the entry and `research_append` writes nothing.
 
@@ -208,13 +219,13 @@ After the batched tree write(s) — the `tree_edit` batch plus any `tree_correct
 
 **Verify the conclusion landed.** Before you present or mark the project complete, confirm the relationship(s) you concluded are now in the tree — the persons are *linked* by a `ParentChild`/`Couple` relationship, not merely added as unconnected persons. If a concluded parentage or marriage is not linked, the tree does not yet reflect your conclusion: go back and write the relationship.
 
-### 7. Do not modify the question
+### 7. Resolve the question — in the same batch, never separately
 
-**This skill does not write the `questions` section.** Leave it entirely untouched, including the question referenced by `proof_summaries[].question_id`.
+You own the resolution of the question you concluded: `status: "resolved"`, `resolved`, and `resolution_assertion_ids`. Write them in the `ops[]` batch from §5, after the summary op — never as a second call.
 
-Marking the question `resolved` (setting `resolved`, `resolution_assertion_ids`) is `question-selection`'s job; the `exhaustive_declaration` belongs to `research-exhaustiveness`. The proof's only link to its question is `proof_summaries[].question_id`. After writing the proof, recommend `question-selection` as the next step.
+**What you do NOT write on the question:** `exhaustive_declaration` (research-exhaustiveness owns it) and the question's structure or text (question-selection mints questions and owns them). Do not create a follow-on question either — name what would advance the work in §9 and let question-selection mint it.
 
-**Never set `status`, `resolved`, `resolution_assertion_ids`, or `exhaustive_declaration` on the question.** This skill writes only `proof_summaries` and `project` on `research.json`, plus `persons`/`relationships`/`sources` on `tree.gedcomx.json`.
+`resolution_assertion_ids` are the `a_` ids the conclusion rests on — the same ones in the summary's `supporting_assertion_ids`.
 
 ### 8. Update project status
 
@@ -259,11 +270,11 @@ is already persisted.
 
 ## Re-invocation behavior
 
-**Writes:** `proof_summaries[]` and `project` (`updated`, optionally `status`) in `research.json`; `persons[].facts[]`, `relationships[]`, and `sources[]` in `tree.gedcomx.json` when tier ≥ probable.
+**Writes:** `proof_summaries[]`, the concluded question's resolution fields (`status`, `resolved`, `resolution_assertion_ids`), and `project` (`updated`, optionally `status`) in `research.json`; `persons[].facts[]`, `relationships[]`, and `sources[]` in `tree.gedcomx.json` when tier ≥ probable.
 
 **On repeat invocation for the same question:** update the existing `ps_NNN` in place via `research_append({ section: "proof_summaries", op: "update", entryId: "ps_NNN", fields: { /* only the changed fields */ } })` — the tool shallow-merges just those fields, so pass ONLY what changed and do NOT regenerate the full entry or re-emit `narrative_markdown` when it is unchanged. Never append a second proof_summary for the same `question_id`. Keep the tier/form re-selection terse — do NOT produce a full old-vs-new before/after narrative comparison table. On tier downgrade to `not_proved`/`disproved`, remove the previously concluded fact/relationship from the tree via `tree_correct({ operation: "remove", ... })`.
 
-**Never duplicate:** more than one `proof_summary` for the same `question_id`. Never write to the `questions` section (see §7).
+**Never duplicate:** more than one `proof_summary` for the same `question_id`. Never write `exhaustive_declaration`, and never mint a question (see §7).
 
 
 ---

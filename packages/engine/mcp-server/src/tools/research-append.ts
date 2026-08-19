@@ -362,10 +362,8 @@ function questionResolvedInvariants(entry: any, research: any): string[] {
       "`resolved` date): no proof summary references it. A question is resolved by concluding " +
       "it — invoke proof-conclusion, which writes the proof_summaries entry carrying " +
       "question_id. A question closed with nothing found is still concluded: write a " +
-      "`not_proved` summary saying so. Write the summary FIRST, in its own call, then " +
-      "update the question in a second one — the two cannot share a batch, because the " +
-      "proof_summaries write is routed to the proof-conclusion agent and this update is " +
-      "not, and a batch is all-or-nothing.",
+      "`not_proved` summary saying so. If you are writing both in one batch, order the " +
+      "proof_summaries append BEFORE this update.",
   ];
 }
 

@@ -44,7 +44,7 @@ Then recommend the next step: more open questions → question-selection; all re
 
 ## Re-invocation behavior
 
-**Writes:** nothing directly. Every write is made by the `proof-conclusion` agent this skill delegates to — `proof_summaries[]` and `project` in `research.json`, and `persons[].facts[]`, `relationships[]` and `sources[]` in `tree.gedcomx.json` at tier ≥ probable.
+**Writes:** nothing directly. Every write is made by the `proof-conclusion` agent this skill delegates to — `proof_summaries[]`, the concluded question's resolution fields, and `project` in `research.json`, and `persons[].facts[]`, `relationships[]` and `sources[]` in `tree.gedcomx.json` at tier ≥ probable.
 
 **On repeat invocation for the same question:** delegate again, unchanged. The agent finds the existing `ps_NNN` and updates it in place rather than appending a second summary. Do not pre-check for an existing summary and do not tell the agent to append.
 
@@ -52,6 +52,6 @@ Then recommend the next step: more open questions → question-selection; all re
 
 ## Never
 
-- Never write the `questions` section — not `status`, `resolved`, `resolution_assertion_ids`, or `exhaustive_declaration`. Marking a question resolved is question-selection's job; `exhaustive_declaration` is research-exhaustiveness's.
+- Never write `research.json` yourself. The agent writes the summary and the question's resolution together, in one batch — do not resolve the question here, and do not split the two into separate calls.
 - Never resolve a conflict here — recommend conflict-resolution.
 - Never append a second `proof_summary` for a `question_id` that already has one.
