@@ -403,7 +403,7 @@ re-graded) / `skipped` (the judge never ran).
 | `tool_cap` / `max_turns` | It may be looping — look for repeated tool calls near the end |
 | `cost_cap` | Hit the per-run cost limit |
 | `error` | SDK or harness exception; check `result.error` |
-| `mcp_unavailable` | **The genealogy tools were not in the session — an environment failure, not your fixture. Re-run; do not re-research the case.** You will not find a run log for it: this one writes no files. The abort message itself now prints the server's own captured stderr when the harness found it (issue #1301) — if it didn't, run `make e2e-preflight`, which reads the same log and shows the directory it looked in |
+| `mcp_unavailable` | **The genealogy tools were not in the session — an environment failure, not your fixture. Re-run; do not re-research the case.** You will not find a run log for it: this one writes no files. The abort message itself now prints the server's own captured stderr when the harness found it — if it didn't, run `make e2e-preflight`, which reads the same log and shows the directory it looked in |
 
 Full field reference: spec §8.
 

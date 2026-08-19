@@ -581,7 +581,7 @@ Nothing enforces a budget — see the `max_cost_usd` note in §6 step 5.
    `E2eResult` is constructed, and **the judge is never called**. "This run never
    happened."
 
-   **The printed error can now name the server's own cause (issue #1301).** The
+   **The printed error can now name the server's own cause.** The
    SDK's `stderr:` callback never receives the MCP child's output — verified
    live against claude-agent-sdk 0.1.81, a stub that wrote to stderr and exited
    non-zero produced zero captured lines — so the CLI's per-server JSONL log
