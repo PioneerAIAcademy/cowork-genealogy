@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 
+import e2e.wiki_failure_report as wfr
 from e2e.wiki_failure_report import (
     Call,
     classify,
@@ -228,3 +229,27 @@ def test_scan_counts_a_stripped_run_as_stripped_not_unclassified(tmp_path):
     assert res.calls == []  # nothing classified
     assert res.stripped_calls == 2  # both wiki/pop calls, not the record_search
     assert res.stripped_runs == 1
+
+
+def test_resolve_authors_never_spawns_per_file_when_the_batch_resolved_all(monkeypatch):
+    """The one-shot `git log` resolves every committed run in a single process; the
+    per-file `commit_author` fallback must fire only for a path the batch missed.
+    `setdefault(p, commit_author(p))` evaluated the default eagerly, spawning a git
+    process per run log even for paths already resolved — 72s vs 0.19s over the
+    corpus (florencemashipei's review). This pins that it does not."""
+    rel = "eval/runlogs/e2e/fixture/run-2026-08-01_00-00-00.json"
+    p = wfr.REPO_ROOT / rel
+
+    class _FakeProc:
+        # one commit (author "Ada Lovelace") that added `rel`
+        stdout = f"\x01Ada Lovelace\n{rel}\n"
+
+    monkeypatch.setattr(wfr.subprocess, "run", lambda *a, **k: _FakeProc())
+
+    def _boom(path):
+        raise AssertionError(f"commit_author spawned for {path}; the batch resolved it")
+
+    monkeypatch.setattr(wfr, "commit_author", _boom)
+
+    authors = wfr.resolve_authors([p])
+    assert authors[p] == "Ada Lovelace"

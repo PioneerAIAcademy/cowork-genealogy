@@ -261,7 +261,13 @@ def resolve_authors(paths: list[Path]) -> dict[Path, str]:
             # the earliest add, which is exactly `commit_author`'s answer.
             authors[p] = current
     for p in paths:
-        authors.setdefault(p, commit_author(p))
+        # NOT `setdefault(p, commit_author(p))`: setdefault evaluates its default
+        # eagerly, so it would spawn a git process for every path even when the
+        # batch already resolved it — defeating the one-shot `git log` above
+        # (~72s vs 0.19s over the corpus). Only the paths the batch missed pay for
+        # a per-file resolve.
+        if p not in authors:
+            authors[p] = commit_author(p)
     return authors
 
 

@@ -378,12 +378,23 @@ def test_resolve_base_prefers_the_per_user_override(monkeypatch, tmp_path):
 
 def test_resolve_base_falls_back_to_the_ts_default(monkeypatch, tmp_path):
     """With no override, the compiled-in TS default is the source of truth, so a
-    rotation of that constant is followed without editing this file."""
+    rotation of that constant is followed without editing this test: it asserts the
+    resolver returns whatever the TS currently declares, not a fixed URL."""
+    import re
+
     monkeypatch.setattr(pf, "FS_CONFIG", tmp_path / "absent.json")
     got = pf._resolve_service_base(
         "wikiApiUrl", pf._WIKI_CONFIG_TS, "DEFAULT_WIKI_API_URL"
     )
-    assert got and got.startswith("https://") and got.endswith("/wiki")
+    declared = (
+        re.search(
+            r'DEFAULT_WIKI_API_URL\s*=\s*"([^"]+)"',
+            pf._WIKI_CONFIG_TS.read_text(encoding="utf-8"),
+        )
+        .group(1)
+        .rstrip("/")
+    )
+    assert got == declared and got.startswith("https://")
 
 
 def test_main_passes_skip_through_without_failing_or_warning(monkeypatch, capsys):
