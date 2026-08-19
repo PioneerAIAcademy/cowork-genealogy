@@ -17,7 +17,6 @@
 // incident), instead of merely prose-forbidden from it.
 
 import { join } from "path";
-import { readFile } from "fs/promises";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -29,8 +28,7 @@ import type {
 } from "../types/gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import type { ValidationError } from "../validation/types.js";
-import { atomicWriteJson, backupIfExists } from "../utils/project-io.js";
+import { atomicWriteJson, backupIfExists, readProjectJson, formatIssues } from "../utils/project-io.js";
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
 import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
@@ -154,21 +152,11 @@ function gateOperation(operation: string | undefined, gate: OpGate): void {
   throw new TreeEditError(`unknown operation '${operation}'`);
 }
 
-function formatIssues(issues: ValidationError[]): string[] {
-  return issues.map((e) => (e.path ? `${e.path}: ${e.message}` : e.message));
-}
-
 async function readJson(projectPath: string, filename: string): Promise<any> {
-  let text: string;
   try {
-    text = await readFile(join(projectPath, filename), "utf-8");
-  } catch {
-    throw new TreeEditError(`${filename} not found in projectPath`);
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new TreeEditError(`${filename} is not valid JSON`);
+    return await readProjectJson(projectPath, filename);
+  } catch (e) {
+    throw new TreeEditError(e instanceof Error ? e.message : String(e));
   }
 }
 
