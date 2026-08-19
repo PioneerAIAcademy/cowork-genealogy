@@ -8,10 +8,17 @@
  * build stays GREEN, electron-builder logs `cannot find path for dependency` at
  * **warn**, and the installed app opens no window and prints nothing.
  *
- * Measured on this branch (macOS, `--dir`, electron-builder 26.15.3):
- * `npm run build:unpack` without the `packageManager` field produced an asar with
- * 105 packages and all 5 runtime dependencies missing, 0 renderer helpers;
- * with it, 124 packages, all present, 3 helpers. Same tree, same command.
+ * Measured on this branch by running both builds back to back (macOS, `--dir`,
+ * electron-builder 26.15.3, counts from this script after its scope-directory
+ * miscount was fixed):
+ *
+ *   without the `packageManager` field -> 102 packages, 5 of the 7 declared
+ *     dependencies absent, and `cannot find path for dependency` in the log.
+ *     The 2 that survive are the `workspace:*` packages, which is where the
+ *     issue's original "five" figure comes from.
+ *   with it -> 120 packages, all 7 present, no warning.
+ *
+ * Same tree, same command, the field the only difference.
  *
  * **Why it compares declared dependencies rather than scanning the bundle for
  * `require()` calls.** The scan was the first design and it had a silent no-op:
@@ -35,7 +42,7 @@
  * second one.
  */
 
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -44,50 +51,89 @@ const require = createRequire(import.meta.url)
 const HERE = dirname(fileURLToPath(import.meta.url))
 const APP_ROOT = resolve(HERE, '..')
 
+/** The app's own package.json. */
+function appPackage() {
+  return JSON.parse(readFileSync(join(APP_ROOT, 'package.json'), 'utf8'))
+}
+
 /** Runtime dependencies the packaged app must carry. */
-function declaredDependencies() {
-  const pkg = JSON.parse(readFileSync(join(APP_ROOT, 'package.json'), 'utf8'))
+function declaredDependencies(pkg) {
   return Object.keys(pkg.dependencies ?? {}).sort()
 }
 
-/** Every `app.asar` under `dir`, depth-first. */
-function findAsars(dir, depth = 0) {
-  if (depth > 8 || !existsSync(dir)) return []
+/**
+ * The `main` entry, as the asar spells it: `./out/main/index.js` -> `/out/main/index.js`.
+ *
+ * Checked because every dependency directory can be present while the app's own
+ * main bundle is absent — `build:mac` and `build:linux` reach electron-builder
+ * even when `electron-vite build` emitted nothing useful, and a dependency-only
+ * check calls that artifact OK.
+ */
+function entryPointPath(pkg) {
+  const main = pkg.main ?? 'index.js'
+  return '/' + main.replace(/^\.?\//, '')
+}
+
+const MAX_DEPTH = 12
+
+/**
+ * Every `app.asar` under `dir`, depth-first, plus every subtree we could NOT
+ * look inside.
+ *
+ * Returning the skips is the whole point. An earlier version swallowed a
+ * `readdir` failure and returned empty, which only fails loudly at depth 0 —
+ * deeper down it meant an unreadable subtree vanished and the run could still
+ * exit 0 while that architecture shipped broken. A mac build emits one asar per
+ * arch, so "one leg unreadable, the other fine" is a real path, and a check that
+ * reports OK there is worse than no check at all.
+ *
+ * `withFileTypes` gives the entry kind from the single `readdir`, so there is no
+ * per-entry `stat`, and symlinks are never followed: an `app.asar` is always a
+ * real file, while `Electron Framework.framework` links back through
+ * `Versions/Current` and would otherwise be walked repeatedly.
+ */
+function findAsars(dir, depth = 0, skipped = []) {
+  if (depth > MAX_DEPTH) {
+    skipped.push(`${dir} (deeper than ${MAX_DEPTH} levels)`)
+    return { found: [], skipped }
+  }
   const found = []
   let entries
   try {
-    entries = readdirSync(dir)
-  } catch {
-    // Not a directory, or unreadable. Returning empty lands on the no-asar
-    // branch below, which FAILS — never on a silent pass.
-    return []
+    entries = readdirSync(dir, { withFileTypes: true })
+  } catch (err) {
+    skipped.push(`${dir} (${err.code ?? err.message})`)
+    return { found, skipped }
   }
   for (const entry of entries) {
-    const full = join(dir, entry)
-    let stats
-    try {
-      stats = statSync(full)
-    } catch {
-      continue // a broken symlink inside a .app bundle is not our problem
-    }
-    if (stats.isDirectory()) found.push(...findAsars(full, depth + 1))
-    else if (entry === 'app.asar') found.push(full)
+    const full = join(dir, entry.name)
+    if (entry.isSymbolicLink()) continue
+    if (entry.isDirectory()) found.push(...findAsars(full, depth + 1, skipped).found)
+    else if (entry.name === 'app.asar') found.push(full)
   }
-  return found
+  return { found, skipped }
 }
 
-/** Top-level package names present in the asar's own `node_modules`. */
-function packagesInAsar(asarPath) {
+/** Top-level package names in the asar's `node_modules`, and whether `entry` is present. */
+function inspectAsar(asarPath, entry) {
   const asar = require('@electron/asar')
   const names = new Set()
+  let hasEntry = false
   for (const file of asar.listPackage(asarPath, { isPack: false })) {
+    if (file.replace(/\\/g, '/') === entry) hasEntry = true
     // The `[/\\]` alternation is load-bearing, not defensive: `listFiles` builds
     // each entry with `path.join`, so a Windows run yields `\node_modules\foo`
     // while macOS and Linux yield `/node_modules/foo`.
-    const match = file.match(/^[/\\]node_modules[/\\]((?:@[^/\\]+[/\\])?[^/\\]+)/)
+    // Two explicit arms rather than an optional scope group: with the group
+    // optional, `/node_modules/@genealogy` — the scope DIRECTORY, which
+    // `listFiles` emits before its children — fell through to the unscoped arm
+    // and was counted as a package. That inflated every number this check
+    // printed by the number of scopes present (4 on this tree: 124 reported,
+    // 120 real).
+    const match = file.match(/^[/\\]node_modules[/\\](@[^/\\]+[/\\][^/\\]+|[^@][^/\\]*)/)
     if (match) names.add(match[1].replace(/\\/g, '/'))
   }
-  return names
+  return { names, hasEntry }
 }
 
 function main(argv) {
@@ -102,7 +148,25 @@ function main(argv) {
     return 2
   }
 
-  const asars = target.endsWith('.asar') ? [target] : findAsars(target)
+  let asars, skipped
+  if (target.endsWith('.asar')) {
+    asars = [target]
+    skipped = []
+  } else {
+    ;({ found: asars, skipped } = findAsars(target))
+  }
+
+  if (skipped.length > 0) {
+    // Not a warning. An unread subtree is an unchecked artifact, and reporting
+    // OK beside it is the "reads as coverage" failure this check exists to stop.
+    console.error(
+      `check-packaged-deps: FAIL — ${skipped.length} subtree(s) under ${target} could not be ` +
+        'searched, so an app.asar may have gone uninspected:\n' +
+        skipped.map((entry) => `    - ${entry}`).join('\n')
+    )
+    return 2
+  }
+
   if (asars.length === 0) {
     // The load-bearing failure. A check that silently inspects nothing reads as
     // coverage and is worse than no check at all.
@@ -114,7 +178,9 @@ function main(argv) {
     return 2
   }
 
-  const declared = declaredDependencies()
+  const pkg = appPackage()
+  const declared = declaredDependencies(pkg)
+  const entry = entryPointPath(pkg)
   if (declared.length === 0) {
     console.error(
       'check-packaged-deps: apps/electron/package.json declares no dependencies.\n' +
@@ -127,9 +193,9 @@ function main(argv) {
   let failed = false
   for (const asarPath of asars) {
     const label = asarPath.startsWith(APP_ROOT) ? asarPath.slice(APP_ROOT.length + 1) : asarPath
-    let present
+    let present, hasEntry
     try {
-      present = packagesInAsar(asarPath)
+      ;({ names: present, hasEntry } = inspectAsar(asarPath, entry))
     } catch (err) {
       // A truncated or corrupt archive is a packaging failure in its own right,
       // and it must not stop the other architectures being inspected — a mac
@@ -142,6 +208,14 @@ function main(argv) {
       continue
     }
     const missing = declared.filter((name) => !present.has(name))
+    if (!hasEntry) {
+      failed = true
+      console.error(
+        `\ncheck-packaged-deps: FAIL — ${label}\n  the app's own entry point ${entry} ` +
+          '(package.json "main") is not in the archive.\n  Every dependency can be ' +
+          'present and the app still opens nothing without it.'
+      )
+    }
     if (missing.length > 0) {
       failed = true
       console.error(
@@ -159,10 +233,10 @@ function main(argv) {
           'not just build,\n' +
           '  `dist/` is stale — remove it and package again.'
       )
-    } else {
+    } else if (hasEntry) {
       console.log(
         `check-packaged-deps: OK — ${label} (${present.size} packages, all ` +
-          `${declared.length} declared dependencies present)`
+          `${declared.length} declared dependencies present, ${entry} present)`
       )
     }
   }

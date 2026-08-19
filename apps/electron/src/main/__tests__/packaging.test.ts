@@ -43,7 +43,11 @@ describe('electron packaging contract (#1070)', () => {
     // file — and most likely still pass, which is the shape of check that reads
     // as coverage while verifying nothing.
     expect((readPkg(APP_ROOT) as { name?: string }).name).toBe('@genealogy/electron')
-    expect((readPkg(REPO_ROOT) as { name?: string }).name).toBeTruthy()
+    // Exact, not just truthy: REPO_ROOT is derived (`../..`), not verified, so a
+    // truthy check would still pass if the app ever moved a level and some other
+    // package.json sat two up — and the packageManager equality below would then
+    // be asserting against an unrelated file while reading as coverage.
+    expect((readPkg(REPO_ROOT) as { name?: string }).name).toBe('cowork-genealogy-monorepo')
   })
 
   it('declares packageManager, matching the workspace root exactly', () => {
@@ -74,6 +78,20 @@ describe('electron packaging contract (#1070)', () => {
         scripts[name],
         `${name} does not run check-packaged, so it can ship an unlaunchable app silently`
       ).toContain('check-packaged')
+      // The clean is a precondition of the check, not tidiness: the check
+      // inspects EVERY app.asar under dist/, so a stale bundle left by an
+      // earlier build of a different target either dilutes the signal or fails
+      // a perfectly good build. Nothing else guards it.
+      expect(
+        scripts[name],
+        `${name} does not clean dist first, so the check can read a stale artifact`
+      ).toContain('clean:dist')
+      // Both release targets once called electron-vite directly and packaged
+      // without a typecheck, while build:win did not. A type error must not be
+      // able to reach an installer on one platform only.
+      expect(scripts[name], `${name} skips the typecheck that 'npm run build' performs`).toContain(
+        'npm run build'
+      )
     }
   })
 

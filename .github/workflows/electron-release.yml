@@ -119,4 +119,9 @@ jobs:
         with:
           name: ${{ matrix.target }}-dist
           path: apps/electron/dist/**
-          if-no-files-found: error
+          # `warn`, not `error`. This step now runs on failure too (so a failed
+          # verify still hands you the artifact to inspect), and the common
+          # failure is the BUILD failing before dist/ exists at all — where
+          # `error` would add a second red step blaming a missing artifact
+          # instead of the typecheck error that actually broke it.
+          if-no-files-found: warn

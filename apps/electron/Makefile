@@ -81,8 +81,12 @@ ab-tabs:                      ## List all targets (windows, webviews)
 
 # ── Utilities ───────────────────────────────────────────
 
+# Delegates dist/ to the npm script so there is ONE implementation: `rm -rf` is
+# not usable on the Windows-based half of this team, and `clean:dist` is the
+# portable one the build scripts already call.
 clean:                        ## Remove build artifacts
-	rm -rf out dist
+	npm run clean:dist
+	node -e "require('node:fs').rmSync('out', { recursive: true, force: true })"
 
 help:                         ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}'
