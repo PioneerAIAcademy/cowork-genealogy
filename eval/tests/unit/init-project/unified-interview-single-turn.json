@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_init_project_wzk",
+    "skill": "init-project",
+    "name": "All three opening-turn questions answered together need no follow-up",
+    "type": "positive",
+    "description": "Single-turn decomposition extended to all three opening-turn questions at once: the user states the research objective, experience level, and access all in the first message, so nothing needs asking or defaulting. Tests that init-project recognizes and normalizes all three from one message and completes in a single pass with no unnecessary questions.",
+    "tags": ["initialization", "opening-turn", "single-turn-decomposition", "issue-1510"]
+  },
+  "input": {
+    "user_message": "init-project: Start a new project for FamilySearch ID LZNY-BRF. I want to identify his parents. About me: I'm experienced, and I have a paid Ancestry subscription.",
+    "scenario": null
+  },
+  "mcp_fixtures": ["person-read-flynn"],
+  "judge_context": [
+    "The stored objective should reflect 'identify his parents' -- a specific, user-stated objective, not the generic default.",
+    "`researcher_profile.experience_level` should be `experienced`.",
+    "`researcher_profile.subscriptions` should be normalized to `[\"Ancestry\"]`.",
+    "`researcher_profile.narration_guidance` should be the verbatim experienced-level text: 'No preambles. Do the work and report results concisely. Assume fluency with GPS and standard genealogy terminology.'",
+    "None of the three defaults (generic objective, `intermediate`, `[\"none\"]`) should be used or mentioned as assumed, since the user answered all three in the opening message.",
+    "Should create both research.json and tree.gedcomx.json in this single pass, seeding the Patrick Flynn stub from person-read-flynn.",
+    "Should not re-ask any of the three questions -- they were all already answered."
+  ]
+}

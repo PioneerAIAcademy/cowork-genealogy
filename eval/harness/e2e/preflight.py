@@ -13,6 +13,14 @@ Checks, in order:
   3. Anthropic API key    — ANTHROPIC_API_KEY in env or eval/.env
   4. Harness deps synced  — claude_agent_sdk + anthropic importable
   5. MCP server connects  — the CLI reports the genealogy server `connected`
+  6. Wiki + pop services  — the wiki-query-api and Pop Stats bases answer (WARN only)
+
+Check 6 is WARN-only by design (issue #1552): the services are a public tailnet
+that is *expected* to be reachable, but a per-machine setup defect silently fails
+a large share of wiki/pop-stats calls — the agent then ships a thinner locality
+answer and the operator sees nothing. A warning up front spares an hour spent on
+a run whose locality half will be empty. It never FAILs, because a run without
+these services is degraded, not aborted.
 
 Checks 1-4 are static: they read files and import modules. **Check 5 is not**
 — it spawns a local Claude Code CLI, which spawns the MCP server, and asks the
@@ -53,6 +61,15 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 FS_TOKENS = Path.home() / ".familysearch-mcp" / "tokens.json"
 MCP_BUILD = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.js"
 ENV_FILE = REPO_ROOT / "eval" / ".env"
+
+# Check 6 (#1552). The wiki/pop base URLs resolve exactly as the tools do: a
+# per-user override in ~/.familysearch-mcp/config.json wins, else the compiled-in
+# default read straight from the TS source, so a rotated default is followed
+# without duplicating it here.
+FS_CONFIG = Path.home() / ".familysearch-mcp" / "config.json"
+_WIKI_CONFIG_TS = REPO_ROOT / "packages" / "engine" / "mcp-server" / "src" / "auth" / "config.ts"
+_POP_CONFIG_TS = REPO_ROOT / "packages" / "engine" / "mcp-server" / "src" / "tools" / "place-population.ts"
+_WIKI_POP_TIMEOUT_S = 5.0
 
 # Ceiling on the whole live connection check, CLI spawn included, because a
 # preflight that hangs is worse than one that lies: an operator can act on a
@@ -511,14 +528,106 @@ def _check_mcp_connection(
     )
 
 
+def _resolve_service_base(config_key: str, ts_file: Path, ts_const: str) -> str | None:
+    """The base URL a wiki/pop tool would use: per-user override, else the TS
+    default. None when neither can be read (then the check WARNs, never FAILs).
+    """
+    import json
+
+    try:
+        if FS_CONFIG.exists():
+            val = json.loads(FS_CONFIG.read_text(encoding="utf-8")).get(config_key)
+            if isinstance(val, str) and val.strip():
+                return val.strip().rstrip("/")
+    except (OSError, ValueError):
+        pass
+    import re
+
+    try:
+        m = re.search(rf'{ts_const}\s*=\s*"([^"]+)"', ts_file.read_text(encoding="utf-8"))
+        if m:
+            return m.group(1).rstrip("/")
+    except OSError:
+        pass
+    return None
+
+
+def _probe_url(url: str) -> tuple[bool, str]:
+    """(reachable, detail) for a plain GET. ANY HTTP answer — even 404/405 for a
+    bare GET against an API root — proves reachability; only a transport failure
+    (refused, DNS, timeout) means unreachable."""
+    import socket
+    import urllib.error
+    import urllib.request
+
+    # `urlopen(timeout=)` bounds connect/read but NOT DNS resolution, so a
+    # blackholed resolver would stall past it. Bound getaddrinfo too by setting
+    # the socket default for the duration of the probe, then restoring it.
+    prev = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(_WIKI_POP_TIMEOUT_S)
+    try:
+        with urllib.request.urlopen(url, timeout=_WIKI_POP_TIMEOUT_S) as r:
+            return True, f"HTTP {getattr(r, 'status', '?')}"
+    except urllib.error.HTTPError as e:
+        return True, f"HTTP {e.code}"
+    except Exception as e:  # noqa: BLE001 — URLError, timeout, anything: unreachable
+        return False, type(e).__name__
+    finally:
+        socket.setdefaulttimeout(prev)
+
+
+def _check_wiki_pop_services(
+    prober: Callable[[str], tuple[bool, str]] | None = None,
+) -> tuple[str, str]:
+    """Warn if the wiki-query-api or Pop Stats base is unreachable from here.
+
+    WARN-only (issue #1552): a run without these services still produces an
+    answer, just a thinner locality half, so this must never block a run the way
+    a missing token does. `prober` is injectable so tests never hit the network.
+    """
+    probe = prober or _probe_url
+    targets = [
+        ("wiki-query-api", _resolve_service_base("wikiApiUrl", _WIKI_CONFIG_TS, "DEFAULT_WIKI_API_URL")),
+        ("Pop Stats", _resolve_service_base("popStatsUrl", _POP_CONFIG_TS, "DEFAULT_POP_STATS_URL")),
+    ]
+    unresolved = [name for name, base in targets if not base]
+    if unresolved:
+        return (
+            "WARN",
+            f"Could not resolve the {', '.join(unresolved)} base URL, so "
+            "reachability was not checked. Green elsewhere does not prove these "
+            "services are reachable.",
+        )
+
+    details, unreachable = [], []
+    for name, base in targets:
+        ok, info = probe(base)  # type: ignore[arg-type]  # base is not None here
+        details.append(f"{name} {info}")
+        if not ok:
+            unreachable.append(name)
+
+    if unreachable:
+        return (
+            "WARN",
+            "The wiki and population services are not reachable from this "
+            "machine, so wiki_search / wiki_read / wiki_place_page / "
+            "place_population will fail for the whole run and the locality half "
+            "of the answer will be empty. This is expected to work — report it "
+            f"before spending an hour on this run. ({'; '.join(details)})",
+        )
+    return ("OK", f"Wiki + population services reachable ({'; '.join(details)})")
+
+
 CHECKS = [
     ("FamilySearch login", _check_fs_token),
     ("Built MCP server", _check_mcp_build),
     ("Anthropic API key", _check_api_key),
     ("Harness deps synced", _check_harness_deps),
-    # Last: it is the only check that spawns a process, and it depends on the
-    # three above having passed.
+    # The only check that spawns a process, and it depends on the three above.
     ("MCP server connects", _check_mcp_connection),
+    # A lightweight network probe (issue #1552). WARN-only, so it sits after the
+    # process-spawning check and can never turn a degraded run into a blocked one.
+    ("Wiki + population services", _check_wiki_pop_services),
 ]
 
 

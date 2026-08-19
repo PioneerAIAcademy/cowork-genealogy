@@ -210,7 +210,7 @@ to get the actual distance in kilometers. Compare the result against era travel 
 (pre-1830: ~30-50 km/day; 1830-1870: rail where available; 1870+:
 extensive rail networks). A quantified distance strengthens or
 eliminates a travel-impossibility argument far more than a subjective
-description of "distant locations."
+description of "distant locations." As a rule of thumb, events within ~20 miles (32 km) of each other were plausibly the same community. Where origins are farther apart, consider whether a market town, county seat, or transport hub between them could serve as a meeting point. Terrain often constrains movement more than straight-line distance: a river crossing or mountain pass can make 10 miles more limiting than 30 miles of open road.
 
 **For date conflicts that a calendar transition might explain:** when
 you suspect the discrepancy is a Julian→Gregorian artifact rather than a
@@ -331,14 +331,12 @@ resolution patterns:
    whether events cohere into one life
 4. Check: do the ages fit? Do the locations make sense? Are there
    impossibilities?
-5. A **patronymic mismatch is a different-person signal, never a
-   spelling variant.** In patronymic naming (Scandinavian -sen/-datter,
+5. A **patronymic mismatch is a different-person signal — never a spelling variant in true patronymic systems.** In patronymic naming (Scandinavian -sen/-datter,
    -son/-dotter, and similar) the surname encodes the *father's* given
    name, so two records giving the "same" person different patronymics
    name different fathers — treat that as evidence of distinct people,
    not a surname variant to smooth over. (The Americanized/farm surname
-   an emigrant later adopts is separate from, and does not resolve,
-   the patronymic.)
+   an emigrant later adopts is separate from, and does not resolve, the patronymic. Iberian naming — Spanish and Portuguese two-surname systems — follows different rules and variation there does not carry the same implication.)
 
 **Do not confirm identity by the absence of an alternative.** Not
 finding a competing same-name candidate in a later record is not

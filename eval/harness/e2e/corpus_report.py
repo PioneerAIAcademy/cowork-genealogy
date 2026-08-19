@@ -243,7 +243,19 @@ def tally(paths: list[Path]) -> Tally:
             verdict, compliance_axis, outcome = axes_from_runlog(data)
             violations = violations_of(data)
             hits = bash_protected_hits(data, path)
-        except (OSError, json.JSONDecodeError, TypeError, AttributeError) as e:
+        except (
+            OSError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+            TypeError,
+            AttributeError,
+        ) as e:
+            # `UnicodeDecodeError` is a `ValueError`, not a `JSONDecodeError`, and
+            # `read_text` decodes before `json` sees the bytes — so without it one
+            # file truncated mid-character aborts the whole sweep with a traceback
+            # instead of being named and skipped. Same hole found in
+            # `judge_report.py`, which cites this function as its precedent (#1485
+            # review); fixed in both so the precedent is one worth citing.
             problems.append(f"{path}: {e}")
             continue
         recall[verdict] += 1

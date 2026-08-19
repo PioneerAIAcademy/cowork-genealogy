@@ -740,3 +740,37 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
         f"({len(blocked_context_calls)} call(s), denied by the hook). "
         f"Delegate to the owning subagent — {fixes}."
     )
+
+
+def test_no_raw_writes_to_protected_files(blocked_protected_writes):
+    """No raw Write/Edit/NotebookEdit hit research.json / tree.gedcomx.json.
+
+    Those two documents must be written only through the MCP writer tools
+    (research_append, research_log_append, tree_edit, tree_correct), which
+    validate, allocate ids, and keep a `.bak` before persisting. A direct file
+    write skips all of that. The rule ships as a PreToolUse deny in Cowork, the
+    hosted control plane, and the e2e harness; this validator is the unit tier's
+    half of it (issue #1493).
+
+    Deterministic, like `test_no_main_thread_subagent_only_calls`: the hook
+    denies the write and records it here, so a raw-write attempt is caught
+    mechanically rather than left to the judge — and because the hook blocks the
+    call, the attempt never reaches `tool_calls`, so this list is the only place
+    it is visible. Empty is the healthy case.
+    """
+    if not blocked_protected_writes:
+        return
+
+    offending = sorted(
+        {
+            f"{c.get('tool', '?')} → {(c.get('args') or {}).get('file_path', '?')}"
+            for c in blocked_protected_writes
+        }
+    )
+    raise AssertionError(
+        f"raw write(s) to a protected project file, denied by the hook "
+        f"({len(blocked_protected_writes)} call(s)): {'; '.join(offending)}. "
+        f"Route writes to research.json / tree.gedcomx.json through the writer "
+        f"tools (research_append, research_log_append, tree_edit, tree_correct), "
+        f"which validate before persisting."
+    )
