@@ -369,6 +369,19 @@ Scope and record-keeping:
   `avoid` findings are also untouched — there `matched: "true"` means
   "correctly declined to assert", which is not a component tally, and
   §3.4.1's guard owns them.
+
+  `source` and `person` findings are **reported, not derived**. The
+  derivation is not widened to them: the committed corpus cannot calibrate
+  that widening — `source` is 3 of 261 findings, only 2 distinct ones under
+  human grade, so a `calibrate_judge` re-run could move at most a handful of
+  graded labels and would read as validation it cannot supply. Instead,
+  `check_e2e_fixtures.py`'s component-derivation drift check **warns** (never
+  blocks) when a PR-added run log leaves *any* finding's `matched` disagreeing
+  with `derive_matched` of its own `components` — **every finding type** — so
+  the reviewer sees the mislabel the relationship-only derivation would
+  otherwise miss. `fact` stays excluded from the *derivation* on its own
+  2026-08-10 measurement, but the drift check still reports its disagreements.
+  Whoever proposes widening the derivation again is standing here.
 - What was overridden is recorded under
   `judge_output.component_derivation.overrides` (each with `finding_id`,
   the model's `model` label and the `derived` one), the model's original
@@ -829,7 +842,11 @@ post-hoc by `find_protected_writes_by_unnamed_delegate`
 (guardrail-enforcement-spec §11). That detector lists a main-thread
 call among its "legitimate" cases, but only as an attribution class (a
 main-thread call is not an *unnamed-delegate* bypass); this hard deny is what
-actually forbids the router's main-thread call.
+actually forbids the router's main-thread call. The delegate half counts the
+*attempt* itself — an unnamed delegate's call is a violation whether the write
+succeeded, was rejected by validation, or errored for any other reason; it
+does not key off `is_error` the way the main-thread half's denial
+bookkeeping does.
 
 The two halves are not enforced alike, and the difference matters when reading a
 run: the main-thread half is **denied**, the delegate half is only **logged**.
