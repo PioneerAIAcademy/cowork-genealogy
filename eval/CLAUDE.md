@@ -253,12 +253,13 @@ A third warn-only lint runs alongside them: `eval/harness/scripts/check_negative
 
 ### E2E checks (`check-e2e-fixtures.yml`)
 
-A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` — one blocking check plus one warn:
+A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` — one blocking check plus two warns:
 
 | Check | Severity | What |
 |---|---|---|
 | Grading gate | **block** | Every `run-<ts>.json` **added in the PR** that produced a final tree (`run-<ts>.final-tree.gedcomx.json` present) must ship its `run-<ts>.ann.json` sibling in the same PR. Grading is same-PR. Treeless runs (crash/skip before a tree) are exempt. Scoped to PR-added logs via `git diff --diff-filter=A` (`BASE_SHA`/`HEAD_SHA`); presence only — content validity is the maintainer's `calibrate_judge --dry-run`, not CI. |
 | Unresolved draft | warn | A PR-added run log whose fixture README still carries `DRAFT PENDING ADJUDICATION` — the run scored an unverified record hint rather than a genealogist-resolved answer, so its verdict and grade mean less than they appear to. One warning per fixture. Cleared by `/resolve-record-hint` (e2e-testing-guide.md Step 1a) removing the marker. |
+| Component-derivation drift | warn | A PR-added run log whose finding has a stored `matched` disagreeing with `derive_matched` of its own `link` components. `apply_component_derivation` reconciles this for `relationship` findings only, so a `source`, `fact` or `person` finding keeps whatever label the judge wrote (`e2e-test-spec.md` §3.4.2). Reports the disagreement; does **not** widen the derivation — `fact` is excluded from the derivation but deliberately *not* from this report. Skipped only for findings already derived (`matched_model` present), `avoid` findings, and findings carrying no `link` component to derive from. **Mostly forward-looking:** of 448 findings across the 155 committed run logs, 433 predate `components` entirely and 8 are evaluated, so a clean run is thin evidence rather than calibration. |
 
 **Fixture validity is not CI-gated.** Whether a fixture has a committed *passing* run log (proof it is solvable from live FamilySearch — spec §14) is a recommended authoring practice surfaced in the docs, not a check. A fixture can land without one (draft/PID-less fixtures routinely do). This used to be an advisory warning; it was removed because it re-flagged every un-run fixture in the repo on every e2e PR — pure noise. The unresolved-draft warn above avoids that trap by firing only on fixtures the PR itself committed a run for.
 
