@@ -4,7 +4,7 @@
     "skill": "record-extraction",
     "name": "Extract assertions from a multi-person 1850 census household",
     "type": "positive",
-    "description": "Tests extraction from a multi-person 1850 U.S. census household provided in context (as search-records hands a found record to record-extraction). The 1850 census lists each person in a dwelling but states no relationships, so relationship assertions must be classified as indirect evidence.",
+    "description": "Tests extraction from a multi-person 1850 U.S. census household provided in context (as search-records hands a found record to record-extraction). The 1850 census lists each person in a dwelling but states no relationships, so no relationship assertions may be written at all — the household links are left to downstream correlation (decided 2026-08-15, #1626).",
     "tags": ["extraction", "1850-census", "census-household"]
   },
   "input": {
@@ -25,23 +25,20 @@
     { "record_role": "child_1", "fact_type": "age", "evidence_type": "direct" },
     { "record_role": "child_1", "fact_type": "birth", "attribute": "place", "evidence_type": "direct" },
     { "record_role": "child_1", "fact_type": "residence", "evidence_type": "direct", "informant_proximity": "witness" },
-    { "record_role": "child_1", "fact_type": "relationship", "evidence_type": "indirect", "informant_proximity": "researcher" },
     { "record_role": "child_2", "fact_type": "name", "evidence_type": "direct" },
     { "record_role": "child_2", "fact_type": "age", "evidence_type": "direct" },
     { "record_role": "child_2", "fact_type": "birth", "attribute": "place", "evidence_type": "direct" },
     { "record_role": "child_2", "fact_type": "residence", "evidence_type": "direct", "informant_proximity": "witness" },
-    { "record_role": "child_2", "fact_type": "relationship", "evidence_type": "indirect", "informant_proximity": "researcher" },
     { "record_role": "child_3", "fact_type": "name", "evidence_type": "direct" },
     { "record_role": "child_3", "fact_type": "age", "evidence_type": "direct" },
     { "record_role": "child_3", "fact_type": "birth", "attribute": "place", "evidence_type": "direct" },
-    { "record_role": "child_3", "fact_type": "residence", "evidence_type": "direct", "informant_proximity": "witness" },
-    { "record_role": "child_3", "fact_type": "relationship", "evidence_type": "indirect", "informant_proximity": "researcher" }
+    { "record_role": "child_3", "fact_type": "residence", "evidence_type": "direct", "informant_proximity": "witness" }
   ],
   "judge_context": [
     "Should extract assertions for every named person in the household, not just Patrick — the other household members are part of his FAN network and relevant to future research questions",
-    "Relationship assertions should be marked `evidence_type: \"indirect\"` because the 1850 census does not state relationships explicitly (the 1860 census is similarly structured — explicit relationship columns were not introduced until 1880)",
+    "NO relationship assertions — the 1850 census states no relationships (explicit relationship columns arrived in 1880), so the record establishes only that these five people shared dwelling 214. Extract each person's stated facts and their residence, and write NO parent-child or spousal assertion, including `indirect` / `_inferred` ones. Emitting the household links in any form is the error this test guards against; omitting them is correct and is NOT a Completeness gap. Noting in the summary that the household looks like a family is good practice — that hypothesis is downstream correlation's to confirm",
     "Occupation assertions should only exist for persons who have an occupation listed in the census table — Patrick is the only person with 'Laborer' listed. Do not create occupation assertions for persons with blank occupation fields",
-    "Each relationship assertion should be atomic — one relationship per assertion (e.g., 'Mary is likely wife of Patrick' is one assertion, 'Thomas is likely child of Patrick' is another). Do not combine relationship inferences into compound assertions",
+    "Atomicity still applies to the facts that ARE extracted — one fact per assertion, name separate from age separate from birthplace. Do not judge relationship atomicity here: there should be no relationship assertions to atomize",
     "Informant identification: the census enumerator is the recorder, not the informant. For name/age/birthplace facts, informant should be 'unknown household member' with reasoning (e.g., 'likely self or spouse' for adults, 'likely a parent' for children) and proximity 'household_member'. For residence facts, informant_proximity 'witness' is acceptable (the enumerator physically visited the dwelling). Use informant_bias_notes to explain reasoning."
   ],
   "execution": {
