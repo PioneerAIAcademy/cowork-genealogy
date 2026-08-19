@@ -5,19 +5,20 @@
 // from the merged document, backing up before an irreversible overwrite, and
 // the Mode-2 research.json person-id remap. Spec: merge-gedcomx-spec.md §5b.
 
-import { readFile } from "fs/promises";
-import { join } from "path";
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import { validateGedcomx } from "../validation/validator.js";
 import { createReport, isValid } from "../validation/types.js";
-import type { ValidationError } from "../validation/types.js";
 import { iteratePersonIdRefs } from "../validation/person-id-refs.js";
-import { backupIfExists } from "../utils/project-io.js";
+import {
+  backupIfExists,
+  readProjectJson as readProjectJsonBase,
+  formatIssues,
+} from "../utils/project-io.js";
 // Single source of the vital single-occurrence fact types — shared with the
 // merge core and materialize_facts's conflict-surfacing gate (spec §4.4).
 import { VITAL_PRIMARY_TYPES } from "../utils/merge-gedcomx.js";
 
-export { backupIfExists };
+export { backupIfExists, formatIssues };
 
 export interface MergePairSummary {
   survivorId: string;
@@ -60,22 +61,11 @@ export async function readProjectJson(
   projectPath: string,
   filename: string,
 ): Promise<any> {
-  let text: string;
   try {
-    text = await readFile(join(projectPath, filename), "utf-8");
-  } catch {
-    throw new MergeInputError(`${filename} not found in projectPath`);
+    return await readProjectJsonBase(projectPath, filename);
+  } catch (e) {
+    throw new MergeInputError(e instanceof Error ? e.message : String(e));
   }
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new MergeInputError(`${filename} is not valid JSON`);
-  }
-}
-
-/** Format validator issues as flat strings for the tool's error/warning lists. */
-export function formatIssues(issues: ValidationError[]): string[] {
-  return issues.map((e) => (e.path ? `${e.path}: ${e.message}` : e.message));
 }
 
 /**

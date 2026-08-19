@@ -37,9 +37,8 @@
 // is today; moving it host-side is a separate change.
 
 import { join } from "path";
-import { atomicWriteBoth, fileExists } from "../utils/project-io.js";
+import { atomicWriteBoth, fileExists, formatIssues } from "../utils/project-io.js";
 import { validateParsed } from "../validation/validator.js";
-import { formatIssues } from "./merge-shared.js";
 
 /** The sections a new project starts with, all empty. `researcher_profile` and
  *  `known_holdings` are deliberately absent: both are written after the fact,
