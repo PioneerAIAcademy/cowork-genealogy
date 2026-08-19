@@ -62,12 +62,11 @@ one machine's tailnet. The hosted path can now be redirected without an
 engine rebuild — set `WIKI_API_URL` / `POP_STATS_URL` on the control
 plane and `hosted_config()` writes them into the sandbox's config — but
 the compiled-in defaults still apply everywhere else, including every
-installed `.mcpb`. Measured over the
-committed e2e corpus, 28% of wiki-tool calls and 35% of `place_population`
-calls fail, across 17 distinct days. The agent gets an actionable error
-and then quietly ships a thinner answer, so the user sees nothing. Do not
-write "end users do not need to set this" — that was true only in the
-sense that they cannot.
+installed `.mcpb`. When one of those calls fails the agent gets an
+actionable error and then quietly ships a thinner answer, so the user sees
+nothing; `make e2e-wiki-failures` is what surfaces the current rate and its
+causes. Do not write "end users do not need to set this" — that was true only
+in the sense that they cannot.
 
 ## Repository layout
 
