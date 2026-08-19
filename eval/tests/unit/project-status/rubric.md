@@ -30,6 +30,17 @@ Does the summary accurately reflect the current state of research.json? Are coun
 - **partial:** Most facts are right but one count is off by one or a status is mis-reported.
 - **fail:** Multiple counts wrong, or a major status reported incorrectly (claiming a question is resolved when it's in_progress).
 
+**`evidence_type` and `information_quality` are independent enums — do not conflate them.**
+An assertion can be `evidence_type: direct` (the source states the fact outright, no
+inference needed) while also `information_quality: secondary` (the informant lacked
+firsthand knowledge) — e.g. a death certificate naming a father, reported by a
+son-in-law. Calling such an assertion "direct evidence" is correct; it is not a
+misstatement just because the same assertion is also secondary information. Only
+penalize Accuracy here if the summary claims `primary` when the file says
+`secondary`/`indeterminate` (or vice versa), or claims an informant had firsthand
+knowledge when `informant_proximity` says otherwise — not for correctly using
+"direct" alongside a noted informant-reliability caveat.
+
 ## Actionability
 
 Did the skill clearly identify what should be done next and why? The recommendation should be specific (e.g., "resolve birthplace conflict before writing proof") not generic ("continue research").
