@@ -667,6 +667,42 @@ than no check at all. The three ways one silently passes here: a grep whose
 pattern excludes its own tree, a `git grep` that skips untracked files, and a
 field-name match that collides with an unrelated key.
 
+### A measurement that disagrees with belief is re-measured, not reworded
+
+When a recorded measurement says one thing and we believe another, **probe again until
+the two reach consensus.** Do not reword prose until the guard goes green, and do not add
+a provenance escape hatch so the belief can be asserted alongside a verdict that
+contradicts it. The recorded verdict and the shipped text have to say the same thing, and
+the way to get there is measurement.
+
+This binds hardest where a guard matches *wording* rather than meaning, because rewording
+is always available and always wrong: `packages/engine/mcp-server/tests/packaging/measured-figures.test.ts`
+fires on phrasings that contradict a recorded probe verdict, and its own failure message
+already says not to relax the pattern. Re-run the probe instead — and if the probe returns
+`OPEN` or `NOT MEASURED`, settling it is a measurement-design task, not a re-run.
+
+### The eval harness emulates production's permission model
+
+**Grant what production grants.** Both production paths hold every MCP tool the server
+advertises — the hosted control plane runs `permission_mode="bypassPermissions"` with no
+allowlist, and Cowork loads the plugin whole. A harness that denies a tool production
+allows produces false alarms *and* false negatives, and it perturbs the run it is
+measuring rather than observing it.
+
+**A skill's `allowed-tools` is a grant, not a restriction.** Claude Code documents it as
+"tools Claude can use **without asking permission** during the turn that invokes this
+skill"; the field that removes a tool from the pool is `disallowed-tools`, which no skill
+here declares. anthropics/claude-code#37683 — that `allowed-tools` does not restrict — is
+closed as not planned. So deriving a deny list as its complement inverts the field's
+meaning; that is a harness construct and never a fidelity measure.
+
+**The boundary, so this is not over-applied:** emulate production's *permission model*;
+construct the test's *inputs* freely. A deny that hides the answer from the agent — e2e's
+`is_blocked_tree_tool`, a fixture's `blocked_tools` — is a fixture and stays. A deny that
+changes what the agent is *allowed to do* is a distortion and goes. Denies production
+genuinely has stay too: the protected-file write lockdown mirrors the shipped plugin hook,
+and agent `disallowedTools:` binds even under `bypassPermissions`.
+
 ### Python file I/O: always pass `encoding="utf-8"`
 
 Every Python `read_text()` / `write_text()` / `open()` on a text file
