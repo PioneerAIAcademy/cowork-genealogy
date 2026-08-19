@@ -30,9 +30,14 @@ Usage (from eval/harness/):  uv run python -m e2e.preflight
 
 from __future__ import annotations
 
+import argparse
 import asyncio
+import json
+import os
+import re
 import sys
 import threading
+import time
 from pathlib import Path
 from typing import Any, Callable
 
@@ -76,6 +81,99 @@ _MCP_TEARDOWN_GRACE_S = 15.0
 # (caps allow up to 60 min) might cross the 24h boundary mid-flight.
 _TOKEN_MAX_AGE_HOURS = 24.0
 _TOKEN_WARN_AGE_HOURS = 22.0
+
+# Bounds for _read_mcp_stderr_lines (issue #1301, rule 1). An unbounded capture
+# buries the actionable line — the defect #941's review fixed once already
+# (a WARN that interpolated every server's whole tools array).
+_STDERR_MAX_LINES = 20
+_STDERR_MAX_CHARS = 200
+
+
+def _read_mcp_stderr_lines(
+    *, cwd: Path, server_name: str, since: float,
+    max_lines: int = _STDERR_MAX_LINES, max_chars: int = _STDERR_MAX_CHARS,
+) -> tuple[list[str], str]:
+    """(lines, dir_looked_in). Best-effort: any failure -> ([], dir_looked_in).
+
+    The CLI writes each MCP server's stderr into its own per-connection JSONL
+    log — the SDK's `stderr:` callback never receives it (independently
+    verified 2026-08-18 against claude-agent-sdk 0.1.81 with a stub that wrote
+    one marker line and exited non-zero: the callback list stayed empty while
+    this log carried the marker verbatim). Log path, one per session:
+    ``<cache-root>/<cwd-slug>/mcp-logs-<server_name>/<ISO-timestamp>.jsonl``,
+    one JSON object per line, a captured line arriving as
+    ``{"error": "Server stderr: <the server's line>\\n", ...}``.
+
+    Never raises. A missing cache-root env var, a missing directory, an
+    unreadable file, a line that isn't valid JSON, or an unrecognized
+    `sys.platform` all degrade to an empty capture — the caller then prints
+    today's unchanged message plus `dir_looked_in`, per rule 2: an empty
+    capture must never read as "the server said nothing" when it might mean
+    "we didn't know where to look."
+    """
+    try:
+        if sys.platform == "win32":
+            base = os.environ.get("LOCALAPPDATA")
+            if not base:
+                return [], "(LOCALAPPDATA not set)"
+            cache_root = Path(base) / "claude-cli-nodejs" / "Cache"
+        elif sys.platform == "darwin":
+            cache_root = Path.home() / "Library" / "Caches" / "claude-cli-nodejs"
+        else:
+            xdg = os.environ.get("XDG_CACHE_HOME")
+            cache_root = Path(xdg) / "claude-cli-nodejs" if xdg else (
+                Path.home() / ".cache" / "claude-cli-nodejs"
+            )
+
+        cwd_slug = re.sub(r"[^A-Za-z0-9]", "-", str(cwd))
+        log_dir = cache_root / cwd_slug / f"mcp-logs-{server_name}"
+        dir_looked_in = str(log_dir)
+
+        # Small bounded retry: the CLI's JSONL append can lag the moment its
+        # control protocol reports "failed" by up to a couple hundred ms
+        # (measured live, issue #1301 -- the very first end-to-end run of this
+        # feature missed the capture on attempt 1 and found it on attempt 2).
+        # Still "best-effort" per rule 2: on the last attempt an empty result
+        # is returned exactly as before, just after trying a little harder.
+        lines: list[str] = []
+        for attempt in range(3):
+            if attempt > 0:
+                time.sleep(0.3)
+            if not log_dir.is_dir():
+                continue
+            candidates = [
+                p for p in log_dir.glob("*.jsonl")
+                if p.stat().st_mtime >= since
+            ]
+            if not candidates:
+                continue
+            newest = max(candidates, key=lambda p: (p.stat().st_mtime, p.name))
+
+            for raw_line in newest.read_text(encoding="utf-8").splitlines():
+                if not raw_line.strip():
+                    continue
+                try:
+                    row = json.loads(raw_line)
+                except (json.JSONDecodeError, ValueError):
+                    continue
+                error = row.get("error") if isinstance(row, dict) else None
+                if isinstance(error, str) and error.startswith("Server stderr: "):
+                    # The CLI's own value carries a trailing "\n" (confirmed
+                    # live, issue #1301 §0) -- strip it or it reads as a stray
+                    # blank line wherever this gets interpolated into a
+                    # sentence.
+                    text = error[len("Server stderr: "):].rstrip("\n")
+                    lines.append(text[:max_chars])
+            if lines:
+                break
+
+        dropped = len(lines) - max_lines
+        kept = lines[-max_lines:]
+        if dropped > 0:
+            kept.append(f"(… {dropped} earlier lines dropped)")
+        return kept, dir_looked_in
+    except Exception:  # noqa: BLE001 — best-effort capture must never raise
+        return [], dir_looked_in if "dir_looked_in" in locals() else "(unresolved)"
 
 
 def _check_fs_token() -> tuple[str, str]:
@@ -205,8 +303,12 @@ def _run_bounded(work: Callable[[], Any], budget: float) -> Any:
     return result[0]
 
 
-def _live_mcp_status() -> Any:
+def _live_mcp_status(entry: Path | str | None = None) -> Any:
     """Ask the running CLI for live MCP status. One spawn, zero model tokens.
+
+    `entry` is the MCP server script to spawn — `None` resolves to `MCP_BUILD`
+    at call time (not as a parameter default), so a test's
+    `monkeypatch.setattr(pf, "MCP_BUILD", ...)` is still honored (issue #1301).
 
     Uses `ClaudeSDKClient` (streaming mode) because `get_mcp_status()` is a
     control-protocol request and the one-shot `query()` the run itself uses
@@ -241,6 +343,8 @@ def _live_mcp_status() -> Any:
     except ImportError as e:  # pragma: no cover — check 4 reports this first
         raise _Unprovable(f"harness dependency not importable: {e}") from e
 
+    resolved_entry = entry if entry is not None else MCP_BUILD
+
     load_env_file()  # the run's judge does this; the CLI needs the same key
     try:
         agent_env = env_for_sdk(resolve_auth())
@@ -248,7 +352,7 @@ def _live_mcp_status() -> Any:
         raise _Unprovable(f"no usable Anthropic credential: {e}") from e
 
     options = ClaudeAgentOptions(
-        mcp_servers=genealogy_mcp_config(MCP_BUILD),
+        mcp_servers=genealogy_mcp_config(resolved_entry),
         env=agent_env,
         # Prove THIS config and nothing else. Without it the CLI merges
         # file/user/local-scoped MCP config on top of the block above, and this
@@ -290,11 +394,23 @@ def _live_mcp_status() -> Any:
 
 def _check_mcp_connection(
     status_getter: Callable[[], Any] | None = None,
+    *,
+    entry: Path | str | None = None,
+    log_reader: Callable[[float], tuple[list[str], str]] | None = None,
 ) -> tuple[str, str]:
     """Prove the genealogy MCP server answers, in a real CLI session.
 
     `status_getter` is injectable so every arm below is unit-testable without
-    spawning a CLI.
+    spawning a CLI — unchanged by issue #1301, still zero-arg, still returns a
+    bare server list.
+
+    `entry` (issue #1301) is the MCP server script to spawn, resolved to
+    `MCP_BUILD` at call time (not as a parameter default) so a test's
+    `monkeypatch.setattr(pf, "MCP_BUILD", ...)` is still honored. `log_reader`
+    is the (since -> (lines, dir)) callable that reads the CLI's per-server
+    stderr log — kept as a separate parameter from `status_getter` per the
+    issue's own instruction, so mcp_health.py stays pure and this file owns
+    the filesystem read. Both default to today's behavior (no capture).
     """
     # Prerequisites first. A CLI session needs the build, a credential and the
     # SDK; without them this check cannot distinguish "MCP is broken" from
@@ -312,7 +428,20 @@ def _check_mcp_connection(
                 "first; the MCP connection cannot be proved without it.",
             )
 
-    getter = status_getter or _live_mcp_status
+    resolved_entry = entry if entry is not None else MCP_BUILD
+
+    # started_at is written only by the default getter — an injected
+    # status_getter (every existing test) never touches it, so it stays 0.0
+    # and log_reader(0.0) is simply never called on that path unless a test
+    # also injects log_reader explicitly (the new arms in test_e2e_preflight.py
+    # do exactly that, to test the FAIL-text threading without a real clock).
+    started_at = [0.0]
+
+    def _default_getter() -> Any:
+        started_at[0] = time.time()
+        return _live_mcp_status(resolved_entry)
+
+    getter = status_getter or _default_getter
     try:
         servers = getter()
     except _Unprovable as e:
@@ -325,6 +454,10 @@ def _check_mcp_connection(
             "could not be attempted. Green here does not mean ready.",
         )
     except (asyncio.TimeoutError, TimeoutError):
+        lines, log_dir = log_reader(started_at[0]) if log_reader else ([], None)
+        captured = f" Captured server stderr:\n{chr(10).join(lines)}" if lines else (
+            f" (no server stderr captured; looked in {log_dir})" if log_dir else ""
+        )
         return (
             "FAIL",
             f"The genealogy MCP server never reported a settled status within "
@@ -333,7 +466,7 @@ def _check_mcp_connection(
             "never listed it at all. A server that hangs instead of failing "
             "blocks session start: an e2e run would die on 'Control request "
             "timeout: initialize' after ~60s. Check that "
-            f"`node {MCP_BUILD}` starts and speaks MCP on stdio.",
+            f"`node {resolved_entry}` starts and speaks MCP on stdio.{captured}",
         )
     except Exception as e:  # noqa: BLE001 — a preflight must report, never crash
         return (
@@ -343,8 +476,8 @@ def _check_mcp_connection(
 
     health = classify_server_status(servers)
     if health == "connected":
-        entry = find_server_entry(servers) or {}
-        tools = entry.get("tools") or []
+        server_entry = find_server_entry(servers) or {}
+        tools = server_entry.get("tools") or []
         return (
             "OK",
             f"Genealogy MCP server connected ({len(tools)} tools advertised)",
@@ -354,12 +487,16 @@ def _check_mcp_connection(
         # whole point of asking the CLI rather than checking a file. Preflight
         # wording, not the run's: nothing has been attempted yet, so "re-run the
         # test" and "run make e2e-preflight" would be nonsense here.
+        lines, log_dir = log_reader(started_at[0]) if log_reader else ([], None)
+        cause = unavailable_cause(find_server_entry(servers), server_stderr=lines or None)
+        if not lines and log_dir:
+            cause += f" (no server stderr captured; looked in {log_dir})"
         return (
             "FAIL",
-            f"{unavailable_cause(find_server_entry(servers))}. An e2e run would "
+            f"{cause}. An e2e run would "
             "have no genealogy tools at all — it would burn a live-FamilySearch "
             "session producing nothing. Fix this before running: check that "
-            f"`node {MCP_BUILD}` starts and stays up, and rebuild with "
+            f"`node {resolved_entry}` starts and stays up, and rebuild with "
             "`make engine-build` if it doesn't.",
         )
     # Report the status, NOT the payload. `servers` carries each connected
@@ -385,11 +522,44 @@ CHECKS = [
 ]
 
 
+def _read_stderr_for() -> Callable[[float], tuple[list[str], str]]:
+    """A `since -> (lines, dir)` closure over this process's own cwd.
+
+    `read_mcp_stderr_lines` keys its lookup on `cwd` and `server_name`, not on
+    which server script was spawned, so this factory takes no arguments —
+    preflight has no "workspace" concept the way the orchestrator does; the
+    CLI's cwd-slug is derived from the invoking process's own cwd (confirmed
+    live, issue #1301 §0).
+    """
+    def _read(since: float) -> tuple[list[str], str]:
+        return _read_mcp_stderr_lines(
+            cwd=Path.cwd(), server_name=GENEALOGY_SERVER_NAME, since=since,
+        )
+
+    return _read
+
+
 def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--mcp-server-entry",
+        type=Path,
+        default=None,
+        help="MCP server script to spawn for check 5 (default: the built "
+        "production server). Same flag as run_e2e's, for pointing preflight "
+        "at a stub without touching MCP_BUILD.",
+    )
+    args = parser.parse_args(argv if argv is not None else [])
+
     print("=== E2E preflight ===\n")
     statuses = []
     for name, check in CHECKS:
-        status, detail = check()
+        if check is _check_mcp_connection:
+            status, detail = check(
+                entry=args.mcp_server_entry, log_reader=_read_stderr_for()
+            )
+        else:
+            status, detail = check()
         statuses.append(status)
         print(f"[{status:<4}] {name}: {detail}\n")
 
@@ -404,4 +574,10 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # Explicit, not main()'s None-default: main() treats a bare `None` as "no
+    # args" (empty list) rather than "fall back to real sys.argv" — the
+    # opposite of argparse's own convention — specifically so that calling
+    # main() bare from a test under pytest's own argv doesn't choke on
+    # unrelated pytest flags (issue #1301). The real CLI entry point must
+    # therefore pass sys.argv explicitly to still see its own flags.
+    sys.exit(main(sys.argv[1:]))

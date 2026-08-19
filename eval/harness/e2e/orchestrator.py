@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import shutil
 import sys
@@ -61,6 +62,7 @@ from harness.skill_invocation import (
 from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
+    GENEALOGY_SERVER_NAME,
     backstop_fired,
     classify_server_status,
     find_server_entry,
@@ -101,6 +103,88 @@ DEFAULT_RUNLOG_ROOT = REPO_ROOT / "eval" / "runlogs" / "e2e"
 DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
 DEFAULT_PLUGIN_SKILLS = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 DEFAULT_PLUGIN_AGENTS = REPO_ROOT / "packages" / "engine" / "plugin" / "agents"
+
+# Bounds for _read_mcp_stderr_lines (issue #1301, rule 1) — same values as
+# preflight.py's own copy of this function; kept in sync by eye, not import
+# (rule 3: the filesystem read lives in the two callers, not a shared module).
+_STDERR_MAX_LINES = 20
+_STDERR_MAX_CHARS = 200
+
+
+def _read_mcp_stderr_lines(
+    *, cwd: Path, server_name: str, since: float,
+    max_lines: int = _STDERR_MAX_LINES, max_chars: int = _STDERR_MAX_CHARS,
+) -> tuple[list[str], str]:
+    """(lines, dir_looked_in). Best-effort: any failure -> ([], dir_looked_in).
+
+    Orchestrator's own copy of preflight.py's `_read_mcp_stderr_lines` — see
+    that copy's docstring for the mechanism and its verification (issue #1301
+    §0). Duplicated rather than imported per the issue's rule 3 ("the
+    filesystem read lives in the two callers"); `mcp_health.py` stays pure.
+    """
+    try:
+        if sys.platform == "win32":
+            base = os.environ.get("LOCALAPPDATA")
+            if not base:
+                return [], "(LOCALAPPDATA not set)"
+            cache_root = Path(base) / "claude-cli-nodejs" / "Cache"
+        elif sys.platform == "darwin":
+            cache_root = Path.home() / "Library" / "Caches" / "claude-cli-nodejs"
+        else:
+            xdg = os.environ.get("XDG_CACHE_HOME")
+            cache_root = Path(xdg) / "claude-cli-nodejs" if xdg else (
+                Path.home() / ".cache" / "claude-cli-nodejs"
+            )
+
+        cwd_slug = re.sub(r"[^A-Za-z0-9]", "-", str(cwd))
+        log_dir = cache_root / cwd_slug / f"mcp-logs-{server_name}"
+        dir_looked_in = str(log_dir)
+
+        # Small bounded retry: the CLI's JSONL append can lag the moment its
+        # control protocol reports "failed" by up to a couple hundred ms
+        # (measured live, issue #1301 -- the very first end-to-end run of this
+        # feature missed the capture on attempt 1 and found it on attempt 2).
+        # Still "best-effort" per rule 2: on the last attempt an empty result
+        # is returned exactly as before, just after trying a little harder.
+        lines: list[str] = []
+        for attempt in range(3):
+            if attempt > 0:
+                time.sleep(0.3)
+            if not log_dir.is_dir():
+                continue
+            candidates = [
+                p for p in log_dir.glob("*.jsonl")
+                if p.stat().st_mtime >= since
+            ]
+            if not candidates:
+                continue
+            newest = max(candidates, key=lambda p: (p.stat().st_mtime, p.name))
+
+            for raw_line in newest.read_text(encoding="utf-8").splitlines():
+                if not raw_line.strip():
+                    continue
+                try:
+                    row = json.loads(raw_line)
+                except (json.JSONDecodeError, ValueError):
+                    continue
+                error = row.get("error") if isinstance(row, dict) else None
+                if isinstance(error, str) and error.startswith("Server stderr: "):
+                    # The CLI's own value carries a trailing "\n" (confirmed
+                    # live, issue #1301 §0) -- strip it or it reads as a stray
+                    # blank line wherever this gets interpolated into a
+                    # sentence.
+                    text = error[len("Server stderr: "):].rstrip("\n")
+                    lines.append(text[:max_chars])
+            if lines:
+                break
+
+        dropped = len(lines) - max_lines
+        kept = lines[-max_lines:]
+        if dropped > 0:
+            kept.append(f"(… {dropped} earlier lines dropped)")
+        return kept, dir_looked_in
+    except Exception:  # noqa: BLE001 — best-effort capture must never raise
+        return [], dir_looked_in if "dir_looked_in" in locals() else "(unresolved)"
 
 
 # Tools always allowed alongside MCP tools. See e2e-test-spec.md §6.
@@ -1181,6 +1265,10 @@ async def _run_agent(
     mcp_state: dict[str, Any] = {"unavailable": False, "misses": 0, "queries": []}
 
     run_started = time.monotonic()
+    # Wall-clock companion to the monotonic clock above (issue #1301) —
+    # time.monotonic() has no relationship to file mtimes, so a "since this
+    # check started" log-file filter needs its own real-clock timestamp.
+    run_started_wall = time.time()
 
     # Per-message timeline for forensics: [elapsed_seconds, kind, tool_names].
     # Lets a later analysis split a run into structural vs stall time, pinpoint
@@ -1649,7 +1737,20 @@ async def _run_agent(
             nonlocal aborted_reason, error
             mcp_state["unavailable"] = True
             aborted_reason = "mcp_unavailable"
-            error = unavailable_message(entry, backstop=backstop, queries=queries)
+            # Best-effort stderr capture (issue #1301) — this fires on an abort
+            # path that must never itself crash, so a failure here degrades to
+            # no lines rather than propagating.
+            try:
+                server_stderr, _ = _read_mcp_stderr_lines(
+                    cwd=workspace, server_name=GENEALOGY_SERVER_NAME,
+                    since=run_started_wall,
+                )
+            except Exception:  # noqa: BLE001 — see comment above
+                server_stderr = []
+            error = unavailable_message(
+                entry, backstop=backstop, queries=queries,
+                server_stderr=server_stderr or None,
+            )
             # Recorded like every other harness-side event even though THIS path
             # never persists it (the run writes no files at all — see
             # run_e2e_test). Kept so the in-memory trace is complete and so a
@@ -2305,9 +2406,23 @@ async def run_e2e_test(
         # reached, so no run-log files exist and no E2eResult is ever built.
         # "This run never happened" — print the error, exit non-zero.
         if stop_reason == "mcp_unavailable":
-            raise McpUnavailableError(
-                error or unavailable_message(None)
-            )
+            if error:
+                fallback_message = error
+            else:
+                # Rare defensive arm: aborted_reason latched but `error` is
+                # somehow falsy. Best-effort capture, same as the primary abort
+                # path (issue #1301) — must not itself crash this raise.
+                try:
+                    fallback_stderr, _ = _read_mcp_stderr_lines(
+                        cwd=workspace, server_name=GENEALOGY_SERVER_NAME,
+                        since=started_at,
+                    )
+                except Exception:  # noqa: BLE001 — see comment above
+                    fallback_stderr = []
+                fallback_message = unavailable_message(
+                    None, server_stderr=fallback_stderr or None
+                )
+            raise McpUnavailableError(fallback_message)
 
         judge_seconds = 0.0
         if skip_judge or final_tree is None:

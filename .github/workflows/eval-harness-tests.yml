@@ -22,7 +22,11 @@ name: Eval harness tests
 #
 # Every test in this suite is offline and free. CI has no API key and must
 # never bill the Anthropic API, so nothing here may call a model — the same
-# invariant scripts/test.sh holds for the pre-PR gate.
+# invariant scripts/test.sh holds for the pre-PR gate. The one exception is
+# the "E2E preflight smoke" step (issue #1301): it spawns the bundled Claude
+# Code CLI (~10s) against a dead MCP stub, which calls no model — check 5's
+# whole design is a spawn-and-ask, never a prompt — but it is not a bare
+# pytest invocation like everything else here, so it's called out separately.
 #
 # The CLI tests (test_cli.py) import run_tests.py, which refuses to run
 # against a missing/stale packages/engine/mcp-server/build/ (run_tests.py
@@ -156,3 +160,29 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         working-directory: eval/harness
         run: uv run --frozen pytest
+
+      # A dead-stub smoke test for issue #1301: check 5 must FAIL against a
+      # server that never starts, and its FAIL detail must carry the stub's
+      # own stderr line. Exit-code-alone is not enough to assert here — with
+      # no credential at all resolve_auth() raises and check 5 degrades to
+      # WARN/exit 0, which would let this job pass while proving nothing. So
+      # this step inverts the check itself: a dead stub making check 5 FAIL
+      # (preflight exits 1) is the CORRECT outcome and must not redden this
+      # step; only an unexpected exit 0, or a missing marker, does.
+      - name: E2E preflight smoke (dead MCP stub)
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: eval/harness
+        run: |
+          set +e
+          OUTPUT=$(ANTHROPIC_API_KEY=sk-ant-not-a-real-key uv run --frozen python -m e2e.preflight \
+            --mcp-server-entry tests/fixtures/dead-stub.js 2>&1)
+          RC=$?
+          echo "$OUTPUT"
+          if [ "$RC" -eq 0 ]; then
+            echo "::error::preflight exited 0 against a dead stub — check 5 should FAIL, not pass"
+            exit 1
+          fi
+          if ! echo "$OUTPUT" | grep -q "STUB-MARKER: refused to start"; then
+            echo "::error::dead-stub marker missing from preflight output — the FAIL detail lost the captured stderr"
+            exit 1
+          fi
