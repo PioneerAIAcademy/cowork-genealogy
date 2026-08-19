@@ -99,6 +99,10 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         run: pnpm install --frozen-lockfile
 
+      - name: ESLint
+        if: steps.scope.outputs.relevant == 'true'
+        run: pnpm --filter @genealogy/electron lint
+
       - name: Run workspace tests
         if: steps.scope.outputs.relevant == 'true'
         run: pnpm turbo run test
@@ -148,6 +152,11 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         working-directory: eval/app
         run: npm ci
+
+      - name: ESLint
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: eval/app
+        run: npm run lint
 
       - name: Run tests
         if: steps.scope.outputs.relevant == 'true'

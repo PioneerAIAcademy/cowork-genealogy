@@ -3,6 +3,7 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, isAbsolute } from 'node:path'
 import JSZip from 'jszip'
+import type { GedcomxCoupleRelationship, GedcomxData, GedcomxPerson } from '@genealogy/schema'
 import {
   buildFeedbackZip,
   capSessionLog,
@@ -18,7 +19,10 @@ async function readFeedbackJson(zipBase64: string): Promise<Record<string, unkno
   return JSON.parse(await file.async('string'))
 }
 
-function makeOptions(folder: string, overrides: Partial<FeedbackOptions['report']> = {}): FeedbackOptions {
+function makeOptions(
+  folder: string,
+  overrides: Partial<FeedbackOptions['report']> = {}
+): FeedbackOptions {
   return {
     folderPath: folder,
     includeMedia: false,
@@ -269,11 +273,29 @@ describe('buildFeedbackZip — living-person redaction', () => {
     sources: []
   }
 
-  async function readTree(zipBase64: string): Promise<Record<string, any>> {
+  async function readTree(zipBase64: string): Promise<GedcomxData> {
     const zip = await JSZip.loadAsync(Buffer.from(zipBase64, 'base64'))
     const file = zip.file('tree.gedcomx.json')
     if (!file) throw new Error('tree.gedcomx.json missing from zip')
     return JSON.parse(await file.async('string'))
+  }
+
+  // These narrow rather than assert-non-null, so a person or relationship that
+  // the redaction dropped entirely fails as "P2 missing from the bundled tree"
+  // instead of a TypeError on `.names` several lines later. `facts` lives only
+  // on the Couple arm of GedcomxRelationship, so the type check is real and not
+  // ceremony.
+  function person(tree: GedcomxData, id: string): GedcomxPerson {
+    const found = tree.persons.find((p) => p.id === id)
+    if (!found) throw new Error(`person ${id} missing from the bundled tree`)
+    return found
+  }
+
+  function couple(tree: GedcomxData, id: string): GedcomxCoupleRelationship {
+    const found = (tree.relationships ?? []).find((r) => r.id === id)
+    if (!found) throw new Error(`relationship ${id} missing from the bundled tree`)
+    if (found.type !== 'Couple') throw new Error(`relationship ${id} is ${found.type}, not Couple`)
+    return found
   }
 
   beforeEach(async () => {
@@ -288,14 +310,14 @@ describe('buildFeedbackZip — living-person redaction', () => {
 
   it('leaves a person explicitly marked deceased untouched', async () => {
     const tree = await readTree((await buildFeedbackZip(makeOptions(folder))).zipBase64)
-    const p1 = tree.persons.find((p: any) => p.id === 'P1')
+    const p1 = person(tree, 'P1')
     expect(p1.names[0].given).toBe('Reuben Spencer')
     expect(p1.facts).toHaveLength(1)
   })
 
   it('redacts a living person: no given name, facts, or ark; id and surname kept', async () => {
     const tree = await readTree((await buildFeedbackZip(makeOptions(folder))).zipBase64)
-    const p2 = tree.persons.find((p: any) => p.id === 'P2')
+    const p2 = person(tree, 'P2')
     expect(p2.names[0].given).toBe('Living')
     expect(p2.names[0].surname).toBe('Spriggs')
     expect(p2.facts).toEqual([])
@@ -306,7 +328,7 @@ describe('buildFeedbackZip — living-person redaction', () => {
 
   it('treats a MISSING living flag as living — absent is not deceased', async () => {
     const tree = await readTree((await buildFeedbackZip(makeOptions(folder))).zipBase64)
-    const p3 = tree.persons.find((p: any) => p.id === 'P3')
+    const p3 = person(tree, 'P3')
     expect(p3.names[0].given).toBe('Living')
     expect(p3.facts).toEqual([])
   })
@@ -324,8 +346,8 @@ describe('buildFeedbackZip — living-person redaction', () => {
 
   it('clears Couple facts touching a living person, keeps the rest', async () => {
     const tree = await readTree((await buildFeedbackZip(makeOptions(folder))).zipBase64)
-    expect(tree.relationships.find((r: any) => r.id === 'r1').facts).toEqual([])
-    expect(tree.relationships.find((r: any) => r.id === 'r2').facts).toHaveLength(1)
+    expect(couple(tree, 'r1').facts).toEqual([])
+    expect(couple(tree, 'r2').facts).toHaveLength(1)
   })
 
   it('records the redaction in FEEDBACK.md so a triager reads it as intentional', async () => {
@@ -363,7 +385,9 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
   })
 
   async function feedbackMarkdown(options: FeedbackOptions): Promise<string> {
-    const zip = await JSZip.loadAsync(Buffer.from((await buildFeedbackZip(options)).zipBase64, 'base64'))
+    const zip = await JSZip.loadAsync(
+      Buffer.from((await buildFeedbackZip(options)).zipBase64, 'base64')
+    )
     return zip.file('FEEDBACK.md')!.async('string')
   }
 
@@ -410,7 +434,9 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
       process.env.USERPROFILE = fakeHome
 
       const opts = { ...makeOptions(folder), includeSessionLog: true }
-      const zip = await JSZip.loadAsync(Buffer.from((await buildFeedbackZip(opts)).zipBase64, 'base64'))
+      const zip = await JSZip.loadAsync(
+        Buffer.from((await buildFeedbackZip(opts)).zipBase64, 'base64')
+      )
       const md = await zip.file('FEEDBACK.md')!.async('string')
       expect(md).toContain('## Session log')
       expect(md).toContain('See `_feedback/session-log.jsonl`')
