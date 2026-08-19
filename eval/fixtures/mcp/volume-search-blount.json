@@ -1,0 +1,38 @@
+{
+  "tool": "volume_search",
+  "description": "Digitized volumes for Blount County, Alabama, 1840-1880",
+  "args": {
+    "standardPlace": "~Blount"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Blount, Alabama, United States",
+      "startYear": 1840,
+      "endYear": 1880
+    },
+    "totalResults": 3,
+    "results": [
+      {
+        "imageGroupNumber": "005154190",
+        "title": "1860 U.S. Census, Blount County, Alabama (free schedule, NARA Roll 2)",
+        "recordSearchablePercent": 99,
+        "fulltextSearchable": true,
+        "imageCount": 1180
+      },
+      {
+        "imageGroupNumber": "007316662",
+        "title": "Blount County, Alabama Marriage Records, 1820-1888",
+        "recordSearchablePercent": 92,
+        "fulltextSearchable": true,
+        "imageCount": 2140
+      },
+      {
+        "imageGroupNumber": "004808801",
+        "title": "Blount County, Alabama Probate Records, 1845-1957",
+        "recordSearchablePercent": 2,
+        "fulltextSearchable": true,
+        "imageCount": 3980
+      }
+    ]
+  }
+}

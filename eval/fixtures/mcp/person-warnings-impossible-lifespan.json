@@ -10,7 +10,7 @@
       {
         "scoreType": "COHERENCE",
         "issueType": "hasAgeRangeGreaterThan120",
-        "severity": "error",
+        "severity": "contradiction",
         "personId": "I1",
         "personName": "Patrick Flynn",
         "message": "This person's lifespan is greater than 120 years, which is implausible.",

@@ -1,0 +1,32 @@
+{
+  "tool": "external_links_search",
+  "description": "FS-curated external links for Blount County, Alabama, 1840-1880",
+  "args": {
+    "standardPlace": "~Alabama"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Blount, Alabama, United States",
+      "startYear": 1840,
+      "endYear": 1880
+    },
+    "totalForPlace": 3,
+    "results": [
+      {
+        "linkText": "Blount County, Alabama - Ancestry.com",
+        "url": "https://www.ancestry.com/search/locations/blount-county-alabama",
+        "host": "ancestry.com"
+      },
+      {
+        "linkText": "Alabama Department of Archives and History - Blount County records",
+        "url": "https://archives.alabama.gov/blount-county",
+        "host": "archives.alabama.gov"
+      },
+      {
+        "linkText": "Blount County, Alabama - Find A Grave",
+        "url": "https://www.findagrave.com/cemetery/county/blount-alabama",
+        "host": "findagrave.com"
+      }
+    ]
+  }
+}

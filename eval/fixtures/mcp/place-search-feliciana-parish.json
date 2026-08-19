@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for the old, undivided Feliciana Parish, Louisiana (pre-1824)",
+  "args": {
+    "placeName": "Feliciana Parish, Louisiana"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Feliciana Parish, Louisiana, United States",
+        "type": "Parish",
+        "dateRange": "+1810/1824",
+        "latitude": 30.9,
+        "longitude": -91.3,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Feliciana&focusedId=8801"
+      }
+    ]
+  }
+}

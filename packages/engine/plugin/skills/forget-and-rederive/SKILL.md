@@ -76,7 +76,13 @@ selectors below take ids, and `tree_forget` walks the relationships itself to
 resolve parents, children and spouses.
 
 **Do not read `tree.gedcomx.json`.** You do not need the names and dates you are
-about to remove, and you are better off not having them in context.
+about to remove, and you are better off not having them in context. For the same
+reason, use the year (or year range) the researcher gave you and stop. A single
+call packing more than one threshold onto the same date selector is rejected by
+the tool itself, but nothing stops you from making that same mistake across
+**separate** calls — do not repeat a date selector with a different year to see
+what the counts do. That reads a date off the tree as surely as opening the
+file.
 
 **The canonical setup is build-full-then-forget.** When a project is seeded
 specifically to test re-derivation, `init-project` builds the *complete* tree
@@ -107,8 +113,11 @@ Each entry in `forget` is `{ selector, … }`:
 | `birth-of` | `personId` | that person's birth facts |
 | `death-of` | `personId` | that person's death facts |
 | `facts-of` | `personId`, `factType` | that person's facts of one type (e.g. `Marriage`) |
+| `facts-before` | `year`, optional `personId` | facts confidently before `year`; tree-wide without `personId` |
+| `facts-after` | `year`, optional `personId` | facts confidently after `year`; tree-wide without `personId` |
+| `facts-between` | `fromYear`, `toYear`, optional `personId` | facts confidently within the range; tree-wide without `personId` |
 | `person` | `personId` | one person, cascading their relationships |
-| `fact` | `factId` | one specific fact |
+| `fact` | `factId`, optional `personId` | one specific fact; add `personId` if the tool reports the id exists on more than one owner |
 | `relationship` | `relationshipId` | one specific relationship |
 
 **Show the researcher the dry-run counts and get their agreement before

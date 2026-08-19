@@ -64,6 +64,19 @@ wikipedia_search({ query: "Schuylkill County Pennsylvania history" })
 
 Note when the jurisdiction was formed, from what parent, and any boundary changes during the target period. Keep this brief — deep historical context belongs in historical-context (see Decision rules). Note only what directly affects which records exist and where they are held. When a boundary or name change splits a locality's records across two jurisdictions (e.g., a territorial-era set and a later county set), connect them explicitly as one continuous research trail for that place rather than listing them as unrelated record sets.
 
+**A temporal split and a geographic split need different quirks.** A temporal
+split (the same territory renamed or re-parented on a date) gives a clean
+before/after rule — "before 1878, filed under the predecessor." A *geographic*
+split (the jurisdiction divided into two or more successors covering different
+parts of the original territory, e.g. Feliciana Parish, Louisiana into East
+and West Feliciana Parish in 1824) does not: which successor holds a given
+record depends on exactly where within the original territory the event
+occurred, and that is often not known at survey time. Write the quirk to say
+so plainly — "records could be under either East or West Feliciana Parish;
+search both" — rather than picking one successor as if the split were
+temporal. Do not resolve the ambiguity yourself from a wiki summary unless it
+actually pins the specific place to one side.
+
 ### 3. Survey available records and repositories
 
 Once `place_search` (step 2) has returned the `standardPlace`, issue the survey calls in a SINGLE turn as PARALLEL tool calls — `place_population`, `collections_search`, `volume_search`, `external_links_search`, `wiki_search`, and all four `wiki_place_page` sections (home / getting_started / online_records / research_tips) are independent and must NOT be run one-per-turn. Batch them together. The only exception is `wiki_read`: it needs a page URL, so run it right after `wiki_search` returns one. Do not drop any call — parallelize, don't prune.
@@ -129,7 +142,8 @@ research_append({
       // research-tips / online-records pages. This is ALSO where any border/name
       // succession advice goes — a sentence, not a jurisdiction field, e.g.:
       "Parish records indexed only at the county level — search the county, not the exact parish.",
-      "Lackawanna County records before 1878 were filed under Luzerne County — search Luzerne first."
+      "Lackawanna County records before 1878 were filed under Luzerne County — search Luzerne first.",
+      "Feliciana Parish split into East and West Feliciana Parish in 1824 — which side holds a given record depends on where within old Feliciana Parish the event occurred; search both unless that's pinned down."
     ],
     guide_markdown: "<the guide you just presented, in markdown>",
     pages_read: [

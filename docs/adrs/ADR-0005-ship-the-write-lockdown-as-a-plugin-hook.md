@@ -52,10 +52,21 @@ as part of the plugin, and the hosted path gets it alongside its own `hooks=`.
 Verified live in Cowork on 2026-07-30 — the hook loads, fires under either
 matcher form, and its deny is honored with the script's own reason text
 surfacing. (That probe used a **broader matcher** than the shipped one and so
-also fired for `Bash`; the shipped `hooks.json` matcher is
-`Write|Edit|NotebookEdit`, and the `Bash` route is deliberately open — see the
-costs below.) Cowork runs `permission_mode: "default"`, the hosted path runs
+also fired for `Bash`; the `Bash` route is deliberately open — see the costs
+below.) Cowork runs `permission_mode: "default"`, the hosted path runs
 `bypassPermissions`; a hook binds under both.
+
+**The matcher is part of the guardrail, not packaging detail.** It decides
+whether the script runs at all, so a tool the script would deny but the matcher
+omits is a hole the script can never close — which is exactly what the probe
+above demonstrates from the other direction. The shipped matcher is
+`Write|Edit|NotebookEdit|.*device_commit_files`; it must stay at least as wide
+as the script's own `FILE_WRITE_TOOLS` + `DEVICE_WRITE_TOOLS`, and
+`tests/packaging/plugin-hooks.test.ts` derives the expected set from the script
+rather than restating it. It shipped narrower once: the `device_commit_files`
+arm landed in all three predicate copies while the matcher still named only the
+three raw-write tools, so the closure was inert in Cowork — the one environment
+it was built for — and every test was green.
 
 Three deliberate properties of the script:
 
@@ -124,16 +135,21 @@ is not hypothetical, it has already produced one silent no-op.
 > `packages/engine/mcp-server/tests/packaging/plugin-hooks.test.ts` — asserts
 > `scripts/package-plugin.mjs`'s `INCLUDE` carries `"hooks"` (without it the
 > directory never ships, which looks identical to the runtime refusing to load
-> it) and **runs the real guard script** against vectors.
+> it), **runs the real guard script** against vectors, and asserts the
+> `hooks.json` matcher covers every tool the script denies — reading the tool
+> names out of the script, since a restated list is what let the matcher and the
+> predicate drift apart.
 
 > `eval/harness/tests/unit/test_write_lockdown_parity.py` — asserts the three
 > sibling implementations agree, by lifting each one's `PROTECTED_PROJECT_FILES`
 > and predicate out with `ast` and running them against one vector set. It also
 > fails on an unregistered fourth copy.
 
-What it does **not** catch: that the hook **binds as a runtime hook** — only the
-script's decisions are exercised (#1160); or the `Bash` route, which is out of
-scope by design.
+What it does **not** catch: that the hook **binds as a runtime hook** — the
+matcher is now checked against the script statically, but whether the runtime
+honours it, and whether the real `device_commit_files` payload looks anything
+like the vectors, only a live Cowork session can say (#1160); or the `Bash`
+route, which is out of scope by design.
 
 `docs/specs/guardrail-enforcement-spec.md` **§6** is the authority on this
 guardrail; **§4** is the table of every guardrail's instrument, binding

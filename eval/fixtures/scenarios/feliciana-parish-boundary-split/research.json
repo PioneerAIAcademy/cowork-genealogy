@@ -1,0 +1,154 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Trace Silas Bankston (b. ~1800) after his family's residence in the old, undivided Feliciana Parish, Louisiana",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-08-01",
+    "updated": "2026-08-01"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where did Silas Bankston marry, circa 1828?",
+      "rationale": "The 1820 census shows the Bankston family residing in Feliciana Parish, Louisiana (before its 1824 split into East and West Feliciana Parish). By Silas's likely 1828 marriage, the parish had already split. Exactly where within the old, undivided parish the family resided at the time of the split is not established from records found so far, so which successor parish's records would hold the marriage is unknown.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-08-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-08-01T09:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bankston",
+        "given": "Silas",
+        "collection": "1820 U.S. Census",
+        "place": "Feliciana Parish, Louisiana"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "notes": "Found Silas Bankston (head of household, age category 16-25) in the 1820 census for Feliciana Parish, Louisiana — before the 1824 split. No indication of which part of the parish the household occupied.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1820 U.S. Census, Feliciana Parish, Louisiana, population schedule, Silas Bankston household; digital image, FamilySearch.org, accessed 1 Aug 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1820 U.S. Federal Census, population schedule",
+        "when_created": "1820",
+        "when_accessed": "2026-08-01",
+        "where": "FamilySearch.org",
+        "where_within": "Feliciana Parish, Louisiana"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-01",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:FELI-0001",
+      "url_archived": null,
+      "notes": null,
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:FELI-0001",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "residing Feliciana Parish, Louisiana (1820)",
+      "structured_value": {
+        "place": "Feliciana Parish, Louisiana, United States"
+      },
+      "date": "1820",
+      "date_certainty": "exact",
+      "place": "Feliciana Parish, Louisiana",
+      "standard_place": "Feliciana Parish, Louisiana, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Louisiana, United States",
+      "for_place": "Feliciana Parish (East and West Feliciana Parish from 1824), Louisiana",
+      "time_period": "1810-1835",
+      "jurisdictions": [
+        {
+          "name": "Feliciana Parish, Louisiana, United States",
+          "date_range": "1810-1824"
+        },
+        {
+          "name": "East Feliciana Parish, Louisiana, United States",
+          "date_range": "1824-present"
+        },
+        {
+          "name": "West Feliciana Parish, Louisiana, United States",
+          "date_range": "1824-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "3000101",
+          "title": "Louisiana, East Feliciana Parish Marriage Records, 1824-1900",
+          "date_range": "1824-1900"
+        },
+        {
+          "id": "3000102",
+          "title": "Louisiana, West Feliciana Parish Marriage Records, 1824-1900",
+          "date_range": "1824-1900"
+        }
+      ],
+      "quirks": [
+        "Feliciana Parish split into East and West Feliciana Parish in 1824 — a GEOGRAPHIC split, not a temporal one. Which successor parish holds a given record depends on exactly where within the old, undivided parish the event occurred, and that is often not known. Records could be under either East or West Feliciana Parish; search both unless a specific residence within the old parish is pinned down.",
+        "Both East and West Feliciana Parish marriage registers from 1824 onward are indexed on FamilySearch and full-text searchable."
+      ],
+      "guide_markdown": "# Locality Guide: Feliciana Parish / East and West Feliciana Parish, Louisiana (1810-1835)\n\nFeliciana Parish split into East and West Feliciana Parish in 1824. This is a geographic split: which successor parish holds a given record depends on where within the old parish the event occurred, and that is frequently unknown. Records for a family resident in the old parish before 1824 may be found under either successor's name after that date — search both.",
+      "pages_read": [
+        { "section": "home", "url": null, "found": false },
+        { "section": "getting_started", "url": null, "found": false },
+        { "section": "online_records", "url": null, "found": false },
+        { "section": "research_tips", "url": null, "found": false }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-01"
+    }
+  ]
+}

@@ -10,7 +10,7 @@ areas where historical terminology differs from current usage.
 These are among the most frequently misinterpreted terms in
 genealogical records.
 
-### "Junior" and "Senior"
+### "Junior" and "Senior" (and "II" / "III")
 
 In modern usage, Junior and Senior indicate a parent-child pair
 sharing the same name. In historical records (particularly before
@@ -22,10 +22,18 @@ unrelated. When one of the pair died or moved away, the remaining
 man might drop his designator entirely, or a third person of the
 same name might inherit the Junior label.
 
-**Research implication:** Do not assume a Junior/Senior pair
-represents a parent-child relationship without independent
-evidence. Look for other records (wills, deeds, church records)
-that explicitly state the relationship.
+"II" and "III" worked the same way and were also not necessarily
+generational: a community could have a father/son pair
+disambiguated as Senior and Junior, while a more distantly related
+man of the same name — a cousin, not a grandson — is styled "III"
+simply because he is the third such man in the area, not because
+he is third in a direct line.
+
+**Research implication:** Do not assume a Junior/Senior, II, or
+III designation represents a parent-child or direct-descent
+relationship without independent evidence. Look for other records
+(wills, deeds, church records) that explicitly state the
+relationship.
 
 ### "Cousin"
 
@@ -85,8 +93,9 @@ married woman in records before roughly 1900.
   below the gentry but above a tenant farmer. In America, often
   simply meant "farmer" or "freeholder."
 - **Gentleman:** A man of sufficient wealth and social standing to
-  live without manual labor. Had specific legal implications for
-  jury service, voting, and office-holding.
+  live without manual labor, and who still owned land — it was not
+  a purely social title. Had specific legal implications for jury
+  service, voting, and office-holding.
 - **Husbandman:** A farmer of lower status than a yeoman, typically
   a tenant farmer or one with a smaller holding. Not related to
   the word "husband" in its modern spousal sense.
@@ -114,6 +123,12 @@ married woman in records before roughly 1900.
 - **Testate/intestate:** Testate means the person died with a will.
   Intestate means without a will. Intestate estates were divided
   according to the jurisdiction's inheritance laws.
+- **Feme sole:** A woman with the legal standing to act for
+  herself in business or at law — either unmarried, or married but
+  acting independently of her husband (a "feme sole trader"). This
+  is the term that explains why a married woman appears as a party
+  in her own right in a deed, contract, or lawsuit rather than
+  through her husband.
 
 ## Occupational terms
 
