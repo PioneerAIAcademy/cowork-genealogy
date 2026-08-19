@@ -11,7 +11,7 @@
       "extraction",
       "indirect-evidence",
       "household",
-      "relationship-inferred"
+      "no-relationship-assertions"
     ]
   },
   "input": {
@@ -20,7 +20,7 @@
   },
   "judge_context": [
     "Should produce atomic assertions — separate `a_` entries for each person's name, age/birth, birthplace, and (for Thomas) occupation. NOT compound assertions like 'Thomas Flynn, age 32, Ireland, miner' jammed into one `value` field",
-    "Should classify relationship assertions (Mary as Thomas's likely wife, Patrick as their likely child) as `evidence_type: \"indirect\"` because the 1850 census doesn't have a relationship column — household position is the inference, not the record's statement",
+    "NO relationship assertions — this census has no relationship column (that begins in 1880), so the record establishes only that these people shared a dwelling. Extract every person's stated facts and their residence, and write NO parent-child or spousal assertion in any form, including `indirect` / `_inferred` ones. Omitting them is CORRECT and is NOT a Completeness gap; emitting them is the error this test guards against. Noting the apparent family in the summary is good practice — that hypothesis belongs to downstream correlation, not to extraction (decided 2026-08-15, #1626)",
     "Should distinguish the census enumerator (recorder) from the household informant (most likely Thomas or Mary, but the 1850 census doesn't identify the informant). `informant_proximity` for age and birthplace facts should be `household_member` (someone in the household had to answer); `informant_proximity` for residence facts can be `witness` (the enumerator physically visited the dwelling)",
     "Should NOT create assertions for Mary Flynn's occupation — the census record only lists Thomas as 'miner'; fabricating an occupation for Mary would violate faithful-capture",
     "Birth year computed from stated age is INDIRECT evidence (requires arithmetic). Birthplace stated in the record is DIRECT evidence. Age stated in the record is DIRECT evidence. Do not conflate birth year (indirect) with age or birthplace (direct)."
@@ -84,18 +84,6 @@
       "attribute": "place",
       "value": "Ireland",
       "evidence_type": "direct"
-    },
-    {
-      "record_role": "child_1",
-      "fact_type": "relationship",
-      "evidence_type": "indirect",
-      "optional": true
-    },
-    {
-      "record_role": "wife",
-      "fact_type": "relationship",
-      "evidence_type": "indirect",
-      "optional": true
     }
   ]
 }
