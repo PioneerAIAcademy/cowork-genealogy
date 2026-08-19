@@ -61,6 +61,7 @@ from typing import Any
 from e2e import judge as judge_module
 from e2e.env import ENV_FILE, load_env_file
 from e2e.judge import derive_verdict  # shared with apply_avoid_guard; re-exported for our callers
+from e2e.provenance import findings_hash
 
 
 # NOTE: these mirror e2e.orchestrator's DEFAULT_RUNLOG_ROOT / DEFAULT_FIXTURES_ROOT
@@ -74,7 +75,7 @@ DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
 PER_FINDING_TARGET = 0.80  # ~ human inter-rater agreement
 
 FINDING_LABELS = {"true", "partial", "false"}
-ALLOWED_ANN_KEYS = {"annotator", "per_finding", "proof_quality_score", "notes"}
+ALLOWED_ANN_KEYS = {"annotator", "per_finding", "proof_quality_score", "notes", "findings_hash"}
 
 
 # Verdict derivation lives in e2e.judge (`derive_verdict`, re-exported above) —
@@ -269,11 +270,14 @@ def load_annotated_runs(
         3. any per_finding value null            -> WARN + SKIP (incomplete; inert)
         4. fixture / expected-findings unreadable-> ERROR  (orphaned filled grade)
         5. <stem>.final-tree.gedcomx.json missing-> ERROR  (ungradeable filled grade)
-        6. per_finding keys != fixture ids       -> ERROR  (drift; re-grade or delete)
-        7. bad enum (label / proof_quality_score)-> ERROR
-        8. valid, keys match                     -> INCLUDE (derive verdict)
+        6. per_finding keys != fixture ids       -> ERROR  (id/key drift; re-grade or delete)
+        7. findings_hash present and mismatches  -> ERROR  (content drift; re-grade or delete)
+           findings_hash absent                  -> INCLUDE, flagged unverifiable (legacy; grandfathered)
+        8. bad enum (label / proof_quality_score)-> ERROR
+        9. valid, keys match                     -> INCLUDE (derive verdict)
 
-    Included cases are in the internal shape ``grade_case`` consumes.
+    Included cases are in the internal shape ``grade_case`` consumes, each with
+    ``findings_hash_present`` recording whether rung 7 could verify it.
     """
     cases: list[dict[str, Any]] = []
     problems: list[LoaderProblem] = []
@@ -343,7 +347,7 @@ def load_annotated_runs(
                 err(f"{research_path.name} unreadable ({e})")
                 continue
 
-        # 6. drift — keys must equal the fixture's finding ids
+        # 6. id/key drift — keys must equal the fixture's finding ids
         findings = expected.get("findings") or []
         fixture_ids = {str(f.get("id")) for f in findings}
         ann_ids = set(per_finding)
@@ -352,7 +356,22 @@ def load_annotated_runs(
                 f"{sorted(fixture_ids)} — fixture changed; re-grade or delete")
             continue
 
-        # 7. enums (filled values)
+        # 7. content drift — a stamped findings_hash must still match the
+        #    fixture's expected-findings.json. Catches an amended finding body
+        #    that kept its id, which rung 6 cannot see. An absent hash is a
+        #    legacy grade from before the check: include it but flag it
+        #    unverifiable — grandfathered, never stamped retroactively (that
+        #    would certify the very drift this catches). See issue #1719.
+        stored_hash = ann.get("findings_hash")
+        findings_hash_present = stored_hash is not None
+        if findings_hash_present:
+            current_hash = findings_hash(fixture_dir / "expected-findings.json")
+            if stored_hash != current_hash:
+                err("findings_hash mismatch — expected-findings.json changed "
+                    "since grading; re-grade or delete")
+                continue
+
+        # 8. enums (filled values)
         bad = {fid: v for fid, v in per_finding.items() if v not in FINDING_LABELS}
         if bad:
             err(f"per_finding labels {bad} not in {sorted(FINDING_LABELS)}")
@@ -371,7 +390,7 @@ def load_annotated_runs(
                 err(f"notes for unknown finding(s) {sorted(note_unknown)}")
                 continue
 
-        # 8. INCLUDE — assemble the internal case (verdict derived)
+        # 9. INCLUDE — assemble the internal case (verdict derived)
         human: dict[str, Any] = {
             "verdict": derive_verdict(per_finding, findings),
             "per_finding": per_finding,
@@ -397,6 +416,10 @@ def load_annotated_runs(
             "final_research": final_research,
             "subject_person_ids": sorted(subject_ids),
             "human": human,
+            # rung 7: True when a findings_hash was present and matched; False for
+            # a grandfathered legacy grade. Set on every include so main's count
+            # never KeyErrors.
+            "findings_hash_present": findings_hash_present,
         })
 
     return cases, problems
@@ -480,11 +503,23 @@ def main(argv: list[str] | None = None) -> int:
     cases, problems = load_annotated_runs(args.runlog_root, args.fixtures_root)
     warnings = [p for p in problems if p.severity == "warn"]
     errors = [p for p in problems if p.severity == "error"]
+    # Legacy grades from before the content-drift check (rung 7): included and
+    # graded, but their labels cannot be tied to the findings they were produced
+    # against. Counted separately — not a warn (those are excluded) — so the
+    # ready count is unaffected and the reader knows the coverage gap.
+    unverifiable = [c for c in cases if not c.get("findings_hash_present", True)]
 
     for w in warnings:
         print(f"WARN: {w.message}", file=sys.stderr)
     for e in errors:
         print(f"ERROR: {e.message}", file=sys.stderr)
+    if unverifiable:
+        print(
+            f"{len(unverifiable)} of {len(cases)} annotation(s) carry no "
+            "findings_hash — graded before the content-drift check, not "
+            "verifiable (grandfathered; re-grade to verify).",
+            file=sys.stderr,
+        )
 
     model = args.model or judge_module.DEFAULT_JUDGE_MODEL
 

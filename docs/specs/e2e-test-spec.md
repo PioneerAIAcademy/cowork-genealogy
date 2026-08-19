@@ -1162,9 +1162,14 @@ The presence of a *complete* annotation is the selection — there is no separat
 calibration-case directory. `calibrate_judge` discovers every
 `runlogs/e2e/**/run-*.ann.json`, re-runs the judge against each graded run, and
 reports **per-finding agreement (the ≥80% gate)**, proof-quality agreement
-(advisory), and a per-slug breakdown. A drifted annotation (its `per_finding` keys
-no longer match the fixture's finding ids — i.e. `expected-findings.json` was
-edited after grading) is a hard error: re-grade or delete it. A grade whose
+(advisory), and a per-slug breakdown. A drifted annotation is a hard error:
+re-grade or delete it. Drift takes two forms, both caught. **Id/key drift** — its
+`per_finding` keys no longer match the fixture's finding ids (a finding was added,
+removed, or renamed). **Content drift** — a finding body was amended while its id
+stayed the same, so the keys still match but the labels were produced against a
+requirement that no longer exists; this is caught by a `findings_hash` stamped
+into the annotation at grade time and re-checked by the loader, which hard-errors
+on mismatch with the same remedy. A grade whose
 **fixture was retired** is the same hard error with the same
 remedy: delete the `.ann.json`. Do not re-slug it onto a successor fixture — a
 split changes the researcher question and the starting tree, so the run was
@@ -1176,6 +1181,29 @@ gradeable runs — pass/partial/fail — are committed; §8), enforced by the bl
 grading gate (§14). Contributors run only `/grade-e2e-run`; the **maintainer**
 runs `uv run python -m e2e.calibrate_judge` periodically (`--dry-run` lints
 without API calls) — contributors never do.
+
+**Why `findings_hash` covers the whole file, normalized.** The stamp is a sha256
+over the entire `expected-findings.json`, normalized (parsed then re-emitted with
+sorted keys and stable formatting before hashing), so a reformat or key reorder
+does not fire but any content edit does. It is computed by one shared function
+that both the grader's stamp step and the loader call, so the two cannot disagree
+on whitespace or non-ASCII encoding — a corpus full of em-dashes and accented
+names would otherwise make every fresh stamp fail the check it exists to satisfy.
+Two narrower designs were rejected. Hashing only the graded fields (id, type,
+description, details, required, polarity — excluding `supporting_sources`) was
+rejected because the judge is handed the *entire* findings object, so an edit
+confined to `supporting_sources` changes the question it answers, and the narrower
+rule would leave that silent — the same invalidation this check exists to close. A
+per-finding digest map was rejected as worth only a handful more usable labels
+across the committed corpus, at a larger annotation.
+
+Annotations graded before the check carry no `findings_hash`. They are
+**grandfathered** — included and graded, but reported as unverifiable rather than
+errored, and never stamped retroactively (a retroactive stamp would certify
+exactly the drift the check exists to catch). They age out as re-grades replace
+them, the same way the pre-blind-grading annotations above do. The accepted cost
+is that a citation-only fixture edit invalidates every grade for that slug; the
+remedy is always a re-grade or a delete, never a re-stamp.
 
 **Collecting grades before the judge is calibrated is the intended bootstrap.**
 You do not need a calibrated judge to start grading; the grades are what makes

@@ -19,6 +19,8 @@ from e2e.calibrate_judge import (
     load_annotated_runs,
     main,
 )
+from e2e.provenance import findings_hash
+from e2e.stamp_findings_hash import stamp as stamp_findings_hash
 
 
 def _case(case_id, human_verdict, human_per_finding, **extra):
@@ -326,6 +328,76 @@ def test_loader_drift_is_error(tmp_path):
     assert cases == []
     assert [p.severity for p in problems] == ["error"]
     assert "fixture changed" in problems[0].message
+
+
+# --- content-drift check: findings_hash (issue #1719) ----------------------
+
+
+def test_loader_content_drift_hash_mismatch_is_error(tmp_path):
+    # Keys still match the fixture ids, but a stamped findings_hash no longer
+    # matches the (amended) expected-findings.json — the silent case rung 6 misses.
+    rr, fr, _ = _layout(tmp_path, ann={
+        "per_finding": {"f1": "true", "f2": "partial"},
+        "findings_hash": "0" * 64,  # stale/wrong hash
+    })
+    cases, problems = load_annotated_runs(rr, fr)
+    assert cases == []
+    assert [p.severity for p in problems] == ["error"]
+    assert "findings_hash mismatch" in problems[0].message
+
+
+def test_loader_absent_findings_hash_is_grandfathered(tmp_path):
+    # Legacy grade with no findings_hash: included, flagged unverifiable, no problem.
+    rr, fr, _ = _layout(tmp_path)  # default ann carries no findings_hash
+    cases, problems = load_annotated_runs(rr, fr)
+    assert problems == []
+    assert len(cases) == 1
+    assert cases[0]["findings_hash_present"] is False
+
+
+def test_loader_matching_findings_hash_is_verified(tmp_path):
+    rr, fr, ann_path = _layout(tmp_path)
+    good = findings_hash(fr / "smith-1850" / "expected-findings.json")
+    ann_path.write_text(
+        json.dumps({"per_finding": {"f1": "true", "f2": "partial"},
+                    "findings_hash": good}),
+        encoding="utf-8")
+    cases, problems = load_annotated_runs(rr, fr)
+    assert problems == []
+    assert len(cases) == 1
+    assert cases[0]["findings_hash_present"] is True
+
+
+def test_stamp_then_load_round_trips(tmp_path):
+    # The writer's stamp and the loader's check share one implementation, so a
+    # freshly stamped annotation must verify — the divergence the shared function
+    # exists to prevent (whitespace / ensure_ascii) would fail here otherwise.
+    rr, fr, ann_path = _layout(tmp_path)
+    stamp_findings_hash(ann_path, fr)
+    cases, problems = load_annotated_runs(rr, fr)
+    assert problems == []
+    assert len(cases) == 1
+    assert cases[0]["findings_hash_present"] is True
+
+
+def test_stamp_refuses_missing_fixture(tmp_path):
+    rr, fr, ann_path = _layout(tmp_path, fixture=False)
+    with pytest.raises(FileNotFoundError):
+        stamp_findings_hash(ann_path, fr)
+
+
+def test_stamp_is_idempotent_and_reflects_a_fixture_edit(tmp_path):
+    rr, fr, ann_path = _layout(tmp_path)
+    h1 = stamp_findings_hash(ann_path, fr)
+    assert stamp_findings_hash(ann_path, fr) == h1  # idempotent
+    # Amend the fixture; a re-stamp tracks the new content, and the OLD hash now
+    # mismatches (which is what the loader would catch).
+    (fr / "smith-1850" / "expected-findings.json").write_text(
+        json.dumps({"findings": [{"id": "f1", "required": True, "details": "new"},
+                                 {"id": "f2", "required": True}]}),
+        encoding="utf-8")
+    h2 = stamp_findings_hash(ann_path, fr)
+    assert h2 != h1
 
 
 def test_loader_orphaned_fixture_is_error(tmp_path):
