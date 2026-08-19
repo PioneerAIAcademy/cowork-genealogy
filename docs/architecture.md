@@ -656,8 +656,9 @@ they have different fixes, and only one of them is a description problem.
 2. **Did the user address the skill directly?** Then it *is* the `description`
    (§3.2). Add the missed utterance to `eval/tests/unit/<skill>/` as a trigger
    query **first** — `make optimize-skill SKILL=<name>` builds its query set from
-   that corpus, so tuning against an empty set does nothing. It makes real paid
-   model calls, is not in CI, and only *proposes* text you then apply by hand.
+   that corpus, and **refuses to run** when that set has no positives (it used to
+   report a pass without scoring anything). It makes real paid model calls, is not
+   in CI, and only *proposes* text you then apply by hand.
 3. **Did it trigger and then do the wrong thing?** That is not a triggering
    failure — classify it with §3.6.
 

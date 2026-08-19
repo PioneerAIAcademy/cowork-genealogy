@@ -119,7 +119,10 @@ damage, intentional destruction — with dates and what was lost. Note
 any substitute sources that partially compensate.]
 
 ## Research tips
-- [Jurisdiction-specific advice from wiki articles]
+- [Jurisdiction-specific advice from wiki articles — cite the source page URL
+  inline per the SKILL.md rule "Cite the wiki page, not just its title", e.g.
+  "Town clerks recorded vital records from 1639 ([Massachusetts Vital
+  Records](https://www.familysearch.org/en/wiki/Massachusetts_Vital_Records))"]
 - [Naming conventions or spelling patterns for this area]
 - [Alternative sources when primary records are missing]
 - [Efficient research sequence for this jurisdiction]

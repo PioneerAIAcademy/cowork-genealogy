@@ -327,6 +327,63 @@ export function latestYear(std: string): number | null {
 }
 
 /**
+ * True when the year `earliestYear` returns for this date is FUDGE's
+ * heuristic, not a real bound — i.e. the specific component contributing to
+ * the earliest side carries a `Bef` modifier ("Bef 1900" has no true lower
+ * bound at all). Mirrors `earliestYear`'s own `Bet`/`or`/plain branches so a
+ * caller checking "is this really bounded" sees exactly the component
+ * `earliestYear` itself drew the year from — not the date string as a
+ * whole, which matters for a `Bet X and Y` range where only ONE side may
+ * carry the modifier (found by review: a whole-string check wrongly voids
+ * an already-real bound sitting on the OTHER side of the range).
+ */
+export function earliestIsUnbounded(std: string): boolean {
+  const cleaned = cleanInput(std);
+  if (!cleaned) return false;
+
+  const rangeMatch = cleaned.match(/^Bet\s+(.+?)\s+and\s+(.+)$/);
+  if (rangeMatch) {
+    const start = parseSingle(rangeMatch[1]);
+    return start?.modifier === "Bef";
+  }
+
+  // "or" feeds BOTH sides into Math.min for earliestYear, so a Bef on
+  // either side can be the one that wins the minimum — unlike Bet, side
+  // doesn't disambiguate anything here.
+  const orMatch = cleaned.match(/^(.+?)\s+or\s+(.+)$/);
+  if (orMatch) {
+    const a = parseSingle(orMatch[1]);
+    const b = parseSingle(orMatch[2]);
+    return a?.modifier === "Bef" || b?.modifier === "Bef";
+  }
+
+  const p = parseSingle(cleaned);
+  return p?.modifier === "Bef";
+}
+
+/** The `Aft`-side mirror of {@link earliestIsUnbounded}. */
+export function latestIsUnbounded(std: string): boolean {
+  const cleaned = cleanInput(std);
+  if (!cleaned) return false;
+
+  const rangeMatch = cleaned.match(/^Bet\s+(.+?)\s+and\s+(.+)$/);
+  if (rangeMatch) {
+    const end = parseSingle(rangeMatch[2]);
+    return end?.modifier === "Aft";
+  }
+
+  const orMatch = cleaned.match(/^(.+?)\s+or\s+(.+)$/);
+  if (orMatch) {
+    const a = parseSingle(orMatch[1]);
+    const b = parseSingle(orMatch[2]);
+    return a?.modifier === "Aft" || b?.modifier === "Aft";
+  }
+
+  const p = parseSingle(cleaned);
+  return p?.modifier === "Aft";
+}
+
+/**
  * Returns the smallest possible gap in days between two standardized dates.
  * Returns 0 if the ranges overlap.
  * Returns null if either date has no year.

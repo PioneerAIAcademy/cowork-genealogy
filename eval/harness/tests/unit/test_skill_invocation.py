@@ -324,6 +324,55 @@ def test_does_not_flag_a_seeded_primary_fact_already_in_the_starting_tree():
     assert not any("proof-conclusion" in v for v in violations)
 
 
+def test_flags_a_primary_fact_replaced_in_place():
+    """Issue #1569: a primary fact REPLACED (same count, different content) used to
+    read as unchanged under the count-based check. Identity-based (signature) catches
+    it: the seeded Death fact carries no date, the final one does."""
+    starting_person = {"id": "I1", "facts": [{"type": "Death", "primary": True}]}
+    final_person = {"id": "I1", "facts": [{"type": "Death", "primary": True, "standard_date": "1900"}]}
+    tree = {"persons": [final_person], "relationships": []}
+    starting = {"persons": [starting_person]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_flags_a_second_primary_fact_with_content_identical_to_an_existing_one():
+    """Found by review: a bare set of normalized signatures would collapse two
+    primary facts that happen to carry the identical (type, date, place) into one,
+    silently hiding a genuinely-added duplicate -- exactly the gap the raw-count
+    check this replaces was supposed to catch. Counter-based comparison preserves
+    multiplicity: 2 of the same signature vs. 1 in the baseline must still fire."""
+    dup_fact = {"type": "Death", "primary": True, "standard_date": "1900", "standard_place": None}
+    starting_person = {"id": "I1", "facts": [dict(dup_fact)]}
+    final_person = {"id": "I1", "facts": [dict(dup_fact), {**dup_fact, "sources": [{"ref": "src-2"}]}]}
+    tree = {"persons": [final_person], "relationships": []}
+    starting = {"persons": [starting_person]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_flags_a_second_relationship_fact_with_content_identical_to_an_existing_one():
+    """The relationship-side twin of
+    test_flags_a_second_primary_fact_with_content_identical_to_an_existing_one: a bare
+    frozenset of normalized fact signatures collapses two facts carrying the identical
+    (type, date, place) into one, hiding a genuinely-added duplicate. Counter-based
+    comparison preserves multiplicity. Without this test, dropping the Counter here
+    passes the whole suite (found by review)."""
+    dup = {"type": "Marriage", "standard_date": "21 Oct 1860", "standard_place": "Lezayre"}
+    starting_rel = {"id": "R1", "type": "Couple", "person1": "I1", "person2": "I2", "facts": [dict(dup)]}
+    final_rel = {
+        "id": "R1",
+        "type": "Couple",
+        "person1": "I1",
+        "person2": "I2",
+        "facts": [dict(dup), {**dup, "sources": [{"ref": "src-2"}]}],
+    }
+    starting = {"persons": [], "relationships": [starting_rel]}
+    tree = {"persons": [], "relationships": [final_rel]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert any("proof-conclusion" in v for v in violations)
+
+
 def test_flags_a_placeholder_relationship_re_pointed_this_run():
     """The endpoint-tuple key, not `id`: 7 fixtures seed a relationship pointing at
     a PID-TODO placeholder that the agent resolves during the run. Keying on `id`
@@ -336,6 +385,89 @@ def test_flags_a_placeholder_relationship_re_pointed_this_run():
         {"id": "rel-1", "type": "ParentChild", "parent": "G7X1-234", "child": "p-child-thomas"}]}
     violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
     assert any("proof-conclusion" in v for v in violations)
+
+
+def test_flags_a_marriage_fact_dated_onto_a_seeded_couple():
+    """Issue #1569 (was #1368) Scenario A: susanna-dawson-marriage's own shape — a
+    Couple seeded with NO facts, a marriage fact written onto it this run. The
+    endpoint-only key read this as unchanged; the normalized signature does not,
+    because facts is part of the signature now."""
+    starting_rel = {"id": "R1", "type": "Couple", "person1": "I1", "person2": "I2"}
+    final_rel = {
+        "id": "R1",
+        "type": "Couple",
+        "person1": "I1",
+        "person2": "I2",
+        "facts": [{"type": "Marriage", "standard_date": "21 Oct 1860", "standard_place": "Lezayre"}],
+    }
+    starting = {"persons": [], "relationships": [starting_rel]}
+    tree = {"persons": [], "relationships": [final_rel]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_flags_a_parentchild_subtype_reclassified():
+    """Issue #1569 Scenario B: a seeded ParentChild's subtype changed
+    Biological -> Adopted. The endpoints are identical; only subtype differs."""
+    starting_rel = {"id": "R16", "type": "ParentChild", "parent": "I1", "child": "I2", "subtype": "Biological"}
+    final_rel = {"id": "R16", "type": "ParentChild", "parent": "I1", "child": "I2", "subtype": "Adopted"}
+    starting = {"persons": [], "relationships": [starting_rel]}
+    tree = {"persons": [], "relationships": [final_rel]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_does_not_flag_a_seeded_couples_facts_merely_reordered_or_re_ided():
+    """The normalization control: a harmless re-serialization (facts reordered, an
+    id attached to a fact) must NOT read as a new conclusion -- the exact disease
+    issue #1340 cures. Confirms the signature is order- and id-insensitive, not
+    merely 'facts changed'."""
+    starting_rel = {
+        "id": "R1",
+        "type": "Couple",
+        "person1": "I1",
+        "person2": "I2",
+        "facts": [
+            {"type": "Marriage", "standard_date": "21 Oct 1860", "standard_place": "Lezayre"},
+            {"type": "Residence", "standard_date": "1861", "standard_place": "Lezayre"},
+        ],
+    }
+    final_rel = {
+        "id": "R1",
+        "type": "Couple",
+        "person1": "I1",
+        "person2": "I2",
+        # same two facts, reordered, one with an id attached this run
+        "facts": [
+            {"id": "F9", "type": "Residence", "standard_date": "1861", "standard_place": "Lezayre"},
+            {"type": "Marriage", "standard_date": "21 Oct 1860", "standard_place": "Lezayre"},
+        ],
+    }
+    starting = {"persons": [], "relationships": [starting_rel]}
+    tree = {"persons": [], "relationships": [final_rel]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert not any("proof-conclusion" in v for v in violations)
+
+
+def test_relationship_signature_tolerates_a_none_and_a_populated_place_on_same_fact_type():
+    """Real corpus shape (chresten-nielsen-daughter's R1): two facts of the same
+    type where one has a populated standard_place and the other None. A
+    sorted-tuple signature would raise TypeError comparing None to str; the
+    frozenset-based signature must not."""
+    rel = {
+        "id": "R1",
+        "type": "Couple",
+        "person1": "I1",
+        "person2": "I2",
+        "facts": [
+            {"type": "Marriage", "standard_date": "13 Mar 1790", "standard_place": None},
+            {"type": "Marriage", "standard_date": "13 Mar 1790", "standard_place": "Tyrsted, Vejle, Denmark"},
+        ],
+    }
+    tree = {"persons": [], "relationships": [rel]}
+    starting = {"persons": [], "relationships": [rel]}
+    violations = find_effects_without_invocation([], {}, tree, starting_tree=starting)
+    assert not any("proof-conclusion" in v for v in violations)
 
 
 def test_flags_a_new_unlinked_person_with_no_person_evidence_invocation():
@@ -358,6 +490,20 @@ def test_flags_a_seed_person_who_gained_new_facts_this_run():
     starting = {"persons": [{"id": "I1", "names": [{"given": "Seed"}], "facts": [{"type": "Birth"}]}]}
     grown = {"persons": [{"id": "I1", "names": [{"given": "Seed"}], "facts": [{"type": "Birth"}, {"type": "Death"}]}], "relationships": []}
     violations = find_effects_without_invocation([], {"person_evidence": []}, grown, starting_tree=starting)
+    assert any("person-evidence" in v for v in violations)
+
+
+def test_flags_a_seed_persons_fact_replaced_in_place():
+    """Found by review: the same count-based blind spot the proof-conclusion arm
+    had (issue #1569) was also present here -- a seeded person's fact REPLACED
+    (same count, different content) read as unchanged. Identity-based comparison
+    catches it: the seeded Birth fact carries no date, the final one does."""
+    starting = {"persons": [{"id": "I1", "names": [{"given": "Seed"}], "facts": [{"type": "Birth"}]}]}
+    changed = {
+        "persons": [{"id": "I1", "names": [{"given": "Seed"}], "facts": [{"type": "Birth", "standard_date": "1850"}]}],
+        "relationships": [],
+    }
+    violations = find_effects_without_invocation([], {"person_evidence": []}, changed, starting_tree=starting)
     assert any("person-evidence" in v for v in violations)
 
 
@@ -649,6 +795,17 @@ def test_extraction_append_by_unnamed_delegate_flagged():
     assert "record-extractor" in violations[0]
 
 
+def test_extraction_append_by_unnamed_delegate_still_flagged_when_errored():
+    """The is_error skip that used to sit before this branch split (issue #1569)
+    covered the extraction_append path too -- pin it separately from the
+    owning_skills-path regression test above, since a future fix scoped to only
+    one branch would otherwise pass every existing test."""
+    calls = [_extraction_call(agent_id="a1", agent_type="general-purpose", is_error=True)]
+    violations = find_protected_writes_by_unnamed_delegate(calls)
+    assert len(violations) == 1
+    assert "record-extractor" in violations[0]
+
+
 def test_extraction_append_by_wrong_dedicated_agent_still_flagged():
     """Only record-extractor is legitimate for this specific tool -- being
     IN DEDICATED_AGENT_NAMES is not sufficient the way it is for the four
@@ -674,9 +831,13 @@ def test_gps_mentor_evaluations_write_not_flagged():
     assert find_protected_writes_by_unnamed_delegate(calls) == []
 
 
-def test_is_error_entries_skipped():
+def test_is_error_entries_still_counted():
+    """Issue #1569: the lane check is about who called, not whether the call
+    succeeded — an errored write from an unnamed delegate is still a violation."""
     calls = [_owned_write("person-evidence", agent_id="a1", agent_type="general-purpose", is_error=True)]
-    assert find_protected_writes_by_unnamed_delegate(calls) == []
+    violations = find_protected_writes_by_unnamed_delegate(calls)
+    assert len(violations) == 1
+    assert "person-evidence" in violations[0]
 
 
 def test_no_owned_writes_returns_empty():
