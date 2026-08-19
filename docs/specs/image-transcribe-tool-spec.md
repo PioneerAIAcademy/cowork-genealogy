@@ -357,11 +357,11 @@ from the plugin or the `.mcpb` — see `docs/architecture.md`, "Other environmen
 differences that bite"), so a Cowork transcription slower than a minute is
 aborted long before either budget above fires. Measured over the committed e2e
 corpus as of commit b065b687^ (2026-08-16), 13 of 132 healthy calls (9.8%) ran
-past 60s — a floor, since the corpus carries no bridge hop. Counted by issue
-#1638's script, which is not the method that produced the n=101/n=89 below.
-Re-running it today reports 13 of 144 (9.0%): PR #1682 strips
-`response_summary` past 14 days, so its errored-call filter no longer sees
-most of the corpus. The 90/90/180 budgets hold only on the
+past 60s — a floor, since the corpus carries no bridge hop. Counted by the
+e2e-corpus timeline script, which is not the method that produced the n=101/n=89
+below. Re-running it today reports 13 of 144 (9.0%): the run-log retention step
+in commit `b065b687` strips `response_summary` past 14 days, so its errored-call
+filter no longer sees most of the corpus. The 90/90/180 budgets hold only on the
 paths that honour them — verified over stdio for the harnesses and the hosted
 control plane; whether the desktop `.mcpb` is bridged too is unverified, so the
 ceiling may apply to every Cowork session. This is a documented
