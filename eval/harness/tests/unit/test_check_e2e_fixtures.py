@@ -275,17 +275,19 @@ def test_no_link_components_is_silent(tmp_path, monkeypatch):
     assert check_e2e_fixtures.check_matched_vs_components([rel]) == []
 
 
-def test_fact_finding_excluded(tmp_path, monkeypatch):
-    """A `fact` finding's link tally is not a reliable signal (deriving it made
-    eleven false disagreements, 2026-08-10), so a disagreement is not warned —
-    matching apply_component_derivation's own fact exclusion."""
+def test_fact_finding_is_reported(tmp_path, monkeypatch):
+    """The check covers EVERY finding type (issue #1721 decision), so a `fact`
+    finding whose stored `matched` disagrees with its link tally is reported too.
+    `fact` is excluded from the derivation, not from this report."""
     monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
     rel = _write_e2e_run_with_findings(
         tmp_path, "smith", "2026-06-15_10-00-00",
         [{"finding_id": "f1", "matched": "true", "components": [_link("unsupported")]}],
     )
     _write_expected_findings(tmp_path, "smith", [{"id": "f1", "type": "fact"}])
-    assert check_e2e_fixtures.check_matched_vs_components([rel]) == []
+    warnings = check_e2e_fixtures.check_matched_vs_components([rel])
+    assert len(warnings) == 1
+    assert "f1" in warnings[0]
 
 
 def test_multiple_findings_only_the_disagreeing_one_warns(tmp_path, monkeypatch):

@@ -37,17 +37,17 @@ so it stays silent until someone actually does the thing worth flagging.
 
 ``apply_component_derivation`` (e2e/judge.py, e2e-test-spec.md §3.4.2) recomputes
 a finding's ``matched`` from its own ``components``, but only for ``relationship``
-findings. A ``source`` or ``person`` finding keeps whatever ``matched`` the judge
-wrote — even when its ``components``, sitting in the same object in the format the
-derivation consumes, resolve to a different label — and nothing reports it (issue
-#1721). This warns when a PR-added run log carries such a finding (stored
-``matched`` != ``derive_matched(components)``) so the reviewer can confirm the
-label. It does **not** widen the derivation: ``source``/``person`` cannot be
-calibrated against the committed corpus, so the disagreement is reported, not
-corrected. Warn-only, never blocks. Findings derivation already reconciled
-(``matched_model`` present), ``avoid`` findings (whose ``matched`` is not a link
-tally), and ``fact`` findings (whose components are dates, not links, so the tally
-says nothing — the same exclusion derivation makes) are skipped.
+findings. A ``source``, ``fact`` or ``person`` finding keeps whatever ``matched``
+the judge wrote — even when its ``components``, sitting in the same object in the
+format the derivation consumes, resolve to a different label — and nothing reports
+it (issue #1721). This warns, for **every finding type**, when a PR-added run log
+carries such a finding (stored ``matched`` != ``derive_matched(components)``) so
+the reviewer can confirm the label. It does **not** widen the derivation:
+``source``/``fact``/``person`` cannot be calibrated against the committed corpus,
+so the disagreement is reported, not corrected. Warn-only, never blocks. Findings
+derivation already reconciled (``matched_model`` present) and ``avoid`` findings
+(whose ``matched`` is not a link tally) are skipped; ``fact`` is *not* skipped —
+it is excluded from the derivation, not from this report.
 
 ## Not gated: fixture validity
 
@@ -216,21 +216,22 @@ def derive_matched(components: list[dict] | None) -> str | None:
     return "partial"
 
 
-def excluded_finding_ids(slug: str) -> set[str]:
-    """``id``s of findings the drift check does not evaluate, read from the
-    fixture's expected-findings.json:
+def avoid_finding_ids(slug: str) -> set[str]:
+    """``id``s of ``avoid``-polarity findings in the fixture's
+    expected-findings.json.
 
-    - ``avoid`` findings — there ``matched: "true"`` means "correctly declined
-      to assert", which is not a link tally.
-    - ``fact`` findings — their components are dates and places rather than
-      links, so the link tally says nothing about them; deriving there
-      manufactured eleven false disagreements in the 2026-08-10 sweep
-      (e2e-test-spec.md §3.4.2; ``apply_component_derivation`` in judge.py).
+    For an ``avoid`` finding ``matched: "true"`` means "correctly declined to
+    assert", which is not a link tally, so the drift check skips them — matching
+    ``apply_component_derivation``'s own polarity exclusion. This is the *only*
+    type/polarity the check skips: the issue's decision is to flag disagreements
+    for **every finding type** (``source``, ``fact`` and ``person`` alike), and
+    only ``avoid``'s ``matched`` semantics make the link tally meaningless. In
+    particular ``fact`` is *not* excluded here — it is excluded from the
+    *derivation* (judge.py), but the report still surfaces its disagreements.
 
-    Both mirror ``apply_component_derivation``'s own exclusions. Returns an empty
-    set when the fixture is missing or its JSON is unreadable or wrong-shaped —
-    the check then evaluates every finding, erring toward surfacing rather than
-    hiding a disagreement."""
+    Returns an empty set when the fixture is missing or its JSON is unreadable or
+    wrong-shaped — the check then evaluates every finding, erring toward
+    surfacing rather than hiding a disagreement."""
     ef = REPO_ROOT / "eval" / "tests" / "e2e" / slug / "expected-findings.json"
     try:
         data = json.loads(ef.read_text(encoding="utf-8"))
@@ -239,13 +240,11 @@ def excluded_finding_ids(slug: str) -> set[str]:
     findings = data.get("findings") if isinstance(data, dict) else None
     if not isinstance(findings, list):
         return set()
-    excluded: set[str] = set()
-    for f in findings:
-        if not isinstance(f, dict):
-            continue
-        if str(f.get("polarity", "recover")) == "avoid" or str(f.get("type")) == "fact":
-            excluded.add(str(f.get("id")))
-    return excluded
+    return {
+        str(f.get("id"))
+        for f in findings
+        if isinstance(f, dict) and str(f.get("polarity", "recover")) == "avoid"
+    }
 
 
 def check_matched_vs_components(added: list[Path]) -> list[str]:
@@ -253,20 +252,21 @@ def check_matched_vs_components(added: list[Path]) -> list[str]:
     disagreeing with the label its own ``components`` roll up to.
 
     ``apply_component_derivation`` reconciles this automatically, but only for
-    ``relationship`` findings (e2e-test-spec.md §3.4.2). A ``source`` or
-    ``person`` finding keeps whatever ``matched`` the judge wrote even when its
+    ``relationship`` findings (e2e-test-spec.md §3.4.2). A ``source``, ``fact``
+    or ``person`` finding keeps whatever ``matched`` the judge wrote even when its
     own ``components`` resolve to a different label, and nothing reports it
-    (issue #1721). This surfaces that disagreement for the reviewer without
-    widening the derivation.
+    (issue #1721). This surfaces that disagreement, for **every finding type**,
+    without widening the derivation.
 
     Skipped per finding when: it was already derived (``matched_model`` present —
-    the stored ``matched`` is the derived value), it is an ``avoid`` or ``fact``
-    finding (see ``excluded_finding_ids``), it has no ``matched`` to compare, or
-    it carries no ``link`` components (nothing to derive). Malformed or
-    wrong-shaped logs are skipped, never raised on.
+    the stored ``matched`` is the derived value), it is an ``avoid`` finding
+    (its ``matched`` is not a link tally), it has no ``matched`` to compare, or
+    it carries no ``link`` components (nothing to derive). ``fact`` is *not*
+    skipped — it is excluded from the derivation, not from this report. Malformed
+    or wrong-shaped logs are skipped, never raised on.
     """
     warnings: list[str] = []
-    excluded_by_slug: dict[str, set[str]] = {}
+    avoid_by_slug: dict[str, set[str]] = {}
     for rel in added:
         try:
             data = json.loads((REPO_ROOT / rel).read_text(encoding="utf-8"))
@@ -281,15 +281,15 @@ def check_matched_vs_components(added: list[Path]) -> list[str]:
         if not isinstance(per_finding, list):
             continue
         slug = rel.parts[3] if len(rel.parts) >= 4 else ""
-        if slug not in excluded_by_slug:
-            excluded_by_slug[slug] = excluded_finding_ids(slug)
-        excluded = excluded_by_slug[slug]
+        if slug not in avoid_by_slug:
+            avoid_by_slug[slug] = avoid_finding_ids(slug)
+        avoid_ids = avoid_by_slug[slug]
         for entry in per_finding:
             # Short-circuit isinstance first so `in`/`get` never hit a non-dict.
             if not isinstance(entry, dict) or "matched_model" in entry or "matched" not in entry:
                 continue
             fid = str(entry.get("finding_id"))
-            if fid in excluded:
+            if fid in avoid_ids:
                 continue
             derived = derive_matched(entry.get("components"))
             if derived is None:

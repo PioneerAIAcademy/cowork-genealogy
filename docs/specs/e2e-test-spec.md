@@ -376,11 +376,12 @@ Scope and record-keeping:
   human grade, so a `calibrate_judge` re-run could move at most a handful of
   graded labels and would read as validation it cannot supply. Instead,
   `check_e2e_fixtures.py`'s component-derivation drift check **warns** (never
-  blocks) when a PR-added run log leaves such a finding's `matched` disagreeing
-  with `derive_matched` of its own `components`, so the reviewer sees the
-  mislabel the relationship-only derivation would otherwise miss. `fact` stays
-  excluded on its own 2026-08-10 measurement. Whoever proposes widening the
-  derivation again is standing here.
+  blocks) when a PR-added run log leaves *any* finding's `matched` disagreeing
+  with `derive_matched` of its own `components` — **every finding type** — so
+  the reviewer sees the mislabel the relationship-only derivation would
+  otherwise miss. `fact` stays excluded from the *derivation* on its own
+  2026-08-10 measurement, but the drift check still reports its disagreements.
+  Whoever proposes widening the derivation again is standing here.
 - What was overridden is recorded under
   `judge_output.component_derivation.overrides` (each with `finding_id`,
   the model's `model` label and the `derived` one), the model's original
