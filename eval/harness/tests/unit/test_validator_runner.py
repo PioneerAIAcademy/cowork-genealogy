@@ -1042,8 +1042,30 @@ def test_bare_name_rule_exempts_negative_evidence():
                 "id": "a_1",
                 "record_role": "absent",
                 "fact_type": "name",
-                "value": "no father of the bride recorded on the license",
+                # The relation must sit INSIDE brackets, or the bracket-scoped
+                # regex never matches and this test passes without ever reaching
+                # the exemption it names (which is what it did before #1631's
+                # review — deleting the exemption left all 16 tests green).
+                "value": "not recorded (father of the bride)",
                 "evidence_type": "negative",
+            }
+        ]
+    )
+    assert result.passed is True, result.error
+
+
+def test_bare_name_rule_only_scans_name_facts():
+    """A relational phrase in a non-`name` fact is not the collapse shape — a
+    relationship fact's whole job is to say "X of Y". Without the fact_type
+    filter this value would be flagged, so this is what pins the filter:
+    dropping it left the rest of the suite green."""
+    result = _run_bare_name_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "groom",
+                "fact_type": "relationship",
+                "value": "listed as son (son of Frank Becker)",
             }
         ]
     )
