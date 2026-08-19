@@ -125,11 +125,28 @@ async function allCoverages(
  * A concept's ancestor chain, from a global (place-less) query.
  * Works for internal nodes too: any coverage whose hierarchy CONTAINS the id
  * yields the ancestors as the slice before it.
+ *
+ * Retries without the `types: ["NATURAL"]` filter when the scoped query finds
+ * nothing. `131602` is the case: 0 NATURAL groups carry it, 2 non-NATURAL ones
+ * do, so the chain is unreachable at this tool's own scope and the claim the
+ * spec makes about it could not be re-derived from this probe. The retry is
+ * flagged in the output, because a chain found only outside `NATURAL` says the
+ * type exists in FamilySearch's taxonomy but `volume_search` cannot return its
+ * volumes.
  */
 async function ancestorsOf(
   id: number
-): Promise<{ total: number; chain: number[] | null; name: string }> {
-  const r = await query(null, { extraCoverage: { recordTypeConceptIds: [id] }, pageSize: 20 });
+): Promise<{ total: number; chain: number[] | null; name: string; naturalOnly: boolean }> {
+  let r = await query(null, { extraCoverage: { recordTypeConceptIds: [id] }, pageSize: 20 });
+  let naturalOnly = true;
+  if (r.totalCount === 0) {
+    r = await query(null, {
+      extraCoverage: { recordTypeConceptIds: [id] },
+      pageSize: 20,
+      extraTop: { types: undefined },
+    });
+    naturalOnly = false;
+  }
   for (const g of r.groups) {
     for (const c of g.coverages ?? []) {
       const h = c.recordTypeConceptIdHierarchy;
@@ -143,10 +160,11 @@ async function ancestorsOf(
           c.recordTypeConceptId === id
             ? String(c.recordTypeOrig ?? "").replace(/^title:\s*/, "")
             : "",
+        naturalOnly,
       };
     }
   }
-  return { total: r.totalCount, chain: null, name: "" };
+  return { total: r.totalCount, chain: null, name: "", naturalOnly };
 }
 
 // ---------------------------------------------------------------- sections
@@ -338,7 +356,7 @@ async function sectionReach() {
  * claims to absorb. A claim holds when the anchor is in the id's ancestor chain.
  */
 const GROUP_CLAIMS: [string, number[], number[]][] = [
-  ["2 Baptism", [103612, 127575], [114490]],
+  ["2 Baptism", [103612], [114490, 127575]],
   ["3 Death", [104898], [127079, 129429, 122911, 126811]],
   ["4 Religious Death", [127576], [127739]],
   ["6 Marriage", [104727], [114513, 127549, 104742, 104744, 101383, 126374]],
@@ -348,11 +366,11 @@ const GROUP_CLAIMS: [string, number[], number[]][] = [
   ["19 ID documents", [126546], [131474, 123143, 129962, 129964]],
   ["21 Census", [123363], [124264, 104611, 100770, 130138, 126486, 129065, 129449]],
   ["22 Court", [127010], [123349, 126370, 126417, 127571]],
-  ["23 Probate", [124277, 126785], [123648, 123196, 129461, 130661]],
+  ["23 Probate", [124277], [123648, 123196, 129461, 130661, 126785]],
   ["24 Wills", [124457], [124456, 126946, 127073, 129547]],
   ["30 Tax", [124410], [129065]],
-  ["32 Religious", [123402, 124209], [130206, 126601]],
-  ["42 Prison", [123478, 131448], [126780, 130086, 126416, 129538]],
+  ["32 Religious", [123402], [130206, 126601, 124209]],
+  ["42 Prison", [123478], [126780, 130086, 126416, 129538, 131448]],
   ["46 Government Pensions", [124227], [124225, 124226, 130136, 131421, 126869, 124383, 127027]],
   // Not shipped as a group — its members are reachable via Military and Death.
   // Kept so that decision stays reproducible from this probe.
@@ -376,7 +394,10 @@ async function sectionAnchors() {
       if (anchors.some((a) => a === id || r.chain!.includes(a))) inSubtree += 1;
       else {
         stray += 1;
-        strays.push(`${id}${r.name ? ` (${r.name})` : ""} -> under [${r.chain.join(",")}]`);
+        strays.push(
+          `${id}${r.name ? ` (${r.name})` : ""} -> under [${r.chain.join(",")}]` +
+            (r.naturalOnly ? "" : "   [no NATURAL group carries it — volume_search cannot return these]")
+        );
       }
     }
     if (strays.length) console.log(`  ${label}  anchors[${anchors.join(",")}]\n      ${strays.join("\n      ")}`);

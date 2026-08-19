@@ -352,7 +352,7 @@ id's real ancestor chain.
 |---|---|---|
 | Baptism | `127575` religious birth records | Religious `123402` — a **sibling** of the Baptism anchor `103612`, not a descendant. 208,413 volumes globally |
 | Prison | `131448` police records | Government `126517` — a **sibling** of the Prison anchor `123478`. 50,432 volumes globally |
-| Emigration | `131602` departure records | Migration `127023` — a **sibling** of the Emigration anchor `123632`, so containment does not reach it |
+| Emigration | `131602` departure records | Migration `127023` — a **sibling** of the Emigration anchor `123632`, so containment does not reach it. **No `NATURAL` group carries this type**, so the two volumes that do are outside the only scope this tool queries; the id is carried so the group is correct if that changes, not because it returns anything today |
 | Death | `122911` obituaries | Newspapers `124231` |
 | Religious Death | `127739` religious burial | Religious `123402` |
 | Passports | `124432`, `124442`, `131572` travel permits, visas, residence permits | Migration `127023` |
@@ -424,10 +424,12 @@ equivalence, because a volume carrying one event type generally carries others:
 > there is no `ajv` or `zod`, and `src/index.ts` casts `request.params.arguments`
 > straight to each handler — so a schema-level `additionalProperties: false`
 > would only produce an error if the *client* validated first, which is three
-> clients and untested in all three. (`rank_search_matches` and `research_append`
-> do set it; it constrains what those tools accept in practice only through the
-> same client-side path.) `volume_search` therefore rejects the wrong field
-> server-side, in `validate()`:
+> clients and untested in all three. (`rank_search_matches` does set it, on its
+> input schema, and it constrains what that tool accepts only through the same
+> client-side path. `research_append` does not: its `additionalProperties: false`
+> sits on `research.schema.json` and is enforced server-side by
+> `validate_research_schema`, a different mechanism.) `volume_search` therefore
+> rejects the wrong field server-side, in `validate()`:
 >
 > ```ts
 > if ("recordType" in input) throw new Error(
@@ -743,7 +745,10 @@ as absent rather than guessing.
         {
           "place": "Edensor, Derbyshire, England, United Kingdom",
           "dateRange": "1726–1812",
-          "recordType": "Burial Records"
+          "recordType": "Burial Records",
+          "recordTypeConceptId": 104497,
+          "startYear": 1726,
+          "endYear": 1812
         }
       ]
     }
@@ -856,10 +861,24 @@ The full-text sub-fetch failure is **non-fatal** — a partial result with
 2. Resolve `standardPlace` → `placeId` via `standardPlaceToPlaceId`,
    then `placeId` → `placeRepIds` via `placeIdToRepIds` (both anonymous).
 3. If `recordTypeGroups` is present and non-empty, map each name through the
-   group table to its **anchor plus any strays**, union the ids, and set
+   group table to its **anchor, plus the strays of that group and of every
+   group nested beneath it**, union the ids, and set
    `coverage.recordTypeConceptIds`. An unrecognised name throws (see
    [Error handling](#error-handling)); an empty array is treated as no filter,
    matching the API.
+
+   **A descendant's strays must be sent, or a parent returns less than its own
+   child.** Containment reaches every descendant *anchor*, so those stay out of
+   the array. A stray is by definition an id containment cannot reach, and it is
+   unreachable from the parent for exactly the same reason it is unreachable from
+   its own anchor. Sending only the selected group's own strays would mean
+   `Death` returns obituaries while `Vital` — which the group table says includes
+   `Death` — does not, a gap of roughly 116,000 volumes on today's data. The same
+   holds for `Legal` against `Court`, `Government` against `Tax`, `Prison`,
+   `Passports` and `Government Pensions`, and `ID documents` against `Passports`.
+   This is the failure mode described under [Strays](#strays), reached from the
+   other direction: no error, no empty result, just fewer volumes than the tool
+   description promises the model.
 4. Derive the RMS wire dates from the integer years
    (`fromDateString = "${startYear}-01-01"`,
    `toDateString = "${endYear}-12-31"`) and build the group-search body
@@ -1000,7 +1019,7 @@ images are digitized, indexed, or full-text processed.
 | 15a | Strips a `title:` prefix from `dateRange`; derives `dateRange` from the date pair when `datesOrig` is absent | Date normalization |
 | 15b | Parses `startYear`/`endYear` from `fromdateString`/`todateString`; omits both when the pair is absent | Structured dates |
 | 15c | `recordTypeGroups` maps each group name to its anchor **and stray** ids and sends them in `coverage.recordTypeConceptIds` | Group expansion |
-| 15d | A parent group's request ids retrieve its nested groups' volumes (containment), and two groups OR rather than intersect | Group semantics |
+| 15d | A parent group's request ids retrieve its nested groups' volumes (containment), send the strays of every group nested beneath it, and two groups OR rather than intersect | Group semantics |
 | 15e | An unrecognised group name throws and names the valid set — it does **not** fall through to an unfiltered or empty search | Unknown-group guard |
 | 15f | `recordTypeGroups` is resent on the paginated follow-up call, unchanged | Pagination + filter |
 | 16 | Returns `nextPageToken` when present; rebuilds identical body + token on paged call | Pagination |
@@ -1079,10 +1098,19 @@ read as a guard without being one.
 **Counts are permission-dependent; the structure is not.** Figures here were
 measured with ordinary FamilySearch credentials. A caller with elevated permissions
 sees more: the same probes run against an elevated account returned `119166` at
-176,286 against 152,392 here, and `131602` at 3 volumes against 0. Every *ancestor
-chain*, containment relationship and reach *direction* reproduced identically across
-both. So treat the absolute numbers as a floor from one access level, and the
-structural claims as the durable part.
+176,286 against 152,392 here. Every *ancestor chain*, containment relationship and
+reach *direction* reproduced identically across both. So treat the absolute numbers
+as a floor from one access level, and the structural claims as the durable part.
+
+**`131602` is a different matter, and not a permissions one.** It reports 0 here
+and 2–3 elsewhere because **`types: ["NATURAL"]` excludes it entirely** — dropping
+that one field returns its volumes and its `[127023]` chain at ordinary
+credentials. Since this tool only ever queries `NATURAL`
+([Fixed fields](#fixed-fields-always-sent-in-the-group-search-request-body)),
+those volumes are out of its reach at any permission level. `ancestorsOf` in the probe therefore retries without the
+`types` filter when the scoped query is empty, and labels any chain it recovers
+that way, so a type the taxonomy has but the tool cannot return is visible rather
+than indistinguishable from a bad id.
 
 ## Design notes
 
