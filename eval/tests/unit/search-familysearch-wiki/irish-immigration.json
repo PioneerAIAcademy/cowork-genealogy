@@ -13,8 +13,9 @@
   },
   "mcp_fixtures": ["wiki-search-irish-immigration"],
   "judge_context": [
-    "The fixture chunk says 'Parish registers from Catholic churches in these communities are key genealogical sources'. The skill must preserve the word 'key' — do NOT accept 'primary', 'most important', 'essential', or any superlative upgrade. If the skill uses an upgraded term, score Summary faithful as 2 (partial).",
-    "Minor rephrasing that preserves 'key' is acceptable — e.g. 'are key sources' or 'are key genealogical resources' are faithful enough to score 3.",
+    "This test grades whether the summary preserves the source's strength of wording. The fixture chunk reads 'Parish registers from Catholic churches in these communities are key genealogical sources'. Judge whether the force of 'key' survives — an upgrade to a superlative ('primary', 'most important', 'essential') overstates the source; clause order, which noun carries the modifier, and whether 'genealogical' was retained are not part of this dimension.",
+    "This scoping binds every dimension, base and rubric alike: rephrasing that preserves the source's strength must not be marked down under Correctness either.",
+    "The skill saves its summary to a markdown file and, per its SKILL.md, reports only the filename and the fact of a Sources section — it is instructed to keep that message brief and NOT to reproduce the file in chat. Do not treat the file's contents being unquoted as a defect, and do not mark any dimension down for being unable to verify them from the response; file contents and Sources formatting are checked deterministically outside the judge.",
     "Only one result is returned by the fixture — the Sources section must contain exactly one bullet citing it."
   ]
 }
