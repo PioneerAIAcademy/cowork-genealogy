@@ -749,6 +749,7 @@ async def _execute_skill_with_retry(
     before_snapshot: dict[str, Any] = {}
     after_snapshot: dict[str, Any] = {}
     for attempt in range(attempts):
+        attempt_completed = False
         try:
             with tempfile.TemporaryDirectory(
                 prefix=f"eval-{spec.id}-{run_index}-{attempt}-",
@@ -793,6 +794,7 @@ async def _execute_skill_with_retry(
                         ),
                     )
                     after_snapshot = snapshot_files(workspace)
+                    attempt_completed = True
                 finally:
                     # Always clean up the SDK's session-store entry so long
                     # runs don't accumulate orphans under ~/.claude/projects/.
@@ -810,7 +812,14 @@ async def _execute_skill_with_retry(
             # populated above; only the tempdir's own removal failed. Same
             # rationale as ignore_cleanup_errors itself: a leaked temp dir is
             # strictly better than discarding an already-computed result.
-            pass
+            #
+            # Re-raised unless the attempt already produced a result. Without
+            # that guard this `except` also swallows a RecursionError raised
+            # from build_workspace/run_skill INSIDE the block, and the loop then
+            # returns the PREVIOUS attempt's result stamped with this attempt's
+            # number — silently, with no exception and no warning (#1735 review).
+            if not attempt_completed:
+                raise
 
         if not _is_retryable_abort(result) or attempt + 1 >= attempts:
             # Record how many attempts this run took so the stall tax is

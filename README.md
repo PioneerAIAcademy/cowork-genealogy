@@ -499,9 +499,9 @@ What's shipped:
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `image-reader` (fast/cheap page OCR),
   and `image-reader-opus` (explicit-only, higher-accuracy re-read).
-- **Researcher profile.** `init-project` captures experience level and
-  paid subscriptions in two questions; every skill adapts narration
-  density to the answer.
+- **Researcher profile.** `init-project` asks the research objective,
+  experience level, and site access together in one non-blocking opening
+  turn; every skill adapts narration density to the answer.
 - **Eval harness** under `eval/` for skill regression testing.
 
 ## Developer and contributor docs
