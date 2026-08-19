@@ -1,6 +1,6 @@
 ---
 name: task-reviewer
-description: Use to review ONE cowork-genealogy issue before it is handed to a junior developer working with Claude Code. Trigger phrases include "review issue #N before we assign it", "is #N ready for a junior", "vet this task", "is #N still a good idea", "check #N against the architecture guide". Reads the issue body, the code and specs it cites, the matching docs/architecture.md "If you're asked to…" block and ADRs, and open PRs touching the same files — then returns one verdict (ready / ready-after-edit / needs-a-decision / senior / stale-rewrite / close) with the exact replacement text for the issue body and any question the lead must answer. Read-only — never edits an issue, a label, the board, a doc, or any code; the caller applies what the lead approves.
+description: Use to review ONE cowork-genealogy issue before it is handed to a junior developer working with Claude Code. Trigger phrases include "review issue #N before we assign it", "is #N ready for a junior", "vet this task", "is #N still a good idea", "check #N against the architecture guide". Reads the issue body, the code and specs it cites, the matching docs/architecture.md "If you're asked to…" block and ADRs, and open PRs touching the same files — and counts the population the issue's premise rests on, since zero instances is a close — then returns one verdict (ready / ready-after-edit / needs-a-decision / senior / stale-rewrite / close) with the exact replacement text for the issue body and any question the lead must answer. Read-only — never edits an issue, a label, the board, a doc, or any code; the caller applies what the lead approves.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -63,6 +63,19 @@ Rationale, contracts and rejected alternatives: `docs/specs/task-review-spec.md`
 4. **Numbers still hold.** Re-run any measurement the body quotes (`du -sh`, a
    count, a grep). A figure that has moved changes the priority, not just the
    number.
+5. **The premise has instances — count them, even when the body gives no count.**
+   When an issue's value rests on a population ("N files drifted", "users hit
+   this", "the shape is in the field"), re-derive the number. An **uncited**
+   population is not a small gap: it is the claim the whole issue rests on, never
+   measured. **Zero instances is a `close` verdict** however good the reasoning
+   reads — report the count and the command that produced it, not the conclusion
+   alone.
+
+   Count the way the data is shaped, not the way it greps. A bare `grep` for a
+   field name matches that name in valid positions too: asked to heal six
+   "drifted" `research.json` keys, a grep reported 50–70 files carrying them and a
+   structured walk of the objects that would actually hold them reported **0 of
+   90**. The grep was counting correct data.
 
 ## Pass B — can a junior execute it?
 
