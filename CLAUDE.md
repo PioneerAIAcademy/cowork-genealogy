@@ -390,44 +390,21 @@ ToolSearch is the real load path there. Search by bare tool name —
 `query: "+research_append"` — which matches whatever prefix the session exposes.
 The same packaging test fails any `select:mcp__…` in a plugin body.
 
-**`ENABLE_TOOL_SEARCH=true` turns tool search ON, not off.** Verified against
-CLI v2.1.220 (2026-08-02): a truthy value (`true|1|yes|on`) enables
-deferred/tool-search mode, `auto`/`auto:N` is adaptive, and a **falsy** value
-(`false|0|no|off`) is what disables it — **unset also means on**. Both harnesses
-and the hosted path set `"true"`, so they run *with* deferral, which is the
-opposite of what their comments claimed until they were corrected. Nothing here
-depends on the flag's value; the bare-name rule above is correct either way.
-Flipping it is separate work that has to re-measure the tool mix.
+**`ENABLE_TOOL_SEARCH=true` turns tool search ON, not off** — and unset also
+means on, so both harnesses and the hosted path run *with* deferral. The
+bare-name rule above holds either way. Full polarity, what now depends on
+deferral being on, and what flipping it would cost: `docs/architecture.md`,
+"Agent frontmatter: spelled per registrar, exactly matched".
 
 **No playbook/reference files for agents — an agent body is self-contained.**
 Everything an agent needs at runtime lives inline in its `.md`. Do **not**
 split per-topic reference material (e.g. per-record-type extraction tables)
 into sibling files for the agent to `Read` on demand, and do **not** assemble
 them into the body at build time. Decided 2026-07-27 after measuring both;
-tried on `record-extractor` (issue #702, closed) and reverted.
-
-*Why not on-demand `Read`:* it is unreliable in a way nothing catches. Across
-a full `record-extraction` suite run with the files provably reachable, the
-agent read the playbook on some tests, ignored it on others (every assertion
-fell back to `informant_proximity: "unknown"`), and over-applied it on others
-(`witness` on all 16) — pass rate 6/19 against a 12–14/19 baseline, fails up
-from 0–1 to 6. Every one of those modes is silent: no error, and the unit
-harness only records MCP tool calls (`skill_runner.py` filters on `mcp__`),
-so a skipped `Read` leaves no trace at all. This is behavioral, not
-environmental — it persisted after the harness was made to load the plugin
-the way both production paths do.
-
-*Why not build-time assembly:* it works mechanically but splits the reviewed
-artifact from the executed one. In this repo the prompt **is** the product —
-whoever edits a fragment must be able to see the whole body it lands in
-(contradictions 400 lines up, the total context budget). Seeing the real size
-is also the pressure that produces a smaller prompt; hiding it removes the
-incentive.
-
-*What this costs, knowingly:* there is no per-record-type ownership surface,
-so a probate specialist edits the same file as everyone else. That need is
-declined, not disproven — revisit only with a mechanism that cannot silently
-skip, and re-read this note first.
+tried on `record-extractor` (issue #702, closed) and reverted. Revisit only
+with a mechanism that cannot silently skip. What each alternative measured,
+and the ownership cost knowingly accepted: `docs/architecture.md`, "Agent
+bodies are self-contained — do not split them".
 
 ## Handling user feedback submissions
 
@@ -669,39 +646,27 @@ field-name match that collides with an unrelated key.
 
 ### A measurement that disagrees with belief is re-measured, not reworded
 
-When a recorded measurement says one thing and we believe another, **probe again until
-the two reach consensus.** Do not reword prose until the guard goes green, and do not add
-a provenance escape hatch so the belief can be asserted alongside a verdict that
-contradicts it. The recorded verdict and the shipped text have to say the same thing, and
-the way to get there is measurement.
-
-This binds hardest where a guard matches *wording* rather than meaning, because rewording
-is always available and always wrong: `packages/engine/mcp-server/tests/packaging/measured-figures.test.ts`
-fires on phrasings that contradict a recorded probe verdict, and its own failure message
-already says not to relax the pattern. Re-run the probe instead — and if the probe returns
-`OPEN` or `NOT MEASURED`, settling it is a measurement-design task, not a re-run.
+When a recorded measurement contradicts what you believe, re-probe until the two agree.
+Do not reword prose until the guard goes green, and do not add a provenance escape hatch
+so the belief can sit beside a verdict that denies it. A verdict stuck at `OPEN` or
+`NOT MEASURED` is a measurement-design task, not a re-run. The guard that matches wording
+rather than meaning is `measured-figures.test.ts`; its failure message says the same.
 
 ### The eval harness emulates production's permission model
 
-**Grant what production grants.** Both production paths hold every MCP tool the server
-advertises — the hosted control plane runs `permission_mode="bypassPermissions"` with no
-allowlist, and Cowork loads the plugin whole. A harness that denies a tool production
-allows produces false alarms *and* false negatives, and it perturbs the run it is
-measuring rather than observing it.
+Grant what production grants. Both production paths hold every MCP tool the server
+advertises — the hosted control plane runs `bypassPermissions` with no allowlist, and
+Cowork loads the plugin whole. A skill's `allowed-tools` is a **grant, not a
+restriction**: the field that removes a tool from the pool is `disallowed-tools`, which
+no skill here declares, so a deny list derived as the complement of a grant inverts the
+field's meaning. The unit harness still derives one; retiring it is open work.
 
-**A skill's `allowed-tools` is a grant, not a restriction.** Claude Code documents it as
-"tools Claude can use **without asking permission** during the turn that invokes this
-skill"; the field that removes a tool from the pool is `disallowed-tools`, which no skill
-here declares. anthropics/claude-code#37683 — that `allowed-tools` does not restrict — is
-closed as not planned. So deriving a deny list as its complement inverts the field's
-meaning; that is a harness construct and never a fidelity measure.
-
-**The boundary, so this is not over-applied:** emulate production's *permission model*;
-construct the test's *inputs* freely. A deny that hides the answer from the agent — e2e's
-`is_blocked_tree_tool`, a fixture's `blocked_tools` — is a fixture and stays. A deny that
-changes what the agent is *allowed to do* is a distortion and goes. Denies production
-genuinely has stay too: the protected-file write lockdown mirrors the shipped plugin hook,
-and agent `disallowedTools:` binds even under `bypassPermissions`.
+The boundary, so this is not over-applied: emulate production's *permission model*,
+construct the test's *inputs* freely. A deny that hides the answer from the agent — the
+e2e tree-read block, a fixture's `blocked_tools` — is a fixture and stays. A deny that
+changes what the agent may *do* is a distortion and goes. Denies production genuinely has
+stay too: the protected-file write lockdown mirrors the shipped plugin hook, and agent
+`disallowedTools:` binds even under `bypassPermissions`.
 
 ### Python file I/O: always pass `encoding="utf-8"`
 
