@@ -1,0 +1,222 @@
+{
+  "run_log": "v1_2026-08-18_10-46-59.json",
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "corrections": [
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree. This negative/near-miss routing test is flaky independent of my #1315 changes — I reverted my references/output-format.md edit and reran (clean pass), then restored it and reran twice more (both clean passes). Only the very first full-suite run failed. Confirmed not caused by this PR."
+    },
+    {
+      "test_id": "ut_locality_guide_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Same finding as Correctness above — pre-existing single-run flakiness on a test explicitly tagged near-miss/boundary, not a #1315 regression."
+    },
+    {
+      "test_id": "ut_locality_guide_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree — pre-existing overclaim unrelated to #1315: states 1850 census destruction as more certain (\"some county returns missing entirely\") than the wiki source itself hedges (\"the great majority\" vs. the guide's \"most\")."
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree — pre-existing pagination omission unrelated to #1315: volume_search returned 14 results with a nextPageToken, but the guide only details the first 3 without noting more exist."
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree — fabricated FamilySearch collection IDs and record counts not returned by any tool call, unrelated to #1315. Notably the guide does correctly cite the FamilySearch Wiki URL for the 1639 town-level mandate claim, confirming citation behavior itself is intact after the output-format.md template fix."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree — two place_search calls used an underspecified place name (\"Berkshire\"/\"Berkshire County\" without full context) and hit fixture_not_found; the skill recovered cleanly via place_search_all afterward. Pre-existing tool-usage issue, unrelated to #1315."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree — same fabricated collection IDs/record counts noted under Correctness."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree — the search-order strategy itself is sound in structure; scored down because it rests on the fabricated collection IDs noted above."
+    }
+  ]
+}

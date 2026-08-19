@@ -315,6 +315,7 @@ nothing:
 | `make e2e-latency` | where wall-clock actually goes, per phase (`BY_SKILL=1` per skill) |
 | `make skill-latency` | per-skill output-token profile from the unit run logs |
 | `make eval-timings` | the slowest tests per suite, with why |
+| `make judge-report` | rubric dimensions whose score never varies across a suite — a flat dimension grades nothing |
 | `make e2e-agent-tools` | tools an agent declares and never calls — dead capability |
 | `make e2e-guardrail-shadow` | what a shadow guardrail would have denied |
 
