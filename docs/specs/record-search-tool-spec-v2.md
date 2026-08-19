@@ -548,29 +548,55 @@ as a behavioural change and re-verify against a live run, not unit tests alone.
 > which is exactly what happened below, so read the two classes above as the whole
 > test, not as a summary of a wider scan.
 >
-> Applied twice. **First** for the `\bco\.?\b` fix below, and the numbers are the
+> Attempted twice, granted once. **First** for the `\bco\.?\b` fix below, and the numbers are the
 > criterion run verbatim: **class 1 — 1623 distinct tree-fact places** (1405 from
 > `starting-tree.gedcomx.json`, the rest across 144 `*.final-tree.gedcomx.json`),
 > **0 changed**; **class 2 — 54 distinct recorded search arguments, 0 changed**.
 > Exempt.
 >
-> **Second**, 2026-08-18, for the three qualifier-stripping defects below — the
-> ASCII-only boundary, the internal qualifier that fused two locality levels into
-> one token, and `CO` the postal abbreviation: **class 1 — 1712 distinct tree-fact
-> places, 0 changed**; **class 2 — 60 distinct recorded search arguments, 0
-> changed**, across 260 tree files and 451 run logs. Exempt.
+> **Second attempt, 2026-08-19 — the exemption did NOT hold, and the reason is
+> worth more than the exemption was.** Measured for the three qualifier-stripping
+> defects below (the ASCII-only boundary, the internal qualifier that fused two
+> locality levels into one token, and `CO` the postal abbreviation): **class 1 —
+> 1771 distinct tree-fact places, 2 changed**; **class 2 — 61 distinct recorded
+> search arguments, 0 changed**. A non-zero class 1 means a live run is owed, per
+> the paragraph above.
 >
-> Two things about that second run, because a criterion reporting `0` is worth
-> exactly as much as its ability to report non-zero. It **imported the exported
+> The two are one place, twice:
+>
+>     "Graham Young County Texas, USA"
+>       ["graham young  texas","usa"] -> ["graham young","texas","usa"]
+>     "Oak Grove Cemetery  Graham Young County Texas, USA Plot: Section 12, …"
+>       (the same place with plot text appended)
+>
+> Both arrived with the `stribling-father-1821` fixture in `5b360d71`, and both are
+> the internal-qualifier fix doing exactly what it exists to do. **The lesson is
+> about the criterion's shelf life, not this change:** an earlier run of the same
+> script over the same code reported class 1 as `1712 distinct, 0 changed`, and
+> that was correct at the time. A fixture landing on `main` in between turned a
+> clean exemption into a live-run obligation without a line of the tokenizer
+> moving. Re-measure after merging `main`, not before — a criterion run against a
+> stale corpus is not evidence about the corpus you are shipping into.
+>
+> Two properties of the measurement, because a criterion reporting `0` is worth
+> exactly as much as its ability to report non-zero. It **imports the exported
 > `placeParts`** rather than reimplementing the pipeline, so it cannot measure an
 > order the tokenizer no longer uses — the failure mode the first run's
-> hand-copied `after()` was one edit away from. And it was **self-checked against
+> hand-copied `after()` was one edit away from. And it is **self-checked against
 > synthetic `"Denver, CO"` and `"Boulder, CO, United States"`**, which it does
-> report as moved. The postal-abbreviation change moves nothing here because the
-> corpus holds 11 places with a two-letter uppercase trailing token — `UT`, `NY`,
-> `FL`, `MT`, `NJ`, `MD` — and no `CO`. Of the 7 places carrying a standalone
-> `co` token, all 7 are genuine county qualifiers and all 7 still strip, including
-> the leading-qualifier Irish forms `"Co Kilkenny"` and `"Co Down"`.
+> report as moved.
+>
+> The postal-abbreviation change moves nothing in either class, because neither
+> holds a `CO`: of class 1's 12 places whose last comma-part is two letters, the 9
+> uppercase ones are `UT`, `NY`, `FL`, `MT` and `LA`, and the rest are `Ny`, `Ca`
+> and `Ma`; class 2 has none at all. Neither class holds a place with a standalone
+> `co` token. A **wider scan** — every `place`/`standard_place` under
+> `eval/tests/e2e` and `eval/runlogs`, which is outside the criterion by design —
+> finds 9 such places, including the leading-qualifier Irish forms `"Co Kilkenny"`
+> and `"Co Down"` in `eval/runlogs/e2e/butler-ancestry/`. All 9 still strip;
+> `placeParts` was run over each rather than eyeballed. Deliberately not quoted
+> here: a count of files scanned. Three reviewers produced three different numbers
+> for it and it decides nothing — the distinct-string counts are the measurement.
 >
 > Seven strings *did* change elsewhere in `eval/` — run-log outputs, one fixture
 > README line, and two `unstripped-tree.gedcomx.json` files. That is why the
@@ -680,6 +706,32 @@ entries to maintain against a signal already present in the string. Knowingly
 accepted: `"Denver, Co"`, Colorado written with a lowercase `o`, still strips and so
 still compares equal to `"Denver, Iowa"` — the price of catching `"Hill Co"`, which
 has no other tell. Do not "fix" that without reopening this ruling.
+
+**The inverse cost, and why it is not accepted.** Keeping `co` as a token has a
+second consequence that review caught, and it is the more common of the two:
+`["denver","co"]` is not a subset of `["denver","colorado"]`, so a `CO`-scoped
+search stopped excluding its own **spelled-out** tree place and offered
+`"Denver, Colorado, United States"` straight back as a candidate — the very failure
+the `Co.` paragraph above says this tokenizer exists to prevent, arriving from the
+other side. It was first read as a documentation-only cost on the grounds that
+matching `CO` to `Colorado` needs the fifty-entry postal-abbreviation set the
+ruling rejected. **That reasoning is wrong, and the trap is worth naming:** the set
+was rejected as a way to decide *whether to strip*, and by the time a bare `co`
+survives tokenization the ruling has already decided it is Colorado and nothing
+else. Only the comparison is left, so it costs one mapping, not fifty.
+`placeTokens` therefore compares a surviving `co` as `colorado`. `placeParts` is
+untouched — `"Denver, CO"` still tokenizes as `["denver","co"]` — so the ruling and
+every assertion resting on it stand. Net effect: a postal abbreviation now neither
+suppresses a same-named place in another state nor resurfaces its own.
+
+**A kept qualifier is still a boundary.** The keep branch first returned the match
+bare, which left it fused into the token before it — `"Hill CO, Texas"` tokenized as
+`["hill co","texas"]`. That is wrong under both readings (the county abbreviation
+wants `["hill","texas"]`, Colorado wants `["hill","co","texas"]`, neither wants one
+fused token), and it was the internal-qualifier defect surviving in the one branch
+that had stopped honouring the separator rule. The kept match is wrapped in
+separators instead. Not an all-caps-only case, as first supposed: any place with an
+uppercase standalone `CO` and text before it in the same comma part hits it.
 
 Two consequences for anyone editing `stripCountyQualifier`. The strip must run
 **above** the `.toLowerCase()`, because that call destroys the case signal the rule

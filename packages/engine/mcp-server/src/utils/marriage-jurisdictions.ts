@@ -123,7 +123,14 @@ function stripCountyQualifier(part: string): string {
       if (word.length > 2) return ","; // `County`, never an abbreviation
       if (dot) return ","; // rule 1
       if (word !== "CO") return ","; // rule 3
-      return part.slice(offset + match.length).trim() === "" ? match : ","; // rule 2
+      // Kept — but still a boundary. Returning `match` bare would leave it fused
+      // into the token before it (`"Hill CO"` -> `["hill co"]`), which is neither
+      // reading: the county abbreviation wants `["hill"]` and Colorado wants
+      // `["hill","co"]`, never one token. Wrapping it in separators is the same
+      // "the qualifier marks a locality boundary" rule the strip branch applies.
+      return part.slice(offset + match.length).trim() === ""
+        ? `,${match},`
+        : ","; // rule 2
     },
   );
 }
@@ -203,8 +210,26 @@ export function isSubCountryPlace(place: string | undefined): boolean {
   return placeParts(place).some((part) => !COUNTRY_TERMS.has(part));
 }
 
+/**
+ * `placeParts`, with a surviving `co` token compared as `colorado`.
+ *
+ * Needed because `co` now survives tokenization at all. Without the mapping,
+ * `["denver","co"]` is not a subset of `["denver","colorado"]`, so a `CO`-scoped
+ * search stopped excluding its own spelled-out tree place and offered
+ * `"Denver, Colorado, United States"` straight back as an alternative — the exact
+ * failure the `Co.` fix exists to prevent, reintroduced from the other side.
+ *
+ * This is one mapping, not the fifty-entry postal-abbreviation set the ruling
+ * rejected, and it does not reopen that ruling. The set was rejected as a way to
+ * decide *whether to strip*; by the time a bare `co` reaches here,
+ * `stripCountyQualifier` has already ruled it to be Colorado and nothing else, so
+ * only the comparison is left. `placeParts` is unchanged — `"Denver, CO"` still
+ * tokenizes as `["denver","co"]`.
+ */
 function placeTokens(place: string): string[] {
-  const parts = placeParts(place);
+  const parts = placeParts(place).map((part) =>
+    part === "co" ? "colorado" : part,
+  );
   const withoutCountry = parts.filter((part) => !COUNTRY_TERMS.has(part));
   // A country-only place ("United States") must not reduce to [], or the
   // comparison below has nothing to work with and the searched place is offered

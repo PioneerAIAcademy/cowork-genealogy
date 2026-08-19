@@ -165,6 +165,32 @@ describe("marriageJurisdictionCandidates — excluding the place already searche
     expect(out.map((c) => c.place)).toContain("Denver, Iowa, United States");
   });
 
+  // Review finding, and the other half of the one above. Keeping `co` as a token
+  // meant ["denver","co"] was not a subset of ["denver","colorado"], so a
+  // CO-scoped search stopped excluding its OWN spelled-out place and offered it
+  // back as an alternative — the failure the Co. fix exists to prevent, arriving
+  // from the other side. `placeTokens` compares a surviving `co` as `colorado`;
+  // one mapping, not the postal-abbreviation set the ruling rejected, because by
+  // then the token has already been ruled to be Colorado and nothing else.
+  it("EXCLUDES its own spelled-out state when a postal abbreviation was searched", () => {
+    const t = {
+      persons: [
+        {
+          id: "I1",
+          facts: [
+            { type: "Residence", place: "Denver, Colorado, United States", date: "1870" },
+            { type: "Residence", place: "Denver, Iowa, United States", date: "1871" },
+          ],
+        },
+      ],
+      relationships: [],
+    };
+    const out = marriageJurisdictionCandidates(t, "I1", { searchedPlace: "Denver, CO" });
+    const places = out.map((c) => c.place);
+    expect(places).not.toContain("Denver, Colorado, United States");
+    expect(places).toContain("Denver, Iowa, United States");
+  });
+
   // Review defect: containment ran both ways, so a county-scoped search deleted the
   // parent state from its own candidate list. A statewide search is a DIFFERENT
   // search — it reaches the other counties — and dropping a locality level when the
@@ -364,6 +390,17 @@ describe("placeParts — qualifier boundaries", () => {
   // "fix" this without reopening the ruling.
   it("still strips a lowercase 'Co' even when it means Colorado", () => {
     expect(placeParts("Denver, Co")).toEqual(["denver"]);
+  });
+
+  // Review finding. A kept `CO` is still a locality boundary, so it gets its own
+  // token. Returning the match bare left it fused into the token before it, which
+  // is wrong under both readings — the county abbreviation wants ["hill","texas"]
+  // and Colorado wants ["hill","co","texas"], never one fused token. This is the
+  // separator rule above surviving into the keep branch.
+  it("gives a kept CO its own token instead of fusing it into the one before", () => {
+    expect(placeParts("Hill CO, Texas")).toEqual(["hill", "co", "texas"]);
+    expect(placeParts("Salt Lake CO, Utah")).toEqual(["salt lake", "co", "utah"]);
+    expect(placeParts("HILL CO")).toEqual(["hill", "co"]);
   });
 });
 
