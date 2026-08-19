@@ -108,7 +108,7 @@ two reader families handle it differently (`harness/since_window.py`):
   `make e2e-latency`, `make e2e-skill-episodes` tally many runs into one number, so mixing eras corrupts
   it. They window to 14 days and print the window plus how many runs they
   excluded. `SINCE=all` opts back in.
-- **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency` show
+- **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency`, `make judge-report` show
   the newest 1–2 run logs per skill, so there is no sample to narrow: a date
   cut would delete the *skill*, hiding that it needs a re-run. They show every
   row, mark stale ones, sort them last, and name them in a summary line.

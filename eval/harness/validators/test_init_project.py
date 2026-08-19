@@ -27,38 +27,73 @@ import pytest
 def test_both_project_files_created(before_state, after_state, test):
     """init-project positive tests must produce BOTH research.json and
     tree.gedcomx.json. Either file missing is a structural failure even
-    if the other validates.
-
-    Exception: tests tagged `no-premature-write` verify the opposite --
-    that init-project correctly blocks and asks (e.g. a bare PID with no
-    stated objective, per issue #1320) instead of writing files before it
-    has what it needs. For those, no files existing is the correct,
-    passing outcome, not a structural failure."""
+    if the other validates. Per issue #1510, every opening-turn question
+    (objective, experience level, access) is non-blocking and defaults
+    silently if unanswered, so a positive test always completes in one
+    pass -- there is no longer a premature-write exception to gate."""
     if test.get("type") != "positive":
         pytest.skip("file-existence rules apply only to positive tests")
-    if "no-premature-write" in test.get("tags", []):
-        pytest.skip("no-premature-write test: correct behavior is to write nothing yet")
     if after_state.get("research_json") is None:
         assert False, "init-project did not create research.json"
     if after_state.get("tree_gedcomx_json") is None:
         assert False, "init-project did not create tree.gedcomx.json"
 
 
-# --- No premature write (tag-gated) -------------------------------------
+# --- Opening-turn defaults, checked exactly (tag-gated) -----------------
 
-def test_no_premature_write(after_state, test):
-    """Tag-gated, paired with the no-premature-write skip above: tests
-    tagged `no-premature-write` must positively assert neither project
-    file exists. Skipping the file-existence check without asserting its
-    opposite leaves nothing to catch a run that writes anyway — this is
-    the invariant `ut_init_project_010` actually leans on."""
-    if "no-premature-write" not in test.get("tags", []):
-        pytest.skip("not a no-premature-write scenario")
-    assert after_state.get("research_json") is None, (
-        "init-project wrote research.json before the objective was captured"
+# Issue #1510: the objective's default is defined as a fixed, verbatim
+# string, the same way a defaulted narration_guidance is verbatim rather
+# than paraphrased. That makes it checkable in code instead of leaving
+# "did the skill hallucinate a specific direction?" to judge interpretation.
+_DEFAULT_OBJECTIVE = (
+    "General research: build out the tree and identify gaps and next steps."
+)
+
+
+def test_objective_default_verbatim(after_state, test):
+    """Tag-gated on `objective-default`: when the test's premise is that the
+    user stated no objective, the stored `project.objective` must be this
+    exact string -- not a paraphrase, and not a specific direction invented
+    from person data. Runs whether or not the test also expects the profile
+    fields to default (see `test_profile_defaults_when_all_default` below
+    for that tag), since a test can default the objective alone."""
+    if "objective-default" not in test.get("tags", []):
+        pytest.skip("not an objective-default scenario")
+    research = after_state.get("research_json")
+    if research is None:
+        assert False, "objective-default requires research.json to exist"
+    objective = (research.get("project") or {}).get("objective")
+    assert objective == _DEFAULT_OBJECTIVE, (
+        f"objective should default to the verbatim generic text when unstated, "
+        f"got: {objective!r}"
     )
-    assert after_state.get("tree_gedcomx_json") is None, (
-        "init-project wrote tree.gedcomx.json before the objective was captured"
+
+
+def test_profile_defaults_when_all_default(after_state, test):
+    """Tag-gated on `opening-turn-all-defaults`: when the test's premise is
+    that the user answered none of the three opening-turn questions,
+    `researcher_profile.experience_level` and `.subscriptions` must hold
+    the documented defaults exactly -- `intermediate` and `["none"]` -- not
+    be left absent (the pre-#1510 dead-edge-case behavior) and not hold
+    anything else."""
+    if "opening-turn-all-defaults" not in test.get("tags", []):
+        pytest.skip("not an all-defaults scenario")
+    research = after_state.get("research_json")
+    if research is None:
+        assert False, "opening-turn-all-defaults requires research.json to exist"
+    profile = research.get("researcher_profile")
+    assert profile is not None, (
+        "researcher_profile is absent -- the opening turn always asks and always "
+        "proceeds, so this section should always be written, even when every "
+        "answer defaults"
+    )
+    assert profile.get("experience_level") == "intermediate", (
+        f"experience_level should default to 'intermediate', got: "
+        f"{profile.get('experience_level')!r}"
+    )
+    assert profile.get("subscriptions") == ["none"], (
+        f"subscriptions should default to ['none'], got: "
+        f"{profile.get('subscriptions')!r}"
     )
 
 
@@ -126,14 +161,11 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
     landed. The e2e corpus cannot see it either: every fixture starts from an
     existing project.
 
-    Scoped to positive tests that were supposed to produce files. A
-    `no-premature-write` test correctly writes nothing, and a negative test's
-    calls belong to the routed-to skill.
+    Scoped to positive tests that were supposed to produce files -- a
+    negative test's calls belong to the routed-to skill.
     """
     if test.get("type") != "positive":
         pytest.skip("write-path rules apply only to positive tests")
-    if "no-premature-write" in test.get("tags", []):
-        pytest.skip("no-premature-write test: correct behavior is to write nothing yet")
 
     called = {(call.get("tool") or "").rsplit("__", 1)[-1] for call in tool_calls or []}
 

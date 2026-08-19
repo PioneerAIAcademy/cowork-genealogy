@@ -526,6 +526,13 @@ e2e-author: ## Fixture-authoring script, for developers: make e2e-author ARGS="s
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
 	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
 
+.PHONY: judge-report
+judge-report: ## Non-discrimination scan of the UNIT judge over committed run logs: make judge-report | SKILL=<name>. Reads committed JSON only — no API calls, no cost.
+	# A rubric dimension whose score never varies grades nothing, whatever it is
+	# nominally measuring. Pairs with /audit-rubric, which checks one skill at a
+	# time by LLM judgment; this is the mechanical corpus-wide half.
+	cd eval/harness && uv run python -m judge_report $(if $(SKILL),--skill $(SKILL),) $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-calibrate
 e2e-calibrate: ## Run judge calibration against committed run annotations (maintainer step; needs an API key)
 	cd eval/harness && uv run python -m e2e.calibrate_judge
