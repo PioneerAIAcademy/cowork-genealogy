@@ -26,13 +26,16 @@ import { join } from 'node:path'
 const APP_ROOT = process.cwd()
 const REPO_ROOT = join(APP_ROOT, '..', '..')
 
-const readPkg = (dir: string) =>
-  JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as Record<string, never> & {
-    packageManager?: string
-    dependencies?: Record<string, string>
-    devDependencies?: Record<string, string>
-    scripts?: Record<string, string>
-  }
+type ElectronPkg = {
+  name?: string
+  packageManager?: string
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+  scripts?: Record<string, string>
+}
+
+const readPkg = (dir: string): ElectronPkg =>
+  JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as ElectronPkg
 
 describe('electron packaging contract (#1070)', () => {
   it('is reading the package.json it thinks it is (guards the reader itself)', () => {

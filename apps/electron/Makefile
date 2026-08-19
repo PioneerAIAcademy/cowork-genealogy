@@ -46,19 +46,17 @@ build:                        ## Production build (typecheck + compile)
 # `pnpm build:mac` straight from the README, which is the invocation #1070 is
 # named after and which no make target covers.
 #
-# `rm -rf dist` first because the check inspects EVERY app.asar under dist/: a
-# stale bundle left by an earlier build of a different OS would otherwise fail a
-# perfectly good one.
+# The dist/ clean that the check needs (it inspects EVERY app.asar under dist/,
+# so a stale bundle from an earlier build of a different OS would fail a good
+# one) lives in the npm scripts, not here — `pnpm build:mac` run straight from
+# the README has to clean too, and that invocation reaches no make target.
 build-linux:                  ## Build Linux AppImage
-	rm -rf dist
 	npm run build:linux
 
 build-mac:                    ## Build macOS DMG (arm64 + x64)
-	rm -rf dist
 	npm run build:mac
 
 build-win:                    ## Build Windows NSIS installer
-	rm -rf dist
 	npm run build:win
 
 check-packaged:               ## Verify the packaged app carries its declared dependencies

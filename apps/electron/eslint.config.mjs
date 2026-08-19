@@ -19,14 +19,18 @@ export default defineConfig(
   },
   {
     // Plain-JS build scripts. The TS recommended set is applied unscoped above,
-    // which had it backwards for these files: `explicit-function-return-type`
-    // fired on every function (unannotatable in .mjs), while `no-unused-vars`
-    // did NOT — so an unused import shipped in `check-packaged-deps.mjs` and
-    // lint stayed green. Turn the first off and the second on. (#1070 review)
+    // so `explicit-function-return-type` fires on every function in a .mjs file,
+    // where there is no syntax to satisfy it. Nothing else here needs relaxing:
+    // `no-unused-vars` already applies to these files and reports correctly
+    // (verified by removing this block and re-running).
+    //
+    // An unused import did ship in `check-packaged-deps.mjs`, but not because a
+    // rule was missing — nothing runs eslint at all. There is no `lint` task in
+    // turbo.json and no workflow invokes it, so the rule that would have caught
+    // it never ran. (#1070 review)
     files: ['**/*.{js,mjs,cjs}'],
     rules: {
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/no-unused-vars': 'error'
+      '@typescript-eslint/explicit-function-return-type': 'off'
     }
   },
   {

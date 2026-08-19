@@ -54,7 +54,15 @@ function declaredDependencies() {
 function findAsars(dir, depth = 0) {
   if (depth > 8 || !existsSync(dir)) return []
   const found = []
-  for (const entry of readdirSync(dir)) {
+  let entries
+  try {
+    entries = readdirSync(dir)
+  } catch {
+    // Not a directory, or unreadable. Returning empty lands on the no-asar
+    // branch below, which FAILS — never on a silent pass.
+    return []
+  }
+  for (const entry of entries) {
     const full = join(dir, entry)
     let stats
     try {
@@ -118,9 +126,22 @@ function main(argv) {
 
   let failed = false
   for (const asarPath of asars) {
-    const present = packagesInAsar(asarPath)
-    const missing = declared.filter((name) => !present.has(name))
     const label = asarPath.startsWith(APP_ROOT) ? asarPath.slice(APP_ROOT.length + 1) : asarPath
+    let present
+    try {
+      present = packagesInAsar(asarPath)
+    } catch (err) {
+      // A truncated or corrupt archive is a packaging failure in its own right,
+      // and it must not stop the other architectures being inspected — a mac
+      // build emits one asar per arch, and aborting here would leave the second
+      // unchecked while printing a header-parse stack instead of a diagnosis.
+      failed = true
+      console.error(
+        `\ncheck-packaged-deps: FAIL — ${label}\n  could not be read as an asar archive: ${err.message}`
+      )
+      continue
+    }
+    const missing = declared.filter((name) => !present.has(name))
     if (missing.length > 0) {
       failed = true
       console.error(

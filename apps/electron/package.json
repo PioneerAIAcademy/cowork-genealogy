@@ -17,11 +17,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "npm run typecheck && electron-vite build",
+    "clean:dist": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "rebuild-native": "electron-builder install-app-deps",
-    "build:unpack": "npm run build && electron-builder --dir && npm run check-packaged",
-    "build:win": "npm run build && electron-builder --win && npm run check-packaged",
-    "build:mac": "electron-vite build && electron-builder --mac && npm run check-packaged",
-    "build:linux": "electron-vite build && electron-builder --linux && npm run check-packaged",
+    "build:unpack": "npm run clean:dist && npm run build && electron-builder --dir && npm run check-packaged",
+    "build:win": "npm run clean:dist && npm run build && electron-builder --win && npm run check-packaged",
+    "build:mac": "npm run clean:dist && electron-vite build && electron-builder --mac && npm run check-packaged",
+    "build:linux": "npm run clean:dist && electron-vite build && electron-builder --linux && npm run check-packaged",
     "check-packaged": "node scripts/check-packaged-deps.mjs"
   },
   "dependencies": {
