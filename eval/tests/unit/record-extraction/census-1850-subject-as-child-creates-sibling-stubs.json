@@ -10,7 +10,7 @@
       "1850",
       "1850-census",
       "subject-as-child",
-      "relationship-assertions",
+      "no-relationship-assertions",
       "identity-question"
     ]
   },
@@ -20,10 +20,10 @@
   },
   "judge_context": [
     "Should extract per-person assertions for every household member (Thomas, Bridget, Patrick, John) — name, age/birth, birthplace at minimum — decomposed into atomic assertions and written via extraction_append. This is unchanged census-extraction behavior and must continue to work",
-    "The 1850 census has no relationship column, so any relationship-type assertion the skill emits for the children (e.g., a ParentChild between Thomas and each child) is INDIRECT evidence inferred from household position: its `structured_value.relationship_type` must carry the `_inferred` suffix (e.g., `child_inferred`), `evidence_type` must be `indirect`, and the informant is the researcher (`informant: \"none — inferred from household position\"`, `informant_proximity: \"researcher\"`). Stating it `direct`, or naming a record party as the informant, is a fail-level classification error",
-    "record-extraction is ASSERTION-ONLY. It writes the record's S-entry (composite sourceDescription) and the per-person assertions/relationship-type assertions — and it MUST NOT write, rename, or remove any tree.gedcomx.json person, name, or relationship. `mcp__genealogy__tree_edit` is not in its frontmatter; it makes ZERO tree_edit / tree_correct calls. Minting the sibling person stubs (Bridget, John) and writing their ParentChild edges to Thomas is person-evidence's household-skeleton step (materialize_facts create-or-enrich + tree_edit add_relationship), reached later — not extraction's job. Do NOT expect, or reward, any tree person/edge write in this run",
+    "The 1850 census has NO relationship column, so the skill must emit NO relationship-type assertion at all — no ParentChild between Thomas and any child, and no spousal link. A link deduced from household position is a hypothesis, and extraction does not form hypotheses: writing one is a fail-level error EVEN IF it is labelled `indirect` with a `child_inferred` suffix and a `researcher` informant, which was the previously-required shape. Omitting them is CORRECT and is not a Completeness gap (decided 2026-08-15, #1626)",
+    "record-extraction is ASSERTION-ONLY. It writes the record's S-entry (composite sourceDescription) and the per-person assertions — and it MUST NOT write, rename, or remove any tree.gedcomx.json person, name, or relationship. `mcp__genealogy__tree_edit` is not in its frontmatter; it makes ZERO tree_edit / tree_correct calls. Minting the sibling person stubs (Bridget, John) and writing their ParentChild edges to Thomas is person-evidence's household-skeleton step (materialize_facts create-or-enrich + tree_edit add_relationship), reached later — not extraction's job. Do NOT expect, or reward, any tree person/edge write in this run",
     "The CORRECT handling of the siblings is to FLAG the record-vs-tree children discrepancy in the summary as an identity question: Bridget and John appear on this 1850 household but are not yet in the tree, while Mary (I3) and James (I4) are in the tree via the St. Mary's baptism edges (R2/R3 cite S5) but do NOT appear on this census. The census children and the tree children are different people until identity work says otherwise. RENAMING or rewriting existing persons is a FAIL — e.g. update_name/update_person turning I3 into Bridget or I4 into John, or any remove op — as is silently 'reconciling' the two child sets",
-    "Per-person assertions in research.json (each member's name, age, birthplace; the children's inferred ParentChild) attach to `record_id` + `record_role` (child_N / head_of_household), NOT to any tree person. Materializing these assertions onto tree persons — and creating the sibling stubs that carry them — happens later in person-evidence, not here",
+    "Per-person assertions in research.json (each member's name, age, birthplace) attach to `record_id` + `record_role` (child_N / head_of_household), NOT to any tree person. Materializing them onto tree persons — and creating the sibling stubs that carry them, together with whatever parent-child links the correlation supports — happens later in person-evidence, not here. Extraction supplies the people and their facts; it does not supply the links",
     "Should NOT extract facts for blank columns (Bridget/Patrick/John have no occupation listed) — absent assertions for blank fields are compliance, not incompleteness"
   ],
   "execution": {
@@ -77,24 +77,6 @@
       "attribute": "place",
       "value": "Pennsylvania",
       "evidence_type": "direct"
-    },
-    {
-      "record_role": "child_1",
-      "fact_type": "relationship",
-      "evidence_type": "indirect",
-      "optional": true
-    },
-    {
-      "record_role": "child_2",
-      "fact_type": "relationship",
-      "evidence_type": "indirect",
-      "optional": true
-    },
-    {
-      "record_role": "child_3",
-      "fact_type": "relationship",
-      "evidence_type": "indirect",
-      "optional": true
     }
   ]
 }

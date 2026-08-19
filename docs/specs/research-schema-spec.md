@@ -543,7 +543,9 @@ Recommended shapes by `fact_type`. The shape is not strictly enforced — it is 
 
 **Authority:** `structured_value` is derived from `value`, `date`, and `place` — not the other way around. If they disagree, the human-readable fields (`value`, `date`, `place`) govern. This follows the same authority pattern as `narrative_markdown` vs. structured fields in proof summaries.
 
-**`_inferred` suffix convention:** Use `_inferred` suffix on `relationship_type` (e.g., `child_inferred`) when the relationship is deduced from household position rather than explicitly stated in the record. This applies to the 1790–1870 censuses (no relationship column); the explicit relationship column was introduced in 1880. This convention is specific to `relationship_type` — other fact types handle uncertainty through the assertion's `evidence_type` (indirect) and `informant_bias_notes` rather than through the structured value itself.
+**`_inferred` suffix convention:** Use the `_inferred` suffix on `relationship_type` (e.g., `child_inferred`) when the relationship is deduced from household position rather than explicitly stated in the record — the 1790–1870 censuses, which have no relationship column (introduced in 1880). This convention is specific to `relationship_type`; other fact types handle uncertainty through the assertion's `evidence_type` (indirect) and `informant_bias_notes` rather than through the structured value itself.
+
+**Who may write one — not extraction (2026-08-15).** A deduced household link is a *hypothesis*, and record extraction does not form hypotheses: on a pre-1880 census it extracts each person's stated facts and their co-residence and writes **no** parent-child or spousal assertion, in any form. The suffix therefore belongs to the downstream correlation skills that weigh evidence across records. Nothing in this schema requires an `_inferred` relationship to exist for a pre-1880 record, and the record-extraction validator asserts their absence. The distinction is worth stating explicitly because "never assert a relationship without evidence" admits two readings — omit the link, or assert it labelled `indirect` — and a prompt carrying both produced either output unpredictably across runs of the same record.
 
 ### 5.7 `person_evidence`
 
@@ -841,6 +843,8 @@ Both `record-extraction` and `citation` write to the `sources` section. The prot
 ## 9. Worked Example
 
 Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsylvania, died 1908. The example shows two questions (q_001, q_002). q_002 unblocks q_001 — locating Patrick in the 1850 census is a prerequisite for identifying his parents.
+
+> **Whose output this is.** The example is the state of a project part-way through, not the output of any one skill. In particular `a_004` (1850) and `a_010` (1860) are `child_inferred` relationship assertions on pre-1880 censuses: per §5.6.1 those are written by the downstream correlation skills that weigh evidence across records, **never** by `record-extraction`, whose validator asserts their absence. Read them as already-correlated state, not as an extraction result.
 
 ### `tree.gedcomx.json` (simplified GedcomX, abbreviated)
 

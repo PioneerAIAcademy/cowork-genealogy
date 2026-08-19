@@ -143,20 +143,20 @@ Some situations can be analyzed as either warnings or conflicts:
 
 ## Clustered Warnings
 
-A single `severity: "warning"` on an otherwise clean profile is
+A single `severity: "implausible"` on an otherwise clean profile is
 usually noise. But multiple warnings clustering on the same person
--- especially mixing error and warning severities -- is a strong
+-- especially mixing contradiction and implausible severities -- is a strong
 signal of systematic problems.
 
 Escalation guidance:
-- 1 `warning` on its own: note and move on
-- 2+ `warning`s on same person: mention the pattern
-- 1 `error` on its own: investigate the specific condition
-- 1 `error` + 1+ `warning`s: likely identity confusion; recommend
+- 1 `implausible` on its own: note and move on
+- 2+ `implausible`s on same person: mention the pattern
+- 1 `contradiction` on its own: investigate the specific condition
+- 1 `contradiction` + 1+ `implausible`s: likely identity confusion; recommend
   timeline review
-- 2+ `error`s: almost certainly two people merged; recommend
+- 2+ `contradiction`s: almost certainly two people merged; recommend
   splitting the profile and rebuilding person_evidence links
-- Any `error` involving the death-vs-event sequence
+- Any `contradiction` involving the death-vs-event sequence
   (`hasEventAfterDeath1`, `hasEventBeforeBirth365_2`): stop and
   investigate immediately regardless of other warning count
 
