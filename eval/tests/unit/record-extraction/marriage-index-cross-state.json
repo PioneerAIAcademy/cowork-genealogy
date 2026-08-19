@@ -23,7 +23,7 @@
     "Edward's mother is recorded only as 'Anna' with no surname - extract exactly as stated; do NOT supply 'Kramer' or reconcile with other records (that is downstream)",
     "Edward's stated birth (~1887) differs from the census Edward (~1876/1877) - extract the birth as stated on THIS record; the discrepancy is a downstream identity/conflict question, not an extraction fix",
     "Birth entries give a place and an approximate year - extract as stated; do NOT invent an exact date",
-    "Informant: each party is the informant for their own facts (proximity 'self'); the clerk is the recorder",
+    "Informant: each party is the informant for their own facts (proximity 'self'), INCLUDING the marriage event itself (date, place) — they participated in the ceremony firsthand. The clerk and any officiant are RECORDERS, not the event's informant: do not credit or require 'official_duty' for the marriage date/place, and do not dock 'self'",
     "Source classification is DERIVATIVE - a FamilySearch index of the Kentucky marriage record"
   ],
   "execution": {
@@ -69,6 +69,19 @@
       "optional": true,
       "evidence_type": "direct",
       "information_quality": "primary"
+    },
+    {
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "evidence_type": "direct",
+      "informant_proximity": "self"
+    },
+    {
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "optional": true,
+      "evidence_type": "direct",
+      "informant_proximity": "self"
     }
   ]
 }

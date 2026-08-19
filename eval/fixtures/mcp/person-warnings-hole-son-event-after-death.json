@@ -10,7 +10,7 @@
       {
         "scoreType": "COHERENCE",
         "issueType": "hasEventAfterDeath1",
-        "severity": "error",
+        "severity": "contradiction",
         "personId": "KD96-TV4",
         "personName": "Ole C. Hole",
         "message": "An event is dated more than 1 year after this person's latest death-like fact.",
