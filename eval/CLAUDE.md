@@ -111,7 +111,7 @@ two reader families handle it differently (`harness/since_window.py`):
   IS the 14-day default: it classifies calls from `response_summary`, and the e2e
   capture strip below drops that field past 14 days — so `SINCE=all` there mostly
   reports how many older calls are stripped-and-unclassifiable, not more causes.)
-- **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency` show
+- **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency`, `make judge-report` show
   the newest 1–2 run logs per skill, so there is no sample to narrow: a date
   cut would delete the *skill*, hiding that it needs a re-run. They show every
   row, mark stale ones, sort them last, and name them in a summary line.
