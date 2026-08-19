@@ -8,9 +8,8 @@
 // fresh-context agent (the record-extractor) never opens either file.
 // Spec: docs/specs/project-context-tool-spec.md.
 
-import { join } from "path";
-import { readFile } from "fs/promises";
 import { questionStates, type QuestionStatus } from "../utils/question-state.js";
+import { readProjectJson } from "../utils/project-io.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -63,20 +62,6 @@ export type ProjectContextResult =
     }
   | { ok: false; errors: string[] };
 
-async function readJson(projectPath: string, filename: string): Promise<any> {
-  let text: string;
-  try {
-    text = await readFile(join(projectPath, filename), "utf-8");
-  } catch {
-    throw new Error(`${filename} not found in projectPath`);
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error(`${filename} is not valid JSON`);
-  }
-}
-
 function truncateQuestion(text: string): string {
   if (text.length <= QUESTION_TRUNCATE_AT) return text;
   return `${text.slice(0, QUESTION_TRUNCATE_AT - 1)}…`;
@@ -114,8 +99,8 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
   let research: any;
   let tree: any;
   try {
-    research = await readJson(input.projectPath, "research.json");
-    tree = await readJson(input.projectPath, "tree.gedcomx.json");
+    research = await readProjectJson(input.projectPath, "research.json");
+    tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
   } catch (e) {
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
   }

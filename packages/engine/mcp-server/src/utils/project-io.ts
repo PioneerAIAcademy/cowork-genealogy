@@ -11,6 +11,7 @@
 import { writeFile, readFile, rename, mkdir, unlink, copyFile, access } from "fs/promises";
 import { dirname, join, resolve, relative, isAbsolute } from "path";
 import { randomUUID } from "node:crypto";
+import type { ValidationError } from "../validation/types.js";
 
 /**
  * True if `ref` (relative or absolute) resolves to a path inside `projectPath`.
@@ -43,32 +44,15 @@ function serialize(obj: unknown): string {
 }
 
 /**
- * Read and parse one of the project's JSON documents, with the two error
- * messages every writer tool phrases identically. Throws a plain Error; the
- * caller maps it onto its own `{ ok: false, errors }` shape.
+ * Read and parse one of the project's JSON documents.
  *
- * New callers use this one.
+ * Throws a plain Error with one of two messages:
+ *   - `<filename> not found in projectPath`
+ *   - `<filename> is not valid JSON`
  *
- * Five tools predate it and carry a private `readJson`/`readProjectJson` with
- * the same `not found in projectPath` message. All but `project-context.ts`
- * re-throw it through their own error class; that one throws a plain `Error`:
- *
- *   research-append.ts · tree-edit.ts · project-context.ts
- *   materialize-facts.ts · research-log-append.ts
- *
- * `research-query.ts` is a sixth site, and the one to note: written three days
- * AFTER this helper landed, it still inlines its own read-and-throw, with no
- * helper function to delete. Nothing enforces the line above.
- *
- * `tools/merge-shared.ts` is a seventh site but a different case — it exports
- * its own `readProjectJson`, so it is a *second shared* implementation rather
- * than a private copy. Consolidating means first deciding which of the two is
- * canonical; that decision is the reason this has not simply been swept.
- *
- * Consolidation is tracked by issue #988. It is **not** #1158: that issue was
- * closed `completed` while every copy above was still in place, so following it
- * lands on a closed ticket and an unsolved problem. Earlier counts stopped at
- * those five — `research-query.ts` was missed by all of them, #988 included.
+ * Every project-file read goes through this helper. The caller maps its plain
+ * Error onto its own result shape (typically `{ ok: false, errors }` via a
+ * tool-specific error class wrapper — see tree-forget.ts for the pattern).
  */
 export async function readProjectJson(projectPath: string, filename: string): Promise<any> {
   let text: string;
@@ -82,6 +66,11 @@ export async function readProjectJson(projectPath: string, filename: string): Pr
   } catch {
     throw new Error(`${filename} is not valid JSON`);
   }
+}
+
+/** Format validator issues as flat strings for the tool's error/warning lists. */
+export function formatIssues(issues: ValidationError[]): string[] {
+  return issues.map((e) => (e.path ? `${e.path}: ${e.message}` : e.message));
 }
 
 /**
