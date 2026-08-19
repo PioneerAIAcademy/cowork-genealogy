@@ -508,8 +508,10 @@ function rejectVaryingDateThresholds(forget: ForgetSelector[]): void {
   // A `Map<string, string>` typed value would make `JSON.stringify(undefined)`
   // (itself the JS `undefined`, not a string — a malformed entry with no
   // `year` at all) collide with "never seen this kind before" if compared
-  // against `undefined` directly. `.has()` distinguishes them; the main
-  // loop's own `requireYear` rejects the missing-year entry regardless.
+  // against `undefined` directly. `.has()` distinguishes them. Note this guard
+  // runs BEFORE the main loop, so a malformed entry alongside a valid one
+  // reports the threshold error rather than `requireYear`'s missing-year error
+  // — misleading, but only on input that is already invalid.
   const seenThreshold = new Map<string, string | undefined>();
   for (const entry of forget) {
     if (typeof entry !== "object" || entry === null) continue; // reported by the main loop below

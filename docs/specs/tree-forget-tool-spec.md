@@ -191,14 +191,17 @@ result, however, carries a residual: a dry run is free and reports
 `factsByType`, so a caller that can vary the year and read the response back
 narrows a fact's date toward the exact year.
 
-`resolveSelectors` closes the *in-call* form of this in code: a single
+`resolveSelectors` closes the *laddered* in-call form of this in code: a single
 `forget` call may not mix different year thresholds for the same date-range
 selector kind (`facts-before`'s `year`, `facts-after`'s `year`, or
 `facts-between`'s `fromYear`/`toYear` pair) — packing a year-ladder into one
 call's entries would otherwise reveal exactly which threshold failed first,
 pinning a fact's date from a single invocation. The same threshold repeated
 for different people in one call is unaffected (an ordinary multi-person
-sweep, not a probe). What code cannot close is the *across-calls* form — a
+sweep, not a probe). This does not make a single call safe in general — one
+`facts-between(Y, Y)` is still an exact-year test — so the instruction below,
+not this guard, is what closes the surface. The guard removes the cheapest
+shape, not the shape. What code cannot close is the *across-calls* form — a
 caller free to make as many separate calls as it likes can still binary-search
 a threshold one call at a time, and closing that would mean dropping
 `factsByType` from every dry run, which breaks the "a dry run is a full
