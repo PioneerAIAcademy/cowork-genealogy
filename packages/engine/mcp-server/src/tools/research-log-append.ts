@@ -18,12 +18,11 @@
 // orphan-cleanup behavior, just extended to a list.
 
 import { join } from "path";
-import { readFile, unlink } from "fs/promises";
+import { unlink } from "fs/promises";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import type { ValidationError } from "../validation/types.js";
-import { atomicWriteJson } from "../utils/project-io.js";
+import { atomicWriteJson, readProjectJson, formatIssues } from "../utils/project-io.js";
 import { finalizeStagedResults } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 
@@ -146,21 +145,11 @@ function coerceObjectArg(value: unknown, field: string): unknown {
   return parsed;
 }
 
-function formatIssues(issues: ValidationError[]): string[] {
-  return issues.map((e) => (e.path ? `${e.path}: ${e.message}` : e.message));
-}
-
-async function readProjectJson(projectPath: string, filename: string): Promise<any> {
-  let text: string;
+async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
-    text = await readFile(join(projectPath, filename), "utf-8");
-  } catch {
-    throw new LogAppendError(`${filename} not found in projectPath`);
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new LogAppendError(`${filename} is not valid JSON`);
+    return await readProjectJson(projectPath, filename);
+  } catch (e) {
+    throw new LogAppendError(e instanceof Error ? e.message : String(e));
   }
 }
 
@@ -383,9 +372,9 @@ export async function researchLogAppend(
   try {
     // Read project files once (research mutated in memory only; tree read for
     // cross-file checks during validation).
-    const research = await readProjectJson(projectPath, "research.json");
+    const research = await readJson(projectPath, "research.json");
     const { tree } = sanitizeTree(
-      await readProjectJson(projectPath, "tree.gedcomx.json"),
+      await readJson(projectPath, "tree.gedcomx.json"),
     );
     // Pre-mutation snapshot (applyLogAppendOp mutates research in place; tree
     // is read-only here): block only on errors THIS call introduces, not
