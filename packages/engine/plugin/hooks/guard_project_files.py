@@ -80,6 +80,31 @@ DEVICE_WRITE_TOOLS = ("device_commit_files",)
 # restoring 400, now fails.
 _MAX_PATH_LEN = 4096
 
+# research.json sections whose owner is enforced by caller identity, mapped to
+# the BARE agent name that owns each. Rows come from
+# `docs/specs/schemas/ownership.json`; a row reaches this map only when its
+# `enforceableAt` names the `hook` plane and it declares a `hookCallers` agent.
+#
+# The section name is hardcoded rather than read from the manifest because a
+# hook runs in the VM with no access to the repo — `cwd` is the sandbox and the
+# connected folder is not mounted there. Keeping the two in step is the
+# manifest's `hookCallers` field plus this comment, not a loader.
+OWNED_SECTIONS = {"proof_summaries": "proof-conclusion"}
+
+# The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.
+# A refusal with no working alternative is what produced the bypass this whole
+# guardrail exists to stop: agents told to use a door that was locked went
+# through the wall instead. If a bare-name delegation ever fails and the model
+# retries as a general-purpose stand-in, this message is what turns the refusal
+# into a recoverable in-turn pivot rather than an unwritable artifact.
+OWNER_REASON = (
+    "Writing research.json's `{section}` from here is disabled — that section is "
+    "owned by the {agent} agent, which applies the tier and citation rules the "
+    "section depends on. Delegate the write: invoke `@plugin:{agent}` and let it "
+    "make the research_append call. Everything else in research_append is "
+    "unaffected; only this section is routed."
+)
+
 REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json "
     "must go through the writer tools. To CREATE a new project use project_create, "
@@ -157,13 +182,77 @@ def protected_target(tool_name: str, tool_input: dict) -> str | None:
     return None
 
 
+def _ops(tool_input: dict):
+    """Every op in a `research_append` call, batch or single.
+
+    A batch puts them in `ops`; a single call carries `section` at the top
+    level. Both shapes reach the same sections, so both are walked.
+    """
+    ops = (tool_input or {}).get("ops")
+    if isinstance(ops, list):
+        for op in ops:
+            if isinstance(op, dict):
+                yield op
+    elif tool_input:
+        yield tool_input
+
+
+def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> str | None:
+    """The owned section this call writes without being its owner, or None.
+
+    `proof_summaries` is owned by `proof-conclusion`
+    (`docs/specs/schemas/ownership.json`). Measured over the committed corpus,
+    52 of the 142 runs that wrote a proof summary never launched the skill that
+    owns it. Prose did not hold it — see ADR-0011 — so the caller is checked
+    here, which is the only plane that can see who is calling.
+
+    **Both caller keys are required.** `agent_id` is absent as a KEY on the main
+    thread (test membership, never truthiness), and `agent_type` alone is not
+    sufficient because it is also present on the main thread of a session
+    started with `--agent`, which an `agent_type`-only rule would misread as a
+    subagent (`eval/harness/harness/context_policy.py`). The tail comparison
+    accepts both `proof-conclusion` and the namespaced
+    `genealogy-research:proof-conclusion`, which is what production actually
+    reports — a bare equality never fires there, and under `deny unless ==` that
+    denies every caller including the owner.
+
+    Covers `op: "update"` as well as `"append"`: the skill updates an existing
+    `ps_NNN` in place on every re-conclusion, and a rule that saw only appends
+    would leave that path denied in production with its fixture still green.
+    """
+    if _basename(tool_name.replace("__", "/")) != "research_append":
+        return None
+    for op in _ops(tool_input):
+        if op.get("section") not in OWNED_SECTIONS:
+            continue
+        section = op["section"]
+        if "agent_id" not in payload:
+            return section
+        agent_type = str(payload.get("agent_type") or "")
+        if agent_type.rsplit(":", 1)[-1] != OWNED_SECTIONS[section]:
+            return section
+    return None
+
+
 def decision(payload: dict) -> dict:
     """The hook's stdout payload: a deny, or `{}` for no opinion."""
     tool_input = payload.get("tool_input")
-    name = protected_target(
-        str(payload.get("tool_name") or ""),
-        tool_input if isinstance(tool_input, dict) else {},
-    )
+    tool_input = tool_input if isinstance(tool_input, dict) else {}
+    tool_name = str(payload.get("tool_name") or "")
+
+    section = owner_denied(tool_name, tool_input, payload)
+    if section is not None:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": OWNER_REASON.format(
+                    section=section, agent=OWNED_SECTIONS[section]
+                ),
+            },
+        }
+
+    name = protected_target(tool_name, tool_input)
     if name is None:
         return {}
     return {

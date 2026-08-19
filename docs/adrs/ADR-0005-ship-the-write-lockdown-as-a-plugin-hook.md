@@ -6,7 +6,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-30 (#989; Windows path fix #984)
-- **Last updated:** 2026-08-09 (the write-lockdown parity test shipped)
+- **Last updated:** 2026-08-19 (the caller check reached production; the per-context trigger fired)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -46,6 +46,16 @@ are not ours. And Cowork is the product.
 (`packages/engine/plugin/hooks/hooks.json` + `guard_project_files.py`), denying
 raw `Write` / `Edit` / `NotebookEdit` on `research.json` and `tree.gedcomx.json`,
 matched on basename with both path separators handled.
+
+**Since 2026-08-19 the same script carries a second, different kind of rule.**
+The lockdown above asks *what file is this write going to*; the caller check asks
+*who is calling*. `research.json`'s `proof_summaries` section is denied to
+everyone but the `proof-conclusion` agent (`OWNED_SECTIONS` in the script). That
+is the per-context policy reaching production — the trigger this ADR's "Revisit
+when" named — and it is why the matcher now also covers `.*research_append`.
+Both rules live in one script because both need the same instrument; they share
+nothing else, and the caller check deliberately does **not** join the three-copy
+parity test, because the other two copies have no caller dimension to compare.
 
 A plugin-shipped hook binds in **both** environments that matter: Cowork loads it
 as part of the plugin, and the hosted path gets it alongside its own `hooks=`.
@@ -145,6 +155,12 @@ is not hypothetical, it has already produced one silent no-op.
 > and predicate out with `ast` and running them against one vector set. It also
 > fails on an unregistered fourth copy.
 
+> `packages/engine/mcp-server/tests/packaging/plugin-hooks.test.ts` also runs the
+> real script against the **caller check**: the owning agent under both the bare
+> and the namespaced `agent_type`, a general-purpose stand-in, and an
+> `agent_type` present without `agent_id` (the `--agent` main thread, which an
+> `agent_type`-only rule would misread as a subagent).
+
 What it does **not** catch: that the hook **binds as a runtime hook** — the
 matcher is now checked against the script statically, but whether the runtime
 honours it, and whether the real `device_commit_files` payload looks anything
@@ -158,7 +174,14 @@ environment, and enforcing-vs-shadow status.
 ## Revisit when
 
 A bypass is observed using the shell route — at which point the false-deny
-calculus changes and `Bash` matching becomes worth its cost. Or a skill ships a
-`scripts/` folder, which would finally make the hypothetical half of the
-rationale real. Or the per-context policy is ported to production, which
-would give the hook layer a caller dimension it does not have today.
+calculus changes and `Bash` matching becomes worth its cost. **Observed
+2026-08-17** and tracked as issue #1499, whose chosen direction is the file mode
+rather than a command matcher, pending the Windows rename-over-read-only
+measurement. Or a skill ships a `scripts/` folder, which would finally make the
+hypothetical half of the rationale real.
+
+**The per-context trigger has fired.** Porting that policy to production was
+listed here as a future event; it happened on 2026-08-19 (see the Decision), so
+the hook layer now *has* a caller dimension. What to revisit next is whether a
+second section earns one — the answer is Phase 4 of the enforcement programme,
+ranked by measured e2e traffic rather than by tractability.

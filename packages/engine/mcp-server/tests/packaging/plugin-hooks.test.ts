@@ -42,7 +42,11 @@ function loadHooks(): Record<string, Matcher[]> {
  * on a miss — a silently empty tuple would make the caller's assertions pass on
  * exactly the change that breaks production.
  */
-function guardToolNames(): { fileWriteTools: string[]; deviceWriteTools: string[] } {
+function guardToolNames(): {
+  fileWriteTools: string[];
+  deviceWriteTools: string[];
+  ownerRoutedTools: string[];
+} {
   const src = readFileSync(GUARD, "utf-8");
   const tuple = (constName: string): string[] => {
     const body = src.match(new RegExp(`^${constName}\\s*=\\s*\\(([^)]*)\\)`, "m"))?.[1];
@@ -59,7 +63,24 @@ function guardToolNames(): { fileWriteTools: string[]; deviceWriteTools: string[
   return {
     fileWriteTools: tuple("FILE_WRITE_TOOLS"),
     deviceWriteTools: tuple("DEVICE_WRITE_TOOLS"),
+    // The caller-routed sections live in a dict, not a tuple, and the tool they
+    // gate is always `research_append` — so what the matcher must cover is that
+    // one name, conditional on the dict being non-empty. Read rather than
+    // assumed, so emptying OWNED_SECTIONS correctly relaxes the requirement.
+    ownerRoutedTools: ownedSections(src).length > 0 ? ["research_append"] : [],
   };
+}
+
+/** The section names in the guard script's `OWNED_SECTIONS` map. */
+function ownedSections(src: string): string[] {
+  const body = src.match(/^OWNED_SECTIONS\s*=\s*\{([^}]*)\}/m)?.[1];
+  if (body === undefined) {
+    throw new Error(
+      `OWNED_SECTIONS not found in ${GUARD}. If it was renamed, update this ` +
+        `helper — do not hardcode the section names back into the test.`,
+    );
+  }
+  return [...body.matchAll(/["']([^"']+)["']\s*:/g)].map((m) => m[1]);
 }
 
 // Resolved once, not per call: probing costs a process launch each time.
@@ -118,12 +139,13 @@ describe("plugin hooks are packaged and wired", () => {
     // That shipped the device-bridge route open while the predicate, its three
     // copies, and their parity vectors all said it was closed.
     const matcher = loadHooks().PreToolUse[0].matcher ?? "";
-    const { fileWriteTools, deviceWriteTools } = guardToolNames();
+    const { fileWriteTools, deviceWriteTools, ownerRoutedTools } = guardToolNames();
 
     // The extraction is load-bearing: an empty list makes every assertion below
     // vacuously true, which is the same false green in a new costume.
     expect(fileWriteTools.length).toBeGreaterThan(0);
     expect(deviceWriteTools.length).toBeGreaterThan(0);
+    expect(ownerRoutedTools.length).toBeGreaterThan(0);
 
     // Anchored full match — the strictest reading of how a matcher is applied.
     // Passing under `^(…)$` also passes under a substring search, so proving it
@@ -138,6 +160,18 @@ describe("plugin hooks are packaged and wired", () => {
       // `remote-devices` and the plugin cannot control the prefix, so a matcher
       // naming only the bare tail never fires in the environment that matters.
       for (const spelling of [tool, `mcp__remote-devices__${tool}`]) {
+        expect(matches(spelling), `matcher does not cover ${spelling}`).toBe(true);
+      }
+    }
+    for (const tool of ownerRoutedTools) {
+      // An MCP tool, so all THREE server spellings — the same rule agent
+      // frontmatter follows, and for the same reason: the server's name is
+      // chosen by whoever registers it and the plugin cannot control that.
+      for (const spelling of [
+        `mcp__genealogy__${tool}`,
+        `mcp__remote-devices__Genealogy_Research__${tool}`,
+        `mcp__Genealogy_Research__${tool}`,
+      ]) {
         expect(matches(spelling), `matcher does not cover ${spelling}`).toBe(true);
       }
     }
@@ -196,6 +230,63 @@ describe("the guard script's decisions", () => {
     ["mcp__remote-devices__device_bash", { command: "cat > research.json" }],
   ])("has no opinion on %s", (tool_name, tool_input) => {
     expect(runGuard({ tool_name, tool_input })).toEqual({});
+  });
+
+  // ── caller-routed sections: research_append + proof_summaries ──
+  //
+  // The only test that runs the real script against this arm. No harness binds
+  // a plugin hook, so nothing else exercises it before a live Cowork session.
+  const OWNER = "genealogy-research:proof-conclusion";
+
+  it.each([
+    ["append, no agent_id (main thread)", { section: "proof_summaries", op: "append", entry: {} }, {}],
+    // The re-conclusion path. SKILL.md updates ps_NNN in place on every repeat
+    // invocation; an arm that saw only appends would leave this dead.
+    ["update in place, no agent_id", { section: "proof_summaries", op: "update", entryId: "ps_001", fields: {} }, {}],
+    ["batched ops form", { ops: [{ section: "questions", op: "update" }, { section: "proof_summaries", op: "append" }] }, {}],
+    // agent_type WITHOUT agent_id is the `--agent` main thread, not a subagent.
+    ["agent_type present but agent_id absent", { section: "proof_summaries", op: "append" }, { agent_type: OWNER }],
+    // A different agent is still not the owner.
+    ["a different agent", { section: "proof_summaries", op: "append" }, { agent_id: "a1", agent_type: "general-purpose" }],
+  ])("denies research_append on proof_summaries — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    // The refusal must name the way out, or it reproduces the bypass this
+    // guardrail exists to stop.
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:proof-conclusion");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["namespaced agent_type, as production reports it", OWNER],
+    ["bare agent_type", "proof-conclusion"],
+  ])("permits the owning agent — %s", (_label, agent_type) => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "proof_summaries", op: "append", entry: {} },
+      agent_id: "agent-1",
+      agent_type,
+    });
+    expect(out).toEqual({});
+  });
+
+  it.each([
+    // Every other section is untouched — only this one is routed.
+    ["assertions on the main thread", { section: "assertions", op: "append" }],
+    ["a batch with no owned section", { ops: [{ section: "questions", op: "update" }] }],
+  ])("has no opinion on research_append — %s", (_label, tool_input) => {
+    expect(runGuard({ tool_name: "mcp__genealogy__research_append", tool_input })).toEqual({});
+  });
+
+  it("routes under every server spelling, since the prefix is not ours to pick", () => {
+    for (const name of [
+      "mcp__genealogy__research_append",
+      "mcp__remote-devices__Genealogy_Research__research_append",
+      "mcp__Genealogy_Research__research_append",
+    ]) {
+      const out = runGuard({ tool_name: name, tool_input: { section: "proof_summaries", op: "append" } });
+      expect(out.hookSpecificOutput?.permissionDecision, `${name} was not denied`).toBe("deny");
+    }
   });
 
   it("allows the call rather than erroring on a malformed payload", () => {

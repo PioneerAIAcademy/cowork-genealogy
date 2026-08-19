@@ -27,6 +27,7 @@ from e2e import orchestrator
 from e2e.orchestrator import (
     _run_agent,
     is_main_thread_extraction_append,
+    is_main_thread_owned_section_write,
     load_fixture,
 )
 
@@ -251,3 +252,72 @@ def _result(session="S1"):
         num_turns=1,
         session_id=session,
     )
+
+
+# ── agent-owned sections: research_append + proof_summaries ──
+#
+# Keyed on tool AND section, unlike the extraction_append block above: that one
+# can key on the tool alone because no skill declares it, whereas research_append
+# is the general writer and only its owned sections are routed. Keyed on
+# agent_type as well as agent_id, because agent_id alone would permit the
+# general-purpose stand-in the model falls back to when a delegation misses.
+
+
+def _owned(section=None, ops=None, agent_id=None, agent_type=None, tool="research_append"):
+    payload = {"tool_name": f"mcp__genealogy__{tool}", "tool_input": {}}
+    if ops is not None:
+        payload["tool_input"]["ops"] = ops
+    elif section is not None:
+        payload["tool_input"]["section"] = section
+    if agent_id is not None:
+        payload["agent_id"] = agent_id
+    if agent_type is not None:
+        payload["agent_type"] = agent_type
+    return payload
+
+
+@pytest.mark.parametrize(
+    "payload,label",
+    [
+        (_owned(section="proof_summaries"), "main thread"),
+        (
+            _owned(ops=[{"section": "questions"}, {"section": "proof_summaries"}]),
+            "batched with another section",
+        ),
+        (
+            _owned(section="proof_summaries", agent_id="a1", agent_type="general-purpose"),
+            "a general-purpose stand-in, which agent_id alone would permit",
+        ),
+        (
+            _owned(section="proof_summaries", agent_type="genealogy-research:proof-conclusion"),
+            "agent_type without agent_id -- the --agent main thread",
+        ),
+    ],
+)
+def test_owned_section_write_is_blocked(payload, label):
+    assert is_main_thread_owned_section_write(payload) is True, label
+
+
+@pytest.mark.parametrize(
+    "payload,label",
+    [
+        (
+            _owned(
+                section="proof_summaries",
+                agent_id="a1",
+                agent_type="genealogy-research:proof-conclusion",
+            ),
+            "the owner, namespaced as production reports it",
+        ),
+        (
+            _owned(section="proof_summaries", agent_id="a1", agent_type="proof-conclusion"),
+            "the owner, bare",
+        ),
+        (_owned(section="assertions"), "an unowned section on the main thread"),
+        (_owned(ops=[{"section": "questions"}]), "a batch with no owned section"),
+        (_owned(section="proof_summaries", tool="research_query"), "a different tool"),
+        ({"tool_name": "Write", "tool_input": {"section": "proof_summaries"}}, "not an MCP tool"),
+    ],
+)
+def test_owned_section_write_is_allowed(payload, label):
+    assert is_main_thread_owned_section_write(payload) is False, label

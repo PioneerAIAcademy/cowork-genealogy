@@ -227,6 +227,47 @@ def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
     )
 
 
+# research.json sections routed to a named agent, mapped to that agent's BARE
+# name. Mirrors OWNED_SECTIONS in packages/engine/plugin/hooks/
+# guard_project_files.py, which is the copy that reaches production; this one
+# only reaches e2e runs, because a plugin hook binds in neither harness.
+E2E_OWNED_SECTIONS = {"proof_summaries": "proof-conclusion"}
+
+
+def is_main_thread_owned_section_write(input_data: dict[str, Any]) -> bool:
+    """Whether this writes an agent-owned research.json section from elsewhere.
+
+    Keyed on tool **and section**, unlike `is_main_thread_extraction_append`
+    above. That function can key on the tool alone because `extraction_append`
+    is declared by no skill, so any caller is the wrong caller. `research_append`
+    is the opposite: it is the general writer, called legitimately from the main
+    thread constantly. Only the owned SECTIONS are routed.
+
+    Keyed on `agent_type` as well as `agent_id`, again unlike the function
+    above. Presence of `agent_id` alone would permit a `general-purpose`
+    stand-in — the shape the model falls back to when a delegation misses —
+    which is precisely the caller this exists to catch.
+    """
+    if not (input_data.get("tool_name") or "").startswith("mcp__"):
+        return False
+    if _bare_tool_name(input_data["tool_name"]) != "research_append":
+        return False
+    tool_input = input_data.get("tool_input") or {}
+    ops = tool_input.get("ops")
+    ops = ops if isinstance(ops, list) else [tool_input]
+    owner = None
+    for op in ops:
+        if isinstance(op, dict) and op.get("section") in E2E_OWNED_SECTIONS:
+            owner = E2E_OWNED_SECTIONS[op["section"]]
+            break
+    if owner is None:
+        return False
+    if not is_subagent_call(input_data):
+        return True
+    agent_type = str(input_data.get("agent_type") or "")
+    return agent_type.rsplit(":", 1)[-1] != owner
+
+
 def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
     """Whether a tool call is denied by THIS fixture's `blocked_tools`.
 
@@ -1284,7 +1325,9 @@ async def _run_agent(
         #   - `image_read`, the set's other member, is NOT enforced here yet. It
         #     meets the same condition today (no skill declares it; it lives only
         #     on agents/image-reader-opus.md) — issue #1273.
-        if is_main_thread_extraction_append(input_data):
+        if is_main_thread_extraction_append(input_data) or is_main_thread_owned_section_write(
+            input_data
+        ):
             bare = _bare_tool_name(tool_name)
             blocked_context_calls.append(
                 {
