@@ -217,6 +217,24 @@ describe("research_log_append read failures", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors.join(" ")).toMatch(/research\.json is not valid JSON/);
   });
+
+  // This tool reads BOTH files, so it owes the same pair as tree_edit /
+  // materialize_facts / research_append. It had only the research.json half,
+  // which is the half that fails first — so the tree read was unpinned.
+  it("missing tree.gedcomx.json → ok:false", async () => {
+    await writeResearch();
+    const r = await call();
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors.join(" ")).toMatch(/tree\.gedcomx\.json not found in projectPath/);
+  });
+
+  it("invalid tree.gedcomx.json → ok:false", async () => {
+    await writeResearch();
+    await writeBadJson("tree.gedcomx.json");
+    const r = await call();
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors.join(" ")).toMatch(/tree\.gedcomx\.json is not valid JSON/);
+  });
 });
 
 // ── research_query ────────────────────────────────────────────────────────────
