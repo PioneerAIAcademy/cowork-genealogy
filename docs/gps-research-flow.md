@@ -120,9 +120,10 @@ assumptions have genuinely been invalidated.
 
 Four modes, chosen by what the records actually are.
 
-**Indexed search** is the default. Queries go broad to narrow, with no
-wildcards — explicit spelling variants instead — always anchored on surname
-or country, and never narrowed by dropping the given name. Every search is
+**Indexed search** is the default. Queries go broad to narrow, always anchored
+on surname or country, and never narrowed by dropping the given name. Spelling
+variants are tried explicitly first — so it can be said which letter changed —
+and a wildcard follows, to catch the shape nobody could guess. Every search is
 logged, including the ones that find nothing: a negative result is a
 finding, and the query behind it is recorded so it isn't repeated blindly.
 
