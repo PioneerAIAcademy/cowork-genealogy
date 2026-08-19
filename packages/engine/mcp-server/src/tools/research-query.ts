@@ -23,8 +23,7 @@
 // against a per-section allow-list — supplying a filter a section doesn't
 // support is a clear error, not a silent no-op.
 
-import { join } from "path";
-import { readFile } from "fs/promises";
+import { readProjectJson } from "../utils/project-io.js";
 
 const MAX_ITEMS = 50;
 
@@ -77,6 +76,14 @@ export type ResearchQueryResult =
   | { ok: false; errors: string[] };
 
 class ResearchQueryError extends Error {}
+
+async function readJson(projectPath: string, filename: string): Promise<any> {
+  try {
+    return await readProjectJson(projectPath, filename);
+  } catch (e) {
+    throw new ResearchQueryError(e instanceof Error ? e.message : String(e));
+  }
+}
 
 type FilterKey =
   | "recordId"
@@ -237,18 +244,7 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       activeFilters.push({ key, rule, value });
     }
 
-    let text: string;
-    try {
-      text = await readFile(join(projectPath, "research.json"), "utf-8");
-    } catch {
-      throw new ResearchQueryError("research.json not found in projectPath");
-    }
-    let research: any;
-    try {
-      research = JSON.parse(text);
-    } catch {
-      throw new ResearchQueryError("research.json is not valid JSON");
-    }
+    const research = await readJson(projectPath, "research.json");
 
     const arr = research?.[section];
     if (!Array.isArray(arr)) {
