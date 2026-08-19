@@ -18,7 +18,6 @@ from harness.context_policy import (
     bare_tool_name,
     is_subagent_call,
     protected_file_denial,
-    protected_write_denial,
     subagent_only_denial,
     subagent_only_violation,
 )
@@ -446,63 +445,3 @@ def test_protected_file_denial_survives_degenerate_input():
     # was entitled to make.
     assert protected_file_denial("Write", None) is None
     assert protected_file_denial("", {"file_path": "/ws/research.json"}) is None
-
-
-# --- protected_write_denial: the existence-gated wrapper the unit harness wires
-#     into skill_runner's pretool_hook. Denies a raw write to an ALREADY-EXISTING
-#     protected file; exempts bootstrap creation; never raises (issue #1493). ---
-
-
-def test_protected_write_denies_an_edit_to_an_existing_protected_file(tmp_path):
-    (tmp_path / "research.json").write_text("{}", encoding="utf-8")
-    denial = protected_write_denial(
-        "Write", {"file_path": str(tmp_path / "research.json")}, tmp_path
-    )
-    assert denial is not None
-    out = denial["hookSpecificOutput"]
-    assert out["permissionDecision"] == "deny"
-    assert "research.json" in out["permissionDecisionReason"]
-    assert "stopReason" not in denial
-
-
-def test_protected_write_allows_bootstrap_creation_of_an_absent_file(tmp_path):
-    # tree.gedcomx.json does not exist yet → init-project's seed write is allowed.
-    assert (
-        protected_write_denial(
-            "Write", {"file_path": str(tmp_path / "tree.gedcomx.json")}, tmp_path
-        )
-        is None
-    )
-
-
-def test_protected_write_resolves_a_relative_path_against_workspace(tmp_path):
-    (tmp_path / "research.json").write_text("{}", encoding="utf-8")
-    # A bare/relative file_path is resolved under the workspace, so an existing
-    # file is still caught.
-    assert (
-        protected_write_denial("Write", {"file_path": "research.json"}, tmp_path)
-        is not None
-    )
-    assert (
-        protected_write_denial("Edit", {"file_path": "./research.json"}, tmp_path)
-        is not None
-    )
-
-
-def test_protected_write_ignores_an_unprotected_or_non_write_call(tmp_path):
-    (tmp_path / "research.json").write_text("{}", encoding="utf-8")
-    assert protected_write_denial("Write", {"file_path": str(tmp_path / "notes.md")}, tmp_path) is None
-    assert protected_write_denial("Read", {"file_path": str(tmp_path / "research.json")}, tmp_path) is None
-
-
-def test_protected_write_never_raises_on_an_unstattable_path(tmp_path):
-    # `.exists()` raises ENAMETOOLONG on a model-composed overlong path; the hook
-    # must never raise, so this fails open (treated as create → allowed).
-    overlong = "/" + "a" * 5000 + "/research.json"
-    assert protected_write_denial("Write", {"file_path": overlong}, tmp_path) is None
-
-
-def test_protected_write_survives_degenerate_input(tmp_path):
-    assert protected_write_denial("Write", None, tmp_path) is None
-    assert protected_write_denial("Write", {"file_path": ""}, tmp_path) is None
-    assert protected_write_denial("Write", {"file_path": None}, tmp_path) is None

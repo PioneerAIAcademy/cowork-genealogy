@@ -526,23 +526,14 @@ there is no fourth textual predicate to vector-check — and why the unit deny i
 pinned instead by `test_context_policy.py`, which asserts the harness bound the
 shipped file (`__file__`) and denies the right targets.
 
-**The unit tier exempts bootstrap creation; the shipping copies do not, and
-that gap is a known defect.** The unit deny fires only when the target file
-**already exists** on disk — a raw write that *creates* a not-yet-existing
-`research.json`/`tree.gedcomx.json` is allowed. This mirrors the coarse
-validator `test_project_file_changes_route_through_writer_tools`, which skips
-when there is no `before_state` to diff, and it is required because
-`init-project` seeds both files by raw `Write` (no writer tool can create an
-absent file — `research_append`/`tree_edit` throw "not found" — and it is
-granted none). The three shipping copies match on basename **with no such
-exemption**, so wherever `init-project` seeds via raw `Write` and the guard
-binds, the create is denied — confirmed live in Cowork on 2026-08-09. (In
-Cowork *with a connected folder* the seed instead goes through
-`device_commit_files` and the `Write` guard never fires — see §6.1 — so that
-path is unaffected; the deny bites the direct-`Write` paths.) That gap — a
-missing bootstrap seed tool the shipping copies need and the unit tier must not
-reproduce — is tracked separately; when a seed writer ships, `init-project`
-stops raw-writing and the exemption becomes moot.
+The unit tier denies **identically to the three shipping copies**, creates
+included: a raw `Write`/`Edit`/`NotebookEdit` to `research.json` or
+`tree.gedcomx.json` is denied whether or not the file already exists, because
+`protected_file_denial` matches on basename alone. No skill legitimately
+raw-creates these files — the `project_create` tool seeds both in one validated
+call and `init-project` uses it — so nothing breaks. (In Cowork *with a
+connected folder* the seed instead goes through `device_commit_files` and the
+`Write` guard never fires — see §6.1 — so that path is unaffected either way.)
 
 **Why the plugin copy exists.** A per-agent `tools:` allow-list is subtractive —
 it can only narrow what a subagent inherits — so nothing but a hook can restrain

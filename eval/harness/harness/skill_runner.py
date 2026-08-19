@@ -42,7 +42,7 @@ from claude_agent_sdk import (
 
 from harness.auth import AuthConfig, env_for_sdk
 from harness.context_policy import (
-    protected_write_denial,
+    protected_file_denial,
     subagent_only_denial,
     subagent_only_violation,
 )
@@ -285,7 +285,7 @@ class SkillRunResult:
     blocked_context_calls: list[dict[str, Any]] = field(default_factory=list)
     # Raw Write/Edit/NotebookEdit calls to a protected project file
     # (research.json / tree.gedcomx.json) the main thread tried and was denied,
-    # as {"tool", "args"} (see harness.context_policy.protected_write_denial).
+    # as {"tool", "args"} (see harness.context_policy.protected_file_denial).
     # Empty is the healthy case. Like blocked_context_calls, the hook blocks the
     # call so it never reaches `tool_calls` — this is the only place the raw-write
     # attempt is visible, and the universal validator asserts it stays empty
@@ -445,17 +445,19 @@ async def run_skill(
                 }
             )
             return subagent_only_denial(violation)
-        # Protected-file lockdown: deny a raw Write/Edit/NotebookEdit to an
-        # EXISTING research.json / tree.gedcomx.json, which must go through the
-        # MCP writer tools that validate before persisting (issue #1493). The
-        # decision (protected basename? already exists? — with the
-        # bootstrap-create exemption and the never-raise fail-open) lives in the
-        # unit-tested `protected_write_denial`; here we only record the block.
+        # Protected-file lockdown: deny a raw Write/Edit/NotebookEdit to
+        # research.json / tree.gedcomx.json — creates included — which must go
+        # through the MCP writer tools that validate before persisting (issue
+        # #1493). Denies identically to the three shipping copies (no
+        # bootstrap-create exemption): `project_create` (#1690) now seeds both
+        # files in one validated call, so no skill raw-creates them. The decision
+        # (protected basename? — with the never-raise fail-open) lives in the
+        # unit-tested `protected_file_denial`; here we only record the block.
         # Checked BEFORE the max_tool_calls counter for the same reason as the
         # block above — a denied call never executes, so it must not consume the
         # budget.
-        protected_denial = protected_write_denial(
-            tool_name, input_data.get("tool_input"), workspace
+        protected_denial = protected_file_denial(
+            tool_name, input_data.get("tool_input")
         )
         if protected_denial is not None:
             blocked_protected_writes.append(
