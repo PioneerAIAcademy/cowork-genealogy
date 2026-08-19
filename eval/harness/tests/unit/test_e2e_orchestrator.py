@@ -1041,3 +1041,66 @@ def test_mcp_unavailable_error_carries_the_operator_message():
     text = str(McpUnavailableError(unavailable_message(None)))
     assert "RE-RUN" in text
     assert "re-research" in text
+
+
+# --- orchestrator's own copy of _read_mcp_stderr_lines (issue #1301 review) --
+#
+# Duplicated from preflight.py's copy per the issue's rule 3 ("the filesystem
+# read lives in the two callers"), so it needs its own regression coverage --
+# a fix (or a future regression) in one copy says nothing about the other.
+
+
+def _orch_stderr_log_dir(tmp_path: Path, cwd: Path, server_name: str) -> Path:
+    import re as _re
+
+    cwd_slug = _re.sub(r"[^A-Za-z0-9]", "-", str(cwd))
+    return tmp_path / "claude-cli-nodejs" / cwd_slug / f"mcp-logs-{server_name}"
+
+
+def test_orchestrator_read_mcp_stderr_lines_finds_the_log_when_the_cli_resolved_a_different_cwd(
+    monkeypatch, tmp_path,
+):
+    """Same bug, orchestrator's own copy: `run_e2e_test` passes `workspace`, a
+    raw `tempfile.TemporaryDirectory` path -- on macOS that's /var/folders/...,
+    unresolved, while the CLI (Node) writes its log under the RESOLVED
+    /private/var/folders/... slug. Caught live by chesworthrm's review; this
+    pins the fix in THIS module's copy specifically, since it is not shared
+    with preflight.py's.
+    """
+    import e2e.orchestrator as eo
+
+    monkeypatch.setattr(eo.sys, "platform", "linux")
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+
+    literal_cwd = Path("/var/folders/xx/T/e2e-some-fixture-abc123")
+    resolved_cwd = Path("/private/var/folders/xx/T/e2e-some-fixture-abc123")
+
+    real_resolve = Path.resolve
+
+    def fake_resolve(self, *args, **kwargs):
+        if str(self) == str(literal_cwd):
+            return resolved_cwd
+        return real_resolve(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "resolve", fake_resolve)
+
+    log_dir = _orch_stderr_log_dir(tmp_path, resolved_cwd, "genealogy")
+    log_dir.mkdir(parents=True)
+    (log_dir / "x.jsonl").write_text(
+        '{"error": "Server stderr: STUB-MARKER: refused to start\\n"}\n',
+        encoding="utf-8",
+    )
+
+    lines, dir_looked_in = eo._read_mcp_stderr_lines(
+        cwd=literal_cwd, server_name="genealogy", since=0,
+    )
+    assert lines == ["STUB-MARKER: refused to start"]
+    assert str(log_dir) in dir_looked_in
+
+# The two call sites' "if not server_stderr: error += ..." fix (Finding 2) is
+# not separately unit-tested here: both live inside `_consume`'s nested async
+# closure inside `_run_agent`, reachable only with a live SDK session (see
+# issue #1743, already filed for this exact gap) -- a test that stubbed the
+# string-formatting instead would not exercise the real call site and would
+# be the "check that cannot fail" CLAUDE.md warns against. Verified by direct
+# code inspection against the reviewer's exact suggested patch instead.

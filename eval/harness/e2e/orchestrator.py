@@ -136,9 +136,21 @@ def _read_mcp_stderr_lines(
                 Path.home() / ".cache" / "claude-cli-nodejs"
             )
 
-        cwd_slug = re.sub(r"[^A-Za-z0-9]", "-", str(cwd))
-        log_dir = cache_root / cwd_slug / f"mcp-logs-{server_name}"
-        dir_looked_in = str(log_dir)
+        # The CLI slugs the cwd IT resolved, not the one it was handed: on
+        # macOS Node's process.cwd() reports /private/var/... where Python's
+        # tempfile hands us /var/... (issue #1301 review, chesworthrm — 49 of
+        # 157 committed e2e run logs are macOS). Try the literal path first,
+        # then the resolved one; on Windows/Linux Path.cwd() is already
+        # resolved, so the two candidates collapse to one and behaviour is
+        # unchanged there. `workspace` here is a raw `tempfile` path, exactly
+        # the case that exposed this.
+        log_dirs: list[Path] = []
+        for candidate in (Path(cwd), Path(cwd).resolve()):
+            slug = re.sub(r"[^A-Za-z0-9]", "-", str(candidate))
+            d = cache_root / slug / f"mcp-logs-{server_name}"
+            if d not in log_dirs:
+                log_dirs.append(d)
+        dir_looked_in = " or ".join(str(d) for d in log_dirs)
 
         # Small bounded retry: the CLI's JSONL append can lag the moment its
         # control protocol reports "failed" by up to a couple hundred ms
@@ -150,7 +162,8 @@ def _read_mcp_stderr_lines(
         for attempt in range(3):
             if attempt > 0:
                 time.sleep(0.3)
-            if not log_dir.is_dir():
+            log_dir = next((d for d in log_dirs if d.is_dir()), None)
+            if log_dir is None:
                 continue
             candidates = [
                 p for p in log_dir.glob("*.jsonl")
@@ -1741,16 +1754,24 @@ async def _run_agent(
             # path that must never itself crash, so a failure here degrades to
             # no lines rather than propagating.
             try:
-                server_stderr, _ = _read_mcp_stderr_lines(
+                server_stderr, looked_in = _read_mcp_stderr_lines(
                     cwd=workspace, server_name=GENEALOGY_SERVER_NAME,
                     since=run_started_wall,
                 )
             except Exception:  # noqa: BLE001 — see comment above
-                server_stderr = []
+                server_stderr, looked_in = [], "(unresolved)"
             error = unavailable_message(
                 entry, backstop=backstop, queries=queries,
                 server_stderr=server_stderr or None,
             )
+            if not server_stderr:
+                # Rule 2 (issue #1301): an empty capture must never read as
+                # "the server said nothing" -- without this, the message here
+                # is byte-identical to the pre-#1301 text, so a genealogist
+                # has no hint a capture was even attempted, let alone where it
+                # looked (this silence is exactly what hid the macOS cwd-slug
+                # bug from a live run, chesworthrm's review).
+                error += f"\n(No server stderr captured; looked in {looked_in}.)"
             # Recorded like every other harness-side event even though THIS path
             # never persists it (the run writes no files at all — see
             # run_e2e_test). Kept so the in-memory trace is complete and so a
@@ -2413,15 +2434,20 @@ async def run_e2e_test(
                 # somehow falsy. Best-effort capture, same as the primary abort
                 # path (issue #1301) — must not itself crash this raise.
                 try:
-                    fallback_stderr, _ = _read_mcp_stderr_lines(
+                    fallback_stderr, fallback_looked_in = _read_mcp_stderr_lines(
                         cwd=workspace, server_name=GENEALOGY_SERVER_NAME,
                         since=started_at,
                     )
                 except Exception:  # noqa: BLE001 — see comment above
-                    fallback_stderr = []
+                    fallback_stderr, fallback_looked_in = [], "(unresolved)"
                 fallback_message = unavailable_message(
                     None, server_stderr=fallback_stderr or None
                 )
+                if not fallback_stderr:
+                    # Same rule-2 guard as the primary abort path above.
+                    fallback_message += (
+                        f"\n(No server stderr captured; looked in {fallback_looked_in}.)"
+                    )
             raise McpUnavailableError(fallback_message)
 
         judge_seconds = 0.0

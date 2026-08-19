@@ -405,7 +405,12 @@ def test_read_mcp_stderr_lines_reads_the_newest_matching_log(monkeypatch, tmp_pa
 
     lines, log_dir_str = pf._read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
     assert lines == ["NEW LINE"]
-    assert log_dir_str == str(log_dir)
+    # Substring, not exact-equality: `dir_looked_in` names every candidate
+    # tried (literal cwd + its .resolve()'d form), and on a machine where a
+    # synthetic POSIX-style path resolves to something else (e.g. Windows,
+    # which prepends a drive letter) those are two different strings joined
+    # by " or " -- even though the literal one is what actually matched here.
+    assert str(log_dir) in log_dir_str
 
 
 def test_read_mcp_stderr_lines_filters_on_the_server_stderr_prefix(monkeypatch, tmp_path):
@@ -492,7 +497,7 @@ def test_read_mcp_stderr_lines_never_raises_on_an_unreadable_file(monkeypatch, t
 
     lines, log_dir_str = pf._read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
     assert lines == []  # must not raise
-    assert log_dir_str == str(log_dir)
+    assert str(log_dir) in log_dir_str  # substring, not exact-equality; see note above
 
 
 def test_read_mcp_stderr_lines_since_filter_skips_files_older_than_the_check(monkeypatch, tmp_path):
@@ -509,6 +514,56 @@ def test_read_mcp_stderr_lines_since_filter_skips_files_older_than_the_check(mon
         cwd=cwd, server_name="genealogy", since=time.time() + 3600,
     )
     assert lines == []
+
+
+def test_read_mcp_stderr_lines_finds_the_log_when_the_cli_resolved_a_different_cwd(
+    monkeypatch, tmp_path,
+):
+    """macOS: Node's process.cwd() reports the RESOLVED path (/private/var/...)
+    while Python's tempfile hands this function the literal, unresolved one
+    (/var/...) -- the two disagree only because /var is itself a symlink.
+    Caught live by chesworthrm's review: the CLI writes its log under the
+    resolved slug, so a reader that only tries the literal one never finds it,
+    and the abort silently falls back to today's message with no hint a
+    capture was even attempted.
+
+    Simulated via a `Path.resolve` monkeypatch rather than a real symlink, so
+    this is deterministic on every platform (including CI, which runs Linux,
+    where the literal and resolved forms are the same and this divergence
+    can't be reproduced with a real filesystem symlink in the same way).
+    """
+    _use_linux_cache_root(monkeypatch, tmp_path)
+    literal_cwd = Path("/var/folders/xx/T/e2e-some-fixture-abc123")
+    resolved_cwd = Path("/private/var/folders/xx/T/e2e-some-fixture-abc123")
+
+    real_resolve = Path.resolve
+
+    def fake_resolve(self, *args, **kwargs):
+        if str(self) == str(literal_cwd):
+            return resolved_cwd
+        return real_resolve(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "resolve", fake_resolve)
+
+    # The log exists ONLY under the slug the CLI actually resolved to --
+    # exactly what a real macOS run produces (chesworthrm's review reproduced
+    # this live: "handed log dir exists? 0 / resolved log dir exists? 1").
+    log_dir = _stderr_log_dir(tmp_path, resolved_cwd, "genealogy")
+    log_dir.mkdir(parents=True)
+    (log_dir / "x.jsonl").write_text(
+        '{"error": "Server stderr: STUB-MARKER: refused to start\\n"}\n',
+        encoding="utf-8",
+    )
+
+    lines, dir_looked_in = pf._read_mcp_stderr_lines(
+        cwd=literal_cwd, server_name="genealogy", since=0,
+    )
+    assert lines == ["STUB-MARKER: refused to start"]
+    # Both candidates are named in the failure-path string, not just whichever
+    # one happened to match -- rule 2 (an empty capture must name where it
+    # looked) needs this to be true on the miss path too, not just the hit path.
+    assert str(_stderr_log_dir(tmp_path, literal_cwd, "genealogy")) in dir_looked_in
+    assert str(log_dir) in dir_looked_in
 
 
 # --- the hard wall around the live check (#941) -----------------------

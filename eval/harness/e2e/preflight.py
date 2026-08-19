@@ -142,9 +142,20 @@ def _read_mcp_stderr_lines(
                 Path.home() / ".cache" / "claude-cli-nodejs"
             )
 
-        cwd_slug = re.sub(r"[^A-Za-z0-9]", "-", str(cwd))
-        log_dir = cache_root / cwd_slug / f"mcp-logs-{server_name}"
-        dir_looked_in = str(log_dir)
+        # The CLI slugs the cwd IT resolved, not the one it was handed: on
+        # macOS Node's process.cwd() reports /private/var/... where Python's
+        # tempfile hands us /var/... (issue #1301 review, chesworthrm — 49 of
+        # 157 committed e2e run logs are macOS). Try the literal path first,
+        # then the resolved one; on Windows/Linux Path.cwd() is already
+        # resolved, so the two candidates collapse to one and behaviour is
+        # unchanged there.
+        log_dirs: list[Path] = []
+        for candidate in (Path(cwd), Path(cwd).resolve()):
+            slug = re.sub(r"[^A-Za-z0-9]", "-", str(candidate))
+            d = cache_root / slug / f"mcp-logs-{server_name}"
+            if d not in log_dirs:
+                log_dirs.append(d)
+        dir_looked_in = " or ".join(str(d) for d in log_dirs)
 
         # Small bounded retry: the CLI's JSONL append can lag the moment its
         # control protocol reports "failed" by up to a couple hundred ms
@@ -156,7 +167,8 @@ def _read_mcp_stderr_lines(
         for attempt in range(3):
             if attempt > 0:
                 time.sleep(0.3)
-            if not log_dir.is_dir():
+            log_dir = next((d for d in log_dirs if d.is_dir()), None)
+            if log_dir is None:
                 continue
             candidates = [
                 p for p in log_dir.glob("*.jsonl")
