@@ -87,6 +87,28 @@ def main() -> int:
     pos = sum(1 for i in items if i["should_trigger"])
     neg = len(items) - pos
 
+    # Unmeasurable is a stop, not a warning. With no items at all — or none that
+    # should trigger — run_eval submits zero `claude -p` calls, run_loop then sees
+    # `failed == 0` and breaks on iteration 1 with `all_passed`. `make
+    # optimize-skill SKILL=<x>` therefore reports that the description passed
+    # everything while measuring nothing: a vacuous green, not a failure anyone
+    # sees. Exiting non-zero is what makes `make` stop instead.
+    #
+    # Deliberately NOT keyed on the `pos < 3 or neg < 3` predicate below: measured
+    # over all 27 skills on main, that is true for eight of them, and six are thin
+    # on the negative side ONLY (hypothesis-tracking 13/0, validate-schema 11/1,
+    # init-project 9/2, locality-guide 26/2, search-wikipedia 11/2, translation
+    # 11/2) and optimize usefully today. Hard-failing those would break a command
+    # that works for them. Only `research` and `forget-and-rederive` (0/0) are
+    # unmeasurable.
+    if not items or pos == 0:
+        print(f"ERROR: unmeasurable set ({pos} positive / {neg} negative) — nothing to "
+              f"optimize against. run_loop would report `all_passed` on iteration 1 "
+              f"without scoring a single query. Add positive trigger tests under "
+              f"eval/tests/unit/{args.skill}/ (or negatives naming '{args.skill}' in "
+              f"negative.correct_skill elsewhere) first.", file=sys.stderr)
+        return 1
+
     out = Path(args.out) if args.out else (OUT_DIR / f"{args.skill}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(items, indent=2) + "\n", encoding="utf-8")

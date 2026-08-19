@@ -14,7 +14,7 @@ How closely does this kind of record relate to the fact in dispute?
 A birth certificate is highly relevant to birth date; a death
 certificate is tangentially relevant to birth date. A marriage
 record is highly relevant to marriage date but only tangentially
-relevant to a bride's parentage.
+relevant to a bride's parentage. A less-relevant record is not worthless; it can still corroborate a conclusion supported by more directly relevant evidence.
 
 ### 2. Category of the record
 
