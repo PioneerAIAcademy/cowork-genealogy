@@ -48,14 +48,71 @@ Wiki article (Sweden):
 - Great-grandfather Tor Andersson appears with sons Jöns and Asmund Torsson in the
   1658–1663 Henckelstorp tax lists.
 
-**Recoverability caveat (read before grading a failed run):** the tax lists and
-catechism records that carry this proof are browse-only and largely on
-SVAR/ArkivDigital, not name-indexed on FamilySearch. A benchmark agent restricted
-to FamilySearch record/full-text search may be unable to reach f1–f3 and f5 at
-all; the 1712 marriage (f4) and the pre-1745 parish registers are the most likely
-to be reachable. A low score here is an expected signal about tool reach, not
-necessarily an agent failure — weigh it against what the FamilySearch tools can
-actually surface.
+**Recoverability caveat (read before grading a failed run).** Two separate
+questions with different answers: whether a record is *on* FamilySearch, and
+whether an agent restricted to name and full-text search can *reach* it.
+
+*On FamilySearch, browse-only.* The Mantalslängder for Harjager härad are here as
+image volumes — groups `008978368`, `008978369`, `008978374`, `008978375` —
+covering 1670–1681 and 1700–1714, which includes 1680, 1681, 1700, 1702, 1705 and
+1708 inside this fixture's research window. Probate `007118856` (1688–1816) and
+the häradsrätt series `008355604`–`008355613` (1691–1713) are here too and
+unexamined; see the routes note below. Measured 2026-08-19, and only visible on a
+post-#1598 `volume_search` — before that fix it discarded every record type and
+surfaced none of this, so anyone re-checking on an older tree will see nothing.
+
+*Not on FamilySearch.* The catechism lists of 1696, 1699 and 1701 that carry f3
+and half of f2 are absent at every level checked — härad, parish and county. A
+full county sweep (1,525 volumes) returned only husförhörslängder for Helsingborg
+1875–1890 and one Communion Records for Tullstorp 1718–1744. The 1658–1663 tax
+lists behind f5 are absent as well; the earliest Harjager list is 1670.
+
+*Reachable by the agent: still largely no.* Every volume above reports
+`recordSearchablePercent: 0` and `fulltextSearchable: false`. Nothing is
+name-indexed, so an agent restricted to record and full-text search cannot search
+its way to f1–f3 or f5 regardless of what the images hold. The 1712 marriage (f4)
+and the pre-1745 parish registers remain the most likely to be reachable. A low
+score is still an expected signal about tool reach rather than agent failure —
+but grade it against what is *searchable*, not what is merely *held*.
+
+**Unexamined routes (2026-08-19).** Neither has been opened, so neither appears in
+`expected-findings.json`. Probate `007118856` (1688–1816, 439 + 113 images) covers
+Asmund Torsson's death in January 1711, and a Swedish *bouppteckning* enumerating
+heirs would be direct evidence for f2 against this fixture's indirect-evidence
+premise. Häradsrätt `008355612` (1710–1712) covers both that death and Elena's
+December 1712 marriage. Anyone who reads either volume should update f2's
+supporting sources and revisit the difficulty rating.
+
+**Register start date — noted, not investigated (2026-08-19).** Parish group
+`004523021` reports "Church records | 1662-1850 | Vestra Karaby", while this
+fixture's premise is that the registers begin in 1688 and Elena (b. c. 1681)
+predates them. Deliberately out of scope for #1596, which concerns the
+availability and discoverability of the tax and catechism records.
+
+**Read this before acting on it: almost certainly a catalogue-level span, not a
+register.** `004523021` is returned four times, with different image counts (221,
+143, 198, 25) and the *identical* three coverages each time — coverage repeated
+verbatim across separate film items is description attached at the catalogue/DGS
+level, not per volume, and 188 years is the span of a holding rather than of a
+register. The same group's `1687-1729` coverage is far more likely to be the real
+early register, and it agrees with the documented 1688 start to within a year.
+The case study this fixture was built from is itself titled "Beyond Parish
+Registers", which is only a case study worth writing if the registers genuinely
+do not reach 1681.
+
+**But if it is ever shown to be real, the consequence is larger than this
+caveat.** Elena was born about 1681, so a register actually running from 1662
+would likely contain *her own baptism* — direct evidence for f1, and for f2 and
+f3 if the entry names her parents. That would move this fixture out of the
+indirect-evidence genre altogether and require rewriting its premise, its
+difficulty rating and its findings, not just correcting a note.
+
+Cheapest order to settle it, if someone takes it on: read what the case study says
+about the register start date and where it got it; then check SVAR/ArkivDigital's
+per-series holdings list for Västra Karaby, which publishes start dates. Open
+images only after both. Note also that *adding* a finding would leave the
+committed `run-2026-08-13_01-40-40` annotation without a label for it — amending
+the existing f1–f6 is safe, adding an f7 is not.
 
 **Authoring note (PID-less / Path 3):** Built from the wiki case study as ground
 truth, with no FamilySearch access — the starting tree was *constructed* from the
@@ -73,7 +130,8 @@ tiered the conclusion `possible`, and wrote nothing to the tree. Stopped on the 
 wall-clock cap at 197 of 200 tool calls. Four gaps found alongside it: #1593
 (`image_read` refuses >700 KB), #1594 (`image_transcribe` fabricates/corrupts on early
 -modern Nordic hands), #1595 (26% OpenRouter failure rate), and **#1596 — the
-Recoverability caveat above is half wrong: the Mantalslängder *are* on FamilySearch
-(Harjager 1681/1700/1702/1705/1708, browse-only), and probate 1688–1816 and häradsrätt
-1697–1714 are unexamined routes.** Read #1596 before grading a future run against that
-caveat.
+Recoverability caveat was half wrong: the Mantalslängder *are* on FamilySearch
+(Harjager 1670–1681 and 1700–1714, browse-only), and probate 1688–1816 and
+häradsrätt 1691–1713 are unexamined routes.** That caveat has since been corrected
+(#1596): the tax lists are on FamilySearch browse-only, the catechism records are
+not, and both unexamined routes are recorded there.
