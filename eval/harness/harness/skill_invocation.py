@@ -28,6 +28,7 @@ Three consumers, all described in the plan:
 from __future__ import annotations
 
 import re
+from collections import Counter
 from typing import Any
 
 from harness.context_policy import bare_tool_name
@@ -271,6 +272,73 @@ def _relationship_key(r: dict[str, Any]) -> tuple[Any, ...]:
     return (r.get("type"), r.get("person1"), r.get("person2"), r.get("parent"), r.get("child"))
 
 
+def _relationship_conclusion_signature(r: dict[str, Any]) -> tuple[Any, ...]:
+    """Endpoint identity plus normalized content, for detecting a conclusion written
+    INTO an existing relationship — a marriage fact dated onto a seeded couple, a
+    parentage re-classified Biological->Adopted — which `_relationship_key` alone
+    cannot see (issue #1569, was #1368). Used only by
+    `find_effects_without_invocation`'s proof-conclusion arm;
+    `find_relationship_writes_without_warnings_check` asks a different question (was a
+    NEW edge written) and keeps using the plain endpoint key.
+
+    Ignores `id` for the same reason `_relationship_key` does, and ignores fact ORDER —
+    a harmless re-serialization must not register as a new conclusion, the exact disease
+    issue #1340 cures. A `frozenset` of `Counter` items, not a sorted tuple and not a bare
+    `frozenset` of the facts themselves: two facts of the same type can have one
+    populated and one None `standard_place` (real corpus shape, e.g.
+    `chresten-nielsen-daughter`'s R1 — two Marriage facts, one with a place, one
+    without), and sorting a tuple containing both raises `TypeError` comparing `None` to
+    `str`. Neither `Counter` construction nor `frozenset` construction ever orders its
+    elements relative to each other, so the comparison that crashes a sort never happens
+    — but a bare `frozenset` of the facts would also collapse two facts that carry the
+    IDENTICAL normalized signature into one, silently hiding a genuinely-added duplicate
+    (found by review). Routing through `Counter` first preserves that multiplicity while
+    keeping the same hash-only, comparison-free construction. Same pattern
+    `_primary_fact_signatures` uses below.
+    """
+    facts = r.get("facts") if isinstance(r.get("facts"), list) else []
+    fact_counts = Counter(
+        (f.get("type"), f.get("standard_date"), f.get("standard_place"))
+        for f in facts
+        if isinstance(f, dict)
+    )
+    fact_sig = frozenset(fact_counts.items())
+    return _relationship_key(r) + (r.get("subtype"), fact_sig)
+
+
+def _fact_signatures(p: dict[str, Any]) -> Counter[tuple[Any, ...]]:
+    """Normalized `(type, standard_date, standard_place)` for EVERY fact on a
+    person, not filtered to `primary: true` -- the identity-based counterpart to
+    a raw count for the person-evidence arm's "did new content appear" check,
+    which cares about any new fact, not just a primary one (issue #1569 found
+    the same count-based blind spot here that the proof-conclusion arm had: a
+    fact REPLACED in place read as unchanged). A `Counter`, not a `set`, for the
+    same multiplicity reason as `_primary_fact_signatures` below."""
+    return Counter(
+        (f.get("type"), f.get("standard_date"), f.get("standard_place"))
+        for f in (p.get("facts") or [])
+        if isinstance(f, dict)
+    )
+
+
+def _primary_fact_signatures(p: dict[str, Any]) -> Counter[tuple[Any, ...]]:
+    """Normalized `(type, standard_date, standard_place)` for every `primary: true`
+    fact on a person, ignoring `id` and ordering — the identity-based counterpart to a
+    raw count, so a primary fact REPLACED in place (count unchanged, content changed)
+    is visible the same way a primary fact ADDED is (issue #1569). A `Counter`, not a
+    `set`: two primary facts that happen to carry the identical normalized signature
+    are a real duplicate, and a `set` would collapse them — silently hiding a
+    genuinely-added second fact the same way the raw-count check this replaces was
+    supposed to catch (found by review). `Counter(current) - Counter(baseline)` is
+    truthy exactly when some signature's count went up, which is what "has a new
+    primary fact" means; a bare set difference would miss that for a duplicate."""
+    return Counter(
+        (f.get("type"), f.get("standard_date"), f.get("standard_place"))
+        for f in (p.get("facts") or [])
+        if isinstance(f, dict) and f.get("primary") is True
+    )
+
+
 def find_effects_without_invocation(
     tool_calls: list[dict[str, Any]],
     research: dict[str, Any] | None,
@@ -290,11 +358,13 @@ def find_effects_without_invocation(
     this run began: the person-evidence arm ignores persons that already had
     facts/names, and the proof-conclusion arm ignores ParentChild/Couple
     relationships and primary facts already present, flagging a conclusion
-    encoded as a NEW relationship or an ADDED primary fact (it does not see one
-    written into an existing relationship, e.g. a marriage fact dated onto a
-    seeded couple — issue #1368). Without it every seeded relationship or
-    already-unlinked seed person would read as a violation. Best-effort and may
-    over-flag when omitted.
+    encoded as a NEW relationship, an ADDED primary fact, a conclusion written
+    INTO an existing relationship (a marriage fact dated onto a seeded couple,
+    a parentage re-classified Biological->Adopted), or a primary fact REPLACED
+    in place — see `_relationship_conclusion_signature` and
+    `_primary_fact_signatures` (issue #1569, was #1368). Without a starting
+    tree every seeded relationship or already-unlinked seed person would read
+    as a violation. Best-effort and may over-flag when omitted.
 
     Each arm keys on a *product* of the skill, never on the skill's mere
     footprint — see `_is_conflict_resolution_product` for why the
@@ -336,37 +406,42 @@ def find_effects_without_invocation(
     # arm.
     starting_persons = (starting_tree or {}).get("persons") if isinstance((starting_tree or {}).get("persons"), list) else []
     starting_ids = {p.get("id") for p in starting_persons if isinstance(p, dict)}
-    starting_fact_counts = {p.get("id"): len(p.get("facts") or []) for p in starting_persons if isinstance(p, dict)}
-    starting_primary_counts = {
-        p.get("id"): sum(1 for f in (p.get("facts") or []) if isinstance(f, dict) and f.get("primary") is True)
+    starting_fact_signatures = {
+        p.get("id"): _fact_signatures(p)
+        for p in starting_persons
+        if isinstance(p, dict)
+    }
+    starting_primary_signatures = {
+        p.get("id"): _primary_fact_signatures(p)
         for p in starting_persons
         if isinstance(p, dict)
     }
 
-    starting_relationship_keys = {
-        _relationship_key(r)
+    starting_relationship_signatures = {
+        _relationship_conclusion_signature(r)
         for r in ((starting_tree or {}).get("relationships") or [])
         if isinstance(r, dict) and r.get("type") in ("ParentChild", "Couple")
     }
 
     def _has_new_primary_fact(p: dict[str, Any]) -> bool:
-        count = sum(1 for f in (p.get("facts") or []) if isinstance(f, dict) and f.get("primary") is True)
-        baseline = 0 if starting_tree is None else starting_primary_counts.get(p.get("id"), 0)
-        return count > baseline
+        current = _primary_fact_signatures(p)
+        if starting_tree is None:
+            return bool(current)
+        baseline = starting_primary_signatures.get(p.get("id"), Counter())
+        return bool(current - baseline)
 
-    # Detects a conclusion encoded as a NEW ParentChild/Couple relationship or an
-    # ADDED primary fact, each diffed against the starting tree (both are routinely
-    # seeded). It does NOT see a conclusion written into an existing relationship —
-    # a marriage fact dated onto a seeded couple, a parentage re-classified
-    # Biological->Adopted — nor a primary fact replaced in place (count 1->1 reads
-    # as unchanged); the proof_summaries disjunct still catches the normal path
-    # where a summary is also written (issue #1368). proof_summaries itself needs
-    # no baseline — no fixture seeds a non-empty one.
+    # Detects a conclusion encoded as a NEW ParentChild/Couple relationship, a
+    # conclusion written INTO an existing one, an ADDED primary fact, or a primary
+    # fact REPLACED in place — each diffed against the starting tree via a
+    # normalized signature (both relationships and primary facts are routinely
+    # seeded). The proof_summaries disjunct still catches the normal path where a
+    # summary is also written. proof_summaries itself needs no baseline — no
+    # fixture seeds a non-empty one.
     has_primary_fact = any(isinstance(p, dict) and _has_new_primary_fact(p) for p in persons)
     has_conclusion_relationship = any(
         isinstance(r, dict)
         and r.get("type") in ("ParentChild", "Couple")
-        and (starting_tree is None or _relationship_key(r) not in starting_relationship_keys)
+        and (starting_tree is None or _relationship_conclusion_signature(r) not in starting_relationship_signatures)
         for r in relationships
     )
     if (
@@ -385,13 +460,20 @@ def find_effects_without_invocation(
     def _has_content(p: dict[str, Any]) -> bool:
         return bool(p.get("facts") or p.get("names"))
 
+    # Identity-based, like the proof-conclusion arm's fact checks above, not
+    # count-based: a seeded person's fact REPLACED in place (count unchanged,
+    # content changed) is new content the same way an ADDED fact is (found by
+    # review; same defect class as the proof-conclusion arm's, in this same
+    # function). Names are not part of this comparison -- unchanged from
+    # before this fix, and not something the review raised.
     def _is_new_content_this_run(p: dict[str, Any]) -> bool:
         if starting_tree is None:
             return True  # no baseline available; best-effort per the docstring
         pid = p.get("id")
         if pid not in starting_ids:
             return True  # brand-new person this run
-        return len(p.get("facts") or []) > starting_fact_counts.get(pid, 0)
+        baseline = starting_fact_signatures.get(pid, Counter())
+        return bool(_fact_signatures(p) - baseline)
 
     unlinked = [
         p
@@ -686,13 +768,15 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     (`e2e/orchestrator.py::is_main_thread_extraction_append` in e2e,
     `context_policy.subagent_only_violation` in the unit harness; e2e-test-spec
     §6.1.1), so it never executes. The attempt still reaches this function —
-    `tool_calls` is appended before the PreToolUse decision — but from
-    `HARNESS_SCHEMA_VERSION` 3 a denied call carries `is_error: true`, so it
-    exits at the `is_error` guard at the top of the loop and never reaches the
-    `agent_id is None` branch. On a pre-`is_error` log it exits at that branch
-    instead, on the classification above. Either way it is not counted, and the
-    classification stands on its own — do not read the `is_error` skip as the
-    reason a main-thread call is exempt from *this* detector.
+    `tool_calls` is appended before the PreToolUse decision — but it exits at
+    the `agent_id is None` branch on the classification above: a main-thread
+    call (denied or not) is not an *unnamed-delegate* bypass, full stop. It is
+    not counted, and that classification stands on its own regardless of
+    whether the denied call also carries `is_error: true` — this detector
+    reads `is_error` nowhere (issue #1569): the rule here is about who called,
+    not whether the call succeeded, so a caller that should not have made this
+    decision is a violation whether the write landed, was rejected by
+    validation, or was denied outright.
 
     Note what the two layers do and do not compose to. The main-thread half is
     DENIED; this delegate half is only LOGGED — it is shadow-mode, deliberately
@@ -760,8 +844,6 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     """
     violations: list[str] = []
     for i, entry in enumerate(tool_calls):
-        if entry.get("is_error") is True:
-            continue
         tool = entry.get("tool", "")
         args = entry.get("args") or {}
         agent_id = entry.get("agent_id")
