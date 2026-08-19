@@ -350,9 +350,9 @@ id's real ancestor chain.
 
 | Group | Stray | Actually under |
 |---|---|---|
-| Baptism | `127575` religious birth records | Religious `123402` — a **sibling** of the Baptism anchor `103612`, not a descendant. 208,413 volumes globally |
+| Baptism | `127575` religious birth records | Religious `123402` — a **sibling** of the Baptism anchor `103612`, not a descendant. 208,840 volumes globally |
 | Prison | `131448` police records | Government `126517` — a **sibling** of the Prison anchor `123478`. 50,432 volumes globally |
-| Emigration | `131602` departure records | Migration `127023` — a **sibling** of the Emigration anchor `123632`, so containment does not reach it. **No `NATURAL` group carries this type**, so the two volumes that do are outside the only scope this tool queries; the id is carried so the group is correct if that changes, not because it returns anything today |
+| Emigration | `131602` departure records | Migration `127023` — a **sibling** of the Emigration anchor `123632`, so containment does not reach it. Volume counts here are access-dependent and small: 0 under `NATURAL` and 2 without the type filter at the ordinary credentials these figures use, against 3 and 5 on an elevated account |
 | Death | `122911` obituaries | Newspapers `124231` |
 | Religious Death | `127739` religious burial | Religious `123402` |
 | Passports | `124432`, `124442`, `131572` travel permits, visas, residence permits | Migration `127023` |
@@ -375,7 +375,7 @@ them. (`131421` is also double-claimed but resolves *inside* Government Pensions
 **Enumerate this table; do not describe it.** The source list gives four groups a
 *second* anchor. Two of those second anchors fall **outside** the first anchor's
 subtree, so containment cannot reach them and they appear above as strays —
-carrying only the first anchor would drop 208,413 volumes from Baptism and 50,432
+carrying only the first anchor would drop 208,840 volumes from Baptism and 50,432
 from Prison, with no error and no empty result to notice. The other two are
 **inside** their subtree and need no row: Probate's `126785` resolves to
 `[122797, 127010, 124277]`, and Religious's `124209` ("Parish") to `[123402]`.
@@ -804,7 +804,9 @@ as absent rather than guessing.
           "Restrict to volumes of these record-type groups. Multiple groups are " +
           "OR-ed. Selecting a group also returns the groups nested beneath it — " +
           "'Government' also returns Tax, Prison, Poor Law, Passports and more. " +
-          "Omit to search all record types.",
+          "This filters volumes, not coverages: a matched volume is returned with " +
+          "all of its coverage rows, so some will carry other record types and " +
+          "years outside the requested range. Omit to search all record types.",
       },
       pageToken: {
         type: "string",
@@ -873,7 +875,7 @@ The full-text sub-fetch failure is **non-fatal** — a partial result with
    unreachable from the parent for exactly the same reason it is unreachable from
    its own anchor. Sending only the selected group's own strays would mean
    `Death` returns obituaries while `Vital` — which the group table says includes
-   `Death` — does not, a gap of roughly 116,000 volumes on today's data. The same
+   `Death` — does not, a gap of 110,231 volumes measured 2026-08-19. The same
    holds for `Legal` against `Court`, `Government` against `Tax`, `Prison`,
    `Passports` and `Government Pensions`, and `ID documents` against `Passports`.
    This is the failure mode described under [Strays](#strays), reached from the
@@ -916,8 +918,8 @@ For each group in `response.groups`:
    - `startYear` / `endYear` ← the leading year of
      `coverage.fromdateString` / `coverage.todateString` (when present)
    - when `coverage.datesOrig` is absent but the pair is present, `dateRange`
-     is derived from `startYear`/`endYear` (`"1683-1700"`, or just the year
-     when they are equal)
+     is `` `${startYear}-${endYear}` ``, matching `collections_search`
+     exactly — including when the years are equal, so `"1683-1683"`
 
 ---
 
@@ -991,7 +993,7 @@ images are digitized, indexed, or full-text processed.
 | `src/types/volume-search.ts` | Add `recordTypeGroups?: string[]` to `VolumeSearchInput`; `recordTypeConceptIds?: number[]` to `MetadataRmsCoverageRequest`; `recordTypeConceptId?`, `recordTypeConceptIdHierarchy?`, `fromdateString?`, `todateString?` to `MetadataRmsCoverageEntry`; `recordTypeConceptId?`, `startYear?`, `endYear?` to `SimplifiedCoverage` |
 | `src/tools/volume-search.ts` | Validate and expand `recordTypeGroups`; send `coverage.recordTypeConceptIds`; map the new coverage fields; add the input to `volumeSearchSchema` |
 | `tests/tools/volume-search.test.ts` | Cases 15a–15f |
-| `dev/probe-record-type-groups.ts` | **New.** The evidence behind this section; `VOCABULARY` there and the group table here must agree |
+| `dev/probe-record-type-groups.ts` | **New.** The evidence behind this section; `VOCABULARY` there and the group table here must agree. **Nothing checks that agreement** — no test, workflow or script reads either table today, so the implementation PR must add one, in the manner `tests/packaging/manifest.test.ts` guards `manifest.json` against `allToolSchemas` |
 
 ---
 
@@ -1049,7 +1051,7 @@ Recorded so the implementation does not re-open them.
 
 **Strays are kept, and groups may overlap.** Adding a stray costs nothing — one
 more entry in the same `recordTypeConceptIds` array — while dropping one loses real
-volumes (208,413 for Baptism, 50,432 for Prison). The consequence is that a volume
+volumes (208,840 for Baptism, 50,432 for Prison). The consequence is that a volume
 can appear under two groups: an obituary volume answers both **Death** and
 **Newspapers**. A duplicate is harmless; a missing death-record volume is a wrong
 answer.
@@ -1096,21 +1098,35 @@ read as a guard without being one.
 ### A note on the volume counts in this spec
 
 **Counts are permission-dependent; the structure is not.** Figures here were
-measured with ordinary FamilySearch credentials. A caller with elevated permissions
-sees more: the same probes run against an elevated account returned `119166` at
-176,286 against 152,392 here. Every *ancestor chain*, containment relationship and
-reach *direction* reproduced identically across both. So treat the absolute numbers
-as a floor from one access level, and the structural claims as the durable part.
+measured with ordinary FamilySearch credentials, refreshed 2026-08-19. Every
+*ancestor chain*, containment relationship and reach *direction* reproduced
+identically across both access levels. So treat the absolute numbers as a floor
+from one access level, and the structural claims as the durable part.
 
-**`131602` is a different matter, and not a permissions one.** It reports 0 here
-and 2–3 elsewhere because **`types: ["NATURAL"]` excludes it entirely** — dropping
-that one field returns its volumes and its `[127023]` chain at ordinary
-credentials. Since this tool only ever queries `NATURAL`
-([Fixed fields](#fixed-fields-always-sent-in-the-group-search-request-body)),
-those volumes are out of its reach at any permission level. `ancestorsOf` in the probe therefore retries without the
-`types` filter when the scoped query is empty, and labels any chain it recovers
-that way, so a type the taxonomy has but the tool cannot return is visible rather
-than indistinguishable from a bad id.
+**The two access levels drift in parallel, so a mismatch is not staleness.** The
+same ids, measured weeks apart on both accounts:
+
+| id | ordinary, round 1 | ordinary, 2026-08-19 | elevated, round 1 | elevated, 2026-08-19 |
+|---|---|---|---|---|
+| `119166` newspapers | 152,392 | 152,454 | 176,286 | 176,444 |
+| `127575` religious birth | 208,413 | 208,840 | — | 323,467 |
+| `131448` police records | 50,432 | 50,432 | — | 65,965 |
+
+Both accounts drift by small amounts in the same direction and stay far apart;
+`131448` has not moved at all on the ordinary account across the whole period.
+Re-measuring an ordinary figure will therefore not converge on an elevated one,
+and a gap between the two is not evidence that either is out of date.
+
+**`131602` is the sharpest case.** At ordinary credentials it returns 0 groups
+under `types: ["NATURAL"]` and 2 without the type filter; on an elevated account
+it returns 3 and 5, and the two accounts do not even return the same group names.
+Its `[127023]` chain is identical on both. An earlier revision of this section
+read that as `NATURAL` excluding the type outright and concluded the volumes were
+unreachable at any permission level — both wrong, and the second is the reason to
+state the access level rather than assert an absolute. `ancestorsOf` in the probe
+retries without the `types` filter when the scoped query is empty and labels any
+chain it recovers that way, so a chain that resolves only outside `NATURAL` stays
+visible rather than indistinguishable from a bad id.
 
 ## Design notes
 

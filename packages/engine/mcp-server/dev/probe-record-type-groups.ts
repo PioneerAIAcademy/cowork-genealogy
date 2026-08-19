@@ -127,12 +127,12 @@ async function allCoverages(
  * yields the ancestors as the slice before it.
  *
  * Retries without the `types: ["NATURAL"]` filter when the scoped query finds
- * nothing. `131602` is the case: 0 NATURAL groups carry it, 2 non-NATURAL ones
- * do, so the chain is unreachable at this tool's own scope and the claim the
- * spec makes about it could not be re-derived from this probe. The retry is
- * flagged in the output, because a chain found only outside `NATURAL` says the
- * type exists in FamilySearch's taxonomy but `volume_search` cannot return its
- * volumes.
+ * nothing, and flags any chain recovered that way. Whether it fires is
+ * account-dependent: `131602`, the case it was written for, resolves inside
+ * `NATURAL` on an elevated account and only outside it on an ordinary one, so
+ * without the retry that chain is unresolvable here and the spec's claim about
+ * it cannot be re-derived. `total` is returned alongside, because the stray
+ * counts this spec quotes are only refreshable if the caller can see them.
  */
 async function ancestorsOf(
   id: number
@@ -395,8 +395,8 @@ async function sectionAnchors() {
       else {
         stray += 1;
         strays.push(
-          `${id}${r.name ? ` (${r.name})` : ""} -> under [${r.chain.join(",")}]` +
-            (r.naturalOnly ? "" : "   [no NATURAL group carries it — volume_search cannot return these]")
+          `${id}${r.name ? ` (${r.name})` : ""} -> under [${r.chain.join(",")}]  total=${r.total}` +
+            (r.naturalOnly ? "" : "   [resolved outside NATURAL — this account's NATURAL scope has none]")
         );
       }
     }
