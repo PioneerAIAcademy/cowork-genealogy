@@ -30,8 +30,10 @@ import sys
 from pathlib import Path
 
 try:  # package context (python -m app.agent.runner)
+    from .errors import classify, log_operator
     from .mock_agent import MockAgent
 except ImportError:  # loose script alongside mock_agent.py (baked E2B image)
+    from errors import classify, log_operator  # type: ignore
     from mock_agent import MockAgent  # type: ignore
 
 
@@ -62,7 +64,13 @@ async def _run_turn(agent, text: str, emit) -> None:
         # task was cancelled. Report the stop, then let turn_done fall through.
         emit({"kind": "error", "text": "(stopped)"})
     except Exception as exc:  # never die on an agent error
-        emit({"kind": "error", "text": f"Agent error: {exc}"})
+        # Not the SDK path — handle_turn wraps its own import, _ensure_client
+        # and the whole receive loop, so nothing SDK-shaped escapes to here.
+        # This catches mock-agent and framing failures, which are just as
+        # unreadable to a user as a 401 was (#1126).
+        classification = classify(exc)
+        log_operator("run_turn", classification, exc=exc)
+        emit({"kind": "error", "text": classification})
     emit({"kind": "turn_done"})  # sole source of turn_done (mock + real)
 
 
@@ -88,7 +96,14 @@ async def serve(agent, incoming: "asyncio.Queue", emit) -> None:
                 try:
                     handled = bool(await agent.interrupt())
                 except Exception as exc:
-                    emit({"kind": "error", "text": f"Interrupt failed: {exc}"})
+                    # Concrete #1126 case: the key rotates mid-turn, the control
+                    # channel dies, the user presses Stop, and RealAgent.interrupt
+                    # raises CLIConnectionError("Not connected") — so the user
+                    # read "Interrupt failed: Not connected" for an operator
+                    # problem they had no part in.
+                    classification = classify(exc)
+                    log_operator("interrupt", classification, exc=exc)
+                    emit({"kind": "error", "text": classification})
                 # The real agent tells the SDK to abort and its stream ends on its
                 # own (handled=True). An agent that can't self-stop is cancelled;
                 # _run_turn turns that into (stopped) + turn_done.
