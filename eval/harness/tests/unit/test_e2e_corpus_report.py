@@ -82,6 +82,33 @@ def test_tally_reports_unreadable_files_instead_of_crashing(tmp_path: Path):
     assert "run-2.json" in problems[0]
 
 
+def test_tally_survives_a_log_whose_bytes_are_not_utf_8(tmp_path: Path):
+    """The test above only covers invalid JSON, which `json.JSONDecodeError`
+    already caught. This covers the corruption the corpus actually produces.
+
+    `read_text(encoding="utf-8")` decodes before `json` sees the bytes, so a
+    write interrupted mid-character raises `UnicodeDecodeError` — a `ValueError`,
+    and neither an `OSError` nor a `json.JSONDecodeError`. Without it in the
+    tuple one bad file aborts the whole sweep with a traceback instead of being
+    named and skipped.
+
+    This half was fixed in the #1485 review and left unguarded, which mattered
+    more than it looks: `judge_report.py`'s guard cites this function as its
+    precedent, so an unguarded precedent is one a later tidy-up silently
+    un-fixes. Caught in round 3.
+    """
+    good = _write(tmp_path, "run-1.json", {"verdict": "pass"})
+    bad = tmp_path / "run-2.json"
+    # Valid JSON up to the point the bytes stop being UTF-8 — the shape a write
+    # interrupted mid-character leaves behind, not a syntactically broken file.
+    bad.write_bytes(b'{"verdict": "pass", "note": "\xff\xfe"}')
+
+    recall, _compliance, _gate, problems, _arms, _fix, _bash = tally([good, bad])
+    assert recall == {"pass": 1}
+    assert len(problems) == 1
+    assert "run-2.json" in problems[0]
+
+
 def test_format_report_omits_the_note_when_everything_was_checked(tmp_path: Path):
     paths = [
         _write(tmp_path, "run-1.json", {

@@ -185,15 +185,24 @@ secondary informant) for birthplace."
 - **Use occupational and geographic networks.** When families are
   connected through shared occupations or locations, note these
   connections explicitly. They suggest new sources to search.
-- **Cite sources, and distinguish what came from tools.** When
-  information comes from a wiki article or Wikipedia page, name
-  the source in-line. When a tool call returns no results or an
-  error, do not continue elaborating that topic as if the search
-  succeeded — either narrow the response to what the successful
-  calls returned, or flag the gap explicitly ("I could not confirm
-  this from the wiki; the following comes from general knowledge
-  and should be verified"). Never present training-knowledge claims
-  in the same register as tool-verified facts.
+- **End every response that called a wiki/Wikipedia tool with a "Sources
+  consulted" list — one bullet per page actually used, title linked to its
+  URL** (`source_url` on each `wiki_search` result, `url` from `wiki_read`
+  and `wikipedia_search`), e.g. `- [Germany Genealogy — Getting Started]
+  (https://www.familysearch.org/en/wiki/Germany_Genealogy#...)`. This is
+  the same pattern `search-familysearch-wiki` already uses, and it is the
+  hard requirement — inline citation of individual claims is good practice
+  on top of it, but a scattered narrative naming a source by title mid-
+  paragraph and never elsewhere is not a citation; the end-of-response list
+  is what makes every source checkable regardless of how the prose reads.
+  A claim you cannot trace to a returned URL is not a finding: say the
+  wiki/Wikipedia does not cover it rather than asserting it from memory.
+  When a tool call returns no results or an error, do not continue
+  elaborating that topic as if the search succeeded — either narrow the
+  response to what the successful calls returned, or flag the gap
+  explicitly ("I could not confirm this from the wiki; the following comes
+  from general knowledge and should be verified"). Never present
+  training-knowledge claims in the same register as tool-verified facts.
 - **Do not speculate beyond evidence.** Historical context explains
   what COULD have happened, not what DID happen. Present
   possibilities, not conclusions.
