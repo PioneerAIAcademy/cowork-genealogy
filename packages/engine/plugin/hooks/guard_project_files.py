@@ -91,6 +91,26 @@ _MAX_PATH_LEN = 4096
 # manifest's `hookCallers` field plus this comment, not a loader.
 OWNED_SECTIONS = {"proof_summaries": "proof-conclusion"}
 
+# The reverse direction: the sections each named agent MAY write. Rows come from
+# the same manifest -- every section whose `callers` names that agent's skill.
+#
+# This is a SECOND rule, not a restatement of the one above, and it catches a
+# different failure. OWNED_SECTIONS stops everyone else reaching a section; this
+# stops the owner reaching everything else. Measured 2026-08-19: blocked from
+# concluding by an unresolved conflict, the proof-conclusion agent wrote
+# `status: "resolved"` onto that conflict itself -- with weighing and
+# independence analysis -- and then concluded. It needed no tool it lacked; it
+# used the broad writer it legitimately holds, on a section it does not own.
+# `disallowedTools:` cannot express that: the granularity there is the tool, and
+# the tool was the right one. Only a section-level check reaches it.
+#
+# A section owned by a SKILL cannot be enforced through OWNED_SECTIONS -- there
+# is no agent to permit, so a permit-the-owner rule would deny the owning
+# skill's own write. `conflicts` is that shape, which is why it is covered here.
+AGENT_WRITABLE_SECTIONS = {
+    "proof-conclusion": frozenset({"proof_summaries", "questions", "project"}),
+}
+
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.
 # A refusal with no working alternative is what produced the bypass this whole
 # guardrail exists to stop: agents told to use a door that was locked went
@@ -103,6 +123,13 @@ OWNER_REASON = (
     "section depends on. Delegate the write: invoke `@plugin:{agent}` and let it "
     "make the research_append call. Everything else in research_append is "
     "unaffected; only this section is routed."
+)
+
+OUT_OF_LANE_REASON = (
+    "Writing research.json's `{section}` is outside your lane — you may write "
+    "{allowed} and nothing else. The skill that owns `{section}` applies rules "
+    "you are not running. Report what you found and hand off to it; do not "
+    "resolve it yourself so that your own work can proceed."
 )
 
 REASON = (
@@ -197,8 +224,13 @@ def _ops(tool_input: dict):
         yield tool_input
 
 
-def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> str | None:
-    """The owned section this call writes without being its owner, or None.
+def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | None:
+    """`(section, rule, caller)` for a denied write, or None to allow.
+
+    Two rules, both keyed on the caller and both returning the offending
+    section: `routed` — a section reserved to an owning agent, reached by
+    someone else; `out_of_lane` — a known agent reaching outside the sections
+    its own skill is a declared caller for.
 
     `proof_summaries` is owned by `proof-conclusion`
     (`docs/specs/schemas/ownership.json`). Measured over the committed corpus,
@@ -222,15 +254,20 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> str | None:
     """
     if _basename(tool_name.replace("__", "/")) != "research_append":
         return None
+    caller = ""
+    if "agent_id" in payload:
+        caller = str(payload.get("agent_type") or "").rsplit(":", 1)[-1]
+    writable = AGENT_WRITABLE_SECTIONS.get(caller)
     for op in _ops(tool_input):
-        if op.get("section") not in OWNED_SECTIONS:
+        section = op.get("section")
+        if not isinstance(section, str):
             continue
-        section = op["section"]
-        if "agent_id" not in payload:
-            return section
-        agent_type = str(payload.get("agent_type") or "")
-        if agent_type.rsplit(":", 1)[-1] != OWNED_SECTIONS[section]:
-            return section
+        # A routed section, reached by anyone but its owning agent.
+        if section in OWNED_SECTIONS and caller != OWNED_SECTIONS[section]:
+            return (section, "routed", caller)
+        # A known agent reaching outside its own set.
+        if writable is not None and section not in writable:
+            return (section, "out_of_lane", caller)
     return None
 
 
@@ -240,15 +277,19 @@ def decision(payload: dict) -> dict:
     tool_input = tool_input if isinstance(tool_input, dict) else {}
     tool_name = str(payload.get("tool_name") or "")
 
-    section = owner_denied(tool_name, tool_input, payload)
-    if section is not None:
+    denied = owner_denied(tool_name, tool_input, payload)
+    if denied is not None:
+        section, rule, caller = denied
+        if rule == "routed":
+            reason = OWNER_REASON.format(section=section, agent=OWNED_SECTIONS[section])
+        else:
+            allowed = ", ".join(f"`{s}`" for s in sorted(AGENT_WRITABLE_SECTIONS[caller]))
+            reason = OUT_OF_LANE_REASON.format(section=section, allowed=allowed)
         return {
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
-                "permissionDecisionReason": OWNER_REASON.format(
-                    section=section, agent=OWNED_SECTIONS[section]
-                ),
+                "permissionDecisionReason": reason,
             },
         }
 

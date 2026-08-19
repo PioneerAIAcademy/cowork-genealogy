@@ -270,6 +270,43 @@ describe("the guard script's decisions", () => {
     expect(out).toEqual({});
   });
 
+  it("denies the owning agent a section outside its own lane", () => {
+    // The real 2026-08-19 failure, replayed. Blocked from concluding by an
+    // unresolved conflict, the agent resolved that conflict itself — status,
+    // weighing_analysis, independence_analysis — and then concluded. It held
+    // the right tool; it used it on a section conflict-resolution owns.
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: {
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { status: "resolved", weighing_analysis: "..." },
+      },
+      agent_id: "agent-1",
+      agent_type: OWNER,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    // Names the lane, and says not to clear its own path.
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("proof_summaries");
+  });
+
+  it("denies it inside a batch too, where the other ops are legitimate", () => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: {
+        ops: [
+          { section: "conflicts", op: "update", entryId: "c_001", fields: { status: "resolved" } },
+          { section: "proof_summaries", op: "append", entry: {} },
+        ],
+      },
+      agent_id: "agent-1",
+      agent_type: OWNER,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+  });
+
   it("permits the owning agent's real shape — summary + resolve in ONE batch", () => {
     // This is what the agent actually emits: the conclusion and its question
     // resolution as one all-or-nothing write. A permit proven only against the

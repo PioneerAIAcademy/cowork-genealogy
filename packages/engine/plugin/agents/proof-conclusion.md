@@ -113,13 +113,38 @@ restate a tier judgement as a gate failure.
    gate is satisfied **per person**, not per persona or per assertion. Do not
    defer to person-evidence over extra unlinked personas of an
    already-identified person. Note any advisory IDs and proceed.
-4. **Conflicts (hard block).** For each conflict touching this question's
-   assertions, confirm it is `resolved` or carries an explicit
-   acknowledgment. List any conflict IDs that fail this check.
+4. **Conflicts (hard block, on identity).** For each unresolved conflict
+   touching this question's assertions, ask one thing: **does the disputed
+   attribute bear on whether the conflicting sources describe the same
+   person?** Birthplace, birth date, parents' names, a residence that places
+   someone in two counties at once — these are identifying attributes. A
+   middle-name spelling, or an age that moves a year across two censuses, is
+   not.
+   - **Bears on identity → BLOCKING.** You may not correlate sources whose
+     identity to one another is unsettled. Correlation assumes they describe
+     one person; an unresolved identity conflict means that assumption is
+     untested, so the correlation is not weak, it is not yet valid. This is
+     not fixable by tiering down — tiering happens after identity is
+     established, not instead of it.
+   - **Does not bear on identity → not blocking here.** It still blocks
+     `proved` (§2), and it must be named in the narrative.
+   List any conflict IDs that fail this check.
 
-**If step 2 produces failing IDs, step 3 leaves any relied-upon *person*
-without a linked identity assertion, or step 4 produces failing IDs: stop.
-Do not proceed to Step 1.**
+**If step 2 produces failing IDs, or step 3 leaves any relied-upon *person*
+without a linked identity assertion: stop. Do not proceed to Step 1.** Those
+are workflow states — an upstream step has not run — so there is no finding to
+record. Report the failing IDs and route.
+
+**If step 4 produces failing IDs, do not conclude the question — but do record
+the attempt.** An unresolved identity conflict is a research *finding*, not a
+missing prerequisite, and a question that comes back with nothing written
+loses the reasoning that got there. Write a `not_proved` proof summary whose
+narrative states that identity across the cited sources is not established,
+names the conflict and the specific attribute in dispute, and says what would
+settle it. Do **not** resolve the question, and do **not** write the tree —
+`not_proved` is below the encoding threshold (§6), so no relationship or fact
+is asserted. Then route to `conflict-resolution`. Re-invoked after the
+conflict is resolved, you update that same `ps_NNN` in place.
 Report the exact failing IDs to the user and recommend the specific skill
 for each gap (`assertion-classification`, `person-evidence`, or
 `conflict-resolution`). In `--autonomous` mode, route to the missing skill
@@ -174,7 +199,7 @@ session.
 | **Not Proved** | Insufficient evidence to lean toward any conclusion. |
 | **Disproved** | Evidence affirmatively refutes the hypothesis. |
 
-**Decision rules:** Unresolved conflicts are a **hard block on Proved**. **An unresolved conflict that *disputes the concluded fact or relationship itself* caps the tier at `possible`** — which is below the `probable` tree-write threshold (§6), so a disputed conclusion is never encoded in the tree until the conflict is resolved. (Unresolved conflicts on *collateral* facts — details not part of the conclusion — only block Proved, not Probable.) Hedging language ("suggests," "appears to be") blocks Proved — proved means stating the conclusion as fact. When in doubt, tier down.
+**Decision rules:** Unresolved conflicts are a **hard block on Proved**. **An unresolved conflict that *disputes the concluded fact or relationship itself* caps the tier at `possible`** — which is below the `probable` tree-write threshold (§6), so a disputed conclusion is never encoded in the tree until the conflict is resolved. (An unresolved conflict on a *non-identifying* detail — one that does not bear on whether the cited sources describe the same person — only blocks Proved, not Probable. The test is **not** "is it part of the conclusion?": a birthplace dispute is not part of a parentage conclusion, yet it goes directly to whether the census entries and the death certificate are even the same man. Identity first, then tier.) Hedging language ("suggests," "appears to be") blocks Proved — proved means stating the conclusion as fact. When in doubt, tier down.
 
 **A bounded or negative conclusion can itself be Proved/Probable — do not collapse to Not Proved because a *precise* value is unreachable.** When the exact event value can't be established but a **bounded** claim is well-supported, tier and state THAT bounded conclusion at the level its own evidence supports (often probable), and encode it (§6). Example: an exact death date is unrecoverable, but "died after the 1870 census and before 1911 — Kentucky had no statewide death registration until 1911, so **no death certificate exists** for him; a county estate administration brackets the death to the later 1870s" is a well-supported bounded conclusion, not a Not-Proved non-answer. Likewise a **documented negative** — "no record of type X exists for this person, and here is why (jurisdiction/era)" — is a GPS-valid finding; recording it *is* answering the question. Tier the finding on the strength of what CAN be established (the bracket / the negative), not on the unreachable exact value. Reserve Not Proved for when you cannot even bound the event or choose among candidates — and never leave the tree silent on a vital event you were asked about: if you can bound it or document its record-absence, that conclusion belongs in the tree (§6). **This does not relax the precondition gate above.** An *unresolved conflict* — competing candidates for the concluded fact not yet adjudicated — still hard-blocks per the decision rules: decline to finalize, surface the open conflict explicitly, and route to `conflict-resolution` first. A bounded or documented-negative conclusion is a valid *answer* only once the preconditions hold (exhaustiveness declared, conflicts resolved); it is never a way to conclude *past* an unresolved conflict or an undeclared exhaustiveness.
 
@@ -185,6 +210,8 @@ session.
 - **Statement** — a few cited sentences, no explanation needed. Budget: ≤~150 words.
 - **Summary** — multiple sources correlate; weight clearly one direction. Budget: ~300–500 words.
 - **Argument** — significant conflicts, only indirect evidence, competing candidates, or a reader would ask "but what about...?" Use only when that bar is met; budget: ≤~800 words.
+
+**Two or more candidates that the evidence does not separate, with no direct evidence to settle it, is an Argument — not a Summary.** A Summary says the sources agree and point one way; when the reader has to follow an elimination and see why it failed, the reasoning IS the deliverable and a Summary hides it. Rule of thumb: if the narrative has to explain why you did *not* conclude something, it is an Argument.
 
 Do not restate evidence already quoted verbatim elsewhere — cite it. Most conclusions require a Summary or Argument. Full selection tests are under `## Selecting the Proof Conclusion Form` below.
 
@@ -267,6 +294,22 @@ Present a terse summary ONLY:
 - **Next step** — more questions → question-selection; all resolved → "The project is complete."; tier could advance → question-selection or research-plan (name in one line what would advance the tier — but only a **reasonably obtainable** record; never a privacy-restricted/sealed one, e.g. a recent vital record embargoed ~100 years).
 
 The full narrative lives in the persisted `proof_summaries` entry — point the user there rather than reprinting it.
+
+**Assessing an EXISTING proof summary — cover every one of these.** A review
+that praises the reasoning and misses a mechanical defect is not a review.
+Walk them in order and say something about each:
+
+1. **Tier** — is it justified against the tier above and below it?
+2. **Self-containment** — can a reader with no access to `research.json`
+   follow it? Evidence named only by bare id (`a_004`, `src_001`) is a
+   FAILURE of this check, not a stylistic preference: name the record, its
+   date, its repository, and carry an inline citation.
+3. **Citations** — present, and copied faithfully from the source entry?
+4. **Conflicts** — every conflict the conclusion touches, named and addressed?
+5. **Exhaustiveness** — does the stated scope match what was actually searched?
+6. **Unresolvability claims** — does it assert a fact "cannot be established"
+   while a relevant record type is unsearched?
+7. **Tree** — is the concluded relationship or fact actually encoded?
 
 **Exception — review / assessment mode (no new proof written).** When this
 invocation does NOT write a new or updated `proof_summaries` entry — e.g.

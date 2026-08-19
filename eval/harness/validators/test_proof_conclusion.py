@@ -290,24 +290,54 @@ def test_reinvocation_no_duplicate_proof(after_state, test):
 
 
 def test_conflict_blocks_proved(after_state, test):
-    """Tagged `conflict-blocks-proved`: with an unresolved conflict that
-    blocks the question, the skill must not declare `proved`. Any proof
-    summary for q_001 must be at a tier below proved (or absent, if the
-    skill deferred to conflict-resolution)."""
+    """Tagged `conflict-blocks-proved`: an unresolved conflict on an
+    IDENTIFYING attribute blocks the conclusion outright, and the blocked
+    attempt is recorded at `not_proved`.
+
+    Three assertions, deliberately deterministic. Every one of them was a
+    judge-graded nuance before, and the test flip-flopped across four runs on
+    exactly these points while the skill produced three different behaviours:
+    concluding at probable, declining silently, and resolving the conflict
+    itself.
+
+    The rule (lead ruling, 2026-08-19): correlation presupposes identity, so
+    sources whose identity to one another is unsettled cannot be correlated at
+    any tier. Tiering down does not fix it — tiering happens after identity is
+    established. `probable` is NOT an acceptable hedge here, which is what the
+    earlier version of this check allowed by testing only for `proved`.
+    """
     if "conflict-blocks-proved" not in test.get("tags", []):
         pytest.skip("not a conflict-blocks-proved scenario")
     after = after_state.get("research_json")
     if after is None:
         pytest.skip("Missing research.json")
-    proved = [
+
+    for_q = [
         ps for ps in after.get("proof_summaries", [])
-        if ps.get("question_id") == "q_001" and ps.get("tier") == "proved"
+        if ps.get("question_id") == "q_001"
     ]
-    assert not proved, (
-        "proof-conclusion declared q_001 `proved` while an unresolved "
-        "conflict (c_001) blocks it — unresolved conflicts hard-block the "
-        "proved tier"
+    # 1. The attempt is recorded. A silent decline loses the reasoning.
+    assert for_q, (
+        "proof-conclusion recorded nothing for q_001. A blocked conclusion is "
+        "still a research finding: write a `not_proved` summary naming the "
+        "conflict and what would settle it, then route to conflict-resolution."
     )
+    # 2. At not_proved — not proved, and not probable either.
+    bad = [ps for ps in for_q if ps.get("tier") != "not_proved"]
+    assert not bad, (
+        "proof-conclusion concluded q_001 at "
+        f"{[ps.get('tier') for ps in bad]} while an unresolved conflict on an "
+        "identifying attribute (c_001, birthplace) is open. The disputed "
+        "attribute goes to whether the cited sources describe the same person, "
+        "so no tier is available — record it at `not_proved`."
+    )
+    # 3. The question stays open — resolving it is the downstream step's call.
+    q = next((x for x in after.get("questions", []) if x.get("id") == "q_001"), None)
+    if q is not None:
+        assert q.get("status") != "resolved" and not q.get("resolved"), (
+            "proof-conclusion marked q_001 resolved on a blocked conclusion. "
+            "The question stays open until the conflict is adjudicated."
+        )
 
 
 # --- Tag-gated: research_query tool coverage (SKILL.md §1) -------------
