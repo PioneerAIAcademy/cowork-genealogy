@@ -37,6 +37,13 @@ For skill `<X>` (paths relative to repo root):
   `docs/specs/schemas/ann.schema.json`).
 - **`eval/tests/unit/<X>/rubric.md`** (the dimensions under audit) and the
   test files (to see which dimension each test can actually exercise).
+- **`make judge-report SKILL=<X>`** — the mechanical pass over the same data,
+  free and offline. It computes *Non-discriminating dimension* and the
+  judge-vs-human counts behind *Systematic judge-vs-human divergence* across
+  every suite, from the newest run log per skill. Start there so your reading
+  goes to what the counts cannot answer: whether a flat dimension is flat
+  because the bar is wrong or because the skill genuinely passes it, and the
+  cross-version variance a single-log reader cannot see.
 
 ## What to flag
 

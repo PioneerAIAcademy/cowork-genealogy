@@ -1,0 +1,17 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "false",
+    "f4": "true",
+    "f5": "false"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "ParentChild I1->KLYT-G3Q present, sourced to S5 (1823 guardian bond). Taliaferro's 1781 Wilkes County, Georgia birth is absent from the tree.",
+    "f2": "ParentChild I2->KLYT-G3Q present and sourced; I2 carries Peggy McDowell from the 1815 marriage index. Mother is split across two unmerged persons: the 1824 Sleeper remarriage sits on duplicate I3 (Couple R34 with I4 Gideon Sleeper), not on I2. Agent identified the duplication itself and deferred it as hypothesis h_002. Her 1793 birth and 1864 death are absent.",
+    "f3": "Couple relationship R33 (I1+I2) exists but carries no facts at all -- no marriage date, no place, and sourced only to S4 (1823 probate) rather than the marriage index. The string '1 Mar 1815' appears in the tree only inside the S2 source title. The agent asserts the 1 March 1815 Amite County marriage in the proof narrative and cites the index, but never materialized it as a fact on the relationship. Graded false on the tree: the dated marriage fact the finding calls for is not encoded.",
+    "f4": "Satisfied via the amended option (b): S5 = ark:/61903/3:1:3QS7-L9QX-2H77, the 1823 Amite Orphans' Court guardian bond, attached as the source backing both parentage edges R35/R36. Agent read that image directly and re-extracted against the confirmed transcription. It also read the 1825 Sleeper bond (ark 3QS7-89QX-2C5P) and cites it in the narrative, but wrote that source with a bare full-text search URL, so the 1825 ARK itself is not in the tree.",
+    "f5": "New finding, corrected on second review (florencemashipei) from an initial true. R34 (Couple, I3+I4) is sourced to S3, the correct 1824 marriage index entry, but carries no facts at all -- no Marriage fact, no date -- the same defect f3 was graded false on for R33, and the standard has to apply the same way to both findings. Independently, R34 sits on I3, the unmerged duplicate of the mother (see f2), not on I2, the person R36 actually names as the subject's parent -- so the tree as delivered does not connect the subject's mother to Sleeper, only a same-named, disconnected node. Hypothesis h_002 correctly reasons that I2 and I3 are one person and recommends the merge, but that reasoning lives in research.json, not in the tree, and this fixture's own README states elsewhere that a conclusion recorded in research.json and not in the tree is an agent failure, not a judge miss. Two independent gaps, not one: no dated fact, and no connection to the actual mother node. Graded false."
+  }
+}
