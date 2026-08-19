@@ -10,7 +10,7 @@
       {
         "scoreType": "COHERENCE",
         "issueType": "relativesHasAgeRangeGreaterThan120",
-        "severity": "warning",
+        "severity": "implausible",
         "personId": "I2",
         "personName": "Thomas Flynn",
         "message": "A relative of this person has a lifespan greater than 120 years, which is implausible.",

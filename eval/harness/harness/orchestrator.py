@@ -643,6 +643,53 @@ async def _execute_single_run(
 
 DEFAULT_SKILL_RUN_ATTEMPTS = 3
 
+_ALWAYS_RETRYABLE_ABORTS = {"error", "sdk_stream_silence"}
+
+
+def _is_zero_progress_timeout(result) -> bool:
+    """A `max_wall_clock_seconds` abort where the run never got going.
+
+    Reads `usage["num_turns"]`, which on this path is set by the timeout
+    handler in `skill_runner` from a counter incremented per AssistantMessage
+    as they stream — NOT from the SDK's ResultMessage. That distinction is the
+    whole correctness of this guard: `usage` is otherwise populated only in
+    the ResultMessage branch, and a wall-clock timeout cancels the consumer
+    before that message arrives, so every wall-clock abort would look like
+    zero progress and EVERY slow test would be retried — burning the full cap
+    once per attempt (1500s x 3) at 3x the tokens. Caught in review before
+    that shipped; do not re-derive this from `duration_api_ms`, which is
+    genuinely unavailable here.
+
+    Zero turns means the whole budget went by without the model answering
+    once: the subprocess stalled during startup, which is the
+    `Control request timeout: initialize` failure the `error` path already
+    retries, arriving under a different name because the wall-clock watchdog
+    fired first.
+
+    Observed 2026-08-15: two tests aborted at 1888s and 1908s against a 1500s
+    cap having never started, and were lost from a paid suite run. A third hit
+    the same stall, surfaced as `error`, was retried, and passed.
+
+    Deliberately narrow: a run that timed out mid-work has turns, so it stays
+    non-retryable and does not burn its budget twice.
+    """
+    if result.aborted_reason != "max_wall_clock_seconds":
+        return False
+    # Explicit 0, not falsy: a MISSING `num_turns` means the timeout handler
+    # that records it did not run, so we cannot tell a stall from slow work —
+    # and the safe answer there is "don't retry". Fails closed, so if that
+    # handler is ever removed this guard quietly reverts to the old
+    # never-retry behaviour instead of silently retrying every slow test.
+    return (result.usage or {}).get("num_turns") == 0
+
+
+def _is_retryable_abort(result) -> bool:
+    """Whether a failed skill run should be retried (see the two helpers and
+    `_execute_skill_with_retry`'s docstring)."""
+    if result.aborted_reason in _ALWAYS_RETRYABLE_ABORTS:
+        return True
+    return _is_zero_progress_timeout(result)
+
 
 async def _execute_skill_with_retry(
     *,
@@ -658,7 +705,7 @@ async def _execute_skill_with_retry(
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
     """Build a fresh workspace and run the skill, retrying transient
-    failures with exponential backoff.
+    failures with exponential backoff. See `_is_retryable_abort`.
 
     Two transient-failure modes are retried:
 
@@ -682,17 +729,21 @@ async def _execute_skill_with_retry(
     pre-flight or mid-run.
 
     Deterministic execution-cap aborts (`max_turns`, `max_tool_calls`,
-    `max_wall_clock_seconds`, `max_input_tokens_per_turn`) are NOT
-    retried — a retry would just burn the same budget — so they return
-    on the first attempt. The Agent SDK collapses every other failure
-    into `is_error`/exceptions without the clean HTTP status codes the
-    judge path discriminates on, so a genuinely non-transient error is
-    retried too; the cost is bounded (`attempts` tries plus a few
-    seconds of backoff).
+    `max_input_tokens_per_turn`) are NOT retried — a retry would just burn
+    the same budget — so they return on the first attempt. The Agent SDK
+    collapses every other failure into `is_error`/exceptions without the
+    clean HTTP status codes the judge path discriminates on, so a genuinely
+    non-transient error is retried too; the cost is bounded (`attempts`
+    tries plus a few seconds of backoff).
+
+    3. `max_wall_clock_seconds` **with zero progress** — see
+       `_is_zero_progress_timeout`. A wall-clock abort is normally a slow
+       test and stays non-retryable; one that burned the whole budget
+       without a single turn never started, which is the same transient
+       class as (1) and (2).
 
     Returns (SkillRunResult, before_snapshot, after_snapshot).
     """
-    RETRYABLE_ABORT_REASONS = {"error", "sdk_stream_silence"}
     delay = base_delay
     result: SkillRunResult | None = None
     before_snapshot: dict[str, Any] = {}
@@ -761,10 +812,7 @@ async def _execute_skill_with_retry(
             # strictly better than discarding an already-computed result.
             pass
 
-        if (
-            result.aborted_reason not in RETRYABLE_ABORT_REASONS
-            or attempt + 1 >= attempts
-        ):
+        if not _is_retryable_abort(result) or attempt + 1 >= attempts:
             # Record how many attempts this run took so the stall tax is
             # visible per-run in the log (1 = clean first try).
             result.attempts = attempt + 1

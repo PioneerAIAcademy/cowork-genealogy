@@ -185,8 +185,13 @@ measured rather than argued.
 3. **A deny binds even under `bypassPermissions`, but only by exact tool name.**
    That is what makes `disallowedTools:` the last line of defence for a
    delegated agent (see the plugin-agents section of `CLAUDE.md`) — and it is
-   also the limit: the hook's matcher names `Write|Edit|NotebookEdit`, so
-   `device_bash` was not matched, and the write landed (issue #1509).
+   also the limit: the matcher decides whether the hook runs at all, so a name
+   it omits is a hole the script behind it can never close. `device_bash` is
+   omitted deliberately and the write landed (issue #1509);
+   `device_commit_files` was omitted by accident, which left the route open
+   after all three predicate copies had been taught to deny it. The matcher is
+   now `Write|Edit|NotebookEdit|.*device_commit_files`, and a packaging test
+   derives the expected set from the guard script instead of restating it.
 4. **Coverage is per-boundary, never global.** A writer-tool check binds only
    for callers who use the writer tool; a hook binds only for the tool names it
    matches, and only where the hook loads. The plugin hook is the one that

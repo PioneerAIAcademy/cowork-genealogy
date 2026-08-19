@@ -1,9 +1,121 @@
 {
-  "run_log": "v1_2026-08-10_12-56-30.json",
-  "annotator": "florencemashipei4@gmail.com",
+  "run_log": "v1_2026-08-11_14-28-07.json",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_record_extraction_023",
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_009",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
@@ -11,47 +123,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_023",
+      "test_id": "ut_check_warnings_009",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_023",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_023",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_023",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_023",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
       "llm_score": 2,
       "corrected_score": 2,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_024",
+      "test_id": "ut_check_warnings_009",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -59,47 +139,47 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_024",
+      "test_id": "ut_check_warnings_009",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_024",
+      "test_id": "ut_check_warnings_009",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_024",
+      "test_id": "ut_check_warnings_009",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
+      "dimension_name": "Actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_024",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_024",
+      "test_id": "ut_check_warnings_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "The persisted assertions correctly mark John Becker's and Mary Kramer's names as indirect, but the skill's text-response summary mislabels both as Direct, misreporting its own work on the exact doctrine point this test check"
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_record_extraction_003",
+      "test_id": "ut_check_warnings_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -107,7 +187,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_003",
+      "test_id": "ut_check_warnings_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -115,39 +195,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_003",
+      "test_id": "ut_check_warnings_007",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_003",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "The judge_context's indirect requirement is scoped to relationship assertions only, so marking name/sex/age/birthplace as direct explicitly stated in the census columns — is correct, not an error"
-    },
-    {
-      "test_id": "ut_record_extraction_003",
+      "test_id": "ut_check_warnings_007",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 2,
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "The informant/proximity fields (unknown household member/household_member) are correctly populated "
+      "comment": null
     },
     {
-      "test_id": "ut_record_extraction_003",
+      "test_id": "ut_check_warnings_007",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 2,
+      "dimension_name": "Actionability",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "The indirect rule in the judge_context applies only to relationship assertions, not biographical facts, which the census explicitly states and are therefore correctly direct"
+      "comment": null
     },
     {
-      "test_id": "ut_record_extraction_001",
+      "test_id": "ut_check_warnings_007",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -155,7 +235,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_001",
+      "test_id": "ut_check_warnings_010",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -163,7 +243,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_001",
+      "test_id": "ut_check_warnings_010",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -171,31 +251,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_001",
+      "test_id": "ut_check_warnings_010",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_001",
+      "test_id": "ut_check_warnings_010",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_001",
+      "test_id": "ut_check_warnings_010",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
+      "dimension_name": "Actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_022",
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -203,7 +291,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_022",
+      "test_id": "ut_check_warnings_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -211,7 +299,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_022",
+      "test_id": "ut_check_warnings_004",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -219,31 +307,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_022",
+      "test_id": "ut_check_warnings_004",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_022",
+      "test_id": "ut_check_warnings_004",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_022",
+      "test_id": "ut_check_warnings_004",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
+      "dimension_name": "Actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_018",
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -251,7 +347,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_018",
+      "test_id": "ut_check_warnings_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -259,7 +355,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_018",
+      "test_id": "ut_check_warnings_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -267,31 +363,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_018",
+      "test_id": "ut_check_warnings_005",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_018",
+      "test_id": "ut_check_warnings_005",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_018",
+      "test_id": "ut_check_warnings_005",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
+      "dimension_name": "Actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_026",
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_006",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -299,7 +403,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_026",
+      "test_id": "ut_check_warnings_006",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -307,7 +411,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_026",
+      "test_id": "ut_check_warnings_006",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -315,31 +419,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_026",
+      "test_id": "ut_check_warnings_006",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_026",
+      "test_id": "ut_check_warnings_006",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_026",
+      "test_id": "ut_check_warnings_006",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
+      "dimension_name": "Actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_027",
+      "test_id": "ut_check_warnings_006",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_013",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -347,7 +459,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_027",
+      "test_id": "ut_check_warnings_013",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -355,7 +467,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_027",
+      "test_id": "ut_check_warnings_013",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -363,39 +475,47 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_027",
+      "test_id": "ut_check_warnings_013",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_027",
+      "test_id": "ut_check_warnings_013",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_027",
+      "test_id": "ut_check_warnings_013",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
+      "dimension_name": "Actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_009",
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_009",
+      "test_id": "ut_check_warnings_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -403,7 +523,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_009",
+      "test_id": "ut_check_warnings_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -411,31 +531,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_009",
+      "test_id": "ut_check_warnings_008",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_009",
+      "test_id": "ut_check_warnings_008",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_009",
+      "test_id": "ut_check_warnings_008",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
+      "dimension_name": "Actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_028",
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -443,7 +571,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_028",
+      "test_id": "ut_check_warnings_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -451,151 +579,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_028",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_028",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_028",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_028",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_021",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_021",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_021",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_021",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_021",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_021",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_025",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_025",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_025",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_025",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_025",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_025",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_012",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_012",
+      "test_id": "ut_check_warnings_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -603,7 +587,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_011",
+      "test_id": "ut_check_warnings_012",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -611,7 +595,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_011",
+      "test_id": "ut_check_warnings_012",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -619,7 +603,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_011",
+      "test_id": "ut_check_warnings_012",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -627,7 +611,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_002",
+      "test_id": "ut_check_warnings_011",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -635,7 +619,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_002",
+      "test_id": "ut_check_warnings_011",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -643,55 +627,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_004",
+      "test_id": "ut_check_warnings_011",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -699,7 +635,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_015",
+      "test_id": "ut_check_warnings_015",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -707,7 +643,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_015",
+      "test_id": "ut_check_warnings_015",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -715,7 +651,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_015",
+      "test_id": "ut_check_warnings_015",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -723,31 +659,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_015",
+      "test_id": "ut_check_warnings_015",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_015",
+      "test_id": "ut_check_warnings_015",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_015",
+      "test_id": "ut_check_warnings_015",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 2,
+      "dimension_name": "Actionability",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "the actual informant/proximity assignments are correct throughout."
+      "comment": null
     },
     {
-      "test_id": "ut_record_extraction_007",
+      "test_id": "ut_check_warnings_015",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_014",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -755,7 +699,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_007",
+      "test_id": "ut_check_warnings_014",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -763,7 +707,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_007",
+      "test_id": "ut_check_warnings_014",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -771,127 +715,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_007",
+      "test_id": "ut_check_warnings_014",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_007",
+      "test_id": "ut_check_warnings_014",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_007",
+      "test_id": "ut_check_warnings_014",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
+      "dimension_name": "Actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_005",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_005",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_005",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_005",
+      "test_id": "ut_check_warnings_014",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "FamilySearch quality reporting",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_006",
+      "test_id": "ut_check_warnings_016",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -899,7 +755,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_006",
+      "test_id": "ut_check_warnings_016",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -907,39 +763,47 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_006",
+      "test_id": "ut_check_warnings_016",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_016",
+      "test_id": "ut_check_warnings_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_016",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_018",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -947,7 +811,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_016",
+      "test_id": "ut_check_warnings_018",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -955,7 +819,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_016",
+      "test_id": "ut_check_warnings_018",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -963,25 +827,89 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_016",
+      "test_id": "ut_check_warnings_018",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_016",
+      "test_id": "ut_check_warnings_018",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_016",
+      "test_id": "ut_check_warnings_018",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
