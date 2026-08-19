@@ -1,0 +1,1247 @@
+{
+  "persons": [
+    {
+      "id": "KLYT-G3Q",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Simpson Ridley",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "79622560-b979-4204-98bf-34e4f965d5b7",
+          "type": "Birth",
+          "date": "15 July 1821",
+          "standard_date": "15 Jul 1821",
+          "place": "Amite County, Mississippi",
+          "standard_place": "Amite, Mississippi, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "October 5, 1888",
+          "standard_date": "5 Oct 1888",
+          "place": "Simmesport, Avoyelles, Louisiana, United States",
+          "standard_place": "Simmesport, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "c067b9b1-6487-4460-91ab-5dedf2b3ce6e",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Avoyelles, Louisiana, United States",
+          "standard_place": "Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "723d2559-82b0-47ca-aea6-88e1cc388a72",
+          "type": "Burial",
+          "date": "October 1888",
+          "standard_date": "Oct 1888",
+          "place": "Masonic Cemetery  Simmesport Avoyelles Parish Louisiana, USA",
+          "standard_place": "Simmesport, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "c410731a-3b4a-43d6-a5bf-d03050089211",
+          "type": "Occupation",
+          "place": "Graham, Texas, United States",
+          "standard_place": "Graham, Jasper, Texas, United States",
+          "value": "Bank President, member of Texas Legislature Graham, Texas"
+        }
+      ]
+    },
+    {
+      "id": "LV9Y-SNS",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Lee S.",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "20 July 1864",
+          "standard_date": "20 Jul 1864"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "20 July 1864",
+          "standard_date": "20 Jul 1864",
+          "place": "Louisiana, United States",
+          "standard_place": "Louisiana, United States"
+        }
+      ]
+    },
+    {
+      "id": "MKJ4-38M",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Adele Catherine",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "24 OCT 1852",
+          "standard_date": "24 Oct 1852",
+          "place": "Simmesport, Avoyelles, Louisiana, United States",
+          "standard_place": "Simmesport, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "525e081c-0ed4-4f0e-9cf2-2d0aa811cc18",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Justice Precinct 4, Young, Texas, United States",
+          "standard_place": "Justice Precinct 4, Young, Texas, United States"
+        },
+        {
+          "id": "82f42a29-2c72-42c1-9700-cddcb42ee845",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Justice Precinct 1 Graham city, Young, Texas, United States",
+          "standard_place": "Justice Precinct 1, Young, Texas, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "11 October 1914",
+          "standard_date": "11 Oct 1914",
+          "place": "Graham Young County Texas, USA",
+          "standard_place": "Graham, Young, Texas, United States"
+        },
+        {
+          "id": "e81f0cb6-7974-4c2c-a053-78629f8a8597",
+          "type": "Burial",
+          "date": "October 1914",
+          "standard_date": "Oct 1914",
+          "place": "Oak Grove Cemetery  Graham Young County Texas, USA Plot: Section 12, Block 172, Plot B",
+          "standard_place": "Oak Grove Cemetery, Young, Texas, United States"
+        },
+        {
+          "id": "7ca53f5a-85fd-4b48-8206-b31076b972ee",
+          "type": "Residence",
+          "place": "Graham, Jasper, Texas, United States",
+          "standard_place": "Graham, Jasper, Texas, United States"
+        },
+        {
+          "id": "c0c3feb8-ce67-4a0f-9a1a-110399b368f3",
+          "type": "Religion",
+          "value": "Baptist Church"
+        }
+      ]
+    },
+    {
+      "id": "G9V6-VFN",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "William Samuel",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0a3954a6-fd17-4b16-8084-b8abed0cd76c",
+          "type": "Birth",
+          "date": "2 March 1853",
+          "standard_date": "2 Mar 1853",
+          "place": "Simmesport, Avoyelles, Louisiana, United States",
+          "standard_place": "Simmesport, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "a403e05e-f365-44cf-ae82-7a5a5f4dc33c",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Bunkie, Avoyelles, Louisiana, United States",
+          "standard_place": "Bunkie, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "6d4a2763-90df-4c91-80af-5faafefc8a37",
+          "type": "Social Program Application",
+          "date": "January 1938",
+          "standard_date": "Jan 1938"
+        },
+        {
+          "id": "2eccfa5c-5b5e-4e03-b48a-cc75d574b32b",
+          "type": "Death",
+          "date": "28 April 1941",
+          "standard_date": "28 Apr 1941",
+          "place": "Marksville, Avoyelles, Louisiana, United States",
+          "standard_place": "Marksville, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "168ead98-9684-40a0-8906-574d3d2b0b23",
+          "type": "Burial",
+          "place": "Bunkie, Avoyelles Parish, Louisiana, United States of America",
+          "standard_place": "Bunkie, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "800a6afa-ef3d-4527-9320-b2db0c67fc06",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "23ab805e-bf38-4164-a9ed-7f1e4c0a82aa",
+          "type": "Social Program Correspondence",
+          "value": "Social Program Correspondence"
+        },
+        {
+          "id": "27966341-da78-4331-bfd4-d3b98eeb2ad8",
+          "type": "Marital Status",
+          "value": "Married"
+        }
+      ]
+    },
+    {
+      "id": "LBWD-VGV",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Alice",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7a6c23d0-7b25-46b4-98c8-b6514564c735",
+          "type": "Birth",
+          "date": "3 October 1857",
+          "standard_date": "3 Oct 1857",
+          "place": "Bunkie, Avoyelles, Louisiana, United States",
+          "standard_place": "Bunkie, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "d012dd81-6831-45c9-ad58-ee38146d146b",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Avoyelles, Louisiana, United States",
+          "standard_place": "Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "643fca92-fe77-47cf-86a3-18cece04ecb7",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Justice Precinct 1 Wharton town, Wharton, Texas, United States",
+          "standard_place": "Justice Precinct 1, Wharton, Texas, United States"
+        },
+        {
+          "id": "a025a61a-de1a-41f7-a9fe-99d05abcf1a6",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Mexia, Limestone, Texas, United States",
+          "standard_place": "Mexia, Limestone, Texas, United States"
+        },
+        {
+          "id": "357a4fb0-4c55-4bb1-86f9-be06e6613009",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Dallas Precinct 22, Dallas, Texas, United States",
+          "standard_place": "Dallas, Dallas, Texas, United States"
+        },
+        {
+          "id": "8905dfe3-6576-4438-aaeb-6937b7fbbf32",
+          "type": "Death",
+          "date": "7 September 1948",
+          "standard_date": "7 Sep 1948",
+          "place": "Dallas, Dallas, Texas, United States",
+          "standard_place": "Dallas, Dallas, Texas, United States"
+        },
+        {
+          "id": "977d57da-062c-4da3-8000-746c172ee218",
+          "type": "Burial",
+          "place": "Dallas, Dallas, Texas, United States of America",
+          "standard_place": "Dallas, Dallas, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "LV9Y-SL3",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Theresine Eugenia",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "20 January 1863",
+          "standard_date": "20 Jan 1863",
+          "place": "Louisiana, United States",
+          "standard_place": "Louisiana, United States"
+        },
+        {
+          "id": "ed2e813a-127f-4ba6-a0dc-668b7619fb7b",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Avoyelles, Louisiana, United States",
+          "standard_place": "Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "22 November 1907",
+          "standard_date": "22 Nov 1907",
+          "place": "Orleans, Louisiana, United States",
+          "standard_place": "Orleans, Louisiana, United States"
+        },
+        {
+          "id": "a136d38e-d730-4421-aaa5-5c2469486d65",
+          "type": "Burial",
+          "place": "Valence Cemetery, New Orleans, Orleans, Louisiana, United States",
+          "standard_place": "Valence Cemetery, New Orleans, Orleans, Louisiana, United States"
+        }
+      ]
+    },
+    {
+      "id": "LV9Y-9V8",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Seaborn",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "13 October 1854",
+          "standard_date": "13 Oct 1854",
+          "place": "Louisiana, United States",
+          "standard_place": "Louisiana, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KLYT-G3L",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Mary Athalie",
+          "surname": "Douthier"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e0a4954f-c59d-4fe7-bb86-d7a9839812bb",
+          "type": "Birth",
+          "date": "29 March 1829",
+          "standard_date": "29 Mar 1829",
+          "place": "Pointe Coupee, Louisiana, United States",
+          "standard_place": "Pointe Coupee, Louisiana, United States"
+        },
+        {
+          "id": "bbab836f-f78d-4ded-a352-29370a8ab1f0",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Avoyelles, Louisiana, United States",
+          "standard_place": "Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "20 October 1905",
+          "standard_date": "20 Oct 1905",
+          "place": "Simmesport, Avoyelles, Louisiana, United States",
+          "standard_place": "Simmesport, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521",
+          "type": "Burial",
+          "place": "Masonic Cemetary",
+          "standard_place": "Masonic, Mono, California, United States"
+        }
+      ]
+    },
+    {
+      "id": "LZ64-KT8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Margaret",
+          "surname": "McDowell"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "2 January 1793",
+          "standard_date": "2 Jan 1793",
+          "place": "Milledgeville, Baldwin, Georgia, United States",
+          "standard_place": "Milledgeville, Baldwin, Georgia, United States"
+        },
+        {
+          "id": "70b33fab-ab40-4e6f-8e9e-71e3d0c05da7",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Amite, Mississippi, United States",
+          "standard_place": "Amite, Mississippi, United States"
+        },
+        {
+          "id": "75223694-d788-41a5-b673-6f001dc24c5c",
+          "type": "Burial",
+          "date": "January 1864",
+          "standard_date": "Jan 1864",
+          "place": "Sleeper Cemetery, Liberty, Amite, Mississippi, United States",
+          "standard_place": "Sleeper Cemetery, Liberty, Amite, Mississippi, United States"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death",
+          "date": "21 January 1864",
+          "standard_date": "21 Jan 1864",
+          "place": "Liberty, Amite, Mississippi, United States",
+          "standard_place": "Liberty, Amite, Mississippi, United States"
+        }
+      ]
+    },
+    {
+      "id": "GQ5S-Q2N",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Monetta E",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5b72faec-fff9-45cf-850a-fba53eb0fc2e",
+          "type": "Birth",
+          "date": "18 June 1859",
+          "standard_date": "18 Jun 1859",
+          "place": "Louisiana, United States",
+          "standard_place": "Louisiana, United States"
+        },
+        {
+          "id": "bd300031-6559-44f6-89d2-d70bf6484233",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Avoyelles, Louisiana, United States",
+          "standard_place": "Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "98416430-2c55-464f-a897-bf91e882f8f7",
+          "type": "Death",
+          "date": "15 September 1881",
+          "standard_date": "15 Sep 1881",
+          "place": "Simmesport, Avoyelles, Louisiana, United States",
+          "standard_place": "Simmesport, Avoyelles, Louisiana, United States"
+        }
+      ]
+    },
+    {
+      "id": "MHHV-HRR",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Virginia K.",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "87391f95-427a-4ea7-95aa-90256f576db8",
+          "type": "Birth",
+          "date": "31 August 1866",
+          "standard_date": "31 Aug 1866",
+          "place": "Pointe Coupee, Louisiana, United States",
+          "standard_place": "Pointe Coupee, Louisiana, United States"
+        },
+        {
+          "id": "7cda6579-9c12-4724-9151-9cbe0a485f04",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Avoyelles, Louisiana, United States",
+          "standard_place": "Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "48b03ab3-ae6e-415a-a9c7-ddc7c6e9a1ae",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Justice Precinct 1, Young, Texas, United States",
+          "standard_place": "Justice Precinct 1, Young, Texas, United States"
+        },
+        {
+          "id": "e98b5e91-3cf6-453b-badd-35a0fe250253",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Graham, Young, Texas, United States",
+          "standard_place": "Graham, Young, Texas, United States"
+        },
+        {
+          "id": "723e16b2-7570-4f59-b184-2547e7604ab2",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Justice Precinct 3, Young, Texas, United States",
+          "standard_place": "Justice Precinct 3, Young, Texas, United States"
+        },
+        {
+          "id": "66c89e6d-3d6c-4219-9d54-efeb4c38de1e",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Olney, Young, Texas, United States",
+          "standard_place": "Olney, Young, Texas, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "8 November 1945",
+          "standard_date": "8 Nov 1945",
+          "place": "Young, Texas, United States",
+          "standard_place": "Young, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "KPHL-7TZ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N12",
+          "given": "Ridley Lucian",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "23 August 1861",
+          "standard_date": "23 Aug 1861",
+          "place": "Simmesport, Avoyelles, Louisiana, United States",
+          "standard_place": "Simmesport, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "94ed7bcc-4a6c-4278-b3e7-fc913de49566",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Waco Ward 4, McLennan, Texas, United States",
+          "standard_place": "Waco, McLennan, Texas, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "12 August 1924",
+          "standard_date": "12 Aug 1924",
+          "place": "Waco, McLennan, Texas, United States",
+          "standard_place": "Waco, McLennan, Texas, United States"
+        },
+        {
+          "id": "32185491-e32a-4b1b-9ba8-1a4cc6cc440b",
+          "type": "Occupation",
+          "place": "Waco, McLennan, Texas, United States",
+          "standard_place": "Waco, McLennan, Texas, United States",
+          "value": "cashier, First National Bank"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "place": "Oakwood Cemetery, Waco, McLennan, Texas, United States",
+          "standard_place": "Oakwood Cemetery, Waco, McLennan, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "LV9Y-SCV",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N13",
+          "given": "Joseph Eugene",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "23 September 1871",
+          "standard_date": "23 Sep 1871",
+          "place": "Simmesport, Avoyelles, Louisiana, United States",
+          "standard_place": "Simmesport, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "931fd246-fad4-4b6d-9c21-5cdef54948c4",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Waco Ward 4, McLennan, Texas, United States",
+          "standard_place": "Waco, McLennan, Texas, United States"
+        },
+        {
+          "id": "c8db8db6-d762-4dad-b8f1-e98d53ff41f1",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Waco, McLennan, Texas, United States",
+          "standard_place": "Waco, McLennan, Texas, United States"
+        },
+        {
+          "id": "626440e4-8d5d-4056-aa5f-f1ca97d1163a",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Oklahoma City, Oklahoma, Oklahoma, United States",
+          "standard_place": "Oklahoma City, Oklahoma, Oklahoma, United States"
+        },
+        {
+          "id": "1d484f30-316f-4b09-ba28-179e49e2e25d",
+          "type": "SocialProgramClaim",
+          "date": "2 April 1951",
+          "standard_date": "2 Apr 1951"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "24 April 1961",
+          "standard_date": "24 Apr 1961",
+          "place": "Lincoln, Oklahoma, United States",
+          "standard_place": "Lincoln, Oklahoma, United States"
+        },
+        {
+          "id": "8d971e66-298e-4e7d-b155-5535bc75848d",
+          "type": "Occupation",
+          "value": "Clerk, Wharton, Texas"
+        },
+        {
+          "id": "ace760c5-6f81-4f05-8592-0f34022f4aff",
+          "type": "Burial",
+          "place": "Oklahoma, Oklahoma, United States",
+          "standard_place": "Oklahoma, Oklahoma, United States"
+        },
+        {
+          "id": "ba2833df-952a-4cde-bdfc-8a4e6d1aa09a",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "16c9f74c-2ee2-435a-b527-39a5a3cc0ea5",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "K4K1-HCD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N14",
+          "given": "Marie Athalie",
+          "surname": "D'Authier"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "<1838>",
+          "standard_date": "Bef 1838",
+          "place": "<Simmesport, Avoyelles, Louisiana>",
+          "standard_place": "Simmesport, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "L6Q3-4XX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N15",
+          "given": "Taliaferro",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "94461359-56f6-4ce3-b35c-86e778d441eb",
+          "type": "Birth",
+          "date": "1781",
+          "standard_date": "1781",
+          "place": "Wilkes, Georgia, United States",
+          "standard_place": "Wilkes, Georgia, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "1823",
+          "standard_date": "1823",
+          "place": "Amite, Mississippi, United States",
+          "standard_place": "Amite, Mississippi, United States"
+        },
+        {
+          "id": "9d0a3ba5-50ba-4e05-874a-18b05097b23c",
+          "type": "Burial",
+          "date": "1823",
+          "standard_date": "1823",
+          "place": "Sleeper Cemetery, Liberty, Amite, Mississippi, United States",
+          "standard_place": "Sleeper Cemetery, Liberty, Amite, Mississippi, United States"
+        },
+        {
+          "id": "845fb453-12f4-4543-a74f-d1d1739f5e9b",
+          "type": "LifeSketch",
+          "value": "Find A Grave contributor Elreeta Weathers provided the following information on Taliaferro Stribling and his family:\n\nTaliaferro Stribling was born in 1781 in Wilkes Co., Georgia\n\nTaliaferro was the seventh child of Francis Stribling and Dorothy Seale.\n\nTaliaferro Stribling married Lettice Sudduth on 19 Oct. 1809 in Lincoln County, GA. (Marriage Bk H, p. 27)\n\nTaliaferro and Lettice were the parents of one child, Margaret Stribling, before Lettice died.\n\nTaliaferro was named an executor of his father's will in 1796. Following the death of Lettice, Taliaferro and daughter Margaret moved to Liberty, MS, early and lived there for the remainder of his life. \n\nHe was the first known Stribling to live in Mississippi. Amite County was organized 24 Feb. 1809 and was the 5th county. Taliaferro Stribling purchased 156 acres of land for $312 on Jan. 10, 1816, in Amite Co., MS.\n\nTaliaferro Stribling married Margaret McDowell on 1 Mar 1815, in Amite County, MS.\n\nTaliaferro Stribling and Margaret McDowell were the parents of 5 children:\n\n1. John H. Stribling (1817-1877)\n\n2. James Stribling (d. 1843)\n\n3. Seaborn Stribling\n\n4. Simpson Ridley Stribling (1822-1888)\n\n5. Peggy Stribling\n\nIn 1820 there were 8 people (4 males and 4 females) in his family.\n\nTaliaferro's estate was recorded in court records on 29 April, 1823 with his wife, her brother-in-law, John R. Brown & brother, William McDowell as adm.\n\n+++\n\nFor more family information, see Stribling and Related Families by Mary Frances Stribling Moursund, 1967."
+        }
+      ]
+    },
+    {
+      "id": "KLYT-GMJ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N16",
+          "given": "Mary Angeline Gertrude",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "23 August 1869",
+          "standard_date": "23 Aug 1869",
+          "place": "Point Coupe Parish, Louisiana, United States",
+          "standard_place": "Louisiana, United States"
+        },
+        {
+          "id": "6d0c9afa-20e2-4c92-a98e-811ed2f57dea",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Avoyelles, Louisiana, United States",
+          "standard_place": "Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "466a94fb-0342-440a-9303-998c55aeb279",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Ward 7, Iberville, Louisiana, United States",
+          "standard_place": "Ward Seven, Iberville, Louisiana, United States"
+        },
+        {
+          "id": "a899fded-0e26-49ab-bd59-393afeeba66b",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Police Jury Ward 4, Pointe Coupee, Louisiana, United States",
+          "standard_place": "Ward Four, Pointe Coupee, Louisiana, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "16 September 1929",
+          "standard_date": "16 Sep 1929",
+          "place": "Evangeline, St. Landry Parish, Louisiana, United States",
+          "standard_place": "Evangeline, Louisiana, United States"
+        },
+        {
+          "id": "4763559b-bff7-47f8-b5ac-32825a63c500",
+          "type": "Burial",
+          "place": "Pythian Cemetery, Bunkie, Avoyelles Parish, Louisiana, United States of America",
+          "standard_place": "Pythian Cemetery, Bunkie, Avoyelles, Louisiana, United States"
+        }
+      ]
+    },
+    {
+      "id": "MLCR-68X",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N17",
+          "given": "Julia Athalie",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "5 February 1856",
+          "standard_date": "5 Feb 1856",
+          "place": "Avoyelles, Louisiana, United States",
+          "standard_place": "Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "1fa7d2b3-0935-4b7e-8473-b007999dd8bb",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Pointe Coupee, Louisiana, United States",
+          "standard_place": "Pointe Coupee, Louisiana, United States"
+        },
+        {
+          "id": "2acaa11b-c7e3-4864-9af4-1d60288db7ac",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Ward 1, Pointe Coupee, Louisiana, United States",
+          "standard_place": "Ward One, Pointe Coupee, Louisiana, United States"
+        },
+        {
+          "id": "3e39916d-2447-4415-9789-08d98c6535f4",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Police Jury Ward 10, Avoyelles, Louisiana, United States",
+          "standard_place": "Ward Ten, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "7fcbe890-dae9-4f07-bb7d-72b2a52ed69e",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Bunkie, Avoyelles, Louisiana, United States",
+          "standard_place": "Bunkie, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "21 April 1943",
+          "standard_date": "21 Apr 1943",
+          "place": "Bunkie, Avoyelles, Louisiana, United States",
+          "standard_place": "Bunkie, Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "ef2018d3-a8d6-494b-ac9f-93adb556b20d",
+          "type": "Burial",
+          "date": "1943",
+          "standard_date": "1943",
+          "place": "Bunkie, Avoyelles Parish, Louisiana, United States of America",
+          "standard_place": "Bunkie, Avoyelles, Louisiana, United States"
+        }
+      ]
+    },
+    {
+      "id": "LZPL-X7J",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N18",
+          "given": "John Harmonson",
+          "surname": "Stribling"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "15 July 1867",
+          "standard_date": "15 Jul 1867",
+          "place": "Waco, McLennan, Texas, United States",
+          "standard_place": "Waco, McLennan, Texas, United States"
+        },
+        {
+          "id": "b933567f-e9a6-44eb-b1cf-3109c3702f65",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Avoyelles, Louisiana, United States",
+          "standard_place": "Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "96cda966-c257-4333-8b5d-3f63ebe9f866",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "McLennan, Texas",
+          "standard_place": "McLennan, Texas, United States"
+        },
+        {
+          "id": "bcd522c0-6917-4c8e-8640-34f1859d70e9",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Waco city Ward 2, McLennan, Texas, United States",
+          "standard_place": "Waco, McLennan, Texas, United States"
+        },
+        {
+          "id": "172ecd15-0df8-492b-ae1f-ccfb86526e5b",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Waco Ward 4, McLennan, Texas, United States",
+          "standard_place": "Waco, McLennan, Texas, United States"
+        },
+        {
+          "id": "6729c2ac-568f-4741-88ad-8d0dbd367674",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "McLennan, Texas, United States",
+          "standard_place": "McLennan, Texas, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "6 March 1928",
+          "standard_date": "6 Mar 1928",
+          "place": "Texas, United States",
+          "standard_place": "Texas, United States"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521",
+          "type": "Burial",
+          "place": "Oakwood Cemetery",
+          "standard_place": "Oakwood Cemetery, Lewis, Cass, Iowa, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KLYT-G3Q",
+      "person2": "KLYT-G3L",
+      "facts": [
+        {
+          "id": "b5ab540e-6b34-4b6d-a725-95b16f15362b",
+          "type": "Marriage",
+          "date": "4 January 1851",
+          "standard_date": "4 Jan 1851",
+          "place": "Avoyelles, Louisiana, United States",
+          "standard_place": "Avoyelles, Louisiana, United States"
+        },
+        {
+          "id": "cad6d70c-e62b-4215-ab5e-c5831c638ebe",
+          "type": "Marriage",
+          "date": "Abt 1855",
+          "standard_date": "Abt 1855",
+          "place": ", Avoyelles, LA",
+          "standard_place": "Avoyelles, Louisiana, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "KLYT-G3Q",
+      "person2": "K4K1-HCD"
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "L6Q3-4XX",
+      "person2": "LZ64-KT8",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "1 March 1815",
+          "standard_date": "1 Mar 1815",
+          "place": "Amite, Mississippi, United States",
+          "standard_place": "Amite, Mississippi, United States"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L6Q3-4XX",
+      "child": "KLYT-G3Q",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "LZ64-KT8",
+      "child": "KLYT-G3Q",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KLYT-G3Q",
+      "child": "MKJ4-38M",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KLYT-G3L",
+      "child": "MKJ4-38M",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "KLYT-G3Q",
+      "child": "G9V6-VFN",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KLYT-G3L",
+      "child": "G9V6-VFN",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "KLYT-G3Q",
+      "child": "LV9Y-9V8"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "KLYT-G3L",
+      "child": "LV9Y-9V8"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "KLYT-G3Q",
+      "child": "MLCR-68X",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "KLYT-G3L",
+      "child": "MLCR-68X",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "KLYT-G3Q",
+      "child": "LBWD-VGV"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "KLYT-G3L",
+      "child": "LBWD-VGV"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "KLYT-G3Q",
+      "child": "GQ5S-Q2N"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "KLYT-G3L",
+      "child": "GQ5S-Q2N"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "KLYT-G3Q",
+      "child": "KPHL-7TZ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "KLYT-G3L",
+      "child": "KPHL-7TZ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "K4K1-HCD",
+      "child": "KPHL-7TZ"
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "KLYT-G3Q",
+      "child": "LV9Y-SL3"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "KLYT-G3L",
+      "child": "LV9Y-SL3"
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "KLYT-G3Q",
+      "child": "LV9Y-SNS"
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "KLYT-G3L",
+      "child": "LV9Y-SNS"
+    },
+    {
+      "id": "R25",
+      "type": "ParentChild",
+      "parent": "KLYT-G3Q",
+      "child": "MHHV-HRR"
+    },
+    {
+      "id": "R26",
+      "type": "ParentChild",
+      "parent": "KLYT-G3L",
+      "child": "MHHV-HRR"
+    },
+    {
+      "id": "R27",
+      "type": "ParentChild",
+      "parent": "KLYT-G3Q",
+      "child": "LZPL-X7J",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R28",
+      "type": "ParentChild",
+      "parent": "KLYT-G3L",
+      "child": "LZPL-X7J",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R29",
+      "type": "ParentChild",
+      "parent": "KLYT-G3Q",
+      "child": "KLYT-GMJ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R30",
+      "type": "ParentChild",
+      "parent": "KLYT-G3L",
+      "child": "KLYT-GMJ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R31",
+      "type": "ParentChild",
+      "parent": "KLYT-G3Q",
+      "child": "LV9Y-SCV"
+    },
+    {
+      "id": "R32",
+      "type": "ParentChild",
+      "parent": "KLYT-G3L",
+      "child": "LV9Y-SCV"
+    }
+  ],
+  "sources": [
+    {
+      "id": "3YHK-1Y2",
+      "title": "S R Stribling, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K3QY-1JP : Tue Apr 21 14:53:18 UTC 2026), Entry for Jno H Stribling and S R Stribling, 6 March 1928.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K3QY-1J5"
+    },
+    {
+      "id": "SV2S-8NF",
+      "title": "Sinapsort Ridley Stribling, \"Louisiana, Deaths, 1850-1875, 1894-1960\"",
+      "citation": "\"Louisiana, Deaths, 1850-1875, 1894-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FSYL-9K7 : Mon Jan 20 21:58:48 UTC 2025), Entry for William Samuel Stribling and Sinapsort Ridley Stribling, 28 Apr 1941.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FSYL-9KW"
+    },
+    {
+      "id": "3YHK-1VW",
+      "title": "S R Stribling, \"Louisiana, Deaths, 1850-1875, 1894-1960\"",
+      "citation": "\"Louisiana, Deaths, 1850-1875, 1894-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F33J-B31 : Fri Jan 17 04:35:51 UTC 2025), Entry for Mary Stribling Robertson and S R Stribling, 16 Sep 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F33J-BQM"
+    },
+    {
+      "id": "3YH2-M97",
+      "title": "S R Stribling, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K3ZZ-329 : Mon Apr 27 16:24:46 UTC 2026), Entry for Ridley L Stribling and S R Stribling, 12 August 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K3ZZ-32S"
+    },
+    {
+      "id": "SV2S-CVG",
+      "title": "S. R. Stribling, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MD6F-26Q : Wed Oct 22 02:09:37 UTC 2025), Entry for S. R. Stribling and A. Stribling, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MD6F-26Q"
+    },
+    {
+      "id": "SKHY-XLX",
+      "title": "Louisiana, Compiled Marriage Index, 1718-1925",
+      "url": "https://search.ancestry.com/cgi-bin/sse.dll?indiv=1&dbid=7837&h=483393&tid=&pid=&usePUB=true&_phsrc=cJT72&_phstart=successSource"
+    },
+    {
+      "id": "3YHK-16P",
+      "title": "Sam R Stribling, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K39R-DQ5 : Mon Apr 20 15:23:38 UTC 2026), Entry for Alice Stevens and Sam R Stribling, 7 September 1948.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K39R-DQR"
+    },
+    {
+      "id": "7KVW-2V1",
+      "title": "Simpson Ridley Stribling, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV2W-CB6D : Sun Jul 19 03:10:49 UTC 2026), Entry for Simpson Ridley Stribling.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV2W-CB6D"
+    },
+    {
+      "id": "MS7Z-7RD",
+      "title": "Legacy NFS Source: Ridley Stribling - Individual or family possessions: birth-name: Ridley Stribling"
+    }
+  ]
+}
