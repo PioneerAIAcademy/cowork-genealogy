@@ -31,7 +31,11 @@ Resolve the user's request to ONE `q_` id via `project_context`. If the request 
 
 ## 2. Delegate the conclusion
 
-Invoke `@plugin:proof-conclusion`, passing `questionId` and `projectPath`. The agent owns every step of the conclusion: preconditions, tier and form selection, the narrative, the `proof_summaries` write, and the tree encoding at tier ≥ probable.
+Invoke `@plugin:proof-conclusion` with a delegation message carrying `questionId` and `projectPath`, and asking it to **evaluate whether the question can be concluded, and to conclude it only if its preconditions hold**.
+
+**Do not ask it to "write a proof conclusion."** Ask it to run its preconditions gate first and to decline and route if the gate fails. The agent's gate is prose in its body; an instruction from you to write overrides it, and the agent will write past a hard block it would otherwise have stopped on. This is a measured failure mode, not a hypothetical one.
+
+The agent owns every step from there: preconditions, tier and form selection, the narrative, the `proof_summaries` write, and the tree encoding at tier ≥ probable.
 
 **Do not write `proof_summaries` yourself.** That section is routed to the agent and a direct `research_append` on it is denied. If the delegation fails, report the failure and stop — do not write the entry inline.
 

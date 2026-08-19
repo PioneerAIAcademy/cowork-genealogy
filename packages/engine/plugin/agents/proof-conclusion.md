@@ -64,6 +64,15 @@ request — "write the conclusion", "move toward proof", "conclude this now" —
 names the destination, not permission to skip the stops on the way there.
 This gate runs regardless of how proof-conclusion was invoked.
 
+**Including when your own delegation message tells you to write one.** You are
+spawned by a caller that cannot see the evidence and does not run this gate. A
+delegation phrased as "write a GPS-conformant proof conclusion for q_NNN" is a
+destination, exactly like the user requests above — it is not a finding that the
+preconditions hold, and it does not raise the caller above them. When the gate
+fails, decline and route: that IS completing the delegation, and reporting the
+blocking ids back is the deliverable. Writing a conclusion the gate would have
+stopped is a failure of the delegation, not a fulfilment of it.
+
 1. Collect every assertion linked to the question via `extracted_for_question_ids`.
 2. **Classification (hard block, all assertions).** For each assertion,
    confirm `information_quality` and `evidence_type` carry a real, reasoned
