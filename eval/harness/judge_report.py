@@ -21,8 +21,9 @@ Two definitions do the work, and both are load-bearing:
 * **`graded` counts numeric scores only.** An always-N/A dimension is a *different*
   defect from an always-3 one, so N/A is reported separately and never flags as
   non-discriminating. This changes answers, not just wording: `base/Tool Arguments`
-  is 100% N/A in three suites, and `init-project`'s `Place standardization` (2
-  numeric, 6 N/A) flips from unflagged to flagged if N/A counts toward the threshold.
+  is 100% N/A in three suites, and `init-project`'s `Place standardization` — all
+  its numeric scores identical, most of its gradings N/A — flips from unflagged to
+  flagged if N/A counts toward the threshold.
 * **A dimension is keyed `(skill, source, name)`.** Keying on `(source, name)` alone
   merges seven names across suites — all three base dimensions plus `Jurisdiction
   accuracy`, `Result triage`, `Actionability`, `Accuracy` — collapsing the corpus
