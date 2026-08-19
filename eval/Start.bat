@@ -1,6 +1,18 @@
 @echo off
 cd %~dp0
 
+REM --- OneDrive / syncing-folder check ---
+if defined OneDrive (
+    echo %CD% | findstr /i /c:"%OneDrive%" >nul 2>&1
+    if not errorlevel 1 (
+        echo WARNING: This checkout is inside your OneDrive folder.
+        echo OneDrive's sync conflicts with build tools ^(uv, Next.js^).
+        echo Move the clone to a plain local path, e.g. C:\src\.
+        echo.
+        pause
+    )
+)
+
 echo Starting test-creation app...
 echo Close this window to stop the app.
 echo.

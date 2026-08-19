@@ -397,8 +397,8 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
     const profileSaved = process.env.USERPROFILE
     const fakeHome = await mkdtemp(join(tmpdir(), 'feedback-home-'))
     try {
-      const projectHash = folder.replace(/^\//, '').replace(/\//g, '-')
-      const projectDir = join(fakeHome, '.claude', 'projects', `-${projectHash}`)
+      const projectHash = folder.replace(/[^a-zA-Z0-9-]/g, '-')
+      const projectDir = join(fakeHome, '.claude', 'projects', projectHash)
       await mkdir(projectDir, { recursive: true })
       await writeFile(
         join(projectDir, 'session.jsonl'),

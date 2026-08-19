@@ -44,6 +44,13 @@ scripts\windows\test-all.bat    REM == make test-all, the pre-PR gate
 ```
 
 [`scripts/windows/README.md`](./scripts/windows/README.md) lists all of them.
+
+> **Do not clone the repo under a syncing folder** (OneDrive, Dropbox, Google
+> Drive, iCloud Drive). The sync client's filesystem hooks conflict with build
+> tools — `uv` fails on hardlinks, Next.js never writes `routes-manifest.json`,
+> and transient ENOENT/EINVAL errors appear under `.next/` and `node_modules/`.
+> Clone to a plain local path instead (e.g. `C:\src\`).
+
 Running e2e fixtures, skill evals, and building the shipped artifacts go
 through the double-clickable scripts in `eval\` instead — see
 [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) and

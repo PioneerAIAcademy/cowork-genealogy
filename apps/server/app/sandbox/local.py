@@ -227,7 +227,10 @@ class LocalProvider(SandboxProvider):
     async def _kill_server(self, proc: subprocess.Popen) -> None:
         if proc.poll() is None:
             try:
-                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)  # kills server + agent (new session)
+                if hasattr(os, "killpg"):
+                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                else:
+                    proc.terminate()
             except (ProcessLookupError, PermissionError):
                 proc.terminate()
         try:
