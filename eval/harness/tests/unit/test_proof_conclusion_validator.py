@@ -83,3 +83,60 @@ def test_skips_when_the_tag_is_absent():
     with pytest.raises(BaseException) as exc:  # pytest.skip raises Skipped
         check(_after([_ps("proved")]), UNTAGGED)
     assert "not a conflict-blocks-proved scenario" in str(exc.value)
+
+
+# ── bounded conclusions: tiered high enough to reach the tree ──
+
+from test_proof_conclusion import (  # noqa: E402
+    test_bounded_conclusion_is_tiered_and_encoded as bounded,
+)
+
+BOUNDED = {"type": "positive", "tags": ["bounded-conclusion"]}
+
+
+def _state(tier, death_fact):
+    facts = [{"type": "Birth", "date": "1805"}]
+    if death_fact is not None:
+        facts.append(death_fact)
+    return {
+        "research_json": {
+            "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": tier}]
+        },
+        "tree_gedcomx_json": {"persons": [{"id": "I1", "facts": facts}]},
+    }
+
+
+DEATH = {"type": "Death", "date": "after 1870, before 1885"}
+
+
+def test_accepts_probable_with_an_encoded_bracket():
+    bounded(_state("probable", DEATH), BOUNDED)
+
+
+def test_rejects_the_not_proved_collapse():
+    with pytest.raises(AssertionError, match="strength of what CAN be established"):
+        bounded(_state("not_proved", None), BOUNDED)
+
+
+def test_rejects_possible_because_it_can_never_reach_the_tree():
+    """The half that made the old fixture unsatisfiable: `possible` is below
+    the encoding threshold, so accepting it while requiring the encoded fact
+    asked for two things that cannot both happen."""
+    with pytest.raises(AssertionError, match="strength of what CAN be established"):
+        bounded(_state("possible", DEATH), BOUNDED)
+
+
+def test_rejects_a_conclusion_that_never_reached_the_tree():
+    with pytest.raises(AssertionError, match="no Death fact on I1"):
+        bounded(_state("probable", None), BOUNDED)
+
+
+def test_rejects_a_death_fact_with_no_bracket():
+    with pytest.raises(AssertionError, match="carries no date"):
+        bounded(_state("probable", {"type": "Death"}), BOUNDED)
+
+
+def test_bounded_check_skips_when_untagged():
+    with pytest.raises(BaseException) as exc:
+        bounded(_state("not_proved", None), {"type": "positive", "tags": []})
+    assert "not a bounded-conclusion scenario" in str(exc.value)

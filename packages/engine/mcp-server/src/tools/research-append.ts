@@ -367,6 +367,89 @@ function questionResolvedInvariants(entry: any, research: any): string[] {
   ];
 }
 
+/** Sources an unresolved conflict disputes, from the PRE-CALL project state.
+ *
+ *  A conflict names the assertions that compete; each assertion names the
+ *  source it came from. Those sources are the ones whose reliability is
+ *  currently in question. */
+function disputedSourceIds(research: any): Map<string, string[]> {
+  const assertionSource = new Map<string, string>();
+  for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
+    if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+  }
+  const bySource = new Map<string, string[]>();
+  for (const c of Array.isArray(research?.conflicts) ? research.conflicts : []) {
+    if (!c || c.status === "resolved") continue;
+    for (const aid of Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []) {
+      const src = assertionSource.get(aid);
+      if (!src) continue;
+      const seen = bySource.get(src) ?? [];
+      if (!seen.includes(c.id)) seen.push(c.id);
+      bySource.set(src, seen);
+    }
+  }
+  return bySource;
+}
+
+/** A conclusion may not out-tier the reliability of the sources it rests on.
+ *
+ *  **Correlation presupposes identity** (lead ruling, 2026-08-19). When an
+ *  unresolved conflict disputes an assertion drawn from a source the summary
+ *  also relies on, the sources have not been established as describing the
+ *  same person — so they cannot be correlated at ANY tier above `not_proved`.
+ *  Tiering down does not repair it, because tiering happens *after* identity
+ *  is settled, not instead of it.
+ *
+ *  The worked case: a birthplace conflict on a parentage question reads as
+ *  "collateral" — different fact, so seemingly harmless. But the death
+ *  certificate disputing the birthplace was also the only DIRECT evidence of
+ *  parentage, so the dispute impeached the very correlation the conclusion
+ *  rested on. Prose could not hold this: told in its own body that birthplace
+ *  is an identifying attribute, the agent still recorded the conflict
+ *  "non-blocking — it doesn't touch identity" and concluded at `probable`,
+ *  across five successive wordings.
+ *
+ *  Read from the PRE-CALL snapshot, the same discipline the exhaustiveness
+ *  gate uses: a batch may not resolve a conflict and spend that resolution on
+ *  a tier in the same call. `not_proved` is always available — recording the
+ *  blocked attempt is the sanctioned move, not silence. */
+function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
+  const tier = entry?.tier;
+  if (typeof tier !== "string" || tier === "not_proved" || tier === "disproved") return [];
+  const disputed = disputedSourceIds(beforeResearch);
+  if (disputed.size === 0) return [];
+
+  const assertionSource = new Map<string, string>();
+  for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
+    if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+  }
+  const supporting = Array.isArray(entry?.supporting_assertion_ids)
+    ? entry.supporting_assertion_ids
+    : [];
+  const hits = new Map<string, string[]>();
+  for (const aid of supporting) {
+    const src = assertionSource.get(aid);
+    const conflicts = src ? disputed.get(src) : undefined;
+    if (src && conflicts) hits.set(src, conflicts);
+  }
+  if (hits.size === 0) return [];
+
+  const shared = [...hits.keys()].sort();
+  const blocking = [...new Set([...hits.values()].flat())].sort();
+  return [
+    `tier '${tier}' is not available while ${blocking.join(", ")} ` +
+      `${blocking.length === 1 ? "is" : "are"} unresolved: ` +
+      `${blocking.length === 1 ? "that conflict disputes" : "those conflicts dispute"} ` +
+      `evidence from ${shared.join(", ")}, which this conclusion also relies on. ` +
+      "Correlating sources assumes they describe the same person, and that is " +
+      "what the open conflict puts in question — so no tier above `not_proved` " +
+      "is reachable, and tiering down to `possible` does not repair it. Record " +
+      "the attempt at `not_proved`, naming the conflict and what would settle " +
+      "it, then invoke conflict-resolution. Re-conclude by updating that same " +
+      "summary once the conflict is resolved.",
+  ];
+}
+
 function proofSummaryInvariants(
   entry: any,
   preCallExhaustiveDeclared: Map<string, boolean> | undefined,
@@ -761,6 +844,7 @@ function applyOne(
   preCallExhaustiveDeclared?: Map<string, boolean>,
   preCallCritiquedSummaryIds?: Set<string>,
   preCallBlockingConflicts?: any[],
+  preCallResearch?: any,
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -1120,6 +1204,7 @@ function applyOne(
       op.op === "append" || Object.prototype.hasOwnProperty.call(op.fields ?? {}, "tier");
     if (tierTouchedThisOp) {
       invariantErrors.push(...proofSummaryInvariants(resultEntry, preCallExhaustiveDeclared));
+      invariantErrors.push(...conflictedSourceInvariants(resultEntry, preCallResearch));
     }
   }
   if (invariantErrors.length > 0) {
@@ -1884,6 +1969,7 @@ export async function researchAppend(
             preCallExhaustiveDeclared,
             preCallCritiquedSummaryIds,
             preCallBlockingConflicts,
+            beforeResearch,
           ),
         );
       } catch (e) {

@@ -340,6 +340,63 @@ def test_conflict_blocks_proved(after_state, test):
         )
 
 
+
+def test_bounded_conclusion_is_tiered_and_encoded(after_state, test):
+    """Tagged `bounded-conclusion`: a well-supported bounded finding is tiered
+    at `probable` or better AND lands in the tree as a fact carrying the
+    bracket.
+
+    Both halves are one rule, which is why they are checked together: the
+    encoding threshold is tier >= probable, so a tier of `possible` does not
+    merely score lower — it makes the tree write unreachable. An earlier
+    version of this test's fixture accepted `possible` while still requiring
+    the encoded fact, which asked for two things that cannot both happen.
+
+    Deterministic on purpose. Both halves were judge-graded before and the test
+    failed on 2026-08-19 with a rationale that misread its own fixture,
+    reporting that `possible` was disallowed when the fixture then allowed it.
+    The `not_proved` collapse this guards — "the exact date is unreachable, so
+    nothing can be concluded" — is the specific error the doctrine names.
+    """
+    if "bounded-conclusion" not in test.get("tags", []):
+        pytest.skip("not a bounded-conclusion scenario")
+    after = after_state.get("research_json")
+    tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
+    if after is None or tree is None:
+        pytest.skip("Missing research.json or tree.gedcomx.json")
+
+    summaries = [
+        ps for ps in after.get("proof_summaries", [])
+        if ps.get("question_id") == "q_001"
+    ]
+    assert summaries, "no proof summary written for q_001"
+
+    ACCEPTED = {"probable", "proved"}
+    tiers = [ps.get("tier") for ps in summaries]
+    assert any(t in ACCEPTED for t in tiers), (
+        f"bounded conclusion tiered {tiers} — a bounded finding is tiered on the "
+        "strength of what CAN be established (the bracket, the documented "
+        "negative), not on the unreachable exact value. Below `probable` the "
+        "tree is never written, so the conclusion is found-but-lost."
+    )
+
+    facts = [
+        f
+        for p in tree.get("persons", [])
+        if p.get("id") == "I1"
+        for f in p.get("facts", []) or []
+    ]
+    deaths = [f for f in facts if f.get("type") == "Death"]
+    assert deaths, (
+        "no Death fact on I1 — the conclusion exists only in the narrative and "
+        "the tree is silent on the vital event the question asked about. Encode "
+        "the bracket as the fact's date."
+    )
+    assert any(str(f.get("date") or "").strip() for f in deaths), (
+        "the Death fact on I1 carries no date — the bracket IS the finding, so "
+        "it belongs in the date (e.g. 'after 1870, before 1885')."
+    )
+
 # --- Tag-gated: research_query tool coverage (SKILL.md §1) -------------
 
 def test_research_query_called_for_coverage(tool_calls, test):

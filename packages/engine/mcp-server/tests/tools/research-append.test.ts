@@ -903,6 +903,145 @@ describe("research_append (Phase 3)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
+
+  // ── correlation presupposes identity (lead ruling, 2026-08-19) ──
+  //
+  // A conclusion may not out-tier the reliability of the sources it rests on.
+  // The rule moved into the tool after five successive wordings of the agent's
+  // own gate failed to hold it — the last of them recording a birthplace
+  // conflict as "non-blocking, it doesn't touch identity" while its own body
+  // named birthplace an identifying attribute.
+  //
+  // Blast radius, measured across all 88 committed scenarios before landing:
+  // 83 carry no unresolved conflict so the rule cannot fire, 1 carries
+  // conflicts that share no source with a conclusion, and 4 would fire — all
+  // of them the flynn-* fixtures built to exercise conflict handling.
+  describe("a conclusion may not out-tier a disputed source", () => {
+    const conflicted = () => ({
+      project: { objective: "x" },
+      questions: [{ id: "q_001", question: "parents?", status: "open" }],
+      sources: [{ id: "src_001", citation: "1850 census" }, { id: "src_004", citation: "death cert" }],
+      assertions: [
+        // The conflict disputes the death certificate's birthplace...
+        { id: "a_012", source_id: "src_004", value: "Born 1845, Pennsylvania" },
+        { id: "a_002", source_id: "src_001", value: "Ireland" },
+        // ...and the conclusion leans on that same death certificate for the father.
+        { id: "a_013", source_id: "src_004", value: "Father: Thomas Flynn" },
+        { id: "a_004", source_id: "src_001", value: "in Thomas's household" },
+      ],
+      conflicts: [
+        { id: "c_001", status: "unresolved", competing_assertion_ids: ["a_002", "a_012"] },
+      ],
+      proof_summaries: [],
+    });
+
+    const summary = (tier: string, supporting: string[]) => ({
+      question_id: "q_001",
+      tier,
+      vehicle: "summary",
+      supporting_assertion_ids: supporting,
+      resolved_conflict_ids: [],
+      exhaustive_search_summary: "census + vitals",
+      narrative_markdown: "## Conclusion\n...",
+    });
+
+    it.each(["possible", "probable"])(
+      "refuses tier '%s' when an open conflict disputes a source the conclusion relies on",
+      async (tier) => {
+        await writeProject(conflicted());
+        const before = await readFile(join(dir, "research.json"), "utf-8");
+        const r = await researchAppend({
+          projectPath: dir,
+          section: "proof_summaries",
+          op: "append",
+          entry: summary(tier, ["a_004", "a_013"]),
+        });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        const msg = r.errors.join(" ");
+        expect(msg).toContain("c_001");
+        expect(msg).toContain("src_004");
+        // The message must leave a working move, or it repeats the bypass this
+        // whole guardrail exists to stop.
+        expect(msg).toContain("not_proved");
+        expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      },
+    );
+
+    it("allows not_proved — recording the blocked attempt is the sanctioned move", async () => {
+      await writeProject(conflicted());
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summary("not_proved", ["a_004", "a_013"]),
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does NOT fire when the conflict shares no source with the conclusion", async () => {
+      // The narrow case that keeps this from becoming "any open conflict
+      // blocks everything": a dispute confined to sources the conclusion does
+      // not lean on leaves the correlation intact.
+      const state = conflicted();
+      state.conflicts = [
+        { id: "c_002", status: "unresolved", competing_assertion_ids: ["a_002"] },
+      ];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summary("probable", ["a_013"]), // src_004 only; c_002 disputes src_001
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does NOT fire once the conflict is resolved", async () => {
+      const state = conflicted();
+      state.conflicts[0].status = "resolved";
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summary("probable", ["a_004", "a_013"]),
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("cannot be cleared by resolving the conflict in the same batch", async () => {
+      // Same discipline as the exhaustiveness gate: read from the PRE-CALL
+      // snapshot, so a batch may not manufacture its own precondition.
+      await writeProject(conflicted());
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          {
+            section: "conflicts",
+            op: "update",
+            entryId: "c_001",
+            // A FULLY VALID resolution, so the batch's only remaining defect is
+            // the one under test. With a partial resolution the batch is
+            // refused for a missing weighing/rationale instead, and this test
+            // passes with the rule disconnected entirely — which it did.
+            fields: {
+              status: "resolved",
+              preferred_assertion_id: "a_002",
+              independence_analysis: "separate records, separate informants",
+              weighing_analysis: "two censuses outweigh a later secondary informant",
+              resolution_rationale: "contemporaneous household enumeration preferred",
+            },
+          },
+          { section: "proof_summaries", op: "append", entry: summary("probable", ["a_004", "a_013"]) },
+        ],
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("c_001");
+    });
+  });
+
   // docs/specs/guardrail-enforcement-spec.md §5 — tier/exhaustiveness cross-field guardrail.
   it("rejects tier 'proved' when the question's exhaustive_declaration.declared is false", async () => {
     await writeProject(); // phase3Research(): q_001 defaults to exhaustive_declaration.declared: false
