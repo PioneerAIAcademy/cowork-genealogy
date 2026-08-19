@@ -565,7 +565,7 @@ These are not included in v1 but are good candidates for extension:
 > **`MOTHER_TOO_OLD` struck — built:** shipped as
 > `latestChildBirthToBirthFemale45` (`person-warnings.ts`), female-gated,
 > on a >= cutoff (not the `> 50` this table listed). Cutoff is 45, lowered
-> from an original 55; severity unchanged (`warning`, not promoted — the
+> from an original 55; severity unchanged (`implausible`, not promoted — the
 > check fired 0 times at 55 across the e2e corpus, so promotion would be
 > an unmeasured doctrine commitment). Two alternatives were rejected: a
 > gender-neutral 45 (flags 31 people vs. 6, 25 of them men — a 45-74 gap

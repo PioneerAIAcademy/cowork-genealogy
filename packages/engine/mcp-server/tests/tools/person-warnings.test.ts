@@ -1737,6 +1737,21 @@ describe("calculateWarnings — latestChildBirthToBirthFemale45 emitter", () => 
     expect(tags).toContain("latestChildBirthToBirthFemale45");
   });
 
+  // The #1191 ruling is "lower the cutoff, do NOT promote the severity" — the
+  // check fired 0 times at 55 across the e2e corpus, so promoting would be an
+  // unmeasured doctrine commitment. Severity was unpinned: promoting both 45
+  // emitters to `contradiction` left all 119 tests in this file green.
+  it("stays `implausible` — the cutoff moved, the severity deliberately did not", () => {
+    const warnings = finalWarnings(
+      new Mob(
+        buildParentChildTree({ parentGender: "Female", childBirthYear: 1831 }),
+        "P",
+      ),
+    ).filter((w) => w.issueType === "latestChildBirthToBirthFemale45");
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0].severity).toBe("implausible");
+  });
+
   it("gender-gated: silent for a MALE anchor at the same 45-year gap", () => {
     const tags = finalWarnings(
       new Mob(
@@ -2090,6 +2105,8 @@ describe("calculateWarnings — relative-mob emitters", () => {
     // single warning anchored on the ORIGINAL anchor, not the failing
     // relative — unlike the per-relative shape used elsewhere in this file.
     expect(matching[0].personId).toBe("I1");
+    // Not promoted — see the sibling emitter's severity test above (#1191).
+    expect(matching[0].severity).toBe("implausible");
   });
 
   it("femaleRelativesLatestChildBirthToBirth45: gender-gated — silent for a MALE relative at the same 45-year gap", () => {
