@@ -264,13 +264,118 @@ def test_matched_model_present_is_skipped(tmp_path, monkeypatch):
 
 
 def test_no_link_components_is_silent(tmp_path, monkeypatch):
+    """A finding whose components are all details derives to nothing, so even a
+    `source` finding (which the check does evaluate) is not warned on."""
     monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
     rel = _write_e2e_run_with_findings(
         tmp_path, "smith", "2026-06-15_10-00-00",
         [{"finding_id": "f1", "matched": "false", "components": [_detail("contradicted")]}],
     )
+    _write_expected_findings(tmp_path, "smith", [{"id": "f1", "type": "source"}])
+    assert check_e2e_fixtures.check_matched_vs_components([rel]) == []
+
+
+def test_fact_finding_excluded(tmp_path, monkeypatch):
+    """A `fact` finding's link tally is not a reliable signal (deriving it made
+    eleven false disagreements, 2026-08-10), so a disagreement is not warned —
+    matching apply_component_derivation's own fact exclusion."""
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
+    rel = _write_e2e_run_with_findings(
+        tmp_path, "smith", "2026-06-15_10-00-00",
+        [{"finding_id": "f1", "matched": "true", "components": [_link("unsupported")]}],
+    )
     _write_expected_findings(tmp_path, "smith", [{"id": "f1", "type": "fact"}])
     assert check_e2e_fixtures.check_matched_vs_components([rel]) == []
+
+
+def test_multiple_findings_only_the_disagreeing_one_warns(tmp_path, monkeypatch):
+    """A log with an agreeing sibling and a disagreeing finding warns exactly
+    once, naming the disagreeing finding."""
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
+    rel = _write_e2e_run_with_findings(
+        tmp_path, "smith", "2026-06-15_10-00-00",
+        [
+            {"finding_id": "f1", "matched": "true", "components": [_link("supported")]},
+            {"finding_id": "f4", "matched": "partial",
+             "components": [_link("supported"), _link("supported")]},
+        ],
+    )
+    _write_expected_findings(
+        tmp_path, "smith",
+        [{"id": "f1", "type": "source"}, {"id": "f4", "type": "source"}],
+    )
+    warnings = check_e2e_fixtures.check_matched_vs_components([rel])
+    assert len(warnings) == 1
+    assert "f4" in warnings[0] and "f1" not in warnings[0]
+
+
+def test_missing_matched_key_is_silent(tmp_path, monkeypatch):
+    """A finding with link components but no `matched` key has nothing to
+    compare, so it is skipped rather than warned with a `matched=None` message."""
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
+    rel = _write_e2e_run_with_findings(
+        tmp_path, "smith", "2026-06-15_10-00-00",
+        [{"finding_id": "f1", "components": [_link("supported")]}],
+    )
+    _write_expected_findings(tmp_path, "smith", [{"id": "f1", "type": "source"}])
+    assert check_e2e_fixtures.check_matched_vs_components([rel]) == []
+
+
+def test_wrong_shaped_but_valid_json_does_not_crash(tmp_path, monkeypatch):
+    """Valid JSON of the wrong shape must be skipped, not raise (the docstring's
+    'never raised on' promise, and CI would otherwise fail with a traceback)."""
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
+    d = tmp_path / "eval" / "runlogs" / "e2e" / "smith"
+    d.mkdir(parents=True, exist_ok=True)
+    rels = []
+    for i, body in enumerate([
+        "null", "[]", "5", '"str"',
+        '{"judge_output": 5}',
+        '{"judge_output": [1, 2]}',
+        '{"judge_output": {"per_finding": 5}}',
+        '{"judge_output": {"per_finding": true}}',
+        '{"judge_output": {"per_finding": ["notadict", 3]}}',
+    ]):
+        ts = f"2026-06-15_10-00-0{i}"
+        (d / f"run-{ts}.json").write_text(body, encoding="utf-8")
+        rels.append(Path("eval/runlogs/e2e/smith") / f"run-{ts}.json")
+    # Must return cleanly (no exception) for every wrong shape.
+    assert check_e2e_fixtures.check_matched_vs_components(rels) == []
+
+
+def test_wrong_shaped_expected_findings_does_not_crash(tmp_path, monkeypatch):
+    """A fixture whose expected-findings.json is valid JSON but not an object
+    (or whose `findings` is not a list) must not crash the join."""
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
+    rel = _write_e2e_run_with_findings(
+        tmp_path, "smith", "2026-06-15_10-00-00",
+        [{"finding_id": "f1", "matched": "partial", "components": [_link("supported")]}],
+    )
+    ef = tmp_path / "eval" / "tests" / "e2e" / "smith" / "expected-findings.json"
+    ef.parent.mkdir(parents=True, exist_ok=True)
+    ef.write_text("[]", encoding="utf-8")  # array root, not an object
+    # No avoid/fact info recoverable → treat as non-excluded → still warns once.
+    assert len(check_e2e_fixtures.check_matched_vs_components([rel])) == 1
+
+
+def test_derive_matched_matches_judge_canonical():
+    """The inline derive_matched must stay in lockstep with judge.py's canonical
+    one (it is a hand-kept stdlib copy; nothing else cross-checks them)."""
+    from e2e.judge import derive_matched as judge_derive_matched
+
+    cases = [
+        [_link("supported"), _link("supported")],
+        [_link("supported"), _link("unsupported")],
+        [_link("supported"), _link("contradicted")],
+        [_link("unsupported")],
+        [_link("contradicted"), _detail("supported")],
+        [_detail("contradicted")],
+        [_link("supported"), _detail("unsupported")],
+        [],
+    ]
+    for comps in cases:
+        assert check_e2e_fixtures.derive_matched(comps) == judge_derive_matched(comps), comps
+    assert check_e2e_fixtures.derive_matched(None) == judge_derive_matched(None)
 
 
 def test_malformed_runlog_does_not_crash(tmp_path, monkeypatch):
@@ -309,3 +414,22 @@ def test_main_drift_warning_does_not_fail_the_job(tmp_path, monkeypatch, capsys)
     out = capsys.readouterr().out
     assert "::warning::" in out
     assert "f1" in out
+
+
+def test_main_drift_warning_prints_even_when_grading_gate_fails(tmp_path, monkeypatch, capsys):
+    """The warn loops run before the blocking gate so the drift warning is
+    visible even on the exit-1 path (a tree with no committed ann fails the
+    gate). Guards against a later reorder silently swallowing the warning."""
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
+    rel = _write_e2e_run_with_findings(
+        tmp_path, "smith", "2026-06-15_10-00-00",
+        [{"finding_id": "f1", "matched": "partial", "components": [_link("supported")]}],
+    )
+    slug_dir = tmp_path / "eval" / "runlogs" / "e2e" / "smith"
+    # Tree present, ann missing → blocking grading gate fails (exit 1).
+    (slug_dir / "run-2026-06-15_10-00-00.final-tree.gedcomx.json").write_text("{}", encoding="utf-8")
+    _write_expected_findings(tmp_path, "smith", [{"id": "f1", "type": "source"}])
+    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "::warning::" in out and "f1" in out
