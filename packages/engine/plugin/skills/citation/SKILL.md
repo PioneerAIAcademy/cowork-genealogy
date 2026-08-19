@@ -169,9 +169,12 @@ beats a complete-looking citation with invented detail:
    real citation. Examples illustrate shape, not data. The same
    applies to your own explanations: when describing what a field
    should eventually contain, show the shape ("Will Book [volume],
-   p. [page]") — never invent sample numbers ("Will Book 7, p. 214")
-   even as an illustration, since illustrative values are easily
-   mistaken for data.
+   p. [page]") — never a filled-in sample, not even as an
+   illustration and not even flagged "e.g.", since illustrative
+   values are easily mistaken for data. This covers volume and page
+   numbers, certificate numbers, dates, article titles, and
+   repository names alike: describe the thing to look for on the
+   image, never a specimen of it.
 4. **Use explicit unknown-markers for gaps.** Write
    `[ARTICLE TITLE NOT RECORDED]`, `[PAGE NOT RECORDED]`,
    `[WILL BOOK NUMBER NOT RECORDED]` — never a plausible-sounding
@@ -307,16 +310,22 @@ Berks County Orphans' Court, Pennsylvania, will of Edward
 Mooney, proved 3 June 1874; Will Book 9, p. 113; Berks County
 Courthouse, Reading.
 ```
-For Pennsylvania probate the creating authority is the county
-Orphans' Court — name the court, not the courthouse building or a
-generic records office.
+For Pennsylvania probate, match the authority to the document. A
+will is received, probated and recorded by the county **Register of
+Wills**, who holds the will books — that office is the creator of a
+will, a probate record, or a letters-testamentary entry. The county
+**Orphans' Court** adjudicates estate distribution, accounts,
+partition and guardianship — name it for those records. Either way,
+name the office, never the courthouse building or a generic records
+office. Where `tree.gedcomx.json` carries an `author` on the
+matching source description, that value takes precedence over this
+inference.
 
 `where_within` for probate records contains ONLY the physical locator
-(Will Book volume and page: "Will Book 9, p. 113") or the missing-data
-marker ("Will Book [volume] and page not on file" →
-`[WILL BOOK AND PAGE NOT RECORDED]`). The document title ("Thomas Flynn
-will") and party name belong in `what` and `citation`, not in
-`where_within`.
+(the Will Book volume and page, in the form "Will Book [volume],
+p. [page]") or the missing-data marker
+(`[WILL BOOK AND PAGE NOT RECORDED]`). The document title and the
+party name belong in `what` and `citation`, not in `where_within`.
 
 #### Church records
 ```
@@ -413,7 +422,32 @@ the query field is the authoritative source for search parameters.
 
 Do not invent a second search or additional negative outcome not
 described in the log. Do not infer scope or jurisdiction beyond what
-is explicitly recorded. The citation string should indicate the scope
+is explicitly recorded.
+
+**A query year is an estimate, not a date.** The log's `query`
+fields are search parameters the researcher typed, not facts the
+record established. A `birth_year` carried into the citation keeps
+its estimate marker — "born c. 1845" — never a bare year, which
+would assert a birth date the nil search cannot support.
+
+**Quote the log, not this document.** Any phrase the citation
+presents as coming from the log must be the log's own wording, read
+from the entry. A phrase illustrated in this file is a shape, not a
+quotation; reproducing it and attributing it to the log misreports
+the search.
+
+**Carry the caveat that qualifies the negative.** When the log notes
+that the site or collection may not have been indexed, that the
+collection's coverage is partial, or anything else that bears on
+whether the search could have found the record, that note must reach
+the user with the citation — in the citation string, or alongside it
+as a stated limit on the search. It is the difference between
+evidence of absence and absence of evidence, and BCG Standard 3
+requires the citation to convey the scope of what was searched. A
+nil result presented without its coverage caveat overstates the
+negative.
+
+The citation string should indicate the scope
 of the search:
 ```
 1870 U.S. Census; searched John Callahan, born c. 1835, Ireland;
