@@ -327,13 +327,15 @@ table rather than an indented diagram: a nested `⊃` notation is ambiguous abou
 whether a name following it is a sibling or a child; one parent per row is not.
 
 **ᵃ Placement is the taxonomy's, and needs a reader-facing annotation.**
-Enslavement nests under **Land & Property**, reflecting that enslaved people were
-recorded in law as property; Indigenous nests under **Government**. Both are what
-FamilySearch encodes, and the *Parent* column has to state it: selecting **Land**
-returns enslavement volumes whether or not this table admits it. Flattening either
-row would make the table misdescribe containment. The **wording** of the annotation
-these two rows carry is a genealogy-reviewer decision and is the one item still
-open in this spec.
+Enslavement nests under **Land & Property** because the era's legal and property
+records documented enslaved people as property. The nesting reflects that
+historical record-keeping practice, not a judgment about personhood. Indigenous
+nests under **Government** because its record types are administrative and
+jurisdictional. They record government dealings with, and governance of,
+Indigenous peoples and nations. Both are what FamilySearch encodes, and the
+*Parent* column has to state it: selecting **Land** returns enslavement volumes
+whether or not this table admits it. Flattening either row would make the table
+misdescribe containment.
 
 **Groups may overlap, and that is intended.** Because a stray can attach a type to
 a group outside its subtree, one volume can satisfy two group names — an obituary
@@ -875,7 +877,9 @@ The full-text sub-fetch failure is **non-fatal** — a partial result with
    unreachable from the parent for exactly the same reason it is unreachable from
    its own anchor. Sending only the selected group's own strays would mean
    `Death` returns obituaries while `Vital` — which the group table says includes
-   `Death` — does not, a gap of 110,231 volumes measured 2026-08-19. The same
+   `Death` — does not, a gap of 110,231 volumes measured 2026-08-19 — the
+   volumes `Vital` gains, slightly below the stray's own 111,577 total because
+   some obituary volumes also carry a type inside `Vital`. The same
    holds for `Legal` against `Court`, `Government` against `Tax`, `Prison`,
    `Passports` and `Government Pensions`, and `ID documents` against `Passports`.
    This is the failure mode described under [Strays](#strays), reached from the
@@ -1074,9 +1078,11 @@ considered and rejected: `recordTypeGroups` is a flat enum, so a caller selects
 *Parent* column governs one thing only — what a **Land** search returns — and
 selecting Land returns enslavement volumes whether or not the table says so.
 Flattening would make the table misdescribe containment, which is the single thing
-it exists to state correctly. **Still open: the wording of the annotation** these
-two rows carry. That is a genealogy-reviewer call, not an engineering one, and it
-is the only question left in this spec.
+it exists to state correctly. The wording of the annotation these two rows carry
+was settled by a genealogy reviewer, not an engineering call: it states that the
+nesting reflects the era's record-keeping practice rather than a judgment about
+personhood, and that the Indigenous record types are administrative and
+jurisdictional.
 
 **Newspapers anchors on the root `124231`, not the child `119166`.** Measured
 before and after: anchoring on the child left New South Wales at 96.5%, Oslo at
