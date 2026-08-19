@@ -6,6 +6,7 @@
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -13,6 +14,7 @@
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -20,6 +22,7 @@
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -27,6 +30,7 @@
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -34,6 +38,7 @@
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -41,6 +46,7 @@
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -48,6 +54,7 @@
       "test_id": "ut_conflict_resolution_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -55,6 +62,7 @@
       "test_id": "ut_conflict_resolution_002",
       "dimension_source": "base",
       "dimension_name": "Completeness",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -62,6 +70,7 @@
       "test_id": "ut_conflict_resolution_002",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -69,6 +78,7 @@
       "test_id": "ut_conflict_resolution_002",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -76,6 +86,7 @@
       "test_id": "ut_conflict_resolution_002",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -83,6 +94,7 @@
       "test_id": "ut_conflict_resolution_002",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -90,6 +102,7 @@
       "test_id": "ut_conflict_resolution_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -97,6 +110,7 @@
       "test_id": "ut_conflict_resolution_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -104,6 +118,7 @@
       "test_id": "ut_conflict_resolution_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -111,6 +126,7 @@
       "test_id": "ut_conflict_resolution_003",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -118,6 +134,7 @@
       "test_id": "ut_conflict_resolution_003",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -125,6 +142,7 @@
       "test_id": "ut_conflict_resolution_003",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -132,6 +150,7 @@
       "test_id": "ut_conflict_resolution_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -139,6 +158,7 @@
       "test_id": "ut_conflict_resolution_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
+      "llm_score": 3,
       "corrected_score": 3,
       "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
     },
@@ -146,6 +166,7 @@
       "test_id": "ut_conflict_resolution_004",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
@@ -153,6 +174,7 @@
       "test_id": "ut_conflict_resolution_010",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 1,
       "corrected_score": 1,
       "comment": "Score confirmed accurate."
     },
@@ -160,6 +182,7 @@
       "test_id": "ut_conflict_resolution_010",
       "dimension_source": "base",
       "dimension_name": "Completeness",
+      "llm_score": 1,
       "corrected_score": 1,
       "comment": "Score confirmed accurate."
     },
@@ -167,6 +190,7 @@
       "test_id": "ut_conflict_resolution_010",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": null,
       "corrected_score": null,
       "comment": null
     }
