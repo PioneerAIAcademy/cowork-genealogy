@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_stribling_father_1821",
+    "objective": "Who were the parents of Simpson Ridley Stribling, born 15 July 1821 in Amite County, Mississippi?",
+    "subject_person_ids": [
+      "KLYT-G3Q"
+    ],
+    "status": "active",
+    "created": "2026-08-14",
+    "updated": "2026-08-14"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
