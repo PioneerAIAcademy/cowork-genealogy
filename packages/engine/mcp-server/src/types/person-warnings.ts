@@ -9,7 +9,7 @@ export interface PersonWarningsInput {
 export interface PersonWarning {
   scoreType: string;
   issueType: string;
-  severity: "error" | "warning";
+  severity: "contradiction" | "implausible";
   personId: string;
   personName: string;
   message: string;

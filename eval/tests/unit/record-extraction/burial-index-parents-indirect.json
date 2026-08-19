@@ -68,6 +68,12 @@
       "evidence_type": "indirect",
       "informant_proximity": "unknown",
       "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "optional": true,
+      "evidence_type": "indirect"
     }
   ]
 }

@@ -50,29 +50,29 @@ export default function Sidebar({
       label: 'Known Information',
       countFn: () => research?.known_holdings?.length ?? 0
     },
-    { key: 'questions', label: 'Questions', countFn: () => research?.questions.length ?? 0 },
+    { key: 'questions', label: 'Questions', countFn: () => research?.questions?.length ?? 0 },
     { key: 'localities', label: 'Localities', countFn: () => research?.localities?.length ?? 0 },
-    { key: 'plans', label: 'Plans', countFn: () => research?.plans.length ?? 0 },
-    { key: 'log', label: 'Research Log', countFn: () => research?.log.length ?? 0 },
-    { key: 'sources', label: 'Sources', countFn: () => research?.sources.length ?? 0 },
-    { key: 'assertions', label: 'Assertions', countFn: () => research?.assertions.length ?? 0 },
+    { key: 'plans', label: 'Plans', countFn: () => research?.plans?.length ?? 0 },
+    { key: 'log', label: 'Research Log', countFn: () => research?.log?.length ?? 0 },
+    { key: 'sources', label: 'Sources', countFn: () => research?.sources?.length ?? 0 },
+    { key: 'assertions', label: 'Assertions', countFn: () => research?.assertions?.length ?? 0 },
     {
       key: 'person_evidence',
       label: 'Person Evidence',
-      countFn: () => research?.person_evidence.length ?? 0
+      countFn: () => research?.person_evidence?.length ?? 0
     },
-    { key: 'conflicts', label: 'Conflicts', countFn: () => research?.conflicts.length ?? 0 },
-    { key: 'hypotheses', label: 'Hypotheses', countFn: () => research?.hypotheses.length ?? 0 },
-    { key: 'timelines', label: 'Timelines', countFn: () => research?.timelines.length ?? 0 },
+    { key: 'conflicts', label: 'Conflicts', countFn: () => research?.conflicts?.length ?? 0 },
+    { key: 'hypotheses', label: 'Hypotheses', countFn: () => research?.hypotheses?.length ?? 0 },
+    { key: 'timelines', label: 'Timelines', countFn: () => research?.timelines?.length ?? 0 },
     {
       key: 'proof_summaries',
       label: 'Proof Summaries',
-      countFn: () => research?.proof_summaries.length ?? 0
+      countFn: () => research?.proof_summaries?.length ?? 0
     },
     {
       key: 'evaluations',
       label: 'Mentor Evaluations',
-      countFn: () => research?.evaluations.length ?? 0
+      countFn: () => research?.evaluations?.length ?? 0
     }
   ]
 

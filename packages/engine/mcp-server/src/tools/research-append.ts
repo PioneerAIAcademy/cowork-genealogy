@@ -22,12 +22,13 @@ import { join } from "path";
 import { readFile, mkdir } from "fs/promises";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import type { ValidationError } from "../validation/types.js";
 import {
   atomicWriteJson,
   atomicWriteBoth,
   backupIfExists,
   isInsideProject,
+  readProjectJson,
+  formatIssues,
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { exampleHints } from "./research-append-examples.js";
@@ -225,6 +226,45 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
       `to this identity. Use 'probable' (or 'speculative'), keep the [?] in the assertion value, ` +
       `and record what would resolve it — a second independent record, or the original image. ` +
       `A confident wrong parent is worse than a flagged uncertain one.`,
+  ];
+}
+
+/** Warn — NOT reject — a `confident` person_evidence link that records no numeric
+ *  `match_score` (#1006). `same_person` returns a 0–1 float and `match_score` is
+ *  the field meant to carry it, yet 94% of historical person_evidence writes leave
+ *  it unset: identity is asserted, never scored. This ships WARN-ONLY — the fault
+ *  text rides the response's `validation.warnings` and the write still succeeds —
+ *  because a hard reject on day one would break ~94% of runs and the hosted path
+ *  at once. Graduating it to a rejection is a separate decision (needs @DallanQ),
+ *  the same shadow-then-graduate discipline as guardrail-enforcement-spec.md §7.
+ *
+ *  Gated on `confidence === "confident"`, mirroring `personEvidenceInvariants`:
+ *  `research_append` is a stateless write that cannot see the tree or the session,
+ *  so "brand-new tree person" is not knowable here, but the confidence claim is —
+ *  and a confident identity is exactly the one that should carry the score behind
+ *  it. The correct response is to call `same_person` on the pairing and record its
+ *  score — NOT to lower the confidence to silence the warning. Confidence is the
+ *  correlation judgment; `match_score` is the number behind it, and downgrading the
+ *  first to escape a warning about the second games a genealogical claim (and can
+ *  slip a link under the `confident` epistemic-gate reject above). A link that
+ *  genuinely cannot be scored (no comparable FamilySearch persona) keeps
+ *  `match_score: null` and the confidence its analysis supports. A present number
+ *  does not prove `same_person` ran — same trust posture the `confidence` field
+ *  itself takes — but only a real 0–1 score clears the warning: a number outside the
+ *  range does not, since the runtime validator (`validator.ts`, which does not load
+ *  the JSON Schema) leaves the schema's 0–1 bound unenforced at the write. */
+function personEvidenceScoreWarnings(entry: any): string[] {
+  if (entry.confidence !== "confident") return [];
+  const score = entry.match_score;
+  if (typeof score === "number" && score >= 0 && score <= 1) return [];
+  return [
+    `person_evidence link for person '${entry.person_id}' (assertion '${entry.assertion_id}') ` +
+      `claims confidence 'confident' but records no usable match_score (got ` +
+      `${JSON.stringify(entry.match_score)} — expected a number 0–1). A confident identity should ` +
+      `carry the same_person score behind it (a number 0–1). Call same_person on this pairing ` +
+      `and record its score. If no comparable FamilySearch persona exists to score against, ` +
+      `leave match_score null and keep the confidence your correlation analysis supports — do ` +
+      `not lower it to silence this. The link was still written — this is a warning, not a rejection.`,
   ];
 }
 
@@ -451,21 +491,11 @@ class ResearchAppendError extends Error {
   }
 }
 
-function formatIssues(issues: ValidationError[]): string[] {
-  return issues.map((e) => (e.path ? `${e.path}: ${e.message}` : e.message));
-}
-
 async function readJson(projectPath: string, filename: string): Promise<any> {
-  let text: string;
   try {
-    text = await readFile(join(projectPath, filename), "utf-8");
-  } catch {
-    throw new ResearchAppendError(`${filename} not found in projectPath`);
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new ResearchAppendError(`${filename} is not valid JSON`);
+    return await readProjectJson(projectPath, filename);
+  } catch (e) {
+    throw new ResearchAppendError(e instanceof Error ? e.message : String(e));
   }
 }
 
@@ -1038,6 +1068,10 @@ function applyOne(
 
   // Section invariants the project validator does not already enforce.
   const invariantErrors: string[] = [];
+  // Warn-only advisories: collected here, surfaced on the successful response's
+  // validation.warnings (via the caller's flatMap over AppliedOp.warnings), never
+  // thrown. Distinct from invariantErrors, which reject the write (#1006).
+  const opWarnings: string[] = [];
   // A question may only reach `resolved` once a proof summary for it exists.
   // Same "only when THIS op sets it" discipline as the proof_summaries block
   // below — an unrelated update to an already-resolved question must not
@@ -1065,6 +1099,9 @@ function applyOne(
   // to "confident"; the helper no-ops for every other confidence value.
   if (section === "person_evidence") {
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
+    // Warn-only: a confident link that records no match_score (#1006). Rides the
+    // response warnings; does not block the write.
+    opWarnings.push(...personEvidenceScoreWarnings(resultEntry));
   }
   // Only when THIS op is the one setting/changing tier — append always sets it;
   // update only when `fields` names it. An unrelated update to an entry already
@@ -1080,7 +1117,13 @@ function applyOne(
     throw new ResearchAppendError(invariantErrors);
   }
 
-  return { section, op: op.op, entryId, arrayIndex };
+  return {
+    section,
+    op: op.op,
+    entryId,
+    arrayIndex,
+    warnings: opWarnings.length > 0 ? opWarnings : undefined,
+  };
 }
 
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────

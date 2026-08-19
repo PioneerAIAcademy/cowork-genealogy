@@ -29,6 +29,7 @@ export function buildMockContext(
     setDevMode: () => {},
     getById: overrides.getById ?? (() => null),
     selectFolder: async () => {},
+    canSelectFolder: true,
     activeSection: overrides.activeSection ?? 'project_overview',
     setActiveSection: overrides.setActiveSection ?? vi.fn(),
     sidecar: overrides.sidecar ?? { status: 'closed' },
