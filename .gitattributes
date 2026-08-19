@@ -1,3 +1,10 @@
+# Normalize line endings for all text files regardless of any contributor's or
+# environment's core.autocrlf setting. Without this, whether a file is stored
+# as LF or CRLF depends on whoever last touched it — a real source of drift
+# across a Windows dev, a Linux CI/VM, and the Cowork sandbox bridge, all
+# writing to the same repo. text=auto lets git still skip binaries.
+* text=auto eol=lf
+
 # Shell scripts must keep LF endings on every platform.
 #
 # Git for Windows defaults core.autocrlf=true, so without this these files check
