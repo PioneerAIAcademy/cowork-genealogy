@@ -119,7 +119,7 @@ def test_slug_passes_on_the_settled_name():
     check_slug(
         EMPTY,
         _state(**{"death-records-1800s.md": "x"}),
-        _tags("slug-death-records-1800s"),
+        _tags("expects-file-death-records-1800s"),
     )
 
 
@@ -133,13 +133,47 @@ def test_slug_fires_on_the_ut_007_drift():
         check_slug(
             EMPTY,
             _state(**{"death-records.md": "x"}),
-            _tags("slug-death-records-1800s"),
+            _tags("expects-file-death-records-1800s"),
         )
 
 
 def test_slug_skips_when_untagged():
     with pytest.raises(pytest.skip.Exception):
         check_slug(EMPTY, _state(**{"anything.md": "x"}), _tags("fs-wiki"))
+
+
+def test_slug_ignores_a_descriptive_slug_tag():
+    """Regression for the collision found in review of PR #1762.
+
+    `census-records.json` carries `slug-normalization` — a DESCRIPTIVE tag
+    naming what the test exercises, not what it writes. The first version of
+    this helper scanned for the `slug-` prefix and so resolved the expected
+    file to `normalization.md` while the test writes `census-records.md`,
+    failing a green test and taking the judge down with it (a failing
+    validator skips grading). Verified against both committed run logs at the
+    time: 11 matched, this one did not.
+
+    The prefix is now `expects-file-`, which cannot collide with a
+    descriptive tag. `search-wikipedia` has four more of the same shape
+    (`slug-simple`, `slug-parens`, `slug-numbers`, `slug-single-word`).
+    """
+    check_slug(
+        EMPTY,
+        _state(**{"census-records.md": "x"}),
+        _tags("fs-wiki", "how-to", "census",
+              "slug-normalization", "expects-file-census-records"),
+    )
+
+
+def test_slug_rejects_two_expected_file_tags():
+    """Two filename declarations is an authoring error, not a precedence
+    question — fail loudly rather than silently taking the first."""
+    with pytest.raises(AssertionError, match="at most one"):
+        check_slug(
+            EMPTY,
+            _state(**{"census-records.md": "x"}),
+            _tags("expects-file-census-records", "expects-file-something-else"),
+        )
 
 
 # --- test_no_file_on_empty_results -------------------------------------

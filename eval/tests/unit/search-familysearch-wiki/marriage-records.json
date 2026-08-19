@@ -5,7 +5,7 @@
     "name": "FamilySearch wiki — marriage records",
     "type": "positive",
     "description": "User asks how to find marriage records on FamilySearch. Exercises the core workflow with a common record type.",
-    "tags": ["fs-wiki", "how-to", "marriage", "slug-marriage-records"]
+    "tags": ["fs-wiki", "how-to", "marriage", "expects-file-marriage-records"]
   },
   "input": {
     "user_message": "Search the FamilySearch wiki for how to find marriage records for my ancestors",

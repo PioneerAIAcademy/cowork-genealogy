@@ -58,21 +58,40 @@ def _new_md_files(before_state, after_state) -> dict[str, str]:
     }
 
 
-def _slug_tag(test) -> str | None:
-    """The expected basename declared by a `slug-<name>` tag, or None.
+def _expected_file(test) -> str | None:
+    """The expected basename declared by an `expects-file-<name>` tag, or None.
 
-    Tags are the activation mechanism the sibling skill already uses
-    (`test_slug_albert_einstein` in test_search_wikipedia.py). Note the
-    known wart, tracked as its own issue: `tags` is in
+    **The prefix is deliberately NOT `slug-`.** That was the first attempt and
+    it was wrong: `slug-` is already an established *descriptive* tag prefix
+    naming what a test exercises, not what it writes. `census-records.json`
+    carried `slug-normalization` (it exercises slug normalisation), so a
+    prefix scan resolved its expected file to `normalization.md` while the
+    test writes `census-records.md` — silently turning a green test red, and
+    with it the judge (a failing validator skips grading entirely). Verified
+    against both committed run logs: 11 tests matched, that one did not.
+
+    `search-wikipedia` has four more of the same shape — `slug-simple`,
+    `slug-parens`, `slug-numbers`, `slug-single-word` — which are safe only
+    because that file hardcodes one function per test instead of scanning.
+    Anyone reusing this helper there would hit the same collision, so the
+    fix is a prefix that cannot mean anything else. Descriptive `slug-*` tags
+    keep their meaning and are ignored here.
+
+    Two tags with this prefix is an authoring error, not a precedence
+    question — fail loudly rather than silently picking the first.
+
+    Known wart, tracked as its own issue: `tags` is in
     `snapshot._COSMETIC_TEST_FIELDS`, so retagging a test does not
     invalidate its run log even though it changes what is asserted here.
-    Migrating these to a snapshot-hashed field is queued for the next
-    change that already buys a run.
+    Migrating to a snapshot-hashed field is queued for the next change that
+    already buys a run.
     """
-    for tag in (test.get("tags") or []):
-        if tag.startswith("slug-"):
-            return tag[len("slug-"):] + ".md"
-    return None
+    prefix = "expects-file-"
+    found = [t[len(prefix):] for t in (test.get("tags") or []) if t.startswith(prefix)]
+    assert len(found) <= 1, (
+        f"a test may declare at most one {prefix}<name> tag; got: {found}"
+    )
+    return found[0] + ".md" if found else None
 
 
 def _wiki_results(tool_calls) -> list[dict]:
@@ -192,9 +211,9 @@ def test_expected_slug(before_state, after_state, test):
     different answers, because no test recorded which was expected. The
     period-qualifier rule was settled under #1647 (periods are kept).
     """
-    expected = _slug_tag(test)
+    expected = _expected_file(test)
     if expected is None:
-        pytest.skip("test declares no slug-<name> tag")
+        pytest.skip("test declares no expects-file-<name> tag")
     names = sorted(p.split("/")[-1] for p in _new_md_files(before_state, after_state))
     assert names == [expected], (
         f"expected exactly ['{expected}']; got {names}"
