@@ -18,10 +18,12 @@ Compared to test_conflict_resolution.py, record-extraction:
 Pattern: ownership check, append-only check on assertions/sources,
 foreign-key integrity, and per-assertion required-field checks.
 
-Tag-gated regression checks (e.g., 1850-census-uses-_inferred-suffix)
-sit at the bottom; they gate on `test["tags"]` so they only fire on
-the specific scenario they describe.
+Tag-gated regression checks (e.g., pre-1880-census-creates-no-relationship-
+assertions) sit at the bottom; they gate on `test["tags"]` so they only fire
+on the specific scenario they describe.
 """
+
+import re
 
 import pytest
 
@@ -31,9 +33,8 @@ from validators_lib import (
 )
 
 
-# Ownership enforcement is centralised in test_universal.py's
-# OWNERSHIP_TABLE driven by a single dict mirroring
-# research-schema-spec.md §4. Per-skill copies were removed to prevent
+# Ownership enforcement is centralised in test_universal.py, driven by
+# docs/specs/schemas/ownership.json. Per-skill copies were removed to prevent
 # drift between two sources of truth.
 #
 # Diff / append-only / foreign-key patterns delegate to
@@ -312,6 +313,227 @@ def test_expected_classifications(before_state, after_state, test):
     )
 
 
+_EMBEDDED_YEAR_RE = re.compile(r"\b(1[5-9]\d{2}|20\d{2})\b")
+
+
+def test_birth_place_value_has_no_embedded_year(before_state, after_state):
+    """A place-keyed `birth` assertion must not smuggle a birth YEAR into its
+    `value` string (#1407).
+
+    The defect this catches is atomicity, not classification: a run that
+    persists
+
+        {"fact_type": "birth", "value": "born about 1845, Ohio",
+         "place": "Ohio, United States", "date": null,
+         "evidence_type": "direct"}
+
+    has put TWO facts in one assertion. The birthplace is `direct` (stated)
+    while a year derived from a stated age is `indirect`, so one assertion
+    cannot carry a correct `evidence_type` for both — and every structured
+    matcher is blind to it, because the year lives in free text where
+    `expected_classifications` never looks (ut_022 scored a false pass on
+    `Assertion atomicity` eight times over).
+
+    The defect is **information loss**, so the rule fires only when the year
+    is recoverable from nowhere but that free-text string. Two exemptions,
+    both measured rather than guessed:
+
+    1. **The assertion carries its own structured `date`.** ut_026
+       `"January 1845"`, ut_016 `"Born 11 July 1817, Stavanger…"`, ut_005
+       `"born Ireland, circa 1845"` and ut_006 `"born ca. 1845, Ireland"` all
+       populate `date`, so the year in `value` mirrors a structured fact.
+    2. **A sibling `birth` assertion for the same `record_role` carries the
+       year in its `date`.** This is the ut_028 case, and it is why the
+       first exemption alone is not enough: the run persists TWO atomic
+       assertions per party — `place='Cincinnati, Ohio'` / `date=None`
+       (`direct`) beside `date='~1887'` / `place=None` (`indirect`) — so
+       atomicity is correct and only the place assertion's human-readable
+       label is redundant. The year is not smuggled; it is stated twice.
+       Failing that shape reddens a structurally-correct extraction.
+
+    So a `value` naming a year is graded against the assertion **set**, not
+    the assertion alone. What survives both exemptions is the real defect:
+    a year that exists only inside a birthplace's prose.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    before_ids = {a.get("id") for a in before.get("assertions", [])}
+    new = [a for a in after.get("assertions", []) if a.get("id") not in before_ids]
+
+    # Exemption 2: which (record, role) pairs already state a birth date
+    # structurally. A date on a sibling means the year is captured and the
+    # assertion set is atomic — the verbose label is noise, not smuggling.
+    #
+    # Keyed on (record_id, record_role), NOT role alone: `child_1` on one
+    # record must not vouch for `child_1` on another, which would suppress a
+    # genuine leak in any multi-record project.
+    #
+    # Scans the WHOLE after-state, not just new rows: a scenario that seeded a
+    # birth date (every `mid-research-flynn` fixture does) already states the
+    # year, so a run adding only the birthplace has smuggled nothing.
+    #
+    # Deliberately EXISTENCE-based rather than year-matching. Matching the
+    # exact year read strictly better until it met a real label: a value like
+    # "1870 census: born in Ohio" carries the enumeration year, `search` takes
+    # the FIRST year it finds, and no structured field states 1870 — so a
+    # doctrine-correct run with its birth year properly on a sibling got
+    # flagged. Since a validator failure suppresses the judge, that false
+    # positive costs the test's entire grade. Year-matching only ever bought
+    # the contrived "sibling states the wrong year" case, which occurs nowhere
+    # in the corpus; extra years in a human-readable label are common. Fewer
+    # false positives is the right trade for a guard whose true-positive count
+    # is zero.
+    dated_siblings = set()
+    for a in after.get("assertions", []):
+        if not _fact_type_matches(a.get("fact_type"), "birth"):
+            continue
+        if a.get("date"):
+            dated_siblings.add(
+                (
+                    a.get("record_id"),
+                    _normalize_classification_token(a.get("record_role")),
+                )
+            )
+
+    errors = []
+    for a in new:
+        if not _fact_type_matches(a.get("fact_type"), "birth"):
+            continue
+        if a.get("evidence_type") != "direct":
+            continue
+        if not (a.get("place") or a.get("standard_place")):
+            continue
+        if a.get("date"):
+            continue  # exemption 1 — this assertion states a date itself
+        # Exemption 2 — a sibling birth assertion for this same record+role
+        # states one, so the year is captured structurally.
+        if (
+            a.get("record_id"),
+            _normalize_classification_token(a.get("record_role")),
+        ) in dated_siblings:
+            continue
+        value = str(a.get("value") or "")
+        years = _EMBEDDED_YEAR_RE.findall(value)
+        if not years:
+            continue
+        errors.append(
+            f"assertions[{a.get('id', '?')}] (record_role="
+            f"'{a.get('record_role')}'): direct birth/place assertion has "
+            f"{'years' if len(years) > 1 else 'the year'} "
+            f"{', '.join(years)} embedded in value={value!r}, and NO birth "
+            f"assertion for this record+role states a date — a birth year "
+            f"belongs in its own indirect assertion, not recoverable only "
+            f"from the birthplace's prose"
+        )
+
+    assert not errors, (
+        "Compound birth assertions (year smuggled into a birthplace "
+        "value):\n  - " + "\n  - ".join(errors)
+    )
+
+
+# Only the PARENTHESISED part of a name value is scanned. Both observed
+# collapse shapes put the relation inside brackets —
+# `John Becker (father of Frank Becker)` and
+# `Linda (given name only; spouse of Robert Whitaker)` — while every known
+# false positive is a relation word that is really a surname or a title, sitting
+# in the bare part of the name:
+#
+#     Joseph Parent of Quebec      (Parent is a common surname)
+#     Julia Child of Boston        (Child is a surname)
+#     Mary, Mother of Sorrows      (a devotional name)
+#
+# All three fired under the first version of this rule (caught in review), and a
+# false positive is expensive: a failing validator suppresses the judge, so it
+# costs the test's whole grade, not one dimension. Scoping to brackets removes
+# them and is what makes the wider vocabulary below safe.
+#
+# The cost is a miss on a comma-form collapse (`John Becker, father of Frank`).
+# That is the safer direction to err, and the per-fixture `record_role` matchers
+# catch the collapse independently.
+_PAREN_SEGMENT_RE = re.compile(r"\(([^)]*)\)")
+
+_RELATION_PHRASE_RE = re.compile(
+    # optional step-/grand- prefix, the relation, optional -in-law, then of/to
+    r"\b(?:(?:step|grand|great[-\s]?grand)[-\s]?)?"
+    r"(?:father|mother|parent|wife|husband|spouse|widow|widower|son|daughter|"
+    r"child|brother|sister|sibling|niece|nephew|aunt|uncle|cousin)"
+    r"(?:[-\s]?in[-\s]?law)?\s+(?:of|to)\b"
+    # plus the abbreviated genealogical forms: son/daughter/wife of
+    r"|\b[sdw]/o\b",
+    re.IGNORECASE,
+)
+
+
+def _relational_name_hit(value):
+    """The relation phrase found inside a bracketed segment, or None."""
+    for segment in _PAREN_SEGMENT_RE.findall(str(value or "")):
+        m = _RELATION_PHRASE_RE.search(segment)
+        if m:
+            return m.group(0)
+    return None
+
+
+def test_name_value_is_a_bare_name(before_state, after_state):
+    """A `name` assertion's value is the NAME, not the name plus the person's
+    tie to someone else (#1627).
+
+    The observed failure fuses two things into one value while filing the
+    assertion under the wrong persona:
+
+        record_role='groom'  fact_type='name'
+        value='John Becker (father of Frank Becker)'
+
+    Both halves are wrong. The tie belongs in its own `relationship`
+    assertion, and the name belongs to `father_of_groom` — filed under
+    `groom`, no parent persona exists at all, and `person-evidence` binds by
+    record_id + record_role, so nothing downstream can ever reach it.
+
+    This rule catches the value half deterministically and corpus-wide. The
+    role half is only reachable per fixture, via an existence-gated
+    `expected_classifications` matcher on the third-party role (ut_025 has
+    them, which is how this surfaced).
+
+    Scoped to `name` assertions, and to a relation word followed by `of`/`to`,
+    so a maiden-name parenthetical ("Mary (Johnson) Smith") and a
+    negative-evidence value describing an absence are both untouched.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    before_ids = {a.get("id") for a in before.get("assertions", [])}
+
+    errors = []
+    for a in after.get("assertions", []):
+        if a.get("id") in before_ids:
+            continue
+        if not _fact_type_matches(a.get("fact_type"), "name"):
+            continue
+        if a.get("record_role") == "absent":
+            continue  # negative evidence describes what was expected
+        value = str(a.get("value") or "")
+        hit = _relational_name_hit(value)
+        if hit:
+            errors.append(
+                f"assertions[{a.get('id', '?')}] (record_role="
+                f"'{a.get('record_role')}'): name value={value!r} carries the "
+                f"relational phrase '{hit}' — a name assertion's "
+                f"value is the bare name, the tie is its own `relationship` "
+                f"assertion, and the named third party needs their OWN "
+                f"record_role rather than this one"
+            )
+
+    assert not errors, (
+        "Name assertions fusing identity with relationship:\n  - "
+        + "\n  - ".join(errors)
+    )
+
+
 def test_new_assertions_attached_to_record_role(before_state, after_state):
     """Every new assertion must have both record_id and record_role.
 
@@ -407,21 +629,52 @@ def test_new_sources_have_citation_detail(before_state, after_state):
 
 # --- Tag-gated regression checks ---
 
-def test_1850_census_uses_inferred_suffix(before_state, after_state, test):
-    """For 1850-census extractions, relationship-type assertions must use
-    the `_inferred` suffix on `structured_value.relationship_type`.
+def _census_year_before_1880(test):
+    """True when the test's tags mark it a census record whose year predates
+    the 1880 relationship column. Year is DERIVED from the tags rather than
+    matched against a hardcoded list, so a future 1840 fixture is covered the
+    day it lands. Tags carry the year either bare (`"1870"`) or suffixed
+    (`"1850-census"`)."""
+    tags = [str(t) for t in (test.get("tags") or [])]
+    is_census = any(t == "census" or t.endswith("-census") for t in tags)
+    if not is_census:
+        return False
+    years = [int(t[:4]) for t in tags if t[:4].isdigit() and len(t[:4]) == 4]
+    return bool(years) and max(years) < 1880
 
-    Per research-schema-spec.md §5.6.1, the 1850 census has no
-    relationship column — relationships are deduced from household
-    position and must be flagged with the `_inferred` suffix
-    (e.g., `child_inferred`, `spouse_inferred`).
 
-    Tag-gated on `1850` or `1850-census` so it only applies to the
-    relevant scenarios.
+def test_pre_1880_census_creates_no_relationship_assertions(
+    before_state, after_state, test
+):
+    """A pre-1880 census extraction must create NO parent-child or spousal
+    relationship assertions — in any form, including `indirect` /
+    `_inferred`.
+
+    The ruling this enforces is recorded on issue #1626 — quoted in full, with
+    its author and date, rather than asserted here. This docstring previously
+    read "Decided 2026-08-15 (issue #1626)" while that issue held no record of
+    any decision, which a reviewer correctly refused to accept as authorisation
+    for a reversal spanning the agent body, the reference doc, the rubric, eight
+    fixtures, this validator and the schema spec.
+
+    The 1790–1870 censuses have no
+    relationship column, so the record states only that these people shared
+    a dwelling. Extraction records each person's stated facts and the
+    co-residence; deducing family links from household position is a
+    hypothesis, and hypotheses belong to downstream correlation.
+
+    This REPLACES `test_1850_census_uses_inferred_suffix`, which enforced the
+    opposite policy (relationships must exist and carry `_inferred`). Both
+    readings were defensible from the old prompt, so the model arbitrated per
+    run — ut_022 emitted 14, 13, 1 and 0 relationship assertions across
+    successive runs of the same fixture. Determinism is the point of the
+    rule, not merely tidiness.
+
+    Gated on census tags with a derived year < 1880, so 1880+ fixtures (where
+    the column exists and the relationship IS stated) are untouched.
     """
-    tags = test.get("tags", [])
-    if not any(t in tags for t in ("1850", "1850-census")):
-        pytest.skip("not a 1850-census scenario")
+    if not _census_year_before_1880(test):
+        pytest.skip("not a pre-1880 census scenario")
 
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -434,19 +687,22 @@ def test_1850_census_uses_inferred_suffix(before_state, after_state, test):
     for a in after.get("assertions", []):
         if a.get("id") in before_ids:
             continue
-        if a.get("fact_type") != "relationship":
+        if not _fact_type_matches(a.get("fact_type"), "relationship"):
             continue
         sv = a.get("structured_value") or {}
-        rel_type = sv.get("relationship_type")
-        if rel_type and not str(rel_type).endswith("_inferred"):
-            errors.append(
-                f"assertions[{a.get('id')}]: 1850-census relationship "
-                f"has relationship_type='{rel_type}' without '_inferred' "
-                f"suffix (relationships in 1850 are deduced, not stated)"
-            )
+        rel_type = sv.get("relationship_type") or "?"
+        errors.append(
+            f"assertions[{a.get('id')}] (record_role="
+            f"'{a.get('record_role')}', relationship_type='{rel_type}', "
+            f"evidence_type='{a.get('evidence_type')}'): a pre-1880 census "
+            f"has no relationship column, so no relationship assertion may "
+            f"be written — not even `indirect`/`_inferred`. Record the "
+            f"people and their co-residence; the family links are "
+            f"downstream correlation's to infer"
+        )
 
     assert not errors, (
-        "1850-census relationships missing _inferred suffix:\n  - "
+        "pre-1880 census wrote relationship assertions:\n  - "
         + "\n  - ".join(errors)
     )
 

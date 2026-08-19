@@ -6,11 +6,14 @@ Conventions enforced when a rubric is present and non-empty:
 - each H2 section MUST contain three bullets: pass, partial, fail
 - no other H2-level structure (the parser is strict by design)
 
-The rubric layer is **opt-in**. A skill with no `rubric.md`, or with a
-present-but-empty file, is graded on the base dimensions only. Use
-`parse_rubric_or_empty(skill_name, text)` to opt into the empty-rubric
-path; `parse_rubric(text)` retains the strict contract for callers
-that want to validate a non-empty file directly.
+The rubric layer is **opt-in**, and there is exactly one way to opt out:
+delete `rubric.md`. A skill with no file is graded on the base dimensions
+only; a present-but-empty file is malformed, not an opt-out, because the
+CRUD UI's own parser rejects it (`eval/app/lib/skills.ts::parseRubric`)
+and a state the two halves disagree about is worse than either answer.
+Use `parse_rubric_or_empty(skill_name, text)` when the file may be
+absent; `parse_rubric(text)` retains the strict contract for callers
+that want to validate a file's content directly.
 """
 
 from __future__ import annotations
@@ -21,7 +24,8 @@ from dataclasses import dataclass, field
 
 
 class InvalidRubricError(Exception):
-    """Raised when a non-empty rubric.md file doesn't match the spec format."""
+    """Raised when a present rubric.md doesn't match the spec format —
+    including a blank one, which must be deleted rather than emptied."""
 
 
 @dataclass
@@ -72,10 +76,17 @@ def empty_rubric(skill: str) -> Rubric:
 
 
 def parse_rubric_or_empty(skill: str, text: str | None) -> Rubric:
-    """Opt-in entry point. text=None (file missing) or text.strip()==""
-    (present-but-empty) → empty rubric. Otherwise parse strictly."""
-    if text is None or not text.strip():
+    """Opt-in entry point. text=None (file missing) → empty rubric.
+    Otherwise parse strictly — including text.strip()=="", which is a
+    blanked file, not an opt-out."""
+    if text is None:
         return empty_rubric(skill)
+    if not text.strip():
+        raise InvalidRubricError(
+            f"'{skill}' has a blank rubric.md. To grade a skill on the base "
+            "dimensions only, delete the file — the CRUD UI's parser rejects "
+            "a blank one, so leaving it in place breaks the skills list."
+        )
     return parse_rubric(text)
 
 

@@ -445,7 +445,8 @@ workflow itself or building one of its skills.
 Per-project context about the researcher (experience level, paid
 subscriptions, derived narration guidance) lives in a
 `researcher_profile` section of `research.json`. `init-project` writes
-it after a short two-question interview at project start. Every
+it after a short opening-turn interview, asked non-blocking alongside
+the project's research objective at project start. Every
 `SKILL.md` opens with a one-line `**Narration:**` instruction that
 tells Claude to read `researcher_profile.narration_guidance` and apply
 it as the narration style for that invocation.
@@ -482,7 +483,11 @@ change, with different (and easy-to-undercount) site lists:
   mirror (`packages/schema/schemas/research.schema.json` + the matching `interface`
   in `packages/schema/src/index.ts`). A *required* field additionally breaks
   `eval/fixtures/scenarios/*/research.json` and the eval Python stubs, which fail
-  validation until backfilled.
+  validation until backfilled. A new **section** (a top-level property, or a new
+  entry in `research_append`'s `section` enum) additionally needs a row in
+  `docs/specs/schemas/ownership.json` saying who may write it — declare it
+  `owner: null` with a reason rather than guessing; a packaging test fails until
+  the row exists.
 - **New value on a closed enum** (e.g. `evidence_type`): the enum lives in
   `enums.schema.json` (`$defs`), **not** `research.schema.json` (which only
   `$ref`s it). Edit `enums.schema.json` in *both* schema trees (`docs/specs/schemas/`

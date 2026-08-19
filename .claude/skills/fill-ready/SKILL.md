@@ -95,14 +95,13 @@ self-serve from Ready and the lead hands work out at standup. This skill adds no
 assignee at all; the only pre-assigned items on the board are `cross-cutting`
 ones, and `/find-big-wins` assigns those at filing time (§1).
 
-One exception, and it runs the other way: **remove an assignee whose role does
-not match the label.** `.claude/skills/triage-standup/references/roster.md`
-carries a role column — check it before you believe an existing assignment. A
-genealogist holding a `developer`-labeled harness issue is a mis-route, not a
-choice; unassign, leave the label alone, and put a line in the body naming what
-that person knows that the next taker will need. (This happened with issue
-#1023: the genealogist who found a silent grading-credential failure was
-assigned the Python fix, and only he had the broken-key window.)
+**And never remove one either — a role/label mismatch is not a mis-route.** The
+lead is deliberately teaching the developers to be simple genealogists and the
+genealogists to be simple developers; they reach out to each other as needed. A
+developer holding a `genealogist` issue is the point, not a defect (ruled
+2026-08-14). So the roster's role column tells you which *pool target* an item
+counts against, and nothing else: do not report a mismatch as a finding, do not
+propose unassigning, and do not rewrite the label to match the person.
 
 ## 1. Measure Ready depth before you rank anything
 
@@ -286,11 +285,27 @@ visible, and an idle one is the most expensive stalled card there is.
 Ranking cannot fix a board where work arrives faster than it leaves. Measure
 both, every run, over the last four weeks:
 
+**Do not count with `--search "created:$a..$b"` per week.** GitHub's range is
+inclusive at *both* ends, so consecutive windows both claim the boundary day and
+every week is inflated — on 2026-08-14 that reported 239 filed for a week that
+saw 221, and 92 for one that saw 85. Pull the dates once and bucket them
+locally with a half-open range instead:
+
 ```sh
-for w in 1 2 3 4; do
-  a=$(date -v-${w}w +%Y-%m-%d); b=$(date -v-$((w-1))w +%Y-%m-%d)
-  echo "$a..$b  filed: $(gh issue list --repo PioneerAIAcademy/cowork-genealogy --state all --limit 500 --search "created:$a..$b" --json number -q 'length')  closed: $(gh issue list --repo PioneerAIAcademy/cowork-genealogy --state closed --limit 500 --search "closed:$a..$b" --json number -q 'length')"
-done
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state all --limit 2000 \
+  --json number,createdAt,closedAt,state > /tmp/all-issues.json
+python3 - <<'PY'
+import json, datetime
+a = json.load(open('/tmp/all-issues.json', encoding='utf-8'))
+today = datetime.date.today()
+for w in range(4, 0, -1):
+    lo = today - datetime.timedelta(weeks=w); hi = today - datetime.timedelta(weeks=w-1)
+    d = lambda s: datetime.date.fromisoformat(s[:10])
+    f = sum(1 for i in a if lo <= d(i['createdAt']) < hi)
+    c = sum(1 for i in a if i['closedAt'] and lo <= d(i['closedAt']) < hi)
+    print(f'{lo}..{hi}  filed {f:4d}  closed {c:4d}  net {f-c:+d}')
+print('open now:', sum(1 for i in a if i['state'] == 'OPEN'))
+PY
 ```
 
 Baseline measured 2026-08-01, for comparison only — recompute, never quote it:
@@ -716,8 +731,9 @@ when the item would still be hard *after* every open question is answered.
 
 `senior` items carry `developer` or `genealogist` exactly as the junior pools do,
 and the lane decides the reviewer as much as the doer — `.github/CODEOWNERS`
-routes `.ts`/`.py`/`.json` to `senior-developers` and the skill, agent, eval and
-docs trees to `senior-genealogists`.
+queues `.ts`/`.py`/`.json` to `senior-developers` and the skill, agent and eval
+trees to `senior-genealogists`. Either team's approval unblocks the merge; the
+lane is who the work is routed to, not who is permitted to sign it off.
 
 **A `genealogist`-lane senior item is not a lesser one.** Doctrine adjudication
 across drifted skill copies, deciding whether a compliance rate is acceptable,

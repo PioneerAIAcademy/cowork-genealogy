@@ -180,9 +180,10 @@ materialize_facts({ projectPath, ops: [{ personId?, recordId, recordRole }, ...]
   `research.json`, resolves each one's provenance, and writes to
   `tree.gedcomx.json`. (`personId` may be an id that does not yet exist —
   see create-or-enrich.)
-- Reads the tree fresh from disk, validates the would-be project
-  (`validate_research_schema` / `validateParsed`), writes atomically with a
-  backup, and returns a **compact** summary (person id, facts
+- Reads the tree fresh from disk, validates the would-be project through
+  `validateIntroduced` (which wraps `validateParsed`) so it blocks only on a
+  **call-introduced** error while pre-existing drift rides as a warning (the authority `match-merge-workflow-spec.md` cites here), writes atomically
+  with a backup, and returns a **compact** summary (person id, facts
   added/enriched, refs attached, conflicts surfaced) — never an echo of the
   written JSON.
 - **Batch form.** Pass `ops: [{ personId?, recordId, recordRole }, ...]`

@@ -547,10 +547,10 @@ async def _execute_single_run(
         has_expected_classifications=bool(spec.raw.get("expected_classifications")),
     )
 
-    # Routing deference: on a correctly-routed negative test the outcome is
-    # decided by routing and the base dimensions are diagnostic, so a judge FAIL
-    # there grades something this test does not own.
-    apply_routing_deference(
+    # A judge FAIL on a correctly-routed negative test is REPORTED, not floored:
+    # the corpus says the judge is usually right (20 of 24 human-confirmed), and
+    # these dimensions never gated the outcome anyway.
+    flag_routing_negative_judge_fail(
         judge_result.dimensions,
         spec=spec,
         activated=activated,
@@ -643,6 +643,53 @@ async def _execute_single_run(
 
 DEFAULT_SKILL_RUN_ATTEMPTS = 3
 
+_ALWAYS_RETRYABLE_ABORTS = {"error", "sdk_stream_silence"}
+
+
+def _is_zero_progress_timeout(result) -> bool:
+    """A `max_wall_clock_seconds` abort where the run never got going.
+
+    Reads `usage["num_turns"]`, which on this path is set by the timeout
+    handler in `skill_runner` from a counter incremented per AssistantMessage
+    as they stream — NOT from the SDK's ResultMessage. That distinction is the
+    whole correctness of this guard: `usage` is otherwise populated only in
+    the ResultMessage branch, and a wall-clock timeout cancels the consumer
+    before that message arrives, so every wall-clock abort would look like
+    zero progress and EVERY slow test would be retried — burning the full cap
+    once per attempt (1500s x 3) at 3x the tokens. Caught in review before
+    that shipped; do not re-derive this from `duration_api_ms`, which is
+    genuinely unavailable here.
+
+    Zero turns means the whole budget went by without the model answering
+    once: the subprocess stalled during startup, which is the
+    `Control request timeout: initialize` failure the `error` path already
+    retries, arriving under a different name because the wall-clock watchdog
+    fired first.
+
+    Observed 2026-08-15: two tests aborted at 1888s and 1908s against a 1500s
+    cap having never started, and were lost from a paid suite run. A third hit
+    the same stall, surfaced as `error`, was retried, and passed.
+
+    Deliberately narrow: a run that timed out mid-work has turns, so it stays
+    non-retryable and does not burn its budget twice.
+    """
+    if result.aborted_reason != "max_wall_clock_seconds":
+        return False
+    # Explicit 0, not falsy: a MISSING `num_turns` means the timeout handler
+    # that records it did not run, so we cannot tell a stall from slow work —
+    # and the safe answer there is "don't retry". Fails closed, so if that
+    # handler is ever removed this guard quietly reverts to the old
+    # never-retry behaviour instead of silently retrying every slow test.
+    return (result.usage or {}).get("num_turns") == 0
+
+
+def _is_retryable_abort(result) -> bool:
+    """Whether a failed skill run should be retried (see the two helpers and
+    `_execute_skill_with_retry`'s docstring)."""
+    if result.aborted_reason in _ALWAYS_RETRYABLE_ABORTS:
+        return True
+    return _is_zero_progress_timeout(result)
+
 
 async def _execute_skill_with_retry(
     *,
@@ -658,7 +705,7 @@ async def _execute_skill_with_retry(
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
     """Build a fresh workspace and run the skill, retrying transient
-    failures with exponential backoff.
+    failures with exponential backoff. See `_is_retryable_abort`.
 
     Two transient-failure modes are retried:
 
@@ -682,74 +729,99 @@ async def _execute_skill_with_retry(
     pre-flight or mid-run.
 
     Deterministic execution-cap aborts (`max_turns`, `max_tool_calls`,
-    `max_wall_clock_seconds`, `max_input_tokens_per_turn`) are NOT
-    retried — a retry would just burn the same budget — so they return
-    on the first attempt. The Agent SDK collapses every other failure
-    into `is_error`/exceptions without the clean HTTP status codes the
-    judge path discriminates on, so a genuinely non-transient error is
-    retried too; the cost is bounded (`attempts` tries plus a few
-    seconds of backoff).
+    `max_input_tokens_per_turn`) are NOT retried — a retry would just burn
+    the same budget — so they return on the first attempt. The Agent SDK
+    collapses every other failure into `is_error`/exceptions without the
+    clean HTTP status codes the judge path discriminates on, so a genuinely
+    non-transient error is retried too; the cost is bounded (`attempts`
+    tries plus a few seconds of backoff).
+
+    3. `max_wall_clock_seconds` **with zero progress** — see
+       `_is_zero_progress_timeout`. A wall-clock abort is normally a slow
+       test and stays non-retryable; one that burned the whole budget
+       without a single turn never started, which is the same transient
+       class as (1) and (2).
 
     Returns (SkillRunResult, before_snapshot, after_snapshot).
     """
-    RETRYABLE_ABORT_REASONS = {"error", "sdk_stream_silence"}
     delay = base_delay
     result: SkillRunResult | None = None
     before_snapshot: dict[str, Any] = {}
     after_snapshot: dict[str, Any] = {}
     for attempt in range(attempts):
-        with tempfile.TemporaryDirectory(
-            prefix=f"eval-{spec.id}-{run_index}-{attempt}-",
-            ignore_cleanup_errors=True,
-        ) as tmp:
-            workspace = Path(tmp)
-            try:
-                build_workspace(
-                    scenario_name=spec.scenario,
-                    scenarios_dir=paths.scenarios_dir,
-                    skills_dir=paths.skills_dir,
-                    target_dir=workspace,
-                )
-                before_snapshot = snapshot_files(workspace)
-                result = await run_skill(
-                    user_message=spec.user_message,
-                    workspace=workspace,
-                    fixture_names=spec.mcp_fixtures,
-                    fixtures_dir=paths.fixtures_dir,
-                    auth=auth,
-                    model=model,
-                    max_turns=spec.execution.get("max_turns", 20),
-                    max_wall_clock_seconds=spec.execution.get(
-                        "max_wall_clock_seconds", 300
-                    ),
-                    max_tool_calls=spec.execution.get("max_tool_calls", 50),
-                    max_input_tokens_per_turn=spec.execution.get(
-                        "max_input_tokens_per_turn", 200_000
-                    ),
-                    sdk_message_silence_seconds=spec.execution.get(
-                        "sdk_message_silence_seconds",
-                        DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
-                    ),
-                    allowed_tools_override=skill_baseline,
-                    routing_short_circuit_skills=routing_short_circuit_skills,
-                    stub_skills=stub_skills,
-                    # The skill's OWN declaration, not skill_baseline (which
-                    # unions in its subagents' tools). The gap between the two
-                    # is what the per-context policy guards.
-                    declared_tools=declared_skill_tools(
-                        spec.skill, paths.skills_dir
-                    ),
-                )
-                after_snapshot = snapshot_files(workspace)
-            finally:
-                # Always clean up the SDK's session-store entry so long
-                # runs don't accumulate orphans under ~/.claude/projects/.
-                cleanup_session_store(workspace)
+        attempt_completed = False
+        try:
+            with tempfile.TemporaryDirectory(
+                prefix=f"eval-{spec.id}-{run_index}-{attempt}-",
+                ignore_cleanup_errors=True,
+            ) as tmp:
+                workspace = Path(tmp)
+                try:
+                    build_workspace(
+                        scenario_name=spec.scenario,
+                        scenarios_dir=paths.scenarios_dir,
+                        skills_dir=paths.skills_dir,
+                        target_dir=workspace,
+                    )
+                    before_snapshot = snapshot_files(workspace)
+                    result = await run_skill(
+                        user_message=spec.user_message,
+                        workspace=workspace,
+                        fixture_names=spec.mcp_fixtures,
+                        fixtures_dir=paths.fixtures_dir,
+                        auth=auth,
+                        model=model,
+                        max_turns=spec.execution.get("max_turns", 20),
+                        max_wall_clock_seconds=spec.execution.get(
+                            "max_wall_clock_seconds", 300
+                        ),
+                        max_tool_calls=spec.execution.get("max_tool_calls", 50),
+                        max_input_tokens_per_turn=spec.execution.get(
+                            "max_input_tokens_per_turn", 200_000
+                        ),
+                        sdk_message_silence_seconds=spec.execution.get(
+                            "sdk_message_silence_seconds",
+                            DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
+                        ),
+                        allowed_tools_override=skill_baseline,
+                        routing_short_circuit_skills=routing_short_circuit_skills,
+                        stub_skills=stub_skills,
+                        # The skill's OWN declaration, not skill_baseline (which
+                        # unions in its subagents' tools). The gap between the two
+                        # is what the per-context policy guards.
+                        declared_tools=declared_skill_tools(
+                            spec.skill, paths.skills_dir
+                        ),
+                    )
+                    after_snapshot = snapshot_files(workspace)
+                    attempt_completed = True
+                finally:
+                    # Always clean up the SDK's session-store entry so long
+                    # runs don't accumulate orphans under ~/.claude/projects/.
+                    cleanup_session_store(workspace)
+        except RecursionError:
+            # Windows-only stdlib footgun: tempfile.TemporaryDirectory's
+            # _rmtree/onexc recovery treats a locked *file* PermissionError as
+            # "maybe this is actually a directory" and retries _rmtree on it,
+            # which recurses forever when the file is genuinely locked (a
+            # lingering subprocess handle) rather than a directory.
+            # ignore_cleanup_errors=True does not cover this path -- it only
+            # suppresses the `else` branch for non-Permission/FileNotFound
+            # exceptions. By this point build_workspace/run_skill already
+            # completed and before_snapshot/result/after_snapshot are
+            # populated above; only the tempdir's own removal failed. Same
+            # rationale as ignore_cleanup_errors itself: a leaked temp dir is
+            # strictly better than discarding an already-computed result.
+            #
+            # Re-raised unless the attempt already produced a result. Without
+            # that guard this `except` also swallows a RecursionError raised
+            # from build_workspace/run_skill INSIDE the block, and the loop then
+            # returns the PREVIOUS attempt's result stamped with this attempt's
+            # number — silently, with no exception and no warning (#1735 review).
+            if not attempt_completed:
+                raise
 
-        if (
-            result.aborted_reason not in RETRYABLE_ABORT_REASONS
-            or attempt + 1 >= attempts
-        ):
+        if not _is_retryable_abort(result) or attempt + 1 >= attempts:
             # Record how many attempts this run took so the stall tax is
             # visible per-run in the log (1 = clean first try).
             result.attempts = attempt + 1
@@ -921,35 +993,46 @@ def apply_deterministic_deference(dimensions, validator_results, *, has_expected
     return dimensions
 
 
-def apply_routing_deference(dimensions, *, spec, activated, skills_invoked, warnings=None):
-    """Floor Correctness/Completeness off 1 on a correctly-routed negative test.
+def flag_routing_negative_judge_fail(
+    dimensions, *, spec, activated, skills_invoked, warnings=None
+):
+    """Report a judge FAIL on a correctly-routed negative test. Change no score.
 
-    A negative test with a non-empty `correct_skill` is decided by routing:
-    `_compute_outcome` returns pass once the skill under test did not activate
-    and an accepted skill fired, and the judge runs base-only and diagnostically.
-    A judge FAIL there is therefore usually grading something the test does not
-    own — the routed-to skill's execution — and it costs a genealogist the same
-    override every run.
+    This used to FLOOR Correctness/Completeness from 1 to 2 here, on the theory
+    that the judge was grading the routed-to skill's execution rather than
+    anything this test owns. **The corpus says the opposite.** Replaying the
+    floor's own guards over the 121 committed unit run logs and joining to the
+    annotations: 24 cells were floor-eligible with a judge 1, and a human
+    confirmed that 1 on **20 of them**. All 14 cells where the skill produced
+    non-empty output (102-14,123 chars) were confirmed, with rationales naming
+    the case the old docstring called a rare corner ("instead of declining and
+    routing to convert-dates, it performed the date conversion itself") — the
+    smallest of them, 102 chars, is a fabricated completion claim ("Saved as
+    kirchenbuch.md") on a run that created no file.
 
-    **Known limitation — read before widening this.** `activated` is False
-    whenever the skill under test is absent from `skills_invoked`, and
-    `derive_activated`'s own docstring records that SDK skill-discovery bugs
-    leave that list empty even when the skill ran. So a run where the model
-    carried out the skill's task inline *and* routed to an accepted skill
-    satisfies every guard here — and `_negative_judge_context`'s third framing
-    line tells the judge to score exactly that case 1. That 1 is correct and this
-    function floors it. There is no mechanical discriminator (a skill can produce
-    substantive prose with no writes), so the pre-floor score and rationale are
-    pushed onto `warnings` instead, following `judge.py`'s
-    `coerced_tool_arguments_to_na`: a silently-vanished 1 is what makes this
-    class of defect untrendable.
+    **There is still no mechanical discriminator, and gating on empty output is
+    worse than deleting.** All 4 overrides had `text_response == ""` and
+    `num_turns == 0` — but so did 6 of the 20 confirmations, and the same test
+    (`ut_search_records_003`) carries that identical empty/zero-turn signature in
+    all 8 of its eligible cells: confirmed in two run logs, overridden in two
+    others. So a floor gated on empty output would have fired on 10 cells and
+    been wrong on 6. The floor's real defect was not picking the wrong signal; it
+    was that no signal exists.
 
-    Mutates + returns `dimensions`; appends to `warnings` when given. No-op
+    Deleting gives up nothing measurable: `_compute_outcome` decides a
+    negative-with-`correct_skill` purely on routing, so no score this function
+    could change has ever moved a test's outcome.
+
+    What remains is the warning, which is the half that was actually load-bearing
+    and which nobody could see: its kind was never registered in
+    `run_tests.py::_JUDGE_WARNING_KINDS`, so it printed nowhere. It is registered
+    now. A judge 1 here is worth a human's eye — it is either the skill doing the
+    work inline (a real defect this suite would otherwise miss) or the judge
+    misreading a clean decline.
+
+    Returns `dimensions` unmodified; appends to `warnings` when given. No-op
     unless the test is negative with a non-empty `correct_skill`, the skill under
     test did not activate, and an accepted skill is in `skills_invoked`.
-    `grade_on_invariant` negatives return from `_compute_outcome` before the
-    routing branch, so they are excluded. Floors to 2, never 3: the judge may
-    still have seen something real, and this removes only the false FAIL.
     """
     if not dimensions:
         return dimensions
@@ -974,28 +1057,21 @@ def apply_routing_deference(dimensions, *, spec, activated, skills_invoked, warn
         return dimensions
     for dd in dimensions:
         if dd.get("name") in _ROUTING_DIAGNOSTIC_DIMENSIONS and dd.get("score") == 1:
-            orig = dd.get("rationale") or ""
             if warnings is not None:
                 warnings.append({
-                    "kind": "floored_routing_diagnostic_dimension",
+                    "kind": "routing_negative_judge_fail",
                     "advisory": (
                         f"judge scored {dd['name']} 1 on a negative test whose "
-                        f"outcome is decided by routing; floored to 2. If the "
-                        f"skill under test carried out its own task inline, this "
-                        f"1 was correct — check the transcript."
+                        f"outcome is decided by routing. Across the committed "
+                        f"corpus a human confirmed this 1 in 20 of 24 such "
+                        f"cells, so read it before overriding it: if the skill "
+                        f"under test carried out its own task inline, the 1 is "
+                        f"right and the routing pass is hiding a real defect."
                     ),
                     "name": dd["name"],
                     "score": dd.get("score"),
-                    "rationale": orig,
+                    "rationale": dd.get("rationale") or "",
                 })
-            dd["score"] = 2
-            dd["rationale"] = (
-                "[deterministic-deference] this negative test is decided by "
-                "routing: the skill under test is absent from skills_invoked and "
-                "an accepted skill fired, so this dimension cannot FAIL on the "
-                "routing. Floored from the judge's 1 to 2 (partial). "
-                "Original judge rationale: " + orig
-            )
     return dimensions
 
 
@@ -1236,6 +1312,15 @@ def _summarize_changes(file_changes, tool_calls, *, include_content: bool = Fals
     # judge can grade a deliverable persisted to a file rather than echoed in
     # the chat reply (e.g. proof-conclusion's narrative_markdown). Per-field and
     # overall truncation bound the judge prompt.
+    #
+    # `array_sample=None` on this path only. The block's own header calls this
+    # "the persisted artifact — grade this", and the default cap of 3 was
+    # applying at every depth, so a nested `items[]` inside one added entry was
+    # cut to its first three while the entry list itself looked complete — a
+    # plan with 9 items showed 3, under a heading telling the judge it was
+    # looking at the artifact. The tool-response and before-state paths keep the
+    # cap: there the first few hits show argument quality and the rest is noise.
+    # `_CHANGES_STRING_MAX` and the overall prompt bound still apply.
     content_lines = [
         "",
         "Content written to files (the persisted artifact — grade this, not just the chat reply):",
@@ -1243,7 +1328,9 @@ def _summarize_changes(file_changes, tool_calls, *, include_content: bool = Fals
     for fname, fdiff in file_changes.items():
         for section, sdiff in fdiff.get("diff", {}).items():
             for entry in sdiff.get("added", []):
-                summarized = _summarize_response(entry, string_max=_CHANGES_STRING_MAX)
+                summarized = _summarize_response(
+                    entry, string_max=_CHANGES_STRING_MAX, array_sample=None
+                )
                 content_lines.append(
                     f"  {fname} / {section} (added): "
                     f"{json.dumps(summarized, ensure_ascii=False)}"
@@ -1255,7 +1342,7 @@ def _summarize_changes(file_changes, tool_calls, *, include_content: bool = Fals
                     for field, change in entry.get("changed_fields", {}).items()
                 }
                 summarized = _summarize_response(
-                    after_values, string_max=_CHANGES_STRING_MAX
+                    after_values, string_max=_CHANGES_STRING_MAX, array_sample=None
                 )
                 content_lines.append(
                     f"  {fname} / {section} (modified {eid}, new values): "

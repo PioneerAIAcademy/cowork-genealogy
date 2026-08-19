@@ -20,14 +20,15 @@
 
 import { join } from "path";
 import { readFile, mkdir } from "fs/promises";
-import { validateParsed } from "../validation/validator.js";
+import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import type { ValidationError } from "../validation/types.js";
 import {
   atomicWriteJson,
   atomicWriteBoth,
   backupIfExists,
   isInsideProject,
+  readProjectJson,
+  formatIssues,
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { exampleHints } from "./research-append-examples.js";
@@ -59,6 +60,19 @@ interface SectionConfig {
   singleton?: {
     allowedFields: string[];
     stampTimestamp?: { field: string; kind: "date" | "datetime" };
+    /** Fields that may be SET once and never rewritten — legal while the
+     *  current value is absent or empty, refused after. `init-project` fills
+     *  these at creation; nothing else may change them afterwards.
+     *
+     *  **What this constrains is the system, not the researcher.** A human who
+     *  mistyped their objective edits `research.json` directly; the raw-write
+     *  lockdown binds the agent, never a text editor, and preventing a person
+     *  from editing their own files is explicitly not a goal of this layer. So
+     *  this needs no override path — the override is the file itself. */
+    initOnlyFields?: string[];
+    /** Create the object when the document has no such section yet, rather than
+     *  refusing. Only for sections a project may legitimately lack. */
+    createWhenAbsent?: boolean;
   };
 }
 
@@ -93,7 +107,41 @@ const SECTIONS: Record<string, SectionConfig> = {
   // GPS cycle; the tool stamps `project.updated` (iso_date).
   project: {
     prefix: "",
-    singleton: { allowedFields: ["status"], stampTimestamp: { field: "updated", kind: "date" } },
+    singleton: {
+      // `status` is freely updatable — proof-conclusion flips it to "completed".
+      // The other three are set ONCE, by whoever creates the project, and never
+      // rewritten: the ownership declaration's own statement of the harm is "a
+      // skill rewrites the objective, and every later skill plans against a
+      // changed goal it never agreed to."
+      allowedFields: ["status", "objective", "title", "subject_person_ids"],
+      initOnlyFields: ["objective", "title", "subject_person_ids"],
+      stampTimestamp: { field: "updated", kind: "date" },
+    },
+  },
+  // The researcher profile: written at project creation by init-project, and
+  // correctable afterwards — NOT init-only. Every skill reads
+  // `narration_guidance` from here, and a researcher who picked the wrong
+  // experience level needs a route that is not "start over".
+  //
+  // `createWhenAbsent` because a project may legitimately have no profile: the
+  // section is optional in the schema, and an agent must never fabricate one
+  // (a project was observed created with "intermediate experience, no paid
+  // subscriptions" that the user was never asked for). So the object appears on
+  // the first real write rather than being seeded with invented values.
+  //
+  // No `stampTimestamp`: the schema is `additionalProperties: false` with no
+  // timestamp field, so stamping one fails validation on every write.
+  researcher_profile: {
+    prefix: "",
+    singleton: {
+      allowedFields: [
+        "experience_level",
+        "subscriptions",
+        "narration_guidance",
+        "intended_audience",
+      ],
+      createWhenAbsent: true,
+    },
   },
 };
 
@@ -181,6 +229,45 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
   ];
 }
 
+/** Warn — NOT reject — a `confident` person_evidence link that records no numeric
+ *  `match_score` (#1006). `same_person` returns a 0–1 float and `match_score` is
+ *  the field meant to carry it, yet 94% of historical person_evidence writes leave
+ *  it unset: identity is asserted, never scored. This ships WARN-ONLY — the fault
+ *  text rides the response's `validation.warnings` and the write still succeeds —
+ *  because a hard reject on day one would break ~94% of runs and the hosted path
+ *  at once. Graduating it to a rejection is a separate decision (needs @DallanQ),
+ *  the same shadow-then-graduate discipline as guardrail-enforcement-spec.md §7.
+ *
+ *  Gated on `confidence === "confident"`, mirroring `personEvidenceInvariants`:
+ *  `research_append` is a stateless write that cannot see the tree or the session,
+ *  so "brand-new tree person" is not knowable here, but the confidence claim is —
+ *  and a confident identity is exactly the one that should carry the score behind
+ *  it. The correct response is to call `same_person` on the pairing and record its
+ *  score — NOT to lower the confidence to silence the warning. Confidence is the
+ *  correlation judgment; `match_score` is the number behind it, and downgrading the
+ *  first to escape a warning about the second games a genealogical claim (and can
+ *  slip a link under the `confident` epistemic-gate reject above). A link that
+ *  genuinely cannot be scored (no comparable FamilySearch persona) keeps
+ *  `match_score: null` and the confidence its analysis supports. A present number
+ *  does not prove `same_person` ran — same trust posture the `confidence` field
+ *  itself takes — but only a real 0–1 score clears the warning: a number outside the
+ *  range does not, since the runtime validator (`validator.ts`, which does not load
+ *  the JSON Schema) leaves the schema's 0–1 bound unenforced at the write. */
+function personEvidenceScoreWarnings(entry: any): string[] {
+  if (entry.confidence !== "confident") return [];
+  const score = entry.match_score;
+  if (typeof score === "number" && score >= 0 && score <= 1) return [];
+  return [
+    `person_evidence link for person '${entry.person_id}' (assertion '${entry.assertion_id}') ` +
+      `claims confidence 'confident' but records no usable match_score (got ` +
+      `${JSON.stringify(entry.match_score)} — expected a number 0–1). A confident identity should ` +
+      `carry the same_person score behind it (a number 0–1). Call same_person on this pairing ` +
+      `and record its score. If no comparable FamilySearch persona exists to score against, ` +
+      `leave match_score null and keep the confidence your correlation analysis supports — do ` +
+      `not lower it to silence this. The link was still written — this is a warning, not a rejection.`,
+  ];
+}
+
 /** Non-blocking nudge (issue #1478). Returns a warning when THIS call appended a
  *  source and the resulting project holds ≥THRESHOLD sources but zero assertions;
  *  null otherwise. Gated on a real (non-noop) `sources` append so it fires at the
@@ -223,6 +310,64 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
  *  the *current* op is the one setting/changing `tier` (see call site), so an
  *  unrelated update to an already-legitimately-proved entry (proved in an
  *  earlier, separate call) never re-triggers it. */
+/**
+ * A question may only be marked `resolved` once a proof summary exists for it.
+ *
+ * **Why this gate exists.** `status: "resolved"` is the orchestrator's stop
+ * condition, and today it is a free write: neither `proof-conclusion` nor
+ * `question-selection` claims it — each body explicitly points at the other —
+ * so it lands in whichever skill happens to be running when the agent decides
+ * it is done. Measured over 154 committed e2e runs: 150 questions reached
+ * `resolved`, written from **11 different skill contexts**.
+ *
+ * **Why it reads `research` LIVE, unlike the sibling completion gates.** Those
+ * snapshot before the call so a batch cannot satisfy its own precondition. That
+ * discipline is right when the precondition must be met by a *different actor* —
+ * a `gps-mentor` verdict is not something the writer may append for itself. Here
+ * the summary and the resolve are two halves of one author's single conclusion,
+ * and requiring separate calls would be friction with no safety gained.
+ * Measured: 7 of 154 resolve-calls append the summary in the same batch, and all
+ * 7 order the summary first — so a pre-call snapshot would refuse 7 correct
+ * writes while live state refuses none.
+ *
+ * The general rule, worth stating once: **snapshot when the precondition must be
+ * satisfied by someone else; read live when it is the same author's own prior
+ * step.**
+ *
+ * **Both spellings of resolved are gated, deliberately.** A question carries a
+ * `status` enum AND a `resolved` date, and gating only `status` left the date as
+ * an ungated synonym: an agent refused here could write `resolved: "2026-01-02"`
+ * with `status` untouched, and `project_context` would then report the question
+ * resolved (`question-state.ts` reads `Boolean(question.resolved)`) while this
+ * gate had never seen it. That is the shape ADR-0011 warns about — a blocked
+ * agent improvises toward another route — and it is not hypothetical: the same
+ * inconsistency is why the completion gate's `q.resolved === true` was dead.
+ *
+ * **Cost, measured before it was written: zero, on both arms.** Replayed over
+ * the committed corpus: 142 writes set `status: "resolved"` and 4 set the date
+ * alone; **none of the 146** would have been refused. All 150 questions that
+ * reached `resolved` have a proof summary.
+ *
+ * Deliberately NOT gated here, because both would refuse real runs and a false
+ * deny is the asymmetric risk: a prior exhaustive declaration (14 of 150 lack
+ * one) and non-empty `resolution_assertion_ids` (9 of 150 are empty). Both are
+ * surfaced advisorily by `project_context`'s `questionStatuses` instead.
+ */
+function questionResolvedInvariants(entry: any, research: any): string[] {
+  const resolving = entry?.status === "resolved" || Boolean(entry?.resolved);
+  if (!resolving) return [];
+  const summaries = Array.isArray(research?.proof_summaries) ? research.proof_summaries : [];
+  if (summaries.some((s: any) => s?.question_id === entry?.id)) return [];
+  return [
+    `question ${entry?.id ?? "(no id)"} cannot be marked resolved (via \`status\` or the ` +
+      "`resolved` date): no proof summary references it. A question is resolved by concluding " +
+      "it — invoke proof-conclusion, which writes the proof_summaries entry carrying " +
+      "question_id. A question closed with nothing found is still concluded: write a " +
+      "`not_proved` summary saying so. If you are writing both in one batch, order the " +
+      "proof_summaries append BEFORE this update.",
+  ];
+}
+
 function proofSummaryInvariants(
   entry: any,
   preCallExhaustiveDeclared: Map<string, boolean> | undefined,
@@ -346,21 +491,11 @@ class ResearchAppendError extends Error {
   }
 }
 
-function formatIssues(issues: ValidationError[]): string[] {
-  return issues.map((e) => (e.path ? `${e.path}: ${e.message}` : e.message));
-}
-
 async function readJson(projectPath: string, filename: string): Promise<any> {
-  let text: string;
   try {
-    text = await readFile(join(projectPath, filename), "utf-8");
-  } catch {
-    throw new ResearchAppendError(`${filename} not found in projectPath`);
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new ResearchAppendError(`${filename} is not valid JSON`);
+    return await readProjectJson(projectPath, filename);
+  } catch (e) {
+    throw new ResearchAppendError(e instanceof Error ? e.message : String(e));
   }
 }
 
@@ -615,6 +750,8 @@ function applyOne(
   op: ResearchAppendOp,
   appendedThisBatch?: Set<string>,
   preCallExhaustiveDeclared?: Map<string, boolean>,
+  preCallCritiquedSummaryIds?: Set<string>,
+  preCallBlockingConflicts?: any[],
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -637,9 +774,17 @@ function applyOne(
     if (!op.fields || typeof op.fields !== "object") {
       throw new ResearchAppendError("update requires a `fields` object");
     }
-    const target = research[section];
+    let target = research[section];
     if (!target || typeof target !== "object" || Array.isArray(target)) {
-      throw new ResearchAppendError(`research.json '${section}' is missing or not an object`);
+      // An optional section a project may legitimately lack (researcher_profile)
+      // is created by its first write. A required one that is missing is a
+      // malformed document, and saying so beats silently manufacturing it.
+      if (config.singleton.createWhenAbsent && target === undefined) {
+        target = {};
+        research[section] = target;
+      } else {
+        throw new ResearchAppendError(`research.json '${section}' is missing or not an object`);
+      }
     }
     const allowed = new Set(config.singleton.allowedFields);
     const rejected = Object.keys(op.fields).filter((k) => !allowed.has(k));
@@ -647,6 +792,25 @@ function applyOne(
       throw new ResearchAppendError(
         `field(s) not updatable on '${section}': ${rejected.join(", ")} ` +
           `(allowed: ${config.singleton.allowedFields.join(", ")})`,
+      );
+    }
+    // Set-once: legal while the current value is absent or empty, refused after.
+    // Emptiness is per-type — "" for a string, [] for a list — because
+    // `subject_person_ids` is seeded as an empty array rather than omitted.
+    const initOnly = new Set(config.singleton.initOnlyFields ?? []);
+    const alreadySet = Object.keys(op.fields).filter((k) => {
+      if (!initOnly.has(k)) return false;
+      const current = (target as Record<string, unknown>)[k];
+      if (current === undefined || current === null) return false;
+      if (typeof current === "string") return current.trim() !== "";
+      if (Array.isArray(current)) return current.length > 0;
+      return true;
+    });
+    if (alreadySet.length > 0) {
+      throw new ResearchAppendError(
+        `field(s) already set on '${section}' and not rewritable: ${alreadySet.join(", ")}. ` +
+          "These are written once, when the project is created, because every later step " +
+          "plans against them. To change one, edit research.json directly.",
       );
     }
     // Completed-gate (GPS Component 4, deterministic): refuse to mark the
@@ -667,13 +831,28 @@ function applyOne(
       // blocks_question_ids was also empty (issue #1001).
       const isIdentityConflict = (c: any) =>
         typeof c.identity_question === "string" && c.identity_question.trim() !== "";
-      const blocking = (Array.isArray(research.conflicts) ? research.conflicts : []).filter(
+      const live = (Array.isArray(research.conflicts) ? research.conflicts : []).filter(
         (c: any) =>
           c &&
           c.status === "unresolved" &&
           (isIdentityConflict(c) ||
             (Array.isArray(c.blocks_question_ids) && c.blocks_question_ids.length > 0)),
       );
+      // Refuse on the UNION of the pre-call and live blocking sets, not on live
+      // alone. `applyOne` mutates `research` in place per op, so a live-only read
+      // let one batch resolve the conflict and complete in the same call — the
+      // gate grading its own homework, the exact defect the sibling mentor gate
+      // below was built to avoid. The union is strictly stronger than either
+      // half: the snapshot catches a conflict settled mid-batch, and the live
+      // read still catches one this batch newly introduced.
+      const blockingIds = new Set<string>(live.map((c: any) => c.id));
+      const blocking = [...live];
+      for (const c of preCallBlockingConflicts ?? []) {
+        if (!blockingIds.has(c.id)) {
+          blockingIds.add(c.id);
+          blocking.push(c);
+        }
+      }
       if (blocking.length > 0) {
         const names = blocking
           .map((c: any) => `${c.id} (${c.conflict_type ?? "conflict"}${isIdentityConflict(c) ? ", identity" : ""})`)
@@ -683,7 +862,80 @@ function applyOne(
             "GPS Component 4 requires conflicting evidence to be resolved before concluding. " +
             "Run conflict-resolution for each — set its status to 'resolved' (with " +
             "independence_analysis, weighing_analysis, and resolution_rationale) or 'moot' " +
-            "(with a rationale for why it no longer matters) — then retry completing the project.",
+            "(with a rationale for why it no longer matters) — then retry completing the project. " +
+            "A conflict settled in the same batch as this update does not count; complete it in " +
+            "a later call.",
+        );
+      }
+
+      // Mentor gate: every proof summary backing a RESOLVED question must carry
+      // a gps-mentor `proof-critique` verdict before the project may complete.
+      //
+      // A pure foreign key — proof_summaries[].question_id joins the question
+      // (a question entry carries no ps_id), and evaluations[].target_id joins
+      // the summary. It reads only data already in memory, so unlike the
+      // sibling same_person gate there is nothing to invent and no new field to
+      // persist.
+      //
+      // **The critique set is the PRE-CALL snapshot, deliberately.** Read live,
+      // one batch could append its own proof-critique evaluation and consume it
+      // for the completed transition in the same call — the gate would grade its
+      // own homework. Same discipline as proofSummaryInvariants.
+      //
+      // Prose was tried on exactly this rule and lost: research/SKILL.md has
+      // carried "verify BOTH gates, in order — do not write completed until both
+      // hold" since PR #1029, and 23% of completed runs in the committed e2e
+      // corpus reach `completed` with at least one uncritiqued summary anyway.
+      //
+      // A superseded verdict does not count: if a newer verdict replaced it, the
+      // newer one is itself in evaluations[] and satisfies the gate; if nothing
+      // replaced it, the critique genuinely no longer stands.
+      // `resolved` is an ISO date string or null, never a boolean, so the old
+      // `=== true` was unsatisfiable dead code — the same shape as the
+      // `identity_question === true` bug 60 lines above. `Boolean(q.resolved)`
+      // is what `question-state.ts` already uses to answer the same question,
+      // and the two disagreeing is how a question could read as resolved to
+      // `project_context` while this gate never counted it. Widening the set can
+      // only require MORE critiques; measured over the corpus it newly refuses
+      // nothing (4 date-only resolved questions, all already critiqued).
+      const resolvedQuestionIds = new Set(
+        (Array.isArray(research.questions) ? research.questions : [])
+          .filter((q: any) => q && (q.status === "resolved" || Boolean(q.resolved)))
+          .map((q: any) => q.id),
+      );
+      const uncritiqued = (
+        Array.isArray(research.proof_summaries) ? research.proof_summaries : []
+      )
+        .filter(
+          (ps: any) =>
+            ps &&
+            resolvedQuestionIds.has(ps.question_id) &&
+            !preCallCritiquedSummaryIds?.has(ps.id),
+        )
+        .map((ps: any) => ps.id);
+      // A resolved question with NO proof summary passes vacuously — but that
+      // state is no longer REACHABLE through this tool, so the vacuous pass now
+      // only covers documents seeded that way (fixtures, hand-authored state).
+      // `questionResolvedInvariants` refuses the transition, on either spelling
+      // of resolved, unless a summary references the question.
+      //
+      // That is the deliberate resolution of a contradiction these two gates
+      // used to carry: this comment claimed "closed a side question with no
+      // candidates" as a legitimate terminal state while its sibling made it
+      // unwritable. Concluding is the only way to close a question — a question
+      // closed with nothing found gets a `not_proved` summary saying so, which
+      // is a GPS-valid finding rather than a non-answer. Neither state occurs in
+      // the committed corpus: 0 of 154 runs ever reach `resolved` without a
+      // summary, seeded or produced.
+      if (uncritiqued.length > 0) {
+        throw new ResearchAppendError(
+          `cannot set project.status = "completed": proof summary/summaries ` +
+            `${uncritiqued.join(", ")} have no gps-mentor verdict. ` +
+            "Every proof summary backing a resolved question must be critiqued before " +
+            "the project is completed. Invoke the gps-mentor agent with " +
+            "focus: proof-critique on each id above — it appends the verdict to " +
+            "evaluations[] — then retry completing the project. A verdict appended in " +
+            "the same batch as this update does not count; complete it in a later call.",
         );
       }
     }
@@ -816,6 +1068,27 @@ function applyOne(
 
   // Section invariants the project validator does not already enforce.
   const invariantErrors: string[] = [];
+  // Warn-only advisories: collected here, surfaced on the successful response's
+  // validation.warnings (via the caller's flatMap over AppliedOp.warnings), never
+  // thrown. Distinct from invariantErrors, which reject the write (#1006).
+  const opWarnings: string[] = [];
+  // A question may only reach `resolved` once a proof summary for it exists.
+  // Same "only when THIS op sets it" discipline as the proof_summaries block
+  // below — an unrelated update to an already-resolved question must not
+  // re-trigger it.
+  if (section === "questions") {
+    // `resolved` is checked alongside `status` because it is the other spelling
+    // of the same transition — see questionResolvedInvariants. Omitting it here
+    // would leave the gate reachable only through one of the two fields.
+    const fields = op.fields ?? {};
+    const resolutionTouchedThisOp =
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(fields, "status") ||
+      Object.prototype.hasOwnProperty.call(fields, "resolved");
+    if (resolutionTouchedThisOp) {
+      invariantErrors.push(...questionResolvedInvariants(resultEntry, research));
+    }
+  }
   if (section === "conflicts") invariantErrors.push(...conflictInvariants(resultEntry));
   // One active plan per question — enforced on append OR an update that
   // (re)sets status to "active"; the helper no-ops for non-active entries.
@@ -826,6 +1099,9 @@ function applyOne(
   // to "confident"; the helper no-ops for every other confidence value.
   if (section === "person_evidence") {
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
+    // Warn-only: a confident link that records no match_score (#1006). Rides the
+    // response warnings; does not block the write.
+    opWarnings.push(...personEvidenceScoreWarnings(resultEntry));
   }
   // Only when THIS op is the one setting/changing tier — append always sets it;
   // update only when `fields` names it. An unrelated update to an entry already
@@ -841,7 +1117,13 @@ function applyOne(
     throw new ResearchAppendError(invariantErrors);
   }
 
-  return { section, op: op.op, entryId, arrayIndex };
+  return {
+    section,
+    op: op.op,
+    entryId,
+    arrayIndex,
+    warnings: opWarnings.length > 0 ? opWarnings : undefined,
+  };
 }
 
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────
@@ -1491,11 +1773,41 @@ export async function researchAppend(
         q?.exhaustive_declaration?.declared === true,
       ]),
     );
+    // Same discipline, for the mentor gate on project.status = "completed":
+    // the proof summaries that already carry a gps-mentor proof-critique
+    // verdict, as of BEFORE this call's ops. Snapshotting is what stops a
+    // single batch appending the verdict and consuming it for the completion
+    // transition in one call.
+    // Same discipline again, for the conflict half of the completion gate: the
+    // conflicts that were blocking BEFORE this call's ops. Without it a single
+    // batch could resolve the conflict and complete in one go.
+    const preCallBlockingConflicts = (
+      Array.isArray(research.conflicts) ? research.conflicts : []
+    ).filter(
+      (c: any) =>
+        c &&
+        c.status === "unresolved" &&
+        ((typeof c.identity_question === "string" && c.identity_question.trim() !== "") ||
+          (Array.isArray(c.blocks_question_ids) && c.blocks_question_ids.length > 0)),
+    );
+    const preCallCritiquedSummaryIds = new Set<string>(
+      (Array.isArray(research.evaluations) ? research.evaluations : [])
+        .filter(
+          (e: any) =>
+            e && e.focus === "proof-critique" && !e.superseded_by && typeof e.target_id === "string",
+        )
+        .map((e: any) => e.target_id as string),
+    );
     // Heal legacy tree shapes in memory; the healed document is what a
     // composite write persists (same one-shot migration as tree_edit). A
     // research-only call still never writes the tree.
     const sanitized = sanitizeTree(await readJson(projectPath, "tree.gedcomx.json"));
     const tree = sanitized.tree;
+    // Pre-mutation snapshot (applyOne and prepareOps mutate research and tree
+    // in place): block only on errors THIS call introduces, not pre-existing
+    // drift in a section it never touched (#1572).
+    const beforeResearch = structuredClone(research);
+    const beforeTree = structuredClone(tree);
 
     let ops: ResearchAppendOp[];
     if (isBatch) {
@@ -1555,7 +1867,16 @@ export async function researchAppend(
     const appendedThisBatch = new Set<string>();
     for (let i = 0; i < ops.length; i++) {
       try {
-        applied.push(applyOne(research, ops[i], appendedThisBatch, preCallExhaustiveDeclared));
+        applied.push(
+          applyOne(
+            research,
+            ops[i],
+            appendedThisBatch,
+            preCallExhaustiveDeclared,
+            preCallCritiquedSummaryIds,
+            preCallBlockingConflicts,
+          ),
+        );
       } catch (e) {
         if (e instanceof ResearchAppendError) {
           // Identify the failing op; nothing has been written.
@@ -1575,7 +1896,7 @@ export async function researchAppend(
     let validationWarnings: string[] = [];
     let filesWritten: string[] = [];
     if (anyMutation) {
-      const validation = await validateParsed(research, tree, { projectPath });
+      const validation = await validateIntroduced({ research: beforeResearch, tree: beforeTree }, { research, tree }, { projectPath });
       if (!validation.valid) {
         // Shape errors surface here (the document validator, not applyOne), so
         // this is the site the evaluations/known_holdings rejections land on.
@@ -1713,6 +2034,7 @@ export const RESEARCH_APPEND_SECTIONS = [
   "known_holdings",
   "localities",
   "project",
+  "researcher_profile",
 ] as const;
 
 export const researchAppendSchema = {

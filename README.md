@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 47 tools.
+The MCP server exposes 48 tools.
 
 ### FamilySearch records and places
 
@@ -98,6 +98,7 @@ way project state changes.
 
 | Tool | Purpose | Auth |
 |------|---------|------|
+| `project_create` | Create a new project — writes `research.json` and `tree.gedcomx.json` together, validated against each other. The only way to bring a project into being | None |
 | `research_append` | Append to a `research.json` section (questions, sources, assertions, person_evidence, conflicts, proof_summaries), single or batched `ops` | None |
 | `research_query` | Paged, filtered read of a `research.json` section without loading the whole document | None |
 | `research_log_append` | Append a research-log entry, including a search's result sidecar | None |
@@ -317,13 +318,20 @@ Specs: `docs/specs/research-schema-spec.md` and
 
 ## Researcher profile
 
-When you start a new project with `init-project`, the skill asks you two
-short questions:
+When you start a new project with `init-project`, the skill asks three
+short questions in one opening turn:
 
-1. **Experience level** — *just starting out / some research under my
+1. **Research objective** — what you are trying to find out.
+2. **Experience level** — *just starting out / some research under my
    belt / experienced / professional or certified*.
-2. **Paid subscriptions** — Ancestry, MyHeritage, FindMyPast,
-   Newspapers.com, GenealogyBank, FindAGrave-Plus, other, or none.
+3. **Access** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
+   GenealogyBank, FindAGrave-Plus, other, or none. Free access counts:
+   a FamilySearch affiliate library or a partner subscription is access,
+   not "none".
+
+None of the three blocks. Answer what you like; anything you skip takes
+a documented default, and the summary at the end names what was
+defaulted so you can correct it.
 
 The answers are written to a `researcher_profile` section of
 `research.json` alongside the rest of your project state. Every skill
@@ -335,9 +343,8 @@ reads from it:
   `narration_guidance` string that the skill reads and follows
   verbatim — one place defines the mapping (`init-project`), one place
   stores it (`research.json`), every skill reads it.
-- **Subscriptions** guide `search-external-sites` URL prioritization.
-  Subscribed sites land first; unsubscribed sites are still searchable
-  but flagged.
+- **Access** guides `search-external-sites` URL prioritization. Sites
+  you can reach land first; the rest are still searchable but flagged.
 
 The profile takes under a minute to capture. It lives in
 `research.json` because Cowork sessions are ephemeral but the project
@@ -485,7 +492,7 @@ then narrows the search.
 
 What's shipped:
 
-- **47 MCP tools.** See the tables above for the full catalog, by category:
+- **48 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
 - **27 shipped skills.** Full GPS research cycle from `init-project`
@@ -498,9 +505,9 @@ What's shipped:
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `image-reader` (fast/cheap page OCR),
   and `image-reader-opus` (explicit-only, higher-accuracy re-read).
-- **Researcher profile.** `init-project` captures experience level and
-  paid subscriptions in two questions; every skill adapts narration
-  density to the answer.
+- **Researcher profile.** `init-project` asks the research objective,
+  experience level, and site access together in one non-blocking opening
+  turn; every skill adapts narration density to the answer.
 - **Eval harness** under `eval/` for skill regression testing.
 
 ## Developer and contributor docs

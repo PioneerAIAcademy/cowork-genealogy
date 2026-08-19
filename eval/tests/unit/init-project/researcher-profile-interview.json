@@ -4,7 +4,7 @@
     "skill": "init-project",
     "name": "Researcher-profile interview maps answers to normalized profile fields",
     "type": "positive",
-    "description": "Single-turn decomposition: the user states their experience level and subscriptions in the first message, so the two-question profile interview can be answered without a follow-up. Tests that init-project maps the answers to experience_level, normalizes subscriptions to the canonical enum, and stores the verbatim narration_guidance for that level.",
+    "description": "Single-turn decomposition: the user states their experience level and subscriptions in the first message, so the opening-turn profile interview can be answered without a follow-up. Tests that init-project maps the answers to experience_level, normalizes subscriptions to the canonical enum, and stores the verbatim narration_guidance for that level.",
     "tags": ["initialization", "researcher-profile", "interview", "normalization", "narration-guidance", "single-turn-decomposition"]
   },
   "input": {

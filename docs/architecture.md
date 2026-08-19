@@ -649,8 +649,9 @@ they have different fixes, and only one of them is a description problem.
 2. **Did the user address the skill directly?** Then it *is* the `description`
    (§3.2). Add the missed utterance to `eval/tests/unit/<skill>/` as a trigger
    query **first** — `make optimize-skill SKILL=<name>` builds its query set from
-   that corpus, so tuning against an empty set does nothing. It makes real paid
-   model calls, is not in CI, and only *proposes* text you then apply by hand.
+   that corpus, and **refuses to run** when that set has no positives (it used to
+   report a pass without scoring anything). It makes real paid model calls, is not
+   in CI, and only *proposes* text you then apply by hand.
 3. **Did it trigger and then do the wrong thing?** That is not a triggering
    failure — classify it with §3.6.
 
@@ -961,7 +962,10 @@ search tool → disk → log-append and never round-trips through the model**
 `research_append` (and its lane-scoped variant `extraction_append`, §5.3),
 `research_log_append`, `tree_edit`, `tree_correct`, `merge_tree_persons`,
 `tree_forget`, and `materialize_facts` each **validate the whole project in
-memory and write nothing on failure.** The tools assign all ids; callers never
+memory and block only on errors the call itself introduces** — pre-existing
+schema drift in a section the call does not touch is demoted to a warning rather
+than freezing the write (`validation/introduced-errors.ts`); a call that
+introduces an error still writes nothing. The tools assign all ids; callers never
 predict them.
 
 `validate_research_schema` is a read-only check for files touched *outside* the
@@ -1301,6 +1305,7 @@ skips silently**, which looks identical to passing.
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
 | **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names | whether a granted tool actually **binds**; skips silently with no API key |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
+| `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions, and `runs_per_test` is pinned to 1, so within-test flakiness is out of reach |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus` reports recall, compliance and violations, not spend — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
 
 ### 9.2 The lint layer

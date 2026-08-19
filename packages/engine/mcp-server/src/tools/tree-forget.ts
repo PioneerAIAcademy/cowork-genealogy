@@ -32,11 +32,12 @@ import type {
   SimplifiedFact,
   SimplifiedRelationship,
 } from "../types/gedcomx.js";
-import { validateParsed } from "../validation/validator.js";
+import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import { atomicWriteJson, readProjectJson, fileExists } from "../utils/project-io.js";
-import { formatIssues } from "./merge-shared.js";
+import { atomicWriteJson, readProjectJson, fileExists, formatIssues } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { getStandardDate } from "../utils/fact-helpers.js";
+import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "../utils/date-helpers.js";
 
 /** The pre-removal snapshot. Dot-prefixed on purpose — it still holds the
  *  answer, and both the agent's file browsing and the feedback bundler skip
@@ -50,6 +51,9 @@ export type ForgetSelectorKind =
   | "birth-of"
   | "death-of"
   | "facts-of"
+  | "facts-before"
+  | "facts-after"
+  | "facts-between"
   | "person"
   | "fact"
   | "relationship";
@@ -61,6 +65,9 @@ const SELECTOR_KINDS: ReadonlySet<string> = new Set<ForgetSelectorKind>([
   "birth-of",
   "death-of",
   "facts-of",
+  "facts-before",
+  "facts-after",
+  "facts-between",
   "person",
   "fact",
   "relationship",
@@ -91,6 +98,11 @@ export interface ForgetSelector {
   factType?: string;
   factId?: string;
   relationshipId?: string;
+  /** facts-before/facts-after: the year threshold. */
+  year?: number;
+  /** facts-between: the inclusive range bounds. */
+  fromYear?: number;
+  toYear?: number;
 }
 
 export interface TreeForgetInput {
@@ -220,16 +232,316 @@ function factIdsOfTypes(
   return ids;
 }
 
+function personOwnsFact(tree: SimplifiedGedcomX, personId: string, factId: string): boolean {
+  const person = persons(tree).find((p) => p.id === personId);
+  return (person?.facts ?? []).some((f) => f.id === factId);
+}
+
+/** A person and a relationship are two different id spaces — nothing in the
+ *  tree or its validator guarantees they stay disjoint (a relationship's own
+ *  id is never checked against person ids). factKey below carries this so an
+ *  id shared across the two spaces can't collide the same way a bare factId
+ *  did across persons (#1574). */
+type OwnerKind = "person" | "relationship";
+
+interface FactOwner {
+  kind: OwnerKind;
+  id: string;
+}
+
+/**
+ * Every person or relationship whose facts array contains a fact with this
+ * literal id. FamilySearch does not guarantee a fact id is unique across
+ * persons (#1574) — more than one owner here is the collision this function
+ * exists to surface, not a bug in this function.
+ */
+function findFactOwners(tree: SimplifiedGedcomX, factId: string): FactOwner[] {
+  const owners: FactOwner[] = [];
+  for (const p of persons(tree)) {
+    if ((p.facts ?? []).some((f) => f.id === factId)) owners.push({ kind: "person", id: p.id ?? "" });
+  }
+  for (const r of relationships(tree)) {
+    if ((r.facts ?? []).some((f) => f.id === factId)) {
+      owners.push({ kind: "relationship", id: r.id ?? "" });
+    }
+  }
+  return owners;
+}
+
+/** A request to check, later, whether a resolved fact's id ALSO exists on
+ *  some other owner. Deferred rather than resolved on the spot: at the point
+ *  any one selector resolves, the full removal set is not known yet, and an
+ *  "other" owner sharing this id can turn out to be removed too, by a later
+ *  match in the same tree-wide sweep or by a different selector in the same
+ *  call (found by review — checking only against the pre-removal tree named
+ *  an owner as untouched when this same call was also removing its copy). */
+interface PendingFactNotice {
+  ownerKind: OwnerKind;
+  ownerId: string;
+  factId: string;
+  label: string;
+}
+
+function pendingFactNotice(
+  ownerKind: OwnerKind,
+  ownerId: string,
+  factId: string,
+  label: string,
+): PendingFactNotice {
+  return { ownerKind, ownerId, factId, label };
+}
+
+/** pendingFactNotice over a batch of ids resolved for one person — the
+ *  `birth-of`/`death-of`/`facts-of`/`parents-of`/`spouses-of` shape, where
+ *  every id shares one owner. */
+function pendingFactNoticesForIds(
+  pid: string,
+  ids: Iterable<string>,
+  label: string,
+): PendingFactNotice[] {
+  const notices: PendingFactNotice[] = [];
+  for (const f of ids) {
+    notices.push(pendingFactNotice("person", pid, f, label));
+  }
+  return notices;
+}
+
+/**
+ * Turns each pending check into a final "also exists on" notice. Called
+ * against the tree AFTER removal is fully applied (persons/relationships
+ * reassigned to their kept sets, matched facts already pruned from every
+ * survivor), so `findFactOwners` only ever finds an owner that genuinely
+ * still has its own copy — an owner also removed this same call, whether by
+ * this selector's own batch or a different one, has already lost its copy
+ * by this point and cannot be named (found by review; see PendingFactNotice
+ * for why this can't be resolved any earlier). Advisory only — removal
+ * above is already correctly scoped regardless (#1574).
+ *
+ * Deduped on the final string, not on the pending entry's own (ownerKind,
+ * ownerId, factId): two DIFFERENT removed facts (e.g. two different
+ * people's own copies of the same shared id) can legitimately resolve to
+ * the identical sentence once the tree state they're checked against is
+ * the same for both — same factId, same post-removal "who else has it"
+ * answer. And two selectors in the same call can independently rediscover
+ * the exact same fact (e.g. each spouse's own person-scoped date selector
+ * reaching their shared Couple relationship). Either way the second
+ * occurrence tells the researcher nothing the first didn't already say
+ * (found by review).
+ */
+function resolveFactSharingNotices(
+  tree: SimplifiedGedcomX,
+  pending: readonly PendingFactNotice[],
+): string[] {
+  const seen = new Set<string>();
+  const notices: string[] = [];
+  for (const { ownerKind, ownerId, factId, label } of pending) {
+    const others = findFactOwners(tree, factId).filter(
+      (o) => !(o.kind === ownerKind && o.id === ownerId),
+    );
+    if (others.length === 0) continue;
+    const named = others.map((o) => `${o.id} (${o.kind})`).join(", ");
+    const notice = `${label} fact '${factId}' also exists on: ${named}`;
+    if (seen.has(notice)) continue;
+    seen.add(notice);
+    notices.push(notice);
+  }
+  return notices;
+}
+
+/**
+ * Encodes an (ownerKind, ownerId, factId) triple as one Set entry.
+ * JSON-encoded so no delimiter choice can collide with a real id's own
+ * content. ownerKind is load-bearing, not decoration: a person and a
+ * relationship can share a literal id (nothing checks the two id spaces
+ * against each other), so (ownerId, factId) alone would silently reunite the
+ * exact cross-owner leak this scoping exists to prevent, just across a
+ * different pair of fields (#1574).
+ */
+function factKey(ownerKind: OwnerKind, ownerId: string, factId: string): string {
+  return JSON.stringify([ownerKind, ownerId, factId]);
+}
+
+// ─── date-range selectors (#1574) ───────────────────────────────────────────
+//
+// `forget-and-rederive/SKILL.md` tells the agent NOT to read tree.gedcomx.json
+// — the file holds the very answer it is about to go looking for. A date
+// cutoff like "before 1850" therefore has to resolve to fact ids INSIDE the
+// tool, never by the agent reading dates itself. These three selectors are
+// that resolution: the year the caller passes is their own input, not tree
+// data, so echoing it back in an error is not a redaction violation; a fact's
+// OWN date value is never read into anything the caller receives.
+
+interface DatedFact {
+  ownerKind: OwnerKind;
+  ownerId: string;
+  fact: SimplifiedFact;
+  earliest: number;
+  latest: number;
+}
+
+/**
+ * Every fact in scope that has a parseable date, with its earliest/latest
+ * possible year. Scoped to one person's own facts when personId is given,
+ * or every person AND relationship in the tree otherwise (the "tree-wide
+ * variant" #1574 asks for). `skipped` counts facts in scope whose date
+ * could not be parsed at all — they never match any date predicate, and the
+ * caller is told the count (not which facts) so a dry run's silence about
+ * them is never mistaken for "there were none."
+ */
+function datedFacts(
+  tree: SimplifiedGedcomX,
+  personId: string | undefined,
+): { entries: DatedFact[]; skipped: number } {
+  const entries: DatedFact[] = [];
+  let skipped = 0;
+  const consider = (ownerKind: OwnerKind, ownerId: string, facts: SimplifiedFact[] | undefined) => {
+    for (const fact of facts ?? []) {
+      // An id-less fact could never be targeted by factKey (its id would
+      // collapse to the same "" as every other id-less fact on this owner),
+      // so it must never become a match candidate here either — the same
+      // guard factIdsOfType already applies for birth-of/facts-of. Not
+      // currently reachable (validate-before-persist requires every fact to
+      // carry an id), but this keeps the two resolution paths' guarantees
+      // identical rather than relying on that being true forever.
+      if (!fact.id) {
+        skipped += 1;
+        continue;
+      }
+      const std = getStandardDate(fact);
+      if (std === null) {
+        skipped += 1;
+        continue;
+      }
+      const earliest = earliestYear(std);
+      const latest = latestYear(std);
+      if (earliest === null || latest === null) {
+        skipped += 1;
+        continue;
+      }
+      // `Bef`/`Aft` are open-ended on one side. date-helpers' FUDGE caps
+      // that open side at a +/-10 year heuristic meant for the warning
+      // checks, not a real bound: "Aft 1850" could be any later year, not
+      // just up to 1860. Treating the fudge as a real bound let facts-before
+      // sweep a fact that was never confidently before the threshold (found
+      // by review) — unbounded on the open side instead, so the confident-
+      // match predicates never fire there. earliestIsUnbounded/
+      // latestIsUnbounded (not a bare string test) so a `Bet X and Y` range
+      // where the modifier sits on only ONE side never voids the OTHER
+      // side's already-real bound (found by an independent follow-up
+      // review — a whole-string test over-refuses, never over-deletes, but
+      // it's cheap to get exactly right while this function is open).
+      entries.push({
+        ownerKind,
+        ownerId,
+        fact,
+        earliest: earliestIsUnbounded(std) ? -Infinity : earliest,
+        latest: latestIsUnbounded(std) ? Infinity : latest,
+      });
+    }
+  };
+  if (personId !== undefined) {
+    consider("person", personId, persons(tree).find((p) => p.id === personId)?.facts);
+    // A marriage date normally lives on the Couple relationship, not on
+    // either spouse's own record — the same reason spouses-of sweeps a
+    // person-level Marriage fact in the other direction. Skipping this
+    // would let a person-scoped date selector report success while a
+    // dated fact the person is a party to stays in the tree, unremoved
+    // and unmentioned (found by review).
+    const { rels } = relatives(tree, personId, "spouses");
+    for (const rid of rels) {
+      const rel = relationships(tree).find((r) => r.id === rid);
+      consider("relationship", rid, rel?.facts);
+    }
+  } else {
+    for (const p of persons(tree)) consider("person", p.id ?? "", p.facts);
+    for (const r of relationships(tree)) consider("relationship", r.id ?? "", r.facts);
+  }
+  return { entries, skipped };
+}
+
+function requireYear(value: unknown, sel: string, field: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new TreeForgetError(`'${sel}' requires a numeric ${field}`);
+  }
+  return value;
+}
+
 // ─── selector resolution ─────────────────────────────────────────────────────
 
 interface Targets {
   persons: Set<string>;
+  /** (ownerKind, ownerId, factId) triples, each encoded by factKey.
+   *  Owner-scoped so a fact id FamilySearch handed to more than one person
+   *  (#1574) is only ever removed from the owner a selector actually
+   *  resolved. */
   facts: Set<string>;
   relationships: Set<string>;
+  /** One entry per resolved fact (birth-of/death-of/facts-of/parents-of/
+   *  spouses-of/facts-before/facts-after/facts-between) whose literal id
+   *  might also exist on a different owner. Not resolved to a final notice
+   *  until every selector's removals are known (see PendingFactNotice). */
+  pendingFactNotices: PendingFactNotice[];
+  /** Advisory strings already final at the point they're added (e.g. the
+   *  skipped-date count) — these need no later resolution. */
+  factSharingNotices: string[];
+}
+
+/**
+ * A `forget` call may not test different year thresholds for the same
+ * date-range selector kind in one call. `resolveSelectors` processes entries
+ * sequentially and throws on the first with zero matches, naming its own
+ * threshold — so a single dry run packing a year-ladder into one entry (e.g.
+ * facts-before at 1888, 1886, 1884, 1883 for the same person) reveals
+ * exactly which threshold failed first, pinning a fact's date from ONE call
+ * (found by review; reproduced: pins an exact year from one call, tighter
+ * than the repeated-separate-calls form forget-and-rederive/SKILL.md closes
+ * by instruction — that instruction cannot reach this in-call form, since it
+ * is one tool invocation, not a series).
+ *
+ * Scoped to the THRESHOLD, not the selector kind: two entries of the same
+ * kind sharing the identical year (or fromYear/toYear pair) are an ordinary
+ * multi-person sweep — e.g. `facts-before(E1, 1850)` and
+ * `facts-before(E2, 1850)` in one call — and stay allowed. Only a
+ * *difference* in threshold for the same kind is the probe shape.
+ */
+function rejectVaryingDateThresholds(forget: ForgetSelector[]): void {
+  // A `Map<string, string>` typed value would make `JSON.stringify(undefined)`
+  // (itself the JS `undefined`, not a string — a malformed entry with no
+  // `year` at all) collide with "never seen this kind before" if compared
+  // against `undefined` directly. `.has()` distinguishes them. Note this guard
+  // runs BEFORE the main loop, so a malformed entry alongside a valid one
+  // reports the threshold error rather than `requireYear`'s missing-year error
+  // — misleading, but only on input that is already invalid.
+  const seenThreshold = new Map<string, string | undefined>();
+  for (const entry of forget) {
+    if (typeof entry !== "object" || entry === null) continue; // reported by the main loop below
+    const kind = entry.selector;
+    if (kind !== "facts-before" && kind !== "facts-after" && kind !== "facts-between") continue;
+    const threshold =
+      kind === "facts-between"
+        ? JSON.stringify([entry.fromYear, entry.toYear])
+        : JSON.stringify(entry.year);
+    if (seenThreshold.has(kind) && seenThreshold.get(kind) !== threshold) {
+      throw new TreeForgetError(
+        `forget: multiple '${kind}' selectors with different year thresholds in one call ` +
+          `are not allowed — the response would reveal which threshold a fact's date falls ` +
+          `between. Use one threshold per call.`,
+      );
+    }
+    seenThreshold.set(kind, threshold);
+  }
 }
 
 function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Targets {
-  const t: Targets = { persons: new Set(), facts: new Set(), relationships: new Set() };
+  rejectVaryingDateThresholds(forget);
+
+  const t: Targets = {
+    persons: new Set(),
+    facts: new Set(),
+    relationships: new Set(),
+    pendingFactNotices: [],
+    factSharingNotices: [],
+  };
 
   for (let i = 0; i < forget.length; i++) {
     const entry = forget[i];
@@ -275,7 +587,12 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
         }
         people.forEach((p) => t.persons.add(p));
         rels.forEach((r) => t.relationships.add(r));
-        redundantFactIds.forEach((f) => t.facts.add(f));
+        redundantFactIds.forEach((f) => t.facts.add(factKey("person", pid, f)));
+        // Same heads-up as birth-of/death-of/facts-of (#1574): a swept
+        // Parents/Marriage/Divorce/Annulment fact id is not guaranteed
+        // unique to this person either.
+        const redundantLabel = kind === "parents-of" ? "Parents" : "Marriage/Divorce/Annulment";
+        t.pendingFactNotices.push(...pendingFactNoticesForIds(pid, redundantFactIds, redundantLabel));
         break;
       }
       case "birth-of":
@@ -288,7 +605,8 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
             `'${kind}' matched nothing — ${pid} has no ${factType} fact.`,
           );
         }
-        ids.forEach((f) => t.facts.add(f));
+        ids.forEach((f) => t.facts.add(factKey("person", pid, f)));
+        t.pendingFactNotices.push(...pendingFactNoticesForIds(pid, ids, factType));
         break;
       }
       case "facts-of": {
@@ -303,7 +621,76 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
             `'facts-of' matched nothing — ${pid} has no ${factType} fact.`,
           );
         }
-        ids.forEach((f) => t.facts.add(f));
+        ids.forEach((f) => t.facts.add(factKey("person", pid, f)));
+        t.pendingFactNotices.push(...pendingFactNoticesForIds(pid, ids, factType));
+        break;
+      }
+      case "facts-before":
+      case "facts-after":
+      case "facts-between": {
+        // personId is OPTIONAL here — omitted means tree-wide, the variant
+        // #1574 asks for alongside the person-scoped form. `!== undefined`,
+        // not a truthy check: an explicitly-passed personId: "" must still
+        // reach requirePerson's own "requires personId" error, the same as
+        // every mandatory-personId selector already gives it — not silently
+        // read as "omitted" and fall through to a full tree-wide sweep on
+        // what is otherwise a destructive tool (found by review).
+        const pid =
+          entry.personId !== undefined ? requirePerson(tree, entry.personId, kind) : undefined;
+
+        let matches: (earliest: number, latest: number) => boolean;
+        let label: string;
+        if (kind === "facts-before") {
+          const year = requireYear(entry.year, kind, "year");
+          // Confident match only: the fact's LATEST possible year must be
+          // before the threshold, or a date that might actually be at/after
+          // it would be swept by a selector named "before" — the same
+          // over-broad-removal shape #1574 exists to eliminate, just moved
+          // from id-collision onto date uncertainty.
+          matches = (_earliest, latest) => latest < year;
+          label = `before ${year}`;
+        } else if (kind === "facts-after") {
+          const year = requireYear(entry.year, kind, "year");
+          matches = (earliest, _latest) => earliest > year;
+          label = `after ${year}`;
+        } else {
+          const fromYear = requireYear(entry.fromYear, kind, "fromYear");
+          const toYear = requireYear(entry.toYear, kind, "toYear");
+          if (fromYear > toYear) {
+            throw new TreeForgetError(`'facts-between' requires fromYear <= toYear`);
+          }
+          // Confident match: the fact's entire possible range must fit
+          // inside [fromYear, toYear], not merely overlap it.
+          matches = (earliest, latest) => earliest >= fromYear && latest <= toYear;
+          label = `between ${fromYear} and ${toYear}`;
+        }
+
+        const { entries, skipped } = datedFacts(tree, pid);
+        const matched = entries.filter((e) => matches(e.earliest, e.latest));
+        if (matched.length === 0) {
+          throw new TreeForgetError(
+            `'${kind}' matched nothing${pid ? ` for ${pid}` : ""} — no fact's date is ` +
+              `confidently ${label}.`,
+          );
+        }
+        for (const m of matched) {
+          const factId = m.fact.id ?? "";
+          t.facts.add(factKey(m.ownerKind, m.ownerId, factId));
+          // The fact's own type here, not the predicate label — consistent
+          // with birth-of/facts-of's notices, and reads naturally ("Residence
+          // fact ... also exists on"), whereas the predicate belongs in the
+          // "matched nothing" error above, where restating it explains why.
+          t.pendingFactNotices.push(
+            pendingFactNotice(m.ownerKind, m.ownerId, factId, m.fact.type ?? "Unknown"),
+          );
+        }
+        if (skipped > 0) {
+          t.factSharingNotices.push(
+            `${skipped} fact(s) in scope had no date this tool could compare and were ` +
+              `not considered for '${kind}' — including any whose standard_date is not ` +
+              `GEDCOM-canonical form (e.g. '1883-12-31' rather than '31 Dec 1883').`,
+          );
+        }
         break;
       }
       case "person": {
@@ -312,7 +699,37 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
       }
       case "fact": {
         if (!entry.factId) throw new TreeForgetError("'fact' requires factId");
-        t.facts.add(entry.factId);
+        const factId = entry.factId;
+        if (entry.personId !== undefined) {
+          // Caller named the owner explicitly — the only way to disambiguate
+          // a factId FamilySearch handed to more than one person (#1574).
+          // `!== undefined`, not a truthy check: personId: "" must still
+          // reach requirePerson's error rather than silently falling through
+          // to the ambiguous-owner path below (found by review).
+          const pid = requirePerson(tree, entry.personId, kind);
+          if (!personOwnsFact(tree, pid, factId)) {
+            throw new TreeForgetError(
+              `'fact' factId '${factId}' does not belong to person '${pid}'.`,
+            );
+          }
+          t.facts.add(factKey("person", pid, factId));
+        } else {
+          const owners = findFactOwners(tree, factId);
+          if (owners.length > 1) {
+            const named = owners.map((o) => `${o.id} (${o.kind})`).join(", ");
+            throw new TreeForgetError(
+              `'fact' factId '${factId}' exists on more than one owner: ${named} — ` +
+                `add personId to target whichever one is a person.`,
+            );
+          }
+          // owners.length === 0 uses the "" sentinel: no real owner has that
+          // id, so applyForget's existing "not in the tree" check still
+          // fires below, unchanged. owners.length === 1 resolves unambiguously,
+          // carrying its real kind so it can't be confused with a same-id
+          // owner of the other kind.
+          const owner = owners[0];
+          t.facts.add(factKey(owner?.kind ?? "person", owner?.id ?? "", factId));
+        }
         break;
       }
       case "relationship": {
@@ -333,7 +750,12 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
  * Remove the targets in place, cascading relationships off removed persons.
  * Returns the redacted summary — how many of what kind went, never a value.
  */
-function applyForget(tree: SimplifiedGedcomX, t: Targets): TreeForgetRemoved {
+interface ApplyForgetResult {
+  removed: TreeForgetRemoved;
+  factSharingNotices: string[];
+}
+
+function applyForget(tree: SimplifiedGedcomX, t: Targets): ApplyForgetResult {
   // A removed person takes every relationship touching them, or the tree is
   // left with links pointing at people who no longer exist.
   const cascaded = new Set(
@@ -353,34 +775,68 @@ function applyForget(tree: SimplifiedGedcomX, t: Targets): TreeForgetRemoved {
   const factsByType: Record<string, number> = {};
   const unmatched = new Set(t.facts);
 
-  const pruneFacts = (owner: { facts?: SimplifiedFact[] }): void => {
+  const pruneFacts = (ownerKind: OwnerKind) => (owner: { id?: string; facts?: SimplifiedFact[] }): void => {
     if (owner.facts === undefined) return;
+    const ownerId = owner.id ?? "";
     owner.facts = owner.facts.filter((f) => {
       const fid = f.id ?? "";
-      if (!t.facts.has(fid)) return true;
+      const key = factKey(ownerKind, ownerId, fid);
+      if (!t.facts.has(key)) return true;
       const ftype = f.type ?? "Unknown";
       factsByType[ftype] = (factsByType[ftype] ?? 0) + 1;
-      unmatched.delete(fid);
+      unmatched.delete(key);
       return false;
     });
   };
-  keptPersons.forEach(pruneFacts);
-  keptRels.forEach(pruneFacts);
+  keptPersons.forEach(pruneFacts("person"));
+  keptRels.forEach(pruneFacts("relationship"));
+
+  // A fact selector can target a fact whose owner is ALSO being wholesale-
+  // removed by a person/relationship selector in the same call (e.g. `person:
+  // I1` + `fact: <I1's own Birth fact>`). pruneFacts only ever visits KEPT
+  // owners, so that fact's key is never touched above — but the request is
+  // already satisfied, since the owner and everything on it is going away
+  // regardless. Treating it as "not in the tree" would be wrong: the fact
+  // unambiguously existed the instant before this call. Not counted in
+  // factsByType either, consistent with a removed owner's OTHER facts, which
+  // were never individually counted to begin with.
+  for (const key of [...unmatched]) {
+    const [ownerKind, ownerId] = JSON.parse(key) as [OwnerKind, string, string];
+    const ownerAlsoRemoved =
+      (ownerKind === "person" && t.persons.has(ownerId)) ||
+      (ownerKind === "relationship" && deadRels.has(ownerId));
+    if (ownerAlsoRemoved) unmatched.delete(key);
+  }
 
   if (unmatched.size > 0) {
+    // t.facts holds factKey-encoded (ownerKind, ownerId, factId) triples —
+    // decode back to the bare factId for the message, matching the
+    // pre-#1574 wording.
+    const danglingFactIds = [...unmatched].map((k) => JSON.parse(k)[2] as string);
     throw new TreeForgetError(
-      `these fact ids are not in the tree: ${[...unmatched].sort().join(", ")}`,
+      `these fact ids are not in the tree: ${danglingFactIds.sort().join(", ")}`,
     );
   }
 
   tree.persons = keptPersons;
   tree.relationships = keptRels;
 
+  // Resolved against the tree AS IT NOW STANDS, post-removal — see
+  // resolveFactSharingNotices for why that is the point every pending check
+  // must wait for.
+  const factSharingNotices = [
+    ...resolveFactSharingNotices(tree, t.pendingFactNotices),
+    ...t.factSharingNotices,
+  ];
+
   return {
-    persons: removedPersons,
-    relationships: removedRels,
-    relationshipsCascaded: [...cascaded].filter((r) => !t.relationships.has(r)).length,
-    factsByType,
+    removed: {
+      persons: removedPersons,
+      relationships: removedRels,
+      relationshipsCascaded: [...cascaded].filter((r) => !t.relationships.has(r)).length,
+      factsByType,
+    },
+    factSharingNotices,
   };
 }
 
@@ -412,15 +868,18 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     const sanitized = sanitizeTree(raw);
     const tree = sanitized.tree;
     const research = await readJson(projectPath, "research.json");
+    // Post-heal, pre-removal snapshot: block only on errors THIS call
+    // introduces, not pre-existing drift in a section it never touches (#1572).
+    const beforeTree = structuredClone(tree);
 
     const targets = resolveSelectors(tree, forget);
-    const removed = applyForget(tree, targets);
+    const { removed, factSharingNotices } = applyForget(tree, targets);
 
     // Validate the WHOLE project before persisting. The realistic failure is a
     // dangling person reference from research.json (person_evidence,
     // subject_person_ids, timelines, known holdings) — this tool does not
     // repair those, by design, so the error names them and the caller decides.
-    const validation = await validateParsed(research, tree, { projectPath });
+    const validation = await validateIntroduced({ research, tree: beforeTree }, { research, tree }, { projectPath });
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }
@@ -432,7 +891,10 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
       remaining: { persons: persons(tree).length, relationships: relationships(tree).length },
       filesWritten: [],
       restoreFile: null,
-      validation: { valid: true, warnings: sanitized.warnings },
+      validation: {
+        valid: true,
+        warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...factSharingNotices],
+      },
     };
     if (dryRun) return result;
 
@@ -483,7 +945,24 @@ export const treeForgetSchema = {
     "removing a person also removes every relationship touching them, so " +
     "forgetting a father can cut siblings, his own parents, and his marriage " +
     "(reported as `relationshipsCascaded`). Fact-level selectors (birth-of, " +
-    "death-of, facts-of, fact) never cascade.\n" +
+    "death-of, facts-of, facts-before, facts-after, facts-between, fact) " +
+    "never cascade.\n" +
+    "\n" +
+    "FamilySearch does not guarantee a fact id is unique across owners. " +
+    "Removal is always scoped correctly to the owner a selector resolved — " +
+    "but if a resolved fact's id ALSO exists on a different owner not being " +
+    "touched, `validation.warnings` says so (ids only, never a value). Not " +
+    "an error; just tell the researcher.\n" +
+    "\n" +
+    "For a date-bounded request ('forget everything before 1850'), use " +
+    "facts-before/facts-after/facts-between with a year, NOT your own reading " +
+    "of tree.gedcomx.json's dates — the whole point of these selectors is " +
+    "that the year threshold is your own input, never a value read off the " +
+    "tree. Only a fact whose date is CONFIDENTLY inside the requested range " +
+    "is removed; an uncertain or ranged date that only partly overlaps the " +
+    "boundary is left alone rather than guessed. A fact with no parseable " +
+    "date is never matched either; validation.warnings reports how many " +
+    "were skipped this way (a count, not which ones).\n" +
     "\n" +
     "Validates the whole project before writing; on failure nothing is written " +
     "and `{ok: false, errors}` comes back — most often because research.json " +
@@ -516,6 +995,9 @@ export const treeForgetSchema = {
                 "birth-of",
                 "death-of",
                 "facts-of",
+                "facts-before",
+                "facts-after",
+                "facts-between",
                 "person",
                 "fact",
                 "relationship",
@@ -525,16 +1007,26 @@ export const treeForgetSchema = {
                 "them (cascades). parents-of ALSO removes the person's own `Parents` " +
                 "documentary facts, and spouses-of ALSO removes the person's own " +
                 "`Marriage`/`Divorce`/`Annulment` facts, so the forgotten conclusion does not " +
-                "survive as a fact on the subject. birth-of/death-of: that person's Birth/Death facts. " +
-                "facts-of: that person's facts of one type (needs factType). person: one " +
-                "person, cascading every relationship touching them. fact/relationship: one " +
-                "specific entity by id.",
+                "survive as a fact on the subject. birth-of/death-of: that person's Birth/Death " +
+                "facts. facts-of: that person's facts of one type (needs factType). " +
+                "facts-before/facts-after: that person's facts confidently before/after a " +
+                "year, including a Couple relationship they are a party to (needs year). " +
+                "facts-between: that person's facts confidently within an inclusive year " +
+                "range, same reach (needs fromYear, toYear). All three date selectors " +
+                "omit personId to apply tree-wide instead of to one person. person: one " +
+                "person, cascading every relationship touching them. fact: one fact by id " +
+                "(add personId if that id exists on more than one person). relationship: " +
+                "one relationship by id.",
             },
             personId: {
               type: "string",
               description:
                 "Tree person id (the `id` field, not a FamilySearch PID) — required for " +
-                "parents-of, children-of, spouses-of, birth-of, death-of, facts-of, person.",
+                "parents-of, children-of, spouses-of, birth-of, death-of, facts-of, person. " +
+                "Optional for fact: FamilySearch does not guarantee a fact id is unique " +
+                "across persons, so pass this to say which person's copy to remove when " +
+                "the tool reports the id exists on more than one. Optional for " +
+                "facts-before/facts-after/facts-between: omit to apply tree-wide.",
             },
             factType: {
               type: "string",
@@ -545,6 +1037,20 @@ export const treeForgetSchema = {
             relationshipId: {
               type: "string",
               description: "Relationship id — required for the `relationship` selector.",
+            },
+            year: {
+              type: "number",
+              description:
+                "Year threshold for facts-before (strictly before) or facts-after (strictly " +
+                "after). Your own input, not a value read from the tree.",
+            },
+            fromYear: {
+              type: "number",
+              description: "facts-between: inclusive start year of the range.",
+            },
+            toYear: {
+              type: "number",
+              description: "facts-between: inclusive end year of the range. Must be >= fromYear.",
             },
           },
           required: ["selector"],

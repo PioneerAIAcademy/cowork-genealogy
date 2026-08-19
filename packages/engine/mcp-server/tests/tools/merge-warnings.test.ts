@@ -241,7 +241,7 @@ describe("calculateWarnings (merge mode, distinct mobs)", () => {
     const w = calculateWarnings(target, candidate, target, false).find(
       (x) => x.issueType === "hasSameCensus",
     );
-    expect(w?.severity).toBe("error");
+    expect(w?.severity).toBe("contradiction");
     expect(w?.mobRole).toBe("candidate");
     expect(w?.relatedPersonId).toBe("C1");
   });
@@ -364,6 +364,36 @@ describe("merge_warnings tool", () => {
   const exists = async (name: string) =>
     access(join(dir, name)).then(() => true, () => false);
 
+  it("a drift-only project does not make the dry-run report a rejection (#1572 flip)", async () => {
+    // The project carries a pre-existing additionalProperties drift on `project`;
+    // the proposed merge itself is valid. Before #1572 the dry-run returned
+    // { ok: false } — reading the pre-existing drift as "a real merge would be
+    // rejected here". Now the merge is clean, so it returns { ok: true }: the
+    // drift is not the merge's fault. merge_warnings' { ok: false } is an answer
+    // ("would be rejected"), not a tool failure, so the flip is the point.
+    const research = { ...minimalResearch, project: { ...minimalResearch.project, legacy_field: "x" } };
+    await writeProject(
+      {
+        persons: [{ id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] }],
+        relationships: [],
+        sources: [],
+      },
+      research,
+    );
+
+    const result = await mergeWarnings({
+      projectPath: dir,
+      candidateGedcomx: {
+        persons: [{ id: "C1", gender: "Male", names: [{ id: "NC", given: "John", surname: "Smith" }] }],
+        relationships: [],
+        sources: [],
+      },
+      merges: [["I1", "C1"]],
+    });
+
+    expect(result.ok).toBe(true);
+  });
+
   it("blocks a planted impossibility: a census event after the tree person's death", async () => {
     await writeProject({
       persons: [
@@ -402,7 +432,7 @@ describe("merge_warnings tool", () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    const errors = result.warnings.filter((w) => w.severity === "error");
+    const errors = result.warnings.filter((w) => w.severity === "contradiction");
     expect(errors.length).toBeGreaterThan(0);
     expect(result.warnings.map((w) => w.issueType)).toContain(
       "hasEventsOutsideLifespanFar",
@@ -462,7 +492,7 @@ describe("merge_warnings tool", () => {
     if (!result.ok) return;
     const sameCensus = result.warnings.find((w) => w.issueType === "hasSameCensus");
     expect(sameCensus).toBeDefined();
-    expect(sameCensus?.severity).toBe("error");
+    expect(sameCensus?.severity).toBe("contradiction");
   });
 
   it("returns a clean result for a coherent merge", async () => {
@@ -503,7 +533,7 @@ describe("merge_warnings tool", () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.warnings.filter((w) => w.severity === "error")).toEqual([]);
+    expect(result.warnings.filter((w) => w.severity === "contradiction")).toEqual([]);
   });
 
   it("returns { ok: false, errors } for a malformed merge (unknown id)", async () => {

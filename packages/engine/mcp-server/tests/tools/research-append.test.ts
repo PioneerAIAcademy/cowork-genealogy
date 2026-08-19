@@ -113,6 +113,32 @@ describe("research_append (Phase 1)", () => {
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
 
+  it("a pre-existing unrelated drift does not block a write; it rides as a warning (#1572)", async () => {
+    // `project` carries a legacy additionalProperties key this call never touches
+    // (the call updates an assertion). Before #1572 the whole-document validation
+    // froze the write; now it succeeds and the drift is surfaced as a warning.
+    const research = baseResearch();
+    (research.project as any).legacy_field = "legacy drift";
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { date: "1850" },
+    });
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // Surfaced as a single summary line (a count + a pointer), not one warning
+    // per drifted field — see the #1476-wall note in validateIntroduced.
+    expect(r.validation.warnings.join(" ")).toMatch(/1 pre-existing schema error/);
+    expect(r.validation.warnings.join(" ")).toMatch(/validate_research_schema/);
+    // the update landed
+    expect((await readResearch()).assertions.find((a: any) => a.id === "a_001").date).toBe("1850");
+  });
+
   // Same class as record_search's recordType: `SECTIONS[section]` and
   // `EXAMPLES[section]` walk the prototype chain, so "constructor" indexed out
   // `Object` — truthy, so `!config` failed to reject — and the rejection path
@@ -1025,8 +1051,135 @@ describe("research_append (project singleton section)", () => {
     expect(r.errors.join(" ")).toMatch(/only op 'update'/);
   });
 
-  it("rejects a field that isn't allowed on project (e.g. objective)", async () => {
+  it("creates researcher_profile on first write when the section is absent", async () => {
+    // The seed never fabricates a profile — an observed run invented
+    // "intermediate experience, no paid subscriptions" the user was never asked
+    // for — so the object has to appear on the first REAL write. Without
+    // createWhenAbsent the singleton branch throws "missing or not an object"
+    // and the section stays writable by nothing.
+    const r0 = baseResearch();
+    expect((r0 as Record<string, unknown>).researcher_profile).toBeUndefined();
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: {
+        experience_level: "professional",
+        subscriptions: ["Ancestry"],
+        narration_guidance: "Terse; assume GPS fluency.",
+      },
+    } as never);
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.researcher_profile.experience_level).toBe("professional");
+    expect(research.researcher_profile.narration_guidance).toBe("Terse; assume GPS fluency.");
+  });
+
+  it("lets a researcher correct their profile afterwards — it is not set-once", async () => {
     await writeProject();
+    const first = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: { experience_level: "novice" },
+    } as never);
+    expect(first.ok).toBe(true);
+    const second = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: { experience_level: "professional" },
+    } as never);
+    expect(second.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.researcher_profile.experience_level).toBe("professional");
+  });
+
+  it("stamps no timestamp on researcher_profile", async () => {
+    // Its schema is additionalProperties:false with no timestamp field, so a
+    // stamp would fail validation on every write.
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "researcher_profile",
+      op: "update",
+      fields: { intended_audience: "family" },
+    } as never);
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(Object.keys(research.researcher_profile)).toEqual(["intended_audience"]);
+  });
+
+  it("rejects a field that is on no allow-list at all (e.g. created)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { created: "2020-01-01" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/not updatable on 'project'/);
+  });
+
+  it("sets objective, title and subject_person_ids once on a fresh project", async () => {
+    // The whole point of the widening: init-project holds no writer tool today
+    // and creates the project with a bare `Write`, which the lockdown denies.
+    const r0 = baseResearch();
+    r0.project = { ...r0.project, objective: "", subject_person_ids: [] };
+    delete (r0.project as Record<string, unknown>).title;
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: {
+        objective: "Identify the parents of John Smith",
+        title: "Smith parentage",
+        subject_person_ids: ["I1"],
+      },
+    } as never);
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.project.objective).toBe("Identify the parents of John Smith");
+    expect(research.project.title).toBe("Smith parentage");
+    expect(research.project.subject_person_ids).toEqual(["I1"]);
+  });
+
+  it("treats an empty string and an empty array as unset, not as set", async () => {
+    // `subject_person_ids` is seeded as `[]` rather than omitted, so a
+    // truthiness test would have refused the very first legitimate write.
+    const r0 = baseResearch();
+    r0.project = { ...r0.project, objective: "   ", subject_person_ids: [] };
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { objective: "Real objective", subject_person_ids: ["I1"] },
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("still allows status through, which is not set-once", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { status: "paused" },
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("refuses to rewrite an objective that is already set", async () => {
+    // `objective` moved onto allowedFields so init-project can write it once.
+    // The refusal it now hits is the set-once one, not the not-allowed one —
+    // the ownership declaration's stated harm is a skill REWRITING the goal
+    // every later step plans against.
+    await writeProject(); // baseResearch() seeds objective: "Test"
     const r = await researchAppend({
       projectPath: dir,
       section: "project",
@@ -1035,7 +1188,9 @@ describe("research_append (project singleton section)", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/not updatable on 'project'/);
+    expect(r.errors.join(" ")).toMatch(/already set on 'project' and not rewritable: objective/);
+    const research = await readResearch();
+    expect(research.project.objective).toBe("Test"); // nothing written
   });
 
   it("rejects an invalid status value (whole-project validation)", async () => {
@@ -1146,6 +1301,274 @@ describe("research_append (project singleton section)", () => {
         description: "Minor date variance between two censuses; does not bear on any open question.",
       }),
     );
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
+  // ── Completed-gate: the mentor verdict (issue #1490 phase 1) ──
+  // Prose carried this rule since PR #1029 ("verify BOTH gates, in order — do
+  // not write completed until both hold") and 23% of completed runs in the
+  // committed e2e corpus reach `completed` with at least one uncritiqued
+  // summary anyway. This is that rule at the write boundary.
+
+  const resolvedQuestion = () => ({
+    id: "q_001",
+    question: "Who were the parents of John Smith?",
+    rationale: "Objective-answering question.",
+    selection_basis: "objective_decomposition",
+    priority: "high",
+    status: "resolved",
+    depends_on: [],
+    unblocks: [],
+    created: "2026-01-01",
+    resolved: "2026-01-02",
+    resolution_assertion_ids: ["a_001"],
+    exhaustive_declaration: { declared: false, log_entry_ids: [], stop_criteria: {} },
+  });
+  const summary = (id = "ps_001", questionId = "q_001") => ({
+    id,
+    question_id: questionId,
+    tier: "proved",
+    vehicle: "summary",
+    supporting_assertion_ids: ["a_001"],
+    resolved_conflict_ids: [],
+    exhaustive_search_summary: "Every identified repository was searched.",
+    narrative_markdown: "The evidence establishes the parentage.",
+  });
+  const critique = (targetId = "ps_001", extra: Record<string, unknown> = {}) => ({
+    id: "ev_001",
+    focus: "proof-critique",
+    target_id: targetId,
+    target_type: "proof_summary",
+    verdict: "looks_solid",
+    file_path: "evaluations/proof-critique-ps_001.json",
+    timestamp: "2026-01-02T00:00:00Z",
+    superseded_by: null,
+    ...extra,
+  });
+  const withProof = (evaluations: Record<string, unknown>[] = []) => {
+    const r = baseResearch();
+    r.questions.push(resolvedQuestion());
+    r.proof_summaries.push(summary());
+    r.evaluations.push(...evaluations);
+    return r;
+  };
+
+  // ── questions: `resolved` requires a proof summary ──
+  // `status: "resolved"` is the orchestrator's stop condition and was a free
+  // write — neither proof-conclusion nor question-selection claims it, and it
+  // landed from 11 different skill contexts across the corpus. Measured cost of
+  // this gate: 0 refusals across all 150 questions that ever reached resolved.
+
+  it("refuses status resolved when no proof summary references the question", async () => {
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { status: "resolved" },
+    } as never);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/q_001/);
+    expect(msg).toMatch(/proof-conclusion/);
+    const research = await readResearch();
+    expect(research.questions[0].status).toBe("open"); // nothing written
+  });
+
+  it("refuses the `resolved` DATE with no summary, not just the status", async () => {
+    // The two fields are one transition. Gating only `status` left the date as
+    // an ungated synonym, so an agent refused above could reach the same state
+    // by writing the date instead — and `project_context` would then report the
+    // question resolved while this gate had never seen it.
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { resolved: "2026-01-02" },
+    } as never);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/q_001/);
+    const research = await readResearch();
+    expect(research.questions[0].resolved).toBe(null); // nothing written
+  });
+
+  it("allows status resolved once a summary references it", async () => {
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
+    r0.proof_summaries.push(summary());
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { status: "resolved" },
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows the summary and the resolve in ONE batch, summary first", async () => {
+    // Reads live state on purpose: the summary and the resolve are two halves of
+    // one author's conclusion, unlike the mentor verdict which must come from a
+    // different actor. 7 of 154 corpus resolve-calls do exactly this, all with
+    // the summary ordered first — a pre-call snapshot would refuse all 7.
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
+    await writeProject(r0);
+    // tier `possible` — a proved/probable summary additionally requires a prior
+    // exhaustive declaration, which is a different invariant than the one under
+    // test and would mask it.
+    const { id: _id, ...summaryEntry } = { ...summary(), tier: "possible" };
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "proof_summaries", op: "append", entry: summaryEntry as never },
+        { section: "questions", op: "update", entryId: "q_001", fields: { status: "resolved" } },
+      ],
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not re-trigger on an unrelated update to an already-resolved question", async () => {
+    // The op must be the one SETTING status, or every later edit to a resolved
+    // question re-runs the gate — the same discipline the tier invariant uses.
+    const r0 = baseResearch();
+    r0.questions.push(resolvedQuestion());
+    r0.proof_summaries.push(summary());
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { rationale: "Clarified after review." },
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
+  it("a batch cannot resolve its own blocking conflict and complete", async () => {
+    // The conflict gate used to read `research.conflicts` LIVE, and applyOne
+    // mutates in place per op — so one batch could settle the conflict and
+    // complete in the same call. Same defect the mentor gate's snapshot avoids.
+    await writeProject(withConflict(conflictBase()));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "conflicts",
+          op: "update",
+          entryId: "c_001",
+          fields: {
+            status: "resolved",
+            resolution_rationale: "The certificate names a different man.",
+            independence_analysis: "Sources are independent.",
+            weighing_analysis: "The parish register is decisive.",
+            preferred_assertion_id: "a_001",
+          },
+        },
+        { section: "project", op: "update", fields: { status: "completed" } },
+      ],
+    } as never);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/c_001/);
+    const research = await readResearch();
+    expect(research.project.status).toBe("active");
+  });
+
+  it("refuses completed when a resolved question's proof summary has no mentor verdict", async () => {
+    await writeProject(withProof());
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/cannot set project\.status/);
+    expect(msg).toMatch(/ps_001/);
+    expect(msg).toMatch(/proof-critique/);
+    const research = await readResearch();
+    expect(research.project.status).toBe("active"); // nothing written
+  });
+
+  it("allows completed once the summary carries a proof-critique verdict", async () => {
+    await writeProject(withProof([critique()]));
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not count a superseded verdict", async () => {
+    // If a newer verdict replaced it, that one is itself in evaluations[] and
+    // satisfies the gate. If nothing replaced it, the critique no longer stands.
+    await writeProject(withProof([critique("ps_001", { superseded_by: "ev_002" })]));
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/ps_001/);
+  });
+
+  it("a batch cannot satisfy its own precondition", async () => {
+    // The critique set is snapshotted before any op applies, so appending the
+    // verdict and completing in one call must still refuse. Read live, the gate
+    // would grade its own homework.
+    await writeProject(withProof());
+    // The tool assigns entry ids, so an append entry must not carry one.
+    const { id: _id, ...critiqueEntry } = critique();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "evaluations", op: "append", entry: critiqueEntry as never },
+        { section: "project", op: "update", fields: { status: "completed" } },
+      ],
+    } as never);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/ps_001/);
+    const research = await readResearch();
+    expect(research.project.status).toBe("active");
+  });
+
+  it("a resolved question with no proof summary passes vacuously, on seeded state", async () => {
+    // Still deliberate, but the state is now reachable only by seeding it:
+    // questionResolvedInvariants refuses the transition through the tool. What
+    // this pins is that an already-seeded document still LOADS and completes —
+    // a gate on a transition must not retroactively invalidate documents that
+    // predate it.
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), resolution_assertion_ids: [] });
+    await writeProject(r0);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
+  it("counts a question resolved by DATE alone toward the critique requirement", async () => {
+    // `resolved` is an ISO date or null, so the old `=== true` never matched and
+    // a date-resolved question's summary escaped the mentor gate entirely.
+    // `question-state.ts` has always read this field as truthy-or-not, so the
+    // two disagreed about the same question.
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "exhaustive_declared" });
+    r0.proof_summaries.push(summary());
+    await writeProject(r0);
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/ps_001/);
+  });
+
+  it("ignores a summary whose question is not resolved", async () => {
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
+    r0.proof_summaries.push(summary());
+    await writeProject(r0);
     const r = await complete();
     expect(r.ok).toBe(true);
   });
@@ -3107,5 +3530,84 @@ describe("research_append — sources-without-assertions nudge (#1478)", () => {
     expect(warn).toBeTruthy();
     // record-extractor is denied research_append — the nudge must not name it
     expect(warn).not.toContain("research_append");
+  });
+});
+
+// #1006: warn-only (the write still succeeds) when a `confident` person_evidence
+// link records no numeric match_score. Distinct from the epistemic gate above,
+// which REJECTS — this only adds an advisory to validation.warnings.
+describe("research_append — person_evidence match_score warning (#1006)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-pe-score-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // Clean reading (no [?]) so the epistemic gate never fires — isolates the
+  // match_score warning from the rejection path.
+  async function writeProject(personEvidence: any[] = []) {
+    const r = baseResearch();
+    r.assertions = [
+      ...r.assertions,
+      { ...validAssertion("a_010"), record_id: "rec_A", fact_type: "name", value: "Father: Thomas Flynn" },
+    ] as any;
+    r.person_evidence = personEvidence as any;
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+
+  const link = (overrides: any = {}) => ({
+    projectPath: dir,
+    section: "person_evidence",
+    op: "append" as const,
+    entry: {
+      assertion_id: "a_010",
+      person_id: "I1",
+      confidence: "confident",
+      rationale: "Names match the subject.",
+      match_score: null,
+      created: "2026-07-18",
+      superseded_by: null,
+      ...overrides,
+    },
+  });
+
+  it("warns, but still writes, when a confident link records no match_score", async () => {
+    await writeProject();
+    const r = await researchAppend(link({ match_score: null }));
+    expect(r.ok).toBe(true); // warn-only: the write is NOT blocked
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/records no usable match_score/);
+    const saved = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(saved.person_evidence).toHaveLength(1);
+  });
+
+  it("does not warn when a confident link carries a numeric match_score", async () => {
+    await writeProject();
+    const r = await researchAppend(link({ match_score: 0.92 }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/match_score/);
+  });
+
+  it("still warns when match_score is a number outside 0–1 — validator.ts does not bound the range", async () => {
+    // The runtime validator carries match_score in its field allow-list but does
+    // not enforce the schema's 0–1 minimum/maximum, so an out-of-range number is
+    // accepted at the write and would otherwise silence the warning (review #1550).
+    await writeProject();
+    const r = await researchAppend(link({ match_score: 5 }));
+    expect(r.ok).toBe(true); // not rejected — the range is unenforced at runtime
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/records no usable match_score/);
+  });
+
+  it("does not warn on a probable link with no match_score — the gate is confidence, not a downgrade route", async () => {
+    await writeProject();
+    const r = await researchAppend(link({ confidence: "probable", match_score: null }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/match_score/);
   });
 });

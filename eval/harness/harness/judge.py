@@ -43,11 +43,12 @@ JUDGE_PRICING = {
     # Per-million-token prices as of January 2026 list price. Update here
     # when Anthropic publishes new rates; the judge will pick them up.
     "claude-haiku-4-5-20251001": {"input": 1.0, "output": 5.0, "cached_input": 0.10},
-    # Sonnet 4.6 — included so a harness invoked with --judge-model
-    # claude-sonnet-4-6 doesn't silently report $0 cost.
+    # Sonnet 4.6 and Opus 4.7 are listed even though nothing selects them today:
+    # the judge model is a module constant with no CLI override, so these entries
+    # exist so that changing DEFAULT_JUDGE_MODEL cannot silently start reporting
+    # $0. An unpriced model falls back to _FALLBACK_PRICING and warns.
     "claude-sonnet-4-6": {"input": 3.0, "output": 15.0, "cached_input": 0.30},
-    # Opus 4.7 — same rationale; cost is much higher but the table prevents
-    # silent under-reporting.
+    # Opus 4.7 — cost is much higher, so the table matters more, not less.
     "claude-opus-4-7": {"input": 15.0, "output": 75.0, "cached_input": 1.50},
 }
 
@@ -141,7 +142,11 @@ _RESPONSE_MAX_DEPTH = 8  # guard against pathological nested responses
 
 
 def _summarize_response(
-    response: Any, _depth: int = 0, *, string_max: int = _RESPONSE_STRING_MAX
+    response: Any,
+    _depth: int = 0,
+    *,
+    string_max: int = _RESPONSE_STRING_MAX,
+    array_sample: int | None = _RESPONSE_ARRAY_SAMPLE,
 ) -> Any:
     """Produce a tight summary of a tool response for the judge prompt.
 
@@ -165,6 +170,15 @@ def _summarize_response(
     a graded deliverable written to a file (see orchestrator._summarize_changes)
     pass a larger value so e.g. a full proof narrative, including its
     citations, survives.
+
+    `array_sample` overrides the list cap; **None means keep every element.**
+    The default suits a tool response, where the first few hits show argument
+    quality and the rest is noise. It is wrong for a graded artifact: the block
+    the judge is told to grade as "the persisted artifact" was silently showing
+    the first 3 of a plan's items, so a note saying "read the persisted plan
+    items" pointed at a third of them. Sampling applies at every depth, so a
+    nested `items[]` inside one added entry was cut even though the entry list
+    itself was short.
     """
     if _depth >= _RESPONSE_MAX_DEPTH:
         return {"_truncated_for_depth": True, "_max_depth": _RESPONSE_MAX_DEPTH}
@@ -172,18 +186,24 @@ def _summarize_response(
         return None
     if isinstance(response, dict):
         return {
-            k: _summarize_response(v, _depth + 1, string_max=string_max)
+            k: _summarize_response(
+                v, _depth + 1, string_max=string_max, array_sample=array_sample
+            )
             for k, v in response.items()
         }
     if isinstance(response, list):
-        if len(response) <= _RESPONSE_ARRAY_SAMPLE:
+        if array_sample is None or len(response) <= array_sample:
             return [
-                _summarize_response(x, _depth + 1, string_max=string_max)
+                _summarize_response(
+                    x, _depth + 1, string_max=string_max, array_sample=array_sample
+                )
                 for x in response
             ]
         sample = [
-            _summarize_response(x, _depth + 1, string_max=string_max)
-            for x in response[:_RESPONSE_ARRAY_SAMPLE]
+            _summarize_response(
+                x, _depth + 1, string_max=string_max, array_sample=array_sample
+            )
+            for x in response[:array_sample]
         ]
         return {
             "_summary_truncated": True,

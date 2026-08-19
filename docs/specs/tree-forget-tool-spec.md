@@ -81,8 +81,11 @@ the `{ operation, ...fields }` shape `tree_edit` takes:
 | `birth-of` | `personId` | that person's Birth facts |
 | `death-of` | `personId` | that person's Death facts |
 | `facts-of` | `personId`, `factType` | that person's facts of one type (e.g. `Marriage`); `factType` matches case-insensitively |
+| `facts-before` | `year`, optional `personId` | facts confidently dated before `year` (§2.1.3); tree-wide when `personId` is omitted |
+| `facts-after` | `year`, optional `personId` | facts confidently dated after `year`; tree-wide when `personId` is omitted |
+| `facts-between` | `fromYear`, `toYear`, optional `personId` | facts confidently within the inclusive range `[fromYear, toYear]`; tree-wide when `personId` is omitted |
 | `person` | `personId` | one person, cascading every relationship touching them |
-| `fact` | `factId` | one specific fact, wherever it lives (person or Couple relationship) |
+| `fact` | `factId`, optional `personId` | one specific fact, wherever it lives (person or Couple relationship); `personId` picks the owner when the id is not unique (§2.1.2) |
 | `relationship` | `relationshipId` | one specific relationship |
 
 Selection is **structural, never by name**. The caller passes ids; the tool
@@ -125,6 +128,130 @@ to deleting facts. The ratio drifts as the corpus grows — re-measure rather th
 quoting these figures. That is the sole-carrier case working as
 designed — the fact is the only record of the conclusion — and `removed.factsByType`
 names what went, so the deletion is not silent.
+
+#### 2.1.2 A fact id is not guaranteed unique across owners
+
+FamilySearch does not guarantee a fact id is unique across persons — a real
+compiled tree returned the same literal Birth fact id for six distinct people.
+Every fact-producing selector — `birth-of`, `death-of`, `facts-of`, the
+`parents-of`/`spouses-of` redundant-fact sweep (§2.1.1), and `fact` —
+therefore resolves and removes by **(owner, factId)**, never by a bare factId:
+removing one person's fact never touches another owner's fact that happens to
+carry the same id, even when both are kept.
+
+"Owner" carries its own kind (person or Couple relationship), not just an id.
+Nothing in the tree or its validator guarantees a person id and a relationship
+id stay disjoint — a relationship's own id is never checked against person
+ids — so a bare `(ownerId, factId)` pair would reunite the exact cross-owner
+leak this scoping exists to prevent, just across a different pair of fields,
+the moment a person and a relationship happened to share a literal id.
+
+For `birth-of`/`death-of`/`facts-of`, and the `parents-of`/`spouses-of`
+redundant-fact sweep (§2.1.1), ownership is already unambiguous — the
+selector (or, for the sweep, the relative selector doing the sweeping) names
+the owning `personId` directly — so removal proceeds without asking anything.
+But the same id can still exist on a different owner the call is not
+touching, and `validation.warnings` says so (§3.1's ids-only rule applies):
+one line per resolved fact naming every other owner and its kind. Not an
+error; removal is correct regardless. It is a fact about the data worth
+telling the researcher.
+
+For the bare `fact` selector, which historically took only a `factId`, there is
+no already-given owner to be unambiguous against, so the tool resolves
+ownership at call time instead:
+
+- Exactly one owner has that id → proceeds, scoped to them (the common case,
+  unchanged from before this fix).
+- No owner has it → the existing "not in the tree" error.
+- More than one owner has it → a new error naming every candidate and its kind,
+  and asking for `personId` to pick one. Passing `personId` for `fact` scopes
+  removal to that person's copy specifically; if that person does not in fact
+  own the id, that is its own error rather than a silent no-op. If one of the
+  candidates is a relationship rather than a person, it cannot currently be
+  targeted this way — the error only offers `personId` as the disambiguator.
+
+A fact selector combined with a selector that removes the fact's own owner in
+the same call (e.g. `person: <id>` alongside `fact: <that person's own fact>`,
+or a relative selector whose cascade takes the fact's owning relationship with
+it) is satisfied by that removal — the fact unambiguously existed the instant
+before the call, so it is not reported as missing. It is not counted in
+`removed.factsByType` either, consistent with a removed owner's other facts,
+which were never individually counted to begin with.
+
+#### 2.1.3 Date-range selectors resolve internally, never by the caller reading dates
+
+`forget-and-rederive/SKILL.md` tells the agent not to read `tree.gedcomx.json` —
+the file holds the very answer it is about to go looking for. A request like
+"forget everything before 1850" therefore cannot be satisfied by the agent
+reading dates and hand-picking fact ids; `facts-before`, `facts-after`, and
+`facts-between` resolve that internally instead. The year (or year range) the
+caller passes is their own input, never a value read off the tree, so it is
+not subject to the redaction contract the way a fact's own date is. The
+result, however, carries a residual: a dry run is free and reports
+`factsByType`, so a caller that can vary the year and read the response back
+narrows a fact's date toward the exact year.
+
+`resolveSelectors` closes the *laddered* in-call form of this in code: a single
+`forget` call may not mix different year thresholds for the same date-range
+selector kind (`facts-before`'s `year`, `facts-after`'s `year`, or
+`facts-between`'s `fromYear`/`toYear` pair) — packing a year-ladder into one
+call's entries would otherwise reveal exactly which threshold failed first,
+pinning a fact's date from a single invocation. The same threshold repeated
+for different people in one call is unaffected (an ordinary multi-person
+sweep, not a probe). This does not make a single call safe in general — one
+`facts-between(Y, Y)` is still an exact-year test — so the instruction below,
+not this guard, is what closes the surface. The guard removes the cheapest
+shape, not the shape. What code cannot close is the *across-calls* form — a
+caller free to make as many separate calls as it likes can still binary-search
+a threshold one call at a time, and closing that would mean dropping
+`factsByType` from every dry run, which breaks the "a dry run is a full
+rehearsal" guarantee this tool otherwise gives. `forget-and-rederive/SKILL.md`
+closes that residual by instruction: use the year (or year range) the
+researcher gave you, once, and stop.
+
+Each fact's comparable range comes from `getStandardDate` (prefers
+`standard_date`, falls back to parsing `date`) and then `earliestYear`/
+`latestYear` on that canonical string — the same utilities `person_warnings`
+already uses, not a new parser. A fact with no parseable date at all is never
+matched by any of the three selectors; the count of how many were skipped this
+way is reported in `validation.warnings` (a count, never which facts).
+
+Matching is **confident, not merely overlapping**:
+
+- `facts-before(year)`: the fact's *latest* possible year must be strictly
+  before `year`.
+- `facts-after(year)`: the fact's *earliest* possible year must be strictly
+  after `year`.
+- `facts-between(fromYear, toYear)`: the fact's entire possible range must fit
+  inside `[fromYear, toYear]`, not merely intersect it.
+
+`Bef`/`Aft` dates are open-ended on one side, and are treated as such: a `Bef`
+fact's earliest possible year is unbounded, so it is never matched by
+`facts-after` or the open side of `facts-between`, and an `Aft` fact's latest
+possible year is unbounded, so it is never matched by `facts-before` or the
+open side of `facts-between`, regardless of how far past the fact's own stated
+year the threshold sits. `earliestYear`/`latestYear`'s own fudge on the open
+side (used elsewhere for `person_warnings`' looser, illustrative checks) is a
+heuristic, not a real bound, and is not treated as one here (found by review).
+
+An uncertain or ranged date that only partly overlaps the boundary (e.g. `Bet
+1845 and 1855` against `facts-before(1850)`) is left alone rather than guessed
+at. This is deliberate: a looser "any overlap counts" rule would recreate the
+same over-broad-removal shape this whole fix exists to eliminate, just moved
+from id collision onto date uncertainty.
+
+`personId` is optional on all three. Given, the selector matches that
+person's own facts, plus the facts on any Couple relationship they are a
+party to — a marriage date typically lives on the relationship, not on
+either spouse's own record, and skipping it would let a person-scoped
+request report success while that fact stays in the tree, unremoved and
+unmentioned (found by review; the same reason `spouses-of` sweeps a
+person-level echo of the same conclusion in the other direction). Omitted,
+it matches tree-wide — every person's and every Couple relationship's
+facts — which is the variant the original date-range request needed and the
+owner-scoping fix above makes safe to offer, since every match is still
+resolved and removed through the same (ownerKind,
+ownerId, factId) scoping as every other selector.
 
 ### 2.2 Cascade
 
@@ -199,8 +326,11 @@ Any future field on this result is subject to the same rule.
 
 The tool heals legacy shapes (`sanitizeTree`) and then validates the **whole
 project** (`validateParsed`) before writing — the same validate-before-persist
-contract every writer tool honors. On a validation failure nothing is written and
-`{ ok: false, errors }` is returned.
+contract every writer tool honors. It blocks only on errors the removal itself
+introduces: on a **call-introduced** validation failure nothing is written and
+`{ ok: false, errors }` is returned, while pre-existing drift in a section the
+removal does not touch is demoted to a warning rather than freezing the removal
+(`validation/introduced-errors.ts`).
 
 This is a deliberate tightening over the deleted Python script, which validated
 nothing and could leave the project in a state where every later `tree_edit`

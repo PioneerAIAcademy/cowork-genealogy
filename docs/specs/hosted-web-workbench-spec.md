@@ -17,7 +17,7 @@ WSS **directly** to the sandbox rather than a WS proxied by the control plane.
 
 **Still genuinely open:** §12 (sidecar productionization — both endpoints are
 still on the personal `*.ts.net` host), §11's `schema_version` stamping, and
-most of §13 (residency/retention, token encryption at rest, cost budgets).
+most of §13 (residency/retention, cost budgets — token encryption at rest shipped).
 
 Per-section verdicts are in the audit table below; every section that is now
 historical rather than current carries an inline `**As built…**` note. **Original
@@ -46,7 +46,7 @@ Verified against `apps/server/app/`, `apps/web/src/`, `packages/viewer-ui/src/`,
 | 4 | Monorepo layout | **shipped differently** — engine split in two, counts moved, `/apps/cowork-plugin` + `/apps/mcpb` never created |
 | 4.1 | `ResearchTransport` seam | **shipped as specced**, plus three optional methods |
 | 5.1 | Google OAuth + allowlist | **not built** — superseded by unified FamilySearch login (the allowlist survives) |
-| 5.2 | Per-user FamilySearch OAuth | **shipped as specced** (option (a)); tokens are stored **unencrypted** |
+| 5.2 | Per-user FamilySearch OAuth | **shipped as specced** (option (a)); tokens **encrypted at rest** |
 | 6.1 | Control-plane responsibilities | **mixed** — see the inline note |
 | 6.2 | WebSocket protocol | **shipped differently** — same message vocabulary, different endpoint and host; `auth_required` never built |
 | 6.3 | Database tables | **shipped differently** — 4 of 6 tables, with different columns |
@@ -58,7 +58,7 @@ Verified against `apps/server/app/`, `apps/web/src/`, `packages/viewer-ui/src/`,
 | 10 | Cowork plugin + `.mcpb` | **shipped as specced** (build scripts are `.mjs`) |
 | 11 | Data model / feedback / migration | **mixed** — feedback shipped; `schema_version` **not built** |
 | 12 | Sidecar productionization | **not built** |
-| 13 | Security, PII, cost | **partial** — isolation and rotating secrets shipped; encryption, retention and budgets did not |
+| 13 | Security, PII, cost | **partial** — isolation, rotating secrets, and token encryption at rest shipped; retention and budgets did not |
 | 14 | Observability, testing | **partial** — PII-free logging and the transport-contract test shipped; no error tracking, no live suspend/resume e2e |
 | 15 | Phasing | phases 1–3 **done**; 4 **partial**; 5 **not started** |
 | 16 | POC decisions | **held**, except the deployment target |
@@ -471,9 +471,15 @@ multi-tenant web this must change:
 > *is* the login, a browser user always arrives with a grant — there is nobody to
 > gate. What replaced it is the expiry banner driven by that `familysearch` state.
 >
-> **Deviation from §13:** tokens are stored **plaintext**, not "encrypted at
-> rest". `models.py` carries an explicit `TODO encrypt at rest before any real
-> PII`. Acceptable only while the no-living-person-data rule in §0.5 holds.
+> **§13 — token encryption at rest (shipped):** the `access_token` /
+> `refresh_token` columns are Fernet-encrypted via `crypto.EncryptedStr`
+> (plaintext in memory, ciphertext in the DB); an undecryptable value reads back
+> as `None` and is treated as "expired", so a legacy/wrong-key row self-heals on
+> the next login. A production deploy still on the default `FS_TOKEN_ENC_KEY` is
+> refused at boot (`config.assert_production_config`). Note the token copy
+> injected into the sandbox (`~/.familysearch-mcp/tokens.json`) stays plaintext by
+> design — the in-sandbox MCP needs it, and it dies on the same ~24h FS grant
+> clock — so the at-rest protection is DB-scoped.
 
 ---
 
@@ -557,7 +563,7 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 ### 6.3 Database (Postgres) — minimum tables
 - `users` (id, google_sub, email, created)
 - `allowed_emails` (email) — the allowlist
-- `familysearch_tokens` (user_id, access_enc, refresh_enc, expires_at)
+- `familysearch_tokens` (user_id, access_token, refresh_token, expires_at) — access/refresh **encrypted at rest**
 - `projects` (id, user_id, sandbox_id, agent_session_id, objstore_prefix,
   title, created, updated, last_active) — **the user→sandbox map + project list**
 - `sessions` (app login sessions) — or stateless JWT
@@ -570,7 +576,7 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   id, stored for traceability; the allowlist still gates on email).
 > - **`allowed_emails`** — shipped verbatim.
 > - **`familysearch_tokens`** — shipped, columns `access_token` / `refresh_token`
->   / `expires_at` / `updated`. **Not encrypted** (see §5.2).
+>   / `expires_at` / `updated`. **Encrypted at rest** via `crypto.EncryptedStr` (see §5.2).
 > - **`projects`** — shipped, minus **`objstore_prefix`** (no object store, §6.4)
 >   and plus four columns this spec didn't foresee: `model` (the per-session model
 >   knob from §0.5), `status` (`active`/`archived`), and `turn_locked_at` — a
@@ -647,6 +653,41 @@ build time.
 > §7.1 is accurate — `apps/server/sandbox/e2b.Dockerfile` bakes Python 3.12 +
 > `claude-agent-sdk`, Node 22, the engine prod tree, and the plugin, built by
 > `apps/server/sandbox/build-image.sh` (`make sandbox-image`).
+
+### 7.2 What a user is allowed to read when this runtime fails
+
+Every failure at the agent boundary is classified before it reaches the browser
+(`apps/server/app/agent/errors.py`); no handler emits a raw exception, an HTTP
+status, or upstream process text. Two strings exist — one for an operator
+misconfiguration, one for everything else — and neither names a credential or a
+vendor, because naming one is what caused the defect: two alpha testers read an
+operator-key 401 as a FamilySearch problem and debugged the wrong credential.
+The raw text survives on the operator log, which is now its only home.
+
+**There is deliberately no user-fault branch, and it must not be re-added.**
+The only credential the SDK holds at this boundary is the control plane's own
+`ANTHROPIC_API_KEY`, so an SDK auth failure here is operator-side by
+construction. A FamilySearch token expiry never reaches these handlers — it is
+raised inside the MCP server and returns as a *tool result*, which the model
+reads and acts on — so a "was this the user's fault?" branch could never fire.
+Nor may any string claim someone was notified: nothing alerts an operator today.
+(Ruling: lead, 2026-08-14.)
+
+An errored `AssistantMessage` is emitted as `kind: "error"`, not `kind: "text"`.
+That is not cosmetic — it is the difference between the UI styling a failure as
+a failure (`chatEvents.ts` → `last.error` → ChatPane's `msgError`) and rendering
+it as the assistant's own answer, which is how the testers came to read an API
+error as a research finding.
+
+The genealogy MCP server's health is read from the CLI's `system`/`init` payload
+and the user is warned **once** if the tool surface is absent
+(`apps/server/app/agent/mcp_health.py`, the classifier ported from
+`eval/harness/e2e/mcp_health.py`). Without it a session whose MCP server never
+connected still runs — the model simply has no genealogy tools — so the user
+pays for a full session of research that could not have happened, with nothing
+distinguishing it from a genuine dead end. `pending` must never warn: at init a
+healthy server still reads `pending`, so a `!= "connected"` test would fire on
+every healthy session.
 
 ---
 
@@ -831,8 +872,10 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
 >   it never enters a pause snapshot — because a sandbox's create-time env can
 >   never be updated and would pin a rotated key for the sandbox's whole life.
 >   Never surfaced to the browser.
-> - **Token encryption at rest — NOT built.** `familysearch_tokens` is plaintext
->   with a `TODO` in `models.py`.
+> - **Token encryption at rest — built.** `familysearch_tokens.access_token`
+>   / `refresh_token` are Fernet-encrypted via `crypto.EncryptedStr`; a bad decrypt
+>   soft-fails to `None` → "expired" → self-heals on re-login. The sandbox's injected
+>   `tokens.json` copy stays plaintext by design (same ~24h clock).
 > - **`validate_research_schema` path-traversal — not addressed in the tool**,
 >   which still takes `projectPath` and reads from it unconstrained. The
 >   mitigation is architectural rather than the one described: the tool runs

@@ -41,6 +41,15 @@ import sys
 from collections.abc import AsyncIterator
 from pathlib import Path
 
+from .errors import UNEXPECTED, classify, log_operator
+from .mcp_health import (
+    GENEALOGY_TOOL_PREFIX,
+    classify_server_status,
+    find_server_entry,
+    should_warn_at_init,
+    unavailable_message,
+)
+
 # real_agent.py -> agent -> app -> server -> apps -> <repo root>
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 _MCP_BUILD = os.environ.get("ENGINE_MCP_BUILD", str(_REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.js"))
@@ -138,10 +147,78 @@ PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
 # docs/specs/guardrail-enforcement-spec.md §6 ("Deliberate gaps") instead —
 # close it only if a bypass appears in a runlog or a feedback case.
 _FILE_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
+# The device-bridge writer, matched on the BARE TAIL because Cowork namespaces it
+# (`mcp__remote-devices__device_commit_files`) and the plugin cannot control the
+# prefix. This is the route that actually mattered: measured live 2026-08-15,
+# `init-project` created both protected files through it in a run where
+# Write/Edit/NotebookEdit appear nowhere, while `Write` could not reach the
+# user's disk at all. `device_bash` is deliberately absent — its input is a
+# command string where `cat research.json` and `cat > research.json` are
+# indistinguishable without parsing a shell, and 37 of 40 shell touches of a
+# protected file in the committed corpus are reads.
+#
+# Mirrored in all three lockdown copies even though only the plugin one ever
+# sees the bridge; the parity test holds them to one vector set.
+DEVICE_WRITE_TOOLS = ("device_commit_files",)
+
+# A path has no newline and is no longer than the platform allows. Both bounds
+# keep the payload walk below off file CONTENT travelling alongside the paths,
+# though only the newline bound does real work there. 4096 = Linux PATH_MAX; it
+# was 400, which is under every real path limit and let a 401-char path to a
+# protected file through. Pinned by vectors in test_write_lockdown_parity.py.
+_MAX_PATH_LEN = 4096
+
+
+def _basename(value: str) -> str:
+    """The trailing segment, under either separator."""
+    return value.replace("\\", "/").rsplit("/", 1)[-1]
+
+
+def _path_like_strings(value, depth: int = 0):
+    """Every string in `value` that could be a path, walked structurally.
+
+    The bridge's payload shape is not ours and is recorded nowhere in this repo,
+    so this guesses no key: it walks whatever arrives. A content string that
+    merely mentions a protected file is still safe, because whole basenames are
+    compared — "see research.json" has basename "see research.json".
+    """
+    if depth > 6:
+        return
+    if isinstance(value, str):
+        if value and "\n" not in value and len(value) <= _MAX_PATH_LEN:
+            yield value
+    elif isinstance(value, dict):
+        for v in value.values():
+            yield from _path_like_strings(v, depth + 1)
+    elif isinstance(value, (list, tuple)):
+        for v in value:
+            yield from _path_like_strings(v, depth + 1)
+
+
+def _device_bridge_target(tool_name: str, tool_input) -> str | None:
+    """The protected filename a device-bridge write targets, or None.
+
+    **Fails open on an unrecognised payload, deliberately.** Denying whenever the
+    shape cannot be parsed would block a user asking Cowork to write their OWN
+    files into a connected folder, which is not this guard's business and is a
+    worse failure than the hole.
+    """
+    if _basename(tool_name.replace("__", "/")) not in DEVICE_WRITE_TOOLS:
+        return None
+    for candidate in _path_like_strings(tool_input or {}):
+        name = _basename(candidate)
+        if name in PROTECTED_PROJECT_FILES:
+            return name
+    return None
 
 
 def direct_project_file_write(tool_name: str, tool_input: dict | None) -> str | None:
-    """The protected filename a raw file-write tool targets, or None.
+    """The protected filename a write call targets, or None.
+
+    Two arms. A file-write tool names its destination in `file_path`; anything
+    else falls through to `_device_bridge_target`, which claims only the
+    device-bridge writers and returns None for every other tool — the MCP writer
+    tools included, since those are the sanctioned route.
 
     Matched on the basename, so an absolute or relative path is caught alike.
     Both separators are handled: the sandbox is Linux, but the model composes
@@ -149,7 +226,7 @@ def direct_project_file_write(tool_name: str, tool_input: dict | None) -> str | 
     redundant split.
     """
     if tool_name not in _FILE_WRITE_TOOLS:
-        return None
+        return _device_bridge_target(tool_name, tool_input)
     file_path = str((tool_input or {}).get("file_path") or "")
     name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
     return name if name in PROTECTED_PROJECT_FILES else None
@@ -179,9 +256,11 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
             "permissionDecision": "deny",
             "permissionDecisionReason": (
                 f"{tool_name} on {protected} is disabled — all writes to "
-                "research.json/tree.gedcomx.json must go through the writer tools "
-                "(research_append, research_log_append, tree_edit, tree_correct), "
-                "which validate before persisting. Direct file writes never validate."
+                "research.json/tree.gedcomx.json must go through the writer tools. "
+                "To CREATE a new project use project_create, which writes both files "
+                "together; to add to an existing one use research_append, "
+                "research_log_append, tree_edit or tree_correct. These validate "
+                "before persisting. Direct file writes never validate."
             ),
         },
     }
@@ -353,6 +432,37 @@ def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | Non
             elif delta.get("type") == "thinking_delta" and delta.get("thinking"):
                 out.append(_event_for(message, "thinking_delta", text=delta["thinking"]))
     elif isinstance(message, AssistantMessage):
+        # #1126 — the path the alpha testers actually read. When the SDK marks
+        # an assistant message as an error (`AssistantMessage.error`, the
+        # 6-value literal at claude_agent_sdk/types.py:1005, populated by
+        # message_parser.py), its text blocks ARE the failure's own words: an
+        # operator-key 401 arrived as "Failed to authenticate. API Error: 401
+        # API key is invalid." tagged `kind: "text"`, i.e. styled as the
+        # assistant's own answer. Emit ONE classified error event and drop the
+        # blocks; the raw text survives on the operator log.
+        #
+        # `kind: "error"` rather than `kind: "text"` is what tells the UI this
+        # is not an answer: chatEvents.ts sets `last.error = true`, which
+        # ChatPane renders with the `msgError` class.
+        #
+        # Dropping the blocks cannot swallow a real answer. Raised in review of
+        # #1724 for the retried-`rate_limit` case and anchored in the bundled
+        # CLI: every errored assistant message is built by one helper,
+        # `Gl({content, error})` -> `{content: [{type: "text", text: content}],
+        # isApiErrorMessage: true, error}`, where `content` IS the error text
+        # (e.g. "Usage credits required for 1M context ..."). So an errored
+        # AssistantMessage never carries a successful answer, and there is
+        # nothing to lose by replacing its text with the classified string.
+        err_kind = getattr(message, "error", None)
+        if err_kind:
+            classification = classify(error_kind=err_kind)
+            raw = " ".join(
+                b.text for b in message.content if isinstance(b, TextBlock)
+            ).strip()
+            log_operator("assistant_message", classification,
+                         error_kind=err_kind, detail=raw[:500] or None)
+            out.append(_event_for(message, "error", text=classification))
+            return out
         for block in message.content:
             if isinstance(block, TextBlock):
                 out.append(_event_for(message, "text", text=block.text))
@@ -414,6 +524,13 @@ class RealAgent:
         self._cum_cost = 0.0
         self._cum_in = 0
         self._cum_out = 0
+        # #941/#1126 — genealogy MCP health, read off the CLI's `system`/`init`
+        # message. Session-scoped, not turn-scoped: a re-spawned CLI emits a
+        # FRESH init, so both counters have to outlive the turn or the warning
+        # would repeat (and would fire on a session that has already
+        # researched). See mcp_health.should_warn_at_init.
+        self._mcp_calls = 0
+        self._mcp_warned = False
         if self._session_file.exists():
             try:
                 self._resume_id = self._session_file.read_text(encoding="utf-8").strip() or None
@@ -496,23 +613,128 @@ class RealAgent:
         await self._client.interrupt()
         return True
 
+    def _mcp_health_events(self, message) -> list[dict]:
+        """Zero or one warning that this session has no genealogy tools.
+
+        Reads the CLI's `system`/`init` payload. Silent on every arm except a
+        genealogy server that is listed unhealthy — or not listed at all — in a
+        session that has made no genealogy call yet. `pending` is the NORMAL
+        healthy reading at init (it settles ~14s later), so it must not warn;
+        that is what `classify_server_status`'s three-way split is for.
+
+        Defensive throughout: this reads another process's payload, and a
+        detector that raises would break the sessions it exists to protect.
+        """
+        if self._mcp_warned:
+            return []
+        # Gate on the subtype the harness gates on (`orchestrator.py`'s
+        # `if message.subtype == "init"`). `SystemMessage` also carries config
+        # and hint subtypes; reading `mcp_servers` off any of them is safe only
+        # because none of the others happens to use that key today, which also
+        # made `test_a_non_init_system_message_is_ignored` pass for the wrong
+        # reason. Matching the source this is copied from removes both.
+        if getattr(message, "subtype", None) != "init":
+            return []
+        data = getattr(message, "data", None)
+        if not isinstance(data, dict):
+            return []
+        entries = data.get("mcp_servers")
+        health = classify_server_status(entries)
+        if not should_warn_at_init(health, mcp_call_count=self._mcp_calls):
+            return []
+        self._mcp_warned = True
+        entry = find_server_entry(entries)
+        text = unavailable_message(entry)
+        log_operator("mcp_init", text, detail=f"health={health} entry={entry!r}")
+        return [_event("error", text=text)]
+
     async def handle_turn(self, text: str) -> AsyncIterator[dict]:
         try:
-            from claude_agent_sdk import ResultMessage
-        except ImportError:
-            yield _event("error", text="claude-agent-sdk not installed; use AGENT_MODE=mock")
+            from claude_agent_sdk import ResultMessage, SystemMessage
+        except ImportError as exc:
+            # Developer text ("use AGENT_MODE=mock") in front of a paying user
+            # is the same defect as the raw 401 — it reads as something they
+            # misconfigured. The detail stays on the operator log.
+            log_operator("import_sdk", UNEXPECTED, exc=exc)
+            yield _event("error", text=UNEXPECTED)
             return
         try:
             client = await self._ensure_client()
         except Exception as exc:
-            yield _event("error", text=f"Failed to start the agent: {exc}")
+            classification = classify(exc)
+            log_operator("ensure_client", classification, exc=exc)
+            yield _event("error", text=classification)
             return
         try:
             await client.query(text)
+            # Whether an errored AssistantMessage has already told the user about
+            # this turn. Turn-scoped, not session-scoped: a later turn's failure
+            # is a new fact the user needs.
+            error_emitted = False
             async for message in client.receive_response():
                 for ev in map_message(message, self._tool_names, self._tasks):
+                    if ev.get("kind") == "tool_use" and str(
+                        ev.get("tool") or ""
+                    ).startswith(GENEALOGY_TOOL_PREFIX):
+                        self._mcp_calls += 1
+                    if ev.get("kind") == "error":
+                        error_emitted = True
                     yield ev
+                if isinstance(message, SystemMessage):
+                    # #941 ported from the e2e harness (issue #1126). The CLI's
+                    # init message lists every MCP server it tried to connect
+                    # (`mcp_servers: [{name, status}]`, a required field of its
+                    # own init schema). A hosted session whose genealogy server
+                    # never connected still RUNS — the model just has no
+                    # genealogy tools — so the user pays a full session for
+                    # research that could not have happened, with nothing to
+                    # distinguish it from a genuine dead end. The harness aborts
+                    # such a run; there is no run to abort here, so we warn once
+                    # and let the turn proceed.
+                    for ev in self._mcp_health_events(message):
+                        yield ev
                 if isinstance(message, ResultMessage):
+                    # #1126 — the silent path. `receive_response()` YIELDS the
+                    # ResultMessage and terminates; it does not raise on
+                    # `is_error`, and nothing in this package read that field,
+                    # so an in-turn API 401 produced no error event at all: the
+                    # turn ended with `usage` + `turn_done` and the user watched
+                    # ~90s of nothing, then silence. That retry latency is the
+                    # signature of this path, not of a fail-fast connect().
+                    # Two ways this must NOT fire, both found in review of #1724.
+                    #
+                    # 1. The user pressed Stop. The CLI sets `is_error` with
+                    #    `terminal_reason` in ("aborted_streaming",
+                    #    "aborted_tools") and NO `api_error_status`, so the
+                    #    default classification would tell the person who just
+                    #    cancelled that something went wrong and to report it —
+                    #    a new false alarm, since this field was read nowhere
+                    #    before. The SDK's own docstring defines those two
+                    #    values as "the turn was cancelled" (types.py:1249), and
+                    #    the bundled CLI skips its own error render on the same
+                    #    test.
+                    # 2. The assistant-message path already reported this turn.
+                    #    The SDK sets `AssistantMessage.error` and
+                    #    `ResultMessage.is_error` independently, from two CLI
+                    #    messages, so both can land in one turn — and an
+                    #    `is_error` with no status would then read
+                    #    "please report it" followed by "please try again" for
+                    #    one failure. That contradiction is this PR's own defect
+                    #    pointed at itself. The assistant path wins because it
+                    #    carries the real `error_kind`.
+                    #
+                    # The MCP-health warning is deliberately NOT counted here:
+                    # it reports a different fact (this session has no genealogy
+                    # tools), not a second opinion about this failure.
+                    aborted = getattr(message, "terminal_reason", None) in (
+                        "aborted_streaming",
+                        "aborted_tools",
+                    )
+                    if getattr(message, "is_error", False) and not aborted and not error_emitted:
+                        status = getattr(message, "api_error_status", None)
+                        classification = classify(status=status)
+                        log_operator("result_message", classification, status=status)
+                        yield _event("error", text=classification)
                     self._remember_session(message)  # persist for resume on relaunch
                     # Per-turn cost/usage for the operator cost meter (alpha
                     # mode, web only). The SDK's ResultMessage carries
@@ -537,4 +759,6 @@ class RealAgent:
                     )
                     break  # turn complete; the runner emits turn_done
         except Exception as exc:
-            yield _event("error", text=f"Agent error: {exc}")
+            classification = classify(exc)
+            log_operator("receive_loop", classification, exc=exc)
+            yield _event("error", text=classification)
