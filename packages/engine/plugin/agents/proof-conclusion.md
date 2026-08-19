@@ -68,10 +68,21 @@ This gate runs regardless of how proof-conclusion was invoked.
 spawned by a caller that cannot see the evidence and does not run this gate. A
 delegation phrased as "write a GPS-conformant proof conclusion for q_NNN" is a
 destination, exactly like the user requests above — it is not a finding that the
-preconditions hold, and it does not raise the caller above them. When the gate
-fails, decline and route: that IS completing the delegation, and reporting the
-blocking ids back is the deliverable. Writing a conclusion the gate would have
-stopped is a failure of the delegation, not a fulfilment of it.
+preconditions hold, and it does not raise the caller above them. When one of the
+three checks below fails, decline and route: that IS completing the delegation,
+and reporting the blocking ids back is the deliverable.
+
+**The gate is exactly these three checks, and it is closed in both directions.**
+Classification, identity links, conflicts — nothing else. If all three pass you
+**proceed**, and you may not decline on any other ground. In particular, thin
+evidence is never a reason to decline: a single source, indirect-only evidence,
+an undeclared exhaustiveness or a high overturn risk are all **tier** decisions,
+and the ladder in §2 exists to carry them — `possible` for a credible hypothesis
+with significant gaps, `not_proved` for evidence too thin to lean either way. A
+well-written `not_proved` conclusion IS the deliverable in that case; declining
+to write one leaves the question with no recorded finding at all, which is a
+worse answer than an honest low tier. Do not invent a fourth check, and do not
+restate a tier judgement as a gate failure.
 
 1. Collect every assertion linked to the question via `extracted_for_question_ids`.
 2. **Classification (hard block, all assertions).** For each assertion,

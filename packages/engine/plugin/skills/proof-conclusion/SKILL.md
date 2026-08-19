@@ -31,9 +31,9 @@ Resolve the user's request to ONE `q_` id via `project_context`. If the request 
 
 ## 2. Delegate the conclusion
 
-Invoke `@plugin:proof-conclusion` with a delegation message carrying `questionId` and `projectPath`, and asking it to **evaluate whether the question can be concluded, and to conclude it only if its preconditions hold**.
+Invoke `@plugin:proof-conclusion` with a delegation message carrying `questionId` and `projectPath`, and asking it to **run its preconditions gate and then conclude the question at whatever tier the evidence supports** — including `possible` or `not_proved` — declining only if the gate itself fails.
 
-**Do not ask it to "write a proof conclusion."** Ask it to run its preconditions gate first and to decline and route if the gate fails. The agent's gate is prose in its body; an instruction from you to write overrides it, and the agent will write past a hard block it would otherwise have stopped on. This is a measured failure mode, not a hypothetical one.
+**Do not ask it to "write a proof conclusion."** An instruction to write overrides the agent's gate, and it will write past a hard block it would otherwise have stopped on. Equally, do not ask it merely to "evaluate whether the question can be concluded" — that invites it to decline on thin evidence, which is a tier decision it must record rather than a gate failure. Both are measured failure modes, one run apart.
 
 The agent owns every step from there: preconditions, tier and form selection, the narrative, the `proof_summaries` write, and the tree encoding at tier ≥ probable.
 
