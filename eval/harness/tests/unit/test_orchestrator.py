@@ -821,6 +821,35 @@ def test_skill_retry_recovers_after_transient_error(tmp_path, monkeypatch):
     assert result.aborted_reason is None
 
 
+def test_a_recursionerror_from_the_body_is_not_swallowed(tmp_path, monkeypatch):
+    """The tempdir-cleanup `except RecursionError` must not also swallow one
+    raised from build_workspace/run_skill INSIDE the block.
+
+    It used to. Attempt 1 aborts retryably, attempt 2 raises RecursionError
+    from the body, the except swallows it, and the loop returns attempt 1's
+    result stamped `attempts=2` — silently, no exception and no warning. That
+    is corrupted eval data, not a lost run, which is why this raises instead.
+    """
+    _stub_workspace_helpers(monkeypatch)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    calls = {"n": 0}
+
+    async def fake_run_skill(**kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return _retry_stub_result(aborted_reason="error")
+        raise RecursionError("locked-file cleanup lookalike, raised from the body")
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    with pytest.raises(RecursionError):
+        asyncio.run(orchestrator._execute_skill_with_retry(
+            run_index=0, spec=_positive_spec(), paths=paths,
+            skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+            base_delay=0,
+        ))
+
+
 def test_skill_retry_gives_up_after_attempts(tmp_path, monkeypatch):
     """When every attempt errors, _execute_skill_with_retry returns the
     last errored result after `attempts` tries — it does not loop
