@@ -749,53 +749,77 @@ async def _execute_skill_with_retry(
     before_snapshot: dict[str, Any] = {}
     after_snapshot: dict[str, Any] = {}
     for attempt in range(attempts):
-        with tempfile.TemporaryDirectory(
-            prefix=f"eval-{spec.id}-{run_index}-{attempt}-",
-            ignore_cleanup_errors=True,
-        ) as tmp:
-            workspace = Path(tmp)
-            try:
-                build_workspace(
-                    scenario_name=spec.scenario,
-                    scenarios_dir=paths.scenarios_dir,
-                    skills_dir=paths.skills_dir,
-                    target_dir=workspace,
-                )
-                before_snapshot = snapshot_files(workspace)
-                result = await run_skill(
-                    user_message=spec.user_message,
-                    workspace=workspace,
-                    fixture_names=spec.mcp_fixtures,
-                    fixtures_dir=paths.fixtures_dir,
-                    auth=auth,
-                    model=model,
-                    max_turns=spec.execution.get("max_turns", 20),
-                    max_wall_clock_seconds=spec.execution.get(
-                        "max_wall_clock_seconds", 300
-                    ),
-                    max_tool_calls=spec.execution.get("max_tool_calls", 50),
-                    max_input_tokens_per_turn=spec.execution.get(
-                        "max_input_tokens_per_turn", 200_000
-                    ),
-                    sdk_message_silence_seconds=spec.execution.get(
-                        "sdk_message_silence_seconds",
-                        DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
-                    ),
-                    allowed_tools_override=skill_baseline,
-                    routing_short_circuit_skills=routing_short_circuit_skills,
-                    stub_skills=stub_skills,
-                    # The skill's OWN declaration, not skill_baseline (which
-                    # unions in its subagents' tools). The gap between the two
-                    # is what the per-context policy guards.
-                    declared_tools=declared_skill_tools(
-                        spec.skill, paths.skills_dir
-                    ),
-                )
-                after_snapshot = snapshot_files(workspace)
-            finally:
-                # Always clean up the SDK's session-store entry so long
-                # runs don't accumulate orphans under ~/.claude/projects/.
-                cleanup_session_store(workspace)
+        attempt_completed = False
+        try:
+            with tempfile.TemporaryDirectory(
+                prefix=f"eval-{spec.id}-{run_index}-{attempt}-",
+                ignore_cleanup_errors=True,
+            ) as tmp:
+                workspace = Path(tmp)
+                try:
+                    build_workspace(
+                        scenario_name=spec.scenario,
+                        scenarios_dir=paths.scenarios_dir,
+                        skills_dir=paths.skills_dir,
+                        target_dir=workspace,
+                    )
+                    before_snapshot = snapshot_files(workspace)
+                    result = await run_skill(
+                        user_message=spec.user_message,
+                        workspace=workspace,
+                        fixture_names=spec.mcp_fixtures,
+                        fixtures_dir=paths.fixtures_dir,
+                        auth=auth,
+                        model=model,
+                        max_turns=spec.execution.get("max_turns", 20),
+                        max_wall_clock_seconds=spec.execution.get(
+                            "max_wall_clock_seconds", 300
+                        ),
+                        max_tool_calls=spec.execution.get("max_tool_calls", 50),
+                        max_input_tokens_per_turn=spec.execution.get(
+                            "max_input_tokens_per_turn", 200_000
+                        ),
+                        sdk_message_silence_seconds=spec.execution.get(
+                            "sdk_message_silence_seconds",
+                            DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
+                        ),
+                        allowed_tools_override=skill_baseline,
+                        routing_short_circuit_skills=routing_short_circuit_skills,
+                        stub_skills=stub_skills,
+                        # The skill's OWN declaration, not skill_baseline (which
+                        # unions in its subagents' tools). The gap between the two
+                        # is what the per-context policy guards.
+                        declared_tools=declared_skill_tools(
+                            spec.skill, paths.skills_dir
+                        ),
+                    )
+                    after_snapshot = snapshot_files(workspace)
+                    attempt_completed = True
+                finally:
+                    # Always clean up the SDK's session-store entry so long
+                    # runs don't accumulate orphans under ~/.claude/projects/.
+                    cleanup_session_store(workspace)
+        except RecursionError:
+            # Windows-only stdlib footgun: tempfile.TemporaryDirectory's
+            # _rmtree/onexc recovery treats a locked *file* PermissionError as
+            # "maybe this is actually a directory" and retries _rmtree on it,
+            # which recurses forever when the file is genuinely locked (a
+            # lingering subprocess handle) rather than a directory.
+            # ignore_cleanup_errors=True does not cover this path -- it only
+            # suppresses the `else` branch for non-Permission/FileNotFound
+            # exceptions. By this point build_workspace/run_skill already
+            # completed and before_snapshot/result/after_snapshot are
+            # populated above; only the tempdir's own removal failed. Same
+            # rationale as ignore_cleanup_errors itself: a leaked temp dir is
+            # strictly better than discarding an already-computed result.
+            #
+            # Re-raised unless the attempt already produced a result. Without
+            # that guard this `except` also swallows a RecursionError raised
+            # from build_workspace/run_skill INSIDE the block, and the loop then
+            # returns the PREVIOUS attempt's result stamped with this attempt's
+            # number — silently, with no exception and no warning (#1735 review).
+            if not attempt_completed:
+                raise
 
         if not _is_retryable_abort(result) or attempt + 1 >= attempts:
             # Record how many attempts this run took so the stall tax is
