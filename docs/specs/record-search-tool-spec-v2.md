@@ -578,6 +578,38 @@ as a behavioural change and re-verify against a live run, not unit tests alone.
 > moving. Re-measure after merging `main`, not before — a criterion run against a
 > stale corpus is not evidence about the corpus you are shipping into.
 >
+> **Reachability, and the distinction the criterion's wording actually draws.** A
+> class-1 string is a *candidate* input, not necessarily a reached one. The rule
+> above is written as "a tokenized value any fixture **actually feeds** to
+> `samePlace`", and these two are never fed to it:
+>
+> - Both are the `Death` and `Burial` places of `MKJ4-38M` (Adele Catherine
+>   Stribling), who holds **no relationships at all** in that tree.
+> - `marriageJurisdictionCandidates` gathers from exactly three sources — the
+>   subject's own facts, spouses' facts, and `Couple`-relationship facts. A person
+>   in no `Couple` relationship who is not the subject contributes nothing, so
+>   neither fact is ever collected, tokenized, or compared.
+> - The one remaining route is a search naming *her* as its subject. An exhaustive
+>   walk of both `stribling-father-1821` run logs puts every occurrence of her id
+>   inside `project_context` **response** payloads — a listing of tree persons. She
+>   appears in no tool input.
+>
+> So the moved strings are unreachable by the comparison the exemption is about,
+> and a live run on this fixture would exercise nothing that changed. **Recorded as
+> an argument, not as a granted exemption** — the criterion is a count and the count
+> is non-zero. Whoever grants or refuses it should do so on this reasoning, and the
+> reasoning generalizes better than the count does: check *whose fact* a moved
+> string sits on before pricing a run, because a place on an unrelated,
+> unrelationshipped person cannot reach `samePlace` no matter how many run logs
+> carry it.
+>
+> **Do not read this as "class 1 is over-broad, narrow it."** Scoping the criterion
+> to reachable facts would require the collector's traversal — subject, spouses,
+> couple facts, and whatever a future version adds — to be reimplemented inside the
+> measurement script, where it would drift silently and quietly stop reporting
+> strings that *are* reached. A count that over-reports and forces a human to check
+> reachability is the safe direction of error.
+>
 > Two properties of the measurement, because a criterion reporting `0` is worth
 > exactly as much as its ability to report non-zero. It **imports the exported
 > `placeParts`** rather than reimplementing the pipeline, so it cannot measure an
