@@ -280,6 +280,37 @@ earlier, under "Which rule wins", and is not restated at the point of insertion.
 So the per-test override arrives with no local statement of its authority,
 trailing a paragraph about a different concern.
 
+**A third witness, and the flagrant one.** On the third full run
+`ut_convert_dates_013` (Sweden, "30 February 1712") **failed** on Correctness 1
+with: "The skill's core claim is factually false. Claude asserts that 30 February
+1712 is a real Swedish calendar date." Its `judge_context` bullet 0 says, in
+capitals: "Should recognize 30 February 1712 in Sweden as a REAL, historically
+attested date — not an OCR error." Bullet 2 restates it ("so 30 February 1712
+(Swedish) really existed") and bullet 3 gives the exact chain the skill produced
+(Swedish 30 Feb = Julian 29 Feb = Gregorian 11 Mar 1712). The skill was right,
+the date is real, and the judge asserted the opposite of its own binding
+instruction — then failed a correct answer for it.
+
+That is the escalation that settles F5's severity. The three witnesses are not
+three wordings; they are one defect at increasing cost:
+
+| Witness | What the override said | What the judge did | Cost |
+|---|---|---|---|
+| `_002/_004/_005/_006/_009` | note the other jurisdictions' offsets | ignored it, scored Completeness 3 | 20/20 + canary: a **false pass** |
+| `_011` | empty response + correct routing **is** the pass condition | scored Correctness 1 | a **false negative** |
+| `_013` | 30 Feb 1712 is REAL, capitalised | "factually false" | a **false negative on a correct answer** |
+
+**A second witness, from a different rule.** On the first full run the judge
+scored `ut_convert_dates_011` Correctness **1** because the skill "produced no
+output" — on a negative test where it had routed correctly to
+`conflict-resolution`. The judge prompt states the opposite in terms: "An empty
+response from the skill under test, with the correct other skill named in 'Skills
+Claude invoked', is the **pass** condition on those tests. It is not an omission,
+and terseness is never the deduction." The harness's own
+`routing_negative_judge_fail` advisory caught it and notes a human confirmed that
+1 in 20 of 24 such cells across the corpus. So this is not one bullet being
+missed; it is a pattern of binding instructions not binding.
+
 That is a **global judge-prompt** matter, and this guide is explicit that the
 base rubric and global judge prompt are not mine to edit — the instruction is to
 post the problem and proposed wording and let the lead call it. So, for the lead:
@@ -348,6 +379,66 @@ which is what the body's `{ ok: false }` rule already requires.
 `ut_convert_dates_009` (Württemberg, 15 January 1699 → +10 → 25 January 1699) sits
 inside `1582-10-15 … 1700-03-01`, verified against the live handler. No new test
 was needed to hold that band.
+
+### F7 — Nothing graded whether the skill used what the tool returned.
+
+Only findable after VR-0. The harness emitted `missing_tool_usage_dimension` on
+the first full run: the rubric had no dimension whose name suggests tool-usage
+coverage. It could not have fired before — no tool was ever called.
+
+**Did:** prohibition-list rules 2 (`{ ok: false }` → surface the error) and 7
+(present `applied[].rule` and `offsetDays`) are the two rules that describe using
+the tool's *response*. Base `Tool Arguments` grades the call's arguments and
+stops there. So with the tool live, a skill could call `convert_calendar`, ignore
+the response, narrate its own arithmetic, and lose no points anywhere.
+
+**Should:** `docs/specs/unit-test-spec.md`'s rubric budget is 3–5 dimensions and
+convert-dates had 3, so there was room.
+
+**Gap: lane 2.** Added **Tool response interpretation** — pass when every rule and
+offset traces to `applied[]`/`converted` and an `ok: false` is surfaced rather
+than replaced by a hand-computed date; partial when the tool is called but the
+offset is narrated from the body's tables; fail when the response contradicts the
+tool or asserts a date after `ok: false`; N/A when no arithmetic was warranted.
+
+It discriminated on first contact — three distinct values in four observations:
+**2** on `_016` when the response contradicted the tool, **3** on `_007` and
+`_002` tracing the rule and offset to `applied[]`, **N/A** on `_016` when the
+skill correctly treated a notation question as needing no call. Against a suite
+where 3 of 5 dimensions never took more than one value, that is the point.
+
+### F8 — The same 25-March error was in the tool, its own unit test, the skill body, and the eval test.
+
+**Did:** `_016` scored `partial` on the first full run for *contradicting the
+tool* — the skill said both 1750 and 1751 were defensible on 25 March, and
+`convert_calendar` had returned a flat 1751. The dimension was right to flag it,
+but the tool was wrong, not the skill.
+
+**Should:** `convertCalendar`'s `doubleDatedYear` branch bumped the year
+unconditionally. Its own comment states the assumption it never checked —
+"The slash already signals the Jan 1–Mar 24 boundary" — while the sibling
+`osNsYear` branch correctly tests `day <= 24`. So the tool produced the one-year
+error F3 is about, and would have written it into a researcher's notes.
+
+**Gap: lane 1, fixed.** Added the window guard, refusing only when the date
+*proves* it is outside Jan 1 – Mar 24 (`month > 3`, or March with `day > 24`),
+noting rather than refusing a March date with no day, and leaving a year-only
+input alone so the spec's documented `{1750, doubleYear:1}` case still resolves.
+
+The instructive part is the spread. **Five places carried the same error:**
+`convert-calendar.ts`, its vitest case (which asserted `{1750, month:3, day:25}`
+→ 1751, i.e. the test *encoded* the bug), a second vitest case using the same
+date incidentally, `convert-dates/SKILL.md`'s worked example, and
+`ut_convert_dates_007`'s input. Each looked locally consistent because they all
+agreed with each other. Full vitest after the fix: 102 files, 2443 tests, green.
+
+**And this one hides from the run-log snapshot.** MCP source is deliberately not
+snapshotted, but `LIVE_TOOLS` executes the *compiled* build — so a tool fix
+changes what every future eval run does while every committed run log still reads
+as active. `eval/CLAUDE.md` names the remedy ("hash the compiled artifact
+separately, as `judge_prompt_hash` does") and it is not implemented. Worth a
+`nothing-checks` label whenever someone picks it up: before VR-0 no live tool
+mattered to this skill, and now one does.
 
 ---
 
@@ -576,7 +667,62 @@ and the rubric still parses); `eval/harness` unit suite 2249 passed / 3 skipped;
 no duplicate `test.id` across the corpus (CI rule 4); every `§` anchor in this
 document resolves to a real heading.
 
+## The three full runs, and why the suite is not green
+
+| | Run 1 | Run 2 | Run 3 (committed) |
+|---|---|---|---|
+| Outcome | 15 pass, 1 fail | 12 pass, 1 partial, 2 fail, 1 aborted | **14 pass, 1 partial, 1 fail** |
+| Cost / wall | $1.56 / 351s | $1.06 / 613s | $1.10 / 359s |
+| Judge time | 139s | **300s** | 172s |
+| Transient retries | 0 | **1** | 0 |
+| Environment | clean | **degraded** | clean |
+
+**Run 2 carries no corpus signal and should not be read as one.** Its two "fails"
+were judge API timeouts — `_001`'s judge ran 108s and `_008`'s 56s before giving
+up, against a 4–14s norm in the same run, returning zero dimensions on responses
+of 1034 and 1185 characters. `_012` never reached the judge at all (wall-clock
+cap, judge time 0ms). The skill worked; the grader did not answer.
+
+**A harness reporting gap made that look like a skill regression.** A judge
+timeout produces a bare `fail`, indistinguishable in the summary table from the
+skill getting the answer wrong — while skill-side aborts print their reason
+(`aborted [max_wall_clock_seconds]`). `eval/CLAUDE.md` says a result with nothing
+gradeable is `aborted` with a reason; a judge-side failure does not follow that
+rule. Worth a `nothing-checks` label: it converts an API outage into what reads
+as two regressions.
+
+### Why run 3 is the one to commit, at 14/16
+
+`_012` **passed** — the routing fix worked, which is the one thing runs 1 and 2
+could not tell us (run 1 failed it, run 2 aborted it).
+
+The two non-passes are both understood, and **neither should be made to pass**:
+
+- **`_013` fail — the judge is wrong, not the skill.** F5's third witness above.
+  The test is already correct and emphatic; the only way to turn it green is to
+  weaken a correct test to satisfy a judge that is not reading it. That is
+  precisely the failure mode this dive was commissioned to find, so doing it
+  would be self-defeating. Its `Tool response interpretation` 1 is collateral
+  from the same misread — the Swedish→Julian step has **no** tool correction, so
+  no call was "warranted and available" and the dimension's own text does not
+  fail it. A future run should carry a one-line carve-out naming the Swedish
+  case; it is not worth a paid run of its own.
+- **`_004` partial — a fair criticism.** `Genealogical presentation` 2 for
+  printing "Modern Gregorian date: 14 September 1582 — unchanged" on a date that
+  has no Gregorian equivalent. Correctness, Conversion accuracy and Tool response
+  interpretation all scored 3, so the substance was right and the labelling was
+  muddled. The sharper test would forbid a "Gregorian date" line entirely for a
+  pre-adoption date. Also a candidate for the next run, not a reason for one.
+
+**Chasing 16/16 was the wrong target.** A green suite bought by loosening two
+correct tests is worth less than an amber one that discriminates — and this suite
+now discriminates: `_007` catches over-conversion when it happens, `_015` catches
+the offset threshold, `_016` catches the boundary day, `_004` catches
+pre-adoption over-claiming, and the new dimension has already taken three
+distinct values.
+
 ## Verified by scratch run
+
 
 Six `--test` scratch runs, **$0.55 total** — gitignored, unreleasable, and no
 annotation owed. They cost about 6% of the full-suite run this PR's edits imply,

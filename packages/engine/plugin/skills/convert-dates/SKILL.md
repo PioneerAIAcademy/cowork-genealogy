@@ -119,8 +119,8 @@ March 24 are in the "previous" year by modern reckoning:
 
 ### Double-dated years → `doubleDatedYear: true`
 
-Records often show both years: "15 February 1749/50" means 1749 OS but
-1750 NS. Pass `date: { year: 1749, doubleYear: 50 }` — the tool
+Records often show both years: "6 January 1745/6" means 1745 OS but
+1746 NS. Pass `date: { year: 1745, doubleYear: 6 }` — the tool
 returns the later (New Style) year. Double dates belong to Jan 1 –
 Mar 24 only. On 25 March the two years are the same, so a slash on
 that date is anomalous: flag it and check where the year turns over in
