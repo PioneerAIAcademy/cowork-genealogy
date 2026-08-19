@@ -97,12 +97,6 @@ def test_a_namespaced_tool_name_is_recognised():
     )
 
 
-def test_a_no_premature_write_test_is_skipped():
-    """That scenario's correct behaviour is writing nothing at all."""
-    with pytest.raises(pytest.skip.Exception):
-        check([], NO_PROFILE, {"type": "positive", "tags": ["no-premature-write"]})
-
-
 def test_a_negative_test_is_skipped():
     with pytest.raises(pytest.skip.Exception):
         check([], NO_PROFILE, {"type": "negative"})

@@ -43,11 +43,7 @@ treated as approximate.
 
 ### Memory degradation over time
 
-The further removed a recording is from the event, the less reliable
-the stated date. A death certificate created 70 years after the
-subject's birth will often have an inaccurate birth date because the
-informant (often a child or in-law) is reporting secondhand from
-fading memory.
+A record created years after the event it states is less reliable for that date. A death certificate gives a birth date decades after the birth; the informant is reporting secondhand and may not have the correct date, or may not remember it.
 
 ### Deliberate misstatement
 
@@ -106,7 +102,7 @@ niece, nephew, step-relative, or other kin.
 
 "Mother-in-law" sometimes meant stepmother in historical usage.
 "Son-in-law" could mean stepson. "Brother-in-law" might mean
-step-brother. Always consider the historical usage for the time,
+step-brother. Half-siblings were sometimes recorded simply as "brother" or "sister" with no indication of the half relationship. Always consider the historical usage for the time,
 place, and record type before interpreting relationship terms
 literally.
 
@@ -130,7 +126,7 @@ the original is almost always correct.
 ### Multiple informants per record
 
 Many records have multiple informants contributing different facts.
-A death certificate typically has three: a family member (personal
+A death certificate typically has three: a family member, neighbour, or friend (personal
 details), a physician (cause and date of death), and a funeral
 director (burial information). Each informant's contribution has
 different reliability for different facts.
