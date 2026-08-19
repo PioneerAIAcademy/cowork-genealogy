@@ -41,24 +41,28 @@ check:                        ## Run typecheck + lint + tests
 build:                        ## Production build (typecheck + compile)
 	npm run build
 
-# Each build target runs check-packaged afterwards. These three shell
-# `npm run build:*`, which is the invocation that shipped an unlaunchable app
-# (#1070) — electron-builder logs the missing dependencies at WARN, so the build
-# succeeds and only this check turns it into a failure.
+# `npm run build:*` now runs check-packaged itself (package.json), so these
+# targets inherit the gate rather than repeating it — and so does anyone running
+# `pnpm build:mac` straight from the README, which is the invocation #1070 is
+# named after and which no make target covers.
+#
+# `rm -rf dist` first because the check inspects EVERY app.asar under dist/: a
+# stale bundle left by an earlier build of a different OS would otherwise fail a
+# perfectly good one.
 build-linux:                  ## Build Linux AppImage
+	rm -rf dist
 	npm run build:linux
-	$(MAKE) check-packaged
 
 build-mac:                    ## Build macOS DMG (arm64 + x64)
+	rm -rf dist
 	npm run build:mac
-	$(MAKE) check-packaged
 
 build-win:                    ## Build Windows NSIS installer
+	rm -rf dist
 	npm run build:win
-	$(MAKE) check-packaged
 
-check-packaged:               ## Verify the packaged app contains its main-process deps
-	node scripts/check-packaged-deps.mjs
+check-packaged:               ## Verify the packaged app carries its declared dependencies
+	npm run check-packaged
 
 preview:                      ## Preview the production build
 	npm start

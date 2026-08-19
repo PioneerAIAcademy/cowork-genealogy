@@ -18,6 +18,18 @@ export default defineConfig(
     }
   },
   {
+    // Plain-JS build scripts. The TS recommended set is applied unscoped above,
+    // which had it backwards for these files: `explicit-function-return-type`
+    // fired on every function (unannotatable in .mjs), while `no-unused-vars`
+    // did NOT — so an unused import shipped in `check-packaged-deps.mjs` and
+    // lint stayed green. Turn the first off and the second on. (#1070 review)
+    files: ['**/*.{js,mjs,cjs}'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-unused-vars': 'error'
+    }
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     plugins: {
       'react-hooks': eslintPluginReactHooks,

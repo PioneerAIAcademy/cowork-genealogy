@@ -18,10 +18,11 @@
     "test:watch": "vitest",
     "build": "npm run typecheck && electron-vite build",
     "rebuild-native": "electron-builder install-app-deps",
-    "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux"
+    "build:unpack": "npm run build && electron-builder --dir && npm run check-packaged",
+    "build:win": "npm run build && electron-builder --win && npm run check-packaged",
+    "build:mac": "electron-vite build && electron-builder --mac && npm run check-packaged",
+    "build:linux": "electron-vite build && electron-builder --linux && npm run check-packaged",
+    "check-packaged": "node scripts/check-packaged-deps.mjs"
   },
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
@@ -36,6 +37,7 @@
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.1.0",
     "@electron-toolkit/tsconfig": "^2.0.0",
+    "@electron/asar": "^3.4.1",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
