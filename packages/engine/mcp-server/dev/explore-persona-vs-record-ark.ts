@@ -55,6 +55,10 @@ async function main(): Promise<void> {
       rows.push({ pid: e.id, name: persons[0]?.display?.name ?? "?", sds });
     }
     if (entries.length < 100) break;
+    if (offset + 100 >= 900) {
+      console.log("  ABORTING: hit the 900-row cap with a full page — counts below would be partial");
+      process.exit(1);
+    }
   }
 
   // What shapes actually appear in sourceDescriptions.about?

@@ -33,6 +33,9 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function readAll(range: string): Promise<{ total: number | null; ids: string[] } | null> {
   const ids: string[] = [];
   let total: number | null = null;
+  // Attempts are capped per page: an unbounded `offset -= 100; continue` spins
+  // forever on a persistently throttling endpoint, and this one throttles.
+  let attempts = 0;
   for (let offset = 0; offset < 1500; offset += 100) {   // sibling REPORTED 585 (not in the artifact); 600 was too tight
     await sleep(300);
     const res = await fetch(
@@ -41,10 +44,12 @@ async function readAll(range: string): Promise<{ total: number | null; ids: stri
                    "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } });
     if (res.status === 204) return { total: total ?? 0, ids };   // meaningful zero
     if (res.status === 429) {                                     // retry, do not truncate
+      if (++attempts > 8) return null;                            // bounded: null, never a partial
       await sleep((Number(res.headers.get("retry-after") ?? 8)) * 1000 + 1500);
       offset -= 100;
       continue;
     }
+    attempts = 0;
     // Any other non-OK: return null so the caller cannot mistake a partial read
     // for a complete one. Previously this returned the rows read so far with a
     // total already set from page 1, which printed a plausible row and a silent
@@ -56,7 +61,11 @@ async function readAll(range: string): Promise<{ total: number | null; ids: stri
     for (const e of entries) ids.push(e.id);
     if (entries.length < 100) break;
   }
-  return { total, ids };
+  // Cap exhausted with a full last page: the read is PARTIAL and must not be
+  // handed back looking complete — "target present? no" would be a false negative,
+  // which is the only conclusion this script draws. The records sibling's readAll
+  // returns null here for the same reason.
+  return null;
 }
 
 async function main(): Promise<void> {

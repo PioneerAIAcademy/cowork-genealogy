@@ -40,12 +40,23 @@ interface Row { id: string; payloadYear: number | null }
 async function readAll(extra: string): Promise<{ total: number | null; rows: Row[] } | null> {
   const rows: Row[] = [];
   let total: number | null = null;
+  let retry = 0;
   for (let offset = 0; offset < CAP; offset += 100) {
     await sleep(250);
     const res = await fetch(
       `https://www.familysearch.org/service/search/hr/v2/personas?${POOL}${extra}&count=100&offset=${offset}&m.queryRequireDefault=on`,
       { headers: { Authorization: `Bearer ${token}`, Accept: "application/json",
                    "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } });
+    // A transient 429 anywhere in 12 bands x 2 variants x N pages would otherwise
+    // mark the band unenumerable and discard the whole run — and on the first read
+    // it printed "narrow further", blaming pool size for throttling.
+    if (res.status === 429 && retry < 6) {
+      const ra = Number(res.headers.get("retry-after") ?? 5);
+      await sleep((Number.isFinite(ra) ? ra : 5) * 1000 + 500);
+      retry++;
+      offset -= 100;
+      continue;
+    }
     if (!res.ok) return null;
     const b: any = await res.json();
     total ??= b?.results ?? null;
@@ -78,6 +89,7 @@ async function main(): Promise<void> {
 
   const membership = new Map<string, number>();
   const exactMembership = new Map<string, number>();
+  const bandMembers = new Map<string, Set<string>>();   // band label -> ids, for the control
   console.log("band        total  read   | .exact total  read");
   console.log("-".repeat(52));
   let unenumerable = 0;
@@ -92,6 +104,7 @@ async function main(): Promise<void> {
     const ex = await readAll(`${range}&q.birthLikeDate.exact=on`);
     if (!set) { unenumerable++; console.log(`${from}-${to}   DID NOT ENUMERATE`); continue; }
     bandRowsRead += set.rows.length;
+    bandMembers.set(`${from}-${to}`, new Set(set.rows.map((r) => r.id)));
     for (const r of set.rows) membership.set(r.id, (membership.get(r.id) ?? 0) + 1);
     if (ex) for (const r of ex.rows) exactMembership.set(r.id, (exactMembership.get(r.id) ?? 0) + 1);
     console.log(
@@ -101,9 +114,19 @@ async function main(): Promise<void> {
   }
   const N = BANDS.length - unenumerable;
 
-  // THE CLOSURE IDENTITY, asserted. Every row returned across all bands must be
-  // accounted for by exactly one membership increment, so the two sums are equal
-  // or a row was dropped or double-counted somewhere between reading and tallying.
+  // THE CLOSURE IDENTITY, asserted over the UNRANGED SET so it can fail on data.
+  //
+  // The first two versions of this block were tautological. Both accumulated
+  // `bandRowsRead` and the `membership` increments from the same `set.rows` in
+  // adjacent statements, so the sums were identically equal for ANY input; the
+  // injection that "proved" it could fail did so by mutating the code between
+  // those two lines, which is a much narrower property than a closure identity.
+  //
+  // This version sums `k * count` over the histogram of the UNRANGED read, exactly
+  // as the tree sibling does. A band that returns an id the unranged enumeration
+  // did not contain contributes to `bandRowsRead` and to no histogram bucket, so
+  // the two diverge — which is a real data-level failure (an incomplete unranged
+  // read, or paging that served rows the first pass missed).
   //
   // Until 2026-08-20 this script printed the histogram and the band table and tied
   // them together nowhere: the "1,465 = 1,465" figure quoted for this pool was
@@ -114,12 +137,15 @@ async function main(): Promise<void> {
   // together) and a missing require switch (every band returns the whole pool, and
   // the sums still agree). The strong guard is the payload-dated control below:
   // a payload-dated persona must land in EXACTLY ONE band.
-  const membershipTotal = [...membership.values()].reduce((a, b) => a + b, 0);
+  const unrangedIds = new Set(u.rows.map((r) => r.id));
+  let accountedFor = 0;
+  for (const id of unrangedIds) accountedFor += membership.get(id) ?? 0;
+  const strays = [...membership.keys()].filter((id) => !unrangedIds.has(id)).length;
   console.log(
-    `\nCLOSURE: band rows read=${bandRowsRead}  sum(membership)=${membershipTotal}  ` +
-      `equal=${bandRowsRead === membershipTotal}`
+    `\nCLOSURE: band rows read=${bandRowsRead}  accounted for by unranged ids=${accountedFor}  ` +
+      `equal=${bandRowsRead === accountedFor}` + (strays ? `  (${strays} id(s) in a band but NOT in the unranged read)` : "")
   );
-  if (bandRowsRead !== membershipTotal) {
+  if (bandRowsRead !== accountedFor) {
     console.log("  REFUSING a verdict: rows were counted on one side of the identity and not the other.");
     return;
   }
@@ -143,9 +169,38 @@ async function main(): Promise<void> {
   }
 
   // Control: does a payload date land in the band that contains it?
+  // THE STRONG GUARD. A persona whose payload exposes a year must land in EXACTLY
+  // ONE band, and in the band that contains that year.
+  //
+  // `>= 1` was the first version and it is useless: under the failure this guard
+  // exists to catch — a missing `m.queryRequireDefault=on`, where every band
+  // returns the whole pool — a dated persona is in all 12 bands and `>= 1` still
+  // reports dated/dated. Closure passes that failure too (both sums rise together),
+  // so this is the ONLY check that sees it. It refuses a verdict rather than
+  // printing, for the same reason.
+  const bandOf = (y: number): number => Math.floor((y - 1400) / 50);
   const dated = u.rows.filter((r) => r.payloadYear !== null);
-  const agree = dated.filter((r) => (membership.get(r.id) ?? 0) >= 1).length;
-  console.log(`\ncontrol — personas WITH a payload year that appear in >=1 band: ${agree}/${dated.length}`);
+  const wrongCount = dated.filter((r) => (membership.get(r.id) ?? 0) !== 1);
+  const wrongBand = dated.filter((r) => {
+    const b = bandOf(r.payloadYear as number);
+    if (b < 0 || b >= BANDS.length) return false;   // dated outside the swept axis
+    const [from, to] = BANDS[b]!;
+    return !(bandMembers.get(`${from}-${to}`)?.has(r.id) ?? false);
+  });
+  console.log(
+    `\ncontrol — payload-dated personas: ${dated.length}; in exactly one band: ` +
+      `${dated.length - wrongCount.length}; in the band holding their own year: ` +
+      `${dated.length - wrongBand.length}`
+  );
+  if (wrongCount.length || wrongBand.length) {
+    console.log(
+      `  REFUSING a verdict: ${wrongCount.length} dated persona(s) are not in exactly one band ` +
+        `and ${wrongBand.length} are absent from the band holding their payload year. ` +
+        `The usual cause is a missing m.queryRequireDefault=on, which makes every band ` +
+        `return the whole pool — closure cannot see that.`
+    );
+    return;
+  }
 
   // The silent cohort under .exact
   const silent = u.rows.filter((r) => (membership.get(r.id) ?? 0) === N && N > 0);

@@ -61,6 +61,13 @@ const EVIDENCE_SURFACES = [
  * disagree with each other and with the artifact.
  */
 const AGENT_SURFACES = [
+  // `person-search.ts` is a MODEL-READ surface, so it belongs here even though it
+  // is deliberately not an EVIDENCE surface: this list forbids absolute totals,
+  // which is exactly what should never appear in a description whose endpoint has
+  // no probe. Without it a stale comma-grouped total could be pasted into the
+  // shipped `person_search` description with the whole suite green — the same hole
+  // this file closes elsewhere, left open one file over.
+  "packages/engine/mcp-server/src/tools/person-search.ts",
   "packages/engine/plugin/skills/search-records/SKILL.md",
   "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md",
   "packages/engine/plugin/skills/search-records/references/place-date-mechanics.md",
@@ -533,7 +540,11 @@ describe("measured figures stay traceable to the probe artifact", () => {
     for (const [section, body] of Object.entries(fig)) {
       if (!body || typeof body !== "object") continue;
       for (const key of Object.keys(body as Record<string, unknown>)) {
-        if (key.startsWith("verdict:")) known.add(`${section}.${key}`);
+        // Normalised on BOTH sides, as the docstring says. Building `known` from
+        // raw keys passes today only because every artifact key happens to hold
+        // single spaces; one emitted with a newline or a double space would make
+        // every real citation of it report as dangling.
+        if (key.startsWith("verdict:")) known.add(`${section}.${key}`.replace(/\s+/g, " "));
       }
     }
     // `H.verdict:…` up to the closing backtick, with whitespace collapsed first so

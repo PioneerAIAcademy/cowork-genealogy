@@ -25,10 +25,14 @@
 import { getValidToken } from "../src/auth/refresh.js";
 const BASE = "https://api.familysearch.org/platform/tree/search";
 const R = "m.queryRequireDefault=on";
-let token = "";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// `getValidToken()` per request, not once up front: this script runs 18 queries
+// with up to 12 attempts and multi-second backoffs, easily tens of minutes, and a
+// token that expires mid-run would otherwise print `HTTP 401` as a data value in
+// the results column. It auto-refreshes, so calling it per request is cheap.
 async function total(qs: string): Promise<{ v: number | string; tries: number }> {
+  const token = await getValidToken();
   for (let a = 0; a < 12; a++) {
     await sleep(3000);
     const res = await fetch(`${BASE}?${qs}`, {
@@ -55,7 +59,6 @@ async function total(qs: string): Promise<{ v: number | string; tries: number }>
 }
 
 async function main(): Promise<void> {
-  token = await getValidToken();
   const SURNAMES = ["Zsigmondy", "Mingazzini", "Bochenek", "Ollerenshaw", "Bickerdike", "Pocklington"];
   console.log("tree endpoint — does .exact drop the persons whose given name is EMPTY?");
   console.log("(nonsense given name matches nothing, so what survives is the empty-field set)\n");
