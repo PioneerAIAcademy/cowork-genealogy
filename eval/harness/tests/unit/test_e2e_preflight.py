@@ -326,7 +326,7 @@ def test_unavailable_fail_arm_degrades_to_todays_message_plus_directory(monkeypa
     # The note is spliced in before the trailing sentence, so the baseline
     # isn't a literal substring — check its two halves survive around it
     # instead of requiring byte-for-byte containment.
-    before_note, after_note = baseline_detail.split(". An e2e run would")
+    before_note, after_note = baseline_detail.split(".\nAn e2e run would")
     assert before_note in detail
     assert "An e2e run would" + after_note in detail
     assert "/some/dir/mcp-logs-genealogy" in detail

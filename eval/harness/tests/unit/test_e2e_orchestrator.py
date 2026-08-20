@@ -6,6 +6,7 @@ path is covered by an e2e suite run, not these unit tests.
 
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 
@@ -1104,3 +1105,29 @@ def test_orchestrator_read_mcp_stderr_lines_finds_the_log_when_the_cli_resolved_
 # string-formatting instead would not exercise the real call site and would
 # be the "check that cannot fail" CLAUDE.md warns against. Verified by direct
 # code inspection against the reviewer's exact suggested patch instead.
+
+
+def test_the_two_stderr_readers_stay_identical():
+    """`_read_mcp_stderr_lines` exists twice (issue #1301 rule 3), kept in
+    sync by eye. The macOS cwd fix (chesworthrm's review) had to be applied
+    to both copies by hand, and nothing compared them -- the same shape
+    `test_write_lockdown_parity.py` was written to guard against, after a
+    POSIX-only path split made the e2e copy a silent no-op on Windows between
+    #914 and #984 (Promise's review of this PR). Same guard, same reason.
+    """
+    repo = Path(__file__).resolve().parents[4]
+
+    def body(path: Path) -> str:
+        src = path.read_text(encoding="utf-8")
+        for node in ast.walk(ast.parse(src)):
+            if isinstance(node, ast.FunctionDef) and node.name == "_read_mcp_stderr_lines":
+                if isinstance(node.body[0], ast.Expr) and isinstance(
+                    node.body[0].value, ast.Constant
+                ):
+                    node.body = node.body[1:]  # docstrings differ by design
+                return ast.dump(ast.parse(ast.unparse(node)))
+        raise AssertionError(f"_read_mcp_stderr_lines not found in {path}")
+
+    assert body(repo / "eval/harness/e2e/preflight.py") == body(
+        repo / "eval/harness/e2e/orchestrator.py"
+    ), "the two _read_mcp_stderr_lines copies have drifted"

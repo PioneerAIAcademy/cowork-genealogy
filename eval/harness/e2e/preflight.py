@@ -522,7 +522,7 @@ def _check_mcp_connection(
             cause += f" (no server stderr captured; looked in {log_dir})"
         return (
             "FAIL",
-            f"{cause}. An e2e run would "
+            f"{cause}.\nAn e2e run would "
             "have no genealogy tools at all — it would burn a live-FamilySearch "
             "session producing nothing. Fix this before running: check that "
             f"`node {resolved_entry}` starts and stays up, and rebuild with "
