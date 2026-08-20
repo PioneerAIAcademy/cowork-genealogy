@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Bennington County, Vermont (formed 1779; on the Massachusetts border opposite northwestern Berkshire County). Supports test 026's cross-border adjoining-jurisdiction search (issue #1415).",
+  "args": {
+    "placeName": "~Bennington"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Bennington, Vermont, United States",
+        "type": "County",
+        "dateRange": "+1779/",
+        "latitude": 43.08,
+        "longitude": -73.11,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Bennington%2C%20Vermont"
+      }
+    ]
+  }
+}
