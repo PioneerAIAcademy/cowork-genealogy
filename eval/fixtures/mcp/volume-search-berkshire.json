@@ -1,0 +1,47 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized Berkshire County, Massachusetts town-clerk and church record volumes covering 1820-1850. Browse-only image volumes, not name-indexed. Matches the skill's standardPlace 'Berkshire, Massachusetts, United States' call for test 026; the ~Massachusetts fixture returns Boston (Suffolk) passenger lists, the wrong locality for this test (issue #1415).",
+  "args": {
+    "standardPlace": "~Berkshire"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Berkshire, Massachusetts, United States",
+      "startYear": 1820,
+      "endYear": 1850
+    },
+    "totalResults": 2,
+    "results": [
+      {
+        "imageGroupNumber": "004500891",
+        "imageGroupPrefix": "004500891",
+        "imageCount": 512,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Berkshire, Massachusetts, United States",
+            "dateRange": "1761-1850",
+            "recordType": "Town Clerk Vital and Town Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004500892",
+        "imageGroupPrefix": "004500892",
+        "imageCount": 274,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Pittsfield, Berkshire, Massachusetts, United States",
+            "dateRange": "1791-1850",
+            "recordType": "Church Records (Congregational)"
+          }
+        ]
+      }
+    ]
+  }
+}
