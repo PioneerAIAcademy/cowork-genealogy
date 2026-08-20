@@ -67,13 +67,30 @@ full county sweep (1,525 volumes) returned only husförhörslängder for Helsing
 1875–1890 and one Communion Records for Tullstorp 1718–1744. The 1658–1663 tax
 lists behind f5 are absent as well; the earliest Harjager list is 1670.
 
-*Reachable by the agent: still largely no.* Every volume above reports
-`recordSearchablePercent: 0` and `fulltextSearchable: false`. Nothing is
-name-indexed, so an agent restricted to record and full-text search cannot search
-its way to f1–f3 or f5 regardless of what the images hold. The 1712 marriage (f4)
-and the pre-1745 parish registers remain the most likely to be reachable. A low
-score is still an expected signal about tool reach rather than agent failure —
-but grade it against what is *searchable*, not what is merely *held*.
+*Reachable by the agent: per finding, not all-or-nothing.* Every volume above
+reports `recordSearchablePercent: 0` and `fulltextSearchable: false`, so nothing in
+the tax lists or the catechism lists is name-indexed. But most findings also rest on
+a **parish register**, and those are a different matter — grade them separately:
+
+- **f1 — reachable.** Elena's own 1745 Barsebäck death entry, recorded *"barnfödd i
+  Henckelstorp"*, plus the gazetteer placing Henckelstorp in Västra Karaby.
+- **f2 — the father's identity is reachable.** The 11 June 1712 Västra Karaby
+  christening of Boel names *"Asmun Tors(son's) dotter Elena from Henckelstorp"*.
+  Only the household *placement* across 1680–1709 depends on the browse-only tax and
+  catechism lists.
+- **f3 — partly reachable, and the split matters.** Pernilla's 1719 death entry
+  ("widow of Asmun Torson") reaches her as Asmund's wife. But the 1696 catechism list
+  is, in this fixture's own words, the *only record listing her maiden name* — so
+  **Jönsdotter**, which is what f3 actually asserts, is not reachable. A run that
+  recovers "Pernilla, wife of Asmund" has got as far as the tools allow.
+- **f4 — reachable.** The 29 December 1712 Västra Karaby marriage entry.
+- **f5 — not reachable.** Its only source is the 1658–1663 tax lists, and the
+  earliest Harjager list on FamilySearch is 1670.
+
+So treat f1, f4, and f2's father-identity as reachable; treat the tax/catechism
+household placement, f3's maiden surname, and f5 as beyond the agent's tool reach. A
+low score is still an expected signal about tool reach rather than agent failure —
+but grade it per finding, against what is *searchable*, not what is merely *held*.
 
 **Unexamined routes (2026-08-19).** Neither has been opened, so neither appears in
 `expected-findings.json`. Probate `007118856` (1688–1816, 439 + 113 images) covers
