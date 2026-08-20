@@ -652,6 +652,84 @@ describe("measured figures stay traceable to the probe artifact", () => {
  * still contain. Both sides are normalised so that a template split across
  * string concatenation still matches the single line it produces.
  */
+/**
+ * The empty-field asymmetry is stated on four shipped surfaces and backed by NO
+ * artifact key.
+ *
+ * `dev/explore-name-empty-field-leg-records.ts` measures it but never calls
+ * `record()`, so there is no `verdict:` to trace against;
+ * `T.verdict:all name fields behave alike` still reads NOT MEASURED. That means the
+ * three guards above — traceability, contradiction pairs, dangling keys — cannot see
+ * this claim at all: every one of them starts from a recorded verdict. The suite
+ * would stay green while all four surfaces told the model the opposite of the truth.
+ *
+ * Promoting the script into a probe section is the real fix and belongs to #1771
+ * (its own docblock says so). Until then this is what is checkable without a verdict:
+ *
+ *   1. All four surfaces state BOTH halves. Drift between surfaces is the exact
+ *      defect class that produced three findings in one review round on this PR —
+ *      a skill file, a spec table and a tool description each disagreeing with the
+ *      others about the same rule.
+ *   2. The script that is the claim's only evidence still exists and still prints
+ *      both verdict strings, so it cannot be quietly deleted or reworded out from
+ *      under four surfaces that depend on it.
+ *
+ * It cannot check the claim against FamilySearch. Nothing here can, which is the
+ * point of recording the gap rather than leaving it invisible.
+ */
+describe("the unbacked empty-field asymmetry stays consistent", () => {
+  const SURFACES = [
+    "packages/engine/mcp-server/src/tools/record-search.ts",
+    "packages/engine/mcp-server/src/tools/person-search.ts",
+    "docs/specs/record-search-tool-spec-v2.md",
+    "docs/specs/person-search-tool-spec.md",
+  ];
+  const SCRIPT = "packages/engine/mcp-server/dev/explore-name-empty-field-leg-records.ts";
+
+  /** Join TS string concatenation and strip blockquote markers, then flatten. */
+  const flatten = (text: string): string =>
+    text
+      .replace(/"\s*\+\s*\n\s*"/g, "")
+      .split("\n")
+      .map((l) => l.replace(/^\s*>\s?/, ""))
+      .join("\n")
+      .replace(/\s+/g, " ");
+
+  const KEEPS =
+    /that field is (?:empty|EMPTY)\*{0,2} — for `givenName` and for a father's, mother's, parent's or spouse's name/;
+  const DROPS =
+    /but \*{0,2}(?:not|NOT)\*{0,2} for `surname`, where an unqualified value drops surname-empty/;
+
+  it("every surface states both halves of the asymmetry", () => {
+    const missing: string[] = [];
+    for (const rel of SURFACES) {
+      const flat = flatten(readFileSync(join(projectRoot, rel), "utf8"));
+      if (!KEEPS.test(flat)) missing.push(`${rel}: the KEEPS half (givenName + the four relatives)`);
+      if (!DROPS.test(flat)) missing.push(`${rel}: the DROPS half (surname)`);
+    }
+    expect(
+      missing,
+      "no artifact key backs this claim, so cross-surface agreement is the only guard it has.\n" +
+        "  A surface that drops or reverses a half is how three findings in one review round\n" +
+        "  came about. If you changed the wording deliberately, update the regexes here in the\n" +
+        "  same commit — and if the CLAIM changed, the four surfaces and the script all move."
+    ).toEqual([]);
+  });
+
+  it("the script that is its only evidence still prints both verdicts", () => {
+    const src = readFileSync(join(projectRoot, SCRIPT), "utf8");
+    const expected = [
+      "unqualified KEEPS records with no typed Given part",
+      "unqualified DROPS surname-empty records",
+    ];
+    expect(
+      expected.filter((v) => !src.includes(v)),
+      `${SCRIPT} is the only evidence for a claim on four shipped surfaces. ` +
+        "If its verdict strings changed, the surfaces quoting it need to change too."
+    ).toEqual([]);
+  });
+});
+
 describe("recorded verdicts are still producible by the probe", () => {
   const PROBE = join(mcpRoot, "dev", "probe-search-qualifiers.ts");
 
