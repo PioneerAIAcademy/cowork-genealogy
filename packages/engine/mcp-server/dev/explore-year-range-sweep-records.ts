@@ -28,7 +28,8 @@
  * wired into `SECTIONS`, `record()` calls, a verdict string the producibility check
  * can find in the source, and RULE 0 compliance.
  *
- * Run: `npx tsx dev/explore-year-range-sweep-records.ts` from `packages/engine/mcp-server`.
+ * Run: `npx tsx dev/explore-year-range-sweep-records.ts` from
+ * `packages/engine/mcp-server`.
  */
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";

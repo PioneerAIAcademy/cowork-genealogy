@@ -6,9 +6,9 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  *
  * The family had grown to the point where `record_search` shipped about 15,500
  * characters of description — roughly four times `person_search`'s — with six
- * `*Exact` toggles over the then-ceiling of 240 characters, and one at 475. The corpus says the
- * family is barely used: across every committed run log only four of the 43
- * toggles have EVER appeared in a call.
+ * `*Exact` toggles over the then-ceiling of 240 characters, and one at 475. The
+ * corpus says the family is barely used: across every committed run log only four
+ * of the 43 toggles have EVER appeared in a call.
  *
  * **The justification is clarity; the token saving is small.** Measured after the
  * rewrite: `record_search` 15,509 -> 14,092 and `person_search` 3,745 -> 4,980
@@ -44,7 +44,8 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  *
  * **The ceiling is the midpoint of the empirical gap.** Legitimate one-liners top
  * out at 238; the smallest real offender was 255; so any ceiling in 239..254 is
- * defensible and `CEILING` below is the middle of it. 240 was the bottom of that range and left
+ * defensible and `CEILING` below is the middle of it. 240 was the bottom of that
+ * range and left
  * two characters of headroom, which makes an ordinary clarification look like a
  * defect. 255 or above is NOT available: it would re-admit a description this PR
  * shortened for being too long, and a lint that permits what it was written to

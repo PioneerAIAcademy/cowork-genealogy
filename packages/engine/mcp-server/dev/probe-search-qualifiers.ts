@@ -4588,16 +4588,17 @@ async function sectionR(): Promise<void> {
   // the end on both sides rather than paged to a cap.
   console.log("\n  --- does .exact on a relative name require that relative to be present? ---");
   // Generalised over FAMILIES. Was spouse-only; father is independently covered by
-  // section F, and mother/parent/other had no measurement at all — which is what
+  // section F, and mother and parent had no measurement at all — which is what
   // left six `*Exact` descriptions reading "Assumed, as `motherGivenNameExact`".
   // The legacy key `spouseExactRequiresPresence` and the spouse verdict string are
   // preserved byte-for-byte: prose cites them and the traceability lint resolves
   // every `R.verdict:...` it finds in a spec against this artifact.
   const exactRows: Array<Record<string, unknown>> = [];
   // POPS OUTER, families inner, so the baseline is enumerated ONCE per population.
-  // The first version of this block had the loops the other way round with the
-  // enumeration inside both, which fetched the same three baselines fifteen times
-  // and took the run from minutes to 46 of them. Correct either way — just wasteful.
+  // The first version had the loops the other way round with the enumeration inside
+  // both, fetching the same three baselines fifteen times. Correct either way, just
+  // wasteful — and it landed in the same run that went from two families to five, so
+  // do not read the 46 minutes that run took as this bug's cost alone.
   for (const pop of POPS) {
     const full = await mustEnumerate(pop.base);
     for (const fam of FAMILIES) {

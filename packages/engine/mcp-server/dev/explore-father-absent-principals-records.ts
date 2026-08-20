@@ -33,13 +33,16 @@
  * is missing or the persona is a parent. The population is legitimate and the
  * estimated-range explanation is dead. Do not revive it.
  *
- * ## What is therefore still open
+ * ## How it was resolved — nothing here is open
  *
- * The zero-retention result stands on a sound population, which means it is the
- * QUERY SHAPE that must be wrong, not the classifier. The untested difference from
- * production: this probe supplies a relative name as the ONLY name term, while a
- * real `record_search` always anchors on a principal name and adds the relative as
- * a supplement. Test that before concluding anything about the shipped rule.
+ * The zero-retention result stood on a sound population, so the QUERY SHAPE was
+ * what was wrong. The pool was anchored on country, type, date and place with no
+ * name term at all, which makes an unmatchable relative token the only name term
+ * and returns an EMPTY set; membership in an empty set distinguishes nothing.
+ * Section R of `probe-search-qualifiers.ts` anchors every population on
+ * `q.surname=` and finds the opposite — `R.verdict:keep-silent` HOLDS, with
+ * retention tracking the silent share — so the shipped rule stands, and the probe
+ * that contradicted it has been deleted. The trap is recorded in R.
  *
  * Run: `npx tsx dev/explore-father-absent-principals-records.ts` from
  * `packages/engine/mcp-server`.

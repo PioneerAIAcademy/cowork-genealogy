@@ -16,9 +16,9 @@
  * The two principal fields behave OPPOSITELY, which is why one test each is not
  * enough:
  *
- *   givenName  an unqualified value keeps records with no typed Given part. Three unmatchable
- *              tokens retain ~251/252/252 of a 6,038 pool; the retained rows have no
- *              typed Given part; `.exact` takes it to 0.
+ *   givenName  an unqualified value keeps records with no typed Given part. Three
+ *              unmatchable tokens retain ~251/252/252 of a 6,038 pool; `.exact`
+ *              takes it to 0.
  *   surname    an unqualified value DROPS surname-empty records. A bound
  *              surname-empty record is present in a 1,100-row set read to the end and
  *              absent under three unmatchable tokens, each of which returns ZERO rows
@@ -32,7 +32,8 @@
  *    surname": some records put the whole name in the Given part, so
  *    `fullText: "Henry Pocklington"` can have zero Surname parts while the string is
  *    still in the name index. The SURNAME leg cross-checks `fullText` against the
- *    parts before accepting the bound target. The GIVENNAME leg does NOT — it counts typed Given parts
+ *    parts before accepting the bound target. The GIVENNAME leg does NOT — it
+ *    counts typed Given parts
  *    only, so its 58/60 is a lower bound on given-name-silence, not a cross-checked
  *    count. Adding the same cross-check there is the open follow-up.
  * 3. A COMMON GIVEN NAME. Anchoring on `Maria` in Brazil means every pool is

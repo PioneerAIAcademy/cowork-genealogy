@@ -46,13 +46,17 @@
  * (70.1% -> 70.2%, 92.8% -> 92.8%, 9.8% -> 10.2%).
  *
  * A probe deleted on 2026-08-20, `explore-relative-empty-field-families.ts`, got
- * "kept 0" against that. It was the
- * one that is wrong: place/date-anchored pool instead of a surname anchor, a
- * graph-derived two-way classifier instead of role-based three-way, and no check
- * that its own controls matched R before reporting. Its numbers must not be quoted.
- * R's three-way split matters specifically because a `role="Father"` person can carry
- * no name at all — neither "named" nor "silent" — which is R's
- * `namelessButIndexedInBaseline` column.
+ * "kept 0" against that, and it was the one that was wrong: a place/date-anchored
+ * pool instead of a surname anchor, a two-bucket classifier instead of R's three,
+ * and no check that its own controls matched R before it reported. Its numbers must
+ * not be quoted. The third bucket is what matters — a relative resolved through the
+ * relationship graph can carry no readable given name, which is neither "named" nor
+ * "silent", and is R's `namelessButIndexedInBaseline` column. Note that R does NOT
+ * detect a father by `role`: its `Persona` docblock lists `display.role ===
+ * "Father"` as one of three WRONG ways, because that field is absent on most
+ * personas and varies ("Father Of Groom") where present. It uses the graph with
+ * `display.gender` first. `role` is the right instrument for THIS probe's question
+ * — what the payload says a person is — and the wrong one for R's.
  *
  * Run: `npx tsx dev/explore-relative-role-classifier-records.ts` from
  * `packages/engine/mcp-server`.
@@ -83,7 +87,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /**
  * Every `role` in the object tree. THIS is where the raw search response says what a
  * person is on the record — "Father", "Mother", "Principal", "Spouse". `fields[]`
- * labels do not carry it (measured: two collections, zero kin labels), and the
+ * labels do not carry it (two collections read, zero kin labels), and the
  * relationship graph is a second-hand view of it. Checking `role` first is what this
  * probe should have done.
  */
