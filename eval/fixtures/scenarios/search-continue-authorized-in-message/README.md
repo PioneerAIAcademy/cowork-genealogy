@@ -29,8 +29,7 @@ involved; the MCP fixtures (`record-search-1880-census-sheahan`,
 were authored for this test alone.
 
 **Correction (post-baseline-run):** the church item's rationale now names the
-real `collectionId` (1401638, "Pennsylvania, Church and Town Records,
-1708-1985" -- reused from the existing `collections-search-schuylkill`
+synthetic `collectionId` (SYNTH-PA-CHURCH, "Pennsylvania, Schuylkill County Church Records (synthetic test fixture)" -- reused from the existing `collections-search-schuylkill`
 fixture) directly, matching `search-records/SKILL.md`'s own guidance that
 `collectionId` may come "from `collections_search` output **or plan
 rationale**." The first baseline run's fixture for this item anchored on a
