@@ -339,21 +339,43 @@ Measured on the two witnesses, n=1 each:
   the rationale asserting it "addressed all requirements from the user message
   and per-test context".
 
-**That second result corrects part of F5, in my own disfavour.** The canary bullet
-reads "briefly note that offsets vary by country and time period (e.g., 10 days
-for Catholic Europe 1582, 11 days for England 1752)". The judge credited "noted
-the jurisdiction-specific offset (+13 days for Russia 1918)" as satisfying it —
-and that is a *defensible* reading, because the "e.g." is illustrative and a
-jurisdiction-specific offset does convey that offsets vary. So the 20/20
-false-pass count is **not** cleanly 20 instances of an override being ignored;
-some part of it is a bullet too vague to enforce.
+**That second result sent me to measure the false-pass arm properly, and both my
+earlier numbers were wrong.** Classified across all 20 gradings that carried the
+bullet, against two readings of it — *strict* (does the response cite the bullet's
+own example jurisdictions?) and *loose* (does it convey that the offset varies by
+country or era **at all**, in any words?):
 
-F5 therefore splits, and only one half is proven:
+| | count |
+|---|---|
+| gradings carrying the bullet | 20 |
+| met the strict reading (cited 1582 / 1752) | **0** |
+| met the loose reading (conveyed variation some other way) | **5** |
+| met **neither** — a genuinely unmet override scored 3 | **15** |
 
-| Arm | Evidence | State |
-|---|---|---|
-| **False negatives** — judge contradicting a stated fact (`_013`) or a stated pass condition (`_011`) | flat contradictions, not loose readings | **real, and `_013` is fixed** |
-| **False passes** — an unmet requirement scored 3 (20 gradings) | at least partly loose-but-defensible compliance against a vague bullet | **weaker than first reported** |
+So there are two distinct causes inside the original "20 of 20", not one:
+
+- **5 of 20 — my measurement was wrong, not the judge.** I grepped for the
+  bullet's *example years*, which are illustrative ("e.g.") rather than required.
+  Those five responses said things like "the offset in force from 1 March 1900
+  onward" or "jurisdiction-specific", which does convey variation, and the judge
+  credited it correctly. Never violations.
+- **15 of 20 — genuinely unmet, and scored 3 anyway.** No example jurisdiction and
+  no variation language in any form, yet Completeness passed. These are real
+  non-compliance with a binding note, and they are what the prompt's "background"
+  framing licensed.
+
+**"20 of 20" over-claimed; "weaker than I reported" over-retracted.** The number
+is 15, from one instance each time — the first generalised from two tests, the
+second from the single fresh run that happened to be one of the five loose-
+compliant cases. Same error twice, opposite directions.
+
+**And that same accident leaves the requirement arm untested.** `_005` is the only
+test still carrying the bullet, and on the fresh post-fix run it fell in the
+loose-compliant five — so there was no violation for the new wording to catch.
+The requirement arm is therefore **unverified, not disproven**; only the fact arm
+(`_013`) is proven. Testing it needs a test that carries the bullet *and* fails
+the loose reading: `_004` and `_009` fail it in all four runs, which makes either
+of them the canary this should have used. Keeping it on `_005` was the wrong pick.
 
 The canary has therefore spent its usefulness: it cannot discriminate, because it
 is vague. Striking it would edit `eval/tests/` and invalidate the committed run
