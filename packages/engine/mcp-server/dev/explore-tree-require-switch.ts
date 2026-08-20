@@ -1,0 +1,70 @@
+/**
+ * Trap 1: `m.queryRequireDefault=on` is mandatory, and its absence is silent.
+ *
+ * EXPLORATORY. **Its output is not in `dev/measured-figures.json` and must not be
+ * cited as measured.** Nothing here calls `record()`, so no verdict it prints can
+ * be traced, contradicted, or diffed against a re-run — which is exactly the
+ * defect that reached a shipped tool description and two specs before review and a
+ * self-audit caught it (issue #1409). Committed so the next person starts from
+ * working code rather than from a prose description of a result.
+ *
+ * Without the switch every query returns the SURNAME-ONLY total (Pocklington 3,953
+ * rather than 272), which reads convincingly as "the given name does not filter"
+ * and is wrong. `buildSearchUrl` always sends it; anything probing by hand must
+ * too. The last row of each block reproduces the bug deliberately.
+ *
+ * To make its output citable it needs, in `probe-search-qualifiers.ts`: a section
+ * letter wired into `SECTIONS`, `record()` calls for every figure and verdict, a
+ * verdict string the producibility check can find in the source, and RULE 0
+ * compliance (refuse a direction when the set could not be enumerated). Issue
+ * #1771 steps 0 and 1 own that work.
+ *
+ * Run: `npx tsx dev/explore-tree-require-switch.ts` from `packages/engine/mcp-server`.
+ */
+import { getValidToken } from "../src/auth/refresh.js";
+const BASE = "https://api.familysearch.org/platform/tree/search";
+const REQUIRE = "m.queryRequireDefault=on";   // the switch I dropped last time
+let token = "";
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function total(qs: string): Promise<number | string> {
+  for (let a = 0; a < 6; a++) {
+    await sleep(600);
+    const res = await fetch(`${BASE}?${qs}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } });
+    if (res.status === 429) { await sleep((Number(res.headers.get("retry-after") ?? 5)) * 1000 + 500); continue; }
+    if (!res.ok) return `HTTP ${res.status}`;
+    const txt = await res.text();
+    if (!txt.trim()) { await sleep(2000); continue; }   // transient empty body
+    try { return JSON.parse(txt)?.results ?? "?"; } catch { await sleep(2000); continue; }
+  }
+  return "429";
+}
+
+async function main(): Promise<void> {
+  token = await getValidToken();
+  // Different names, per the ask: a common English pair and two rare ones.
+  const SETS: Array<[string, string[]]> = [
+    ["Pocklington / Thomae", ["q.surname=Pocklington", "q.givenName=Thomae"]],
+    ["Bickerdike / Joseph",  ["q.surname=Bickerdike", "q.givenName=Joseph"]],
+    ["Ollerenshaw / Hannah", ["q.surname=Ollerenshaw", "q.givenName=Hannah"]],
+  ];
+  for (const [label, [sn, gn]] of SETS) {
+    console.log(`\n=== ${label} ===`);
+    const cases: Array<[string, string]> = [
+      ["surname only",              `${sn}&count=1&${REQUIRE}`],
+      ["+ givenName",               `${sn}&${gn}&count=1&${REQUIRE}`],
+      ["+ givenName NONSENSE",      `${sn}&q.givenName=Xzqwbrtl&count=1&${REQUIRE}`],
+      ["+ givenName .exact",        `${sn}&${gn}&q.givenName.exact=on&count=1&${REQUIRE}`],
+      ["+ givenName NONSENSE .exact", `${sn}&q.givenName=Xzqwbrtl&q.givenName.exact=on&count=1&${REQUIRE}`],
+      ["surname .exact + givenName", `${sn}&q.surname.exact=on&${gn}&count=1&${REQUIRE}`],
+      ["NO require switch (old bug)", `${sn}&${gn}&count=1`],
+    ];
+    for (const [what, qs] of cases) {
+      const t = await total(qs);
+      console.log(`  ${what.padEnd(30)} ${String(t).padStart(8)}`);
+      console.log(`      ${BASE}?${qs}`);
+    }
+  }
+}
+main().catch((e) => { console.error(e instanceof Error ? e.message : String(e)); process.exit(1); });
