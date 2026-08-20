@@ -443,6 +443,7 @@ async def _execute_single_run(
     validator_results = run_validators(
         skill=spec.skill,
         validators_dir=paths.validators_dir,
+        text_response=result.text_response or "",
         before_state={
             "research_json": before_snapshot["research_json"],
             "tree_gedcomx_json": before_snapshot["tree_gedcomx_json"],

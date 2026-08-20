@@ -41,6 +41,7 @@ def run_validators(
     test: dict[str, Any] | None = None,
     blocked_context_calls: list[dict[str, Any]] | None = None,
     skills_invoked: list[str] | None = None,
+    text_response: str = "",
 ) -> list[ValidatorRunResult]:
     """Run universal validators + the per-skill validator file if present."""
     results: list[ValidatorRunResult] = []
@@ -50,6 +51,12 @@ def run_validators(
         "after_state": after_state,
         "tool_calls": tool_calls,
         "skill_frontmatter": skill_frontmatter or {},
+        # The skill's final prose answer. Some rules live only in the narration
+        # — an offer to hand off, a required date format — and are otherwise
+        # gradeable only by the judge. A validator that declares an arg the
+        # runner cannot supply is recorded as FAILED, not skipped (see below),
+        # so this must stay in step with what validators ask for.
+        "text_response": text_response,
         # Every skill invoked through the SDK's `Skill` tool, in call order,
         # captured by the PreToolUse hook in skill_runner. Ground truth for
         # "did the skill delegate to X" — the hook fires on the real call, so
