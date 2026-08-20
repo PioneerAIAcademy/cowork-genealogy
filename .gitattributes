@@ -18,8 +18,9 @@
 # checkout — meaning on Windows it fails *silently*, leaving the new worktree
 # with no linked node_modules or .env and no clue why.
 #
-# Extensionless scripts (git hooks) are covered separately, next to the hooks
-# themselves.
+# Extensionless scripts (git hooks) have no rule of their own — they had none
+# at all before the blanket `* text=auto eol=lf` above, which is what covers
+# them now.
 *.sh text eol=lf
 
 *.bat text eol=crlf
