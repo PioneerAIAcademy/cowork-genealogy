@@ -25,9 +25,9 @@ export default defineConfig(
     // (verified by removing this block and re-running).
     //
     // An unused import did ship in `check-packaged-deps.mjs`, but not because a
-    // rule was missing — nothing runs eslint at all. There is no `lint` task in
-    // turbo.json and no workflow invokes it, so the rule that would have caught
-    // it never ran. (#1070 review)
+    // rule was missing — at the time nothing ran eslint. There is still no
+    // `lint` task in turbo.json, but `make lint`, `scripts/test.sh` and both
+    // `js-tests.yml` jobs now run it, added here. (#1070 review)
     files: ['**/*.{js,mjs,cjs}'],
     rules: {
       '@typescript-eslint/explicit-function-return-type': 'off'
