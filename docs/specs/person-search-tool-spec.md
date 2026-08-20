@@ -622,7 +622,10 @@ Run `dev/try-person-search.ts` for the smoke layer; OAuth setup per
 - `docs/specs/record-search-tool-spec-v2.md` — sibling tool; input-naming convention and shared `q.*` family.
 - `docs/specs/person-read-tool-spec.md` — the chained tool for expanding a chosen match.
 
-Evidence trail: `packages/engine/mcp-server/dev/probe-tree-search.ts`,
+Evidence: a session probe run 2026-05-28. **No script was ever committed for it** —
+the four filenames this line used to cite (`probe-tree-search.ts`,
 `probe-tree-search-narrowing.ts`, `probe-svc-tree-search.ts`,
-`probe-tree-search-platform-lang.ts` (run 2026-05-28).
-```
+`probe-tree-search-platform-lang.ts`) appear in no commit on any branch, so the
+trail was unfollowable from the day it was written. The figures it backs — the
+56,177 and ~9,700 pools above, and the 56,177 / 2,916 require-switch contrast in
+the flag table — are reproducible only by re-running those queries by hand.

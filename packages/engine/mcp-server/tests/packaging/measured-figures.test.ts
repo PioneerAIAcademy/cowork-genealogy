@@ -193,7 +193,7 @@ const EXEMPT = new Map<number, string>([
   ],
   [
     56177,
-    "person_search spec, from a 2026-05-28 probe that predates this artifact: the unqualified `surname=Lincoln` pool, quoted twice to show the require-switch has no effect without it",
+    "person_search spec, from a 2026-05-28 session probe that predates this artifact AND left no committed script — see that spec's Evidence note: the unqualified `surname=Lincoln` pool, quoted twice to show the require-switch has no effect without it",
   ],
   [
     9700,
