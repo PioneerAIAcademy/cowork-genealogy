@@ -18,17 +18,7 @@ import json
 
 import pytest
 
-
-# --- Helpers ----------------------------------------------------------
-
-def _new_log_entries(before_state, after_state) -> list[dict]:
-    before = before_state.get("research_json") or {}
-    after = after_state.get("research_json") or {}
-    before_ids = {e.get("id") for e in before.get("log", []) if isinstance(e, dict)}
-    return [
-        e for e in after.get("log", [])
-        if isinstance(e, dict) and e.get("id") not in before_ids
-    ]
+from validators_lib import new_log_entries as _new_log_entries
 
 
 # --- Structural rules from SKILL.md -----------------------------------
@@ -130,13 +120,25 @@ def test_sidecar_written_for_positive_fts(before_state, after_state, test):
 
 # --- Log entries must trace to the call they document -----------------
 
-# Structured `fulltext_search` params that are post-search filters per
-# SKILL.md ("Search by name only first... Apply place as a post-search
-# filter") and query-syntax.md ("Apply place and date via filters AFTER
-# the initial search, not by typing into Place/Year fields").
+# Structured `fulltext_search` params a log entry's `query` might claim.
+# `collectionId` is checked here too (a log entry can misrepresent it like
+# any other field) but is NOT a "post-search" filter -- see
+# POST_SEARCH_FILTER_KEYS below and test_fulltext_search_never_scopes_to_collection_id.
 FILTER_KEYS = (
     "recordPlace0", "recordPlace1", "recordPlace2", "recordPlace3",
     "recordType", "yearFrom", "yearTo", "collectionId",
+)
+
+# The subset SKILL.md's decision ladder adds only after an unfiltered look
+# (step 5: 50-500 hits -> add Year/RecordType; >500 -> add a second term or
+# place). collectionId is deliberately excluded: it is not a "wait, then
+# add" filter at all -- SKILL.md forbids it on every call, full stop ("Do
+# NOT scope a full-text search to a record collectionId"), so it gets its
+# own always-applies check below rather than living in the first-call-only
+# one.
+POST_SEARCH_FILTER_KEYS = (
+    "recordPlace0", "recordPlace1", "recordPlace2", "recordPlace3",
+    "recordType", "yearFrom", "yearTo",
 )
 
 
@@ -145,39 +147,59 @@ def _fts_tool_calls(tool_calls):
 
 
 def test_log_query_traces_to_fulltext_search_call(before_state, after_state, tool_calls):
-    """A new fulltext_search log entry query must not record a
+    """A new fulltext_search log entry's query must not record a
     recordPlace/yearFrom/yearTo/recordType/collectionId filter that was
     never sent in the fulltext_search call it documents (deep-dive #1651
-    finding 1). Matched by keywords/nlQuery, the only stable handle a log
-    entry and a tool call share; an entry whose keywords/nlQuery match no
-    call this turn is left alone rather than guessed at."""
-    new_entries = [e for e in _new_log_entries(before_state, after_state) if e.get("tool") == "fulltext_search"]
+    finding 1).
+
+    Matched by keywords/nlQuery, grouped, then paired POSITIONALLY within
+    each group -- not "any call with the same handle." Two calls sharing
+    identical keywords is exactly the skill's own recommended pattern
+    (search broad, then narrow with the same terms plus a filter), and an
+    any()-style match let a log entry falsely claim call 1 sent a filter
+    that only call 2 actually sent, undetected, precisely because call 2
+    genuinely did send it (task review on PR #1758, chrisedeson). An entry
+    whose handle has more log entries than calls sharing it is left alone
+    past the point calls run out, rather than guessed at."""
+    new_entries = [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "fulltext_search" and isinstance(e.get("query"), dict)
+    ]
     if not new_entries:
         pytest.skip("no new fulltext_search log entries this turn")
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search tool calls this turn")
 
+    calls_by_handle: dict[object, list] = {}
+    for c in calls:
+        handle = c["args"].get("keywords") or c["args"].get("nlQuery")
+        calls_by_handle.setdefault(handle, []).append(c["args"])
+
+    entries_by_handle: dict[object, list] = {}
+    for e in new_entries:
+        handle = e["query"].get("keywords") or e["query"].get("nlQuery")
+        entries_by_handle.setdefault(handle, []).append(e)
+
     errors = []
-    for entry in new_entries:
-        query = entry.get("query") or {}
-        handle = query.get("keywords") or query.get("nlQuery")
-        matching = [
-            c["args"] for c in calls
-            if (c["args"].get("keywords") or c["args"].get("nlQuery")) == handle
-        ]
-        if not matching:
-            continue
-        for key in FILTER_KEYS:
-            claimed = query.get(key)
-            if claimed is None:
-                continue
-            if not any(args.get(key) == claimed for args in matching):
-                errors.append(
-                    f"log entry {entry.get('id')} (query {handle!r}) claims "
-                    f"{key}={claimed!r}, but no fulltext_search call with that "
-                    f"keywords/nlQuery sent it"
-                )
+    for handle, entries in entries_by_handle.items():
+        matching_calls = calls_by_handle.get(handle, [])
+        for position, entry in enumerate(entries):
+            if position >= len(matching_calls):
+                continue  # more entries than calls sharing this handle; can't correlate positionally
+            args = matching_calls[position]
+            query = entry["query"]
+            for key in FILTER_KEYS:
+                claimed = query.get(key)
+                if claimed is None:
+                    continue
+                if args.get(key) != claimed:
+                    errors.append(
+                        f"log entry {entry.get('id')} (query {handle!r}, position "
+                        f"{position} among same-keywords calls) claims {key}={claimed!r}, "
+                        f"but the positionally-corresponding fulltext_search call sent "
+                        f"{key}={args.get(key)!r}"
+                    )
     assert not errors, "Log entries claiming an unsent filter:\n  - " + "\n  - ".join(errors)
 
 
@@ -189,20 +211,41 @@ def test_first_fulltext_search_call_is_unscoped(tool_calls):
     Year/RecordType/place filter once the unfiltered hit count is known
     (50-500 add Year/RecordType; over 500 add a second term or place) so
     the FIRST fulltext_search call in a turn must carry none of them
-    (deep-dive #1651 finding 2). Checks only the literal first call, not
-    every later first look at an independent target within the same turn
-    (e.g. two names searched in parallel) -- a known narrower scope than
-    the full rule, chosen to keep false positives at zero; widening it
-    needs a way to tell a new target apart from the same target narrowed,
-    which is a judgment call, not a mechanical one."""
+    (deep-dive #1651 finding 2). collectionId is intentionally not part of
+    this check -- see test_fulltext_search_never_scopes_to_collection_id,
+    which covers every call, not just the first.
+
+    Checks only the literal first call, not every later first look at an
+    independent target within the same turn (e.g. two names searched in
+    parallel) -- a known narrower scope than the full rule, chosen to keep
+    false positives at zero; widening it needs a way to tell a new target
+    apart from the same target narrowed, which is a judgment call, not a
+    mechanical one."""
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
     first_args = calls[0]["args"]
-    present = [k for k in FILTER_KEYS if k in first_args]
+    present = [k for k in POST_SEARCH_FILTER_KEYS if k in first_args]
     assert not present, (
         f"first fulltext_search call ({first_args.get('keywords') or first_args.get('nlQuery')!r}) "
         f"includes post-search filter(s) before any unfiltered hit count was observed: {present}"
+    )
+
+
+def test_fulltext_search_never_scopes_to_collection_id(tool_calls):
+    """SKILL.md: "Do NOT scope a full-text search to a record collectionId"
+    -- an absolute rule, unlike place/date/recordType, which only wait for
+    the first unfiltered look (see test_first_fulltext_search_call_is_unscoped,
+    which checks call 0 only and never mentions collectionId). Without this
+    check, collectionId sent on a second-or-later call had no coverage
+    anywhere in the suite (task review on PR #1758, chrisedeson)."""
+    calls = _fts_tool_calls(tool_calls)
+    if not calls:
+        pytest.skip("no fulltext_search calls this turn")
+    offenders = [c["args"] for c in calls if "collectionId" in c["args"]]
+    assert not offenders, (
+        f"fulltext_search must never send collectionId; offending call(s): "
+        f"{[(a.get('keywords') or a.get('nlQuery'), a.get('collectionId')) for a in offenders]}"
     )
 
 
@@ -216,11 +259,18 @@ def test_first_fulltext_search_call_is_unscoped(tool_calls):
 # actually confirms the completing search touched this record type --
 # certificate (vital), alien/citizen (naturalization), parish (church), and
 # funeral (obituary) were all cut as too generic to confirm anything on
-# their own, and family_bible has no term reliable enough to list at all. A
-# record_type with no entry here (including family_bible) gets the
+# their own, and family_bible has no term reliable enough to list at all.
+# Bare "will" was cut from probate the same way after task review on PR
+# #1758 (chrisedeson) confirmed it false-positives on ordinary narration
+# ("will need to confirm the deed date next") -- more common there than
+# any of the terms already cut, since it is also an auxiliary verb, not
+# just a noun that happens to double as vocabulary. The list stays strong
+# without it (testament, bequeath, executor/executrix, administrator/
+# administratrix, appraise/appraisement, inventory, heir, legatee, probate).
+# A record_type with no entry here (including family_bible) gets the
 # structural check only, not asserted clean by a term match it never had.
 RECORD_TYPE_TERMS = {
-    "probate": ("will", "estate", "executor", "executrix", "administrator",
+    "probate": ("estate", "executor", "executrix", "administrator",
                 "administratrix", "appraise", "appraisement", "inventory",
                 "bequeath", "testament", "heir", "legatee", "probate"),
     "church": ("baptism", "baptismal", "christen", "confirmation", "burial"),
@@ -255,7 +305,7 @@ def _completed_plan_items(before_state, after_state):
 
 def test_plan_item_completion_matches_its_own_record_type(before_state, after_state):
     """SKILL.md step 8: set completed (search executed) or skipped
-    (unnecessary). A plan item own search is what it says it is -- e.g.
+    (unnecessary). A plan item's own search is what it says it is -- e.g.
     a record_type probate item calls for a will/estate search. Deep-dive
     #1651 finding 3: a plan item was repeatedly marked completed by an
     unrelated ad-hoc search (a witness/deed query, an nlQuery tree-ID

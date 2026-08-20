@@ -1,19 +1,20 @@
-"""Direct tests for the three search-full-text validators added in the #1651
-deep dive (log-fidelity, first-call scoping, plan-item completion congruence).
+"""Direct tests for the four search-full-text validators added in the #1651
+deep dive (log-fidelity, first-call scoping, collection-id absoluteness,
+plan-item completion congruence).
 
 Same reason as `test_init_project_validator.py`: `pyproject.toml` sets
 `testpaths = ["tests"]`, so nothing under `validators/` is collected by
-`make harness-test`, and these three ran their real pass/fail set exactly
+`make harness-test`, and these checks ran their real pass/fail set exactly
 once, inside a paid `make eval-skill` run. A later refactor could make one
 vacuous with nothing going red. Firing cases are drawn from committed run
 logs wherever one exists (traceable back to the exact test/run that
-produced the defect); the one branch with no real occurrence in any
+produced the defect); the branches with no real occurrence in any
 committed run log (test_plan_item_completion_matches_its_own_record_type's
-structural half -- a plan item completed with zero attributed log entries)
-is hand-built, since there is nothing real to draw it from.
+structural half, and everything specific to the PR #1758 task review's
+findings, which no committed run log happens to exercise) are hand-built,
+since there is nothing real to draw them from.
 """
 
-import json
 import sys
 from pathlib import Path
 
@@ -25,6 +26,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_search_full_text import (  # noqa: E402
     test_log_query_traces_to_fulltext_search_call as check_log_fidelity,
     test_first_fulltext_search_call_is_unscoped as check_first_call_unscoped,
+    test_fulltext_search_never_scopes_to_collection_id as check_never_scopes_to_collection_id,
     test_plan_item_completion_matches_its_own_record_type as check_plan_item_completion,
 )
 
@@ -261,3 +263,119 @@ def test_plan_item_completion_skips_when_nothing_completed_this_turn():
     after = {"research_json": {"plans": []}}
     with pytest.raises(pytest.skip.Exception):
         check_plan_item_completion(before, after)
+
+
+# --- Task review on PR #1758 (chrisedeson), three confirmed bugs --------
+
+# 1. Bare "will" in RECORD_TYPE_TERMS["probate"] false-positived on
+# ordinary narration. No committed run log happens to say "will" in an
+# unrelated sense on a probate completion, so both sides are hand-built.
+
+def test_probate_content_check_no_longer_false_positives_on_bare_will():
+    before = {"research_json": {"plans": [
+        {"id": "pl_010", "items": [
+            {"id": "pli_100", "record_type": "probate", "status": "in_progress"},
+        ]},
+    ]}}
+    after = {"research_json": {
+        "log": [{"id": "log_100", "plan_item_id": "pli_100", "tool": "fulltext_search",
+                 "query": {"keywords": "+Flynn +witness"},
+                 "notes": "found Flynn as a witness on a deed. will need to confirm the deed date next."}],
+        "plans": [{"id": "pl_010", "items": [
+            {"id": "pli_100", "record_type": "probate", "status": "completed"},
+        ]}],
+    }}
+    with pytest.raises(AssertionError) as e:
+        check_plan_item_completion(before, after)
+    assert "pli_100" in str(e.value)
+
+
+def test_probate_content_check_still_fires_on_genuine_probate_vocabulary():
+    """The list stays strong without "will" -- confirm it still catches a
+    real probate hit via one of the remaining terms."""
+    before = {"research_json": {"plans": [
+        {"id": "pl_011", "items": [
+            {"id": "pli_101", "record_type": "probate", "status": "in_progress"},
+        ]},
+    ]}}
+    after = {"research_json": {
+        "log": [{"id": "log_101", "plan_item_id": "pli_101", "tool": "fulltext_search",
+                 "query": {"keywords": "+Flynn +executor"},
+                 "notes": "Flynn named as executor of the estate"}],
+        "plans": [{"id": "pl_011", "items": [
+            {"id": "pli_101", "record_type": "probate", "status": "completed"},
+        ]}],
+    }}
+    check_plan_item_completion(before, after)
+
+
+# 2. Two calls sharing identical keywords (the skill's own recommended
+# broad-then-narrow pattern) let a log entry misattribute call 2's filter
+# to call 1. Built by hand from the exact counter-example in the review.
+
+def test_log_fidelity_does_not_let_a_later_call_cover_for_an_earlier_false_claim():
+    calls = [
+        {"tool": "mcp__genealogy__fulltext_search", "args": {"keywords": "+Flynn +Patrick", "count": 240}},
+        {"tool": "mcp__genealogy__fulltext_search", "args": {"keywords": "+Flynn +Patrick", "recordPlace1": "Spain"}},
+    ]
+    before = {"research_json": {"log": []}}
+    after = {"research_json": {"log": [{
+        "id": "log_005", "plan_item_id": None, "tool": "fulltext_search",
+        # Falsely claims call 1 (the unscoped one) sent recordPlace1.
+        "query": {"keywords": "+Flynn +Patrick", "recordPlace1": "Spain"},
+        "outcome": "positive", "results_examined": 1,
+    }]}}
+    with pytest.raises(AssertionError) as e:
+        check_log_fidelity(before, after, calls)
+    assert "position 0" in str(e.value)
+
+
+def test_log_fidelity_passes_the_broad_then_narrow_pattern_honestly_logged():
+    """Same two calls, but now two log entries, each correctly attributed
+    to its own position -- the skill's recommended pattern, done right."""
+    calls = [
+        {"tool": "mcp__genealogy__fulltext_search", "args": {"keywords": "+Flynn +Patrick", "count": 240}},
+        {"tool": "mcp__genealogy__fulltext_search", "args": {"keywords": "+Flynn +Patrick", "recordPlace1": "Spain"}},
+    ]
+    before = {"research_json": {"log": []}}
+    after = {"research_json": {"log": [
+        {"id": "log_005", "plan_item_id": None, "tool": "fulltext_search",
+         "query": {"keywords": "+Flynn +Patrick"}, "outcome": "positive", "results_examined": 240},
+        {"id": "log_006", "plan_item_id": None, "tool": "fulltext_search",
+         "query": {"keywords": "+Flynn +Patrick", "recordPlace1": "Spain"},
+         "outcome": "positive", "results_examined": 3},
+    ]}}
+    check_log_fidelity(before, after, calls)
+
+
+# 3. collectionId is an absolute never-send rule (unlike place/date/
+# record-type, which only wait for the first unfiltered look), so it gets
+# its own always-applies check across every call, not just call 0.
+
+def test_collection_id_check_fires_when_sent_on_a_later_call():
+    calls = [
+        {"tool": "mcp__genealogy__fulltext_search", "args": {"keywords": "+Flynn +Patrick"}},
+        {"tool": "mcp__genealogy__fulltext_search", "args": {"keywords": "+Flynn +Patrick", "collectionId": "2220359"}},
+    ]
+    with pytest.raises(AssertionError) as e:
+        check_never_scopes_to_collection_id(calls)
+    assert "2220359" in str(e.value)
+
+
+def test_collection_id_check_fires_on_the_first_call_too():
+    calls = [{"tool": "mcp__genealogy__fulltext_search", "args": {"keywords": "+Flynn +Patrick", "collectionId": "2220359"}}]
+    with pytest.raises(AssertionError):
+        check_never_scopes_to_collection_id(calls)
+
+
+def test_collection_id_check_passes_when_never_sent():
+    calls = [
+        {"tool": "mcp__genealogy__fulltext_search", "args": {"keywords": "+Flynn +Patrick"}},
+        {"tool": "mcp__genealogy__fulltext_search", "args": {"keywords": "+Flynn +Patrick", "recordPlace1": "Spain"}},
+    ]
+    check_never_scopes_to_collection_id(calls)
+
+
+def test_collection_id_check_skips_when_no_fulltext_search_was_called():
+    with pytest.raises(pytest.skip.Exception):
+        check_never_scopes_to_collection_id([])

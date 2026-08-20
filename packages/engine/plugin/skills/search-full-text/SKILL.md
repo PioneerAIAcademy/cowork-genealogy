@@ -97,15 +97,10 @@ Read `references/query-syntax.md` for operator details and wildcards.
   millions of irrelevant results.
 - **Search by name only first.** Do NOT send `recordPlace0/1/2/3`,
   `yearFrom`/`yearTo`, or `recordType` on the first `fulltext_search`
-  call for a query — these are post-search filters (see the decision
-  ladder below), whether the value would have gone into `keywords`
-  text or a structured argument; both count as "the initial query."
-  Place risks false positives (matches collection metadata, not
-  document content). Date/record-type risk false negatives instead: a
-  document's real date may not match its collection's metadata date
-  (see references/transcription-quirks.md), so filtering on the first
-  call can silently exclude the right record. Apply all three only
-  once the unfiltered hit count is known.
+  call for a query — whether as `keywords` text or a structured
+  argument, both count as "the initial query." See
+  `references/query-syntax.md`'s "Filters (post-search)" section for
+  why, and the decision ladder below for when to add them.
 - **Do NOT scope a full-text search to a record `collectionId`.** The
   FTS corpus is partitioned into its own auto-generated collections;
   a `collectionId` guessed from `record_search` (or from a collections
