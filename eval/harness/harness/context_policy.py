@@ -53,6 +53,8 @@ condition today and is enforceable there too — issue #1273. e2e imports
 (e2e imports from `harness.*`, never the reverse.)
 """
 
+import importlib.util
+from pathlib import Path
 from typing import Any
 
 # Tools that are unsafe on the main thread *when the skill did not claim them*.
@@ -194,5 +196,83 @@ def subagent_only_denial(bare: str) -> dict[str, Any]:
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
             "permissionDecisionReason": reason,
+        },
+    }
+
+
+# ---------------------------------------------------------------------------
+# Protected-file lockdown, imported (NOT copied) from the shipped plugin hook.
+#
+# The raw-write lockdown — deny Write/Edit/NotebookEdit on research.json and
+# tree.gedcomx.json — ships in three copies (plugin hook, hosted SDK hook, e2e
+# harness). The unit harness was the one tier missing it (issue #1493). Rather
+# than add a fourth textual copy that could drift, we bind the *live* predicate
+# object from the plugin hook. It is the only one of the three that is
+# stdlib-only (`json`/`sys`), so importing it here pulls in no `claude_agent_sdk`
+# — unlike `real_agent`/`orchestrator`, whose predicates the parity test must
+# `ast`-extract because importing them would run a foreign venv's imports.
+#
+# An imported predicate cannot diverge from what the plugin ships, which is
+# strictly stronger than a vector-checked copy; that is why #1493 mandates
+# "import, do not copy" and why IMPLEMENTATIONS in test_write_lockdown_parity.py
+# stays at three. Do NOT rebind `_guard.PROTECTED_PROJECT_FILES` to a
+# module-level name here: `test_no_unregistered_copy_of_the_lockdown_exists`
+# greps for `PROTECTED_PROJECT_FILES[[:space:]]*[:=]` and would flag this module
+# as a fourth copy. Reach it as `_guard.PROTECTED_PROJECT_FILES` only.
+# ---------------------------------------------------------------------------
+
+_GUARD_HOOK_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "packages"
+    / "engine"
+    / "plugin"
+    / "hooks"
+    / "guard_project_files.py"
+)
+
+
+def _load_guard():
+    """Import the shipped plugin hook module by file path.
+
+    Fail-closed on purpose: if the plugin hook cannot be loaded, raise here
+    rather than degrade to allowing every write — a silent None would recreate
+    exactly the "nothing checks" gap #1493 closes. The plugin file is always
+    present in a checkout, so this only fires on a genuinely broken tree.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "_genealogy_guard_project_files", _GUARD_HOOK_PATH
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load guard hook at {_GUARD_HOOK_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_guard = _load_guard()
+
+
+def protected_file_denial(tool_name: str, tool_input: Any) -> dict[str, Any] | None:
+    """A PreToolUse deny payload for a raw write to a protected project file.
+
+    Returns None when the call is not a protected-file write (the hook should
+    then fall through to the normal permission flow). Reuses the plugin hook's
+    own `protected_target` predicate and `REASON` text, so the unit harness
+    denies exactly what ships in Cowork, with identical feedback. No
+    `stopReason` — a denied write is recoverable, matching `subagent_only_denial`
+    and the e2e tree-read block.
+    """
+    name = _guard.protected_target(
+        tool_name, tool_input if isinstance(tool_input, dict) else {}
+    )
+    if name is None:
+        return None
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": _guard.REASON.format(
+                tool=tool_name or "This tool", name=name
+            ),
         },
     }

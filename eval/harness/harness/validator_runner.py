@@ -40,6 +40,7 @@ def run_validators(
     skill_frontmatter: dict[str, Any] | None = None,
     test: dict[str, Any] | None = None,
     blocked_context_calls: list[dict[str, Any]] | None = None,
+    blocked_protected_writes: list[dict[str, Any]] | None = None,
     skills_invoked: list[str] | None = None,
 ) -> list[ValidatorRunResult]:
     """Run universal validators + the per-skill validator file if present."""
@@ -66,6 +67,13 @@ def run_validators(
         # blocks the call, it never reaches `tool_calls`, so this is the only
         # place the violation is visible.
         "blocked_context_calls": blocked_context_calls or [],
+        # Raw Write/Edit/NotebookEdit calls to a protected project file
+        # (research.json / tree.gedcomx.json) the main thread tried and the hook
+        # denied (harness.context_policy.protected_file_denial). Same shape and
+        # same rationale as blocked_context_calls: the denied call never reaches
+        # `tool_calls`, so this is the only place a raw-write attempt is visible.
+        # The universal validator asserts it is empty (issue #1493).
+        "blocked_protected_writes": blocked_protected_writes or [],
         # `test` is the parsed test JSON dict (the inner "test" block,
         # plus top-level validator-facing blocks the orchestrator threads
         # in — currently `expected_classifications`). Validators gate
