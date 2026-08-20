@@ -1364,14 +1364,15 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and 82 negative routing tests. **374** committed test definitions —
-  one JSON file per test under `eval/tests/unit/` — and across the 25 live
+  run logs, and 82 negative routing tests. **396** committed test definitions
+  (`make eval-inventory`) — one JSON file per test under `eval/tests/unit/` —
+  and across the 25 live
   suites the latest run log per suite totals **373 rows, 343 passing (92%)**.
   Those two numbers count different things and their near-match is a
   coincidence: the latest logs are snapshots taken between 2026-07-21 and
   2026-08-06, and exactly one defined test appears in none of them.
-- **E2e** (`eval/tests/e2e/<fixture>/`) — live FamilySearch, 104 fixtures
-  (directories carrying a `fixture.json`; `eval/tests/e2e/` holds one more
+- **E2e** (`eval/tests/e2e/<fixture>/`) — live FamilySearch, 106 fixtures
+  (`make eval-inventory`; directories carrying a `fixture.json`; `eval/tests/e2e/` holds one more
   directory that is not one), blind
   human `.ann.json` annotations, and `calibrate_judge` measuring judge-vs-human
   agreement **offline** rather than inferring it from expensive live runs. Three
@@ -1464,7 +1465,7 @@ lives. A test is not just its definition: it usually needs a matching
 `eval/fixtures/mcp/` response, a dimension in that skill's `rubric.md`, and a
 check in `eval/harness/validators/`. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
-1 by policy. 82 of the 374 definitions are **negative** tests that exist to prove
+1 by policy. 82 of the 396 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is

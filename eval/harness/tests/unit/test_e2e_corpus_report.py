@@ -11,7 +11,9 @@ import pytest
 
 from e2e.corpus_report import (
     VIOLATION_ARMS,
+    RecomputeTally,
     classify,
+    format_recompute,
     format_report,
     main,
     recompute_tally,
@@ -733,6 +735,47 @@ def test_recompute_recovers_violations_a_stored_only_read_counts_as_zero(tmp_pat
     assert rt.skipped == []
     assert sum(rt.arms.values()) > 0
     assert rt.arms.get("mentor verdict", 0) > 0
+    # Recompute found MORE than stored (which was absent) -> not a regression.
+    assert rt.regressed == []
+
+
+def test_recompute_surfaces_a_run_where_stored_exceeds_recomputed(tmp_path: Path):
+    """The mary-mcandrew-son case (#1340): a run recorded a violation today's
+    detector clears. It must be NAMED as a detector correction, not absorbed into
+    the aggregate where the report would read as if recompute only ever finds
+    MORE. Clean research/tree recompute to zero; the stored field says one."""
+    runs, fixtures = tmp_path / "runs", tmp_path / "fixtures"
+    run = _run_with_sidecars(
+        runs, "fixed",
+        {"proof_summaries": [], "evaluations": []}, {"persons": []},
+        stored_violations=["a violation a contemporaneous checker recorded"],
+    )
+    (fixtures / "fixed").mkdir(parents=True)
+    _write(fixtures / "fixed", "starting-tree.gedcomx.json", {"persons": []})
+
+    rt = recompute_tally([run], fixtures_root=fixtures)
+    assert sum(rt.arms.values()) == 0          # today's detector: clean
+    assert len(rt.regressed) == 1
+    assert "stored 1 -> recomputed 0" in rt.regressed[0]
+
+    out = format_recompute(Counter(), rt)
+    assert "clears a violation the run recorded" in out
+    assert "detector correction, not a corpus change" in out
+    # The falsified claim must be gone in both directions.
+    assert "stored is a floor" not in out
+    assert "the real count" not in out
+
+
+def test_recompute_arm_order_breaks_ties_alphabetically():
+    """Equal-count arms must order deterministically. Sorting a set by count
+    alone leaves ties to hash-seed-dependent iteration order, which makes the
+    report undiffable — and byte-identical output is #1484's regression check."""
+    rt = RecomputeTally(
+        arms=Counter({"zebra": 2, "alpha": 2, "mango": 2}),
+        per_fixture=Counter(), scanned=3, skipped=[], regressed=[],
+    )
+    out = format_recompute(Counter(), rt)
+    assert out.index("alpha") < out.index("mango") < out.index("zebra")
 
 
 def test_recompute_skips_a_run_whose_fixture_has_no_seed_tree(tmp_path: Path):

@@ -306,12 +306,19 @@ class RecomputeTally(NamedTuple):
     corpus. (A skipped run still appears in the report's stored column, which
     spans all paths to stay byte-identical with the default report — the skip
     only removes it from the recomputed side.)
+
+    `regressed` names every run whose stored count EXCEEDS its recomputed one: a
+    violation the run recorded that today's detector clears (a detector
+    correction, not a corpus change). Surfaced for the same reason skips are: a
+    `stored > recomputed` case otherwise vanishes into the aggregate and the
+    report reads as if the recompute could only ever find more.
     """
 
     arms: Counter
     per_fixture: Counter
     scanned: int
     skipped: list[str]
+    regressed: list[str]
 
 
 def recompute_tally(paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES) -> RecomputeTally:
@@ -338,6 +345,7 @@ def recompute_tally(paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES) ->
     arms: Counter = Counter()
     per_fixture: Counter = Counter()
     skipped: list[str] = []
+    regressed: list[str] = []
     scanned = 0
     for path in paths:
         slug = path.parent.name
@@ -356,12 +364,19 @@ def recompute_tally(paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES) ->
             continue
         tool_calls = data.get("tool_calls") or []
         scanned += 1
+        recomputed_here = 0
         for violation in check_guardrail_compliance(
             tool_calls, final_research, final_tree, starting_tree=seed
         ):
             arms[classify(violation)] += 1
             per_fixture[slug] += 1
-    return RecomputeTally(arms, per_fixture, scanned, skipped)
+            recomputed_here += 1
+        stored_here = len(violations_of(data))
+        if stored_here > recomputed_here:
+            regressed.append(
+                f"{slug}/{path.name}  stored {stored_here} -> recomputed {recomputed_here}"
+            )
+    return RecomputeTally(arms, per_fixture, scanned, skipped, regressed)
 
 
 class Spend(NamedTuple):
@@ -662,24 +677,37 @@ def format_spend(spend: Spend, ratios: list[float]) -> str:
 
 
 def format_recompute(stored_arms: Counter, rt: RecomputeTally) -> str:
-    """Stored vs recomputed, per arm, labelled — then every named skip.
+    """Stored vs recomputed, per arm, labelled — then every regressed run and
+    every named skip.
 
-    The stored column is a floor: runs written before the detector store no
-    violations field and read `not_checked`, contributing zero. The recomputed
-    column re-derives them from committed data.
+    The two columns are not the same measurement: `stored` is what each run
+    recorded at the time (pre-detector runs recorded none), `recomputed` is
+    today's detectors over the same committed data. Recomputed is NOT guaranteed
+    to be >= stored: today's detector can clear a violation a contemporaneous
+    checker recorded, which the regressed list below names.
     """
     lines = [
         "",
         "  --recompute: violations re-derived from tool_calls + committed sidecars.",
-        "               stored is a floor (pre-detector runs record none); recomputed is the real count.",
+        "               stored = what each run recorded at the time (pre-detector runs record none); ",
+        "               recomputed = today's detectors over the same committed data. Not the same ",
+        "               measurement: recomputed is not guaranteed >= stored.",
         f"    {'arm':<34} {'stored':>7} {'recomputed':>11}",
     ]
-    for arm in sorted(set(stored_arms) | set(rt.arms), key=lambda a: -rt.arms.get(a, 0)):
+    # Tiebreak alphabetically so equal-count arms order deterministically across
+    # processes (set iteration is hash-seed-dependent); matches `_counts`.
+    for arm in sorted(set(stored_arms) | set(rt.arms), key=lambda a: (-rt.arms.get(a, 0), a)):
         lines.append(f"    {arm:<34} {stored_arms.get(arm, 0):>7} {rt.arms.get(arm, 0):>11}")
     lines.append(
         f"    {'TOTAL':<34} {sum(stored_arms.values()):>7} {sum(rt.arms.values()):>11}"
         f"   ({rt.scanned} run(s) scanned)"
     )
+    if rt.regressed:
+        lines.append(
+            f"    {len(rt.regressed)} run(s) where TODAY's detector clears a violation the run recorded"
+        )
+        lines.append("      (a detector correction, not a corpus change):")
+        lines.extend(f"      {r}" for r in rt.regressed)
     if rt.skipped:
         lines.append(
             f"    {len(rt.skipped)} skip(s) — excluded from the recomputed count, never counted as zero:"

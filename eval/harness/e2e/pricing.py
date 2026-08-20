@@ -1,9 +1,11 @@
 """Flat per-token price table + a cost estimator for abort-path e2e runs.
 
 Issue #1484 (b): every aborted run (`_fallback_usage`) stores
-`total_cost_usd: None`, so the corpus ledger reads as if 24 runs were free and
-hides ~$196 of real spend — non-randomly, since every `timeout` run is among
-them. `total_cost_usd` itself stays null (a run spans several models, so one
+`total_cost_usd: None`, so the corpus ledger reads as if the null-cost runs were
+free and hides real spend, non-randomly, since every `timeout` run is among
+them. The hidden figure is not pinned here because it drifts with the corpus:
+`make e2e-corpus SINCE=all` prints it live (recorded / estimated / unrecoverable),
+which is this module's whole point. `total_cost_usd` itself stays null (a run spans several models, so one
 authoritative price lookup would be wrong; see `_fallback_usage`'s docstring and
 e2e-test-spec.md §8.1.2). This module produces a *separately-named, clearly-
 approximate* figure instead: `total_cost_usd_estimated`.

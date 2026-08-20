@@ -999,12 +999,10 @@ def _timeline_tool_label(tool: str, args: dict | None) -> str:
     return _bare_tool_name(tool)
 
 
-_USAGE_FIELDS = (
-    "input_tokens",
-    "output_tokens",
-    "cache_read_input_tokens",
-    "cache_creation_input_tokens",
-)
+# The token fields `_accumulate_usage` sums, and the presence test the estimator
+# uses — one definition (`pricing.PRICED_FIELDS`), so `_fallback_usage`'s emitted
+# block and the estimator that prices it can never silently diverge (#1484).
+_USAGE_FIELDS = pricing.PRICED_FIELDS
 
 
 def _accumulate_usage(acc: dict[str, dict[str, int]], message: Any) -> None:

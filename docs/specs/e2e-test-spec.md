@@ -535,7 +535,8 @@ batch needs an explicit shell loop and a budget decision, not a one-word flag.
 **Suite economics — scale by the mean, not the median.** Measured 2026-08-20
 over the 157 committed e2e runlogs: median ~**$7 / ~53 min** per run. **24 carry
 no `total_cost_usd`** (all timeouts, plus a few `error`/`inactivity`), so the
-**$1,142.74** recorded total spans 133 runs while the wall-clock spans all 157.
+**$1,142.74** recorded total spans 133 runs, while `duration_ms` spans 144; the
+13 runs carrying neither a cost nor token counts carry no `duration_ms` either.
 Two ways fill the gap, and they are complementary, not rival: the pooled $/min
 imputation used here historically (~$0.1504/min), and the flat per-token estimate
 `make e2e-corpus`'s spend line now applies (`e2e/pricing.py`), which recovers the
@@ -543,7 +544,11 @@ imputation used here historically (~$0.1504/min), and the flat per-token estimat
 carry neither as unrecoverable rather than imputing them. Prefer the per-token
 estimate where token counts survive — it is calibrated (median ~0.90x recorded,
 `make e2e-corpus CALIBRATE=1`); the $/min figure is the fallback for the
-tokenless tail. Budget a suite at the mean, and run `make e2e-corpus SINCE=all`
+tokenless tail, and its minutes come from `usage.timeline` (`duration_ms` is null
+for every run in that tail), which covers 10 of the 13; the remaining 3 carry no
+wall-clock signal and are unmeasurable by either method. The means are ~**$8.59**
+and ~**59.9 min**, so a 20-fixture pass is about **$172** and **~20 h serial**.
+Budget a suite at the mean, and run `make e2e-corpus SINCE=all`
 for the live figure rather than this snapshot. Nothing enforces a budget — see
 the `max_cost_usd` note in §6 step 5.
 
