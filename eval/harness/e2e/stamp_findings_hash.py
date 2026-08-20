@@ -34,6 +34,19 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
 
 
+def _resolve_ann_path(ann_path: Path) -> Path:
+    """Accept an absolute path, one relative to cwd, or one relative to the repo
+    root. ``uv run`` puts cwd at ``eval/harness``, but the grade-e2e-run skill
+    hands the repo-root-relative path it wrote (``eval/runlogs/e2e/...``); without
+    this that path would resolve under ``eval/harness/`` and silently fail to
+    stamp. Falls back to the input unchanged so the caller's read raises a clear
+    error on a genuinely missing file."""
+    if ann_path.is_absolute() or ann_path.exists():
+        return ann_path
+    candidate = REPO_ROOT / ann_path
+    return candidate if candidate.exists() else ann_path
+
+
 def stamp(ann_path: Path, fixtures_root: Path) -> str:
     """Write ``findings_hash`` into ``ann_path`` in place; return the hash.
 
@@ -74,12 +87,13 @@ def main(argv: list[str] | None = None) -> int:
         help=f"Root of e2e fixtures. Default: {DEFAULT_FIXTURES_ROOT}",
     )
     args = parser.parse_args(argv)
+    ann_path = _resolve_ann_path(args.ann_path)
     try:
-        digest = stamp(args.ann_path, args.fixtures_root)
+        digest = stamp(ann_path, args.fixtures_root)
     except (OSError, ValueError) as e:
         print(f"stamp_findings_hash: {e}", file=sys.stderr)
         return 1
-    print(f"stamped findings_hash={digest} into {args.ann_path}")
+    print(f"stamped findings_hash={digest} into {ann_path}")
     return 0
 
 
