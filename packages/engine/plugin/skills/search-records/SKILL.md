@@ -226,9 +226,8 @@ and on how often that relative is indexed in the records you are searching:
 
 - **An unmatchable relative name keeps exactly the records silent about that
   relative, and drops every record naming a different one.** Enumerated for
-  `father*` and `spouse*` only, in marriage records; `mother*`, `parent*` and
-  `other*` are assumed to follow, not measured — so a mother-anchored nil is
-  weaker evidence than a father-anchored one.
+  `father*`, `spouse*`, `mother*` and `parent*` in marriage records; `other*` is
+  not measured, so an `other`-anchored nil is the weak one.
 - **So the narrowing you get is the share of records that name that relative at
   all.** Where parents are rarely indexed, a parent name barely narrows and a
   parent-anchored nil is weak evidence. Where spouses are almost always indexed
