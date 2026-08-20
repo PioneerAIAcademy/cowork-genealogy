@@ -228,8 +228,13 @@ class LocalProvider(SandboxProvider):
         if proc.poll() is None:
             try:
                 if hasattr(os, "killpg"):
+                    # kills server + agent (new session)
                     os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
                 else:
+                    # Windows has no process groups here. terminate() reaches the
+                    # direct child only, so the agent grandchild sandbox_server
+                    # spawns is orphaned rather than killed — strictly better than
+                    # the AttributeError this replaces, but not equivalent.
                     proc.terminate()
             except (ProcessLookupError, PermissionError):
                 proc.terminate()

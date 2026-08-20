@@ -354,7 +354,11 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
   let folder: string
 
   beforeEach(async () => {
-    folder = await mkdtemp(join(tmpdir(), 'feedback-slog-'))
+    // Underscore on purpose. Claude Code replaces EVERY non-alphanumeric char
+    // with '-', not just path separators, so an all-alphanumeric temp name is
+    // derived identically by the old (separators-only) and new rules — with
+    // 'feedback-slog-' this suite passed against the broken derivation too.
+    folder = await mkdtemp(join(tmpdir(), 'feedback_slog-'))
     await writeFile(join(folder, 'research.json'), '{}', 'utf8')
   })
 
