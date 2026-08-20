@@ -1,8 +1,8 @@
 # citation — prohibition list (Step 1 of the deep-dive guide)
 
-Built from `packages/engine/plugin/skills/citation/SKILL.md` at commit `c1fc2a4c`
-(2026-08-09, the last commit before this dive's own changes), plus
-`references/gps-citation-standards.md` and `references/validation-protocol.md`.
+Built from `packages/engine/plugin/skills/citation/SKILL.md` as this PR leaves
+it, plus `references/gps-citation-standards.md` and
+`references/validation-protocol.md`.
 Every line below is checkable by eye against a run-log transcript
 (`output.text_response`, `output.tool_calls`, `output.file_changes`).
 
@@ -96,7 +96,7 @@ deliberately excluded — they belong to the judge, per the guide.
     that office is the creator of a will, a probate record, or a letters-testamentary
     entry. The county Orphans' Court adjudicates estate distribution, accounts,
     partition and guardianship — name it for those records. Either way, name the
-    office, never the courthouse building or a generic records office.
+    office in `who`, never the courthouse building or a generic records office.
     *(Finding F8's ruling — the body previously named only Orphans' Court; this PR
     corrects it to distinguish both offices by document type.)*
 28. State-issued certificate creator = the named state agency, not "local registrar".
