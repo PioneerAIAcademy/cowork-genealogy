@@ -313,12 +313,12 @@ registrar" — the agency named on the certificate form.
 
 #### Probate records (will)
 ```
-[COUNTY] [COURT], [STATE], [DOCUMENT TYPE], [PERSON NAME],
+[COUNTY] [OFFICE], [STATE], [DOCUMENT TYPE], [PERSON NAME],
 [DATE]; [BOOK/VOLUME], [PAGE]; [ARCHIVES], [CITY].
 ```
 Example:
 ```
-Berks County Orphans' Court, Pennsylvania, will of Edward
+Berks County Register of Wills, Pennsylvania, will of Edward
 Mooney, proved 3 June 1874; Will Book 9, p. 113; Berks County
 Courthouse, Reading.
 ```
@@ -328,8 +328,8 @@ Wills**, who holds the will books — that office is the creator of a
 will, a probate record, or a letters-testamentary entry. The county
 **Orphans' Court** adjudicates estate distribution, accounts,
 partition and guardianship — name it for those records. Either way,
-name the office, never the courthouse building or a generic records
-office. Where `tree.gedcomx.json` carries an `author` on the
+name the office in `who`, never the courthouse building or a generic
+records office. Where `tree.gedcomx.json` carries an `author` on the
 matching source description, that value takes precedence over this
 inference.
 
