@@ -1267,12 +1267,12 @@ export const recordSearchToolSchema = {
     "To scope to a specific record collection, call the collections tool " +
     "first to find the right collectionId. " +
     "EXACT-MATCH TOGGLES: without an `*Exact` flag a name field also matches " +
-    "fuzzy spellings, and on a RELATIVE's name field it additionally keeps " +
-    "records that name no such person at all. Setting the flag excludes both, " +
-    "so it only ever narrows and can drop the target. Whether the principal " +
-    "`surname`/`givenName` toggles also drop records with that field empty is " +
-    "not established. Years behave differently — see `birthYearExact`. Place " +
-    "toggles are a different mechanism — see `birthPlaceExact`.",
+    "fuzzy spellings, and it keeps records where that field is EMPTY — for " +
+    "`givenName` and for any relative's name, but NOT for `surname`, where an " +
+    "unqualified value drops surname-empty records outright. Setting a flag " +
+    "excludes what its own field admits, so it only ever narrows and can drop " +
+    "the target. Years behave differently — see `birthYearExact`. Place toggles " +
+    "are a different mechanism — see `birthPlaceExact`.",
   // The `*Exact` descriptions below state only what is specific to each
   // parameter; the rule they share lives in the tool-level description above and
   // is deliberately not repeated per parameter. They cover the effect on the

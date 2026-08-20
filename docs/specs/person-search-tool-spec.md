@@ -74,11 +74,19 @@ parameters is in *FamilySearch API Reference → mapping table*.
 
 #### The exact-match rule
 
-One rule, belonging to the search engine rather than to this endpoint:
+One rule, belonging to the search engine rather than to this endpoint — with one
+measured exception, on `surname`:
 
-> **Without `exact=on` on a name field**, results include fuzzy matches. On a
-> **relative's** name field they additionally include persons for whom that
-> relative is not recorded. **With `exact=on`**, both are excluded.
+> **Without `exact=on` on a name field**, results include fuzzy matches, and persons
+> where **that field is empty** — for `givenName` and for a relative's name, but
+> **not** for `surname`, where an unqualified value drops surname-empty persons.
+> **With `exact=on`**, whatever its own field admits is excluded.
+
+**The exception was measured on the record index, not here.** See
+`record-search-tool-spec-v2.md` → *Person fields* → *The exact-match rule* for the
+method and the figures, and `dev/explore-name-empty-field-leg-records.ts` for the
+script. Nothing has tested it on `platform/tree/search`, so treat the asymmetry as the
+engine's behaviour reported from one endpoint rather than as measured on this one.
 
 **Provenance, and its limit.** The rule is the lead's, from FamilySearch
 search-engine internals — it belongs to the search engine rather than to either

@@ -101,11 +101,13 @@ but the anchor rule above must be satisfied.
 
 #### The exact-match rule
 
-One rule, belonging to the search engine rather than to this endpoint:
+One rule, belonging to the search engine rather than to this endpoint — with one
+measured exception, on `surname`:
 
-> **Without `exact=on` on a name field**, results include fuzzy matches. On a
-> **relative's** name field they additionally include records that name no such
-> person at all. **With `exact=on`**, both are excluded.
+> **Without `exact=on` on a name field**, results include fuzzy matches, and records
+> where **that field is empty** — for `givenName` and for any relative's name, but
+> **not** for `surname`, where an unqualified value drops surname-empty records
+> outright. **With `exact=on`**, whatever its own field admits is excluded.
 
 **What is measured, and what is not.** The relative half is enumerated on this
 endpoint: `F.verdict:relative .exact requires the relative to be present` reads
@@ -116,13 +118,31 @@ spouse to be present` likewise across two populations read in full, and
 `B.verdict:exact surfaces records fuzzy does not` reads NO — exact is a strict
 subset.
 
-**Whether the principal `surname`/`givenName` toggles also drop records with that
-field empty is NOT established**, and the spec should not imply it.
-`T.verdict:all name fields behave alike` reads *"NOT MEASURED — the per-field
-verdicts are withheld under RULE 0"*, and `surname` is a required anchor, so a
-surname-empty record is not a case this endpoint puts in front of you. An earlier
-version of this section asserted the empty-field leg for every name field; it was
-narrowed here after review.
+**The two principal fields behave oppositely, and that is the surprise.** The
+artifact leaves this open — `T.verdict:all name fields behave alike` reads *"NOT
+MEASURED — the per-field verdicts are withheld under RULE 0"* — so it was measured
+directly on 2026-08-20 with the unmatchable-token method sections R and S built and
+validated, reproducible via
+`packages/engine/mcp-server/dev/explore-name-empty-field-leg-records.ts`:
+
+- **`givenName` keeps them.** Three unmatchable tokens each retain ~251 of a 6,038
+  pool (spread under 2%, which is S's control separating silence from fuzzy reach);
+  58 of 60 sampled retained rows carry no typed Given part; `.exact` takes it to 0.
+- **`surname` drops them.** A bound surname-empty record — `fullText` "Escolastica",
+  one Given part, zero Surname parts — is present in a 1,100-row set read to the end,
+  and each of three unmatchable tokens returns an **empty set**. Zero rows, so this is
+  not a ranking artifact.
+
+Two earlier revisions of this section were wrong here: the first asserted the
+empty-field leg for every name field, the second declared it unestablished for both.
+Neither was measured. Note also that the reason first given for the surname
+half — "`surname` is a required anchor, so a surname-empty record is not a case this
+endpoint puts in front of you" — is **not** why: `surname` is only one of three
+anchors, the pool above is anchored on country, type, date and place with no name
+term at all, and it contains 1,100 records including surname-empty ones.
+
+These figures are not in `dev/measured-figures.json`; the script is the trail until a
+probe section records them.
 
 The lead states the rule as the search engine's rather than this endpoint's, from
 FamilySearch internals. See `docs/specs/person-search-tool-spec.md` → *Person fields* → *The

@@ -353,12 +353,13 @@ export const personSearchToolSchema = {
     "login tool first if not logged in. For ambiguous place names, call the " +
     "place_search tool first. " +
     "EXACT-MATCH TOGGLES: without an `*Exact` flag a name field also matches " +
-    "fuzzy spellings, and a relative's name field additionally keeps persons " +
-    "for whom that relative is not recorded. Setting the flag excludes both, " +
-    "so it only ever narrows and can drop the target. This is the search " +
-    "engine's behaviour rather than this endpoint's; the figures behind it were " +
-    "measured against the record index. Years and places are outside the rule " +
-    "and their behaviour here is unestablished — see `birthYearExact` and " +
+    "fuzzy spellings, and it keeps persons where that field is EMPTY — for " +
+    "`givenName` and for a relative's name, but NOT for `surname`, where an " +
+    "unqualified value drops surname-empty persons. Setting a flag excludes " +
+    "what its own field admits, so it only ever narrows and can drop the " +
+    "target. This is the search engine's behaviour; the figures behind it were " +
+    "measured against the record index, not this endpoint. Years and places are " +
+    "outside the rule and unestablished here — see `birthYearExact` and " +
     "`birthPlaceExact`.",
   inputSchema: {
     type: "object",

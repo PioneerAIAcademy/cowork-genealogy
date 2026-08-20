@@ -11,13 +11,17 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * toggles have EVER appeared in a call.
  *
  * **The justification is clarity, not token cost.** Measured after the rewrite:
- * `record_search` 15,509 -> 14,286 and `person_search` 3,745 -> 4,918 (its
+ * `record_search` 15,509 -> 14,281 and `person_search` 3,745 -> 4,985 (its
  * toggles were stubs that were also wrong, so correctness cost tokens there), for
- * a combined 19,254 -> 19,204 — a net saving of about 50 characters. An earlier
- * version of this docstring led with the token argument; it does not survive
- * measurement, and `record_search.birthYearExact` at 475 chars is most of the
- * remaining bulk. What this lint buys is that the shared rule is stated once and
- * cannot silently be re-expanded into 43 paragraphs.
+ * a combined 19,254 -> 19,266 — a net INCREASE of about 12 characters. An earlier
+ * version of this docstring led with the token argument and claimed a saving; it
+ * does not survive measurement, and `record_search.birthYearExact` at 475 chars is
+ * most of the remaining bulk. What this lint buys is that the shared rule is stated
+ * once and cannot silently be re-expanded into 43 paragraphs.
+ *
+ * The assertion below caught this pair going stale when the tool-level rule was
+ * corrected — which is the first time a guard here caught my own staleness before it
+ * shipped rather than a reviewer catching it after.
  *
  * Issue #1409's shape is the fix: state the rule ONCE in the tool-level
  * description, and give each parameter a one-liner underneath. This test is what
@@ -98,8 +102,8 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14286],
-  ["person_search", 4918],
+  ["record_search", 14281],
+  ["person_search", 4985],
 ];
 
 /**

@@ -188,6 +188,10 @@ const EXEMPT = new Map<number, string>([
     "the HISTORICAL count quoted from issue #1088's transcript, deliberately preserved as the observation being explained rather than as a current measurement",
   ],
   [
+    1100,
+    "the Brazil/Lapa/1880 pool that made the surname empty-field leg provable, from dev/explore-name-empty-field-leg-records.ts on 2026-08-20 — a session script, not a probe section, so no verdict records it; re-run the script to check it",
+  ],
+  [
     56177,
     "person_search spec, from a 2026-05-28 probe that predates this artifact: the unqualified `surname=Lincoln` pool, quoted twice to show the require-switch has no effect without it",
   ],
