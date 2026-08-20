@@ -18,18 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-
-# --- Helpers ----------------------------------------------------------
-
-def _new_log_entries(before_state, after_state) -> list[dict]:
-    """Return log entries added between before and after, keyed by id."""
-    before = before_state.get("research_json") or {}
-    after = after_state.get("research_json") or {}
-    before_ids = {e.get("id") for e in before.get("log", []) if isinstance(e, dict)}
-    return [
-        e for e in after.get("log", [])
-        if isinstance(e, dict) and e.get("id") not in before_ids
-    ]
+from validators_lib import new_log_entries as _new_log_entries
 
 
 # --- Structural rules from SKILL.md -----------------------------------

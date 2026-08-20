@@ -4,13 +4,13 @@ Grading dimensions for search-full-text unit tests. Evaluated by the LLM judge a
 
 ## Query construction
 
-Did the skill construct effective full-text search queries using appropriate operators? Queries should use the right operators for FTS (which does not auto-expand abbreviations or apply phonetic matching) and be scoped to plausible jurisdictions where the prompt supplies one.
+Did the skill construct effective full-text search queries using appropriate operators? Queries should use the right operators for FTS (which does not auto-expand abbreviations or apply phonetic matching). Jurisdiction/date/record-type scope, when the prompt or research state supplies it, belongs on a second-or-later call, applied only after an unfiltered first call reveals the hit count — never baked into the first call for a topic.
 
 This dimension grades the queries the skill *actually executed*, not a wishlist of variants it could have tried. Spelling variants and abbreviation forms (Flinn, Wm, Thos) are valuable but only required when the prompt or initial results signal that a variant is plausible.
 
-- **pass:** Queries use the search engine's operators correctly (phrase quoting, `+`/`-`, `?`/`*` wildcards), are scoped to plausible jurisdictions/collections when supplied, and use the right field (Name vs. Keywords) for the query intent. A canonical-spelling query that returns the expected record is acceptable.
-- **partial:** Queries are effective but mishandle an obvious operator or scoping decision (e.g., use OR-default by omitting `+`, put place in the query field instead of using filters), OR the prompt explicitly suggests a variant is needed and the skill omits it.
-- **fail:** Queries are bare strings with no operators; the genealogist would have to re-search from scratch to get useful coverage.
+- **pass:** Queries use the search engine's operators correctly (phrase quoting, `+`/`-`, `?`/`*` wildcards), leave the first call for a topic unscoped and apply jurisdiction/date/record-type scope only afterward as post-search filters, and use the right field (Name vs. Keywords) for the query intent. A canonical-spelling query that returns the expected record is acceptable.
+- **partial:** Queries are effective but mishandle an obvious operator or scoping decision (e.g., use OR-default by omitting `+`, put place in the query field instead of using filters, or send `recordPlace*`/`yearFrom`/`yearTo`/`recordType` on the FIRST `fulltext_search` call for a plan item before any unfiltered hit count has been observed — those are post-search filters per SKILL.md and query-syntax.md and must wait for a second call), OR the prompt explicitly suggests a variant is needed and the skill omits it.
+- **fail:** Queries are bare strings with no operators; the genealogist would have to re-search from scratch to get useful coverage; OR the research-log entry's `query` object records a place/date/record-type/collection filter that the `fulltext_search` tool call visible in the call log never actually sent — check the executed args, not just the narrated summary.
 
 ## FAN awareness
 
