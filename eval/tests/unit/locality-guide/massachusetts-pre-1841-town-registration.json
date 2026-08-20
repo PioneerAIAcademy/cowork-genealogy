@@ -24,9 +24,17 @@
     "max_wall_clock_seconds": 480
   },
   "mcp_fixtures": [
+    "place-search-berkshire-county",
     "place-search-massachusetts",
+    "place-search-columbia-county-ny",
+    "place-search-rensselaer-county-ny",
+    "place-search-washington-county-ny",
+    "place-search-bennington-county-vt",
     "collections-search-massachusetts",
+    "collections-search-any",
+    "volume-search-berkshire",
     "volume-search-massachusetts",
+    "volume-search-any",
     "wiki-search-massachusetts-colonial-records",
     "place-search-all-any",
     "external-links-search-any",
