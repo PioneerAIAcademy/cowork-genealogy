@@ -13,11 +13,12 @@
  * the real probe already warned. Reported one persona answering 1490-1550 and no
  * window outside it.
  *
- * To make its output citable it needs, in `probe-search-qualifiers.ts`: a section
- * letter wired into `SECTIONS`, `record()` calls for every figure and verdict, a
- * verdict string the producibility check can find in the source, and RULE 0
- * compliance (refuse a direction when the set could not be enumerated). Issue
- * #1771 steps 0 and 1 own that work.
+ * DELIBERATELY NOT CITABLE, and should stay that way. The lead's 2026-08-17 ruling
+ * on the exact-match rule is explicit: on `person_search`, "state the direction and
+ * the mechanism only, carry no figure from it, and do not add `person-search.ts` to
+ * `EVIDENCE_SURFACES`". Promoting this into a probe section would manufacture
+ * exactly the figures that ruling forbids. It exists to let a reader re-run the
+ * check by hand, not to source a number.
  *
  * Run: `npx tsx dev/explore-tree-range-sweep.ts` from `packages/engine/mcp-server`.
  */

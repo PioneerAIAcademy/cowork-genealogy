@@ -13,11 +13,12 @@
  * and is wrong. `buildSearchUrl` always sends it; anything probing by hand must
  * too. The last row of each block reproduces the bug deliberately.
  *
- * To make its output citable it needs, in `probe-search-qualifiers.ts`: a section
- * letter wired into `SECTIONS`, `record()` calls for every figure and verdict, a
- * verdict string the producibility check can find in the source, and RULE 0
- * compliance (refuse a direction when the set could not be enumerated). Issue
- * #1771 steps 0 and 1 own that work.
+ * NOT A MEASUREMENT, so citability does not apply. This demonstrates a defect in
+ * how the endpoint or the probe behaves; its value is that the failure is silent
+ * and inverts the reading, so an executable demonstration beats a warning in prose.
+ * Keep it as an explorer. The candidate promotion is into a TEST, not a probe
+ * section — a test would fail when the defect is fixed, which is the signal worth
+ * having.
  *
  * Run: `npx tsx dev/explore-tree-require-switch.ts` from `packages/engine/mcp-server`.
  */

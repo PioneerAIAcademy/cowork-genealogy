@@ -13,11 +13,13 @@
  * throttles hard (~50 retries in one run) and `searchOnce` in the real probe does
  * NOT handle its 204 responses.
  *
- * To make its output citable it needs, in `probe-search-qualifiers.ts`: a section
- * letter wired into `SECTIONS`, `record()` calls for every figure and verdict, a
- * verdict string the producibility check can find in the source, and RULE 0
- * compliance (refuse a direction when the set could not be enumerated). Issue
- * #1771 steps 0 and 1 own that work.
+ * SHOULD BECOME CITABLE, and issue #1771 steps 0-1 own that: a section letter
+ * wired into `SECTIONS`, `record()` calls for every figure and verdict, a verdict
+ * string the producibility check can find in the source, and RULE 0 compliance
+ * (refuse a direction when the set could not be enumerated). Do not promote it
+ * before #1771's open questions are settled — the unbanded-persons gate, the
+ * non-parish control pool, and which verdict keys are renamed — because recording
+ * a verdict bakes in an answer to each.
  *
  * Run: `npx tsx dev/explore-year-bands-tree.ts` from `packages/engine/mcp-server`.
  */
