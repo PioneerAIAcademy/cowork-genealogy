@@ -23,13 +23,19 @@
  * Run: `npx tsx dev/explore-tree-204-vs-429.ts` from `packages/engine/mcp-server`.
  */
 import { getValidToken } from "../src/auth/refresh.js";
+import { fetchWithTimeout } from "../src/utils/http.js";
 const BASE = "https://api.familysearch.org/platform/tree/search";
 const R = "m.queryRequireDefault=on";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function probe(label: string, qs: string): Promise<void> {
   await sleep(3000);
   const token = await getValidToken();
-  const res = await fetch(`${BASE}?${qs}`, {
+  // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
+  // its own, and these scripts page for tens of minutes against an endpoint that
+  // throttles. `volume_search` once hung for 236 minutes on exactly this
+  // (CLAUDE.md). `no-bare-fetch.test.ts` only walks `src/`, so nothing here would
+  // have caught it; three existing dev probes already use the helper.
+  const res = await fetchWithTimeout(`${BASE}?${qs}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } });
   const body = await res.text();
   console.log(`\n${label}`);

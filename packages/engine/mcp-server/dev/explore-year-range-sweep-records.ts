@@ -32,6 +32,7 @@
  */
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
+import { fetchWithTimeout } from "../src/utils/http.js";
 
 const POOL = "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=0";
 const TARGET = "NPBV-WBQ";
@@ -46,7 +47,12 @@ async function readAll(range: string): Promise<{ total: number | null; ids: stri
   let attempts = 0;
   for (let offset = 0; offset < 1500; offset += 100) {   // sibling REPORTED 585 (not in the artifact); 600 was too tight
     await sleep(300);
-    const res = await fetch(
+    // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
+    // its own, and these scripts page for tens of minutes against an endpoint that
+    // throttles. `volume_search` once hung for 236 minutes on exactly this
+    // (CLAUDE.md). `no-bare-fetch.test.ts` only walks `src/`, so nothing here would
+    // have caught it; three existing dev probes already use the helper.
+    const res = await fetchWithTimeout(
       `https://www.familysearch.org/service/search/hr/v2/personas?${POOL}${range}&count=100&offset=${offset}&m.queryRequireDefault=on`,
       { headers: { Authorization: `Bearer ${token}`, Accept: "application/json",
                    "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } });

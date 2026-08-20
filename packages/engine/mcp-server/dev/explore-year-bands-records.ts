@@ -28,6 +28,7 @@
  */
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
+import { fetchWithTimeout } from "../src/utils/http.js";
 
 const POOL = "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=0";
 const CAP = 4900;
@@ -43,7 +44,12 @@ async function readAll(extra: string): Promise<{ total: number | null; rows: Row
   let retry = 0;
   for (let offset = 0; offset < CAP; offset += 100) {
     await sleep(250);
-    const res = await fetch(
+    // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
+    // its own, and these scripts page for tens of minutes against an endpoint that
+    // throttles. `volume_search` once hung for 236 minutes on exactly this
+    // (CLAUDE.md). `no-bare-fetch.test.ts` only walks `src/`, so nothing here would
+    // have caught it; three existing dev probes already use the helper.
+    const res = await fetchWithTimeout(
       `https://www.familysearch.org/service/search/hr/v2/personas?${POOL}${extra}&count=100&offset=${offset}&m.queryRequireDefault=on`,
       { headers: { Authorization: `Bearer ${token}`, Accept: "application/json",
                    "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } });
@@ -103,6 +109,13 @@ async function main(): Promise<void> {
   console.log("band        total  read   | .exact total  read");
   console.log("-".repeat(52));
   let unenumerable = 0;
+  // Counted, not swallowed. `if (ex)` below skips a failed `.exact` read without
+  // recording it, and the `silentKept` line near the end then reports "kept by
+  // .exact in >=1 band" with the count depressed by every band whose `.exact` read
+  // errored — printed as a finding, with only an `err` in the table to hint at it.
+  // The tree sibling already refuses on this; this script refused only on failed
+  // UNQUALIFIED reads.
+  let exactFailed = 0;
   // Counted straight off each response, NOT derived from `membership` — otherwise
   // the closure identity below compares a number to itself and can never fail,
   // which is worse than no check (CLAUDE.md: "a check that cannot fail reads as
@@ -116,6 +129,7 @@ async function main(): Promise<void> {
     bandRowsRead += set.rows.length;
     bandMembers.set(`${from}-${to}`, new Set(set.rows.map((r) => r.id)));
     for (const r of set.rows) membership.set(r.id, (membership.get(r.id) ?? 0) + 1);
+    if (!ex) exactFailed++;
     if (ex) for (const r of ex.rows) exactMembership.set(r.id, (exactMembership.get(r.id) ?? 0) + 1);
     console.log(
       `${from}-${to}  ${String(set.total).padStart(5)}  ${String(set.rows.length).padStart(4)}   | ` +
@@ -161,6 +175,14 @@ async function main(): Promise<void> {
   }
   if (unenumerable > 0) {
     console.log(`  REFUSING a verdict: ${unenumerable} band(s) did not enumerate, so coverage is partial.`);
+    return;
+  }
+  if (exactFailed > 0) {
+    console.log(
+      `  REFUSING a verdict: ${exactFailed} .exact read(s) failed. Every figure below that ` +
+        `counts .exact membership would be depressed by exactly those bands and would print ` +
+        `as measured. Closure cannot see it — the identity is over the unqualified reads.`
+    );
     return;
   }
 

@@ -23,6 +23,7 @@
  * Run: `npx tsx dev/explore-tree-empty-field-leg.ts` from `packages/engine/mcp-server`.
  */
 import { getValidToken } from "../src/auth/refresh.js";
+import { fetchWithTimeout } from "../src/utils/http.js";
 const BASE = "https://api.familysearch.org/platform/tree/search";
 const R = "m.queryRequireDefault=on";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -35,7 +36,12 @@ async function total(qs: string): Promise<{ v: number | string; tries: number }>
   const token = await getValidToken();
   for (let a = 0; a < 12; a++) {
     await sleep(3000);
-    const res = await fetch(`${BASE}?${qs}`, {
+    // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
+    // its own, and these scripts page for tens of minutes against an endpoint that
+    // throttles. `volume_search` once hung for 236 minutes on exactly this
+    // (CLAUDE.md). `no-bare-fetch.test.ts` only walks `src/`, so nothing here would
+    // have caught it; three existing dev probes already use the helper.
+    const res = await fetchWithTimeout(`${BASE}?${qs}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } });
     // 204 = zero results. A MEANINGFUL ZERO, not transient. Without this branch
     // the empty body below falls into the retry, all 12 attempts are spent, and

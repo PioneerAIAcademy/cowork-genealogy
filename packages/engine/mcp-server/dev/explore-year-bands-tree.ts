@@ -24,6 +24,7 @@
  * Run: `npx tsx dev/explore-year-bands-tree.ts` from `packages/engine/mcp-server`.
  */
 import { getValidToken } from "../src/auth/refresh.js";
+import { fetchWithTimeout } from "../src/utils/http.js";
 const BASE = "https://api.familysearch.org/platform/tree/search";
 const POOL = "q.surname=Pocklington&q.givenName=Thomae&m.queryRequireDefault=on";
 let token = ""; let retries = 0;
@@ -32,7 +33,12 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function page(qs: string): Promise<any | null> {
   for (let a = 0; a < 10; a++) {
     await sleep(1200);
-    const res = await fetch(`${BASE}?${qs}`, {
+    // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
+    // its own, and these scripts page for tens of minutes against an endpoint that
+    // throttles. `volume_search` once hung for 236 minutes on exactly this
+    // (CLAUDE.md). `no-bare-fetch.test.ts` only walks `src/`, so nothing here would
+    // have caught it; three existing dev probes already use the helper.
+    const res = await fetchWithTimeout(`${BASE}?${qs}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } });
     // 204 = zero results. A MEANINGFUL ZERO, not transient — handled before the
     // empty-body branch below, which otherwise retries it 10x and then reports the
@@ -112,6 +118,18 @@ async function main(): Promise<void> {
     console.log(`   ${String(c).padStart(2)} band(s): ${String(n).padStart(4)}${tag}`);
   }
   console.log(`\nCLOSURE: sum(k*count)=${closure}  sum(band rows)=${bandRows}  equal=${closure === bandRows}`);
+  if (closure !== bandRows) {
+    // Printed-and-continued until 2026-08-20, so the two lines below read as
+    // findings off a broken identity. The records sibling returns here for the same
+    // condition; the divergence between two scripts on the ONE identity they share
+    // is what a reader would have trusted wrongly.
+    console.log(
+      "  REFUSING a verdict: a band returned an id the unranged read did not contain, " +
+        "so the span and .exact figures below would be computed over a set that is not " +
+        "closed. Re-run; if it persists, the unranged enumeration is incomplete."
+    );
+    return;
+  }
   const spans = [...hist].filter(([c]) => c > 1 && c < enumerated).reduce((s, [, n]) => s + n, 0);
   console.log(`estimated SPANS (>1 band, not all): ${spans}`);
   console.log(`unqualified band rows ${unqTot} -> .exact ${exTot};  retries ${retries}`);
