@@ -259,6 +259,28 @@ describe('MODIFIERS', () => {
     expect(MODIFIERS.get('about')).toBe('Abt');
     expect(MODIFIERS.get('approx')).toBe('Abt');
     expect(MODIFIERS.get('approximately')).toBe('Abt');
+    // `~` is the spelling simplified GedcomX itself uses for an approximate
+    // date, so it is the one that must not be dropped.
+    expect(MODIFIERS.get('~')).toBe('Abt');
+  });
+
+  test('tilde is an approximation marker, not punctuation to discard', () => {
+    // Regression: the tokenizer discarded `~` and the parser only honored
+    // `<`/`>` among symbols, so `~1845` standardized to an exact `1845` —
+    // silently upgrading an approximate year to a certain one. `~1845` is
+    // what every tree.gedcomx.json writes for an approximate date.
+    expect(stdDate('~1845')).toBe('Abt 1845');
+    expect(stdDate('~ 1845')).toBe('Abt 1845');
+    expect(stdDate('~12 Mar 1908')).toBe('Abt 12 Mar 1908');
+    expect(stdDate('~1845 (?)')).toBe('Abt 1845 (?)');
+    // The other symbolic modifiers and plain forms are unchanged.
+    expect(stdDate('<1850')).toBe('Bef 1850');
+    expect(stdDate('>1840')).toBe('Aft 1840');
+    expect(stdDate('1845')).toBe('1845');
+    expect(stdDate('1840-1850')).toBe('Bet 1840 and 1850');
+    // The one output this fix changes besides the bare tilde forms: the
+    // marker now survives onto the range's lower bound instead of vanishing.
+    expect(stdDate('~1840-1850')).toBe('Bet Abt 1840 and 1850');
   });
 
   test('synonym collapsing — Est variants', () => {

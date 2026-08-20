@@ -131,3 +131,100 @@ def test_load_multiple_fixtures_preserves_order():
     )
     assert fixtures[0]["tool"] == "wikipedia_search"
     assert fixtures[1]["tool"] == "place_search"
+
+# --- person_read fixtures vs. the shipped tool's output contract ----------
+#
+# A fixture is the only description of a tool most of the corpus ever sees, so a
+# fixture that disagrees with the tool teaches the skill a contract production
+# does not honor -- and the disagreement is invisible, because every downstream
+# check reads the fixture too. `person-read-flynn.json` returned a bare person
+# object (`{id, gender, names, facts}`) as its whole response for eight of
+# init-project's twelve tests: `relatives: true` was unfalsifiable (the payload
+# was identical with and without it) and the relationship-import rules had never
+# run once across five committed runs.
+#
+# Scoped to `person_read` because that tool's output shape is pinned by
+# `docs/specs/person-read-tool-spec.md` and by `shapePersons`/
+# `shapeRelationships`/`shapeSources`, which always assemble those three keys.
+
+_PERSON_READ_TOP_LEVEL = {"persons", "relationships", "sources"}
+
+
+def _person_read_fixtures():
+    """Every fixture on disk whose `tool` is person_read, as (name, parsed)."""
+    out = []
+    for path in sorted(FIXTURE_DIR.glob("*.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("tool") == "person_read":
+            out.append((path.name, data))
+    return out
+
+
+def test_person_read_fixtures_declared():
+    """Guards the two checks below against silently passing on an empty sweep --
+    a glob that matches nothing is the failure mode a lint cannot report."""
+    assert _person_read_fixtures(), (
+        f"no person_read fixtures found under {FIXTURE_DIR}; the two contract "
+        f"checks below would pass vacuously"
+    )
+
+
+def test_person_read_fixtures_match_the_tool_contract():
+    """`person_read`'s response top level is always persons/relationships/sources.
+
+    Per `person-read-tool-spec.md` ("The top-level shape is always ...") and the
+    implementation, which returns exactly those three keys on every input. A
+    fixture shaped otherwise cannot exercise either flag.
+    """
+    wrong = []
+    for name, data in _person_read_fixtures():
+        response = data.get("response")
+        if not isinstance(response, dict):
+            wrong.append(f"{name}: response is {type(response).__name__}, not an object")
+            continue
+        keys = set(response)
+        if keys != _PERSON_READ_TOP_LEVEL:
+            wrong.append(f"{name}: top-level keys {sorted(keys)}")
+        elif not isinstance(response["persons"], list):
+            wrong.append(f"{name}: persons is not a list")
+    assert not wrong, (
+        "person_read fixtures must return {persons, relationships, sources} -- "
+        "the shape the tool always returns: " + "; ".join(wrong)
+    )
+
+
+def test_person_read_fixture_facts_carry_both_standardized_sidecars():
+    """A dated fact from `person_read` carries `standard_date`; a placed one
+    carries `standard_place`.
+
+    `simplifyFact` emits `standard_date` for every fact whose date parses, and
+    `toSimplifiedStandardized` fills `standard_place`. A fixture that omits
+    either teaches the skill to invent the value -- which is exactly what
+    init-project did with `standard_place` in 28 of 28 runs, copying the fact's
+    free-text `place` and never calling `place_search`.
+
+    `standard_place` is best-effort (the resolver can fail and leave it empty),
+    so it is required only where the fixture itself supplies a `place`; a
+    fixture that deliberately models a resolver miss should drop `place` too, or
+    this check needs an opt-out marker rather than a silent exception.
+    """
+    missing = []
+    for name, data in _person_read_fixtures():
+        response = data.get("response")
+        if not isinstance(response, dict):
+            continue
+        facts = []
+        for person in response.get("persons") or []:
+            facts += [(person.get("id"), f) for f in person.get("facts") or []]
+        for rel in response.get("relationships") or []:
+            facts += [(rel.get("type"), f) for f in rel.get("facts") or []]
+        for owner, fact in facts:
+            if fact.get("date") and not fact.get("standard_date"):
+                missing.append(f"{name}: {owner} {fact.get('type')} has date, no standard_date")
+            if fact.get("place") and not fact.get("standard_place"):
+                missing.append(f"{name}: {owner} {fact.get('type')} has place, no standard_place")
+    assert not missing, (
+        "person_read returns a standardized sidecar beside each raw date/place; "
+        "a fixture without one cannot show whether the skill kept it or invented "
+        "it: " + "; ".join(missing)
+    )

@@ -48,7 +48,7 @@ function tokenize(s: string): Token[] {
       let str = '';
       while (i < s.length && /[a-zA-Z]/.test(s[i])) str += s[i++];
       tokens.push({ type: 'str', value: str });
-    } else if (ch === '/' || ch === '<' || ch === '>' || ch === '&') {
+    } else if (ch === '/' || ch === '<' || ch === '>' || ch === '&' || ch === '~') {
       tokens.push({ type: 'sym', value: ch });
       i++;
     } else {
@@ -392,7 +392,7 @@ function parseDateTokens(tokens: Token[], startIdx: number, endIdx: number): Dat
     }
 
     if (tok.type === 'sym') {
-      if (tok.value === '<' || tok.value === '>') {
+      if (tok.value === '<' || tok.value === '>' || tok.value === '~') {
         const mod = MODIFIERS.get(tok.value);
         if (mod && !parts.modifier) {
           parts.modifier = mod;
