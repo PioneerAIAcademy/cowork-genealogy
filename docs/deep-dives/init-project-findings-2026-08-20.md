@@ -707,7 +707,39 @@ travelled undeclared. Declared here.
 | F16 | `TreeFact` declared `standard_date` but not `standard_place`, which the tool returns | 1 | type declared (found in round-two critique) |
 | F17 | `ark` cannot be carried and per spec cannot be absent | 4 | resolved: derived as `ark:/61903/4:1:<pid>`; body, reference and V2 updated |
 
-**Validator requests: 8** (V1–V8). Two more shapes were considered and dropped:
+**Validator requests: 8 — and all eight are now implemented, not requested.**
+Per the lead's standing instruction to deep-dive authors ("if additional
+validators are suggested, please include those validators in your PR or in a
+follow-on PR"), they ship as code in
+`eval/harness/validators/test_init_project.py`, with 45 mutation tests in
+`eval/harness/tests/unit/test_init_project_provenance_validators.py` — every one
+asserted to fire on the specific defect it was written for and to pass on the
+shape the 2026-08-20 run actually produced.
+
+Two things checked before committing them, because a failed validator skips the
+judge and takes the grades with it:
+
+- **Replayed against the committed run** — 96 validator/test pairs (responses
+  rehydrated from the fixtures the log names, written tree from the
+  `project_create` argument): 55 pass, 41 skip, **0 failures**. The next paid run
+  will not lose its grades to a validator of mine.
+- **Validators are not in the run-log snapshot** (fixtures, test JSONs,
+  `rubric.md`, `SKILL.md` and its references are), so shipping them costs no
+  second run.
+
+Two of the eight are deliberately **weaker** than this document first proposed,
+and both narrowings came from the genealogist's labels rather than from code:
+V7 is tag-gated instead of message-derived, and V8 checks loss-or-alteration
+instead of provenance — because the objective-only builds legitimately write
+`Abt 1920` for a hand-entered `~1920` with no tool involved. The stronger forms
+would each have failed a run confirmed as correct.
+
+**V7 is dormant on the current suite** and that is stated in its docstring: no
+test carries `expects-person-search`. `ut_init_project_004` is its right home,
+but adding a tag edits a snapshot-tracked file and would invalidate the run this
+PR just bought.
+
+Two more shapes were considered and dropped:
 a `project_create` call-count check (no observed violation, and
 `test_project_files_written_through_the_writer_tools` already asserts presence),
 and a stub-count check for the maiden-name rule (the "did the user imply this
