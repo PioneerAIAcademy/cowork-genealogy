@@ -48,8 +48,8 @@ quoting a number to anyone outside the team.
 - On the FamilySearch-sourced path (from a PID), the full original (pre-stripping)
   `unstripped-tree.gedcomx.json`, from which the starting tree is
   derived. It is **never** copied into the run workspace — see below.
-- Fixture metadata: id, source PID, tags, model pins (caps are harness
-  defaults, not fixture metadata — see §3.1)
+- Fixture metadata: id, source PID, tags, model pins, and optional
+  per-fixture stop-condition `caps` (see §3.1)
 - A README with human notes (PID, what was removed, why)
 
 ### What the test fixture does not contain
@@ -144,12 +144,8 @@ Test metadata.
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
 | `blocked_tools` | array of strings | no | Extra MCP tools (bare advertised names, e.g. `"wiki_search"`) denied for this fixture's runs, beyond the universal §6.1 tree block. For fixtures whose ground truth a specific tool can surface directly — e.g. a fixture built from a public wiki case-study article that names the answer. Document the reason in the fixture README |
+| `caps` | object | no | Per-fixture stop-condition overrides — any of the seven keys `wall_clock_seconds`, `inactivity_seconds`, `progress_stall_seconds`, `tool_calls`, `max_turns`, `max_cost_usd`, `max_continue_nudges`. Omitted keys inherit the defaults in `FixtureCaps` (`eval/harness/e2e/orchestrator.py`), which is the single source of truth for their values — do not copy them here. A **new** override must give its reason in the fixture README. (`susan-miller-birth` is the precedent for stating one at all: it records the raised wall-clock cap and the timed-out run that motivated it in the fixture's `notes`. From now on that reasoning belongs in the README, where a reader looks for it.) An **unrecognised** key inside `caps` is silently ignored — the loader reads the seven names above and fills the rest from defaults, and nothing validates `fixture.json`, so a typo'd cap looks applied and is not. |
 
-**Stop-condition limits (`caps`) are NOT a fixture field.** They're a
-harness safety concern (don't run forever, don't burn the budget), so
-they live as defaults in the orchestrator (`FixtureCaps`), not in
-`fixture.json`. Every fixture uses the same caps; an author never writes
-them. See §6.
 
 ### 3.2 `starting-research.json`
 
@@ -581,9 +577,12 @@ the `max_cost_usd` note in §6 step 5.
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
 
-   The `caps.*` values are the harness defaults in
-   `eval/harness/e2e/orchestrator.py` (`FixtureCaps`) — the same for every
-   fixture, not authored per-fixture. A turn-cap hit the SDK reports as an
+   The `caps.*` values default to those in
+   `eval/harness/e2e/orchestrator.py` (`FixtureCaps`), which a fixture may
+   override per key (§3.1). The caps a past run actually used are recorded
+   in its run log at `usage.caps` — the six enforcement caps only;
+   `max_continue_nudges` is not in that block, and `usage.continue_nudges`
+   records how many were spent. A turn-cap hit the SDK reports as an
    error result (rather than a clean `max_turns`) is reclassified to
    `max_turns`.
 
@@ -675,9 +674,13 @@ the `max_cost_usd` note in §6 step 5.
    voluntary yield: while the project is unfinished it vetoes the stop
    (`decision: "block"`) and instructs the agent to re-read `research.json`
    and invoke the next sub-skill. The nudge is bounded by
-   `caps.max_continue_nudges` (default 5) plus a no-progress guard — if a
-   nudge produces no tool call, or the budget is spent, the run is allowed
-   to end as `natural_end` and fail honestly rather than loop. The nudge
+   `caps.max_continue_nudges` plus a no-progress guard. That cap is generous
+   by design — a full GPS proof yields after each of ~10+ sub-skill steps, so
+   a stingy one ends the loop before proof-conclusion; it only bounds the
+   worst case, and the no-progress check is the real backstop against a
+   genuinely idle agent. If a nudge produces no tool call, or the budget is
+   spent, the run is allowed to end as `natural_end` and fail honestly rather
+   than loop. The nudge
    reason is procedural only (no research hints), so it cannot affect
    recall; the number of nudges used is recorded in
    `usage.continue_nudges`, so a run that needed many pokes reads as weaker
