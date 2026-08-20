@@ -624,6 +624,37 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
         )
 
 
+# --- Write-then-validate (V1) ----------------------------------------
+#
+# If research.json was modified, validate_research_schema must appear in
+# tool_calls. Scoped to skills that declare validate_research_schema in
+# their allowed-tools frontmatter. Universal because the rule applies to
+# any skill that holds the tool, not just citation.
+
+def test_write_then_validate(before_state, after_state, tool_calls, skill_frontmatter, test):
+    """If research.json was modified, validate_research_schema must have been called."""
+    if test.get("type") == "negative":
+        pytest.skip("negative test — tool calls belong to the routed-to skill")
+    allowed = (skill_frontmatter or {}).get("allowed-tools", []) or []
+    if "validate_research_schema" not in allowed:
+        pytest.skip("skill does not declare validate_research_schema")
+    before_rj = before_state.get("research_json")
+    after_rj = after_state.get("research_json")
+    if before_rj is None or after_rj is None:
+        pytest.skip("missing research.json")
+    import json as _json
+    if _json.dumps(before_rj, sort_keys=True) == _json.dumps(after_rj, sort_keys=True):
+        pytest.skip("research.json was not modified")
+    validate_calls = [
+        c for c in tool_calls
+        if c.get("tool", "").split("__")[-1] == "validate_research_schema"
+    ]
+    assert validate_calls, (
+        "research.json was modified but validate_research_schema was never "
+        "called — the skill must validate after every write"
+    )
+
+
 # --- Hand-edit detection (project files must go through writer tools) ---
 #
 # The full set of MCP tools that legitimately write research.json /

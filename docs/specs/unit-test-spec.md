@@ -1112,7 +1112,7 @@ One file per skill in `eval/harness/validators/`, following pytest naming (`test
 
 ### Validator signature
 
-All validators take the same three arguments. Validators that don't need an argument simply ignore it:
+Validators declare whichever subset of the available arguments they need. The harness inspects each function's signature and passes only the requested parameters — validators that don't need an argument simply omit it:
 
 ```python
 def test_log_append_only(before_state, after_state, tool_calls):
@@ -1132,11 +1132,16 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
         warnings.warn(f"undeclared tools called: {sorted(set(bad))}")
 ```
 
-**The three arguments:**
+**Available arguments** (a validator declares whichever subset it needs):
 
 - `before_state` (dict) — `{"research_json": {...}, "tree_gedcomx_json": {...}, "files": {<path>: <content>}, "skill_frontmatter": {...}}`. Files present in the temp dir before the skill ran. `research_json` and `tree_gedcomx_json` are convenience aliases for the parsed contents of those files; absent if the test is stateless. `skill_frontmatter` is the parsed YAML frontmatter of the skill under test's SKILL.md.
 - `after_state` (dict) — same shape as `before_state`, snapshotting state after the skill ran. Files created during the run appear here with no `before` counterpart.
 - `tool_calls` (list) — every MCP tool call made by the skill, with the shape `{"tool": "mcp__genealogy__record_search", "args": {...}, "matched": {...}, "response_fixture": "..."}` (Section 10).
+- `skill_frontmatter` (dict) — the parsed YAML frontmatter of the skill under test's SKILL.md (also available inside `before_state`/`after_state`).
+- `test` (dict) — the parsed test JSON dict, including `test.type`, `test.tags`, and any validator-facing blocks the orchestrator threads in.
+- `skills_invoked` (list) — skills invoked via the SDK `Skill` tool, captured by the PreToolUse hook.
+- `blocked_context_calls` (list) — main-thread calls to subagent-only tools that the PreToolUse hook denied.
+- `blocked_protected_writes` (list) — raw Write/Edit calls to a protected project file that the hook denied.
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.
 
@@ -2005,14 +2010,18 @@ Eight fixtures in `eval/fixtures/mcp/`:
 
 ### Deterministic Validators
 
-Validators in `eval/harness/validators/` fall into two tiers:
+Validators in `eval/harness/validators/` fall into three tiers:
 
-- **Gating** — failure prevents the LLM judge from running (saves cost). All universal validators except `test_tool_allowlist` are gating.
+- **Gating** — failure prevents the LLM judge from running (saves cost). All universal validators except `test_tool_allowlist` are gating. All citation-specific validators (V5, V6, V10) are gating.
+- **Reporting** (not yet built) — checks that are regexes over Claude's prose response. Their findings are handed to the LLM judge as observations it weighs alongside the response, recorded in the run log, but they do not touch `validators_passed`. The mechanism is tracked as Group M of the citation deep-dive validators.
 - **Advisory** — emits a warning but does not fail the test. `test_tool_allowlist` is advisory: it warns when a skill calls undeclared tools, but the session grants all tools regardless.
+
+This three-tier system was decided against two alternatives: making every check gate (brittle — a prose regex reds a correct run and the judge never sees it), and dropping prose checks entirely (loses the finding). Only structured-field checks may gate.
 
 | Validator | Path | Scope |
 |-----------|------|-------|
-| Universal | `eval/harness/validators/test_universal.py` | All skills. Checks: schema structure, enum values, ID prefixes, ID referential integrity, full reference integrity (dangling/cross-file/cycles, via the compiled TS `validateParsed`), duplicate tree IDs, append-only log, no-delete enforcement, tool allowlist (advisory). |
-| Conflict-resolution | `eval/harness/validators/test_conflict_resolution.py` | One skill. Checks: ownership enforcement (only writes to `conflicts`), no MCP tool calls, fact conflicts have ≥2 competing assertions, resolved conflicts have required fields, preferred assertion is in competing list. |
+| Universal | `eval/harness/validators/test_universal.py` | All skills. Checks: schema structure, enum values, ID prefixes, ID referential integrity, full reference integrity (dangling/cross-file/cycles, via the compiled TS `validateParsed`), duplicate tree IDs, append-only log, no-delete enforcement, write-then-validate (V1 — skills declaring `validate_research_schema`), tool allowlist (advisory). |
+| Citation | `eval/harness/validators/test_citation.py` | One skill. Checks: no new source entries, source classification preservation, creator-not-in-custody (V5), unknown-marker vocabulary (V6), informant-not-in-who (V10). |
+| Conflict-resolution | `eval/harness/validators/test_conflict_resolution.py` | One skill. Checks: fact conflicts have ≥2 competing assertions, resolved conflicts have required fields, preferred assertion is in competing list. |
 
-The universal validator demonstrates the pattern for general validators. The conflict-resolution validator demonstrates the pattern for skill-specific validators (ownership, structural rules from SKILL.md). Use these as templates when writing validators for other skills.
+The table is illustrative, not exhaustive — most skills have a `test_<skill>.py` file with skill-specific validators. Use the existing files as templates when writing validators for other skills.

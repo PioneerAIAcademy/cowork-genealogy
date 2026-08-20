@@ -4,7 +4,9 @@ Spec §8: "Developers can also run validators standalone with
 `pytest eval/harness/validators/ -v` for debugging."
 
 Each validator function declares some subset of `before_state`,
-`after_state`, `tool_calls`, `skill_frontmatter`. The harness's
+`after_state`, `tool_calls`, `skill_frontmatter`, `test`,
+`skills_invoked`, `blocked_context_calls`,
+`blocked_protected_writes`. The harness's
 validator_runner supplies these per-test; pytest needs them as fixtures
 when running outside the harness.
 
@@ -82,3 +84,17 @@ def blocked_protected_writes() -> list:
 @pytest.fixture
 def skill_frontmatter() -> dict:
     return {}
+
+
+@pytest.fixture
+def test() -> dict:
+    """The parsed test JSON dict. Empty is the safe default — validators
+    that gate on test["type"] or test["tags"] will skip rather than crash.
+    """
+    return {}
+
+
+@pytest.fixture
+def skills_invoked() -> list:
+    """Skills invoked via the SDK Skill tool, captured by the PreToolUse hook."""
+    return []

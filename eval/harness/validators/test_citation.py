@@ -4,17 +4,18 @@ citation keeps its `rubric.md` — all three dimensions (Evidence
 Explained compliance, Replication test, Source vs information
 distinction) are pure GPS craft and stay graded by the LLM judge.
 
-This file holds the append-only source-section check (per spec:
-citation never creates new source entries — it refines existing
-ones). Tool-allowlist enforcement is delegated to universal
-`test_tool_allowlist`, which correctly honors the skill's declared
-`allowed-tools` (currently `[validate_research_schema]`).
+This file holds structural invariants: the append-only source-section
+check, creator-vs-custody slot validation (V5), unknown-marker
+vocabulary (V6), and informant-not-in-who (V10). Tool-allowlist and
+write-then-validate enforcement are delegated to universal validators.
 
 See test_universal.py module docstring for the validator function-
 signature contract.
 """
 
 from __future__ import annotations
+
+import re
 
 import pytest
 
@@ -69,4 +70,153 @@ def test_preserves_src001_original_classification(after_state, test):
     assert src.get("source_classification") == "original", (
         f"src_001 source_classification should be 'original'; "
         f"got {src.get('source_classification')!r}"
+    )
+
+
+# --- V5: Creator not in custody position --------------------------------
+
+def test_creator_not_in_custody(before_state, after_state, test):
+    """Author (creator) must not appear in the custody position.
+
+    The `author` of the matching tree.gedcomx.json source description is
+    the record's creator. If that name appears inside a parenthetical in
+    the after-state `citation_detail.where`, it has been placed in the
+    custody slot — who *holds* the record — which is a different fact.
+    It is NOT a violation for the name to appear in `citation_detail.who`
+    (that is the creator slot, where it belongs).
+    """
+    if test.get("type") == "negative":
+        pytest.skip("negative test")
+    before_rj = before_state.get("research_json")
+    after_rj = after_state.get("research_json")
+    tree = before_state.get("tree_gedcomx_json")
+    if before_rj is None or after_rj is None:
+        pytest.skip("missing research.json")
+    if not tree:
+        pytest.skip("no tree.gedcomx.json")
+
+    tree_sources = {s["id"]: s.get("author", "") for s in tree.get("sources", [])}
+
+    before_sources = {s["id"]: s for s in before_rj.get("sources", [])}
+    violations = []
+    for src in after_rj.get("sources", []):
+        sid = src.get("id")
+        if sid not in before_sources:
+            continue
+        sd_id = src.get("gedcomx_source_description_id")
+        if not sd_id:
+            continue
+        author = tree_sources.get(sd_id, "")
+        if not author:
+            continue
+        cd = src.get("citation_detail", {}) or {}
+        where = cd.get("where", "") or ""
+        for paren_match in re.finditer(r'\(([^)]+)\)', where):
+            paren_content = paren_match.group(1)
+            if author.lower() in paren_content.lower():
+                violations.append(
+                    f"{sid}: author {author!r} from tree source {sd_id} "
+                    f"appears in the custody parenthetical of "
+                    f"citation_detail.where: {where!r}"
+                )
+    assert not violations, (
+        "record creator appears in the custody position — who created a "
+        "record and who holds it are different facts:\n  "
+        + "\n  ".join(violations)
+    )
+
+
+# --- V6: Unknown-marker vocabulary --------------------------------------
+
+_ALLOWED_MARKER_ELEMENTS = {
+    "who", "what",
+    "when_created", "when created",
+    "when_accessed", "when accessed",
+    "where",
+    "where_within", "where within",
+}
+
+_MARKER_RE = re.compile(r'\[([A-Z_ ]+?)(?:\s+NOT RECORDED)\]', re.IGNORECASE)
+
+
+def test_unknown_marker_vocabulary(after_state, test):
+    """[...NOT RECORDED] markers must name a Who/What/When/Where/Wherein element.
+
+    Markers for elements outside the framework — physical custody,
+    microfilm number — belong in `notes`, not in the citation.
+    """
+    if test.get("type") == "negative":
+        pytest.skip("negative test")
+    after_rj = after_state.get("research_json")
+    if after_rj is None:
+        pytest.skip("missing research.json")
+    violations = []
+    for src in after_rj.get("sources", []):
+        sid = src.get("id", "?")
+        fields_to_check = [("citation", src.get("citation", "") or "")]
+        cd = src.get("citation_detail", {}) or {}
+        for field_name in ("who", "what", "when_created", "when_accessed",
+                           "where", "where_within"):
+            fields_to_check.append(
+                (f"citation_detail.{field_name}", cd.get(field_name, "") or "")
+            )
+        for field_label, value in fields_to_check:
+            for m in _MARKER_RE.finditer(value):
+                raw = m.group(1).strip()
+                normalized = raw.lower().replace(" ", "_")
+                normalized_spaced = raw.lower()
+                if (normalized not in _ALLOWED_MARKER_ELEMENTS
+                        and normalized_spaced not in _ALLOWED_MARKER_ELEMENTS):
+                    violations.append(
+                        f"{sid}.{field_label}: marker [{m.group(0)}] names "
+                        f"element {raw!r}, which is not in the sanctioned "
+                        f"vocabulary"
+                    )
+    assert not violations, (
+        "[...NOT RECORDED] markers must name a Who/What/When/Where/Wherein "
+        "element — markers for elements outside the framework belong in "
+        "notes, not in the citation:\n  "
+        + "\n  ".join(violations)
+    )
+
+
+# --- V10: Informant never reaches `who` (literal half) -----------------
+
+def test_informant_not_in_who(before_state, after_state, test):
+    """citation_detail.who and citation string must not contain 'informant'.
+
+    The informant is a person who supplied information within the record;
+    their proximity to the event determines whether that information is
+    primary or secondary. `who` is the record's creator. Collapsing the
+    two destroys the distinction the evidence-classification layer rests on.
+    """
+    if test.get("type") == "negative":
+        pytest.skip("negative test")
+    before_rj = before_state.get("research_json")
+    after_rj = after_state.get("research_json")
+    if before_rj is None or after_rj is None:
+        pytest.skip("missing research.json")
+    before_sources = {s["id"]: s for s in before_rj.get("sources", [])}
+    violations = []
+    for src in after_rj.get("sources", []):
+        sid = src.get("id")
+        if sid not in before_sources:
+            continue
+        cd = src.get("citation_detail", {}) or {}
+        who = cd.get("who", "") or ""
+        citation = src.get("citation", "") or ""
+        if "informant" in who.lower():
+            violations.append(
+                f"{sid}: citation_detail.who contains 'informant': {who!r}"
+            )
+        if "informant" in citation.lower():
+            violations.append(
+                f"{sid}: citation string contains 'informant': {citation!r}"
+            )
+    assert not violations, (
+        "the informant is not the record creator — 'informant' must not "
+        "appear in citation_detail.who or the citation string. The "
+        "informant belongs in notes (proximity to the event determines "
+        "whether information is primary or secondary):\n  "
+        + "\n  ".join(violations)
     )
