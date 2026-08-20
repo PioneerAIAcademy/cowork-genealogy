@@ -69,10 +69,24 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * before touching this comment — it is the only justification for CEILING, so being
  * wrong here is the same class of defect as guessing the threshold.
  *
- * It deliberately checks only the `*Exact` family. Other parameters carry
- * genuinely load-bearing prose (`projectPath`, `subjectId`, `batchNumber`) whose
- * length is not a smell, and inventing a number for those would be exactly the
+ * **Two different scopes here, and it matters when this test fires.** `CEILING` is
+ * enforced on the `*Exact` family ONLY. Other parameters carry genuinely
+ * load-bearing prose (`projectPath`, `subjectId`, `batchNumber`) whose length is not
+ * a smell, and inventing a per-description limit for those would be exactly the
  * guess this comment says the ceiling is not.
+ *
+ * `DOCUMENTED_TOTALS` is deliberately WHOLE-TOOL: it sums the tool-level description
+ * plus every parameter, not just the `*Exact` ones. So it fires on ANY description
+ * edit in either tool, including one with nothing to do with this family. That is
+ * intended, not a leak — the totals are what the budget claim above rests on, and a
+ * whole-tool figure is the only one that means anything for token cost. It is also
+ * the reason the claim has stayed correct: it fired on every description edit made
+ * after it was added, each one mine.
+ *
+ * So if you shortened `batchNumber` and this test went red, nothing is wrong with
+ * your edit. Re-derive the two totals from `allToolSchemas` and update them here.
+ * Do not scope the sum to `*Exact` to silence it — that would make the budget figure
+ * measure something no one cares about.
  */
 const CEILING = 250;
 
