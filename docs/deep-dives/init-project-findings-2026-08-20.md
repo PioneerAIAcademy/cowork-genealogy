@@ -380,16 +380,35 @@ and `person-search-brennan-none` (`totalMatches: 0`, empty `results`, per
 stub fallback.
 
 > **Validator request V7 — search before stubs**
-> **Rule:** when the user's message names no FamilySearch person ID and the run
-> writes at least one tree person, `output.tool_calls` must contain a
-> `person_search` call.
-> **Where to look:** the test's `input.user_message` and `output.tool_calls`.
-> **Why it is not judgment:** presence of a call. Stubbing a person the
-> FamilySearch tree already holds creates the duplicate that
-> `merge_tree_persons` then has to undo.
-> **What a violation looks like:** `ut_init_project_002` and
-> `ut_init_project_006`, every committed run — no `person_search` call in
-> `tool_calls`.
+> **Rule:** on a test tagged `expects-person-search`, a run that writes at least
+> one tree person must contain a `person_search` call. **Tag-gated, not derived
+> from the message** — see the narrowing below.
+> **Where to look:** the test's `tags` and `output.tool_calls`.
+> **Why it is not judgment:** presence of a call, on a premise the test author
+> declares. Stubbing a person the FamilySearch tree already holds creates the
+> duplicate `merge_tree_persons` then has to undo.
+> **What a violation looks like:** no instance survives — see the narrowing. The
+> rule guards the case a future test will introduce: a named individual, no ID
+> given, and no claim that they are absent from the tree.
+
+**Narrowed after the 2026-08-20 annotation, and the narrowing is the point.**
+The first draft read "no person ID in the message ⇒ a `person_search` call must
+exist", citing 002 and 006 as violations. With the nil fixtures in place the
+2026-08-20 run split them: **006 searched, 002 did not** — and the genealogist
+confirmed 002's dimensions as passes. Both messages assert the same premise
+(002: *"No FamilySearch tree exists for any of these people yet"*; 006:
+*"No FamilySearch tree exists for him yet"*), so the ruling that follows is that
+an explicit statement of absence makes the search **discretionary**: searching is
+defensible diligence, and skipping what the researcher has already told you is
+empty is not a defect.
+
+So the original V7 would have **false-flagged a run the genealogist had just
+confirmed** — the exact shape this repo bans, "a check that encodes a stale
+design is worse than no check, because its red looks like the skill's fault".
+Hence tag-gated, on the same pattern as `test_objective_default_verbatim`: the
+premise stays with the test author, who knows whether the message concedes
+absence, rather than in a validator parsing prose. Neither 002 nor 006 carries
+the tag.
 
 ---
 
