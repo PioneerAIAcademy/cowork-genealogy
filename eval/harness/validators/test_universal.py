@@ -529,12 +529,13 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
         )
 
 
-def test_tool_allowlist(tool_calls, skill_frontmatter, test):
+def test_tool_allowlist(tool_calls, skill_frontmatter, test, attempted_mcp_calls=None):
     """Advisory: warns when MCP tool calls are not in the skill's allowed-tools.
 
     The session grants every registered MCP tool (issue #1748), so this
     validator no longer gates. Undeclared calls are surfaced as Python
-    warnings for the reviewer. See unit-test-spec.md §13.5.
+    warnings for the reviewer. See unit-test-spec.md §15,
+    "Deriving allowed_tools per skill".
 
     The declared set is widened with the frontmatter `tools:` of every
     plugin agent the skill's SKILL.md references via `@plugin:<name>` —
@@ -553,7 +554,17 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
             "allowlist is not checked on negative tests — tool calls "
             "belong to the routed-to skill, not the skill under test"
         )
-    if not tool_calls:
+    # Union tool_calls with attempted_mcp_calls: the latter captures MCP calls
+    # that the model emitted but that never reached a fixture match (denied by
+    # policy, caps, or aborts). Without this, a skill that tried a tool its
+    # frontmatter doesn't declare — but was denied before the mock could serve
+    # it — slips past this check entirely (issue #1748).
+    _attempted = [
+        c for c in (attempted_mcp_calls or [])
+        if c.get("tool", "").startswith("mcp__")
+    ]
+    all_calls = list(tool_calls) + _attempted
+    if not all_calls:
         return
     declared = set((skill_frontmatter or {}).get("allowed-tools", []) or [])
 
@@ -604,7 +615,7 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
                 declared.add(_bare)
 
     if not declared:
-        bare = [c["tool"].split("__")[-1] for c in tool_calls]
+        bare = [c["tool"].split("__")[-1] for c in all_calls]
         if bare:
             _warnings.warn(
                 f"skill called MCP tools but declared none in allowed-tools: "
@@ -612,7 +623,7 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
             )
         return
     bad = []
-    for call in tool_calls:
+    for call in all_calls:
         bare = call["tool"].split("__")[-1]
         if bare not in declared:
             bad.append(bare)

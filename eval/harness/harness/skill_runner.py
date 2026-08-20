@@ -314,7 +314,6 @@ async def run_skill(
     max_tool_calls: int = DEFAULT_MAX_TOOL_CALLS,
     max_input_tokens_per_turn: int = DEFAULT_MAX_INPUT_TOKENS_PER_TURN,
     sdk_message_silence_seconds: int = DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
-    allowed_tools_override: list[str] | None = None,
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     declared_tools: set[str] | None = None,
@@ -323,10 +322,6 @@ async def run_skill(
 
     The caller is responsible for snapshotting workspace state before/after
     and running validators + judge.
-
-    `allowed_tools_override` is accepted for backward compatibility but
-    ignored — the session now grants every registered MCP tool (issue
-    #1748).
 
     `declared_tools` is the BARE tool names this skill claims in its own
     `allowed-tools` (`allowed_tools.declared_skill_tools`) — NOT the unioned

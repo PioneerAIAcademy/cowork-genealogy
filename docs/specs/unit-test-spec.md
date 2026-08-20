@@ -1685,7 +1685,7 @@ Key settings:
 
 - `cwd` — the temp directory. The SDK discovers skills from `.claude/skills/` relative to this path.
 - `setting_sources=["project"]` — required for skill discovery. `"project"` loads `.claude/` from cwd. v1.5 dropped `"user"` because eval runs on developer machines where `~/.claude/skills/` may contain custom user skills that contaminate routing tests; outcomes need to be reproducible across machines and CI. Production Cowork loads both, but it runs in a fresh VM where `~/.claude/` is a known clean state.
-- `allowed_tools` — **per-skill, derived from the skill's SKILL.md frontmatter** (see below). Combined with `permission_mode="dontAsk"`, this enforces the tool allowlist at execution time rather than only catching violations after the fact.
+- `allowed_tools` — the filesystem baseline plus every registered MCP tool (see below). No per-skill narrowing: `allowed-tools` frontmatter is a grant, not a restriction, and the `test_tool_allowlist` validator reports undeclared calls after the fact.
 - `model` — pinned to a specific version for reproducibility across runs.
 - `temperature=0` — deterministic decoding within a single run. **v1.5 implementation note:** the installed `claude-agent-sdk` does not currently expose a `temperature` field on `ClaudeAgentOptions` — the harness relies on the underlying Claude Code CLI's default decoding behaviour. Variance is acknowledged in `harness/skill_runner.py` and captured by bumping `runs_per_test` when needed.
 - `hooks` — `PreToolUse` hooks let the harness observe every tool invocation, including `Skill` calls (used to populate `skills_invoked`) and MCP calls (used to populate `tool_calls` and route to the mock server).
@@ -1963,7 +1963,6 @@ A companion **static** check — `eval/harness/scripts/check_tool_coverage.py`, 
 
 - **Skill discovery on Linux:** The testing plan flags issue #268 — hardcoded macOS paths in the SDK's skill discovery. Verify that `.claude/skills/<name>/SKILL.md` is found correctly on Linux before trusting results.
 - **Session storage pollution:** Temp directories create orphaned session entries in `~/.claude/projects/`. The harness must clean these up or the directory will grow unboundedly.
-- **`permission_mode="dontAsk"` must actually block unlisted tools.** The harness relies on this SDK setting to enforce per-skill allowlists at call time (see "Deriving `allowed_tools` per skill"). Verify on every SDK version bump that an unlisted tool is rejected rather than silently prompting. If the SDK regresses, fall back to `disallowed_tools` populated as the complement of the per-skill allowlist.
 - **Hook API stability:** The PreToolUse hook interface may change between SDK versions. Pin the SDK version in `eval/harness/pyproject.toml`.
 
 ---

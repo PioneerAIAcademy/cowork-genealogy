@@ -411,41 +411,72 @@ def test_preflight_message_names_both_remedies():
 # --- Permissive grant (issue #1748) -------------------------------------------
 
 
-def test_session_grants_every_registered_mcp_tool():
-    """The session allowlist includes every mock-registered MCP tool,
-    regardless of what the skill declares (issue #1748).
+def test_session_grants_every_registered_mcp_tool(tmp_path, monkeypatch):
+    """The SDK session grants every registered MCP tool regardless of what
+    the skill declares (issue #1748).  Reads the real ClaudeAgentOptions
+    that run_skill passes to query — NOT a reimplementation of the grant
+    logic.  Fails on main where per-skill narrowing still derives an
+    extra_disallowed complement."""
+    import asyncio
 
-    Exercises skill_runner's permissive path: BASELINE_ALLOWED + all
-    registered tools, with disallowed_tools = DISALLOWED_BACKSTOP only.
-    """
-    from harness.skill_runner import BASELINE_ALLOWED, DISALLOWED_BACKSTOP
+    from claude_agent_sdk import ResultMessage
 
-    # Simulate what skill_runner.py now does: permissive grant.
-    tools_by_name = {
-        "wikipedia_search": object(),
-        "record_search": object(),
-        "undeclared_tool": object(),
-    }
-    allowed_tools = list(BASELINE_ALLOWED) + [
-        f"mcp__genealogy__{name}" for name in tools_by_name
-    ]
-    disallowed_tools = list(DISALLOWED_BACKSTOP)
+    import harness.skill_runner as sr
+    from harness.auth import AuthConfig
+    from harness.mock_mcp import LIVE_TOOLS
+    from harness.skill_runner import DISALLOWED_BACKSTOP
 
-    # Every registered tool must be in allowed_tools.
-    for name in tools_by_name:
-        qualified = f"mcp__genealogy__{name}"
-        assert qualified in allowed_tools, f"{qualified} missing from grant"
+    class _Stream:
+        """Minimal async iterator that yields a single ResultMessage."""
 
-    # No registered tool may appear in disallowed_tools.
-    for name in tools_by_name:
-        qualified = f"mcp__genealogy__{name}"
-        assert qualified not in disallowed_tools, (
-            f"{qualified} in disallowed_tools — narrowing was supposed to be retired"
+        def __init__(self, messages):
+            self._m, self._i = messages, 0
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            if self._i >= len(self._m):
+                raise StopAsyncIteration
+            self._i += 1
+            return self._m[self._i - 1]
+
+        async def aclose(self):
+            return None
+
+    seen: dict = {}
+
+    def fake_query(**kw):
+        seen["options"] = kw["options"]
+        return _Stream([
+            ResultMessage(
+                subtype="result", duration_ms=1, duration_api_ms=1,
+                is_error=False, num_turns=1, session_id="S1",
+            )
+        ])
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    asyncio.run(sr.run_skill(
+        user_message="go",
+        workspace=tmp_path,
+        fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(
+            skill_runner_mode="api_key", api_key="x", detail="stub",
+        ),
+    ))
+    options = seen["options"]
+
+    # Every LIVE_TOOLS entry must be granted.
+    for name in LIVE_TOOLS:
+        q = f"mcp__genealogy__{name}"
+        assert q in options.allowed_tools, f"{q} missing from the session grant"
+        assert q not in options.disallowed_tools, (
+            f"{q} in disallowed_tools — per-skill narrowing is back"
         )
 
     # Dangerous tools still blocked.
-    for dangerous in DISALLOWED_BACKSTOP:
-        assert dangerous in disallowed_tools
+    assert sorted(options.disallowed_tools) == sorted(DISALLOWED_BACKSTOP)
 
 
 # --- Advisory validator (issue #1748) ----------------------------------------
@@ -467,7 +498,7 @@ def test_tool_allowlist_validator_warns_instead_of_failing():
     # Must NOT raise AssertionError.
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        test_tool_allowlist(tool_calls, frontmatter, test)
+        test_tool_allowlist(tool_calls, frontmatter, test, attempted_mcp_calls=[])
 
     # Must emit a warning naming the undeclared tool.
     msgs = [str(w.message) for w in caught]
