@@ -149,9 +149,12 @@ it is part of **pass**.
 Does every search produce a log entry whose *authored* content is faithful and
 useful? Scope this dimension narrowly: `research_log_append` assigns `id`,
 `performed`, `results_ref` and writes the sidecar, and deterministic validators
-already own entry existence (`test_positive_appends_log_entry`) and `outcome`
+already own entry existence (`test_positive_appends_log_entry`), `outcome`
 honesty (`test_log_outcome_positive_record_search`,
-`test_log_outcome_honest_no_match`). **Do not re-grade any of those here.**
+`test_log_outcome_honest_no_match`), and — on a pre-1880 US census household —
+whether `notes` marks the family structure inferred rather than stated
+(`test_pre1880_census_structure_marked_inferred`, the Step 4
+no-relationship-column rule). **Do not re-grade any of those here.**
 
 What is left is the part only a reader can judge: whether `query` faithfully
 reproduces the search that was actually run, whether `results_examined` matches

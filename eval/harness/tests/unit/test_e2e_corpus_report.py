@@ -11,12 +11,17 @@ import pytest
 
 from e2e.corpus_report import (
     VIOLATION_ARMS,
+    RecomputeTally,
     classify,
+    format_recompute,
     format_report,
     main,
+    recompute_tally,
+    spend_tally,
     tally,
     violations_of,
 )
+from e2e.pricing import estimate_cost_usd
 from e2e.runlog_selection import all_result_jsons, is_result_json, run_date
 from harness.skill_invocation import (
     find_effects_without_invocation,
@@ -685,3 +690,124 @@ def test_a_windowed_report_says_so_where_it_states_a_denominator():
     # The window itself is `describe_window`'s to name — stating it twice
     # invites the two lines to disagree.
     assert "Window:" not in windowed
+
+# --- issue #1484: --recompute, the spend split, and the cost estimator ------
+
+
+_MENTOR_GAP_RESEARCH = {
+    # A resolved question whose proof_summary carries no gps-mentor proof-critique
+    # verdict — the shape `find_missing_mentor_verdicts` fires on (mirrors the
+    # `_detector_messages` helper above, so it tracks the real detector).
+    "questions": [{"status": "resolved", "proof_summary_id": "ps1"}],
+    "proof_summaries": [{"id": "ps1"}],
+    "evaluations": [],
+}
+
+
+def _run_with_sidecars(runs_dir: Path, slug: str, final_research: dict, final_tree: dict,
+                       *, stored_violations=None) -> Path:
+    """A committed-run layout: run-1.json + its final-research / final-tree
+    sidecars, under a per-slug dir. `stored_violations=None` means the run
+    predates the detector — no `guardrail_bypass_violations` field at all."""
+    d = runs_dir / slug
+    d.mkdir(parents=True, exist_ok=True)
+    payload: dict = {"tool_calls": []}
+    if stored_violations is not None:
+        payload["guardrail_bypass_violations"] = stored_violations
+    run = _write(d, "run-1.json", payload)
+    _write(d, "run-1.final-research.json", final_research)
+    _write(d, "run-1.final-tree.gedcomx.json", final_tree)
+    return run
+
+
+def test_recompute_recovers_violations_a_stored_only_read_counts_as_zero(tmp_path: Path):
+    runs, fixtures = tmp_path / "runs", tmp_path / "fixtures"
+    run = _run_with_sidecars(runs, "myfix", _MENTOR_GAP_RESEARCH, {"persons": []})
+    (fixtures / "myfix").mkdir(parents=True)
+    _write(fixtures / "myfix", "starting-tree.gedcomx.json", {"persons": []})
+
+    # Default (stored) path: no guardrail_bypass_violations field -> zero.
+    assert sum(tally([run]).arms.values()) == 0
+
+    # --recompute path: the mentor-verdict gap is recovered from the sidecars.
+    rt = recompute_tally([run], fixtures_root=fixtures)
+    assert rt.scanned == 1
+    assert rt.skipped == []
+    assert sum(rt.arms.values()) > 0
+    assert rt.arms.get("mentor verdict", 0) > 0
+    # Recompute found MORE than stored (which was absent) -> not a regression.
+    assert rt.regressed == []
+
+
+def test_recompute_surfaces_a_run_where_stored_exceeds_recomputed(tmp_path: Path):
+    """The mary-mcandrew-son case (#1340): a run recorded a violation today's
+    detector clears. It must be NAMED as a detector correction, not absorbed into
+    the aggregate where the report would read as if recompute only ever finds
+    MORE. Clean research/tree recompute to zero; the stored field says one."""
+    runs, fixtures = tmp_path / "runs", tmp_path / "fixtures"
+    run = _run_with_sidecars(
+        runs, "fixed",
+        {"proof_summaries": [], "evaluations": []}, {"persons": []},
+        stored_violations=["a violation a contemporaneous checker recorded"],
+    )
+    (fixtures / "fixed").mkdir(parents=True)
+    _write(fixtures / "fixed", "starting-tree.gedcomx.json", {"persons": []})
+
+    rt = recompute_tally([run], fixtures_root=fixtures)
+    assert sum(rt.arms.values()) == 0          # today's detector: clean
+    assert len(rt.regressed) == 1
+    assert "stored 1 -> recomputed 0" in rt.regressed[0]
+
+    out = format_recompute(Counter(), rt)
+    assert "clears a violation the run recorded" in out
+    assert "detector correction, not a corpus change" in out
+    # The falsified claim must be gone in both directions.
+    assert "stored is a floor" not in out
+    assert "the real count" not in out
+
+
+def test_recompute_arm_order_breaks_ties_alphabetically():
+    """Equal-count arms must order deterministically. Sorting a set by count
+    alone leaves ties to hash-seed-dependent iteration order, which makes the
+    report undiffable — and byte-identical output is #1484's regression check."""
+    rt = RecomputeTally(
+        arms=Counter({"zebra": 2, "alpha": 2, "mango": 2}),
+        per_fixture=Counter(), scanned=3, skipped=[], regressed=[],
+    )
+    out = format_recompute(Counter(), rt)
+    assert out.index("alpha") < out.index("mango") < out.index("zebra")
+
+
+def test_recompute_skips_a_run_whose_fixture_has_no_seed_tree(tmp_path: Path):
+    runs, fixtures = tmp_path / "runs", tmp_path / "fixtures"
+    run = _run_with_sidecars(runs, "noseed", _MENTOR_GAP_RESEARCH, {"persons": []})
+    fixtures.mkdir()  # no noseed/ dir -> no starting-tree.gedcomx.json to read
+
+    rt = recompute_tally([run], fixtures_root=fixtures)
+    # Named skip, excluded from the recomputed count, never counted as zero.
+    assert rt.scanned == 0
+    assert sum(rt.arms.values()) == 0
+    assert len(rt.skipped) == 1
+    assert "starting-tree" in rt.skipped[0]
+
+
+def test_estimate_cost_is_a_number_with_token_counts_and_none_without():
+    assert estimate_cost_usd({"input_tokens": 1000, "output_tokens": 2000}) > 0
+    # None / empty / a dict with none of the priced fields -> None, never 0.0:
+    # a 0.0 would read as a free run and re-introduce the hidden-spend defect.
+    assert estimate_cost_usd(None) is None
+    assert estimate_cost_usd({}) is None
+    assert estimate_cost_usd({"unrelated": 5}) is None
+
+
+def test_spend_separates_recorded_estimated_and_unrecoverable(tmp_path: Path):
+    recorded = _write(tmp_path, "run-1.json",
+                      {"usage": {"total_cost_usd": 4.0, "usage": {"input_tokens": 1}}})
+    estimable = _write(tmp_path, "run-2.json",
+                       {"usage": {"total_cost_usd": None, "usage": {"input_tokens": 1000}}})
+    tokenless = _write(tmp_path, "run-3.json",
+                       {"usage": {"total_cost_usd": None}})
+    spend = spend_tally([recorded, estimable, tokenless])
+    assert (spend.recorded_n, spend.estimated_n, spend.neither_n) == (1, 1, 1)
+    assert spend.recorded == 4.0
+    assert spend.estimated > 0
