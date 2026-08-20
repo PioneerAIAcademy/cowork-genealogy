@@ -26,7 +26,6 @@ import { getValidToken } from "../src/auth/refresh.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
 const BASE = "https://api.familysearch.org/platform/tree/search";
 const REQUIRE = "m.queryRequireDefault=on";   // the switch I dropped last time
-let token = "";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function total(qs: string): Promise<number | string> {
@@ -37,6 +36,9 @@ async function total(qs: string): Promise<number | string> {
     // throttles. `volume_search` once hung for 236 minutes on exactly this
     // (CLAUDE.md). `no-bare-fetch.test.ts` only walks `src/`, so nothing here would
     // have caught it; three existing dev probes already use the helper.
+    // Per request, not once up front: `getValidToken()` auto-refreshes, so a token
+    // expiring mid-run cannot surface as a 401 that reads like a data value.
+    const token = await getValidToken();
     const res = await fetchWithTimeout(`${BASE}?${qs}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } });
     if (res.status === 204) return 0;   // meaningful zero, not a retry
@@ -58,7 +60,6 @@ async function total(qs: string): Promise<number | string> {
 }
 
 async function main(): Promise<void> {
-  token = await getValidToken();
   // Different names, per the ask: a common English pair and two rare ones.
   const SETS: Array<[string, string[]]> = [
     ["Pocklington / Thomae", ["q.surname=Pocklington", "q.givenName=Thomae"]],

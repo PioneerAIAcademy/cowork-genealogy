@@ -27,7 +27,7 @@ import { getValidToken } from "../src/auth/refresh.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
 const BASE = "https://api.familysearch.org/platform/tree/search";
 const POOL = "q.surname=Pocklington&q.givenName=Thomae&m.queryRequireDefault=on";
-let token = ""; let retries = 0;
+let retries = 0;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function page(qs: string): Promise<any | null> {
@@ -38,6 +38,9 @@ async function page(qs: string): Promise<any | null> {
     // throttles. `volume_search` once hung for 236 minutes on exactly this
     // (CLAUDE.md). `no-bare-fetch.test.ts` only walks `src/`, so nothing here would
     // have caught it; three existing dev probes already use the helper.
+    // Per request, not once up front: `getValidToken()` auto-refreshes, so a token
+    // expiring mid-run cannot surface as a 401 that reads like a data value.
+    const token = await getValidToken();
     const res = await fetchWithTimeout(`${BASE}?${qs}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } });
     // 204 = zero results. A MEANINGFUL ZERO, not transient — handled before the
@@ -77,7 +80,6 @@ async function readAll(extra: string): Promise<{ total: number | null; ids: stri
   return null;
 }
 async function main(): Promise<void> {
-  token = await getValidToken();
   const u = await readAll("");
   if (!u) { console.log("unranged pool did not enumerate"); return; }
   console.log(`unranged: total ${u.total}, read ${u.ids.length}, distinct ${new Set(u.ids).size}\n`);

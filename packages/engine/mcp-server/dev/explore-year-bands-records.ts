@@ -32,7 +32,6 @@ import { fetchWithTimeout } from "../src/utils/http.js";
 
 const POOL = "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=0";
 const CAP = 4900;
-let token = "";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 interface Row { id: string; payloadYear: number | null }
@@ -44,6 +43,12 @@ async function readAll(extra: string): Promise<{ total: number | null; rows: Row
   let retry = 0;
   for (let offset = 0; offset < CAP; offset += 100) {
     await sleep(250);
+    // Per request, not once in `main()`: this is the longest-running script of the
+    // set (12 bands x 2 variants x up to 49 pages, plus 429 backoffs). A token that
+    // expired mid-run would return 401, `!res.ok` would abort, and a whole run would
+    // be discarded rather than refreshed. `getValidToken()` auto-refreshes, so
+    // calling it per request is cheap.
+    const token = await getValidToken();
     // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
     // its own, and these scripts page for tens of minutes against an endpoint that
     // throttles. `volume_search` once hung for 236 minutes on exactly this
@@ -92,7 +97,6 @@ async function readAll(extra: string): Promise<{ total: number | null; rows: Row
 }
 
 async function main(): Promise<void> {
-  token = await getValidToken();
 
   const u = await readAll("");
   if (!u) { console.log("unranged pool did not enumerate — narrow further"); return; }

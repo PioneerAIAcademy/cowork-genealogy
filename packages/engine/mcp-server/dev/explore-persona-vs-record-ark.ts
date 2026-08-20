@@ -29,14 +29,15 @@ import { fetchWithTimeout } from "../src/utils/http.js";
 
 const YPOP = "q.surname=Pocklington&q.recordCountry=England&f.recordType=0";
 const RANGE = "&q.birthLikeDate.from=1850&q.birthLikeDate.to=1854";
-let token = "";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function main(): Promise<void> {
-  token = await getValidToken();
   const rows: Array<{ pid: string; name: string; sds: string[] }> = [];
   for (let offset = 0; offset < 900; offset += 100) {
     await sleep(300);
+    // Per request, not once up front: a token expiring mid-run would abort on 401
+    // and discard the paging done so far. `getValidToken()` auto-refreshes.
+    const token = await getValidToken();
     // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
     // its own, and these scripts page for tens of minutes against an endpoint that
     // throttles. `volume_search` once hung for 236 minutes on exactly this

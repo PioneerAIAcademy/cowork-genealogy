@@ -37,7 +37,6 @@ import { fetchWithTimeout } from "../src/utils/http.js";
 
 const POOL = "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=0";
 const TARGET = "NPBV-WBQ";
-let token = "";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function readAll(range: string): Promise<{ total: number | null; ids: string[] } | null> {
@@ -48,6 +47,10 @@ async function readAll(range: string): Promise<{ total: number | null; ids: stri
   let attempts = 0;
   for (let offset = 0; offset < 1500; offset += 100) {   // sibling REPORTED 585 (not in the artifact); 600 was too tight
     await sleep(300);
+    // Per request, not once in `main()`: this sweeps many windows with 429 backoffs,
+    // and a token expiring mid-run would surface as a 401 abort that discards the
+    // whole sweep. `getValidToken()` auto-refreshes.
+    const token = await getValidToken();
     // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
     // its own, and these scripts page for tens of minutes against an endpoint that
     // throttles. `volume_search` once hung for 236 minutes on exactly this
@@ -90,7 +93,6 @@ async function readAll(range: string): Promise<{ total: number | null; ids: stri
 }
 
 async function main(): Promise<void> {
-  token = await getValidToken();
   const windows: Array<[string, string]> = [
     ["no range at all", ""],
     ["1480-1489", "&q.birthLikeDate.from=1480&q.birthLikeDate.to=1489"],
