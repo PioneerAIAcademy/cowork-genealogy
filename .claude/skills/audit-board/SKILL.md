@@ -316,6 +316,59 @@ on #N", "gated on the #N probe", "land after PR #N". Extract every one and
 resolve it. A closed blocker on an issue still marked blocked is the highest-value
 find in this section, because nothing else in the workflow notices.
 
+**Sweep it, do not read for it.** This check was prose-only until 2026-08-20 and
+therefore never ran; a `/fill-ready` pass that day found **six** items whose every
+named blocker had closed — including issue #847, the prompt-injection gate for the
+public launch, freed when its probe closed and parked for weeks anyway. Two more
+were found by accident the same morning, each after a promotion had already been
+proposed on a stale body.
+
+```sh
+python3 - <<'PY'
+import json, re, subprocess
+issues = json.load(open('/tmp/issues.json', encoding='utf-8'))    # written by §0
+BLOCK = re.compile(r'(blocked on|do not start until|wait for|waits on|prerequisite'
+                   r'|gated on|land(?:s)? first|must land|queues behind|start(?:s)? after'
+                   r'|do after)', re.I)
+refs = {}
+for i in issues:
+    n, b = i['number'], i.get('body') or ''
+    for m in BLOCK.finditer(b):                       # only numbers NEAR the phrase —
+        for r in re.findall(r'#(\d{3,4})',            # a bare #N anywhere is noise
+                            b[m.start():m.start() + 220]):
+            refs.setdefault(n, set()).add(int(r))
+def state(r):
+    for kind in ('issue', 'pr'):
+        out = subprocess.run(['gh', kind, 'view', str(r), '--repo',
+                              'PioneerAIAcademy/cowork-genealogy', '--json', 'state',
+                              '-q', '.state'], capture_output=True, text=True).stdout.strip()
+        if out:
+            return out
+    return 'UNKNOWN'
+cache = {}
+for n, rs in sorted(refs.items()):
+    st = {r: cache.setdefault(r, state(r)) for r in rs}
+    if st and all(v in ('CLOSED', 'MERGED') for v in st.values()):
+        print(f'FREED #{n}  every blocker closed: '
+              + ', '.join(f'#{r} {v}' for r, v in st.items()))
+PY
+```
+
+Then **confirm the work reached `main`** before calling one freed — closed is not
+shipped, which is the very next check below. A blocker closed `not planned` frees
+the issue too, but for the opposite reason: nobody is doing that work, so the
+dependent item needs its premise re-read, not just its banner deleted.
+
+**Report only the freed items sitting in Backlog.** The sweep reads the whole open
+pool, and on 2026-08-20 it returned 14 — but a freed item already in Ready, In
+Progress or Review is not a find: someone holds it, and its banner is their
+problem, not the board's. Cross the list against `/tmp/board.json` before you
+report. Backlog is where a cleared blocker leaves an item invisible.
+
+Each survivor needs its stale banner struck in the body — a
+`> **Do not start until #N**` line outlives the blocker and parks the issue again
+on the next read — and each is a `/fill-ready` promotion candidate the same week.
+
 **The closed issue it points at never shipped.** The inverse of the check above,
 and it fails in the direction nobody looks. `closed` reads as done, so a body or
 a code comment that names a closed issue as its tracker is trusted on sight. Do
@@ -711,7 +764,11 @@ things that change what happens this week. Then:
 2. **Obsolete** — what to close outright, and what needs a body correction rather
    than a close. One line of evidence each. Keep **blocked on an unmerged branch**
    as its own group: those are not obsolete, they are unbuildable, and the fix is
-   naming the branch rather than closing the issue.
+   naming the branch rather than closing the issue. Keep **freed — every blocker
+   closed** (§2's sweep) as its own group too, and put it first: those are the
+   opposite of obsolete. They are startable work that has been parked, invisibly,
+   for as long as the blocker has been closed, and they are this week's
+   `/fill-ready` candidates.
 3. **Clusters** — one block each: members, what binds them, decision pending, next
    action, doer, and **Since**. Lead with any next action that has not moved since
    a previous audit.
