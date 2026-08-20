@@ -1,5 +1,16 @@
 /**
- * Trap 2: a zero-result query returns HTTP 204 with an empty body, not 200.
+ * Trap 2: on the TREE endpoint a zero-result query returns HTTP 204 with an empty
+ * body, not 200. The RECORDS endpoint does not — it answers 200 with an empty
+ * `entries` array. Measured side by side on 2026-08-20 (cases F and G), because the
+ * direction was being recalled both ways in review and nothing in
+ * `measured-figures.json` settles it:
+ *
+ *   TREE     q.surname=Xzqwbrtl&q.surname.exact=on  ->  204, body empty
+ *   RECORDS  the same query                         ->  200, entries:[] (results 0)
+ *
+ * One query per endpoint, not an enumeration — enough to fix the direction, not a
+ * general claim about every zero-result shape. The practical consequence: a 204
+ * branch is load-bearing for tree readers and defensive-only for records readers.
  *
  * EXPLORATORY. **Its output is not in `dev/measured-figures.json` and must not be
  * cited as measured.** Nothing here calls `record()`, so no verdict it prints can
@@ -24,10 +35,12 @@
  */
 import { getValidToken } from "../src/auth/refresh.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
-const BASE = "https://api.familysearch.org/platform/tree/search";
+import { BROWSER_USER_AGENT } from "../src/constants.js";
+const TREE = "https://api.familysearch.org/platform/tree/search";
+const RECORDS = "https://www.familysearch.org/service/search/hr/v2/personas";
 const R = "m.queryRequireDefault=on";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-async function probe(label: string, qs: string): Promise<void> {
+async function probe(label: string, qs: string, base = TREE): Promise<void> {
   await sleep(3000);
   const token = await getValidToken();
   // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
@@ -35,8 +48,11 @@ async function probe(label: string, qs: string): Promise<void> {
   // throttles. `volume_search` once hung for 236 minutes on exactly this
   // (CLAUDE.md). `no-bare-fetch.test.ts` only walks `src/`, so nothing here would
   // have caught it; three existing dev probes already use the helper.
-  const res = await fetchWithTimeout(`${BASE}?${qs}`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } });
+  const res = await fetchWithTimeout(`${base}?${qs}`, {
+    headers: base === TREE
+      ? { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" }
+      : { Authorization: `Bearer ${token}`, Accept: "application/json",
+          "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } });
   const body = await res.text();
   console.log(`\n${label}`);
   console.log(`  status ${res.status} ${res.statusText}`);
@@ -56,5 +72,15 @@ async function main(): Promise<void> {
     `q.surname=Xzqwbrtl&q.surname.exact=on&count=1&${R}`);
   await probe("E. nonsense givenName + .exact, WITHOUT the require switch",
     `q.surname=Pocklington&q.givenName=Xzqwbrtl&q.givenName.exact=on&count=1`);
+
+  // Which endpoints actually answer a zero-result query with 204? Added because the
+  // claim in this docblock was TREE-only and was then being recalled both ways in
+  // review, with nothing in `measured-figures.json` to settle it and no side-by-side
+  // read anywhere. The same unmatchable query, put to both endpoints, one after the
+  // other. Compare the two `status` lines.
+  await probe("F. TREE, zero-result query — status?",
+    `q.surname=Xzqwbrtl&q.surname.exact=on&count=1&${R}`, TREE);
+  await probe("G. RECORDS, the same zero-result query — status?",
+    `q.surname=Xzqwbrtl&q.surname.exact=on&count=1&${R}`, RECORDS);
 }
 main().catch((e) => { console.error(e instanceof Error ? e.message : String(e)); process.exit(1); });

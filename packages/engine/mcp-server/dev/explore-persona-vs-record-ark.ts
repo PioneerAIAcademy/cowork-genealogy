@@ -49,6 +49,13 @@ async function main(): Promise<void> {
     // Without this, a 429 or 5xx yields an error object, `entries` is [], the
     // `entries.length < 100` check breaks the paging loop, and every figure below
     // is printed from a partial read with nothing marking it partial.
+    //
+    // No 204 branch, deliberately. `res.ok` IS true for 204, so on the TREE endpoint
+    // that omission would hand an empty body to `res.json()` — the trap
+    // `explore-tree-204-vs-429.ts` documents. This is the RECORDS endpoint, which
+    // answers a zero-result query 200 with `entries: []` (measured side by side on
+    // 2026-08-20, cases F and G of that script). A 204 branch here would be dead
+    // code; the ones in the sibling records-endpoint readers are defensive only.
     if (!res.ok) {
       console.log(`  ABORTING: HTTP ${res.status} at offset ${offset} — figures below would be partial`);
       process.exit(1);
