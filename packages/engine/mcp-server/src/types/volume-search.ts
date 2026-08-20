@@ -12,6 +12,11 @@ export interface VolumeSearchInput {
   standardPlace: string;
   startYear?: number;
   endYear?: number;
+  /**
+   * Record-type group names from RECORD_TYPE_GROUP_NAMES. OR-ed; an empty array
+   * means no filter, matching the upstream behaviour for an empty id list.
+   */
+  recordTypeGroups?: string[];
   pageToken?: string;
 }
 
@@ -23,6 +28,12 @@ export interface MetadataRmsCoverageRequest {
   placeRepIds: number[];
   fromDateString?: string;
   toDateString?: string;
+  /**
+   * Record-type filter. Undocumented upstream; matches by hierarchy containment
+   * and ORs the array. Must sit inside `coverage` — at the top level of the
+   * request body it is silently ignored.
+   */
+  recordTypeConceptIds?: number[];
 }
 
 export interface MetadataRmsSearchRequest {
@@ -40,6 +51,14 @@ export interface MetadataRmsCoverageEntry {
   place?: string;
   datesOrig?: string;
   recordTypeOrig?: string;
+  /** Stable key for the record type; `recordTypeOrig` is display text. */
+  recordTypeConceptId?: number;
+  /** Ancestor chain, root first, ending in `recordTypeConceptId`. */
+  recordTypeConceptIdHierarchy?: number[];
+  /** ISO-shaped span start, e.g. `"1683-01-01T00:00:00"`. */
+  fromdateString?: string;
+  /** ISO-shaped span end, e.g. `"1700-12-31T23:59:59.999"`. */
+  todateString?: string;
 }
 
 export interface MetadataRmsGroup {
@@ -73,6 +92,16 @@ export interface SimplifiedCoverage {
   place: string;
   dateRange?: string;
   recordType?: string;
+  /**
+   * The concept id behind `recordType`, and the stable key of the pair:
+   * `recordType` is locale- and collection-specific display text, absent on ~18%
+   * of coverages and sometimes an unusable `concept-id:` placeholder.
+   */
+  recordTypeConceptId?: number;
+  /** First year covered, from `fromdateString`. */
+  startYear?: number;
+  /** Last year covered, from `todateString`. */
+  endYear?: number;
 }
 
 export interface VolumeGroup {
@@ -92,6 +121,7 @@ export interface VolumeSearchResult {
     standardPlace: string;
     startYear?: number;
     endYear?: number;
+    recordTypeGroups?: string[];
   };
   totalResults: number;
   nextPageToken?: string;

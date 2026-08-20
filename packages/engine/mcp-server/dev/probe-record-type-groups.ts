@@ -23,6 +23,7 @@ import {
 } from "../src/utils/place-resolver.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
+import { RECORD_TYPE_GROUP_TABLE } from "../src/utils/record-type-groups.js";
 
 const RMS_SEARCH_URL =
   "https://sg30p0.familysearch.org/service/records/rms/group-service/group/search";
@@ -406,74 +407,21 @@ async function sectionAnchors() {
 }
 
 /**
- * THE VOCABULARY — single source of truth for `tree` and `reach`.
+ * THE VOCABULARY — imported, never restated.
  *
- * Both sections derive their id sets from this array, so a change here is
- * automatically reflected in the reach measurement. An earlier version hardcoded
- * a separate id list inside `sectionReach`; it drifted from the group table
- * (carrying two ids that are not group roots, missing two that are) and reported
- * 100% reach for a vocabulary that does not ship. A check that cannot notice the
- * thing it checks is worse than no check.
+ * `tree` and `reach` measure the ids the tool actually sends, so they read the
+ * shipped table directly. An earlier version of this probe kept its own copy: it
+ * drifted from the group table (carrying two ids that are not group roots,
+ * missing two that are) and reported 100% reach for a vocabulary that does not
+ * ship. A check that cannot notice the thing it checks is worse than no check.
  *
- * `strays` are ids belonging to the group editorially but OUTSIDE its anchor's
- * subtree, so containment cannot reach them; they are sent alongside the anchor.
+ * Aliased to `VOCABULARY` so the sections below read as before, and so the spec's
+ * Files table — which names a `VOCABULARY` here that must agree with its group
+ * table — stays literally true. Agreement is now structural rather than asserted:
+ * there is one array, and tests/packaging/record-type-group-drift.test.ts compares
+ * it to the spec's tables.
  */
-interface VocabGroup {
-  name: string;
-  anchor: number;
-  parent: string | null;
-  strays?: number[];
-}
-
-const VOCABULARY: VocabGroup[] = [
-  { name: "Genealogies", anchor: 123682, parent: null },
-  { name: "Biography", anchor: 122921, parent: "Genealogies" },
-  { name: "Vital", anchor: 124443, parent: null },
-  { name: "Birth", anchor: 103979, parent: "Vital" },
-  { name: "Death", anchor: 104898, parent: "Vital", strays: [122911] },
-  { name: "Cemetery", anchor: 104497, parent: "Death" },
-  { name: "Marriage", anchor: 104727, parent: "Vital" },
-  { name: "Divorce", anchor: 104832, parent: "Vital" },
-  { name: "Religious", anchor: 123402, parent: null },
-  { name: "Baptism", anchor: 103612, parent: "Religious", strays: [127575] },
-  { name: "Religious Death", anchor: 127576, parent: "Religious", strays: [127739] },
-  { name: "Religious Marriage", anchor: 127577, parent: "Religious" },
-  { name: "Confirmation", anchor: 101655, parent: "Religious" },
-  { name: "Military", anchor: 124133, parent: null },
-  { name: "Military Pensions", anchor: 127621, parent: "Military" },
-  { name: "Draft", anchor: 104808, parent: "Military" },
-  { name: "Migration", anchor: 127023, parent: null },
-  { name: "Emigration", anchor: 123632, parent: "Migration", strays: [131602] },
-  { name: "Naturalization", anchor: 124162, parent: "Migration" },
-  { name: "Census", anchor: 123363, parent: null, strays: [104611] },
-  { name: "Legal", anchor: 122797, parent: null },
-  { name: "Court", anchor: 127010, parent: "Legal", strays: [127571] },
-  { name: "Probate", anchor: 124277, parent: "Court" },
-  { name: "Guardianship", anchor: 123769, parent: "Probate" },
-  { name: "Wills", anchor: 124457, parent: "Legal", strays: [127073, 129547] },
-  { name: "Land", anchor: 127026, parent: "Legal" },
-  { name: "Enslavement", anchor: 126864, parent: "Land" },
-  { name: "Notarial", anchor: 100599, parent: "Legal" },
-  { name: "Government", anchor: 126517, parent: null },
-  { name: "ID documents", anchor: 126546, parent: "Government", strays: [129962, 129964] },
-  { name: "Passports", anchor: 124216, parent: "ID documents", strays: [124432, 124442, 131572] },
-  { name: "Foreigner", anchor: 131588, parent: "Government" },
-  { name: "Tax", anchor: 124410, parent: "Government", strays: [129065] },
-  { name: "Wartime", anchor: 130090, parent: "Government" },
-  { name: "Poor Law", anchor: 126768, parent: "Government" },
-  { name: "Prison", anchor: 123478, parent: "Government", strays: [130086, 126416, 131448] },
-  { name: "Government Pensions", anchor: 124227, parent: "Government", strays: [126869, 124383, 127027] },
-  { name: "Indigenous", anchor: 130717, parent: "Government" },
-  { name: "Voting", anchor: 127015, parent: null },
-  { name: "School", anchor: 124365, parent: null },
-  { name: "Business", anchor: 126340, parent: null },
-  { name: "Reference", anchor: 126808, parent: null },
-  { name: "Medical", anchor: 127076, parent: null },
-  { name: "Photographs", anchor: 122956, parent: null },
-  { name: "Miscellaneous", anchor: 124078, parent: null },
-  { name: "Administrative", anchor: 135784, parent: null },
-  { name: "Newspapers", anchor: 124231, parent: null },
-];
+const VOCABULARY = RECORD_TYPE_GROUP_TABLE;
 
 /** Every id the shipped vocabulary would send: anchors plus strays. */
 function vocabularyIds(): number[] {

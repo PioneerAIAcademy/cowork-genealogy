@@ -256,11 +256,15 @@ once. Sentence case with proper nouns capitalised; no kebab- or snake-casing.
 > group numbering ("group 14", "group 16") appears only in that document and in
 > the decisions recorded below.
 
-Each group maps to `{ anchors, strays }`:
+Each group maps to `{ anchor, strays }`:
 
-- **`anchors`** — concept ids whose subtree covers the group. Usually one.
+- **`anchor`** — the concept id whose subtree covers the group. Exactly one per
+  group: the source list proposed a second anchor for four groups, and
+  [Enumerate this table](#the-group-table) records why none is carried — two fall
+  outside the first anchor's subtree and appear as strays instead, and two resolve
+  inside it, so containment already reaches them.
 - **`strays`** — ids belonging to the group editorially but sitting **outside**
-  every anchor's subtree, so containment cannot reach them. They are added to the
+  the anchor's subtree, so containment cannot reach them. They are added to the
   same `recordTypeConceptIds` array; there is no post-filter. Verified list in
   [Strays](#strays).
 
@@ -774,8 +778,8 @@ as absent rather than guessing.
     "(recordSearchablePercent), and whether it is full-text searchable " +
     "(fulltextSearchable). Use the returned imageGroupNumber with image_search to " +
     "list the volume's images, or with fulltext_search to search its text. " +
-    "Results are paginated — pass back nextPageToken (with the same standardPlace and " +
-    "years) as pageToken to get the next page. " +
+    "Results are paginated — pass back nextPageToken (with the same standardPlace, " +
+    "years and record-type groups) as pageToken to get the next page. " +
     "Optionally narrow to record-type groups with recordTypeGroups. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
@@ -791,12 +795,12 @@ as absent rather than guessing.
       startYear: {
         type: "integer",
         description:
-          "Earliest year of interest, inclusive (e.g., 1730). Omit for all periods.",
+          "Earliest year of interest (inclusive), e.g. 1730. Omit for all periods.",
       },
       endYear: {
         type: "integer",
         description:
-          "Latest year of interest, inclusive (e.g., 1810). Must be ≥ startYear. " +
+          "Latest year of interest (inclusive), e.g. 1810. Must be >= startYear. " +
           "Omit for all periods.",
       },
       recordTypeGroups: {
@@ -842,7 +846,9 @@ all other authenticated tools. Do not re-implement token plumbing.
 | `endYear` not an integer year | Throw: `"endYear must be an integer year (e.g., 1810)."` |
 | `endYear` < `startYear` | Throw: `"endYear must be greater than or equal to startYear."` |
 | Resolved place has no placeRepIds | Throw: `"No place representations found for \"{standardPlace}\"."` |
-| `recordTypeGroups` contains an unrecognised name | Throw: `"Unknown record-type group \"<name>\". Valid groups: <list>."` — never fall through to an unfiltered or empty search, since the API answers an unrecognised concept id with `totalCount: 0` and status `200`, which is indistinguishable from a genuine absence of records |
+| `recordTypeGroups` contains an unrecognised name | Throw: `"Unknown record-type group(s): <names>. Valid groups: <list>."` — plural, because the input is an array and several entries can be wrong at once, so one error should let the caller fix them all. Never fall through to an unfiltered or empty search, since the API answers an unrecognised concept id with `totalCount: 0` and status `200`, which is indistinguishable from a genuine absence of records |
+| `recordTypeGroups` is not an array | Throw: `"recordTypeGroups must be an array of group names."` The schema's `enum` is advisory — nothing validates input against the advertised JSON Schema server-side — so a bare string (`"Tax"`) reaches the handler and would otherwise fail deep inside id expansion with an error naming neither the field nor the fix |
+| `recordType` supplied instead of `recordTypeGroups` | Throw, naming the valid groups. Three sibling tools take a singular `recordType`, so it is the field an LLM reaches for here, and the endpoint ignores unknown request fields silently — see [the warning box](#relationship-to-the-other-record-type-filters-read-before-naming-anything) for the reasoning and the exact guard |
 | Not authenticated | Let `getValidToken()` throw its LLM-instruction error |
 | Group-search API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | Group-search API returns 403 | Throw: `"FamilySearch volume search API error: 403 Forbidden."` |
