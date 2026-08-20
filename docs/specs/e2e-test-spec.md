@@ -528,13 +528,25 @@ expensive enough (§12) that an accidental sweep is a real cost event; driving a
 batch needs an explicit shell loop and a budget decision, not a one-word flag.
 (A `--tag` sweep existed until 2026-07 and was removed for this reason.)
 
-**Suite economics — scale by the mean, not the median.** From the 96 committed
-e2e runlogs: median **$7.29 / 53 min** per run. **17 of 96 carry no
-`total_cost_usd`** (16 `timeout`, 1 `error`), so the $661 recorded total spans
-only 79 runs while the 98 h of wall-clock spans all 96; imputing the missing runs
-at the pooled $0.1504/min puts true spend near **$886**. A suite is a *sum*, so
-budget it at the mean: a 20-fixture pass is ≈ **$185 and ~20.5 h serial**.
-Nothing enforces a budget — see the `max_cost_usd` note in §6 step 5.
+**Suite economics — scale by the mean, not the median.** Measured 2026-08-20
+over the 157 committed e2e runlogs: median ~**$7 / ~53 min** per run. **24 carry
+no `total_cost_usd`** (all timeouts, plus a few `error`/`inactivity`), so the
+**$1,142.74** recorded total spans 133 runs, while `duration_ms` spans 144; the
+13 runs carrying neither a cost nor token counts carry no `duration_ms` either.
+Two ways fill the gap, and they are complementary, not rival: the pooled $/min
+imputation used here historically (~$0.1504/min), and the flat per-token estimate
+`make e2e-corpus`'s spend line now applies (`e2e/pricing.py`), which recovers the
+11 null-cost runs that still carry token counts (≈$123) and names the 13 that
+carry neither as unrecoverable rather than imputing them. Prefer the per-token
+estimate where token counts survive — it is calibrated (median ~0.90x recorded,
+`make e2e-corpus CALIBRATE=1`); the $/min figure is the fallback for the
+tokenless tail, and its minutes come from `usage.timeline` (`duration_ms` is null
+for every run in that tail), which covers 10 of the 13; the remaining 3 carry no
+wall-clock signal and are unmeasurable by either method. The means are ~**$8.59**
+and ~**59.9 min**, so a 20-fixture pass is about **$172** and **~20 h serial**.
+Budget a suite at the mean, and run `make e2e-corpus SINCE=all`
+for the live figure rather than this snapshot. Nothing enforces a budget — see
+the `max_cost_usd` note in §6 step 5.
 
 1. Harness loads fixture, builds a fresh temp project directory.
 2. Copies `starting-research.json` and `starting-tree.gedcomx.json`
@@ -1531,6 +1543,18 @@ fallback reconstructs the block from the streamed assistant messages:
 
 **Never compare a `streamed_fallback` cost against a clean run's.**
 
+The abort-path cost is not lost, only kept out of `total_cost_usd`: a separate,
+clearly-approximate `total_cost_usd_estimated` carries a flat-rate estimate over
+the exact token counts (`e2e/pricing.py`), left `null` when a run recorded no
+tokens at all. `total_cost_usd` itself stays null — the argument above stands, so
+the authoritative field is never a guess. The estimate is a *different*, labelled
+figure, published beside its measured accuracy (median estimated/recorded across
+the runs carrying both; lead ruling 2026-08-10). Because a null-cost
+run already committed carries no `total_cost_usd_estimated`, `make e2e-corpus`
+estimates at **report** time (not only in this write-time fallback) — otherwise
+every run committed before the field existed would stay at zero and the gap this
+closes would reopen.
+
 #### 8.1.3 `git_sha` / `skills_hash` — run provenance
 
 These two fields exist because a graded run once landed alongside a
@@ -1640,22 +1664,55 @@ Window: runs on/after 2026-07-21 — 82 of 142 run(s), 60 older run(s) excluded.
           this one fixture's behavior.
   runs w/ >=1 violation: 21/21 of DECIDABLE runs (100%) — but no run is known
                          clean, so this is a floor on incidence, not a rate.
+  spend:
+    recorded    $1,142.74  over 133 run(s) carrying total_cost_usd
+    estimated   $122.62  over 11 null-cost run(s) with token counts (~0.90x recorded, median over 133 calibrating run(s))
+    unrecovered 13 run(s) carry neither a cost nor token counts
 ```
 
-(A snapshot taken 2026-08-04, not a live figure — run the command for current
-totals. The gap between the recall line and the gate line is the whole point:
-runs that recovered the genealogical answer can still fail the gate on
-compliance.)
+(A snapshot, not a live figure — run the command for current totals. The axis /
+violation / concentration lines are a 2026-08-04 windowed run (82 runs); the
+`spend:` line below them is from a later `--since all` run over the whole corpus
+(157 runs), so its denominators differ — both illustrate the format, not one
+coherent invocation. The gap between the recall line and the gate line is the
+whole point: runs that recovered the genealogical answer can still fail the gate
+on compliance.)
 
 **`violations:` and `runs w/ >=1 violation:` count different things** — individual
 violations and the runs carrying at least one. They are labelled apart because
 quoting one against the other's denominator is the error this report exists to
 prevent.
 
+**Spend, and recomputed violations.** The report always prints a `spend:` line —
+recorded cost, estimated cost, and the count of runs with neither — as three
+numbers, never one blend: abort-path cost is estimated (§8.1.2) and must not be
+folded into the authoritative recorded total. Beside the estimate is its
+measured accuracy (median estimated/recorded); `CALIBRATE=1`
+(`--calibrate-cost`) adds the full median + range. `RECOMPUTE=1` (`--recompute`)
+additionally re-derives violations from each run's committed `tool_calls` +
+`final-research`/`final-tree` sidecars + the fixture's seed tree, printing
+stored beside recomputed. **Neither bounds the other:** stored is what each run
+recorded at the time (pre-detector runs recorded none and contribute zero),
+recomputed is today's detectors over the same committed data — which can also
+*clear* a violation a contemporaneous checker recorded. Every run where stored
+exceeds recomputed is **named** under the TOTAL line as a detector correction,
+for the same reason skips are named: a divergence absorbed into the aggregate
+reads as if the recompute could only ever find more. A run whose fixture has no
+readable `starting-tree.gedcomx.json` is **named in a skip list and excluded
+from the recomputed count**, never counted as zero — it still appears in the
+stored column, which is the default report's own tally over every run in the
+window. The recomputed figure is a function of the committed ledger, which
+truncates and summarises some writer entries (a small population of assigned ids
+was never written down), so it inherits that ceiling rather than being an
+independent re-derivation. The stored field stays the record; `--recompute` is a
+reporting flag only, and the axis / violation / concentration numbers above the
+spend line are byte-identical with or without it.
+
 **Scoping:** `TEST=<slug>` restricts to one fixture; `SINCE=all|N|YYYY-MM-DD` sets
 the window, defaulting to the last 14 days like every other run-log reader
 (`harness/since_window.py`), so a window is an argument rather than a figure
-hand-edited into prose. A malformed `SINCE` is rejected at parse time (exit 2)
+hand-edited into prose. `RECOMPUTE=1` and `CALIBRATE=1` pass `--recompute` and
+`--calibrate-cost`. A malformed `SINCE` is rejected at parse time (exit 2)
 rather than silently selecting the wrong runs, and a run whose filename carries no
 parseable date is **kept**, so a naming change cannot quietly shrink the sample.
 
