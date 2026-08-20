@@ -70,5 +70,15 @@ def blocked_context_calls() -> list:
 
 
 @pytest.fixture
+def blocked_protected_writes() -> list:
+    """Raw writes to an existing research.json/tree.gedcomx.json, denied by the
+    PreToolUse hook (issue #1493).
+
+    Empty is the healthy case, so it is also the right standalone default.
+    """
+    return []
+
+
+@pytest.fixture
 def skill_frontmatter() -> dict:
     return {}

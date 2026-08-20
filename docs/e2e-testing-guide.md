@@ -94,6 +94,11 @@ If it flags something:
   at all and would improvise for an hour, which is the failure that filed #941.
   A WARN here means the connection could not be *proved* (no credential, or the
   server was still handshaking); green is not implied.
+- **Wiki + population services** — a WARN means the wiki-query-api or Pop Stats
+  base is unreachable from this machine. It never blocks a run, but a run without
+  them produces an answer whose locality half is empty, silently. These services
+  are expected to be reachable, so a WARN here is a per-machine setup problem to
+  report before spending an hour on the run — not a normal state to run through.
 - **Harness deps** — `cd eval/harness && uv sync`.
 
 ---

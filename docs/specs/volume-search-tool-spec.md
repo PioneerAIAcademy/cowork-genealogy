@@ -103,7 +103,8 @@ place fetchers all hit anonymous endpoints.
 | `standardPlace` | string | **Yes** | Standard place name (the `standardPlace` field from `place_search`). The tool resolves it to a `placeId` and then to one or more `placeRepId`s internally (via `standardPlaceToPlaceId` → `placeIdToRepIds`). |
 | `startYear` | integer | No | Earliest year of interest, inclusive (e.g., `1730`). Omit for all periods. |
 | `endYear` | integer | No | Latest year of interest, inclusive (e.g., `1810`). Must be ≥ `startYear`. Omit for all periods. |
-| `pageToken` | string | No | Opaque pagination cursor. Pass back the `nextPageToken` from a previous response to fetch the next page. **Must be sent together with the same `standardPlace`/`startYear`/`endYear`** that produced it (see [Pagination](#pagination)). |
+| `recordTypeGroups` | string[] | No | One or more record-type group names from the closed vocabulary in [Record-type filtering](#record-type-filtering). Results are restricted to volumes carrying at least one matching coverage. Multiple groups are **OR**-ed. Omit to search all record types. |
+| `pageToken` | string | No | Opaque pagination cursor. Pass back the `nextPageToken` from a previous response to fetch the next page. **Must be sent together with the same `standardPlace`/`startYear`/`endYear`/`recordTypeGroups`** that produced it (see [Pagination](#pagination)). |
 
 ### Fixed fields (always sent in the group-search request body)
 
@@ -158,7 +159,8 @@ sub-year/ISO-day precision. So `startYear: 1730, endYear: 1810` yields:
   "coverage": {
     "placeRepIds": [2968392, 10609408],
     "fromDateString": "1730-01-01",
-    "toDateString": "1810-12-31"
+    "toDateString": "1810-12-31",
+    "recordTypeConceptIds": [122797]
   },
   "types": ["NATURAL"],
   "active": true,
@@ -171,6 +173,351 @@ On a paged call, `nextPageToken` is added and the rest of the body is
 requires this).
 
 ---
+
+## Record-type filtering
+
+Everything in this section was determined empirically against the live API —
+FamilySearch publishes no documentation for it. Each claim names the probe
+section that reproduces it:
+`npx tsx dev/probe-record-type-groups.ts <section>`.
+
+### The request field
+
+The RMS group-search endpoint accepts a record-type filter **inside `coverage`**,
+beside `placeRepIds`:
+
+```ts
+coverage: {
+  placeRepIds: number[];
+  fromDateString?: string;
+  toDateString?: string;
+  recordTypeConceptIds?: number[];   // ← the filter
+}
+```
+
+> **Probing this endpoint requires controls.** It returns `200` and ignores
+> unknown request fields silently, so a successful response is not evidence that
+> a parameter exists. Only a response whose `totalCount` **moves** is.
+> Section `filter`, Harjager 1650–1720 — baseline `110`; a bogus field at top
+> level and inside `coverage` both return `110`; `recordTypeConceptIds` at top
+> level returns `110`; **inside `coverage` it returns `4`**. The singular
+> `recordTypeConceptId` and a name-based `recordTypes` are not parameters.
+
+### Semantics
+
+| Behaviour | Detail | Section |
+|---|---|---|
+| **Hierarchy containment** | An ancestor id matches its entire subtree. Harjager 1650–1720: `122797` (Legal, root) and `127010` (Court, its child) both return **25**, while `124277` (Probate, below Court) returns **3**; `123402` (Religious) returns **81** against `127575` (Religious Birth) at **2**. | `containment` |
+| **OR across the array** | `[124410]`→4, `[123402]`→81, `[124410,123402]`→**85**. Intersection would return 0. | `or` |
+| **Unknown id contributes nothing** | Alone it returns `totalCount: 0` with status `200` — indistinguishable from "no such records here". Alongside a valid id it is silently dropped (`[124410,999999]`→4). | `or` |
+| **Filters groups, not coverages** | A matching group is returned with **all** its coverage rows, including types that did not match. Harjager filtered on `124410` returns 4 groups carrying 48 matching rows **and 48 non-matching** ones (`123363` Census — a different root). Consumers must not assume every returned `recordType` satisfies the filter. | `containment` |
+| **The date window filters groups too** | The same is true of `startYear`/`endYear`: a matched group carries coverage rows entirely outside the requested range. A Harjager query for 1650–1720 returns groups whose rows include 1846–1858. Do not treat a returned `dateRange` as being within the requested window. | `containment` |
+
+Because containment is applied server-side, a group needs only its **anchor**
+concept id — not an enumeration of the types beneath it.
+
+#### Two quirks that affect how the request is built
+
+- **Key matching is case-lenient, not exact.** `recordTypeConceptIDs` (capital
+  `D`) is honoured and filters identically. So "the endpoint ignores anything it
+  does not recognise" is too strong a model: it ignores unknown *fields*, but
+  tolerates case variants of known ones. Send the documented spelling; do not
+  infer from a working response that a guessed field name is correct.
+- **An empty array is a no-op.** `recordTypeConceptIds: []` returns the
+  unfiltered baseline. The tool must therefore decide explicitly what
+  `recordTypeGroups: []` means rather than passing it through: **treat an empty
+  array as "no filter"**, matching the API, and never as an error.
+- String ids are coerced (`["124410"]` filters correctly), so a wire-format slip
+  will not surface as an error. Send numbers.
+
+### The group vocabulary
+
+`recordTypeGroups` is a **closed** vocabulary declared as an `enum` on the tool's
+input schema, following the `enum: [...CONST_LIST]` precedent in
+`extraction-append.ts` and `research-log-append.ts`. The names live in the schema
+rather than in any `SKILL.md`, so they cost no tokens per skill invocation.
+
+**The enum literals are exactly the values in the *Group* column below**, verbatim
+and case-sensitive — `"ID documents"`, `"Poor Law"`, `"Government Pensions"`.
+They are exported as `RECORD_TYPE_GROUP_NAMES` from
+`src/utils/record-type-groups.ts` and spread into the schema, so the list exists
+once. Sentence case with proper nouns capitalised; no kebab- or snake-casing.
+
+> **The vocabulary is settled** — 47 groups, membership and anchors decided in
+> review (see [Decisions taken in review](#decisions-taken-in-review)). One item
+> remains open and does not affect the literals: the wording of the annotation on
+> the Enslavement and Indigenous rows.
+
+> **"The source list"**, referred to throughout this section, is the proposed
+> record-type grouping circulated for genealogical review — 48 candidate groups,
+> each with an anchor concept id and the record types it was intended to absorb.
+> It is the editorial input to this vocabulary; the group table below is what
+> survived verification against the taxonomy. It is not a repository file, so its
+> group numbering ("group 14", "group 16") appears only in that document and in
+> the decisions recorded below.
+
+Each group maps to `{ anchors, strays }`:
+
+- **`anchors`** — concept ids whose subtree covers the group. Usually one.
+- **`strays`** — ids belonging to the group editorially but sitting **outside**
+  every anchor's subtree, so containment cannot reach them. They are added to the
+  same `recordTypeConceptIds` array; there is no post-filter. Verified list in
+  [Strays](#strays).
+
+#### The group table
+
+**Every group is a single row with exactly one parent**, so containment is
+unambiguous. `—` in *Parent* means a root. Selecting a group returns its own
+volumes **plus every group nested beneath it**. Reproduce with section `tree`.
+
+| Group | Anchor | Parent | Also returns |
+|---|---|---|---|
+| Genealogies | `123682` | — | Biography |
+| Biography | `122921` | Genealogies | |
+| Vital | `124443` | — | Birth, Death, Cemetery, Marriage, Divorce |
+| Birth | `103979` | Vital | |
+| Death | `104898` | Vital | Cemetery |
+| Cemetery | `104497` | Death | |
+| Marriage | `104727` | Vital | |
+| Divorce | `104832` | Vital | |
+| Religious | `123402` | — | Baptism, Religious Death, Religious Marriage, Confirmation |
+| Baptism | `103612` | Religious | |
+| Religious Death | `127576` | Religious | |
+| Religious Marriage | `127577` | Religious | |
+| Confirmation | `101655` | Religious | |
+| Military | `124133` | — | Military Pensions, Draft |
+| Military Pensions | `127621` | Military | |
+| Draft | `104808` | Military | |
+| Migration | `127023` | — | Emigration, Naturalization |
+| Emigration | `123632` | Migration | |
+| Naturalization | `124162` | Migration | |
+| Census | `123363` | — | |
+| Legal | `122797` | — | Court, Probate, Guardianship, Wills, Land, Enslavement, Notarial |
+| Court | `127010` | Legal | Probate, Guardianship |
+| Probate | `124277` | Court | Guardianship |
+| Guardianship | `123769` | Probate | |
+| Wills | `124457` | Legal | |
+| Land | `127026` | Legal | Enslavement |
+| Enslavement ᵃ | `126864` | Land | |
+| Notarial | `100599` | Legal | |
+| Government | `126517` | — | ID documents, Passports, Foreigner, Tax, Wartime, Poor Law, Prison, Government Pensions, Indigenous |
+| ID documents | `126546` | Government | Passports |
+| Passports | `124216` | ID documents | |
+| Foreigner | `131588` | Government | |
+| Tax | `124410` | Government | |
+| Wartime | `130090` | Government | |
+| Poor Law | `126768` | Government | |
+| Prison | `123478` | Government | |
+| Government Pensions | `124227` | Government | |
+| Indigenous ᵃ | `130717` | Government | |
+| Voting | `127015` | — | |
+| School | `124365` | — | |
+| Business | `126340` | — | |
+| Reference | `126808` | — | |
+| Medical | `127076` | — | |
+| Photographs | `122956` | — | |
+| Miscellaneous | `124078` | — | |
+| Administrative | `135784` | — | |
+| Newspapers | `124231` | — | |
+
+**Consumers must be told the nesting**, because it is not visible from a group
+name: asking for *Government* also returns tax, prison, poor-law, passport,
+foreigner, wartime, pension and indigenous volumes. Express the hierarchy as this
+table rather than an indented diagram: a nested `⊃` notation is ambiguous about
+whether a name following it is a sibling or a child; one parent per row is not.
+
+**ᵃ Placement is the taxonomy's, and needs a reader-facing annotation.**
+Enslavement nests under **Land & Property** because the era's legal and property
+records documented enslaved people as property. The nesting reflects that
+historical record-keeping practice, not a judgment about personhood. Indigenous
+nests under **Government** because its record types are administrative and
+jurisdictional. They record government dealings with, and governance of,
+Indigenous peoples and nations. Both are what FamilySearch encodes, and the
+*Parent* column has to state it: selecting **Land** returns enslavement volumes
+whether or not this table admits it. Flattening either row would make the table
+misdescribe containment.
+
+**Groups may overlap, and that is intended.** Because a stray can attach a type to
+a group outside its subtree, one volume can satisfy two group names — an obituary
+volume answers both **Death** (via the `122911` stray) and **Newspapers** (via
+containment). A duplicate across two groups is harmless; a death-record search that
+silently omits obituaries is a wrong answer. Consumers must not assume the groups
+partition the corpus.
+
+#### Strays
+
+Ids that belong to a group editorially but sit outside its anchor's subtree.
+Verified individually with section `anchors`; each row's *Actually under* is the
+id's real ancestor chain.
+
+| Group | Stray | Actually under |
+|---|---|---|
+| Baptism | `127575` religious birth records | Religious `123402` — a **sibling** of the Baptism anchor `103612`, not a descendant. 208,840 volumes globally |
+| Prison | `131448` police records | Government `126517` — a **sibling** of the Prison anchor `123478`. 50,432 volumes globally |
+| Emigration | `131602` departure records | Migration `127023` — a **sibling** of the Emigration anchor `123632`, so containment does not reach it. Volume counts here are access-dependent and small: 0 under `NATURAL` and 2 without the type filter at the ordinary credentials these figures use, against 3 and 5 on an elevated account |
+| Death | `122911` obituaries | Newspapers `124231` |
+| Religious Death | `127739` religious burial | Religious `123402` |
+| Passports | `124432`, `124442`, `131572` travel permits, visas, residence permits | Migration `127023` |
+| ID documents | `129962`, `129964` driver records and licences | Government `126517` |
+| Census | `104611` military census | Military `124133` |
+| Court | `127571` court martial | Military `124133` |
+| Wills | `127073` testamentary letters | Probate `122797›127010›124277` |
+| Wills | `129547` religious testaments | Religious `123402` |
+| Tax | `129065` tax census | Census `123363` |
+| Prison | `130086` criminal records | Legal `122797` |
+| Prison | `126416` criminal case files | Criminal court `122797›127010›126417` |
+| Government Pensions | `126869`, `124383` social-security death | Vital › Death `124443›104898` |
+| Government Pensions | `127027` widow records | Government `126517` |
+
+Two of these resolve a duplicate assignment in the source list: `127571` and
+`129065` were each claimed by two groups, and the taxonomy settles which owns
+them. (`131421` is also double-claimed but resolves *inside* Government Pensions
+`124227`, so containment already reaches it and it needs no stray row.)
+
+**Enumerate this table; do not describe it.** The source list gives four groups a
+*second* anchor. Two of those second anchors fall **outside** the first anchor's
+subtree, so containment cannot reach them and they appear above as strays —
+carrying only the first anchor would drop 208,840 volumes from Baptism and 50,432
+from Prison, with no error and no empty result to notice. The other two are
+**inside** their subtree and need no row: Probate's `126785` resolves to
+`[122797, 127010, 124277]`, and Religious's `124209` ("Parish") to `[123402]`.
+Nothing is lost by omitting them.
+
+### Relationship to the other record-type filters — read before naming anything
+
+**Three sibling tools already accept a `recordType`, and none of their
+vocabularies is this one.** The differences are deliberate, but they are a trap
+for an agent transferring a value between tools, so they are spelled out here
+rather than discovered.
+
+| Where | Field | Type | Vocabulary |
+|---|---|---|---|
+| `record_search` | `recordType` | string | **closed, 8**, lowercase: `birth`, `marriage`, `death`, `census`, `immigration`, `military`, `probate`, `other` — mapped to the upstream integer encoding (`RECORD_TYPE_TO_INT`, `src/tools/record-search.ts`) |
+| `fulltext_search` | `recordType` | string | **open**, free text, forwarded as `f.recordType0` |
+| `research.json` | `record_type` | string | **open enum, snake_case** — `record_type_recommended` in `enums.schema.json`, e.g. `census`, `vital_record`, `probate`, `church` |
+| **`volume_search`** | **`recordTypeGroups`** | **string[]** | **closed, 47**, Title Case — this document |
+
+**They filter different objects, which is why one vocabulary cannot serve all
+four.** `record_search`'s `recordType` narrows indexed *records* by the event the
+record attests. `volume_search`'s `recordTypeGroups` narrows *volumes* by the kind
+of book. A single volume of `Religious` records contains birth, marriage and death
+records at once, so "this volume is a church register" and "this record is a
+birth" are orthogonal statements — not coarse and fine versions of one statement.
+`research.json`'s `record_type` is a third thing again: what a human wrote down
+about a source in the research log.
+
+Approximate correspondences, for an agent moving from a record search to a volume
+search. **Approximate is the operative word** — each row is a widening, not an
+equivalence, because a volume carrying one event type generally carries others:
+
+| `record_search.recordType` | Closest `recordTypeGroups` |
+|---|---|
+| `birth` | `Birth`, or `Baptism` for a parish register |
+| `marriage` | `Marriage`, or `Religious Marriage` |
+| `death` | `Death`, or `Religious Death`; `Cemetery` for burials |
+| `census` | `Census` |
+| `immigration` | `Migration` |
+| `military` | `Military` |
+| `probate` | `Probate` |
+| `other` | no correspondence — do not map it |
+
+> **The name mismatch fails silently, so `validate()` rejects it explicitly.**
+> Nothing in this server validates input against the advertised JSON Schema —
+> there is no `ajv` or `zod`, and `src/index.ts` casts `request.params.arguments`
+> straight to each handler — so a schema-level `additionalProperties: false`
+> would only produce an error if the *client* validated first, which is three
+> clients and untested in all three. (`rank_search_matches` does set it, on its
+> input schema, and it constrains what that tool accepts only through the same
+> client-side path. `research_append` does not: its `additionalProperties: false`
+> sits on `research.schema.json` and is enforced server-side by
+> `validate_research_schema`, a different mechanism.) `volume_search` therefore
+> rejects the wrong field server-side, in `validate()`:
+>
+> ```ts
+> if ("recordType" in input) throw new Error(
+>   "volume_search filters by recordTypeGroups, not recordType. Valid groups: …"
+> );
+> ```
+>
+> Without it, `recordType: "probate"` is ignored and the search runs unfiltered —
+> a full result set with no error and no signal the filter was dropped.
+
+### Names are not stable; concept ids are
+
+`recordTypeOrig` is **locale- and collection-specific display text**, not a
+canonical label — `101655` surfaces as "Konfirmationslängd" in Sweden, `124372`
+as "Militärische Kriegsgefangenenakten", `126869` as "Begraven". Some values are
+literal placeholders (`concept-id:124231`, `concept-id:123632`), and of the 13
+roots observed by section `roots`, **six carry no label at all**: `122797`,
+`124078`, `126340`, `126517`, `126808`, `127015`.
+
+> **Which roots are unnamed is sample-dependent, and that is itself the point.**
+> A shallower sweep of the same 10 places left `124443` unnamed and never
+> surfaced `126340` as a root; deeper pagination named `124443` ("Vital records")
+> and revealed `126340`. A name map harvested from observed leaves is therefore a
+> floor, never a census — which is why the vocabulary's English names are
+> supplied by this spec rather than derived from the API at runtime.
+
+The concept id is the only stable key.
+
+`recordTypeConceptId` is surfaced on each coverage in the [Output](#output) so a
+consumer can reason about the tree without depending on display text.
+
+### What the filter excludes, and what it does not
+
+**A missing display name is not a missing type.** The filter matches on
+`recordTypeConceptId`; `recordTypeOrig` is only a label. Confusing the two
+inverts every conclusion in this section, so both are measured separately.
+Section `roots`, 10 places, window 1500–1950, first 2 pages (≤200 groups) per
+place, 2704 coverages:
+
+| | Coverages |
+|---|---|
+| lacking a **display name** (`recordTypeOrig`) | **475 / 2704 — 18%** |
+| lacking a **concept id** (what the filter matches) | **1 / 2704 — 0%** |
+
+The two diverge completely by jurisdiction. New South Wales has **202 of 202**
+coverages with no display name and **0 of 202** with no concept id; Ontario is
+144/200 and 0/200. A filter reaches both places in full.
+
+**Filter reach is high but not total.** Section `reach` OR-s **every id the
+vocabulary would send** — all 47 anchors plus all strays, 67 ids — against each
+place's unfiltered baseline:
+
+| Place | Reachable |
+|---|---|
+| Harjager · Edensor · Wayne · Kent · Jalisco · Ontario · Oslo · Tolna · New South Wales | **100%** |
+| Bayern, Germany | 164288 / 164292 |
+
+**So the constraint is the completeness of our vocabulary, not the API's data** —
+every one of those shortfalls is a volume whose type sits outside the subtrees we
+name, not a volume without a type.
+
+**Anchor each group on its taxonomy root, not on a child, or reach suffers.**
+Newspapers is the worked case: anchored on the child `119166` rather than its root
+`124231`, New South Wales sat at 3641/3775 (96.5%), Oslo at 6192/6227 (99.4%),
+Ontario at 32609/32628 and Kent at 10593/10666. Re-anchoring on the root took all
+four to 100%. Bayern's four remaining volumes are the only evidence in this sample
+of a root outside the vocabulary.
+
+> **This measurement must be derived from the vocabulary, never hand-listed.** The
+> probe's `reach` section reads the same `VOCABULARY` constant its `tree` section
+> does, so a change to the group table moves the number. A hardcoded id list
+> reports a reach figure for a vocabulary that does not ship.
+
+Consequences for the tool:
+
+1. **No untyped-coverage advisory, and do not add one.** Measured against
+   `recordTypeConceptId` — the field the filter matches — the excluded count is
+   `0` almost everywhere, so reporting it carries no information and a
+   majority-untyped warning could never fire. The temptation comes from measuring
+   `recordTypeOrig` instead, which is absent 18% of the time and irrelevant to
+   what the filter reaches.
+2. **An unknown group name is a hard error** naming the valid set — never an
+   empty result, which is indistinguishable from a genuine absence of records
+   (the API returns `totalCount: 0` with status `200` for an unrecognised id).
+3. **Re-measure `reach` whenever the vocabulary changes.** It is the check that
+   the group list still covers the corpus, and it is cheap — one query per place.
 
 ## API response shape
 
@@ -219,12 +566,20 @@ Group fields intentionally **ignored**: `creators`, `custodians`,
 | `place` | string | `place` (resolved, human-readable) |
 | `datesOrig` | string? | `dateRange` (when present, e.g. `"1726–1812"`; a `title:` prefix is stripped) |
 | `recordTypeOrig` | string? | `recordType` (when present and not an opaque `concept-id:` value; a `title:` prefix is stripped) |
+| `recordTypeConceptId` | number? | `recordTypeConceptId` — the stable key, and what [record-type filtering](#record-type-filtering) matches on |
+| `fromdateString` | string? | `startYear`, and `dateRange` when `datesOrig` is absent |
+| `todateString` | string? | `endYear`, and `dateRange` when `datesOrig` is absent |
+
+Coverage fields **consumed**: `place`, `datesOrig`, `recordTypeOrig`,
+`recordTypeConceptId`, and `fromdateString`/`todateString` (parsed to
+`startYear`/`endYear`, and used to derive `dateRange` when `datesOrig` is
+absent).
 
 Coverage fields intentionally **ignored**: `placeRepId`,
 `placeRepIdHierarchy`, `placeCoordinates`, `placeOrig`,
-`placeRelevance`, `recordTypeConceptId`,
-`recordTypeConceptIdHierarchy`, `lifeEventIds`, `fromDate`/`toDate`,
-`fromdateString`/`todateString`, `citationString`, `source`.
+`placeRelevance`, `recordTypeConceptIdHierarchy`, `lifeEventIds`,
+`fromDate`/`toDate` (superseded by the string forms — see
+[Output](#output)), `citationString`, `source`.
 
 ---
 
@@ -293,7 +648,7 @@ on the full `groupName` is exact — no prefix fallback is needed.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `query` | object | Echo of input (`standardPlace`, `startYear?`, `endYear?`) |
+| `query` | object | Echo of input (`standardPlace`, `startYear?`, `endYear?`, `recordTypeGroups?`) |
 | `totalResults` | number | `totalCount` from the API (across all pages) |
 | `nextPageToken` | string? | Present only when more pages remain; pass back as `pageToken` |
 | `results` | VolumeGroup[] | The matched image groups (this page) |
@@ -319,6 +674,56 @@ on the full `groupName` is exact — no prefix fallback is needed.
 | `place` | string | Human-readable place (e.g., `"Edensor, Derbyshire, England, United Kingdom"`). |
 | `dateRange` | string? | Human-readable date range (from `datesOrig`, e.g., `"1726–1812"`), when present. A `^title:` prefix is stripped and the value kept, as on `recordType`. Omitted if nothing remains after stripping. |
 | `recordType` | string? | Record type (from `recordTypeOrig`, e.g., `"Burial Records"`), when present. Omitted when the API returns an opaque internal id (a value matching `^concept-id:`). A `^title:` prefix is **stripped and the value kept** — that prefix marks provenance (the type came from the volume's title rather than the concept taxonomy), not a placeholder, so `"title:Taxation"` surfaces as `"Taxation"`. Omitted if nothing remains after stripping. |
+| `recordTypeConceptId` | number? | The concept id behind `recordType` (from `recordTypeConceptId`), when present. **The stable key** — `recordType` is locale- and collection-specific display text and is sometimes an unusable placeholder, whereas the id is constant across locales and is what [record-type filtering](#record-type-filtering) matches on. Surfaced so a consumer can identify a type it cannot read the name of. |
+| `startYear` | number? | First year covered, parsed from `fromdateString`. |
+| `endYear` | number? | Last year covered, parsed from `todateString`. |
+
+**Why the date pair is surfaced, and why `dateRange` falls back to it.**
+`datesOrig` is display text and is **absent more often than the structured pair**:
+over 4 pages per place, window 1500–1950, Wayne, Ohio has `datesOrig` on 335 of
+463 coverages while `fromdateString`/`todateString` are present on **462**. Emitting
+only `datesOrig` therefore drops a date the API supplied on ~27% of Wayne's rows.
+`datesOrig` is also inconsistent (`"1882–1896"` with an en-dash beside
+`"1870-1880"` with a hyphen, in one place) and carries the `title:` prefix, which
+the pair never does — 0 occurrences in 2161 coverages.
+
+So: `dateRange` keeps the archival display string when there is one, and is
+**derived from the pair when `datesOrig` is absent**; `startYear`/`endYear` are
+always emitted when the pair is present, because a consumer cannot compare or
+filter on `"1882–1896"`.
+
+Note the raw `fromDate`/`toDate` are epoch **milliseconds, negative before 1970**
+(`-8899027200000`), so the ISO-shaped `fromdateString`/`todateString` are the
+fields to parse.
+
+**Reuse: match `collections_search`, do not invent a second format.**
+`src/tools/collections-search.ts` already derives a display range from a
+`startYear`/`endYear` pair — `` `${startYear}-${endYear}` `` when both are
+present, the bare start year when only one is. `dateRange`'s fallback must produce
+the same shape, so the two tools do not describe the same span differently. Those
+fields are also already typed `startYear?: number` / `endYear?: number` on
+`FSSearchMetadata` (`src/types/collection.ts`), which is the naming and type this
+spec follows.
+
+**Year extraction: take the leading four digits; do not route through the
+genealogical date helpers.** `earliestYear` / `latestYear`
+(`src/utils/date-helpers.ts`) parse the repo's *standardized* date strings —
+`"11 Sep 1718"`, `"Bet 1870 and 1880"` — and return `null` for every ISO form.
+Verified live:
+
+```
+"1683-01-01T00:00:00"     -> null
+"1700-12-31T23:59:59.999" -> null
+"1683-01-01"              -> null
+"1683"                    -> 1683
+"11 Sep 1718"             -> 1718
+```
+
+So they cannot be reused here, and **widening them to accept ISO is deliberately
+out of scope**: they are shared by the timeline, conflict and warning paths, and a
+change to their parsing surface risks those for no benefit to this tool. Extract
+the year locally instead, and treat a value that does not begin with four digits
+as absent rather than guessing.
 
 ### Output example
 
@@ -342,7 +747,10 @@ on the full `groupName` is exact — no prefix fallback is needed.
         {
           "place": "Edensor, Derbyshire, England, United Kingdom",
           "dateRange": "1726–1812",
-          "recordType": "Burial Records"
+          "recordType": "Burial Records",
+          "recordTypeConceptId": 104497,
+          "startYear": 1726,
+          "endYear": 1812
         }
       ]
     }
@@ -368,6 +776,7 @@ on the full `groupName` is exact — no prefix fallback is needed.
     "list the volume's images, or with fulltext_search to search its text. " +
     "Results are paginated — pass back nextPageToken (with the same standardPlace and " +
     "years) as pageToken to get the next page. " +
+    "Optionally narrow to record-type groups with recordTypeGroups. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -390,12 +799,23 @@ on the full `groupName` is exact — no prefix fallback is needed.
           "Latest year of interest, inclusive (e.g., 1810). Must be ≥ startYear. " +
           "Omit for all periods.",
       },
+      recordTypeGroups: {
+        type: "array",
+        items: { type: "string", enum: [...RECORD_TYPE_GROUP_NAMES] },
+        description:
+          "Restrict to volumes of these record-type groups. Multiple groups are " +
+          "OR-ed. Selecting a group also returns the groups nested beneath it — " +
+          "'Government' also returns Tax, Prison, Poor Law, Passports and more. " +
+          "This filters volumes, not coverages: a matched volume is returned with " +
+          "all of its coverage rows, so some will carry other record types and " +
+          "years outside the requested range. Omit to search all record types.",
+      },
       pageToken: {
         type: "string",
         description:
           "Pagination cursor. Pass the nextPageToken from a previous " +
-          "response, together with the same standardPlace/startYear/endYear, to " +
-          "fetch the next page.",
+          "response, together with the same standardPlace/startYear/endYear/" +
+          "recordTypeGroups, to fetch the next page.",
       },
     },
     required: ["standardPlace"],
@@ -422,6 +842,7 @@ all other authenticated tools. Do not re-implement token plumbing.
 | `endYear` not an integer year | Throw: `"endYear must be an integer year (e.g., 1810)."` |
 | `endYear` < `startYear` | Throw: `"endYear must be greater than or equal to startYear."` |
 | Resolved place has no placeRepIds | Throw: `"No place representations found for \"{standardPlace}\"."` |
+| `recordTypeGroups` contains an unrecognised name | Throw: `"Unknown record-type group \"<name>\". Valid groups: <list>."` — never fall through to an unfiltered or empty search, since the API answers an unrecognised concept id with `totalCount: 0` and status `200`, which is indistinguishable from a genuine absence of records |
 | Not authenticated | Let `getValidToken()` throw its LLM-instruction error |
 | Group-search API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | Group-search API returns 403 | Throw: `"FamilySearch volume search API error: 403 Forbidden."` |
@@ -443,7 +864,28 @@ The full-text sub-fetch failure is **non-fatal** — a partial result with
    (`startYear`/`endYear`, with `endYear` ≥ `startYear`).
 2. Resolve `standardPlace` → `placeId` via `standardPlaceToPlaceId`,
    then `placeId` → `placeRepIds` via `placeIdToRepIds` (both anonymous).
-3. Derive the RMS wire dates from the integer years
+3. If `recordTypeGroups` is present and non-empty, map each name through the
+   group table to its **anchor, plus the strays of that group and of every
+   group nested beneath it**, union the ids, and set
+   `coverage.recordTypeConceptIds`. An unrecognised name throws (see
+   [Error handling](#error-handling)); an empty array is treated as no filter,
+   matching the API.
+
+   **A descendant's strays must be sent, or a parent returns less than its own
+   child.** Containment reaches every descendant *anchor*, so those stay out of
+   the array. A stray is by definition an id containment cannot reach, and it is
+   unreachable from the parent for exactly the same reason it is unreachable from
+   its own anchor. Sending only the selected group's own strays would mean
+   `Death` returns obituaries while `Vital` — which the group table says includes
+   `Death` — does not, a gap of 110,231 volumes measured 2026-08-19 — the
+   volumes `Vital` gains, slightly below the stray's own 111,577 total because
+   some obituary volumes also carry a type inside `Vital`. The same
+   holds for `Legal` against `Court`, `Government` against `Tax`, `Prison`,
+   `Passports` and `Government Pensions`, and `ID documents` against `Passports`.
+   This is the failure mode described under [Strays](#strays), reached from the
+   other direction: no error, no empty result, just fewer volumes than the tool
+   description promises the model.
+4. Derive the RMS wire dates from the integer years
    (`fromDateString = "${startYear}-01-01"`,
    `toDateString = "${endYear}-12-31"`) and build the group-search body
    (fixed fields + coverage + optional `nextPageToken`).
@@ -476,6 +918,12 @@ For each group in `response.groups`:
    - `recordType` ← `coverage.recordTypeOrig`, when present and not matching
      `^concept-id:`, with a leading `^title:\s*` stripped and the result
      trimmed; omitted when the result is empty
+   - `recordTypeConceptId` ← `coverage.recordTypeConceptId` (when present)
+   - `startYear` / `endYear` ← the leading year of
+     `coverage.fromdateString` / `coverage.todateString` (when present)
+   - when `coverage.datesOrig` is absent but the pair is present, `dateRange`
+     is `` `${startYear}-${endYear}` ``, matching `collections_search`
+     exactly — including when the years are equal, so `"1683-1683"`
 
 ---
 
@@ -487,7 +935,9 @@ docs):
 - `nextPageToken` is **only valid with the exact same searchSpec** — the
   tool must rebuild a byte-for-byte identical body and append the token.
   Therefore the caller passes `pageToken` **together with the same
-  `standardPlace`/`startYear`/`endYear`**. The year → ISO date derivation
+  `standardPlace`/`startYear`/`endYear`/`recordTypeGroups`** — the filter is
+  part of the body, so omitting it on the follow-up call would silently widen
+  the search mid-pagination. The year → ISO date derivation
   (`"${startYear}-01-01"` / `"${endYear}-12-31"`) is deterministic, so the
   same years always produce the same `fromDateString`/`toDateString` and
   hence the same body.
@@ -522,6 +972,10 @@ images are digitized, indexed, or full-text processed.
 
 ## Files
 
+> **The rows below marked *Create* describe the tool's original build. The tool
+> ships today**, so for the record-type-group and structured-date work in this
+> spec they are **edits**, listed separately beneath.
+
 | File | Action |
 |------|--------|
 | `src/types/volume-search.ts` | Create — input, output, and API response types |
@@ -534,6 +988,16 @@ images are digitized, indexed, or full-text processed.
 | `tests/tools/volume-search.test.ts` | Create — unit tests |
 | `README.md` | Add `volume_search` to the tool catalog |
 | `CLAUDE.md` | Add `volume_search` to the authenticated-tools list; ensure the code-reuse note points at `src/utils/place-resolver.ts` as the home of `standardPlaceToPlaceId`/`placeIdToRepIds` (not the old `image-search.ts`) |
+
+### Edits for record-type groups and structured dates
+
+| File | Edit |
+|---|---|
+| `src/utils/record-type-groups.ts` | **New.** The group table as data: `RECORD_TYPE_GROUP_NAMES` (the enum literals, exported for the schema) and a `name → { anchor, strays }` lookup |
+| `src/types/volume-search.ts` | Add `recordTypeGroups?: string[]` to `VolumeSearchInput`; `recordTypeConceptIds?: number[]` to `MetadataRmsCoverageRequest`; `recordTypeConceptId?`, `recordTypeConceptIdHierarchy?`, `fromdateString?`, `todateString?` to `MetadataRmsCoverageEntry`; `recordTypeConceptId?`, `startYear?`, `endYear?` to `SimplifiedCoverage` |
+| `src/tools/volume-search.ts` | Validate and expand `recordTypeGroups`; send `coverage.recordTypeConceptIds`; map the new coverage fields; add the input to `volumeSearchSchema` |
+| `tests/tools/volume-search.test.ts` | Cases 15a–15f |
+| `dev/probe-record-type-groups.ts` | **New.** The evidence behind this section; `VOCABULARY` there and the group table here must agree. **Nothing checks that agreement** — no test, workflow or script reads either table today, so the implementation PR must add one, in the manner `tests/packaging/manifest.test.ts` guards `manifest.json` against `allToolSchemas` |
 
 ---
 
@@ -555,9 +1019,15 @@ images are digitized, indexed, or full-text processed.
 | 10 | Sets `fulltextSearchable: true/false` from the groupNumber endpoint | Full-text mapping |
 | 11 | Sets `fulltextSearchable: null` after the full-text call fails 3× | Full-text failure path |
 | 12 | Batches `groupName`s in chunks of ≤ 100 | Batch sizing |
-| 13 | Maps coverages to `{ place, dateRange?, recordType? }`; drops `placeId`/`placeRelevance` | Coverage mapping |
+| 13 | Maps coverages to `{ place, dateRange?, recordType?, recordTypeConceptId?, startYear?, endYear? }`; drops `placeId`/`placeRelevance` | Coverage mapping |
 | 14 | Omits `recordType` for `concept-id:…`; strips a `title:` prefix and keeps the type | Record-type normalization |
 | 15 | Handles empty `{"totalCount":0}` response | Zero-result path |
+| 15a | Strips a `title:` prefix from `dateRange`; derives `dateRange` from the date pair when `datesOrig` is absent | Date normalization |
+| 15b | Parses `startYear`/`endYear` from `fromdateString`/`todateString`; omits both when the pair is absent | Structured dates |
+| 15c | `recordTypeGroups` maps each group name to its anchor **and stray** ids and sends them in `coverage.recordTypeConceptIds` | Group expansion |
+| 15d | A parent group's request ids retrieve its nested groups' volumes (containment), send the strays of every group nested beneath it, and two groups OR rather than intersect | Group semantics |
+| 15e | An unrecognised group name throws and names the valid set — it does **not** fall through to an unfiltered or empty search | Unknown-group guard |
+| 15f | `recordTypeGroups` is resent on the paginated follow-up call, unchanged | Pagination + filter |
 | 16 | Returns `nextPageToken` when present; rebuilds identical body + token on paged call | Pagination |
 | 17 | Throws on 401 with re-login guidance | Token-expired path |
 | 18 | Throws on network error | Connectivity failure |
@@ -578,6 +1048,91 @@ npx tsx dev/try-volume-search.ts --standardPlace "Edensor, Derbyshire, England, 
 > endpoint behaves as specced.
 
 ---
+
+## Decisions taken in review
+
+Recorded so the implementation does not re-open them.
+
+**Strays are kept, and groups may overlap.** Adding a stray costs nothing — one
+more entry in the same `recordTypeConceptIds` array — while dropping one loses real
+volumes (208,840 for Baptism, 50,432 for Prison). The consequence is that a volume
+can appear under two groups: an obituary volume answers both **Death** and
+**Newspapers**. A duplicate is harmless; a missing death-record volume is a wrong
+answer.
+
+**Casualties/War/POW is not a group.** Its four members are already reachable:
+`123352` casualty records and `124372` POW files via **Military** `124133`;
+`124129` military death and `124445` war grave records via **Death**
+`124443›104898`. A Casualties group would add no reach and would be the only row
+breaking one-row-one-parent. Reproducible from the probe's `anchors` section, which
+carries the four ids for exactly this reason. Revisit only if researchers ask for
+"war casualties" as a category.
+
+**Emigration stays.** Narrowing is the vocabulary's job — Probate sits inside Court
+inside Legal and is still worth naming. `131602` departure records is a **sibling**
+of the Emigration anchor under Migration, so Emigration carries it as a stray.
+
+**Enslavement and Indigenous keep the taxonomy's placement.** Flattening was
+considered and rejected: `recordTypeGroups` is a flat enum, so a caller selects
+`Enslavement` directly and never has to "open Land & Property" to reach it. The
+*Parent* column governs one thing only — what a **Land** search returns — and
+selecting Land returns enslavement volumes whether or not the table says so.
+Flattening would make the table misdescribe containment, which is the single thing
+it exists to state correctly. The wording of the annotation these two rows carry
+was settled by a genealogy reviewer, not an engineering call: it states that the
+nesting reflects the era's record-keeping practice rather than a judgment about
+personhood, and that the Indigenous record types are administrative and
+jurisdictional.
+
+**Newspapers anchors on the root `124231`, not the child `119166`.** Measured
+before and after: anchoring on the child left New South Wales at 96.5%, Oslo at
+99.4%, Ontario and Kent short as well; the root takes all four to 100%. `124231`
+carries no upstream label (`concept-id:124231`), which is not an obstacle — six of
+the seventeen roots are unlabelled and this spec supplies the English names for all
+of them.
+
+**Voting `127015`, Medical `127076`, Photographs `122956` and Administrative
+`135784` are ordinary roots.** The source list marks them "no large anchor
+(aggregate)"; they need no special treatment.
+
+**Unknown-field rejection happens in `validate()`, not the schema.** See the
+warning box under
+[Relationship to the other record-type filters](#relationship-to-the-other-record-type-filters-read-before-naming-anything).
+A schema-level `additionalProperties: false` is unenforced server-side, so it would
+read as a guard without being one.
+
+### A note on the volume counts in this spec
+
+**Counts are permission-dependent; the structure is not.** Figures here were
+measured with ordinary FamilySearch credentials, refreshed 2026-08-19. Every
+*ancestor chain*, containment relationship and reach *direction* reproduced
+identically across both access levels. So treat the absolute numbers as a floor
+from one access level, and the structural claims as the durable part.
+
+**The two access levels drift in parallel, so a mismatch is not staleness.** The
+same ids, measured weeks apart on both accounts:
+
+| id | ordinary, round 1 | ordinary, 2026-08-19 | elevated, round 1 | elevated, 2026-08-19 |
+|---|---|---|---|---|
+| `119166` newspapers | 152,392 | 152,454 | 176,286 | 176,444 |
+| `127575` religious birth | 208,413 | 208,840 | — | 323,467 |
+| `131448` police records | 50,432 | 50,432 | — | 65,965 |
+
+Both accounts drift by small amounts in the same direction and stay far apart;
+`131448` has not moved at all on the ordinary account across the whole period.
+Re-measuring an ordinary figure will therefore not converge on an elevated one,
+and a gap between the two is not evidence that either is out of date.
+
+**`131602` is the sharpest case.** At ordinary credentials it returns 0 groups
+under `types: ["NATURAL"]` and 2 without the type filter; on an elevated account
+it returns 3 and 5, and the two accounts do not even return the same group names.
+Its `[127023]` chain is identical on both. An earlier revision of this section
+read that as `NATURAL` excluding the type outright and concluded the volumes were
+unreachable at any permission level — both wrong, and the second is the reason to
+state the access level rather than assert an absolute. `ancestorsOf` in the probe
+retries without the `types` filter when the scoped query is empty and labels any
+chain it recovers that way, so a chain that resolves only outside `NATURAL` stays
+visible rather than indistinguishable from a bad id.
 
 ## Design notes
 
