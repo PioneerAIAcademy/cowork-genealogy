@@ -34,6 +34,12 @@ async function page(qs: string): Promise<any | null> {
     await sleep(1200);
     const res = await fetch(`${BASE}?${qs}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } });
+    // 204 = zero results. A MEANINGFUL ZERO, not transient — handled before the
+    // empty-body branch below, which otherwise retries it 10x and then reports the
+    // band as unreadable, dropping it from `enumerated` and so from the
+    // in-EVERY-band test. That is the trap explore-tree-204-vs-429.ts documents,
+    // and this script contained it until 2026-08-20.
+    if (res.status === 204) return { results: 0, entries: [] };
     if (res.status === 429) { retries++; await sleep((Number(res.headers.get("retry-after") ?? 8)) * 1000 + 1500); continue; }
     if (!res.ok) return null;
     const txt = await res.text();

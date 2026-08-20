@@ -4,13 +4,20 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 /**
  * Keeps the `*Exact` qualifier family from drifting back into paragraphs.
  *
- * Every character here is a billed prompt token on every call to these two
- * tools, and the family had grown to the point where `record_search` shipped
- * about 15,500 characters of description — roughly four times `person_search`'s
- * — with six `*Exact` toggles over 240 characters each and one at 477. The
- * corpus says the family is barely used: across every committed run log only
- * four of the 43 toggles have EVER appeared in a call, so the paragraphs were
- * being paid for on every request and read by nobody.
+ * The family had grown to the point where `record_search` shipped about 15,500
+ * characters of description — roughly four times `person_search`'s — with six
+ * `*Exact` toggles over 240 characters each and one at 475. The corpus says the
+ * family is barely used: across every committed run log only four of the 43
+ * toggles have EVER appeared in a call.
+ *
+ * **The justification is clarity, not token cost.** Measured after the rewrite:
+ * `record_search` 15,509 -> 14,286 and `person_search` 3,745 -> 4,918 (its
+ * toggles were stubs that were also wrong, so correctness cost tokens there), for
+ * a combined 19,254 -> 19,204 — a net saving of about 50 characters. An earlier
+ * version of this docstring led with the token argument; it does not survive
+ * measurement, and `record_search.birthYearExact` at 475 chars is most of the
+ * remaining bulk. What this lint buys is that the shared rule is stated once and
+ * cannot silently be re-expanded into 43 paragraphs.
  *
  * Issue #1409's shape is the fix: state the rule ONCE in the tool-level
  * description, and give each parameter a one-liner underneath. This test is what
@@ -18,24 +25,26 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * how it got here.
  *
  * The ceiling is SIZED FROM THE ONE-LINERS ACTUALLY WRITTEN, not guessed. The
- * longest non-exempt description is `record_search.givenNameExact` at **238**
- * characters — it carries the diminutive note and the initials-order note —
- * followed by `birthPlaceExact` at 201 and `surnameExact` at 198. Before this
- * change six toggles exceeded the ceiling: 475, 402, 375, 341, 269, 255.
+ * two longest non-exempt descriptions are `record_search.givenNameExact` at **238**
+ * and `record_search.surnameExact` at **237** — both within three characters of the
+ * ceiling. Next is `birthPlaceExact` at 181. Before this change six toggles
+ * exceeded the ceiling: 475, 402, 375, 341, 269, 255.
  *
- * **Headroom is therefore 2 characters, not 39.** Stated plainly because the
- * ceiling is nearly binding, and the next editor deserves to know that a
- * three-word clarification to `givenNameExact` will trip this lint. When it does,
- * the fix is to shorten that description or split the initials note out to the
- * spec — NOT to raise the ceiling, and NOT to add an `EXEMPT` entry, which is for
- * a description whose length is under active measurement.
+ * **So the ceiling is effectively binding on two descriptions, not one.** A
+ * three-word clarification to either trips this lint. When it does, the fix is to
+ * shorten it or split a clause out to the spec — NOT to raise the ceiling, and NOT
+ * to add an `EXEMPT` entry, which is for a description whose behaviour is under
+ * active measurement.
  *
- * Two earlier versions of this comment were wrong about its own basis: first
- * citing `surnameExact` at 205 with a baseline list uniformly +2 (from counting
- * the enclosing quotes), then naming `birthPlaceExact` as the longest while
- * quoting a larger number for `givenNameExact` in the same sentence. Since this
- * comment is the only justification for 240, getting it wrong is the same class
- * of defect as guessing the threshold.
+ * **This comment has now been wrong three times about its own basis** — first
+ * citing `surnameExact` at 205 with a baseline list uniformly +2 (counting the
+ * enclosing quotes); then naming `birthPlaceExact` as longest while quoting a
+ * bigger number for `givenNameExact` in the same sentence; then carrying 201/198
+ * for two descriptions that a later commit rewrote to 181/237. The cause each time
+ * was measuring, then editing the descriptions, then not re-measuring. If you
+ * change any `*Exact` description, re-derive these numbers from `allToolSchemas`
+ * before touching this comment — it is the only justification for 240, so being
+ * wrong here is the same class of defect as guessing the threshold.
  *
  * It deliberately checks only the `*Exact` family. Other parameters carry
  * genuinely load-bearing prose (`projectPath`, `subjectId`, `batchNumber`) whose

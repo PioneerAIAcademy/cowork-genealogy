@@ -33,6 +33,14 @@ async function total(qs: string): Promise<{ v: number | string; tries: number }>
     await sleep(3000);
     const res = await fetch(`${BASE}?${qs}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } });
+    // 204 = zero results. A MEANINGFUL ZERO, not transient. Without this branch
+    // the empty body below falls into the retry, all 12 attempts are spent, and
+    // the function returns the literal string "429 (gave up after 12)" — so this
+    // script reported its OWN expected result (`.exact` returns zero) as rate
+    // limiting. That is the exact inversion its sibling
+    // explore-tree-204-vs-429.ts was written to expose, and it sat in this file
+    // until 2026-08-20.
+    if (res.status === 204) return { v: 0, tries: a + 1 };
     if (res.status === 429) {
       const ra = Number(res.headers.get("retry-after") ?? 15);
       await sleep((Number.isFinite(ra) ? ra : 15) * 1000 + 3000);

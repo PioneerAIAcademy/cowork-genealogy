@@ -83,16 +83,23 @@ One rule, belonging to the search engine rather than to this endpoint:
 **Provenance, and its limit.** The rule is the lead's, from FamilySearch
 search-engine internals — it belongs to the search engine rather than to either
 endpoint. **Every figure behind it was measured against the record index**
-(`/service/search/hr/v2/personas`), not against `platform/tree/search`. No probe
-covers this endpoint: `grep -rl "platform/tree/search" packages/engine/mcp-server/dev/`
-returns nothing, and no figure in `dev/measured-figures.json` was taken here.
+(`/service/search/hr/v2/personas`), not against `platform/tree/search`.
+
+**No figure in `dev/measured-figures.json` was taken on this endpoint**, and that
+is the line that matters. Four exploratory scripts under
+`packages/engine/mcp-server/dev/` do reach it —
+`explore-tree-require-switch.ts`, `explore-tree-204-vs-429.ts`,
+`explore-tree-empty-field-leg.ts`, `explore-year-bands-tree.ts` — so a reader can
+re-run the checks by hand. What none of them does is call `record()`, so nothing
+they print is traceable, contradictable, or diffable against a re-run. An
+`explore-*` script is not a probe section.
 
 So the rule is stated **on the lead's authority, not on a measurement of this
-endpoint**, and the tool description says as much. A session probe on
-2026-08-19 was consistent with it, but it lived in throwaway scripts and left no
-artifact, so it is not cited here and nothing can be diffed against it — building
-the tree-endpoint probe is the work that would change that. Until then, treat a
-tree-side figure as absent rather than unstated.
+endpoint**, and the tool description says as much. Two of those scripts must stay
+that way: the 2026-08-17 ruling says of `person_search` to "state the direction and
+the mechanism only, carry no figure from it, and do not add `person-search.ts` to
+`EVIDENCE_SURFACES`" — promoting them would manufacture the figures it forbids.
+Treat a tree-side figure as absent rather than unstated.
 
 No figure belongs in a tool description here, and
 `person-search.ts` is deliberately **not** in `EVIDENCE_SURFACES` in

@@ -30,16 +30,26 @@ const TARGET = "NPBV-WBQ";
 let token = "";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function readAll(range: string): Promise<{ total: number | null; ids: string[] }> {
+async function readAll(range: string): Promise<{ total: number | null; ids: string[] } | null> {
   const ids: string[] = [];
   let total: number | null = null;
-  for (let offset = 0; offset < 600; offset += 100) {
+  for (let offset = 0; offset < 1500; offset += 100) {   // sibling measured 585; 600 was too tight
     await sleep(300);
     const res = await fetch(
       `https://www.familysearch.org/service/search/hr/v2/personas?${POOL}${range}&count=100&offset=${offset}&m.queryRequireDefault=on`,
       { headers: { Authorization: `Bearer ${token}`, Accept: "application/json",
                    "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } });
-    if (!res.ok) return { total: null, ids };
+    if (res.status === 204) return { total: total ?? 0, ids };   // meaningful zero
+    if (res.status === 429) {                                     // retry, do not truncate
+      await sleep((Number(res.headers.get("retry-after") ?? 8)) * 1000 + 1500);
+      offset -= 100;
+      continue;
+    }
+    // Any other non-OK: return null so the caller cannot mistake a partial read
+    // for a complete one. Previously this returned the rows read so far with a
+    // total already set from page 1, which printed a plausible row and a silent
+    // false negative on the only conclusion this script draws.
+    if (!res.ok) return null;
     const b: any = await res.json();
     total ??= b?.results ?? null;
     const entries = b?.entries ?? [];
@@ -68,7 +78,12 @@ async function main(): Promise<void> {
   console.log("window            total   rows read   target present?");
   console.log("-".repeat(58));
   for (const [label, range] of windows) {
-    const { total, ids } = await readAll(range);
+    const r = await readAll(range);
+    if (r === null) {
+      console.log(`${label.padEnd(17)}   ABORTED — a page failed; a partial read would read as "target absent"`);
+      continue;
+    }
+    const { total, ids } = r;
     const hit = ids.includes(TARGET);
     console.log(
       `${label.padEnd(17)} ${String(total ?? "err").padStart(5)}   ${String(ids.length).padStart(9)}   ${hit ? "*** YES ***" : "no"}`

@@ -40,6 +40,13 @@ async function main(): Promise<void> {
       `https://www.familysearch.org/service/search/hr/v2/personas?${YPOP}${RANGE}&count=100&offset=${offset}&m.queryRequireDefault=on`,
       { headers: { Authorization: `Bearer ${token}`, Accept: "application/json",
                    "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } });
+    // Without this, a 429 or 5xx yields an error object, `entries` is [], the
+    // `entries.length < 100` check breaks the paging loop, and every figure below
+    // is printed from a partial read with nothing marking it partial.
+    if (!res.ok) {
+      console.log(`  ABORTING: HTTP ${res.status} at offset ${offset} — figures below would be partial`);
+      process.exit(1);
+    }
     const b: any = await res.json();
     const entries = b?.entries ?? [];
     for (const e of entries) {

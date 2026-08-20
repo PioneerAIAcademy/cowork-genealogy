@@ -189,7 +189,8 @@ day even if supplied.
 
 **The `*Exact` toggles in this table change the result count.** A place toggle
 stops upward expansion to parent jurisdictions
-(it still descends to child localities); a year toggle removes the fuzz
+(and is generally said to still descend to child localities, though no verdict
+records that half — see the carve-outs above); a year toggle removes the fuzz
 around the range bounds, excluding records whose indexed year falls just
 outside it — though that fuzz is only weakly evidenced: 3 of 300 sampled
 records fell outside an unqualified single-year range on 2026-08-08 and every

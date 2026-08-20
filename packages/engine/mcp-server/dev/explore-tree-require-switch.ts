@@ -33,6 +33,7 @@ async function total(qs: string): Promise<number | string> {
     await sleep(600);
     const res = await fetch(`${BASE}?${qs}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } });
+    if (res.status === 204) return 0;   // meaningful zero, not a retry
     if (res.status === 429) { await sleep((Number(res.headers.get("retry-after") ?? 5)) * 1000 + 500); continue; }
     if (!res.ok) return `HTTP ${res.status}`;
     const txt = await res.text();
