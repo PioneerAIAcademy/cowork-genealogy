@@ -672,6 +672,20 @@ def test_fallback_usage_nulls_the_fields_it_cannot_honestly_reconstruct():
     assert usage["duration_api_ms"] is None
 
 
+def test_fallback_usage_estimates_cost_from_tokens_but_keeps_total_null():
+    """`total_cost_usd_estimated` carries a flat-rate estimate over the exact
+    token counts, while `total_cost_usd` stays null (issue #1484). The estimate
+    is a separate, clearly-approximate field — the authoritative one is never a
+    guess. The None-when-there-is-no-token-block-at-all case is a report-time
+    path over committed runs, covered in test_e2e_corpus_report."""
+    acc: dict = {}
+    _accumulate_usage(acc, _FakeAssistantMessage("m", {"input_tokens": 1000, "output_tokens": 2000}))
+    usage = _fallback_usage(acc, 1000)
+    assert usage["total_cost_usd"] is None
+    assert usage["total_cost_usd_estimated"] is not None
+    assert usage["total_cost_usd_estimated"] > 0
+
+
 # --- check_guardrail_compliance (issue #972) --------------------------------
 
 

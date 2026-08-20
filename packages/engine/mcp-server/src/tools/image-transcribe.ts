@@ -102,6 +102,39 @@ function buildOcrPrompt(lookingFor?: string): string {
   return base;
 }
 
+// Node's global `fetch` rejects with `TypeError: fetch failed` and hangs the
+// real socket-level reason (ECONNRESET, ENOTFOUND, UND_ERR_*, a TLS error) off
+// `.cause` — the bare `.message` is always the useless string "fetch failed".
+// Walk that chain so the thrown "Could not reach OpenRouter" carries the code
+// that tells host-side from provider-side (#1594). `AggregateError.errors` is
+// flattened too — a DNS attempt arrives as a bundle. Depth- and cycle-bounded
+// so a self-referential cause cannot loop. `fetchWithTimeout`'s own timeout
+// error already carries a full message and no `.cause`, so it passes through
+// unchanged.
+function describeFetchError(error: unknown): string {
+  const parts: string[] = [];
+  const seen = new Set<unknown>();
+  const push = (label: string) => {
+    if (label && !parts.includes(label)) parts.push(label);
+  };
+  const labelOf = (e: unknown): string => {
+    if (!(e instanceof Error)) return String(e);
+    const code = (e as { code?: unknown }).code;
+    return typeof code === "string" && code.length > 0
+      ? `${code}: ${e.message}`
+      : e.message;
+  };
+  let current: unknown = error;
+  for (let depth = 0; depth < 6 && current != null && !seen.has(current); depth++) {
+    seen.add(current);
+    push(labelOf(current));
+    const agg = (current as { errors?: unknown }).errors;
+    if (Array.isArray(agg)) for (const e of agg) push(labelOf(e));
+    current = (current as { cause?: unknown }).cause;
+  }
+  return parts.join(" <- ") || "unknown error";
+}
+
 function parseFound(text: string): "FOUND" | "NOT FOUND" | undefined {
   // The prompt asks for the marker on a FINAL line ("write exactly FOUND or
   // NOT FOUND"). Read the last non-empty line and require the marker at its
@@ -175,8 +208,7 @@ export async function imageTranscribeTool(
       OCR_TIMEOUT_MS
     );
   } catch (error) {
-    const cause = error instanceof Error ? error.message : String(error);
-    throw new Error(`Could not reach OpenRouter. (${cause})`);
+    throw new Error(`Could not reach OpenRouter. (${describeFetchError(error)})`);
   }
 
   // Auth failures are LLM-actionable — the key needs re-entering. Transient
