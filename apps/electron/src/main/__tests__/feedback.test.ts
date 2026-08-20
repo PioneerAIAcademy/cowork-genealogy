@@ -188,8 +188,10 @@ describe('buildFeedbackZip — size budgets follow the server convention', () =>
     // clean tree for anyone running the full gate while passing in isolation.
     // The 45 MB is load-bearing (3 x 15 MB against the 35 MB budget), so the
     // budget to raise is the clock's. DEFLATE dominates the cost, not the
-    // fixture: generating the noise is only ~340ms of it.
-  }, 30_000)
+    // fixture: generating the noise is only ~340ms of it. The per-test
+    // 30_000 that used to sit here is redundant now that this package's
+    // vitest.config.ts raises testTimeout for the whole suite.
+  })
 
   it('keeps a bundle that fits entirely intact', async () => {
     await writeFile(join(folder, 'small.bin'), noise(1024))

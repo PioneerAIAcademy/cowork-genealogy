@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Berkshire County, Massachusetts (westernmost county; formed 1761 from Hampshire County). Matches the skill's place_search({ placeName: \"Berkshire County\", contextName: \"Massachusetts\" }) call, which the state-level ~Massachusetts fixture does not (issue #1415).",
+  "args": {
+    "placeName": "~Berkshire"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Berkshire, Massachusetts, United States",
+        "type": "County",
+        "dateRange": "+1761/",
+        "latitude": 42.37,
+        "longitude": -73.21,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Berkshire%2C%20Massachusetts"
+      }
+    ]
+  }
+}

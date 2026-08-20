@@ -5,7 +5,7 @@
     "name": "FamilySearch wiki — immigration records",
     "type": "positive",
     "description": "User asks how to find immigration records. Exercises the skill with a record type explicitly listed in the description.",
-    "tags": ["fs-wiki", "how-to", "immigration"]
+    "tags": ["fs-wiki", "how-to", "immigration", "expects-file-immigration-records"]
   },
   "input": {
     "user_message": "Search the FamilySearch wiki for how to find immigration records for my ancestors",

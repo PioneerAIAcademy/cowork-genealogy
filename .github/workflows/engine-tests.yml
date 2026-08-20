@@ -22,6 +22,11 @@ name: Engine tests
 #   - eval/tests/unit/** — the same enum-drift lint scans rubric files for ∈
 #     declarations. No rubric carries one today, but including the path arms
 #     the lint the day one lands (mirroring the references/ class above).
+#   - .gitattributes — tests/packaging/gitattributes.test.ts asks `git
+#     check-attr` what the line-ending rules resolve to. That policy cannot be
+#     broken from anywhere else: no local git config overrides it, so the only
+#     PR that can break it is one editing a .gitattributes — and that PR
+#     touches none of the paths above.
 # A change to any of them can red the suite, so any of them must trigger it.
 #
 # `npm test` runs the `pretest` build first (tsc), which the packaging tests do
@@ -56,7 +61,12 @@ jobs:
           # adr-links.test.ts and doc-links.test.ts lint them. Without these three
           # a PR touching only a skill body, an agent, or an ADR skips vitest and
           # reports success — the lint would be dark for its entire domain.
-          PATTERNS: '^packages/engine/mcp-server/|^packages/engine/plugin/|^packages/schema/schemas/|^docs/specs/schemas/|^eval/tests/unit/|^\.claude/|^docs/|^\.github/workflows/engine-tests\.yml$'
+          # `.gitattributes` is here for the same reason and the sharpest case of
+          # it: gitattributes.test.ts guards the line-ending rules, and the only
+          # diff that can break them is a diff to a .gitattributes. Unanchored on
+          # the left, because a NEW nested one would override the root file's
+          # rules for its subtree and is the same break by another route.
+          PATTERNS: '^packages/engine/mcp-server/|^packages/engine/plugin/|^packages/schema/schemas/|^docs/specs/schemas/|^eval/tests/unit/|^\.claude/|^docs/|(^|/)\.gitattributes$|^\.github/workflows/engine-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \

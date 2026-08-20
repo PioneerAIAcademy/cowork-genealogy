@@ -71,6 +71,16 @@ double-click **`eval\InstallHooks.bat`**. Both install `post-checkout`, which
 sets up new worktrees: it links the shared files and installs the pnpm
 workspace.
 
+On Windows, also do this once after pulling the `* text=auto eol=lf` rule —
+commit anything in progress first, because `reset --hard` discards
+uncommitted work:
+
+    git rm --cached -r . && git reset --hard
+
+A pull does not re-check-out files, so an existing clone keeps its CRLF copy
+of `scripts/git-hooks/post-checkout` and the hook goes on failing silently.
+`git status` stays clean either way, so nothing tells you.
+
 What gets installed into `.git/hooks/` is a stub (`scripts/git-hooks/shim.sh`)
 that re-runs the tracked hook, so editing anything under `scripts/git-hooks/`
 takes effect immediately — there's nothing to reinstall after a pull. Rerun the
