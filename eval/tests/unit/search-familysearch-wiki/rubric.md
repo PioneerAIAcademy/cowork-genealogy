@@ -30,9 +30,9 @@ Did the skill synthesise only from what the FamilySearch Wiki returned, without 
 
 ## No-result handling (negative path)
 
-When the FamilySearch Wiki returns an empty results list, did the skill tell the user, write no file, and stop there? SKILL.md step 3 is "tell the user no wiki guidance was found **and stop** — do not save a file", so the stop is part of what this dimension grades, not just the absence of a file.
+When the FamilySearch Wiki returns an empty results list, did the skill correctly tell the user and write no file?
 
-- **pass:** Skill told the user no wiki guidance was found, created no file, and stopped — no explanation of why the wiki lacks coverage, no substitute guidance from its own knowledge, no menu of alternative topics to try.
-- **partial:** Skill told the user and created no file, but continued past the stop — speculating about why the wiki has no coverage, proposing reformulated queries, or offering related help. Also use this band when a file was written but is empty or a placeholder.
-- **fail:** Skill wrote a substantive file despite empty results, answered the research question from its own training knowledge instead, or silently did nothing without informing the user.
+- **pass:** Skill told the user no wiki guidance was found and did not create a file.
+- **partial:** Skill told the user but also wrote an empty or placeholder file.
+- **fail:** Skill wrote a file despite empty results, or silently did nothing without informing the user.
 - **N/A:** Test did not exercise the empty-results path.
