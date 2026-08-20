@@ -1304,7 +1304,7 @@ skips silently**, which looks identical to passing.
 | **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names | whether a granted tool actually **binds**; skips silently with no API key |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions, and `runs_per_test` is pinned to 1, so within-test flakiness is out of reach |
-| `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus` reports recall, compliance and violations, not spend — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
+| `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
 
 ### 9.2 The lint layer
 
@@ -1362,14 +1362,17 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and 82 negative routing tests. **374** committed test definitions —
-  one JSON file per test under `eval/tests/unit/` — and across the 25 live
-  suites the latest run log per suite totals **373 rows, 343 passing (92%)**.
-  Those two numbers count different things and their near-match is a
-  coincidence: the latest logs are snapshots taken between 2026-07-21 and
-  2026-08-06, and exactly one defined test appears in none of them.
-- **E2e** (`eval/tests/e2e/<fixture>/`) — live FamilySearch, 104 fixtures
-  (directories carrying a `fixture.json`; `eval/tests/e2e/` holds one more
+  run logs, and 82 negative routing tests. **396** committed test definitions
+  (`make eval-inventory`) — one JSON file per test under `eval/tests/unit/` — and
+  across the 25 live suites the latest run log per suite totals **396 rows, 364
+  passing (92%)**. Those two numbers count different things and can diverge in
+  either direction: a test defined after its suite's last run has no row, and a
+  row survives for a test since deleted. They coincide exactly today — the latest
+  logs are snapshots taken between 2026-07-21 and 2026-08-20, and every defined
+  test appears in its suite's log — which is a fact about the snapshots, not an
+  identity.
+- **E2e** (`eval/tests/e2e/<fixture>/`) — live FamilySearch, 106 fixtures
+  (`make eval-inventory`; directories carrying a `fixture.json`; `eval/tests/e2e/` holds one more
   directory that is not one), blind
   human `.ann.json` annotations, and `calibrate_judge` measuring judge-vs-human
   agreement **offline** rather than inferring it from expensive live runs. Three
@@ -1462,7 +1465,7 @@ lives. A test is not just its definition: it usually needs a matching
 `eval/fixtures/mcp/` response, a dimension in that skill's `rubric.md`, and a
 check in `eval/harness/validators/`. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
-1 by policy. 82 of the 374 definitions are **negative** tests that exist to prove
+1 by policy. 82 of the 396 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is
