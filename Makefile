@@ -617,6 +617,20 @@ e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-wiki-failures
+e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (issue #1552): make e2e-wiki-failures | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. Splits every wiki_search/
+	# wiki_read/wiki_place_page/place_population call into a fixed taxonomy and
+	# reports it by cause, by day, and by the run log's committing author, so the
+	# blended failure headline separates into service reach, corpus data
+	# gaps, and client-side. The 14-day default IS the useful horizon: it reads
+	# response_summary, which the e2e capture strip drops past 14 days, so older
+	# runs report only as a stripped-and-unclassifiable count. SINCE=all shows
+	# that count; it does not recover more causes.
+	cd eval/harness && uv run python -m e2e.wiki_failure_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-detector-diff
 e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API. Reusable across detector corrections: runs a locally-

@@ -408,7 +408,11 @@ describe("measured figures stay traceable to the probe artifact", () => {
           `  ${rule.verdict} = ${recorded.slice(0, 120)}\n` +
           `  ${rule.why}\n` +
           `  Update the prose, or re-run the section if the behaviour changed.\n` +
-          `  Do NOT relax the pattern to make this pass.`
+          `  Do NOT relax the pattern to make this pass, and do NOT reword around\n` +
+          `  it. When a recorded measurement disagrees with what you believe is true,\n` +
+          `  re-probe until the two agree (CLAUDE.md, "A measurement that disagrees\n` +
+          `  with belief is re-measured, not reworded"). A verdict stuck at OPEN or\n` +
+          `  NOT MEASURED is a measurement-design task, not a re-run.`
       ).toEqual([]);
     });
   }
