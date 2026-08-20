@@ -1656,12 +1656,19 @@ Window: runs on/after 2026-07-21 — 82 of 142 run(s), 60 older run(s) excluded.
           this one fixture's behavior.
   runs w/ >=1 violation: 21/21 of DECIDABLE runs (100%) — but no run is known
                          clean, so this is a floor on incidence, not a rate.
+  spend:
+    recorded    $1,142.74  over 133 run(s) carrying total_cost_usd
+    estimated   $122.62  over 11 null-cost run(s) with token counts (~0.90x recorded, median over 133 calibrating run(s))
+    unrecovered 13 run(s) carry neither a cost nor token counts
 ```
 
-(A snapshot taken 2026-08-04, not a live figure — run the command for current
-totals. The gap between the recall line and the gate line is the whole point:
-runs that recovered the genealogical answer can still fail the gate on
-compliance.)
+(A snapshot, not a live figure — run the command for current totals. The axis /
+violation / concentration lines are a 2026-08-04 windowed run (82 runs); the
+`spend:` line below them is from a later `--since all` run over the whole corpus
+(157 runs), so its denominators differ — both illustrate the format, not one
+coherent invocation. The gap between the recall line and the gate line is the
+whole point: runs that recovered the genealogical answer can still fail the gate
+on compliance.)
 
 **`violations:` and `runs w/ >=1 violation:` count different things** — individual
 violations and the runs carrying at least one. They are labelled apart because

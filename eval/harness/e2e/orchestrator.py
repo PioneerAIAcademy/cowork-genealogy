@@ -47,9 +47,6 @@ from harness.judge import _summarize_response
 from harness.skill_invocation import (
     check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
     find_citation_nulling_in_conclusions,
-    find_effects_without_invocation,
-    find_missing_mentor_verdicts,
-    find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
