@@ -1,64 +1,8 @@
 {
-  "run_log": "v1_2026-07-22_10-11-56.json",
-  "annotator": "edesonchristopher@gmail.com",
+  "run_log": "v1_2026-08-19_14-53-19.json",
+  "annotator": "johnpeterbrown@ymail.com",
   "corrections": [
     {
-      "test_id": "ut_search_wiki_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_008",
-      "dimension_source": "rubric",
-      "dimension_name": "File saved correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Sources cited correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Summary faithful to wiki content",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_008",
-      "dimension_source": "rubric",
-      "dimension_name": "No-result handling (negative path)",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
       "test_id": "ut_search_wiki_012",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -171,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wiki_016",
+      "test_id": "ut_search_wiki_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -179,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wiki_016",
+      "test_id": "ut_search_wiki_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -187,47 +131,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wiki_016",
+      "test_id": "ut_search_wiki_004",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_wiki_016",
-      "dimension_source": "rubric",
-      "dimension_name": "File saved correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_016",
-      "dimension_source": "rubric",
-      "dimension_name": "Sources cited correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_016",
-      "dimension_source": "rubric",
-      "dimension_name": "Summary faithful to wiki content",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_016",
-      "dimension_source": "rubric",
-      "dimension_name": "No-result handling (negative path)",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_001",
+      "test_id": "ut_search_wiki_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -235,7 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wiki_001",
+      "test_id": "ut_search_wiki_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -243,7 +155,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wiki_001",
+      "test_id": "ut_search_wiki_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -251,7 +179,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wiki_001",
+      "test_id": "ut_search_wiki_008",
       "dimension_source": "rubric",
       "dimension_name": "File saved correctly",
       "llm_score": 3,
@@ -259,7 +187,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wiki_001",
+      "test_id": "ut_search_wiki_008",
       "dimension_source": "rubric",
       "dimension_name": "Sources cited correctly",
       "llm_score": 3,
@@ -267,7 +195,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wiki_001",
+      "test_id": "ut_search_wiki_008",
       "dimension_source": "rubric",
       "dimension_name": "Summary faithful to wiki content",
       "llm_score": 3,
@@ -275,12 +203,60 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wiki_001",
+      "test_id": "ut_search_wiki_008",
       "dimension_source": "rubric",
       "dimension_name": "No-result handling (negative path)",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
     },
     {
       "test_id": "ut_search_wiki_014",
@@ -342,16 +318,16 @@
       "test_id": "ut_search_wiki_015",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_search_wiki_015",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
@@ -366,441 +342,465 @@
       "test_id": "ut_search_wiki_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_006",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_006",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "correct action"
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "This is a right."
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "This is a right."
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "This is a right call."
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "The skill must not save anything"
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Good"
+    },
+    {
+      "test_id": "ut_search_wiki_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": null
+      "comment": "Partial is right. \"Free indexed access through 1940, plus the newly released 1950 census\" attaches FamilySearch access to 1950; the wiki only says 1950 \"was released in 2022\"."
     },
     {
-      "test_id": "ut_search_wiki_003",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_003",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_003",
-      "dimension_source": "rubric",
-      "dimension_name": "File saved correctly",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Sources cited correctly",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Summary faithful to wiki content",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_003",
+      "test_id": "ut_search_wiki_016",
       "dimension_source": "rubric",
       "dimension_name": "No-result handling (negative path)",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_013",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_013",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_013",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_013",
-      "dimension_source": "rubric",
-      "dimension_name": "File saved correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Sources cited correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Summary faithful to wiki content",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_013",
-      "dimension_source": "rubric",
-      "dimension_name": "No-result handling (negative path)",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_002",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_002",
-      "dimension_source": "rubric",
-      "dimension_name": "File saved correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Sources cited correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Summary faithful to wiki content",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_002",
-      "dimension_source": "rubric",
-      "dimension_name": "No-result handling (negative path)",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_010",
-      "dimension_source": "rubric",
-      "dimension_name": "File saved correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Sources cited correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Summary faithful to wiki content",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_010",
-      "dimension_source": "rubric",
-      "dimension_name": "No-result handling (negative path)",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_006",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_006",
-      "dimension_source": "rubric",
-      "dimension_name": "File saved correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Sources cited correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Summary faithful to wiki content",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_006",
-      "dimension_source": "rubric",
-      "dimension_name": "No-result handling (negative path)",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_009",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_009",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_009",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_009",
-      "dimension_source": "rubric",
-      "dimension_name": "File saved correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_009",
-      "dimension_source": "rubric",
-      "dimension_name": "Sources cited correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_009",
-      "dimension_source": "rubric",
-      "dimension_name": "Summary faithful to wiki content",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_009",
-      "dimension_source": "rubric",
-      "dimension_name": "No-result handling (negative path)",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_005",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_005",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_005",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_011",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_011",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_011",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_011",
-      "dimension_source": "rubric",
-      "dimension_name": "File saved correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Sources cited correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Summary faithful to wiki content",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_011",
-      "dimension_source": "rubric",
-      "dimension_name": "No-result handling (negative path)",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
+      "comment": "Pass. A brief redirect after a nil result is correct practice. RUBRIC DEFECT: rubric.md's partial band (added under #1647) wrongly calls this a partial — revert it; do not tune the skill to stop redirecting."
     }
   ]
 }
