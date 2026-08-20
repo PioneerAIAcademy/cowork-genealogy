@@ -1042,6 +1042,107 @@ describe("research_append (Phase 3)", () => {
     });
   });
 
+
+  // ── one conclusion per question ──
+  //
+  // The ownership manifest has required this since it landed and nothing
+  // enforced it. Observed 2026-08-20: blocked from concluding at `probable`,
+  // the agent recorded a correct `not_proved` summary by APPENDING it, leaving
+  // the stale `probable` entry beside it — two contradictory conclusions on one
+  // question, with nothing marking which is current.
+  describe("a question carries only one proof summary", () => {
+    const withSummary = () => ({
+      project: { objective: "x" },
+      questions: [{ id: "q_001", question: "parents?", status: "open" }],
+      sources: [{ id: "src_001", citation: "1850 census" }],
+      assertions: [{ id: "a_004", source_id: "src_001", value: "in household" }],
+      conflicts: [],
+      proof_summaries: [
+        {
+          id: "ps_001",
+          question_id: "q_001",
+          tier: "probable",
+          vehicle: "summary",
+          supporting_assertion_ids: ["a_004"],
+          resolved_conflict_ids: [],
+          exhaustive_search_summary: "census",
+          narrative_markdown: "## Conclusion\n...",
+        },
+      ],
+    });
+
+    const entry = (tier: string) => ({
+      question_id: "q_001",
+      tier,
+      vehicle: "summary",
+      supporting_assertion_ids: ["a_004"],
+      resolved_conflict_ids: [],
+      exhaustive_search_summary: "census",
+      narrative_markdown: "## Conclusion\n...",
+    });
+
+    it("refuses a second append, and names the id to update instead", async () => {
+      await writeProject(withSummary());
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: entry("not_proved"),
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toContain("ps_001");
+      // The deny must leave a working move — the id to retry against.
+      expect(msg).toContain('op: "update"');
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("allows updating the existing summary", async () => {
+      await writeProject(withSummary());
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields: { tier: "not_proved" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect((await readResearch()).proof_summaries).toHaveLength(1);
+    });
+
+    it("allows a first summary for a DIFFERENT question", async () => {
+      const state = withSummary();
+      state.questions.push({ id: "q_002", question: "birth?", status: "open" });
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: { ...entry("probable"), question_id: "q_002" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("catches two appends for one question inside a single batch", async () => {
+      // Reads live state rather than the pre-call snapshot, so the second op
+      // collides with the first. A snapshot-based check would let a batch
+      // create the duplicate it exists to prevent.
+      const state = withSummary();
+      state.proof_summaries = [];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "proof_summaries", op: "append", entry: entry("possible") },
+          { section: "proof_summaries", op: "append", entry: entry("not_proved") },
+        ],
+      });
+      expect(r.ok).toBe(false);
+    });
+  });
+
   // docs/specs/guardrail-enforcement-spec.md §5 — tier/exhaustiveness cross-field guardrail.
   it("rejects tier 'proved' when the question's exhaustive_declaration.declared is false", async () => {
     await writeProject(); // phase3Research(): q_001 defaults to exhaustive_declaration.declared: false

@@ -450,6 +450,37 @@ function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
   ];
 }
 
+/** One conclusion per question — the manifest's own rule, now enforced.
+ *
+ *  `docs/specs/schemas/ownership.json` has required this since the manifest
+ *  landed ("never more than one summary per `question_id`") and nothing checked
+ *  it. Observed 2026-08-20: told by another precondition that it could not
+ *  conclude at `probable`, the agent recorded a correct `not_proved` summary —
+ *  by APPENDING it, leaving the stale `probable` entry beside it. The project
+ *  then carried two contradictory conclusions for one question, and the newer,
+ *  correct one did not win: every reader that scans `proof_summaries` for a
+ *  question sees both.
+ *
+ *  Re-concluding is legitimate and common; it is an `update` of the existing
+ *  `ps_NNN`, never a second append. The message names the id so the caller can
+ *  retry as an update without a lookup. */
+function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | undefined): string[] {
+  const qid = entry?.question_id;
+  if (typeof qid !== "string" || qid === "") return [];
+  const existing = (Array.isArray(research?.proof_summaries) ? research.proof_summaries : []).filter(
+    (ps: any) => ps?.question_id === qid && ps?.id !== appendedId,
+  );
+  if (existing.length === 0) return [];
+  const ids = existing.map((ps: any) => ps?.id).filter(Boolean);
+  return [
+    `question '${qid}' already has a proof summary (${ids.join(", ")}), and a question may ` +
+      "carry only one. Re-concluding is an UPDATE of that entry, not a second append: retry " +
+      `with { section: "proof_summaries", op: "update", entryId: "${ids[0]}", fields: { … } }, ` +
+      "passing only the fields that changed. Appending here would leave two contradictory " +
+      "conclusions on one question, with nothing to say which is current.",
+  ];
+}
+
 function proofSummaryInvariants(
   entry: any,
   preCallExhaustiveDeclared: Map<string, boolean> | undefined,
@@ -1205,6 +1236,11 @@ function applyOne(
     if (tierTouchedThisOp) {
       invariantErrors.push(...proofSummaryInvariants(resultEntry, preCallExhaustiveDeclared));
       invariantErrors.push(...conflictedSourceInvariants(resultEntry, preCallResearch));
+    }
+    // Reads LIVE research, not the pre-call snapshot: two appends inside one
+    // batch must collide with each other, not just with what was already there.
+    if (op.op === "append") {
+      invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
     }
   }
   if (invariantErrors.length > 0) {

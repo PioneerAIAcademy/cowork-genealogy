@@ -53,6 +53,18 @@ Does the chosen proof conclusion — written as a Statement, Summary, or Argumen
 
 ## Tree encoding
 
+**Check the tag FIRST. On a `no-new-proof-expected` (review-mode) test this
+dimension is `null` — score it N/A and stop reading here.** The skill writes no
+conclusion on those tests, so the tree's state is the FIXTURE's setup, not the
+skill's output; a planted tree defect is what the assessment is supposed to
+FIND, and scoring the dimension on that defect fails the skill for the fixture's
+own content. Observed 2026-08-20: this dimension was scored fail on a rationale
+reading "the assessment correctly flags this", which is a misgrade. If the
+rationale you are about to write praises the assessment, the score is `null`,
+not 1.
+
+Everything below applies to WRITE-mode tests only.
+
 At tier `probable` or higher, does the skill actually *encode the conclusion in `tree.gedcomx.json`* — marking the concluded value as `primary` (facts) / `preferred` (names) on the right person, not merely narrating it in the proof summary? Evidence facts already sit on the tree — materialized continuously at identity-link time by person-evidence, un-`primary` and carrying their source-refs — so proof-conclusion's tree act is to declare which value is the *conclusion*, not to first populate the tree. A conclusion that lives only in `narrative_markdown` while the tree carries no `primary`/concluded value is a **found-but-lost** result (proof-conclusion SKILL.md §6).
 
 **Two write paths (spec §7.1) — grade whichever the evidence shape calls for:**
