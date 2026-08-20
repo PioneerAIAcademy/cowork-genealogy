@@ -134,9 +134,9 @@ directly on 2026-08-20 with the unmatchable-token method R and S validated, via
 
 - **`givenName` keeps them.** Three unmatchable tokens each retain ~251 of a 6,038
   pool (spread under 2%, which is S's control separating silence from fuzzy reach);
-  58 of 60 sampled retained rows carry no typed Given part — a lower bound, since
-  that detector counts typed parts and does not cross-check `fullText` the way the
-  surname leg below does; `.exact` takes it to 0.
+  58 of 60 sampled retained rows are given-name-empty, on the typed parts AND on the
+  `fullText` cross-check the surname leg below uses — the two agree exactly, so no
+  row had a given name misfiled under another part type; `.exact` takes it to 0.
 - **`surname` drops them.** A bound surname-empty record — `fullText` "Escolastica",
   one Given part, zero Surname parts — is present in a 1,100-row set read to the end,
   and each of three unmatchable tokens returns an **empty set**. Zero rows, so this is
