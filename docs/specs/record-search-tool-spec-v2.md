@@ -548,75 +548,71 @@ as a behavioural change and re-verify against a live run, not unit tests alone.
 > which is exactly what happened below, so read the two classes above as the whole
 > test, not as a summary of a wider scan.
 >
-> Attempted twice, granted once. **First** for the `\bco\.?\b` fix below, and the numbers are the
+> Applied twice. **First** for the `\bco\.?\b` fix below, and the numbers are the
 > criterion run verbatim: **class 1 — 1623 distinct tree-fact places** (1405 from
 > `starting-tree.gedcomx.json`, the rest across 144 `*.final-tree.gedcomx.json`),
 > **0 changed**; **class 2 — 54 distinct recorded search arguments, 0 changed**.
 > Exempt.
 >
-> **Second attempt, 2026-08-19 — the exemption did NOT hold, and the reason is
-> worth more than the exemption was.** Measured for the three qualifier-stripping
-> defects below (the ASCII-only boundary, the internal qualifier that fused two
-> locality levels into one token, and `CO` the postal abbreviation): **class 1 —
-> 1771 distinct tree-fact places, 2 changed**; **class 2 — 61 distinct recorded
-> search arguments, 0 changed**. A non-zero class 1 means a live run is owed, per
-> the paragraph above.
+> **Second, 2026-08-19**, for the three qualifier-stripping defects below (the
+> ASCII-only boundary, the internal qualifier that fused two locality levels into
+> one token, and `CO` the postal abbreviation): **class 1 — 1007 distinct
+> tree-fact places, 0 changed**; **class 2 — 61 distinct recorded search
+> arguments, 0 changed**. Exempt.
 >
-> The two are one place, twice:
+> **The criterion itself was wrong first, and that is the part to carry forward.**
+> It initially reported class 1 as `1771 distinct, 2 changed`, which by the rule
+> above put a live run on the critical path. Both rows were spurious. The script
+> collected `place` and `standard_place` as separate strings via a regex over every
+> matching key in the file, so it measured the raw `place` even where a
+> `standard_place` shadowed it — strings the tokenizer never reads. The two rows
+> came from `stribling-father-1821`:
 >
->     "Graham Young County Texas, USA"
->       ["graham young  texas","usa"] -> ["graham young","texas","usa"]
->     "Oak Grove Cemetery  Graham Young County Texas, USA Plot: Section 12, …"
->       (the same place with plot text appended)
+>     place          "Graham Young County Texas, USA"          <- what was measured
+>     standard_place "Graham, Young, Texas, United States"      <- what is read
 >
-> Both arrived with the `stribling-father-1821` fixture in `5b360d71`, and both are
-> the internal-qualifier fix doing exactly what it exists to do. **The lesson is
-> about the criterion's shelf life, not this change:** an earlier run of the same
-> script over the same code reported class 1 as `1712 distinct, 0 changed`, and
-> that was correct at the time. A fixture landing on `main` in between turned a
-> clean exemption into a live-run obligation without a line of the tokenizer
-> moving. Re-measure after merging `main`, not before — a criterion run against a
-> stale corpus is not evidence about the corpus you are shipping into.
+> `marriage-jurisdictions.ts` reads `standard_place || place`. The standardized form
+> carries no `County` token and does not move. **This section already stated that
+> rule** — "the standardized form wins where both exist" — and the script
+> contradicted it, so the criterion had been over-reporting since it was written.
+> Collecting `standard_place || place` off each fact of each person and relationship
+> instead took class 1 from 1771/2 to 1007/0: 764 of those strings were raw `place`
+> values shadowed by a standardized form, or `place` keys on objects that are not
+> facts at all.
 >
-> **Reachability, and the distinction the criterion's wording actually draws.** A
-> class-1 string is a *candidate* input, not necessarily a reached one. The rule
-> above is written as "a tokenized value any fixture **actually feeds** to
-> `samePlace`", and these two are never fed to it:
+> The criterion now lives at `dev/probe-placeparts-criterion.ts` rather than pasted
+> into an issue body, which is how it drifted from the prose in the first place. It
+> carries a **self-check**: it asserts the comparison still reports three
+> known-moving canaries and exits non-zero otherwise, because the likeliest cause of
+> a false `0` is a baseline `before()` left identical to the current tokenizer —
+> which reports "exempt" having measured nothing. Verified to fail by making
+> `before()` delegate to `placeParts` (`0/3` canaries, exit 1).
 >
-> - Both are the `Death` and `Burial` places of `MKJ4-38M` (Adele Catherine
->   Stribling), who holds **no relationships at all** in that tree.
-> - `marriageJurisdictionCandidates` gathers from exactly three sources — the
->   subject's own facts, spouses' facts, and `Couple`-relationship facts. A person
->   in no `Couple` relationship who is not the subject contributes nothing, so
->   neither fact is ever collected, tokenized, or compared.
-> - The one remaining route is a search naming *her* as its subject. An exhaustive
->   walk of both `stribling-father-1821` run logs puts every occurrence of her id
->   inside `project_context` **response** payloads — a listing of tree persons. She
->   appears in no tool input.
+> Two further notes for the next person to run it. **Re-measure after merging
+> `main`, not before**: an earlier run of the old script reported `1712 distinct, 0
+> changed`, correct for the corpus at that moment, and a fixture landing on `main`
+> in between changed the count with no tokenizer line moving. And **a non-zero count
+> is not automatically a live run**: a class-1 string is a candidate input, not
+> necessarily a reached one, since `marriageJurisdictionCandidates` collects only the
+> subject's facts, spouses' facts and `Couple`-relationship facts. Check whose fact a
+> moved string sits on first — a fact on a person in no `Couple` relationship who is
+> not the subject cannot reach `samePlace` however many run logs carry it. (That was
+> the argument advanced for the two spurious rows above, before the collector turned
+> out to be the actual defect. It stands on its own, and it is cheaper than a run.)
 >
-> So the moved strings are unreachable by the comparison the exemption is about,
-> and a live run on this fixture would exercise nothing that changed. **Recorded as
-> an argument, not as a granted exemption** — the criterion is a count and the count
-> is non-zero. Whoever grants or refuses it should do so on this reasoning, and the
-> reasoning generalizes better than the count does: check *whose fact* a moved
-> string sits on before pricing a run, because a place on an unrelated,
-> unrelationshipped person cannot reach `samePlace` no matter how many run logs
-> carry it.
+> **Do not narrow class 1 to reachable facts, though.** That would mean
+> reimplementing the collector's traversal inside the measurement script, where it
+> drifts the moment that traversal grows a source and starts silently
+> under-reporting strings that *are* reached. Over-reporting and making a human
+> check reachability is the safe direction of error. `standard_place || place` is a
+> different kind of narrowing — fidelity to what the tokenizer reads, not a guess
+> about what the caller traverses.
 >
-> **Do not read this as "class 1 is over-broad, narrow it."** Scoping the criterion
-> to reachable facts would require the collector's traversal — subject, spouses,
-> couple facts, and whatever a future version adds — to be reimplemented inside the
-> measurement script, where it would drift silently and quietly stop reporting
-> strings that *are* reached. A count that over-reports and forces a human to check
-> reachability is the safe direction of error.
->
-> Two properties of the measurement, because a criterion reporting `0` is worth
-> exactly as much as its ability to report non-zero. It **imports the exported
-> `placeParts`** rather than reimplementing the pipeline, so it cannot measure an
-> order the tokenizer no longer uses — the failure mode the first run's
-> hand-copied `after()` was one edit away from. And it is **self-checked against
-> synthetic `"Denver, CO"` and `"Boulder, CO, United States"`**, which it does
-> report as moved.
+> One more property worth keeping: the script **imports the exported `placeParts`**
+> rather than reimplementing the pipeline, so it cannot measure an order the
+> tokenizer no longer uses. The first application's hand-copied `after()` was one
+> edit away from exactly that, and it is the same class of defect as the regex
+> above — a measurement drifting from the thing it measures.
 >
 > The postal-abbreviation change moves nothing in either class, because neither
 > holds a `CO`: of class 1's 12 places whose last comma-part is two letters, the 9
