@@ -13,14 +13,22 @@
  * the real probe already warned. Reported one persona answering 1490-1550 and no
  * window outside it.
  *
- * DELIBERATELY NOT CITABLE, and should stay that way. The lead's 2026-08-17 ruling
- * on the exact-match rule is explicit: on `person_search`, "state the direction and
- * the mechanism only, carry no figure from it, and do not add `person-search.ts` to
- * `EVIDENCE_SURFACES`". Promoting this into a probe section would manufacture
- * exactly the figures that ruling forbids. It exists to let a reader re-run the
- * check by hand, not to source a number.
+ * PROMOTE, alongside `explore-year-bands-records.ts`, under #1771 steps 0-1.
  *
- * Run: `npx tsx dev/explore-tree-range-sweep.ts` from `packages/engine/mcp-server`.
+ * **Renamed 2026-08-20 from `explore-tree-range-sweep.ts`, and its disposition
+ * reversed.** It was committed as a tree script whose header justified
+ * non-citability by the `person_search` ruling. Both were wrong: it queries the
+ * RECORD index (`www.familysearch.org/service/search/hr/v2/personas`, with
+ * `q.recordCountry` and `f.recordType`), not `platform/tree/search`. On the record
+ * endpoint figures ARE allowed and section N already records this question, so the
+ * ruling that forbids tree-side figures never applied here. Mis-filed by endpoint,
+ * with the wrong reason written into its header.
+ *
+ * What it needs before its output is citable is the ordinary list: a section letter
+ * wired into `SECTIONS`, `record()` calls, a verdict string the producibility check
+ * can find in the source, and RULE 0 compliance.
+ *
+ * Run: `npx tsx dev/explore-year-range-sweep-records.ts` from `packages/engine/mcp-server`.
  */
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
@@ -59,7 +67,11 @@ async function readAll(range: string): Promise<{ total: number | null; ids: stri
     total ??= b?.results ?? null;
     const entries = b?.entries ?? [];
     for (const e of entries) ids.push(e.id);
-    if (entries.length < 100) break;
+    // A short page means the set is COMPLETE — return it. Falling through to the
+    // trailing `return null` (which is the cap-exhausted path) made every complete
+    // read look like a failure, so main() printed ABORTED for every window and the
+    // script could never reach its only conclusion.
+    if (entries.length < 100) return { total, ids };
   }
   // Cap exhausted with a full last page: the read is PARTIAL and must not be
   // handed back looking complete — "target present? no" would be a false negative,

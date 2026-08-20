@@ -6,7 +6,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  *
  * The family had grown to the point where `record_search` shipped about 15,500
  * characters of description — roughly four times `person_search`'s — with six
- * `*Exact` toggles over 240 characters each and one at 475. The corpus says the
+ * `*Exact` toggles over the then-ceiling of 240 characters, and one at 475. The corpus says the
  * family is barely used: across every committed run log only four of the 43
  * toggles have EVER appeared in a call.
  *
@@ -39,7 +39,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  *
  * **The ceiling is the midpoint of the empirical gap.** Legitimate one-liners top
  * out at 238; the smallest real offender was 255; so any ceiling in 239..254 is
- * defensible and 250 is the middle of it. 240 was the bottom of that range and left
+ * defensible and `CEILING` below is the middle of it. 240 was the bottom of that range and left
  * two characters of headroom, which makes an ordinary clarification look like a
  * defect. 255 or above is NOT available: it would re-admit a description this PR
  * shortened for being too long, and a lint that permits what it was written to
@@ -60,7 +60,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * for two descriptions that a later commit rewrote to 181/237. The cause each time
  * was measuring, then editing the descriptions, then not re-measuring. If you
  * change any `*Exact` description, re-derive these numbers from `allToolSchemas`
- * before touching this comment — it is the only justification for 240, so being
+ * before touching this comment — it is the only justification for CEILING, so being
  * wrong here is the same class of defect as guessing the threshold.
  *
  * It deliberately checks only the `*Exact` family. Other parameters carry
@@ -90,6 +90,17 @@ const DOCUMENTED_LONGEST: Array<[string, number]> = [
 ];
 /** Smallest description that exceeded the ceiling before #1409 shortened it. */
 const SMALLEST_HISTORICAL_OFFENDER = 255;
+
+/**
+ * The AFTER totals the docstring quotes, asserted for the same reason as
+ * `DOCUMENTED_LONGEST`: they are live figures that change whenever any description
+ * is edited, and they were stale in the PR body twice before being moved here.
+ * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
+ */
+const DOCUMENTED_TOTALS: Array<[string, number]> = [
+  ["record_search", 14286],
+  ["person_search", 4918],
+];
 
 /**
  * Exempt, by name and with the reason, so an exemption cannot outlive it.
@@ -158,6 +169,17 @@ describe("*Exact descriptions stay one-liners", () => {
     const documentedOrder = DOCUMENTED_LONGEST.map(([k]) => k);
     if (JSON.stringify(topThree) !== JSON.stringify(documentedOrder)) {
       drift.push(`longest three are now ${topThree.join(" > ")}, docstring names ${documentedOrder.join(" > ")}`);
+    }
+    for (const [tool, documented] of DOCUMENTED_TOTALS) {
+      const schema = allToolSchemas.find((t) => t.name === tool);
+      const toolLevel = (schema?.description ?? "").length;
+      const params = Object.values(props(tool)).reduce(
+        (a, v) => a + ((v.description ?? "").length),
+        0
+      );
+      if (toolLevel + params !== documented) {
+        drift.push(`${tool} total: docstring says ${documented}, actual ${toolLevel + params}`);
+      }
     }
     if (CEILING <= (measured[0]?.[1] ?? 0)) drift.push(`CEILING ${CEILING} is below the longest description`);
     if (CEILING >= SMALLEST_HISTORICAL_OFFENDER) {

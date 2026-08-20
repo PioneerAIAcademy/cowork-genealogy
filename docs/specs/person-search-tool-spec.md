@@ -69,7 +69,7 @@ parameters is in *FamilySearch API Reference → mapping table*.
 | `givenName` | string | Given (first) name. Counts as the required "other" field alongside `surname`. |
 | `surname` | string | Family name. **Required on every search**, plus at least one other search field (see the surname-plus-one rule). |
 | `sex` | `"Male"` \| `"Female"` \| `"Unknown"` | Sex of the person. Case-insensitive — `"male"` normalizes to `"Male"`. |
-| `givenNameExact` | boolean | Restricts the given name to its exact spelling — see the exact-match rule below. Excludes diminutives. |
+| `givenNameExact` | boolean | Restricts the given name to its exact spelling — see the exact-match rule below. Excludes diminutives — the lead's 2026-08-17 sourcing, not a measurement, and not measured on this endpoint at all (see `record-search-tool-spec-v2.md` → `givenNameExact`). |
 | `surnameExact` | boolean | Restricts the surname to its exact spelling — see the exact-match rule below. Fuzzy matching is what bridges a misspelling, so this can drop the target. |
 
 #### The exact-match rule
@@ -95,11 +95,25 @@ they print is traceable, contradictable, or diffable against a re-run. An
 `explore-*` script is not a probe section.
 
 So the rule is stated **on the lead's authority, not on a measurement of this
-endpoint**, and the tool description says as much. Two of those scripts must stay
-that way: the 2026-08-17 ruling says of `person_search` to "state the direction and
-the mechanism only, carry no figure from it, and do not add `person-search.ts` to
-`EVIDENCE_SURFACES`" — promoting them would manufacture the figures it forbids.
-Treat a tree-side figure as absent rather than unstated.
+endpoint**, and the tool description says as much. Treat a tree-side figure as
+absent rather than unstated.
+
+Those four scripts do not share one disposition, and each says which it has in its
+own header:
+
+- `explore-tree-empty-field-leg.ts` — **never citable.** The 2026-08-17 ruling says
+  of `person_search` to "state the direction and the mechanism only, carry no figure
+  from it, and do not add `person-search.ts` to `EVIDENCE_SURFACES`". Promoting this
+  one would manufacture exactly the figures that forbids, because what it measures
+  IS the name rule.
+- `explore-tree-require-switch.ts`, `explore-tree-204-vs-429.ts` — **not
+  measurements.** Each demonstrates an instrument defect on this endpoint, so
+  citability does not apply; their promotion path is a test.
+- `explore-year-bands-tree.ts` — **should become citable**, and that is not in
+  tension with the ruling. The ruling constrains what the NAME rule may claim about
+  this endpoint; it says nothing about whether YEAR behaviour may be measured here.
+  Until a probe section records it, the year toggles say their behaviour here is
+  unestablished.
 
 No figure belongs in a tool description here, and
 `person-search.ts` is deliberately **not** in `EVIDENCE_SURFACES` in

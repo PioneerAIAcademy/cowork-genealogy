@@ -50,7 +50,10 @@ async function page(qs: string): Promise<any | null> {
 }
 async function readAll(extra: string): Promise<{ total: number | null; ids: string[] } | null> {
   const ids: string[] = []; let total: number | null = null;
-  for (let offset = 0; offset <= 700; offset += 100) {
+  // 1500, not 700: a band larger than the cap returned null, which the loop above
+  // logged as DID NOT ENUMERATE — a silent reclassification of a big band as a
+  // missing one. The unranged pool here is 272, so this is generous headroom.
+  for (let offset = 0; offset <= 1500; offset += 100) {
     const b = await page(`${POOL}${extra}&count=100&offset=${offset}`);
     if (b === null) return null;
     total ??= b?.results ?? null;
@@ -69,17 +72,35 @@ async function main(): Promise<void> {
   for (let y = 1400; y < 2000; y += 50) BANDS.push([y, y + 49]);
   const mem = new Map<string, number>(); const exMem = new Map<string, number>();
   let bandRows = 0, enumerated = 0, unqTot = 0, exTot = 0;
+  // Counted, not swallowed. The records sibling refuses a verdict on partial
+  // coverage; this script only logged "DID NOT ENUMERATE" and carried on, so a
+  // throttled run printed "in EVERY band (index-silent)" against a lower
+  // `enumerated`, and `exTot += ex?.ids.length ?? 0` added 0 for a failed `.exact`
+  // read before reporting "unqualified band rows X -> .exact Y" as if measured.
+  let bandsFailed = 0, exactFailed = 0;
   console.log("band         rows  | .exact");
   console.log("-".repeat(32));
   for (const [f, t] of BANDS) {
     const r = await readAll(`&q.birthLikeDate.from=${f}&q.birthLikeDate.to=${t}`);
     const ex = await readAll(`&q.birthLikeDate.from=${f}&q.birthLikeDate.to=${t}&q.birthLikeDate.exact=on`);
-    if (!r) { console.log(`${f}-${t}   DID NOT ENUMERATE`); continue; }
+    if (!r) { bandsFailed++; console.log(`${f}-${t}   DID NOT ENUMERATE`); continue; }
+    if (!ex) exactFailed++;
     enumerated++; bandRows += r.ids.length; unqTot += r.ids.length; exTot += ex?.ids.length ?? 0;
     for (const id of r.ids) mem.set(id, (mem.get(id) ?? 0) + 1);
     if (ex) for (const id of ex.ids) exMem.set(id, (exMem.get(id) ?? 0) + 1);
     console.log(`${f}-${t}  ${String(r.ids.length).padStart(5)}  | ${String(ex?.ids.length ?? "-").padStart(6)}`);
   }
+  if (bandsFailed > 0 || exactFailed > 0) {
+    console.log(
+      `\nREFUSING a verdict: ${bandsFailed} band(s) and ${exactFailed} .exact read(s) did not ` +
+        `enumerate, so coverage is partial. The "in EVERY band" test compares against ` +
+        `${enumerated} bands rather than ${BANDS.length}, and the .exact total omits the ` +
+        `failed reads — both would print confidently and be wrong. Closure cannot see ` +
+        `either: a missing band lowers both of its sums together.`
+    );
+    return;
+  }
+
   const hist = new Map<number, number>();
   for (const id of new Set(u.ids)) hist.set(mem.get(id) ?? 0, (hist.get(mem.get(id) ?? 0) ?? 0) + 1);
   console.log(`\n${enumerated} bands enumerated. membership over ${new Set(u.ids).size} distinct unranged persons:`);

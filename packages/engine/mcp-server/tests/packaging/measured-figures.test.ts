@@ -76,7 +76,13 @@ const AGENT_SURFACES = [
 ];
 
 /**
- * Scanned for CONTRADICTED WORDING only — never for figures.
+ * Scanned for CONTRADICTED WORDING.
+ *
+ * Note the one overlap, deliberate: `person-search.ts` is ALSO in `AGENT_SURFACES`,
+ * which forbids absolute totals — a model-read surface should carry no comma-grouped
+ * figure, and its endpoint has no probe to source one from. What neither list does is
+ * make it an EVIDENCE surface, which would invite the figures the 2026-08-17 ruling
+ * forbids. So "wording only" describes the SPEC in this list, not both entries.
  *
  * `person_search` hits a different endpoint (`platform/tree/search`) and carries
  * no measured figure, so it must NOT join `EVIDENCE_SURFACES`: doing so would
@@ -427,7 +433,10 @@ describe("measured figures stay traceable to the probe artifact", () => {
       const recorded = String(get(fig, rule.verdict) ?? "");
       if (!rule.activeWhen.test(recorded)) return; // rule inactive for this run
       const offenders: string[] = [];
-      for (const rel of [...EVIDENCE_SURFACES, ...AGENT_SURFACES, ...WORDING_ONLY_SURFACES]) {
+      // Deduped: `person-search.ts` is in both AGENT_SURFACES (no absolute totals)
+      // and WORDING_ONLY_SURFACES (contradicted wording), so without this it is read
+      // twice and any offending line is reported twice in the failure message.
+      for (const rel of new Set([...EVIDENCE_SURFACES, ...AGENT_SURFACES, ...WORDING_ONLY_SURFACES])) {
         const text = readFileSync(join(projectRoot, rel), "utf8");
         for (const line of text.split("\n")) {
           if (rule.mustNotSay.test(line)) offenders.push(`${rel}: ${line.trim().slice(0, 110)}`);
@@ -549,7 +558,11 @@ describe("measured figures stay traceable to the probe artifact", () => {
     }
     // `H.verdict:…` up to the closing backtick, with whitespace collapsed first so
     // a key wrapped across two lines still matches its artifact form.
-    const CITE = /`([A-Z])\.(verdict:[^`]+)`/g;
+    // `[A-Z][A-Z0-9]?` not `[A-Z]`: every section today is one letter, so a
+    // single-letter pattern passes — but #1771 adds and renames sections, and a
+    // two-character one would have its citations skipped silently while the
+    // `cited > 0` guard below stayed green on the remaining single-letter ones.
+    const CITE = /`([A-Z][A-Z0-9]?)\.(verdict:[^`]+)`/g;
     const dangling: string[] = [];
     let cited = 0;
     for (const rel of new Set(CITING_SURFACES)) {
