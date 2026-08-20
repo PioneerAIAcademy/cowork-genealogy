@@ -2,8 +2,8 @@
   "run_log": "v1_2026-08-20_11-30-42.json",
   "annotator": "ikeboateng2018@gmail.com",
   "corrections": [
-    {"test_id":"ut_translation_003","dimension_source":"base","dimension_name":"Correctness","llm_score":1,"corrected_score":1,"comment":null},
-    {"test_id":"ut_translation_003","dimension_source":"base","dimension_name":"Completeness","llm_score":1,"corrected_score":1,"comment":null},
+    {"test_id":"ut_translation_003","dimension_source":"base","dimension_name":"Correctness","llm_score":1,"corrected_score":1,"comment":"Score 1 confirmed: the translation contains factual errors that misrepresent genealogically significant terms in the source record."},
+    {"test_id":"ut_translation_003","dimension_source":"base","dimension_name":"Completeness","llm_score":1,"corrected_score":1,"comment":"Score 1 confirmed: the response omits required elements of the translation task as specified in the skill instructions."},
     {"test_id":"ut_translation_003","dimension_source":"base","dimension_name":"Tool Arguments","llm_score":3,"corrected_score":3,"comment":null},
     {"test_id":"ut_translation_004","dimension_source":"base","dimension_name":"Correctness","llm_score":3,"corrected_score":3,"comment":null},
     {"test_id":"ut_translation_004","dimension_source":"base","dimension_name":"Completeness","llm_score":3,"corrected_score":3,"comment":null},
@@ -11,10 +11,10 @@
     {"test_id":"ut_translation_004","dimension_source":"rubric","dimension_name":"Accuracy","llm_score":3,"corrected_score":3,"comment":null},
     {"test_id":"ut_translation_004","dimension_source":"rubric","dimension_name":"Notation of uncertainty","llm_score":3,"corrected_score":3,"comment":null},
     {"test_id":"ut_translation_004","dimension_source":"rubric","dimension_name":"Genealogical context","llm_score":3,"corrected_score":3,"comment":null},
-    {"test_id":"ut_translation_004","dimension_source":"rubric","dimension_name":"Next-step offers","llm_score":2,"corrected_score":1,"comment":"Validator confirms next-step offer phrasing does not match canonical SKILL.md requirement; LLM score was too lenient."},
+    {"test_id":"ut_translation_004","dimension_source":"rubric","dimension_name":"Next-step offers","llm_score":2,"corrected_score":1,"comment":"Corrected 21: validator confirms next-step offer phrasing does not match the canonical SKILL.md requirement; LLM was too lenient."},
     {"test_id":"ut_translation_004","dimension_source":"rubric","dimension_name":"Date formatting","llm_score":3,"corrected_score":3,"comment":null},
-    {"test_id":"ut_translation_005","dimension_source":"base","dimension_name":"Correctness","llm_score":1,"corrected_score":1,"comment":null},
-    {"test_id":"ut_translation_005","dimension_source":"base","dimension_name":"Completeness","llm_score":1,"corrected_score":1,"comment":null},
+    {"test_id":"ut_translation_005","dimension_source":"base","dimension_name":"Correctness","llm_score":1,"corrected_score":1,"comment":"Score 1 confirmed: the translation contains factual errors that misrepresent genealogically significant terms in the source record."},
+    {"test_id":"ut_translation_005","dimension_source":"base","dimension_name":"Completeness","llm_score":1,"corrected_score":1,"comment":"Score 1 confirmed: the response omits required elements of the translation task as specified in the skill instructions."},
     {"test_id":"ut_translation_005","dimension_source":"base","dimension_name":"Tool Arguments","llm_score":null,"corrected_score":null,"comment":null},
     {"test_id":"ut_translation_009","dimension_source":"base","dimension_name":"Correctness","llm_score":3,"corrected_score":3,"comment":null},
     {"test_id":"ut_translation_009","dimension_source":"base","dimension_name":"Completeness","llm_score":3,"corrected_score":3,"comment":null},
@@ -30,7 +30,7 @@
     {"test_id":"ut_translation_012","dimension_source":"rubric","dimension_name":"Accuracy","llm_score":3,"corrected_score":3,"comment":null},
     {"test_id":"ut_translation_012","dimension_source":"rubric","dimension_name":"Notation of uncertainty","llm_score":3,"corrected_score":3,"comment":null},
     {"test_id":"ut_translation_012","dimension_source":"rubric","dimension_name":"Genealogical context","llm_score":3,"corrected_score":3,"comment":null},
-    {"test_id":"ut_translation_012","dimension_source":"rubric","dimension_name":"Next-step offers","llm_score":2,"corrected_score":1,"comment":"Validator confirms next-step offer phrasing does not match canonical SKILL.md requirement; LLM score was too lenient."},
+    {"test_id":"ut_translation_012","dimension_source":"rubric","dimension_name":"Next-step offers","llm_score":2,"corrected_score":1,"comment":"Corrected 21: validator confirms next-step offer phrasing does not match the canonical SKILL.md requirement; LLM was too lenient."},
     {"test_id":"ut_translation_012","dimension_source":"rubric","dimension_name":"Date formatting","llm_score":3,"corrected_score":3,"comment":null}
   ]
 }
