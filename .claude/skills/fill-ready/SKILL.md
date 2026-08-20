@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: every developer takes from the junior pool, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, and the work behind it is often junior), `senior` (hard regardless, assigned to a senior in the developer or genealogist lane), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every developer issue it moves through review-ready before promoting. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: every developer takes from the junior pool, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, and the work behind it is often junior), `senior` (hard regardless, assigned to a senior in the developer or genealogist lane), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every issue it moves through review-ready before promoting — both pools. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -676,12 +676,25 @@ auto-add workflow that sets nothing else — a freshly filed issue that belongs 
 Ready still needs this move. (The exception is a `feedback` item, which the same
 workflow files directly into Ready and which you never move at all.)
 
-**Gate every `developer` issue you are moving into Ready through `/review-ready`
-before you promote it — not just the ones you rank as junior.** Your seniority
-test (§1) is a pre-filter read off the issue body; that skill fans out one agent
-per item to check the same call against the cited code, the architecture guide's
-site list, and the board's what-nothing-checks issues — which is where a
-"junior-safe" item turns out to hide an open API decision.
+**Gate every issue you are moving into Ready through `/review-ready` before you
+promote it — both pools, not just `developer`, and not just the ones you rank as
+junior.** Your seniority test (§1) is a pre-filter read off the issue body; that
+skill fans out one agent per item to check the same call against the cited code,
+the architecture guide's site list, and the board's what-nothing-checks issues —
+which is where a "junior-safe" item turns out to hide an open API decision, or a
+body's central claim turns out to have no instances behind it.
+
+**The genealogist half was ungated until 2026-08-19, and that was wrong.** A
+stale premise is not a developer-shaped defect, and the genealogist half is the
+more expensive one to get wrong: a bad developer premise reds a test, a bad
+genealogist premise surfaces inside a paid `make eval-skill` run or not at all.
+The reversal and what refuted the old scope are in
+`docs/specs/task-review-spec.md` §6 — do not re-argue it here.
+
+**Budget for it.** The gate costs ~110k tokens per issue, so a full fill of both
+pools is roughly 2M. That is cheap against a junior's wasted week and it is not
+free; if the genealogist half was gated earlier in the week, `--developer-only`
+is the escape.
 
 **"Every" means every one you move, including a `senior`-labeled item.** A senior
 item's body is stale in exactly the ways a junior item's is, and it is the more
@@ -874,6 +887,26 @@ du -sh <path>                                            # do the cited measurem
 git log --oneline -5 -- <cited path>                     # did someone already fix it?
 git log --diff-filter=D --all -- '<cited path>'          # was it deliberately deleted?
 ```
+
+**An uncited count is not a small gap — produce one.** When an issue's value
+rests on a population ("N files drifted", "users hit this", "the shape is in the
+field") and the body names no number, measure it *before* proposing any
+disposition. That is the shape which survives every other check: it reads as a
+real problem, its reasoning is sound, and there is nothing behind it. One request
+wanted a six-way genealogical adjudication to heal drifted `research.json` keys;
+the drift appears in **0 of 90** committed documents and no write path can create
+it. It closed `not planned` in one command.
+
+**Count the way the data is shaped, not the way it greps.** On that same request a
+bare `grep` for the six key names returned 50–70 files — `person_id` is a correct
+key on `person_evidence[]`, `record_id` is correct on assertions, `notes` is
+correct on sources. The grep was counting valid data. Walk the objects that would
+actually hold the field.
+
+Do not repeat this for the shortlist you are about to gate — `/review-ready`'s
+agents now count the premise per issue in fresh context (`docs/specs/task-review-spec.md`
+§7). Spend it here on what the gate never sees: the items you are about to close,
+consolidate, split, or route to the lead.
 
 **Read the mechanism the issue proposes to build, before agreeing it needs
 building.** A near-miss extension of something that exists is a different,
