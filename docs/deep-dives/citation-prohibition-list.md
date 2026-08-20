@@ -1,7 +1,8 @@
 # citation — prohibition list (Step 1 of the deep-dive guide)
 
-Built from `packages/engine/plugin/skills/citation/SKILL.md` @ mtime 2026-05-10,
-plus `references/gps-citation-standards.md` and `references/validation-protocol.md`.
+Built from `packages/engine/plugin/skills/citation/SKILL.md` at commit `c1fc2a4c`
+(2026-08-09, the last commit before this dive's own changes), plus
+`references/gps-citation-standards.md` and `references/validation-protocol.md`.
 Every line below is checkable by eye against a run-log transcript
 (`output.text_response`, `output.tool_calls`, `output.file_changes`).
 
@@ -43,8 +44,8 @@ deliberately excluded — they belong to the judge, per the guide.
 10. Never write inferences into `citation` / `citation_detail`. An inference may be
     MENTIONED to the user as search guidance only.
 11. Never copy template example values into a real citation — and, in your own
-    explanations, "show the shape (`Will Book [volume], p. [page]`) — never invent
-    sample numbers (`Will Book 7, p. 214`) even as an illustration."
+    explanations, "show the shape (`Will Book [volume], p. [page]`) — never a
+    filled-in sample, not even as an illustration and not even flagged 'e.g.'"
 12. Gaps take an explicit unknown-marker (`[PAGE NOT RECORDED]`,
     `[ARTICLE TITLE NOT RECORDED]`, `[WILL BOOK NUMBER NOT RECORDED]`) — never a
     plausible reconstruction like `[Obituary of John Smith]`.
@@ -90,10 +91,14 @@ deliberately excluded — they belong to the judge, per the guide.
 26. Probate `where_within` holds ONLY the physical locator (Will Book volume + page)
     or the missing-data marker. Document title and party name belong in `what` and
     `citation`.
-27. PA probate creator: "the creating authority is the county Orphans' Court — name the
-    court, not the courthouse building or a generic records office."
-    *(see Finding F8 — the suite's judge_context also accepts Register of Wills; the
-    body does not mention it.)*
+27. PA probate creator: match the authority to the document. A will is received,
+    probated and recorded by the county Register of Wills, who holds the will books —
+    that office is the creator of a will, a probate record, or a letters-testamentary
+    entry. The county Orphans' Court adjudicates estate distribution, accounts,
+    partition and guardianship — name it for those records. Either way, name the
+    office, never the courthouse building or a generic records office.
+    *(Finding F8's ruling — the body previously named only Orphans' Court; this PR
+    corrects it to distinguish both offices by document type.)*
 28. State-issued certificate creator = the named state agency, not "local registrar".
 29. Deed creator = the recording office (Recorder of Deeds), not the courthouse
     building. Execution date and recording date are different facts — cite both when

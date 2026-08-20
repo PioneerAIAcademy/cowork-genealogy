@@ -4,7 +4,7 @@
     "skill": "citation",
     "name": "Refine a rough probate/will citation (src_006)",
     "type": "positive",
-    "description": "src_006 is Thomas Flynn's 1881 will from Schuylkill County. The working citation is missing the court name (should be Schuylkill County Orphans' Court, not 'Courthouse'), Will Book volume and page locator, and access date. Probate records have a distinct locator pattern (Will Book + page number) that differs from vital records or census. Tests whether the skill applies the probate template correctly.",
+    "description": "src_006 is Thomas Flynn's 1881 will from Schuylkill County. The working citation is missing the probating authority's name (should be Schuylkill County Register of Wills, not 'Courthouse'), Will Book volume and page locator, and access date. Probate records have a distinct locator pattern (Will Book + page number) that differs from vital records or census. Tests whether the skill applies the probate template correctly.",
     "tags": [
       "probate",
       "will",

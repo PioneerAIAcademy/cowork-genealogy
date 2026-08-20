@@ -215,7 +215,7 @@ the citation string a genealogist pastes into a proof argument.
 > **What a violation looks like:** `ut_citation_017`, run `v1_2026-07-21_15-04-23` —
 > `where: "FamilySearch.org ([PHYSICAL REPOSITORY NOT RECORDED])"` while
 > `ut_citation_005` handled the same source correctly with the gap in `notes`.
-> **Blocked on:** the doctrine call in Q3 below.
+> **Resolved** — see "Rulings recorded here so they do not get stranded again" below (ruling 3); V6 is unblocked.
 
 ---
 
@@ -422,7 +422,7 @@ in one test's grading context, and never propagated to the skill body. So the bo
 still teaches Orphans' Court as *the* answer while the suite accepts both, and neither
 test can report a defect because both branches pass.
 
-This one wants a genealogist's word before I touch the body (Q1 below): in Pennsylvania
+This one wants a genealogist's word before I touch the body (see "Rulings recorded here so they do not get stranded again" below, ruling 1): in Pennsylvania
 the Register of Wills receives and probates the will and holds the will books; the
 Orphans' Court adjudicates estate distribution and guardianship. For a *will* citation
 the Register of Wills is the better creator, and the body's current sentence is at best
@@ -441,7 +441,7 @@ MyHeritage as the platform searched, not as a record creator."* The judge scored
 compliance 3 with the rationale *"Who: U.S. Census Bureau (the source creator, not
 MyHeritage the platform)"* — the precise inverse of the instruction it was given.
 
-**Gap — lane 2, and it needs a genealogical ruling before I can write the fix (Q2).**
+**Gap — lane 2, and it needs a genealogical ruling before I can write the fix (see "Rulings recorded here so they do not get stranded again" below, ruling 2).**
 A nil result documents a *search*, not a record; BCG Standard 3 requires a citation to
 convey "understanding of the research scope (what was searched)." SKILL.md's own
 negative-search exemplar leads with the collection and never assigns a `who`. So the
