@@ -558,11 +558,15 @@ records with parallel subagents, so this is reached by following the skills'
 own guidance.
 
 The whole tool body — from the first read to the last write — is therefore
-serialized behind an **in-process async mutex keyed by `resolve(projectPath)`**
-(`withProjectLock` in `src/utils/project-io.ts`). **One lock per project, not
-per file:** `materialize_facts` writes the tree while the composite path here
-writes tree + research together, so a per-file lock would still lose one of
-them. The mutex wraps the six writer entry points — `research_append`,
+serialized behind an **in-process async mutex keyed on the canonical (realpath)
+project path** (`withProjectLock` in `src/utils/project-io.ts`), falling back to
+`resolve(projectPath)` before the directory exists. Canonicalizing is what makes
+the key genuinely one-per-project: two callers naming the same project through
+different symlinks — on macOS `/tmp` is itself a symlink to `/private/tmp` — or
+through case-variant spellings on Windows would otherwise get separate mutexes
+and silently unlock the race. **One lock per project, not per file:**
+`materialize_facts` writes the tree while the composite path here writes tree +
+research together, so a per-file lock would still lose one of them. The mutex wraps the six writer entry points — `research_append`,
 `research_log_append`, `tree_edit`'s `executeTreeOps`, `materialize_facts`,
 `merge_tree_persons`, `tree_forget` — at the shared-core function only;
 `extraction_append` (→ `researchAppend`) and `tree_correct` (→ `executeTreeOps`)
