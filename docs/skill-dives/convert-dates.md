@@ -311,9 +311,69 @@ and terseness is never the deduction." The harness's own
 1 in 20 of 24 such cells across the corpus. So this is not one bullet being
 missed; it is a pattern of binding instructions not binding.
 
+### The mechanism, found precisely — and the fix, made and measured
+
+The "placement" hypothesis above was close but wrong. **The prompt contradicts
+itself.** "Which rule wins" calls per-test notes "binding, not advisory" and says
+they "win outright". The section that actually *delivers* them, 120 lines later,
+called them **"background"** — twice — and stated that a bullet phrased as a
+requirement "is still background". The judge was not ignoring an instruction; it
+was obeying the **nearer** one.
+
+The "background" framing had a real job: stopping the judge inventing dimensions
+named after bullets. So the fix separates two things the prompt conflated —
+*structure* (these do not create new dimensions) from *authority* (these bind the
+scores of the dimensions you were given) — and adds the arm for asserted facts.
+`**Do not emit separate dimensions for them.**` is preserved verbatim, because
+`test_render_prompt_puts_per_test_context_last` pins it as "#1401's only prose
+defence against invented dimensions".
+
+Measured on the two witnesses, n=1 each:
+
+- **`_013` — FIXED.** Correctness **1 → 3**. The rationale went from "The skill's
+  core claim is factually false" to "The response correctly identifies 30
+  February 1712 as a real Swedish calendar date, not an OCR error." The
+  fact-assertion arm does what it was written to do.
+- **`_005` — UNCHANGED.** The canary bullet is still unmet (zero mentions of
+  1582, 1752, Catholic Europe or England) and Completeness still scored 3, with
+  the rationale asserting it "addressed all requirements from the user message
+  and per-test context".
+
+**That second result corrects part of F5, in my own disfavour.** The canary bullet
+reads "briefly note that offsets vary by country and time period (e.g., 10 days
+for Catholic Europe 1582, 11 days for England 1752)". The judge credited "noted
+the jurisdiction-specific offset (+13 days for Russia 1918)" as satisfying it —
+and that is a *defensible* reading, because the "e.g." is illustrative and a
+jurisdiction-specific offset does convey that offsets vary. So the 20/20
+false-pass count is **not** cleanly 20 instances of an override being ignored;
+some part of it is a bullet too vague to enforce.
+
+F5 therefore splits, and only one half is proven:
+
+| Arm | Evidence | State |
+|---|---|---|
+| **False negatives** — judge contradicting a stated fact (`_013`) or a stated pass condition (`_011`) | flat contradictions, not loose readings | **real, and `_013` is fixed** |
+| **False passes** — an unmet requirement scored 3 (20 gradings) | at least partly loose-but-defensible compliance against a vague bullet | **weaker than first reported** |
+
+The canary has therefore spent its usefulness: it cannot discriminate, because it
+is vague. Striking it would edit `eval/tests/` and invalidate the committed run
+log, so it is **not** struck here — it is the first thing to remove on whatever
+run happens next for another reason.
+
+**What this costs, stated because it is real.** The change is global: it alters
+grading for every skill, and it has been verified on two tests of one. The
+fact-assertion arm is low-risk (it forbids contradicting the test author). The
+requirement-deduction arm could make judges stricter corpus-wide, turning some
+passes into partials on the next run of any skill. `judge_prompt_hash` now
+mismatches every committed run log, which CI rule 2b reports as a **warning**,
+non-blocking, "because judge edits are a separate cadence" — and the prompt is
+not in the snapshot, so no run log is invalidated.
+
 That is a **global judge-prompt** matter, and this guide is explicit that the
 base rubric and global judge prompt are not mine to edit — the instruction is to
-post the problem and proposed wording and let the lead call it. So, for the lead:
+post the problem and proposed wording and let the lead call it. **That approval
+was given on 2026-08-20 and the edit above is the result.** The original proposal
+read:
 *consider a one-line header on the `{judge_context}` slot restating that these
 bullets are binding per-test overrides that outrank `rubric.md`, since the
 evidence is 20 committed gradings out of 20 where an override went unenforced,
