@@ -330,7 +330,8 @@ def recompute_tally(paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES) ->
 
     Skip discipline follows `replay_provenance`: a run whose seed tree is
     unreadable — or which is missing a required sidecar — is NAMED in `skipped`
-    and excluded from both counts, never counted as zero. `william-ferber-ancestry`
+    and excluded from the recomputed count, never counted as zero (it still shows
+    in the stored column — see `RecomputeTally`). `william-ferber-ancestry`
     has a committed run log but no fixture directory, so it is the one expected
     skip on today's corpus (recomputing it with `starting_tree=None` would
     manufacture spurious `same_person` violations).
@@ -744,9 +745,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--recompute",
         action="store_true",
-        help="also re-derive violations from tool_calls + committed sidecars "
-        "(the stored field is a floor; pre-detector runs record none). Prints "
-        "stored vs recomputed; the default stays the stored path.",
+        help="also re-derive violations from tool_calls + committed sidecars. "
+        "Prints stored vs recomputed — not the same measurement, and neither "
+        "bounds the other; the default stays the stored path.",
     )
     ap.add_argument(
         "--calibrate-cost",

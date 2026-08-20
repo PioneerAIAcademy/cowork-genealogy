@@ -1683,23 +1683,30 @@ violations and the runs carrying at least one. They are labelled apart because
 quoting one against the other's denominator is the error this report exists to
 prevent.
 
-**Spend, and recomputed violations.** The report always prints a
-`spend:` line — recorded cost, estimated cost, and the count of runs with
-neither — as three numbers, never one blend: abort-path cost is estimated
-(§8.1.2) and must not be folded into the authoritative recorded total. Beside the
-estimate is its measured accuracy (median estimated/recorded); `CALIBRATE=1`
+**Spend, and recomputed violations.** The report always prints a `spend:` line —
+recorded cost, estimated cost, and the count of runs with neither — as three
+numbers, never one blend: abort-path cost is estimated (§8.1.2) and must not be
+folded into the authoritative recorded total. Beside the estimate is its
+measured accuracy (median estimated/recorded); `CALIBRATE=1`
 (`--calibrate-cost`) adds the full median + range. `RECOMPUTE=1` (`--recompute`)
 additionally re-derives violations from each run's committed `tool_calls` +
-`final-research`/`final-tree` sidecars + the fixture's seed tree, printing stored
-(a floor — pre-detector runs record none) beside recomputed. A run whose fixture
-has no readable `starting-tree.gedcomx.json` is **named in a skip list and
-excluded from both counts**, never counted as zero. The recomputed figure is a
-function of the committed ledger, which truncates and summarises some writer
-entries (a small population of assigned ids was never written down), so it
-inherits that ceiling rather than being an independent re-derivation. The stored
-field stays the record; `--recompute` is a reporting flag only, and the axis /
-violation / concentration numbers above the spend line are byte-identical with or
-without it.
+`final-research`/`final-tree` sidecars + the fixture's seed tree, printing
+stored beside recomputed. **Neither bounds the other:** stored is what each run
+recorded at the time (pre-detector runs recorded none and contribute zero),
+recomputed is today's detectors over the same committed data — which can also
+*clear* a violation a contemporaneous checker recorded. Every run where stored
+exceeds recomputed is **named** under the TOTAL line as a detector correction,
+for the same reason skips are named: a divergence absorbed into the aggregate
+reads as if the recompute could only ever find more. A run whose fixture has no
+readable `starting-tree.gedcomx.json` is **named in a skip list and excluded
+from the recomputed count**, never counted as zero — it still appears in the
+stored column, which is the default report's own tally over every run in the
+window. The recomputed figure is a function of the committed ledger, which
+truncates and summarises some writer entries (a small population of assigned ids
+was never written down), so it inherits that ceiling rather than being an
+independent re-derivation. The stored field stays the record; `--recompute` is a
+reporting flag only, and the axis / violation / concentration numbers above the
+spend line are byte-identical with or without it.
 
 **Scoping:** `TEST=<slug>` restricts to one fixture; `SINCE=all|N|YYYY-MM-DD` sets
 the window, defaulting to the last 14 days like every other run-log reader

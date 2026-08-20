@@ -784,7 +784,7 @@ def test_recompute_skips_a_run_whose_fixture_has_no_seed_tree(tmp_path: Path):
     fixtures.mkdir()  # no noseed/ dir -> no starting-tree.gedcomx.json to read
 
     rt = recompute_tally([run], fixtures_root=fixtures)
-    # Named skip, excluded from both counts, never counted as zero.
+    # Named skip, excluded from the recomputed count, never counted as zero.
     assert rt.scanned == 0
     assert sum(rt.arms.values()) == 0
     assert len(rt.skipped) == 1
