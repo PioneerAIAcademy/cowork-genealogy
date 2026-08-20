@@ -98,7 +98,7 @@ treating as established.
 - `earliestChildBirthToBirth12` -- parent had a child before age 12.
 - `earliestChildBirthToBirthMale14` -- father had a child before age 14.
 - `latestChildBirthToBirth80` -- child born 80+ years after this person's birth.
-- `latestChildBirthToBirthFemale55` -- mother was age 55 or older at a child's birth.
+- `latestChildBirthToBirthFemale45` -- mother was age 45 or older at a child's birth.
 
 ### Marriage timing
 - `hasEarlyMarriage14` -- married before age 14.
@@ -148,7 +148,7 @@ The current set of relative-mob tags: `relativesDeathRangeGreaterThan2`,
 `relativesEarliestChildBirthToBirth12`,
 `relativesHasEventBeforeChristening365_3`,
 `maleRelativesEarliestChildBirthToBirth14`,
-`femaleRelativesLatestChildBirthToBirth55`,
+`femaleRelativesLatestChildBirthToBirth45`,
 `relativesHasDeathBeforeChildBirth365_2`,
 `relativesHasDeathBeforeChildBirth30_10`,
 `relativesEarliestChildMarriageToBirth30`,
