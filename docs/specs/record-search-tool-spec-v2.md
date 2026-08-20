@@ -104,10 +104,11 @@ but the anchor rule above must be satisfied.
 One rule, belonging to the search engine rather than to this endpoint — with one
 measured exception, on `surname`:
 
-> **Without `exact=on` on a name field**, results include fuzzy matches, and records
-> where **that field is empty** — for `givenName` and for any relative's name, but
-> **not** for `surname`, where an unqualified value drops surname-empty records
-> outright. **With `exact=on`**, whatever its own field admits is excluded.
+> **Without `exact=on` on a name field**, results include fuzzy matches, and
+> records where **that field is empty** — for `givenName` and for a father's or
+> spouse's name, but **not** for `surname`, where an unqualified value drops
+> surname-empty records outright. **With `exact=on`**, whatever its own field
+> admits is excluded.
 
 **What is measured, and what is not.** The relative half is enumerated on this
 endpoint: `F.verdict:relative .exact requires the relative to be present` reads
@@ -127,7 +128,9 @@ validated, reproducible via
 
 - **`givenName` keeps them.** Three unmatchable tokens each retain ~251 of a 6,038
   pool (spread under 2%, which is S's control separating silence from fuzzy reach);
-  58 of 60 sampled retained rows carry no typed Given part; `.exact` takes it to 0.
+  58 of 60 sampled retained rows carry no typed Given part — a lower bound, since
+  that detector counts typed parts and does not cross-check `fullText` the way the
+  surname leg below does; `.exact` takes it to 0.
 - **`surname` drops them.** A bound surname-empty record — `fullText` "Escolastica",
   one Given part, zero Surname parts — is present in a 1,100-row set read to the end,
   and each of three unmatchable tokens returns an **empty set**. Zero rows, so this is
@@ -141,8 +144,10 @@ endpoint puts in front of you" — is **not** why: `surname` is only one of thre
 anchors, the pool above is anchored on country, type, date and place with no name
 term at all, and it contains 1,100 records including surname-empty ones.
 
-These figures are not in `dev/measured-figures.json`; the script is the trail until a
-probe section records them.
+The retention counts and the 1,100-row Brazil pool are not in
+`dev/measured-figures.json`; the script is the trail until a probe section records
+them. The 6,038 pool total *is* already recorded, as
+`Y.impossiblePools:birth[0].poolTotal` — it is the same Pocklington pool.
 
 The lead states the rule as the search engine's rather than this endpoint's, from
 FamilySearch internals. See `docs/specs/person-search-tool-spec.md` → *Person fields* → *The

@@ -16,7 +16,7 @@
  * The two principal fields behave OPPOSITELY, which is why one test each is not
  * enough:
  *
- *   givenName  an unqualified value keeps given-name-empty records. Three unmatchable
+ *   givenName  an unqualified value keeps records with no typed Given part. Three unmatchable
  *              tokens retain ~251/252/252 of a 6,038 pool; the retained rows have no
  *              typed Given part; `.exact` takes it to 0.
  *   surname    an unqualified value DROPS surname-empty records. A bound
@@ -31,7 +31,10 @@
  * 2. A DETECTOR THAT CONFLATED TWO THINGS. "No typed Surname part" is not "no
  *    surname": some records put the whole name in the Given part, so
  *    `fullText: "Henry Pocklington"` can have zero Surname parts while the string is
- *    still in the name index. Check `fullText` against the parts, which this does.
+ *    still in the name index. The SURNAME leg cross-checks `fullText` against the
+ *    parts before accepting the bound target. The GIVENNAME leg does NOT — it counts typed Given parts
+ *    only, so its 58/60 is a lower bound on given-name-silence, not a cross-checked
+ *    count. Adding the same cross-check there is the open follow-up.
  * 3. A COMMON GIVEN NAME. Anchoring on `Maria` in Brazil means every pool is
  *    millions and you are reduced to inferring from totals instead of reading sets.
  * 4. THE NAME-EMPTY FLOOR. Any `q.givenName` term drags in every given-name-empty
@@ -116,7 +119,7 @@ async function main(): Promise<void> {
   console.log(`  three tokens agree (spread <= 2%): ${spread(gNums) <= 0.02}   [${gNums.join(", ")}]`);
   console.log(`  retained rows with NO typed Given part: ${gEmptyVerified}/${gSampled}`);
   console.log(`  => VERDICT: ${spread(gNums) <= 0.02 && gEmptyVerified > gSampled * 0.8 && (gEx?.total === 0)
-    ? "unqualified KEEPS given-name-empty records; .exact removes them"
+    ? "unqualified KEEPS records with no typed Given part; .exact removes them"
     : "not established by this run"}`);
 
   // ---- surname: bound-record membership, no name term in the anchor (trap 4) ----

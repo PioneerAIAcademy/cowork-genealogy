@@ -1268,7 +1268,8 @@ export const recordSearchToolSchema = {
     "first to find the right collectionId. " +
     "EXACT-MATCH TOGGLES: without an `*Exact` flag a name field also matches " +
     "fuzzy spellings, and it keeps records where that field is EMPTY — for " +
-    "`givenName` and for any relative's name, but NOT for `surname`, where an " +
+    "`givenName` and for a father's or spouse's name, but NOT for `surname`, " +
+    "where an " +
     "unqualified value drops surname-empty records outright. Setting a flag " +
     "excludes what its own field admits, so it only ever narrows and can drop " +
     "the target. Years behave differently — see `birthYearExact`. Place toggles " +

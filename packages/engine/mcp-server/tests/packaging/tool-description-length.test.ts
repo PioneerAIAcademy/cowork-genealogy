@@ -11,9 +11,9 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * toggles have EVER appeared in a call.
  *
  * **The justification is clarity, not token cost.** Measured after the rewrite:
- * `record_search` 15,509 -> 14,281 and `person_search` 3,745 -> 4,985 (its
+ * `record_search` 15,509 -> 14,289 and `person_search` 3,745 -> 4,995 (its
  * toggles were stubs that were also wrong, so correctness cost tokens there), for
- * a combined 19,254 -> 19,266 — a net INCREASE of about 12 characters. An earlier
+ * a combined 19,254 -> 19,284 — a net INCREASE of about 30 characters. An earlier
  * version of this docstring led with the token argument and claimed a saving; it
  * does not survive measurement, and `record_search.birthYearExact` at 475 chars is
  * most of the remaining bulk. What this lint buys is that the shared rule is stated
@@ -102,8 +102,8 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14281],
-  ["person_search", 4985],
+  ["record_search", 14289],
+  ["person_search", 4995],
 ];
 
 /**

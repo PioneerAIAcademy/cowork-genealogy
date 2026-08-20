@@ -77,10 +77,11 @@ parameters is in *FamilySearch API Reference → mapping table*.
 One rule, belonging to the search engine rather than to this endpoint — with one
 measured exception, on `surname`:
 
-> **Without `exact=on` on a name field**, results include fuzzy matches, and persons
-> where **that field is empty** — for `givenName` and for a relative's name, but
-> **not** for `surname`, where an unqualified value drops surname-empty persons.
-> **With `exact=on`**, whatever its own field admits is excluded.
+> **Without `exact=on` on a name field**, results include fuzzy matches, and
+> persons where **that field is empty** — for `givenName` and for a father's or
+> spouse's name, but **not** for `surname`, where an unqualified value drops
+> surname-empty persons. **With `exact=on`**, whatever its own field admits is
+> excluded.
 
 **The exception was measured on the record index, not here.** See
 `record-search-tool-spec-v2.md` → *Person fields* → *The exact-match rule* for the
@@ -228,13 +229,14 @@ Strict surname + birth-place match:
 Kept deliberately, with what it costs stated — the two toggles here do different
 things, and this is the one shape where both are the right call. `surnameExact`
 holds the count to persons indexed exactly `Smyth`, and it will miss the target
-outright if the tree spells it `Smith`. It is *not* claimed to drop initials-only
-forms or persons with no surname recorded — neither is established for a principal
-name field, on either endpoint. Use it only with a spelling you
-have confirmed. `birthPlaceExact` is not the same mechanism: it stops upward
-expansion to parent jurisdictions, which is what makes the count mean something
-for an exhaustiveness claim. Reach for this pair when you need a defensible
-total, not when you are still looking for the person.
+outright if the tree spells it `Smith`. It is *not* claimed to drop
+initials-only forms — that is not established. It **does** drop persons with no
+surname recorded, per the rule above: measured on the record index, not on this
+endpoint. Use it only with a spelling you have confirmed. `birthPlaceExact` is
+not the same mechanism: it stops upward expansion to parent jurisdictions, which
+is what makes the count mean something for an exhaustiveness claim. Reach for
+this pair when you need a defensible total, not when you are still looking for
+the person.
 
 ---
 
