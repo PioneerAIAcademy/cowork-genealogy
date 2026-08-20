@@ -210,19 +210,33 @@ async function main(): Promise<void> {
   // reports dated/dated. Closure passes that failure too (both sums rise together),
   // so this is the ONLY check that sees it. It refuses a verdict rather than
   // printing, for the same reason.
+  // Both halves must apply the SAME out-of-axis exclusion, and only `wrongBand` did.
+  // A persona dated before 1400 or after the last band — `about 1387` in an England
+  // births pool — is legitimately in NO band, so `membership !== 1` flagged it and the
+  // run refused with "the usual cause is a missing m.queryRequireDefault=on". A
+  // guaranteed false refusal, after ~20 minutes of paging, blaming the wrong thing.
+  // Filter once, use for both, and print what was excluded rather than dropping it
+  // silently.
   const bandOf = (y: number): number => Math.floor((y - 1400) / 50);
+  const inAxis = (r: { payloadYear: number | null }): boolean => {
+    if (r.payloadYear === null) return false;
+    const b = bandOf(r.payloadYear);
+    return b >= 0 && b < BANDS.length;
+  };
   const dated = u.rows.filter((r) => r.payloadYear !== null);
-  const wrongCount = dated.filter((r) => (membership.get(r.id) ?? 0) !== 1);
-  const wrongBand = dated.filter((r) => {
-    const b = bandOf(r.payloadYear as number);
-    if (b < 0 || b >= BANDS.length) return false;   // dated outside the swept axis
-    const [from, to] = BANDS[b]!;
+  const datedInAxis = dated.filter(inAxis);
+  const outOfAxis = dated.length - datedInAxis.length;
+  const wrongCount = datedInAxis.filter((r) => (membership.get(r.id) ?? 0) !== 1);
+  const wrongBand = datedInAxis.filter((r) => {
+    const [from, to] = BANDS[bandOf(r.payloadYear as number)]!;
     return !(bandMembers.get(`${from}-${to}`)?.has(r.id) ?? false);
   });
   console.log(
-    `\ncontrol — payload-dated personas: ${dated.length}; in exactly one band: ` +
-      `${dated.length - wrongCount.length}; in the band holding their own year: ` +
-      `${dated.length - wrongBand.length}`
+    `\ncontrol — payload-dated personas: ${dated.length}` +
+      (outOfAxis ? ` (${outOfAxis} dated outside the swept axis, excluded from both checks)` : "") +
+      `; of the ${datedInAxis.length} in-axis, in exactly one band: ` +
+      `${datedInAxis.length - wrongCount.length}; in the band holding their own year: ` +
+      `${datedInAxis.length - wrongBand.length}`
   );
   if (wrongCount.length || wrongBand.length) {
     console.log(
