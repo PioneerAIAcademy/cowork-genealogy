@@ -560,59 +560,12 @@ as a behavioural change and re-verify against a live run, not unit tests alone.
 > tree-fact places, 0 changed**; **class 2 — 61 distinct recorded search
 > arguments, 0 changed**. Exempt.
 >
-> **The criterion itself was wrong first, and that is the part to carry forward.**
-> It initially reported class 1 as `1771 distinct, 2 changed`, which by the rule
-> above put a live run on the critical path. Both rows were spurious. The script
-> collected `place` and `standard_place` as separate strings via a regex over every
-> matching key in the file, so it measured the raw `place` even where a
-> `standard_place` shadowed it — strings the tokenizer never reads. The two rows
-> came from `stribling-father-1821`:
->
->     place          "Graham Young County Texas, USA"          <- what was measured
->     standard_place "Graham, Young, Texas, United States"      <- what is read
->
-> `marriage-jurisdictions.ts` reads `standard_place || place`. The standardized form
-> carries no `County` token and does not move. **This section already stated that
-> rule** — "the standardized form wins where both exist" — and the script
-> contradicted it, so the criterion had been over-reporting since it was written.
-> Collecting `standard_place || place` off each fact of each person and relationship
-> instead took class 1 from 1771/2 to 1007/0: 764 of those strings were raw `place`
-> values shadowed by a standardized form, or `place` keys on objects that are not
-> facts at all.
->
-> The criterion now lives at `dev/probe-placeparts-criterion.ts` rather than pasted
-> into an issue body, which is how it drifted from the prose in the first place. It
-> carries a **self-check**: it asserts the comparison still reports three
-> known-moving canaries and exits non-zero otherwise, because the likeliest cause of
-> a false `0` is a baseline `before()` left identical to the current tokenizer —
-> which reports "exempt" having measured nothing. Verified to fail by making
-> `before()` delegate to `placeParts` (`0/3` canaries, exit 1).
->
-> Two further notes for the next person to run it. **Re-measure after merging
-> `main`, not before**: an earlier run of the old script reported `1712 distinct, 0
-> changed`, correct for the corpus at that moment, and a fixture landing on `main`
-> in between changed the count with no tokenizer line moving. And **a non-zero count
-> is not automatically a live run**: a class-1 string is a candidate input, not
-> necessarily a reached one, since `marriageJurisdictionCandidates` collects only the
-> subject's facts, spouses' facts and `Couple`-relationship facts. Check whose fact a
-> moved string sits on first — a fact on a person in no `Couple` relationship who is
-> not the subject cannot reach `samePlace` however many run logs carry it. (That was
-> the argument advanced for the two spurious rows above, before the collector turned
-> out to be the actual defect. It stands on its own, and it is cheaper than a run.)
->
-> **Do not narrow class 1 to reachable facts, though.** That would mean
-> reimplementing the collector's traversal inside the measurement script, where it
-> drifts the moment that traversal grows a source and starts silently
-> under-reporting strings that *are* reached. Over-reporting and making a human
-> check reachability is the safe direction of error. `standard_place || place` is a
-> different kind of narrowing — fidelity to what the tokenizer reads, not a guess
-> about what the caller traverses.
->
-> One more property worth keeping: the script **imports the exported `placeParts`**
-> rather than reimplementing the pipeline, so it cannot measure an order the
-> tokenizer no longer uses. The first application's hand-copied `after()` was one
-> edit away from exactly that, and it is the same class of defect as the regex
-> above — a measurement drifting from the thing it measures.
+> Class 1 is `standard_place || place` **per fact**, so a raw `place` is skipped
+> wherever the fact carries a `standard_place`: the tokenizer reads the standardized
+> form, and measuring the raw one reports changes that cannot happen. The criterion
+> lives at `dev/probe-placeparts-criterion.ts` — run it *after* merging `main`, since
+> the counts move with the corpus, and read its header for why it collects what it
+> collects.
 >
 > The postal-abbreviation change moves nothing in either class, because neither
 > holds a `CO`: of class 1's 12 places whose last comma-part is two letters, the 9
