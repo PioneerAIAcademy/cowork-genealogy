@@ -1,0 +1,11 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search catch-all — matches ANY standardPlace (predicate '~' = empty-substring match) so a collections_search call not covered by a more specific fixture degrades gracefully to an empty result instead of erroring with fixture_not_found. MUST be ordered LAST among the collections-search fixtures in a test's mcp_fixtures so the specific place fixtures win first; this only fires when the skill widens to an unanticipated scope (e.g. an adjoining cross-border county). Mirrors the -any catch-all pattern the other tools already use.",
+  "args": { "standardPlace": "~" },
+  "response": {
+    "query": { "standardPlace": "" },
+    "scope": "",
+    "totalForPlace": 0,
+    "results": []
+  }
+}
