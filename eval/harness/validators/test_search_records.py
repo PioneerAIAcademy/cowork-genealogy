@@ -15,20 +15,11 @@ signature contract. The `test` argument is the parsed test JSON dict
 from __future__ import annotations
 
 import json
+import re
 
 import pytest
 
-
-# --- Helpers ----------------------------------------------------------
-
-def _new_log_entries(before_state, after_state) -> list[dict]:
-    before = before_state.get("research_json") or {}
-    after = after_state.get("research_json") or {}
-    before_ids = {e.get("id") for e in before.get("log", []) if isinstance(e, dict)}
-    return [
-        e for e in after.get("log", [])
-        if isinstance(e, dict) and e.get("id") not in before_ids
-    ]
+from validators_lib import new_log_entries as _new_log_entries
 
 
 # --- Structural rules from SKILL.md -----------------------------------
@@ -84,6 +75,112 @@ def test_log_outcome_honest_no_match(before_state, after_state, test):
     assert any(o in ("negative", "partial", "error") for o in outcomes), (
         f"expected a new log entry with outcome in (negative, partial, error); "
         f"got outcomes={outcomes}"
+    )
+
+
+# --- Pre-1880 census: family structure must be marked inferred --------
+
+# Words a log note uses when it is describing the household around the hit,
+# rather than the hit alone. The rule below only applies once the note starts
+# describing the household — a note that reports the focus person and nothing
+# else has no family structure to qualify.
+_HOUSEHOLD_MENTIONS = (
+    "household",
+    "dwelling",
+    "co-resident",
+    "coresident",
+    "enumerated with",
+    "living with",
+)
+
+# Role assertions that can only be read off a relationship column. Bare role
+# words are deliberately NOT listed: a note may legitimately name a tree-side
+# relative ("searched for George's wife Catherine", where Catherine turns out
+# to be absent from the record), and that is not a claim about what the census
+# stated. These forms are — "head of household", "X as father" — so they
+# trigger the requirement even when the word "household" never appears.
+_ROLE_ASSERTIONS = (
+    r"head\s+of\s+household",
+    r"household\s+head",
+    r"\bas\s+[\"'“‘]?(?:his|her|the)?\s*[\"'“‘]?"
+    r"(?:head|wife|husband|son|daughter|father|mother)\b",
+)
+
+# Any of these in the note satisfies the rule. The skill does not have to use
+# SKILL.md's exact sentence — it has to say, in some form, that the structure
+# is an inference rather than something the record stated.
+_INFERENCE_MARKERS = (
+    r"inferr",            # inferred, inferring, indexer-inferred
+    r"inference",         # inference, inferences
+    r"\bnot\s+(?:a\s+)?stated\b",
+    r"\bunstated\b",
+    r"\bimplied\b",
+    r"\bpresumed\b",
+    r"no\s+relationship\s+(?:to\s+head\s+)?column",
+    r"relationship\s+column[^.]{0,40}\b(?:does\s+not|did\s+not|is\s+not|"
+    r"was\s+not|never|absent)\b",
+)
+
+
+def test_pre1880_census_structure_marked_inferred(
+    before_state, after_state, test
+):
+    """Tag-gated (pre-1880-census-household): a log note that describes a
+    pre-1880 US census household must mark the family structure inferred.
+
+    SKILL.md's Step 4 rule: 1850/1860/1870 carry no "relationship to head"
+    column, so every "head"/"wife"/"son" read off such a household — and the
+    record's own `ParentChild`/`Couple` edges, which are the indexer's
+    inference from the same signals — is an inference. The body prescribes
+    the output: "Daniel, Margaret, Hannah in one dwelling; family structure
+    inferred from surname, ages and order, not stated", *not* "head Daniel +
+    wife Margaret + daughter Hannah".
+
+    Deterministic rather than judged because compliance is genuinely
+    inconsistent, not because the judge misreads it. Across the four
+    committed run logs the marker appeared on 17 of 32 pre-1880 census runs
+    and all 32 passed: ut_search_records_012 carried it once in four runs,
+    _013 twice, and _015 and _027 never — while _015 wrote "William Mullen
+    ... as father and Margaret Mullen ... as mother — directly corroborates
+    tree stubs I4 and I5" off an 1860 census. An LLM dimension graded
+    against behaviour that is itself a coin flip flakes with it; this does
+    not. See issue #1284.
+
+    Scoped to the authored `notes` field, which is where the household
+    write-up lands and the one place a validator can see it — the harness
+    hands validators state and tool calls, not the response text. The
+    requirement fires only when `notes` actually describes the household
+    (`_HOUSEHOLD_MENTIONS`) or asserts a record-side role
+    (`_ROLE_ASSERTIONS`), so a note that reports the focus person alone, and
+    a nil entry that has no household to describe, both pass untouched.
+    """
+    if "pre-1880-census-household" not in test.get("tags", []):
+        pytest.skip("not a pre-1880 census household scenario")
+
+    offenders = []
+    for e in _new_log_entries(before_state, after_state):
+        if e.get("tool") != "record_search":
+            continue
+        if e.get("outcome") not in ("positive", "partial"):
+            continue  # a nil found no household to describe
+        notes = e.get("notes") or ""
+        describes_household = any(
+            m in notes.lower() for m in _HOUSEHOLD_MENTIONS
+        ) or any(
+            re.search(p, notes, re.IGNORECASE) for p in _ROLE_ASSERTIONS
+        )
+        if not describes_household:
+            continue
+        if any(re.search(p, notes, re.IGNORECASE) for p in _INFERENCE_MARKERS):
+            continue
+        offenders.append((e.get("id"), notes))
+
+    assert not offenders, (
+        "a pre-1880 US census has no relationship column, so a log note that "
+        "describes the household must say the family structure is inferred "
+        "rather than stated (SKILL.md Step 4). These entries describe the "
+        "household and assert its structure flat: "
+        + "; ".join(f"{eid}: {notes!r}" for eid, notes in offenders)
     )
 
 

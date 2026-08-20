@@ -123,6 +123,28 @@ def assert_foreign_keys_valid(
     assert not errors, "Dangling references:\n  - " + "\n  - ".join(errors)
 
 
+def new_log_entries(before_state: dict[str, Any], after_state: dict[str, Any]) -> list[dict]:
+    """Log entries present in `after_state` but not `before_state`, by id.
+
+    Takes the wrapped per-run state dicts ({"research_json": {...}, ...}),
+    not the unwrapped research.json dict assert_log_append_only and its
+    neighbors above take -- that mismatch is deliberate: every call site
+    this helper was lifted from (test_search_full_text.py,
+    test_search_records.py, test_search_external_sites.py,
+    test_search_images.py) already had its own byte-identical copy taking
+    wrapped state, so matching that signature let each site switch over
+    with no logic change, rather than matching the unwrapped convention
+    the two helpers above use.
+    """
+    before = before_state.get("research_json") or {}
+    after = after_state.get("research_json") or {}
+    before_ids = {e.get("id") for e in before.get("log", []) if isinstance(e, dict)}
+    return [
+        e for e in after.get("log", [])
+        if isinstance(e, dict) and e.get("id") not in before_ids
+    ]
+
+
 def assert_log_append_only(
     before: dict[str, Any],
     after: dict[str, Any],
