@@ -1,0 +1,286 @@
+{
+  "run_log": "v1_2026-08-20_10-39-13.json",
+  "annotator": "edmondoware70@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_citation_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill wrote to research.json through research_append on src_007 but never called validate_research_schema afterward. output.tool_calls contains only the research_append call. SKILL.md Step 6 requires validate_research_schema whenever anything was written. The response also states Validation passed, which the ledger does not support. That is a false report to the researcher about whether the schema gate ran. Agreeing with the judge score of 1."
+    },
+    {
+      "test_id": "ut_citation_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — the write path",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Same defect as Correctness. The write went through research_append correctly, but validate_research_schema is absent from the ledger even though a change was persisted. The rubric's fail criteria name this outright, a write with no validate_research_schema call, or a response claiming validation the ledger does not show. Both conditions are present here. Agreeing with the judge score of 1."
+    },
+    {
+      "test_id": "ut_citation_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Source fidelity — no fabricated detail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Source vs information distinction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Replication test",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence Explained compliance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence Explained compliance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Replication test",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Source vs information distinction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Source fidelity — no fabricated detail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — the write path",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence Explained compliance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Replication test",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Source vs information distinction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Source fidelity — no fabricated detail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — the write path",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Source fidelity — no fabricated detail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — the write path",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Source vs information distinction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Replication test",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence Explained compliance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}
