@@ -20,8 +20,9 @@ different objects: this tool returns records, that one returns tree persons.
 The two share **18 identically-named `*Exact` parameters** out of 22 here and 21
 there, and the pairing has been a trap: same names, and for a long time two
 incompatible stories about what they did. They now mean **the same thing**, stated in
-both specs and measured on both endpoints — see *Input → Person fields → The
-exact-match rule* in either. Four `*Exact` parameters exist
+both specs — see *Input → Person fields → The exact-match rule* in either. The
+figures behind the rule were measured against **this** endpoint's index; the tree
+endpoint has no probe, so `person_search` states the rule on the lead's authority. Four `*Exact` parameters exist
 only here (`anyPlaceExact`, `anyYearExact`, `otherGivenNameExact`,
 `otherSurnameExact`) and three only there (`fatherBirthPlaceExact`,
 `motherBirthPlaceExact`, `parentBirthPlaceExact`).
@@ -125,8 +126,8 @@ narrowed here after review.
 
 The lead states the rule as the search engine's rather than this endpoint's, from
 FamilySearch internals. See `docs/specs/person-search-tool-spec.md` → *Person fields* → *The
-exact-match rule* for the tree-side measurement and for two instrumentation traps
-specific to that endpoint. **The same rule, the same parameter names, the same
+exact-match rule* for what is and is not established there — no probe covers that
+endpoint — and for two instrumentation traps specific to it. **The same rule, the same parameter names, the same
 meaning** on both tools; that is why it is stated in both specs rather than
 cross-referenced from one.
 

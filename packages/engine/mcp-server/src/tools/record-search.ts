@@ -1273,8 +1273,11 @@ export const recordSearchToolSchema = {
     "`surname`/`givenName` toggles also drop records with that field empty is " +
     "not established. Years behave differently — see `birthYearExact`. Place " +
     "toggles are a different mechanism — see `birthPlaceExact`.",
-  // The `*Exact` descriptions below deliberately state what each qualifier does
-  // to the result COUNT rather than to retrieval. Measured live against
+  // The `*Exact` descriptions below state only what is specific to each
+  // parameter; the rule they share lives in the tool-level description above and
+  // is deliberately not repeated per parameter. They cover the effect on the
+  // result SET and on ranking — `.exact` removes records and reorders the ones it
+  // keeps — rather than restating the mechanism. Measured live against
   // /service/search/hr/v2/personas 2026-08-04 (issue #1093), re-done over
   // COMPLETE result sets on 2026-08-10/11: `.exact` REMOVES records and
   // REORDERS the ones it keeps. On the two enumerable `surname` marriage pools
@@ -1304,7 +1307,7 @@ export const recordSearchToolSchema = {
       surnameAlt: { type: "string", description: "Alternate family name (e.g., a woman's maiden name when also searching by married surname). Triggers a UNION search — results match either `surname` OR `surnameAlt`. The tool auto-fills `givenNameAlt = givenName` if only this side is supplied." },
       givenNameAlt: { type: "string", description: "Alternate given name. UNION with `givenName`. The tool auto-fills `surnameAlt = surname` if only this side is supplied." },
       sex: { type: "string", enum: ["Male", "Female", "Unknown"], description: "Sex of the searched person. Case-insensitive on input — `'male'` is normalized to `'Male'`." },
-      surnameExact: { type: "boolean", description: "Restrict the surname to its exact spelling. Fuzzy matching is what bridges an index misspelling, so this can drop the target; use only with a confirmed indexed spelling. Applies to `surnameAlt` too." },
+      surnameExact: { type: "boolean", description: "Restrict the surname to its exact spelling. Narrows the set and reorders what it keeps; it never surfaces a record the fuzzy search buried. Fuzzy is what bridges an index misspelling, so this can drop the target. Applies to `surnameAlt`." },
       givenNameExact: { type: "boolean", description: "Restrict the given name to its exact spelling. Excludes period diminutives (`Betty` for `Elizabeth`) — pass a variant as its own `givenName`. On initials it pins the order, dropping the `W J` that `J W` reaches. Applies to `givenNameAlt`." },
 
       birthYearFrom: { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1850). Must be paired with `birthYearTo`." },

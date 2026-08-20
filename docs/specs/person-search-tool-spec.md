@@ -69,7 +69,7 @@ parameters is in *FamilySearch API Reference → mapping table*.
 | `givenName` | string | Given (first) name. Counts as the required "other" field alongside `surname`. |
 | `surname` | string | Family name. **Required on every search**, plus at least one other search field (see the surname-plus-one rule). |
 | `sex` | `"Male"` \| `"Female"` \| `"Unknown"` | Sex of the person. Case-insensitive — `"male"` normalizes to `"Male"`. |
-| `givenNameExact` | boolean | Restricts the given name to its exact spelling — see the exact-match rule below. Also excludes diminutives and initials-only forms. |
+| `givenNameExact` | boolean | Restricts the given name to its exact spelling — see the exact-match rule below. Excludes diminutives. |
 | `surnameExact` | boolean | Restricts the surname to its exact spelling — see the exact-match rule below. Fuzzy matching is what bridges a misspelling, so this can drop the target. |
 
 #### The exact-match rule
@@ -104,8 +104,10 @@ start. It *is* scanned for contradicted wording (`WORDING_ONLY_SURFACES`).
 
 - **`m.queryRequireDefault=on` is mandatory.** Without it, `q.*` terms only
   rerank; they do not filter. Omitting it makes every query return the
-  surname-only total (Pocklington 3,953 rather than 272), which reads convincingly
-  as "the given name does not filter". `buildSearchUrl` always sends it; anything probing the endpoint by hand must too.
+  surname-only total rather than the filtered one, which reads convincingly as
+  "the given name does not filter". The figures behind that observation are
+  deliberately not quoted: no tree-side figure is in the artifact, so citing one
+  here is exactly what the provenance note above warns against. `buildSearchUrl` always sends it; anything probing the endpoint by hand must too.
 - **A zero-result query returns HTTP 204 with an empty body**, not 200 with an
   empty `entries` array. `res.ok` is true for 204, so a reader that parses the body
   or retries on emptiness turns a meaningful zero into an error. `personSearchTool`
@@ -194,9 +196,10 @@ Strict surname + birth-place match:
 
 Kept deliberately, with what it costs stated — the two toggles here do different
 things, and this is the one shape where both are the right call. `surnameExact`
-holds the count to persons indexed exactly `Smyth`, so it also drops
-initials-only forms and persons with no surname recorded, and it will miss the
-target outright if the tree spells it `Smith`. Use it only with a spelling you
+holds the count to persons indexed exactly `Smyth`, and it will miss the target
+outright if the tree spells it `Smith`. It is *not* claimed to drop initials-only
+forms or persons with no surname recorded — neither is established for a principal
+name field, on either endpoint. Use it only with a spelling you
 have confirmed. `birthPlaceExact` is not the same mechanism: it stops upward
 expansion to parent jurisdictions, which is what makes the count mean something
 for an exhaustiveness claim. Reach for this pair when you need a defensible

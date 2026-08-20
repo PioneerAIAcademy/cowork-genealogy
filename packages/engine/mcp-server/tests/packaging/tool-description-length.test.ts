@@ -18,16 +18,24 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * how it got here.
  *
  * The ceiling is SIZED FROM THE ONE-LINERS ACTUALLY WRITTEN, not guessed. The
- * longest non-exempt description is `record_search.birthPlaceExact` at 201
- * characters (`surnameExact` is 198, `givenNameExact` 238 with its initials
- * clause), so 240 leaves headroom for a genuinely more complex toggle while
- * still failing every paragraph. Before this change six toggles exceeded it:
- * 475, 402, 375, 341, 269, 255.
+ * longest non-exempt description is `record_search.givenNameExact` at **238**
+ * characters — it carries the diminutive note and the initials-order note —
+ * followed by `birthPlaceExact` at 201 and `surnameExact` at 198. Before this
+ * change six toggles exceeded the ceiling: 475, 402, 375, 341, 269, 255.
  *
- * Those figures are measured, and were wrong in the first version of this
- * comment — uniformly +2, from counting the enclosing quotes. Since this comment
- * is the only justification for the number, an off-by-two here is the same class
- * of defect as a guessed threshold.
+ * **Headroom is therefore 2 characters, not 39.** Stated plainly because the
+ * ceiling is nearly binding, and the next editor deserves to know that a
+ * three-word clarification to `givenNameExact` will trip this lint. When it does,
+ * the fix is to shorten that description or split the initials note out to the
+ * spec — NOT to raise the ceiling, and NOT to add an `EXEMPT` entry, which is for
+ * a description whose length is under active measurement.
+ *
+ * Two earlier versions of this comment were wrong about its own basis: first
+ * citing `surnameExact` at 205 with a baseline list uniformly +2 (from counting
+ * the enclosing quotes), then naming `birthPlaceExact` as the longest while
+ * quoting a larger number for `givenNameExact` in the same sentence. Since this
+ * comment is the only justification for 240, getting it wrong is the same class
+ * of defect as guessing the threshold.
  *
  * It deliberately checks only the `*Exact` family. Other parameters carry
  * genuinely load-bearing prose (`projectPath`, `subjectId`, `batchNumber`) whose

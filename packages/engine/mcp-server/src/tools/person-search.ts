@@ -371,7 +371,7 @@ export const personSearchToolSchema = {
 
       birthYearFrom: { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1809). Must be paired with `birthYearTo`." },
       birthYearTo: { type: "number", description: "Upper bound of the birth-year range. 4-digit year. Must be paired with `birthYearFrom`. For a single year, set From and To equal." },
-      birthYearExact: { type: "boolean", description: "Require the birth year to match the range exactly. Years are the exception to the rule above and are being re-measured (#1771) — use only with a firm date, not to include or exclude undated persons." },
+      birthYearExact: { type: "boolean", description: "Require the birth year to match the range exactly. Years are outside the rule above and their behaviour on this endpoint is unestablished — use only with a firm date, not to include or exclude undated persons." },
       birthPlace: { type: "string", description: "Birth place name. For ambiguous place names, call the `place_search` tool first." },
       birthPlaceExact: { type: "boolean", description: "Stop upward expansion to parent jurisdictions. Outside the rule above — expansion, not fuzz — and measured against the record index, not this endpoint." },
 
