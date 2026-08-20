@@ -417,8 +417,10 @@ def load_annotated_runs(
             "subject_person_ids": sorted(subject_ids),
             "human": human,
             # rung 7: True when a findings_hash was present and matched; False for
-            # a grandfathered legacy grade. Set on every include so main's count
-            # never KeyErrors.
+            # a grandfathered legacy grade. Set on every include. main reads it
+            # with a False default — `.get` cannot KeyError at any default, so the
+            # default's only job is to pick a direction, and for a VERIFICATION
+            # flag the safe unknown is "not verified".
             "findings_hash_present": findings_hash_present,
         })
 
@@ -507,7 +509,7 @@ def main(argv: list[str] | None = None) -> int:
     # graded, but their labels cannot be tied to the findings they were produced
     # against. Counted separately — not a warn (those are excluded) — so the
     # ready count is unaffected and the reader knows the coverage gap.
-    unverifiable = [c for c in cases if not c.get("findings_hash_present", True)]
+    unverifiable = [c for c in cases if not c.get("findings_hash_present", False)]
 
     for w in warnings:
         print(f"WARN: {w.message}", file=sys.stderr)

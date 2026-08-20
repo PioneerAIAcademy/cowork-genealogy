@@ -117,7 +117,7 @@ First verify the file you just wrote — you have every input to do this without
 Then stamp the fixture fingerprint into the annotation:
 
 ```
-cd eval/harness && uv run python -m e2e.stamp_findings_hash eval/runlogs/e2e/<slug>/run-<ts>.ann.json
+cd eval/harness && uv run python -m e2e.stamp_findings_hash ../runlogs/e2e/<slug>/run-<ts>.ann.json
 ```
 
 This adds the `findings_hash` key so a later edit to `expected-findings.json`
