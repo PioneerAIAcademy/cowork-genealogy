@@ -116,11 +116,13 @@ start. It *is* scanned for contradicted wording (`WORDING_ONLY_SURFACES`).
 **Years and places are both outside the rule, and neither has been measured
 here.** The year finding — that the population the old wording was phrased around
 (objects with no indexed year) is empty, and the index carries estimated date
-*ranges* matched by overlap — was enumerated over **records**, not tree persons.
-The place mechanism (upward expansion that still descends) is likewise a
-record-index measurement. Both are stated as unestablished on this endpoint, and
-the toggles' descriptions say so. **Places are a different mechanism** (upward expansion, which
-still descends) and are outside the rule.
+*ranges* matched by overlap — is the lead's account, and the session probe behind
+it left no artifact, on either endpoint. The artifact still reads
+`H.verdict:silence tolerated` = OPEN.
+The place mechanism (upward expansion) is likewise a
+record-index measurement, and its descent half is recorded by no verdict at all. Both are stated as unestablished on this endpoint, and
+the toggles' descriptions say so. **Places are a different mechanism** (upward expansion) and are
+outside the rule.
 
 ### Life-event fields
 
@@ -133,7 +135,7 @@ and a place, each with an `Exact` toggle.
 | `birthYearTo` | number | Upper bound of the birth-year range. Pair with `birthYearFrom`. |
 | `birthYearExact` | boolean | Requires the birth year to match the range exactly. **Years are the exception to the exact-match rule** and their behaviour is provisional — use only with a firm date, and do not rely on a range to include or exclude undated persons. |
 | `birthPlace` | string | Birth place name. |
-| `birthPlaceExact` | boolean | Stops upward expansion to parent jurisdictions (it still descends). A **different mechanism** from the exact-match rule — expansion, not fuzz. |
+| `birthPlaceExact` | boolean | Stops upward expansion to parent jurisdictions. A **different mechanism** from the exact-match rule — expansion, not fuzz. Measured against the record index, not here. |
 | `deathYearFrom` / `deathYearTo` / `deathYearExact` | number / number / boolean | Death-year range and exactness. |
 | `deathPlace` / `deathPlaceExact` | string / boolean | Death place and exactness. |
 | `marriageYearFrom` / `marriageYearTo` / `marriageYearExact` | number / number / boolean | Marriage-year range and exactness. |

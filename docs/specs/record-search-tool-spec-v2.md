@@ -132,12 +132,16 @@ meaning** on both tools; that is why it is stated in both specs rather than
 cross-referenced from one.
 
 **Two carve-outs.** *Places* are a different mechanism — `*PlaceExact` stops
-upward expansion to parent jurisdictions and still descends, which is neither
-fuzz, initials, nor an empty field. *Years* are the exception. The population the
-current `birthYearExact` text is phrased around — records with no indexed year —
-was enumerated at **zero**, and the index carries estimated date *ranges* instead,
-matched by overlap. Until that is re-measured and the wording rewritten,
-`birthYearExact`'s text is unchanged and is **not** part of this rule.
+upward expansion to parent jurisdictions, which is neither fuzz, initials, nor an
+empty field. (Whether it still descends to child localities is stated in the
+original spec prose but is recorded by no verdict; treat it as unverified.) *Years* are the exception, and the artifact is
+the authority on why. `H.verdict:silence tolerated` reads **OPEN** and
+`N.verdict:payload-silent means index-silent` reads **NOT MEASURED**: nothing here
+establishes what a year range does to a record carrying no indexed year, in either
+direction. The lead's account is that no such record exists — the index carries an
+estimated date *range* matched by overlap — and a session probe on 2026-08-19 found no such record in an enumerated Pocklington pool, but that probe left **no artifact** and no probe in `dev/` reproduces it, so it is not
+citable here. Until an instrument records it, `birthYearExact`'s text is unchanged
+and is **not** part of this rule.
 
 Setting `surnameAlt` or `givenNameAlt` performs a UNION — the result
 set includes records that match the primary name AND records that

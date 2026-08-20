@@ -49,7 +49,7 @@ const CEILING = 240;
  *
  * `birthYearExact` is the one toggle whose behaviour is still being measured:
  * the population its current text is phrased around — records with no indexed
- * year — was enumerated at zero, and the index turns out to carry estimated date
+ * year — is reported by a session probe as empty, with the index carrying estimated date
  * RANGES instead. Issue #1771 rewrites that paragraph and DELETES this
  * exemption. Do not add an entry here without an issue number and a removal
  * condition.
