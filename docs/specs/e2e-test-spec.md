@@ -1541,7 +1541,7 @@ the exact token counts (`e2e/pricing.py`), left `null` when a run recorded no
 tokens at all. `total_cost_usd` itself stays null — the argument above stands, so
 the authoritative field is never a guess. The estimate is a *different*, labelled
 figure, published beside its measured accuracy (median estimated/recorded across
-the runs carrying both; lead ruling 2026-08-10, issue #1484). Because a null-cost
+the runs carrying both; lead ruling 2026-08-10). Because a null-cost
 run already committed carries no `total_cost_usd_estimated`, `make e2e-corpus`
 estimates at **report** time (not only in this write-time fallback) — otherwise
 every run committed before the field existed would stay at zero and the gap this
@@ -1668,7 +1668,7 @@ violations and the runs carrying at least one. They are labelled apart because
 quoting one against the other's denominator is the error this report exists to
 prevent.
 
-**Spend, and recomputed violations (issue #1484).** The report always prints a
+**Spend, and recomputed violations.** The report always prints a
 `spend:` line — recorded cost, estimated cost, and the count of runs with
 neither — as three numbers, never one blend: abort-path cost is estimated
 (§8.1.2) and must not be folded into the authoritative recorded total. Beside the
