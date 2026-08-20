@@ -112,8 +112,8 @@ def test_scan_feedback_bundle_runs_both_detectors_and_counts(tmp_path):
     """Wiring: a bundle dir with a transcript + research.json yields tool/Skill
     counts, the truncated flag, and both detectors' finding lists."""
     bundle = tmp_path / "some-tester-slug"
-    bundle.mkdir()
-    _write_jsonl(bundle / "session-log.jsonl", [
+    (bundle / "_feedback").mkdir(parents=True)
+    _write_jsonl(bundle / "_feedback" / "session-log.jsonl", [
         _assistant([{"type": "tool_use", "id": "s", "name": "Skill",
                      "input": {"skill": "proof-conclusion"}}]),
         _assistant([{"type": "tool_use", "id": "r", "name": "record_search", "input": {}}]),
@@ -141,3 +141,44 @@ def test_scan_feedback_bundle_cowork_no_transcript(tmp_path):
     assert result["tool_call_count"] == 0
     assert result["unguarded_writes"] == []
     assert isinstance(result["missing_mentor_verdicts"], list)
+
+
+def test_transcript_is_read_from_the_feedback_subdir(tmp_path):
+    """Both producers write the transcript to `_feedback/session-log.jsonl`
+    (feedback-case-spec.md §2.2), and `unzip -d` preserves that layout. Reading
+    the bundle root instead would report has_transcript=False on every real
+    bundle — a silent zero, the failure this feature exists to catch (#1558)."""
+    bundle = tmp_path / "feedback-2026-08-01T10-00-00Z"
+    (bundle / "_feedback").mkdir(parents=True)
+    _write_jsonl(bundle / "_feedback" / "session-log.jsonl", [
+        _assistant([{"type": "tool_use", "id": "t", "name": "record_search", "input": {}}]),
+    ])
+    (bundle / "research.json").write_text("{}", encoding="utf-8")
+    result = scan_feedback_bundle(bundle)
+    assert result["has_transcript"] is True
+    assert result["tool_call_count"] == 1
+
+
+def test_unreadable_research_json_is_flagged_not_counted_as_clean(tmp_path):
+    """A missing or unparseable research.json must not read as "0 findings" —
+    that is indistinguishable from a clean bundle. It is flagged
+    (has_research / research_unreadable) so the report can show it and drop it
+    from the mentor-verdict denominator."""
+    # Unreadable (invalid JSON) research.json, no transcript.
+    bad = tmp_path / "bad-research"
+    bad.mkdir()
+    (bad / "research.json").write_text("{not json", encoding="utf-8")
+    r_bad = scan_feedback_bundle(bad)
+    assert r_bad["has_research"] is True
+    assert r_bad["research_unreadable"] is True
+    assert r_bad["missing_mentor_verdicts"] == []
+
+    # Missing research.json entirely.
+    missing = tmp_path / "no-research"
+    (missing / "_feedback").mkdir(parents=True)
+    _write_jsonl(missing / "_feedback" / "session-log.jsonl", [
+        _assistant([{"type": "tool_use", "id": "t", "name": "record_search", "input": {}}]),
+    ])
+    r_missing = scan_feedback_bundle(missing)
+    assert r_missing["has_research"] is False
+    assert r_missing["research_unreadable"] is False

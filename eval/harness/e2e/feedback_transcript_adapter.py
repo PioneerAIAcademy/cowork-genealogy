@@ -10,8 +10,7 @@ by `type`/`cwd` but appends each surviving line verbatim, so each line is
 messages. This walks those blocks into the flat
 `{"tool", "args", "response_summary", "is_error"}` entries the detectors read
 (documented at `harness/skill_invocation.py:9-14`), mirroring
-`e2e/orchestrator.py`'s message loop (:1663-1669) and result join
-(`apply_tool_result` :897).
+`e2e/orchestrator.py`'s message loop and result join (`apply_tool_result`).
 
 Pure and stdlib-only (keeps callers' "no Claude Agent SDK import" posture). Reads
 only the path handed in, via `parse_jsonl` (never raises on a truncated final

@@ -438,7 +438,11 @@ def scan_feedback_bundle(
     directory. `platform` is supplied by the caller (from the feedback issue's
     `Platform:` line — not knowable from the bundle alone)."""
     bundle_dir = Path(bundle_dir)
-    transcript = bundle_dir / "session-log.jsonl"
+    # Both producers write the transcript to `_feedback/session-log.jsonl`
+    # (feedback-case-spec.md §2.2; apps/server/app/feedback.py, apps/electron
+    # feedback.ts), and `unzip -d` preserves that layout — read it there, not at
+    # the bundle root, or every real bundle silently reports has_transcript=False.
+    transcript = bundle_dir / "_feedback" / "session-log.jsonl"
     research_path = bundle_dir / "research.json"
     out: dict[str, Any] = {
         "bundle": bundle_dir.name,
@@ -448,6 +452,11 @@ def scan_feedback_bundle(
         "tool_call_count": 0,
         "skill_call_count": 0,
         "session_ids": [],
+        # A missing or unreadable research.json must not read as "0 findings" —
+        # that is indistinguishable from a clean bundle. Track it so the report
+        # shows it and drops it from the mentor-verdict denominator.
+        "has_research": research_path.exists(),
+        "research_unreadable": False,
         "unguarded_writes": [],
         "missing_mentor_verdicts": [],
     }
@@ -473,6 +482,7 @@ def scan_feedback_bundle(
             research = json.loads(research_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             research = None
+            out["research_unreadable"] = True
         out["missing_mentor_verdicts"] = find_missing_mentor_verdicts(research)
 
     return out
@@ -480,12 +490,12 @@ def scan_feedback_bundle(
 
 def scan_feedback_dir(root: Path, *, window: int = _FEEDBACK_WINDOW) -> list[dict[str, Any]]:
     """Scan every unpacked bundle directory under `root` (each holding a
-    `research.json` and/or `session-log.jsonl`). Platform is left `None` — the
-    caller labels each from its feedback issue."""
+    `research.json` and/or `_feedback/session-log.jsonl`). Platform is left
+    `None` — the caller labels each from its feedback issue."""
     root = Path(root)
     results: list[dict[str, Any]] = []
     for child in sorted(p for p in root.iterdir() if p.is_dir()):
-        if (child / "session-log.jsonl").exists() or (child / "research.json").exists():
+        if (child / "_feedback" / "session-log.jsonl").exists() or (child / "research.json").exists():
             results.append(scan_feedback_bundle(child, window=window))
     return results
 
@@ -504,6 +514,10 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
     )
     for r in results:
         tag = " [truncated]" if r["truncated"] else ""
+        if r.get("research_unreadable"):
+            tag += " [research unreadable]"
+        elif not r.get("has_research"):
+            tag += " [no research.json]"
         shape_warn = (
             "  ⚠ protected writes with zero Skill calls — likely a Skill-shape "
             "mismatch, investigate before trusting"
@@ -519,12 +533,16 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
             + shape_warn
         )
     # Totals with their denominators — never a combined number across detectors.
+    # The mentor-verdict denominator is only bundles with a readable research.json;
+    # a missing/unreadable one contributes no signal and must not inflate it.
+    with_research = [r for r in results if r["has_research"] and not r["research_unreadable"]]
     unguarded_total = sum(len(r["unguarded_writes"]) for r in with_transcript if not r["truncated"])
-    mentor_total = sum(len(r["missing_mentor_verdicts"]) for r in results)
+    mentor_total = sum(len(r["missing_mentor_verdicts"]) for r in with_research)
     lines.append(
         f"\nTotals: unguarded-write findings {unguarded_total} across "
         f"{len(with_transcript) - len(truncated)} attributable transcript(s); "
-        f"missing-mentor-verdict findings {mentor_total} across {n} bundle(s). "
+        f"missing-mentor-verdict findings {mentor_total} across "
+        f"{len(with_research)} bundle(s) with a readable research.json. "
         f"Corpus is small and self-selected — a signal, not a rate. "
         f"e2e baseline comparison pending issue #1484."
     )
@@ -557,7 +575,7 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "scan unpacked hosted feedback bundles under this directory (issue #1558) "
             "instead of the committed e2e corpus — each subdir a bundle with a "
-            "research.json and/or session-log.jsonl. Bundles live OUTSIDE the repo "
+            "research.json and/or _feedback/session-log.jsonl. Bundles live OUTSIDE the repo "
             "(make feedback-case → ~/feedback/); nothing bundle-derived is committed."
         ),
     )
