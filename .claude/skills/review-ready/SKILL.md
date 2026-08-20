@@ -1,6 +1,6 @@
 ---
 name: review-ready
-description: Use when the lead wants tasks vetted before juniors start them — "vet these before I hand them out", "are these tasks still a good idea", "is this safe for a junior", "review the fill-ready shortlist", "check the junior queue", or a bare "/review-ready". The gate between fill-ready (which ranks and promotes) and standup (which hands work out). Fans out one read-only task-reviewer agent per candidate issue, in parallel, each in fresh context — every agent reads the issue's cited code, the matching docs/architecture.md "If you're asked to…" block, the board's what-nothing-checks issues, and the relevant ADRs, then returns a verdict, the exact body text to add, and any decision only the lead can make. Collates the verdicts, puts the strategic questions to the lead, and applies only what he approves. Do NOT use to choose what the team works on, to rank the Backlog, or to move anything on the board — that is fill-ready, which calls this skill on its shortlist. Never starts the work.
+description: Use when the lead wants tasks vetted before juniors start them — "vet these before I hand them out", "are these tasks still a good idea", "is this safe for a junior", "review the fill-ready shortlist", "check the junior queue", or a bare "/review-ready". The gate between fill-ready (which ranks and promotes) and standup (which hands work out); covers both unassigned pools, developer and genealogist, with `--developer-only` to narrow it. Fans out one read-only task-reviewer agent per candidate issue, in parallel, each in fresh context — every agent reads the issue's cited code, the matching docs/architecture.md "If you're asked to…" block, the board's what-nothing-checks issues, and the relevant ADRs, then returns a verdict, the exact body text to add, and any decision only the lead can make. Collates the verdicts, puts the strategic questions to the lead, and applies only what he approves. Do NOT use to choose what the team works on, to rank the Backlog, or to move anything on the board — that is fill-ready, which calls this skill on its shortlist. Never starts the work.
 allowed-tools:
   - Agent
   - AskUserQuestion
@@ -44,13 +44,28 @@ Other entry points:
 
 - **Issue numbers as arguments** (`/review-ready 945 1031 1094`) — review exactly
   those, in any column. This is also how a re-review is asked for.
-- **Bare `/review-ready`** — the standing pool: unassigned `developer`-labeled
-  items in Ready. A first run, or a run after a gap.
-- **`--all`** — also include unassigned `genealogist` items, **except those
-  labelled `feedback`**, which are user bug reports rather than vetted tasks and
-  have nothing to review. Off by default because the three passes are
-  developer-shaped; the reason and what would change it are in the spec, §6. Say
-  so if asked rather than re-arguing it.
+- **Bare `/review-ready`** — the standing pool: unassigned items in Ready, **both
+  pools**, `developer` and `genealogist`. A first run, or a run after a gap.
+- **`--developer-only`** — the old default, kept for a cheap pass when you know
+  the genealogist half was gated this week. Halves the token cost and halves the
+  coverage.
+
+**`feedback`-labeled items are never in scope**, in any mode. They carry
+`genealogist`, so they would otherwise land in the fan-out, but they are user bug
+reports filed automatically — the body is a Drive link, and every question the
+three passes ask is answered by working the case, not by reading the issue.
+Reviewing one costs ~110k tokens to learn nothing. Their triage is
+`docs/alpha-feedback-guide.md`.
+
+**Why both pools, since this was developer-only until 2026-08-19.** A stale
+premise is not a developer-shaped defect. The run that changed it gated six
+developer issues and zero genealogist ones, and four of the six came back
+not-pickable — two carrying checks that would have shipped green and inert. The
+genealogist half went to Ready on one reader's judgment. And a bad genealogist
+premise is the more expensive one to discover: it surfaces in a paid
+`make eval-skill` run, not in CI. The cost is real — roughly double, ~110k tokens
+per issue — and is the point of the `--developer-only` escape, not a reason to
+default to it.
 
 ### Review on entry, not daily
 
