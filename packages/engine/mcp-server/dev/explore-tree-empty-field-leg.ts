@@ -33,8 +33,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // token that expires mid-run would otherwise print `HTTP 401` as a data value in
 // the results column. It auto-refreshes, so calling it per request is cheap.
 async function total(qs: string): Promise<{ v: number | string; tries: number }> {
-  const token = await getValidToken();
   for (let a = 0; a < 12; a++) {
+    const token = await getValidToken();
     await sleep(3000);
     // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
     // its own, and these scripts page for tens of minutes against an endpoint that
