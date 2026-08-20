@@ -160,7 +160,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           COSMETIC_SKIP: ${{ steps.cosmetic.outputs.skip }}
-        run: python eval/harness/scripts/check_runlogs.py
+        run: exit 1  # SCRATCH (#1378 runtime proof): force the gate to fail; REVERT before ready
 
       # `!cancelled()` here and on every step below: an `if:` with no
       # status-check function carries an implicit `success()`, so a failure in
