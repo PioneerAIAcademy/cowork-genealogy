@@ -79,7 +79,7 @@ measured exception, on `surname`:
 
 > **Without `exact=on` on a name field**, results include fuzzy matches, and
 > persons where **that field is empty** — for `givenName` and for a father's,
-> mother's, parent's or spouse's name (`other` not measured), but **not** for
+> mother's, parent's or spouse's name (the four this tool has), but **not** for
 > `surname`, where an unqualified value drops surname-empty persons. **With
 > `exact=on`**, whatever its own field admits is excluded.
 

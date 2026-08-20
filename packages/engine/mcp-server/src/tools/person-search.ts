@@ -355,7 +355,7 @@ export const personSearchToolSchema = {
     "EXACT-MATCH TOGGLES: without an `*Exact` flag a name field also matches " +
     "fuzzy spellings, and it keeps persons where that field is EMPTY — for " +
     "`givenName` and for a father's, mother's, parent's or spouse's name " +
-    "(`other` not measured), but NOT for `surname`, where an unqualified " +
+    "(the four this tool has), but NOT for `surname`, where an unqualified " +
     "value drops surname-empty persons. Setting a flag excludes " +
     "what its own field admits, so it only ever narrows and can drop the " +
     "target. This is the search engine's behaviour, measured against the " +

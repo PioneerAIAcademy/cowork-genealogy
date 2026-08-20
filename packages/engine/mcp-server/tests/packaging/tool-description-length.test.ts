@@ -11,9 +11,9 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * of the 43 toggles have EVER appeared in a call.
  *
  * **The justification is clarity; the token saving is small.** Measured after the
- * rewrite: `record_search` 15,509 -> 14,092 and `person_search` 3,745 -> 4,980
+ * rewrite: `record_search` 15,509 -> 14,092 and `person_search` 3,745 -> 4,982
  * (its toggles were stubs that were also wrong, so correctness cost tokens
- * there), for a combined 19,254 -> 19,072 — a net saving of about 182 characters,
+ * there), for a combined 19,254 -> 19,074 — a net saving of about 180 characters,
  * under 1%. This figure has been an increase and a saving at different points in
  * the same branch, which is the point: it is a side effect, not the argument.
  * `record_search.birthYearExact` at 475 chars is most of the remaining bulk. What
@@ -119,7 +119,7 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
   ["record_search", 14092],
-  ["person_search", 4980],
+  ["person_search", 4982],
 ];
 
 /**
