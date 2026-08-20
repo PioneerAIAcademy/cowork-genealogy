@@ -100,7 +100,12 @@ async function main(): Promise<void> {
   // ---- givenName: does an unqualified value keep given-name-empty records? ----
   const GPOOL = "q.surname=Pocklington&q.recordCountry=England&f.recordType=0";
   console.log("=== givenName ===");
-  const gBase = await readAll(`${GPOOL}&count=1`, 100);
+  // No `&count=1` here: `readAll` appends its own `&count=100`, so passing one
+  // produced a DUPLICATED query parameter whose winner is server-defined. Harmless
+  // as long as only `.total` is read, which is all this line does — but it is a
+  // latent trap in the one file whose purpose is documenting traps. The `100` cap
+  // is what keeps this to a single page.
+  const gBase = await readAll(GPOOL, 100);
   console.log(`  surname only ............................. total ${gBase?.total ?? "not comparable"}`);
   const gTotals: Array<number | null> = [];
   let gEmptyVerified = 0, gSampled = 0;
