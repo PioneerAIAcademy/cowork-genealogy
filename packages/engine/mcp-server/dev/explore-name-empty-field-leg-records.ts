@@ -115,13 +115,24 @@ async function main(): Promise<void> {
   }
   const gEx = await readAll(`${GPOOL}&q.givenName=${GIBBERISH[0]}&q.givenName.exact=on`, 200);
   console.log(`  + that token AND .exact=on ............... total ${gEx?.total ?? "not comparable"}`);
-  const spread = (xs: number[]) => xs.length < 2 ? 0 : (Math.max(...xs) - Math.min(...xs)) / Math.max(...xs);
+  // `spread` on a one-element set is 0, which would satisfy a guard whose whole
+  // purpose is AGREEMENT ACROSS TOKENS: if two of the three reads come back `null`,
+  // `gNums` is `[251]`, spread is 0, and the verdict fires off a single comparable
+  // read while printing "three tokens agree". The set-size precondition has to sit
+  // outside `spread`, because there is no value `spread([x])` can return that is
+  // both honest and usable.
+  const spread = (xs: number[]) => (Math.max(...xs) - Math.min(...xs)) / Math.max(...xs);
   const gNums = gTotals.filter((n): n is number => n !== null);
-  console.log(`  three tokens agree (spread <= 2%): ${spread(gNums) <= 0.02}   [${gNums.join(", ")}]`);
+  const allThreeComparable = gNums.length === GIBBERISH.length;
+  const agree = allThreeComparable && spread(gNums) <= 0.02;
+  console.log(`  all ${GIBBERISH.length} tokens comparable: ${allThreeComparable}` +
+              `   agree (spread <= 2%): ${agree}   [${gNums.join(", ")}]`);
   console.log(`  retained rows with NO typed Given part: ${gEmptyVerified}/${gSampled}`);
-  console.log(`  => VERDICT: ${spread(gNums) <= 0.02 && gEmptyVerified > gSampled * 0.8 && (gEx?.total === 0)
-    ? "unqualified KEEPS records with no typed Given part; .exact removes them"
-    : "not established by this run"}`);
+  console.log(`  => VERDICT: ${!allThreeComparable
+    ? `not established by this run — only ${gNums.length} of ${GIBBERISH.length} token reads were comparable`
+    : agree && gEmptyVerified > gSampled * 0.8 && gEx?.total === 0
+      ? "unqualified KEEPS records with no typed Given part; .exact removes them"
+      : "not established by this run"}`);
 
   // ---- surname: bound-record membership, no name term in the anchor (trap 4) ----
   const TARGET = "6NVD-8MRS";   // fullText "Escolastica", one Given part, no Surname part
