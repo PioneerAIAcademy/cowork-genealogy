@@ -108,9 +108,11 @@ def findings_hash(expected_findings_path: Path) -> str:
     `calibrate_judge`'s loader: an amended finding body (same id) changes this
     hash and is caught, where the id-vs-key drift check stays silent. Normalized
     via `hash_file` (parse → re-emit `sort_keys=True, indent=2,
-    ensure_ascii=False` → sha256), so a reformat or key reorder does not fire but
-    any content edit — including one confined to `supporting_sources`, which the
-    judge still reads — does.
+    ensure_ascii=False` → sha256), so a whitespace reformat or JSON object-key
+    reorder does not fire, but any content edit — including one confined to
+    `supporting_sources`, which the judge still reads — does. Reordering the
+    `findings` array itself counts as a change (JSON array order is preserved);
+    that is an accepted cost of hashing the whole file, remedied by a re-grade.
 
     **This is the single implementation both sides call** (the loader and the
     `stamp_findings_hash` writer), so they cannot disagree on whitespace or

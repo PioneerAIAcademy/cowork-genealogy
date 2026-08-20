@@ -19,6 +19,7 @@ from e2e.calibrate_judge import (
     load_annotated_runs,
     main,
 )
+from e2e import stamp_findings_hash as stamp_mod
 from e2e.provenance import findings_hash
 from e2e.stamp_findings_hash import stamp as stamp_findings_hash
 
@@ -386,18 +387,78 @@ def test_stamp_refuses_missing_fixture(tmp_path):
         stamp_findings_hash(ann_path, fr)
 
 
-def test_stamp_is_idempotent_and_reflects_a_fixture_edit(tmp_path):
+def test_stamp_writes_hash_and_preserves_sibling_keys(tmp_path):
+    rr, fr, ann_path = _layout(
+        tmp_path, ann={"annotator": "alice", "per_finding": {"f1": "true", "f2": "partial"}})
+    h1 = stamp_findings_hash(ann_path, fr)
+    written = json.loads(ann_path.read_text(encoding="utf-8"))
+    assert written["findings_hash"] == h1  # actually persisted, not just returned
+    assert written["per_finding"] == {"f1": "true", "f2": "partial"}  # untouched
+    assert written["annotator"] == "alice"
+    # Idempotent on the file: a second stamp of an unchanged fixture leaves it equal.
+    assert stamp_findings_hash(ann_path, fr) == h1
+    assert json.loads(ann_path.read_text(encoding="utf-8")) == written
+
+
+def test_stamp_reflects_a_fixture_edit(tmp_path):
     rr, fr, ann_path = _layout(tmp_path)
     h1 = stamp_findings_hash(ann_path, fr)
-    assert stamp_findings_hash(ann_path, fr) == h1  # idempotent
-    # Amend the fixture; a re-stamp tracks the new content, and the OLD hash now
-    # mismatches (which is what the loader would catch).
     (fr / "smith-1850" / "expected-findings.json").write_text(
         json.dumps({"findings": [{"id": "f1", "required": True, "details": "new"},
                                  {"id": "f2", "required": True}]}),
         encoding="utf-8")
-    h2 = stamp_findings_hash(ann_path, fr)
-    assert h2 != h1
+    assert stamp_findings_hash(ann_path, fr) != h1
+
+
+# --- stamp CLI main(): arg parsing + exit codes + path resolution ----------
+
+
+def test_stamp_cli_main_success(tmp_path):
+    rr, fr, ann_path = _layout(tmp_path)
+    rc = stamp_mod.main([str(ann_path), "--fixtures-root", str(fr)])
+    assert rc == 0
+    written = json.loads(ann_path.read_text(encoding="utf-8"))
+    assert written["findings_hash"] == findings_hash(
+        fr / "smith-1850" / "expected-findings.json")
+
+
+def test_stamp_cli_main_missing_fixture_exits_1(tmp_path):
+    rr, fr, ann_path = _layout(tmp_path, fixture=False)
+    rc = stamp_mod.main([str(ann_path), "--fixtures-root", str(fr)])
+    assert rc == 1
+
+
+def test_stamp_cli_resolves_repo_root_relative_path(tmp_path, monkeypatch):
+    # Reproduces the cwd footgun: the skill hands a repo-root-relative ann path,
+    # but `uv run` puts cwd at eval/harness where that path does not resolve. The
+    # CLI must fall back to REPO_ROOT so the stamp still lands.
+    rr, fr, ann_path = _layout(tmp_path)
+    monkeypatch.setattr(stamp_mod, "REPO_ROOT", tmp_path)
+    rel = ann_path.relative_to(tmp_path)  # runlogs/e2e/smith-1850/run-....ann.json
+    monkeypatch.chdir(fr)  # a cwd where `rel` does NOT resolve directly
+    rc = stamp_mod.main([str(rel), "--fixtures-root", str(fr)])
+    assert rc == 0
+    assert json.loads(ann_path.read_text(encoding="utf-8"))["findings_hash"]
+
+
+# --- main() dry-run: grandfather summary + content-drift exit --------------
+
+
+def test_main_dry_run_grandfathered_prints_unverifiable(tmp_path, capsys):
+    rr, fr, _ = _layout(tmp_path)  # no findings_hash → grandfathered
+    rc = main(["--dry-run", "--runlog-root", str(rr), "--fixtures-root", str(fr)])
+    assert rc == 0
+    assert "carry no findings_hash" in capsys.readouterr().err
+
+
+def test_main_dry_run_content_drift_exits_two(tmp_path):
+    rr, fr, ann_path = _layout(tmp_path)
+    ann_path.write_text(
+        json.dumps({"per_finding": {"f1": "true", "f2": "partial"},
+                    "findings_hash": "0" * 64}),
+        encoding="utf-8")
+    rc = main(["--dry-run", "--runlog-root", str(rr), "--fixtures-root", str(fr)])
+    assert rc == 2
 
 
 def test_loader_orphaned_fixture_is_error(tmp_path):

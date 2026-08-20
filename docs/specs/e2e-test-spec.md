@@ -1185,8 +1185,10 @@ without API calls) — contributors never do.
 
 **Why `findings_hash` covers the whole file, normalized.** The stamp is a sha256
 over the entire `expected-findings.json`, normalized (parsed then re-emitted with
-sorted keys and stable formatting before hashing), so a reformat or key reorder
-does not fire but any content edit does. It is computed by one shared function
+sorted object keys and stable formatting before hashing), so a whitespace reformat
+or object-key reorder does not fire but any content edit does. Reordering the
+`findings` array counts as a change (array order is preserved) — an accepted cost
+of hashing the whole file, cleared by a re-grade. It is computed by one shared function
 that both the grader's stamp step and the loader call, so the two cannot disagree
 on whitespace or non-ASCII encoding — a corpus full of em-dashes and accented
 names would otherwise make every fresh stamp fail the check it exists to satisfy.
