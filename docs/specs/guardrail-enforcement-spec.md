@@ -999,6 +999,13 @@ this section before reopening one.
   completion instrument — but it is the first of the four, and the route is now
   demonstrated rather than argued.
 
+  **What the conversion cost, and the rules that came out of it:**
+  `docs/skill-to-agent-pair-conversion.md`. The short version, because it bears
+  on every later pair: a prose gate weakens when it moves behind a delegation
+  boundary — the caller's framing competes with it — so a rule that must hold
+  belongs in the writer tool before the prose moves. Five tests that were stable
+  across five pre-fold runs became unstable across five post-fold ones.
+
   **Two things the first paid run taught, both worth keeping.** The agent is
   pinned to the model the doctrine ran under *before* the fold, not to the model
   the nearest analogue uses: the 2026-08-19 run pinned `claude-sonnet-5` and so

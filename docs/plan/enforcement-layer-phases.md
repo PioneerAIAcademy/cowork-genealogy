@@ -90,6 +90,13 @@ and ~19 drifting copies of one rule). Tracked as issue #1695, which **must follo
 
 ## Phase 4 — the remaining pairs
 
+**Read `docs/skill-to-agent-pair-conversion.md` first.** The first conversion
+took nine paid runs, most of them avoidable; that document is the measured
+record and the ordered process. The two rules that would have saved the most:
+move a rule that must hold into the writer tool *before* the prose moves, and
+fold verbatim then run once unchanged to get the pair's own baseline.
+
+
 **Ranked by measured traffic, not by tractability.** Across 154 e2e runs only 18
 distinct skills are ever routed to; `timeline`, `hypothesis-tracking`,
 `citation`, `convert-dates` and `tree-edit` are invoked **zero** times, so
