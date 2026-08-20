@@ -1099,7 +1099,7 @@ Shared validation code in `eval/harness/validators/`. These run on every test re
 One file per skill in `eval/harness/validators/`, following pytest naming (`test_conflict_resolution.py`).
 
 - **Ownership enforcement** — the skill only wrote to sections it owns per the ownership table in research-schema-spec.md Section 4. Operates on the diff.
-- **Tool allowlist (advisory)** — warns when the skill called MCP tools not listed in its SKILL.md `allowed-tools` frontmatter. Does not fail the test — the session grants all tools (issue #1748). Operates on the tool calls list.
+- **Tool allowlist (advisory)** — warns when the skill called MCP tools not listed in its SKILL.md `allowed-tools` frontmatter. Does not fail the test — the session grants all tools. Operates on the tool calls list.
 - **Skill structural rules** — requirements from SKILL.md that are deterministically checkable (e.g., "every conflict must have ≥2 competing_assertion_ids"). Operates on the diff.
 
 ### Conventions
@@ -1123,7 +1123,7 @@ def test_log_append_only(before_state, after_state, tool_calls):
         assert entry in after_log, f"log entry {entry['id']} was modified or removed"
 
 def test_tool_allowlist(tool_calls, skill_frontmatter, test):
-    """Advisory: warns when undeclared tools were called (issue #1748)."""
+    """Advisory: warns when undeclared tools were called."""
     import warnings
     allowed = (skill_frontmatter or {}).get("allowed-tools", [])
     bad = [c["tool"].split("__")[-1] for c in tool_calls
@@ -1693,7 +1693,7 @@ Key settings:
 ### Deriving `allowed_tools` per skill
 
 The harness grants every registered MCP tool to every skill, matching
-production (issue #1748). Neither Cowork nor the hosted control plane builds a
+production. Neither Cowork nor the hosted control plane builds a
 per-skill allowlist: `allowed-tools` is a **grant** ("tools Claude can use
 without asking permission"), not a restriction — the field that removes a tool
 is `disallowed-tools`, which no skill declares. The previous harness behavior
@@ -1817,7 +1817,7 @@ def create_mock_server(fixture_manifest):
 
 The `matched.kind` field in `call_log` is either `"predicate"` (a fixture matched) or `"none"` (no fixture matched — the handler returned the `fixture_not_found` envelope above). `expected_args` carries the matched fixture's `args` block so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file.
 
-Any call recorded with `matched.kind == "none"` — and any MCP call the model emitted that never reached the mock at all, because the tool had no fixture — aborts the run with `aborted_reason: unmatched_tool_call`. The harness diffs the MCP calls the model emitted against the calls that matched a fixture predicate; any shortfall is an uncovered call. A skill that ran against a `fixture_not_found` error produced output from bad data, so grading it would be meaningless — the fix is always a corpus fix (add or correct a fixture). (Per-skill tool denial was retired in issue #1748; all MCP tools are granted.)
+Any call recorded with `matched.kind == "none"` — and any MCP call the model emitted that never reached the mock at all, because the tool had no fixture — aborts the run with `aborted_reason: unmatched_tool_call`. The harness diffs the MCP calls the model emitted against the calls that matched a fixture predicate; any shortfall is an uncovered call. A skill that ran against a `fixture_not_found` error produced output from bad data, so grading it would be meaningless — the fix is always a corpus fix (add or correct a fixture). (Per-skill tool denial was retired; all MCP tools are granted.)
 
 The SDK is configured to use the mock server:
 
@@ -2008,7 +2008,7 @@ Eight fixtures in `eval/fixtures/mcp/`:
 Validators in `eval/harness/validators/` fall into two tiers:
 
 - **Gating** — failure prevents the LLM judge from running (saves cost). All universal validators except `test_tool_allowlist` are gating.
-- **Advisory** — emits a warning but does not fail the test. `test_tool_allowlist` is advisory (issue #1748): it warns when a skill calls undeclared tools, but the session grants all tools regardless.
+- **Advisory** — emits a warning but does not fail the test. `test_tool_allowlist` is advisory: it warns when a skill calls undeclared tools, but the session grants all tools regardless.
 
 | Validator | Path | Scope |
 |-----------|------|-------|

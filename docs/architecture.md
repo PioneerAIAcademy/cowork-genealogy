@@ -668,14 +668,14 @@ the most expensive mistake in this layer, because two of the three fail
 
 | Surface | Spelling | Binds in production? |
 |---|---|---|
-| Skill `allowed-tools:` | **bare** (`research_query`) | **No** — neither production path nor the unit harness narrows per skill. The field is a grant, not a restriction (issue #1748). Advisory only: the `test_tool_allowlist` validator warns on undeclared calls. |
+| Skill `allowed-tools:` | **bare** (`research_query`) | **No** — neither production path nor the unit harness narrows per skill. The field is a grant, not a restriction. Advisory only: the `test_tool_allowlist` validator warns on undeclared calls. |
 | Agent `tools:` / `disallowedTools:` | **spelled under all three registrars**, matched exactly | **Yes** — and a deny binds even under `bypassPermissions`. |
 | `PreToolUse` hook | n/a — matches on tool name + input | **Yes**, in Cowork and the hosted path. **Neither harness loads the plugin's hooks** (§5.4). |
 
 ### 5.1 Skill `allowed-tools` — declarative everywhere
 
 A skill lists the MCP tools it calls **by bare name**. The unit harness grants
-every registered MCP tool to every skill, matching production (issue #1748).
+every registered MCP tool to every skill, matching production.
 `allowed-tools` is a grant — "tools Claude can use without asking permission" —
 not a restriction; the field that removes a tool is `disallowed-tools`, which no
 skill declares. Deriving a deny list as the complement inverted the field's
