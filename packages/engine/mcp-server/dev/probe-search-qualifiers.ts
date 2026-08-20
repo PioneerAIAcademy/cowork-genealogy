@@ -409,12 +409,19 @@ interface Persona {
    * behind a "the record is silent" claim, so it must not claim silence about a
    * parent whose sex the payload never states.
    *
-   * `father` still uses `parentsIndexed` and is NOT changed here — its verdict
-   * is recorded and reproduced, and it has the mirror-image weakness (a
-   * mother-only record read as father-nameless) which was 4 rows in Pocklington
-   * and never moved its numbers. Fixing it is its own measurement.
    */
   mothersIndexed: number;
+  /**
+   * The mirror image, for `father`: parents that could BE the father — everyone
+   * except a provably-female one.
+   *
+   * Section R needs COMPLETENESS here, not just sufficiency, because it divides
+   * silence by the baseline and compares that share against retention. Section F
+   * deliberately keeps `parentsIndexed === 0` instead, and is right to: it needs a
+   * SUFFICIENT condition to pick representatives that certainly have no father,
+   * and zero indexed parents is exactly that.
+   */
+  fathersIndexed: number;
   /**
    * `display.birthDate` of the matched persona, as free text the way the index
    * holds it ("12 March 1850", "1850", occasionally a range). SECTION H parses
@@ -717,12 +724,16 @@ async function searchOnce(query: string, attempt: number): Promise<Hit | typeof 
     // Everyone except a PROVABLY-male parent. Same gender precedence as `father`
     // above; `/Male$/` does not match ".../Female" (that ends "emale"), which is
     // what makes the negation safe to write this way.
-    const mothersIndexed = persons.filter((q) => {
+    const couldBe = (wrongSex: "Male" | "Female") => (q: (typeof persons)[number]) => {
       if (!parentIds.includes(q.id as string)) return false;
       const d = (q.display ?? {}) as { gender?: string };
       const gt = (q.gender as { type?: string } | undefined)?.type ?? "";
-      return !(d.gender === "Male" || /Male$/.test(gt));
-    }).length;
+      // `/Male$/` does not match ".../Female" (that ends "emale"), so the negation
+      // is safe to write this way for both sexes.
+      return !(d.gender === wrongSex || new RegExp(wrongSex + "$").test(gt));
+    };
+    const mothersIndexed = persons.filter(couldBe("Male")).length;
+    const fathersIndexed = persons.filter(couldBe("Female")).length;
 
     // `givenOf` now lives in dev/payload-extract.ts (see its docblock there).
     const fatherName = ((father?.display ?? {}) as { name?: string }).name ?? null;
@@ -783,6 +794,7 @@ async function searchOnce(query: string, attempt: number): Promise<Hit | typeof 
       parentGivenOfMatched: givenOf(parent),
       spousesIndexed,
       mothersIndexed,
+      fathersIndexed,
       score: typeof e.score === "number" ? e.score : null,
       // Both sources of a date, per person: typed facts and the display block.
       // Section H found records that carry a year ONLY on `display`, so a
@@ -4307,7 +4319,10 @@ async function sectionR(): Promise<void> {
       id: "father",
       param: "fatherGivenName",
       nameOf: (p) => p.fatherGivenOfMatched,
-      indexedCount: (p) => p.parentsIndexed,
+      // NOT parentsIndexed — the mirror of the mother fix. A mother-only record is
+      // father-silent, and calling it father-nameless understates the silent share
+      // that this section compares against retention.
+      indexedCount: (p) => p.fathersIndexed,
     },
     {
       id: "spouse",
@@ -4398,6 +4413,7 @@ async function sectionR(): Promise<void> {
   };
 
   const rows: Array<Record<string, unknown>> = [];
+  const sexRows: Array<Record<string, unknown>> = [];
   for (const pop of POPS) {
     console.log(`\n  -- ${pop.id}`);
     const baseScan = await mustEnumerate(pop.base);
@@ -4413,6 +4429,36 @@ async function sectionR(): Promise<void> {
       console.log("     NOT MEASURED — the enumerated baseline is empty");
       continue;
     }
+
+    // Which rows does the sex-specific denominator actually reclassify, and why?
+    // Added because the answer was being GUESSED. `mothersIndexed` moved 30
+    // Pocklington rows out of mother-nameless; whether `fathersIndexed` moves any
+    // depends on whether those parents carry a READABLE sex, and no recorded figure
+    // said. It does now.
+    //
+    // A parent of unreadable sex counts toward BOTH denominators by design, so it is
+    // double-counted across the two; that overlap is what `anyUnreadable` detects.
+    const withParents = baseScan.personas.filter((q) => q.parentsIndexed > 0);
+    const allFemale = withParents.filter((q) => q.fathersIndexed === 0).length;
+    const allMale = withParents.filter((q) => q.mothersIndexed === 0).length;
+    const anyUnreadable = withParents.filter(
+      (q) => q.mothersIndexed + q.fathersIndexed > q.parentsIndexed
+    ).length;
+    sexRows.push({
+      pop: pop.id,
+      baselineRows: baseline,
+      rowsWithAParent: withParents.length,
+      allParentsProvablyFemale: allFemale,
+      allParentsProvablyMale: allMale,
+      rowsWithAnUnreadableSexParent: anyUnreadable,
+    });
+    console.log(
+      `     parent sex: ${withParents.length} row(s) name a parent — ${allFemale} all-female ` +
+        `(these move father-nameless -> father-silent), ${allMale} all-male ` +
+        `(mother-nameless -> mother-silent), ${anyUnreadable} with a parent of ` +
+        `unreadable sex (no move — counted in both)`
+    );
+
     for (const fam of FAMILIES) {
       // THREE buckets, not two. `nameOf(p) === null` conflates a record with no
       // such relative indexed at all with one whose relative IS indexed but whose
@@ -4501,6 +4547,7 @@ async function sectionR(): Promise<void> {
     }
   }
   record("R", "rows", rows);
+  record("R", "parentSexReadability", sexRows);
 
   if (rows.length === 0) {
     record("R", "verdict:keep-silent", "NOT MEASURED");

@@ -436,23 +436,23 @@
         "family": "father",
         "baselineRows": 521,
         "namedInBaseline": 147,
-        "namelessButIndexedInBaseline": 9,
-        "silentInBaseline": 365,
-        "silentSharePct": 70.1,
+        "namelessButIndexedInBaseline": 8,
+        "silentInBaseline": 366,
+        "silentSharePct": 70.2,
         "gibberish": {
           "total": 366,
           "match": 0,
           "conflict": 0,
-          "silent": 365,
-          "nameless": 1
+          "silent": 366,
+          "nameless": 0
         },
         "realName": "João",
         "real": {
           "total": 379,
           "match": 12,
           "conflict": 0,
-          "silent": 365,
-          "nameless": 2
+          "silent": 366,
+          "nameless": 1
         },
         "retentionPct": 70.2
       },
@@ -626,6 +626,24 @@
         "retentionPct": 92.8
       }
     ],
+    "parentSexReadability": [
+      {
+        "pop": "Brazil/Bochenek",
+        "baselineRows": 521,
+        "rowsWithAParent": 156,
+        "allParentsProvablyFemale": 1,
+        "allParentsProvablyMale": 0,
+        "rowsWithAnUnreadableSexParent": 8
+      },
+      {
+        "pop": "England/Pocklington",
+        "baselineRows": 469,
+        "rowsWithAParent": 34,
+        "allParentsProvablyFemale": 0,
+        "allParentsProvablyMale": 30,
+        "rowsWithAnUnreadableSexParent": 4
+      }
+    ],
     "verdict:drop-contradicting": "HOLDS — across every enumerated pool, an unmatchable name left zero records naming a different relative",
     "verdict:keep-silent": "HOLDS — the records retained by an unmatchable name are the ones the baseline is silent about, in the same number",
     "verdict:keep-matching": "HOLDS — a real name drawn from the data returns matching records",
@@ -637,7 +655,7 @@
         "name": "Paulo",
         "baselineRows": 521,
         "exactRows": 17,
-        "silentReps": 365,
+        "silentReps": 366,
         "silentKept": 0,
         "controlPresent": true
       },
@@ -731,7 +749,7 @@
     "verdict:father .exact requires the relative to be present": "CONFIRMED — across 2 population(s) read in full, every father-silent record is absent from the .exact set and the father-bearing control survives",
     "verdict:mother .exact requires the relative to be present": "CONFIRMED — across 1 population(s) read in full, every mother-silent record is absent from the .exact set and the mother-bearing control survives",
     "verdict:parent .exact requires the relative to be present": "CONFIRMED — across 2 population(s) read in full, every parent-silent record is absent from the .exact set and the parent-bearing control survives",
-    "measured_at": "2026-08-20T16:15:41.961Z"
+    "measured_at": "2026-08-20T17:15:13.093Z"
   },
   "I": {
     "fuzzy": {
