@@ -25,16 +25,33 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * how it got here.
  *
  * The ceiling is SIZED FROM THE ONE-LINERS ACTUALLY WRITTEN, not guessed. The
- * two longest non-exempt descriptions are `record_search.givenNameExact` at **238**
- * and `record_search.surnameExact` at **237** — both within three characters of the
- * ceiling. Next is `birthPlaceExact` at 181. Before this change six toggles
- * exceeded the ceiling: 475, 402, 375, 341, 269, 255.
+ * three longest non-exempt descriptions are `record_search.givenNameExact` at
+ * **238**, `record_search.surnameExact` at **237**, and
+ * `person_search.birthYearExact` at **209** — note that only `record_search`'s
+ * `birthYearExact` is exempt, so the person_search one counts. Then
+ * `record_search.birthPlaceExact` at 181. Before #1409 six toggles exceeded the old
+ * ceiling: 475, 402, 375, 341, 269, 255.
  *
- * **So the ceiling is effectively binding on two descriptions, not one.** A
- * three-word clarification to either trips this lint. When it does, the fix is to
- * shorten it or split a clause out to the spec — NOT to raise the ceiling, and NOT
- * to add an `EXEMPT` entry, which is for a description whose behaviour is under
- * active measurement.
+ * The assertion below caught this list being wrong on its first run: it named
+ * `birthPlaceExact` third, from a measurement whose filter had excluded BOTH tools'
+ * `birthYearExact` when only one is exempt. Fourth error in this docstring, first
+ * one caught by a test rather than a reviewer.
+ *
+ * **The ceiling is the midpoint of the empirical gap.** Legitimate one-liners top
+ * out at 238; the smallest real offender was 255; so any ceiling in 239..254 is
+ * defensible and 250 is the middle of it. 240 was the bottom of that range and left
+ * two characters of headroom, which makes an ordinary clarification look like a
+ * defect. 255 or above is NOT available: it would re-admit a description this PR
+ * shortened for being too long, and a lint that permits what it was written to
+ * catch is worse than a tight one.
+ *
+ * When it does bind, the fix is to shorten the description — NOT to raise the
+ * ceiling, and NOT to add an `EXEMPT` entry, which is for a description whose
+ * behaviour is under active measurement. Note what is NOT the fix: moving a clause
+ * to the spec. The model reads these descriptions and never reads the spec, and the
+ * initials clause on `givenNameExact` is the most actionable thing either tool says
+ * about that leg. Shrinking model-facing guidance to satisfy a lint is the wrong
+ * trade.
  *
  * **This comment has now been wrong three times about its own basis** — first
  * citing `surnameExact` at 205 with a baseline list uniformly +2 (counting the
@@ -51,7 +68,28 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * length is not a smell, and inventing a number for those would be exactly the
  * guess this comment says the ceiling is not.
  */
-const CEILING = 240;
+const CEILING = 250;
+
+/**
+ * The figures the docstring above rests on, asserted rather than trusted.
+ *
+ * That docstring has been wrong about its own basis THREE times — 205 with a
+ * baseline list uniformly +2; then naming `birthPlaceExact` as longest while
+ * quoting a bigger number for `givenNameExact` in the same sentence; then carrying
+ * 201/198 for two descriptions a later commit rewrote to 181/237. The cause was the
+ * same every time: measure, edit the descriptions being measured, forget to
+ * re-measure. Raising the ceiling does nothing about that; this does.
+ *
+ * Keep these in step with the prose above. A drift is then a named test failure
+ * rather than something a reviewer has to catch by re-deriving the numbers.
+ */
+const DOCUMENTED_LONGEST: Array<[string, number]> = [
+  ["record_search.givenNameExact", 238],
+  ["record_search.surnameExact", 237],
+  ["person_search.birthYearExact", 209],
+];
+/** Smallest description that exceeded the ceiling before #1409 shortened it. */
+const SMALLEST_HISTORICAL_OFFENDER = 255;
 
 /**
  * Exempt, by name and with the reason, so an exemption cannot outlive it.
@@ -99,6 +137,41 @@ describe("*Exact descriptions stay one-liners", () => {
       ).toEqual([]);
     });
   }
+
+  it("the docstring's own figures still match the schemas", () => {
+    const props = (toolName: string) =>
+      ((allToolSchemas.find((t) => t.name === toolName)?.inputSchema as
+        { properties?: Record<string, { description?: string }> })?.properties ?? {});
+    const drift: string[] = [];
+    for (const [path, documented] of DOCUMENTED_LONGEST) {
+      const [tool, param] = path.split(".");
+      const actual = ((props(tool!)[param!] ?? {}).description ?? "").length;
+      if (actual !== documented) drift.push(`${path}: docstring says ${documented}, actual ${actual}`);
+    }
+    // The ordering claim matters as much as the values: the docstring names these
+    // as the LONGEST, and the ceiling is derived from the first of them.
+    const measured = ["record_search", "person_search"]
+      .flatMap((t) => Object.entries(props(t)).map(([k, v]) => [`${t}.${k}`, (v.description ?? "").length] as [string, number]))
+      .filter(([k]) => /Exact$/.test(k) && !EXEMPT.has(k))
+      .sort((a, b) => b[1] - a[1]);
+    const topThree = measured.slice(0, 3).map(([k]) => k);
+    const documentedOrder = DOCUMENTED_LONGEST.map(([k]) => k);
+    if (JSON.stringify(topThree) !== JSON.stringify(documentedOrder)) {
+      drift.push(`longest three are now ${topThree.join(" > ")}, docstring names ${documentedOrder.join(" > ")}`);
+    }
+    if (CEILING <= (measured[0]?.[1] ?? 0)) drift.push(`CEILING ${CEILING} is below the longest description`);
+    if (CEILING >= SMALLEST_HISTORICAL_OFFENDER) {
+      drift.push(`CEILING ${CEILING} would re-admit the smallest historical offender (${SMALLEST_HISTORICAL_OFFENDER})`);
+    }
+    expect(
+      drift,
+      "the docstring above no longer describes reality.\n" +
+        "  It is the ONLY justification for CEILING, and it has been wrong about its\n" +
+        "  own basis three times — always by editing a description and not\n" +
+        "  re-measuring. Re-derive from allToolSchemas and update both the prose and\n" +
+        "  DOCUMENTED_LONGEST in the same commit."
+    ).toEqual([]);
+  });
 
   it("every exemption names a reason and stays reachable", () => {
     const problems: string[] = [];
