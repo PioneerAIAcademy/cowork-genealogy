@@ -301,8 +301,37 @@ describe("measured figures stay traceable to the probe artifact", () => {
    * honest re-runs, which is how a check gets deleted.
    */
   const DRIFT = 0.001;
-  const traces = (n: number): boolean => {
-    if (EXEMPT.has(n)) return true;
+  /**
+   * Surfaces an exemption is granted FOR. `EXEMPT` is keyed by VALUE and `traces`
+   * runs per surface, so without this an exemption written for one document silently
+   * excuses the same number in every other — a stale `56,177` pasted into the
+   * record-side spec would trace for free, on a reason naming the person-side probe.
+   *
+   * Absent from this map means every surface, which is the historical default and is
+   * correct for a figure that genuinely appears in more than one place (`9` does, in
+   * three). Each entry below was placed by tokenising every figure on the four
+   * surfaces and testing membership, not by reading the reason strings.
+   */
+  const EXEMPT_SCOPE = new Map<number, readonly string[]>([
+    [14095, ["docs/specs/record-search-tool-spec-v2.md"]],
+    [251867, ["docs/specs/record-search-tool-spec-v2.md"]],
+    [31606, ["docs/specs/record-search-tool-spec-v2.md"]],
+    [10730, ["docs/specs/record-search-tool-spec-v2.md"]],
+    [1100, ["docs/specs/record-search-tool-spec-v2.md"]],
+    [3380, ["packages/engine/mcp-server/src/tools/record-search.ts"]],
+    [1478, ["packages/engine/mcp-server/src/tools/record-search.ts"]],
+    [947, ["packages/engine/mcp-server/src/tools/record-search.ts"]],
+    [56177, ["docs/specs/person-search-tool-spec.md"]],
+    [9700, ["docs/specs/person-search-tool-spec.md"]],
+    [2916, ["docs/specs/person-search-tool-spec.md"]],
+  ]);
+
+  const traces = (n: number, rel: string): boolean => {
+    if (EXEMPT.has(n)) {
+      const scope = EXEMPT_SCOPE.get(n);
+      // Out of scope falls THROUGH to the artifact check rather than passing.
+      if (scope === undefined || scope.includes(rel)) return true;
+    }
     for (const v of [...recorded, ...derived]) {
       // Relative only, with a floor small enough that it cannot bridge two
     // genuinely different small numbers. The old floor was 2, which let `100×`
@@ -318,7 +347,7 @@ describe("measured figures stay traceable to the probe artifact", () => {
     it(`every precise figure in ${rel} traces to the artifact`, () => {
       const text = readFileSync(join(projectRoot, rel), "utf8");
       const orphans = collectFigures(text)
-        .filter((f) => !traces(f.value))
+        .filter((f) => !traces(f.value, rel))
         .map((f) => f.raw);
       expect(
         [...new Set(orphans)],
