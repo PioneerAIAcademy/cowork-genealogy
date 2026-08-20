@@ -77,7 +77,7 @@ function recordBrowseAndCheckBudget(
 // holds only where the call is not bridged (the harnesses and the hosted
 // control plane, both verified over stdio): in Cowork the device bridge aborts
 // every MCP call at 60s, so any OCR past a minute is lost there regardless of
-// this value. Whether the desktop `.mcpb` is bridged too is unverified (#1732);
+// this value. Whether the desktop `.mcpb` is bridged too has not been measured;
 // see docs/architecture.md "Other environment differences that bite".
 const OCR_TIMEOUT_MS = 180_000;
 

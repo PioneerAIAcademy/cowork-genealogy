@@ -1293,11 +1293,11 @@ Other environment differences that bite:
   budget above 60s is therefore aspirational in Cowork: the call is aborted with
   `tool "…" timed out after 60s` before the tool's own budget fires, and its
   eventual result is discarded. The harnesses and the hosted control plane
-  register the server over stdio and are **not** capped (two committed e2e run
-  logs carry `image_transcribe`'s own 180s timeout as a result, so a call ran
+  register the server over stdio and are **not** capped (committed e2e run
+  logs carry `image_transcribe`'s own 180s timeout as a result, so calls ran
   past 60s there). `image_transcribe`'s `OCR_TIMEOUT_MS = 180s` is the first
-  budget this bites (9.8% of healthy calls exceed 60s, measured over the corpus
-  as of 2026-08-16 — see the spec's Timeout budget section), but
+  budget this bites (roughly 10-15% of healthy calls exceed 60s — see the
+  spec's Timeout budget section for why it is a range, not a point), but
   it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
   budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
   above the ceiling too. **No automated check reaches this** — neither harness
