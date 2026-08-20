@@ -40,7 +40,15 @@ async function total(qs: string): Promise<number | string> {
     const res = await fetchWithTimeout(`${BASE}?${qs}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } });
     if (res.status === 204) return 0;   // meaningful zero, not a retry
-    if (res.status === 429) { await sleep((Number(res.headers.get("retry-after") ?? 5)) * 1000 + 500); continue; }
+    if (res.status === 429) {
+      // `??` only defends a MISSING header. RFC 7231 also allows an HTTP-date, and
+      // `Number("Wed, 20 Aug 2026 07:00:00 GMT")` is NaN — which setTimeout treats as
+      // 0ms, so every retry fires instantly and the run reports throttling it never
+      // waited for. Same shape as the 204/429 inversion this file family documents.
+      const ra = Number(res.headers.get("retry-after"));
+      await sleep((Number.isFinite(ra) ? ra : 5) * 1000 + 500);
+      continue;
+    }
     if (!res.ok) return `HTTP ${res.status}`;
     const txt = await res.text();
     if (!txt.trim()) { await sleep(2000); continue; }   // transient empty body

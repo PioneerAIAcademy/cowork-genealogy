@@ -60,7 +60,9 @@ async function readAll(range: string): Promise<{ total: number | null; ids: stri
     if (res.status === 204) return { total: total ?? 0, ids };   // meaningful zero
     if (res.status === 429) {                                     // retry, do not truncate
       if (++attempts > 8) return null;                            // bounded: null, never a partial
-      await sleep((Number(res.headers.get("retry-after") ?? 8)) * 1000 + 1500);
+      // NaN from an HTTP-date `Retry-After` would fire every retry instantly.
+      const ra = Number(res.headers.get("retry-after"));
+      await sleep((Number.isFinite(ra) ? ra : 8) * 1000 + 1500);
       offset -= 100;
       continue;
     }

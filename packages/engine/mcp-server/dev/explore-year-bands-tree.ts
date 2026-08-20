@@ -46,7 +46,14 @@ async function page(qs: string): Promise<any | null> {
     // in-EVERY-band test. That is the trap explore-tree-204-vs-429.ts documents,
     // and this script contained it until 2026-08-20.
     if (res.status === 204) return { results: 0, entries: [] };
-    if (res.status === 429) { retries++; await sleep((Number(res.headers.get("retry-after") ?? 8)) * 1000 + 1500); continue; }
+    if (res.status === 429) {
+      // NaN from an HTTP-date `Retry-After` would make setTimeout fire immediately,
+      // burning every retry in milliseconds; `??` does not catch that.
+      retries++;
+      const ra = Number(res.headers.get("retry-after"));
+      await sleep((Number.isFinite(ra) ? ra : 8) * 1000 + 1500);
+      continue;
+    }
     if (!res.ok) return null;
     const txt = await res.text();
     if (!txt.trim()) { retries++; await sleep(1500); continue; }
