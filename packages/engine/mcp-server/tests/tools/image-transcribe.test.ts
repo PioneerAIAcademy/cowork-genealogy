@@ -235,6 +235,32 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
     ).rejects.toThrow(/Could not reach OpenRouter/);
   });
 
+  // #1594: Node's `fetch failed` hides the socket code on `error.cause`; the
+  // bare `.message` classifies nothing. The thrown message must carry the code.
+  it("surfaces the socket-level cause code hidden on error.cause (#1594)", async () => {
+    const cause = Object.assign(new Error("read ECONNRESET"), {
+      code: "ECONNRESET",
+    });
+    const fetchFailed = Object.assign(new TypeError("fetch failed"), { cause });
+    mockFetch.mockRejectedValueOnce(fetchFailed);
+    await expect(
+      imageTranscribeTool({ imageId: "004884748_02613" })
+    ).rejects.toThrow(/Could not reach OpenRouter\..*ECONNRESET/s);
+  });
+
+  // A DNS failure arrives as an AggregateError whose member carries the code.
+  it("flattens an AggregateError cause to surface ENOTFOUND (#1594)", async () => {
+    const member = Object.assign(new Error("getaddrinfo ENOTFOUND openrouter.ai"), {
+      code: "ENOTFOUND",
+    });
+    const cause = new AggregateError([member], "");
+    const fetchFailed = Object.assign(new TypeError("fetch failed"), { cause });
+    mockFetch.mockRejectedValueOnce(fetchFailed);
+    await expect(
+      imageTranscribeTool({ imageId: "004884748_02613" })
+    ).rejects.toThrow(/Could not reach OpenRouter\..*ENOTFOUND/s);
+  });
+
   it("throws rather than fabricate on empty OCR content", async () => {
     mockOpenRouterOk("   ");
     await expect(
