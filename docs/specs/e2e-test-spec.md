@@ -48,8 +48,8 @@ quoting a number to anyone outside the team.
 - On the FamilySearch-sourced path (from a PID), the full original (pre-stripping)
   `unstripped-tree.gedcomx.json`, from which the starting tree is
   derived. It is **never** copied into the run workspace — see below.
-- Fixture metadata: id, source PID, tags, model pins (caps are harness
-  defaults, not fixture metadata — see §3.1)
+- Fixture metadata: id, source PID, tags, model pins, and optional
+  per-fixture stop-condition `caps` (see §3.1)
 - A README with human notes (PID, what was removed, why)
 
 ### What the test fixture does not contain
@@ -144,12 +144,8 @@ Test metadata.
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
 | `blocked_tools` | array of strings | no | Extra MCP tools (bare advertised names, e.g. `"wiki_search"`) denied for this fixture's runs, beyond the universal §6.1 tree block. For fixtures whose ground truth a specific tool can surface directly — e.g. a fixture built from a public wiki case-study article that names the answer. Document the reason in the fixture README |
+| `caps` | object | no | Per-fixture stop-condition overrides — any of the seven keys `wall_clock_seconds`, `inactivity_seconds`, `progress_stall_seconds`, `tool_calls`, `max_turns`, `max_cost_usd`, `max_continue_nudges`. Omitted keys inherit the defaults in `FixtureCaps` (`eval/harness/e2e/orchestrator.py`), which is the single source of truth for their values — do not copy them here. A **new** override must give its reason in the fixture README. (`susan-miller-birth` is the precedent for stating one at all: it records the raised wall-clock cap and the timed-out run that motivated it in the fixture's `notes`. From now on that reasoning belongs in the README, where a reader looks for it.) An **unrecognised** key inside `caps` is silently ignored — the loader reads the seven names above and fills the rest from defaults, and nothing validates `fixture.json`, so a typo'd cap looks applied and is not. |
 
-**Stop-condition limits (`caps`) are NOT a fixture field.** They're a
-harness safety concern (don't run forever, don't burn the budget), so
-they live as defaults in the orchestrator (`FixtureCaps`), not in
-`fixture.json`. Every fixture uses the same caps; an author never writes
-them. See §6.
 
 ### 3.2 `starting-research.json`
 
@@ -569,9 +565,12 @@ Nothing enforces a budget — see the `max_cost_usd` note in §6 step 5.
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
 
-   The `caps.*` values are the harness defaults in
-   `eval/harness/e2e/orchestrator.py` (`FixtureCaps`) — the same for every
-   fixture, not authored per-fixture. A turn-cap hit the SDK reports as an
+   The `caps.*` values default to those in
+   `eval/harness/e2e/orchestrator.py` (`FixtureCaps`), which a fixture may
+   override per key (§3.1). The caps a past run actually used are recorded
+   in its run log at `usage.caps` — the six enforcement caps only;
+   `max_continue_nudges` is not in that block, and `usage.continue_nudges`
+   records how many were spent. A turn-cap hit the SDK reports as an
    error result (rather than a clean `max_turns`) is reclassified to
    `max_turns`.
 
@@ -663,9 +662,13 @@ Nothing enforces a budget — see the `max_cost_usd` note in §6 step 5.
    voluntary yield: while the project is unfinished it vetoes the stop
    (`decision: "block"`) and instructs the agent to re-read `research.json`
    and invoke the next sub-skill. The nudge is bounded by
-   `caps.max_continue_nudges` (default 5) plus a no-progress guard — if a
-   nudge produces no tool call, or the budget is spent, the run is allowed
-   to end as `natural_end` and fail honestly rather than loop. The nudge
+   `caps.max_continue_nudges` plus a no-progress guard. That cap is generous
+   by design — a full GPS proof yields after each of ~10+ sub-skill steps, so
+   a stingy one ends the loop before proof-conclusion; it only bounds the
+   worst case, and the no-progress check is the real backstop against a
+   genuinely idle agent. If a nudge produces no tool call, or the budget is
+   spent, the run is allowed to end as `natural_end` and fail honestly rather
+   than loop. The nudge
    reason is procedural only (no research hints), so it cannot affect
    recall; the number of nudges used is recorded in
    `usage.continue_nudges`, so a run that needed many pokes reads as weaker
@@ -1103,6 +1106,7 @@ A human grade is a per-run annotation committed **beside the run log it grades**
 | `proof_quality_score` | no | Advisory axis: `1` / `2` / `3` / `null`. `null` or absent is still a *complete* grade. |
 | `notes` | no | Sparse `{finding_id: text}` map, surfaced on that finding's disagreement line. |
 | `annotator` | no | Provenance; git blame on the committed file is the fallback. |
+| `findings_hash` | no | sha256 of the normalized `expected-findings.json` this grade was produced against, so a later edit to a finding's body cannot silently invalidate the grade while its id stays put. Written by `/grade-e2e-run`'s stamp step, never by hand. Absent on annotations graded before the check — those are included and graded, but reported unverifiable. |
 
 There is **no `verdict` field** — the per-run verdict is derived from `per_finding`
 + the findings' `required` flags by the §7.2 rule.
@@ -1162,9 +1166,14 @@ The presence of a *complete* annotation is the selection — there is no separat
 calibration-case directory. `calibrate_judge` discovers every
 `runlogs/e2e/**/run-*.ann.json`, re-runs the judge against each graded run, and
 reports **per-finding agreement (the ≥80% gate)**, proof-quality agreement
-(advisory), and a per-slug breakdown. A drifted annotation (its `per_finding` keys
-no longer match the fixture's finding ids — i.e. `expected-findings.json` was
-edited after grading) is a hard error: re-grade or delete it. A grade whose
+(advisory), and a per-slug breakdown. A drifted annotation is a hard error:
+re-grade or delete it. Drift takes two forms, both caught. **Id/key drift** — its
+`per_finding` keys no longer match the fixture's finding ids (a finding was added,
+removed, or renamed). **Content drift** — a finding body was amended while its id
+stayed the same, so the keys still match but the labels were produced against a
+requirement that no longer exists; this is caught by a `findings_hash` stamped
+into the annotation at grade time and re-checked by the loader, which hard-errors
+on mismatch with the same remedy. A grade whose
 **fixture was retired** is the same hard error with the same
 remedy: delete the `.ann.json`. Do not re-slug it onto a successor fixture — a
 split changes the researcher question and the starting tree, so the run was
@@ -1176,6 +1185,31 @@ gradeable runs — pass/partial/fail — are committed; §8), enforced by the bl
 grading gate (§14). Contributors run only `/grade-e2e-run`; the **maintainer**
 runs `uv run python -m e2e.calibrate_judge` periodically (`--dry-run` lints
 without API calls) — contributors never do.
+
+**Why `findings_hash` covers the whole file, normalized.** The stamp is a sha256
+over the entire `expected-findings.json`, normalized (parsed then re-emitted with
+sorted object keys and stable formatting before hashing), so a whitespace reformat
+or object-key reorder does not fire but any content edit does. Reordering the
+`findings` array counts as a change (array order is preserved) — an accepted cost
+of hashing the whole file, cleared by a re-grade. It is computed by one shared function
+that both the grader's stamp step and the loader call, so the two cannot disagree
+on whitespace or non-ASCII encoding — a corpus full of em-dashes and accented
+names would otherwise make every fresh stamp fail the check it exists to satisfy.
+Two narrower designs were rejected. Hashing only the graded fields (id, type,
+description, details, required, polarity — excluding `supporting_sources`) was
+rejected because the judge is handed the *entire* findings object, so an edit
+confined to `supporting_sources` changes the question it answers, and the narrower
+rule would leave that silent — the same invalidation this check exists to close. A
+per-finding digest map was rejected as worth only a handful more usable labels
+across the committed corpus, at a larger annotation.
+
+Annotations graded before the check carry no `findings_hash`. They are
+**grandfathered** — included and graded, but reported as unverifiable rather than
+errored, and never stamped retroactively (a retroactive stamp would certify
+exactly the drift the check exists to catch). They age out as re-grades replace
+them, the same way the pre-blind-grading annotations above do. The accepted cost
+is that a citation-only fixture edit invalidates every grade for that slug; the
+remedy is always a re-grade or a delete, never a re-stamp.
 
 **Collecting grades before the judge is calibrated is the intended bootstrap.**
 You do not need a calibrated judge to start grading; the grades are what makes

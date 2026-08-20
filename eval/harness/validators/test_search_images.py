@@ -20,17 +20,7 @@ from __future__ import annotations
 
 import pytest
 
-
-# --- Helpers ----------------------------------------------------------
-
-def _new_log_entries(before_state, after_state) -> list[dict]:
-    before = before_state.get("research_json") or {}
-    after = after_state.get("research_json") or {}
-    before_ids = {e.get("id") for e in before.get("log", []) if isinstance(e, dict)}
-    return [
-        e for e in after.get("log", [])
-        if isinstance(e, dict) and e.get("id") not in before_ids
-    ]
+from validators_lib import new_log_entries as _new_log_entries
 
 
 def _new_result_sidecars(before_state, after_state) -> list[str]:
