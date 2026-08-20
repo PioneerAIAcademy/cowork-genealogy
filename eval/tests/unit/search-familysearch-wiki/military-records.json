@@ -4,8 +4,9 @@
     "skill": "search-familysearch-wiki",
     "name": "FamilySearch wiki — military records Civil War",
     "type": "positive",
+    "holdout": true,
     "description": "User asks how to find military service records for a Civil War ancestor. Tests that the skill handles a conflict-scoped military query.",
-    "tags": ["fs-wiki", "how-to", "military"]
+    "tags": ["fs-wiki", "how-to", "military", "expects-file-civil-war-military-service-records"]
   },
   "input": {
     "user_message": "Search the FamilySearch wiki for how to find military service records for a Civil War ancestor",

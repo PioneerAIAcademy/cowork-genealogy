@@ -21,6 +21,14 @@ that makes "reasonably exhaustive" claims provable.
    enough detail to reproduce the search: names, dates, places,
    collection, and any filters used.
 
+   **Only record a filter that was actually sent to the tool call it
+   documents.** A place, date, or collection filter that never appeared
+   in the corresponding search call's arguments must not appear in the
+   log entry's `query` object either, even when the filter matches the
+   locality under research — a genealogist re-running "what was
+   searched" from this entry must get the same call, not a tighter one
+   than what actually executed.
+
    **A read-style entry has no search parameters — it still needs an
    object.** For `record_read`, `image_transcribe` and `image_read`, put
    the identifier under a canonical key and leave the prose to `notes`:
