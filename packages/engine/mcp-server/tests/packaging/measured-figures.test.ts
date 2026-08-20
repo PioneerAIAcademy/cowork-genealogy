@@ -69,6 +69,30 @@ const AGENT_SURFACES = [
 ];
 
 /**
+ * Scanned for CONTRADICTED WORDING only — never for figures.
+ *
+ * `person_search` hits a different endpoint (`platform/tree/search`) and carries
+ * no measured figure, so it must NOT join `EVIDENCE_SURFACES`: doing so would
+ * invite figures onto a surface whose behaviour was established separately, and
+ * issue #1409 rules it out explicitly. But it describes the same qualifier family
+ * as `record_search`, so a sentence here can contradict a recorded verdict
+ * exactly as one there can — and until this list existed, nothing checked that.
+ *
+ * PR #1699 found the gap by accident and called it what it was: `person_search`'s
+ * duplicated schema block "happened to still match its tool. That was luck — no
+ * wording rule in tests/packaging/measured-figures.test.ts covers either
+ * person_search surface."
+ *
+ * Verified before this list existed: a sentence reading "an unqualified range
+ * tolerates year-silent records" could be added to person-search.ts and the whole
+ * file stayed green, while the same sentence in record-search.ts failed.
+ */
+const WORDING_ONLY_SURFACES = [
+  "packages/engine/mcp-server/src/tools/person-search.ts",
+  "docs/specs/person-search-tool-spec.md",
+];
+
+/**
  * A "precise figure": a comma-grouped integer, or an `N×` / `N-fold` ratio.
  *
  * Bare percentages are deliberately NOT matched. They are the most rounded
@@ -396,7 +420,7 @@ describe("measured figures stay traceable to the probe artifact", () => {
       const recorded = String(get(fig, rule.verdict) ?? "");
       if (!rule.activeWhen.test(recorded)) return; // rule inactive for this run
       const offenders: string[] = [];
-      for (const rel of [...EVIDENCE_SURFACES, ...AGENT_SURFACES]) {
+      for (const rel of [...EVIDENCE_SURFACES, ...AGENT_SURFACES, ...WORDING_ONLY_SURFACES]) {
         const text = readFileSync(join(projectRoot, rel), "utf8");
         for (const line of text.split("\n")) {
           if (rule.mustNotSay.test(line)) offenders.push(`${rel}: ${line.trim().slice(0, 110)}`);
@@ -416,6 +440,61 @@ describe("measured figures stay traceable to the probe artifact", () => {
       ).toEqual([]);
     });
   }
+
+  /**
+   * Every rule above must actually BIND to something in the artifact.
+   *
+   * `get()` returns `undefined` for a key that is not there, `String(undefined ??
+   * "")` is `""`, and no `activeWhen` pattern matches the empty string — so a
+   * rule whose verdict key was renamed or deleted returns early at the
+   * `activeWhen` check and its `it` PASSES. The rule is gone and the suite is
+   * green. Nothing above notices: the traceability checks read figures quoted in
+   * prose, and the producibility check only inspects keys that are present.
+   *
+   * Verified before this test existed: renaming `H.verdict:silence tolerated` in
+   * the artifact left the whole file at 15/15, and the producibility check missed
+   * it too, because the renamed key still starts with `verdict:` and its value was
+   * unchanged.
+   *
+   * This matters right now. The year sections are being rewritten around indexed
+   * date RANGES (issue #1771), which deletes the estimator block that emits
+   * `H.verdict:silence tolerated` (probe:2463 and probe:2744) and renames several
+   * other keys. Without this test, that rewrite silently removes two of the four
+   * wording guards — including the pair this whole investigation is organised
+   * around — and no suite anywhere goes red.
+   *
+   * A missing grant fails loudly; a missing DENY fails open and silently. Same
+   * shape as the agent-tool deny rule in CLAUDE.md, and the same reason it needs
+   * its own check.
+   */
+  it("every wording rule and contradiction pair binds to a key that exists", () => {
+    const dangling: string[] = [];
+    for (const rule of FORBIDDEN_WHEN) {
+      const v = get(fig, rule.verdict);
+      if (v === undefined || String(v).trim() === "") {
+        dangling.push(`FORBIDDEN_WHEN -> ${rule.verdict}`);
+      }
+    }
+    for (const pair of CONTRADICTION_PAIRS) {
+      for (const path of [pair.a, pair.b]) {
+        const v = get(fig, path);
+        if (v === undefined || String(v).trim() === "") {
+          dangling.push(`CONTRADICTION_PAIRS -> ${path}`);
+        }
+      }
+    }
+    expect(
+      dangling,
+      `a rule names a verdict key that is not in dev/measured-figures.json.\n` +
+        `  Such a rule is INERT: the key resolves to undefined, no activeWhen\n` +
+        `  pattern matches "", and its test passes while guarding nothing.\n` +
+        `  Either the probe section was renamed/deleted without updating the rule\n` +
+        `  (fix the rule in the SAME commit as the rename), or the section has not\n` +
+        `  been run since the key was introduced (run it).\n` +
+        `  Do NOT delete the rule to make this pass unless the claim it forbids is\n` +
+        `  also gone from every surface it scans.`
+    ).toEqual([]);
+  });
 
   it("the exemption list stays justified", () => {
     const unjustified = [...EXEMPT.entries()]
