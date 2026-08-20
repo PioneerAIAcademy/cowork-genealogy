@@ -1,21 +1,7 @@
 @echo off
-cd %~dp0
+cd /d "%~dp0"
 
-REM --- OneDrive / syncing-folder check ---
-if defined OneDrive (
-    REM Substring compare, not findstr: findstr /c: treats a backslash-escape in
-    REM the search string as syntax, so a OneDrive path containing "\-" (e.g.
-    REM C:\Users\-TIFE-\OneDrive) silently never matches. Verified under cmd.exe.
-    setlocal enabledelayedexpansion
-    if /i not "!CD:%OneDrive%=!"=="!CD!" (
-        echo WARNING: This checkout is inside your OneDrive folder.
-        echo OneDrive's sync conflicts with build tools ^(uv, Next.js^).
-        echo Move the clone to a plain local path, e.g. C:\src\.
-        echo.
-        pause
-    )
-    endlocal
-)
+call "%~dp0_CheckSync.bat" || exit /b 1
 
 echo === Cowork Genealogy Eval Setup ===
 echo.

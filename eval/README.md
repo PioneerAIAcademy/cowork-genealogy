@@ -280,10 +280,9 @@ Seniors need **Triage** or **Write** access on the repo to apply labels.
 ## Windows users
 
 > **Do not clone the repo under a syncing folder** (OneDrive, Dropbox, Google
-> Drive, iCloud Drive). The sync client's filesystem hooks conflict with build
-> tools — `uv` fails on hardlinks, Next.js never writes `routes-manifest.json`,
-> and transient ENOENT/EINVAL errors appear under `.next/` and `node_modules/`.
-> Clone to a plain local path instead (e.g. `C:\src\`).
+> Drive, iCloud Drive) — including `Documents` and `Desktop`, which Windows 11
+> usually syncs to OneDrive. Setup will fail partway through, with errors that
+> change each time you retry. Clone to a plain local path such as `C:\src\`.
 
 `Setup.bat` performs the one-time setup. Then `Start.bat` launches the CRUD UI and `RunTests.bat` runs the harness against the current corpus.
 
