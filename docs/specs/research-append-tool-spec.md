@@ -545,6 +545,54 @@ Mirrors `research_log_append` minus the sidecar:
      commit order. The healed (sanitized) tree is what persists, as with any tree
      writer.
 
+### 4.1 Concurrency — one write lock per project
+
+Steps 1–6 are a read-modify-write, and step 3's id allocation is "highest
+existing + 1" from what step 1 read. Two writers running concurrently against
+one project both read the pre-write state, both allocate the same next id, and
+the losing write is **silently lost** — the losing caller still gets a success
+naming ids that ended up on the other writer's record, and validation passes
+afterward because a lost update leaves a consistent file that merely omits a
+record. `/research` and `record-extraction` actively encourage batching across
+records with parallel subagents, so this is reached by following the skills'
+own guidance.
+
+The whole tool body — from the first read to the last write — is therefore
+serialized behind an **in-process async mutex keyed by `resolve(projectPath)`**
+(`withProjectLock` in `src/utils/project-io.ts`). **One lock per project, not
+per file:** `materialize_facts` writes the tree while the composite path here
+writes tree + research together, so a per-file lock would still lose one of
+them. The mutex wraps the six writer entry points — `research_append`,
+`research_log_append`, `tree_edit`'s `executeTreeOps`, `materialize_facts`,
+`merge_tree_persons`, `tree_forget` — at the shared-core function only;
+`extraction_append` (→ `researchAppend`) and `tree_correct` (→ `executeTreeOps`)
+lock through their core and are **not** wrapped again, since the mutex is not
+reentrant.
+
+**This beat compare-and-swap** (capture a hash at read, reject on change, return
+a retryable error). CAS changes the error contract of all six tools, and
+`record-extractor.md`'s "fix ONLY the ops named in `errors`" / "never retry
+blindly" instructions mean a conflict error — which names no op — only works if
+that agent body and `record-extraction/SKILL.md` are edited too, flipping the
+record-extraction run log inactive and buying a fresh paid eval + annotation.
+Serialization needs no skill or agent edit. Prose-only ("delegate serially") was
+also rejected as unenforceable and leaves the gap on the `nothing-checks`
+register.
+
+**Two residuals, recorded rather than designed around:**
+
+- The mutex binds only **within one MCP server process**. Every deployment we
+  run is one server per session (hosted: one sandbox per session; harness: one
+  stdio server per run), so it holds there. Whether two Cowork desktop sessions
+  on the same project folder share one `.mcpb` process is **unverified**; if they
+  do not, the lock does not bind across them. The change is strictly better than
+  today either way.
+- Under contention the queued call now **waits** instead of losing its write. In
+  Cowork's cloud mode a bridged MCP call is killed at 60s (a limit imposed by the
+  bridge, not settable from our side), so a call queued behind a slow composite
+  append can be killed there — a **visible** failure replacing a silent loss. Do
+  not add a timeout or retry to work around it.
+
 ---
 
 ## 5. State-coupling invariants enforced as preconditions

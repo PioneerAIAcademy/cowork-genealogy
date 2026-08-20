@@ -38,6 +38,72 @@ export function assertInsideProject(projectPath: string, ref: string): string {
   return resolve(projectPath, ref);
 }
 
+// ─── Per-project write serialization (issue #1715) ──────────────────────────
+//
+// Every writer tool (research_append, research_log_append, tree_edit,
+// materialize_facts, merge_tree_persons, tree_forget) is a read-modify-write:
+// it reads research.json / tree.gedcomx.json, allocates ids as "highest + 1"
+// from what it read, mutates in memory, then writes atomically. Two of these
+// running concurrently against one project both read the pre-write state, both
+// allocate the same next id, and the losing write is silently lost — the losing
+// caller still gets a success naming ids that ended up belonging to the other
+// writer's record, and `validate_research_schema` passes afterward because a
+// lost update leaves a perfectly consistent file that merely omits a record.
+//
+// `withProjectLock` closes that window by serializing the WHOLE tool body —
+// acquire before the first read, release after the last write — keyed on the
+// resolved project path. One lock per project, not per file: materialize_facts
+// writes the tree while research_append's composite path writes tree + research
+// together, so a per-file lock would still lose one of them.
+//
+// Residual (stated in docs/specs/research-append-tool-spec.md): this binds only
+// within one MCP server process. Every deployment we run is one server per
+// session, so it holds there; whether two Cowork desktop sessions on the same
+// folder share one .mcpb process is unverified, and if they do not the lock does
+// not bind across them. The change is strictly better than today either way.
+
+/** A FIFO async mutex: `run` queues its callback behind every earlier one and
+ *  releases the next only after this one settles (resolve OR reject). */
+class AsyncMutex {
+  private tail: Promise<void> = Promise.resolve();
+
+  run<T>(fn: () => Promise<T>): Promise<T> {
+    const prev = this.tail;
+    let release!: () => void;
+    // Reassigned synchronously, before the first await below, so callers arriving
+    // in the same tick chain in arrival order rather than racing on `tail`.
+    this.tail = new Promise<void>((resolve) => (release = resolve));
+    return prev.then(fn).finally(release);
+  }
+}
+
+// Keyed by resolved project path. One entry per distinct project seen this
+// process — bounded (a session works one project) and never evicted: deleting a
+// mutex a queued caller still holds a reference to would reintroduce the race.
+const projectLocks = new Map<string, AsyncMutex>();
+
+/**
+ * Run `fn` while holding this project's write lock, serializing it against every
+ * other `withProjectLock` call for the same resolved `projectPath`. Wrap the
+ * ENTIRE tool body — from the first read to the last write — so the
+ * read-modify-write window cannot interleave with another writer's.
+ *
+ * NOT reentrant: a locked function must never call another locked function for
+ * the same project (it would deadlock, waiting on a lock it holds). This is why
+ * the two shared cores are locked and their thin wrappers are not —
+ * extraction_append → researchAppend and tree_correct → executeTreeOps lock only
+ * the inner function.
+ */
+export function withProjectLock<T>(projectPath: string, fn: () => Promise<T>): Promise<T> {
+  const key = resolve(projectPath);
+  let mutex = projectLocks.get(key);
+  if (!mutex) {
+    mutex = new AsyncMutex();
+    projectLocks.set(key, mutex);
+  }
+  return mutex.run(fn);
+}
+
 /** Serialize an object to pretty JSON, matching the on-disk project format. */
 function serialize(obj: unknown): string {
   return JSON.stringify(obj, null, 2);

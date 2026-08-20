@@ -42,7 +42,7 @@ import type {
 } from "../types/materialize-facts.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import { atomicWriteJson, backupIfExists, readProjectJson, formatIssues } from "../utils/project-io.js";
+import { atomicWriteJson, backupIfExists, readProjectJson, formatIssues, withProjectLock } from "../utils/project-io.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { factsEquivalent, VITAL_PRIMARY_TYPES } from "../utils/merge-gedcomx.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
@@ -434,6 +434,10 @@ export async function materializeFacts(
   // pushes a model toward stringifying it.
   input.ops = coerceJsonArg(input.ops) as MaterializeFactsOp[] | undefined;
 
+  // Serialize the read-modify-write against every other writer on this project
+  // (issue #1715) — this one writes tree.gedcomx.json, which research_append's
+  // composite path also writes, so the same per-project lock covers both.
+  return withProjectLock(projectPath, async () => {
   try {
     // Heal legacy tree shapes in memory, then read research.json (assertions
     // live there). Single-file write path — research.json is read, never written.
@@ -508,6 +512,7 @@ export async function materializeFacts(
     if (e instanceof MaterializeFactsError) return { ok: false, errors: [e.message] };
     throw e;
   }
+  });
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
