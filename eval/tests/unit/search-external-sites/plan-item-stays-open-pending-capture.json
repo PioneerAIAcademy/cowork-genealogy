@@ -1,0 +1,37 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_pic",
+    "skill": "search-external-sites",
+    "name": "Plan item stays in_progress while the capture is outstanding",
+    "type": "positive",
+    "description": "The user names the plan item explicitly, so Step 7 has an unambiguous subject and must write a status. MyHeritage is paywalled: the skill can only build a URL and ask for a PDF, so no search has happened when its turn ends. pli_001 must be left in_progress, not completed. Regression test for #1226, where Step 7 said to set completed 'once the search is logged, found or not' — which let research-exhaustiveness declare the question exhaustively researched on the strength of a link nobody clicked. Exists because Step 7's status write fires in 0 of 14 other tests in this suite (every external_site entry has plan_item_id null), so without a test that names the item the deterministic validator skips — and a skipped validator records passed.",
+    "tags": [
+      "external-site",
+      "myheritage",
+      "census",
+      "plan-item-status",
+      "capture-pending",
+      "issue-1226"
+    ]
+  },
+  "input": {
+    "user_message": "Work plan item pli_001 — the 1855 Massachusetts State Census for Josiah Barnes on MyHeritage.",
+    "scenario": "ma-state-census-external"
+  },
+  "mcp_fixtures": [
+    "place-search-massachusetts",
+    "external-links-search-massachusetts",
+    "collections-search-massachusetts-census"
+  ],
+  "judge_context": [
+    "pli_001 MUST be left `in_progress`. No capture has come back, so the MyHeritage search has not happened — marking it `completed` claims a search that did not occur, and `research-exhaustiveness` would then declare the question exhaustively researched. Marking it `skipped` is also wrong: the user did not ask to skip the site.",
+    "A status write IS expected on this turn — the user named pli_001, so 'left the status untouched' is not a pass. The deterministic validator only forbids terminal statuses; the judge owns the positive half.",
+    "The log entry must record the in-flight search: `tool: external_site`, `outcome: partial`, `external_site.captureReceived: false`, and the generated URL.",
+    "The narration must tell the user what is outstanding — that the search is not finished until they capture the results page — rather than reporting the plan item as done or announcing that the search is complete.",
+    "Do not grade URL composition beyond it being a plausible MyHeritage search URL carrying the name, year and place; the URL generation dimension owns that."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

@@ -21,6 +21,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+
 
 def assert_no_section_deletions(
     before: dict[str, Any],
@@ -170,3 +172,83 @@ _DEFAULT_ALL_SECTIONS: set[str] = {
     "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries",
 }
+
+
+def assert_capture_pending_item_not_terminal(
+    before_state: dict[str, Any],
+    after_state: dict[str, Any],
+    test: dict[str, Any],
+) -> None:
+    """A plan item whose external-site search is still awaiting a capture must
+    not be terminal.
+
+    `search-external-sites` cannot search a paywalled site: it builds a URL,
+    hands it to the user, and waits for a PDF. Marking the plan item
+    `completed` (or `skipped`) at that point tells `research-exhaustiveness`
+    the avenue was searched when nothing was, and it declares the question
+    exhaustively researched. See issue #1226 and the endings table in
+    `search-external-sites/SKILL.md` step 7.
+
+    Scoped deliberately:
+
+    * Only items **this run changed** — a scenario's pre-existing `completed`
+      external-site items (e.g. `mid-research-flynn`'s `pli_002`/`pli_003`)
+      are fixture state, not this run's doing.
+    * `tool == "external_site"` is the discriminator; `log_entry` has no
+      `type` property.
+    * Latest entry per item wins. Step 4's in-flight entry is never revised —
+      a capture appends a *new* entry — so a stale `capture_received: false`
+      must not fail a run whose capture did arrive.
+    * `autonomous` and `user-requested-skip` tagged tests are exempt: both
+      legitimately end terminal.
+    """
+    tags = test.get("tags") or []
+    if "autonomous" in tags or "user-requested-skip" in tags:
+        pytest.skip("autonomous / user-requested-skip tests end terminal by design")
+
+    before = (before_state or {}).get("research_json")
+    after = (after_state or {}).get("research_json")
+    if not before or not after:
+        pytest.skip("no research.json in scenario")
+
+    def _items(doc: dict) -> dict[str, str]:
+        out: dict[str, str] = {}
+        for plan in doc.get("plans") or []:
+            for item in plan.get("items") or []:
+                if item.get("id"):
+                    out[item["id"]] = item.get("status")
+        return out
+
+    before_items, after_items = _items(before), _items(after)
+    changed = {
+        pid
+        for pid, status in after_items.items()
+        if before_items.get(pid) != status
+    }
+    if not changed:
+        pytest.skip("this run changed no plan-item status")
+
+    # Latest external_site entry per plan item, across the whole final log:
+    # a capture that arrived is a later entry, not an edit of the earlier one.
+    latest: dict[str, dict] = {}
+    for entry in after.get("log") or []:
+        if entry.get("tool") != "external_site":
+            continue
+        pid = entry.get("plan_item_id")
+        if pid:
+            latest[pid] = entry
+
+    for pid in sorted(changed):
+        entry = latest.get(pid)
+        if entry is None:
+            continue
+        site = entry.get("external_site") or {}
+        if site.get("capture_received") is True:
+            continue
+        status = after_items.get(pid)
+        assert status not in ("completed", "skipped"), (
+            f"plan item {pid} is '{status}' but its latest external_site log "
+            f"entry ({entry.get('id')}) has capture_received="
+            f"{site.get('capture_received')!r} — the capture never arrived, so "
+            f"the search did not happen. Expected 'in_progress'. See #1226."
+        )
