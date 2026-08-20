@@ -81,32 +81,24 @@ measured exception, on `surname`:
 > persons where **that field is empty** — for `givenName` and for a father's,
 > mother's, parent's or spouse's name (`other` not measured), but **not** for
 > `surname`, where an unqualified value drops surname-empty persons. **With
-> `exact=on`**, whatever its own field admits is
-> excluded.
-
-**The exception was measured on the record index, not here.** See
-`record-search-tool-spec-v2.md` → *Person fields* → *The exact-match rule* for the
-method and the figures, and `dev/explore-name-empty-field-leg-records.ts` for the
-script. Nothing has tested it on `platform/tree/search`, so treat the asymmetry as the
-engine's behaviour reported from one endpoint rather than as measured on this one.
+> `exact=on`**, whatever its own field admits is excluded.
 
 **Provenance, and its limit.** The rule is the lead's, from FamilySearch
-search-engine internals — it belongs to the search engine rather than to either
-endpoint. **Every figure behind it was measured against the record index**
-(`/service/search/hr/v2/personas`), not against `platform/tree/search`.
+search-engine internals, so it belongs to the engine rather than to either
+endpoint — but **every figure behind it was measured against the record index**
+(`/service/search/hr/v2/personas`), and **no figure in `dev/measured-figures.json`
+was taken on `platform/tree/search`**. For the method and the figures see
+`record-search-tool-spec-v2.md` → *Person fields* → *The exact-match rule*; the
+script is `dev/explore-name-empty-field-leg-records.ts`. So the rule is stated on
+the lead's authority, not on a measurement of this endpoint, and the tool
+description says as much. Treat a tree-side figure as absent rather than unstated.
 
-**No figure in `dev/measured-figures.json` was taken on this endpoint**, and that
-is the line that matters. Four exploratory scripts under
-`packages/engine/mcp-server/dev/` do reach it —
+Four exploratory scripts under `dev/` do reach this endpoint —
 `explore-tree-require-switch.ts`, `explore-tree-204-vs-429.ts`,
 `explore-tree-empty-field-leg.ts`, `explore-year-bands-tree.ts` — so a reader can
 re-run the checks by hand. What none of them does is call `record()`, so nothing
 they print is traceable, contradictable, or diffable against a re-run. An
 `explore-*` script is not a probe section.
-
-So the rule is stated **on the lead's authority, not on a measurement of this
-endpoint**, and the tool description says as much. Treat a tree-side figure as
-absent rather than unstated.
 
 Those four scripts do not share one disposition, and each says which it has in its
 own header:
@@ -150,10 +142,9 @@ here.** The year finding — that the population the old wording was phrased aro
 *ranges* matched by overlap — is the lead's account, and the session probe behind
 it left no artifact, on either endpoint. The artifact still reads
 `H.verdict:silence tolerated` = OPEN.
-The place mechanism (upward expansion) is likewise a
-record-index measurement, and its descent half is recorded by no verdict at all. Both are stated as unestablished on this endpoint, and
-the toggles' descriptions say so. **Places are a different mechanism** (upward expansion) and are
-outside the rule.
+Places are a different mechanism altogether — upward expansion, not fuzz — also
+measured on the record index, with the descent half recorded by no verdict at all.
+Both toggles' descriptions say as much.
 
 ### Life-event fields
 

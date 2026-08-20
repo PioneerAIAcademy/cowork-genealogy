@@ -1269,12 +1269,11 @@ export const recordSearchToolSchema = {
     "EXACT-MATCH TOGGLES: without an `*Exact` flag a name field also matches " +
     "fuzzy spellings, and it keeps records where that field is EMPTY — for " +
     "`givenName` and for a father's, mother's, parent's or spouse's name " +
-    "(`other` not measured), but NOT for `surname`, " +
-    "where an " +
-    "unqualified value drops surname-empty records outright. Setting a flag " +
+    "(`other` not measured), but NOT for `surname`, where an unqualified " +
+    "value drops surname-empty records outright. Setting a flag " +
     "excludes what its own field admits, so it only ever narrows and can drop " +
-    "the target. Years behave differently — see `birthYearExact`. Place toggles " +
-    "are a different mechanism — see `birthPlaceExact`.",
+    "the target. Years and places differ — see `birthYearExact` and " +
+    "`birthPlaceExact`.",
   // The `*Exact` descriptions below state only what is specific to each
   // parameter; the rule they share lives in the tool-level description above and
   // is deliberately not repeated per parameter. They cover the effect on the
@@ -1344,19 +1343,19 @@ export const recordSearchToolSchema = {
 
       spouseGivenName: { type: "string", description: "Spouse's given name (a person mentioned alongside the searched person as their spouse on the record). A record that names no spouse at all is kept too, since silence is not a contradiction — read `relativeTerms.spouse` on each result to see which." },
       spouseSurname: { type: "string", description: "Spouse's family name. A record that names no spouse at all is kept too, since silence is not a contradiction — read `relativeTerms.spouse` on each result to see which." },
-      spouseGivenNameExact: { type: "boolean", description: "Require the spouse's given name to be present and match exactly. Enumerated on two marriage populations: every spouse-silent record is dropped." },
+      spouseGivenNameExact: { type: "boolean", description: "Require the spouse's given name to be present and match exactly. Enumerated on two marriage populations." },
       spouseSurnameExact: { type: "boolean", description: "Require the spouse's family name to be present and match exactly. Same trade-off as `spouseGivenNameExact`." },
       fatherGivenName: { type: "string", description: "Father's given name (a person mentioned on the record as the searched person's father). A record that names no father at all is kept too, since silence is not a contradiction — read `relativeTerms.father` on each result to see which." },
       fatherSurname: { type: "string", description: "Father's family name. A record that names no father at all is kept too, since silence is not a contradiction — read `relativeTerms.father` on each result to see which." },
-      fatherGivenNameExact: { type: "boolean", description: "Require the father's given name to be present and match exactly. Unqualified, the field keeps records that name no father at all; this drops them. Rarely worth it." },
+      fatherGivenNameExact: { type: "boolean", description: "Require the father's given name to be present and match exactly. Rarely worth it." },
       fatherSurnameExact: { type: "boolean", description: "Require the father's family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
       motherGivenName: { type: "string", description: "Mother's given name (a person mentioned on the record as the searched person's mother). A record that names no mother at all is kept too, since silence is not a contradiction — read `relativeTerms.mother` on each result to see which." },
       motherSurname: { type: "string", description: "Mother's family name. A record that names no mother at all is kept too, since silence is not a contradiction — read `relativeTerms.mother` on each result to see which." },
-      motherGivenNameExact: { type: "boolean", description: "Require the mother's given name to be present and match exactly. Unqualified, the field keeps records naming no mother; this drops them. Enumerated on two populations, the drop on one." },
+      motherGivenNameExact: { type: "boolean", description: "Require the mother's given name to be present and match exactly. The keep is enumerated on two populations, the drop on one." },
       motherSurnameExact: { type: "boolean", description: "Require the mother's family name to be present and match exactly. Same trade-off as `motherGivenNameExact`." },
       parentGivenName: { type: "string", description: "A parent's given name when the parent's sex is unknown. Use instead of `fatherGivenName` / `motherGivenName` when you don't know which parent. A record that names no parent at all is kept too, since silence is not a contradiction — read `relativeTerms.parent` on each result to see which." },
       parentSurname: { type: "string", description: "A parent's family name when the parent's sex is unknown. A record that names no parent at all is kept too, since silence is not a contradiction — read `relativeTerms.parent` on each result to see which." },
-      parentGivenNameExact: { type: "boolean", description: "Require the parent's given name to be present and match exactly. Unqualified, the field keeps records naming no parent; this drops them. Enumerated on two populations." },
+      parentGivenNameExact: { type: "boolean", description: "Require the parent's given name to be present and match exactly. Enumerated on two populations." },
       parentSurnameExact: { type: "boolean", description: "Require the parent's family name to be present and match exactly. Same trade-off as `parentGivenNameExact`." },
       otherGivenName: { type: "string", description: "Given name of a person who appears on the record alongside the searched person, of unknown relationship (use when you know two names co-occur but not how they relate). `relativeTerms.other` reports whether a co-person on the record carries this name: `present` (one does), `unknown` (co-people exist, none matches — names are compared exactly, so a spelling variant lands here), `absent` (the record names nobody else)." },
       otherSurname: { type: "string", description: "Family name of a person who appears on the record alongside the searched person, of unknown relationship. `relativeTerms.other` reports whether a co-person on the record carries this name: `present` (one does), `unknown` (co-people exist, none matches — names are compared exactly, so a spelling variant lands here), `absent` (the record names nobody else)." },

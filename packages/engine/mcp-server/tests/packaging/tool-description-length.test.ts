@@ -10,14 +10,15 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * family is barely used: across every committed run log only four of the 43
  * toggles have EVER appeared in a call.
  *
- * **The justification is clarity, not token cost.** Measured after the rewrite:
- * `record_search` 15,509 -> 14,389 and `person_search` 3,745 -> 5,038 (its
- * toggles were stubs that were also wrong, so correctness cost tokens there), for
- * a combined 19,254 -> 19,427 — a net INCREASE of about 173 characters. An earlier
- * version of this docstring led with the token argument and claimed a saving; it
- * does not survive measurement, and `record_search.birthYearExact` at 475 chars is
- * most of the remaining bulk. What this lint buys is that the shared rule is stated
- * once and cannot silently be re-expanded into 43 paragraphs.
+ * **The justification is clarity; the token saving is small.** Measured after the
+ * rewrite: `record_search` 15,509 -> 14,092 and `person_search` 3,745 -> 4,980
+ * (its toggles were stubs that were also wrong, so correctness cost tokens
+ * there), for a combined 19,254 -> 19,072 — a net saving of about 182 characters,
+ * under 1%. This figure has been an increase and a saving at different points in
+ * the same branch, which is the point: it is a side effect, not the argument.
+ * `record_search.birthYearExact` at 475 chars is most of the remaining bulk. What
+ * this lint buys is that the shared rule is stated once and cannot silently be
+ * re-expanded into 43 paragraphs.
  *
  * The assertion below caught this pair going stale when the tool-level rule was
  * corrected — which is the first time a guard here caught my own staleness before it
@@ -90,7 +91,7 @@ const CEILING = 250;
 const DOCUMENTED_LONGEST: Array<[string, number]> = [
   ["record_search.givenNameExact", 238],
   ["record_search.surnameExact", 237],
-  ["person_search.birthYearExact", 209],
+  ["record_search.birthPlaceExact", 181],
 ];
 /** Smallest description that exceeded the ceiling before #1409 shortened it. */
 const SMALLEST_HISTORICAL_OFFENDER = 255;
@@ -102,8 +103,8 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14389],
-  ["person_search", 5038],
+  ["record_search", 14092],
+  ["person_search", 4980],
 ];
 
 /**

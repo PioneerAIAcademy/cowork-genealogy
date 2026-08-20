@@ -97,7 +97,7 @@ but the anchor rule above must be satisfied.
 | `givenNameAlt` | string | Alternate given name. |
 | `sex` | `"Male"` \| `"Female"` \| `"Unknown"` | Sex of the person. Case-insensitive — `"male"` is normalized to `"Male"`. |
 | `surnameExact` | boolean | Restricts the surname to its exact spelling — see the exact-match rule below. Applies to `surnameAlt` too when both are set. **Narrows the count, reorders the records it keeps, and can drop the target**: read over complete sets the exact result is a strict subset of the fuzzy one, so it cannot surface a record a fuzzy search buried (measured on `surname` in marriage populations only). |
-| `givenNameExact` | boolean | Restricts the given name to its exact spelling — see the exact-match rule below. Applies to `givenNameAlt` too. Excludes period diminutives (`Betty` for `Elizabeth`); pass a variant as its own `givenName` instead. **The exclusion direction is the lead's (2026-08-17), not measured**: the artifact records only the fuzzy REACH — `N.verdict:diminutiveReach` = REACHED, and section E's membership tests — never that `.exact` drops them. The ruling sourced it, which is why the description states it flatly; the provenance belongs here rather than in a description the model pays for on every call. |
+| `givenNameExact` | boolean | Restricts the given name to its exact spelling — see the exact-match rule below. Applies to `givenNameAlt` too. Excludes period diminutives (`Betty` for `Elizabeth`); pass a variant as its own `givenName` instead. **The exclusion direction is the lead's (2026-08-17), not measured**: the artifact records only the fuzzy REACH — `N.verdict:diminutiveReach` = REACHED, and section E's membership tests — never that `.exact` drops them. The ruling sourced it, which is why the description states it flatly. |
 
 #### The exact-match rule
 
@@ -108,12 +108,11 @@ measured exception, on `surname`:
 > records where **that field is empty** — for `givenName` and for a father's,
 > mother's, parent's or spouse's name (`other` not measured), but **not** for
 > `surname`, where an unqualified value drops surname-empty records outright.
-> **With `exact=on`**, whatever its own field
-> admits is excluded.
+> **With `exact=on`**, whatever its own field admits is excluded.
 
 **What is measured, and what is not.** The relative half is enumerated on this
-endpoint for four kinship families. `R.verdict:keep-silent` HOLDS, and the
-presence requirement reads CONFIRMED for each of
+endpoint for four kinship families: `R.verdict:keep-silent` HOLDS, and the
+presence requirement is CONFIRMED in each of
 `R.verdict:father .exact requires the relative to be present`,
 `R.verdict:spouse .exact requires the spouse to be present`,
 `R.verdict:mother .exact requires the relative to be present` (one population —
@@ -122,17 +121,16 @@ the other indexes no mother given names at all) and
 `F.verdict:relative .exact requires the relative to be present` is the
 independent father measurement. `other` is the exception:
 `R.verdict:other names behave like the four kinship families` reads NOT
-MEASURED, and it is excluded by decision rather than untried — it is a
-co-occurrence term, not a kinship one. The fuzzy half is enumerated too:
+MEASURED — excluded by decision, not untried, being a co-occurrence term rather
+than a kinship one. The fuzzy half is enumerated too:
 `B.verdict:exact surfaces records fuzzy does not` reads NO — exact is a strict
 subset.
 
 **The two principal fields behave oppositely, and that is the surprise.** The
 artifact leaves this open — `T.verdict:all name fields behave alike` reads *"NOT
 MEASURED — the per-field verdicts are withheld under RULE 0"* — so it was measured
-directly on 2026-08-20 with the unmatchable-token method sections R and S built and
-validated, reproducible via
-`packages/engine/mcp-server/dev/explore-name-empty-field-leg-records.ts`:
+directly on 2026-08-20 with the unmatchable-token method R and S validated, via
+`dev/explore-name-empty-field-leg-records.ts`:
 
 - **`givenName` keeps them.** Three unmatchable tokens each retain ~251 of a 6,038
   pool (spread under 2%, which is S's control separating silence from fuzzy reach);
@@ -144,13 +142,11 @@ validated, reproducible via
   and each of three unmatchable tokens returns an **empty set**. Zero rows, so this is
   not a ranking artifact.
 
-Two earlier revisions of this section were wrong here: the first asserted the
-empty-field leg for every name field, the second declared it unestablished for both.
-Neither was measured. Note also that the reason first given for the surname
-half — "`surname` is a required anchor, so a surname-empty record is not a case this
-endpoint puts in front of you" — is **not** why: `surname` is only one of three
-anchors, the pool above is anchored on country, type, date and place with no name
-term at all, and it contains 1,100 records including surname-empty ones.
+One explanation to rule out, because it is the intuitive one and it is wrong:
+**not** "`surname` is a required anchor, so a surname-empty record is never put in
+front of you." `surname` is one of three anchors, and the pool above is anchored on
+country, type, date and place with no name term at all — 1,100 records, surname-empty
+ones among them.
 
 The retention counts and the 1,100-row Brazil pool are not in
 `dev/measured-figures.json`; the script is the trail until a probe section records

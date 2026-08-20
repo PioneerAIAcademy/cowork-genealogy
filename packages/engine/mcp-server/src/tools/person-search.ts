@@ -355,12 +355,11 @@ export const personSearchToolSchema = {
     "EXACT-MATCH TOGGLES: without an `*Exact` flag a name field also matches " +
     "fuzzy spellings, and it keeps persons where that field is EMPTY — for " +
     "`givenName` and for a father's, mother's, parent's or spouse's name " +
-    "(`other` not measured), but NOT for `surname`, " +
-    "where an " +
-    "unqualified value drops surname-empty persons. Setting a flag excludes " +
+    "(`other` not measured), but NOT for `surname`, where an unqualified " +
+    "value drops surname-empty persons. Setting a flag excludes " +
     "what its own field admits, so it only ever narrows and can drop the " +
-    "target. This is the search engine's behaviour; the figures behind it were " +
-    "measured against the record index, not this endpoint. Years and places are " +
+    "target. This is the search engine's behaviour, measured against the " +
+    "record index, not this endpoint. Years and places are " +
     "outside the rule and unestablished here — see `birthYearExact` and " +
     "`birthPlaceExact`.",
   inputSchema: {
@@ -374,7 +373,7 @@ export const personSearchToolSchema = {
 
       birthYearFrom: { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1809). Must be paired with `birthYearTo`." },
       birthYearTo: { type: "number", description: "Upper bound of the birth-year range. 4-digit year. Must be paired with `birthYearFrom`. For a single year, set From and To equal." },
-      birthYearExact: { type: "boolean", description: "Require the birth year to match the range exactly. Years are outside the rule above and their behaviour on this endpoint is unestablished — use only with a firm date, not to include or exclude undated persons." },
+      birthYearExact: { type: "boolean", description: "Require the birth year to match the range exactly. Years are outside the rule above and unestablished here — use only with a firm date, not to include or exclude undated persons." },
       birthPlace: { type: "string", description: "Birth place name. For ambiguous place names, call the `place_search` tool first." },
       birthPlaceExact: { type: "boolean", description: "Stop upward expansion to parent jurisdictions. Outside the rule above — expansion, not fuzz — and measured against the record index, not this endpoint." },
 
