@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-08-20_14-20-01.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The guide is largely accurate and useful, with correct historical context and appropriate discussion of California research records. However, the unsupported FamilySearch collection reference is a significant factual issue for a genealogy guide because it presents an unverified resource as authoritative. This does not invalidate the entire guide, but it is a material accuracy problem that requires correction before full approval."
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill demonstrates good coverage of California genealogical record classes, correctly identifying many important sources such as vital records, census records, land, probate, military, church, newspapers, cemeteries, and tax records. It also shows awareness of access limitations, including correctly identifying some records as browse-only or unavailable through FamilySearch collections."
+    },
+    {
+      "test_id": "ut_locality_guide_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Mostly accurate, but it includes an unsupported claim about Dutch Reformed volume 007733180 covering records from 1639. The tool evidence only supports coverage from 1700–1776. The resource guidance is useful, but the unverified detail prevents full credit."
+    },
+    {
+      "test_id": "ut_locality_guide_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The tool call failed with fixture_not_found because the skill used incorrect arguments (contextName: \"New York\"), meaning the intended place lookup could not be executed. Since the tool usage produced no valid result and the failure was caused by incorrect argument construction, this is a significant correctness issue. Although the search intent was reasonable, the actual execution did not satisfy the tool contract."
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill provided a comprehensive and useful California genealogy research guide. It correctly identified the jurisdiction, historical context, major record groups, repositories, record availability issues, and practical research strategies. The inclusion of collection IDs, volume references, and repository details supported the user's request for actionable resources. The skill also demonstrated awareness that additional search results existed by noting the pagination/next-page token. Overall, it fully addressed the task requirements."
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill used the MCP tools correctly throughout. All tool arguments matched the expected fixtures semantically, including critical identifiers such as places, collection IDs, and volume numbers. Search queries were reasonable and appropriately constructed, pagination was handled correctly, and no fixture_not_found errors occurred. The tool usage was accurate and supported the research task effectively."
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately explained California’s jurisdictional history during the relevant period, including the transition from Mexican Alta California to U.S. military administration and statehood in 1850. It correctly noted California’s direct admission as a state without territorial status and appropriately addressed early county formation, boundary changes, and pre-statehood civil and religious record authorities. The jurisdictional guidance is historically accurate and relevant for genealogical research."
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill provided highly actionable and research-focused guidance rather than generic advice. It established a clear research sequence, prioritized appropriate record groups, identified repository-specific resources, and explained major California Gold Rush research challenges such as record loss, boundary changes, transient populations, and mining-related records. The recommendations were specific enough to guide an actual genealogical investigation, including when to use indexed collections versus browse-only records and which repositories may hold additional evidence. Overall, the strategy reflects sound genealogical research planning."
+    },
+    {
+      "test_id": "ut_locality_guide_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill comprehensively addressed the NYC colonial-period genealogy request. It covered the major record groups relevant to 1700s New York research, including church, probate, land, government, tax, military, census, immigration, newspaper, and cemetery records. It also identified appropriate repositories and provided actionable research guidance, including specific collection references and practical research considerations. The response was detailed, organized, and aligned with the needs of a genealogist researching colonial New York."
+    },
+    {
+      "test_id": "ut_locality_guide_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately explained the jurisdictional context of 1700s New York City genealogy research. It correctly identified Manhattan as New York County during the colonial period, explained the Dutch-to-British transition, and accurately distinguished the separate jurisdictions that later became the five boroughs. The discussion of the 1898 consolidation and early U.S. capital period was properly contextualized and directly relevant to understanding where colonial-era records were created and preserved. Overall, the jurisdictional guidance was historically accurate and useful for genealogical research."
+    },
+    {
+      "test_id": "ut_locality_guide_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill provided detailed and actionable coverage of NYC colonial-era record types, including church, probate, land, government, tax, military, census, and newspaper records. It appropriately identified important repositories and explained the role of church records as the primary substitute for later civil vital registration. The response also provided useful distinctions between indexed, imaged, and browse-only materials and included specific collection references and access details. Overall, the guidance is comprehensive and directly useful for a genealogist researching 1700s New York City."
+    },
+    {
+      "test_id": "ut_locality_guide_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill provided highly actionable research guidance for colonial NYC genealogy. It gave a clear search strategy, identified appropriate record priorities, included specific collections and repositories, and highlighted important colonial research challenges such as lack of civil registration, browse-only church records, language barriers, jurisdictional differences, patronymic naming patterns, and Revolutionary-era migration. The recommendations reflect practical genealogical methodology rather than generic advice and would help a researcher plan an effective investigation."
+    }
+  ]
+}
