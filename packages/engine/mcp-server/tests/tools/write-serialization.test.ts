@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { mkdtemp, writeFile, readFile, rm } from "fs/promises";
+import { mkdtemp, writeFile, readFile, rm, symlink } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
@@ -11,6 +11,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   return { ...actual, resolveStandardPlace: vi.fn(async () => null) };
 });
 
+import { withProjectLock } from "../../src/utils/project-io.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { materializeFacts } from "../../src/tools/materialize-facts.js";
 
@@ -171,5 +172,44 @@ describe("write serialization under concurrency (issue #1715)", () => {
     // research.json carries A's new source.
     const research = await readResearch();
     expect(research.sources).toHaveLength(2);
+  });
+
+  // --- what the lock is keyed ON --------------------------------------------
+  //
+  // Both of these were unpinned: a mutation making the key a single constant
+  // left the two tests above green (over-serializing is invisible to them), and
+  // one keyed on the raw string let a symlinked path race its own target.
+
+  it("locks per project, not globally — two projects do not serialize", async () => {
+    const other = await mkdtemp(join(tmpdir(), "ws-other-"));
+    try {
+      let bDone = false;
+      const a = withProjectLock(dir, async () => {
+        await new Promise((r) => setTimeout(r, 40));
+        return bDone;
+      });
+      await withProjectLock(other, async () => { bDone = true; });
+      // B finished while A still held its own project's lock.
+      expect(await a).toBe(true);
+    } finally {
+      await rm(other, { recursive: true, force: true });
+    }
+  });
+
+  it("one project reached by two names shares one lock", async () => {
+    const link = join(await mkdtemp(join(tmpdir(), "ws-link-")), "alias");
+    await symlink(dir, link);
+    let active = 0;
+    let overlapped = false;
+    // Trailing slash, a `..` hop, and a symlink all name the same project. On
+    // macOS this is not exotic: /tmp itself is a symlink to /private/tmp.
+    await Promise.all([dir, `${dir}/`, join(dir, "x", ".."), link].map((p) =>
+      withProjectLock(p, async () => {
+        active++;
+        if (active > 1) overlapped = true;
+        await new Promise((r) => setTimeout(r, 15));
+        active--;
+      })));
+    expect(overlapped).toBe(false);
   });
 });

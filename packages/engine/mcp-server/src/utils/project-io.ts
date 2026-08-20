@@ -9,6 +9,7 @@
 // tool. Spec: docs/specs/validate-project-refactor-spec.md §10.
 
 import { writeFile, readFile, rename, mkdir, unlink, copyFile, access } from "fs/promises";
+import { realpathSync } from "node:fs";
 import { dirname, join, resolve, relative, isAbsolute } from "path";
 import { randomUUID } from "node:crypto";
 import type { ValidationError } from "../validation/types.js";
@@ -94,8 +95,24 @@ const projectLocks = new Map<string, AsyncMutex>();
  * extraction_append → researchAppend and tree_correct → executeTreeOps lock only
  * the inner function.
  */
+/** The lock's identity. `resolve` alone is not enough: two callers can name one
+ *  project through different symlinks — and on macOS `/tmp` IS a symlink to
+ *  `/private/tmp` — which would hand them separate mutexes and silently unlock
+ *  the very race this exists to stop. `realpathSync.native` also folds the
+ *  case-insensitive spellings a Windows caller can produce. Falls back to the
+ *  resolved path when the project directory does not exist yet, since the
+ *  caller's own read is the right place for that to fail. */
+function lockKey(projectPath: string): string {
+  const resolved = resolve(projectPath);
+  try {
+    return realpathSync.native(resolved);
+  } catch {
+    return resolved;
+  }
+}
+
 export function withProjectLock<T>(projectPath: string, fn: () => Promise<T>): Promise<T> {
-  const key = resolve(projectPath);
+  const key = lockKey(projectPath);
   let mutex = projectLocks.get(key);
   if (!mutex) {
     mutex = new AsyncMutex();
