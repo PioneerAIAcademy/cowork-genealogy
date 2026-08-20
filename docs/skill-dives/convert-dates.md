@@ -484,11 +484,81 @@ F2 fixes in the body. Fix the row first or delete the file.
 
 ---
 
-## Step 6 — Validator requests
+## Step 6 — Validators, implemented
 
-The measure of the session. Each is a rule a program can decide from the run log;
-a developer writes the Python. **VR-1 is a prerequisite for VR-2 and VR-4** — none
-of the three can fail while the tool is unregistered.
+The guide says the auditor supplies the rule and a developer writes the Python.
+That was overridden for this dive: the validators are **implemented here**, in
+this PR. `eval/harness/validators/` and `eval/harness/tests/` are outside the
+run-log snapshot, so they cost nothing — no re-run, no annotation pass.
+
+| | Rule | Where it landed | Why there |
+|---|---|---|---|
+| **VR-0** | register `convert_calendar` as a live tool | `mock_mcp.py` (4 sites) | prerequisite; nothing below can fail without it |
+| **VR-1** | a `requires-tool-conversion` test must call the tool | `validators/test_convert_dates.py` | ✅ implemented, 5 tests |
+| **VR-2** | no `doubleDatedYear` outside Jan 1 – Mar 24 | **the tool**, + 5 vitest cases | ⚠️ written as a validator, then **removed** — see below |
+| **VR-3** | a `grade_on_invariant` validator must be able to fail | follow-on, design below | blocking + cross-skill + heuristic |
+| **VR-4** | zero calls on a `refusal-to-convert` test | `validators/test_convert_dates.py` | ✅ implemented, 3 tests |
+
+Proof-of-failure and real-data replay for both shipped validators:
+`eval/harness/tests/unit/test_convert_dates_validators.py` — 11 tests, each
+check exercised against a state that must pass **and** the state that must fire.
+Then replayed against the committed run log
+(`v1_2026-08-19_22-13-16`): **0 failures across all 16 tests.**
+
+### VR-2 was implemented, then deleted — and that is the reusable lesson
+
+Written as specified, VR-2 read `tool_calls[].args` and failed any
+`doubleDatedYear` request outside the window. It passed its own unit tests. Then
+replaying it against the committed run log **failed `ut_convert_dates_016` — a
+test that had passed.**
+
+What `_016` actually did: requested the correction for 25 March, received the
+(now-guarded) tool's refusal, and relayed it — *"The tool confirms this date is
+outside the normal double-dating window and flags it as anomalous."* That is
+precisely what the body's `{ ok: false }` rule asks for. Reading only `args`, a
+validator cannot distinguish correct probing from asserting a wrong year, so it
+punished the best available behaviour.
+
+**A rule the tool can enforce belongs in the tool** — where a wrong request is
+*answered* rather than merely recorded, and where nothing can bypass it. A
+validator earns its place on what the tool cannot see: whether a call happened at
+all (VR-1), or whether one happened that should not have (VR-4). The guide's
+Step 6 table has no row for this distinction; it is worth adding.
+
+Cost of learning it this way: nothing, because validators are free. Cost of
+*not* learning it: a permanent false failure on the one test that documents the
+boundary day.
+
+### VR-3 — handed to a developer, with the design and the reason it is not here
+
+> **Rule:** when a test sets `negative.grade_on_invariant: true`, the tag-gated
+> validator carrying its verdict must be capable of failing. If the assertion is
+> "tool X was not called" and X is registered nowhere for that test, the pass is
+> vacuous.
+> **Where to look:** the test's `tags`, the gating validator in
+> `validators/test_<skill>.py`, and the tool set the run can register
+> (`spec.mcp_fixtures` ∪ `mock_mcp.LIVE_TOOLS`).
+> **What a violation looks like:** `ut_convert_dates_003` and `_010`, all four
+> pre-dive runs. `test_no_spurious_conversion` recorded `"error": null` — it ran,
+> and passed — while asserting `convert_calendar` was not called, for a tool
+> registered nowhere. `_010`'s own `explanation` asserts the opposite:
+> "grade_on_invariant is safe **only because that validator actually runs and
+> gates the outcome**; without it the invariant would pass vacuously."
+
+**Why it is not in this PR.** `check_runnable` returns `not_runnable`, which
+aborts the test as a corpus error (exit 2). Extracting "which tool a validator
+asserts about" from its source is a **heuristic** — a tool name can appear in a
+message string, and an assertion can be about something else entirely. A false
+positive would therefore abort a paid run across any skill. Ship it as a
+**warn-only lint** in `harness/scripts/` beside `check_tool_coverage.py` and
+`check_rubric_tool_drift.py`, which is where this repo already puts approximate
+cross-skill checks, rather than as an extension of the blocking gate at
+`runnability.py` (grep `passes VACUOUSLY`) whose comment already names this exact
+failure mode one step short.
+
+The specific instance is closed regardless: `convert_calendar` is registered, so
+`test_no_spurious_conversion` can now fail, and
+`test_no_spurious_conversion_now_has_a_registered_tool_to_catch` proves it does.
 
 ### VR-0 (prerequisite, lane 1) — register `convert_calendar` as a live tool
 
@@ -539,108 +609,18 @@ what that skill's future runs can do. No committed run log is invalidated
 message should offer `LIVE_TOOLS` as a third remedy, since for a deterministic
 tool the two it currently offers are both wrong.
 
-### VR-1 — a test that requires calendar arithmetic must call `convert_calendar`
-
-> **Rule:** every positive convert-dates test tagged `requires-tool-conversion`
-> must show at least one `convert_calendar` call. Hand arithmetic is prohibited
-> by the skill body, and the tool is the only thing whose offset is derived from
-> the date rather than from a table the body might state wrongly.
-> **Where to look:** `tests[].runs[].output.tool_calls[].tool`, gated on
-> `"requires-tool-conversion" in test["tags"]`.
-> **Why it is not judgment:** presence of a tool name in a list. The tag is
-> already on the nine tests (added by this dive at zero snapshot cost — tags are
-> cosmetic under `snapshot.normalize`), so the validator is a four-line function
-> in the shape of the existing `test_no_spurious_conversion`.
-> **What a violation looks like:** all nine, every committed run.
-> `ut_convert_dates_004`, `v1_2026-07-27_18-21-44`, `tool_calls: []`, response
-> opening "The `convert_calendar` arithmetic tool isn't available in this
-> environment".
-
-This one validator also closes F2 for every future run: the tool derives the
-offset by JDN round-trip, so a call gets 12 days for Julian 14 Feb 1900 whatever
-the body's table says. Prose can regress again; the tool cannot.
-
-### VR-2 — `doubleDatedYear` must not be requested outside 1 Jan – 24 Mar
-
-> **Rule:** a `convert_calendar` call carrying `corrections.doubleDatedYear: true`
-> is a violation when `date.month`/`date.day` fall outside 1 January – 24 March.
-> A double date belongs to that window only; on 25 March the Old-Style and
-> New-Style years are identical, so resolving to the later year is a one-year
-> error in the researcher's notes.
-> **Where to look:** `tool_calls[].args.date.month`, `.day`, and
-> `.corrections.doubleDatedYear`.
-> **Why it is not judgment:** two integers and a boolean, all present in the call.
-> The same window is already encoded, correctly, in the tool's `osNsYear` branch
-> (`day <= 24`) and in `convert-calendar-tool-spec.md` §4.2.
-> **What a violation looks like:** none recorded — the tool has never been called.
-> The prose form is the historical `ut_convert_dates_007`, `v1_2026-07-27` (the
-> boundary case now covered by `ut_convert_dates_016`): "Do **not** silently
-> record it as 1750 — that would place the event in the wrong year."
-
-**Companion tool fix (lane 1):** `convertCalendar` should refuse, or at minimum
-`notes`, a `doubleDatedYear` request on an out-of-window date —
-`convert-calendar.ts` bumps unconditionally today (grep `if (c.doubleDatedYear) {`). And
-`convert-calendar-tool-spec.md` §5b should stop offering `doubleDatedYear` and
-`osNsYear` as interchangeable for "25 March 1750/1"; they differ by a year, which
-is the whole of F3.
-
-### VR-3 — a `grade_on_invariant` validator must be capable of failing
-
-> **Rule:** when a test sets `negative.grade_on_invariant: true`, the tag-gated
-> validator carrying its verdict must assert against something the run could
-> actually produce. If the assertion is "tool X was not called" and tool X is
-> registered nowhere for that test, the pass is vacuous — the same failure the
-> existing gate was built to stop, one step earlier in the chain.
-> **Where to look:** the test's `tags`, the tag-gated validator in
-> `validators/test_<skill>.py`, and the tool set the run would register
-> (`spec.mcp_fixtures` ∪ `LIVE_TOOLS`). A set intersection.
-> **Why it is not judgment:** it compares two lists of tool names. No genealogy
-> and no narrative involved.
-> **What a violation looks like:** `ut_convert_dates_003` and
-> `ut_convert_dates_010`, all four runs. `test_no_spurious_conversion` records
-> `"error": null` — it ran, and passed — but `convert_calendar` is registered
-> nowhere, so `assert not converted` cannot fail. `ut_convert_dates_010`'s own
-> `explanation` asserts the opposite: "grade_on_invariant is safe **only because
-> that validator actually runs and gates the outcome**; without it the invariant
-> would pass vacuously."
-> **Where it goes:** `check_runnable` in `eval/harness/harness/runnability.py`,
-> beside the existing gate whose comment already names this failure mode (grep `passes VACUOUSLY`)
-> — "A tag that reaches no validator therefore doesn't fail loudly — it passes
-> VACUOUSLY, green forever, asserting nothing." That gate checks the tag reaches
-> a validator. It does not check the validator can fail.
-
-This is the CLAUDE.md rule "a new lint must be proven to fail", enforced
-mechanically instead of by reviewer discipline. It is not convert-dates-specific;
-it applies to every `grade_on_invariant` test in the corpus.
-
-### VR-4 — zero `convert_calendar` calls on a refusal-to-convert test
-
-> **Rule:** a positive test tagged `refusal-to-convert` must show **no**
-> `convert_calendar` call. The graded behaviour is recognising that no conversion
-> is needed; performing one is the failure.
-> **Where to look:** `tool_calls[].tool`, gated on `"refusal-to-convert"` (already
-> a tag on `ut_convert_dates_008`).
-> **Why it is not judgment:** a count that must be zero.
-> **What a violation looks like:** not yet possible. Today the two boundary
-> *negatives* have this guard (`test_no_spurious_conversion`) and the
-> *positive* no-op test does not — `test_only_convert_calendar_called` bans other
-> tools, not a spurious conversion by the right tool. Once VR-0 lands,
-> `ut_convert_dates_008` ("15 March 1850, London") could silently apply an
-> 11-day shift and pass.
-
 ### Considered and not requested
 
-**"The converted date in the narration must match the tool's `converted`."** The
-right shape (chat asserting something the tool never returned), and it would
-catch a skill that calls the tool and then narrates its own arithmetic. Not
-requested yet because matching a date across the renderings a response might use
-("26 February 1750", "26 Feb 1750", "1750-02-26") is a regex in prose, and the
-guide is right that mechanising that ends in a dimension nobody trusts. Revisit
-after VR-1 has produced a corpus of real `applied[]` blocks to calibrate against.
+**"The converted date in the narration must match the tool's `converted`."** Now
+known to be *implementable but not from a run log*: the validator runner passes
+the live `response` to validators (`validator_runner.py`), but the committed run
+log persists only `tool`, `args`, `expected_args`, `matched` and
+`response_fixture`. So a validator could check it in-run, while no after-the-fact
+audit of a committed log could. Still not requested: matching a date across the
+renderings a response might use is a regex in prose, and the guide is right that
+mechanising that ends in a dimension nobody trusts.
 
 **Anything about whether the explanation was good** — left with the judge.
-
----
 
 ## Changes in this PR
 
@@ -658,6 +638,8 @@ scratch run" below for what each one actually produced.
 | `tests/…/{scotland-hybrid, protestant-german-1700, julian-gregorian-1750}.json` + `catholic-europe-1582.json` | Struck the "note that offsets vary by country" bullet — already graded by each test's bullet 2, and complying only pads a billed response. | F5 | **made** — but see F5: striking it does not close the finding |
 | `tests/…/russia-1918.json` (`_005`) | Same bullet **deliberately retained** as a canary, so the next run can still distinguish "overrides now bind" from "the symptom was deleted". | F5 | **made** |
 | `tests/…/catholic-europe-1582.json` (`_004`) | Expectation rewritten: grades naming the pre-adoption status, saying no contemporaneous Gregorian equivalent exists, recording as written, and labelling 24 Sep 1582 proleptic if offered. `requires-tool-conversion` removed — the conversion is a specified input error. | F6 | **made & verified** — input error surfaced and explained |
+| `eval/harness/validators/test_convert_dates.py` | **VR-1** (a `requires-tool-conversion` test must call the tool) and **VR-4** (zero calls on a `refusal-to-convert` test), plus a recorded note on why VR-2 is not here. | VR-1, VR-4 | **made** — replayed against the committed run, 0 failures |
+| `eval/harness/tests/unit/test_convert_dates_validators.py` **(new)** | 11 tests: every check exercised against a state that must pass and the state that must fire, per CLAUDE.md's "a new lint must be proven to fail". Not snapshot-tracked, so free. | VR-1, VR-4 | **made** |
 | `eval/harness/harness/mock_mcp.py` | **VR-0**: `convert_calendar` registered as a live tool — `LIVE_TOOLS`, a `_make_live_handler` branch on the generic compiled-tool builder, `OK_FALSE_IS_FAILURE_LIVE` (required by the drift lint), and the stale "three that are not live" comment. | F1 | **made** — handler verified live |
 | `tests/…/russia-1900-threshold.json` **(new, `ut_convert_dates_015`)** | Julian 14 Feb 1900, Moscow → Gregorian 26 Feb 1900. Names 27 February as the specific failure a year-band reading produces. Gives F2 something that verifies it. | F2 | **made & verified** — +12, not +13 |
 | 8 test files | Added the `requires-tool-conversion` tag (`_004` excluded — see F6). Snapshot-cosmetic, so free; makes VR-1 implementable without a hardcoded id list. | VR-1 | **made** |
@@ -738,14 +720,20 @@ dive: **register the tool, then run the affected tests, then write the findings.
 | **F4** | **Reproduced, and now caught** | `_007` **fails**. The skill still volunteers the unrequested shift — "the Gregorian equivalent would be **26 February 1751**" — and the judge now scores Correctness **1**, quoting the bullet, where it previously scored 3 with "correctly restrains itself from applying it". |
 | **F5** | **Reproduced — now 21 of 21** | The retained canary on `_005` went entirely unmet: the response contains **zero** occurrences of 1582, 1752, England, Catholic Europe, "10 days" or "11 days". Completeness scored **3** anyway. Keeping one bullet is what made this observable; striking all five would have deleted the only evidence. |
 
-### `_007` ships failing, deliberately
+### `_007` catches the violation when it happens — which is not every run
 
-It is not a broken test — it is a correct test catching a real violation of a rule
-the body already states ("Do not bundle corrections the user didn't request — that
-is over-conversion"). Per this guide's own rule, a rule that exists and was ignored
-does not get restated: **no skill-body edit was made for F4.** What changed is that
-the violation is now measurable, on every run, instead of being praised as
-restraint.
+Both scratch runs failed it; the committed full run **passed** it, with the judge
+noting the skill "explicitly did NOT apply the Julian-to-Gregorian day offset (15
+February remained 15 February)". So F4's over-conversion is **intermittent**,
+roughly two runs in three observed, not deterministic. An earlier draft of this
+write-up said `_007` "ships failing, deliberately"; that was drawn from the
+scratch runs alone and is wrong.
+
+The test is still the win: the violation is now *measurable* whenever it occurs,
+instead of being praised as restraint. And per this guide's own rule, a rule the
+body already states ("Do not bundle corrections the user didn't request — that is
+over-conversion") and that was ignored does not get restated: **no skill-body edit
+was made for F4.**
 
 ### One defect of my own, caught by the run
 
@@ -779,15 +767,19 @@ one level down.
   particular now reach a live tool for the first time and could surface their own
   F6-shaped collisions.
 
-### A correction to VR-5's premise
+### A correction to VR-5's premise, and then a correction to that
 
-The run logs do **not** persist a tool call's response — an entry carries `tool`,
-`args`, `expected_args`, `matched` and `response_fixture`, and nothing else. The
-"narration must match the tool's `converted`" idea in "Considered and not
-requested" is therefore not merely brittle, it is **unimplementable as written**.
-Either the writer must start persisting responses, or that validator must be
-specified against `args` alone. `args` is present and complete, so VR-1 and VR-2
-are unaffected.
+First reading: run logs do not persist a tool call's response — an entry carries
+`tool`, `args`, `expected_args`, `matched` and `response_fixture` and nothing
+else — so "narration must match the tool's `converted`" looked unimplementable.
+
+That was half right. `validator_runner.py` passes the **live** `response` to
+validators, so a validator *can* read it during the run; what cannot happen is an
+after-the-fact audit of a committed log. The distinction matters for anyone
+designing a future check: in-run assertions may use the response, post-hoc
+analysis may not. It stays unrequested for the reason in "Considered and not
+requested" above — matching a date across prose renderings is a regex — not
+because it is impossible.
 
 ## A note on the paid run
 
