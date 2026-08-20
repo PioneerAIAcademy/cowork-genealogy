@@ -496,6 +496,74 @@ describe("measured figures stay traceable to the probe artifact", () => {
     ).toEqual([]);
   });
 
+  /**
+   * Prose that NAMES a verdict key must name one that exists.
+   *
+   * The dangling-key test above covers the other direction — a `FORBIDDEN_WHEN`
+   * rule pointing at a missing key. This covers prose: a spec sentence that cites
+   * `F.verdict:relative .exact requires the relative to be present` as its
+   * evidence is worthless the moment that key is renamed, and worse than
+   * worthless, because it still reads as sourced.
+   *
+   * This is not speculative. Issue #1771 rewrites the year sections around indexed
+   * date RANGES and renames several keys by name, including
+   * `H.verdict:silence tolerated`, which two specs currently cite. Nothing else
+   * here would notice: the traceability check reads FIGURES, the wording rules read
+   * sentences, and the producibility check reads the artifact against the probe —
+   * none of them reads a citation.
+   *
+   * WHITESPACE IS THE TRAP. These keys are long enough to wrap inside a markdown
+   * inline-code span, so a naive per-line regex reports a real key as dangling —
+   * the first draft of this check did exactly that on
+   * `R.verdict:spouse .exact requires the spouse to be present`. Normalise runs of
+   * whitespace on BOTH sides before comparing. That is the same "a grep is wrong in
+   * both directions" hazard CLAUDE.md describes for the encoding lint.
+   *
+   * Scoped to `verdict:` keys, deliberately. Data keys (`B.rows`, `I.fuzzy`) are
+   * cited far less often and get renamed as a matter of course; a verdict is a
+   * claim, and a claim is what prose leans on.
+   */
+  it("prose cites verdict keys that exist in the artifact", () => {
+    const CITING_SURFACES = [
+      ...EVIDENCE_SURFACES,
+      ...WORDING_ONLY_SURFACES,
+      "docs/specs/person-search-tool-spec.md",
+    ];
+    const known = new Set<string>();
+    for (const [section, body] of Object.entries(fig)) {
+      if (!body || typeof body !== "object") continue;
+      for (const key of Object.keys(body as Record<string, unknown>)) {
+        if (key.startsWith("verdict:")) known.add(`${section}.${key}`);
+      }
+    }
+    // `H.verdict:…` up to the closing backtick, with whitespace collapsed first so
+    // a key wrapped across two lines still matches its artifact form.
+    const CITE = /`([A-Z])\.(verdict:[^`]+)`/g;
+    const dangling: string[] = [];
+    let cited = 0;
+    for (const rel of new Set(CITING_SURFACES)) {
+      const text = readFileSync(join(projectRoot, rel), "utf8").replace(/\s+/g, " ");
+      for (const m of text.matchAll(CITE)) {
+        cited++;
+        const key = `${m[1]}.${m[2]}`.trim();
+        if (!known.has(key)) dangling.push(`${rel} cites ${key}`);
+      }
+    }
+    expect(
+      cited,
+      "no prose cites a verdict key by name — either the citations were removed, or " +
+        "this check's pattern no longer matches how they are written"
+    ).toBeGreaterThan(0);
+    expect(
+      dangling,
+      `prose names a verdict key that is not in dev/measured-figures.json.\n` +
+        `  The sentence still reads as sourced while its source is gone. Either the\n` +
+        `  probe section was renamed (update the citation in the SAME commit), or the\n` +
+        `  section has not been run since the key was introduced (run it).\n` +
+        `  Do NOT delete the citation to make this pass unless the claim goes with it.`
+    ).toEqual([]);
+  });
+
   it("the exemption list stays justified", () => {
     const unjustified = [...EXEMPT.entries()]
       .filter(([, reason]) => reason.trim().length < 20)
