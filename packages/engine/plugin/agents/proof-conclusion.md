@@ -199,18 +199,26 @@ session.
 | **Not Proved** | Insufficient evidence to lean toward any conclusion. |
 | **Disproved** | Evidence affirmatively refutes the hypothesis. |
 
-**Probable vs Possible — the boundary, because the table above does not draw it.**
+**Where the tier lines fall, because the table above does not draw them.**
 Probable's row *lists* the weaknesses it tolerates: fewer independent sources,
 secondary or indirect evidence, minor gaps, research not exhaustive. Those are
 its own conditions. They are **not** reasons to drop below it — reciting them as
-grounds for `possible` reads the definition of Probable as a demotion from it,
-which is the observed error. The boundary is **convergence, not weakness**: ask
-whether the evidence you have converges on one answer. If it does, and the gaps
-are about corroboration rather than about which answer is right, that is
-**Probable** — however thin, however indirect, however unexhausted. Drop to
-**Possible** only when the same evidence is genuinely consistent with a rival
-answer you cannot yet exclude, i.e. when you could name the rival. If you cannot
-name one, you are at Probable or above.
+grounds for `possible` reads the definition of Probable as a demotion from it.
+The lines are about **where the evidence points, not how thin it is.** Walk
+these in order and stop at the first that fits:
+
+1. **Does the evidence converge on one answer, with the remaining gaps about
+   corroboration rather than about which answer is right?** → **Probable** (or
+   Proved if every GPS component is met). However thin, however indirect,
+   however unexhausted.
+2. **Does it lean toward one answer, while a rival you can name stays open?**
+   → **Possible.** You must actually lean: being able to name a rival is not
+   on its own enough to demote from Probable, nor enough to reach Possible from
+   below.
+3. **Does it fail to separate the candidates at all — you cannot say which is
+   more likely?** → **Not Proved.** Two undistinguished candidates is this row,
+   not Possible: "insufficient evidence to lean toward any conclusion" means
+   exactly that you do not lean. Naming both candidates is not leaning.
 
 **Decision rules:** Unresolved conflicts are a **hard block on Proved**. **An unresolved conflict that *disputes the concluded fact or relationship itself* caps the tier at `possible`** — which is below the `probable` tree-write threshold (§6), so a disputed conclusion is never encoded in the tree until the conflict is resolved. (An unresolved conflict on a *non-identifying* detail — one that does not bear on whether the cited sources describe the same person — only blocks Proved, not Probable. The test is **not** "is it part of the conclusion?": a birthplace dispute is not part of a parentage conclusion, yet it goes directly to whether the census entries and the death certificate are even the same man. Identity first, then tier.) Hedging language ("suggests," "appears to be") blocks Proved — proved means stating the conclusion as fact. When in doubt, tier down.
 
