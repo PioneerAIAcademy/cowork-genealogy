@@ -52,6 +52,18 @@ const FIGURES = join(mcpRoot, "dev", "measured-figures.json");
 const EVIDENCE_SURFACES = [
   "docs/specs/record-search-tool-spec-v2.md",
   "packages/engine/mcp-server/src/tools/record-search.ts",
+  // The person SPEC, added 2026-08-20. It carries real comma-grouped figures
+  // (56,177 / ~9,700 / 2,916 from a 2026-05-28 probe) and was in
+  // `WORDING_ONLY_SURFACES` alone — so no traceability check and no total ban, which
+  // left the hole this file closed for `person-search.ts` open on the one
+  // `person_search` file that actually holds numbers.
+  //
+  // The 2026-08-17 ruling forbids adding `person-search.ts` — the TOOL file, whose
+  // text the model pays for and whose endpoint has no probe. It says nothing about
+  // the spec, which is an evidence trail read by humans. The three figures below
+  // predate `measured-figures.json` and are exempted by name; any NEW figure in that
+  // spec must now trace.
+  "docs/specs/person-search-tool-spec.md",
 ];
 
 /**
@@ -84,8 +96,9 @@ const AGENT_SURFACES = [
  * make it an EVIDENCE surface, which would invite the figures the 2026-08-17 ruling
  * forbids. So "wording only" describes the SPEC in this list, not both entries.
  *
- * `person_search` hits a different endpoint (`platform/tree/search`) and carries
- * no measured figure, so it must NOT join `EVIDENCE_SURFACES`: doing so would
+ * `person-search.ts` — the TOOL file — hits a different endpoint
+ * (`platform/tree/search`) and carries no figure, so it must NOT join
+ * `EVIDENCE_SURFACES`: doing so would
  * invite figures onto a surface whose behaviour was established separately, and
  * issue #1409 rules it out explicitly. But it describes the same qualifier family
  * as `record_search`, so a sentence here can contradict a recorded verdict
@@ -173,6 +186,18 @@ const EXEMPT = new Map<number, string>([
   [
     1478,
     "the HISTORICAL count quoted from issue #1088's transcript, deliberately preserved as the observation being explained rather than as a current measurement",
+  ],
+  [
+    56177,
+    "person_search spec, from a 2026-05-28 probe that predates this artifact: the unqualified `surname=Lincoln` pool, quoted twice to show the require-switch has no effect without it",
+  ],
+  [
+    9700,
+    "same 2026-05-28 probe — the gibberish-surname pool, quoted as `~9,700` to make the surname-plus-one rule's case",
+  ],
+  [
+    2916,
+    "same 2026-05-28 probe — the same query WITH `m.queryRequireDefault=on`, which is the contrast the 56,177 figure exists for",
   ],
   [
     947,

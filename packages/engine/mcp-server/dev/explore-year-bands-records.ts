@@ -47,6 +47,13 @@ async function readAll(extra: string): Promise<{ total: number | null; rows: Row
       `https://www.familysearch.org/service/search/hr/v2/personas?${POOL}${extra}&count=100&offset=${offset}&m.queryRequireDefault=on`,
       { headers: { Authorization: `Bearer ${token}`, Accept: "application/json",
                    "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } });
+    // 204 = zero results, a MEANINGFUL ZERO. `res.ok` is true for 204 and the body
+    // is empty, so without this branch `res.json()` below rejects, `readAll` throws,
+    // and `main().catch` kills the run after however many minutes of paging — on an
+    // empty early band, which a 12-band sweep from 1400 will have. Three siblings on
+    // this same endpoint got this branch on 2026-08-20; this was the one that did
+    // not, and a run that happened to hit no empty band hid it.
+    if (res.status === 204) return { total: total ?? 0, rows };
     // A transient 429 anywhere in 12 bands x 2 variants x N pages would otherwise
     // mark the band unenumerable and discard the whole run — and on the first read
     // it printed "narrow further", blaming pool size for throttling.
@@ -58,6 +65,9 @@ async function readAll(extra: string): Promise<{ total: number | null; rows: Row
       continue;
     }
     if (!res.ok) return null;
+    retry = 0;   // reset on a good page: a lifetime budget of 6 across an up-to-49
+                 // page read is spent by scattered 429s, and the band is then
+                 // reported unenumerable — the very discard this block prevents.
     const b: any = await res.json();
     total ??= b?.results ?? null;
     const entries = b?.entries ?? [];
