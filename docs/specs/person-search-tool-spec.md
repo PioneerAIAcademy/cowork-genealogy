@@ -69,8 +69,49 @@ parameters is in *FamilySearch API Reference → mapping table*.
 | `givenName` | string | Given (first) name. Counts as the required "other" field alongside `surname`. |
 | `surname` | string | Family name. **Required on every search**, plus at least one other search field (see the surname-plus-one rule). |
 | `sex` | `"Male"` \| `"Female"` \| `"Unknown"` | Sex of the person. Case-insensitive — `"male"` normalizes to `"Male"`. |
-| `givenNameExact` | boolean | When `true`, disables fuzzy matching on the given name (no nicknames/spelling variants). |
-| `surnameExact` | boolean | When `true`, disables fuzzy matching on the surname. |
+| `givenNameExact` | boolean | Restricts the given name to its exact spelling — see the exact-match rule below. Also excludes diminutives and initials-only forms. |
+| `surnameExact` | boolean | Restricts the surname to its exact spelling — see the exact-match rule below. Fuzzy matching is what bridges a misspelling, so this can drop the target. |
+
+#### The exact-match rule
+
+One rule, belonging to the search engine rather than to this endpoint:
+
+> **Without `exact=on` on a name field**, results include fuzzy matches, names
+> matching on **initials only**, and tree persons where the **searched-for field
+> is empty**. **With `exact=on`**, all three are excluded.
+
+**Provenance.** The rule was stated by the lead from FamilySearch search-engine
+internals, and then **measured on this endpoint** — it is not carried across from
+`record_search`, whose measurements were all against
+`/service/search/hr/v2/personas` rather than `platform/tree/search`. Measured
+2026-08-19: `q.surname=Pocklington&q.givenName=Joseph` returns 203 unqualified,
+of which 51 are field-empty (an unmatchable given name returns exactly those),
+and 103 survive `.exact`. An unmatchable given name under `.exact` returns
+**zero**. Reproduced across six surnames.
+
+No figure from that measurement belongs in a tool description, and
+`person-search.ts` is deliberately **not** in `EVIDENCE_SURFACES` in
+`tests/packaging/measured-figures.test.ts` — it carries no figures and must not
+start. It *is* scanned for contradicted wording (`WORDING_ONLY_SURFACES`).
+
+**Two mistakes this endpoint invites**, both silent and both inverting the result
+— recorded because each produced a wrong finding before being caught:
+
+- **`m.queryRequireDefault=on` is mandatory.** Without it, `q.*` terms only
+  rerank; they do not filter. Omitting it makes every query return the
+  surname-only total (Pocklington 3,953 rather than 272), which reads convincingly
+  as "the given name does not filter". `buildSearchUrl` always sends it; anything probing the endpoint by hand must too.
+- **A zero-result query returns HTTP 204 with an empty body**, not 200 with an
+  empty `entries` array. `res.ok` is true for 204, so a reader that parses the body
+  or retries on emptiness turns a meaningful zero into an error. `personSearchTool`
+  handles this correctly (its 204 branch returns `emptyResponse`); copy it.
+
+**Years are the exception to the rule above.** The population the year wording
+was phrased around — persons with no indexed year — was enumerated at **zero**;
+the index carries estimated date *ranges* instead, and an unqualified range
+matches by overlapping one. The year toggles' descriptions are therefore
+provisional and say so. **Places are a different mechanism** (upward expansion, which
+still descends) and are outside the rule.
 
 ### Life-event fields
 
@@ -81,9 +122,9 @@ and a place, each with an `Exact` toggle.
 |-------|------|-------------|
 | `birthYearFrom` | number | Lower bound of the birth-year range. 4-digit year. Pair with `birthYearTo`. |
 | `birthYearTo` | number | Upper bound of the birth-year range. Pair with `birthYearFrom`. |
-| `birthYearExact` | boolean | When `true`, the year range is matched exactly (no fuzz). |
+| `birthYearExact` | boolean | Requires the birth year to match the range exactly. **Years are the exception to the exact-match rule** and their behaviour is provisional — use only with a firm date, and do not rely on a range to include or exclude undated persons. |
 | `birthPlace` | string | Birth place name. |
-| `birthPlaceExact` | boolean | When `true`, the place is matched exactly (no expansion to parent jurisdictions). |
+| `birthPlaceExact` | boolean | Stops upward expansion to parent jurisdictions (it still descends). A **different mechanism** from the exact-match rule — expansion, not fuzz. |
 | `deathYearFrom` / `deathYearTo` / `deathYearExact` | number / number / boolean | Death-year range and exactness. |
 | `deathPlace` / `deathPlaceExact` | string / boolean | Death place and exactness. |
 | `marriageYearFrom` / `marriageYearTo` / `marriageYearExact` | number / number / boolean | Marriage-year range and exactness. |
@@ -101,15 +142,15 @@ the same value.
 | Field | Type | Description |
 |-------|------|-------------|
 | `spouseGivenName` / `spouseSurname` | string | Spouse's given / family name. |
-| `spouseGivenNameExact` / `spouseSurnameExact` | boolean | Strict match on the spouse's given / family name. |
+| `spouseGivenNameExact` / `spouseSurnameExact` | boolean | Requires the spouse's given / family name to be present and match exactly — the exact-match rule, including its empty-field leg. |
 | `fatherGivenName` / `fatherSurname` | string | Father's given / family name. |
-| `fatherGivenNameExact` / `fatherSurnameExact` | boolean | Strict match on the father's given / family name. |
+| `fatherGivenNameExact` / `fatherSurnameExact` | boolean | Requires the father's given / family name to be present and match exactly. Unqualified, the field keeps persons with no father recorded; this drops them. |
 | `fatherBirthPlace` / `fatherBirthPlaceExact` | string / boolean | Father's birth place and exactness. |
 | `motherGivenName` / `motherSurname` | string | Mother's given / family name. |
-| `motherGivenNameExact` / `motherSurnameExact` | boolean | Strict match on the mother's given / family name. |
+| `motherGivenNameExact` / `motherSurnameExact` | boolean | As `fatherGivenNameExact`, for the mother. |
 | `motherBirthPlace` / `motherBirthPlaceExact` | string / boolean | Mother's birth place and exactness. |
 | `parentGivenName` / `parentSurname` | string | A parent's given / family name when the parent's sex is unknown. |
-| `parentGivenNameExact` / `parentSurnameExact` | boolean | Strict match on the parent's given / family name. |
+| `parentGivenNameExact` / `parentSurnameExact` | boolean | As `fatherGivenNameExact`, for a parent of unknown sex. |
 | `parentBirthPlace` / `parentBirthPlaceExact` | string / boolean | A parent's birth place and exactness. |
 
 ### Pagination
@@ -143,6 +184,16 @@ Strict surname + birth-place match:
 { "surname": "Smyth", "surnameExact": true,
   "birthPlace": "Hodgenville, Kentucky", "birthPlaceExact": true }
 ```
+
+Kept deliberately, with what it costs stated — the two toggles here do different
+things, and this is the one shape where both are the right call. `surnameExact`
+holds the count to persons indexed exactly `Smyth`, so it also drops
+initials-only forms and persons with no surname recorded, and it will miss the
+target outright if the tree spells it `Smith`. Use it only with a spelling you
+have confirmed. `birthPlaceExact` is not the same mechanism: it stops upward
+expansion to parent jurisdictions, which is what makes the count mean something
+for an exhaustiveness claim. Reach for this pair when you need a defensible
+total, not when you are still looking for the person.
 
 ---
 
