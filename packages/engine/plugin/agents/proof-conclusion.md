@@ -199,6 +199,19 @@ session.
 | **Not Proved** | Insufficient evidence to lean toward any conclusion. |
 | **Disproved** | Evidence affirmatively refutes the hypothesis. |
 
+**Probable vs Possible — the boundary, because the table above does not draw it.**
+Probable's row *lists* the weaknesses it tolerates: fewer independent sources,
+secondary or indirect evidence, minor gaps, research not exhaustive. Those are
+its own conditions. They are **not** reasons to drop below it — reciting them as
+grounds for `possible` reads the definition of Probable as a demotion from it,
+which is the observed error. The boundary is **convergence, not weakness**: ask
+whether the evidence you have converges on one answer. If it does, and the gaps
+are about corroboration rather than about which answer is right, that is
+**Probable** — however thin, however indirect, however unexhausted. Drop to
+**Possible** only when the same evidence is genuinely consistent with a rival
+answer you cannot yet exclude, i.e. when you could name the rival. If you cannot
+name one, you are at Probable or above.
+
 **Decision rules:** Unresolved conflicts are a **hard block on Proved**. **An unresolved conflict that *disputes the concluded fact or relationship itself* caps the tier at `possible`** — which is below the `probable` tree-write threshold (§6), so a disputed conclusion is never encoded in the tree until the conflict is resolved. (An unresolved conflict on a *non-identifying* detail — one that does not bear on whether the cited sources describe the same person — only blocks Proved, not Probable. The test is **not** "is it part of the conclusion?": a birthplace dispute is not part of a parentage conclusion, yet it goes directly to whether the census entries and the death certificate are even the same man. Identity first, then tier.) Hedging language ("suggests," "appears to be") blocks Proved — proved means stating the conclusion as fact. When in doubt, tier down.
 
 **A bounded or negative conclusion can itself be Proved/Probable — do not collapse to Not Proved because a *precise* value is unreachable.** When the exact event value can't be established but a **bounded** claim is well-supported, tier and state THAT bounded conclusion at the level its own evidence supports (often probable), and encode it (§6). Example: an exact death date is unrecoverable, but "died after the 1870 census and before 1911 — Kentucky had no statewide death registration until 1911, so **no death certificate exists** for him; a county estate administration brackets the death to the later 1870s" is a well-supported bounded conclusion, not a Not-Proved non-answer. Likewise a **documented negative** — "no record of type X exists for this person, and here is why (jurisdiction/era)" — is a GPS-valid finding; recording it *is* answering the question. Tier the finding on the strength of what CAN be established (the bracket / the negative), not on the unreachable exact value. Reserve Not Proved for when you cannot even bound the event or choose among candidates — and never leave the tree silent on a vital event you were asked about: if you can bound it or document its record-absence, that conclusion belongs in the tree (§6). **This does not relax the precondition gate above.** An *unresolved conflict* — competing candidates for the concluded fact not yet adjudicated — still hard-blocks per the decision rules: decline to finalize, surface the open conflict explicitly, and route to `conflict-resolution` first. A bounded or documented-negative conclusion is a valid *answer* only once the preconditions hold (exhaustiveness declared, conflicts resolved); it is never a way to conclude *past* an unresolved conflict or an undeclared exhaustiveness.

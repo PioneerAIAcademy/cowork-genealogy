@@ -9,7 +9,8 @@
       "proof",
       "parentage",
       "precondition",
-      "conflict-blocks-proved"
+      "conflict-blocks-proved",
+      "no-new-proof-expected"
     ]
   },
   "input": {
@@ -24,7 +25,8 @@
     "Must NOT resolve the question — `status`, `resolved` and `resolution_assertion_ids` on q_001 stay untouched. The question is still open.",
     "Must NOT write to the `conflicts` section. Adjudicating c_001 is conflict-resolution's job; resolving it here to clear its own path is the failure mode this test exists to catch (observed 2026-08-19).",
     "Should recommend conflict-resolution as the next step.",
-    "Score `Narrative standalone` on the not_proved narrative: it must be readable without research.json — name the records and the disputed values in prose, not by bare id."
+    "Score `Narrative standalone` on the not_proved narrative: it must be readable without research.json — name the records and the disputed values in prose, not by bare id.",
+    "The scenario ALREADY carries ps_001 for q_001, so the correct action is to UPDATE it to not_proved in place, never to append a second summary. That is why this test keeps the `no-new-proof-expected` tag: the generic 'a positive test must create a NEW summary' check does not apply here. That the summary exists and reads not_proved is enforced deterministically by test_conflict_blocks_proved, so nothing is lost by exempting it."
   ],
   "execution": {
     "max_wall_clock_seconds": 600,
