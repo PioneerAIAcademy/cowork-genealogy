@@ -1266,10 +1266,12 @@ export const recordSearchToolSchema = {
     "not logged in. For ambiguous place names, call the places tool first. " +
     "To scope to a specific record collection, call the collections tool " +
     "first to find the right collectionId. " +
-    "EXACT-MATCH TOGGLES: without an `*Exact` flag, a name field also matches " +
-    "fuzzy spellings, names indexed as initials only, and records where that " +
-    "field is empty; setting the flag excludes all three, so it narrows and can " +
-    "drop the target. Years behave differently — see `birthYearExact`. Place " +
+    "EXACT-MATCH TOGGLES: without an `*Exact` flag a name field also matches " +
+    "fuzzy spellings, and on a RELATIVE's name field it additionally keeps " +
+    "records that name no such person at all. Setting the flag excludes both, " +
+    "so it only ever narrows and can drop the target. Whether the principal " +
+    "`surname`/`givenName` toggles also drop records with that field empty is " +
+    "not established. Years behave differently — see `birthYearExact`. Place " +
     "toggles are a different mechanism — see `birthPlaceExact`.",
   // The `*Exact` descriptions below deliberately state what each qualifier does
   // to the result COUNT rather than to retrieval. Measured live against
@@ -1303,7 +1305,7 @@ export const recordSearchToolSchema = {
       givenNameAlt: { type: "string", description: "Alternate given name. UNION with `givenName`. The tool auto-fills `surnameAlt = surname` if only this side is supplied." },
       sex: { type: "string", enum: ["Male", "Female", "Unknown"], description: "Sex of the searched person. Case-insensitive on input — `'male'` is normalized to `'Male'`." },
       surnameExact: { type: "boolean", description: "Restrict the surname to its exact spelling. Fuzzy matching is what bridges an index misspelling, so this can drop the target; use only with a confirmed indexed spelling. Applies to `surnameAlt` too." },
-      givenNameExact: { type: "boolean", description: "Restrict the given name to its exact spelling. Also excludes period diminutives (`Betty` for `Elizabeth`) — pass a variant as its own `givenName` instead. Applies to `givenNameAlt` too." },
+      givenNameExact: { type: "boolean", description: "Restrict the given name to its exact spelling. Excludes period diminutives (`Betty` for `Elizabeth`) — pass a variant as its own `givenName`. On initials it pins the order, dropping the `W J` that `J W` reaches. Applies to `givenNameAlt`." },
 
       birthYearFrom: { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1850). Must be paired with `birthYearTo`." },
       birthYearTo: { type: "number", description: "Upper bound of the birth-year range. 4-digit year (e.g., 1859). Must be paired with `birthYearFrom`." },

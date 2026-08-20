@@ -76,20 +76,25 @@ parameters is in *FamilySearch API Reference → mapping table*.
 
 One rule, belonging to the search engine rather than to this endpoint:
 
-> **Without `exact=on` on a name field**, results include fuzzy matches, names
-> matching on **initials only**, and tree persons where the **searched-for field
-> is empty**. **With `exact=on`**, all three are excluded.
+> **Without `exact=on` on a name field**, results include fuzzy matches. On a
+> **relative's** name field they additionally include persons for whom that
+> relative is not recorded. **With `exact=on`**, both are excluded.
 
-**Provenance.** The rule was stated by the lead from FamilySearch search-engine
-internals, and then **measured on this endpoint** — it is not carried across from
-`record_search`, whose measurements were all against
-`/service/search/hr/v2/personas` rather than `platform/tree/search`. Measured
-2026-08-19: `q.surname=Pocklington&q.givenName=Joseph` returns 203 unqualified,
-of which 51 are field-empty (an unmatchable given name returns exactly those),
-and 103 survive `.exact`. An unmatchable given name under `.exact` returns
-**zero**. Reproduced across six surnames.
+**Provenance, and its limit.** The rule is the lead's, from FamilySearch
+search-engine internals — it belongs to the search engine rather than to either
+endpoint. **Every figure behind it was measured against the record index**
+(`/service/search/hr/v2/personas`), not against `platform/tree/search`. No probe
+covers this endpoint: `grep -rl "platform/tree/search" packages/engine/mcp-server/dev/`
+returns nothing, and no figure in `dev/measured-figures.json` was taken here.
 
-No figure from that measurement belongs in a tool description, and
+So the rule is stated **on the lead's authority, not on a measurement of this
+endpoint**, and the tool description says as much. A session probe on
+2026-08-19 was consistent with it, but it lived in throwaway scripts and left no
+artifact, so it is not cited here and nothing can be diffed against it — building
+the tree-endpoint probe is the work that would change that. Until then, treat a
+tree-side figure as absent rather than unstated.
+
+No figure belongs in a tool description here, and
 `person-search.ts` is deliberately **not** in `EVIDENCE_SURFACES` in
 `tests/packaging/measured-figures.test.ts` — it carries no figures and must not
 start. It *is* scanned for contradicted wording (`WORDING_ONLY_SURFACES`).
@@ -106,11 +111,13 @@ start. It *is* scanned for contradicted wording (`WORDING_ONLY_SURFACES`).
   or retries on emptiness turns a meaningful zero into an error. `personSearchTool`
   handles this correctly (its 204 branch returns `emptyResponse`); copy it.
 
-**Years are the exception to the rule above.** The population the year wording
-was phrased around — persons with no indexed year — was enumerated at **zero**;
-the index carries estimated date *ranges* instead, and an unqualified range
-matches by overlapping one. The year toggles' descriptions are therefore
-provisional and say so. **Places are a different mechanism** (upward expansion, which
+**Years and places are both outside the rule, and neither has been measured
+here.** The year finding — that the population the old wording was phrased around
+(objects with no indexed year) is empty, and the index carries estimated date
+*ranges* matched by overlap — was enumerated over **records**, not tree persons.
+The place mechanism (upward expansion that still descends) is likewise a
+record-index measurement. Both are stated as unestablished on this endpoint, and
+the toggles' descriptions say so. **Places are a different mechanism** (upward expansion, which
 still descends) and are outside the rule.
 
 ### Life-event fields

@@ -352,26 +352,28 @@ export const personSearchToolSchema = {
     "person_read with relatives: true. Requires authentication — call the " +
     "login tool first if not logged in. For ambiguous place names, call the " +
     "place_search tool first. " +
-    "EXACT-MATCH TOGGLES: without an `*Exact` flag, a name field also matches " +
-    "fuzzy spellings, names indexed as initials only, and tree persons where " +
-    "that field is empty; setting the flag excludes all three, so it narrows " +
-    "and can drop the target. Measured on this endpoint. Years behave " +
-    "differently — see `birthYearExact`. Place toggles are a different " +
-    "mechanism — see `birthPlaceExact`.",
+    "EXACT-MATCH TOGGLES: without an `*Exact` flag a name field also matches " +
+    "fuzzy spellings, and a relative's name field additionally keeps persons " +
+    "for whom that relative is not recorded. Setting the flag excludes both, " +
+    "so it only ever narrows and can drop the target. This is the search " +
+    "engine's behaviour rather than this endpoint's; the figures behind it were " +
+    "measured against the record index. Years and places are outside the rule " +
+    "and their behaviour here is unestablished — see `birthYearExact` and " +
+    "`birthPlaceExact`.",
   inputSchema: {
     type: "object",
     properties: {
       givenName: { type: "string", description: "Given (first) name. Counts as a qualifying 'other' field alongside the required surname." },
       surname: { type: "string", description: "Family name. Required on every search, and must be accompanied by at least one other search field (a given name, a life-event year/place, or a relative's name). `sex` and `*Exact` toggles do not count." },
       sex: { type: "string", enum: ["Male", "Female", "Unknown"], description: "Sex of the person. Case-insensitive on input — `'male'` is normalized to `'Male'`. Does not satisfy the surname-plus-one rule on its own." },
-      givenNameExact: { type: "boolean", description: "Restrict the given name to its exact spelling. Also excludes diminutives and initials-only forms — pass a variant as its own `givenName` instead." },
+      givenNameExact: { type: "boolean", description: "Restrict the given name to its exact spelling. Excludes diminutives — pass a variant as its own `givenName` instead." },
       surnameExact: { type: "boolean", description: "Restrict the surname to its exact spelling. Fuzzy matching is what bridges a misspelling, so this can drop the target; use only with a spelling you have confirmed." },
 
       birthYearFrom: { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1809). Must be paired with `birthYearTo`." },
       birthYearTo: { type: "number", description: "Upper bound of the birth-year range. 4-digit year. Must be paired with `birthYearFrom`. For a single year, set From and To equal." },
       birthYearExact: { type: "boolean", description: "Require the birth year to match the range exactly. Years are the exception to the rule above and are being re-measured (#1771) — use only with a firm date, not to include or exclude undated persons." },
       birthPlace: { type: "string", description: "Birth place name. For ambiguous place names, call the `place_search` tool first." },
-      birthPlaceExact: { type: "boolean", description: "Stop upward expansion to parent jurisdictions (it still descends). Not the rule above: this is expansion, not fuzz." },
+      birthPlaceExact: { type: "boolean", description: "Stop upward expansion to parent jurisdictions. Outside the rule above — expansion, not fuzz — and measured against the record index, not this endpoint." },
 
       deathYearFrom: { type: "number", description: "Lower bound of the death-year range. 4-digit year. Must be paired with `deathYearTo`." },
       deathYearTo: { type: "number", description: "Upper bound of the death-year range. 4-digit year. Must be paired with `deathYearFrom`." },

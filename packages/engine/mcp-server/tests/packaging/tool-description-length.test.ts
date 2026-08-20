@@ -17,11 +17,17 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * stops the next editor from re-expanding a one-liner into a paragraph, which is
  * how it got here.
  *
- * The ceiling is SIZED FROM THE DRAFTED ONE-LINERS, not guessed: the longest one
- * written for #1409 is `record_search.surnameExact` at 205 characters, so 240
- * leaves headroom for a genuinely more complex toggle while still failing every
- * paragraph. Before this test, six toggles exceeded it (477, 404, 377, 343, 271,
- * 257).
+ * The ceiling is SIZED FROM THE ONE-LINERS ACTUALLY WRITTEN, not guessed. The
+ * longest non-exempt description is `record_search.birthPlaceExact` at 201
+ * characters (`surnameExact` is 198, `givenNameExact` 238 with its initials
+ * clause), so 240 leaves headroom for a genuinely more complex toggle while
+ * still failing every paragraph. Before this change six toggles exceeded it:
+ * 475, 402, 375, 341, 269, 255.
+ *
+ * Those figures are measured, and were wrong in the first version of this
+ * comment — uniformly +2, from counting the enclosing quotes. Since this comment
+ * is the only justification for the number, an off-by-two here is the same class
+ * of defect as a guessed threshold.
  *
  * It deliberately checks only the `*Exact` family. Other parameters carry
  * genuinely load-bearing prose (`projectPath`, `subjectId`, `batchNumber`) whose
@@ -83,7 +89,23 @@ describe("*Exact descriptions stay one-liners", () => {
       const [tool, param] = key.split(".");
       const schema = allToolSchemas.find((t) => t.name === tool);
       const props = (schema?.inputSchema as { properties?: Record<string, unknown> })?.properties ?? {};
-      if (!(param in props)) problems.push(`${key}: parameter no longer exists — delete the exemption`);
+      if (!(param in props)) {
+        problems.push(`${key}: parameter no longer exists — delete the exemption`);
+        continue;
+      }
+      // The docstring promises an exemption cannot outlive its reason, and only
+      // this assertion makes that true. Checking the parameter still EXISTS is
+      // not enough: when the description it excuses is rewritten as a one-liner
+      // (which is exactly what the issue owning `birthYearExact` will do), a
+      // leftover entry becomes a permanent pass for that parameter and nothing
+      // goes red. An exemption for a description that already fits is dead.
+      const len = ((props[param] as { description?: string }).description ?? "").length;
+      if (len <= CEILING) {
+        problems.push(
+          `${key}: description is ${len} chars, already under the ${CEILING} ceiling — ` +
+            `the exemption is dead, delete it`
+        );
+      }
     }
     expect(
       problems,

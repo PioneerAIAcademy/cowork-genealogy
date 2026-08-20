@@ -102,13 +102,29 @@ but the anchor rule above must be satisfied.
 
 One rule, belonging to the search engine rather than to this endpoint:
 
-> **Without `exact=on` on a name field**, results include fuzzy matches, names
-> matching on **initials only**, and records where the **searched-for field is
-> empty**. **With `exact=on`**, all three are excluded.
+> **Without `exact=on` on a name field**, results include fuzzy matches. On a
+> **relative's** name field they additionally include records that name no such
+> person at all. **With `exact=on`**, both are excluded.
 
-Stated by the lead from FamilySearch search-engine internals, and measured on
-**both** endpoints — this one and `platform/tree/search`, which `person_search`
-uses. See `docs/specs/person-search-tool-spec.md` → *Person fields* → *The
+**What is measured, and what is not.** The relative half is enumerated on this
+endpoint: `F.verdict:relative .exact requires the relative to be present` reads
+CONFIRMED (every father-less representative absent from the exact set read in
+full, father-bearing control present), `R.verdict:spouse .exact requires the
+spouse to be present` likewise across two populations read in full, and
+`R.verdict:keep-silent` HOLDS. The fuzzy half is enumerated too:
+`B.verdict:exact surfaces records fuzzy does not` reads NO — exact is a strict
+subset.
+
+**Whether the principal `surname`/`givenName` toggles also drop records with that
+field empty is NOT established**, and the spec should not imply it.
+`T.verdict:all name fields behave alike` reads *"NOT MEASURED — the per-field
+verdicts are withheld under RULE 0"*, and `surname` is a required anchor, so a
+surname-empty record is not a case this endpoint puts in front of you. An earlier
+version of this section asserted the empty-field leg for every name field; it was
+narrowed here after review.
+
+The lead states the rule as the search engine's rather than this endpoint's, from
+FamilySearch internals. See `docs/specs/person-search-tool-spec.md` → *Person fields* → *The
 exact-match rule* for the tree-side measurement and for two instrumentation traps
 specific to that endpoint. **The same rule, the same parameter names, the same
 meaning** on both tools; that is why it is stated in both specs rather than
@@ -1185,7 +1201,7 @@ general statement about place ranking.
 | Family | Unqualified behavior | What `.exact=on` costs |
 |---|---|---|
 | `surname` | Filters, and expands loosely to spelling neighbours | **Can drop the target.** On a record indexed `Neill`, `q.surname=Neal` returns it and `q.surname=Neal&q.surname.exact=on` returns **0**. Fuzzy matching is the mechanism that bridges an index misspelling — the commonest reason a record cannot be found |
-| `givenName` | Filters, and expands. It bridges standardized abbreviations (an unqualified `fatherGivenName=William` returned `Wm:52 Wm.:31` in a 300-result survey, re-measured 2026-08-08 after a father-detection fix in the probe). It also reaches period diminutives: membership tests on 2026-08-08 (probe section E) returned the diminutive's own record from the fuzzy search for the formal name 8 times out of 8, across Elizabeth→Betty, Margaret→Peggy and Mary→Polly. **The limit is rank, not coverage** — each record was ranked only within its own pool — the best at rank 347 in a pool of 1,019 (2 of the 8 fell inside the 500-deep scan), the other six unseen within that scan in pools of 55,514, 90,037 and 219,494, so a top-N sample cannot establish what the expansion reaches (an earlier revision of this row concluded "no `Betty`" from exactly such a sample). Narrowing works: with the query narrowed on the surname to a 227-row set read in full, the bound `Betty` record was present, at rank 103. Nothing widens the expansion — qualifiers only subtract — so to surface a diminutive, narrow the query until the pool is scannable or search it as its own `givenName` value. **Initials:** an unqualified given name also reaches records indexed as initials only, and an initials value reaches its transposition (`J W` finds `W J`, 29 of 100 sampled). `I.verdict:fuzzy swallows initials into spelled-out names = NO` is about what dominates the returned page, not what is in the set — initials matches are included and rank low | Excludes every variant, including the nicknames the default *does* reach; the abbreviation figures in the middle column are a 300-row sample of a pool too large to enumerate, so treat the size of that loss as indicative |
+| `givenName` | Filters, and expands. It bridges standardized abbreviations (an unqualified `fatherGivenName=William` returned `Wm:52 Wm.:31` in a 300-result survey, re-measured 2026-08-08 after a father-detection fix in the probe). It also reaches period diminutives: membership tests on 2026-08-08 (probe section E) returned the diminutive's own record from the fuzzy search for the formal name 8 times out of 8, across Elizabeth→Betty, Margaret→Peggy and Mary→Polly. **The limit is rank, not coverage** — each record was ranked only within its own pool — the best at rank 347 in a pool of 1,019 (2 of the 8 fell inside the 500-deep scan), the other six unseen within that scan in pools of 55,514, 90,037 and 219,494, so a top-N sample cannot establish what the expansion reaches (an earlier revision of this row concluded "no `Betty`" from exactly such a sample). Narrowing works: with the query narrowed on the surname to a 227-row set read in full, the bound `Betty` record was present, at rank 103. Nothing widens the expansion — qualifiers only subtract — so to surface a diminutive, narrow the query until the pool is scannable or search it as its own `givenName` value. **Initials, in the one direction that is measured:** an initials *value* reaches its transposition — `I.verdict:.exact pins the initials ORDER` is CONFIRMED (ENUMERATED), the transposed record present in the fuzzy set and absent from the `.exact` set, both read to the end. Whether a **spelled-out** query reaches records indexed as initials only is unmeasured, and `I.verdict:fuzzy swallows initials into spelled-out names` reads NO for the converse direction, so do not state it. The sampled `J W:66 W J:29` forms breakdown is a 100-row sample of a 1,025,885-row pool and is indicative only | Excludes every variant, including the nicknames the default *does* reach; the abbreviation figures in the middle column are a 300-row sample of a pool too large to enumerate, so treat the size of that loss as indicative |
 | relative names (`father*`, `mother*`, `spouse*`, `parent*`, `other*`) | **Keep-matching / keep-silent / drop-contradicting** — see below. Enumerated for `father*` and `spouse*` only, on marriage records in two countries; `mother*`, `parent*` and `other*` are assumed to follow, not measured | Drops the silent records *and* variant forms the unqualified search did reach: on a pool read in full, `João Baptista` and `Thiago J` are present unqualified and absent from the `.exact` set. Whether it drops indexed **abbreviations** specifically is NOT MEASURED — that enumerated unqualified set contained no abbreviated form to drop, and the `Wm:52 Wm.:31` of 300 that stood here is a sample of a pool too large to enumerate |
 | `<event>Place` | Expands upward far enough that a county scope barely discriminates — from the same query, the **wrong** Arkansas county returned the same total as the right one to within 0.1% (about 35,500 each). Two *different* English counties measured counts 0.001% apart (`dev/explore-wildcard-scope.ts`), so treat an unqualified county scope as no scope at all | It makes the count meaningful. Its effect on ordering was not measured beyond one target, which ranked first either way. Useful mainly where a total has to mean something (an exhaustiveness claim) |
 | `<event>Year` | Fuzz around the range bounds — weakly evidenced (see above). Whether an unqualified range requires an indexed year is **not established**: the instrument that addressed it could not tell a record with no indexed year from one whose year the result payload merely does not expose, so no direction is recorded. Do not quote a share of tolerated silence, and do not rely on an unqualified range to include undated records. `any` was never tested at all | Meant to exclude records whose indexed year falls just outside the range, though the enumerated check found one out-of-range row SURVIVING it, so do not rely on the exclusion being complete. Whether it also drops records carrying no indexed year, or in-range *approximate* dates, is **not established** — so it cannot be relied on to exclude undated records either. Use only with a firm date |
