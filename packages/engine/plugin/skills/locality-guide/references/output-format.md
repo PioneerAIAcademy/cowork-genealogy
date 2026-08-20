@@ -2,8 +2,13 @@
 
 Use this structure when compiling the final guide. Fill in every
 section with specific data from MCP tool results. Omit sections only
-when the record type is clearly inapplicable (e.g., immigration
-records for an inland area with no immigration activity).
+when the record type is clearly inapplicable (e.g., international
+border-crossing manifests for a locality far from any land border or
+port of entry — only border crossings and ports of entry are
+geographically bound). Do **not** omit immigration records for an
+inland area: declarations of intention, naturalizations, affidavits
+filed by relatives, and alien registrations were all generated inland,
+far from any port.
 
 ```markdown
 # Locality Guide: [Place] ([Time Period])
