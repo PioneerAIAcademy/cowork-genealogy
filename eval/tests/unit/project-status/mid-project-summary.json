@@ -17,8 +17,9 @@
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
-    "Should report on every GPS element present in the project: 2 questions (q_001 in_progress, q_002 resolved), 2 plans (pl_001 completed, pl_002 active), 5 log entries, 4 sources, 13 assertions, 6 person_evidence links, 1 resolved conflict (c_001), 1 supported hypothesis (h_001), 1 timeline (t_001), 1 proof summary (ps_001 at probable)",
+    "Should report on every GPS element present in the project: 2 questions (q_001 in_progress, q_002 resolved), 2 plans (pl_001 completed, pl_002 active), 5 log entries, 9 sources, 13 assertions, 6 person_evidence links, 1 resolved conflict (c_001), 1 supported hypothesis (h_001), 1 timeline (t_001), 1 proof summary (ps_001 at probable)",
     "Counts in the report must match research.json exactly (e.g., 'thirteen assertions' or '13 assertions' matches the 13 entries; not approximate counts)",
+    "person_evidence rows are not one-per-assertion — pe_002 and pe_006 both link a_004. Six rows cover five distinct assertions, so 8 of the 13 assertions are unlinked (a_002, a_003, a_006, a_007, a_008, a_009, a_011, a_012). Do NOT penalize a report that says 8; count distinct assertion_id values, not rows",
     "Should identify what's needed to advance the proof tier from `probable` to `proved` — specifically that pli_006 (probate) is still in_progress and that 1870/1880/1900 censuses haven't been searched",
     "Should recommend the immediate next step concretely: complete the in-progress probate search before considering the parentage question resolved (per the active state of pli_006)"
   ],
