@@ -177,12 +177,20 @@ async function runPool(POOL: string, label: string, crossTab: boolean): Promise<
     .sort((a, b) => b[1] - a[1]);
   console.log(`\n  kin-related labels (${kin.length}):`);
   for (const [l, n] of kin) console.log(`    ${l.padEnd(38)} on ${n}/${rows.length} personas`);
-  if (kin.length === 0 || !crossTab) {
+  // Two different reasons to stop, and they must not share a message. The single
+  // `||` printed "NONE — the index view of relatives is not in this payload" even
+  // when the loop above had just listed kin labels, purely because `crossTab` was
+  // off — a flat denial of what the previous line had shown.
+  if (kin.length === 0) {
     console.log("    NONE — so the index view of relatives is not in this payload after all.");
     console.log("    Top 25 labels present, for the record:");
     for (const [l, n] of [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 25)) {
       console.log(`      ${l.padEnd(38)} ${n}`);
     }
+    return;
+  }
+  if (!crossTab) {
+    console.log(`    (${kin.length} kin label(s) above; cross-tab skipped for this pool by config)`);
     return;
   }
 
