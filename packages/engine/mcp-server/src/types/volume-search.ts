@@ -54,6 +54,13 @@ export interface MetadataRmsCoverageEntry {
   /** Stable key for the record type; `recordTypeOrig` is display text. */
   recordTypeConceptId?: number;
   /** Ancestor chain, root first, ending in `recordTypeConceptId`. */
+  /**
+   * The concept's ancestor chain, root-first, ending in `recordTypeConceptId`.
+   * No shipped code reads it — it is how `dev/probe-record-type-groups.ts`
+   * resolves a stray's real parent, which is the evidence behind the group
+   * table, and it is listed here so this interface describes the whole coverage
+   * row rather than only the parts the tool consumes.
+   */
   recordTypeConceptIdHierarchy?: number[];
   /** ISO-shaped span start, e.g. `"1683-01-01T00:00:00"`. */
   fromdateString?: string;

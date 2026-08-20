@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  assertAcyclicTable,
   RECORD_TYPE_GROUPS,
   RECORD_TYPE_GROUP_NAMES,
   RECORD_TYPE_GROUP_TABLE,
@@ -66,6 +67,28 @@ describe("record-type group vocabulary", () => {
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids).toContain(122797);
     expect(ids).toContain(127571); // Court's stray
+  });
+
+  it("names every bad entry, including null and undefined", () => {
+    // `["Tax", null].join(", ")` renders the null as an empty string, so a raw
+    // join would name nothing at all — the opposite of reporting every bad
+    // entry in one throw, which is why the message is plural.
+    expect(() =>
+      conceptIdsForGroups(["Tax", null] as unknown as string[])
+    ).toThrow(/Unknown record-type group\(s\): null\./);
+    expect(() =>
+      conceptIdsForGroups(["Tax", undefined] as unknown as string[])
+    ).toThrow(/Unknown record-type group\(s\): undefined\./);
+    expect(() =>
+      conceptIdsForGroups(["Nope", 42] as unknown as string[])
+    ).toThrow(/Unknown record-type group\(s\): Nope, 42\./);
+  });
+
+  it("every parent chain terminates at a root", () => {
+    // Whole-table check. `descendantsOf` only walks into cycles reachable from
+    // the group being queried, so a corrupt row elsewhere would not surface at
+    // runtime; this is the check that fails regardless of what is asked for.
+    expect(() => assertAcyclicTable()).not.toThrow();
   });
 
   it("throws on an unknown name rather than quietly widening the search", () => {

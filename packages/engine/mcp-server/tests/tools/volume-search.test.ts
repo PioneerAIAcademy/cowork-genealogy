@@ -517,12 +517,11 @@ describe("volumeSearchTool", () => {
   });
 
   // 15c-15f. Record-type group filtering
-  const EDENSOR = "Edensor, Derbyshire, England, United Kingdom";
 
   it("expands a group to its anchor and sends it inside coverage", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
     // Marriage carries no strays, so this isolates the anchor path.
-    await volumeSearchTool({ standardPlace: EDENSOR, recordTypeGroups: ["Marriage"] });
+    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Marriage"] });
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     // Inside `coverage`, not at the top level — at the top level it is ignored.
     expect(body.coverage.recordTypeConceptIds).toEqual([104727]);
@@ -531,43 +530,43 @@ describe("volumeSearchTool", () => {
 
   it("sends a group's strays alongside its anchor", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
-    await volumeSearchTool({ standardPlace: EDENSOR, recordTypeGroups: ["Prison"] });
+    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Prison"] });
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     // 131448 police records, 130086 criminal records and 126416 criminal case
     // files all sit outside 123478's subtree, so containment cannot reach them.
-    expect(body.coverage.recordTypeConceptIds.sort()).toEqual(
-      [123478, 131448, 130086, 126416].sort()
+    expect(body.coverage.recordTypeConceptIds.sort((a: number, b: number) => a - b)).toEqual(
+      [123478, 131448, 130086, 126416].sort((a, b) => a - b)
     );
   });
 
   it("ORs multiple groups into one id array", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
     await volumeSearchTool({
-      standardPlace: EDENSOR,
+      standardPlace: EDENSOR_P,
       recordTypeGroups: ["Tax", "Census"],
     });
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     // Tax anchor + Tax stray + Census anchor + Census stray.
-    expect(body.coverage.recordTypeConceptIds.sort()).toEqual(
-      [124410, 129065, 123363, 104611].sort()
+    expect(body.coverage.recordTypeConceptIds.sort((a: number, b: number) => a - b)).toEqual(
+      [124410, 129065, 123363, 104611].sort((a, b) => a - b)
     );
   });
 
   it("sends a parent's anchor plus its descendants' strays, not their anchors", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
-    await volumeSearchTool({ standardPlace: EDENSOR, recordTypeGroups: ["Legal"] });
+    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Legal"] });
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     // Court, Probate, Wills and Land anchors are NOT enumerated — the API
     // expands 122797's subtree itself. Their strays are, because a stray sits
     // outside that subtree and containment cannot reach it.
-    expect(body.coverage.recordTypeConceptIds.sort()).toEqual(
-      [122797, 127571, 127073, 129547].sort()
+    expect(body.coverage.recordTypeConceptIds.sort((a: number, b: number) => a - b)).toEqual(
+      [122797, 127571, 127073, 129547].sort((a, b) => a - b)
     );
   });
 
   it("treats an empty recordTypeGroups array as no filter", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
-    await volumeSearchTool({ standardPlace: EDENSOR, recordTypeGroups: [] });
+    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: [] });
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     // Upstream treats an empty id list as no filter; omit it rather than send a
     // no-op that reads like a filter.
@@ -576,7 +575,7 @@ describe("volumeSearchTool", () => {
 
   it("throws on an unknown group name and names the valid set", async () => {
     await expect(
-      volumeSearchTool({ standardPlace: EDENSOR, recordTypeGroups: ["Taxation"] })
+      volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Taxation"] })
     ).rejects.toThrow(/Unknown record-type group\(s\): Taxation.*Tax/s);
     // Never falls through to an unfiltered search: upstream answers an
     // unrecognised id with totalCount 0 and status 200, which is
@@ -590,7 +589,7 @@ describe("volumeSearchTool", () => {
     // field is dropped and the search silently returns everything.
     await expect(
       volumeSearchTool({
-        standardPlace: EDENSOR,
+        standardPlace: EDENSOR_P,
         recordType: "probate",
       } as unknown as VolumeSearchInput)
     ).rejects.toThrow(/filters by recordTypeGroups.*not recordType/s);
@@ -607,14 +606,14 @@ describe("volumeSearchTool", () => {
       []
     );
     const first = await volumeSearchTool({
-      standardPlace: EDENSOR,
+      standardPlace: EDENSOR_P,
       recordTypeGroups: ["Tax"],
     });
     expect(first.nextPageToken).toBe("page-2-cursor");
 
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
     await volumeSearchTool({
-      standardPlace: EDENSOR,
+      standardPlace: EDENSOR_P,
       recordTypeGroups: ["Tax"],
       pageToken: first.nextPageToken,
     });
@@ -635,7 +634,7 @@ describe("volumeSearchTool", () => {
     // throw "filter is not a function" from inside validate().
     await expect(
       volumeSearchTool({
-        standardPlace: EDENSOR,
+        standardPlace: EDENSOR_P,
         recordTypeGroups: "Tax",
       } as unknown as VolumeSearchInput)
     ).rejects.toThrow(/recordTypeGroups must be an array/);
@@ -645,7 +644,7 @@ describe("volumeSearchTool", () => {
   it("echoes recordTypeGroups in query", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
     const result = await volumeSearchTool({
-      standardPlace: EDENSOR,
+      standardPlace: EDENSOR_P,
       recordTypeGroups: ["Tax"],
     });
     expect(result.query.recordTypeGroups).toEqual(["Tax"]);

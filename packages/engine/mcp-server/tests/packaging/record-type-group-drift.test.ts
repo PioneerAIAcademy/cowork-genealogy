@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  assertAcyclicTable,
   RECORD_TYPE_GROUP_TABLE,
   RECORD_TYPE_GROUP_NAMES,
   conceptIdsForGroups,
@@ -126,6 +127,13 @@ describe("the spec's group tables and the shipped vocabulary agree", () => {
   // selecting `Government` also gets you Tax and Prison, and it is exactly the
   // transitive closure of the Parent column — so it can rot without any other
   // check noticing.
+  // Structural, not a spec comparison: the runtime guard in `descendantsOf` only
+  // walks into a cycle reachable from the group being queried, so a corrupt row
+  // elsewhere would never surface. This is the check that fires whatever is asked.
+  it("gives every group a parent chain that terminates at a root", () => {
+    expect(() => assertAcyclicTable()).not.toThrow();
+  });
+
   it("states 'Also returns' as the full set of nested groups", () => {
     const descendants = (name: string) =>
       [...specGroups.entries()]

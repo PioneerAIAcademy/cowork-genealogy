@@ -2,8 +2,8 @@ import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "../utils/http.js";
 import {
-  RECORD_TYPE_GROUPS,
   RECORD_TYPE_GROUP_NAMES,
+  assertKnownGroupNames,
   conceptIdsForGroups,
 } from "../utils/record-type-groups.js";
 import { standardPlaceToPlaceId, placeIdToRepIds } from "../utils/place-resolver.js";
@@ -64,36 +64,39 @@ function validate(input: VolumeSearchInput): void {
   ) {
     throw new Error("endYear must be greater than or equal to startYear.");
   }
-  // `record_search` and `fulltext_search` both take a singular `recordType`, so
-  // it is the field an LLM reaches for here. Nothing validates input against the
+  // Near-miss spellings of *this* field only. `record_search` and
+  // `fulltext_search` both take a singular `recordType`, so that is the name an
+  // LLM reaches for here; `record_type` is the snake_case convention
+  // `research.json` uses elsewhere. Nothing validates input against the
   // advertised JSON Schema — `src/index.ts` casts `request.params.arguments`
-  // straight to the handler — so without this the wrong field name is ignored and
-  // the search silently runs unfiltered, returning everything with no signal.
-  if ("recordType" in input) {
-    throw new Error(
-      "volume_search filters by recordTypeGroups (an array of group names), " +
-        "not recordType. Valid groups: " +
-        RECORD_TYPE_GROUP_NAMES.join(", ") +
-        "."
-    );
+  // straight to the handler — so an unrecognised field is ignored and the search
+  // silently runs unfiltered, returning everything with no signal.
+  //
+  // Deliberately not a general unknown-field check: the tool's year inputs have
+  // their own live spellings elsewhere (`yearFrom`/`yearTo`, `fromYear`/`toYear`)
+  // and catching those too is the schema-wide `additionalProperties` question the
+  // spec puts out of scope, not a bigger version of this list.
+  for (const alias of ["recordType", "record_type", "recordTypes"]) {
+    if (alias in input) {
+      throw new Error(
+        `volume_search filters by recordTypeGroups (an array of group names), ` +
+          `not ${alias}. Valid groups: ` +
+          RECORD_TYPE_GROUP_NAMES.join(", ") +
+          "."
+      );
+    }
   }
   if (input.recordTypeGroups != null) {
     if (!Array.isArray(input.recordTypeGroups)) {
       throw new Error("recordTypeGroups must be an array of group names.");
     }
-    const unknown = input.recordTypeGroups.filter(
-      (name) => !RECORD_TYPE_GROUPS.has(name)
-    );
-    if (unknown.length > 0) {
-      // Never fall through to an unfiltered or empty search: upstream answers an
-      // unrecognised concept id with `totalCount: 0` and status 200, which is
-      // indistinguishable from a genuine absence of records.
-      throw new Error(
-        `Unknown record-type group(s): ${unknown.join(", ")}. Valid groups: ` +
-          RECORD_TYPE_GROUP_NAMES.join(", ") +
-          "."
-      );
-    }
+    // Never fall through to an unfiltered or empty search: upstream answers an
+    // unrecognised concept id with `totalCount: 0` and status 200, which is
+    // indistinguishable from a genuine absence of records. Shared with
+    // `conceptIdsForGroups`, which repeats the check as a backstop for any
+    // future caller that skips this one — one template, so the two cannot word
+    // the same failure differently.
+    assertKnownGroupNames(input.recordTypeGroups);
   }
 }
 
@@ -187,6 +190,13 @@ function computeRecordSearchablePercent(group: MetadataRmsGroup): number | null 
  * repo's genealogical standard-date strings ("11 Sep 1718", "Bet 1870 and 1880")
  * and return null for every ISO form. Widening them would touch the timeline,
  * conflict and warning paths for no gain here.
+ *
+ * Nor is it `parseYear` in `external-links-search.ts`, which looks like the same
+ * job but is not: that one is `Number.parseInt`, which reads 16 out of "16xx"
+ * and 999 out of "999-01-01". This wants the leading *four* digits or nothing,
+ * because the value is an ISO timestamp and a partial parse would put a
+ * plausible-looking wrong year on a coverage. Merging the two means either
+ * loosening this or tightening a shipped tool's behaviour.
  */
 function leadingYear(value: string | undefined): number | undefined {
   if (value == null) return undefined;

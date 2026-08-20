@@ -86,7 +86,8 @@ export const RECORD_TYPE_GROUP_TABLE: readonly RecordTypeGroup[] = [
   { name: "Photographs", anchor: 122956, parent: null },
   { name: "Miscellaneous", anchor: 124078, parent: null },
   { name: "Administrative", anchor: 135784, parent: null },
-  { name: "Newspapers", anchor: 124231, parent: null },];
+  { name: "Newspapers", anchor: 124231, parent: null },
+];
 
 /** Group names, for the tool schema's `enum`. */
 export const RECORD_TYPE_GROUP_NAMES: readonly string[] =
@@ -98,24 +99,67 @@ export const RECORD_TYPE_GROUPS: ReadonlyMap<string, RecordTypeGroup> = new Map(
 );
 
 /**
+ * Parent name -> its immediate children, built once at module load so
+ * `descendantsOf` costs the size of the subtree rather than a full table scan.
+ */
+const CHILDREN: ReadonlyMap<string, readonly RecordTypeGroup[]> = (() => {
+  const index = new Map<string, RecordTypeGroup[]>();
+  for (const group of RECORD_TYPE_GROUP_TABLE) {
+    if (group.parent === null) continue;
+    const siblings = index.get(group.parent);
+    if (siblings) siblings.push(group);
+    else index.set(group.parent, [group]);
+  }
+  return index;
+})();
+
+/**
  * Every group nested beneath `name`, at any depth.
  *
- * The walk is bounded by a seen-set rather than trusting the table to be acyclic.
- * A single mis-transcribed `parent` — two groups naming each other — would
- * otherwise spin here forever, and it would do so *before* the request is built,
- * so `fetchWithTimeout` never gets the chance to bound it. Throwing names the bad
- * row instead of hanging the caller.
+ * Breadth-first over `CHILDREN`, refusing to visit a name twice. A
+ * mis-transcribed `parent` — two rows naming each other — would otherwise spin
+ * here forever, and it would do so *before* the request is built, so
+ * `fetchWithTimeout` never gets the chance to bound it. Throwing names the row.
+ *
+ * The visited check is the first thing done to every node, which is what makes
+ * the guard hold for a group inside the cycle as well as one reaching it from
+ * outside — the swapped-adjacent-rows case a hand edit most easily produces.
+ *
+ * A cycle elsewhere in the table is not reachable from here, so it is
+ * `assertAcyclicTable` — not this guard — that checks all 47 chains.
  */
 function descendantsOf(name: string): RecordTypeGroup[] {
   const out: RecordTypeGroup[] = [];
+  const seen = new Set<string>([name]);
+  const queue: RecordTypeGroup[] = [...(CHILDREN.get(name) ?? [])];
+  while (queue.length > 0) {
+    const group = queue.shift() as RecordTypeGroup;
+    if (seen.has(group.name)) {
+      throw new Error(
+        `Cyclic parent chain in the record-type group table at "${group.name}". ` +
+          `Every group's parent chain must end at a root.`
+      );
+    }
+    seen.add(group.name);
+    out.push(group);
+    const children = CHILDREN.get(group.name);
+    if (children) queue.push(...children);
+  }
+  return out;
+}
+
+/**
+ * Every group's parent chain terminates at a root.
+ *
+ * Exported for the drift test. `descendantsOf` only notices a cycle it walks
+ * into, so a corrupt row nowhere near the queried group would go unreported at
+ * runtime; this checks the whole table at once and is what fails in CI.
+ */
+export function assertAcyclicTable(): void {
   for (const group of RECORD_TYPE_GROUP_TABLE) {
     const seen = new Set<string>([group.name]);
     let parent = group.parent;
     while (parent !== null) {
-      if (parent === name) {
-        out.push(group);
-        break;
-      }
       if (seen.has(parent)) {
         throw new Error(
           `Cyclic parent chain in the record-type group table at "${parent}" ` +
@@ -126,7 +170,30 @@ function descendantsOf(name: string): RecordTypeGroup[] {
       parent = RECORD_TYPE_GROUPS.get(parent)?.parent ?? null;
     }
   }
-  return out;
+}
+
+/**
+ * Throw unless every name is a known group, listing all the bad ones.
+ *
+ * One template, called by `volume_search`'s `validate()` and by
+ * `conceptIdsForGroups` below, so the tool's error and its backstop cannot word
+ * the same failure differently. Non-string entries are rendered rather than
+ * joined raw: `["Tax", null].join(", ")` coerces `null` to an empty string, so
+ * the one entry actually wrong would be invisible in the message.
+ */
+export function assertKnownGroupNames(names: readonly unknown[]): void {
+  const unknown = names.filter(
+    (name) => typeof name !== "string" || !RECORD_TYPE_GROUPS.has(name)
+  );
+  if (unknown.length === 0) return;
+  const named = unknown.map((name) =>
+    typeof name === "string" ? name : JSON.stringify(name) ?? String(name)
+  );
+  throw new Error(
+    `Unknown record-type group(s): ${named.join(", ")}. Valid groups: ` +
+      RECORD_TYPE_GROUP_NAMES.join(", ") +
+      "."
+  );
 }
 
 /**
@@ -151,26 +218,15 @@ function descendantsOf(name: string): RecordTypeGroup[] {
  * — the failure this vocabulary exists to prevent.
  */
 export function conceptIdsForGroups(names: readonly string[]): number[] {
+  assertKnownGroupNames(names);
   const ids = new Set<number>();
-  const unknown: string[] = [];
   for (const name of names) {
-    const group = RECORD_TYPE_GROUPS.get(name);
-    if (!group) {
-      unknown.push(name);
-      continue;
-    }
+    const group = RECORD_TYPE_GROUPS.get(name) as RecordTypeGroup;
     ids.add(group.anchor);
     for (const stray of group.strays ?? []) ids.add(stray);
     for (const descendant of descendantsOf(name)) {
       for (const stray of descendant.strays ?? []) ids.add(stray);
     }
-  }
-  if (unknown.length > 0) {
-    throw new Error(
-      `Unknown record-type group(s): ${unknown.join(", ")}. Valid groups: ` +
-        RECORD_TYPE_GROUP_NAMES.join(", ") +
-        "."
-    );
   }
   // Sorted, so the same set of groups produces the same request body whatever
   // order the caller listed them in. The API ORs the array either way, but a
