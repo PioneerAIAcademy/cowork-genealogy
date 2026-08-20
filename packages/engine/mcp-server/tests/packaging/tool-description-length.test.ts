@@ -56,7 +56,8 @@ const CEILING = 240;
 /**
  * Exempt, by name and with the reason, so an exemption cannot outlive it.
  *
- * `birthYearExact` is the one toggle whose behaviour is still being measured:
+ * `birthYearExact` is the one toggle whose behaviour is unestablished and under
+ * revision (nothing is actively measuring it today):
  * the population its current text is phrased around — records with no indexed
  * year — is reported by a session probe as empty, with the index carrying estimated date
  * RANGES instead. Issue #1771 rewrites that paragraph and DELETES this

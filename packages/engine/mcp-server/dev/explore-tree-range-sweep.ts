@@ -33,7 +33,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function readAll(range: string): Promise<{ total: number | null; ids: string[] } | null> {
   const ids: string[] = [];
   let total: number | null = null;
-  for (let offset = 0; offset < 1500; offset += 100) {   // sibling measured 585; 600 was too tight
+  for (let offset = 0; offset < 1500; offset += 100) {   // sibling REPORTED 585 (not in the artifact); 600 was too tight
     await sleep(300);
     const res = await fetch(
       `https://www.familysearch.org/service/search/hr/v2/personas?${POOL}${range}&count=100&offset=${offset}&m.queryRequireDefault=on`,

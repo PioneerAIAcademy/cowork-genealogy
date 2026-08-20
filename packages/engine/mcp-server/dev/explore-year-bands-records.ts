@@ -81,11 +81,17 @@ async function main(): Promise<void> {
   console.log("band        total  read   | .exact total  read");
   console.log("-".repeat(52));
   let unenumerable = 0;
+  // Counted straight off each response, NOT derived from `membership` — otherwise
+  // the closure identity below compares a number to itself and can never fail,
+  // which is worse than no check (CLAUDE.md: "a check that cannot fail reads as
+  // coverage"). The first version of this block did exactly that.
+  let bandRowsRead = 0;
   for (const [from, to] of BANDS) {
     const range = `&q.birthLikeDate.from=${from}&q.birthLikeDate.to=${to}`;
     const set = await readAll(range);
     const ex = await readAll(`${range}&q.birthLikeDate.exact=on`);
     if (!set) { unenumerable++; console.log(`${from}-${to}   DID NOT ENUMERATE`); continue; }
+    bandRowsRead += set.rows.length;
     for (const r of set.rows) membership.set(r.id, (membership.get(r.id) ?? 0) + 1);
     if (ex) for (const r of ex.rows) exactMembership.set(r.id, (exactMembership.get(r.id) ?? 0) + 1);
     console.log(
@@ -94,6 +100,33 @@ async function main(): Promise<void> {
     );
   }
   const N = BANDS.length - unenumerable;
+
+  // THE CLOSURE IDENTITY, asserted. Every row returned across all bands must be
+  // accounted for by exactly one membership increment, so the two sums are equal
+  // or a row was dropped or double-counted somewhere between reading and tallying.
+  //
+  // Until 2026-08-20 this script printed the histogram and the band table and tied
+  // them together nowhere: the "1,465 = 1,465" figure quoted for this pool was
+  // arithmetic done by hand outside the script, and a commit message claimed the
+  // assertion existed before it did. Both are the defect this file exists to stop.
+  //
+  // Closure remains the WEAK guard — it survives a dropped band (both sums fall
+  // together) and a missing require switch (every band returns the whole pool, and
+  // the sums still agree). The strong guard is the payload-dated control below:
+  // a payload-dated persona must land in EXACTLY ONE band.
+  const membershipTotal = [...membership.values()].reduce((a, b) => a + b, 0);
+  console.log(
+    `\nCLOSURE: band rows read=${bandRowsRead}  sum(membership)=${membershipTotal}  ` +
+      `equal=${bandRowsRead === membershipTotal}`
+  );
+  if (bandRowsRead !== membershipTotal) {
+    console.log("  REFUSING a verdict: rows were counted on one side of the identity and not the other.");
+    return;
+  }
+  if (unenumerable > 0) {
+    console.log(`  REFUSING a verdict: ${unenumerable} band(s) did not enumerate, so coverage is partial.`);
+    return;
+  }
 
   const hist = new Map<number, number>();
   for (const r of u.rows) {
