@@ -78,9 +78,10 @@ One rule, belonging to the search engine rather than to this endpoint — with o
 measured exception, on `surname`:
 
 > **Without `exact=on` on a name field**, results include fuzzy matches, and
-> persons where **that field is empty** — for `givenName` and for a father's or
-> spouse's name, but **not** for `surname`, where an unqualified value drops
-> surname-empty persons. **With `exact=on`**, whatever its own field admits is
+> persons where **that field is empty** — for `givenName` and for a father's,
+> mother's, parent's or spouse's name (`other` not measured), but **not** for
+> `surname`, where an unqualified value drops surname-empty persons. **With
+> `exact=on`**, whatever its own field admits is
 > excluded.
 
 **The exception was measured on the record index, not here.** See

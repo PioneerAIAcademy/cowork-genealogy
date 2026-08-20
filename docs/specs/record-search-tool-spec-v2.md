@@ -105,17 +105,25 @@ One rule, belonging to the search engine rather than to this endpoint — with o
 measured exception, on `surname`:
 
 > **Without `exact=on` on a name field**, results include fuzzy matches, and
-> records where **that field is empty** — for `givenName` and for a father's or
-> spouse's name, but **not** for `surname`, where an unqualified value drops
-> surname-empty records outright. **With `exact=on`**, whatever its own field
+> records where **that field is empty** — for `givenName` and for a father's,
+> mother's, parent's or spouse's name (`other` not measured), but **not** for
+> `surname`, where an unqualified value drops surname-empty records outright.
+> **With `exact=on`**, whatever its own field
 > admits is excluded.
 
 **What is measured, and what is not.** The relative half is enumerated on this
-endpoint: `F.verdict:relative .exact requires the relative to be present` reads
-CONFIRMED (every father-less representative absent from the exact set read in
-full, father-bearing control present), `R.verdict:spouse .exact requires the
-spouse to be present` likewise across two populations read in full, and
-`R.verdict:keep-silent` HOLDS. The fuzzy half is enumerated too:
+endpoint for four kinship families. `R.verdict:keep-silent` HOLDS, and the
+presence requirement reads CONFIRMED for each of
+`R.verdict:father .exact requires the relative to be present`,
+`R.verdict:spouse .exact requires the spouse to be present`,
+`R.verdict:mother .exact requires the relative to be present` (one population —
+the other indexes no mother given names at all) and
+`R.verdict:parent .exact requires the relative to be present`;
+`F.verdict:relative .exact requires the relative to be present` is the
+independent father measurement. `other` is the exception:
+`R.verdict:other names behave like the four kinship families` reads NOT
+MEASURED, and it is excluded by decision rather than untried — it is a
+co-occurrence term, not a kinship one. The fuzzy half is enumerated too:
 `B.verdict:exact surfaces records fuzzy does not` reads NO — exact is a strict
 subset.
 

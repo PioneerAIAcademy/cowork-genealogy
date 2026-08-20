@@ -405,6 +405,31 @@
     "measured_at": "2026-08-11T19:19:43.865Z"
   },
   "R": {
+    "verdict:spouse .exact requires the spouse to be present": "CONFIRMED — across 2 population(s) read in full, every spouse-silent record is absent from the .exact set and the spouse-bearing control survives",
+    "spouseExactRequiresPresence": [
+      {
+        "pop": "Brazil/Bochenek",
+        "baselineRows": 521,
+        "exactRows": 35,
+        "silentReps": 51,
+        "silentKept": 0,
+        "controlPresent": true,
+        "spouseName": "Maria"
+      },
+      {
+        "pop": "US/Bickerdike",
+        "why": "baseline too-deep"
+      },
+      {
+        "pop": "England/Pocklington",
+        "baselineRows": 469,
+        "exactRows": 12,
+        "silentReps": 380,
+        "silentKept": 0,
+        "controlPresent": true,
+        "spouseName": "Ann"
+      }
+    ],
     "rows": [
       {
         "pop": "Brazil/Bochenek",
@@ -457,11 +482,61 @@
         "retentionPct": 10.2
       },
       {
+        "pop": "Brazil/Bochenek",
+        "family": "mother",
+        "baselineRows": 521,
+        "namedInBaseline": 149,
+        "namelessButIndexedInBaseline": 7,
+        "silentInBaseline": 365,
+        "silentSharePct": 70.1,
+        "gibberish": {
+          "total": 365,
+          "match": 0,
+          "conflict": 0,
+          "silent": 365,
+          "nameless": 0
+        },
+        "realName": "Catharina",
+        "real": {
+          "total": 388,
+          "match": 19,
+          "conflict": 4,
+          "silent": 365,
+          "nameless": 0
+        },
+        "retentionPct": 70.1
+      },
+      {
+        "pop": "Brazil/Bochenek",
+        "family": "parent",
+        "baselineRows": 521,
+        "namedInBaseline": 156,
+        "namelessButIndexedInBaseline": 0,
+        "silentInBaseline": 365,
+        "silentSharePct": 70.1,
+        "gibberish": {
+          "total": 365,
+          "match": 0,
+          "conflict": 0,
+          "silent": 365,
+          "nameless": 0
+        },
+        "realName": "João",
+        "real": {
+          "total": 380,
+          "match": 13,
+          "conflict": 2,
+          "silent": 365,
+          "nameless": 0
+        },
+        "retentionPct": 70.1
+      },
+      {
         "pop": "England/Pocklington",
         "family": "father",
         "baselineRows": 469,
-        "namedInBaseline": 26,
-        "namelessButIndexedInBaseline": 8,
+        "namedInBaseline": 30,
+        "namelessButIndexedInBaseline": 4,
         "silentInBaseline": 435,
         "silentSharePct": 92.8,
         "gibberish": {
@@ -505,16 +580,71 @@
           "nameless": 0
         },
         "retentionPct": 81
+      },
+      {
+        "pop": "England/Pocklington",
+        "family": "mother",
+        "baselineRows": 469,
+        "namedInBaseline": 0,
+        "namelessButIndexedInBaseline": 4,
+        "silentInBaseline": 465,
+        "silentSharePct": 99.1,
+        "gibberish": {
+          "total": 465,
+          "match": 0,
+          "conflict": 0,
+          "silent": 465,
+          "nameless": 0
+        },
+        "realName": "",
+        "real": null,
+        "retentionPct": 99.1
+      },
+      {
+        "pop": "England/Pocklington",
+        "family": "parent",
+        "baselineRows": 469,
+        "namedInBaseline": 34,
+        "namelessButIndexedInBaseline": 0,
+        "silentInBaseline": 435,
+        "silentSharePct": 92.8,
+        "gibberish": {
+          "total": 435,
+          "match": 0,
+          "conflict": 0,
+          "silent": 435,
+          "nameless": 0
+        },
+        "realName": "Thoroton",
+        "real": {
+          "total": 436,
+          "match": 1,
+          "conflict": 0,
+          "silent": 435,
+          "nameless": 0
+        },
+        "retentionPct": 92.8
       }
     ],
     "verdict:drop-contradicting": "HOLDS — across every enumerated pool, an unmatchable name left zero records naming a different relative",
     "verdict:keep-silent": "HOLDS — the records retained by an unmatchable name are the ones the baseline is silent about, in the same number",
     "verdict:keep-matching": "HOLDS — a real name drawn from the data returns matching records",
     "verdict:retention equals the silent share": "HOLDS — retention under an unmatchable name matches the baseline's silent share in every enumerated population, which is what makes the father/spouse difference an artifact of indexing rather than of the parameter",
-    "spouseExactRequiresPresence": [
+    "exactRequiresPresence": [
       {
+        "family": "father",
         "pop": "Brazil/Bochenek",
-        "spouseName": "Maria",
+        "name": "Paulo",
+        "baselineRows": 521,
+        "exactRows": 17,
+        "silentReps": 365,
+        "silentKept": 0,
+        "controlPresent": true
+      },
+      {
+        "family": "spouse",
+        "pop": "Brazil/Bochenek",
+        "name": "Maria",
         "baselineRows": 521,
         "exactRows": 35,
         "silentReps": 51,
@@ -522,21 +652,86 @@
         "controlPresent": true
       },
       {
+        "family": "mother",
+        "pop": "Brazil/Bochenek",
+        "name": "Maria",
+        "baselineRows": 521,
+        "exactRows": 26,
+        "silentReps": 365,
+        "silentKept": 0,
+        "controlPresent": true
+      },
+      {
+        "family": "parent",
+        "pop": "Brazil/Bochenek",
+        "name": "Paulo",
+        "baselineRows": 521,
+        "exactRows": 17,
+        "silentReps": 365,
+        "silentKept": 0,
+        "controlPresent": true
+      },
+      {
+        "family": "father",
         "pop": "US/Bickerdike",
         "why": "baseline too-deep"
       },
       {
+        "family": "spouse",
+        "pop": "US/Bickerdike",
+        "why": "baseline too-deep"
+      },
+      {
+        "family": "mother",
+        "pop": "US/Bickerdike",
+        "why": "baseline too-deep"
+      },
+      {
+        "family": "parent",
+        "pop": "US/Bickerdike",
+        "why": "baseline too-deep"
+      },
+      {
+        "family": "father",
         "pop": "England/Pocklington",
-        "spouseName": "Ann",
+        "name": "John",
+        "baselineRows": 469,
+        "exactRows": 7,
+        "silentReps": 435,
+        "silentKept": 0,
+        "controlPresent": true
+      },
+      {
+        "family": "spouse",
+        "pop": "England/Pocklington",
+        "name": "Ann",
         "baselineRows": 469,
         "exactRows": 12,
         "silentReps": 380,
         "silentKept": 0,
         "controlPresent": true
+      },
+      {
+        "family": "mother",
+        "pop": "England/Pocklington",
+        "why": "no mother given name appears in the baseline at all"
+      },
+      {
+        "family": "parent",
+        "pop": "England/Pocklington",
+        "name": "John",
+        "baselineRows": 469,
+        "exactRows": 7,
+        "silentReps": 435,
+        "silentKept": 0,
+        "controlPresent": true
       }
     ],
-    "verdict:spouse .exact requires the spouse to be present": "CONFIRMED — across 2 population(s) read in full, every spouse-silent record is absent from the .exact set and the spouse-bearing control survives",
-    "measured_at": "2026-08-11T19:12:07.043Z"
+    "verdict:other names behave like the four kinship families": "NOT MEASURED — `other` is excluded from this section by decision on 2026-08-20. It is not a kinship role (`q.otherGivenName` is a co-occurrence search) and it is the only multi-valued family, since a register entry names godparents, witnesses and bystanders and any of them can satisfy the query. Measured once with a single-name accessor and once with an any-name accessor: both put 62 records in the conflict bucket (9 Brazil/Bochenek, 53 England/Pocklington) while all four kinship families held at zero, which flipped drop-contradicting and retention-equals-silent-share. Untested hypothesis for those 62: a co-person with no indexed given name satisfies any given-name query through that emptiness, as the principal `givenName` floor does. Settle that before re-admitting it.",
+    "verdict:father .exact requires the relative to be present": "CONFIRMED — across 2 population(s) read in full, every father-silent record is absent from the .exact set and the father-bearing control survives",
+    "verdict:mother .exact requires the relative to be present": "CONFIRMED — across 1 population(s) read in full, every mother-silent record is absent from the .exact set and the mother-bearing control survives",
+    "verdict:parent .exact requires the relative to be present": "CONFIRMED — across 2 population(s) read in full, every parent-silent record is absent from the .exact set and the parent-bearing control survives",
+    "measured_at": "2026-08-20T16:15:41.961Z"
   },
   "I": {
     "fuzzy": {

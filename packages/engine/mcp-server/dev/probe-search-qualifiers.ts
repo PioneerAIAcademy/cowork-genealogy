@@ -373,6 +373,22 @@ interface Persona {
   fatherGivenOfMatched: string | null;
   spouseGivenOfMatched: string | null;
   /**
+   * The same given-name extraction for the three families the artifact left
+   * unmeasured, so section R can answer them instead of six `*Exact`
+   * descriptions saying "Assumed, as `motherGivenNameExact`".
+   *
+   * `mother` shares `father`'s candidate set (the matched persona's parents)
+   * with the gender test inverted. `parent` is SEX-AGNOSTIC on purpose — it
+   * mirrors `q.parentGivenName`, which a caller reaches for precisely when the
+   * sex is unknown, so gating it on sex would report a mother-only record as
+   * parent-silent. `other` has no relationship role at all: its population is
+   * the co-named persons, which makes it the ONE family where `others[0]` is
+   * the right answer rather than one of the three wrong ones listed above.
+   */
+  motherGivenOfMatched: string | null;
+  parentGivenOfMatched: string | null;
+
+  /**
    * How many `Couple` partners the matched persona has, whatever their names.
    * The spouse counterpart of `parentsIndexed`, and for the same reason: it is
    * the only column that can stand behind a "the record is silent about this
@@ -380,6 +396,25 @@ interface Persona {
    * display name.
    */
   spousesIndexed: number;
+  /**
+   * Parents of the matched persona that could BE the mother — everyone except a
+   * provably-male one. `parentsIndexed` cannot serve here: it counts either sex,
+   * so a father-only record reports a parent indexed with no readable mother
+   * name and lands in "indexed-but-nameless" when it is in fact mother-SILENT.
+   * Measured cost on 2026-08-20: 30 misfiled rows in England/Pocklington, which
+   * put retention at 99.1% against a 92.8% silent share and flipped
+   * `verdict:retention equals the silent share` from HOLDS to DOES NOT HOLD.
+   *
+   * Sex-unprovable parents count IN, deliberately: this column exists to stand
+   * behind a "the record is silent" claim, so it must not claim silence about a
+   * parent whose sex the payload never states.
+   *
+   * `father` still uses `parentsIndexed` and is NOT changed here — its verdict
+   * is recorded and reproduced, and it has the mirror-image weakness (a
+   * mother-only record read as father-nameless) which was 4 rows in Pocklington
+   * and never moved its numbers. Fixing it is its own measurement.
+   */
+  mothersIndexed: number;
   /**
    * `display.birthDate` of the matched persona, as free text the way the index
    * holds it ("12 March 1850", "1850", occasionally a range). SECTION H parses
@@ -662,6 +697,33 @@ async function searchOnce(query: string, attempt: number): Promise<Hit | typeof 
         /Father/i.test(d.role ?? "")
       );
     });
+    // Mother: father's candidate set with the gender test inverted, and the SAME
+    // precedence (display.gender, then gender.type, then the role regex last).
+    // Not `p.gender === "Female"` — that is the exact mistake documented above,
+    // which silently falls through to the role regex this file's header rejects.
+    const mother = persons.find((p) => {
+      if (!parentIds.includes(p.id as string)) return false;
+      const d = (p.display ?? {}) as { role?: string; gender?: string };
+      const genderType = (p.gender as { type?: string } | undefined)?.type ?? "";
+      return (
+        d.gender === "Female" ||
+        /Female$/.test(genderType) ||
+        /Mother/i.test(d.role ?? "")
+      );
+    });
+    // Sex-agnostic by design; see the field's docblock. First parent in graph
+    // order, so a mother-only record counts as parent-NAMED, not parent-silent.
+    const parent = persons.find((p) => parentIds.includes(p.id as string));
+    // Everyone except a PROVABLY-male parent. Same gender precedence as `father`
+    // above; `/Male$/` does not match ".../Female" (that ends "emale"), which is
+    // what makes the negation safe to write this way.
+    const mothersIndexed = persons.filter((q) => {
+      if (!parentIds.includes(q.id as string)) return false;
+      const d = (q.display ?? {}) as { gender?: string };
+      const gt = (q.gender as { type?: string } | undefined)?.type ?? "";
+      return !(d.gender === "Male" || /Male$/.test(gt));
+    }).length;
+
     // `givenOf` now lives in dev/payload-extract.ts (see its docblock there).
     const fatherName = ((father?.display ?? {}) as { name?: string }).name ?? null;
     const parentsIndexed = persons.filter((q) => parentIds.includes(q.id as string)).length;
@@ -717,7 +779,10 @@ async function searchOnce(query: string, attempt: number): Promise<Hit | typeof 
       spouseOfMatched: spouseName,
       fatherGivenOfMatched: givenOf(father),
       spouseGivenOfMatched: givenOf(spouse),
+      motherGivenOfMatched: givenOf(mother),
+      parentGivenOfMatched: givenOf(parent),
       spousesIndexed,
+      mothersIndexed,
       score: typeof e.score === "number" ? e.score : null,
       // Both sources of a date, per person: typed facts and the display block.
       // Section H found records that carry a year ONLY on `display`, so a
@@ -4250,7 +4315,67 @@ async function sectionR(): Promise<void> {
       nameOf: (p) => p.spouseGivenOfMatched,
       indexedCount: (p) => p.spousesIndexed,
     },
+    // The three the artifact left open. `T.verdict:all name fields behave alike`
+    // read NOT MEASURED and six `*Exact` descriptions read "Assumed, as
+    // `motherGivenNameExact`"; six hedges is a measurement task, not a wording
+    // task. mother and parent share `parentsIndexed` as their denominator for
+    // the same reason father does — a record with zero parents cannot name a
+    // mother either, and it is the only column that does not conflate silence
+    // with a missing display name.
+    {
+      id: "mother",
+      param: "motherGivenName",
+      nameOf: (p) => p.motherGivenOfMatched,
+      // NOT parentsIndexed — see `mothersIndexed`. A father-only record is
+      // mother-silent, and calling it mother-nameless is what broke the run.
+      indexedCount: (p) => p.mothersIndexed,
+    },
+    {
+      id: "parent",
+      param: "parentGivenName",
+      nameOf: (p) => p.parentGivenOfMatched,
+      indexedCount: (p) => p.parentsIndexed,
+    },
   ];
+  // `other` IS DELIBERATELY ABSENT. Measured on 2026-08-20 and excluded, not
+  // forgotten — see `verdict:other names behave like the four kinship families`.
+  // It is not a kinship role at all: `q.otherGivenName` is a co-occurrence
+  // search, it is the only MULTI-VALUED family (a register entry names
+  // godparents, witnesses and bystanders, any of whom can satisfy the query),
+  // and including it put 62 records into the conflict bucket — 9 in
+  // Brazil/Bochenek, 53 in England/Pocklington — which flipped BOTH
+  // `verdict:drop-contradicting` and `verdict:retention equals the silent share`
+  // from HOLDS to DOES NOT HOLD while all four kinship families stayed at zero
+  // conflicts. The leading hypothesis for those 62 is untested: a record whose
+  // co-persons include one with NO indexed given name can satisfy any
+  // given-name query through that emptiness, exactly as the principal
+  // `givenName` floor does. Do not re-add `other` here without settling that
+  // first, and do not let it back into these two aggregate verdicts — they are
+  // about kinship terms.
+  /**
+   * THREE TRAPS, each of which produced a wrong answer in a probe discarded on
+   * 2026-08-20 (`dev/explore-relative-empty-field-families.ts`, deleted — its
+   * numbers were wrong and it contradicted this section's recorded verdicts).
+   *
+   * 1. THE POOL MUST BE ANCHORED ON A NAME. Every POPS entry above carries
+   *    `q.surname=`. Anchoring on country + type + date + place instead, with no
+   *    name term at all, makes the method collapse: the relative term becomes the
+   *    only name term, an unmatchable token then returns an EMPTY set, and
+   *    membership in an empty set distinguishes nothing. That probe read the
+   *    resulting zero as "unqualified DROPS silent records" — the exact opposite
+   *    of `verdict:keep-silent` below, on three enumerated populations.
+   * 2. GIBBERISH IS VALID HERE, and only here. It works precisely BECAUSE the
+   *    pool is surname-anchored: what survives an unmatchable relative name is
+   *    the silent share, which is the measurement. The discarded probe concluded
+   *    gibberish was "confounded for relatives" in general. It is not — it was
+   *    confounded by that probe's own missing name anchor.
+   * 3. TWO BUCKETS IS NOT ENOUGH — see the named / nameless-but-indexed / silent
+   *    split below. A graph-derived "has a father?" boolean counts a record whose
+   *    relative IS indexed but carries no readable given name as silent, and
+   *    those records are correctly DROPPED by an unmatchable name, so the verdict
+   *    comes out short. `indexedCount` is the only denominator that separates
+   *    the two.
+   */
   const GIBBERISH = "Xqzzyrbl";
 
   /**
@@ -4461,78 +4586,125 @@ async function sectionR(): Promise<void> {
   // Same shape as F's father test — silent representatives must be ABSENT from
   // the exact set, and a spouse-bearing control must be PRESENT — but read to
   // the end on both sides rather than paged to a cap.
-  console.log("\n  --- does .exact on a SPOUSE name require the spouse to be present? ---");
-  const spouseExactRows: Array<Record<string, unknown>> = [];
+  console.log("\n  --- does .exact on a relative name require that relative to be present? ---");
+  // Generalised over FAMILIES. Was spouse-only; father is independently covered by
+  // section F, and mother/parent/other had no measurement at all — which is what
+  // left six `*Exact` descriptions reading "Assumed, as `motherGivenNameExact`".
+  // The legacy key `spouseExactRequiresPresence` and the spouse verdict string are
+  // preserved byte-for-byte: prose cites them and the traceability lint resolves
+  // every `R.verdict:...` it finds in a spec against this artifact.
+  const exactRows: Array<Record<string, unknown>> = [];
+  // POPS OUTER, families inner, so the baseline is enumerated ONCE per population.
+  // The first version of this block had the loops the other way round with the
+  // enumeration inside both, which fetched the same three baselines fifteen times
+  // and took the run from minutes to 46 of them. Correct either way — just wasteful.
   for (const pop of POPS) {
     const full = await mustEnumerate(pop.base);
-    if (full.personas === null) {
-      console.log(`    ${pop.id.padEnd(22)} NOT MEASURED — baseline ${full.why}`);
-      spouseExactRows.push({ pop: pop.id, why: `baseline ${full.why}` });
-      continue;
+    for (const fam of FAMILIES) {
+      if (full.personas === null) {
+        console.log(`    ${fam.id.padEnd(7)} ${pop.id.padEnd(22)} NOT MEASURED — baseline ${full.why}`);
+        exactRows.push({ family: fam.id, pop: pop.id, why: `baseline ${full.why}` });
+        continue;
+      }
+      // A real given name drawn from the data, so the exact search has something to
+      // match. Most common wins: it maximises the control's chance of existing
+      // without choosing it for the answer it gives.
+      const counts = new Map<string, number>();
+      for (const q of full.personas) {
+        const g = fam.nameOf(q);
+        if (g) counts.set(g, (counts.get(g) ?? 0) + 1);
+      }
+      const name = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+      const silentReps = full.personas.filter((q) => fam.indexedCount(q) === 0);
+      const control = full.personas.find((q) => fam.nameOf(q) === name);
+      if (!name || silentReps.length === 0 || control === undefined) {
+        const why = !name
+          ? `no ${fam.id} given name appears in the baseline at all`
+          : silentReps.length === 0
+            ? `no ${fam.id}-silent record in the baseline to test with`
+            : `no ${fam.id}-bearing control record`;
+        console.log(`    ${fam.id.padEnd(7)} ${pop.id.padEnd(22)} NOT MEASURED — ${why}`);
+        exactRows.push({ family: fam.id, pop: pop.id, why });
+        continue;
+      }
+      const ex = await mustEnumerate(
+        `${pop.base}&q.${fam.param}=${encodeURIComponent(name)}&q.${fam.param}.exact=on`
+      );
+      if (ex.personas === null) {
+        console.log(`    ${fam.id.padEnd(7)} ${pop.id.padEnd(22)} NOT MEASURED — the .exact set was ${ex.why}`);
+        exactRows.push({ family: fam.id, pop: pop.id, why: `exact set ${ex.why}` });
+        continue;
+      }
+      const exIds = new Set(ex.personas.map((x) => x.id));
+      const silentKept = silentReps.filter((r) => exIds.has(r.id)).length;
+      const controlKept = exIds.has(control.id);
+      exactRows.push({
+        family: fam.id,
+        pop: pop.id,
+        name,
+        baselineRows: full.personas.length,
+        exactRows: ex.personas.length,
+        silentReps: silentReps.length,
+        silentKept,
+        controlPresent: controlKept,
+      });
+      console.log(
+        `    ${fam.id.padEnd(7)} ${pop.id.padEnd(22)} name=${name.padEnd(12)} ` +
+          `silent ${String(silentReps.length).padStart(4)} kept ${silentKept}   control ${controlKept ? "present" : "ABSENT"}`
+      );
     }
-    // A real spouse given name drawn from the data, so the exact search has
-    // something to match. Most common wins: it maximises the control's chance
-    // of existing without choosing it for the answer it gives.
-    const counts = new Map<string, number>();
-    for (const p of full.personas) {
-      const g = p.spouseGivenOfMatched;
-      if (g) counts.set(g, (counts.get(g) ?? 0) + 1);
-    }
-    const name = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
-    const silentReps = full.personas.filter((p) => p.spousesIndexed === 0);
-    const control = full.personas.find((p) => p.spouseGivenOfMatched === name);
-    if (!name || silentReps.length === 0 || control === undefined) {
-      const why = !name
-        ? "no spouse given name appears in the baseline at all"
-        : silentReps.length === 0
-          ? "no spouse-silent record in the baseline to test with"
-          : "no spouse-bearing control record";
-      console.log(`    ${pop.id.padEnd(22)} NOT MEASURED — ${why}`);
-      spouseExactRows.push({ pop: pop.id, why });
-      continue;
-    }
-    const ex = await mustEnumerate(
-      `${pop.base}&q.spouseGivenName=${encodeURIComponent(name)}&q.spouseGivenName.exact=on`
-    );
-    if (ex.personas === null) {
-      console.log(`    ${pop.id.padEnd(22)} NOT MEASURED — the .exact set was ${ex.why}`);
-      spouseExactRows.push({ pop: pop.id, why: `exact set ${ex.why}` });
-      continue;
-    }
-    const exIds = new Set(ex.personas.map((x) => x.id));
-    const silentKept = silentReps.filter((r) => exIds.has(r.id)).length;
-    const controlKept = exIds.has(control.id);
-    const row = {
-      pop: pop.id,
-      spouseName: name,
-      baselineRows: full.personas.length,
-      exactRows: ex.personas.length,
-      silentReps: silentReps.length,
-      silentKept,
-      controlPresent: controlKept,
-    };
-    spouseExactRows.push(row);
-    console.log(
-      `    ${pop.id.padEnd(22)} "${name}"  ${full.personas.length} -> ${ex.personas.length} rows;` +
-        ` spouse-silent ${silentReps.length} (kept ${silentKept}); control ${controlKept ? "PRESENT" : "ABSENT"}`
-    );
   }
-  record("R", "spouseExactRequiresPresence", spouseExactRows);
-  const usable = spouseExactRows.filter((r) => typeof r.silentKept === "number");
-  const allDrop = usable.length > 0 && usable.every((r) => r.silentKept === 0 && r.controlPresent === true);
-  const anyKept = usable.some((r) => (r.silentKept as number) > 0);
+  record("R", "exactRequiresPresence", exactRows);
+  // Legacy key, unchanged shape: the spouse slice, minus the `family` column it
+  // did not have. Dropping it would break every citation of it.
   record(
     "R",
-    "verdict:spouse .exact requires the spouse to be present",
-    usable.length === 0
-      ? "NOT MEASURED — no population produced both a spouse-silent record and a spouse-bearing control in a set readable to the end"
-      : allDrop
-        ? `CONFIRMED — across ${usable.length} population(s) read in full, every spouse-silent record is absent from the .exact set and the spouse-bearing control survives`
-        : anyKept
-          ? `DOES NOT HOLD — a spouse-silent record survives .exact in ${usable.filter((r) => (r.silentKept as number) > 0).length} of ${usable.length} population(s)`
-          : "INCONCLUSIVE — silent records dropped but the control did not survive, so .exact is not selecting on spouse presence"
+    "spouseExactRequiresPresence",
+    exactRows
+      .filter((r) => r.family === "spouse")
+      .map(({ family: _f, name, ...rest }) => (name === undefined ? rest : { ...rest, spouseName: name }))
   );
-  console.log(`  => ${String(getFig("R", "verdict:spouse .exact requires the spouse to be present"))}`);
+
+  // Recorded rather than omitted: silence in the artifact reads as "nobody
+  // asked", and somebody did. RULE 0 applies to a family we chose not to
+  // characterise just as much as to a pool we could not enumerate.
+  record(
+    "R",
+    "verdict:other names behave like the four kinship families",
+    "NOT MEASURED — `other` is excluded from this section by decision on 2026-08-20. " +
+      "It is not a kinship role (`q.otherGivenName` is a co-occurrence search) and it is " +
+      "the only multi-valued family, since a register entry names godparents, witnesses " +
+      "and bystanders and any of them can satisfy the query. Measured once with a " +
+      "single-name accessor and once with an any-name accessor: both put 62 records in " +
+      "the conflict bucket (9 Brazil/Bochenek, 53 England/Pocklington) while all four " +
+      "kinship families held at zero, which flipped drop-contradicting and " +
+      "retention-equals-silent-share. Untested hypothesis for those 62: a co-person with " +
+      "no indexed given name satisfies any given-name query through that emptiness, as " +
+      "the principal `givenName` floor does. Settle that before re-admitting it."
+  );
+
+  for (const fam of FAMILIES) {
+    const usable = exactRows.filter((r) => r.family === fam.id && typeof r.silentKept === "number");
+    const allDrop = usable.length > 0 && usable.every((r) => r.silentKept === 0 && r.controlPresent === true);
+    const anyKept = usable.some((r) => (r.silentKept as number) > 0);
+    const noun = fam.id === "spouse" ? "spouse" : "relative";
+    const key =
+      fam.id === "spouse"
+        ? "verdict:spouse .exact requires the spouse to be present"
+        : `verdict:${fam.id} .exact requires the relative to be present`;
+    record(
+      "R",
+      key,
+      usable.length === 0
+        ? `NOT MEASURED — no population produced both a ${fam.id}-silent record and a ${fam.id}-bearing control in a set readable to the end`
+        : allDrop
+          ? `CONFIRMED — across ${usable.length} population(s) read in full, every ${fam.id}-silent record is absent from the .exact set and the ${fam.id}-bearing control survives`
+          : anyKept
+            ? `DOES NOT HOLD — a ${fam.id}-silent record survives .exact in ${usable.filter((r) => (r.silentKept as number) > 0).length} of ${usable.length} population(s)`
+            : `INCONCLUSIVE — silent records dropped but the control did not survive, so .exact is not selecting on ${noun} presence`
+    );
+    console.log(`  => ${String(getFig("R", key))}`);
+  }
 }
 
 // --- SECTION W — wildcards x qualifiers (issue #1093 question 4) ----------

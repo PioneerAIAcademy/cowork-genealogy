@@ -45,7 +45,8 @@
  * named / nameless-but-indexed / silent, and retention tracking the silent share
  * (70.1% -> 70.2%, 92.8% -> 92.8%, 9.8% -> 10.2%).
  *
- * `explore-relative-empty-field-families.ts` got "kept 0" against that. It is the
+ * A probe deleted on 2026-08-20, `explore-relative-empty-field-families.ts`, got
+ * "kept 0" against that. It was the
  * one that is wrong: place/date-anchored pool instead of a surname anchor, a
  * graph-derived two-way classifier instead of role-based three-way, and no check
  * that its own controls matched R before reporting. Its numbers must not be quoted.

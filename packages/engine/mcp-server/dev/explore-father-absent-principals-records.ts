@@ -6,7 +6,8 @@
  *
  * ## Why it exists
  *
- * `dev/explore-relative-empty-field-families.ts` found that requiring
+ * A probe since deleted (`explore-relative-empty-field-families.ts`; its traps now
+ * live in section R of `probe-search-qualifiers.ts`) found that requiring
  * `q.fatherGivenName=<a real name>` returns ZERO of the 258 personas its baseline
  * classified father-absent. That reads as a contradiction of the shipped
  * `spouseGivenName` description ("A record that names no spouse at all is kept too,
