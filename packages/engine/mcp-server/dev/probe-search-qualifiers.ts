@@ -387,6 +387,19 @@ interface Persona {
    */
   motherGivenOfMatched: string | null;
   parentGivenOfMatched: string | null;
+  /**
+   * EVERY parent's given name, because `q.parentGivenName` matches ANY of them.
+   * `parentGivenOfMatched` is the first parent in graph order, so a record whose
+   * SECOND parent carries the queried name was scored a conflict rather than a
+   * match — inflating the bucket `verdict:drop-contradicting` sums.
+   *
+   * `parent` gets this and `other` does not, and the difference is boundedness:
+   * `parent` is father plus mother, resolved through `ParentChild` edges, every
+   * member a genuine kinship relation. `other` is an unbounded co-person list with
+   * no role at all — godparents, witnesses, bystanders — whose 62 conflicts were
+   * never explained, which is why it is excluded rather than accommodated.
+   */
+  parentGivensOfMatched: string[];
 
   /**
    * How many `Couple` partners the matched persona has, whatever their names.
@@ -721,6 +734,10 @@ async function searchOnce(query: string, attempt: number): Promise<Hit | typeof 
     // Sex-agnostic by design; see the field's docblock. First parent in graph
     // order, so a mother-only record counts as parent-NAMED, not parent-silent.
     const parent = persons.find((p) => parentIds.includes(p.id as string));
+    const parentGivens = persons
+      .filter((q) => parentIds.includes(q.id as string))
+      .map((q) => givenOf(q))
+      .filter((g): g is string => g !== null);
     // Everyone except a parent PROVABLY of the wrong sex — and "provably" has to
     // mean the same three signals the `father`/`mother` finders above use, or the
     // numerator and the denominator disagree. The first version read only
@@ -801,6 +818,7 @@ async function searchOnce(query: string, attempt: number): Promise<Hit | typeof 
       spouseGivenOfMatched: givenOf(spouse),
       motherGivenOfMatched: givenOf(mother),
       parentGivenOfMatched: givenOf(parent),
+      parentGivensOfMatched: parentGivens,
       spousesIndexed,
       mothersIndexed,
       fathersIndexed,
@@ -4321,6 +4339,12 @@ async function sectionR(): Promise<void> {
     id: string;
     param: string;
     nameOf: (p: Persona) => string | null;
+    /**
+     * Every name this family offers, for the one family that offers more than one.
+     * Defaults to `[nameOf]`, so the three single-valued families compute exactly as
+     * before and their recorded verdicts cannot move as a side effect.
+     */
+    namesOf?: (p: Persona) => string[];
     /** How many relatives of this family are indexed, named or not. */
     indexedCount: (p: Persona) => number;
   }> = [
@@ -4358,6 +4382,8 @@ async function sectionR(): Promise<void> {
       id: "parent",
       param: "parentGivenName",
       nameOf: (p) => p.parentGivenOfMatched,
+      // Multi-valued: the query matches EITHER parent. See `parentGivensOfMatched`.
+      namesOf: (p) => p.parentGivensOfMatched,
       indexedCount: (p) => p.parentsIndexed,
     },
   ];
@@ -4476,16 +4502,22 @@ async function sectionR(): Promise<void> {
       // the keep-silent verdict look 8 records short in two unrelated
       // populations: those records DO carry an indexed relative, so an
       // unmatchable name contradicts them and they are correctly dropped.
-      const named = baseScan.personas.filter((p) => fam.nameOf(p) !== null);
+      // Resolved once. For the three single-valued families this is exactly
+      // `[nameOf]`, so nothing about their numbers changes.
+      const namesOf = fam.namesOf ?? ((q: Persona) => {
+        const n = fam.nameOf(q);
+        return n === null ? [] : [n];
+      });
+      const named = baseScan.personas.filter((p) => namesOf(p).length > 0);
       const namelessButIndexed = baseScan.personas.filter(
-        (p) => fam.nameOf(p) === null && fam.indexedCount(p) > 0
+        (p) => namesOf(p).length === 0 && fam.indexedCount(p) > 0
       ).length;
       const trulySilent = baseScan.personas.filter((p) => fam.indexedCount(p) === 0).length;
       const silentInBase = trulySilent;
       // The real name is drawn FROM the data rather than guessed, so the
       // keep-matching leg cannot fail merely because a chosen name is absent
       // from this population.
-      const realName = (named[0] ? (fam.nameOf(named[0]) ?? "") : "").split(/\s+/)[0] ?? "";
+      const realName = (named[0] ? (namesOf(named[0])[0] ?? "") : "").split(/\s+/)[0] ?? "";
 
       const classify = async (
         value: string
@@ -4505,11 +4537,12 @@ async function sectionR(): Promise<void> {
         let silent = 0;
         let nameless = 0;
         for (const p of scan.personas) {
-          const nm = fam.nameOf(p);
-          if (nm === null) {
+          const nms = namesOf(p);
+          if (nms.length === 0) {
             if (fam.indexedCount(p) === 0) silent++;
             else nameless++;
-          } else if (isHit(nm, value)) match++;
+          } else if (nms.some((nm) => isHit(nm, value))) match++;
+          // A conflict only when NONE of the names the record offers is a hit.
           else conflict++;
         }
         return { total: scan.personas.length, match, conflict, silent, nameless };
@@ -4666,14 +4699,20 @@ async function sectionR(): Promise<void> {
       // A real given name drawn from the data, so the exact search has something to
       // match. Most common wins: it maximises the control's chance of existing
       // without choosing it for the answer it gives.
+      // Same resolution as the keep-silent loop: for a multi-valued family the
+      // candidate name must be drawn from EVERY member, and the control is any
+      // record offering it — not only one whose FIRST member does.
+      const namesOf = fam.namesOf ?? ((q: Persona) => {
+        const n = fam.nameOf(q);
+        return n === null ? [] : [n];
+      });
       const counts = new Map<string, number>();
       for (const q of full.personas) {
-        const g = fam.nameOf(q);
-        if (g) counts.set(g, (counts.get(g) ?? 0) + 1);
+        for (const g of namesOf(q)) counts.set(g, (counts.get(g) ?? 0) + 1);
       }
       const name = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
       const silentReps = full.personas.filter((q) => fam.indexedCount(q) === 0);
-      const control = full.personas.find((q) => fam.nameOf(q) === name);
+      const control = full.personas.find((q) => name !== undefined && namesOf(q).includes(name));
       if (!name || silentReps.length === 0 || control === undefined) {
         const why = !name
           ? `no ${fam.id} given name appears in the baseline at all`

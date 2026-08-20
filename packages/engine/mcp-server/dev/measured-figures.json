@@ -682,9 +682,9 @@
       {
         "family": "parent",
         "pop": "Brazil/Bochenek",
-        "name": "Paulo",
+        "name": "Maria",
         "baselineRows": 521,
-        "exactRows": 17,
+        "exactRows": 30,
         "silentReps": 365,
         "silentKept": 0,
         "controlPresent": true
@@ -749,7 +749,7 @@
     "verdict:father .exact requires the relative to be present": "CONFIRMED — across 2 population(s) read in full, every father-silent record is absent from the .exact set and the father-bearing control survives",
     "verdict:mother .exact requires the relative to be present": "CONFIRMED — across 1 population(s) read in full, every mother-silent record is absent from the .exact set and the mother-bearing control survives",
     "verdict:parent .exact requires the relative to be present": "CONFIRMED — across 2 population(s) read in full, every parent-silent record is absent from the .exact set and the parent-bearing control survives",
-    "measured_at": "2026-08-20T18:44:01.678Z"
+    "measured_at": "2026-08-20T19:06:48.886Z"
   },
   "I": {
     "fuzzy": {
