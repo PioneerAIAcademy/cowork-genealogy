@@ -668,25 +668,23 @@ the most expensive mistake in this layer, because two of the three fail
 
 | Surface | Spelling | Binds in production? |
 |---|---|---|
-| Skill `allowed-tools:` | **bare** (`research_query`) | **No** — the hosted path runs `bypassPermissions` with no allowlist at all. Still enforcing in the unit harness. |
+| Skill `allowed-tools:` | **bare** (`research_query`) | **No** — neither production path nor the unit harness narrows per skill. The field is a grant, not a restriction (issue #1748). Advisory only: the `test_tool_allowlist` validator warns on undeclared calls. |
 | Agent `tools:` / `disallowedTools:` | **spelled under all three registrars**, matched exactly | **Yes** — and a deny binds even under `bypassPermissions`. |
 | `PreToolUse` hook | n/a — matches on tool name + input | **Yes**, in Cowork and the hosted path. **Neither harness loads the plugin's hooks** (§5.4). |
 
-### 5.1 Skill `allowed-tools` — declarative in production, enforcing in tests
+### 5.1 Skill `allowed-tools` — declarative everywhere
 
-A skill lists the MCP tools it calls **by bare name**. The unit harness compiles
-this into the SDK session allowlist: a filesystem baseline
-(`Read, Glob, Grep, Write, Edit, Skill, Task`) **plus** the skill's declared
-tools qualified onto the server key, **plus the union of the `tools:` of every
-plugin agent the skill references via `@plugin:`** — because a delegated agent's
-MCP calls travel through the same session lists, so denying them would break the
-delegation.
+A skill lists the MCP tools it calls **by bare name**. The unit harness grants
+every registered MCP tool to every skill, matching production (issue #1748).
+`allowed-tools` is a grant — "tools Claude can use without asking permission" —
+not a restriction; the field that removes a tool is `disallowed-tools`, which no
+skill declares. Deriving a deny list as the complement inverted the field's
+documented meaning.
 
-**This is not what restrains a production session.** But do not treat it as
-decoration: in the unit harness an undeclared tool is **denied at call time**,
-and the gap between a skill's own declaration and its agents' union is exactly
-what the per-context policy uses to tell a legitimate direct call from a boundary
-violation. **Declare accurately.**
+**Still declare accurately.** The `test_tool_allowlist` validator warns on
+undeclared calls (advisory, not gating), and the gap between a skill's own
+declaration and its agents' union is exactly what the per-context policy uses to
+tell a legitimate direct call from a boundary violation.
 
 ### 5.2 Agent frontmatter: spelled per registrar, exactly matched
 

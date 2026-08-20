@@ -1,4 +1,11 @@
-"""Tests for harness.allowed_tools — per-skill tool allowlist computation."""
+"""Tests for harness.allowed_tools — per-skill declared-tool computation.
+
+The session grants every registered MCP tool (issue #1748). The declared
+set computed by ``compute_allowed_tools`` is advisory: it feeds the
+``test_tool_allowlist`` validator (which warns but does not gate) and the
+``ValueError`` guard on ``run_skills``. These tests verify the declared
+set is accurate, NOT that it narrows the SDK session.
+"""
 
 from pathlib import Path
 
@@ -110,8 +117,9 @@ def test_referenced_agent_tools_unioned(tmp_path):
 
 
 def test_unreferenced_agent_tools_not_unioned(tmp_path):
-    """Agents the skill never references contribute nothing — keeps the
-    allowlist tight so direct out-of-frontmatter calls are still denied."""
+    """Agents the skill never references contribute nothing to the
+    declared set — the advisory validator only warns on the skill's
+    own + referenced tools."""
     skills, agents = _make_skill_and_agent(tmp_path, body="No delegation.\n")
     tools = compute_allowed_tools("router", skills, agents_dir=agents)
     assert "mcp__genealogy__wikipedia_search" not in tools
@@ -286,12 +294,11 @@ def test_uncovered_callee_fixtures_sees_the_callees_agent_tools(tmp_path):
 
 def test_callee_tools_absent_until_the_test_opts_in():
     """Opt-in, not automatic: every test that does not declare `run_skills`
-    keeps the allowlist it had before #1012.
+    keeps the declared set it had before #1012.
 
-    Unioning all four of search-records' callees unconditionally would let any
-    of them reach a tool with no fixture, tripping the Phase 2 gate and
-    aborting the CALLER's test — arming a nondeterministic failure on 24 tests
-    to serve the one that wants it.
+    The session grants all tools regardless (issue #1748), but
+    `uncovered_callee_fixtures` still uses the declared set for its
+    preflight — an unstocked callee would abort the run 20 turns in.
     """
     tools = compute_allowed_tools("search-records", PLUGIN_SKILLS)
     assert "mcp__genealogy__place_search" not in tools
@@ -399,3 +406,71 @@ def test_preflight_message_names_both_remedies():
     assert "ut_x_001" in msg
     assert "place_search" in msg
     assert "stub_skills" in msg
+
+
+# --- Permissive grant (issue #1748) -------------------------------------------
+
+
+def test_session_grants_every_registered_mcp_tool():
+    """The session allowlist includes every mock-registered MCP tool,
+    regardless of what the skill declares (issue #1748).
+
+    Exercises skill_runner's permissive path: BASELINE_ALLOWED + all
+    registered tools, with disallowed_tools = DISALLOWED_BACKSTOP only.
+    """
+    from harness.skill_runner import BASELINE_ALLOWED, DISALLOWED_BACKSTOP
+
+    # Simulate what skill_runner.py now does: permissive grant.
+    tools_by_name = {
+        "wikipedia_search": object(),
+        "record_search": object(),
+        "undeclared_tool": object(),
+    }
+    allowed_tools = list(BASELINE_ALLOWED) + [
+        f"mcp__genealogy__{name}" for name in tools_by_name
+    ]
+    disallowed_tools = list(DISALLOWED_BACKSTOP)
+
+    # Every registered tool must be in allowed_tools.
+    for name in tools_by_name:
+        qualified = f"mcp__genealogy__{name}"
+        assert qualified in allowed_tools, f"{qualified} missing from grant"
+
+    # No registered tool may appear in disallowed_tools.
+    for name in tools_by_name:
+        qualified = f"mcp__genealogy__{name}"
+        assert qualified not in disallowed_tools, (
+            f"{qualified} in disallowed_tools — narrowing was supposed to be retired"
+        )
+
+    # Dangerous tools still blocked.
+    for dangerous in DISALLOWED_BACKSTOP:
+        assert dangerous in disallowed_tools
+
+
+# --- Advisory validator (issue #1748) ----------------------------------------
+
+
+def test_tool_allowlist_validator_warns_instead_of_failing():
+    """test_tool_allowlist is advisory: undeclared tools emit a warning,
+    not an AssertionError. The session grants all tools (issue #1748)."""
+    import warnings
+    from validators.test_universal import test_tool_allowlist
+
+    tool_calls = [
+        {"tool": "mcp__genealogy__wikipedia_search", "args": {}},
+        {"tool": "mcp__genealogy__undeclared_tool", "args": {}},
+    ]
+    frontmatter = {"name": "test-skill", "allowed-tools": ["wikipedia_search"]}
+    test = {"type": "positive", "skill": "test-skill"}
+
+    # Must NOT raise AssertionError.
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        test_tool_allowlist(tool_calls, frontmatter, test)
+
+    # Must emit a warning naming the undeclared tool.
+    msgs = [str(w.message) for w in caught]
+    assert any("undeclared_tool" in m for m in msgs), (
+        f"expected a warning about undeclared_tool; got: {msgs}"
+    )
