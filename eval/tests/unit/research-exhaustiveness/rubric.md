@@ -20,8 +20,8 @@ Did the skill resist the temptation to declare exhaustive prematurely? An honest
 
 ## Stop criteria coverage
 
-When the skill writes a declaration (either direction), are all 7 stop criteria addressed in the `stop_criteria` object?
+Once the skill evaluates exhaustiveness, are all 7 stop criteria addressed — in the `stop_criteria` object when it declares, or in prose when it declines? N/A when the run refuses before evaluating (a plan-item precondition, or an already-declared question).
 
-- **pass:** All seven keys (`goal_alignment`, `repository_breadth`, `original_substitution`, `independent_verification`, `evidence_class`, `conflict_resolution`, `overturn_risk`) are present with 1–2 sentence assessments tied to specific log entries or assertions.
-- **partial:** All keys present but at least one is generic boilerplate ("yes" with no specifics), or one key is missing but the prose justification covers it.
-- **fail:** Two or more keys missing, or the assessments are all generic without reference to project state.
+- **pass:** All seven criteria (`goal_alignment`, `repository_breadth`, `original_substitution`, `independent_verification`, `evidence_class`, `conflict_resolution`, `overturn_risk`) are addressed with 1–2 sentence assessments tied to specific log entries or assertions — as object keys when declaring, or as named prose when declining.
+- **partial:** All seven addressed but at least one is generic boilerplate ("yes" with no specifics), or one is missing but the surrounding justification covers it.
+- **fail:** Two or more of the seven unaddressed, or the assessments are all generic without reference to project state.
