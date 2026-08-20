@@ -1,0 +1,286 @@
+{
+  "run_log": "v1_2026-08-20_15-53-03.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "**`ut_person_evidence_001`** — `base` / `Correctness`\nLLM: 2 → Junior: 3\n\n> The skill correctly identified that pe_005 links a_013 (the relationship assertion 'Father: Thomas Flynn') to Patrick Flynn (I1) with 'confident' confidence. The underlying identity of the deceased as Patrick Flynn I1 is sound — name, location, father name, and timeline all converge. However, the skill's audit reveals a critical factual gap in the existing rationale: it omits that James Brown (the informant for a_013) is secondary, family_not_present, and provided a conflicting birthplace in a_012 (Pennsylvania vs. Ireland per census). The skill correctly surfaces this omission as a defect in the rationale's completeness, not in the identity conclusion itself. The skill's own analysis is factually accurate and well-supported, but it does not correct the defective rationale on file — it only flags it for revision.\n\nJunior: ( not a fail because the skill did exactly what the audit required:\nIdentity conclusion is sound: The death certificate clearly names Patrick Flynn in Schuylkill County in 1908, with father Thomas Flynn. That matches the established profile of I1 (Patrick) and I2 (Thomas). There are no plausible alternative candidates, so the link itself is correct.\nAudit scope respected: The skill didn’t fabricate or misstate facts. It correctly reported that pe_005 is marked “confident” and explained why that tier is defensible.\nGap flagged, not ignored: The problem lies in the rationale text, which is incomplete and misleading. The skill surfaced this defect — noting the informant’s unreliability and the conflation of assertions — but did not silently “fix” it, which is appropriate for a review-only task.\nCorrectness vs. rationale quality: Correctness here means the skill’s analysis is factually accurate. The rationale on file is defective, but the skill’s own reasoning is correct and well-supported. That makes this a Pass, not a fail.)"
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "**`ut_person_evidence_001`** — `rubric` / `Confidence calibration`\nLLM: 2 → Junior: 3\n\n> The skill correctly assesses that 'confident' is borderline defensible on the underlying identity evidence (name, location, father name, timeline all converge; no competing candidates). However, the skill identifies that the existing rationale does not justify the 'confident' tier as written. The rationale conflates the death event (a_011) with the relationship assertion (a_013), omits the informant's secondary status and demonstrated unreliability (conflicting birthplace in a_012), and fails to acknowledge that independent corroboration comes from the census records, not from within the death certificate. The skill's verdict is that the confidence tier is sustainable but the rationale is insufficient to support it — a partial calibration problem. The skill does not recommend lowering confidence, only fixing the rationale to properly account for informant limitations and evidence independence.\n\nJunior: ( It’s not a fail because the skill did exactly what confidence calibration requires in an audit context: \nUnderlying evidence was correctly judged: The skill recognized that the “confident” tier is defensible — name, location, father’s name, and timeline all converge, with no competing candidates. That’s the core of calibration: is the confidence level appropriate given the evidence? The answer was yes.\nRationale defect was properly flagged: The problem wasn’t the confidence tier itself, but the rationale attached to pe_005. The skill identified that the rationale conflated assertions, omitted the informant’s unreliability, and failed to note independence issues. That’s a documentation gap, not a miscalibration of confidence\nAudit scope respected: The skill didn’t downgrade confidence or rewrite the rationale itself — it flagged the issue and recommended revision. That’s correct behavior for a review-only task\nSeparation of evidence vs. rationale: The skill distinguished between the strength of the evidence (which supports “confident”) and the quality of the rationale (which is incomplete). That separation shows proper calibration discipline.\nIn short: the confidence tier is sustainable, the audit’s analysis is factually accurate, and the only issue lies in the rationale’s wording. Since the skill correctly surfaced that problem without misjudging the evidence, this is a Pass, not a fail.)"
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_person_evidence_001`** — `rubric` / `Rationale quality`\nLLM: 1 → Junior: 1\n\n> The skill's audit demonstrates that pe_005's existing rationale is defective. It reads as if written for a_011 (the death event) rather than a_013 (the relationship assertion), cites only 'names match' and 'death location matches' without addressing the relationship-specific evidence, omits the informant's secondary status and family_not_present proximity, fails to disclose James Brown's conflicting birthplace claim in a_012, and does not explain why the 'confident' tier is justified despite the informant's limitations. The rationale does not cite multiple specific matching attributes for the relationship assertion itself, nor does it address competing candidates or the informant's reliability. The skill correctly identifies these gaps and recommends a revised rationale, but the on-file rationale fails the standard.\n\nJunior: ( Rationale quality is judged on the adequacy of the rationale attached to the person_evidence entry, not on the skill’s analysis. Since the rationale conflates assertions, omits critical informant context, and fails to explain the confidence tier, it does not meet the required standard. The skill correctly flagged this, so the rating is Fail for rationale quality.)"
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "**`ut_person_evidence_001`** — `rubric` / `Multi-person awareness`\nLLM: 2 → Junior: 3\n\n> The skill correctly identifies that a_013 is a relationship assertion ('Father: Thomas Flynn') that bears on both I1 (Patrick, the deceased) and I2 (Thomas Flynn, the named father). pe_005 links a_013 → I1 only. The skill flags the missing pe_ entry for a_013 → I2 as a gap and notes it is outside the immediate scope of this review but should be addressed. The skill demonstrates awareness of the cardinality rule and correctly surfaces the omission, but does not create the missing link — it defers to the user. This is appropriate for a review/audit request where no writes should be made without user confirmation, but the gap remains on file.\n\nJunior: ( Pass  The skill demonstrated correct understanding of relationship assertions and their dual‑party nature. By flagging the missing Thomas‑side link and respecting audit boundaries, it showed proper awareness and discipline.)"
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    }
+  ]
+}
