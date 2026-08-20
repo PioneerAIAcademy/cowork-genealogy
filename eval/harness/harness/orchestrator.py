@@ -459,6 +459,7 @@ async def _execute_single_run(
         },
         tool_calls=result.tool_calls,
         blocked_context_calls=result.blocked_context_calls,
+        blocked_protected_writes=result.blocked_protected_writes,
         skill_frontmatter=skill_frontmatter,
         skills_invoked=result.skills_invoked,
         test={
@@ -643,6 +644,53 @@ async def _execute_single_run(
 
 DEFAULT_SKILL_RUN_ATTEMPTS = 3
 
+_ALWAYS_RETRYABLE_ABORTS = {"error", "sdk_stream_silence"}
+
+
+def _is_zero_progress_timeout(result) -> bool:
+    """A `max_wall_clock_seconds` abort where the run never got going.
+
+    Reads `usage["num_turns"]`, which on this path is set by the timeout
+    handler in `skill_runner` from a counter incremented per AssistantMessage
+    as they stream — NOT from the SDK's ResultMessage. That distinction is the
+    whole correctness of this guard: `usage` is otherwise populated only in
+    the ResultMessage branch, and a wall-clock timeout cancels the consumer
+    before that message arrives, so every wall-clock abort would look like
+    zero progress and EVERY slow test would be retried — burning the full cap
+    once per attempt (1500s x 3) at 3x the tokens. Caught in review before
+    that shipped; do not re-derive this from `duration_api_ms`, which is
+    genuinely unavailable here.
+
+    Zero turns means the whole budget went by without the model answering
+    once: the subprocess stalled during startup, which is the
+    `Control request timeout: initialize` failure the `error` path already
+    retries, arriving under a different name because the wall-clock watchdog
+    fired first.
+
+    Observed 2026-08-15: two tests aborted at 1888s and 1908s against a 1500s
+    cap having never started, and were lost from a paid suite run. A third hit
+    the same stall, surfaced as `error`, was retried, and passed.
+
+    Deliberately narrow: a run that timed out mid-work has turns, so it stays
+    non-retryable and does not burn its budget twice.
+    """
+    if result.aborted_reason != "max_wall_clock_seconds":
+        return False
+    # Explicit 0, not falsy: a MISSING `num_turns` means the timeout handler
+    # that records it did not run, so we cannot tell a stall from slow work —
+    # and the safe answer there is "don't retry". Fails closed, so if that
+    # handler is ever removed this guard quietly reverts to the old
+    # never-retry behaviour instead of silently retrying every slow test.
+    return (result.usage or {}).get("num_turns") == 0
+
+
+def _is_retryable_abort(result) -> bool:
+    """Whether a failed skill run should be retried (see the two helpers and
+    `_execute_skill_with_retry`'s docstring)."""
+    if result.aborted_reason in _ALWAYS_RETRYABLE_ABORTS:
+        return True
+    return _is_zero_progress_timeout(result)
+
 
 async def _execute_skill_with_retry(
     *,
@@ -658,7 +706,7 @@ async def _execute_skill_with_retry(
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
     """Build a fresh workspace and run the skill, retrying transient
-    failures with exponential backoff.
+    failures with exponential backoff. See `_is_retryable_abort`.
 
     Two transient-failure modes are retried:
 
@@ -682,74 +730,99 @@ async def _execute_skill_with_retry(
     pre-flight or mid-run.
 
     Deterministic execution-cap aborts (`max_turns`, `max_tool_calls`,
-    `max_wall_clock_seconds`, `max_input_tokens_per_turn`) are NOT
-    retried — a retry would just burn the same budget — so they return
-    on the first attempt. The Agent SDK collapses every other failure
-    into `is_error`/exceptions without the clean HTTP status codes the
-    judge path discriminates on, so a genuinely non-transient error is
-    retried too; the cost is bounded (`attempts` tries plus a few
-    seconds of backoff).
+    `max_input_tokens_per_turn`) are NOT retried — a retry would just burn
+    the same budget — so they return on the first attempt. The Agent SDK
+    collapses every other failure into `is_error`/exceptions without the
+    clean HTTP status codes the judge path discriminates on, so a genuinely
+    non-transient error is retried too; the cost is bounded (`attempts`
+    tries plus a few seconds of backoff).
+
+    3. `max_wall_clock_seconds` **with zero progress** — see
+       `_is_zero_progress_timeout`. A wall-clock abort is normally a slow
+       test and stays non-retryable; one that burned the whole budget
+       without a single turn never started, which is the same transient
+       class as (1) and (2).
 
     Returns (SkillRunResult, before_snapshot, after_snapshot).
     """
-    RETRYABLE_ABORT_REASONS = {"error", "sdk_stream_silence"}
     delay = base_delay
     result: SkillRunResult | None = None
     before_snapshot: dict[str, Any] = {}
     after_snapshot: dict[str, Any] = {}
     for attempt in range(attempts):
-        with tempfile.TemporaryDirectory(
-            prefix=f"eval-{spec.id}-{run_index}-{attempt}-",
-            ignore_cleanup_errors=True,
-        ) as tmp:
-            workspace = Path(tmp)
-            try:
-                build_workspace(
-                    scenario_name=spec.scenario,
-                    scenarios_dir=paths.scenarios_dir,
-                    skills_dir=paths.skills_dir,
-                    target_dir=workspace,
-                )
-                before_snapshot = snapshot_files(workspace)
-                result = await run_skill(
-                    user_message=spec.user_message,
-                    workspace=workspace,
-                    fixture_names=spec.mcp_fixtures,
-                    fixtures_dir=paths.fixtures_dir,
-                    auth=auth,
-                    model=model,
-                    max_turns=spec.execution.get("max_turns", 20),
-                    max_wall_clock_seconds=spec.execution.get(
-                        "max_wall_clock_seconds", 300
-                    ),
-                    max_tool_calls=spec.execution.get("max_tool_calls", 50),
-                    max_input_tokens_per_turn=spec.execution.get(
-                        "max_input_tokens_per_turn", 200_000
-                    ),
-                    sdk_message_silence_seconds=spec.execution.get(
-                        "sdk_message_silence_seconds",
-                        DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
-                    ),
-                    allowed_tools_override=skill_baseline,
-                    routing_short_circuit_skills=routing_short_circuit_skills,
-                    stub_skills=stub_skills,
-                    # The skill's OWN declaration, not skill_baseline (which
-                    # unions in its subagents' tools). The gap between the two
-                    # is what the per-context policy guards.
-                    declared_tools=declared_skill_tools(
-                        spec.skill, paths.skills_dir
-                    ),
-                )
-                after_snapshot = snapshot_files(workspace)
-            finally:
-                # Always clean up the SDK's session-store entry so long
-                # runs don't accumulate orphans under ~/.claude/projects/.
-                cleanup_session_store(workspace)
+        attempt_completed = False
+        try:
+            with tempfile.TemporaryDirectory(
+                prefix=f"eval-{spec.id}-{run_index}-{attempt}-",
+                ignore_cleanup_errors=True,
+            ) as tmp:
+                workspace = Path(tmp)
+                try:
+                    build_workspace(
+                        scenario_name=spec.scenario,
+                        scenarios_dir=paths.scenarios_dir,
+                        skills_dir=paths.skills_dir,
+                        target_dir=workspace,
+                    )
+                    before_snapshot = snapshot_files(workspace)
+                    result = await run_skill(
+                        user_message=spec.user_message,
+                        workspace=workspace,
+                        fixture_names=spec.mcp_fixtures,
+                        fixtures_dir=paths.fixtures_dir,
+                        auth=auth,
+                        model=model,
+                        max_turns=spec.execution.get("max_turns", 20),
+                        max_wall_clock_seconds=spec.execution.get(
+                            "max_wall_clock_seconds", 300
+                        ),
+                        max_tool_calls=spec.execution.get("max_tool_calls", 50),
+                        max_input_tokens_per_turn=spec.execution.get(
+                            "max_input_tokens_per_turn", 200_000
+                        ),
+                        sdk_message_silence_seconds=spec.execution.get(
+                            "sdk_message_silence_seconds",
+                            DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
+                        ),
+                        allowed_tools_override=skill_baseline,
+                        routing_short_circuit_skills=routing_short_circuit_skills,
+                        stub_skills=stub_skills,
+                        # The skill's OWN declaration, not skill_baseline (which
+                        # unions in its subagents' tools). The gap between the two
+                        # is what the per-context policy guards.
+                        declared_tools=declared_skill_tools(
+                            spec.skill, paths.skills_dir
+                        ),
+                    )
+                    after_snapshot = snapshot_files(workspace)
+                    attempt_completed = True
+                finally:
+                    # Always clean up the SDK's session-store entry so long
+                    # runs don't accumulate orphans under ~/.claude/projects/.
+                    cleanup_session_store(workspace)
+        except RecursionError:
+            # Windows-only stdlib footgun: tempfile.TemporaryDirectory's
+            # _rmtree/onexc recovery treats a locked *file* PermissionError as
+            # "maybe this is actually a directory" and retries _rmtree on it,
+            # which recurses forever when the file is genuinely locked (a
+            # lingering subprocess handle) rather than a directory.
+            # ignore_cleanup_errors=True does not cover this path -- it only
+            # suppresses the `else` branch for non-Permission/FileNotFound
+            # exceptions. By this point build_workspace/run_skill already
+            # completed and before_snapshot/result/after_snapshot are
+            # populated above; only the tempdir's own removal failed. Same
+            # rationale as ignore_cleanup_errors itself: a leaked temp dir is
+            # strictly better than discarding an already-computed result.
+            #
+            # Re-raised unless the attempt already produced a result. Without
+            # that guard this `except` also swallows a RecursionError raised
+            # from build_workspace/run_skill INSIDE the block, and the loop then
+            # returns the PREVIOUS attempt's result stamped with this attempt's
+            # number — silently, with no exception and no warning (#1735 review).
+            if not attempt_completed:
+                raise
 
-        if (
-            result.aborted_reason not in RETRYABLE_ABORT_REASONS
-            or attempt + 1 >= attempts
-        ):
+        if not _is_retryable_abort(result) or attempt + 1 >= attempts:
             # Record how many attempts this run took so the stall tax is
             # visible per-run in the log (1 = clean first try).
             result.attempts = attempt + 1

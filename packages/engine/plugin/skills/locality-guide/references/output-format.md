@@ -2,8 +2,13 @@
 
 Use this structure when compiling the final guide. Fill in every
 section with specific data from MCP tool results. Omit sections only
-when the record type is clearly inapplicable (e.g., immigration
-records for an inland area with no immigration activity).
+when the record type is clearly inapplicable (e.g., international
+border-crossing manifests for a locality far from any land border or
+port of entry — only border crossings and ports of entry are
+geographically bound). Do **not** omit immigration records for an
+inland area: declarations of intention, naturalizations, affidavits
+filed by relatives, and alien registrations were all generated inland,
+far from any port.
 
 ```markdown
 # Locality Guide: [Place] ([Time Period])
@@ -119,7 +124,10 @@ damage, intentional destruction — with dates and what was lost. Note
 any substitute sources that partially compensate.]
 
 ## Research tips
-- [Jurisdiction-specific advice from wiki articles]
+- [Jurisdiction-specific advice from wiki articles — cite the source page URL
+  inline per the SKILL.md rule "Cite the wiki page, not just its title", e.g.
+  "Town clerks recorded vital records from 1639 ([Massachusetts Vital
+  Records](https://www.familysearch.org/en/wiki/Massachusetts_Vital_Records))"]
 - [Naming conventions or spelling patterns for this area]
 - [Alternative sources when primary records are missing]
 - [Efficient research sequence for this jurisdiction]
