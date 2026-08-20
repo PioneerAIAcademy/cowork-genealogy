@@ -721,16 +721,25 @@ async function searchOnce(query: string, attempt: number): Promise<Hit | typeof 
     // Sex-agnostic by design; see the field's docblock. First parent in graph
     // order, so a mother-only record counts as parent-NAMED, not parent-silent.
     const parent = persons.find((p) => parentIds.includes(p.id as string));
-    // Everyone except a PROVABLY-male parent. Same gender precedence as `father`
-    // above; `/Male$/` does not match ".../Female" (that ends "emale"), which is
-    // what makes the negation safe to write this way.
+    // Everyone except a parent PROVABLY of the wrong sex — and "provably" has to
+    // mean the same three signals the `father`/`mother` finders above use, or the
+    // numerator and the denominator disagree. The first version read only
+    // `display.gender` and `gender.type`, omitting the `role` fallback, so a parent
+    // whose sex is stated ONLY in `role` was resolvable by the finder while counting
+    // as sex-unprovable here — landing in both denominators at once and inflating
+    // `namelessButIndexedInBaseline` at the expense of the silent share.
+    // `/Male$/` does not match ".../Female" (that ends "emale"), which is what makes
+    // the negation safe to write this way for both sexes.
+    const ROLE_OF = { Male: /Father/i, Female: /Mother/i } as const;
     const couldBe = (wrongSex: "Male" | "Female") => (q: (typeof persons)[number]) => {
       if (!parentIds.includes(q.id as string)) return false;
-      const d = (q.display ?? {}) as { gender?: string };
+      const d = (q.display ?? {}) as { role?: string; gender?: string };
       const gt = (q.gender as { type?: string } | undefined)?.type ?? "";
-      // `/Male$/` does not match ".../Female" (that ends "emale"), so the negation
-      // is safe to write this way for both sexes.
-      return !(d.gender === wrongSex || new RegExp(wrongSex + "$").test(gt));
+      return !(
+        d.gender === wrongSex ||
+        new RegExp(wrongSex + "$").test(gt) ||
+        ROLE_OF[wrongSex].test(d.role ?? "")
+      );
     };
     const mothersIndexed = persons.filter(couldBe("Male")).length;
     const fathersIndexed = persons.filter(couldBe("Female")).length;
