@@ -40,9 +40,9 @@
       ],
       "enforceableAt": [],
       "notes": "Writable through `research_append` as a singleton section, which is what let init-project stop creating it with a raw file write the lockdown denies. Not enforceable on the unit plane: the section is outside the diff set that plane iterates, so the check cannot see it either way.",
-      "requires": "init-project writes the profile at project creation, from a two-question interview \u2014 never from assumed defaults. Any caller may correct a field afterwards; this section is deliberately NOT set-once, because a researcher who picked the wrong experience level needs a route that is not starting over.",
+      "requires": "init-project writes the profile at project creation from its non-blocking opening-turn interview (issue #1510): the questions are always asked and the pass always completes, so the section is always written — with stated answers where given and the documented defaults where not, named as defaulted in the final summary. Any caller may correct a field afterwards; this section is deliberately NOT set-once, because a researcher who picked the wrong experience level needs a route that is not starting over.",
       "failure": "Every skill reads `narration_guidance` from this section, so a fabricated profile silently changes narration across the whole project and is indistinguishable downstream from a real one. A project was observed created with an experience level and subscriptions the user was never asked for.",
-      "remedy": "Interview, then write it through `research_append`. Ask rather than assume \u2014 an absent profile has a working fallback in every skill, and a wrong one does not.",
+      "remedy": "Ask in the opening turn, then write it through `research_append`. Never write a value the user was not asked for — a defaulted field is legitimate only because the question was put to them in the same turn and the summary says it was defaulted.",
       "override": "none"
     },
     {

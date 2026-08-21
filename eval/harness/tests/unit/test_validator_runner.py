@@ -566,6 +566,608 @@ def test_expected_classifications_genuinely_wrong_values_still_fail():
         )
 
 
+# --- compound birth assertions (year smuggled into a birthplace value) ---
+
+
+def _run_birth_year_rule(assertions):
+    before, after = _classification_state(assertions)
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": []},
+    )
+    result = next(
+        (
+            r
+            for r in results
+            if r.name == "test_birth_place_value_has_no_embedded_year"
+        ),
+        None,
+    )
+    assert result is not None, (
+        "test_birth_place_value_has_no_embedded_year did not run"
+    )
+    return result
+
+
+def _birth_assertion(**overrides):
+    base = {
+        "id": "a_1",
+        "record_role": "child_1",
+        "fact_type": "birth",
+        "value": "Ohio",
+        "place": "Ohio, United States",
+        "date": None,
+        "evidence_type": "direct",
+    }
+    base.update(overrides)
+    return base
+
+
+def test_birth_year_rule_flags_dateless_compound_value():
+    """The defect (#1407): a place-keyed `direct` birth assertion carrying a
+    year in `value` and NO structured `date` — two facts in one assertion,
+    invisible to every structured matcher."""
+    result = _run_birth_year_rule(
+        [_birth_assertion(value="born about 1845, Ohio")]
+    )
+    assert result.passed is False
+    for fragment in ("a_1", "1845", "child_1"):
+        assert fragment in (result.error or ""), (
+            f"failure message missing {fragment!r}: {result.error}"
+        )
+
+
+def test_birth_year_rule_passes_on_a_bare_birthplace():
+    assert _run_birth_year_rule([_birth_assertion()]).passed is True
+
+
+@pytest.mark.parametrize(
+    ("value", "date"),
+    [
+        ("January 1845", "January 1845"),  # ut_026 — month-year mirrored
+        ("Born 11 July 1817, Stavanger, Norway", "11 July 1817"),  # ut_016
+        ("born Ireland, circa 1845", "~1845"),  # ut_005
+        ("born ca. 1845, Ireland", "~1845"),  # ut_006
+    ],
+)
+def test_birth_year_rule_does_not_flag_measured_false_positive_shapes(value, date):
+    """The four shapes measured across the committed run logs that carry a
+    year in `value` and are NOT the defect: each populates `date` with THAT
+    year, so the year mirrors a structured fact. Flagging any of them would
+    redden a correct test — the plan's explicit acceptance bar. The date is
+    the real one per shape, not a stand-in: exemption 1 is year-specific, so
+    pairing an 1817 value with a 1845 date would pass for the wrong reason
+    and hide a regression in that check."""
+    result = _run_birth_year_rule([_birth_assertion(value=value, date=date)])
+    assert result.passed is True, (
+        f"false positive on a date-backed value: {result.error}"
+    )
+
+
+def test_birth_year_rule_reports_every_year_in_the_label():
+    """When nothing states a date, the message names all the years it found,
+    so the annotator sees the whole label rather than its first match."""
+    result = _run_birth_year_rule(
+        [_birth_assertion(value="1870 census: born about 1845, Ohio",
+                          date=None)]
+    )
+    assert result.passed is False
+    for year in ("1870", "1845"):
+        assert year in (result.error or ""), result.error
+
+
+def test_birth_year_rule_exempts_a_year_the_before_state_already_stated():
+    """`sibling_years` reads the whole after-state, so a birth date seeded by
+    the scenario (every mid-research-flynn fixture has them) exempts a run
+    that adds only the birthplace — it smuggled nothing."""
+    seeded = _birth_assertion(
+        id="seed_1", value="about 1845", place=None, date="~1845",
+        evidence_type="indirect",
+    )
+    before = _empty_research_state()
+    before["files"] = {}
+    before["research_json"] = {
+        **before["research_json"], "assertions": [seeded],
+    }
+    after = _empty_research_state()
+    after["files"] = {}
+    after["research_json"] = {
+        **after["research_json"],
+        "assertions": [seeded, _birth_assertion(value="born about 1845, Ohio")],
+    }
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": []},
+    )
+    result = next(
+        r
+        for r in results
+        if r.name == "test_birth_place_value_has_no_embedded_year"
+    )
+    assert result.passed is True, f"false positive on a seeded year: {result.error}"
+
+
+def test_birth_year_rule_exempts_a_year_stated_by_a_sibling_assertion():
+    """The ut_028 shape, from the 2026-08-14 paid run. The party gets TWO
+    atomic birth assertions — a `direct` place-claim whose label redundantly
+    repeats the year, beside an `indirect` date-claim that states it
+    structurally. Atomicity is correct and nothing is lost, so this must not
+    fail; the pre-fix rule reddened it."""
+    result = _run_birth_year_rule(
+        [
+            _birth_assertion(
+                id="a_1",
+                record_role="groom",
+                value="about 1887, Cincinnati, Ohio",
+                place="Cincinnati, Ohio",
+                date=None,
+                evidence_type="direct",
+            ),
+            _birth_assertion(
+                id="a_2",
+                record_role="groom",
+                value="about 1887",
+                place=None,
+                date="~1887",
+                evidence_type="indirect",
+            ),
+        ]
+    )
+    assert result.passed is True, f"false positive on an atomic pair: {result.error}"
+
+
+def test_birth_year_rule_exemption_is_scoped_to_the_same_role():
+    """A sibling under a DIFFERENT role does not vouch: the bride stating 1845
+    cannot excuse a year smuggled into the groom's birthplace label."""
+    result = _run_birth_year_rule(
+        [
+            _birth_assertion(
+                id="a_1", record_role="groom",
+                value="born about 1845, Ohio", date=None,
+            ),
+            _birth_assertion(
+                id="a_2", record_role="bride", value="about 1845",
+                place=None, date="~1845", evidence_type="indirect",
+            ),
+        ]
+    )
+    assert result.passed is False
+    assert "a_1" in (result.error or "")
+
+
+def test_birth_year_rule_exemption_is_scoped_to_the_same_record():
+    """And not across records — `child_1` on one record must not vouch for
+    `child_1` on another, which would suppress a genuine leak in any
+    multi-record project."""
+    smuggled = _birth_assertion(
+        id="b_1", value="born about 1845, Ohio", date=None,
+    )
+    smuggled["record_id"] = "recB"
+    other = _birth_assertion(
+        id="a_2", value="about 1845", place=None, date="~1845",
+        evidence_type="indirect",
+    )
+    other["record_id"] = "recA"
+    result = _run_birth_year_rule([smuggled, other])
+    assert result.passed is False
+    assert "b_1" in (result.error or "")
+
+
+def test_birth_year_rule_tolerates_a_second_year_in_the_label():
+    """A label carrying an enumeration year besides the birth year must not
+    fire when the birth year IS captured on a sibling. `search` took the FIRST
+    year, so "1870 census: born in Ohio" failed on 1870 even though ~1845 sat
+    correctly on the sibling — and a validator failure suppresses the judge,
+    so that false positive cost the whole test's grade."""
+    result = _run_birth_year_rule(
+        [
+            _birth_assertion(
+                id="a_1", value="1870 census: born in Ohio", date=None,
+            ),
+            _birth_assertion(
+                id="a_2", value="about 1845", place=None, date="~1845",
+                evidence_type="indirect",
+            ),
+        ]
+    )
+    assert result.passed is True, (
+        f"false positive on a label carrying a second year: {result.error}"
+    )
+
+
+def test_birth_year_rule_ignores_indirect_and_placeless_assertions():
+    """Scope guards, each isolated so it is the ONLY thing that can spare the
+    assertion — with a `date` present too, exemption 1 would carry these and
+    the guard itself would be untested (deleting it would keep the suite
+    green)."""
+    # placeless: no place/standard_place, and no date to fall back on.
+    assert _run_birth_year_rule(
+        [_birth_assertion(value="born about 1845", place=None, date=None)]
+    ).passed is True
+    # indirect: place-keyed and dateless, spared only by evidence_type.
+    assert _run_birth_year_rule(
+        [_birth_assertion(value="born about 1845, Ohio", date=None,
+                          evidence_type="indirect")]
+    ).passed is True
+    # non-birth fact_type, likewise place-keyed, dateless and direct.
+    assert _run_birth_year_rule(
+        [_birth_assertion(value="born about 1845, Ohio", date=None,
+                          fact_type="residence")]
+    ).passed is True
+
+
+# --- pre-1880 census writes no relationship assertions (#1626) ---
+
+
+def _run_pre1880_rule(assertions, tags):
+    before, after = _classification_state(assertions)
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": tags},
+    )
+    result = next(
+        (
+            r
+            for r in results
+            if r.name == "test_pre_1880_census_creates_no_relationship_assertions"
+        ),
+        None,
+    )
+    assert result is not None, "the pre-1880 validator did not run"
+    return result
+
+
+def _relationship(rel_type, evidence_type="indirect"):
+    return {
+        "id": "a_1",
+        "record_role": "child_1",
+        "fact_type": "relationship",
+        "value": "child of Thomas Flynn",
+        "structured_value": {"relationship_type": rel_type},
+        "evidence_type": evidence_type,
+    }
+
+
+@pytest.mark.parametrize(
+    "rel_type,evidence_type",
+    [
+        ("child_inferred", "indirect"),  # the OLD policy's correct output
+        ("spouse_inferred", "indirect"),
+        ("child", "direct"),  # and the plainly-wrong one
+    ],
+)
+def test_pre_1880_rule_rejects_any_relationship_assertion(rel_type, evidence_type):
+    """The `_inferred`/`indirect` form is rejected too — that is the whole
+    reversal (#1626, decided 2026-08-15). Labelling the doubt is still
+    asserting the relationship."""
+    result = _run_pre1880_rule(
+        [_relationship(rel_type, evidence_type)], ["census", "1870"]
+    )
+    assert result.passed is False
+    assert "no relationship column" in (result.error or ""), result.error
+
+
+def test_pre_1880_rule_passes_when_only_stated_facts_are_written():
+    """The doctrine-correct output: people and their facts, no links."""
+    result = _run_pre1880_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "child_1",
+                "fact_type": "name",
+                "value": "John Baker",
+                "evidence_type": "direct",
+            },
+            {
+                "id": "a_2",
+                "record_role": "head_of_household",
+                "fact_type": "residence",
+                "place": "Cincinnati, Hamilton, Ohio",
+                "evidence_type": "direct",
+            },
+        ],
+        ["census", "1870"],
+    )
+    assert result.passed is True, result.error
+
+
+@pytest.mark.parametrize("tags", [["census", "1850-census"], ["census", "1860"]])
+def test_pre_1880_rule_gate_derives_the_year_from_tags(tags):
+    """Both tag spellings gate: bare (`1860`) and suffixed (`1850-census`)."""
+    result = _run_pre1880_rule([_relationship("child_inferred")], tags)
+    assert result.passed is False
+
+
+@pytest.mark.parametrize(
+    "tags",
+    [
+        ["census", "1880"],  # the column exists from 1880
+        ["census", "1900"],
+        ["extraction", "marriage-record"],  # not a census at all
+        ["census"],  # census with no year — cannot be gated
+    ],
+)
+def test_pre_1880_rule_skips_everything_it_should_not_gate(tags):
+    """1880+ census relationships are STATED and stay `direct`; a
+    non-census record is out of scope entirely."""
+    result = _run_pre1880_rule([_relationship("child", "direct")], tags)
+    assert result.passed is True, result.error
+
+
+# --- name values must be bare names (#1627) ---
+
+
+def _run_bare_name_rule(assertions):
+    before, after = _classification_state(assertions)
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": []},
+    )
+    result = next(
+        (r for r in results if r.name == "test_name_value_is_a_bare_name"), None
+    )
+    assert result is not None, "test_name_value_is_a_bare_name did not run"
+    return result
+
+
+def test_bare_name_rule_flags_the_persona_collapse_shape():
+    """The ut_025 defect, from `v1_2026-08-14_16-03-27`: the groom's father
+    captured as a name assertion ON the groom, with the tie fused into the
+    value, so no `father_of_groom` persona exists for person-evidence to
+    bind."""
+    result = _run_bare_name_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "groom",
+                "fact_type": "name",
+                "value": "John Becker (father of Frank Becker)",
+                "evidence_type": "direct",
+            }
+        ]
+    )
+    assert result.passed is False
+    for fragment in ("a_1", "groom", "father of"):
+        assert fragment in (result.error or ""), result.error
+
+
+def test_bare_name_rule_flags_a_relational_note_even_under_the_right_role():
+    """The ut_017 shape: the persona IS correct (`daughter_in_law_1`), but the
+    value carries a relational clause instead of the bare name. Milder than
+    the collapse, same rule — a name value is a name."""
+    result = _run_bare_name_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "daughter_in_law_1",
+                "fact_type": "name",
+                "value": "Linda (given name only; spouse of Robert Whitaker)",
+                "evidence_type": "direct",
+            }
+        ]
+    )
+    assert result.passed is False
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "Mary (Johnson) Smith",  # maiden surname parenthetical — one person
+        "John Becker",
+        "Tollev [Nadnesen?]",  # faithful-capture uncertainty marker
+        "Emma Schmidt",
+        # Relation words that are really surnames or titles, OUTSIDE brackets.
+        # All three fired under the first version of this rule (senior review,
+        # 2026-08-16). A false positive costs the test's whole grade, because a
+        # failing validator suppresses the judge.
+        "Joseph Parent of Quebec",   # Parent is a common surname
+        "Julia Child of Boston",     # Child is a surname
+        "Mary, Mother of Sorrows",   # a devotional name
+    ],
+)
+def test_bare_name_rule_leaves_legitimate_name_values_alone(value):
+    """A maiden-name parenthetical, an uncertainty marker, and plain names all
+    pass: the rule needs a relation word followed by `of`/`to`."""
+    result = _run_bare_name_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "bride",
+                "fact_type": "name",
+                "value": value,
+                "evidence_type": "direct",
+            }
+        ]
+    )
+    assert result.passed is True, f"false positive on {value!r}: {result.error}"
+
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("John Becker (grandfather of Frank)", "grandfather of"),
+        ("Rosa (great-grandmother of Emma)", "great-grandmother of"),
+        ("Wm (stepfather of Charles)", "stepfather of"),
+        ("Anna (father-in-law of X)", "father-in-law of"),
+        ("Jacob (s/o Henry Lang)", "s/o"),
+        ("Ellen (d/o Patrick)", "d/o"),
+    ],
+)
+def test_bare_name_rule_catches_the_wider_relation_vocabulary(value, expected):
+    """Shapes the first version missed (senior review, 2026-08-16): step- and
+    grand- prefixes, `-in-law`, and the abbreviated `s/o` / `d/o` / `w/o`
+    forms. Safe to broaden precisely BECAUSE the scan is bracket-scoped — the
+    surname false positives above live in the bare part of the value."""
+    result = _run_bare_name_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "groom",
+                "fact_type": "name",
+                "value": value,
+                "evidence_type": "direct",
+            }
+        ]
+    )
+    assert result.passed is False
+    assert expected in (result.error or ""), result.error
+
+def test_bare_name_rule_exempts_negative_evidence():
+    """`record_role: absent` values describe an expected-but-missing person,
+    so a relational phrase there is the point, not a defect."""
+    result = _run_bare_name_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "absent",
+                "fact_type": "name",
+                # The relation must sit INSIDE brackets, or the bracket-scoped
+                # regex never matches and this test passes without ever reaching
+                # the exemption it names (which is what it did before #1631's
+                # review — deleting the exemption left all 16 tests green).
+                "value": "not recorded (father of the bride)",
+                "evidence_type": "negative",
+            }
+        ]
+    )
+    assert result.passed is True, result.error
+
+
+def test_bare_name_rule_only_scans_name_facts():
+    """A relational phrase in a non-`name` fact is not the collapse shape — a
+    relationship fact's whole job is to say "X of Y". Without the fact_type
+    filter this value would be flagged, so this is what pins the filter:
+    dropping it left the rest of the suite green."""
+    result = _run_bare_name_rule(
+        [
+            {
+                "id": "a_1",
+                "record_role": "groom",
+                "fact_type": "relationship",
+                "value": "listed as son (son of Frank Becker)",
+            }
+        ]
+    )
+    assert result.passed is True, result.error
+
+
+# --- relationship_type must agree with its own value (found while annotating) ---
+
+
+def _run_rel_agreement(assertions):
+    before, after = _classification_state(assertions)
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": []},
+    )
+    result = next(
+        (r for r in results
+         if r.name == "test_relationship_type_agrees_with_its_value"), None
+    )
+    assert result is not None, "the relationship-agreement validator did not run"
+    return result
+
+
+def _rel(rel_type, value):
+    return [{
+        "id": "a_1", "record_role": "child_1", "fact_type": "relationship",
+        "value": value, "structured_value": {"relationship_type": rel_type},
+        "evidence_type": "direct",
+    }]
+
+
+@pytest.mark.parametrize(
+    "rel_type,value,states",
+    [
+        # The genealogist's find on ut_017: a sister typed as a child.
+        ("child", "sister of Harold Dean Whitaker", "sibling"),
+        ("child", "Sibling of Grace (Whitaker) Tolman", "sibling"),
+        ("parent", "sibling of Grace Tolman (nee Whitaker)", "sibling"),
+        # ut_027: the edge written BACKWARDS — typed parent, value says child of.
+        ("parent", "child of Louise Becker", "child"),
+        ("parent", "child of Edward Becker", "child"),
+    ],
+)
+def test_rel_agreement_catches_the_corpus_disagreements(rel_type, value, states):
+    """The 7 genuine instances in the committed run logs reduce to these two
+    shapes: a category swap and a direction inversion."""
+    result = _run_rel_agreement(_rel(rel_type, value))
+    assert result.passed is False
+    assert states in (result.error or ""), result.error
+
+
+@pytest.mark.parametrize(
+    "rel_type,value",
+    [
+        # Category-equivalent, NOT disagreements. A literal string comparison
+        # flags all of these — 39 hits corpus-wide, only 7 of them real.
+        ("spouse", "wife of George Bennett"),
+        ("spouse", "husband of Mary Flynn"),
+        ("child", "son of George Bennett"),
+        ("child", "daughter of John Becker"),
+        ("child_inferred", "son of Sarah Bennett (inferred)"),
+        ("parent", "father of Louise Becker"),
+        ("parent", "mother of Louise Becker"),
+        ("child", "daughter of head of household John Becker"),
+        ("sibling", "brother of Harold"),
+    ],
+)
+def test_rel_agreement_accepts_category_equivalents(rel_type, value):
+    result = _run_rel_agreement(_rel(rel_type, value))
+    assert result.passed is True, f"false positive on {rel_type}/{value}: {result.error}"
+
+
+@pytest.mark.parametrize(
+    "rel_type,value",
+    [
+        ("stepfather", "stepfather of Charles Ferber"),   # type not in the table
+        ("father_in_law", "father-in-law of X"),          # ditto
+        ("child", "Jacob Lang"),                          # value names no relation
+        ("child", ""),                                     # no value at all
+    ],
+)
+def test_rel_agreement_skips_what_it_cannot_compare(rel_type, value):
+    """Fails OPEN. An unrecognised relationship_type or a value naming no
+    relation is not evidence of disagreement, and guessing would cost the whole
+    test's grade — a failing validator suppresses the judge."""
+    result = _run_rel_agreement(_rel(rel_type, value))
+    assert result.passed is True, result.error
+
+
+def test_rel_agreement_accepts_a_value_naming_several_relations():
+    """`want in found` — the type only has to match one of them."""
+    result = _run_rel_agreement(
+        _rel("child", "child of Thomas Flynn and brother of Mary Flynn")
+    )
+    assert result.passed is True, result.error
+
+
 # --- record_persona_id corruption signature (shared persona across roles) ---
 
 _PERSONA_ARK = "https://www.familysearch.org/ark:/61903/1:1:ABCD-123"

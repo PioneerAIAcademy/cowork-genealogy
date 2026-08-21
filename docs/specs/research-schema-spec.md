@@ -55,8 +55,9 @@ empty: `project`, `questions`, `plans`, `log`, `sources`, `assertions`,
 a shorthand for "empty". The other three are optional and may be absent
 entirely:
 
-- `researcher_profile` — written by `init-project` from a short two-question
-  interview (Section 5.1.1).
+- `researcher_profile` — written by `init-project` from a short interview
+  asked in the same non-blocking opening turn as the project's research
+  objective (Section 5.1.1).
 - `known_holdings` — written by `init-project` from the holdings survey: what
   the researcher already has (documents, prior research, living-relative
   knowledge) before any new research begins (Section 5.1.2).
@@ -104,19 +105,22 @@ flagged. (One row below is the exception, and says so.)
 | `holding_type` | `document`, `prior_research`, `oral_knowledge`, `gedcom`, `photo`, `artifact`, `other` | known_holdings |
 | `holding_confidence` | `confident`, `unsure` | known_holdings — how settled the researcher is about the item, so research prioritizes shaky holdings over settled ones |
 | `experience_level` | `novice`, `intermediate`, `experienced`, `professional` | researcher_profile (Section 5.1.1) |
-| `subscriptions` | `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none` | researcher_profile. Note the mixed casing: these are site brand names, not the lowercase_with_underscores used elsewhere |
+| `subscription` | `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none` | researcher_profile (the `subscriptions` array's items). Note the mixed casing: these are site brand names, not the lowercase_with_underscores used elsewhere |
 | `evaluation_focus` | `pre-exhaustiveness`, `conclusion-readiness`, `proof-critique`, `on-demand` | evaluations (Section 5.12). Note the hyphens — this is the one enum in the file that does not use underscores |
 | `evaluation_target_type` | `question`, `proof_summary`, `project` | evaluations |
 | `evaluation_verdict` | `looks_solid`, `consider_addressing`, `address_first`, `refused` | evaluations |
 | `locality_page_section` | `home`, `getting_started`, `online_records`, `research_tips` | localities' `pages_read[].section` (Section 5.13) — the four FamilySearch Research Wiki place-page sections. **The one closed enum `validate_research_schema` does not check**: it does not descend into a locality's nested objects, so a misspelled section reaches disk and only the JSON Schema catches it |
 
-**Where these live in the machine-readable schemas.** Most are shared with
-`tree.gedcomx.json` and live in `enums.schema.json`. The last six rows above
-(`experience_level` through `locality_page_section`) are defined inline in
-`research.schema.json` instead, so their names are this document's; a
-developer changing one edits `research.schema.json` rather than
-`enums.schema.json`. The blast radius of a change either way is in CLAUDE.md's
-schema-change site list.
+**Where these live in the machine-readable schemas.** All but one are defined in
+`enums.schema.json` and `$ref`'d from `research.schema.json`. The sole exception
+is `locality_page_section` (the last row above), still declared inline in the
+research schema: its `pages_read[].section` enum is bound to no validator check,
+and lifting it would change what the writer tools reject, so it waits on its own
+change. Removing or renaming any closed-enum value additionally requires
+a repo-wide grep for the old value — the drift lint checks the full value *list*,
+which catches an addition, but a renamed or dropped value can leave a stale
+single-value mention in prose that no lint sees. The blast radius of a
+closed-enum change is in CLAUDE.md's schema-change site list.
 
 > **`no_evidence` was considered and rejected as an `evidence_type` value
 > (2026-06-21).** The model reaches for it when a record simply does not speak
@@ -312,8 +316,9 @@ Single object (not an array).
 ### 5.1.1 `researcher_profile`
 
 Optional single object. Captures per-project context about the
-researcher. Mostly written once by `init-project` from a short
-two-question interview (`intended_audience` is the exception — it is set
+researcher. Mostly written once by `init-project` from a short interview
+asked alongside the project's research objective in the same non-blocking
+opening turn (`intended_audience` is the exception — it is set
 by hand, see below); read by every skill. Skills adapt their narration density to
 `narration_guidance`, and `search-external-sites` prioritizes URLs for
 sites listed in `subscriptions`. All fields optional — absence falls
@@ -325,7 +330,7 @@ directly.
 | `experience_level` | string | no | One of `novice`, `intermediate`, `experienced`, `professional`. Drives `narration_guidance` derivation in `init-project`. |
 | `subscriptions` | string[] | no | Sites the researcher subscribes to. Enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none`. Inputs are normalized at write time (case-folded, trimmed, deduped, common aliases mapped) so stored values always match the enum exactly. |
 | `narration_guidance` | string | no | Concrete instruction text derived from `experience_level` at write time. Skills read and follow this text directly — the mapping logic lives only in `init-project`. |
-| `intended_audience` | string | no | Free text naming who the finished write-ups are for (e.g. "my cousins, none of them researchers"; "submission to NGSQ"). Read by `gps-mentor`'s narrative-craft checks (`gps-mentor-agent-spec.md` §6.4) so audience calibration is judged against a stated audience instead of inferred from the prose. **Not** written by `init-project` — the interview stays two questions; set this by hand when it matters, and when it is absent the mentor infers the audience and says which one it assumed. |
+| `intended_audience` | string | no | Free text naming who the finished write-ups are for (e.g. "my cousins, none of them researchers"; "submission to NGSQ"). Read by `gps-mentor`'s narrative-craft checks (`gps-mentor-agent-spec.md` §6.4) so audience calibration is judged against a stated audience instead of inferred from the prose. **Not** written by `init-project` — the opening-turn interview covers experience level, access, and (separately, in `project.objective`) the research objective; it does not ask about audience. Set this by hand when it matters, and when it is absent the mentor infers the audience and says which one it assumed. |
 
 ### 5.1.2 `known_holdings`
 
@@ -543,7 +548,9 @@ Recommended shapes by `fact_type`. The shape is not strictly enforced — it is 
 
 **Authority:** `structured_value` is derived from `value`, `date`, and `place` — not the other way around. If they disagree, the human-readable fields (`value`, `date`, `place`) govern. This follows the same authority pattern as `narrative_markdown` vs. structured fields in proof summaries.
 
-**`_inferred` suffix convention:** Use `_inferred` suffix on `relationship_type` (e.g., `child_inferred`) when the relationship is deduced from household position rather than explicitly stated in the record. This applies to the 1790–1870 censuses (no relationship column); the explicit relationship column was introduced in 1880. This convention is specific to `relationship_type` — other fact types handle uncertainty through the assertion's `evidence_type` (indirect) and `informant_bias_notes` rather than through the structured value itself.
+**`_inferred` suffix convention:** Use the `_inferred` suffix on `relationship_type` (e.g., `child_inferred`) when the relationship is deduced from household position rather than explicitly stated in the record — the 1790–1870 censuses, which have no relationship column (introduced in 1880). This convention is specific to `relationship_type`; other fact types handle uncertainty through the assertion's `evidence_type` (indirect) and `informant_bias_notes` rather than through the structured value itself.
+
+**Who may write one — not extraction (2026-08-15).** A deduced household link is a *hypothesis*, and record extraction does not form hypotheses: on a pre-1880 census it extracts each person's stated facts and their co-residence and writes **no** parent-child or spousal assertion, in any form. The suffix therefore belongs to the downstream correlation skills that weigh evidence across records. Nothing in this schema requires an `_inferred` relationship to exist for a pre-1880 record, and the record-extraction validator asserts their absence. The distinction is worth stating explicitly because "never assert a relationship without evidence" admits two readings — omit the link, or assert it labelled `indirect` — and a prompt carrying both produced either output unpredictably across runs of the same record.
 
 ### 5.7 `person_evidence`
 
@@ -841,6 +848,8 @@ Both `record-extraction` and `citation` write to the `sources` section. The prot
 ## 9. Worked Example
 
 Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsylvania, died 1908. The example shows two questions (q_001, q_002). q_002 unblocks q_001 — locating Patrick in the 1850 census is a prerequisite for identifying his parents.
+
+> **Whose output this is.** The example is the state of a project part-way through, not the output of any one skill. In particular `a_004` (1850) and `a_010` (1860) are `child_inferred` relationship assertions on pre-1880 censuses: per §5.6.1 those are written by the downstream correlation skills that weigh evidence across records, **never** by `record-extraction`, whose validator asserts their absence. Read them as already-correlated state, not as an extraction result.
 
 ### `tree.gedcomx.json` (simplified GedcomX, abbreviated)
 

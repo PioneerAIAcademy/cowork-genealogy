@@ -517,13 +517,32 @@ No raw `Write`, `Edit`, or `NotebookEdit` may target `research.json` or
 (`research_append`, `research_log_append`, `tree_edit`, `tree_correct`); a
 direct file write never validates.
 
-Three implementations, deliberately:
+Three shipping copies, plus the unit harness — which *imports* the plugin
+predicate rather than re-implementing it:
 
 | Where | File | Reaches |
 |---|---|---|
 | Plugin `PreToolUse` command hook | `packages/engine/plugin/hooks/{hooks.json,guard_project_files.py}` | Cowork, hosted, anywhere the plugin loads |
 | SDK `PreToolUse` hook | `apps/server/app/agent/real_agent.py` (`_pretool_hook`) | hosted only |
-| Harness hook | `eval/harness/e2e/orchestrator.py` | e2e runs |
+| Harness hook (e2e) | `eval/harness/e2e/orchestrator.py` | e2e runs |
+| Harness hook (unit) | `eval/harness/harness/context_policy.py` (`protected_file_denial`, wired in `skill_runner.py`'s `pretool_hook`) — **imports** `guard_project_files.protected_target`, does not copy it | unit runs (all 25 skills) |
+
+The unit-tier row is deliberately not a fourth *copy*: it binds the live
+`protected_target` object out of the plugin hook (the only stdlib-only copy, so
+importing it drags in no `claude_agent_sdk`), so it cannot drift from what ships.
+That is why `IMPLEMENTATIONS` in `test_write_lockdown_parity.py` stays at three —
+there is no fourth textual predicate to vector-check — and why the unit deny is
+pinned instead by `test_context_policy.py`, which asserts the harness bound the
+shipped file (`__file__`) and denies the right targets.
+
+The unit tier denies **identically to the three shipping copies**, creates
+included: a raw `Write`/`Edit`/`NotebookEdit` to `research.json` or
+`tree.gedcomx.json` is denied whether or not the file already exists, because
+`protected_file_denial` matches on basename alone. No skill legitimately
+raw-creates these files — the `project_create` tool seeds both in one validated
+call and `init-project` uses it — so nothing breaks. (In Cowork *with a
+connected folder* the seed instead goes through `device_commit_files` and the
+`Write` guard never fires — see §6.1 — so that path is unaffected either way.)
 
 **Why the plugin copy exists.** A per-agent `tools:` allow-list is subtractive —
 it can only narrow what a subagent inherits — so nothing but a hook can restrain
@@ -844,6 +863,35 @@ session_id, tool_input, tool_name, tool_use_id, transcript_path
 - The hook **cannot** read the project documents: `cwd` is the sandbox, and the
   connected folder is not mounted there.
 
+### 6.3 `settings.json` is **not** in the protected set — and why (measured 2026-08-15)
+
+`settings.json` is deliberately not protected here. The question "can an agent
+widen its own permissions by writing `.claude/settings.json`?" was raised while
+adding the unit-harness lockdown and answered empirically by the lead (recorded
+so it is not flattened back to "it was denied"):
+
+- Under `permission_mode="bypassPermissions"` (what the unit harness and the
+  hosted control plane both run) a raw write to a project-local **or** global
+  `.claude/settings.json` **lands** — nothing refuses it.
+- But it is **inert in the same session**: after writing a `Read` deny, `Read`
+  still worked. So it is **not** same-session privilege escalation.
+- The real exposure is **cross-session persistence**: the project folder is the
+  only thing that survives between sessions, so a settings file left behind
+  would bind the *next* session opened there.
+- In **Cowork with a connected folder it is inert entirely** — consistent with
+  §6.1: those files arrive as staged data over the device bridge, not as a
+  project whose settings configure the sandbox session.
+- The global `~/.claude/settings.json` half is already closed: hosted and unit
+  both run `setting_sources=["project"]`, and the E2B image creates only
+  `~/.familysearch-mcp`.
+
+Net: protecting `settings.json` is worth doing on the **hosted web** path only,
+for **persistence** rather than escalation, and it cannot ride the unit-harness
+change: the parity test forces all three shipping copies to protect the *same*
+set, so a hosted-only entry needs a per-path protected-set design first. Tracked
+as separate follow-up work; the unit-harness rule stands
+on its own.
+
 ## 7. Caller-attributed recency check (shadow mode)
 
 `find_unguarded_protected_writes` (`eval/harness/harness/skill_invocation.py`)
@@ -868,9 +916,14 @@ Design points that were paid for and should not be re-derived:
   `ToolResultBlock.is_error`, joined onto each entry by `apply_tool_result` in
   `e2e/orchestrator.py` and read by the `entry.get("is_error") is True` gates in
   `harness/skill_invocation.py` — `recently_succeeded`,
-  `find_unguarded_protected_writes`, `find_effects_without_invocation`,
-  `find_person_evidence_missing_same_person`, and
-  `find_protected_writes_by_unnamed_delegate`.
+  `find_unguarded_protected_writes`, `find_effects_without_invocation`, and
+  `find_person_evidence_missing_same_person`.
+
+  `find_protected_writes_by_unnamed_delegate` (§11) deliberately does **not**
+  read `is_error`: its gate is caller identity, not skill
+  completion, so there is no completion window for an errored call to open —
+  a write attributed to neither the main thread nor a dedicated agent is
+  already the violation regardless of whether the write itself succeeded.
 
   **What that buys, and what it does not.** `is_error` reports whether the *tool
   call* failed, which is not the same question as whether the *skill* succeeded:

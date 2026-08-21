@@ -94,29 +94,14 @@
       }
     },
     "researcher_profile": {
-      "description": "Per-project context about the researcher. Written once by init-project after a short two-question interview. Read by every skill — experience_level drives narration density via narration_guidance, and subscriptions guides search-external-sites prioritization. All fields optional; absence falls back to default narration. To update mid-project, edit this section directly.",
+      "description": "Per-project context about the researcher. Written once by init-project after a short interview, asked non-blocking in the same opening turn as the project's research objective. Read by every skill — experience_level drives narration density via narration_guidance, and subscriptions (framed to the researcher as access) guides search-external-sites prioritization. All fields optional; absence falls back to default narration. To update mid-project, edit this section directly.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "experience_level": {
-          "type": "string",
-          "enum": ["novice", "intermediate", "experienced", "professional"]
-        },
+        "experience_level": { "$ref": "enums.schema.json#/$defs/experience_level" },
         "subscriptions": {
           "type": "array",
-          "items": {
-            "type": "string",
-            "enum": [
-              "Ancestry",
-              "MyHeritage",
-              "FindMyPast",
-              "Newspapers.com",
-              "GenealogyBank",
-              "FindAGrave-Plus",
-              "other",
-              "none"
-            ]
-          }
+          "items": { "$ref": "enums.schema.json#/$defs/subscription" }
         },
         "narration_guidance": { "type": ["string", "null"] },
         "intended_audience": {
@@ -687,29 +672,10 @@
       "additionalProperties": false,
       "properties": {
         "id": { "type": "string", "pattern": "^ev_[0-9]+$" },
-        "focus": {
-          "type": "string",
-          "enum": [
-            "pre-exhaustiveness",
-            "conclusion-readiness",
-            "proof-critique",
-            "on-demand"
-          ]
-        },
+        "focus": { "$ref": "enums.schema.json#/$defs/evaluation_focus" },
         "target_id": { "type": "string" },
-        "target_type": {
-          "type": "string",
-          "enum": ["question", "proof_summary", "project"]
-        },
-        "verdict": {
-          "type": "string",
-          "enum": [
-            "looks_solid",
-            "consider_addressing",
-            "address_first",
-            "refused"
-          ]
-        },
+        "target_type": { "$ref": "enums.schema.json#/$defs/evaluation_target_type" },
+        "verdict": { "$ref": "enums.schema.json#/$defs/evaluation_verdict" },
         "file_path": { "type": "string" },
         "timestamp": { "type": "string", "format": "date-time" },
         "superseded_by": {

@@ -22,12 +22,13 @@ import { join } from "path";
 import { readFile, mkdir } from "fs/promises";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import type { ValidationError } from "../validation/types.js";
 import {
   atomicWriteJson,
   atomicWriteBoth,
   backupIfExists,
   isInsideProject,
+  readProjectJson,
+  formatIssues,
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { exampleHints } from "./research-append-examples.js";
@@ -653,21 +654,11 @@ class ResearchAppendError extends Error {
   }
 }
 
-function formatIssues(issues: ValidationError[]): string[] {
-  return issues.map((e) => (e.path ? `${e.path}: ${e.message}` : e.message));
-}
-
 async function readJson(projectPath: string, filename: string): Promise<any> {
-  let text: string;
   try {
-    text = await readFile(join(projectPath, filename), "utf-8");
-  } catch {
-    throw new ResearchAppendError(`${filename} not found in projectPath`);
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new ResearchAppendError(`${filename} is not valid JSON`);
+    return await readProjectJson(projectPath, filename);
+  } catch (e) {
+    throw new ResearchAppendError(e instanceof Error ? e.message : String(e));
   }
 }
 

@@ -62,12 +62,11 @@ one machine's tailnet. The hosted path can now be redirected without an
 engine rebuild — set `WIKI_API_URL` / `POP_STATS_URL` on the control
 plane and `hosted_config()` writes them into the sandbox's config — but
 the compiled-in defaults still apply everywhere else, including every
-installed `.mcpb`. Measured over the
-committed e2e corpus, 28% of wiki-tool calls and 35% of `place_population`
-calls fail, across 17 distinct days. The agent gets an actionable error
-and then quietly ships a thinner answer, so the user sees nothing. Do not
-write "end users do not need to set this" — that was true only in the
-sense that they cannot.
+installed `.mcpb`. When one of those calls fails the agent gets an
+actionable error and then quietly ships a thinner answer, so the user sees
+nothing; `make e2e-wiki-failures` is what surfaces the current rate and its
+causes. Do not write "end users do not need to set this" — that was true only
+in the sense that they cannot.
 
 ## Repository layout
 
@@ -153,92 +152,52 @@ mocks (no E2B/Anthropic/OAuth needed).
 ## Work you find along the way
 
 Implementing one task always turns up others. **Filing an issue is the last
-resort, not the default.**
-
-**Why: an issue costs about four people.** Someone decides whether it is ready
-(`/review-ready`, which fans out a `task-reviewer` per candidate), someone
-implements it, and two review it — the branch needs two approvals. So the test
-is not "is this issue justified?" — it is **"is the work big enough to carry
-four-person overhead?"** That is a ratio. A half-day genealogist deep dive
-carries it comfortably. A change of four functions in one file does not; build
-that one.
+resort, not the default** — an issue costs about four people: someone vets it
+(`/review-ready`), someone implements it, and two review it. So the test is not
+"is this issue justified?" — it is **"is the work big enough to carry
+four-person overhead?"** A half-day genealogist deep dive carries it comfortably.
+A change of four functions in one file does not; build that one.
 
 Walk these in order and stop at the first that fits:
 
 1. **Fix it in the current PR.** The default, and the right answer about two
    times in three. You already have the context loaded; whoever picks up the
    ticket has to rebuild it from nothing.
-2. **Drop it.** If it is a nit — a wording preference, a tidier structure, a
-   test you would like but nothing is broken without — say nothing and move on.
-   A filed nit costs triage every morning for as long as it stays open.
-3. **Comment on the issue that already covers it.** One search:
+2. **Drop it** if it is a nit — a wording preference, a tidier structure, a test
+   you would like but nothing is broken without.
+3. **Comment on the issue that already covers it.** One search, then stop:
    `gh issue list --state open --search "<path or symbol>"`, plus a grep of the
-   `**Touches:**` lines. Then stop searching — `/audit-board` sees the whole
-   pool weekly and is the only vantage point from which every duplicate is
-   visible.
+   `**Touches:**` lines.
 4. **File a new issue**, in the same PR that defers it.
 
 You may only reach step 4 by naming, in both the PR body and the issue body,
-which of these is true:
-
-- the fix needs a different reviewer or skill — a code fix surfaced during a
-  genealogist's fixture work, or vice versa;
-- it depends on a decision only the lead can make — **and he is not reachable.**
-  A decision is a *question*, not work: filed, it costs triage every morning
-  until someone asks him anyway, and then costs the four people above on top. If
-  you can ask, ask;
-- it is a different skill's eval slot, and bundling it would force a second
-  paid run;
-- it is too big for this PR — **and you have opened the call sites and counted.**
-  State the number of files and roughly the number of lines. "It feels out of
-  scope" is not a measurement; asserting scope instead of measuring it is the
-  single most common way a foldable fix becomes an orphaned ticket.
-
-"I noticed it in passing" and "I'm not sure if this is in scope" are not on
-that list. They are reasons to fix it now (step 1) or to drop it (step 2).
-
-Filing runs one command, no board write:
-
-```sh
-gh issue create --label developer|genealogist [--label icebox] \
-  [--label nothing-checks] \
-  --title "…" --body "**Touches:** path/one.ts, path/two.py
-
-…"
-```
-
-Open the body with a `**Touches:**` line naming the files the work would
-change, when you know them. Overlap here is almost never same-title — it is two
-issues wanting different lines in one file — and that line is what makes it
-greppable. Best guess is fine; the weekly `/audit-board` pass reads it, no gate
-does.
-
-| Label | Use for |
-|---|---|
-| `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
-| `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose |
-| `icebox` | Add alongside either one when the item is a candidate with **no decision behind it**, so triage skips it instead of re-ranking it every morning |
-| `nothing-checks` | Add alongside either one when the item **is a missing guard** — a way CI can be green while the thing is broken. This label is the register `docs/architecture.md` §9.4 points at, so an unlabelled gap is invisible to every reader who follows that section |
+which of these is true: the fix needs a different reviewer or skill; it depends
+on a decision only the lead can make **and he is not reachable** (a decision is a
+question, not work — if you can ask, ask); it is a different skill's paid eval
+slot; or it is too big for this PR **and you have opened the call sites and
+counted**, stating the files and roughly the lines. "It feels out of scope" is
+not a measurement. "I noticed it in passing" and "I'm not sure if this is in
+scope" are not on that list at all — they are reasons to fix it now, or drop it.
 
 **Creating the issue is the whole job: do not call the Projects API yourself**
-(no `gh project` commands, no `addProjectV2ItemById`).
-`.github/workflows/add-to-project.yml` fires on `issues: opened` and puts the
-card in Backlog; the one exception is the `feedback` label, which routes to
-Ready. A `gh` token without the `project` scope — the default after
-`gh auth login` — fails a board write *while still creating the issue*, which
-looks like success. Reference the number in the PR body.
+(no `gh project` commands, no `addProjectV2ItemById`). A workflow files the card
+into Backlog the moment the issue opens. A `gh` token without the `project`
+scope — the default after `gh auth login` — fails a board write *while still
+creating the issue*, which looks like success.
 
 **Do not reintroduce a queue file under any name.** This replaced
 `docs/TODOs.md`, retired 2026-08-02.
 
-`gh issue create` is gated by a `PreToolUse` hook
-(`scripts/claude-hooks/gate-issue-create.py`, wired in `.claude/settings.json`)
-that stops the call and puts steps 1–3 in front of the lead before anything is
-filed. It is a prompt, not a refusal — answer it with which exemption applies.
+Label `developer` or `genealogist` by who does the work, and add
+`nothing-checks` when the item **is a missing guard** — a way CI can be green
+while the thing is broken. That label is the register `docs/architecture.md`
+keeps under "What nothing checks", so an unlabelled gap is invisible to every
+reader who goes looking there.
 
-The rest — how to pick the label, what belongs in a body and what doesn't, the
-`TODOs.md` postmortem — is in [`DEVELOPMENT.md`](./DEVELOPMENT.md) §
-"Follow-on work you find along the way", which owns these rules.
+Everything else — the exact `gh issue create` line, the `**Touches:**` line, the
+`icebox` label, what belongs in a body and what does not, and the hook that
+gates filing — is in [`DEVELOPMENT.md`](./DEVELOPMENT.md) § "Follow-on work you
+find along the way", which owns these rules.
 
 ## Tools and skills
 
@@ -390,44 +349,21 @@ ToolSearch is the real load path there. Search by bare tool name —
 `query: "+research_append"` — which matches whatever prefix the session exposes.
 The same packaging test fails any `select:mcp__…` in a plugin body.
 
-**`ENABLE_TOOL_SEARCH=true` turns tool search ON, not off.** Verified against
-CLI v2.1.220 (2026-08-02): a truthy value (`true|1|yes|on`) enables
-deferred/tool-search mode, `auto`/`auto:N` is adaptive, and a **falsy** value
-(`false|0|no|off`) is what disables it — **unset also means on**. Both harnesses
-and the hosted path set `"true"`, so they run *with* deferral, which is the
-opposite of what their comments claimed until they were corrected. Nothing here
-depends on the flag's value; the bare-name rule above is correct either way.
-Flipping it is separate work that has to re-measure the tool mix.
+**`ENABLE_TOOL_SEARCH=true` turns tool search ON, not off** — and unset also
+means on, so both harnesses and the hosted path run *with* deferral. The
+bare-name rule above holds either way. Full polarity, what now depends on
+deferral being on, and what flipping it would cost: `docs/architecture.md`,
+"Agent frontmatter: spelled per registrar, exactly matched".
 
 **No playbook/reference files for agents — an agent body is self-contained.**
 Everything an agent needs at runtime lives inline in its `.md`. Do **not**
 split per-topic reference material (e.g. per-record-type extraction tables)
 into sibling files for the agent to `Read` on demand, and do **not** assemble
 them into the body at build time. Decided 2026-07-27 after measuring both;
-tried on `record-extractor` (issue #702, closed) and reverted.
-
-*Why not on-demand `Read`:* it is unreliable in a way nothing catches. Across
-a full `record-extraction` suite run with the files provably reachable, the
-agent read the playbook on some tests, ignored it on others (every assertion
-fell back to `informant_proximity: "unknown"`), and over-applied it on others
-(`witness` on all 16) — pass rate 6/19 against a 12–14/19 baseline, fails up
-from 0–1 to 6. Every one of those modes is silent: no error, and the unit
-harness only records MCP tool calls (`skill_runner.py` filters on `mcp__`),
-so a skipped `Read` leaves no trace at all. This is behavioral, not
-environmental — it persisted after the harness was made to load the plugin
-the way both production paths do.
-
-*Why not build-time assembly:* it works mechanically but splits the reviewed
-artifact from the executed one. In this repo the prompt **is** the product —
-whoever edits a fragment must be able to see the whole body it lands in
-(contradictions 400 lines up, the total context budget). Seeing the real size
-is also the pressure that produces a smaller prompt; hiding it removes the
-incentive.
-
-*What this costs, knowingly:* there is no per-record-type ownership surface,
-so a probate specialist edits the same file as everyone else. That need is
-declined, not disproven — revisit only with a mechanism that cannot silently
-skip, and re-read this note first.
+tried on `record-extractor` (issue #702, closed) and reverted. Revisit only
+with a mechanism that cannot silently skip. What each alternative measured,
+and the ownership cost knowingly accepted: `docs/architecture.md`, "Agent
+bodies are self-contained — do not split them".
 
 ## Handling user feedback submissions
 
@@ -445,7 +381,8 @@ workflow itself or building one of its skills.
 Per-project context about the researcher (experience level, paid
 subscriptions, derived narration guidance) lives in a
 `researcher_profile` section of `research.json`. `init-project` writes
-it after a short two-question interview at project start. Every
+it after a short opening-turn interview, asked non-blocking alongside
+the project's research objective at project start. Every
 `SKILL.md` opens with a one-line `**Narration:**` instruction that
 tells Claude to read `researcher_profile.narration_guidance` and apply
 it as the narration style for that invocation.
@@ -494,12 +431,13 @@ change, with different (and easy-to-undercount) site lists:
   prose tables/discussion in `research-schema-spec.md`. **Do not hand-edit the TS
   union**: `packages/schema/src/enums.generated.ts` is emitted from that package's
   own `enums.schema.json` by `scripts/gen-enums.mjs`, chained into `build`,
-  `typecheck` and each app's `dev`, and gitignored (ADR-0008 tier 2). The one
-  exception is the five unions defined inline in `research.schema.json` rather
-  than in `enums.schema.json` — `EvaluationFocus`, `EvaluationTargetType`,
-  `EvaluationVerdict`, `ExperienceLevel`, `Subscription` — which the generator
-  cannot see and which stay hand-written in `packages/schema/src/index.ts` until
-  they move. Worked blast-radius and
+  `typecheck` and each app's `dev`, and gitignored (ADR-0008 tier 2). Every
+  closed enum in `enums.schema.json` is generated, with no exceptions —
+  `gen-enums.mjs` throws rather than let a hand-written union shadow a generated
+  one. Removing or renaming a
+  value additionally requires a repo-wide grep for the old value: the full-list
+  lint catches an added value, but a rename or removal can leave a stale
+  single-value mention in prose that no lint sees. Worked blast-radius and
   rationale: `docs/specs/research-schema-spec.md`, the `no_evidence` note in
   the enum section.
 - **Tree-schema (simplified-GedcomX) change** — a new/renamed field on tree
@@ -675,6 +613,30 @@ than no check at all. The three ways one silently passes here: a grep whose
 pattern excludes its own tree, a `git grep` that skips untracked files, and a
 field-name match that collides with an unrelated key.
 
+### A measurement that disagrees with belief is re-measured, not reworded
+
+When a recorded measurement contradicts what you believe, re-probe until the two agree.
+Do not reword prose until the guard goes green, and do not add a provenance escape hatch
+so the belief can sit beside a verdict that denies it. A verdict stuck at `OPEN` or
+`NOT MEASURED` is a measurement-design task, not a re-run. The guard that matches wording
+rather than meaning is `measured-figures.test.ts`; its failure message says the same.
+
+### The eval harness emulates production's permission model
+
+Grant what production grants. Both production paths hold every MCP tool the server
+advertises — the hosted control plane runs `bypassPermissions` with no allowlist, and
+Cowork loads the plugin whole. A skill's `allowed-tools` is a **grant, not a
+restriction**: the field that removes a tool from the pool is `disallowed-tools`, which
+no skill here declares, so a deny list derived as the complement of a grant inverts the
+field's meaning. The unit harness still derives one; retiring it is open work.
+
+The boundary, so this is not over-applied: emulate production's *permission model*,
+construct the test's *inputs* freely. A deny that hides the answer from the agent — the
+e2e tree-read block, a fixture's `blocked_tools` — is a fixture and stays. A deny that
+changes what the agent may *do* is a distortion and goes. Denies production genuinely has
+stay too: the protected-file write lockdown mirrors the shipped plugin hook, and agent
+`disallowedTools:` binds even under `bypassPermissions`.
+
 ### Python file I/O: always pass `encoding="utf-8"`
 
 Every Python `read_text()` / `write_text()` / `open()` on a text file
@@ -791,9 +753,10 @@ explicitly with the Agent tool.
 - **`skill-improver`** — report-only. Proposes evidence-cited `SKILL.md` edits
   from a skill's latest annotated run log. `/improve-skill <skill>`.
 - **`task-reviewer`** — read-only. Vets one Backlog/Ready issue before it is
-  handed to a junior developer working with Claude Code: staleness, whether the
-  premise was already refuted, the blast radius the issue omits, what verifies
-  the change, and which decisions are the lead's. Fanned out one-per-issue by
+  handed to a junior working with Claude Code: staleness, whether the premise
+  was already refuted, whether the population it rests on has any instances at
+  all, the blast radius the issue omits, what verifies the change, and which
+  decisions are the lead's. Fanned out one-per-issue by
   the `review-ready` skill; never edits an issue, the board, or any code.
   Spec: `docs/specs/task-review-spec.md`.
 

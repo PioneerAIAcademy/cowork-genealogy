@@ -5,7 +5,7 @@
     "name": "FamilySearch wiki — church records",
     "type": "positive",
     "description": "User asks how to find church records for Irish ancestors. Exercises the skill with a record type explicitly listed in the description.",
-    "tags": ["fs-wiki", "how-to", "church-records", "ireland"]
+    "tags": ["fs-wiki", "how-to", "church-records", "ireland", "expects-file-irish-church-records"]
   },
   "input": {
     "user_message": "Search the FamilySearch wiki for how to find church records for my Irish ancestors",

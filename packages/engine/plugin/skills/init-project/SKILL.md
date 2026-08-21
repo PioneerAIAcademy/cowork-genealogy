@@ -23,24 +23,25 @@ allowed-tools:
 # Init Project
 
 **Guard clause — run BEFORE anything else, including file reads:**
-If `research.json` already exists, respond with exactly this and stop — no tool calls, no file reads:
+If `research.json` already exists, do not initialize: make no MCP tool call and read no project file. Hand the turn off instead — **project-status** for status/resume wording, **question-selection** for next-question wording — and stop. If you cannot delegate, reply with exactly this and stop:
 > "This project already has a `research.json` — use **question-selection** to add a research question, or **project-status** to review the current state."
-Do NOT call any tool or read any file. Stop immediately.
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it. If absent (new project being initialized), default to a one-line preamble per action.
+**Narration** (initialize path only — the guard clause above reads nothing): read `researcher_profile.narration_guidance` from `research.json` and apply it. If absent (new project being initialized), default to a one-line preamble per action.
 
-**Places:** Follow `references/places-guidance.md`. Facts from `person_read` already carry `standard_place`; for hand-entered places, resolve with `place_search`.
+**Places:** Follow `references/places-guidance.md`. Keep the `standard_place` a `person_read` fact carries; resolve anything else — hand-entered, or a fact returned with `place` and no `standard_place` — with `place_search`.
 
-## Researcher profile interview
+## Opening-turn questions
 
-Captures experience level and paid subscriptions in `researcher_profile`.
+Ask three things in the opening turn, alongside the person ID/name request: the research objective, experience level, and access (`researcher_profile` stores the latter two). **Never stop and wait for any of them. Complete the full initialization in a single pass:**
 
-**Never stop and wait for answers. Complete the full initialization in a single pass:**
+1. **If the user's message already states an answer** to one or more of the three — map and normalize it and keep going.
+2. **For anything left unanswered, ask it in this same opening-turn message, but do not wait for a reply before proceeding:**
+   - No stated objective → store this exact text, verbatim, as `objective`: "General research: build out the tree and identify gaps and next steps." Never invent, infer, or default a *specific* research direction (a migration story, a disputed relationship, a name-origin theory) from the person's data alone — this verbatim generic default is the only fallback, the same way a defaulted `narration_guidance` is stored verbatim, not paraphrased.
+   - No stated experience level → default to `intermediate`.
+   - No stated access → default to `["none"]`.
+   Write the files now with whatever mix of stated answers and defaults applies, and tell the user in the final summary exactly which fields were defaulted. Optionally repeat the questions *after* both files are written — never as a turn-ending prompt.
 
-1. **If the user's message already states answers** (experience level and/or subscriptions) — map and normalize them and keep going.
-2. **Otherwise, use defaults** (`intermediate`, `["none"]`), write files now, and tell the user in the final summary that defaults were assumed. Optionally include the questions *after* both files are written — never as a turn-ending prompt.
-
-Asking questions and stopping is a failure: the project never gets created.
+Asking a question and then stopping to wait is a failure: the project never gets created.
 
 ### Question 1 — Experience level
 
@@ -50,10 +51,12 @@ Asking questions and stopping is a failure: the project never gets created.
 > (c) experienced → `experienced`
 > (d) professional/certified → `professional`
 
-### Question 2 — Paid subscriptions
+### Question 2 — Access
 
-> Which paid genealogy subscriptions do you have? (or "none"):
-> Ancestry, MyHeritage, FindMyPast, Newspapers.com, GenealogyBank, FindAGrave-Plus, other.
+> What access do you have to genealogy sites? (or "none") — a paid subscription
+> (Ancestry, MyHeritage, FindMyPast, Newspapers.com, GenealogyBank, FindAGrave-Plus, other),
+> free access through a FamilySearch partnership, or access via a library or
+> family history centre.
 
 **Normalize before storing** (downstream skills do exact-equality lookups):
 - Canonical enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none`.
@@ -136,11 +139,11 @@ never re-enters context. A partial hand-build has none of that — which is why 
 
 ### 1. Get the research objective
 
-**This step blocks — unlike the profile and holdings interviews below, do NOT proceed past it without an explicit objective.** Before calling `person_read`, building the tree, or doing any pedigree analysis, you need BOTH: (a) a FamilySearch person ID (preferred) or name + known facts for `person_search`, AND (b) the research objective in the user's own words.
+The objective was captured in the opening-turn questions above (stated by the user, or the generic default if they didn't answer) — this step just uses it. You need a FamilySearch person ID (preferred) or name + known facts for `person_search` alongside it.
 
-If the user gives a PID (or a name) with no stated objective, STOP and ask: "What would you like to research about this person?" **Do not call `person_read` first to learn the person's name for the question — asking about "this person" needs no lookup, and fetching anything before the objective is the exact failure this step blocks.** Do NOT invent, assume, or default an objective from the person's data (e.g., a hallucinated "trace migration from Upper Canada" guessed from a birthplace fact) — a wrong assumption sends the whole project in a direction the user didn't ask for. This is the one interview question in this skill that is blocking; the researcher-profile and known-holdings questions below are not.
+Do NOT call `person_read` before the opening turn's questions are asked — asking about "this person" needs no lookup. Do NOT invent, assume, or default a *specific* objective from the person's data (e.g., a hallucinated "trace migration from Upper Canada" guessed from a birthplace fact) — the generic default from the opening-turn rule above is the only fallback; a wrong specific assumption sends the whole project in a direction the user didn't ask for.
 
-Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If no ID, search by name (see below) — but still confirm the objective before or alongside the name search, not after. If too vague (no named individual), ask for clarification.
+Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If no ID, search by name (see below). If the stated objective is too vague (no named individual), ask for clarification — this is a distinct case from no objective at all, which gets the generic default, not a clarification request.
 
 ### Searching by name
 
@@ -162,33 +165,37 @@ Call `person_read({ personId: "<id>", relatives: true, sourceDescriptions: true 
 
 Build the simplified-GedcomX document in memory — you pass it to `project_create` in Step 4, which writes it. Do NOT write either project file yourself; `Write` on them is blocked. Follow `references/simplified-gedcomx-summary.md`.
 
-**Simplified GedcomX is NOT the same as full GedcomX.** `person_read` returns full GedcomX — you must convert. Key differences: top-level array is `sources` (NOT `sourceDescriptions`); persons have no `fsid` or `extracted` fields; use snake_case for all field names (`standard_place`, not `standardPlace`). Structure: `{ "persons": [], "relationships": [], "sources": [] }`.
+**`person_read` already returns this format** — `{ "persons": [], "relationships": [], "sources": [] }`, snake_case, no field renaming. What it returns is still not persistable as-is: its ids, its source `notes`, and its missing source refs all need work below. Everything else — including both standardized sidecars — is carried through untouched.
 
-**Include:** subject person (names, facts — source refs live on each fact, never as a person-level property), all relatives (parents, spouse, children), all relationships, all source descriptions in the top-level `sources` array. A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`.
+**Include:** subject person (names, facts — source refs live on each fact, never as a person-level property), all relatives (parents, spouse, children), all relationships, all source descriptions in the top-level `sources` array — minus `notes`, which is not an allowed source field and fails the write. A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`. `ark` is what marks a person as being *in* the FamilySearch tree, so every person read from it carries `ark: "ark:/61903/4:1:<their FamilySearch person ID>"` — that exact form, which is what `person_search` returns for the same person. Omit the key entirely on local stubs. Never a page URL, never a bare ID.
 
-**ID conventions (overrides the reference doc):** ALL persons get local `I` IDs (`I1`, `I2`…) — including FamilySearch-seeded persons. Do NOT use FamilySearch PIDs as person IDs. Names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`….
+**ID conventions:** ALL persons get local `I` IDs (`I1`, `I2`…) — including FamilySearch-seeded persons. Do NOT use FamilySearch PIDs as person IDs. Names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`… — mint any the tool did not supply (it returns no name or relationship IDs), and rewrite every relationship endpoint to the new person IDs.
 
 **Source every FamilySearch fact with `quality: 1`** (questionable — compiled/unverified tree data). Create one source description for the FamilySearch tree using only the schema-allowed fields (`id`, `title`, `citation`, `author`, `url` — NO `quality`, `notes`, `repository`, or `accessed`). Then attach a source reference to every fact and relationship (`quality` goes here, on fact-level refs, not on source descriptions):
 ```json
-{ "id": "F1", "type": "Birth", "date": "~1845", "place": "Ireland", "standard_place": "Ireland", "sources": [{ "ref": "S1", "quality": 1 }] }
+{ "id": "F1", "type": "Birth", "date": "~1845", "standard_date": "Abt 1845", "place": "Ireland", "standard_place": "Ireland", "sources": [{ "ref": "S1", "quality": 1 }] }
 ```
 
-Facts from `person_read` already carry `standard_place` — keep it. Hand-entered places: resolve with `place_search`, use `standardPlace` from the first result.
+`person_read` facts arrive with two standardized sidecars — `standard_place` and `standard_date`. **Carry both through exactly as returned; never re-derive either from the raw `place`/`date`.** Hand-entered places, and any returned fact with a `place` but no `standard_place`: resolve with `place_search` and use `standardPlace` from the first result. Never copy `place` into `standard_place`.
 
 Do NOT call data "unsourced" — it IS sourced to the FamilySearch tree. `quality: 1` signals it's unverified.
 
+**With no FamilySearch data (objective-only build), the researcher's own statement is the source.** Create one source description for it and attach a `quality: 1` reference to every fact and relationship built from it, exactly as for a tree import. Do not leave hand-built facts with no `sources` array: a sourceless fact reads downstream as a claim with no provenance, and it is not what "unsourced" means here.
+
 **Simplified GedcomX rules:** gender as flat string (`Male`/`Female`/`Unknown`); names with `given`, `surname`, optional `preferred: true`; facts with PascalCase `type`; ParentChild uses `parent`/`child`; Couple uses `person1`/`person2`; `preferred`/`primary` omit-when-false.
 
-**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, create a stub for that woman's father using only the surname. **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "N1", "preferred": true, "given": "", "surname": "Donovan"}`.
+**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, it fixes a surname in that woman's **parental line**, but does not by itself tell you *which* parent carries it. Assuming it is the father assumes patrilineal surname descent without evidence — an unsound assumption of exactly the kind `check-warnings/references/assumption-categories.md` names as its canonical example ("a bride's surname is the same as her parents' surname"); unsound assumptions need positive evidence, not a default. Create one stub for that parent, sex left unspecified, linked via a `ParentChild` relationship — do not label or default it as "father." **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "N1", "preferred": true, "given": "", "surname": "Donovan"}`. **Set this person's `gender` to `"Unknown"` — do NOT omit the key.** `gender` is required on every person; a stub missing it fails the write for both project files, not just this person.
 
-**Stub only the people the user actually named or directly implied — no others.** A stated maiden name implies exactly one new person: that woman's father.
+**Stub only the people the user actually named or directly implied — no others.** A stated maiden name implies exactly one new person: that woman's parent (not specifically her father).
+
+**Correction path.** If evidence later identifies which parent it actually is, use `tree_correct`'s `remove` operation (`{ relationshipId }` — this never deletes the person) to drop the incorrect `ParentChild` relationship, then `tree_edit`'s `add_relationship` to link the correct parent. Do not use `merge_tree_persons` for this — that operation is for person-identity merges, not relationship reclassification.
 
 Worked example: "the maternal grandmother of Sarah Hennessy; Sarah's mother's maiden name was Mary Donovan" →
 
 **DO create:**
 - **Sarah Hennessy** — named by the user.
 - **Mary Donovan** — named (full name stated).
-- **Mary Donovan's father** — surname `Donovan`, `given: ""`. Maiden name fixes father's surname.
+- **Mary Donovan's parent** — surname `Donovan`, `given: ""`, `gender: "Unknown"`. Maiden name fixes the surname in her parental line, not which parent carries it.
 
 **Do NOT create:**
 - Sarah's father — never mentioned, surname not implied.
@@ -210,11 +217,11 @@ Then relay to the user that the project was created, naming the folder.
 
 ### 4a. Profile and holdings
 
-Two `research_append` calls, after `project_create` — never before, and never bundled into it.
+`research_append` runs after `project_create` — never before, and never bundled into it. Two sections to write; one call each or one call carrying both in an `ops` array, either is fine.
 
-**`researcher_profile`** — `research_append({ section: "researcher_profile", op: "update", fields: {...} })`. Scan the opening message for a stated experience level and subscriptions first. Map `experience_level`; normalize `subscriptions` to the canonical enum (alias table above); store the verbatim `narration_guidance` for that level (table above). When the message supplied answers, never persist the `intermediate` / `["none"]` default. If the user has answered neither question and you have not asked, write nothing here — an absent profile falls back to sane narration everywhere, a guessed one silently mis-narrates for the life of the project.
+**`researcher_profile`** — `research_append({ section: "researcher_profile", op: "update", fields: {...} })`. Scan the opening message for a stated experience level and access first. Map `experience_level`; normalize `subscriptions` to the canonical enum (alias table above); store the verbatim `narration_guidance` for that level (table above). When the message supplied answers, never persist the `intermediate` / `["none"]` default in their place. Since the opening-turn rule above always asks and always proceeds, this call always writes — with whichever mix of stated answers and defaults applies, matching what the final summary told the user was defaulted.
 
-**`known_holdings`** — one `research_append({ section: "known_holdings", op: "append", entry: {...} })` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in the tree; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
+**`known_holdings`** — one `{ section: "known_holdings", op: "append", entry: {...} }` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in the tree; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
 
 ### 5. Pedigree analysis and project summary
 
@@ -226,7 +233,7 @@ Analyze imported data before presenting results:
 
 **Obvious error detection:** birth after death; parent-child age gaps outside 15-50 years; children born in locations inconsistent with parents; dates referencing non-existent jurisdictions; sibling births <9 months apart.
 
-**Historical context signals:** military age during major conflict? Significant migration in area? Jurisdiction existence at recorded date?
+**Historical context signals** — per person, what the era and place imply about where the records will be. Were they of military age during a conflict that reached where they lived, so service, draft or pension files exist? Did a famine, emigration wave or internal migration move this population, leaving the records in the origin jurisdiction rather than the residence? Had civil registration begun there by the recorded date — before it, church registers are the only vitals? And did the named jurisdiction exist at that date, or does the record belong to the parent county or parish it was later split from?
 
 **Source evaluation:** which facts have citations vs. unsourced claims needing priority verification?
 

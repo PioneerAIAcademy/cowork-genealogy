@@ -17,25 +17,111 @@
     "scenario": "empty-project-just-created"
   },
   "expected_classifications": [
-    { "record_role": "deceased", "fact_type": "death", "evidence_type": "direct", "informant_proximity": ["official_duty", "witness"] },
-    { "record_role": "deceased", "fact_type": "cause_of_death", "evidence_type": "direct", "informant_proximity": "official_duty" },
-    { "record_role": "deceased", "fact_type": "age", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
-    { "record_role": "deceased", "fact_type": "birth", "attribute": "date", "optional": true, "evidence_type": "indirect", "informant_proximity": ["family_not_present", "researcher"] },
-    { "record_role": "deceased", "fact_type": "birth", "attribute": "place", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
-    { "record_role": "father_of_deceased", "fact_type": "name", "optional": true, "evidence_type": "indirect", "informant_proximity": "family_not_present" },
-    { "record_role": "father_of_deceased", "fact_type": "birth", "attribute": "place", "optional": true, "evidence_type": "indirect", "informant_proximity": "family_not_present" },
-    { "record_role": "mother_of_deceased", "fact_type": "name", "optional": true, "evidence_type": "indirect", "informant_proximity": "family_not_present" },
-    { "record_role": "mother_of_deceased", "fact_type": "birth", "attribute": "place", "optional": true, "evidence_type": "indirect", "informant_proximity": "family_not_present" }
+    {
+      "record_role": "deceased",
+      "fact_type": "name",
+      "evidence_type": "direct",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "occupation",
+      "value": "Coal miner",
+      "evidence_type": "direct",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "evidence_type": "direct",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "race",
+      "optional": true,
+      "evidence_type": "direct",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "death",
+      "evidence_type": "direct",
+      "informant_proximity": [
+        "official_duty",
+        "witness"
+      ]
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "cause_of_death",
+      "evidence_type": "direct",
+      "informant_proximity": "official_duty"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "age",
+      "evidence_type": "direct",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "evidence_type": "indirect",
+      "informant_proximity": [
+        "family_not_present",
+        "researcher"
+      ]
+    },
+    {
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "attribute": "place",
+      "evidence_type": "direct",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "optional": true,
+      "evidence_type": "direct",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "father_of_deceased",
+      "fact_type": "birth",
+      "attribute": "place",
+      "optional": true,
+      "evidence_type": "direct",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "optional": true,
+      "evidence_type": "direct",
+      "informant_proximity": "family_not_present"
+    },
+    {
+      "record_role": "mother_of_deceased",
+      "fact_type": "birth",
+      "attribute": "place",
+      "optional": true,
+      "evidence_type": "direct",
+      "informant_proximity": "family_not_present"
+    }
   ],
   "judge_context": [
     "The death certificate names Mary Flynn (wife) as the informant — this should appear in the informant field for facts she reported, not 'unknown'",
     "Informant assignment follows the settled death-certificate doctrine (matches SKILL.md/agent and rubric — grade against this, not intuition): the attending physician (Dr. William H. Stein) is the informant for the death event itself — death date, death place, cause, duration of illness — with proximity official_duty; Mary Flynn (wife) is the informant for the decedent's biographical facts — name, birthplace, parents' names, occupation — with proximity family_not_present for events she did not witness (Patrick's birth in Ireland); the undertaker (J.J. Franey) is the informant for burial date/place, proximity official_duty",
     "Do NOT score the extraction down for attributing death date/place/cause to the physician rather than to Mary Flynn — physician attribution is the intended doctrine",
-    "Source classification should be ORIGINAL — the certificate presented here is the record itself, the first recording of both the death and the informants' statements. The informant's secondhand knowledge is captured at the information/evidence layers (family_not_present proximity, indirect evidence), never by demoting the source layer. Only an index, abstract, or transcript OF a death certificate would be derivative",
+    "Source classification should be ORIGINAL — the certificate presented here is the record itself, the first recording of both the death and the informants' statements. The informant's secondhand knowledge is captured at the INFORMATION layer only (proximity family_not_present, quality secondary) and must NOT be pushed into evidence_type: a fact the certificate states in a field is direct evidence carried by secondary information, which is the ordinary case, not a conflict.",
     "A single death assertion may carry BOTH the death date and the death place — date and place are attributes of ONE event, and one assertion holding both fields is correct, not compound (do not require them split). Age and a computed birth year, by contrast, are distinct facts and must be separate assertions if both are extracted",
     "Do NOT create a computed birth date assertion (e.g., ~January 2, 1845) — the certificate states age, not birth date. If a birth year is inferred from age, it is indirect evidence and should be labeled as such, but avoid computing exact dates from age/death-date arithmetic",
-    "Parents' names and birthplaces reported on a death certificate are INDIRECT evidence — the wife (informant) is reporting what she was told, not what she witnessed. She was not present at Patrick's birth in Ireland and did not personally know his parents' birthplaces. These are secondhand facts relayed through the informant.",
-    "The stated age (63 years, 2 months, 10 days) reported by the family informant is likewise INDIRECT — the informant-knowledge test, same as birth date/birthplace/parents: Mary Flynn is relaying secondhand knowledge of when Patrick was born. Do NOT expect direct here. (Contrast a census, where a household member's stated age IS direct — household knowledge.)",
+    "Parents' names and birthplaces are DIRECT evidence — the certificate has Father's name, Father's birthplace, Mother's maiden name and Mother's birthplace FIELDS, and each holds the value, so the record states them. That the wife was not present at Patrick's birth and did not witness his parents' births is an information_quality matter (secondary) at proximity family_not_present; it does not demote the evidence layer. Grading these indirect is the error this test now guards against (doctrine settled 2026-08-16; this bullet previously required indirect).",
+    "The stated age (63 years, 2 months, 10 days) is DIRECT — it sits in the Age field. Only a birth YEAR computed from that age is indirect, because the certificate states no birth date. The discriminator throughout is whether a field on the record holds the value, never who supplied it or how far they were from the event.",
     "Do NOT penalize the decedent's name/occupation attributed to the named personal informant at family_not_present — that is the doctrine: the personal informant (Mary Flynn) is the informant for the decedent's biographical facts including name and occupation, all at proximity family_not_present.",
     "PINNED — evidence_type of the decedent's name and occupation is `direct`, not `indirect`. The certificate STATES the name ('Patrick Flynn') and occupation ('Coal miner') outright, so the record answers those questions directly — evidence_type is about whether the record states the fact, not about the informant's proximity. Marking the decedent's name or occupation `direct` is CORRECT; grading them down as 'should be indirect' is the known judge error this test guards against. (The informant's secondhand distance is captured only at the information/proximity layer — family_not_present — and separately makes the age/birth/parents facts `indirect` because those require inference the record does not state; but name and occupation are stated, hence `direct`.)"
   ],

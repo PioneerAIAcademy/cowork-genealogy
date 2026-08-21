@@ -319,13 +319,20 @@ Specs: `docs/specs/research-schema-spec.md` and
 
 ## Researcher profile
 
-When you start a new project with `init-project`, the skill asks you two
-short questions:
+When you start a new project with `init-project`, the skill asks three
+short questions in one opening turn:
 
-1. **Experience level** — *just starting out / some research under my
+1. **Research objective** — what you are trying to find out.
+2. **Experience level** — *just starting out / some research under my
    belt / experienced / professional or certified*.
-2. **Paid subscriptions** — Ancestry, MyHeritage, FindMyPast,
-   Newspapers.com, GenealogyBank, FindAGrave-Plus, other, or none.
+3. **Access** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
+   GenealogyBank, FindAGrave-Plus, other, or none. Free access counts:
+   a FamilySearch affiliate library or a partner subscription is access,
+   not "none".
+
+None of the three blocks. Answer what you like; anything you skip takes
+a documented default, and the summary at the end names what was
+defaulted so you can correct it.
 
 The answers are written to a `researcher_profile` section of
 `research.json` alongside the rest of your project state. Every skill
@@ -337,9 +344,8 @@ reads from it:
   `narration_guidance` string that the skill reads and follows
   verbatim — one place defines the mapping (`init-project`), one place
   stores it (`research.json`), every skill reads it.
-- **Subscriptions** guide `search-external-sites` URL prioritization.
-  Subscribed sites land first; unsubscribed sites are still searchable
-  but flagged.
+- **Access** guides `search-external-sites` URL prioritization. Sites
+  you can reach land first; the rest are still searchable but flagged.
 
 The profile takes under a minute to capture. It lives in
 `research.json` because Cowork sessions are ephemeral but the project
@@ -502,9 +508,9 @@ What's shipped:
   for one question, and the only writer of `proof_summaries`), `image-reader`
   (fast/cheap page OCR), and `image-reader-opus` (explicit-only,
   higher-accuracy re-read).
-- **Researcher profile.** `init-project` captures experience level and
-  paid subscriptions in two questions; every skill adapts narration
-  density to the answer.
+- **Researcher profile.** `init-project` asks the research objective,
+  experience level, and site access together in one non-blocking opening
+  turn; every skill adapts narration density to the answer.
 - **Eval harness** under `eval/` for skill regression testing.
 
 ## Developer and contributor docs

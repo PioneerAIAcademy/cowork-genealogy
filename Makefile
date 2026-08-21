@@ -526,12 +526,19 @@ e2e-author: ## Fixture-authoring script, for developers: make e2e-author ARGS="s
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
 	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
 
+.PHONY: judge-report
+judge-report: ## Non-discrimination scan of the UNIT judge over committed run logs: make judge-report | SKILL=<name>. Reads committed JSON only — no API calls, no cost.
+	# A rubric dimension whose score never varies grades nothing, whatever it is
+	# nominally measuring. Pairs with /audit-rubric, which checks one skill at a
+	# time by LLM judgment; this is the mechanical corpus-wide half.
+	cd eval/harness && uv run python -m judge_report $(if $(SKILL),--skill $(SKILL),) $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-calibrate
 e2e-calibrate: ## Run judge calibration against committed run annotations (maintainer step; needs an API key)
 	cd eval/harness && uv run python -m e2e.calibrate_judge
 
 .PHONY: e2e-corpus
-e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD | RECOMPUTE=1 | CALIBRATE=1
 	# Pure analysis over committed run JSONs — no live run, no API.
 	#
 	# Defaults to the last 14 days and prints the window it used: the repo
@@ -547,7 +554,19 @@ e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: mak
 	# so pre-#972 runs whose verdict was overwritten by a guardrail bypass show
 	# their real genealogical verdict. Runs with unknown compliance are reported
 	# as `not_checked` and never counted as clean.
-	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+	#
+	# RECOMPUTE=1 also re-derives violations from tool_calls + committed sidecars
+	# (the stored field is a floor; pre-detector runs record none) and prints a
+	# spend line (recorded / estimated / unrecoverable, never blended). CALIBRATE=1
+	# reports the estimate's measured accuracy over runs carrying both (issue #1484).
+	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),) $(if $(RECOMPUTE),--recompute,) $(if $(CALIBRATE),--calibrate-cost,)
+
+.PHONY: eval-inventory
+eval-inventory: ## Six corpus counts (unit tests/suites, e2e fixtures/runs/costed, specs), each by its predicate: make eval-inventory
+	# Pure analysis over committed files — no live run, no API. Reproduces the
+	# counts that drift in docs/architecture.md §9.1/§9.3, each defined by a
+	# printed predicate rather than a hand count (issue #1484 c).
+	cd eval/harness && uv run python -m e2e.inventory
 
 .PHONY: e2e-agent-tools
 e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over committed e2e runs (issue #1085): make e2e-agent-tools | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
@@ -597,6 +616,27 @@ e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #
 	cd eval/harness && uv run python -m e2e.nudge_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-wiki-failures
+e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (issue #1552): make e2e-wiki-failures | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. Splits every wiki_search/
+	# wiki_read/wiki_place_page/place_population call into a fixed taxonomy and
+	# reports it by cause, by day, and by the run log's committing author, so the
+	# blended failure headline separates into service reach, corpus data
+	# gaps, and client-side. The 14-day default IS the useful horizon: it reads
+	# response_summary, which the e2e capture strip drops past 14 days, so older
+	# runs report only as a stripped-and-unclassifiable count. SINCE=all shows
+	# that count; it does not recover more causes.
+	cd eval/harness && uv run python -m e2e.wiki_failure_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-detector-diff
+e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API. Reusable across detector corrections: runs a locally-
+	# defined pre-fix replica and the real, current implementation over every
+	# applicable committed run, and reports every run where the two disagree.
+	cd eval/harness && uv run python -m e2e.detector_before_after_report --detector $(DETECTOR) $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-latency
 e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD

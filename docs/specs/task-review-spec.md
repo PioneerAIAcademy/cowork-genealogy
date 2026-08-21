@@ -141,28 +141,67 @@ reader, not state for a machine.
 
 Re-review is explicit: `/review-ready <N>`.
 
-## 6. Scope: the developer pool
+## 6. Scope: both unassigned pools
 
-The default candidate set is **unassigned `developer`-labeled items**. The
-genealogist pool is opt-in (`--all`) and that is a scope judgment, not a priority
-one: the three passes are developer-shaped — blast radius from
+The candidate set is **every unassigned item in Ready** — `developer` and
+`genealogist` alike. `--developer-only` narrows it to the old default.
+
+This reversed on 2026-08-19. The prior scope was developer-only, on the argument
+that the three passes are developer-shaped: blast radius from
 `docs/architecture.md`'s "If you're asked to…" block, the command that verifies
-the change, §9.4 exposure. Pointed at a `test <slug>` fixture adjudication they
-mostly return "checked, clean" at full token cost.
+the change, the what-nothing-checks exposure. That argument was half right and
+the wrong half was load-bearing.
 
-Gating that pool needs a different and much shorter agent — does the hint record
-exist, is the ark resolvable, is anyone else on this fixture — not a wider
-fan-out of this one. That agent does not exist yet.
+**What refuted it.** The fill that day gated six developer issues and zero
+genealogist ones. Four of the six came back not-pickable, and two of those
+carried checks that would have shipped **green and inert** — one validator that
+passed on the very run it was written from, one that fired on runs which had done
+real work. Meanwhile six genealogist items went to Ready on a single reader's
+judgment with no independent read at all. Nothing about either failure was
+developer-shaped: both were *a claim in a body that nobody had checked against
+the artifact*.
 
-**`feedback`-labeled items are out of scope even under `--all`.** They carry
-`genealogist`, so they would otherwise land in that fan-out, but they are user
-bug reports filed automatically by the feedback endpoint — the body is a Drive
-link and a `make feedback-case` command, and every question this agent asks
+**And the genealogist half is the more expensive one to get wrong.** A bad
+developer premise surfaces when a test goes red. A bad genealogist premise
+surfaces inside a paid `make eval-skill` run — $8–12, 45–65 minutes, plus a
+genealogist's annotation pass — or not at all.
+
+**The cost is real and is not disputed:** roughly double a fill's review spend,
+~110k tokens per issue. That is what `--developer-only` is for. It is an escape
+for a week when the genealogist half was gated already, not a default.
+
+**A fixture-adjudication item will still often return "checked, clean" at full
+cost.** That is accepted. The alternative — a second, shorter agent shaped for
+fixture work (does the hint record exist, is the ark resolvable, is anyone else on
+this fixture) — remains unbuilt and is still the better long-run answer; it is
+listed in §8.
+
+**`feedback`-labeled items are out of scope in every mode.** They carry
+`genealogist`, so they would otherwise land in the fan-out, but they are user bug
+reports filed automatically by the feedback endpoint — the body is a Drive link
+and a `make feedback-case` command, and every question this agent asks
 (staleness, refuted premise, blast radius, what verifies it) is answered by
 working the case, not by reading the issue. Reviewing one costs ~110k tokens to
 learn nothing. The triage they do need is `docs/alpha-feedback-guide.md`.
 
 ## 7. Measurements
+
+**Counting the premise is part of the review, not a courtesy.** When an issue's
+value rests on a population, the agent re-derives the number — *including when the
+body cites none*. An uncited population is the claim the issue rests on, never
+measured, and it is the shape that survives every other check: it reads as a real
+problem, its reasoning is sound, and there is nothing to fix.
+
+Zero instances is a `close`. The count and the command that produced it go in the
+report, so the disposition can be re-checked in seconds rather than re-derived.
+
+**Count the way the data is shaped, not the way it greps.** A request to heal six
+drifted `research.json` keys survived every other check until someone counted. A
+bare `grep` for those key names returned 50–70 files; a structured walk of the
+objects that would actually carry them returned **0 of 90**, because `person_id`
+is a correct key on `person_evidence[]`, `record_id` is correct on assertions, and
+`notes` is correct on sources. The grep was counting valid data, and the request
+closed `not planned`.
 
 From the first run, 2026-08-02, over the unassigned `developer` pool:
 
@@ -215,7 +254,19 @@ line in the staleness check:
   no-op). Both are right for their case; the repo has no rule that decides it.
 - **One agent for the whole batch.** Rejected: cheaper, and it is exactly the
   contamination the fresh-context rule exists to stop.
-- **Extending the fan-out to the genealogist pool.** Rejected for now — see §6.
+- **Extending the fan-out to the genealogist pool.** Rejected until 2026-08-19,
+  then **adopted** — see §6 for what refuted it. The narrower agent shaped for
+  fixture adjudication is still unbuilt and is still the better long-run answer
+  for that half of the pool.
+- **Letting the lead's questions catch a hollow premise instead.** Rejected: a
+  question is answered inside the frame it was asked in. On 2026-08-19 the lead
+  ruled cleanly on a stale spec paragraph, and the agent then found the ruling was
+  incomplete — the spec asserted the same false claim in three places, not the one
+  the question named. Asking about every promotion also drowns the forks that matter:
+  eleven promotions that day, seven forks worth his time.
+- **A `premise-empty` verdict.** Rejected: `close` already covers it. What was
+  missing was not a verdict but the *obligation to count*, which now sits in
+  Pass A.
 
 ## 9. What nothing checks
 

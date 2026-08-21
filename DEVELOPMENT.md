@@ -64,6 +64,16 @@ double-click **`eval\InstallHooks.bat`**. Both install `post-checkout`, which
 sets up new worktrees: it links the shared files and installs the pnpm
 workspace.
 
+On Windows, also do this once after pulling the `* text=auto eol=lf` rule —
+commit anything in progress first, because `reset --hard` discards
+uncommitted work:
+
+    git rm --cached -r . && git reset --hard
+
+A pull does not re-check-out files, so an existing clone keeps its CRLF copy
+of `scripts/git-hooks/post-checkout` and the hook goes on failing silently.
+`git status` stays clean either way, so nothing tells you.
+
 What gets installed into `.git/hooks/` is a stub (`scripts/git-hooks/shim.sh`)
 that re-runs the tracked hook, so editing anything under `scripts/git-hooks/`
 takes effect immediately — there's nothing to reinstall after a pull. Rerun the
@@ -176,7 +186,11 @@ same PR that defers it.** Ask Claude to do it; it is one command and needs no
 board access:
 
 ```sh
-gh issue create --label developer --title "…" --body "…"
+gh issue create --label developer|genealogist [--label icebox] \
+  [--label nothing-checks] \
+  --title "…" --body "**Touches:** path/one.ts, path/two.py
+
+…"
 ```
 
 - **Pick the label by who does the work.** `developer` for anything with a
@@ -186,6 +200,11 @@ gh issue create --label developer --title "…" --body "…"
 - **Add `--label icebox` when it's a maybe** — a candidate with no decision
   behind it. Triage skips those rather than re-ranking them every morning.
   If you'd actually do it given a free afternoon, it isn't icebox.
+- **Add `--label nothing-checks` when the item *is* a missing guard** — a way CI
+  can be green while the thing is broken. That label is the register
+  `docs/architecture.md` keeps under "What nothing checks", and it is read by
+  label, never by searching the text: titles name the mechanism, not the shape,
+  so an unlabelled gap is invisible to everyone who goes looking there.
 - **Creating the issue is all you do — the board takes care of itself.** A CI
   workflow (`add-to-project.yml`) adds the card to Backlog the moment the issue
   opens — the one exception is the `feedback` label, which routes to Ready — and
@@ -249,9 +268,10 @@ entry leaves when it becomes an issue" — never fired on its own. It reached 93
 lines and then 54 unassignable items touched by 54 separate PRs, and became a
 merge-conflict hotspot across concurrent worktrees.
 
-This section is the owner of these rules. [`CLAUDE.md`](./CLAUDE.md) keeps only
-the two whose failure is silent (never write to the board yourself; never start
-a queue file), and points here for the rest.
+This section is the owner of these rules. [`CLAUDE.md`](./CLAUDE.md) keeps the
+four-step order, the exemptions that let you reach step 4, and the three rules
+whose failure is silent — never write to the board yourself, never start a queue
+file, and label a missing guard `nothing-checks`. It points here for the rest.
 
 ## How to test a new tool end-to-end
 
