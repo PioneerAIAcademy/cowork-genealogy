@@ -9,6 +9,12 @@ Pairs are still the right instrument. Only an agent carries an `agent_id`, and
 attribution is what the whole enforcement programme is built on. Nothing below
 argues against pairing — it argues about *what to move, in what order*.
 
+**The general rule this is a worked instance of is ADR-0011**, and it applies
+well beyond pair conversions: a rule that must hold belongs in the writer tool,
+not in a prompt. Read that first if you are choosing where to put one. This
+document is the pair-specific half — what a delegation boundary does to a rule
+that stayed in prose, and the order that avoids finding out the expensive way.
+
 ## 1. A conversion destabilises tests that were stable
 
 Measured over five runs each, `proof-conclusion`'s 21-test suite:

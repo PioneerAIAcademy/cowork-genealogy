@@ -3,11 +3,12 @@
 > **Read before you:** answer a compliance failure by strengthening a `SKILL.md`
 > sentence · decide where a new "this must always hold" rule lives · design a
 > completion gate, a write invariant, or a lockdown · argue a boundary check
-> would be too strict to ship · widen a gate that already exists.
+> would be too strict to ship · widen a gate that already exists · convert a
+> skill into a skill-agent pair.
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09 (on the fourth independent re-derivation in one week)
-- **Last updated:** 2026-08-19 (the hook row gets its first production caller rule; the split-writer-tool alternative records the decision it redirected)
+- **Last updated:** 2026-08-21 (the proof-conclusion pair conversion measured five prose rules failing and holding once moved into the writer tool)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -61,6 +62,20 @@ raw-write lockdown exists in three implementations and the unit eval harness,
 the tier that runs the most sessions, is not one of them); and issues #1499 and
 #1509 (the lockdown has a hole — `device_bash` wrote both protected files past it,
 observed live in Cowork 2026-08-09). Three of those carry `needs-decision`.
+
+**Measured again, and harder, in 2026-08.** Converting `proof-conclusion` into a
+skill-agent pair put five separate behaviours on one test fixture through the
+same loop: stated correctly in the agent body, read by the agent, not followed.
+Each needed between one and five rewordings, none of which held; each held on
+the first run after it became a precondition in `research_append`. Two of the
+rewordings broke a *different* test in a different section, because a prompt has
+no scope — a sentence added to a preconditions gate changed tier selection three
+sections away, and the repair for that broke a third test. The rules that moved
+into the tool have not regressed once.
+
+That is the case for this ADR stated as cost rather than principle: the prose
+attempts cost nine paid eval runs and produced a suite less stable than the one
+they started from, while each tool rule cost one commit and held.
 
 ## Decision
 

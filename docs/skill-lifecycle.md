@@ -382,8 +382,28 @@ held. Place every finding first:
    `Read` was measured to skip silently (`docs/architecture.md` §3.4). Sending an
    agent finding to a `references/` file creates a file the agent will never
    read.
-4. **Core doctrine** (a genuine cross-record-type behavior change) → a
-   SKILL.md edit, gated by the unit suite.
+4. **Core doctrine** (a genuine cross-record-type behavior change) → **first
+   ask whether it can be a tool rule; only then a SKILL.md edit**, gated by the
+   unit suite.
+
+   **Lane 4 is not "write prose" — it is "prose is the last resort."** Before
+   editing the body, apply ADR-0011's first question: *can this be decided by
+   reading the project documents alone?* If yes it belongs in the writer tool
+   as a precondition, where it binds in every environment and cannot be argued
+   with. Prose is for judgement a predicate cannot express.
+
+   **The evidence is not close.** Converting `proof-conclusion` to a
+   skill-agent pair, five separate behaviours on a single test fixture were
+   each written correctly in the body, read by the agent, and not followed —
+   the tier a disputed source permits, whether to update or append a summary,
+   whether a blocked conclusion closes its question, and two more. Each took
+   between one and five rewordings without holding. Each held on the first run
+   after it moved into `research_append`. Several of the rewordings also broke
+   a neighbouring test, because a prompt has no scope: a sentence added to a
+   gate section changed tier selection three sections away.
+
+   So the question to ask of a doctrine finding is not "how should this be
+   worded" but "why is this being enforced by asking nicely?" 
 
 Lanes 1–3 merge conflict-free and in parallel; only lane 4 touches the
 contended prompt. When you're torn between 2 and 4, check the transcript: if
