@@ -432,8 +432,9 @@ change, with different (and easy-to-undercount) site lists:
   union**: `packages/schema/src/enums.generated.ts` is emitted from that package's
   own `enums.schema.json` by `scripts/gen-enums.mjs`, chained into `build`,
   `typecheck` and each app's `dev`, and gitignored (ADR-0008 tier 2). Every
-  closed enum is generated, with no exceptions — `gen-enums.mjs` throws rather
-  than let a hand-written union shadow a generated one. Removing or renaming a
+  closed enum in `enums.schema.json` is generated, with no exceptions —
+  `gen-enums.mjs` throws rather than let a hand-written union shadow a generated
+  one. Removing or renaming a
   value additionally requires a repo-wide grep for the old value: the full-list
   lint catches an added value, but a rename or removal can leave a stale
   single-value mention in prose that no lint sees. Worked blast-radius and
