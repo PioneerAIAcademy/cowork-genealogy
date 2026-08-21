@@ -785,6 +785,7 @@ async def _execute_skill_with_retry(
                             "sdk_message_silence_seconds",
                             DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
                         ),
+                        allowed_tools_override=skill_baseline,
                         routing_short_circuit_skills=routing_short_circuit_skills,
                         stub_skills=stub_skills,
                         # The skill's OWN declaration, not skill_baseline (which

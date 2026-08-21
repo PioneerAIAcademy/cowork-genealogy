@@ -415,8 +415,14 @@ def test_session_grants_every_registered_mcp_tool(tmp_path, monkeypatch):
     """The SDK session grants every registered MCP tool regardless of what
     the skill declares (issue #1748).  Reads the real ClaudeAgentOptions
     that run_skill passes to query — NOT a reimplementation of the grant
-    logic.  Fails on main where per-skill narrowing still derives an
-    extra_disallowed complement."""
+    logic.
+
+    Discriminating: passes allowed_tools_override=["Read"] — a restrictive
+    list the orchestrator sends on main.  On main, run_skill uses it to
+    derive extra_disallowed and LIVE_TOOLS entries land in disallowed_tools.
+    On this branch the parameter is explicitly ignored, so every tool is
+    granted.  Without the override the test takes the standalone-permissive
+    path on both branches and can never fail."""
     import asyncio
 
     from claude_agent_sdk import ResultMessage
@@ -464,10 +470,13 @@ def test_session_grants_every_registered_mcp_tool(tmp_path, monkeypatch):
         auth=AuthConfig(
             skill_runner_mode="api_key", api_key="x", detail="stub",
         ),
+        # Restrictive override — the orchestrator passes this on main.
+        # On main run_skill uses it to narrow; here it is ignored.
+        allowed_tools_override=["Read"],
     ))
     options = seen["options"]
 
-    # Every LIVE_TOOLS entry must be granted.
+    # Every LIVE_TOOLS entry must be granted despite the override.
     for name in LIVE_TOOLS:
         q = f"mcp__genealogy__{name}"
         assert q in options.allowed_tools, f"{q} missing from the session grant"
@@ -504,4 +513,36 @@ def test_tool_allowlist_validator_warns_instead_of_failing():
     msgs = [str(w.message) for w in caught]
     assert any("undeclared_tool" in m for m in msgs), (
         f"expected a warning about undeclared_tool; got: {msgs}"
+    )
+
+
+def test_tool_allowlist_warns_on_attempted_mcp_calls_only():
+    """A tool that appears only in attempted_mcp_calls (denied/aborted before
+    the mock could serve it) must still be checked against the skill's
+    allowed-tools.  Without the union, this undeclared call slips past
+    silently because it never reaches tool_calls."""
+    import warnings
+    from validators.test_universal import test_tool_allowlist
+
+    # tool_calls has only a declared tool — no warning from this alone.
+    tool_calls = [
+        {"tool": "mcp__genealogy__wikipedia_search", "args": {}},
+    ]
+    # The undeclared tool was attempted but denied before reaching tool_calls.
+    attempted_mcp_calls = [
+        {"tool": "mcp__genealogy__secret_tool", "args": {}},
+    ]
+    frontmatter = {"name": "test-skill", "allowed-tools": ["wikipedia_search"]}
+    test = {"type": "positive", "skill": "test-skill"}
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        test_tool_allowlist(
+            tool_calls, frontmatter, test,
+            attempted_mcp_calls=attempted_mcp_calls,
+        )
+
+    msgs = [str(w.message) for w in caught]
+    assert any("secret_tool" in m for m in msgs), (
+        f"expected a warning about secret_tool from attempted_mcp_calls; got: {msgs}"
     )
