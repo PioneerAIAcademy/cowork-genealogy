@@ -414,9 +414,12 @@ interface Persona {
    * provably-male one. `parentsIndexed` cannot serve here: it counts either sex,
    * so a father-only record reports a parent indexed with no readable mother
    * name and lands in "indexed-but-nameless" when it is in fact mother-SILENT.
-   * Measured cost on 2026-08-20: 30 misfiled rows in England/Pocklington, which
-   * put retention at 99.1% against a 92.8% silent share and flipped
-   * `verdict:retention equals the silent share` from HOLDS to DOES NOT HOLD.
+   * Measured cost on 2026-08-20: 30 misfiled rows in England/Pocklington counted
+   * a mother-SILENT record as indexed-but-nameless, putting the silent share at
+   * 92.8% against a 99.1% retention. That 6.3-point gap is inside
+   * `verdict:retention equals the silent share`'s ±10 tolerance, so it would not by
+   * itself have flipped that verdict — but the misfiling is real, and the fix
+   * brings the silent share to 99.1%, matching retention exactly.
    *
    * Sex-unprovable parents count IN, deliberately: this column exists to stand
    * behind a "the record is silent" claim, so it must not claim silence about a
@@ -698,39 +701,37 @@ async function searchOnce(query: string, attempt: number): Promise<Hit | typeof 
             .filter((r) => r.type?.endsWith("ParentChild") && r.person2?.resourceId === matchedId)
             .map((r) => r.person1?.resourceId)
             .filter((id): id is string => typeof id === "string");
-    const father = persons.find((p) => {
-      if (!parentIds.includes(p.id as string)) return false;
-      // `person.gender` is an OBJECT here — `{ type: ".../Male" }` — while the
-      // string form lives at `display.gender`. `p.gender === "Male"` therefore
-      // never fired, and father detection silently fell back to the role regex,
-      // which is one of the three methods this file's own header rejects.
-      // Measured cost on 2026-08-08 before the fix: the `Zachariah + .exact`
-      // row reported 0 fathers named when BOTH surviving records name
-      // Zachariah, and the fuzzy row's tally omitted `Zachariah` itself while
-      // listing its variants. Same precedence order the tool uses
-      // (src/tools/record-search.ts: display.gender first, then gender.type).
-      const d = (p.display ?? {}) as { role?: string; gender?: string };
-      const genderType = (p.gender as { type?: string } | undefined)?.type ?? "";
-      return (
-        d.gender === "Male" ||
-        /Male$/.test(genderType) ||
-        /Father/i.test(d.role ?? "")
-      );
-    });
-    // Mother: father's candidate set with the gender test inverted, and the SAME
-    // precedence (display.gender, then gender.type, then the role regex last).
-    // Not `p.gender === "Female"` — that is the exact mistake documented above,
-    // which silently falls through to the role regex this file's header rejects.
-    const mother = persons.find((p) => {
-      if (!parentIds.includes(p.id as string)) return false;
-      const d = (p.display ?? {}) as { role?: string; gender?: string };
-      const genderType = (p.gender as { type?: string } | undefined)?.type ?? "";
-      return (
-        d.gender === "Female" ||
-        /Female$/.test(genderType) ||
-        /Mother/i.test(d.role ?? "")
-      );
-    });
+    // `person.gender` is an OBJECT here — `{ type: ".../Male" }` — while the
+    // string form lives at `display.gender`. `p.gender === "Male"` therefore never
+    // fired, and sex detection silently fell back to the role regex, which is one
+    // of the three methods this file's own header rejects. Measured cost on
+    // 2026-08-08 before the fix: the `Zachariah + .exact` row reported 0 fathers
+    // named when BOTH surviving records name Zachariah, and the fuzzy row's tally
+    // omitted `Zachariah` itself while listing its variants. So the precedence is
+    // the tool's (src/tools/record-search.ts: display.gender first, then
+    // gender.type, then the role regex last), written ONCE here and shared by the
+    // father/mother finders AND the couldBe denominators below — a single copy so
+    // a future fix to it cannot land in one and miss the other. `/Male$/` does not
+    // match ".../Female" (that ends "emale"), which is what makes the same
+    // predicate safe for both sexes.
+    const ROLE_OF = { Male: /Father/i, Female: /Mother/i } as const;
+    const provablyOfSex =
+      (sex: "Male" | "Female") =>
+      (p: (typeof persons)[number]): boolean => {
+        const d = (p.display ?? {}) as { role?: string; gender?: string };
+        const genderType = (p.gender as { type?: string } | undefined)?.type ?? "";
+        return (
+          d.gender === sex ||
+          new RegExp(sex + "$").test(genderType) ||
+          ROLE_OF[sex].test(d.role ?? "")
+        );
+      };
+    const father = persons.find(
+      (p) => parentIds.includes(p.id as string) && provablyOfSex("Male")(p)
+    );
+    const mother = persons.find(
+      (p) => parentIds.includes(p.id as string) && provablyOfSex("Female")(p)
+    );
     // Sex-agnostic by design; see the field's docblock. First parent in graph
     // order, so a mother-only record counts as parent-NAMED, not parent-silent.
     const parent = persons.find((p) => parentIds.includes(p.id as string));
@@ -738,26 +739,16 @@ async function searchOnce(query: string, attempt: number): Promise<Hit | typeof 
       .filter((q) => parentIds.includes(q.id as string))
       .map((q) => givenOf(q))
       .filter((g): g is string => g !== null);
-    // Everyone except a parent PROVABLY of the wrong sex — and "provably" has to
-    // mean the same three signals the `father`/`mother` finders above use, or the
-    // numerator and the denominator disagree. The first version read only
+    // Everyone except a parent PROVABLY of the wrong sex, using the SAME
+    // `provablyOfSex` predicate the finders above use — or the numerator and the
+    // denominator disagree. An earlier version inlined its own check that read only
     // `display.gender` and `gender.type`, omitting the `role` fallback, so a parent
     // whose sex is stated ONLY in `role` was resolvable by the finder while counting
     // as sex-unprovable here — landing in both denominators at once and inflating
-    // `namelessButIndexedInBaseline` at the expense of the silent share.
-    // `/Male$/` does not match ".../Female" (that ends "emale"), which is what makes
-    // the negation safe to write this way for both sexes.
-    const ROLE_OF = { Male: /Father/i, Female: /Mother/i } as const;
-    const couldBe = (wrongSex: "Male" | "Female") => (q: (typeof persons)[number]) => {
-      if (!parentIds.includes(q.id as string)) return false;
-      const d = (q.display ?? {}) as { role?: string; gender?: string };
-      const gt = (q.gender as { type?: string } | undefined)?.type ?? "";
-      return !(
-        d.gender === wrongSex ||
-        new RegExp(wrongSex + "$").test(gt) ||
-        ROLE_OF[wrongSex].test(d.role ?? "")
-      );
-    };
+    // `namelessButIndexedInBaseline` at the expense of the silent share. Sharing one
+    // predicate is what makes that class of drift impossible.
+    const couldBe = (wrongSex: "Male" | "Female") => (q: (typeof persons)[number]) =>
+      parentIds.includes(q.id as string) && !provablyOfSex(wrongSex)(q);
     const mothersIndexed = persons.filter(couldBe("Male")).length;
     const fathersIndexed = persons.filter(couldBe("Female")).length;
 
@@ -3918,12 +3909,18 @@ async function sectionS(): Promise<void> {
   // or the measurement is not about silence at all.
   const GIBBERISH = ["Xqzzyrbl", "Vplkwnthq"];
   const FAMILIES: Array<[string, string, (p: Persona) => number]> = [
-    ["father", "fatherGivenName", (p) => p.parentsIndexed],
-    // NOTE: there is no mother detection on `Persona` — this row would reuse the
-    // PARENT count, making father and mother indexed rates identical by
-    // construction rather than by measurement, and the section's stated purpose
-    // is to catch a bad extractor by watching that rate move. A check that
-    // cannot move cannot do that, so the row is withheld rather than faked.
+    // `fathersIndexed`, not `parentsIndexed`: the sex-aware count added for
+    // section R counts parents that could be the father, so it does not conflate a
+    // father-SILENT record (no father indexed) with a father-NAMELESS one (a
+    // father indexed without a readable given name). The sex-blind `parentsIndexed`
+    // this row read before overstated the father indexed rate by every mother-only
+    // record, and had section S measuring a different denominator than section R.
+    ["father", "fatherGivenName", (p) => p.fathersIndexed],
+    // `mother`/`parent` are deliberately not rows here: this section challenges the
+    // father/spouse asymmetry section R found, and its verdicts are father-vs-spouse.
+    // Mother detection now DOES exist on `Persona` (`mothersIndexed`), so the old
+    // "no mother detection" reason for withholding a mother row is void — mother
+    // and parent are enumerated in section R rather than re-challenged here.
     ["spouse", "spouseGivenName", (p) => p.spousesIndexed],
   ];
 
@@ -4297,16 +4294,24 @@ async function sectionV(): Promise<void> {
 async function sectionR(): Promise<void> {
   // Pre-seeded so an early return cannot DELETE them. `writeFigures` replaces a
   // whole section object, so a run in which no population enumerates drops every
-  // key this section did not record on THAT run — including the spouse `.exact`
-  // finding, which the shipped `spouseGivenNameExact` description and the levers
-  // doc both cite. A missing key fails nothing: the traceability check reads
-  // figures, and FORBIDDEN_WHEN treats an absent verdict as an inactive rule. So
-  // the honest default is recorded first and overwritten by a real measurement.
-  record(
-    "R",
-    "verdict:spouse .exact requires the spouse to be present",
-    "NOT MEASURED — this run did not reach the spouse leg"
-  );
+  // key this section did not record on THAT run. That must cover all FOUR
+  // per-family `.exact requires the relative to be present` findings, not just
+  // spouse: the shipped `*GivenNameExact` descriptions and both specs cite every
+  // one by name (`R.verdict:father …`, `mother`, `parent`, `spouse`), yet the
+  // father/mother/parent legs run only AFTER the `rows.length === 0` early return
+  // below, so without a pre-seed a run where no baseline enumerates drops exactly
+  // the keys the docs point at. A missing key fails nothing at write time: the
+  // traceability check reads figures, and FORBIDDEN_WHEN treats an absent verdict
+  // as an inactive rule. So the honest default is recorded first and overwritten
+  // by a real measurement. The same key construction as the final FAMILIES loop.
+  for (const famId of ["father", "spouse", "mother", "parent"] as const) {
+    const key =
+      famId === "spouse"
+        ? "verdict:spouse .exact requires the spouse to be present"
+        : `verdict:${famId} .exact requires the relative to be present`;
+    record("R", key, `NOT MEASURED — this run did not reach the ${famId} leg`);
+  }
+  record("R", "exactRequiresPresence", []);
   record("R", "spouseExactRequiresPresence", []);
   console.log("\n=== R. Relative names: keep-matching / keep-silent / drop-contradicting ===");
   console.log(
