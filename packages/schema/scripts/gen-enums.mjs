@@ -8,8 +8,6 @@
 //
 // Only closed enums (a `$def` with an `enum` array) are emitted. Open enums use
 // `examples` and the *_recommended naming convention; they stay `string`.
-// Enums defined inline in research.schema.json rather than here — experience_level,
-// subscription, evaluation_* — stay hand-written in index.ts.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
