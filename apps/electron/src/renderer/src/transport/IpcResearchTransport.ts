@@ -27,6 +27,7 @@ export class IpcResearchTransport implements ResearchTransport {
     window.api.onResearchUpdated((data) => handlers.onResearch(data as ResearchData))
     window.api.onGedcomxUpdated((data) => handlers.onGedcomx(data as GedcomxData))
     window.api.onWatchError((err) => handlers.onError(err))
+    window.api.onFolderNotice((message) => handlers.onNotice(message))
     window.api.onSidecarUpdated((event) => handlers.onSidecar(event))
     return () => window.api.removeAllWatchListeners()
   }

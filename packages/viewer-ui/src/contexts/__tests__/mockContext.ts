@@ -23,6 +23,8 @@ export function buildMockContext(
     gedcomx: overrides.gedcomx === undefined ? patrickFlynnGedcomx : overrides.gedcomx,
     error: null,
     clearError: () => {},
+    notice: null,
+    clearNotice: () => {},
     lastUpdated: null,
     folderPath: null,
     devMode: false,

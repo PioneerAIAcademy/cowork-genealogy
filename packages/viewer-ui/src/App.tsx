@@ -107,6 +107,47 @@ export function WaitingScreen({
   )
 }
 
+// A dismissible heads-up bar (e.g. "research.json is in a subfolder — you may
+// be viewing the wrong folder level", issue #1317 bug 2). Reads `notice` from
+// context, so it renders identically whether or not research is loaded — the
+// reported case has a non-empty top-level research.json, so a WaitingScreen-only
+// surface would never show it. A research load does NOT clear `notice`.
+function FolderNotice(): React.JSX.Element | null {
+  const { notice, clearNotice } = useResearchData()
+  if (!notice) return null
+  return (
+    <div
+      role="status"
+      style={{
+        display: 'flex',
+        gap: '0.75rem',
+        alignItems: 'flex-start',
+        padding: '0.6rem 1rem',
+        background: '#8a6d1f',
+        color: '#fff',
+        fontSize: '0.85rem',
+        lineHeight: 1.4
+      }}
+    >
+      <span style={{ flex: 1 }}>{notice}</span>
+      <button
+        onClick={clearNotice}
+        aria-label="Dismiss"
+        style={{
+          background: 'transparent',
+          border: 'none',
+          color: '#fff',
+          cursor: 'pointer',
+          fontSize: '1rem',
+          lineHeight: 1
+        }}
+      >
+        &times;
+      </button>
+    </div>
+  )
+}
+
 function AppContent({
   showThemeToggle,
   onProjectTitle
@@ -134,6 +175,7 @@ function AppContent({
         <Sidebar showThemeToggle={showThemeToggle} />
         <div className={styles.main}>
           <Header />
+          <FolderNotice />
           <WaitingScreen folderPath={folderPath} canSelectFolder={canSelectFolder} />
         </div>
       </div>
@@ -147,6 +189,7 @@ function AppContent({
       <Sidebar showThemeToggle={showThemeToggle} />
       <div className={styles.main}>
         <Header />
+        <FolderNotice />
         <ProgressPipeline />
         <div className={styles.content}>
           <ErrorBoundary resetKey={activeSection} label={`the ${activeSection} section`}>

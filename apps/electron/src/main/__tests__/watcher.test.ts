@@ -7,7 +7,8 @@ import {
   channelMap,
   WATCHED_FILES,
   SIDECAR_BASENAME,
-  findNestedResearchJson
+  findNestedResearchJson,
+  formatNestedNotice
 } from '../watcher'
 
 // Pure-helper tests. The chokidar integration (lifecycle, awaitWriteFinish,
@@ -168,5 +169,29 @@ describe('findNestedResearchJson (issue #1317, bug 2 — wrong folder level)', (
 
   it('returns empty (does not throw) on a folder with no research.json at all', async () => {
     await expect(findNestedResearchJson(dir)).resolves.toEqual([])
+  })
+})
+
+describe('formatNestedNotice (issue #1317, bug 2 — cap the path list)', () => {
+  it('lists every path verbatim when there are 3 or fewer', () => {
+    const msg = formatNestedNotice(['a/research.json', 'b/research.json'])
+    expect(msg).toContain('"a/research.json"')
+    expect(msg).toContain('"b/research.json"')
+    expect(msg).not.toContain('more')
+    expect(msg).toContain('open that folder instead')
+  })
+
+  it('caps at 3 and collapses the rest to "and N more"', () => {
+    const msg = formatNestedNotice([
+      'a/research.json',
+      'b/research.json',
+      'c/research.json',
+      'd/research.json',
+      'e/research.json'
+    ])
+    expect(msg).toContain('"a/research.json"')
+    expect(msg).toContain('"c/research.json"')
+    expect(msg).not.toContain('"d/research.json"')
+    expect(msg).toContain('and 2 more')
   })
 })

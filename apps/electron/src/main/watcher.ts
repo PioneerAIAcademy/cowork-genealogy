@@ -95,6 +95,20 @@ export async function findNestedResearchJson(folderPath: string): Promise<string
   return found
 }
 
+// Build the folder-notice message. Cap the listed paths so a parent folder
+// holding many projects can't produce a message no UI surface can show sensibly
+// (this repo alone has ~90 nested research.json); the rest collapse to "and N
+// more". Pure + exported so the cap is unit-testable without chokidar.
+export function formatNestedNotice(nested: string[]): string {
+  const shown = nested.slice(0, 3).map((p) => `"${p}"`).join(', ')
+  const rest = nested.length > 3 ? ` and ${nested.length - 3} more` : ''
+  return (
+    `Heads up: this folder also has research.json in a subfolder (${shown}${rest}). ` +
+    `The viewer only shows the top-level project — if your research is in the ` +
+    `subfolder, open that folder instead.`
+  )
+}
+
 export function startWatching(folderPath: string, mainWindow: BrowserWindow): void {
   stopWatching()
   currentFolderPath = resolve(folderPath)
@@ -106,13 +120,11 @@ export function startWatching(folderPath: string, mainWindow: BrowserWindow): vo
   void findNestedResearchJson(folderPath)
     .then((nested) => {
       if (nested.length === 0) return
-      const list = nested.map((p) => `"${p}"`).join(', ')
-      mainWindow.webContents.send(
-        'project:watch-error',
-        `Heads up: this folder also has research.json in a subfolder (${list}). ` +
-          `The viewer only shows the top-level project — if your research is in the ` +
-          `subfolder, open that folder instead.`
-      )
+      // The scan is async; if the user switched folders while it ran, its
+      // result describes the OLD folder — don't warn about a folder we're no
+      // longer watching.
+      if (currentFolderPath !== resolve(folderPath)) return
+      mainWindow.webContents.send('project:folder-notice', formatNestedNotice(nested))
     })
     .catch(() => {
       // A scan failure must never break the watch.
