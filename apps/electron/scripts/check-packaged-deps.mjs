@@ -115,23 +115,43 @@ function findAsars(dir, depth = 0, skipped = []) {
 }
 
 /** Top-level package names in the asar's `node_modules`, and whether `entry` is present. */
+/**
+ * The top-level package name for one asar entry, or null if the entry is not a
+ * top-level `node_modules` member.
+ *
+ * Exported and unit-tested because both rules in it are load-bearing on a
+ * platform this repo's test runners never use:
+ *
+ * The `[/\\]` alternation is not defensive — `listFiles` builds each entry with
+ * `path.join`, so a Windows run yields `\node_modules\foo` while macOS and Linux
+ * yield `/node_modules/foo`. Break it and a mac test run still passes; only a
+ * tagged Windows release notices.
+ *
+ * Two explicit arms rather than an optional scope group: with the group
+ * optional, `/node_modules/@genealogy` — the scope DIRECTORY, which `listFiles`
+ * emits before its children — fell through to the unscoped arm and was counted
+ * as a package, inflating every number this check printed by the number of
+ * scopes present (4 on this tree: 124 reported, 120 real).
+ */
+export function packageNameFromEntry(file) {
+  const match = file.match(/^[/\\]node_modules[/\\](@[^/\\]+[/\\][^/\\]+|[^@][^/\\]*)/)
+  return match ? match[1].replace(/\\/g, '/') : null
+}
+
+/** One asar entry in the archive's own spelling, for comparing against `main`. */
+export function normaliseEntry(file) {
+  return file.replace(/\\/g, '/')
+}
+
+/** Top-level package names in the asar's `node_modules`, and whether `entry` is present. */
 function inspectAsar(asarPath, entry) {
   const asar = require('@electron/asar')
   const names = new Set()
   let hasEntry = false
   for (const file of asar.listPackage(asarPath, { isPack: false })) {
-    if (file.replace(/\\/g, '/') === entry) hasEntry = true
-    // The `[/\\]` alternation is load-bearing, not defensive: `listFiles` builds
-    // each entry with `path.join`, so a Windows run yields `\node_modules\foo`
-    // while macOS and Linux yield `/node_modules/foo`.
-    // Two explicit arms rather than an optional scope group: with the group
-    // optional, `/node_modules/@genealogy` — the scope DIRECTORY, which
-    // `listFiles` emits before its children — fell through to the unscoped arm
-    // and was counted as a package. That inflated every number this check
-    // printed by the number of scopes present (4 on this tree: 124 reported,
-    // 120 real).
-    const match = file.match(/^[/\\]node_modules[/\\](@[^/\\]+[/\\][^/\\]+|[^@][^/\\]*)/)
-    if (match) names.add(match[1].replace(/\\/g, '/'))
+    if (normaliseEntry(file) === entry) hasEntry = true
+    const name = packageNameFromEntry(file)
+    if (name) names.add(name)
   }
   return { names, hasEntry }
 }
@@ -246,4 +266,10 @@ function main(argv) {
 // `process.exitCode`, not `process.exit()`: exiting immediately after writing to
 // stderr can truncate the diagnostic when stderr is a pipe, which is exactly the
 // case in CI — so the one run that needs the message is the one that loses it.
-process.exitCode = main(process.argv.slice(2))
+//
+// Guarded so a test can import the helpers above without running the check. The
+// two path-parsing rules are only exercisable on the platform whose separator
+// they handle, so they are unit-tested rather than left to a tagged release.
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  process.exitCode = main(process.argv.slice(2))
+}
