@@ -351,6 +351,34 @@ Worst case for one `image_transcribe` is therefore 90 + 90 + 180 = **360s**,
 inside the e2e harness's 600s inactivity window — and a timeout returns as a
 `tool_result`, which re-arms that window.
 
+**This 360s worst case is unreachable in Cowork.** The device bridge caps every
+MCP call at 60s (a client-side ceiling this repo does not set and cannot change
+from the plugin or the `.mcpb` — see `docs/architecture.md`, "Other environment
+differences that bite"), so a Cowork transcription slower than a minute is
+aborted long before either budget above fires. Measured over the committed e2e
+corpus, roughly 10-15% of healthy calls ran past 60s — a floor, since the corpus
+carries no bridge hop, and a range rather than a point because `usage.timeline`
+records no `tool_use_id`: in roughly a dozen of the 28 runs containing a
+transcription, several parallel `image-reader` subagents have a call outstanding
+at once, so per-call durations there cannot be recovered. The range is the
+spread across pairing methods on the runs where exactly one call is outstanding
+(12.5% by the corpus-timeline script from the sizing issue, 15.6% pairing each
+call to its own result). Do not quote a corpus-wide re-run of that script as the
+figure: it reports lower and keeps dropping as the corpus grows — 13 of 144
+(9.0%) at commit `6a32f70d`, lower since — because the run-log retention step in
+commit `b065b687` strips `response_summary` past 14 days, so its errored-call
+filter no longer sees most of the corpus and counts sub-second "no API key"
+failures as healthy transcriptions. The 90/90/180 budgets hold only on the
+paths that honour them — verified over stdio for the harnesses and the hosted
+control plane; whether the desktop `.mcpb` is bridged too is unverified, so the
+ceiling may apply to every Cowork session. This is a documented
+environment property, not a tool defect: raising
+`OCR_TIMEOUT_MS` recovers nothing there, and lowering it would lose the tail
+everywhere else. A per-install `ocrTimeoutMs` override and a one-retry carve-out
+in the `image-reader` agent were both weighed against this write-down and dropped
+— the first recovers nothing until a config file is hand-edited, the second costs
+two fresh eval suites (lead decision, 2026-08-17).
+
 **Where 180s comes from.** Measured across every `image_transcribe` call in the
 committed e2e run logs (n=101, matched to its own `tool_result` in
 `usage.timeline`): p50 36s, p90 98s, p95 114s, max 316s. That tail is not the
