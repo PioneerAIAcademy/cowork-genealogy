@@ -16,6 +16,8 @@ export function buildMockContext(
     setActiveSection?: ResearchDataState['setActiveSection']
     activeSection?: string
     getById?: ResearchDataState['getById']
+    notice?: string | null
+    clearNotice?: ResearchDataState['clearNotice']
   } = {}
 ): ResearchDataState {
   return {
@@ -23,8 +25,8 @@ export function buildMockContext(
     gedcomx: overrides.gedcomx === undefined ? patrickFlynnGedcomx : overrides.gedcomx,
     error: null,
     clearError: () => {},
-    notice: null,
-    clearNotice: () => {},
+    notice: overrides.notice ?? null,
+    clearNotice: overrides.clearNotice ?? (() => {}),
     lastUpdated: null,
     folderPath: null,
     devMode: false,

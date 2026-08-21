@@ -112,7 +112,7 @@ export function WaitingScreen({
 // context, so it renders identically whether or not research is loaded — the
 // reported case has a non-empty top-level research.json, so a WaitingScreen-only
 // surface would never show it. A research load does NOT clear `notice`.
-function FolderNotice(): React.JSX.Element | null {
+export function FolderNotice(): React.JSX.Element | null {
   const { notice, clearNotice } = useResearchData()
   if (!notice) return null
   return (
