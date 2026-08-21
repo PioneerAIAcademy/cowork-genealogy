@@ -77,6 +77,26 @@ the pair's own baseline is one run and it is the cheapest run in the project.
 **And keep a fix inside the section it belongs to.** A gate rule that mentions
 tiers is a tier change wearing a gate's clothes.
 
+## 3b. A thin routing skill routes better — the one measured gain
+
+Two of `proof-conclusion`'s tests grade whether it *declines and routes* an
+out-of-scope prompt rather than doing the work itself. One of them
+(`ut_proof_conclusion_009`, a classification-reevaluation request that belongs
+to record-extraction) was a reliable **xfail in all five runs before** the
+conversion and a reliable **xpass in all five after**, with the boundary exactly
+at the fold. Its sibling `_010` had xpassed in all ten runs on record and was
+simply mislabelled. Both were relabelled to `pass` on 2026-08-21.
+
+That is a coherent effect rather than a coincidence: routing is the entire job
+of the routing half, and the thin skill is 2.8 KB against the 28.9 KB monolith
+it replaced. There is far less competing with the DO-NOT clauses for attention.
+
+**So: expect boundary/routing tests to improve, and check them.** They are the
+one place a conversion is likely to *help*, and it is worth recording when it
+does — the costs in sections 1–3 are otherwise the only thing on the ledger. It
+also gives the routing skill a reason to stay thin: if these regress later,
+suspect that it has grown.
+
 ## 4. Determinism surfaces defects that judge grading hid
 
 Converting judge-graded expectations into validators found five real problems
