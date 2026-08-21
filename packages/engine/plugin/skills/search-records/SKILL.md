@@ -451,8 +451,9 @@ candidates; you still confirm the top ones:
   signals. Write the listing and mark the family structure inferred — not "head
   Daniel + wife Margaret + daughter Hannah" but "Daniel, Margaret, Hannah in one
   dwelling; family structure inferred from surname, ages and order, not stated."
-  Same caution for any field that year didn't collect:
-  `references/census-field-availability.md`.
+  **Before summarizing any census household, read
+  `references/census-field-availability.md` for that year** — same caution for
+  any field that year didn't collect.
 - **Cite `matchScore`, never `results[].score` — they are different numbers.** A
   raw search stub's `score` (and `confidence`) is FamilySearch's own *search
   relevance*, the unreliable ordering the match-ranker exists to replace;
