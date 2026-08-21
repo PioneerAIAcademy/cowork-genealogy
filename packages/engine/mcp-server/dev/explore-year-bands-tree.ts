@@ -24,39 +24,31 @@
  * Run: `npx tsx dev/explore-year-bands-tree.ts` from `packages/engine/mcp-server`.
  */
 import { getValidToken } from "../src/auth/refresh.js";
-import { fetchWithTimeout } from "../src/utils/http.js";
+import { fetchRetry, sleep } from "./http-retry.js";
 const BASE = "https://api.familysearch.org/platform/tree/search";
 const POOL = "q.surname=Pocklington&q.givenName=Thomae&m.queryRequireDefault=on";
 let retries = 0;
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function page(qs: string): Promise<any | null> {
   for (let a = 0; a < 10; a++) {
     await sleep(1200);
-    // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
-    // its own, and these scripts page for tens of minutes against an endpoint that
-    // throttles. `volume_search` once hung for 236 minutes on exactly this
-    // (CLAUDE.md). `no-bare-fetch.test.ts` only walks `src/`, so nothing here would
-    // have caught it; three existing dev probes already use the helper.
     // Per request, not once up front: `getValidToken()` auto-refreshes, so a token
     // expiring mid-run cannot surface as a 401 that reads like a data value.
     const token = await getValidToken();
-    const res = await fetchWithTimeout(`${BASE}?${qs}`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } });
+    // `fetchRetry` owns the 429/5xx backoff (correct Retry-After parse — an absent
+    // header no longer reads as a 0ms wait); `onRetry` keeps those in the run-wide
+    // `retries` tally. The outer loop remains for the body-level transients the
+    // tree endpoint also emits (an empty 200 body, unparseable JSON), counted the
+    // same way. baseMs 8_000 keeps the old fallback wait.
+    const res = await fetchRetry(`${BASE}?${qs}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } },
+      { maxRetries: 10, baseMs: 8_000, label: qs, onRetry: () => { retries++; } });
     // 204 = zero results. A MEANINGFUL ZERO, not transient — handled before the
     // empty-body branch below, which otherwise retries it 10x and then reports the
     // band as unreadable, dropping it from `enumerated` and so from the
     // in-EVERY-band test. That is the trap explore-tree-204-vs-429.ts documents,
     // and this script contained it until 2026-08-20.
     if (res.status === 204) return { results: 0, entries: [] };
-    if (res.status === 429) {
-      // NaN from an HTTP-date `Retry-After` would make setTimeout fire immediately,
-      // burning every retry in milliseconds; `??` does not catch that.
-      retries++;
-      const ra = Number(res.headers.get("retry-after"));
-      await sleep((Number.isFinite(ra) ? ra : 8) * 1000 + 1500);
-      continue;
-    }
     if (!res.ok) return null;
     const txt = await res.text();
     if (!txt.trim()) { retries++; await sleep(1500); continue; }

@@ -63,7 +63,7 @@
  */
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
-import { fetchWithTimeout } from "../src/utils/http.js";
+import { fetchRetry, sleep } from "./http-retry.js";
 import { toSimplified } from "../src/utils/gedcomx-convert.js";
 import { findRepresentedPerson, resolveRelativeTerms } from "../src/tools/record-search.js";
 
@@ -82,8 +82,6 @@ const POOLS = [
     qs: "q.surname=Martin&q.collectionId=1494474",
     crossTab: true },
 ];
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 /**
  * Every `role` in the object tree. THIS is where the raw search response says what a
  * person is on the record — "Father", "Mother", "Principal", "Spouse". `fields[]`
@@ -117,25 +115,20 @@ function collectLabels(node: any, out: Set<string>): void {
 async function runPool(POOL: string, label: string, crossTab: boolean): Promise<void> {
   console.log(`\n############ ${label} ############`);
   const rows: any[] = [];
-  let retry = 0;
   const CAP = 500;   // vocabulary only — NOT an enumeration, and the report says so
   for (let offset = 0; offset < CAP; offset += 100) {
     await sleep(700);
     const token = await getValidToken();
-    const res = await fetchWithTimeout(`${BASE}?${POOL}&count=100&offset=${offset}&m.queryRequireDefault=on`,
+    // `fetchRetry` owns the 429 backoff, and its attempt counter is per-CALL: the
+    // pool-scoped counter this loop used to keep never reset on a successful page,
+    // so scattered 429s across the pages of one pool could accumulate past the
+    // abort threshold even though every page eventually succeeded. maxRetries 10
+    // preserves the old per-pool tolerance; baseMs 20_000 the old fallback wait.
+    const res = await fetchRetry(`${BASE}?${POOL}&count=100&offset=${offset}&m.queryRequireDefault=on`,
       { headers: { Authorization: `Bearer ${token}`, Accept: "application/json",
-                   "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } });
+                   "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } },
+      { maxRetries: 10, baseMs: 20_000, label: `offset ${offset}` });
     if (res.status === 204) break;
-    // `??` alone is not enough: RFC 7231 allows an HTTP-date, and Number() of that
-    // is NaN, which setTimeout fires immediately — burning every retry in
-    // milliseconds and then blaming the upstream.
-    if (res.status === 429) {
-      const ra = Number(res.headers.get("retry-after"));
-      if (++retry > 10) { console.log("  ABORT: 429 after 10 retries — refusing"); process.exit(1); }
-      await sleep((Number.isFinite(ra) ? ra : 20) * 1000 + 2000);
-      offset -= 100;
-      continue;
-    }
     if (!res.ok) { console.log(`  ABORT HTTP ${res.status} at offset ${offset} — partial, refusing`); process.exit(1); }
     const b: any = await res.json();
     const es = b?.entries ?? [];

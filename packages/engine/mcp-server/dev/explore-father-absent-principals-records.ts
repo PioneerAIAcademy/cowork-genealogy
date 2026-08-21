@@ -49,23 +49,26 @@
  */
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
-import { fetchWithTimeout } from "../src/utils/http.js";
+import { fetchRetry, sleep } from "./http-retry.js";
 import { toSimplified } from "../src/utils/gedcomx-convert.js";
 import { findRepresentedPerson, resolveRelativeTerms } from "../src/tools/record-search.js";
 
 const BASE = "https://www.familysearch.org/service/search/hr/v2/personas";
 const POOL = "q.recordCountry=Brazil&f.recordType=0&q.birthLikeDate.from=1880&q.birthLikeDate.to=1880" +
              "&q.birthLikePlace=Lapa&q.birthLikePlace.exact=on";
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function main(): Promise<void> {
   const rows: any[] = [];
   for (let offset = 0; offset < 1500; offset += 100) {
     await sleep(300);
     const token = await getValidToken();
-    const res = await fetchWithTimeout(`${BASE}?${POOL}&count=100&offset=${offset}&m.queryRequireDefault=on`,
+    // `fetchRetry`, not a bare fetch: this endpoint throttles, and until 2026-08-20
+    // this loop treated a 429 as a fatal `!res.ok` abort — killing the whole run
+    // on ordinary rate limiting the sibling record scripts already back off from.
+    const res = await fetchRetry(`${BASE}?${POOL}&count=100&offset=${offset}&m.queryRequireDefault=on`,
       { headers: { Authorization: `Bearer ${token}`, Accept: "application/json",
-                   "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } });
+                   "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } },
+      { label: `offset ${offset}` });
     if (res.status === 204) break;
     if (!res.ok) { console.log(`  ABORT HTTP ${res.status} — partial, refusing`); process.exit(1); }
     const b: any = await res.json();

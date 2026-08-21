@@ -33,43 +33,32 @@
  */
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
-import { fetchWithTimeout } from "../src/utils/http.js";
+import { fetchRetry, sleep } from "./http-retry.js";
 
 const POOL = "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=0";
 const TARGET = "NPBV-WBQ";
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function readAll(range: string): Promise<{ total: number | null; ids: string[] } | null> {
   const ids: string[] = [];
   let total: number | null = null;
-  // Attempts are capped per page: an unbounded `offset -= 100; continue` spins
-  // forever on a persistently throttling endpoint, and this one throttles.
-  let attempts = 0;
   for (let offset = 0; offset < 1500; offset += 100) {   // sibling REPORTED 585 (not in the artifact); 600 was too tight
     await sleep(300);
     // Per request, not once in `main()`: this sweeps many windows with 429 backoffs,
     // and a token expiring mid-run would surface as a 401 abort that discards the
     // whole sweep. `getValidToken()` auto-refreshes.
     const token = await getValidToken();
-    // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
-    // its own, and these scripts page for tens of minutes against an endpoint that
-    // throttles. `volume_search` once hung for 236 minutes on exactly this
-    // (CLAUDE.md). `no-bare-fetch.test.ts` only walks `src/`, so nothing here would
-    // have caught it; three existing dev probes already use the helper.
-    const res = await fetchWithTimeout(
+    // `fetchRetry` owns the 429 backoff: correct Retry-After parse (an absent
+    // header no longer reads as a 0ms wait) and a per-call attempt counter capped
+    // at maxRetries, so a persistently throttling page is bounded. An
+    // exhausted-retry 429 returns non-OK, and the `!res.ok` guard below turns it
+    // into null — never a partial read reported as complete. baseMs 8_000 keeps
+    // the old fallback wait.
+    const res = await fetchRetry(
       `https://www.familysearch.org/service/search/hr/v2/personas?${POOL}${range}&count=100&offset=${offset}&m.queryRequireDefault=on`,
       { headers: { Authorization: `Bearer ${token}`, Accept: "application/json",
-                   "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } });
+                   "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } },
+      { maxRetries: 8, baseMs: 8_000, label: range });
     if (res.status === 204) return { total: total ?? 0, ids };   // meaningful zero
-    if (res.status === 429) {                                     // retry, do not truncate
-      if (++attempts > 8) return null;                            // bounded: null, never a partial
-      // NaN from an HTTP-date `Retry-After` would fire every retry instantly.
-      const ra = Number(res.headers.get("retry-after"));
-      await sleep((Number.isFinite(ra) ? ra : 8) * 1000 + 1500);
-      offset -= 100;
-      continue;
-    }
-    attempts = 0;
     // Any other non-OK: return null so the caller cannot mistake a partial read
     // for a complete one. Previously this returned the rows read so far with a
     // total already set from page 1, which printed a plausible row and a silent
