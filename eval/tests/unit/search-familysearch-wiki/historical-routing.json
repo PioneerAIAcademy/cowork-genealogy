@@ -5,7 +5,7 @@
     "name": "Historical background question should route to historical-context",
     "type": "negative",
     "description": "User asks for narrative historical background about migration patterns. The skill description explicitly excludes this — it should decline and direct the user to the historical-context skill.",
-    "tags": ["fs-wiki", "routing", "historical-context"]
+    "tags": ["fs-wiki", "routing", "historical-context", "no-wiki-search"]
   },
   "input": {
     "user_message": "Tell me about migration patterns from Ireland to America in the 1800s",
