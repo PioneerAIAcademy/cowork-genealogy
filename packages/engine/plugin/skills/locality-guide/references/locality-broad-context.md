@@ -57,8 +57,11 @@ that shape record creation and survival.
   the modern dominant language (Latin church records, German colonial
   records, Spanish mission records).
 - **Naming conventions** — Patronymic systems, anglicization of
-  immigrant names, use of middle names, married vs. maiden names
-  all affect how people appear in records.
+  immigrant names, and use of middle names all affect how people appear
+  in records. Do not assume a woman took her husband's surname at
+  marriage: in much of Scandinavia, Iberia, and elsewhere she keeps her
+  birth surname in records for the whole post-marriage span, so searching
+  the married name for those years finds nothing.
 - **Religious record-keeping** — Different denominations kept different
   records at different levels of detail. Some denominations have
   centralized archives; others have records scattered across local
