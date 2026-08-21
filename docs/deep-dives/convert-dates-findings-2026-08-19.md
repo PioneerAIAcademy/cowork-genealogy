@@ -21,31 +21,11 @@ as it said it would. Everything below came from elsewhere.
 
 ## Step 1 — The prohibition list
 
-Every rule in the skill body that is checkable against a transcript. **This is
-the artifact the next auditor starts from.** Cited by quoted wording rather than
-line number: 147 commits over three weeks moved one of this write-up's four
-harness citations, and a dive doc that decays is a dive doc nobody trusts.
-
-| # | Rule | Body wording | Verdict this dive |
-|---|---|---|---|
-| 1 | Every conversion goes through `convert_calendar`; never hand arithmetic | "Do not fall back to hand arithmetic." (§ Calling) | **Violated, 100%** — F1 |
-| 2 | On `{ ok: false }`, surface the error and the missing input; fix and call again | § Calling | Unreachable — tool never called (F1) |
-| 3 | Apply only the correction(s) the user asked for | "Answer only the calendar question asked… Do not bundle corrections the user didn't request — that is over-conversion." (§ Rules) | **Violated, 2 of 4 runs** on `_007` — F4 |
-| 4 | Show the original next to the converted form; keep both | "Show original next to converted." (§ Rules) | Clean — every response did |
-| 5 | When the jurisdiction or convention is unclear, flag the ambiguity; don't guess | "When in doubt, don't convert." (§ Rules) | **Violated** on the 25 March boundary (now `_016`) — F3 |
-| 6 | Never convert without knowing where the record was created | "Jurisdiction matters." (§ Rules) | Technically violated on `_001` — see "Checked, not a finding" |
-| 7 | Present step-by-step: original, `applied[].rule` (+ `offsetDays`), converted | § Calling | Clean in form; the rule/offset are narrated from memory, not from `applied[]` (F1) |
-| 8 | Writes nothing; output-only; idempotent | § Re-invocation behavior | Clean — `files_created` empty in all 56 runs |
-| 9 | Hand off to conflict-resolution when the gap matches no calendar offset | § Routing | Clean — `_011` routed correctly in 3 of 4 runs |
-| 10 | Hand off to historical-context on a why-did-this-exist question | § Routing | Clean — no conversion performed on `_003` in any run |
-| 11 | Offset is jurisdiction-and-year specific, not a single number | § Julian vs. Gregorian | **Body is wrong at three thresholds** — F2 |
-| 12 | Double dates resolve to the later (New Style) year | § Double-dated years | **Body's example is the one date where this is false** — F3 |
-| 13 | Quaker "1st month" shifts meaning at 1752 — always check the era | § Quaker numbered months | Clean — `_001` (1845) took post-1752 correctly |
-| 14 | Read `researcher_profile.narration_guidance` and apply it | frontmatter Narration line | Not checkable — every test runs `scenario: null`, so no `research.json` exists |
-
-Rules 1–13 are checkable. Rule 14 is **structurally uncheckable in this suite**:
-all 16 tests are stateless, so the narration instruction that opens the body can
-never be exercised. Noted for whoever adds a scenario-backed test.
+Split out to its own file, matching the convention the merged dives use:
+[`convert-dates-prohibition-list.md`](./convert-dates-prohibition-list.md).
+14 rules, 13 of them checkable against a transcript; rule 14 (narration) is
+structurally uncheckable in this suite because every test runs
+`scenario: null`.
 
 ---
 
@@ -738,6 +718,40 @@ scratch run" below for what each one actually produced.
 and the rubric still parses); `eval/harness` unit suite 2249 passed / 3 skipped;
 no duplicate `test.id` across the corpus (CI rule 4); every `§` anchor in this
 document resolves to a real heading.
+
+## The judge-prompt fix is NOT evidenced by anything in this branch
+
+Caught in review, and the reviewer is right. Verify it in one command:
+
+```sh
+python -c "import json;print(json.load(open('eval/runlogs/unit/convert-dates/v1_2026-08-19_22-13-16.json'))['judge_prompt_hash'][:8])"
+# 0d186137  == origin/main's prompt.md
+# this branch's prompt.md hashes to c39d7003
+```
+
+The committed run was graded on **2026-08-19 at 22:13**; the prompt fix was made
+**2026-08-20**, after it. So `v1_2026-08-19_22-13-16` was graded entirely under
+the old prompt, and its `_013` still carries Correctness **1** with the original
+rationale verbatim — "The skill's core claim is factually false."
+
+An earlier draft of this write-up and of PR #1766 claimed the Facts arm was
+**proven** by `_013` going 1 → 3. That improvement was real but came from a
+**scratch** run, which is gitignored and therefore not in the repo. Presenting it
+as proof was wrong: the split "one arm proven, one unverified" implied in-repo
+evidence that does not exist.
+
+**Both arms are unverified in this branch.** The honest state:
+
+| Arm | State in repo | What would settle it |
+|---|---|---|
+| **Facts** (do not contradict an asserted fact) | not evidenced | a run whose `judge_prompt_hash` matches this branch; `_013` Correctness should move 1 → 3 |
+| **Authority** (an unmet requirement is a deduction) | not evidenced, and **not testable as the corpus stands** | move the retained canary from `_005` to `_009`, which fails the bullet in 4/4 runs, then run |
+
+Nothing mechanical catches this, by design: `check_runlogs.py` rule 2b compares
+`judge_prompt_hash` and is **warn-only** — "judge edits are a separate cadence."
+That is the right default for a normal judge tweak and the wrong one for shipping
+a corpus-wide prompt change whose only stated proof lives outside the repo. The
+gap is the same shape as F1: a warn-only signal nobody is required to read.
 
 ## The three full runs, and why the suite is not green
 
