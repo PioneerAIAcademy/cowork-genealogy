@@ -38,8 +38,12 @@ with an `imageId`** — every call passes a bare group number (`007936749`, `004
 parameter or re-queries the same group. All correct behaviour — but passing an `imageId`
 to `image_search` is exactly what SKILL.md §"MCP tools" calls *"the single most common
 mistake,"* and the `image_search`-has-no-pagination-params rule sits right beside it; the
-one dimension that would catch either has never scored below 3 because no test exercises
-the mistake and no validator checks the argument.
+dimension that would catch either — `Browse execution`, whose fail bullet names "invented
+`image_search` parameters (`offset`/`imageId`/etc.)" — has never scored below 3 *for that
+reason*, because no test exercises the mistake and no validator checks the argument. It
+does move: it scored 1 on `008` in `-08-10`, but for a different clause of the same
+bullet ("skipped `image_search` entirely"), which is the point — the parameter clause is
+the one nothing has ever put to the test.
 
 **Should:** a dimension that can never move cannot report a defect (deep-dive guide,
 Step 3). This is a literal argument constraint — the shape Step 6 says to convert to a
@@ -84,8 +88,10 @@ validator to request; only the `image_search` argument contract above is unguard
 `image_search` call exists.** The appended log entry records `tool: "image_search"`,
 `outcome: "negative"`. This is **not a one-off — it recurs in all 5 committed run logs
 (0-for-5):** `v1_2026-07-24`, `-07-25`, `-07-28`, `-07-29`, `-08-10`. The related failure
-test `ut_search_images_008` logs the same shape (`tool: "image_search"`, `outcome:
-"error"`, zero `image_search` calls) in 3 of the 5 (`-07-25`, `-07-28`, `-08-10`).
+test `ut_search_images_008` logs the same `tool: "image_search"`-with-zero-calls shape in
+3 of the 5 (`-07-25`, `-07-28`, `-08-10`); the accompanying `outcome` varies and is only
+`"error"` in `-08-10` (`negative` in `-07-25`, `partial` in `-07-28`) — the mislabelled
+`tool` is the constant, not the outcome.
 `Browse audit trail` scored `004` a **3** every time.
 
 **Should:** the log's `tool` field is the search that was performed. For a no-volume nil
