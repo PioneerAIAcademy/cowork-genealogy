@@ -105,19 +105,22 @@ flagged. (One row below is the exception, and says so.)
 | `holding_type` | `document`, `prior_research`, `oral_knowledge`, `gedcom`, `photo`, `artifact`, `other` | known_holdings |
 | `holding_confidence` | `confident`, `unsure` | known_holdings — how settled the researcher is about the item, so research prioritizes shaky holdings over settled ones |
 | `experience_level` | `novice`, `intermediate`, `experienced`, `professional` | researcher_profile (Section 5.1.1) |
-| `subscriptions` | `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none` | researcher_profile. Note the mixed casing: these are site brand names, not the lowercase_with_underscores used elsewhere |
+| `subscription` | `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none` | researcher_profile (the `subscriptions` array's items). Note the mixed casing: these are site brand names, not the lowercase_with_underscores used elsewhere |
 | `evaluation_focus` | `pre-exhaustiveness`, `conclusion-readiness`, `proof-critique`, `on-demand` | evaluations (Section 5.12). Note the hyphens — this is the one enum in the file that does not use underscores |
 | `evaluation_target_type` | `question`, `proof_summary`, `project` | evaluations |
 | `evaluation_verdict` | `looks_solid`, `consider_addressing`, `address_first`, `refused` | evaluations |
 | `locality_page_section` | `home`, `getting_started`, `online_records`, `research_tips` | localities' `pages_read[].section` (Section 5.13) — the four FamilySearch Research Wiki place-page sections. **The one closed enum `validate_research_schema` does not check**: it does not descend into a locality's nested objects, so a misspelled section reaches disk and only the JSON Schema catches it |
 
-**Where these live in the machine-readable schemas.** Most are shared with
-`tree.gedcomx.json` and live in `enums.schema.json`. The last six rows above
-(`experience_level` through `locality_page_section`) are defined inline in
-`research.schema.json` instead, so their names are this document's; a
-developer changing one edits `research.schema.json` rather than
-`enums.schema.json`. The blast radius of a change either way is in CLAUDE.md's
-schema-change site list.
+**Where these live in the machine-readable schemas.** All but one are defined in
+`enums.schema.json` and `$ref`'d from `research.schema.json`. The sole exception
+is `locality_page_section` (the last row above), still declared inline in the
+research schema: its `pages_read[].section` enum is bound to no validator check,
+and lifting it would change what the writer tools reject, so it waits on its own
+change. Removing or renaming any closed-enum value additionally requires
+a repo-wide grep for the old value — the drift lint checks the full value *list*,
+which catches an addition, but a renamed or dropped value can leave a stale
+single-value mention in prose that no lint sees. The blast radius of a
+closed-enum change is in CLAUDE.md's schema-change site list.
 
 > **`no_evidence` was considered and rejected as an `evidence_type` value
 > (2026-06-21).** The model reaches for it when a record simply does not speak
