@@ -1010,6 +1010,49 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
 
+
+    it("refuses an update that leaves a forbidden tier standing, without naming tier", async () => {
+      // The 2026-08-21 escape, replayed. The agent updated the summary's other
+      // fields and never mentioned `tier`, so the stale `probable` stayed —
+      // and a rule gated on "did this op set the tier" never ran. The tier did
+      // not need to be touched; it was already wrong.
+      const state = conflicted() as any;
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("probable", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields: { narrative_markdown: "## Conclusion\nrewritten, tier untouched" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("c_001");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("accepts the same update when it brings the tier down in the same call", async () => {
+      // The deny has to stay satisfiable: fixing the entry is one call, not a
+      // deadlock where you cannot edit it without first editing it.
+      const state = conflicted() as any;
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("probable", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields: { tier: "not_proved", narrative_markdown: "## Conclusion\nidentity unsettled" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
     it("cannot be cleared by resolving the conflict in the same batch", async () => {
       // Same discipline as the exhaustiveness gate: read from the PRE-CALL
       // snapshot, so a batch may not manufacture its own precondition.

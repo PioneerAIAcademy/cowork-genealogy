@@ -1235,8 +1235,21 @@ function applyOne(
       op.op === "append" || Object.prototype.hasOwnProperty.call(op.fields ?? {}, "tier");
     if (tierTouchedThisOp) {
       invariantErrors.push(...proofSummaryInvariants(resultEntry, preCallExhaustiveDeclared));
-      invariantErrors.push(...conflictedSourceInvariants(resultEntry, preCallResearch));
     }
+    // NOT gated on `tierTouchedThisOp`, unlike the exhaustiveness check above.
+    // That gate asks "is this op setting the tier"; this rule asks "does the
+    // entry STAND at a tier the open conflict forbids", which an op can reach
+    // without naming `tier` at all. Observed 2026-08-21: the agent updated a
+    // summary's narrative and left the stale `probable` in place, and the rule
+    // never ran. The tier had not been touched — it did not need to be, because
+    // it was already wrong.
+    //
+    // The cost is that any edit to such an entry is refused until its tier
+    // comes down, which is the rule applied consistently rather than a
+    // side effect: a conclusion standing above `not_proved` on a disputed
+    // source is invalid whether or not this call put it there. Lowering the
+    // tier in the same update satisfies it, so the deny stays satisfiable.
+    invariantErrors.push(...conflictedSourceInvariants(resultEntry, preCallResearch));
     // Reads LIVE research, not the pre-call snapshot: two appends inside one
     // batch must collide with each other, not just with what was already there.
     if (op.op === "append") {
