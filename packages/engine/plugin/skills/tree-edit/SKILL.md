@@ -64,7 +64,7 @@ Other additions via `tree_edit`: `add_person` · `add_relationship` · `add_sour
 ### Writing facts correctly
 
 - **Dates must be GedcomX-parseable.** Write a bare year (`1773`), an ISO date (`1908-03-12`), or a spelled date (`12 March 1908`); record any approximation in the source `page` or your reply, not in the `date` string.
-- **Couple-event facts go on the `Couple` relationship, not on a person.** Marriage, Divorce, and other couple events belong in the relationship's `facts` array — supply them in the `add_relationship` call itself: `relationship: { type: "Couple", person1, person2, facts: [{ type: "Marriage", date, place, sources }] }`. A Marriage written as a person `add_fact` misplaces the event. See `references/relationship-accuracy.md`.
+- **Couple-event facts go on the `Couple` relationship, not on a person.** Marriage, Divorce, and other couple events belong in the relationship's `facts` array — supply them in the `add_relationship` call itself. **The relationship edge needs its own source-ref, separate from the fact's** — a `sources` array nested only inside `facts[]` fails validation (the edge and each fact are checked independently). Prefer `sourceAssertionId` (a research.json assertion with `fact_type: "relationship"` — not the marriage-fact assertion) over a literal `relationship.sources`: it resolves the edge's ref and, when the inline fact carries none of its own, propagates that same ref onto it — `relationship: { type: "Couple", person1, person2, sourceAssertionId: "a_005", facts: [{ type: "Marriage", date, place }] }`. Without `sourceAssertionId`, supply `relationship.sources` directly *and* each fact's own `sources` — one does not inherit the other. A Marriage written as a person `add_fact` misplaces the event. See `references/relationship-accuracy.md`.
 
 ## Person merging
 
@@ -111,7 +111,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 **Conflicting evidence not yet resolved:** Do not pick a side. Coexisting sourced evidence facts may both live in the tree, each carrying its own ref — what waits for proof-conclusion is the *concluded* value (`primary`/`preferred`), not the evidence itself. Do not set the concluded value until the conflict is resolved in proof-conclusion.
 
-**Requested state already satisfied:** If what the user asks for already exists in `tree.gedcomx.json` with the correct value and supporting source, make NO changes. Report: "No edit needed — F1 already reflects this with source S1." Do NOT add `confidence`, `notes`, or any field not in `docs/specs/simplified-gedcomx-spec.md` §4.2 — the audit trail belongs in your reply, not in tree fields.
+**Requested state already satisfied:** If what the user asks for already exists in `tree.gedcomx.json` with the correct value and supporting source, make NO changes. Report: "No edit needed — F1 already reflects this with source S1." Do NOT add `confidence` or any field the spec doesn't define for that object type (`docs/specs/simplified-gedcomx-spec.md` §4.1 facts / §4.2 relationships) — e.g. a fact has no `notes` field. The audit trail belongs in your reply, not in tree fields.
 
 **Do not duplicate:** If the person, relationship, or fact already exists at an id, use `update_*` (via `tree_correct`) against that id rather than adding a second entry.
 

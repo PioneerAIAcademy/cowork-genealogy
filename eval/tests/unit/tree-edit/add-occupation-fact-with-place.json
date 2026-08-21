@@ -18,7 +18,8 @@
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
-    "place-search-schuylkill-county"
+    "place-search-schuylkill-county",
+    "person-warnings-no-warnings"
   ],
   "judge_context": [
     "Should call place_search with placeName 'Schuylkill County, Pennsylvania' and copy the first result's standardPlace verbatim into the new fact's standard_place field (per places-guidance.md)",
@@ -26,7 +27,8 @@
     "Should NOT mark the new fact `primary: true` unless it's the primary Occupation (and only Occupation) for this person — the SKILL.md primary rule only applies when there are competing facts of the same type",
     "Edit-minimality: no other facts on I1 are changed (F1 Birth and F2 Death stay byte-identical); no other person, relationship, or source is touched; research.json is not modified",
     "Should NOT need a separate validate_research_schema call — tree_edit, tree_correct, and merge_tree_persons all validate-before-persist (SKILL.md § Validation), and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
-    "Should reuse S2 (1860 census already in tree.sources) — must NOT create a duplicate S-prefix source entry"
+    "Should reuse S2 (1860 census already in tree.sources) — must NOT create a duplicate S-prefix source entry",
+    "Should invoke `check-warnings` after this edit — SKILL.md § Validation requires it after ANY edit or merge. A `person-warnings-no-warnings` fixture is loaded (matches any personId) so the call succeeds cleanly; do not accept \"the tool is unavailable\" as a reason to skip it."
   ],
   "execution": {
     "max_wall_clock_seconds": 600

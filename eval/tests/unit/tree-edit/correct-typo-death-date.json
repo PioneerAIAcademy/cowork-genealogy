@@ -23,9 +23,13 @@
     "Edit-minimality REQUIRED: no other field on F2 may change (place, sources, type, primary all stay byte-identical); no other fact (F1, F3) is touched; no other person (I2) is touched; no relationship (R1) is touched; research.json is not touched at all",
     "Should NOT 'normalize' adjacent fields opportunistically (e.g., re-resolving F2.place via place_search when only the date was wrong)",
     "Source-grounding requirement (per evidence-grounded-edits.md): the correction must be tied to S3 — the user cited it explicitly. The skill should reflect that in the explanation",
-    "Should report what was changed and confirm post-edit schema validity in the response"
+    "Should report what was changed and confirm post-edit schema validity in the response",
+    "Should invoke `check-warnings` after this edit — SKILL.md § Validation requires it after ANY edit or merge. A `person-warnings-no-warnings` fixture is loaded (matches any personId) so the call succeeds cleanly; do not accept \"the tool is unavailable\" as a reason to skip it."
   ],
   "execution": {
     "max_wall_clock_seconds": 600
-  }
+  },
+  "mcp_fixtures": [
+    "person-warnings-no-warnings"
+  ]
 }

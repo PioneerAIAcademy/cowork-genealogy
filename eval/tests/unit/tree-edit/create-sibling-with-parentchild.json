@@ -24,10 +24,14 @@
     "Should NOT add a Birth fact to Mary directly from raw census data — materializing sourced facts onto a tree person is person-evidence's materialize_facts (record-extraction is assertion-only), not this ad-hoc tree-edit call. tree-edit creates the person stub + the sourced relationship edge; assertions in research.json remain the source of truth for facts",
     "Edit-minimality: no existing person, relationship, fact, or source is modified. I3, I4, and the merge-pending state stay intact (this test does not perform the pending merge)",
     "Should reference ps_003 as the proof authorization in the response — relationship-accuracy.md requires the threshold to be met before writing a relationship",
-    "Should NOT need a separate validate_research_schema call — tree_edit, tree_correct, and merge_tree_persons all validate-before-persist (SKILL.md § Validation), and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it."
+    "Should NOT need a separate validate_research_schema call — tree_edit, tree_correct, and merge_tree_persons all validate-before-persist (SKILL.md § Validation), and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
+    "Should invoke `check-warnings` after this edit — SKILL.md § Validation requires it after ANY edit or merge. A `person-warnings-no-warnings` fixture is loaded (matches any personId) so the call succeeds cleanly; do not accept \"the tool is unavailable\" as a reason to skip it."
   ],
   "execution": {
     "max_wall_clock_seconds": 600,
     "max_turns": 30
-  }
+  },
+  "mcp_fixtures": [
+    "person-warnings-no-warnings"
+  ]
 }

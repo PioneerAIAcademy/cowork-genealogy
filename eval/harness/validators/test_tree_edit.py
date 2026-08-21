@@ -106,3 +106,110 @@ def test_tree_edit_noop(before_state, after_state, test):
         "tree-edit modified tree.gedcomx.json on a no-op scenario; "
         "expected byte-identical content before and after"
     )
+
+
+# --- Place-resolution provenance (deep dive #1657, Finding E) --------
+
+def _iter_facts_with_place(tree: dict):
+    """Yield (place, standard_place) for every fact -- person-level or
+    Couple-relationship-level -- that carries both fields."""
+    for p in (tree.get("persons") or []):
+        for f in (p.get("facts") or []):
+            if isinstance(f, dict) and f.get("standard_place"):
+                yield f.get("place"), f.get("standard_place")
+    for rel in (tree.get("relationships") or []):
+        for f in (rel.get("facts") or []):
+            if isinstance(f, dict) and f.get("standard_place"):
+                yield f.get("place"), f.get("standard_place")
+
+
+def _place_search_standard_places(tool_calls: list) -> set[str]:
+    """Every `standardPlace` any place_search/place_search_all call in this
+    run actually returned. matched loosely on tool name (endswith) so it
+    doesn't care which server prefix the run used."""
+    out: set[str] = set()
+    for c in tool_calls or []:
+        tool = c.get("tool") or ""
+        if not (tool.endswith("place_search") or tool.endswith("place_search_all")):
+            continue
+        resp = c.get("response") or {}
+        for r in (resp.get("results") or []):
+            sp = r.get("standardPlace")
+            if sp:
+                out.add(sp)
+    return out
+
+
+def test_new_standard_place_traces_to_a_real_resolution(before_state, after_state, tool_calls):
+    """places-guidance.md: copy `standard_place` only when the source record
+    already carries one; otherwise call `place_search` and use its result.
+    Deep dive #1657 finding E: `ut_tree_edit_006` wrote `standard_place:
+    "Ireland"` on the new birth fact in 4 of 5 committed runs with ZERO
+    place_search call -- masked because "Ireland" happens to equal its own
+    standard form. Grounded firing case: `ut_tree_edit_006`, run
+    `v1_2026-07-22_13-43-35` (and _14-12-23, _28-13-02-56, _30-18-18-04) --
+    F6 written with `standard_place: "Ireland"`, I3's source fact F4 carried
+    no pre-existing `standard_place` to copy, and no place_search call
+    appears anywhere in the run. Grounded passing case: `ut_tree_edit_006`,
+    run `v1_2026-07-23_01-34-12` -- the same fact, but preceded by
+    `place_search({"placeName": "Ireland"})` returning `standardPlace:
+    "Ireland"`.
+
+    A `standard_place` copied verbatim from an already-resolved fact
+    elsewhere in the pre-existing tree is fine (no fresh call needed, per
+    places-guidance.md); this only fires on a value that is both NEW and
+    untraceable to any place_search/place_search_all response this run."""
+    before_tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    after_tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
+    if before_tree is None or after_tree is None:
+        pytest.skip("missing tree.gedcomx.json on one side")
+
+    already_known = set(_iter_facts_with_place(before_tree))
+    resolved = _place_search_standard_places(tool_calls)
+
+    errors: list[str] = []
+    for place, standard_place in _iter_facts_with_place(after_tree):
+        if (place, standard_place) in already_known:
+            continue
+        if standard_place in resolved:
+            continue
+        errors.append(
+            f"standard_place '{standard_place}' (place '{place}') has no place_search/"
+            "place_search_all call returning it this run, and isn't copied from an "
+            "already-resolved fact in the input state"
+        )
+
+    assert not errors, "Untraceable standard_place written:\n  - " + "\n  - ".join(errors)
+
+
+# --- Post-edit check-warnings (deep dive #1657, Finding F) ------------
+
+def test_check_warnings_runs_after_any_tree_write(before_state, after_state, skills_invoked):
+    """SKILL.md § Validation: "After ANY edit or merge, run check-warnings
+    to catch genealogical impossibilities the structural validator cannot"
+    -- unconditional, no carve-out for a single-field correction. Deep dive
+    #1657 finding F: across the 5 committed run logs, this fired in at most
+    2 of 5 runs for any one edit test, and 0 of 5 for three of them
+    (`ut_tree_edit_006`, `_008`, `_009`) -- including the currently-active
+    run log, where it is 0 of 5 across every edit test. One test's
+    judge_context excused this as "person_warnings ... not available in the
+    unit-test harness", which is not true (14 reusable person-warnings-*
+    fixtures already exist under eval/fixtures/mcp/; tree-edit's tests just
+    never referenced one -- now fixed alongside this validator).
+
+    Grounded firing case: `ut_tree_edit_008`, run `v1_2026-07-30_18-18-04`
+    -- F2's date is corrected (tree.gedcomx.json changes), skills_invoked ==
+    ["tree-edit"], no check-warnings anywhere. Grounded passing case:
+    `ut_tree_edit_010`, run `v1_2026-07-28_13-02-56` -- Mary (I5) and her
+    ParentChild relationship are created, skills_invoked == ["tree-edit",
+    "check-warnings"]."""
+    before_tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    after_tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
+    if before_tree is None or after_tree is None:
+        pytest.skip("missing tree.gedcomx.json on one side")
+    if before_tree == after_tree:
+        pytest.skip("tree.gedcomx.json unchanged -- no edit to validate")
+    assert "check-warnings" in (skills_invoked or []), (
+        "tree.gedcomx.json changed but check-warnings was never invoked -- "
+        "SKILL.md § Validation requires it after ANY edit or merge"
+    )
