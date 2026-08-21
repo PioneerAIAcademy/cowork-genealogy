@@ -148,7 +148,7 @@ could be *Baver*].
   original form (Johann, not John).
 - The godfather's surname is flagged `[?]`, not silently resolved.
 
-*Next step:* "Extract these into research.json?" (record-extraction)
+*Next step:* "Extract assertions from this record?" (record-extraction) · "Link [person] to the tree?" (person-evidence)
 
 ## Paleography guidance
 

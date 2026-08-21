@@ -1,4 +1,4 @@
-# Translation Rubric
+﻿# Translation Rubric
 
 Grading dimensions for translation unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
@@ -22,17 +22,9 @@ Did the skill flag ambiguous words, archaic spellings, or abbreviations rather t
 
 Did the skill identify and explain genealogically significant terms (relationship words, legal terms, religious terminology) rather than providing a generic translation?
 
-- **pass:** Genealogically significant terms are explained when their translation would lose context â€” e.g., "Pate" (godfather) is translated and the relationship's research significance is noted.
+- **pass:** Genealogically significant terms are explained when their translation would lose context — e.g., "Pate" (godfather) is translated and the relationship's research significance is noted.
 - **partial:** Significant terms are translated but their genealogical implications (kinship structure, legal status, sacrament-tied dating) aren't flagged.
 - **fail:** Translation is purely literal; the genealogist would have to research the cultural/legal context themselves.
-
-## Next-step offers
-
-Did the skill close with both required workflow handoff offers using the canonical phrases from SKILL.md: "Extract assertions from this record?" (record-extraction) and "Link [person] to the tree?" (person-evidence)?
-
-- **pass:** Both offers are present after the translation and annotations, each labeled with its skill name. Phrasing matches the canonical forms in SKILL.md.
-- **partial:** One offer is present but the other is missing, or one offer uses a paraphrase rather than the canonical phrase (e.g., "Extract these assertions into research.json?" instead of "Extract assertions from this record?").
-- **fail:** Neither offer is present, or both are replaced by open-ended genealogical research suggestions with no skill handoff prompts.
 
 ## Date formatting
 
