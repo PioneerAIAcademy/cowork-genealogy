@@ -431,6 +431,31 @@ def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
 _FEEDBACK_WINDOW = 40  # == GUARDRAIL_SHADOW_WINDOW; count barely moves 10..150.
 
 
+def _submitted_research(bundle_dir: Path, research_path: Path) -> str:
+    """The research.json the tester *submitted*, not the one triage rewrote.
+
+    `make feedback-case` git-inits the case dir with an `imported` baseline and
+    the agent mutates it as it works (`make feedback-reset` exists for exactly
+    that), so the working-tree research.json can be a replay — a mentor-verdict
+    finding present at submission may have been written away. When the bundle
+    dir is a git repo, read the committed baseline; otherwise fall back to the
+    file (a fresh unzip with no .git — the state is the submitted one)."""
+    if (bundle_dir / ".git").exists():
+        try:
+            import subprocess
+
+            return subprocess.run(
+                ["git", "-C", str(bundle_dir), "show", "HEAD:research.json"],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                check=True,
+            ).stdout
+        except (subprocess.CalledProcessError, OSError):
+            pass  # no committed research.json — fall back to the working tree
+    return research_path.read_text(encoding="utf-8")
+
+
 def scan_feedback_bundle(
     bundle_dir: Path, *, window: int = _FEEDBACK_WINDOW, platform: str | None = None
 ) -> dict[str, Any]:
@@ -449,6 +474,10 @@ def scan_feedback_bundle(
         "platform": platform,
         "has_transcript": transcript.exists(),
         "truncated": False,
+        # A transcript file present but with zero adaptable records is a shape
+        # the adapter didn't recognise — #1558 item 3 requires naming it, and it
+        # must NOT be confused with a quiet session (adapted fine, no tool calls).
+        "could_not_adapt": False,
         "tool_call_count": 0,
         "skill_call_count": 0,
         "session_ids": [],
@@ -465,6 +494,7 @@ def scan_feedback_bundle(
         adapted = adapt_bundle_transcript(transcript)
         tool_calls = adapted["tool_calls"]
         out["truncated"] = adapted["truncated"]
+        out["could_not_adapt"] = adapted.get("adapted_records", 0) == 0
         out["session_ids"] = adapted["session_ids"]
         out["tool_call_count"] = len(tool_calls)
         out["skill_call_count"] = sum(
@@ -479,7 +509,7 @@ def scan_feedback_bundle(
 
     if research_path.exists():
         try:
-            research = json.loads(research_path.read_text(encoding="utf-8"))
+            research = json.loads(_submitted_research(bundle_dir, research_path))
         except (json.JSONDecodeError, OSError):
             research = None
             out["research_unreadable"] = True
@@ -488,15 +518,24 @@ def scan_feedback_bundle(
     return out
 
 
-def scan_feedback_dir(root: Path, *, window: int = _FEEDBACK_WINDOW) -> list[dict[str, Any]]:
+def scan_feedback_dir(
+    root: Path,
+    *,
+    window: int = _FEEDBACK_WINDOW,
+    platforms: dict[str, str] | None = None,
+) -> list[dict[str, Any]]:
     """Scan every unpacked bundle directory under `root` (each holding a
-    `research.json` and/or `_feedback/session-log.jsonl`). Platform is left
-    `None` — the caller labels each from its feedback issue."""
+    `research.json` and/or `_feedback/session-log.jsonl`). `platforms` maps a
+    bundle directory name to its platform (from the feedback issue's `Platform:`
+    line — not knowable from the bundle alone); unmapped bundles get `None`."""
     root = Path(root)
+    platforms = platforms or {}
     results: list[dict[str, Any]] = []
     for child in sorted(p for p in root.iterdir() if p.is_dir()):
         if (child / "_feedback" / "session-log.jsonl").exists() or (child / "research.json").exists():
-            results.append(scan_feedback_bundle(child, window=window))
+            results.append(
+                scan_feedback_bundle(child, window=window, platform=platforms.get(child.name))
+            )
     return results
 
 
@@ -512,8 +551,13 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
         f"\n{n} bundle(s): {len(with_transcript)} with a transcript "
         f"({len(truncated)} truncated), {n - len(with_transcript)} without."
     )
+    could_not_adapt = [r for r in with_transcript if r.get("could_not_adapt")]
     for r in results:
         tag = " [truncated]" if r["truncated"] else ""
+        # A transcript we couldn't adapt is named, not silently dropped (#1558
+        # item 3) — and kept out of the attributable denominator below.
+        if r.get("could_not_adapt"):
+            tag += " [could not adapt]"
         if r.get("research_unreadable"):
             tag += " [research unreadable]"
         elif not r.get("has_research"):
@@ -532,15 +576,27 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
             + (f", session_ids={r['session_ids']}" if len(r['session_ids']) > 1 else "")
             + shape_warn
         )
+        # The raw violation records, not just the count — a triager needs to see
+        # WHICH writes (#1558 item 3). format_detail wants each row tagged with
+        # its source, the same `fixture` key scan_one adds.
+        for v in r["unguarded_writes"]:
+            lines.append(format_detail([{**v, "fixture": r["bundle"]}]))
     # Totals with their denominators — never a combined number across detectors.
     # The mentor-verdict denominator is only bundles with a readable research.json;
     # a missing/unreadable one contributes no signal and must not inflate it.
     with_research = [r for r in results if r["has_research"] and not r["research_unreadable"]]
-    unguarded_total = sum(len(r["unguarded_writes"]) for r in with_transcript if not r["truncated"])
+    # Attributable = has a transcript we could adapt AND that wasn't truncated;
+    # a truncated or unadaptable transcript can't attribute a write, so neither
+    # is in the denominator.
+    attributable = [
+        r for r in with_transcript if not r["truncated"] and not r.get("could_not_adapt")
+    ]
+    unguarded_total = sum(len(r["unguarded_writes"]) for r in attributable)
     mentor_total = sum(len(r["missing_mentor_verdicts"]) for r in with_research)
     lines.append(
         f"\nTotals: unguarded-write findings {unguarded_total} across "
-        f"{len(with_transcript) - len(truncated)} attributable transcript(s); "
+        f"{len(attributable)} attributable transcript(s) "
+        f"({len(truncated)} truncated, {len(could_not_adapt)} could not adapt, excluded); "
         f"missing-mentor-verdict findings {mentor_total} across "
         f"{len(with_research)} bundle(s) with a readable research.json. "
         f"Corpus is small and self-selected — a signal, not a rate. "
@@ -579,6 +635,15 @@ def main(argv: list[str] | None = None) -> int:
             "(make feedback-case → ~/feedback/); nothing bundle-derived is committed."
         ),
     )
+    ap.add_argument(
+        "--platforms",
+        help=(
+            "comma-separated <bundle-dir>=<platform> pairs, from each feedback "
+            "issue's `Platform:` line (e.g. feedback-2026-08-01=web,feedback-...=darwin). "
+            "The platform isn't in the bundle; without this every row prints "
+            "platform=None. The lead's ruling is 'separate columns, never combined.'"
+        ),
+    )
     add_since_arg(ap)
     args = ap.parse_args(argv)
 
@@ -587,7 +652,13 @@ def main(argv: list[str] | None = None) -> int:
         if not root.is_dir():
             print(f"No such directory: {root}", file=sys.stderr)
             return 1
-        print(format_feedback_report(scan_feedback_dir(root)))
+        platforms: dict[str, str] = {}
+        if args.platforms:
+            for pair in args.platforms.split(","):
+                if "=" in pair:
+                    name, _, plat = pair.partition("=")
+                    platforms[name.strip()] = plat.strip()
+        print(format_feedback_report(scan_feedback_dir(root, platforms=platforms)))
         return 0
 
     windows = sorted({int(w) for w in args.windows.split(",") if w.strip()})

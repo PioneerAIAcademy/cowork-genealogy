@@ -48,6 +48,13 @@ def adapt_bundle_transcript(path: Path) -> dict[str, Any]:
     session_ids: list[str] = []
     seen_sids: set[str] = set()
     truncated = False
+    # Records the adapter actually recognised (a user/assistant line with a
+    # `message.content` list). Zero of these WITH non-blank lines present means
+    # the transcript could not be adapted — a shape mismatch #1558 item 3
+    # requires naming — which is distinct from a session that simply made no
+    # tool calls (adapted fine, just quiet). An empty `tool_calls` can't tell
+    # those two apart; this can.
+    adapted_records = 0
 
     for rec in parse_jsonl(path):
         if not isinstance(rec, dict):
@@ -65,6 +72,7 @@ def adapt_bundle_transcript(path: Path) -> dict[str, Any]:
         content = message.get("content") if isinstance(message, dict) else None
         if not isinstance(content, list):
             continue
+        adapted_records += 1
 
         for block in content:
             if not isinstance(block, dict):
@@ -76,9 +84,12 @@ def adapt_bundle_transcript(path: Path) -> dict[str, Any]:
                     "args": dict(block.get("input") or {}),
                     "response_summary": None,
                     # Default False; the matching tool_result flips it (below).
-                    # `is_error` is present on a tool_result ONLY when true, so a
-                    # missing key must read as success, not be left unset — the
-                    # #999 regression, re-created if this default is dropped.
+                    # `is_error` on a tool_result may be absent, explicitly
+                    # false, or true — measured across real transcripts, all
+                    # three occur. `bool(block.get("is_error"))` reads every one
+                    # correctly; the default here must stay False so a missing
+                    # key reads as success, not be left unset (the #999
+                    # regression, re-created if this default is dropped).
                     "is_error": False,
                 }
                 tool_calls.append(entry)
@@ -95,4 +106,5 @@ def adapt_bundle_transcript(path: Path) -> dict[str, Any]:
         "tool_calls": tool_calls,
         "truncated": truncated,
         "session_ids": session_ids,
+        "adapted_records": adapted_records,
     }

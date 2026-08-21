@@ -9,7 +9,11 @@ import json
 from pathlib import Path
 
 from e2e.feedback_transcript_adapter import adapt_bundle_transcript
-from e2e.guardrail_shadow_report import scan_feedback_bundle
+from e2e.guardrail_shadow_report import (
+    format_feedback_report,
+    scan_feedback_bundle,
+    scan_feedback_dir,
+)
 
 
 def _write_jsonl(path: Path, records: list[dict]) -> None:
@@ -49,24 +53,27 @@ def test_tool_use_block_becomes_one_entry(tmp_path):
 
 
 def test_is_error_joins_from_matching_tool_result(tmp_path):
-    """The #999 trap: is_error is present on a tool_result only when true, so a
-    missing key must read as success (False), not be left unset."""
+    """is_error on a tool_result may be absent, explicitly false, or true — all
+    three occur in real transcripts (explicit false is the most common). bool()
+    reads each correctly; a missing key must read as success, not be left unset
+    (the #999 trap)."""
     log = tmp_path / "session-log.jsonl"
     _write_jsonl(log, [
         _assistant([
             {"type": "tool_use", "id": "ok", "name": "record_search", "input": {}},
+            {"type": "tool_use", "id": "plain", "name": "record_search", "input": {}},
             {"type": "tool_use", "id": "bad", "name": "record_search", "input": {}},
         ]),
         _user_result([
             {"type": "tool_result", "tool_use_id": "ok", "content": "hits"},  # no is_error key
+            {"type": "tool_result", "tool_use_id": "plain", "content": "ok", "is_error": False},
             {"type": "tool_result", "tool_use_id": "bad", "content": "boom", "is_error": True},
         ]),
     ])
     out = adapt_bundle_transcript(log)
-    by_tool = {(e["tool"], i): e for i, e in enumerate(out["tool_calls"])}
     assert out["tool_calls"][0]["is_error"] is False  # missing key -> success
-    assert out["tool_calls"][1]["is_error"] is True    # explicit true -> error
-    assert by_tool  # silence unused
+    assert out["tool_calls"][1]["is_error"] is False   # explicit false -> success
+    assert out["tool_calls"][2]["is_error"] is True    # explicit true -> error
 
 
 def test_truncation_note_line_sets_truncated(tmp_path):
@@ -182,3 +189,170 @@ def test_unreadable_research_json_is_flagged_not_counted_as_clean(tmp_path):
     r_missing = scan_feedback_bundle(missing)
     assert r_missing["has_research"] is False
     assert r_missing["research_unreadable"] is False
+
+
+# ── could_not_adapt vs quiet-session distinction (#1558 item 3) ───────────────
+
+def _protected_write(*, block_id: str = "w") -> dict:
+    """A `research_append` op the guardrail owns (proof_summaries) with no prior
+    Skill call — fires `find_unguarded_protected_writes` exactly once."""
+    return {"type": "tool_use", "id": block_id, "name": "research_append",
+            "input": {"section": "proof_summaries", "op": "add",
+                      "entry": {"id": "ps_001"}}}
+
+
+def _mentor_gap_research() -> dict:
+    """A resolved question whose proof summary carries no proof-critique verdict —
+    `find_missing_mentor_verdicts` reports exactly one gap."""
+    return {
+        "questions": [{"id": "q_001", "status": "resolved"}],
+        "proof_summaries": [{"id": "ps_001", "question_id": "q_001"}],
+        "evaluations": [],
+    }
+
+
+def test_could_not_adapt_distinguishes_shape_mismatch_from_quiet_session(tmp_path):
+    """A transcript whose lines carry no `message.content` list (a shape the
+    adapter can't walk) is flagged could_not_adapt; a session that adapted fine
+    but simply made no tool calls is NOT — an empty tool_calls can't tell them
+    apart, this flag can (#1558 item 3)."""
+    # Shape mismatch: lines are dicts, but none has message.content.
+    bad = tmp_path / "unadaptable"
+    (bad / "_feedback").mkdir(parents=True)
+    _write_jsonl(bad / "_feedback" / "session-log.jsonl", [
+        {"type": "summary", "summary": "no content list here"},
+        {"type": "user", "message": {"role": "user"}},  # message present, content absent
+    ])
+    r_bad = scan_feedback_bundle(bad)
+    assert r_bad["has_transcript"] is True
+    assert r_bad["could_not_adapt"] is True
+    assert r_bad["tool_call_count"] == 0
+
+    # Quiet session: adaptable records present, just no tool_use blocks.
+    quiet = tmp_path / "quiet"
+    (quiet / "_feedback").mkdir(parents=True)
+    _write_jsonl(quiet / "_feedback" / "session-log.jsonl", [
+        {"type": "user", "message": {"content": [{"type": "text", "text": "hi"}]}},
+        _assistant([{"type": "text", "text": "hello"}]),
+    ])
+    r_quiet = scan_feedback_bundle(quiet)
+    assert r_quiet["has_transcript"] is True
+    assert r_quiet["could_not_adapt"] is False
+    assert r_quiet["tool_call_count"] == 0
+
+
+# ── scan_feedback_dir: platform mapping + selection ──────────────────────────
+
+def test_scan_feedback_dir_maps_platform_by_bundle_name(tmp_path):
+    """`platforms` maps a bundle DIR NAME to its platform (the feedback issue's
+    `Platform:` line — not in the bundle). Unmapped bundles get None; a dir with
+    neither a transcript nor a research.json is skipped entirely."""
+    web = tmp_path / "feedback-web-01"
+    (web / "_feedback").mkdir(parents=True)
+    _write_jsonl(web / "_feedback" / "session-log.jsonl", [_assistant([_protected_write()])])
+    (web / "research.json").write_text("{}", encoding="utf-8")
+
+    darwin = tmp_path / "feedback-desktop-02"
+    darwin.mkdir()
+    (darwin / "research.json").write_text("{}", encoding="utf-8")
+
+    unmapped = tmp_path / "feedback-unknown-03"
+    unmapped.mkdir()
+    (unmapped / "research.json").write_text("{}", encoding="utf-8")
+
+    (tmp_path / "not-a-bundle").mkdir()  # neither file -> skipped
+
+    results = scan_feedback_dir(
+        tmp_path, platforms={"feedback-web-01": "web", "feedback-desktop-02": "darwin"}
+    )
+    by_name = {r["bundle"]: r for r in results}
+    assert set(by_name) == {"feedback-web-01", "feedback-desktop-02", "feedback-unknown-03"}
+    assert by_name["feedback-web-01"]["platform"] == "web"
+    assert by_name["feedback-desktop-02"]["platform"] == "darwin"
+    assert by_name["feedback-unknown-03"]["platform"] is None
+
+
+# ── format_feedback_report ───────────────────────────────────────────────────
+
+def test_format_feedback_report_prints_raw_records_and_platform(tmp_path):
+    """The report prints each unguarded-write record (not just a count — a
+    triager needs to see WHICH write, #1558 item 3) and the caller-supplied
+    platform."""
+    bundle = tmp_path / "feedback-web-01"
+    (bundle / "_feedback").mkdir(parents=True)
+    _write_jsonl(bundle / "_feedback" / "session-log.jsonl", [_assistant([_protected_write()])])
+    (bundle / "research.json").write_text("{}", encoding="utf-8")
+
+    results = scan_feedback_dir(tmp_path, platforms={"feedback-web-01": "web"})
+    report = format_feedback_report(results)
+    assert "platform=web" in report
+    # The raw record row from format_detail: fixture name + the owning skill.
+    assert "feedback-web-01" in report
+    assert "needs=proof-conclusion" in report
+    assert "tool=research_append" in report
+    # Zero Skill calls before a protected write -> the shape-mismatch warning.
+    assert "Skill-shape mismatch" in report
+
+
+def test_format_feedback_report_excludes_could_not_adapt_from_denominator(tmp_path):
+    """An unadaptable transcript is tagged [could not adapt] and kept OUT of the
+    attributable-transcript denominator; a clean one counts."""
+    good = tmp_path / "good-01"
+    (good / "_feedback").mkdir(parents=True)
+    _write_jsonl(good / "_feedback" / "session-log.jsonl", [_assistant([_protected_write()])])
+    (good / "research.json").write_text("{}", encoding="utf-8")
+
+    bad = tmp_path / "bad-02"
+    (bad / "_feedback").mkdir(parents=True)
+    _write_jsonl(bad / "_feedback" / "session-log.jsonl", [
+        {"type": "summary", "summary": "no content"},
+    ])
+    (bad / "research.json").write_text("{}", encoding="utf-8")
+
+    report = format_feedback_report(scan_feedback_dir(tmp_path))
+    assert "[could not adapt]" in report
+    # 1 attributable transcript (good-01), the unadaptable one excluded.
+    assert "across 1 attributable transcript(s)" in report
+    assert "1 could not adapt, excluded" in report
+
+
+# ── _submitted_research: committed baseline beats a mutated working tree ──────
+
+def test_scan_reads_submitted_research_not_a_mutated_working_tree(tmp_path):
+    """`make feedback-case` git-inits the case dir; the agent mutates
+    research.json as it works. The scanner must read the COMMITTED baseline (what
+    the tester submitted), so a mentor-verdict gap present at submission is still
+    found even after the working tree wrote it away."""
+    import os
+    import shutil
+    import subprocess
+
+    if shutil.which("git") is None:  # pragma: no cover - git present in CI
+        import pytest
+        pytest.skip("git not available")
+
+    bundle = tmp_path / "git-bundle"
+    bundle.mkdir()
+    research = bundle / "research.json"
+    research.write_text(json.dumps(_mentor_gap_research()), encoding="utf-8")
+
+    env = {**os.environ,
+           "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
+    run = lambda *a: subprocess.run(  # noqa: E731
+        ["git", "-C", str(bundle), *a], check=True, capture_output=True,
+        text=True, encoding="utf-8", env=env,
+    )
+    run("init", "-q")
+    run("add", "research.json")
+    run("commit", "-q", "-m", "submitted")
+
+    # Working tree "fixes" the gap: add the proof-critique verdict.
+    fixed = _mentor_gap_research()
+    fixed["evaluations"] = [{"focus": "proof-critique", "target_id": "ps_001"}]
+    research.write_text(json.dumps(fixed), encoding="utf-8")
+
+    result = scan_feedback_bundle(bundle)
+    # Baseline (submitted) still had the gap -> one finding, despite the fix on disk.
+    assert len(result["missing_mentor_verdicts"]) == 1
+    assert "ps_001" in result["missing_mentor_verdicts"][0]
