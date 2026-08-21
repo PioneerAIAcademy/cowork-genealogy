@@ -11,9 +11,9 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * of the 43 toggles have EVER appeared in a call.
  *
  * **The justification is clarity; the token saving is small.** Measured after the
- * rewrite: `record_search` 15,509 -> 14,092 and `person_search` 3,745 -> 4,982
+ * rewrite: `record_search` 15,509 -> 14,137 and `person_search` 3,745 -> 4,982
  * (its toggles were stubs that were also wrong, so correctness cost tokens
- * there), for a combined 19,254 -> 19,074 — a net saving of about 180 characters,
+ * there), for a combined 19,254 -> 19,119 — a net saving of about 135 characters,
  * under 1%. This figure has been an increase and a saving at different points in
  * the same branch, which is the point: it is a side effect, not the argument.
  * `record_search.birthYearExact` at 475 chars is most of the remaining bulk. What
@@ -32,24 +32,29 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * The ceiling is SIZED FROM THE ONE-LINERS ACTUALLY WRITTEN, not guessed. The
  * three longest non-exempt descriptions are `record_search.givenNameExact` at
  * **238**, `record_search.surnameExact` at **237**, and
- * `person_search.birthYearExact` at **209** — note that only `record_search`'s
- * `birthYearExact` is exempt, so the person_search one counts. Then
- * `record_search.birthPlaceExact` at 181. Before #1409 six toggles exceeded the old
- * ceiling: 475, 402, 375, 341, 269, 255.
+ * `record_search.birthPlaceExact` at **226**. `person_search.birthYearExact` is
+ * the longest one below them at 178 — not exempt (only `record_search`'s
+ * `birthYearExact` is), just shorter than `birthPlaceExact`, so it does not make
+ * the top three. Before #1409 six toggles exceeded the old ceiling: 475, 402,
+ * 375, 341, 269, 255.
  *
- * The assertion below caught this list being wrong on its first run: it named
- * `birthPlaceExact` third, from a measurement whose filter had excluded BOTH tools'
- * `birthYearExact` when only one is exempt. Fourth error in this docstring, first
- * one caught by a test rather than a reviewer.
+ * This list has been wrong in BOTH directions. An early revision named
+ * `birthPlaceExact` third from a measurement whose filter had excluded BOTH tools'
+ * `birthYearExact` when only one is exempt — right answer, wrong method. The "fix"
+ * then over-corrected, promoting `person_search.birthYearExact` into third at a
+ * quoted 209; re-measured it is 178, below `birthPlaceExact`'s 181, so
+ * `birthPlaceExact` is third after all. `DOCUMENTED_LONGEST` below has carried the
+ * right list throughout — the assertion binds those executable figures, not this
+ * prose, which is how the prose could drift here while the test stayed green.
  *
- * **The ceiling is the midpoint of the empirical gap.** Legitimate one-liners top
- * out at 238; the smallest real offender was 255; so any ceiling in 239..254 is
- * defensible and `CEILING` below is the middle of it. 240 was the bottom of that
- * range and left
- * two characters of headroom, which makes an ordinary clarification look like a
- * defect. 255 or above is NOT available: it would re-admit a description this PR
- * shortened for being too long, and a lint that permits what it was written to
- * catch is worse than a tight one.
+ * **The ceiling sits high in the empirical gap, for headroom.** Legitimate
+ * one-liners top out at 238; the smallest real offender was 255; so any ceiling in
+ * 239..254 is defensible, and `CEILING` below is 250 — near the top of that range,
+ * not its midpoint. High on purpose: 240 was the bottom and left only two
+ * characters of headroom, which makes an ordinary clarification look like a defect.
+ * 255 or above is NOT available: it would re-admit a description this PR shortened
+ * for being too long, and a lint that permits what it was written to catch is
+ * worse than a tight one.
  *
  * When it does bind, the fix is to shorten the description — NOT to raise the
  * ceiling, and NOT to add an `EXEMPT` entry, which is for a description whose
@@ -106,7 +111,7 @@ const CEILING = 250;
 const DOCUMENTED_LONGEST: Array<[string, number]> = [
   ["record_search.givenNameExact", 238],
   ["record_search.surnameExact", 237],
-  ["record_search.birthPlaceExact", 181],
+  ["record_search.birthPlaceExact", 226],
 ];
 /** Smallest description that exceeded the ceiling before #1409 shortened it. */
 const SMALLEST_HISTORICAL_OFFENDER = 255;
@@ -118,7 +123,7 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14092],
+  ["record_search", 14137],
   ["person_search", 4982],
 ];
 

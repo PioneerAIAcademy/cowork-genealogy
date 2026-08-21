@@ -164,48 +164,100 @@ const ABSOLUTE_TOTAL = /\b\d{1,3}(?:,\d{3})+\b/g;
 
 /**
  * Figures that are real but provably NOT from this artifact. Each needs a
- * reason, because an unexplained entry here is how a wrong number gets a
+ * `reason`, because an unexplained entry here is how a wrong number gets a
  * permanent pass.
+ *
+ * `scope` (optional) names the surfaces the exemption is granted FOR. `traces`
+ * runs per surface and this map is keyed by VALUE, so without a scope an
+ * exemption written for one document silently excuses the same number in every
+ * other — a stale `56,177` pasted into the record-side spec would trace for free
+ * on a reason naming the person-side probe. Omit `scope` for a figure that
+ * genuinely appears in more than one place (`9` does, in three): absent means
+ * every surface, the historical default. `reason` and `scope` live on one entry
+ * so the pair cannot drift out of sync; each scope was placed by tokenising every
+ * figure on the four surfaces and testing membership, not by reading the reasons.
  */
-const EXEMPT = new Map<number, string>([
+const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
   [
     14095,
-    "disclosed in the spec as measured in the original probe session under a query shape the committed probe does not run",
+    {
+      reason: "disclosed in the spec as measured in the original probe session under a query shape the committed probe does not run",
+      scope: ["docs/specs/record-search-tool-spec-v2.md"],
+    },
   ],
-  [251867, "same original-session disclosure — the batch-number pair"],
-  [31606, "same original-session disclosure — the alternate-surname pair"],
+  [
+    251867,
+    {
+      reason: "same original-session disclosure — the batch-number pair",
+      scope: ["docs/specs/record-search-tool-spec-v2.md"],
+    },
+  ],
+  [
+    31606,
+    {
+      reason: "same original-session disclosure — the alternate-surname pair",
+      scope: ["docs/specs/record-search-tool-spec-v2.md"],
+    },
+  ],
   [
     10730,
-    "placed facts across trees — a different investigation entirely, not a qualifier measurement",
+    {
+      reason: "placed facts across trees — a different investigation entirely, not a qualifier measurement",
+      scope: ["docs/specs/record-search-tool-spec-v2.md"],
+    },
   ],
-  [9, "facet-aggregation speedup on `m.defaultFacets`, unrelated to the qualifiers"],
+  [
+    9,
+    { reason: "facet-aggregation speedup on `m.defaultFacets`, unrelated to the qualifiers" },
+  ],
   [
     3380,
-    "row count of a payload-size measurement in record-search.ts, unrelated to the qualifiers",
+    {
+      reason: "row count of a payload-size measurement in record-search.ts, unrelated to the qualifiers",
+      scope: ["packages/engine/mcp-server/src/tools/record-search.ts"],
+    },
   ],
   [
     1478,
-    "the HISTORICAL count quoted from issue #1088's transcript, deliberately preserved as the observation being explained rather than as a current measurement",
+    {
+      reason: "the HISTORICAL count quoted from issue #1088's transcript, deliberately preserved as the observation being explained rather than as a current measurement",
+      scope: ["packages/engine/mcp-server/src/tools/record-search.ts"],
+    },
   ],
   [
     1100,
-    "the Brazil/Lapa/1880 pool that made the surname empty-field leg provable, from dev/explore-name-empty-field-leg-records.ts on 2026-08-20 — a session script, not a probe section, so no verdict records it; re-run the script to check it",
+    {
+      reason: "the Brazil/Lapa/1880 pool that made the surname empty-field leg provable, from dev/explore-name-empty-field-leg-records.ts on 2026-08-20 — a session script, not a probe section, so no verdict records it; re-run the script to check it",
+      scope: ["docs/specs/record-search-tool-spec-v2.md"],
+    },
   ],
   [
     56177,
-    "person_search spec, from a 2026-05-28 session probe that predates this artifact AND left no committed script — see that spec's Evidence note: the unqualified `surname=Lincoln` pool, quoted twice to show the require-switch has no effect without it",
+    {
+      reason: "person_search spec, from a 2026-05-28 session probe that predates this artifact AND left no committed script — see that spec's Evidence note: the unqualified `surname=Lincoln` pool, quoted twice to show the require-switch has no effect without it",
+      scope: ["docs/specs/person-search-tool-spec.md"],
+    },
   ],
   [
     9700,
-    "same 2026-05-28 probe — the gibberish-surname pool, quoted as `~9,700` to make the surname-plus-one rule's case",
+    {
+      reason: "same 2026-05-28 probe — the gibberish-surname pool, quoted as `~9,700` to make the surname-plus-one rule's case",
+      scope: ["docs/specs/person-search-tool-spec.md"],
+    },
   ],
   [
     2916,
-    "same 2026-05-28 probe — the same query WITH `m.queryRequireDefault=on`, which is the contrast the 56,177 figure exists for",
+    {
+      reason: "same 2026-05-28 probe — the same query WITH `m.queryRequireDefault=on`, which is the contrast the 56,177 figure exists for",
+      scope: ["docs/specs/person-search-tool-spec.md"],
+    },
   ],
   [
     947,
-    "the other half of that same #1088 transcript pair (947 -> 1,478); surfaced when the tolerance floor dropped from 2 to 0.5, which stopped it matching section X's current 948 by luck. Historical, like 1478 — not a re-measurement",
+    {
+      reason: "the other half of that same #1088 transcript pair (947 -> 1,478); surfaced when the tolerance floor dropped from 2 to 0.5, which stopped it matching section X's current 948 by luck. Historical, like 1478 — not a re-measurement",
+      scope: ["packages/engine/mcp-server/src/tools/record-search.ts"],
+    },
   ],
 ]);
 
@@ -301,34 +353,10 @@ describe("measured figures stay traceable to the probe artifact", () => {
    * honest re-runs, which is how a check gets deleted.
    */
   const DRIFT = 0.001;
-  /**
-   * Surfaces an exemption is granted FOR. `EXEMPT` is keyed by VALUE and `traces`
-   * runs per surface, so without this an exemption written for one document silently
-   * excuses the same number in every other — a stale `56,177` pasted into the
-   * record-side spec would trace for free, on a reason naming the person-side probe.
-   *
-   * Absent from this map means every surface, which is the historical default and is
-   * correct for a figure that genuinely appears in more than one place (`9` does, in
-   * three). Each entry below was placed by tokenising every figure on the four
-   * surfaces and testing membership, not by reading the reason strings.
-   */
-  const EXEMPT_SCOPE = new Map<number, readonly string[]>([
-    [14095, ["docs/specs/record-search-tool-spec-v2.md"]],
-    [251867, ["docs/specs/record-search-tool-spec-v2.md"]],
-    [31606, ["docs/specs/record-search-tool-spec-v2.md"]],
-    [10730, ["docs/specs/record-search-tool-spec-v2.md"]],
-    [1100, ["docs/specs/record-search-tool-spec-v2.md"]],
-    [3380, ["packages/engine/mcp-server/src/tools/record-search.ts"]],
-    [1478, ["packages/engine/mcp-server/src/tools/record-search.ts"]],
-    [947, ["packages/engine/mcp-server/src/tools/record-search.ts"]],
-    [56177, ["docs/specs/person-search-tool-spec.md"]],
-    [9700, ["docs/specs/person-search-tool-spec.md"]],
-    [2916, ["docs/specs/person-search-tool-spec.md"]],
-  ]);
-
   const traces = (n: number, rel: string): boolean => {
-    if (EXEMPT.has(n)) {
-      const scope = EXEMPT_SCOPE.get(n);
+    const exemption = EXEMPT.get(n);
+    if (exemption !== undefined) {
+      const scope = exemption.scope;
       // Out of scope falls THROUGH to the artifact check rather than passing.
       if (scope === undefined || scope.includes(rel)) return true;
     }
@@ -648,11 +676,27 @@ describe("measured figures stay traceable to the probe artifact", () => {
 
   it("the exemption list stays justified", () => {
     const unjustified = [...EXEMPT.entries()]
-      .filter(([, reason]) => reason.trim().length < 20)
+      .filter(([, { reason }]) => reason.trim().length < 20)
       .map(([n]) => n);
     expect(
       unjustified,
       "every EXEMPT entry needs a real reason — an unexplained one is a permanent pass for a wrong number"
+    ).toEqual([]);
+  });
+
+  it("no surface is classified both evidence and agent", () => {
+    // The three surface arrays are hand-maintained and nothing else checks they
+    // stay consistent. EVIDENCE_SURFACES MAY carry precise figures; AGENT_SURFACES
+    // may NOT carry absolute totals — contradictory rules, so a surface in both
+    // would be checked twice with the outcome depending on loop order. That overlap
+    // is never legitimate. (`person-search.ts` in AGENT + WORDING_ONLY, and the
+    // person spec in EVIDENCE + WORDING_ONLY, are the DELIBERATE overlaps —
+    // WORDING_ONLY is orthogonal to the figure rules and so is excluded here.)
+    const both = EVIDENCE_SURFACES.filter((s) => AGENT_SURFACES.includes(s));
+    expect(
+      both,
+      "a surface is in both EVIDENCE_SURFACES and AGENT_SURFACES, which permit and " +
+        "forbid figures respectively — put it in exactly one."
     ).toEqual([]);
   });
 });
