@@ -1369,7 +1369,7 @@ tools — what happens after you grant one), and `check_negative_reciprocity.py`
 (a negative routing edge `A → B` with no `B → A` test backing it — what happens
 after you widen a description).
 
-**Three more live outside `tests/packaging/`, and the inventory above will not
+**These live outside `tests/packaging/`, and the inventory above will not
 lead you to them:**
 
 - `packages/engine/mcp-server/tests/validation/tree-shape-drift.test.ts` —
@@ -1378,6 +1378,11 @@ lead you to them:**
 - `eval/harness/tests/unit/test_schema_mirrors.py` — the two schema trees stay
   byte-identical. `eval/harness/tests/unit/test_write_lockdown_parity.py` — the
   three write-lockdown copies agree. Both run under `make harness-test`.
+- `eval/harness/tests/unit/test_unit_test_corpus.py` — every committed file
+  under `eval/tests/unit/` validates against `unit-test.schema.json`, by calling
+  `loader.load_test` rather than re-implementing it. Catches a schema violation
+  and unparseable JSON alike; both were previously invisible until the next paid
+  eval run. Runs under `make harness-test`.
 - `eval/harness/scripts/check_e2e_fixtures.py` — **blocking**, from its own
   workflow (`.github/workflows/check-e2e-fixtures.yml`), on any change under
   `eval/tests/e2e/` or `eval/runlogs/e2e/`. It is not part of `make test-all`,
