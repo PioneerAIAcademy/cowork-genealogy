@@ -250,15 +250,14 @@ Two qualifications, both from the source:
   It also exempts plugin agents, which get fresh context per invocation and
   cannot decay this way.
 
-`make e2e-compaction` (issue #1155) is the corpus-scale follow-up to this
-single-session measurement — it splits every committed e2e run at its
-compaction boundaries and checks a narrower, already-partly-anchored case:
-whether `record_search`'s `subjectId` argument (`search-records/SKILL.md`
-prose, feeding a fold in `record-search.ts` — see ADR-0003) keeps being
-supplied late in a session. It decays there too — the shipped nudge meant to
-counter that decay shows a measured effect early in a session and none late,
-where compaction has already done its work. See ADR-0003's Consequences and
-issue #1811.
+`make e2e-compaction` is the corpus-scale follow-up to this single-session
+measurement — it splits every committed e2e run at its compaction boundaries
+and checks a narrower, already-partly-anchored case: whether `record_search`'s
+`subjectId` argument (`search-records/SKILL.md` prose, feeding a fold in
+`record-search.ts` — see ADR-0003) keeps being supplied late in a session. It
+decays there too — the shipped nudge meant to counter that decay shows a
+measured effect early in a session and none late, where compaction has
+already done its work. See ADR-0003's Consequences.
 
 A rule is **structurally anchored** if any of these holds:
 
