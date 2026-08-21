@@ -4,18 +4,22 @@
     "skill": "init-project",
     "name": "Initialize project from FamilySearch tree person ID and full objective",
     "type": "positive",
-    "description": "Single-turn decomposition of the init-project workflow (per unit-test-spec.md §1): the user provides a complete research objective and a FamilySearch person ID in one message, skipping the interview phase. The skill should create both research.json and tree.gedcomx.json, treat the FamilySearch person data as a starting stub (not authoritative facts), and produce a project ready for research.",
-    "tags": ["initialization", "familysearch", "tree", "single-turn-decomposition", "stub-person", "init-empty-sections"]
+    "description": "Single-turn decomposition of the init-project workflow (per unit-test-spec.md §1): the user provides a complete research objective and a FamilySearch person ID in one message, skipping the interview phase. The skill should create both research.json and tree.gedcomx.json, treat the FamilySearch person data as a starting stub (not authoritative facts), and produce a project ready for research. This is also the suite's only multi-person import: the flagged fixture returns a wife, two children, five relationships and two attached source descriptions, so it is the one test where \"include all relatives, all relationships, all source descriptions\", the local-ID re-mapping of FamilySearch-seeded persons, and the ParentChild/Couple endpoint spellings are exercised at all. Both person_read fixtures now predicate on relatives+sourceDescriptions, so a call that omits either matches nothing, receives fixture_not_found, and is scored down on Tool Arguments — which is the first time in this suite that dropping a flag has any consequence at all.",
+    "tags": ["initialization", "familysearch", "tree", "single-turn-decomposition", "stub-person", "init-empty-sections", "relatives", "fan-principle", "source-descriptions", "person-read-flags"]
   },
   "input": {
     "user_message": "Start a new research project to identify the parents of Patrick Flynn, born around 1845 in Pennsylvania and died 1908 in Schuylkill County. His FamilySearch person ID is LZNY-BRF.",
     "scenario": null
   },
-  "mcp_fixtures": ["person-read-flynn"],
+  "mcp_fixtures": ["person-read-flynn-family"],
   "judge_context": [
-    "Should set `project.objective` to a paraphrase of the user's stated goal using the user's stated facts. The user said 'born around 1845 in Pennsylvania' — the objective should reflect that, not FamilySearch's Ireland birthplace. The objective is the user's research question, not the FamilySearch data.",
-    "The person-read-flynn fixture returns Ireland as the birthplace. The stub in tree.gedcomx.json should use Ireland (FamilySearch is the source being surveyed). The discrepancy between the user's Pennsylvania and FamilySearch's Ireland must be flagged — this is correct and expected behavior, not an error.",
-    "Should create a stub person in tree.gedcomx.json from the person-read-flynn fixture data, with only known fields populated and unknown fields omitted (not filled with placeholders)",
+    "Judge whether `project.objective` preserves the user's own stated facts. The user said 'born around 1845 in Pennsylvania'. Substituting FamilySearch's value and dropping the user's value are both departures from it — weigh the stored objective against what the user said, in both directions.",
+    "The fixture returns Ireland as the birthplace. The tree should use Ireland (FamilySearch is the source being surveyed). The discrepancy between the user's Pennsylvania and FamilySearch's Ireland must be flagged — this is correct and expected behavior, not an error.",
+    "Should create tree persons from the fixture data, with only known fields populated and unknown fields omitted (not filled with placeholders)",
+    "The flagged fixture returns four persons (Patrick, wife Mary Kelly, children James and Margaret), one Couple relationship carrying the marriage fact, and four ParentChild relationships. Judge what reached `tree.gedcomx.json` against what the tool returned: persons, relationships and both source descriptions are all part of the survey. No parents are returned — they are the research target, and inventing them is fabrication.",
+    "Every person, including the FamilySearch-seeded ones, carries a local `I` id; FamilySearch PIDs are not used as tree person ids. Relationships and names arrive from `person_read` without ids and the skill synthesizes them.",
+    "The fixture's facts carry two standardized sidecars — `standard_place` and `standard_date` — and neither is a string copy of its raw field (FamilySearch drops \"County\"; `~1845` standardizes to `Abt 1845`). Judge whether both standardized values in the tree are the ones the tool returned, for every fact that arrived with one.",
+    "One of the two returned source descriptions carries a `notes` array. `notes` is not a permitted field on a simplified-GedcomX source, so a verbatim copy of the tool's `sources[]` into the tree is rejected by the `project_create` write — weigh both whether the sources reached the tree and whether the write succeeded.",
     "Should mark facts derived from FamilySearch tree data as UNVERIFIED — e.g., source them to FamilySearch-tree-as-source rather than treating user-tree data as primary evidence"
   ]
 }
