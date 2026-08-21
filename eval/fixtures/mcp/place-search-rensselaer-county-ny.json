@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Rensselaer County, New York (formed 1791 from Albany County; on the Massachusetts border opposite northern Berkshire County). Supports test 026's cross-border adjoining-jurisdiction search (issue #1415).",
+  "args": {
+    "placeName": "~Rensselaer"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Rensselaer, New York, United States",
+        "type": "County",
+        "dateRange": "+1791/",
+        "latitude": 42.71,
+        "longitude": -73.51,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Rensselaer%2C%20New%20York"
+      }
+    ]
+  }
+}

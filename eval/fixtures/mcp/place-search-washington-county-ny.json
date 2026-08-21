@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Washington County, New York (formed 1772 as Charlotte County, renamed 1784; on the New York-Vermont border). Supports test 026's cross-border adjoining-jurisdiction search (issue #1415).",
+  "args": {
+    "placeName": "~Washington"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Washington, New York, United States",
+        "type": "County",
+        "dateRange": "+1784/",
+        "latitude": 43.31,
+        "longitude": -73.43,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Washington%2C%20New%20York"
+      }
+    ]
+  }
+}
