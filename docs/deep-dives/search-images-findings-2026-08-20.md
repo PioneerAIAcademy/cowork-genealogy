@@ -69,9 +69,9 @@ covering the full `image_search` argument contract.
 
 **Already covered — the other prohibited tool, `image_read`, needs no request.** The
 body also forbids the skill calling `image_read` itself. That one *is* already enforced:
-`image_read` is in `SUBAGENT_ONLY_TOOLS` (`eval/harness/harness/context_policy.py:79`),
+`image_read` is in `SUBAGENT_ONLY_TOOLS` (`eval/harness/harness/context_policy.py`),
 the PreToolUse hook blocks a main-thread call, and the universal
-`test_no_main_thread_subagent_only_calls` (`eval/harness/validators/test_universal.py:695`)
+`test_no_main_thread_subagent_only_calls` (`eval/harness/validators/test_universal.py`)
 fails on it — on every skill, search-images included. So there is no `image_read`
 validator to request; only the `image_search` argument contract above is unguarded.
 
@@ -165,7 +165,7 @@ record-extraction may update only `items[].status`."*
 **Gap — lane 2, field-level only.** The **section**-level half is already enforced and
 needs no request: `ownership.json` lists `sources` callers as record-extraction + citation
 and `assertions` as record-extraction only — search-images is not a caller — and the
-universal `test_ownership_table` (`test_universal.py:439`) fails any out-of-lane section
+universal `test_ownership_table` (`test_universal.py`) fails any out-of-lane section
 write. **So the earlier V4 (a search-images `sources`/`assertions` write) is dropped as a
 duplicate of `test_ownership_table`.** What remains uncovered is the **field** level:
 `test_ownership_table` checks section ownership only, `plan_items` `enforceableAt` is even
@@ -191,7 +191,7 @@ changed a plan item's `title` or `priority` would pass every existing validator.
 **Did:** the skill's ROUTING block has five decline branches, each of which must redirect
 and stop with **zero MCP calls and zero writes** (SKILL.md:30-63). The deterministic guard
 for that invariant, `test_no_browse_or_writes_on_planning_request`
-(`test_search_images.py:118`), fires **only** on the `no-browse-no-write` tag — which is
+(`test_search_images.py`), fires **only** on the `no-browse-no-write` tag — which is
 set on exactly one scenario, `negative-research-plan.json` (the planning branch). The
 indexed-search, full-text, and record-extraction decline negatives
 (`ut_search_images_005` / `006` / `007`) carry no such tag, so "zero calls, zero writes"
@@ -278,7 +278,7 @@ Two candidates were dropped after the coverage sweep as already enforced by univ
 validators:
 
 - **V2 (no `image_read`)** — covered by `test_no_main_thread_subagent_only_calls` +
-  `SUBAGENT_ONLY_TOOLS` (`context_policy.py:79`).
+  `SUBAGENT_ONLY_TOOLS` (`context_policy.py`).
 - **V4 (no `sources`/`assertions` write)** — covered by `test_ownership_table` +
   `ownership.json` (search-images is not a caller of either section).
 
