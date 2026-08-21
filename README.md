@@ -77,7 +77,7 @@ The MCP server exposes 48 tools.
 | `person_read` | FamilySearch Family Tree person data — relatives and attached sources | OAuth |
 | `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number | OAuth |
 | `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
-| `volume_search` | Search FamilySearch's Records Management Service for digitized volumes (image groups) by place and year range — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume | OAuth |
+| `volume_search` | Search FamilySearch's Records Management Service for digitized volumes (image groups) by place and year range, optionally filtered to one or more `recordTypeGroups` (selecting a group also returns the groups nested beneath it) — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume | OAuth |
 | `external_links_search` | FS-curated third-party genealogy URLs by place; optional year filter | None |
 
 ### FamilySearch Wiki content
