@@ -17,6 +17,18 @@ under dimensions that never move.
 skill) and `docs/specs/schemas/ownership.json`, so nothing below duplicates an existing
 guard. Two candidate validators were dropped as already-covered — see F1 and F4.
 
+**Validator input contract.** Each request's *Where to look* names only the inputs a
+validator actually receives (`eval/harness/validators/conftest.py`,
+`eval/harness/harness/validator_runner.py`): `before_state`, `after_state`, `tool_calls`,
+and `skill_frontmatter`. The **run-log envelope** fields the *Did* sections quote —
+`output.tool_calls`, `output.file_changes` — are **not** what a validator receives: at
+validation time a file change is `after_state` minus `before_state`, and a call's result
+is the `response` payload on its `tool_calls` entry (each entry carries `tool` / `args` /
+`response`; e.g. `research_log_append` returns `{ ok: … }` in `response`). There is no
+`output.file_changes` input and no `is_error` field. Declaring an input the runner does
+not supply hard-fails the whole suite instead of skipping — the trap live on #1764 — so
+the *Where to look* lines below name the real inputs.
+
 **Dimensions that never discriminate — 2 of 6, as the issue states:**
 
 | dimension | score distribution across the suite |
@@ -64,7 +76,7 @@ covering the full `image_search` argument contract.
 > `imageId` (SKILL.md:98-100 — `image_search` lists the whole group in one call and has
 > no such parameters); (c) no two `image_search` calls in one run share the same
 > `imageGroupNumber` ("never re-query to get more").
-> **Where to look:** `output.tool_calls`, entries whose tool ends in `image_search`.
+> **Where to look:** the `tool_calls` input, entries whose `tool` ends in `image_search`.
 > **Why it is not judgment:** a regex and a key-presence/duplicate check on literal
 > argument values; nothing interpreted.
 > **What a violation looks like:** none in the current corpus — this locks the body's
@@ -114,16 +126,21 @@ cross-checks a log entry's `tool` against the tool ledger — this is V3's speci
 contribution.
 
 > **Validator request V3 — a logged `image_search` browse must have actually happened**
-> **Rule:** if a new `log` entry has `tool` containing `image_search`, then
-> `output.tool_calls` must contain at least one `image_search` call in the same run.
+> **Rule:** if a new `log` entry has `tool` containing `image_search`, then the
+> `tool_calls` input must contain at least one `image_search` call in the same run.
 > (Equivalently: a no-volume browse — zero `image_search` calls — must not log
 > `tool: "image_search"`.)
-> **Where to look:** new entries in `research.json` `log[]` (after-state minus before)
-> and `output.tool_calls`.
+> **Where to look:** the `before_state` / `after_state` inputs (a new `log[]` entry is one
+> present in `after_state`'s `research.json` `log[]` but not `before_state`'s) and the
+> `tool_calls` input.
 > **Why it is not judgment:** compares a literal log field to the tool ledger.
 > **What a violation looks like:** `ut_search_images_004`, all five committed runs —
 > `log` entry `tool: "image_search"`, `tool_calls` = 3×`volume_search` +
 > `research_log_append`, zero `image_search`.
+> **Ship with the body fix:** SKILL.md step 6 still shows `tool: "image_search"` as its
+> only worked example, so V3 turns `ut_search_images_004` red on **every** run until that
+> example names the right tool for the no-volume branch. Land the SKILL.md edit in the
+> same change as V3, or the first post-V3 run reads as a regression.
 
 ---
 
@@ -181,11 +198,10 @@ changed a plan item's `title` or `priority` would pass every existing validator.
 > **Validator request V5 — a search-images plan-item update changes only `status`**
 > **Rule:** every `research_append` call from search-images with `section: "plan_items"`
 > must have a `fields` object whose keys are a subset of `{status}`. (Equivalently, on the
-> persisted side: the only per-item field that differs between the `plans` diff's
-> `changed_fields.items.before` and `.after` is `status`.)
-> **Where to look:** `output.tool_calls` (the `research_append` `fields` arg) — cross-check
-> against `output.file_changes["research.json"].diff.plans` if a persisted-side check is
-> preferred.
+> persisted side: for each plan item that differs between `before_state` and `after_state`,
+> the only changed field is `status`.)
+> **Where to look:** the `tool_calls` input (the `research_append` `fields` arg) — or, for
+> a persisted-side check, the `plans` section of `before_state` vs `after_state`.
 > **Why it is not judgment:** a set-subset check on literal field keys.
 > **What a violation looks like:** none currently — `ut_search_images_012` sets only
 > `status`; this locks the field lane the ownership table does not reach.
@@ -216,13 +232,16 @@ test — is noted but not chased per the guide; V6 would cover it the moment suc
 exists.)
 
 > **Validator request V6 — a routing-decline negative touches nothing**
-> **Rule:** for a search-images **negative** test tagged as a routing decline (any of the
-> five branches), `output.tool_calls` must contain no `volume_search` or `image_search`
-> call, `output.file_changes` must add no new `log` entry, and no `results/` sidecar may
-> be written. (This generalises `test_no_browse_or_writes_on_planning_request` from the
-> single `no-browse-no-write`/planning scenario to every decline branch.)
-> **Where to look:** `output.tool_calls`, `output.file_changes`.
-> **Why it is not judgment:** presence checks on the tool ledger and the file diff.
+> **Rule:** for **every** search-images **negative** test — each one is a routing decline,
+> so select on `test.type == "negative"`, no tag required — the `tool_calls` input contains
+> no `volume_search` or `image_search` call, `after_state` adds no new `log` entry versus
+> `before_state`, and no `results/` sidecar appears in `after_state`. (This generalises
+> `test_no_browse_or_writes_on_planning_request` from the single
+> `no-browse-no-write`/planning scenario to every decline negative, keyed on the negative
+> test type rather than a tag — which is the point, since no routing-decline tag exists.)
+> **Where to look:** the `tool_calls` input; and `before_state` / `after_state` (a new
+> `log[]` entry or `results/` sidecar is one present in `after_state` but not `before_state`).
+> **Why it is not judgment:** presence checks on the tool ledger and the before/after state.
 > **What a violation looks like:** none in the newest run — but only `009` is guarded
 > today; `005`/`006`/`007` are asserted by nothing.
 
@@ -242,8 +261,9 @@ turn.
 > **Validator request V7 — no retry of a rejected `research_log_append`**
 > **Rule:** there must be no two `research_log_append` calls in one run with identical
 > arguments where the first returned `{ ok: false }`.
-> **Where to look:** `output.tool_calls` (args and each call's result/`is_error`).
-> **Why it is not judgment:** equality of two argument objects plus the first result.
+> **Where to look:** the `tool_calls` input — each entry's `args` and its `response` (a
+> rejected write carries `{ ok: false }` in `response`).
+> **Why it is not judgment:** equality of two argument objects plus the first `response`.
 > **What a violation looks like:** none currently — a regression guard.
 
 ---
