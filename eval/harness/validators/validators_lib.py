@@ -196,15 +196,28 @@ def assert_capture_pending_item_not_terminal(
       are fixture state, not this run's doing.
     * `tool == "external_site"` is the discriminator; `log_entry` has no
       `type` property.
-    * Latest entry per item wins. Step 4's in-flight entry is never revised —
-      a capture appends a *new* entry — so a stale `capture_received: false`
-      must not fail a run whose capture did arrive.
-    * `autonomous` and `user-requested-skip` tagged tests are exempt: both
-      legitimately end terminal.
+    * Latest entry per item wins, across **every** tool — not just the
+      external-site ones. An item whose most recent entry is a FamilySearch
+      hit was closed by that search; the stale handoff sitting further up the
+      log is not evidence about how it ended.
+    * A capture that arrived is a later *entry*, never an edit of the earlier
+      one, and step 6 names the fields to carry onto it without naming
+      `planItemId` — so the arrival can land with `plan_item_id: null` and
+      leave no per-item trace. Arrivals are therefore also matched on
+      `(site, url_generated)`, which the schema requires on every
+      external-site entry. That keeps the ending the table calls `completed`
+      from failing here. The guarantee still belongs in the skill text; this
+      is the approximation available to a validator.
+    * Tests whose expected ending is terminal are exempt by tag. Keyed on
+      `terminal-status-expected` for the reason the tag exists, with
+      `autonomous`/`user-requested-skip` still honoured: `autonomous` is a
+      mode, and a future autonomous test in another suite would silently
+      disarm this guard by inheriting an exemption it never asked for.
     """
     tags = test.get("tags") or []
-    if "autonomous" in tags or "user-requested-skip" in tags:
-        pytest.skip("autonomous / user-requested-skip tests end terminal by design")
+    exempt = {"terminal-status-expected", "autonomous", "user-requested-skip"}
+    if exempt & set(tags):
+        pytest.skip("test expects a terminal plan-item status by design")
 
     before = (before_state or {}).get("research_json")
     after = (after_state or {}).get("research_json")
@@ -228,22 +241,33 @@ def assert_capture_pending_item_not_terminal(
     if not changed:
         pytest.skip("this run changed no plan-item status")
 
-    # Latest external_site entry per plan item, across the whole final log:
-    # a capture that arrived is a later entry, not an edit of the earlier one.
+    # Latest entry per plan item across the whole final log, any tool. An item
+    # closed by a later FamilySearch hit is not this guard's business, even
+    # when an older external-site handoff for it is still marked in-flight.
     latest: dict[str, dict] = {}
+    # Captures that arrived, keyed by the search they answer. Step 6 does not
+    # say to carry `planItemId` onto the arrival, so a triaged capture can be
+    # invisible per-item; `(site, url_generated)` identifies the same handoff.
+    captured: set[tuple[str, str]] = set()
     for entry in after.get("log") or []:
-        if entry.get("tool") != "external_site":
-            continue
         pid = entry.get("plan_item_id")
         if pid:
             latest[pid] = entry
+        if entry.get("tool") != "external_site":
+            continue
+        detail = entry.get("external_site") or {}
+        url = detail.get("url_generated")
+        if detail.get("capture_received") is True and detail.get("site") and url:
+            captured.add((detail["site"], url))
 
     for pid in sorted(changed):
         entry = latest.get(pid)
-        if entry is None:
+        if entry is None or entry.get("tool") != "external_site":
             continue
         site = entry.get("external_site") or {}
         if site.get("capture_received") is True:
+            continue
+        if (site.get("site"), site.get("url_generated")) in captured:
             continue
         status = after_items.get(pid)
         assert status not in ("completed", "skipped"), (

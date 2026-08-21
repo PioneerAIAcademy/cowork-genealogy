@@ -7,6 +7,7 @@
     "description": "Under --autonomous there is no user to click a link, capture a PDF, or upload it, so the normal click-capture-wait loop cannot complete. The skill must build the URL as a lead, LOG the search as deferred (outcome negative, capture_received false), mark the plan item terminal, and return control so the autonomous run keeps moving — it must NOT present the URL and end the turn waiting for a user who isn't there (that stalls the run). Pins the autonomous-mode branch added to the skill.",
     "tags": [
       "autonomous",
+      "terminal-status-expected",
       "external-site",
       "defer",
       "no-capture",

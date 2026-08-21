@@ -105,6 +105,72 @@ def test_passes_on_later_entry_carrying_the_capture():
     assert_capture_pending_item_not_terminal(before, after, {"tags": []})
 
 
+def test_passes_when_the_capture_arrived_without_a_plan_item_id():
+    """The ending the table calls `completed`, logged the way the corpus
+    actually logs external-site entries. Step 6 names the fields to carry onto
+    the arrival but not `planItemId`, and 14 of 14 committed ext-sites entries
+    have `plan_item_id: null` — so the arrival is matched on
+    `(site, url_generated)` instead. Without that, the one ending this guard is
+    supposed to permit would fail it."""
+    before, after = _states("completed")
+    after["research_json"]["log"].append(
+        {
+            "id": "log_005",
+            "plan_item_id": None,
+            "tool": "external_site",
+            "outcome": "positive",
+            "external_site": {
+                "site": "ancestry",
+                "url_generated": "https://www.ancestry.com/search/?name=Patrick_Flynn",
+                "capture_received": True,
+                "capture_filename": "ancestry-1850-flynn.pdf",
+            },
+        }
+    )
+    assert_capture_pending_item_not_terminal(before, after, {"tags": []})
+
+
+def test_fires_when_the_capture_that_arrived_answers_a_different_search():
+    """The `(site, url_generated)` match must identify the same handoff, not
+    merely the same site — otherwise any capture anywhere would launder every
+    pending item on that site."""
+    before, after = _states("completed")
+    after["research_json"]["log"].append(
+        {
+            "id": "log_005",
+            "plan_item_id": None,
+            "tool": "external_site",
+            "outcome": "positive",
+            "external_site": {
+                "site": "ancestry",
+                "url_generated": "https://www.ancestry.com/search/?name=Bridget_Flynn",
+                "capture_received": True,
+            },
+        }
+    )
+    with pytest.raises(AssertionError, match="capture never arrived"):
+        assert_capture_pending_item_not_terminal(before, after, {"tags": []})
+
+
+def test_passes_when_a_later_search_closed_the_item():
+    """An item can be closed by work this guard has no opinion about: the
+    record turns up on FamilySearch after the external handoff was logged.
+    Only the item's LATEST entry decides, so a stale in-flight handoff further
+    up the log must not fail a legitimate `completed`."""
+    before, after = _states("completed")
+    after["research_json"]["log"].append(
+        {
+            "id": "log_005",
+            "plan_item_id": "pli_001",
+            "tool": "record_search",
+            "outcome": "positive",
+            "results_examined": 3,
+            "external_site": None,
+        }
+    )
+    assert_capture_pending_item_not_terminal(before, after, {"tags": []})
+
+
 def test_ignores_items_this_run_did_not_change():
     """A scenario's pre-existing `completed` external-site item is fixture
     state, not this run's doing (e.g. mid-research-flynn's pli_002/pli_003)."""
@@ -118,9 +184,13 @@ def test_ignores_items_this_run_did_not_change():
     assert exc.typename == "Skipped"
 
 
-@pytest.mark.parametrize("tag", ["autonomous", "user-requested-skip"])
+@pytest.mark.parametrize(
+    "tag", ["terminal-status-expected", "autonomous", "user-requested-skip"]
+)
 def test_skips_exempt_tags(tag):
-    """Both legitimately end terminal."""
+    """All three legitimately end terminal. `terminal-status-expected` is the
+    tag that says so for its own reason; the other two are honoured because
+    the corpus already carries them."""
     before, after = _states("skipped")
     with pytest.raises(BaseException) as exc:
         assert_capture_pending_item_not_terminal(before, after, {"tags": [tag]})
