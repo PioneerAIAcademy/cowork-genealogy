@@ -8,6 +8,19 @@ Issue #1655. Guide followed: `docs/skill-deep-dive-guide.md`.
 timeline, 152 persisted events. Transcripts and `tool_calls` read before any score.
 Prohibition list: `timeline-prohibition-list.md`.
 
+**The suite is 10 tests as of the merge, not the 9 this dive read.** #1783 added
+`ut_timeline_010` (`negative-hypothesis-tracking.json`) after these runs, so no run log
+in this PR executed it and no finding here covers it — its passing record lives in
+#1783's `v1_2026-08-16_19-22-07` until timeline is next run. Nothing gates on that.
+Worth knowing for ordering, because it cuts one way only: an *added* test file is
+invisible to an existing snapshot (`diff_snapshot_vs_disk` — *"Paths present on disk but
+absent from the snapshot are NOT flagged"*), so #1783 landing first cost this PR
+nothing. This PR modifies `SKILL.md`, `rubric.md`, six existing tests and
+`flynn-impossibility/research.json` — all already snapshot keys — so the reverse order
+would have staled #1783 and owed it a paid run plus an annotation pass. It did stale
+`v1_2026-08-16_19-22-07`, which is now inactive; harmless only because 08-21 is the
+newest and rule 2 checks the latest per skill.
+
 **Starting numbers, verified:** 39 pass / 4 partial / 2 fail. Across the five
 `.ann.json` files, **281 annotated dimensions, 0 score corrections** — no annotator
 changed a single score in five annotation passes. The **7 comments** are all in the
