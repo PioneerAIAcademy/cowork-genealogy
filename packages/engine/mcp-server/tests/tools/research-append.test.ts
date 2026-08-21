@@ -1204,6 +1204,35 @@ describe("research_append (Phase 3)", () => {
       expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
     });
 
+
+    it("refuses an UPDATE that repoints a summary onto a question that already has one", async () => {
+      // The append gate was the same mistake as the tier gate two commits
+      // earlier: it asked "is this op an append" when the rule is "does this
+      // question end up with two summaries". An update that sets question_id
+      // walks straight past it and leaves the exact state the deny message
+      // describes — two contradictory conclusions, nothing saying which wins.
+      const state = withSummary() as any;
+      state.questions.push({ id: "q_002", question: "birth?", status: "open" });
+      state.proof_summaries.push({
+        id: "ps_002",
+        ...entry("possible"),
+        question_id: "q_002",
+      });
+      await writeProject(state);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_002",
+        fields: { question_id: "q_001" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("ps_001");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
     it("allows updating the existing summary", async () => {
       await writeProject(withSummary());
       const r = await researchAppend({

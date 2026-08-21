@@ -46,6 +46,7 @@ function guardToolNames(): {
   fileWriteTools: string[];
   deviceWriteTools: string[];
   ownerRoutedTools: string[];
+  ownedSections: string[];
 } {
   const src = readFileSync(GUARD, "utf-8");
   const tuple = (constName: string): string[] => {
@@ -63,6 +64,7 @@ function guardToolNames(): {
   return {
     fileWriteTools: tuple("FILE_WRITE_TOOLS"),
     deviceWriteTools: tuple("DEVICE_WRITE_TOOLS"),
+    ownedSections: ownedSections(src),
     // The caller-routed sections live in a dict, not a tuple, and the tool they
     // gate is always `research_append` — so what the matcher must cover is that
     // one name, conditional on the dict being non-empty. Read rather than
@@ -125,6 +127,47 @@ describe("plugin hooks are packaged and wired", () => {
         const rel = hook.command!.split("${CLAUDE_PLUGIN_ROOT}/")[1]?.trim();
         expect(existsSync(join(PLUGIN_DIR, rel))).toBe(true);
       }
+    }
+  });
+
+
+  it("routes exactly the sections the ownership manifest declares hook-enforced", () => {
+    // Three places stated this fact independently: the plugin hook, the e2e
+    // harness, and the manifest. The harness copy is gone — it reads the hook's
+    // map through `_guard`. This closes the last pair.
+    //
+    // The manifest cannot be read at runtime: the hook runs in the VM, where
+    // `cwd` is the sandbox and the connected folder is not mounted, so the
+    // script has to carry its own literal. Comparing them here is what keeps
+    // the two honest — and Phase 4 adds three more sections, which is when a
+    // silent drift would start costing paid runs to diagnose.
+    const { ownedSections } = guardToolNames();
+    const manifest = JSON.parse(
+      readFileSync(join(REPO_ROOT, "docs", "specs", "schemas", "ownership.json"), "utf-8"),
+    );
+    const declared = manifest.rows
+      .filter((r: any) => (r.enforceableAt ?? []).includes("hook"))
+      .map((r: any) => r.section)
+      .sort();
+
+    expect(declared.length).toBeGreaterThan(0);
+    expect(ownedSections.sort()).toEqual(declared);
+
+    // And the agent each row names is the one the script routes to.
+    const src = readFileSync(GUARD, "utf-8");
+    const owners = Object.fromEntries(
+      [...(src.match(/^OWNED_SECTIONS\s*=\s*\{([^}]*)\}/m)?.[1] ?? "").matchAll(
+        /["']([^"']+)["']\s*:\s*["']([^"']+)["']/g,
+      )].map((m) => [m[1], m[2]]),
+    );
+    for (const row of manifest.rows) {
+      if (!(row.enforceableAt ?? []).includes("hook")) continue;
+      const fromManifest = (row.hookCallers ?? [])
+        .filter((c: string) => c.startsWith("agent:"))
+        .map((c: string) => c.slice("agent:".length));
+      expect(fromManifest, `${row.section}: manifest names no hookCallers agent`).toContain(
+        owners[row.section],
+      );
     }
   });
 

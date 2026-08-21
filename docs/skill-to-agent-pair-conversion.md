@@ -94,7 +94,7 @@ at the fold. Its sibling `_010` had xpassed in all ten runs on record and was
 simply mislabelled. Both were relabelled to `pass` on 2026-08-21.
 
 That is a coherent effect rather than a coincidence: routing is the entire job
-of the routing half, and the thin skill is 2.8 KB against the 28.9 KB monolith
+of the routing half, and the thin skill is 4.8 KB against the 28.9 KB monolith
 it replaced. There is far less competing with the DO-NOT clauses for attention.
 
 **So: expect boundary/routing tests to improve, and check them.** They are the

@@ -1040,10 +1040,12 @@ this section before reopening one.
   `proof-conclusion` (519) are the cheap candidates if this is revisited.
 
   **Revisited and acted on for `proof-conclusion`, 2026-08-19.** It is now a
-  pair: a thin routing skill (2.8 KB) plus `agents/proof-conclusion.md`, the
-  whole doctrine inlined at 41,469 bytes — between `gps-mentor.md` (40,802) and
-  `record-extractor.md` (53,845), so no new high-water mark, and under the
-  ~54 KB fold ceiling. Both `references/` files were deleted rather than kept
+  pair: a thin routing skill (4.8 KB) plus `agents/proof-conclusion.md`, the
+  whole doctrine inlined at 49,900 bytes — between `gps-mentor.md` (40,802) and
+  `record-extractor.md` (58,541), so no new high-water mark. Both ends of that
+  band moved during the work (the agent grew as rules landed, `record-extractor`
+  grew on main), which is the argument for measuring a ceiling rather than
+  quoting one. Both `references/` files were deleted rather than kept
   beside it — an agent reading its own reference material on demand scored 6/19
   against a 12–14/19 baseline, and failed silently. What this bought beyond
   attribution: the agent emits a

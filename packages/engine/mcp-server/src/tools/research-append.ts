@@ -1292,9 +1292,14 @@ function applyOne(
     invariantErrors.push(...conflictedSourceInvariants(resultEntry, preCallResearch));
     // Reads LIVE research, not the pre-call snapshot: two appends inside one
     // batch must collide with each other, not just with what was already there.
-    if (op.op === "append") {
-      invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
-    }
+    //
+    // NOT gated on `op.op === "append"`, and for the same reason the rule above
+    // is not gated on `tierTouchedThisOp`: the question is "does this question
+    // end up with two summaries", which an UPDATE reaches by setting
+    // `question_id`. The gate asked about the op instead of the outcome and an
+    // update walked past it. `oneSummaryPerQuestion` excludes the entry by id,
+    // so an ordinary update of an existing summary still passes.
+    invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);

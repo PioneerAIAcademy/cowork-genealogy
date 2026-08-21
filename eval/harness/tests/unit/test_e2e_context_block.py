@@ -27,7 +27,7 @@ from e2e import orchestrator
 from e2e.orchestrator import (
     _run_agent,
     is_main_thread_extraction_append,
-    is_main_thread_owned_section_write,
+    main_thread_owned_section,
     load_fixture,
 )
 
@@ -295,7 +295,7 @@ def _owned(section=None, ops=None, agent_id=None, agent_type=None, tool="researc
     ],
 )
 def test_owned_section_write_is_blocked(payload, label):
-    assert is_main_thread_owned_section_write(payload) is True, label
+    assert main_thread_owned_section(payload) == "proof_summaries", label
 
 
 @pytest.mark.parametrize(
@@ -320,4 +320,44 @@ def test_owned_section_write_is_blocked(payload, label):
     ],
 )
 def test_owned_section_write_is_allowed(payload, label):
-    assert is_main_thread_owned_section_write(payload) is False, label
+    assert main_thread_owned_section(payload) is None, label
+
+
+# ── the deny TEXT, not just the decision ──
+
+
+def test_owned_section_deny_uses_the_shipped_hooks_own_words():
+    """The harness must deny with the text the agent meets in Cowork.
+
+    This arm previously shared a branch with the extraction_append block and so
+    reused its denial, which told the agent `research_append may not be called
+    from the main session — it is reserved for a delegated subagent`. That is
+    true of extraction_append and flatly false of research_append: it is the
+    general writer, used from the main thread constantly for plans, questions,
+    conflicts and the log. An agent that believed it would stop writing all of
+    them — in the plane that measures whether this guardrail works.
+    """
+    from harness.context_policy import owned_section_denial
+
+    reason = owned_section_denial("proof_summaries")["hookSpecificOutput"][
+        "permissionDecisionReason"
+    ]
+    assert "proof_summaries" in reason
+    assert "proof-conclusion" in reason
+    # The load-bearing half: the rest of the tool is still available.
+    assert "unaffected" in reason
+    # The sentence that made the old text dangerous must not reappear.
+    assert "may not be called from the main session" not in reason
+
+
+def test_owned_sections_is_the_shipped_hooks_map_not_a_copy():
+    """One definition, reached through the plugin hook module.
+
+    Three places state this fact — the hook, the harness, and the ownership
+    manifest's hook-plane rows. The harness reads the hook's rather than
+    restating it, so only the manifest is left to keep in step, and the
+    packaging test does that.
+    """
+    from harness import context_policy
+
+    assert context_policy.OWNED_SECTIONS is context_policy._guard.OWNED_SECTIONS

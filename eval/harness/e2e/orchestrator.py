@@ -39,8 +39,10 @@ from claude_agent_sdk import (
 
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
+    OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
     is_subagent_call,
+    owned_section_denial,
     subagent_only_denial,
 )
 from harness.judge import _summarize_response
@@ -226,15 +228,10 @@ def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
     )
 
 
-# research.json sections routed to a named agent, mapped to that agent's BARE
-# name. Mirrors OWNED_SECTIONS in packages/engine/plugin/hooks/
-# guard_project_files.py, which is the copy that reaches production; this one
-# only reaches e2e runs, because a plugin hook binds in neither harness.
-E2E_OWNED_SECTIONS = {"proof_summaries": "proof-conclusion"}
+def main_thread_owned_section(input_data: dict[str, Any]) -> str | None:
+    """The agent-owned research.json section this call writes from elsewhere.
 
-
-def is_main_thread_owned_section_write(input_data: dict[str, Any]) -> bool:
-    """Whether this writes an agent-owned research.json section from elsewhere.
+    Returns the section name so the caller can name it in the deny, or None.
 
     Keyed on tool **and section**, unlike `is_main_thread_extraction_append`
     above. That function can key on the tool alone because `extraction_append`
@@ -248,23 +245,27 @@ def is_main_thread_owned_section_write(input_data: dict[str, Any]) -> bool:
     which is precisely the caller this exists to catch.
     """
     if not (input_data.get("tool_name") or "").startswith("mcp__"):
-        return False
+        return None
     if _bare_tool_name(input_data["tool_name"]) != "research_append":
-        return False
+        return None
     tool_input = input_data.get("tool_input") or {}
     ops = tool_input.get("ops")
     ops = ops if isinstance(ops, list) else [tool_input]
-    owner = None
-    for op in ops:
-        if isinstance(op, dict) and op.get("section") in E2E_OWNED_SECTIONS:
-            owner = E2E_OWNED_SECTIONS[op["section"]]
-            break
-    if owner is None:
-        return False
+    section = next(
+        (
+            op["section"]
+            for op in ops
+            if isinstance(op, dict) and op.get("section") in OWNED_SECTION_OWNERS
+        ),
+        None,
+    )
+    if section is None:
+        return None
+    owner = OWNED_SECTION_OWNERS[section]
     if not is_subagent_call(input_data):
-        return True
+        return section
     agent_type = str(input_data.get("agent_type") or "")
-    return agent_type.rsplit(":", 1)[-1] != owner
+    return section if agent_type.rsplit(":", 1)[-1] != owner else None
 
 
 def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
@@ -1329,9 +1330,7 @@ async def _run_agent(
         #   - `image_read`, the set's other member, is NOT enforced here yet. It
         #     meets the same condition today (no skill declares it; it lives only
         #     on agents/image-reader-opus.md) — issue #1273.
-        if is_main_thread_extraction_append(input_data) or is_main_thread_owned_section_write(
-            input_data
-        ):
+        if is_main_thread_extraction_append(input_data):
             bare = _bare_tool_name(tool_name)
             blocked_context_calls.append(
                 {
@@ -1353,6 +1352,37 @@ async def _run_agent(
             )
             _emit(f"[blocked context call] {bare} (main-thread extraction_append)")
             return subagent_only_denial(bare)
+
+        # An owned SECTION, not an owned tool — a separate arm on purpose. The
+        # block above says the whole tool is reserved for a subagent, which is
+        # true of extraction_append and false of research_append: that one is
+        # the general writer, called from the main thread constantly for plans,
+        # questions, conflicts and the log. Sharing the branch handed the agent
+        # a deny telling it the tool was off-limits, and a narration naming the
+        # wrong agent and the wrong artifact.
+        if (owned := main_thread_owned_section(input_data)) is not None:
+            bare = _bare_tool_name(tool_name)
+            blocked_context_calls.append(
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "context",
+                }
+            )
+            owner = OWNED_SECTION_OWNERS[owned]
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "blocked",
+                    "text": (
+                        f"`{bare}` denied on `{owned}` — that section is routed to "
+                        f"the {owner} agent. Everything else in `{bare}` is "
+                        "unaffected; delegate this write rather than making it here."
+                    ),
+                }
+            )
+            _emit(f"[blocked context call] {bare} (main-thread {owned} write)")
+            return owned_section_denial(owned)
 
         # Block tree-reading tools BEFORE counting toward the cap — a denied
         # call never runs, so it shouldn't consume the budget. The run

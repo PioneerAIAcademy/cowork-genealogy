@@ -108,10 +108,13 @@ pairing them would enforce a path no run takes.
 | `conflict-resolution` | 9 | 47.7 KB |
 | `person-evidence` | 149 | 49.5 KB |
 
-**The fold ceiling is ~54 KB**, taken from `record-extractor.md` (53,845 bytes) —
+**The fold ceiling is whatever `record-extractor.md` currently measures** — 58,541
+bytes as of 2026-08-21, up from the 53,845 this line used to quote, which is why
+it says "measure it" rather than naming a number. `wc -c` on that file is the
+check —
 the only agent body the team has shipped and lived with. `search-records` folds
 to 140,882 bytes and is disqualified on size before anything else. Agent bodies
-only grow: `record-extractor` went 32,042 → 53,845 in about a month, because an
+only grow: `record-extractor` went 32,042 → 58,541 in under two months, because an
 agent cannot offload to `references/`.
 
 **Do not split references back out.** Measured and reverted: on-demand `Read`
