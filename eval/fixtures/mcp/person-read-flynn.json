@@ -1,27 +1,35 @@
 {
   "tool": "person_read",
-  "description": "FamilySearch tree person read for Patrick Flynn",
-  "args": { "personId": "LZNY-BRF" },
+  "description": "FamilySearch tree person read for Patrick Flynn — the isolated case: no relatives, no attached source descriptions. Shape follows person-read-tool-spec.md's Output section: the top level is always { persons, relationships, sources }, never a bare person object. Facts carry both sidecars the tool emits (`standard_place` from the place resolver, `standard_date` from stdDate), and neither is a string copy of its raw field — FamilySearch standardized names drop \"County\" and stdDate renders `~1845` as `Abt 1845` — so a run that re-derives either instead of keeping what the tool returned is visible in the written tree. The predicate requires BOTH flags: person_read defaults them to false, and a call that omits either gets fixture_not_found and is scored down on Tool Arguments rather than silently receiving the payload it did not ask for.",
+  "args": { "personId": "LZNY-BRF", "relatives": true, "sourceDescriptions": true },
   "response": {
-    "id": "LZNY-BRF",
-    "gender": "Male",
-    "names": [
+    "persons": [
       {
-        "given": "Patrick",
-        "surname": "Flynn"
+        "id": "LZNY-BRF",
+        "gender": "Male",
+        "living": false,
+        "names": [
+          { "given": "Patrick", "surname": "Flynn" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "~1845",
+            "standard_date": "Abt 1845",
+            "place": "Ireland",
+            "standard_place": "Ireland"
+          },
+          {
+            "type": "Death",
+            "date": "1908",
+            "standard_date": "1908",
+            "place": "Schuylkill County, Pennsylvania, United States",
+            "standard_place": "Schuylkill, Pennsylvania, United States"
+          }
+        ]
       }
     ],
-    "facts": [
-      {
-        "type": "Birth",
-        "date": "~1845",
-        "place": "Ireland"
-      },
-      {
-        "type": "Death",
-        "date": "1908",
-        "place": "Schuylkill County, Pennsylvania, United States"
-      }
-    ]
+    "relationships": [],
+    "sources": []
   }
 }
