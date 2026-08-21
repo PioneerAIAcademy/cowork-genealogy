@@ -1,0 +1,118 @@
+{
+  "tool": "person_read",
+  "description": "FamilySearch tree person read for Patrick Flynn WITH relatives and source descriptions — the only init-project fixture that exercises the relationship import, the FAN rule, and the multi-person re-ID to local I/N/F/R/S ids. Wife Mary Kelly, children James and Margaret; no parents, because the parents are the research target. Names and relationships arrive without ids, per simplified-gedcomx-spec.md §3 — the caller mints them. Facts carry both tool-emitted sidecars (`standard_place`, `standard_date`), neither a string copy of its raw field. One source description carries a `notes` array: person_read emits it, TREE_SOURCE_FIELDS rejects it, so a verbatim copy into the tree fails the project_create write and dropping the whole source to dodge that is the wrong fix.",
+  "args": { "personId": "LZNY-BRF", "relatives": true, "sourceDescriptions": true },
+  "response": {
+    "persons": [
+      {
+        "id": "LZNY-BRF",
+        "gender": "Male",
+        "living": false,
+        "names": [
+          { "given": "Patrick", "surname": "Flynn" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "~1845",
+            "standard_date": "Abt 1845",
+            "place": "Ireland",
+            "standard_place": "Ireland"
+          },
+          {
+            "type": "Death",
+            "date": "1908",
+            "standard_date": "1908",
+            "place": "Schuylkill County, Pennsylvania, United States",
+            "standard_place": "Schuylkill, Pennsylvania, United States"
+          }
+        ]
+      },
+      {
+        "id": "LZNY-K2M",
+        "gender": "Female",
+        "living": false,
+        "names": [
+          { "given": "Mary", "surname": "Kelly" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1849",
+            "standard_date": "1849",
+            "place": "Ireland",
+            "standard_place": "Ireland"
+          }
+        ]
+      },
+      {
+        "id": "LZNY-P7Q",
+        "gender": "Male",
+        "living": false,
+        "names": [
+          { "given": "James", "surname": "Flynn" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1871",
+            "standard_date": "1871",
+            "place": "Branch Township, Schuylkill County, Pennsylvania, United States",
+            "standard_place": "Branch, Schuylkill, Pennsylvania, United States"
+          }
+        ]
+      },
+      {
+        "id": "LZNY-R4T",
+        "gender": "Female",
+        "living": false,
+        "names": [
+          { "given": "Margaret", "surname": "Flynn" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1874",
+            "standard_date": "1874",
+            "place": "Branch Township, Schuylkill County, Pennsylvania, United States",
+            "standard_place": "Branch, Schuylkill, Pennsylvania, United States"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "Couple",
+        "person1": "LZNY-BRF",
+        "person2": "LZNY-K2M",
+        "facts": [
+          {
+            "type": "Marriage",
+            "date": "1869",
+            "standard_date": "1869",
+            "place": "Schuylkill County, Pennsylvania, United States",
+            "standard_place": "Schuylkill, Pennsylvania, United States"
+          }
+        ]
+      },
+      { "type": "ParentChild", "parent": "LZNY-BRF", "child": "LZNY-P7Q", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "LZNY-K2M", "child": "LZNY-P7Q", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "LZNY-BRF", "child": "LZNY-R4T", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "LZNY-K2M", "child": "LZNY-R4T", "subtype": "Biological" }
+    ],
+    "sources": [
+      {
+        "id": "MMM9-1QF",
+        "title": "Pennsylvania, Death Certificates, 1906-1968, Patrick Flynn, 1908",
+        "citation": "\"Pennsylvania, Death Certificates, 1906-1968\", database with images, FamilySearch, entry for Patrick Flynn, 1908, Schuylkill County.",
+        "url": "https://familysearch.org/ark:/61903/1:1:JQ4M-2XS"
+      },
+      {
+        "id": "MMM9-7RB",
+        "title": "United States Census, 1880, Branch Township, Schuylkill, Pennsylvania",
+        "url": "https://familysearch.org/ark:/61903/1:1:MFK9-3WD",
+        "notes": ["Household lists Patrick, wife Mary, and two children."]
+      }
+    ]
+  }
+}

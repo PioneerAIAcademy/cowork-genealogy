@@ -18,7 +18,7 @@ gates' agreement. **Never use the JSON Schema alone as a validity gate.**
 
 ## 1. Overview
 
-`tree.gedcomx.json` contains resolved persons, relationships, facts, and source descriptions in a simplified GedcomX format. It is the file that eventually uploads to FamilySearch. MCP tools handle conversion between full GedcomX (from FamilySearch APIs) and this simplified format.
+`tree.gedcomx.json` contains persons, relationships, facts, and source descriptions in a simplified GedcomX format. It is the project's **working tree**: the place persons and relationships are held as research concludes them, including tentative conclusions and hypotheses that are not yet proven. It is therefore a **superset** of what could be uploaded to FamilySearch, not the upload payload itself — upload is conclusion-gated (see "Relationship to `research.json`" below), so only the concluded subset would ever leave it. MCP tools handle conversion between full GedcomX (from FamilySearch APIs) and this simplified format.
 
 ### Design goals
 
