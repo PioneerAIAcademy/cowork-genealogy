@@ -223,6 +223,55 @@ def test_v2_accepts_the_search_then_read_flow():
     check_ark(after, [search, _person_read_call()])
 
 
+def _named(local_id, ark, given="Patrick", surname="Flynn"):
+    person = {"id": local_id,
+              "names": [{"given": given, "surname": surname}]}
+    if ark is not None:
+        person["ark"] = ark
+    return person
+
+
+def _read_two_same_named():
+    """person_read returning two persons who share a name — a Sr./Jr. pair, or
+    the same-named siblings #1689 adds to the family fixture."""
+    def p(pid):
+        return {"id": pid, "gender": "Male", "living": False,
+                "names": [{"given": "Patrick", "surname": "Flynn"}], "facts": []}
+    return {
+        "tool": "mcp__genealogy__person_read",
+        "args": {"personId": "LZNY-BRF", "relatives": True, "sourceDescriptions": True},
+        "response": {"persons": [p("LZNY-BRF"), p("LZNY-P7Q")],
+                     "relationships": [], "sources": []},
+    }
+
+
+def test_v2_passes_a_same_named_pair_each_carrying_its_own_ark():
+    """Round 2 of review: keying one written person per name blamed each of a
+    same-named pair for the other's pid, failing a CORRECT import. A failed
+    validator skips the judge, so that cost the test its whole grade."""
+    after = _tree(persons=[_named("I1", "ark:/61903/4:1:LZNY-BRF"),
+                           _named("I2", "ark:/61903/4:1:LZNY-P7Q")])
+    check_ark(after, [_read_two_same_named()])
+
+
+def test_v2_still_fires_when_one_of_a_same_named_pair_lacks_its_ark():
+    """The widening must not become a hole: if no same-named person carries the
+    expected ark, that pid is still unanchored."""
+    after = _tree(persons=[_named("I1", "ark:/61903/4:1:LZNY-BRF"),
+                           _named("I2", None)])
+    message = _fails(check_ark, after, [_read_two_same_named()])
+    assert "LZNY-P7Q" in message
+
+
+def test_v2_still_fires_when_a_same_named_pair_shares_one_ark():
+    """Both written with the SAME ark — one pid is anchored twice and the other
+    not at all. The `any` match must not let the duplicate cover for it."""
+    after = _tree(persons=[_named("I1", "ark:/61903/4:1:LZNY-BRF"),
+                           _named("I2", "ark:/61903/4:1:LZNY-BRF")])
+    message = _fails(check_ark, after, [_read_two_same_named()])
+    assert "LZNY-P7Q" in message
+
+
 def test_v2_fires_when_the_ark_names_the_candidate_that_was_not_chosen():
     """The runner-up is in `known` — it was returned — so a form-and-provenance
     check alone would accept it. The expectation is keyed to the person actually

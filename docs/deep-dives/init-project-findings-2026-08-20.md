@@ -829,7 +829,42 @@ any other reason.
 | Tag `ut_init_project_004` with `expects-person-search` | V7 currently skips on all twelve tests. Its firing behaviour is held by mutation tests, not by the suite. | one paid run |
 | Align the three `quality` examples in `references/simplified-gedcomx-summary.md` to `1` | The reference documents the field as optional and shows a `2`; `SKILL.md` mandates `1` and V4 enforces it. A model following the reference over the body fails V4. Every run in the corpus writes 1, so the trap is latent, not active. | one paid run |
 | Give the resolver-miss branch a fixture, using the new `_contract_exempt` marker | `SKILL.md` tells the skill what to do when `person_read` returns a `place` with no `standard_place`; no fixture models it, so that branch is untested. The marker now makes it expressible. | one paid run |
+| Add a `person-search-donovan-none` nil fixture, and correct `person-search-hennessy-none`'s description | Raised in review round 2. `SKILL.md`'s recording convention is maiden (birth) surnames for women, so the convention-following search for Sarah's mother is `surname: Donovan` — which matches no fixture and returns `fixture_not_found`, typically scored down on Tool Arguments. As it stands the fixture set **rewards a married-name search over the correct one**. The existing description also overclaims: "a search on the mother or a relative resolves too" holds only for a married-name search, since `~Hennessy` cannot match `Donovan`. | one paid run |
 
 Both of the first two were raised in review and are recorded in the code that
 depends on them — V7's docstring and V4's — rather than only here, so the next
 person to open either file sees the pending edit and its reason.
+
+---
+
+## Review round 2 — what a second reviewer caught
+
+Two blockers, both free (neither file is snapshot-tracked), and the first is the
+third instance of this dive's own defect class:
+
+**The lint's opt-out reintroduced the defect the lint exists to catch.** The
+first draft read `_contract_exempt` from *inside* the fact. The mock serves
+`response` verbatim, so the first fixture to use it would have handed the skill a
+field `person_read` never returns — and `TREE_FACT_FIELDS` rejects it, so the
+`project_create` write fails for a reason unrelated to what the test checks. The
+marker is now a fixture-level map keyed `"owner/FactType"`, beside `response`
+rather than in it: still per-fact, still explicit, still greppable, still carrying
+a reason. Eight tests on synthetic fixtures pin it, including one asserting that
+the inside-the-fact shape no longer suppresses anything — because the shape that
+breaks the write must not be the shape the lint rewards.
+
+**V2 failed a correct import when two persons share a name.** Keying one written
+person per `(given, surname)` made a Sr./Jr. pair blame each other for their pids.
+Reproduced before fixing: two returned persons sharing a name, both written with
+their own correct arks, and V2 reported
+`I1: ark is 'ark:/61903/4:1:LZNY-BRF', expected 'ark:/61903/4:1:LZNY-P7Q'`. A
+failed validator skips the judge, so this would have cost the test its whole
+grade — and it arms the first time a fixture carries same-named kin, which is
+exactly what #1689 adds. Now any same-named written person carrying the expected
+ark satisfies it, with three tests: the correct pair passes, a pair missing one
+ark still fails, and a pair sharing one ark still fails (so the widening is not a
+hole).
+
+Also from round 2: the `1845-10` / `1900-10` split — same notation, two readings,
+decided by whether the range expansion would run backwards — is now pinned by a
+test rather than left as an undocumented surprise.

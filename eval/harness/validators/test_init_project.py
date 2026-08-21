@@ -403,22 +403,33 @@ def test_tree_ark_is_canonical_and_traceable(after_state, tool_calls):
                 (name.get("given") or "").strip().lower(),
                 (name.get("surname") or "").strip().lower(),
             )
-            written_by_name.setdefault(key, person)
+            written_by_name.setdefault(key, []).append(person)
     for pid, name_key in returned.items():
-        person = written_by_name.get(name_key)
-        if person is None:
+        candidates = written_by_name.get(name_key) or []
+        if not candidates:
             continue  # not imported; V1 and the judge cover what was dropped
         expected = f"ark:/61903/4:1:{pid}"
-        actual = person.get("ark")
-        if not actual:
+        # ANY same-named written person carrying this pid's ark satisfies it. A
+        # single person per name would blame a Sr./Jr. pair -- or same-named
+        # siblings, which #1689 adds to the family fixture -- for each other's
+        # pid, failing a correct import and costing the test its whole grade
+        # (a failed validator skips the judge).
+        if any(p.get("ark") == expected for p in candidates):
+            continue
+        given, surname = name_key
+        who = candidates[0].get("id") if len(candidates) == 1 else (
+            f"{len(candidates)} persons named {given} {surname} "
+            f"({', '.join(str(p.get('id')) for p in candidates)})"
+        )
+        arks = [p.get("ark") for p in candidates]
+        if not any(arks):
             bad.append(
-                f"{person.get('id')} was imported from {pid} but carries no ark "
-                f"({actual!r}); expected {expected!r} -- ark is what marks tree "
-                f"membership, so an imported FS person without one is indistinguishable "
-                f"from a local stub"
+                f"{who} was imported from {pid} but carries no ark ({arks!r}); "
+                f"expected {expected!r} -- ark is what marks tree membership, so an "
+                f"imported FS person without one is indistinguishable from a local stub"
             )
-        elif actual != expected:
-            bad.append(f"{person.get('id')}: ark is {actual!r}, expected {expected!r}")
+        else:
+            bad.append(f"{who}: ark is {arks!r}, none of them the expected {expected!r}")
 
     known = _returned_person_ids(tool_calls)
     for person in [p for p in tree.get("persons") or [] if p.get("ark")]:

@@ -193,6 +193,49 @@ def test_person_read_fixtures_match_the_tool_contract():
     )
 
 
+def sidecar_problems(name, data):
+    """Every sidecar problem in one fixture, as messages.
+
+    Extracted from the check below so the exemption logic is unit-testable on
+    synthetic input -- the check itself reads the fixture directory, so without
+    this the only way to exercise an exemption was to hand-edit a real fixture
+    and watch what happened.
+    """
+    problems = []
+    response = data.get("response")
+    if not isinstance(response, dict):
+        return problems
+    exemptions = data.get("_contract_exempt") or {}
+    if not isinstance(exemptions, dict):
+        problems.append(
+            f"{name}: _contract_exempt must be an object keyed 'owner/FactType'"
+        )
+        exemptions = {}
+    if exemptions and not data.get("_contract_exempt_reason"):
+        problems.append(
+            f"{name}: exempts {sorted(exemptions)} but the fixture states no "
+            f"_contract_exempt_reason"
+        )
+    facts = []
+    for person in response.get("persons") or []:
+        facts += [(person.get("id"), f) for f in person.get("facts") or []]
+    for rel in response.get("relationships") or []:
+        facts += [(rel.get("type"), f) for f in rel.get("facts") or []]
+    for owner, fact in facts:
+        exempt = exemptions.get(f"{owner}/{fact.get('type')}") or []
+        if not isinstance(exempt, list):
+            problems.append(
+                f"{name}: _contract_exempt['{owner}/{fact.get('type')}'] must be a list"
+            )
+            exempt = []
+        for raw, sidecar in (("date", "standard_date"), ("place", "standard_place")):
+            if fact.get(raw) and not fact.get(sidecar) and sidecar not in exempt:
+                problems.append(
+                    f"{name}: {owner} {fact.get('type')} has {raw}, no {sidecar}"
+                )
+    return problems
+
+
 def test_person_read_fixture_facts_carry_both_standardized_sidecars():
     """A dated fact from `person_read` carries `standard_date`; a placed one
     carries `standard_place`.
@@ -210,15 +253,22 @@ def test_person_read_fixture_facts_carry_both_standardized_sidecars():
     resolver miss, which would make that rule permanently untestable: the same
     defect the whole dive is about, reintroduced by its own lint.
 
-    So a fixture may opt a fact out with `"_contract_exempt"` naming the
-    sidecar(s) it deliberately omits, plus a `"_contract_exempt_reason"` on the
-    fixture saying why. The marker is per-fact and explicit, so an omission is a
-    stated modelling choice rather than an oversight, and grep finds every one.
+    So a fixture may opt a fact out with a fixture-level `"_contract_exempt"`
+    map, keyed `"owner/FactType"`, plus a `"_contract_exempt_reason"` saying why.
+    Still per-fact, still explicit, still greppable, still carries the reason:
 
-        "facts": [
-          {"type": "Birth", "place": "Boston",
-           "_contract_exempt": ["standard_place"]}
-        ]
+        "_contract_exempt": { "LZNY-BRF/Birth": ["standard_place"] },
+        "_contract_exempt_reason": "models a resolver miss",
+        "response": { ... }
+
+    **The marker lives beside `response`, never inside it.** The mock serves
+    `response` verbatim, so a marker on the fact itself would be handed to the
+    skill as a field `person_read` never returns — and `TREE_FACT_FIELDS` rejects
+    it, so the `project_create` write would fail for a reason unrelated to what
+    the test is checking. The first draft put it inside the fact and would have
+    reintroduced this lint's own defect the first time anyone used it. The owner
+    key is the person id for a person fact and the relationship type for a
+    relationship fact (`Couple/Marriage`), matching `_returned_person_facts`.
 
     No fixture uses it yet. It exists so the resolver-miss branch of the body can
     be given a test without first having to argue with this check -- and that
@@ -228,31 +278,112 @@ def test_person_read_fixture_facts_carry_both_standardized_sidecars():
     """
     missing = []
     for name, data in _person_read_fixtures():
-        response = data.get("response")
-        if not isinstance(response, dict):
-            continue
-        facts = []
-        for person in response.get("persons") or []:
-            facts += [(person.get("id"), f) for f in person.get("facts") or []]
-        for rel in response.get("relationships") or []:
-            facts += [(rel.get("type"), f) for f in rel.get("facts") or []]
-        for owner, fact in facts:
-            exempt = fact.get("_contract_exempt") or []
-            if not isinstance(exempt, list):
-                missing.append(f"{name}: {owner} _contract_exempt must be a list")
-                continue
-            if exempt and not data.get("_contract_exempt_reason"):
-                missing.append(
-                    f"{name}: exempts {exempt} but the fixture states no "
-                    f"_contract_exempt_reason"
-                )
-            for raw, sidecar in (("date", "standard_date"), ("place", "standard_place")):
-                if fact.get(raw) and not fact.get(sidecar) and sidecar not in exempt:
-                    missing.append(
-                        f"{name}: {owner} {fact.get('type')} has {raw}, no {sidecar}"
-                    )
+        missing += sidecar_problems(name, data)
     assert not missing, (
         "person_read returns a standardized sidecar beside each raw date/place; "
         "a fixture without one cannot show whether the skill kept it or invented "
         "it: " + "; ".join(missing)
     )
+
+
+# --- the _contract_exempt map, on synthetic fixtures ----------------------
+#
+# Round 2 of review caught the first draft reading the marker from inside the
+# fact. The mock serves `response` verbatim, so that shape handed the skill a
+# field `person_read` never returns, which `TREE_FACT_FIELDS` then rejects --
+# the write would have failed for a reason unrelated to what the test checks.
+# These pin the marker at fixture level, and pin that the inside-the-fact shape
+# no longer suppresses anything.
+
+_PLACED_FACT = {"type": "Birth", "place": "Boston"}
+
+
+def _fixture(facts=None, relationships=None, **top):
+    data = {
+        "tool": "person_read",
+        "args": {"personId": "X"},
+        "response": {
+            "persons": [{"id": "LZNY-BRF", "facts": facts or []}],
+            "relationships": relationships or [],
+            "sources": [],
+        },
+    }
+    data.update(top)
+    return data
+
+
+def _problems(data):
+    return sidecar_problems("f.json", data)
+
+
+def test_a_missing_sidecar_is_reported():
+    problems = _problems(_fixture(facts=[_PLACED_FACT]))
+    assert any("has place, no standard_place" in p for p in problems), problems
+
+
+def test_a_fixture_level_exemption_suppresses_it():
+    data = _fixture(
+        facts=[_PLACED_FACT],
+        _contract_exempt={"LZNY-BRF/Birth": ["standard_place"]},
+        _contract_exempt_reason="models a resolver miss",
+    )
+    assert _problems(data) == []
+
+
+def test_an_exemption_without_a_reason_is_reported():
+    data = _fixture(
+        facts=[_PLACED_FACT],
+        _contract_exempt={"LZNY-BRF/Birth": ["standard_place"]},
+    )
+    assert any("_contract_exempt_reason" in p for p in _problems(data)), _problems(data)
+
+
+def test_an_exemption_of_the_wrong_type_is_reported():
+    data = _fixture(
+        facts=[_PLACED_FACT],
+        _contract_exempt=["standard_place"],
+        _contract_exempt_reason="wrong shape on purpose",
+    )
+    assert any("must be an object keyed" in p for p in _problems(data)), _problems(data)
+
+
+def test_a_per_key_exemption_of_the_wrong_type_is_reported():
+    data = _fixture(
+        facts=[_PLACED_FACT],
+        _contract_exempt={"LZNY-BRF/Birth": "standard_place"},
+        _contract_exempt_reason="wrong inner shape on purpose",
+    )
+    assert any("must be a list" in p for p in _problems(data)), _problems(data)
+
+
+def test_an_exemption_keys_a_relationship_fact_too():
+    rel = {"type": "Couple", "facts": [{"type": "Marriage", "place": "Boston"}]}
+    assert any("has place, no standard_place" in p for p in _problems(_fixture(relationships=[rel])))
+    exempted = _fixture(
+        relationships=[rel],
+        _contract_exempt={"Couple/Marriage": ["standard_place"]},
+        _contract_exempt_reason="models a resolver miss on a marriage place",
+    )
+    assert _problems(exempted) == []
+
+
+def test_the_marker_inside_the_fact_no_longer_suppresses():
+    """The trap round 2 caught. A marker on the fact itself is served to the
+    skill verbatim, so it must NOT be honoured -- otherwise the shape that breaks
+    the write is the shape the lint rewards."""
+    data = _fixture(
+        facts=[dict(_PLACED_FACT, _contract_exempt=["standard_place"])],
+        _contract_exempt_reason="reason present, but the marker is in the wrong place",
+    )
+    assert any("has place, no standard_place" in p for p in _problems(data)), _problems(data)
+
+
+def test_an_exemption_does_not_suppress_the_other_sidecar():
+    data = _fixture(
+        facts=[{"type": "Birth", "place": "Boston", "date": "1845"}],
+        _contract_exempt={"LZNY-BRF/Birth": ["standard_place"]},
+        _contract_exempt_reason="only the place is unresolvable",
+    )
+    problems = _problems(data)
+    assert any("has date, no standard_date" in p for p in problems), problems
+    assert not any("standard_place" in p for p in problems), problems

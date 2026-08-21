@@ -809,6 +809,16 @@ describe('ISO year-month is not an abbreviated year range (#1653 review)', () =>
     expect(stdDate('1845-50')).toBe('Bet 1845 and 1850');
   });
 
+  test('the same suffix reads two ways, and the base year decides', () => {
+    // Raised in review: 1-12 is read as a month only when the range expansion
+    // would run backwards, so the same notation splits on the base year. Pinned
+    // because it is surprising, not because it is wrong — the alternative is
+    // adjudicating ISO against the abbreviated-range convention, which this fix
+    // deliberately does not do.
+    expect(stdDate('1845-10')).toBe('Oct 1845');
+    expect(stdDate('1900-10')).toBe('Bet 1900 and 1910');
+  });
+
   test('an ambiguous forward case keeps the long-standing range reading', () => {
     // 1900-10 is October 1900 under ISO and 1900-1910 as an abbreviated range.
     // This fix does not adjudicate that -- it only removes impossible outputs.
