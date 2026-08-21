@@ -90,9 +90,11 @@ in the sense that they cannot.
   full GedcomX and the simplified format defined in
   `docs/specs/simplified-gedcomx-spec.md`; implementation spec at
   `docs/specs/gedcomx-convert-spec.md`) and `search-helpers.ts` (shared
-  input validators and error parsing used by the search tools
-  `record_search` and `person_search`; `parseUpstreamErrorBody` is also
-  reused by `person_ancestors`).
+  input validators, output shaping and error parsing used by the search
+  tools `record_search`, `person_search`, `collections_search` and
+  `volume_search`; `parseUpstreamErrorBody` is also reused by
+  `person_ancestors`, and `formatYearRange` is the single date-range
+  format shared by `collections_search` and `volume_search`).
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
 
 ### Hosted web workbench (monorepo overlay)
