@@ -471,6 +471,13 @@ Architecturally:
   `~/.familysearch-mcp/config.json`. **Never a `process.env` fallback** — the
   file is the sole source. Throw **LLM-instruction errors**: the message must
   tell Claude what to do next, not just what failed.
+- **Every network leg goes through `fetchWithTimeout` (`src/utils/http.ts`)** —
+  the global `fetch` never times out and a stalled upstream hangs the call
+  forever. Size the budget under **60s** or accept that Cowork loses the tail:
+  the device bridge caps every MCP call at 60s (see "Other environment
+  differences that bite"), so any budget above it is honoured only on the
+  stdio paths (harnesses and hosted, both verified) and silently truncated in
+  Cowork. Size a raise from the measured e2e corpus, not by guessing.
 - **Reuse before you write:** `getValidToken()` for auth (never re-implement
   token plumbing), `place-resolver.ts` / `place-api.ts` for places, and
   `BROWSER_USER_AGENT` from `src/constants.ts` for any FamilySearch endpoint —
@@ -1092,15 +1099,12 @@ only `$ref`s it). Edit `enums.schema.json` in **both** schema trees,
 **Do not hand-edit the TypeScript union.** `packages/schema/src/enums.generated.ts`
 is emitted from that package's own `schemas/enums.schema.json` by
 `scripts/gen-enums.mjs`, chained into `build`, `typecheck` and each app's `dev`
-(ADR-0008 tier 2), and gitignored. `src/index.ts` re-exports it. The exception is
-the **five unions defined inline in `research.schema.json`** rather than in
-`enums.schema.json` — `EvaluationFocus`, `EvaluationTargetType`,
-`EvaluationVerdict`, `ExperienceLevel`, `Subscription` — which the generator
-cannot see and which are therefore hand-written in `src/index.ts` until they move
-(#1015). If your value belongs to one of those five, edit `src/index.ts`;
-otherwise regeneration is automatic and typing it by hand creates a sixth copy.
+(ADR-0008 tier 2), and gitignored. `src/index.ts` re-exports it. Every closed enum
+in `enums.schema.json` is generated, with no exceptions. Regeneration is automatic
+and typing a union by hand creates a sixth copy — `gen-enums.mjs` throws rather
+than let a hand-written union silently shadow a generated one.
 
-> **Direction (#1087/#1015/#1014; [ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).**
+> **Direction (#1087/#1014; [ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).**
 > These are **four-plus hand-maintained copies of one source**, kept in sync by
 > elimination, automatic generation, or lint — never by a step a human has to
 > remember. `packages/schema`'s enum unions are generated; everything else is
@@ -1279,6 +1283,22 @@ Other environment differences that bite:
   §5.4's raw-write class is entirely ungated at call time there.
 - **Tool deferral.** Cowork defers tool schemas above a size threshold and offers
   no control over it, so `ToolSearch` is the real load path there (§5.2).
+- **The Cowork bridge caps every MCP call at 60s.** A client-side ceiling this
+  repo does not set — no `MCP_TOOL_TIMEOUT`/`MCP_TIMEOUT` or equivalent per-tool
+  ceiling is defined anywhere in the code — and cannot change from the plugin or
+  the `.mcpb`. Any tool timeout
+  budget above 60s is therefore aspirational in Cowork: the call is aborted with
+  `tool "…" timed out after 60s` before the tool's own budget fires, and its
+  eventual result is discarded. The harnesses and the hosted control plane
+  register the server over stdio and are **not** capped (committed e2e run
+  logs carry `image_transcribe`'s own 180s timeout as a result, so calls ran
+  past 60s there). `image_transcribe`'s `OCR_TIMEOUT_MS = 180s` is the first
+  budget this bites (roughly 10-15% of healthy calls exceed 60s — see the
+  spec's Timeout budget section for why it is a range, not a point), but
+  it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
+  budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
+  above the ceiling too. **No automated check reaches this** — neither harness
+  goes through the bridge — so it is only observable in a live Cowork session.
 
 ### If you're asked to…
 
