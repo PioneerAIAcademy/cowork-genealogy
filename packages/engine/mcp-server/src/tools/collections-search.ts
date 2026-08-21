@@ -1,6 +1,7 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "../utils/http.js";
+import { formatYearRange } from "../utils/search-helpers.js";
 import type {
   FSCollectionData,
   FSCollectionEntry,
@@ -150,14 +151,7 @@ function getCount(
 
 function toCollection(data: FSCollectionData): Collection {
   const meta = data.searchMetadata?.[0];
-  const startYear = meta?.startYear;
-  const endYear = meta?.endYear;
-  const dateRange =
-    startYear != null && endYear != null
-      ? `${startYear}-${endYear}`
-      : startYear != null
-        ? `${startYear}`
-        : "";
+  const dateRange = formatYearRange(meta?.startYear, meta?.endYear);
 
   return {
     id: data.id,

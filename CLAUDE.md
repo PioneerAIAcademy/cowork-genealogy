@@ -90,9 +90,11 @@ in the sense that they cannot.
   full GedcomX and the simplified format defined in
   `docs/specs/simplified-gedcomx-spec.md`; implementation spec at
   `docs/specs/gedcomx-convert-spec.md`) and `search-helpers.ts` (shared
-  input validators and error parsing used by the search tools
-  `record_search` and `person_search`; `parseUpstreamErrorBody` is also
-  reused by `person_ancestors`).
+  input validators, output shaping and error parsing used by the search
+  tools `record_search`, `person_search`, `collections_search` and
+  `volume_search`; `parseUpstreamErrorBody` is also reused by
+  `person_ancestors`, and `formatYearRange` is the single date-range
+  format shared by `collections_search` and `volume_search`).
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
 
 ### Hosted web workbench (monorepo overlay)
@@ -431,12 +433,13 @@ change, with different (and easy-to-undercount) site lists:
   prose tables/discussion in `research-schema-spec.md`. **Do not hand-edit the TS
   union**: `packages/schema/src/enums.generated.ts` is emitted from that package's
   own `enums.schema.json` by `scripts/gen-enums.mjs`, chained into `build`,
-  `typecheck` and each app's `dev`, and gitignored (ADR-0008 tier 2). The one
-  exception is the five unions defined inline in `research.schema.json` rather
-  than in `enums.schema.json` — `EvaluationFocus`, `EvaluationTargetType`,
-  `EvaluationVerdict`, `ExperienceLevel`, `Subscription` — which the generator
-  cannot see and which stay hand-written in `packages/schema/src/index.ts` until
-  they move. Worked blast-radius and
+  `typecheck` and each app's `dev`, and gitignored (ADR-0008 tier 2). Every
+  closed enum in `enums.schema.json` is generated, with no exceptions —
+  `gen-enums.mjs` throws rather than let a hand-written union shadow a generated
+  one. Removing or renaming a
+  value additionally requires a repo-wide grep for the old value: the full-list
+  lint catches an added value, but a rename or removal can leave a stale
+  single-value mention in prose that no lint sees. Worked blast-radius and
   rationale: `docs/specs/research-schema-spec.md`, the `no_evidence` note in
   the enum section.
 - **Tree-schema (simplified-GedcomX) change** — a new/renamed field on tree

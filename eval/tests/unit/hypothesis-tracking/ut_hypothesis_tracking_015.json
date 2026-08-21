@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_015",
+    "skill": "hypothesis-tracking",
+    "name": "Building a candidate chronology should not trigger hypothesis-tracking",
+    "type": "negative",
+    "description": "User asks for every documented event for two same-named Patrick Flynns laid out in date order to see whether they fit one life. The scenario's open hypothesis h_002 asks exactly that identity question, so hypothesis-tracking looks apt — but the deliverable requested is the chronology itself, which is timeline's Mode-B candidate timeline, assigned away by hypothesis-tracking's DO-NOT clause.",
+    "tags": [
+      "near-miss",
+      "hypothesis-tracking-vs-timeline",
+      "routing"
+    ]
+  },
+
+  "input": {
+    "user_message": "Lay out every documented event for both Patrick Flynns side by side in date order so I can see whether they fit one life.",
+    "scenario": "flynn-one-life"
+  },
+
+  "negative": {
+    "correct_skill": ["timeline"],
+    "explanation": "The requested artifact is a chronology — events ordered by date across two candidate persons, which is exactly timeline's identity-testing (Mode-B) mode and is written to the `timelines` section. hypothesis-tracking's SKILL.md states: 'Do NOT use when the user wants to build a timeline (use timeline).' The h_002 identity question is the *reason* the chronology is wanted, not the deliverable; hypothesis-tracking's turn comes after, to record what the chronology showed. Answering with a status update on h_002 and no chronology does not satisfy the request."
+  },
+
+  "judge_context": [
+    "Should route to timeline rather than updating h_002 or writing a hypothesis summary",
+    "The presence of an open identity hypothesis in the scenario is not sufficient reason to activate — hypothesis-tracking records the verdict of a coherence test, it does not build the chronology the test runs on",
+    "Declining and pointing at timeline is correct even though the underlying question is a hypothesis question"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
