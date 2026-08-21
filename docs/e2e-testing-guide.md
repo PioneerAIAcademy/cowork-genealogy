@@ -497,6 +497,36 @@ judgment call you should be able to defend in review.
 
 ---
 
+## Analyzing the committed corpus: a report target, not a script
+
+Steps 0–9 are about authoring one fixture. A different kind of task reads
+*every* committed run at once — `eval/harness/e2e/corpus_report.py`,
+`nudge_report.py`, `latency_report.py`, `wiki_failure_report.py`,
+`compaction_report.py`, and their `make e2e-*` targets are all pure analysis
+over `eval/runlogs/e2e/**`: no live run, no API spend.
+
+**Why this lands as a permanent module + Makefile target, not a one-off
+script**, using `compaction_report.py`/`make e2e-compaction` (issue #1155,
+splitting each run's `record_search` calls by compaction segment) as the
+example: the same timeline-segmentation method is needed again — issue #1144
+wants it applied to four guardrail skills' on-demand reference reads, and
+ADR-0003's "Revisit when" clause asks for a compaction-segment audit of a
+second skill body. A throwaway script gets rebuilt from scratch for each of
+those; a module next to its siblings gets imported.
+
+**Mechanics.** `make e2e-compaction TEST=<slug> SINCE=all|N|YYYY-MM-DD`. Like
+the other aggregating reports, `SINCE` defaults to the last 14 days — too
+narrow for most compaction questions, since heavy compaction only shows up in
+long runs and the corpus turns over quickly. Pass an explicit `SINCE=<date>`
+or `SINCE=all`. The two windows issue #1155 was asked to compare:
+`SINCE=2026-07-27` (the day the ranking fold shipped) and `SINCE=2026-08-04`
+(the day `rankingSkipped` landed, meant to counteract exactly this decay). A
+run committed before 2026-07-26 (#895) carries no per-message tool names and
+can't be segmented; it's excluded from the report and the exclusion is
+counted, never silently dropped.
+
+---
+
 ## Windows equivalents
 
 Every `make` target above has a batch file in `eval\`. Double-click it or run

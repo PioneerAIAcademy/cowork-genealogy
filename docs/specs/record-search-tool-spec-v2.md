@@ -331,7 +331,9 @@ search "looked like" it was about a tree person. That test is a heuristic, and
 gating the signal on an unvalidated heuristic would bias the very coverage
 measurement the signal exists to produce. A caller running a legitimate broad
 survey gets one extra short field; whether a given omission was legitimate is
-answered at analysis time from the args already in the run log.
+answered at analysis time from the args already in the run log. `make
+e2e-compaction` (issue #1155) is the corpus-scale version of that analysis,
+split by compaction segment.
 
 Falsiness, not `=== undefined`, is the test on `subjectId`, because the ranking
 gate is itself `input.subjectId &&`. Matching it exactly is what stops the field

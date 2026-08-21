@@ -99,10 +99,29 @@ default and the ranking fold, both now in `record-search.ts`, and both pinned by
 requests the deep pool and returns `ranked`; without one, `count` stays at 20).
 The committed e2e corpus agrees: 21 of the 22 searches eligible to be ranked — a
 `subjectId` given *and* at least one match — came back with a `ranked` block.
-Every invariant moved
-into `research_append` holds regardless of context
+Every invariant moved into `research_append` holds regardless of context
 state, model, or how long the session has run — and holds identically in Cowork,
 the hosted path, and both harnesses, which prose never does.
+
+**The fold's remaining prose-only step decays exactly where predicted.**
+Supplying `subjectId` itself, from `search-records/SKILL.md`, was left
+unmeasured under compaction. A compaction-segment audit of `search-records`
+via a different signal (`subjectId` supply rather than ranking-call rate;
+`make e2e-compaction`, issue #1155 — **not** the "second skill body" audit the
+"Revisit when" clause below names, since this re-checks the same skill) found
+early-segment (0–2) supply markedly higher than late-segment (3+) throughout:
+45.8% vs. 43.6% before `rankingSkipped` shipped (2026-07-27..08-03, 34
+segmentable runs / 101 late-segment calls), 64.7% vs. 44.0% after
+(2026-08-04+, 14 runs / 25 late-segment calls). Comparing the two
+**disjoint** windows: early-segment supply rose 19 points after
+`rankingSkipped` (45.8% → 64.7%) while late-segment supply moved essentially
+not at all (43.6% → 44.0%). **The nudge shows no measured effect in the
+segment it exists to help** — it correlates with an early-session lift
+(plausibly `search-records/SKILL.md` still being resident, or PR #1032's
+unrelated marriage-search change, both landing in the same window) and
+nothing measurable once compaction has already evicted that prose. That is
+real decay in exactly the place the 77%→3% figure above predicts unanchored
+prose decays, not a gentler version of it — followed up in #1811.
 
 **Costs, knowingly accepted.**
 
