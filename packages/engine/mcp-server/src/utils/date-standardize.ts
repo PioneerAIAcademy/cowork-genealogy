@@ -48,7 +48,7 @@ function tokenize(s: string): Token[] {
       let str = '';
       while (i < s.length && /[a-zA-Z]/.test(s[i])) str += s[i++];
       tokens.push({ type: 'str', value: str });
-    } else if (ch === '/' || ch === '<' || ch === '>' || ch === '&') {
+    } else if (ch === '/' || ch === '<' || ch === '>' || ch === '&' || ch === '~') {
       tokens.push({ type: 'sym', value: ch });
       i++;
     } else {
@@ -175,6 +175,24 @@ function preProcess(raw: string): { text: string; trailingParen: string; uncerta
   text = text.replace(/(\d{1,2})-([a-zA-Z]+)-(\d{4})/g, '$1 $2 $3');
 
   // Handle abbreviated year ranges: 1875-80 → 1875-1880 (BEFORE dash processing)
+  //
+  // Two guards, because the naive expansion produced dates that were not merely
+  // imprecise but wrong, and silently: `1845-03` became `Bet 1845 and 1803` — a
+  // range running backwards past its own start. `YYYY-MM-DD` never hit this (the
+  // three-part ISO rule above claims it first), so only year-month was exposed.
+  //
+  //  1. ISO year-month, not a range. A leading zero says month outright
+  //     (`1845-03`), and so does an expansion that would run backwards or
+  //     nowhere (`1845-3` → 1843, `1845-03` → 1803) when the suffix is a legal
+  //     month number.
+  //  2. A backwards expansion that cannot be a month is a century short, not a
+  //     reversal: `1845-30` → 1930, never 1830.
+  //
+  // Deliberately unchanged: a forward two-digit expansion with no leading zero
+  // stays a range, so `1875-80` → 1875-1880 and `1900-10` → 1900-1910. The
+  // second is genuinely ambiguous against ISO October 1900, and the range
+  // reading is both the long-standing behaviour and a real convention — this fix
+  // does not adjudicate it, it only stops the impossible outputs.
   text = text.replace(/(\d{4})-(\d{1,3})(?!\d)/g, (_match, base, suffix) => {
     const baseYear = parseInt(base, 10);
     const suffixNum = parseInt(suffix, 10);
@@ -182,6 +200,15 @@ function preProcess(raw: string): { text: string; trailingParen: string; uncerta
       // Check it's not already a full year range converted above
       const suffixLen = suffix.length;
       const expanded = Math.floor(baseYear / Math.pow(10, suffixLen)) * Math.pow(10, suffixLen) + suffixNum;
+      const couldBeMonth = suffixNum >= 1 && suffixNum <= 12;
+      const runsBackwards = expanded <= baseYear;
+      if (couldBeMonth && (suffix.startsWith('0') || runsBackwards)) {
+        const mon = numToMonth(suffixNum);
+        if (mon) return `${mon} ${base}`;
+      }
+      if (runsBackwards) {
+        return `${base}-${expanded + 100}`;
+      }
       return `${base}-${expanded}`;
     }
     return _match;
@@ -392,7 +419,7 @@ function parseDateTokens(tokens: Token[], startIdx: number, endIdx: number): Dat
     }
 
     if (tok.type === 'sym') {
-      if (tok.value === '<' || tok.value === '>') {
+      if (tok.value === '<' || tok.value === '>' || tok.value === '~') {
         const mod = MODIFIERS.get(tok.value);
         if (mod && !parts.modifier) {
           parts.modifier = mod;

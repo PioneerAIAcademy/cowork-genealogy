@@ -229,26 +229,29 @@ it also drops records carrying no year, or in-range *approximate* dates, is
 Unqualified, a relative name keeps records where that relative was **never
 indexed**, while still excluding a different one. **How much it narrows depends
 on WHICH relative, and the spread is large.** Measured by reading whole result
-sets to the end, on two marriage populations and on the **father** and **spouse**
-names only: an unmatchable *father* name returned about 70-93% of the baseline,
-an unmatchable *spouse* name 10% in one population and 81% in the other — in each
-case matching the share of records silent about that relative.
+sets to the end, on two marriage populations and on the **father**, **spouse**,
+**mother** and **parent** names: an unmatchable *father* name returned about
+70-93% of the baseline, a *mother* name about 70-99%, a *parent* name about
+70-93%, an unmatchable *spouse* name 10% in one population and 81% in the other —
+in each case matching the share of records silent about that relative.
 
 So a father-anchored nil is weak evidence wherever fathers are thinly indexed,
 and a spouse-anchored one is stronger wherever spouses are not. **The difference
 is exactly how often that relative is indexed:** an unmatchable name keeps the
 records silent about that relative and drops every record naming a different one,
 so retention matches the baseline's silent share to within about a point. Nothing
-is special about the parameter. Mother, parent and other names were not
-enumerated.
+is special about the parameter. `other` names were not enumerated.
 
 Setting `*Exact` requires the relative to be indexed **and** the spelling to
 match, so it drops the silent population as well as variant forms the fuzzy
-search did reach (both sets read in full). Measured on the **father** and
-**spouse** names — for spouse, across two marriage populations read to the end,
-every spouse-silent record is absent from the exact set while a spouse-bearing
-control survives. Mother, parent and other were not tested, so do not assume the
-size of the effect carries across families. Whether it drops indexed
+search did reach (both sets read in full). Enumerated on the **father**,
+**spouse**, **mother** and **parent** names, across two marriage populations read
+to the end: every relative-silent record is absent from the exact set while a
+relative-bearing control survives — the one exception being `mother` in England,
+whose pool indexes no mother given name to serve as a control, so the presence
+requirement is confirmed for `mother` on the Brazil population alone. `other` was
+not tested, so do not assume the size of the effect carries across families.
+Whether it drops indexed
 abbreviations (`Wm` for `William`) specifically is **not** measured — the
 enumerated set held none to drop. Set it only with a confirmed indexed spelling
 of the relative's name.

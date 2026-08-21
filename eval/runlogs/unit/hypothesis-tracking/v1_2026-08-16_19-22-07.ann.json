@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-08-16_19-22-07.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_003`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified a_005 as the key missing assertion and added it to h_001's supporting_assertion_ids. The file_changes diff confirms a_005 was added to the supporting list. Claude correctly preserved h_001's 'supported' status (no change), correctly did not treat the resolved birthplace conflict c_001 as an unresolved contradiction affecting parentage, and correctly reasoned through why other unlinked assertions (a_001–a_003, a_006–a_009, a_011–a_012) do not bear on the parentage claim. The schema validation passed. All factual claims are supported by the sources and prior state.\n\nJunior: ( Correctness - Pass. Claude demonstrated strong judgment in linking only the assertion that directly strengthens the parentage claim. The response shows proper handling of evidence relevance, status preservation, and schema validation. This is a model example of correctness in hypothesis tracking.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_003`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the user's request fully: reviewed all unlinked assertions against h_001, identified a_005 as relevant, added it to supporting_assertion_ids, and provided clear reasoning for why other assertions were skipped. Claude also called validate_research_schema as required. The response covers the complete scope of the task without omissions.\n\nJunior: ( Pass - Claude demonstrated thoroughness and precision. The completeness lies not only in adding the missing assertion but also in systematically documenting why other assertions were excluded. This ensures transparency in genealogical reasoning and aligns with best practices for hypothesis tracking.) "
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_003`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both MCP tool calls passed with correct arguments. The mcp__genealogy__research_append call correctly specified section='hypotheses', op='update', entryId='h_001', and fields containing the updated supporting_assertion_ids array [a_004, a_005, a_010, a_013] with a detailed notes field. The mcp__genealogy__validate_research_schema call correctly specified the projectPath. Both calls matched.kind='live' and returned ok=true with valid schema. No fixture_not_found errors occurred.\n\nJunior: (Pass - Claude demonstrated precise tool usage. The arguments were complete, well‑structured, and aligned with the schema requirements. The notes field was especially strong, showing genealogical reasoning and documenting why the update was made. This is a textbook example of correct tool argument handling.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_003`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> The hypothesis h_001 is stated as a specific, testable claim: 'Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania.' It names specific persons (Patrick Flynn, Thomas Flynn), the specific relationship (father-child), and includes place detail (Schuylkill County, Pennsylvania). The claim is testable and not vague.\n\nJunior: (Pass - This is a model of a well formed genealogical hypothesis. It is specific, testable, and framed in a way that directs research toward concrete sources. The clarity ensures evaluators can distinguish between competing hypotheses (e.g., Thomas Flynn vs. James Flynn as father) without confusion.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_003`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> All supporting assertions linked to h_001 are directly relevant to the parentage claim. a_004 (Patrick's position in Thomas's household, 1850) and a_005 (Thomas Flynn named as head of that household) together establish co-enumeration and candidate father identity. a_010 (Patrick in Thomas's household, 1860) corroborates the relationship across a second census. a_013 (death certificate naming Thomas Flynn as father) is explicit parentage evidence. No contradicting assertions are linked. Claude correctly skipped assertions about Patrick's name, birth, residence, and death as not bearing on parentage. The linkage is precise and well-reasoned.\n\nJunior: (Pass - Claude demonstrated strong evidence evaluation skills. The linkage reflects a careful distinction between assertions that directly support the parentage hypothesis and those that are tangential. This ensures the hypothesis is supported by relevant, probative evidence without clutter from unrelated facts.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_003`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> h_001 remains at 'supported' status, which is correct per research-schema-spec.md §5.9. The hypothesis has direct evidence (a_013 from death certificate, though secondary informant) and indirect corroborating evidence (a_004, a_005, a_010 from censuses). No unresolved contradictions exist — the birthplace conflict c_001 is resolved and does not contradict parentage. Adding a_005 to an already-supported hypothesis does not trigger a status change. Claude correctly made no status transition.\n\nJunior: (Pass - Claude demonstrated proper application of the schema rules. The handling of status transitions was precise: the hypothesis remained supported, consistent with the presence of direct and indirect evidence, and no contradictions were misapplied. This shows a solid grasp of genealogical proof standards and schema compliance.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_002`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified the two competing Patrick Flynn candidates from the identity conflict c_002, extracted the relevant assertions from the existing sources (1850 and 1860 censuses, 1908 death certificate), and linked them appropriately to each hypothesis. The claim that a_013 (death certificate naming Thomas Flynn as father) directly supports the dwelling-84 candidate and contradicts the dwelling-197 candidate is factually sound. No fabricated material or unsupported claims are present. The hypotheses are grounded in the actual assertions on file.\n\nJunior: (Pass - Claude demonstrated precise handling of an identity conflict by formulating alternative hypotheses, linking evidence correctly, and maintaining schema integrity. This is a strong example of correctness in genealogical hypothesis tracking.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_002`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill created two competing hypotheses (h_002 and h_003) representing both candidates in the identity conflict. Both hypotheses include all required schema fields: claim, status, supporting_assertion_ids, contradicting_assertion_ids, ruled_out, ruled_out_reason, notes, and related_question_ids set to q_001. The file_changes diff confirms both entries were successfully appended to research.json with complete field populations. The skill addressed the user's request to formulate the identity conflict as testable hypotheses.\n\nJunior: (Pass - Claude demonstrated thoroughness by not only creating the hypotheses but also documenting the reasoning, contradictions, and research pathways. This is a strong example of completeness in handling identity conflicts within genealogical hypothesis tracking.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_002`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All three MCP tool calls passed validation with matched.kind == 'live' and ok: true responses. The two research_append calls correctly specified projectPath, section ('hypotheses'), op ('append'), and entry objects with all required hypothesis fields. The validate_research_schema call correctly verified the modified project. No fixture_not_found errors occurred. Arguments match the expected structure and semantics.\n\nJunior: (Pass - Claude demonstrated precise and compliant tool usage. The arguments were complete, well structured, and aligned with the schema requirements. This is a strong example of correct tool argument handling in genealogical hypothesis tracking.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_002`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> Both hypotheses are stated as specific, testable claims. h_002 names 'Patrick Flynn, age 5, dwelling 84, Thomas Flynn's household, 1850' and claims he is the 1908 decedent. h_003 names 'Patrick Flynn, age 6, dwelling 197, different household, 1850' and claims he is the 1908 decedent. Each includes specific persons, the specific identity relationship being tested (which Patrick is the subject I1), and sufficient place/time detail (Schuylkill County, 1850, specific dwellings) to enable follow-up searches. Both are clearly testable.\n\nJunior: (Pass - Claude demonstrated excellent clarity in hypothesis formulation. Each claim is distinct, specific, and testable, which is essential for resolving identity conflicts in genealogical research. This is a strong example of how to frame competing hypotheses for evaluation.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_002`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> All linked assertions are directly relevant to the identity hypotheses. For h_002: a_001 (name 'Patrick Flynn'), a_003 (Schuylkill County residence), a_004 (household position with Thomas Flynn), a_010 (1860 co-enumeration with Thomas Flynn), and a_013 (death certificate naming Thomas Flynn as father) all directly bear on whether the dwelling-84 Patrick is the subject. For h_003: a_004, a_010, and a_013 are correctly linked as contradictions—they establish Thomas Flynn as father and household continuity, which contradicts a dwelling-197 origin. No tangential assertions are included.\n\nJunior: (Pass - Claude demonstrated precise evidence linkage, ensuring that only assertions directly relevant to the identity hypotheses were included. The linkage is well reasoned, avoids clutter, and highlights contradictions appropriately, making the hypotheses testable and clear.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_002`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> Both hypotheses are correctly set to 'active' status with ruled_out: false and ruled_out_reason: null. Neither hypothesis has been moved to 'supported' or 'ruled_out' prematurely. h_002 has supporting evidence (five assertions) with no contradictions, but the skill appropriately keeps it 'active' pending further testing rather than declaring it 'supported' without complete evidence. h_003 has contradictions but is not ruled_out, correctly awaiting extraction of the dwelling-197 record. Status transitions comply with research-schema-spec.md §5.9 rules.\n\nJunior: (Pass - Claude demonstrated proper discipline in managing status transitions. By keeping both hypotheses active, the skill respected the requirement that hypotheses remain testable until sufficient evidence exists to support or rule them out. This shows strong adherence to genealogical proof standards and schema compliance.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_001`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified h_001 as SUPPORTED and accurately cited the three supporting assertions (a_004, a_010, a_013) with proper characterization of their evidence types (indirect for census, direct for death certificate). The death certificate informant (James Brown, son-in-law) was correctly identified as secondary. No contradicting assertions exist, as stated. The proof summary reference to ps_001 being rated 'Probable' is accurate. All factual claims are grounded in the before-state sources and assertions.\n\nJunior: (Pass - Claude demonstrated precise and accurate handling of hypothesis status reporting. The response correctly balanced evidence types, acknowledged the absence of contradictions, and identified the next logical research step. This is a strong example of correctness in genealogical hypothesis evaluation.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_001`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: cited the three supporting assertions with their sources and evidence types, noted the empty contradicting_assertion_ids, identified probate records (src_006, the will) as the next corroborating source, and explained why the hypothesis remains at 'Probable' rather than 'Proved' (indirect census evidence, secondary informant, incomplete census search). The response directly answered the user's question about hypothesis status.\n\nJunior: (Pass - Claude demonstrated thoroughness and precision. The completeness lies in covering all required elements: supporting assertions, absence of contradictions, current status, and identification of next research steps. This is a strong example of a fully complete genealogical hypothesis status report.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_001`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> The hypothesis claim is specific and testable: 'Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania.' It names both specific persons, the specific relationship (father-son), and includes place detail (Schuylkill County). The claim is sufficiently precise that follow-up searches (additional censuses, probate records) can directly test it.\n\nJunior: (Pass - Claude demonstrated strong clarity in hypothesis formulation. The claim is well structured, specific, and testable, making it an excellent example of how genealogical hypotheses should be articulated to enable systematic evaluation.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_001`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> All three supporting assertions are directly relevant to the parentage hypothesis. a_004 (Patrick age 5 in Thomas's 1850 household) and a_010 (Patrick age 15 in Thomas's 1860 household) both establish co-residence consistent with a parent-child relationship. a_013 (death certificate naming Thomas as father) is direct evidence of the claimed relationship. No tangential assertions are linked; each bears directly on whether Thomas was Patrick's father.\n\nJunior: (Pass - Claude demonstrated strong genealogical reasoning by linking only assertions that directly support the parentage claim. The evidence linkage is clean, relevant, and probative, avoiding clutter from unrelated facts. This is a model example of accurate and disciplined evidence linkage.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_001`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> The hypothesis status of SUPPORTED is justified per research-schema-spec.md §5.9. The skill correctly notes that the proof summary ps_001 is rated 'Probable' (not 'Proved') because: (1) census evidence is indirect (no relationship column), (2) the death certificate informant is secondary, and (3) research is incomplete (1870, 1880, 1900 censuses not yet searched, probate extraction in progress). The status reflects the actual evidence strength without overstating certainty. No contradictions are unresolved.\n\nJunior: (Pass - Claude demonstrated disciplined application of schema rules. The reasoning behind keeping the hypothesis at SUPPORTED / Probable is clear, evidence based, and avoids premature certainty. This is a strong example of proper status transition management in genealogical hypothesis tracking.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The skill made one MCP call to mcp__genealogy__validate_research_schema with the correct projectPath argument. The call matched the expected fixture and returned valid: true with no errors or warnings. No fixture_not_found errors occurred. The tool invocation was appropriate and correctly formed.\n\nJunior: (Pass - Claude demonstrated precise tool usage. The validation call was clean, accurate, and confirmed the project’s schema integrity without issues. This is a strong example of correct and compliant tool argument handling.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_012`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly refused to downgrade h_001 from supported to active. The response accurately explains that information quality (secondary informant) and evidence type (direct) are independent axes. a_013 is correctly identified as direct evidence (explicitly names Thomas as father) despite the informant being secondary. The proof summary (ps_001) is correctly cited as already accounting for the secondary informant limitation by rating the conclusion Probable rather than Proved. No fabricated material or unsupported claims.\n\nJunior: (Pass - Claude handled this scenario correctly by maintaining h_001 at supported, explaining the distinction between evidence type and information quality, and showing how the secondary informant issue is already reflected in the proof tier. This is a strong example of accurate and disciplined genealogical reasoning.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_012`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed all required elements: (1) validated the schema as required by SKILL.md, (2) directly answered the user's question about downgrading, (3) explained the distinction between evidence type and information quality, (4) cited the relevant rule from SKILL.md about not downgrading for minor discrepancies, (5) showed where the secondary informant concern is already reflected (ps_001), and (6) explained what would actually warrant a downgrade. The file was correctly left unchanged (no status change made).\n\nJunior: (Pass - Claude demonstrated thoroughness and precision. The completeness lies in covering every required element: schema validation, direct answer, rule citation, explanation of axes, acknowledgment of informant quality, and conditions for downgrade. This is a strong example of a fully complete genealogical status review.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_012`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made one MCP tool call: mcp__genealogy__validate_research_schema with projectPath argument. The call matched expected_args (null, meaning no specific args were expected beyond the standard project path). The call succeeded with matched.kind == 'live' and returned valid: true. Arguments are correct.\n\nJunior: (Pass - Claude demonstrated precise and compliant tool usage. The validation call was clean, accurate, and confirmed schema correctness without issues. This is a strong example of proper tool argument handling.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_012`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> The hypothesis claim is stated with full clarity: 'Thomas Flynn was Patrick Flynn's father' (h_001). The response maintains this specific, testable claim throughout and explains exactly what evidence supports it (a_013 naming Thomas as father on the death certificate). The claim is not vague and includes sufficient specificity for follow-up research.\n\nJunior: (Pass - Claude demonstrated strong clarity in hypothesis formulation. The claim is precise, testable, and well anchored, making it an excellent example of how genealogical hypotheses should be articulated for systematic evaluation.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_012`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> Claude correctly links a_013 as supporting evidence for h_001 — the death certificate directly states Thomas as Patrick's father, which is the core of the hypothesis. The response also correctly references ps_001 (proof summary) as the appropriate place where the secondary informant limitation is already documented. All linkages are direct and relevant; no tangential assertions are included.\n\nJunior: (Pass - Claude demonstrated disciplined evidence handling. The linkage is precise, relevant, and correctly contextualized within the proof summary, making this a strong example of accurate genealogical evidence linkage.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_012`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> Claude correctly maintains h_001 at 'supported' status, which aligns with research-schema-spec.md §5.9 rules. The hypothesis has at least one direct evidence assertion (a_013 with evidence_type: direct), no unresolved contradictions, and a consistent timeline. Claude correctly explains that a secondary informant does not disqualify direct evidence or warrant downgrade to active. The status transition rule is properly applied: downgrade only for unresolved contradictions or logical impossibilities, neither of which apply here.\n\nJunior: (Pass - Claude applied the schema rules with precision. The refusal to downgrade was justified, the distinction between evidence type and information quality was well explained, and the supported status was properly preserved. This is a strong example of correct status transition handling in genealogical hypothesis evaluation.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_013`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude created h_002 with a specific, testable claim naming both persons (Thomas Flynn, Patrick Flynn) and the specific alternative relationship (uncle). The claim includes place/time detail (Schuylkill County, Pennsylvania). The hypothesis was written to research.json with status 'active', related_question_ids ['q_001'], supporting_assertion_ids [a_004, a_010], and contradicting_assertion_ids [a_013]. Critically, h_001 was not modified—it remains 'supported' with its original supporting and contradicting assertions intact. The assertion linkage is correct: a_004 and a_010 (census co-enumeration without stated relationships) are genuinely ambiguous between father and uncle, so including them as supporting evidence for h_002 is defensible. a_013 (death certificate naming Thomas as father) is correctly placed in contradicting_assertion_ids for h_002. The notes field provides sound reasoning about informant bias (son-in-law secondary source) and testing strategy. Schema validation passed. No fabricated material or unsupported claims.\n\nJunior: (Pass - Claude handled the creation of a competing hypothesis with precision. The claim is clear, the evidence linkage is appropriate, h_001 was left unchanged, and the schema validated successfully. This is a strong demonstration of correctness in genealogical hypothesis management.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_013`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed all requirements: created h_002 with specific uncle-relationship claim, set status to 'active', linked related_question_ids to q_001, populated supporting_assertion_ids with a_004 and a_010 (census evidence), populated contradicting_assertion_ids with a_013 (death certificate), left ruled_out false and ruled_out_reason null (appropriate for active hypothesis), included detailed notes explaining the ambiguity and testing strategy, and called validate_research_schema to confirm schema validity. The response also provided narrative context explaining the evidence structure and priority tests. No required elements were omitted.\n\nJunior: (Pass - Claude’s response is fully complete. It covered every required element, maintained h_001 unchanged, and added h_002 with precise claim, evidence linkage, and testing strategy. Nothing was omitted, making this a strong example of completeness in genealogical hypothesis management.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_013`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made two MCP calls. First call to mcp__genealogy__research_append passed correct args: projectPath matched the test fixture path, section='hypotheses', op='append', and entry object contained all required fields with correct structure and values. The entry claim is specific and testable, status is 'active', supporting_assertion_ids and contradicting_assertion_ids reference valid existing assertion IDs (a_004, a_010, a_013), and related_question_ids correctly references q_001. Second call to mcp__genealogy__validate_research_schema passed correct projectPath. Both calls succeeded (matched.kind='live', ok=true). No fixture_not_found errors. Arguments match expected structure and semantics.\n\nJunior: (Pass - Claude demonstrated precise tool usage. The append call was correctly structured with all required fields, and the validation call confirmed schema integrity. This is a strong example of proper tool argument handling in genealogical hypothesis management.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_013`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> The claim is highly specific and testable: 'Thomas Flynn of Schuylkill County, Pennsylvania was Patrick Flynn's uncle (a brother of Patrick's unknown biological father), not his father.' It names both specific persons (Thomas Flynn, Patrick Flynn), specifies the exact alternative relationship (uncle, not father), includes place detail (Schuylkill County, Pennsylvania), and provides enough context that follow-up searches could test it (e.g., searching for Thomas's siblings, examining the will for 'nephew' language, checking baptismal records for the father's name). The claim is neither vague nor so broad it cannot be ruled out.\n\nJunior: (Pass - Claude demonstrated excellent clarity in formulating the competing hypothesis. The claim is specific, testable, and provides sufficient context for systematic genealogical evaluation. This is a strong example of how to frame alternative hypotheses with precision.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_013`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> All linked assertions are directly relevant to the uncle hypothesis. Supporting assertions a_004 and a_010 (1850 and 1860 census co-enumeration) genuinely bear on the hypothesis because both records lack stated relationships and use 'child_inferred' relationship type—co-residence is equally consistent with uncle-nephew as with father-son, making them legitimately ambiguous evidence. Contradicting assertion a_013 (death certificate naming Thomas as 'father') directly contradicts the uncle claim. Claude's notes correctly explain why a_013 is contradicting despite its secondary informant status. No tangential or off-topic links; every assertion has clear bearing on whether Thomas was Patrick's uncle.\n\nJunior: (Pass - Claude demonstrated disciplined evidence handling. The linkage is precise, relevant, and correctly distinguishes between ambiguous census evidence and directly contradictory death certificate evidence. This is a strong example of accurate and complete evidence linkage in genealogical hypothesis testing.)"
+    }
+  ]
+}

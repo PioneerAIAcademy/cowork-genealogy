@@ -567,23 +567,81 @@ are both titled `record-extraction:`; only #1017 touches the snapshot. PR #1073'
 own DoD says *not* to edit `search-records/SKILL.md` — a tool fix does not take
 the skill's slot.
 
-**The open PRs' changed paths are the primary read** — the only input here that is
-not self-reported. Run this *first*, before any issue body:
+**Build the whole map in one pass, before you rank anything.** A per-skill query only
+answers about the skill you thought to ask about, and the slot you miss is the one whose
+holder's title never mentions it. Two inputs, and you need both: the changed paths of
+every open PR (the only input here that is not self-reported), and the `**Touches:**`
+line of every open issue in **Ready, In Progress or Review** — not Review and PRs alone.
 
 ```sh
-gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open \
-  --json number,title,files \
-  --jq '.[] | select(any(.files[].path; test("plugin/skills/<skill>/|tests/unit/<skill>/"))) | "#\(.number)\t\(.title)"'
-gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open \
-  --search "<skill> -label:icebox" --json number,title,assignees
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 > /tmp/board.json
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
+  --json number,title,body > /tmp/open.json
+gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
+  --json number,title,files > /tmp/prs.json
+python3 - <<'PY'
+import json, re, collections
+board  = json.load(open('/tmp/board.json', encoding='utf-8'))['items']
+issues = {i['number']: i for i in json.load(open('/tmp/open.json', encoding='utf-8'))}
+prs    = json.load(open('/tmp/prs.json', encoding='utf-8'))
+
+skill_re = re.compile(r'plugin/skills/([a-z0-9-]+)/')
+unit_re  = re.compile(r'eval/tests/unit/([a-z0-9-]+)/')
+agent_re = re.compile(r'plugin/agents/([a-z0-9-]+)\.md')
+
+holders = collections.defaultdict(list)
+for it in board:
+    n = (it.get('content') or {}).get('number')
+    if n not in issues or it.get('status') not in ('Ready', 'In Progress', 'Review'):
+        continue                      # closed issues and Backlog hold nothing
+    body = issues[n].get('body') or ''
+    m = re.search(r'\*\*Touches:\*\*(.*?)(?:\n\n|\Z)', body, re.S)
+    scope = m.group(1) if m else body  # no Touches line means UNKNOWN, not empty
+    hits = set(skill_re.findall(scope)) | set(unit_re.findall(scope))
+    hits |= {'AGENT:' + a for a in agent_re.findall(scope)}
+    for h in hits:
+        holders[h].append((n, it['status'], 'Touches' if m else 'body-fallback'))
+
+pr_hold = collections.defaultdict(list)
+for p in prs:
+    for f in p['files']:
+        for rgx, pre in ((skill_re, ''), (unit_re, ''), (agent_re, 'AGENT:')):
+            for g in rgx.findall(f['path']):
+                pr_hold[pre + g].append(p['number'])
+
+for s in sorted(set(holders) | set(pr_hold)):
+    iss = holders.get(s, []); pr = sorted(set(pr_hold.get(s, [])))
+    print(f"{s:26} issues={iss} prs={pr}")
+PY
 ```
 
-**A `**Touches:**` line is a hint, not the input. A missing one means unknown, not
-empty** — fall back to the body's file citations, and to the changed paths of any
-PR the issue already has. Where a `Touches:` line and real paths disagree, the
-paths win: PR #1577 added ten lines to `init-project/SKILL.md` for an issue whose
-`Touches:` named three other skills. Discount a `Touches:` line inherited from an
-issue since closed `not planned` (issue #1322 carried issue #1447's).
+**Read a `body-fallback` row as "unverified", never as "held".** It means the issue has no
+`Touches:` line and the skill name merely appears somewhere in its prose — open it and
+decide. Issue #1273 cites `search-images/SKILL.md` four times as *evidence* for a claim
+about a harness hook and edits none of its files; treating that as a holder blocks a free
+slot. An `AGENT:` row gates **every** skill naming that agent via `@plugin:` — check the
+fan-out with the grep above.
+
+**Neither shortcut works, and they fail in opposite directions.** Keying on the title
+misses a holder whose title names none of its skills: issue #1606 is titled
+*"Source-evaluation findings: prefer 're-read the record' over 'detach source'…"* and its
+`Touches:` holds `check-warnings`, `record-extraction` **and** `research` — three slots,
+invisible to any title match, and it was blocking a fully-reviewed card. Keying on any
+body mention does the reverse and manufactures the false positive above. Only the
+`Touches:` line, with the body as a flagged fallback, gets both right.
+
+**Scanning only open PRs and Review misses In Progress.** Issue #1490 is In Progress and
+its `Touches:` names `init-project/SKILL.md`; a PR-only read reports that slot free the
+day after the deep dive that held it merged, and the next card in is un-startable.
+
+**A `**Touches:**` line is a hint, not proof. Where it and real paths disagree, the paths
+win**: PR #1577 added ten lines to `init-project/SKILL.md` for an issue whose `Touches:`
+named three other skills. Discount a `Touches:` line inherited from an issue since closed
+`not planned` (issue #1322 carried issue #1447's).
+
+**The map is a snapshot.** It is right for the pass that produced it and stale by the next
+one — re-run it before you write anything to the board, and tell a junior to re-check the
+slot before opening a PR rather than trusting a table in an issue body.
 
 **Reclaim a stalled slot.** A holder that has not moved in ~10 days is blocking a
 whole skill. Say so in your report with the assignee and the idle count, and
