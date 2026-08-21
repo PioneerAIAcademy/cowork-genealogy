@@ -14,6 +14,8 @@ import {
   validateProject,
   validateParsed,
   RESEARCH_SHAPES,
+  ID_PREFIXES,
+  ISO_DATE_PATTERN,
 } from "../../src/validation/validator.js";
 
 describe("Project Validator", () => {
@@ -2072,5 +2074,83 @@ describe("Research closed shapes", () => {
         `allow-list drift on ${name}`,
       ).toEqual(Object.keys(def.properties).sort());
     }
+  });
+});
+
+// ─── Validator pattern copies vs research.schema.json (drift guards) ─────────
+//
+// ID_PREFIXES and ISO_DATE_PATTERN are hand-copies of declarative constraints
+// the schema already expresses (id `pattern`s, the iso_date `pattern`). Like
+// VALIDATOR_ENUMS, they are unguarded copies; these two tests diff them against
+// the schema so a copy that drifts fails loudly instead of shipping bad
+// validation. (issue #1015)
+
+describe("ID_PREFIXES mirrors research.schema.json id patterns", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const schemaPath = join(
+    here, "..", "..", "..", "..", "..",
+    "docs", "specs", "schemas", "research.schema.json",
+  );
+  const schema = JSON.parse(readFileSync(schemaPath, "utf-8"));
+
+  // ID_PREFIXES is keyed by SECTION name (`known_holdings`), the schema by SHAPE
+  // `$def` name (`known_holding`); `plan_items` nests under `plan` rather than
+  // being a top-level section. This translation is the only hand-written half —
+  // the SET of id-carrying $defs is derived by walking the schema below, so a new
+  // id-patterned section that no one maps here fails the set-equality assertion.
+  const SECTION_TO_DEF: Record<string, string> = {
+    project: "project",
+    known_holdings: "known_holding",
+    questions: "question",
+    plans: "plan",
+    plan_items: "plan_item",
+    log: "log_entry",
+    sources: "source",
+    assertions: "assertion",
+    person_evidence: "person_evidence_entry",
+    conflicts: "conflict",
+    hypotheses: "hypothesis",
+    timelines: "timeline",
+    proof_summaries: "proof_summary",
+    evaluations: "evaluation_entry",
+    localities: "locality",
+  };
+
+  /** Every `$def` in research.schema.json whose `id` carries a `pattern`. */
+  const defsWithIdPattern = Object.entries(schema.$defs as Record<string, any>)
+    .filter(([, def]) => typeof def?.properties?.id?.pattern === "string")
+    .map(([name]) => name);
+
+  it("every id-patterned $def is mapped (a new section can't dodge the check)", () => {
+    // Derived side (the schema walk) vs the map's targets. A `$def` added with an
+    // `id` pattern and no SECTION_TO_DEF entry appears here and fails.
+    expect(new Set(defsWithIdPattern)).toEqual(new Set(Object.values(SECTION_TO_DEF)));
+  });
+
+  it("ID_PREFIXES and the section→$def map cover the same sections", () => {
+    expect(Object.keys(ID_PREFIXES).sort()).toEqual(Object.keys(SECTION_TO_DEF).sort());
+  });
+
+  it("each schema id pattern starts with ^ + the ID_PREFIXES prefix", () => {
+    for (const [section, prefix] of Object.entries(ID_PREFIXES)) {
+      const def = schema.$defs[SECTION_TO_DEF[section]];
+      const pattern: string = def.properties.id.pattern;
+      expect(
+        pattern.startsWith("^" + prefix),
+        `${section}: schema pattern ${pattern} does not start with ^${prefix}`,
+      ).toBe(true);
+    }
+  });
+});
+
+describe("ISO_DATE_PATTERN mirrors the iso_date $def", () => {
+  it("its source equals enums.schema.json#/$defs/iso_date pattern", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const enumsPath = join(
+      here, "..", "..", "..", "..", "..",
+      "docs", "specs", "schemas", "enums.schema.json",
+    );
+    const enums = JSON.parse(readFileSync(enumsPath, "utf-8"));
+    expect(ISO_DATE_PATTERN.source).toBe(enums.$defs.iso_date.pattern);
   });
 });
