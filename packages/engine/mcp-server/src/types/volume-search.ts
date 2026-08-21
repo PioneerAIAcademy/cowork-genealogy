@@ -53,7 +53,6 @@ export interface MetadataRmsCoverageEntry {
   recordTypeOrig?: string;
   /** Stable key for the record type; `recordTypeOrig` is display text. */
   recordTypeConceptId?: number;
-  /** Ancestor chain, root first, ending in `recordTypeConceptId`. */
   /**
    * The concept's ancestor chain, root-first, ending in `recordTypeConceptId`.
    * No shipped code reads it — it is how `dev/probe-record-type-groups.ts`

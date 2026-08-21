@@ -11,9 +11,11 @@
  * the anchor because containment cannot reach them. Dropping one is silent and
  * expensive: Baptism's `127575` alone accounts for ~208k volumes.
  *
- * `parent` is documentation, not behaviour — it records which other group's
- * subtree this one sits inside, so a reader can see that selecting `Government`
- * also returns Tax, Prison, Poor Law and the rest. Nothing sends it upstream.
+ * `parent` is not sent upstream, but it is not decoration either: `descendantsOf`
+ * walks it to decide whose strays go into the request, so re-parenting a row
+ * changes what the tool asks for. Pointing Prison at Legal drops its three
+ * strays from a `Government` search. Change a parent only with the `tree` probe
+ * output in hand.
  *
  * The contract, the evidence and the decisions behind every row are in
  * docs/specs/volume-search-tool-spec.md § "Record-type filtering". This table
