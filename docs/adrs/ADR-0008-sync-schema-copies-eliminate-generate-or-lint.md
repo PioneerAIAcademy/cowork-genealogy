@@ -8,7 +8,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-04
-- **Last updated:** 2026-08-05 (#1351)
+- **Last updated:** 2026-08-21 (#1015)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -67,6 +67,16 @@ one of them.**
 
 A generate step that a human must remember to run is worse than a lint, because
 a lint fails loudly and a forgotten regenerate ships silently.
+
+**Scope: `research.json` and `tree.gedcomx.json` only.** This ADR governs the
+copies of `enums.schema.json` and `research.schema.json`, and the corollary that
+anything JSON Schema can express belongs in the schema — a closed enum the
+validator checks with no schema `$def` behind it is a bug, not a category, which
+is why `VALIDATOR_ONLY` in `enum-drift.test.ts` stays empty (#1015). The
+eval-harness schemas (`run-log.schema.json`, `unit-test.schema.json`,
+`ann.schema.json`) are out: their closed-set copies are string literals scattered
+through the Python harness rather than a single `Set` a cheap lint could diff, so
+extending the policy there would write a rule nothing enforces.
 
 **"No entry point can forget it" has to be enumerated, because two mechanisms
 cover most of them and neither covers all.** turbo's `dependsOn: ["^build"]`
