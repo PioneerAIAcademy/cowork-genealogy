@@ -226,6 +226,13 @@ them in the file is indistinguishable from one that does both. `judge_context` f
 candidate persons"* — which this run technically did, since `a_015`/`a_018` are cited
 *somewhere*.
 
+**Does not convert to a validator today, and the reason is V4's.** The rule would be:
+where a Mode-B timeline's reply reports a two-people / Fail conclusion, at least one
+persisted event must carry the competing value in a structured field. Deciding it needs
+the reply, and `run_validators` injects no `text_response` — the same contract change
+V4 waits on. Stated here so it is ready if that lands; until then this one is graded,
+not checked.
+
 **Fixed in `rubric.md` and the test's `judge_context` as a three-way bar, and the
 middle band is the point.** `pass` requires the competing value in a **structured
 field** — its own event, or `conflict_ids` / `conflict_note`. `partial` is the
@@ -326,6 +333,25 @@ uses `a_003` as its canonical combine example. So the corpus systematically asks
 chronology its own `person_evidence` cannot supply, and the only way to score well is
 to ignore Step 2.
 
+> **Validator request V7 — a seed timeline's events must be reachable from `person_evidence`**
+> **Rule:** in a *scenario fixture*, every `a_*` cited by
+> `timelines[].events[].assertion_ids` must be linked by a non-superseded
+> `person_evidence` entry to one of that timeline's `person_ids`. A scenario that cites
+> an assertion no person links is a corpus defect: Step 2 gathers from
+> `person_evidence`, so the seed describes a chronology the skill cannot rebuild, and
+> the only way to score well on it is to ignore Step 2.
+> **Where to look:** `eval/fixtures/scenarios/*/research.json` — `timelines[]`,
+> `person_evidence[]`, `assertions[]`. **Static: no run log, no model call, no cost.**
+> This is a lint over the corpus rather than a per-run validator, so unlike V1–V6 it
+> can be implemented and enforced without buying anyone a paid run.
+> **Why it is not judgment:** an id-set reachability test over three arrays already in
+> the file.
+> **What a violation looks like:** all six Flynn scenarios before this PR — `t_001`
+> cites `a_002`, `a_003`, `a_009` and `a_011`, none of which any `person_evidence`
+> entry links to I1. `flynn-impossibility` is fixed here; the other five would fail
+> until the whole-corpus decision is taken, which is exactly the visibility that
+> decision needs.
+
 **`flynn-impossibility` is fixed in full** — `pe_008`–`pe_011` now link `a_011`,
 `a_002`, `a_003` and `a_009` — because it is timeline-only, costs no other skill's run,
 and a partial fix would have left `ut_timeline_004` still returning a shorter `t_001`
@@ -409,6 +435,12 @@ and a county staying the same are true of every man in Schuylkill County; they s
 nothing about whose son he was. The user is handed "Pass" on a parentage hypothesis —
 proof-conclusion's output — on the strength of a chronology that could not have
 falsified it.
+
+**Does not convert to a validator today, same blocker as F3 and V4.** The rule would
+be: where a timeline's `hypothesis_id` names a non-identity hypothesis, the reply must
+contain no Pass / Fail / Inconclusive conclusion about it. That is a literal-phrase
+check — the guide's seventh convertible shape — but it reads the reply, which the
+validator contract does not expose. Stated so it is ready when V4's change lands.
 
 **Fixed** in `rubric.md` (Identity coherence now scopes itself to identity questions,
 marks N/A elsewhere, and treats a verdict on a non-identity hypothesis as a fail) and
@@ -528,6 +560,16 @@ corpus and watch it fail before committing it.
 The grading changes were not shipped on argument. Two full runs plus two
 single-test probes, $6.42 total, all after the edits above.
 
+**Two runs, not the one the issue budgeted, and that overrun is mine.** The issue is
+explicit: the edits buy *one* `make eval-skill SKILL=timeline` run, and *"Batch every
+finding into that one run — that is the whole reason this is one task per skill rather
+than one per defect."* Every finding *was* batched into run 1; the second run exists
+because run 1 exposed a bug in a fix of mine, not because anything was left out. Total
+$6.42 against a ~$9 budget for one run plus annotation, so it is inside the money — but
+it cost a second annotation pass, which is the scarcer half. The cheap-probe discipline
+limited the damage: the two $0.5 single-test probes are what confirmed the fix before
+the second full run, rather than a third full run discovering it.
+
 **Run 1 — `v1_2026-08-21_14-07-10`, 7 pass / 2 fail, $2.79. Superseded and
 inactive; read the caveat below before using its scores.**
 
@@ -601,6 +643,12 @@ produced no user-facing response explaining that the request belongs to
 conflict-resolution"*, and *"completeness requires communicating that timeline cannot
 resolve the conflict and that conflict-resolution should be used."*
 
+**Should:** prohibition A5 — *"On a negative-routing turn the skill must call no tools
+at all"* — which both runs satisfy (`tool_calls: []`). Beyond that there is no rule to
+cite, and that absence is the finding: the guide's own hand-back rule says *"Do not edit
+the base rubric or the global judge prompt. Those are global."* The behaviour graded here
+belongs to neither this skill's body nor its rubric.
+
 That reading is reasonable and it looked like the dive's ideal find — a defect on a
 passing test. It is not one, and the field that settles it is `activated`:
 
@@ -633,6 +681,15 @@ routing miss. It belongs on **#1646** as a distinct signature from the flap that
 was filed on: not "routes to conflict-resolution" but "routes nowhere and answers
 inline". Run 1 scored the same test 3/3 on Correctness and Completeness while failing
 it on routing, so the cell is flaky in grading as well as in routing.
+
+**Not converted to a validator, on authority rather than for want of trying.**
+`flag_routing_negative_judge_fail`'s docstring is the record of someone already
+attempting exactly this and measuring the result: *"There is still no mechanical
+discriminator, and gating on empty output is worse than deleting"* — 4 of the 24 cells
+were human-overridden, all 4 empty/zero-turn, but so were 6 of the 20 confirmations, and
+one test carries that identical signature confirmed in two run logs and overridden in
+two others. A validator here would be the check-that-cannot-be-right, which is worse
+than the check-that-cannot-fail.
 
 **Gap — lane 2, no change made.** The finding here is the check, and it is worth the
 words: two of three negatives in this suite carry a permanent Correctness 1 /
