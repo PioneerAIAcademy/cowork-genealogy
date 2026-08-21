@@ -14,7 +14,7 @@
  *   npx tsx dev/probe-record-type-groups.ts             # every section
  *   npx tsx dev/probe-record-type-groups.ts filter      # one section
  *
- * Sections: filter | containment | or | roots | reach | anchors | tree
+ * Sections: filter | containment | or | roots | reach | anchors | tree | union
  */
 import { getValidToken } from "../src/auth/refresh.js";
 import {
@@ -23,7 +23,10 @@ import {
 } from "../src/utils/place-resolver.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
-import { RECORD_TYPE_GROUP_TABLE } from "../src/utils/record-type-groups.js";
+import {
+  RECORD_TYPE_GROUP_TABLE,
+  conceptIdsForGroups,
+} from "../src/utils/record-type-groups.js";
 
 const RMS_SEARCH_URL =
   "https://sg30p0.familysearch.org/service/records/rms/group-service/group/search";
@@ -454,6 +457,109 @@ async function sectionTree() {
   console.log(`\n  roots among the proposed groups (${roots.length}): ${roots.join(", ")}`);
 }
 
+/**
+ * What the descendants'-strays union is worth, and whether omitting it inverts.
+ *
+ * `conceptIdsForGroups` adds every nested group's strays to a parent's request,
+ * because a stray sits outside its own anchor's subtree and usually outside the
+ * parent's too, so containment reaches it from neither. This measures what that
+ * buys: per place, the count for the ids the tool ships, the count for the same
+ * parent with its anchor and own strays only, and each stray-carrying descendant
+ * alone.
+ *
+ * TWO DIFFERENT CLAIMS LIVE HERE and they fail apart, which is why both are
+ * measured. `union adds` above zero means the union returns volumes that would
+ * otherwise be missed — the weak claim, and what justifies the union on its own.
+ * `INVERTED` is the strong one: a parent without the union drops below a
+ * descendant's own count, so broadening returns strictly fewer. It is rare and
+ * place-dependent, so a comment asserting it must name where.
+ *
+ * As measured 2026-08-21 over the ten places below: exactly one inversion, `ID
+ * documents` at Bayern, where the parent returns 0 without the union against
+ * `Passports`' 89 — all 89 reached only through Passports' strays, which sit under
+ * Migration. Globally the union adds Vital +110235, Legal +64911,
+ * Government +27698, ID documents +1795; the first of those reproduces the
+ * Mapping-logic figure in the spec (110231, measured 2026-08-19).
+ *
+ * `Religious` and `Migration` add zero at every place, and that is correct rather
+ * than a defect: their descendants' strays sit outside the CHILD anchor's subtree
+ * but still inside the PARENT's, so containment already reaches them from the
+ * parent. A group only needs the union when a descendant's stray escapes both.
+ */
+async function sectionUnion() {
+  console.log("\n## union — what the descendants'-strays union is worth\n");
+  // Local, because `descendantsOf` is deliberately not exported: the probe needs
+  // the shape of the tree, the tool needs only the ids it produces.
+  const nested = (name: string): typeof VOCABULARY[number][] =>
+    VOCABULARY.filter((g) => {
+      let cur: string | null = g.parent;
+      while (cur) {
+        if (cur === name) return true;
+        cur = VOCABULARY.find((x) => x.name === cur)?.parent ?? null;
+      }
+      return false;
+    });
+  const parents = VOCABULARY.filter((g) => nested(g.name).some((d) => d.strays?.length));
+  console.log(
+    `  ${parents.length} groups have a stray-carrying descendant: ` +
+      parents.map((g) => g.name).join(", ") + "\n"
+  );
+  const places: [string, number[] | null][] = [["(global — no place filter)", null]];
+  for (const place of SWEEP_PLACES) {
+    const reps = await repIdsFor(place);
+    if (reps) places.push([place, reps]);
+    else console.log(`  UNRESOLVED  ${place}`);
+  }
+  // NO DATE WINDOW, deliberately. A window is a second filter, and it suppresses
+  // exactly the coverage rows whose dates do not parse — which is most of a
+  // stray's. Measured both ways on 2026-08-21: under `1500-01-01..1950-12-31`
+  // Death's stray `122911` totals 7,789 and adds 7,121 to `Vital`; unwindowed it
+  // totals 111,608 and adds 110,233. The spec's Mapping-logic figure (110,231,
+  // measured 2026-08-19) is the unwindowed one, so a windowed section here would
+  // read as a 15x disagreement with the spec rather than as its own artefact.
+  const opts = { pageSize: 1 };
+  let inversions = 0;
+  for (const [place, reps] of places) {
+    console.log(`\n  ${place}`);
+    for (const parent of parents) {
+      const shipped = await query(reps, {
+        ...opts,
+        extraCoverage: { recordTypeConceptIds: conceptIdsForGroups([parent.name]) },
+      });
+      const bare = await query(reps, {
+        ...opts,
+        extraCoverage: { recordTypeConceptIds: [parent.anchor, ...(parent.strays ?? [])] },
+      });
+      const inverted: string[] = [];
+      const counts: string[] = [];
+      for (const kid of nested(parent.name).filter((d) => d.strays?.length)) {
+        const own = await query(reps, {
+          ...opts,
+          extraCoverage: { recordTypeConceptIds: conceptIdsForGroups([kid.name]) },
+        });
+        counts.push(`${kid.name} ${own.totalCount}`);
+        if (bare.totalCount < own.totalCount) {
+          inverted.push(`${kid.name} ${own.totalCount} > ${bare.totalCount}`);
+        }
+      }
+      inversions += inverted.length;
+      console.log(
+        `    ${parent.name.padEnd(13)} shipped ${String(shipped.totalCount).padStart(7)}` +
+          ` | no union ${String(bare.totalCount).padStart(7)}` +
+          ` | union adds ${String(shipped.totalCount - bare.totalCount).padStart(7)}` +
+          (inverted.length ? `   *** INVERTED: ${inverted.join("; ")} ***` : "")
+      );
+      console.log(`    ${" ".repeat(13)} descendants alone: ${counts.join(", ")}`);
+    }
+  }
+  console.log(
+    `\n  inversions across every place and parent above: ${inversions}\n` +
+      "  A zero here would not weaken the union — a positive 'union adds' is already\n" +
+      "  a volume the tool would otherwise never return. It would only mean no comment\n" +
+      "  may claim broadening returns strictly fewer without naming the place."
+  );
+}
+
 // ------------------------------------------------------------------- main
 
 const SECTIONS: Record<string, () => Promise<void>> = {
@@ -464,6 +570,7 @@ const SECTIONS: Record<string, () => Promise<void>> = {
   reach: sectionReach,
   anchors: sectionAnchors,
   tree: sectionTree,
+  union: sectionUnion,
 };
 
 async function main() {

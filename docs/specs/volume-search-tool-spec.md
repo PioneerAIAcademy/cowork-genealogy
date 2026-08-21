@@ -890,7 +890,11 @@ The full-text sub-fetch failure is **non-fatal** — a partial result with
    `Passports` and `Government Pensions`, and `ID documents` against `Passports`.
    This is the failure mode described under [Strays](#strays), reached from the
    other direction: no error, no empty result, just fewer volumes than the tool
-   description promises the model.
+   description promises the model. At its worst it is not "fewer" but *none*: at
+   Bayern, `ID documents` without the union returns **0** against `Passports`' 89.
+   Reproduce every figure in this paragraph with section `union`, and measure
+   **without** a date window — one suppresses the coverage rows whose dates do not
+   parse, which is most of a stray's, and understates `Vital`'s gain as 7,121.
 4. Derive the RMS wire dates from the integer years
    (`fromDateString = "${startYear}-01-01"`,
    `toDateString = "${endYear}-12-31"`) and build the group-search body
@@ -999,11 +1003,19 @@ images are digitized, indexed, or full-text processed.
 
 | File | Edit |
 |---|---|
-| `src/utils/record-type-groups.ts` | **New.** The group table as data: `RECORD_TYPE_GROUP_NAMES` (the enum literals, exported for the schema) and a `name → { anchor, strays }` lookup |
+| `src/utils/record-type-groups.ts` | **New.** The group table as data: `RECORD_TYPE_GROUP_NAMES` (the enum literals, exported for the schema) and a `name → { anchor, parent, strays }` lookup. Also exports `conceptIdsForGroups` (anchor + own strays + **every nested group's strays**, which is what makes a parent a superset of its children), `assertKnownGroupNames` (one unknown-group message for both the tool's `validate()` and the expansion backstop) and `assertAcyclicTable` (the whole-table cycle check the runtime guard cannot reach). `parent` is not sent upstream but decides which strays are, so it is behaviour, not documentation |
 | `src/types/volume-search.ts` | Add `recordTypeGroups?: string[]` to `VolumeSearchInput`; `recordTypeConceptIds?: number[]` to `MetadataRmsCoverageRequest`; `recordTypeConceptId?`, `recordTypeConceptIdHierarchy?`, `fromdateString?`, `todateString?` to `MetadataRmsCoverageEntry`; `recordTypeConceptId?`, `startYear?`, `endYear?` to `SimplifiedCoverage` |
 | `src/tools/volume-search.ts` | Validate and expand `recordTypeGroups`; send `coverage.recordTypeConceptIds`; map the new coverage fields; add the input to `volumeSearchSchema` |
 | `tests/tools/volume-search.test.ts` | Cases 15a–15f |
-| `dev/probe-record-type-groups.ts` | **New.** The evidence behind this section; `VOCABULARY` there and the group table here must agree. **Nothing checks that agreement** — no test, workflow or script reads either table today, so the implementation PR must add one, in the manner `tests/packaging/manifest.test.ts` guards `manifest.json` against `allToolSchemas` |
+| `dev/probe-record-type-groups.ts` | **New.** The evidence behind this section, section by section. `VOCABULARY` there is now an alias for the shipped `RECORD_TYPE_GROUP_TABLE` rather than a second copy, so agreement with the code is structural; agreement with *this document's* tables is what the drift test below checks, in the manner `tests/packaging/manifest.test.ts` guards `manifest.json` against `allToolSchemas`. Section `tree` reproduces the [Parent column](#the-group-table); section `union` reproduces what the descendants'-strays union is worth |
+| `tests/packaging/record-type-group-drift.test.ts` | **New.** The guard the row above assigns to this PR: parses the group and strays tables out of this spec and compares them to the shipped vocabulary, and compares the tool's advertised descriptions against [Tool schema](#tool-schema) in both directions |
+| `src/utils/search-helpers.ts` | Add `formatYearRange` — the date-range expression lifted out of `collections-search.ts`'s `toCollection`, so `volume_search`'s `dateRange` fallback and `collections_search` cannot describe one span two ways |
+| `src/tools/collections-search.ts` | Call `formatYearRange` in place of the inline expression; behaviour byte-identical, including that equal years render `1683-1683` and a lone `endYear` yields `""` |
+| `tests/utils/record-type-groups.test.ts` | **New.** The invariants this spec's tables cannot express: an expansion sends an anchor's strays and nothing extra, broadening to a parent loses no id, every parent chain terminates, and a non-string entry is named rather than joined into nothing |
+| `tests/utils/search-helpers.test.ts` | **New.** One case per `formatYearRange` branch |
+| `dev/try-volume-search.ts` | Add a comma-separated `--recordTypeGroups` flag so a filtered search is expressible from the shell |
+| `README.md` | Extend the `volume_search` catalog row to name `recordTypeGroups` and that selecting a group also returns the groups nested beneath it |
+| `CLAUDE.md` | Extend the `search-helpers.ts` note to name `collections_search`/`volume_search` among its consumers and `formatYearRange` as the single shared date-range format |
 
 ---
 

@@ -209,9 +209,20 @@ export function assertKnownGroupNames(names: readonly unknown[]): void {
  * `126416` are filed under Legal; Tax's `129065` under Census; Passports'
  * `124432`/`124442`/`131572` under Migration.
  *
- * Without this, selecting `Government` returned strictly fewer prison volumes
- * than selecting `Prison` — broadening a search lost results, silently, while
- * the tool description promised the opposite.
+ * Without this, broadening can return nothing at all. At "Bayern, Germany",
+ * `ID documents` minus the union sends `[126546, 129962, 129964]` and returns
+ * **0** volumes, while its own child `Passports` returns **89** — all 89 reached
+ * only through Passports' three strays, which the taxonomy files under Migration,
+ * so neither anchor's subtree contains them. The tool description promises the
+ * opposite, verbatim.
+ *
+ * Reproduce with `dev/probe-record-type-groups.ts union`, which measures every
+ * group carrying a stray-carrying descendant across ten places. Bayern is the
+ * only outright inversion in that sample; elsewhere the union adds without
+ * inverting — globally Vital +110235, Legal +64911, Government +27698,
+ * ID documents +1795. Measure it **without** a date window: a window suppresses
+ * the coverage rows whose dates do not parse, which is most of a stray's, and
+ * understates Vital's gain as 7121.
  *
  * Unknown names throw, in the same shape `volume_search`'s `validate()` uses, so
  * whichever guard fires the caller reads one message. `validate()` reports every

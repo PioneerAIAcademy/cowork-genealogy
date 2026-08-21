@@ -177,7 +177,18 @@ describe("the tool's advertised descriptions match the spec's schema block", () 
   // readme-catalog.test.ts is presence-only by design, and prompt-budget.test.ts
   // reads SKILL.md/agent bodies. That gap is why three of these descriptions
   // drifted into disagreement with each other before this PR.
-  const schemaBlock = spec.slice(spec.indexOf("## Tool schema"));
+  // Bounded at the next `## ` heading rather than running to the end of the file.
+  // The tail is 24,056 characters where this section is 2,705, and an unbounded
+  // slice lets a description deleted from the schema block still be "found"
+  // further down the spec: delete `endYear`'s description from the block, leave
+  // the same sentence in the tail as prose, and the unbounded version PASSES —
+  // the count check below cannot see it either, because prose carries no second
+  // `description: "` token. Measured, not reasoned about. Bounded, it fails.
+  // A `-1` (Tool schema last in the file) falls back to the tail, since
+  // `slice(start, -1)` would silently drop a character instead.
+  const schemaStart = spec.indexOf("## Tool schema");
+  const schemaEnd = spec.indexOf("\n## ", schemaStart + 1);
+  const schemaBlock = spec.slice(schemaStart, schemaEnd === -1 ? undefined : schemaEnd);
 
   function describedStrings(node: unknown, out: string[] = []): string[] {
     if (node && typeof node === "object") {
