@@ -32,19 +32,30 @@ const EXPECTED_AFTER = [
 let failures = 0;
 const fail = (msg) => { failures++; console.error(`FAIL  ${msg}`); };
 
-// Split the workflow's steps into blocks by `- name:` lines (this file has a
-// single job, `runlogs`; if a second job with steps is ever added this over-scans
-// into it, which fails loud, never silent). String parse, no yaml dep, matching
-// this harness's checkout+node, no-install contract.
-const lines = fs.readFileSync(WORKFLOW, "utf8").split("\n");
+// Split the workflow's steps on YAML list-item boundaries, NOT on `- name:`: a
+// step written as `- run:` or `- uses:` with no name is still a step and must
+// satisfy the invariant too. Comment lines are dropped first so prose naming a
+// script cannot stand in for the step itself. (This file has a single job,
+// `runlogs`; if a second job with steps is ever added this over-scans into it,
+// which fails loud, never silent.) String parse, no yaml dep, matching this
+// harness's checkout+node, no-install contract.
+const lines = fs.readFileSync(WORKFLOW, "utf8").split("\n").filter((l) => !/^\s*#/.test(l));
+const stepsIdx = lines.findIndex((l) => /^\s*steps:\s*$/.test(l));
+if (stepsIdx === -1) {
+  fail(`${WORKFLOW}: no "steps:" key found — renamed or reformatted?`);
+}
 const steps = [];
-for (const line of lines) {
-  const m = line.match(/^(\s+)- name: (.+?)\s*$/);
-  if (m) steps.push({ name: m[2], body: [line] });
-  else if (steps.length) steps[steps.length - 1].body.push(line);
+let indent = null;
+for (const line of lines.slice(stepsIdx + 1)) {
+  const m = line.match(/^(\s+)-\s+(\S.*?)\s*$/);
+  if (m && (indent === null || m[1].length === indent)) {
+    indent = m[1].length;
+    const named = m[2].match(/^name:\s*(.+?)\s*$/);
+    steps.push({ name: named ? named[1] : `<unnamed step: ${m[2]}>`, body: [line] });
+  } else if (steps.length) steps[steps.length - 1].body.push(line);
 }
 if (steps.length === 0) {
-  fail(`${WORKFLOW}: no "- name:" steps found — renamed or reformatted?`);
+  fail(`${WORKFLOW}: no steps found — renamed or reformatted?`);
 }
 
 const gateIdx = steps.findIndex((s) => s.body.join("\n").includes(GATE_RUN));
@@ -70,7 +81,7 @@ if (after.length === 0) {
 
 // The invariant: every post-gate step's `if:` must contain `!cancelled()`.
 for (const s of after) {
-  const ifLine = s.body.find((l) => /^\s*if:/.test(l));
+  const ifLine = s.body.find((l) => /^\s*(-\s+)?if:/.test(l));
   if (!ifLine) {
     fail(`step "${s.name}" (after the gate) has no if: — it must be ` +
          `\`if: \${{ !cancelled() && steps.scope.outputs.relevant == 'true' }}\``);
