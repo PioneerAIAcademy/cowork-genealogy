@@ -91,8 +91,11 @@ When extracting from a pre-1940 census, use these defaults:
 - **Residence facts:** `witness` — the enumerator visited the dwelling
   and confirmed it. Information quality is `primary`.
 - **Relationship facts (1880+):** `household_member` — someone reported
-  the relationship. Before 1880, relationships are inferred from
-  position (use `child_inferred`, `wife_inferred`, etc.).
+  the relationship. **Before 1880 there are no relationship facts to
+  classify**: the census has no relationship column, so extraction
+  records the people and their co-residence and writes no parent-child
+  or spousal assertion at all. Inferring the links from household
+  position is downstream correlation's work, not extraction's.
 
 ### 1940 and Later Census
 
@@ -110,9 +113,14 @@ Marriage records often involve multiple informants:
   present and participating).
 - Each party is secondary for the other party's birth details
   (they were not present at the other's birth).
-- Parents' consent (when recorded): primary from the parent who
-  signed; secondary if reported by the couple.
-- The officiant is primary for the ceremony date and location.
+- Consent for an underage party (when recorded): primary from whoever
+  signed it; secondary if reported by the couple. The signer is not
+  necessarily a parent — a differing surname is evidence of a
+  stepfather or guardian, so record the stated relationship and never
+  infer `father_of_bride` / `father_of_groom` from a signature.
+- The parties are primary for the ceremony date and location — they
+  participated in it firsthand. The officiant and the clerk are
+  recorders, not informants for the event.
 - Witnesses are primary for the fact that the ceremony occurred.
 
 ## Informant vs. Recorder

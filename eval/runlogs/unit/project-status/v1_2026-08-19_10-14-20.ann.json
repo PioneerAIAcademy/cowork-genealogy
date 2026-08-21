@@ -1,0 +1,254 @@
+{
+  "run_log": "v1_2026-08-19_10-14-20.json",
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "corrections": [
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree with the judge — reran standalone and it passed cleanly. This run made a genuine, isolated mistake (claimed 8 unlinked assertions vs. the fixture's 6 person_evidence links; mischaracterized deliberately-unworked sources as an integrity problem). Confirmed unrelated to the #1665 rubric.md/judge_context edit in this branch (that edit only touches the a_013 evidence_type/information_quality wording) — single-run model variance (skill runs aren't temperature-pinned), not a doctrine regression."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Same finding as Correctness above — see that comment. Confirmed jitter via standalone rerun (clean pass)."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Same finding — see Correctness comment. Confirmed jitter via standalone rerun."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Same finding — see Correctness comment. Confirmed jitter via standalone rerun."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Same finding — see Correctness comment. Confirmed jitter via standalone rerun."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Disagree with the judge. skills_invoked=['proof-conclusion'], activated=false, text_response empty — project-status correctly declined and did not carry out its own task at all, which is exactly the required negative-test behavior. This is the documented routing_negative_judge_fail pattern (orchestrator.py): the judge misread a clean decline as a failure to act. Outcome is correctly decided by routing regardless (pass), not by this diagnostic-only score."
+    },
+    {
+      "test_id": "ut_project_status_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Same finding as Correctness above — see that comment."
+    },
+    {
+      "test_id": "ut_project_status_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

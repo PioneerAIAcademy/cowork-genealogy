@@ -95,22 +95,35 @@ Write `eval/runlogs/e2e/<slug>/run-<ts>.ann.json` with **only** these keys:
 | `notes` | no | `{ "<finding_id>": "text" }` — keys ⊆ `per_finding` keys |
 | `annotator` | no | the grader's team identifier (git blame is the fallback if omitted) |
 
-Do **not** add any other key. The loader hard-errors on unknown keys — in
-particular do **not** write `llm_score`, `corrected_score`, or `verdict`. Those are
-the *unit*-annotation shape and the derived verdict; neither belongs in an e2e
-annotation.
+Hand-write **only** these keys. The one other allowed key, `findings_hash`, is
+added by the stamp command in step 7 — do **not** write it by hand. The loader
+hard-errors on any *other* unknown key — in particular do **not** write
+`llm_score`, `corrected_score`, or `verdict`. Those are the *unit*-annotation
+shape and the derived verdict; neither belongs in an e2e annotation.
 
-### 7 — Self-check, then hand off for commit
+### 7 — Self-check, stamp, then hand off for commit
 
-Verify the file you just wrote — you have every input to do this without any tool:
+First verify the file you just wrote — you have every input to do this without any tool:
 
-- keys are exactly `per_finding` (+ optional `proof_quality_score` / `notes` /
-  `annotator`), nothing else;
+- the hand-written keys are exactly `per_finding` (+ optional `proof_quality_score` /
+  `notes` / `annotator`) — nothing else *yet* (`findings_hash` is added by the stamp
+  command below, not by hand);
 - every `per_finding` value is `true` / `partial` / `false` — no nulls (a blank
   label means that finding isn't graded yet; ask the genealogist before writing);
 - `per_finding` keys equal the fixture's finding ids (you copied them from
   `expected-findings.json`, so this holds by construction — confirm it);
 - any `notes` key is one of those finding ids.
+
+Then stamp the fixture fingerprint into the annotation:
+
+```
+cd eval/harness && uv run python -m e2e.stamp_findings_hash eval/runlogs/e2e/<slug>/run-<ts>.ann.json
+```
+
+This adds the `findings_hash` key so a later edit to `expected-findings.json`
+cannot silently invalidate this grade. It is **not** `calibrate_judge`, makes no
+judge API calls, and is **exempt** from the "do not run `calibrate_judge`" rule
+below — run it every time.
 
 Then tell the user to commit the `.ann.json`. **Do not run `calibrate_judge` — not
 even `--dry-run`.** It classifies *every* annotation in the tree, not just this one.
@@ -122,9 +135,10 @@ periodically — documented in `docs/e2e-testing-guide.md` under "Step 8 — Gra
 
 - **Never open `run-<ts>.json`** or otherwise surface the judge's grades. Grading is
   blind; revealing the judge's labels defeats the calibration.
-- Do not run `calibrate_judge` at all — not even `--dry-run`. Self-validate the one
-  file you wrote; whole-set classification and the calibration sweep are the
-  maintainer's job, per the guide.
+- Do not run `calibrate_judge` at all — not even `--dry-run`. (The
+  `stamp_findings_hash` command in step 7 is a *different* tool — run it; it is not
+  `calibrate_judge`.) Self-validate the one file you wrote; whole-set classification
+  and the calibration sweep are the maintainer's job, per the guide.
 - Do not derive or write a `verdict` — the loader derives it from `per_finding`.
 - Do not edit fixtures, skills, the judge prompt, the run log, or the tree.
 - Do not label findings yourself — surface the evidence; the genealogist decides.

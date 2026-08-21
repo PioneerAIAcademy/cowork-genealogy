@@ -10,7 +10,7 @@
       {
         "scoreType": "COHERENCE",
         "issueType": "hasEarlyMarriage14",
-        "severity": "warning",
+        "severity": "implausible",
         "personId": "I1",
         "personName": "Patrick Flynn",
         "message": "This person was married before age 14, which is biologically and socially unusual.",

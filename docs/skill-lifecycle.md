@@ -339,6 +339,29 @@ fix; the "judge over-credited" version doesn't.
 If you arrived from a real failure you already wrote this note in step 1 — this
 is where it goes on the record.
 
+#### Grading a negative test
+
+A negative test passes when the skill under test **declines** — it routes the
+request to another skill or stays silent. Declining is the *correct answer*, not
+a refusal to work, and two grading mistakes recur here, one in each direction:
+
+- **Don't fail a correct decline.** If the skill correctly declined and (when
+  `negative.correct_skill` names one) handed the request to the right skill,
+  Correctness and Completeness are a **3**. "The skill refused" is the pass —
+  never drop it to a 1 for declining, and never call a correct decline a wrong
+  decision.
+- **Don't grade the skill it routed to.** You are scoring the *routing
+  decision*, not the *result* of the skill routed to — that skill's records,
+  translation, or other output is out of scope here; it has its own tests.
+  Failing a negative test because "no records were returned" or "the output was
+  wrong" grades the wrong skill.
+
+Fail (1) when the skill under test carried out **its own** task instead of
+declining (even when that output looks polished) — **or** when it declined but
+routed to the **wrong** skill. The pass is a decline *to the right place*: to the
+skill named in `negative.correct_skill`, or — for an out-of-scope request
+(`correct_skill: []`) — to no skill at all.
+
 ### 5. Improve the skill
 
 **Where:** 🤖 Claude Code at the repo root. **How:**

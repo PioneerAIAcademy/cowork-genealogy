@@ -69,7 +69,7 @@ Example:
 | Field | Type | Description |
 |-------|------|-------------|
 | `warningId` | string | Warning type identifier (e.g., `DEATH_BEFORE_BIRTH`) |
-| `severity` | string | `error` (impossible) or `warning` (unlikely but possible) |
+| `severity` | string | `contradiction` (impossible) or `implausible` (unlikely but possible) |
 | `personId` | string | Person ID the warning applies to |
 | `personName` | string | Display name of the person (see below) |
 | `message` | string | Human-readable description of the problem |
@@ -88,7 +88,7 @@ Example output:
   "warnings": [
     {
       "warningId": "DEATH_BEFORE_BIRTH",
-      "severity": "error",
+      "severity": "contradiction",
       "personId": "I1",
       "personName": "Patrick Flynn",
       "message": "Death year (1840) is before birth year (1845) for Patrick Flynn.",
@@ -233,7 +233,7 @@ unlikely result.
 
 ### W1: `DEATH_BEFORE_BIRTH`
 
-**Severity:** `error`
+**Severity:** `contradiction`
 
 **Condition:** The anchor has both a Birth and a Death fact with
 parseable years, and the latest possible death is before the earliest
@@ -263,7 +263,7 @@ if (birthYear != null && deathYear != null && deathYear < birthYear)
 
 ### W2: `YOUNG_BIRTH`
 
-**Severity:** `warning`
+**Severity:** `implausible`
 
 **Condition:** A ParentChild relationship involving the anchor exists
 where the parent is male, and even the maximum possible age at the
@@ -305,7 +305,7 @@ child's data is what typically needs correction), with the father as
 
 ### W3: `EVENT_AFTER_DEATH`
 
-**Severity:** `error`
+**Severity:** `contradiction`
 
 **Condition:** The anchor has a Death fact with a parseable year, and
 another fact (not in the exclusion list) whose earliest possible year
@@ -479,7 +479,7 @@ Unit tests (see Testing section below).
 
 | # | Scenario | Expected |
 |---|----------|----------|
-| 31 | Death 1840, birth 1845 | 1 warning, severity `error` |
+| 31 | Death 1840, birth 1845 | 1 warning, severity `contradiction` |
 | 32 | Death year = birth year | No warning |
 | 33 | Death year > birth year | No warning |
 | 34 | Birth fact missing | No warning |
@@ -492,7 +492,7 @@ Unit tests (see Testing section below).
 
 | # | Scenario | Expected |
 |---|----------|----------|
-| 39 | Father born 1845, child born 1850 (max age 5) | 1 warning, severity `warning` |
+| 39 | Father born 1845, child born 1850 (max age 5) | 1 warning, severity `implausible` |
 | 40 | Father born 1830, child born 1845 (max age 15) | No warning |
 | 41 | Father born 1832, child born 1845 (max age 13) | 1 warning |
 | 42 | Parent is female (mother) | No warning |
@@ -504,7 +504,7 @@ Unit tests (see Testing section below).
 
 | # | Scenario | Expected |
 |---|----------|----------|
-| 46 | Residence 1920, death 1910 | 1 warning, severity `error` |
+| 46 | Residence 1920, death 1910 | 1 warning, severity `contradiction` |
 | 47 | Burial 1920, death 1910 | No warning |
 | 48 | Probate 1920, death 1910 | No warning |
 | 49 | Birth 1845, death 1910 | No warning |
@@ -547,7 +547,6 @@ These are not included in v1 but are good candidates for extension:
 | Warning ID | Severity | Description |
 |-----------|----------|-------------|
 | `MOTHER_TOO_YOUNG` | `warning` | Mother's age at child's birth < 12 |
-| `MOTHER_TOO_OLD` | `warning` | Mother's age at child's birth > 50 |
 | `FATHER_TOO_OLD` | `warning` | Father's age at child's birth > 75 |
 | `LIVED_TOO_LONG` | `warning` | Age at death > 120 years |
 | `BORN_TOO_EARLY` | `warning` | Birth year < 1000 |
@@ -562,6 +561,18 @@ These are not included in v1 but are good candidates for extension:
 > record, so it isn't a problem (Richard). Some candidates above —
 > notably mother/father child-spacing checks — need **full-date**
 > precision, not year-only; see the date-parsing note.
+>
+> **`MOTHER_TOO_OLD` struck — built:** shipped as
+> `latestChildBirthToBirthFemale45` (`person-warnings.ts`), female-gated,
+> on a >= cutoff (not the `> 50` this table listed). Cutoff is 45, lowered
+> from an original 55; severity unchanged (`implausible`, not promoted — the
+> check fired 0 times at 55 across the e2e corpus, so promotion would be
+> an unmeasured doctrine commitment). Two alternatives were rejected: a
+> gender-neutral 45 (flags 31 people vs. 6, 25 of them men — a 45-74 gap
+> is unremarkable for a father, unlike a mother); and keeping 55 plus a
+> second check banded to [50, 55) (superseded once both bands share one
+> severity, since two checks on one predicate double-fire on a single fact
+> and double-count in the check-warnings cluster rule).
 
 ---
 

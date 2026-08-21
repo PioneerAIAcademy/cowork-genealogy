@@ -471,6 +471,13 @@ Architecturally:
   `~/.familysearch-mcp/config.json`. **Never a `process.env` fallback** — the
   file is the sole source. Throw **LLM-instruction errors**: the message must
   tell Claude what to do next, not just what failed.
+- **Every network leg goes through `fetchWithTimeout` (`src/utils/http.ts`)** —
+  the global `fetch` never times out and a stalled upstream hangs the call
+  forever. Size the budget under **60s** or accept that Cowork loses the tail:
+  the device bridge caps every MCP call at 60s (see "Other environment
+  differences that bite"), so any budget above it is honoured only on the
+  stdio paths (harnesses and hosted, both verified) and silently truncated in
+  Cowork. Size a raise from the measured e2e corpus, not by guessing.
 - **Reuse before you write:** `getValidToken()` for auth (never re-implement
   token plumbing), `place-resolver.ts` / `place-api.ts` for places, and
   `BROWSER_USER_AGENT` from `src/constants.ts` for any FamilySearch endpoint —
@@ -649,8 +656,9 @@ they have different fixes, and only one of them is a description problem.
 2. **Did the user address the skill directly?** Then it *is* the `description`
    (§3.2). Add the missed utterance to `eval/tests/unit/<skill>/` as a trigger
    query **first** — `make optimize-skill SKILL=<name>` builds its query set from
-   that corpus, so tuning against an empty set does nothing. It makes real paid
-   model calls, is not in CI, and only *proposes* text you then apply by hand.
+   that corpus, and **refuses to run** when that set has no positives (it used to
+   report a pass without scoring anything). It makes real paid model calls, is not
+   in CI, and only *proposes* text you then apply by hand.
 3. **Did it trigger and then do the wrong thing?** That is not a triggering
    failure — classify it with §3.6.
 
@@ -1278,6 +1286,22 @@ Other environment differences that bite:
   §5.4's raw-write class is entirely ungated at call time there.
 - **Tool deferral.** Cowork defers tool schemas above a size threshold and offers
   no control over it, so `ToolSearch` is the real load path there (§5.2).
+- **The Cowork bridge caps every MCP call at 60s.** A client-side ceiling this
+  repo does not set — no `MCP_TOOL_TIMEOUT`/`MCP_TIMEOUT` or equivalent per-tool
+  ceiling is defined anywhere in the code — and cannot change from the plugin or
+  the `.mcpb`. Any tool timeout
+  budget above 60s is therefore aspirational in Cowork: the call is aborted with
+  `tool "…" timed out after 60s` before the tool's own budget fires, and its
+  eventual result is discarded. The harnesses and the hosted control plane
+  register the server over stdio and are **not** capped (committed e2e run
+  logs carry `image_transcribe`'s own 180s timeout as a result, so calls ran
+  past 60s there). `image_transcribe`'s `OCR_TIMEOUT_MS = 180s` is the first
+  budget this bites (roughly 10-15% of healthy calls exceed 60s — see the
+  spec's Timeout budget section for why it is a range, not a point), but
+  it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
+  budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
+  above the ceiling too. **No automated check reaches this** — neither harness
+  goes through the bridge — so it is only observable in a live Cowork session.
 
 ### If you're asked to…
 
@@ -1304,7 +1328,8 @@ skips silently**, which looks identical to passing.
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
 | **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names | whether a granted tool actually **binds**; skips silently with no API key |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
-| `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus` reports recall, compliance and violations, not spend — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
+| `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions, and `runs_per_test` is pinned to 1, so within-test flakiness is out of reach |
+| `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
 
 ### 9.2 The lint layer
 
@@ -1362,14 +1387,17 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and 82 negative routing tests. **374** committed test definitions —
-  one JSON file per test under `eval/tests/unit/` — and across the 25 live
-  suites the latest run log per suite totals **373 rows, 343 passing (92%)**.
-  Those two numbers count different things and their near-match is a
-  coincidence: the latest logs are snapshots taken between 2026-07-21 and
-  2026-08-06, and exactly one defined test appears in none of them.
-- **E2e** (`eval/tests/e2e/<fixture>/`) — live FamilySearch, 104 fixtures
-  (directories carrying a `fixture.json`; `eval/tests/e2e/` holds one more
+  run logs, and 82 negative routing tests. **396** committed test definitions
+  (`make eval-inventory`) — one JSON file per test under `eval/tests/unit/` — and
+  across the 25 live suites the latest run log per suite totals **396 rows, 364
+  passing (92%)**. Those two numbers count different things and can diverge in
+  either direction: a test defined after its suite's last run has no row, and a
+  row survives for a test since deleted. They coincide exactly today — the latest
+  logs are snapshots taken between 2026-07-21 and 2026-08-20, and every defined
+  test appears in its suite's log — which is a fact about the snapshots, not an
+  identity.
+- **E2e** (`eval/tests/e2e/<fixture>/`) — live FamilySearch, 106 fixtures
+  (`make eval-inventory`; directories carrying a `fixture.json`; `eval/tests/e2e/` holds one more
   directory that is not one), blind
   human `.ann.json` annotations, and `calibrate_judge` measuring judge-vs-human
   agreement **offline** rather than inferring it from expensive live runs. Three
@@ -1462,7 +1490,7 @@ lives. A test is not just its definition: it usually needs a matching
 `eval/fixtures/mcp/` response, a dimension in that skill's `rubric.md`, and a
 check in `eval/harness/validators/`. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
-1 by policy. 82 of the 374 definitions are **negative** tests that exist to prove
+1 by policy. 82 of the 396 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is

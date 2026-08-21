@@ -2,8 +2,9 @@ import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
 
 // Prompt-budget lint (warn-only). Reports the byte-size delta a PR introduces
-// to every SKILL.md and plugin-agent body, so reviewers see growth at review
-// time — which today nothing surfaces. The unit suite cannot be the gate: it
+// to every SKILL.md, plugin-agent body, and CLAUDE.md — the three prose files
+// billed on every run of the thing that loads them — so reviewers see growth at
+// review time, which today nothing surfaces. The unit suite cannot be the gate: it
 // grades a single invocation in fresh context and blesses an addition as
 // readily as a cut.
 //
@@ -19,9 +20,17 @@ import { execFileSync } from "node:child_process";
 
 const SKILLS_PATH = "packages/engine/plugin/skills";
 const AGENTS_PATH = "packages/engine/plugin/agents";
+// Loaded into every Claude Code session in this repo, and tracked by nothing
+// else. The plugin artifacts above are billed per skill run; this is billed per
+// session, which is why it belongs on the same report.
+const ROOT_PROMPT_PATH = "CLAUDE.md";
 
-/** The two prompt shapes: `skills/<name>/SKILL.md` and `agents/<name>.md`. */
-const TRACKED = /(^|\/)(skills\/[^/]+\/SKILL\.md|agents\/[^/]+\.md)$/;
+/**
+ * The three prompt shapes: `skills/<name>/SKILL.md`, `agents/<name>.md`, and
+ * the repo-root `CLAUDE.md`. The last is anchored so a nested `CLAUDE.md`
+ * (e.g. `eval/CLAUDE.md`, which no session loads wholesale) stays out.
+ */
+const TRACKED = /(^|\/)(skills\/[^/]+\/SKILL\.md|agents\/[^/]+\.md)$|^CLAUDE\.md$/;
 
 // ---------------------------------------------------------------------------
 // Reading sizes out of git
@@ -55,6 +64,7 @@ function lsTree(ref: string): string | null {
         "--",
         SKILLS_PATH,
         AGENTS_PATH,
+        ROOT_PROMPT_PATH,
       ],
       { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] },
     );
@@ -65,7 +75,7 @@ function lsTree(ref: string): string | null {
 
 /**
  * Parse `git ls-tree -r --long` output into path → byte size, keeping only the
- * two tracked prompt shapes.
+ * three tracked prompt shapes.
  *
  * Row format is `<mode> <type> <sha> <size>\t<path>`, size right-aligned in a
  * fixed-width column, so split the metadata on whitespace and the path on the
@@ -277,8 +287,11 @@ describe("prompt-budget (unit)", () => {
     const out = [
       "100644 blob 4d91252be27df1674ba0815e954117da915916eb   48539\tpackages/engine/plugin/agents/record-extractor.md",
       "100644 blob 8959947c6234ff492c5d5c1c42307c2dc241407a   17747\tpackages/engine/plugin/skills/check-warnings/SKILL.md",
-      // Not a tracked prompt shape — a skill's template, and a tree entry.
+      "100644 blob 2222222222222222222222222222222222222222   30000\tCLAUDE.md",
+      // Not a tracked prompt shape — a skill's template, a nested CLAUDE.md no
+      // session loads wholesale, and a tree entry.
       "100644 blob 0000000000000000000000000000000000000000     120\tpackages/engine/plugin/skills/check-warnings/templates/report.md",
+      "100644 blob 3333333333333333333333333333333333333333    4000\teval/CLAUDE.md",
       "040000 tree 1111111111111111111111111111111111111111       -\tpackages/engine/plugin/skills/check-warnings",
     ].join("\n");
 
@@ -286,6 +299,7 @@ describe("prompt-budget (unit)", () => {
       new Map([
         ["packages/engine/plugin/agents/record-extractor.md", 48539],
         ["packages/engine/plugin/skills/check-warnings/SKILL.md", 17747],
+        ["CLAUDE.md", 30000],
       ]),
     );
   });
