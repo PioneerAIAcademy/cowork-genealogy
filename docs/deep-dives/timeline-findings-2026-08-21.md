@@ -523,12 +523,141 @@ corpus and watch it fail before committing it.
 
 ---
 
+## Measured: what the two paid runs showed
+
+The grading changes were not shipped on argument. Two full runs plus two
+single-test probes, $6.42 total, all after the edits above.
+
+**Run 1 — `v1_2026-08-21_14-07-10`, 7 pass / 2 fail, $2.79. Superseded and
+inactive; read the caveat below before using its scores.**
+
+It did the job it was for: the dimensions started discriminating. `ut_timeline_005`
+returned **five non-3 scores in one test**, where this suite had produced none on a
+positive test in five prior runs outside `_004`/`07-21`. `Geographic feasibility`
+returned N/A on the four tests with no distance-sensitive pair instead of a bogus 3.
+The `missing_tool_usage_dimension` advisory disappeared.
+
+**But its `_005` failure was my own grading bug, not a skill defect**, and that is
+the caveat: `_005`'s Correctness 2, Tool usage 2, Geographic feasibility 2, Deferral 2
+and **Identity coherence 1** in run 1 are artefacts of a rubric since revised. The
+`_005` reply contained no instance of `Pass`, `Fail`, `Inconclusive`, `verdict` or even
+`coherence`; the clause fired on *"casts meaningful doubt on whether a_014 belongs to
+this Patrick Flynn"*, which is the **Step-5 coherence signal Step 5 requires**, not a
+Step-6 verdict. Two of the 2s were judge misreads the dimension invited — it marked
+Tool usage down while conceding *"This is correct per the rule"*, and its own sentence
+*"the distance is recorded between the census and the prior event, not between the
+baptism and the census"* is self-refuting, because the census's prior event **is** the
+baptism.
+
+Fixed by defining the term: a verdict is an explicit Pass / Fail / Inconclusive — or
+supported / ruled-out — conclusion **about the hypothesis**, and a Step-5 signal
+(infeasible pair, out-of-lifespan record, doubtful attribution, a `pe_*` confidence
+question) is required behaviour and never a deduction. Plus two reading rules the judge
+had got wrong: `distance_from_previous_km` is the distance from the immediately
+preceding event, and the travel-feasibility finding has no persisted field, so the
+structure is never marked down for "not reflecting" it.
+
+**Run 2 — `v1_2026-08-21_14-34-37`, 8 pass / 1 fail, $2.67. Active; this is the
+record.**
+
+| | run 1 | run 2 |
+|---|---|---|
+| `_005` Identity coherence | **1** | **N/A** |
+| `_005` Tool usage / Geographic feasibility / Correctness / Deferral | 2 / 2 / 2 / 2 | **3 / 3 / 3 / 3** |
+| `_001` `_002` `_004` `_006` `_007` | unchanged | unchanged |
+
+`_005` recovered on two independent samples (a $0.49 probe and run 2), so the
+Geographic-feasibility result is not confounded by the hedge that was absent from the
+probe's reply. The judge reasons in the new terms unprompted: *"The skill did not issue
+an explicit Pass/Fail/Inconclusive verdict on h_001 itself. The reply's observation …
+is a Step-5 coherence signal."*
+
+**Three findings are now confirmed fixed by measurement rather than by inspection:**
+
+- **F5.** `_004` persists five events — `~1845` birth, 1850, 1860, 1908 death,
+  1912 deed — the chronology its own `judge_context` describes and which was
+  unreachable before `pe_008`–`pe_011`. Its skill time also dropped 229s → 170s.
+- **F7.** `_001`, `_002` and `_004` all return Identity coherence **N/A** in run 2,
+  and none issued a parentage verdict: the `SKILL.md` qualifier held. The `_005` false
+  positive was the clause, not the skill.
+- **F3.** `_006` persisted the `~1832` Pennsylvania birth as **its own first event**
+  in run 2, so the new bar's `pass` criterion is met and Identity coherence 3 is
+  correct. The defect did not recur; what the three-way bar buys is that a recurrence
+  is now detectable instead of scoring 3 either way.
+
+**Two things the runs did not fix, deliberately.** `_008` fails in both runs, and F4's
+seed-taught year mismatch is still visible — run 2's `_006` 1860 event cites `a_009`
+(`~1845`), exactly the copied line held for the whole-corpus decision.
+
+---
+
+## F10 — checked, and it dissolves. Recorded because the check is the finding.
+
+**Did:** `ut_timeline_003` and `ut_timeline_009` scored Correctness 1 / Completeness 1
+in run 2, with outcome `pass` — a third consecutive observation under the current judge
+prompt. The genealogist annotated run 1's cells and **confirmed** both:
+*"Although timeline correctly avoided resolving the birthplace conflict itself, it
+produced no user-facing response explaining that the request belongs to
+conflict-resolution"*, and *"completeness requires communicating that timeline cannot
+resolve the conflict and that conflict-resolution should be used."*
+
+That reading is reasonable and it looked like the dive's ideal find — a defect on a
+passing test. It is not one, and the field that settles it is `activated`:
+
+```
+ut_timeline_003: activated=False  turns=0  skills_invoked=['conflict-resolution']  text=''
+ut_timeline_009: activated=False  turns=0  skills_invoked=['proof-conclusion']     text=''
+ut_timeline_008: activated=False  turns=1  skills_invoked=[]                       text='I'd be happy to help…'
+```
+
+**On `_003` and `_009` the timeline skill never ran.** The router delegated before it
+loaded, so the empty `text_response` is an unfilled output slot, not a silent decline —
+the user-facing answer came from the routed-to skill, which the harness does not
+capture in that field. No `SKILL.md` line can instruct a skill that never loads, so
+there is no lane-4 fix and no F-numbered defect. This is the "judge misreading a clean
+decline" half of the dichotomy in
+`orchestrator.py`'s `flag_routing_negative_judge_fail`, whose docstring records the
+measured study behind it: replaying 121 committed run logs against the annotations, a
+human confirmed the judge's 1 in **20 of 24** eligible cells, and *"there is still no
+mechanical discriminator, and gating on empty output is worse than deleting."* The
+warning is retained on purpose — *"A judge 1 here is worth a human's eye."* Nothing to
+escalate: the lead already decided this on better evidence than a proposal from here.
+
+**`_008` is the opposite case and it is real.** `turns=1`, no routing at all, and a
+non-empty reply offering to do the attribution reasoning itself — *"Once I can see
+what's in the certificate, I can compare it against what's known about both Patrick
+Flynns."* The same docstring records that **all 14** cells with non-empty output were
+human-confirmed, because non-empty output from a non-activated skill means the main
+thread did the work instead of routing. So `_008`'s 1/1 is right, and the defect is a
+routing miss. It belongs on **#1646** as a distinct signature from the flap that issue
+was filed on: not "routes to conflict-resolution" but "routes nowhere and answers
+inline". Run 1 scored the same test 3/3 on Correctness and Completeness while failing
+it on routing, so the cell is flaky in grading as well as in routing.
+
+**Gap — lane 2, no change made.** The finding here is the check, and it is worth the
+words: two of three negatives in this suite carry a permanent Correctness 1 /
+Completeness 1 that is correct behaviour, and the one that carries a real defect looks
+identical in the outcome column. Anyone reading this suite's dimension scores without
+reading `activated` will draw the wrong conclusion in both directions.
+
+---
+
 ## Grouping for the paid run
 
 Every edit below is one batch, one `make eval-skill SKILL=timeline` run, one
 annotation pass (5 sampled tests, ~3 sentences since PR #1637). No issue is filed:
 F1–F9 all land on this skill's single eval slot, and splitting them would buy a second
 run for nothing.
+
+**The run logs some requests cite are no longer on disk.** Retention keeps the newest
+five candidates and prunes at the writer, so the two runs above pruned
+`v1_2026-07-08_15-47-10` and `v1_2026-07-19_03-22-09` with both their `.ann.json`
+siblings. V2, V4 and V5 cite examples from them, and F1's annotator quote is from the
+07-08 file — the only log that ever carried human comments before this session. They
+are committed history, not lost: retrieve one with
+`git show 762d1b122:eval/runlogs/unit/timeline/v1_2026-07-19_03-22-09.json`. Whoever
+implements a validator against a pre-2026-08-21 example needs that command, which is
+why it is written here rather than left to be rediscovered.
 
 **Where V1–V6 go after merge.** They are not left in a document with no owner. The
 grouped destination is **one issue labelled `developer` + `nothing-checks`** — that
@@ -670,12 +799,30 @@ log still reflects current behaviour — and
 not *buy* the paid run; one was already owed. They should still ride on it as a single
 batch.
 
-## Verification run this session
+## Verification
+
+Static, re-run after every revision:
 
 - `eval/harness` pytest: **2459 passed, 3 skipped**.
-- `packages/engine/mcp-server` packaging suite: **504 passed** (24 files).
+- `packages/engine/mcp-server` packaging suite: **504 passed** (24 files). One failure
+  was earned and fixed en route: `doc-links.test.ts` rejected two `file.py:LINE`
+  citations in this document, which now cite symbols.
 - `check_rubric_tool_drift.py`: 59 repo-wide hits, **0 in timeline**.
-- `check_runnable` over all 9 timeline tests: **all runnable** — the paid run will not
-  abort at the gate the way the citation dive's first post-fix run did.
+- `parse_rubric`: **5 dimensions**, `has_tool_usage_dimension` **True**.
+- `check_runnable` over all 9 timeline tests: **all runnable** — no abort at the gate
+  that stopped the citation dive's first post-fix run at $0.
 - `validate_research_json` on the edited `flynn-impossibility/research.json`: **no
   errors**.
+
+Empirical, and the part that decides whether any of this works — see "Measured: what
+the two paid runs showed" above. Run 2 (`v1_2026-08-21_14-34-37`) is the active log:
+`diff_snapshot_vs_disk` returns clean against the working tree, and run 1 is inactive
+on the seven files revised after it.
+
+**Still outstanding, and it is not mine to do:** run 2 has no `.ann.json`. Its
+`review_sample` reseeded to `_001, _002, _005, _007, _008`, overlapping run 1's
+annotated set only on `_001` and `_002` — whose scores are identical, so those transfer
+in substance. `_005` and `_007` are all-3/N-A confirmations. `_008` carries Correctness
+1 / Completeness 1 and so needs written comments under rule 3. Annotations are written
+only by the CRUD UI; per `eval/CLAUDE.md` they are never hand-authored, and this PR
+cannot go green until that pass is done.
