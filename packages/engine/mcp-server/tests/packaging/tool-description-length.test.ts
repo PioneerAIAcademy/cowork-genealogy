@@ -42,7 +42,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * `birthPlaceExact` third from a measurement whose filter had excluded BOTH tools'
  * `birthYearExact` when only one is exempt — right answer, wrong method. The "fix"
  * then over-corrected, promoting `person_search.birthYearExact` into third at a
- * quoted 209; re-measured it is 178, below `birthPlaceExact`'s 181, so
+ * quoted 209; re-measured it is 178, below `birthPlaceExact`'s 226, so
  * `birthPlaceExact` is third after all. `DOCUMENTED_LONGEST` below has carried the
  * right list throughout — the assertion binds those executable figures, not this
  * prose, which is how the prose could drift here while the test stayed green.

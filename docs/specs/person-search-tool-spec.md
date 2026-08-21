@@ -222,9 +222,11 @@ Kept deliberately, with what it costs stated — the two toggles here do differe
 things, and this is the one shape where both are the right call. `surnameExact`
 holds the count to persons indexed exactly `Smyth`, and it will miss the target
 outright if the tree spells it `Smith`. It is *not* claimed to drop
-initials-only forms — that is not established. It **does** drop persons with no
-surname recorded, per the rule above: measured on the record index, not on this
-endpoint. Use it only with a spelling you have confirmed. `birthPlaceExact` is
+initials-only forms — that is not established. It does not change what happens to
+persons with no surname recorded: per the rule above, the unqualified `surname`
+value has already dropped those, and `surname` is required on every search — so
+`person_search` cannot reach a surname-less tree person at all, flag or no flag.
+Use it only with a spelling you have confirmed. `birthPlaceExact` is
 not the same mechanism: it stops upward expansion to parent jurisdictions, which
 is what makes the count mean something for an exhaustiveness claim. Reach for
 this pair when you need a defensible total, not when you are still looking for

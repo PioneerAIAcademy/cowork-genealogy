@@ -49,13 +49,13 @@ matching.
   places within 3 jurisdiction levels above it. `q.birthLikePlace=
   Lehi, Utah County, Utah` returns records in Lehi, Utah County,
   and Utah — but not all of USA.
-- **With `.exact=on`:** Still descends to child localities, but does
-  NOT expand upward. `q.birthLikePlace=Utah County, Utah` with
-  `.exact=on` finds Lehi, Provo, etc. but excludes records indexed
-  only as "Utah, USA."
+- **With `.exact=on`:** Does NOT expand upward — `q.birthLikePlace=Utah County,
+  Utah` with `.exact=on` excludes records indexed only as "Utah, USA." Whether it
+  still descends to child localities (Lehi, Provo) is recorded by no verdict —
+  treat it as unverified.
 
-**Key insight:** Exact place does NOT prevent matching child
-localities — it prevents matching parent localities.
+**Key insight:** Exact place stops matching parent localities. Do not assume it
+keeps child localities; that half is unmeasured.
 
 ### What place expansion actually costs — measured 2026-08-04
 

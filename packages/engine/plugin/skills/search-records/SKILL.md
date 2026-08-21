@@ -210,9 +210,13 @@ term you supply is already required in one sense: a record must not *contradict*
 it. A record simply **silent** about a *name* field is kept — enumerated for the
 father, spouse, mother and parent names. (How a *year range* treats a record with no indexed year
 is **not established** in either direction, so do not assume a range either keeps
-or excludes undated records.) For the searched person's own name, which the index
-virtually always holds, that collapses to "must match" — a consequence of the
-index, not a separate measurement. So **a nil result means one of the terms on the person
+or excludes undated records.) The searched person's own two name fields behave
+OPPOSITELY, measured 2026-08-20: an unqualified `givenName` keeps records with no
+indexed given name, but an unqualified `surname` drops records with no indexed
+surname outright — a record indexed with a given name only (infant burials,
+foundlings, enslaved people, patronymic entries) cannot be reached by ANY query
+carrying a surname; to reach one, drop `surname` and anchor on `recordCountry` or
+`batchNumber` instead. So **a nil result means one of the terms on the person
 you searched did not match.** Drop or loosen one of *those* to recover; adding
 more criteria cannot help. A nil is *not* evidence that some relative was absent
 from the records.
