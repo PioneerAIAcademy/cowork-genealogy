@@ -203,7 +203,7 @@ Example:
         "persons": [
           {
             "id": "LZJW-C31",
-            "ark": "https://familysearch.org/ark:/61903/4:1:LZJW-C31",
+            "ark": "ark:/61903/4:1:LZJW-C31",
             "gender": "Male",
             "names": [{ "preferred": true, "type": "BirthName", "given": "Abraham", "surname": "Lincoln" }],
             "facts": [
