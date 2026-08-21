@@ -118,12 +118,19 @@ def test_rejects_the_not_proved_collapse():
         bounded(_state("not_proved", None), BOUNDED)
 
 
-def test_rejects_possible_because_it_can_never_reach_the_tree():
-    """The half that made the old fixture unsatisfiable: `possible` is below
-    the encoding threshold, so accepting it while requiring the encoded fact
-    asked for two things that cannot both happen."""
-    with pytest.raises(AssertionError, match="strength of what CAN be established"):
-        bounded(_state("possible", DEATH), BOUNDED)
+def test_accepts_possible_with_an_encoded_bracket():
+    """Settled 2026-08-21: a bounded conclusion encodes at `possible` too. The
+    probable threshold asks whether a conclusion was REACHED, not how precise
+    it is — and a defensible range is a conclusion. This is what makes the
+    fixture satisfiable: its expected tier is `possible` (a reachable,
+    unsearched 1880 census would halve the bracket) AND it requires the fact."""
+    bounded(_state("possible", DEATH), BOUNDED)
+
+
+def test_rejects_possible_that_never_reached_the_tree():
+    """The carve-out is about the threshold, not a licence to skip the write."""
+    with pytest.raises(AssertionError, match="no Death fact on I1"):
+        bounded(_state("possible", None), BOUNDED)
 
 
 def test_rejects_a_conclusion_that_never_reached_the_tree():

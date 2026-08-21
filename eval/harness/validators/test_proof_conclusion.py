@@ -346,17 +346,21 @@ def test_bounded_conclusion_is_tiered_and_encoded(after_state, test):
     at `probable` or better AND lands in the tree as a fact carrying the
     bracket.
 
-    Both halves are one rule, which is why they are checked together: the
-    encoding threshold is tier >= probable, so a tier of `possible` does not
-    merely score lower — it makes the tree write unreachable. An earlier
-    version of this test's fixture accepted `possible` while still requiring
-    the encoded fact, which asked for two things that cannot both happen.
+    Both halves are one rule. The tier says whether a finding was reached; the
+    encoding says whether it reached the researcher's tree. A bounded finding
+    can be honestly uncertain about WHERE INSIDE the range the event falls while
+    being certain the event happened — so it encodes at `possible` too, carrying
+    the range verbatim as the fact's date (lead ruling, 2026-08-21). What it may
+    not do is collapse to `not_proved` because the exact value is unreachable,
+    or reach a tier and never touch the tree.
 
-    Deterministic on purpose. Both halves were judge-graded before and the test
-    failed on 2026-08-19 with a rationale that misread its own fixture,
-    reporting that `possible` was disallowed when the fixture then allowed it.
-    The `not_proved` collapse this guards — "the exact date is unreachable, so
-    nothing can be concluded" — is the specific error the doctrine names.
+    `possible` is the expected tier for the committed fixture, and for a reason
+    worth keeping: a reachable, unsearched 1880 census would halve its bracket,
+    which is a Component 1 failure rather than a corroboration gap. A bracket
+    with a named record that would narrow it is not reasonably exhaustive.
+
+    Deterministic on purpose — both halves were judge-graded before, and the
+    test failed on 2026-08-19 with a rationale that misread its own fixture.
     """
     if "bounded-conclusion" not in test.get("tags", []):
         pytest.skip("not a bounded-conclusion scenario")
@@ -371,13 +375,13 @@ def test_bounded_conclusion_is_tiered_and_encoded(after_state, test):
     ]
     assert summaries, "no proof summary written for q_001"
 
-    ACCEPTED = {"probable", "proved"}
+    ACCEPTED = {"possible", "probable", "proved"}
     tiers = [ps.get("tier") for ps in summaries]
     assert any(t in ACCEPTED for t in tiers), (
         f"bounded conclusion tiered {tiers} — a bounded finding is tiered on the "
         "strength of what CAN be established (the bracket, the documented "
-        "negative), not on the unreachable exact value. Below `probable` the "
-        "tree is never written, so the conclusion is found-but-lost."
+        "negative), not on the unreachable exact value. `not_proved` says no "
+        "finding was reached; a defensible range IS a finding."
     )
 
     facts = [
@@ -390,7 +394,9 @@ def test_bounded_conclusion_is_tiered_and_encoded(after_state, test):
     assert deaths, (
         "no Death fact on I1 — the conclusion exists only in the narrative and "
         "the tree is silent on the vital event the question asked about. Encode "
-        "the bracket as the fact's date."
+        "the bracket as the fact's date. A `possible` tier is NOT a reason to "
+        "skip this: the probable threshold asks whether a conclusion was "
+        "reached, and a bracket is one."
     )
     assert any(str(f.get("date") or "").strip() for f in deaths), (
         "the Death fact on I1 carries no date — the bracket IS the finding, so "
