@@ -12,7 +12,8 @@
       "triage",
       "near-match",
       "rank-search-matches",
-      "needs-review"
+      "needs-review",
+      "pre-1880-census-household"
     ]
   },
   "input": {

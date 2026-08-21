@@ -366,8 +366,7 @@ Read these before attributing a failed headless run.
   headless run has less runway than that inside the wall-clock, tool and cost caps. If a
   scored run stops at `natural_end` or a cap with the research substantially right, the
   honest options are raising the wall-clock cap (`hole-parents-negative` sets
-  `caps.wall_clock_seconds: 5400`, though spec §3.1 says `caps` is not a fixture field —
-  resolve that before copying it) or restoring the mother to the starting tree, which
+  `caps.wall_clock_seconds: 5400`) or restoring the mother to the starting tree, which
   re-opens the discrimination problem R1 was designed to close. Decide that on a run log,
   not on this note.
 

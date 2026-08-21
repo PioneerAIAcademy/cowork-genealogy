@@ -60,9 +60,10 @@ const SKILLS_WITH_SPECIALIZED_COPY: Array<{ skill: string; why: string; sha256: 
 ];
 
 // LF-normalized, matching the eval snapshot's text rule (eval/CLAUDE.md
-// "Normalization rules"). Only `*.sh` is pinned to LF in .gitattributes, so a
-// Windows clone checks this file out with CRLF; the byte-identical assertions
-// survive that because both sides convert alike, and a raw hash would not.
+// "Normalization rules"). `.gitattributes` now pins every text file to LF, so a
+// fresh clone hashes identically everywhere; the normalization still matters for
+// an existing clone that has not been re-checked-out since, which keeps its CRLF
+// on disk. The byte-identical assertions survive either way; a raw hash would not.
 function contentHash(text: string): string {
   return createHash("sha256").update(text.replace(/\r\n/g, "\n")).digest("hex");
 }
