@@ -353,10 +353,59 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
  * one) and non-empty `resolution_assertion_ids` (9 of 150 are empty). Both are
  * surfaced advisorily by `project_context`'s `questionStatuses` instead.
  */
-function questionResolvedInvariants(entry: any, research: any): string[] {
+function questionResolvedInvariants(
+  entry: any,
+  research: any,
+  beforeResearch?: any,
+): string[] {
   const resolving = entry?.status === "resolved" || Boolean(entry?.resolved);
   if (!resolving) return [];
   const summaries = Array.isArray(research?.proof_summaries) ? research.proof_summaries : [];
+
+  // A conclusion blocked by an unresolved conflict does not close its question.
+  //
+  // `not_proved` legitimately resolves a question that was researched and came
+  // back empty — the message below says so. What it must not do is close a
+  // question the researcher was PREVENTED from concluding: there the work is
+  // unfinished, not finished-with-nothing. The two are told apart by the same
+  // test the tier rule uses — does an open conflict dispute a source this
+  // conclusion leans on. Conflicts read from the pre-call snapshot so a batch
+  // cannot resolve one and spend it here; summaries read live so a summary
+  // written earlier in the same batch counts.
+  //
+  // Observed 2026-08-21: correctly refused `probable`, correctly recorded
+  // `not_proved`, correctly wrote no tree — and then marked the question
+  // resolved anyway, closing a question whose evidence had never been
+  // correlated.
+  if (beforeResearch) {
+    const disputed = disputedSourceIds(beforeResearch);
+    if (disputed.size > 0) {
+      const assertionSource = new Map<string, string>();
+      for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
+        if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+      }
+      const blocking = new Set<string>();
+      for (const ps of summaries) {
+        if (ps?.question_id !== entry?.id) continue;
+        for (const aid of Array.isArray(ps?.supporting_assertion_ids) ? ps.supporting_assertion_ids : []) {
+          const src = assertionSource.get(aid);
+          for (const cid of (src ? disputed.get(src) : undefined) ?? []) blocking.add(cid);
+        }
+      }
+      if (blocking.size > 0) {
+        return [
+          `question ${entry?.id ?? "(no id)"} cannot be marked resolved while ` +
+            `${[...blocking].sort().join(", ")} ${blocking.size === 1 ? "is" : "are"} ` +
+            "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
+            "sources behind it have never been correlated. This is not the same as a question " +
+            "researched and found empty, which `not_proved` does close — here the work is " +
+            "unfinished rather than finished with nothing. Leave the question open, record the " +
+            "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
+        ];
+      }
+    }
+  }
+
   if (summaries.some((s: any) => s?.question_id === entry?.id)) return [];
   return [
     `question ${entry?.id ?? "(no id)"} cannot be marked resolved (via \`status\` or the ` +
@@ -365,6 +414,120 @@ function questionResolvedInvariants(entry: any, research: any): string[] {
       "question_id. A question closed with nothing found is still concluded: write a " +
       "`not_proved` summary saying so. If you are writing both in one batch, order the " +
       "proof_summaries append BEFORE this update.",
+  ];
+}
+
+/** Sources an unresolved conflict disputes, from the PRE-CALL project state.
+ *
+ *  A conflict names the assertions that compete; each assertion names the
+ *  source it came from. Those sources are the ones whose reliability is
+ *  currently in question. */
+function disputedSourceIds(research: any): Map<string, string[]> {
+  const assertionSource = new Map<string, string>();
+  for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
+    if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+  }
+  const bySource = new Map<string, string[]>();
+  for (const c of Array.isArray(research?.conflicts) ? research.conflicts : []) {
+    if (!c || c.status === "resolved") continue;
+    for (const aid of Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []) {
+      const src = assertionSource.get(aid);
+      if (!src) continue;
+      const seen = bySource.get(src) ?? [];
+      if (!seen.includes(c.id)) seen.push(c.id);
+      bySource.set(src, seen);
+    }
+  }
+  return bySource;
+}
+
+/** A conclusion may not out-tier the reliability of the sources it rests on.
+ *
+ *  **Correlation presupposes identity** (lead ruling, 2026-08-19). When an
+ *  unresolved conflict disputes an assertion drawn from a source the summary
+ *  also relies on, the sources have not been established as describing the
+ *  same person — so they cannot be correlated at ANY tier above `not_proved`.
+ *  Tiering down does not repair it, because tiering happens *after* identity
+ *  is settled, not instead of it.
+ *
+ *  The worked case: a birthplace conflict on a parentage question reads as
+ *  "collateral" — different fact, so seemingly harmless. But the death
+ *  certificate disputing the birthplace was also the only DIRECT evidence of
+ *  parentage, so the dispute impeached the very correlation the conclusion
+ *  rested on. Prose could not hold this: told in its own body that birthplace
+ *  is an identifying attribute, the agent still recorded the conflict
+ *  "non-blocking — it doesn't touch identity" and concluded at `probable`,
+ *  across five successive wordings.
+ *
+ *  Read from the PRE-CALL snapshot, the same discipline the exhaustiveness
+ *  gate uses: a batch may not resolve a conflict and spend that resolution on
+ *  a tier in the same call. `not_proved` is always available — recording the
+ *  blocked attempt is the sanctioned move, not silence. */
+function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
+  const tier = entry?.tier;
+  if (typeof tier !== "string" || tier === "not_proved" || tier === "disproved") return [];
+  const disputed = disputedSourceIds(beforeResearch);
+  if (disputed.size === 0) return [];
+
+  const assertionSource = new Map<string, string>();
+  for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
+    if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+  }
+  const supporting = Array.isArray(entry?.supporting_assertion_ids)
+    ? entry.supporting_assertion_ids
+    : [];
+  const hits = new Map<string, string[]>();
+  for (const aid of supporting) {
+    const src = assertionSource.get(aid);
+    const conflicts = src ? disputed.get(src) : undefined;
+    if (src && conflicts) hits.set(src, conflicts);
+  }
+  if (hits.size === 0) return [];
+
+  const shared = [...hits.keys()].sort();
+  const blocking = [...new Set([...hits.values()].flat())].sort();
+  return [
+    `tier '${tier}' is not available while ${blocking.join(", ")} ` +
+      `${blocking.length === 1 ? "is" : "are"} unresolved: ` +
+      `${blocking.length === 1 ? "that conflict disputes" : "those conflicts dispute"} ` +
+      `evidence from ${shared.join(", ")}, which this conclusion also relies on. ` +
+      "Correlating sources assumes they describe the same person, and that is " +
+      "what the open conflict puts in question — so no tier above `not_proved` " +
+      "is reachable, and tiering down to `possible` does not repair it. Record " +
+      "the attempt at `not_proved`, naming the conflict and what would settle " +
+      "it, then invoke conflict-resolution. Re-conclude by updating that same " +
+      "summary once the conflict is resolved.",
+  ];
+}
+
+/** One conclusion per question — the manifest's own rule, now enforced.
+ *
+ *  `docs/specs/schemas/ownership.json` has required this since the manifest
+ *  landed ("never more than one summary per `question_id`") and nothing checked
+ *  it. Observed 2026-08-20: told by another precondition that it could not
+ *  conclude at `probable`, the agent recorded a correct `not_proved` summary —
+ *  by APPENDING it, leaving the stale `probable` entry beside it. The project
+ *  then carried two contradictory conclusions for one question, and the newer,
+ *  correct one did not win: every reader that scans `proof_summaries` for a
+ *  question sees both.
+ *
+ *  Re-concluding is legitimate and common; it is an `update` of the existing
+ *  `ps_NNN`, never a second append. The message names the id so the caller can
+ *  retry as an update without a lookup. */
+function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | undefined): string[] {
+  const qid = entry?.question_id;
+  if (typeof qid !== "string" || qid === "") return [];
+  const existing = (Array.isArray(research?.proof_summaries) ? research.proof_summaries : []).filter(
+    (ps: any) => ps?.question_id === qid && ps?.id !== appendedId,
+  );
+  if (existing.length === 0) return [];
+  const ids = existing.map((ps: any) => ps?.id).filter(Boolean);
+  return [
+    `question '${qid}' already has a proof summary (${ids.join(", ")}), and a question may ` +
+      "carry only one. Re-concluding is an UPDATE of that entry, not a second append: retry " +
+      `with { section: "proof_summaries", op: "update", entryId: "${ids[0]}", fields: { … } }, ` +
+      "passing only the fields that changed. Appending here would leave two contradictory " +
+      "conclusions on one question, with nothing to say which is current.",
   ];
 }
 
@@ -752,6 +915,7 @@ function applyOne(
   preCallExhaustiveDeclared?: Map<string, boolean>,
   preCallCritiquedSummaryIds?: Set<string>,
   preCallBlockingConflicts?: any[],
+  preCallResearch?: any,
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -1086,7 +1250,7 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(fields, "status") ||
       Object.prototype.hasOwnProperty.call(fields, "resolved");
     if (resolutionTouchedThisOp) {
-      invariantErrors.push(...questionResolvedInvariants(resultEntry, research));
+      invariantErrors.push(...questionResolvedInvariants(resultEntry, research, preCallResearch));
     }
   }
   if (section === "conflicts") invariantErrors.push(...conflictInvariants(resultEntry));
@@ -1112,6 +1276,30 @@ function applyOne(
     if (tierTouchedThisOp) {
       invariantErrors.push(...proofSummaryInvariants(resultEntry, preCallExhaustiveDeclared));
     }
+    // NOT gated on `tierTouchedThisOp`, unlike the exhaustiveness check above.
+    // That gate asks "is this op setting the tier"; this rule asks "does the
+    // entry STAND at a tier the open conflict forbids", which an op can reach
+    // without naming `tier` at all. Observed 2026-08-21: the agent updated a
+    // summary's narrative and left the stale `probable` in place, and the rule
+    // never ran. The tier had not been touched — it did not need to be, because
+    // it was already wrong.
+    //
+    // The cost is that any edit to such an entry is refused until its tier
+    // comes down, which is the rule applied consistently rather than a
+    // side effect: a conclusion standing above `not_proved` on a disputed
+    // source is invalid whether or not this call put it there. Lowering the
+    // tier in the same update satisfies it, so the deny stays satisfiable.
+    invariantErrors.push(...conflictedSourceInvariants(resultEntry, preCallResearch));
+    // Reads LIVE research, not the pre-call snapshot: two appends inside one
+    // batch must collide with each other, not just with what was already there.
+    //
+    // NOT gated on `op.op === "append"`, and for the same reason the rule above
+    // is not gated on `tierTouchedThisOp`: the question is "does this question
+    // end up with two summaries", which an UPDATE reaches by setting
+    // `question_id`. The gate asked about the op instead of the outcome and an
+    // update walked past it. `oneSummaryPerQuestion` excludes the entry by id,
+    // so an ordinary update of an existing summary still passes.
+    invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);
@@ -1875,6 +2063,7 @@ export async function researchAppend(
             preCallExhaustiveDeclared,
             preCallCritiquedSummaryIds,
             preCallBlockingConflicts,
+            beforeResearch,
           ),
         );
       } catch (e) {
