@@ -1099,15 +1099,12 @@ only `$ref`s it). Edit `enums.schema.json` in **both** schema trees,
 **Do not hand-edit the TypeScript union.** `packages/schema/src/enums.generated.ts`
 is emitted from that package's own `schemas/enums.schema.json` by
 `scripts/gen-enums.mjs`, chained into `build`, `typecheck` and each app's `dev`
-(ADR-0008 tier 2), and gitignored. `src/index.ts` re-exports it. The exception is
-the **five unions defined inline in `research.schema.json`** rather than in
-`enums.schema.json` — `EvaluationFocus`, `EvaluationTargetType`,
-`EvaluationVerdict`, `ExperienceLevel`, `Subscription` — which the generator
-cannot see and which are therefore hand-written in `src/index.ts` until they move
-(#1015). If your value belongs to one of those five, edit `src/index.ts`;
-otherwise regeneration is automatic and typing it by hand creates a sixth copy.
+(ADR-0008 tier 2), and gitignored. `src/index.ts` re-exports it. Every closed enum
+in `enums.schema.json` is generated, with no exceptions. Regeneration is automatic
+and typing a union by hand creates a sixth copy — `gen-enums.mjs` throws rather
+than let a hand-written union silently shadow a generated one.
 
-> **Direction (#1087/#1015/#1014; [ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).**
+> **Direction (#1087/#1014; [ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).**
 > These are **four-plus hand-maintained copies of one source**, kept in sync by
 > elimination, automatic generation, or lint — never by a step a human has to
 > remember. `packages/schema`'s enum unions are generated; everything else is
