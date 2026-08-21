@@ -119,15 +119,17 @@ export const VALIDATOR_ENUMS = {
   external_site: EXTERNAL_SITE_VALUES,
 } satisfies Record<string, ReadonlySet<string>>;
 
-// research.schema.json binds these fields to enums.schema.json#/$defs/iso_date
-// (^\d{4}-\d{2}-\d{2}$): project.created/updated, known_holdings[].created,
-// questions[].created/resolved, plans[].created, sources[].access_date, and
-// person_evidence[].created. The hand-maintained validator must enforce the
-// same pattern at exactly those sites — prose dates ("12 July 2026") persisted
-// through the writer tools while this check was missing.
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+// The iso_date pattern (enums.schema.json#/$defs/iso_date), hand-copied here for
+// LLM-actionable error text. validator.test.ts asserts this source against that
+// $def so the copy cannot drift. The list of fields it is applied at is
+// deliberately not enumerated — that list went stale (named 8, applied at 10)
+// and the enumeration is what created the staleness.
+export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-const ID_PREFIXES: Record<string, string> = {
+// Hand-copied from each section's `properties.id.pattern` in research.schema.json.
+// validator.test.ts diffs this against the schema (key-set both ways + prefix)
+// so a new id-prefixed section cannot get here without a check, or drift from it.
+export const ID_PREFIXES: Record<string, string> = {
   project: "rp_",
   known_holdings: "kh_",
   questions: "q_",

@@ -98,6 +98,11 @@ export const MODIFIERS: Map<string, string> = new Map([
   ['about', 'Abt'], ['approx', 'Abt'], ['approximately', 'Abt'],
   ['circa', 'Abt'], ['ca', 'Abt'], ['c', 'Abt'], ['cir', 'Abt'],
   ['abt', 'Abt'],
+  // `~` is this project's own approximate-date spelling — simplified GedcomX
+  // writes `~1845` (simplified-gedcomx-spec.md, and every skill's date table).
+  // Without it the tokenizer dropped the tilde and an approximate year
+  // standardized to an exact one. Symbolic, like `<`/`>` below.
+  ['~', 'Abt'],
   // Non-English about
   ['vers', 'Abt'], ['omstreeks', 'Abt'], ['omstr', 'Abt'],
   ['omkring', 'Abt'], ['omk', 'Abt'],

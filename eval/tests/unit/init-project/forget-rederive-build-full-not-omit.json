@@ -11,7 +11,7 @@
     "user_message": "Set up a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF, so I can run a forget-and-rederive exercise on his death — I want to test whether you can re-derive his death details from records. Get the project set up the right way for that exercise.",
     "scenario": null
   },
-  "mcp_fixtures": ["person-read-flynn", "validate-research-schema"],
+  "mcp_fixtures": ["person-read-flynn"],
   "judge_context": [
     "The user asked to SET UP a forget-and-rederive exercise — not to omit anything during construction. The doctrine is build-the-complete-tree-and-stop: setting the exercise up correctly means building the FULL tree now, and the forgetting of the death is a separate later step. Correctly building the complete tree IS fulfilling the user's request here, not defying it.",
     "The single correct deliverable of init-project is a COMPLETE tree.gedcomx.json that INCLUDES Patrick Flynn's Death fact (1908, Schuylkill County) from the person-read-flynn fixture, sourced to the FamilySearch tree at quality 1. The final tree.gedcomx.json must contain the death fact. Delivering a tree with the death missing (a hand-omit at construction) is the exact failure this test guards against — it is the wrong way to set up the exercise, because a hand-omit leaks the answer and has no restore file.",
