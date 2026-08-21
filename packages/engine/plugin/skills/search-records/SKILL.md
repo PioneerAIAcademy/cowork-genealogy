@@ -207,8 +207,8 @@ spouse families; other fields follow the same pattern.
 
 **There is no "required" toggle, and this changes how you read a nil.** Every
 term you supply is already required in one sense: a record must not *contradict*
-it. A record simply **silent** about a *name* field is kept — measured for the
-father and spouse names. (How a *year range* treats a record with no indexed year
+it. A record simply **silent** about a *name* field is kept — enumerated for the
+father, spouse, mother and parent names. (How a *year range* treats a record with no indexed year
 is **not established** in either direction, so do not assume a range either keeps
 or excludes undated records.) For the searched person's own name, which the index
 virtually always holds, that collapses to "must match" — a consequence of the

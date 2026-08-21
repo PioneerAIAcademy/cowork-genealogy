@@ -271,12 +271,13 @@ Each name field independently supports wildcards and `.exact=on`.
   drop, and the 300-result `fatherGivenName=William` survey that once stood
   here is a sample of a pool too large to read to the end.
 - **How much a relative name narrows depends on WHICH relative — the spread is
-  wide enough to change what a nil means.** Measured on two marriage
-  populations, for the **father** and **spouse** names only, every pool read to
-  the end: an unmatchable *father* name returned about 70-93% of the baseline,
-  while an unmatchable *spouse* name returned 10% in one population and 81% in
-  the other — the spread tracking how often each relative is indexed there.
-  Mother, parent and other names were not enumerated.
+  wide enough to change what a nil means.** Enumerated on two marriage
+  populations, for the **father**, **spouse**, **mother** and **parent** names,
+  every pool read to the end: an unmatchable *father* name returned about 70-93%
+  of the baseline, an unmatchable *mother* name about 70-99%, an unmatchable
+  *parent* name about 70-93%, while an unmatchable *spouse* name returned 10% in
+  one population and 81% in the other — the spread tracking how often each
+  relative is indexed there. `other` names were not enumerated.
   A father-anchored nil is therefore weak evidence that no record exists; a
   spouse-anchored one can be stronger, though it varies too much to lean on
   alone.

@@ -1269,13 +1269,19 @@ The gibberish row — 1 father-bearing result of 300 sampled — points the
 same way, and the question was then settled by enumeration rather than
 sampling. Reading whole result sets to the end on two marriage populations
 (Brazil / `Bochenek`, 521 rows; England / `Pocklington`, 469 rows) and on the
-`father` and `spouse` families only: an unmatchable name left **zero** records
-naming a different relative, retained exactly the records the baseline was
-silent about, and a real name drawn from the data returned matching records.
-Retention therefore equals the baseline's silent share — 70.2% against a 70.1%
-silent share and 92.8% against 92.8% for `father`, 10.2% against 9.8% and 81%
-against 81% for `spouse`. That is what makes the father/spouse difference an
-artifact of how often each is indexed, not a property of the parameter.
+`father`, `spouse`, `mother` and `parent` families: an unmatchable name left
+**zero** records naming a different relative, retained exactly the records the
+baseline was silent about, and — wherever the baseline held a real relative
+name to draw from — a real name returned matching records. Retention therefore
+equals the baseline's silent share: for `father`, 70.2% against 70.2% (Brazil)
+and 92.8% against 92.8% (England); for `mother`, 70.1% against 70.1% and 99.1%
+against 99.1%; for `parent`, 70.1% against 70.1% and 92.8% against 92.8%; for
+`spouse`, 10.2% against 9.8% and 81% against 81%. That is what makes the
+between-relative difference an artifact of how often each is indexed, not a
+property of the parameter. The one leg not exercised is the real-name control
+for `mother` in England: that pool indexes no mother given name at all, so there
+was none to draw — the keep-silent side still held (99.1% against 99.1%), and
+the presence requirement is confirmed for `mother` on Brazil alone.
 
 So an unqualified relative name keeps matching records, keeps records where
 that relative was never indexed, and drops contradicting ones — the right
