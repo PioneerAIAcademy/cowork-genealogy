@@ -43,3 +43,15 @@ Score N/A when no conversion arithmetic was warranted, so no call was needed (a 
 - **partial:** The tool was called and its result is broadly consistent with the response, but the offset or rule is narrated from the skill's own tables rather than the returned `applied[]` — or an `ok: false` is mentioned only in passing while the response proceeds as though the conversion had succeeded.
 - **fail:** The response contradicts what the tool returned, asserts a converted date after an `ok: false`, or performs the arithmetic by hand when a call was warranted and available.
 - **N/A:** No calendar arithmetic was warranted, so no tool response was required.
+
+**A step the tool has no correction for is the skill's own, and is not hand
+arithmetic.** `convert_calendar` offers only `doubleDatedYear`, `osNsYear`,
+`quakerMonth` and `julianToGregorianDay`. The Swedish calendar is not among
+them, so converting a Swedish date to its Julian equivalent (Swedish 30 Feb
+1712 = Julian 29 Feb 1712) is a judgment the skill must make itself before any
+call is possible. Do not score that step down as bypassing the tool, and do not
+treat the tool receiving the Julian date rather than the Swedish one as an
+argument mismatch — passing a date the tool cannot interpret would be the
+error. What this dimension grades on such a test is the part the tool did
+handle: whether the returned Julian→Gregorian offset and rule are the ones the
+response presents.

@@ -16,6 +16,7 @@
     "Should explain that because the date precedes the Gregorian calendar's introduction, there is no contemporaneous Gregorian equivalent to convert to. The calendars had not yet diverged into two parallel systems; before 15 October 1582 there was only the Julian calendar",
     "Should recommend recording the date as written — '14 September 1582' — with the calendar noted (Julian / Old Style), which is what another researcher will be able to match against the register",
     "May state the proleptic Gregorian alignment (24 September 1582) for timeline comparison, but ONLY labelled as proleptic or hypothetical. Presenting '24 September 1582' flatly as the Gregorian date, with no indication that the Gregorian calendar did not exist on that day, is the failure this test looks for",
+    "Should NOT present a 'Gregorian date' or 'modern Gregorian' field for this date at all — not even holding the original date unchanged. A row reading 'Modern Gregorian date: 14 September 1582 — unchanged' is a failure, not a notation quibble: it asserts a Gregorian reading of a day on which the Gregorian calendar did not exist, which is the exact distinction this test grades. The correct presentation gives the date once, as recorded, labelled Julian / Old Style",
     "If the skill calls convert_calendar with julianToGregorianDay and receives an input error, surfacing that error and explaining it is correct behaviour, not a failure — the tool rejects this correction before 1582-10-15 by design"
   ]
 }

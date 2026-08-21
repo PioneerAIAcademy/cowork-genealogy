@@ -504,6 +504,31 @@ mattered to this skill, and now one does.
 
 ---
 
+### F9 — `ut_convert_dates_012` is a knife-edge routing test, and no body edit fixes it
+
+**Did:** across five committed runs it goes pass, fail, pass, pass, fail — and the
+two failures differ in kind (`skills_invoked: []` once, `['convert-dates']` once).
+Replacing the body's double-date example did not settle it: `_012` passed the run
+after that change and failed the next.
+
+**Should:** a routing test should discriminate on the routing rule, not on
+sampling noise.
+
+**Gap: lane 2, and the cause is not in the body.** `convert-dates`'s **description
+frontmatter** advertises `double-dated years (e.g. "1749/50")` and, in the same
+paragraph, `date schema validation (use validate-schema)`. `_012`'s input is *"Is
+'15 Feb 1749/50' a valid value for a date field in research.json?"* — it contains
+the skill's own positive trigger example **and** asks the question that same
+description defers. The test sits on the boundary by construction, so it flaps.
+
+Three ways out, none a body edit: change the test's input to a double date the
+description does not name; drop the `(e.g. "1749/50")` example from the
+description, which is optimiser-owned and shifts routing corpus-wide; or accept it
+as known-flaky and stop reading its individual outcomes. **Left for the lead** —
+the middle option touches an optimiser-owned field.
+
+---
+
 ## Checked, not a finding
 
 Recorded so the next auditor doesn't re-derive them.
@@ -719,39 +744,71 @@ and the rubric still parses); `eval/harness` unit suite 2249 passed / 3 skipped;
 no duplicate `test.id` across the corpus (CI rule 4); every `§` anchor in this
 document resolves to a real heading.
 
-## The judge-prompt fix is NOT evidenced by anything in this branch
+### A retraction: the canary was placed correctly
 
-Caught in review, and the reviewer is right. Verify it in one command:
+An earlier draft of this write-up recorded "the canary was kept on `_005` when
+`_004` and `_009` were already measured as failing 4/4" as my error, and named
+`_009` as the replacement. **That self-criticism was itself unverified, and it is
+wrong.** Measured properly — asking not just whether a response cited the
+bullet's named example jurisdictions but whether it conveyed cross-jurisdiction
+variation *at all*:
 
-```sh
-python -c "import json;print(json.load(open('eval/runlogs/unit/convert-dates/v1_2026-08-19_22-13-16.json'))['judge_prompt_hash'][:8])"
-# 0d186137  == origin/main's prompt.md
-# this branch's prompt.md hashes to c39d7003
-```
+| Test | cited the named examples | conveyed variation another way | usable as a canary |
+|---|---|---|---|
+| `_002` | 0/4 | 0/4 | **yes** |
+| `_005` | 0/4 | 0/4 | **yes — the one retained** |
+| `_009` | 0/4 | **1/4** | no |
+| `_004` | 0/4 | **2/4** | no |
+| `_006` | 0/4 | **4/4** | no |
 
-The committed run was graded on **2026-08-19 at 22:13**; the prompt fix was made
-**2026-08-20**, after it. So `v1_2026-08-19_22-13-16` was graded entirely under
-the old prompt, and its `_013` still carries Correctness **1** with the original
-rationale verbatim — "The skill's core claim is factually false."
+`_009` — the "correction" — hedges in one run of four, so it is a *worse*
+instrument than the one in place. `_005` is one of only two clean canaries in the
+corpus, and it is the one that was kept.
 
-An earlier draft of this write-up and of PR #1766 claimed the Facts arm was
-**proven** by `_013` going 1 → 3. That improvement was real but came from a
-**scratch** run, which is gitignored and therefore not in the repo. Presenting it
-as proof was wrong: the split "one arm proven, one unverified" implied in-repo
-evidence that does not exist.
+The lesson is the one I had already drawn and then failed to apply: **verify
+before acting, including on a claim about your own mistake.** Acting on that
+retraction would have degraded a working instrument. `_002` is the backup if
+`_005` ever starts hedging.
 
-**Both arms are unverified in this branch.** The honest state:
+## The judge-prompt fix, now measured: one arm works, one does not
 
-| Arm | State in repo | What would settle it |
-|---|---|---|
-| **Facts** (do not contradict an asserted fact) | not evidenced | a run whose `judge_prompt_hash` matches this branch; `_013` Correctness should move 1 → 3 |
-| **Authority** (an unmet requirement is a deduction) | not evidenced, and **not testable as the corpus stands** | move the retained canary from `_005` to `_009`, which fails the bullet in 4/4 runs, then run |
+Run `v1_2026-08-21_19-59-34` was graded under this branch's prompt —
+`judge_prompt_hash` **c39d7003**, matching `eval/harness/judge/prompt.md` exactly,
+which the previously committed run did not. So this is the in-repo evidence review
+asked for, and it splits.
 
-Nothing mechanical catches this, by design: `check_runlogs.py` rule 2b compares
-`judge_prompt_hash` and is **warn-only** — "judge edits are a separate cadence."
-That is the right default for a normal judge tweak and the wrong one for shipping
-a corpus-wide prompt change whose only stated proof lives outside the repo. The
-gap is the same shape as F1: a warn-only signal nobody is required to read.
+### Facts arm — PROVEN
+
+`ut_convert_dates_013`, the flagrant witness, went **Correctness 1 to 3** and the
+whole test from `fail` to `pass` (all seven dimensions 3). The rationale inverted:
+
+| | rationale |
+|---|---|
+| old prompt | "The skill's core claim is **factually false**. Claude asserts that 30 February 1712 is a real Swedish calendar date" |
+| this branch | "The response **accurately presents the historical facts** about Sweden's unique 30 February 1712 date ... all historically documented" |
+
+Same skill, same test, same asserted fact. The judge stopped contradicting an
+established per-test fact, which is what the Facts paragraph was added to stop.
+
+### Authority arm — DISPROVEN, not merely unverified
+
+The `_005` canary **did** present a violation this run: zero of the bullet's named
+example jurisdictions, and no cross-jurisdiction variation conveyed any other way.
+The bullet was genuinely unmet.
+
+Completeness scored **3**, rationale "The skill addressed all requirements".
+
+So the Authority wording did not work. That is a stronger result than the
+"unverified" this section previously claimed — a measured negative beats an
+absence of evidence. Caveats: n=1, one test, and a `Completeness` case
+specifically. But the arm exists to make exactly that deduction and it did not
+make it.
+
+**What that leaves for the lead.** The Facts half earns its tokens. The Authority
+half is, on this evidence, billed prose on every judge call for every skill that
+changes nothing. Keeping or cutting it is the same global-prompt call that
+authorised it; this dive is not going to iterate on a corpus-wide file one
+unverified wording at a time. Recorded rather than quietly left in.
 
 ## The three full runs, and why the suite is not green
 
