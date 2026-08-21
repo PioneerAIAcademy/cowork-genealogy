@@ -471,6 +471,13 @@ Architecturally:
   `~/.familysearch-mcp/config.json`. **Never a `process.env` fallback** — the
   file is the sole source. Throw **LLM-instruction errors**: the message must
   tell Claude what to do next, not just what failed.
+- **Every network leg goes through `fetchWithTimeout` (`src/utils/http.ts`)** —
+  the global `fetch` never times out and a stalled upstream hangs the call
+  forever. Size the budget under **60s** or accept that Cowork loses the tail:
+  the device bridge caps every MCP call at 60s (see "Other environment
+  differences that bite"), so any budget above it is honoured only on the
+  stdio paths (harnesses and hosted, both verified) and silently truncated in
+  Cowork. Size a raise from the measured e2e corpus, not by guessing.
 - **Reuse before you write:** `getValidToken()` for auth (never re-implement
   token plumbing), `place-resolver.ts` / `place-api.ts` for places, and
   `BROWSER_USER_AGENT` from `src/constants.ts` for any FamilySearch endpoint —
@@ -1277,6 +1284,22 @@ Other environment differences that bite:
   §5.4's raw-write class is entirely ungated at call time there.
 - **Tool deferral.** Cowork defers tool schemas above a size threshold and offers
   no control over it, so `ToolSearch` is the real load path there (§5.2).
+- **The Cowork bridge caps every MCP call at 60s.** A client-side ceiling this
+  repo does not set — no `MCP_TOOL_TIMEOUT`/`MCP_TIMEOUT` or equivalent per-tool
+  ceiling is defined anywhere in the code — and cannot change from the plugin or
+  the `.mcpb`. Any tool timeout
+  budget above 60s is therefore aspirational in Cowork: the call is aborted with
+  `tool "…" timed out after 60s` before the tool's own budget fires, and its
+  eventual result is discarded. The harnesses and the hosted control plane
+  register the server over stdio and are **not** capped (committed e2e run
+  logs carry `image_transcribe`'s own 180s timeout as a result, so calls ran
+  past 60s there). `image_transcribe`'s `OCR_TIMEOUT_MS = 180s` is the first
+  budget this bites (roughly 10-15% of healthy calls exceed 60s — see the
+  spec's Timeout budget section for why it is a range, not a point), but
+  it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
+  budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
+  above the ceiling too. **No automated check reaches this** — neither harness
+  goes through the bridge — so it is only observable in a live Cowork session.
 
 ### If you're asked to…
 
