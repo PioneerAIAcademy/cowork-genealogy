@@ -185,7 +185,8 @@ What this does **not** catch: interface **types** — optionality, `| null`, and
 `date_certainty: string` in `packages/schema/src/index.ts` — which need the
 TypeScript compiler API (#1165); the enum tables in
 `docs/specs/research-schema-spec.md`, whose markdown-table format needs its own
-parser; the sixth inline enum `locality.pages_read[].section`, re-typed in
+parser; the one closed enum still defined inline rather than in
+`enums.schema.json` — `locality.pages_read[].section`, re-typed in
 `packages/engine/mcp-server/src/tools/wiki-place-page.ts` and bound to no
 validator entry to collapse into (#1270); and the `eval/app` fork.
 
