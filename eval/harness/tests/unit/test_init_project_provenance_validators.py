@@ -125,14 +125,40 @@ def test_v1_fires_on_an_explicit_false():
 
 # --- V2: ark form and provenance ----------------------------------------
 
+def _imported(ark=None):
+    """The Patrick Flynn the family fixture returns, as the tree records him.
+    Joined to the response by name, because the import re-ids him to I1."""
+    person = {
+        "id": "I1",
+        "names": [{"id": "N1", "preferred": True, "given": "Patrick",
+                   "surname": "Flynn"}],
+    }
+    if ark is not None:
+        person["ark"] = ark
+    return person
+
+
 def test_v2_passes_on_the_canonical_derived_form():
-    after = _tree(persons=[{"id": "I1", "ark": "ark:/61903/4:1:LZNY-BRF"}])
+    after = _tree(persons=[_imported("ark:/61903/4:1:LZNY-BRF")])
     check_ark(after, [_person_read_call()])
 
 
-def test_v2_skips_when_no_person_carries_an_ark():
-    with pytest.raises(pytest.skip.Exception):
-        check_ark(_tree(persons=[{"id": "I1"}]), [_person_read_call()])
+def test_v2_fires_when_the_ark_is_omitted_from_an_imported_person():
+    """The gap that made the first draft of this validator worthless: keying off
+    the arks the tree happened to carry meant omitting the key everywhere left
+    nothing to inspect, so the check SKIPPED in exactly the case it exists to
+    catch. Expectations now come from the persons person_read returned."""
+    message = _fails(check_ark, _tree(persons=[_imported()]), [_person_read_call()])
+    assert "carries no ark" in message
+    assert "ark:/61903/4:1:LZNY-BRF" in message
+
+
+def test_v2_fires_on_an_empty_string_ark():
+    """Same hole, second door: `ark: ""` is falsy, so a truthiness filter
+    swallowed it silently."""
+    assert "carries no ark" in _fails(
+        check_ark, _tree(persons=[_imported("")]), [_person_read_call()]
+    )
 
 
 @pytest.mark.parametrize(
@@ -140,20 +166,30 @@ def test_v2_skips_when_no_person_carries_an_ark():
     [
         "https://www.familysearch.org/tree/person/details/LZNY-BRF",
         "https://familysearch.org/ark:/61903/4:1:LZNY-BRF",
+        "https://www.familysearch.org/ark:/61903/4:1:LZNY-BRF",
         "LZNY-BRF",
-        "",
     ],
-    ids=["tree-details-url", "resolver-prefixed", "bare-pid", "empty"],
+    ids=["tree-details-url", "resolver-prefixed", "www-resolver", "bare-pid"],
 )
 def test_v2_fires_on_every_shape_the_corpus_actually_wrote(bad_ark):
-    after = _tree(persons=[{"id": "I1", "ark": bad_ark}])
-    if bad_ark == "":
-        # Falsy — the validator treats it as "no ark" and skips rather than
-        # failing. Pinned so the boundary is deliberate, not accidental.
-        with pytest.raises(pytest.skip.Exception):
-            check_ark(after, [_person_read_call()])
-        return
-    assert "canonical" in _fails(check_ark, after, [_person_read_call()])
+    """All four shapes the five committed run logs produced across 18 writes.
+    None is canonical; the tree-details URL is the one that defeats arkToBareId
+    outright."""
+    message = _fails(check_ark, _tree(persons=[_imported(bad_ark)]), [_person_read_call()])
+    assert "expected" in message or "canonical" in message
+
+
+def test_v2_skips_when_person_read_was_never_called():
+    """Objective-only builds: no FamilySearch person was read, so no ark is
+    owed and a local stub correctly carries none."""
+    with pytest.raises(pytest.skip.Exception):
+        check_ark(_tree(persons=[{"id": "I1"}]), [])
+
+
+def test_v2_ignores_a_returned_person_who_was_not_imported():
+    """person_search returns candidates that are deliberately not imported;
+    only what reached the tree is this validator's business."""
+    check_ark(_tree(persons=[]), [_person_read_call()])
 
 
 def test_v2_fires_on_a_canonical_ark_for_a_person_no_tool_returned():
@@ -162,18 +198,44 @@ def test_v2_fires_on_a_canonical_ark_for_a_person_no_tool_returned():
     assert "no tool response returned" in message
 
 
-def test_v2_accepts_an_ark_traced_to_a_person_search_result():
+def test_v2_accepts_the_search_then_read_flow():
+    """ut_init_project_004's real shape: search for candidates, then read the
+    chosen one. The ark derives from the person actually read.
+
+    This test previously supplied only the search call and therefore asserted
+    nothing — V2 skipped it, since no person_read means no ark is owed. Its
+    premise was unreal too: the skill always reads the candidate it picks.
+    """
     search = {
         "tool": "mcp__genealogy__person_search",
-        "args": {"surname": "Flynn"},
+        "args": {"surname": "Flynn", "givenName": "Patrick"},
         "response": {
             "results": [
-                {"personId": "LZNY-QRS", "gedcomx": {"persons": [{"id": "LZNY-QRS"}]}}
+                {"personId": "LZNY-BRF",
+                 "gedcomx": {"persons": [{"id": "LZNY-BRF",
+                                          "ark": "ark:/61903/4:1:LZNY-BRF"}]}},
+                {"personId": "LZNY-QRS",
+                 "gedcomx": {"persons": [{"id": "LZNY-QRS"}]}},
             ]
         },
     }
-    after = _tree(persons=[{"id": "I1", "ark": "ark:/61903/4:1:LZNY-QRS"}])
-    check_ark(after, [search])
+    after = _tree(persons=[_imported("ark:/61903/4:1:LZNY-BRF")])
+    check_ark(after, [search, _person_read_call()])
+
+
+def test_v2_fires_when_the_ark_names_the_candidate_that_was_not_chosen():
+    """The runner-up is in `known` — it was returned — so a form-and-provenance
+    check alone would accept it. The expectation is keyed to the person actually
+    read, which is what catches it."""
+    search = {
+        "tool": "mcp__genealogy__person_search",
+        "args": {"surname": "Flynn"},
+        "response": {"results": [{"personId": "LZNY-QRS",
+                                  "gedcomx": {"persons": [{"id": "LZNY-QRS"}]}}]},
+    }
+    after = _tree(persons=[_imported("ark:/61903/4:1:LZNY-QRS")])
+    message = _fails(check_ark, after, [search, _person_read_call()])
+    assert "expected 'ark:/61903/4:1:LZNY-BRF'" in message
 
 
 # --- V3: standard_place provenance --------------------------------------

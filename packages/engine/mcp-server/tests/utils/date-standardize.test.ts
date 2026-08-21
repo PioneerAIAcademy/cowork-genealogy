@@ -774,3 +774,60 @@ describe('edge cases — error handling', () => {
     expect(latestYear('Bet 28 Sep 1974 and 5 Oct 1978 (SOME TEXT)')).toBe(1978);
   });
 });
+
+describe('ISO year-month is not an abbreviated year range (#1653 review)', () => {
+  // `1845-03` was expanded by the abbreviated-year-range rule (1875-80 ->
+  // 1875-1880) into `1845-1803`, then rendered as a range running backwards
+  // past its own start. YYYY-MM-DD never hit it -- the three-part ISO rule
+  // claims that first -- so only year-month was exposed. Found reviewing the
+  // tilde fix below, which inherited the bug rather than causing it: `~` maps
+  // to the same Abt modifier as the word, and `abt 1845-03` was already wrong.
+
+  test('leading-zero month is a month, not a backwards range', () => {
+    expect(stdDate('1845-03')).toBe('Mar 1845');
+  });
+
+  test('single-digit month is a month', () => {
+    expect(stdDate('1845-3')).toBe('Mar 1845');
+  });
+
+  test('the tilde and the word agree', () => {
+    expect(stdDate('~1845-03')).toBe('Abt Mar 1845');
+    expect(stdDate('abt 1845-03')).toBe(stdDate('~1845-03'));
+  });
+
+  test('a modifier still applies to a year-month', () => {
+    expect(stdDate('<1845-03')).toBe('Bef Mar 1845');
+  });
+
+  test('a backwards expansion that cannot be a month gains a century', () => {
+    expect(stdDate('1845-30')).toBe('Bet 1845 and 1930');
+  });
+
+  test('forward two-digit expansions are untouched', () => {
+    expect(stdDate('1875-80')).toBe('Bet 1875 and 1880');
+    expect(stdDate('1845-50')).toBe('Bet 1845 and 1850');
+  });
+
+  test('an ambiguous forward case keeps the long-standing range reading', () => {
+    // 1900-10 is October 1900 under ISO and 1900-1910 as an abbreviated range.
+    // This fix does not adjudicate that -- it only removes impossible outputs.
+    expect(stdDate('1900-10')).toBe('Bet 1900 and 1910');
+  });
+
+  test('full ISO dates and full-year ranges are unchanged', () => {
+    expect(stdDate('1845-03-12')).toBe('12 Mar 1845');
+    expect(stdDate('2026-08-21')).toBe('21 Aug 2026');
+    expect(stdDate('1845-1850')).toBe('Bet 1845 and 1850');
+  });
+
+  test('no output claims a range that ends before it starts', () => {
+    for (const input of ['1845-03', '1845-3', '~1845-03', '1845-30', '1845-01']) {
+      const out = stdDate(input);
+      const range = out.match(/^(?:Bet|from)\s+.*?(\d{4})\s+(?:and|to)\s+.*?(\d{4})$/i);
+      if (range) {
+        expect(Number(range[2])).toBeGreaterThanOrEqual(Number(range[1]));
+      }
+    }
+  });
+});

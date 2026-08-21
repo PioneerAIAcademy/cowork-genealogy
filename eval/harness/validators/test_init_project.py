@@ -269,18 +269,30 @@ def _written_tree(after_state):
 
 
 def _tree_person_facts(tree):
-    """(person_id, fact) for every fact on every person."""
+    """(owner_id, fact) for every fact in the tree.
+
+    Relationship facts included: a Couple carries the Marriage, and its
+    date/place and their sidecars follow the same rules. Walking persons alone
+    left the one fact in the family fixture that exercises a relationship-level
+    place and date entirely unchecked.
+    """
     for person in tree.get("persons") or []:
         for fact in person.get("facts") or []:
             if isinstance(fact, dict):
                 yield person.get("id"), fact
+    for rel in tree.get("relationships") or []:
+        for fact in rel.get("facts") or []:
+            if isinstance(fact, dict):
+                yield rel.get("id"), fact
 
 
 def _returned_person_facts(tool_calls):
-    """{(person_id, fact_type): fact} as `person_read` returned them.
+    """{(owner, fact_type): fact} as `person_read` returned them.
 
-    Keyed by person and type rather than by id: `person_read` supplies no fact
-    ids, so the skill mints them and the written id cannot be joined back.
+    Keyed by owner and type rather than by id: `person_read` supplies no fact
+    ids, so the skill mints them and the written id cannot be joined back. Owner
+    is the person id for a person fact and the relationship TYPE for a
+    relationship fact, since relationships arrive without ids either.
     """
     out = {}
     for response in _responses(tool_calls, "person_read"):
@@ -288,6 +300,29 @@ def _returned_person_facts(tool_calls):
             for fact in person.get("facts") or []:
                 if isinstance(fact, dict):
                     out[(person.get("id"), fact.get("type"))] = fact
+        for rel in response.get("relationships") or []:
+            for fact in rel.get("facts") or []:
+                if isinstance(fact, dict):
+                    out[(rel.get("type"), fact.get("type"))] = fact
+    return out
+
+
+def _returned_tree_persons(tool_calls):
+    """{familysearch person id: (given, surname)} for every person `person_read`
+    returned. The join key is the name because the skill re-ids persons to local
+    `I` ids on import, so the FamilySearch id is gone from the written tree --
+    `ark` is the only place it survives, which is the point of checking it."""
+    out = {}
+    for response in _responses(tool_calls, "person_read"):
+        for person in response.get("persons") or []:
+            pid = person.get("id")
+            if not pid:
+                continue
+            name = (person.get("names") or [{}])[0]
+            out[pid] = (
+                (name.get("given") or "").strip().lower(),
+                (name.get("surname") or "").strip().lower(),
+            )
     return out
 
 
@@ -350,13 +385,43 @@ def test_tree_ark_is_canonical_and_traceable(after_state, tool_calls):
     `arkToBareId` outright: it parses as no ARK, so `toGedcomX` rebuilds the
     Persistent identifier as a web page address.
     """
+    returned = _returned_tree_persons(tool_calls)
+    if not returned:
+        pytest.skip("no person_read response, so no ark is expected")
     tree = _written_tree(after_state)
-    persons = [p for p in tree.get("persons") or [] if p.get("ark")]
-    if not persons:
-        pytest.skip("no person carries an ark")
-    known = _returned_person_ids(tool_calls)
+
+    # Expectations come from the persons `person_read` actually returned, not
+    # from what the tree happens to carry. Keying off the tree's own arks is what
+    # let the defect hide: omit the key everywhere and there is nothing to
+    # inspect, so the check skipped in precisely the case it exists to catch --
+    # and a falsy `ark: ""` was swallowed by the same filter.
     bad = []
-    for person in persons:
+    written_by_name = {}
+    for person in tree.get("persons") or []:
+        for name in person.get("names") or []:
+            key = (
+                (name.get("given") or "").strip().lower(),
+                (name.get("surname") or "").strip().lower(),
+            )
+            written_by_name.setdefault(key, person)
+    for pid, name_key in returned.items():
+        person = written_by_name.get(name_key)
+        if person is None:
+            continue  # not imported; V1 and the judge cover what was dropped
+        expected = f"ark:/61903/4:1:{pid}"
+        actual = person.get("ark")
+        if not actual:
+            bad.append(
+                f"{person.get('id')} was imported from {pid} but carries no ark "
+                f"({actual!r}); expected {expected!r} -- ark is what marks tree "
+                f"membership, so an imported FS person without one is indistinguishable "
+                f"from a local stub"
+            )
+        elif actual != expected:
+            bad.append(f"{person.get('id')}: ark is {actual!r}, expected {expected!r}")
+
+    known = _returned_person_ids(tool_calls)
+    for person in [p for p in tree.get("persons") or [] if p.get("ark")]:
         ark = person["ark"]
         match = _ARK_RE.match(str(ark))
         if not match:
@@ -471,6 +536,21 @@ def test_every_fact_and_relationship_is_sourced(after_state, test):
     resolves. Nothing checked that one exists -- and on the objective-only path
     the tree landed with `sources: []` and facts carrying no `sources` key at
     all, in four of four runs.
+
+    KNOWN CONTRADICTION, quality only. `SKILL.md` is unambiguous ("Source every
+    FamilySearch fact with `quality: 1`", and the researcher's own statement the
+    same), and every run in the corpus writes 1 -- but
+    `references/simplified-gedcomx-summary.md` still documents the field as
+    optional and illustrates it with a `2`, since it describes the format
+    generically rather than this skill's use of it. A model that follows the
+    reference instead of the body would fail here.
+
+    Kept strict rather than relaxed, because the presence-and-resolution half is
+    what the defect was and dropping the value check would also stop catching an
+    overstated quality on unverified tree data. Aligning the reference's three
+    example values is the correct companion fix and is DEFERRED: that file is
+    snapshot-tracked, so editing it invalidates the run log this PR bought. It
+    rides the next run that touches the skill dir, together with V7's tag.
     """
     if test.get("type") != "positive":
         pytest.skip("sourcing rules apply only to positive tests")

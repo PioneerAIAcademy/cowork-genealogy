@@ -203,10 +203,28 @@ def test_person_read_fixture_facts_carry_both_standardized_sidecars():
     init-project did with `standard_place` in 28 of 28 runs, copying the fact's
     free-text `place` and never calling `place_search`.
 
-    `standard_place` is best-effort (the resolver can fail and leave it empty),
-    so it is required only where the fixture itself supplies a `place`; a
-    fixture that deliberately models a resolver miss should drop `place` too, or
-    this check needs an opt-out marker rather than a silent exception.
+    `standard_place` is best-effort -- the place resolver can fail and leave it
+    empty -- and `SKILL.md` carries a rule for exactly that case ("any returned
+    fact with a `place` but no `standard_place`: resolve with `place_search`").
+    Without an escape hatch this check would forbid any fixture from modelling a
+    resolver miss, which would make that rule permanently untestable: the same
+    defect the whole dive is about, reintroduced by its own lint.
+
+    So a fixture may opt a fact out with `"_contract_exempt"` naming the
+    sidecar(s) it deliberately omits, plus a `"_contract_exempt_reason"` on the
+    fixture saying why. The marker is per-fact and explicit, so an omission is a
+    stated modelling choice rather than an oversight, and grep finds every one.
+
+        "facts": [
+          {"type": "Birth", "place": "Boston",
+           "_contract_exempt": ["standard_place"]}
+        ]
+
+    No fixture uses it yet. It exists so the resolver-miss branch of the body can
+    be given a test without first having to argue with this check -- and that
+    test is the natural next step, deferred here only because adding a fixture to
+    a test edits a snapshot-tracked file and would invalidate the run log this PR
+    bought.
     """
     missing = []
     for name, data in _person_read_fixtures():
@@ -219,10 +237,20 @@ def test_person_read_fixture_facts_carry_both_standardized_sidecars():
         for rel in response.get("relationships") or []:
             facts += [(rel.get("type"), f) for f in rel.get("facts") or []]
         for owner, fact in facts:
-            if fact.get("date") and not fact.get("standard_date"):
-                missing.append(f"{name}: {owner} {fact.get('type')} has date, no standard_date")
-            if fact.get("place") and not fact.get("standard_place"):
-                missing.append(f"{name}: {owner} {fact.get('type')} has place, no standard_place")
+            exempt = fact.get("_contract_exempt") or []
+            if not isinstance(exempt, list):
+                missing.append(f"{name}: {owner} _contract_exempt must be a list")
+                continue
+            if exempt and not data.get("_contract_exempt_reason"):
+                missing.append(
+                    f"{name}: exempts {exempt} but the fixture states no "
+                    f"_contract_exempt_reason"
+                )
+            for raw, sidecar in (("date", "standard_date"), ("place", "standard_place")):
+                if fact.get(raw) and not fact.get(sidecar) and sidecar not in exempt:
+                    missing.append(
+                        f"{name}: {owner} {fact.get('type')} has {raw}, no {sidecar}"
+                    )
     assert not missing, (
         "person_read returns a standardized sidecar beside each raw date/place; "
         "a fixture without one cannot show whether the skill kept it or invented "

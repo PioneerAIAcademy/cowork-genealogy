@@ -3,6 +3,18 @@
 Issue #1653. Guide followed: `docs/skill-deep-dive-guide.md`. Prohibition list:
 `init-project-prohibition-list.md`.
 
+> **One of the five logs is no longer on this branch, by design.** Writing this
+> dive's own run tripped the harness's retention rule — `prune_old_candidates`
+> keeps the newest `DEFAULT_KEEP_CANDIDATES` (5) per skill — which deleted
+> `v1_2026-08-14_02-59-55.json` and its `.ann.json`. The score tables below still
+> count it, so to reproduce them fetch it from before the prune:
+>
+> ```sh
+> git show aaa599830:eval/runlogs/unit/init-project/v1_2026-08-14_02-59-55.json
+> ```
+>
+> Restoring the file instead would fight retention and be undone by the next run.
+
 **Corpus read:** all five committed run logs —
 `v1_2026-08-14_02-59-55`, `v1_2026-08-17_05-17-40`, `v1_2026-08-17_05-31-54`,
 `v1_2026-08-18_12-44-49`, `v1_2026-08-19_08-01-51` (11–12 tests, 1 run each).
@@ -799,3 +811,25 @@ the first time in this suite that dropping a flag has any consequence at all.
 **Do not commit before the guard-clause question in F10 has an answer.** Run-log
 snapshot rule 2 is blocking, so a `SKILL.md` edit landed after the paid run
 invalidates that run's snapshot and buys a second one.
+
+---
+
+## Deferred, and both ride one future run
+
+Two follow-ups are correct, cheap, and deliberately **not** in this PR, for the
+same reason: `eval/tests/unit/init-project/**` and
+`packages/engine/plugin/skills/init-project/**` are snapshot-tracked, so touching
+either invalidates the run log this dive paid for and buys another
+`make eval-skill SKILL=init-project`. Neither is worth ~$9 plus an annotation
+pass on its own; both should land on the next run that touches the skill dir for
+any other reason.
+
+| Deferred | Why it matters | Cost if done alone |
+|---|---|---|
+| Tag `ut_init_project_004` with `expects-person-search` | V7 currently skips on all twelve tests. Its firing behaviour is held by mutation tests, not by the suite. | one paid run |
+| Align the three `quality` examples in `references/simplified-gedcomx-summary.md` to `1` | The reference documents the field as optional and shows a `2`; `SKILL.md` mandates `1` and V4 enforces it. A model following the reference over the body fails V4. Every run in the corpus writes 1, so the trap is latent, not active. | one paid run |
+| Give the resolver-miss branch a fixture, using the new `_contract_exempt` marker | `SKILL.md` tells the skill what to do when `person_read` returns a `place` with no `standard_place`; no fixture models it, so that branch is untested. The marker now makes it expressible. | one paid run |
+
+Both of the first two were raised in review and are recorded in the code that
+depends on them — V7's docstring and V4's — rather than only here, so the next
+person to open either file sees the pending edit and its reason.
