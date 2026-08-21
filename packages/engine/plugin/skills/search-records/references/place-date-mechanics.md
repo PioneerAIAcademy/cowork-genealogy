@@ -221,11 +221,13 @@ Each name field independently supports wildcards and `.exact=on`.
   relative-name bullet below, and getting it backwards will make you
   misread every nil result:
 
-  - For a field the index virtually always carries — the searched person's
-    **own** given name and surname — there is nothing to be silent about,
-    so required collapses to *must match*. One term that does not match
-    collapses the result set — measured, a few hundred results fell to
-    single digits on a gibberish given name.
+  - For the searched person's **own** surname, required collapses to *must
+    match*: measured 2026-08-20, an unqualified `surname` DROPS records with
+    no indexed surname. But its own given name does NOT — an unqualified
+    `givenName` KEEPS records with no indexed given name, so it behaves like
+    the relative fields below. One term that does not match still collapses
+    the result set — measured, a few hundred results fell to single digits on
+    a gibberish given name.
   - For a field a record can simply **omit**, silence is not a
     contradiction, so those records are kept. A father term that nothing
     could match still returned about **97%** of its baseline: only the
