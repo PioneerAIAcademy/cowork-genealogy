@@ -68,7 +68,7 @@ Already done? Skip ahead.
 - FamilySearch tokens in `~/.familysearch-mcp/tokens.json`. If you've used the
   plugin from Cowork this exists already; otherwise run the `login` tool once.
 - This repo cloned. The walk-through below assumes `~/cowork-genealogy` on
-  macOS/Linux and `%USERPROFILE%\cowork-genealogy\` on Windows; adjust paths if
+  macOS/Linux and `C:\src\cowork-genealogy` on Windows; adjust paths if
   yours is elsewhere. (GitHub Desktop defaults to `%USERPROFILE%\Documents\GitHub\` — **don't use it**,
   `Documents` is normally synced to OneDrive and the install will fail there.
   Clone to `C:\src\cowork-genealogy` instead.)
@@ -197,7 +197,7 @@ scripts/setup-feedback-case.sh ~/Downloads/feedback-2026-07-21T09-14-22Z.zip
 it prints at the end):**
 
 ```bat
-%USERPROFILE%\cowork-genealogy\scripts\setup-feedback-case.bat ^
+scripts\setup-feedback-case.bat ^
     "%USERPROFILE%\Downloads\feedback-2026-07-21T09-14-22Z.zip"
 ```
 
