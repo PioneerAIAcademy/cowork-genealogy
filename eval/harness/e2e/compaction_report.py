@@ -26,6 +26,21 @@ order or count.
 Segments 0–2 are "early", segment 3+ is "late" — issue #1155's own split,
 not derived from the data.
 
+## "No subjectId" is not automatically a lapse
+
+The tool's own schema tells the agent to omit `subjectId` "when the search is
+not about a specific tree person yet" — a newly-discovered child, an
+unconfirmed parent, the exact people a research session increasingly
+searches for as it progresses. A raw early-vs-late supply comparison counts
+that alongside the failure it's meant to catch (omitting it for a subject
+the agent already has an ID for). Reading the two runs that carry most of
+one window's late-segment sample call by call, most of their omissions were
+the legitimate kind — searching for a not-yet-tree parent or child — and
+only a couple were the agent's already-established subject searched without
+its known `subjectId`. `format_report` prints `CAVEAT` below so this isn't
+read as a clean decay signal; telling the two apart automatically would need
+a per-call target-identity signal this report doesn't have.
+
 ## Two exclusions, both counted rather than silently dropped
 
 A run is excluded as `unsegmentable-timeline` when any assistant entry lacks
@@ -61,6 +76,18 @@ from harness.context_policy import bare_tool_name
 
 #: Segments 0-2 are "early"; segment 3+ is "late" — issue #1155's own split.
 EARLY_MAX_SEGMENT = 2
+
+#: Printed with every non-empty report — see the module docstring section
+#: "'No subjectId' is not automatically a lapse".
+CAVEAT = (
+    "Caveat: a call without subjectId is not automatically a lapse — the "
+    "tool's schema permits omitting it when the search isn't about a "
+    "specific tree person yet (a newly-discovered child, an unconfirmed "
+    "parent). This report counts every omission the same way; it does not "
+    "distinguish that from 'the agent had a subjectId and didn't supply "
+    "it'. A manual read of the calls behind an early/late gap is needed "
+    "before treating it as a decay signal."
+)
 
 
 class RecordSearchCall(NamedTuple):
@@ -181,6 +208,9 @@ def format_report(
             f"{bucket.upper()} (segments {seg_range}): {n} record_search "
             f"call(s), {n_sub} carrying subjectId ({pct})"
         )
+
+    lines.append("")
+    lines.append(CAVEAT)
 
     late_by_run: dict[str, list[RecordSearchCall]] = {}
     for c in calls:
