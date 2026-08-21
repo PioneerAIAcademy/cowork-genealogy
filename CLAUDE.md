@@ -90,9 +90,11 @@ in the sense that they cannot.
   full GedcomX and the simplified format defined in
   `docs/specs/simplified-gedcomx-spec.md`; implementation spec at
   `docs/specs/gedcomx-convert-spec.md`) and `search-helpers.ts` (shared
-  input validators and error parsing used by the search tools
-  `record_search` and `person_search`; `parseUpstreamErrorBody` is also
-  reused by `person_ancestors`).
+  input validators, output shaping and error parsing used by the search
+  tools `record_search`, `person_search`, `collections_search` and
+  `volume_search`; `parseUpstreamErrorBody` is also reused by
+  `person_ancestors`, and `formatYearRange` is the single date-range
+  format shared by `collections_search` and `volume_search`).
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
 
 ### Hosted web workbench (monorepo overlay)
@@ -591,9 +593,18 @@ goes in the skill's spec or its rubric.
 agent body) to fix an e2e/eval/user finding, classify the finding:
 (1) tooling defect → MCP tool PR; (2) eval defect (judge/rubric/fixture
 wrong) → eval PR; (3) record-type craft gap → that type's
-playbook/table; (4) core doctrine → the stewarded prose edit, gated by
-the unit suite. Most findings are lanes 1–2; prose edits never
-compensate for a tool or eval bug. Full version:
+playbook/table; (4) core doctrine → **first ask whether it can be a tool
+rule**, and only then the stewarded prose edit, gated by the unit suite. Most
+findings are lanes 1–2; prose edits never compensate for a tool or eval bug.
+
+**Lane 4 means prose is the last resort, not the destination.** Apply ADR-0011's
+first question — *can this be decided by reading the project documents alone?*
+If yes it is a writer-tool precondition, where it binds everywhere and cannot be
+argued with. Measured while converting `proof-conclusion` to a skill-agent pair:
+five behaviours on one fixture were each stated correctly in the body, read, and
+not followed; each held on the first run after moving into `research_append`,
+and several of the rewordings broke a neighbouring test on the way, because a
+prompt has no scope. Full version:
 `docs/skill-lifecycle.md` §5.
 
 ### A new lint must be proven to fail
