@@ -256,11 +256,15 @@ once. Sentence case with proper nouns capitalised; no kebab- or snake-casing.
 > group numbering ("group 14", "group 16") appears only in that document and in
 > the decisions recorded below.
 
-Each group maps to `{ anchors, strays }`:
+Each group maps to `{ anchor, strays }`:
 
-- **`anchors`** — concept ids whose subtree covers the group. Usually one.
+- **`anchor`** — the concept id whose subtree covers the group. Exactly one per
+  group: the source list proposed a second anchor for four groups, and
+  [the group table](#the-group-table) records why none of the four is carried —
+  two fall outside the first anchor's subtree and appear as strays instead, and
+  two resolve inside it, so containment already reaches them.
 - **`strays`** — ids belonging to the group editorially but sitting **outside**
-  every anchor's subtree, so containment cannot reach them. They are added to the
+  the anchor's subtree, so containment cannot reach them. They are added to the
   same `recordTypeConceptIds` array; there is no post-filter. Verified list in
   [Strays](#strays).
 
@@ -774,8 +778,8 @@ as absent rather than guessing.
     "(recordSearchablePercent), and whether it is full-text searchable " +
     "(fulltextSearchable). Use the returned imageGroupNumber with image_search to " +
     "list the volume's images, or with fulltext_search to search its text. " +
-    "Results are paginated — pass back nextPageToken (with the same standardPlace and " +
-    "years) as pageToken to get the next page. " +
+    "Results are paginated — pass back nextPageToken (with the same standardPlace, " +
+    "years and record-type groups) as pageToken to get the next page. " +
     "Optionally narrow to record-type groups with recordTypeGroups. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
@@ -791,12 +795,12 @@ as absent rather than guessing.
       startYear: {
         type: "integer",
         description:
-          "Earliest year of interest, inclusive (e.g., 1730). Omit for all periods.",
+          "Earliest year of interest (inclusive), e.g. 1730. Omit for all periods.",
       },
       endYear: {
         type: "integer",
         description:
-          "Latest year of interest, inclusive (e.g., 1810). Must be ≥ startYear. " +
+          "Latest year of interest (inclusive), e.g. 1810. Must be >= startYear. " +
           "Omit for all periods.",
       },
       recordTypeGroups: {
@@ -842,7 +846,9 @@ all other authenticated tools. Do not re-implement token plumbing.
 | `endYear` not an integer year | Throw: `"endYear must be an integer year (e.g., 1810)."` |
 | `endYear` < `startYear` | Throw: `"endYear must be greater than or equal to startYear."` |
 | Resolved place has no placeRepIds | Throw: `"No place representations found for \"{standardPlace}\"."` |
-| `recordTypeGroups` contains an unrecognised name | Throw: `"Unknown record-type group \"<name>\". Valid groups: <list>."` — never fall through to an unfiltered or empty search, since the API answers an unrecognised concept id with `totalCount: 0` and status `200`, which is indistinguishable from a genuine absence of records |
+| `recordTypeGroups` contains an unrecognised name | Throw: `"Unknown record-type group(s): <names>. Valid groups: <list>."` — plural, because the input is an array and several entries can be wrong at once, so one error should let the caller fix them all. Never fall through to an unfiltered or empty search, since the API answers an unrecognised concept id with `totalCount: 0` and status `200`, which is indistinguishable from a genuine absence of records |
+| `recordTypeGroups` is not an array | Throw: `"recordTypeGroups must be an array of group names."` The schema's `enum` is advisory — nothing validates input against the advertised JSON Schema server-side — so a bare string (`"Tax"`) reaches the handler and would otherwise fail deep inside id expansion with an error naming neither the field nor the fix |
+| `recordType`, `record_type` or `recordTypes` supplied instead of `recordTypeGroups` | Throw, naming the offending field and the valid groups. Three sibling tools take a singular `recordType` and `research.json` uses snake_case, so these are the names an LLM reaches for here, and the endpoint ignores unknown request fields silently — see [the warning box](#relationship-to-the-other-record-type-filters-read-before-naming-anything) for the reasoning and the exact guard. Scoped to this field's own spellings: the year inputs have live aliases elsewhere too (`yearFrom`/`yearTo`, `fromYear`/`toYear`), and catching those is the schema-wide `additionalProperties` question this spec puts out of scope |
 | Not authenticated | Let `getValidToken()` throw its LLM-instruction error |
 | Group-search API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | Group-search API returns 403 | Throw: `"FamilySearch volume search API error: 403 Forbidden."` |
@@ -884,7 +890,11 @@ The full-text sub-fetch failure is **non-fatal** — a partial result with
    `Passports` and `Government Pensions`, and `ID documents` against `Passports`.
    This is the failure mode described under [Strays](#strays), reached from the
    other direction: no error, no empty result, just fewer volumes than the tool
-   description promises the model.
+   description promises the model. At its worst it is not "fewer" but *none*: at
+   Bayern, `ID documents` without the union returns **0** against `Passports`' 89.
+   Reproduce every figure in this paragraph with section `union`, and measure
+   **without** a date window — one suppresses the coverage rows whose dates do not
+   parse, which is most of a stray's, and understates `Vital`'s gain as 7,121.
 4. Derive the RMS wire dates from the integer years
    (`fromDateString = "${startYear}-01-01"`,
    `toDateString = "${endYear}-12-31"`) and build the group-search body
@@ -993,11 +1003,19 @@ images are digitized, indexed, or full-text processed.
 
 | File | Edit |
 |---|---|
-| `src/utils/record-type-groups.ts` | **New.** The group table as data: `RECORD_TYPE_GROUP_NAMES` (the enum literals, exported for the schema) and a `name → { anchor, strays }` lookup |
+| `src/utils/record-type-groups.ts` | **New.** The group table as data: `RECORD_TYPE_GROUP_NAMES` (the enum literals, exported for the schema) and a `name → { anchor, parent, strays }` lookup. Also exports `conceptIdsForGroups` (anchor + own strays + **every nested group's strays**, which is what makes a parent a superset of its children), `assertKnownGroupNames` (one unknown-group message for both the tool's `validate()` and the expansion backstop) and `assertAcyclicTable` (the whole-table cycle check the runtime guard cannot reach). `parent` is not sent upstream but decides which strays are, so it is behaviour, not documentation |
 | `src/types/volume-search.ts` | Add `recordTypeGroups?: string[]` to `VolumeSearchInput`; `recordTypeConceptIds?: number[]` to `MetadataRmsCoverageRequest`; `recordTypeConceptId?`, `recordTypeConceptIdHierarchy?`, `fromdateString?`, `todateString?` to `MetadataRmsCoverageEntry`; `recordTypeConceptId?`, `startYear?`, `endYear?` to `SimplifiedCoverage` |
 | `src/tools/volume-search.ts` | Validate and expand `recordTypeGroups`; send `coverage.recordTypeConceptIds`; map the new coverage fields; add the input to `volumeSearchSchema` |
 | `tests/tools/volume-search.test.ts` | Cases 15a–15f |
-| `dev/probe-record-type-groups.ts` | **New.** The evidence behind this section; `VOCABULARY` there and the group table here must agree. **Nothing checks that agreement** — no test, workflow or script reads either table today, so the implementation PR must add one, in the manner `tests/packaging/manifest.test.ts` guards `manifest.json` against `allToolSchemas` |
+| `dev/probe-record-type-groups.ts` | **New.** The evidence behind this section, section by section. `VOCABULARY` there is now an alias for the shipped `RECORD_TYPE_GROUP_TABLE` rather than a second copy, so agreement with the code is structural; agreement with *this document's* tables is what the drift test below checks, in the manner `tests/packaging/manifest.test.ts` guards `manifest.json` against `allToolSchemas`. Section `tree` reproduces the [Parent column](#the-group-table); section `union` reproduces what the descendants'-strays union is worth |
+| `tests/packaging/record-type-group-drift.test.ts` | **New.** The guard the row above assigns to this PR: parses the group and strays tables out of this spec and compares them to the shipped vocabulary, and compares the tool's advertised descriptions against [Tool schema](#tool-schema) in both directions |
+| `src/utils/search-helpers.ts` | Add `formatYearRange` — the date-range expression lifted out of `collections-search.ts`'s `toCollection`, so `volume_search`'s `dateRange` fallback and `collections_search` cannot describe one span two ways |
+| `src/tools/collections-search.ts` | Call `formatYearRange` in place of the inline expression; behaviour byte-identical, including that equal years render `1683-1683` and a lone `endYear` yields `""` |
+| `tests/utils/record-type-groups.test.ts` | **New.** The invariants this spec's tables cannot express: an expansion sends an anchor's strays and nothing extra, broadening to a parent loses no id, every parent chain terminates, and a non-string entry is named rather than joined into nothing |
+| `tests/utils/search-helpers.test.ts` | **New.** One case per `formatYearRange` branch |
+| `dev/try-volume-search.ts` | Add a comma-separated `--recordTypeGroups` flag so a filtered search is expressible from the shell |
+| `README.md` | Extend the `volume_search` catalog row to name `recordTypeGroups` and that selecting a group also returns the groups nested beneath it |
+| `CLAUDE.md` | Extend the `search-helpers.ts` note to name `collections_search`/`volume_search` among its consumers and `formatYearRange` as the single shared date-range format |
 
 ---
 
