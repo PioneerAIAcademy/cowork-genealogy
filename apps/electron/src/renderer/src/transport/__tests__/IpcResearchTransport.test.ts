@@ -10,6 +10,7 @@ function installApiStub(): void {
     onResearchUpdated: () => {},
     onGedcomxUpdated: () => {},
     onWatchError: () => {},
+    onFolderNotice: () => {},
     onSidecarUpdated: () => {},
     removeAllWatchListeners: () => {},
     readSidecar: async () => null,
