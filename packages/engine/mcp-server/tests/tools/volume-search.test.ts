@@ -17,6 +17,7 @@ import { volumeSearchTool } from "../../src/tools/volume-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import type {
+  VolumeSearchInput,
   MetadataRmsSearchResponse,
   MetadataRmsGroup,
 } from "../../src/types/volume-search.js";
@@ -388,6 +389,265 @@ describe("volumeSearchTool", () => {
     const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
     expect(result.totalResults).toBe(0);
     expect(result.results).toHaveLength(0);
+  });
+
+  const EDENSOR_P = "Edensor, Derbyshire, England, United Kingdom";
+
+  // 15a-15b. Structured coverage dates
+  it("parses startYear/endYear from the ISO date pair", async () => {
+    setupCalls(
+      [2968392],
+      makeSearchResponse([
+        makeGroup({
+          coverages: [
+            {
+              place: "Edensor",
+              datesOrig: "1726-1812",
+              fromdateString: "1726-01-01T00:00:00",
+              todateString: "1812-12-31T23:59:59.999",
+            },
+          ],
+        }),
+      ]),
+      []
+    );
+    const result = await volumeSearchTool({ standardPlace: EDENSOR_P });
+    const c = result.results[0].coverages[0];
+    expect(c.startYear).toBe(1726);
+    expect(c.endYear).toBe(1812);
+    // datesOrig present, so dateRange stays the archival display text.
+    expect(c.dateRange).toBe("1726-1812");
+  });
+
+  it("omits startYear/endYear when the date pair is absent", async () => {
+    setupCalls(
+      [2968392],
+      makeSearchResponse([
+        makeGroup({ coverages: [{ place: "Edensor", datesOrig: "1726-1812" }] }),
+      ]),
+      []
+    );
+    const result = await volumeSearchTool({ standardPlace: EDENSOR_P });
+    const c = result.results[0].coverages[0];
+    expect(c.startYear).toBeUndefined();
+    expect(c.endYear).toBeUndefined();
+  });
+
+  it("derives dateRange from the pair when datesOrig is absent", async () => {
+    setupCalls(
+      [2968392],
+      makeSearchResponse([
+        makeGroup({
+          coverages: [
+            {
+              place: "Edensor",
+              fromdateString: "1683-01-01T00:00:00",
+              todateString: "1700-12-31T23:59:59.999",
+            },
+            // Equal years still render as a range, matching collections_search
+            // exactly — one span, one format across both tools.
+            {
+              place: "Edensor",
+              fromdateString: "1873-01-01T00:00:00",
+              todateString: "1873-12-31T23:59:59.999",
+            },
+            // Neither year present — the field stays absent rather than "".
+            { place: "Edensor" },
+          ],
+        }),
+      ]),
+      []
+    );
+    const result = await volumeSearchTool({ standardPlace: EDENSOR_P });
+    const [span, single, none] = result.results[0].coverages;
+    expect(span.dateRange).toBe("1683-1700");
+    expect(single.dateRange).toBe("1873-1873");
+    expect(none.dateRange).toBeUndefined();
+  });
+
+  it("falls back to the pair when datesOrig strips to nothing", async () => {
+    setupCalls(
+      [2968392],
+      makeSearchResponse([
+        makeGroup({
+          coverages: [
+            {
+              place: "Edensor",
+              // Strips to empty. Keying the fallback off presence rather than
+              // emptiness would emit startYear/endYear with no dateRange.
+              datesOrig: "title:",
+              fromdateString: "1683-01-01T00:00:00",
+              todateString: "1700-12-31T23:59:59.999",
+            },
+          ],
+        }),
+      ]),
+      []
+    );
+    const result = await volumeSearchTool({ standardPlace: EDENSOR_P });
+    expect(result.results[0].coverages[0].dateRange).toBe("1683-1700");
+  });
+
+  it("surfaces recordTypeConceptId, the stable key behind recordType", async () => {
+    setupCalls(
+      [2968392],
+      makeSearchResponse([
+        makeGroup({
+          coverages: [
+            {
+              place: "Edensor",
+              // Locale-specific display text with an unusable placeholder sibling:
+              // the id is the only stable identifier of the two.
+              recordTypeOrig: "Konfirmationslängd",
+              recordTypeConceptId: 101655,
+            },
+            { place: "Edensor", recordTypeOrig: "concept-id:124231", recordTypeConceptId: 124231 },
+          ],
+        }),
+      ]),
+      []
+    );
+    const result = await volumeSearchTool({ standardPlace: EDENSOR_P });
+    const [named, placeholder] = result.results[0].coverages;
+    expect(named.recordType).toBe("Konfirmationslängd");
+    expect(named.recordTypeConceptId).toBe(101655);
+    // recordType is dropped as an opaque id, but the concept id still identifies it.
+    expect(placeholder.recordType).toBeUndefined();
+    expect(placeholder.recordTypeConceptId).toBe(124231);
+  });
+
+  // 15c-15f. Record-type group filtering
+
+  it("expands a group to its anchor and sends it inside coverage", async () => {
+    setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
+    // Marriage carries no strays, so this isolates the anchor path.
+    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Marriage"] });
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    // Inside `coverage`, not at the top level — at the top level it is ignored.
+    expect(body.coverage.recordTypeConceptIds).toEqual([104727]);
+    expect(body.recordTypeConceptIds).toBeUndefined();
+  });
+
+  it("sends a group's strays alongside its anchor", async () => {
+    setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
+    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Prison"] });
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    // 131448 police records, 130086 criminal records and 126416 criminal case
+    // files all sit outside 123478's subtree, so containment cannot reach them.
+    expect(body.coverage.recordTypeConceptIds.sort((a: number, b: number) => a - b)).toEqual(
+      [123478, 131448, 130086, 126416].sort((a, b) => a - b)
+    );
+  });
+
+  it("ORs multiple groups into one id array", async () => {
+    setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
+    await volumeSearchTool({
+      standardPlace: EDENSOR_P,
+      recordTypeGroups: ["Tax", "Census"],
+    });
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    // Tax anchor + Tax stray + Census anchor + Census stray.
+    expect(body.coverage.recordTypeConceptIds.sort((a: number, b: number) => a - b)).toEqual(
+      [124410, 129065, 123363, 104611].sort((a, b) => a - b)
+    );
+  });
+
+  it("sends a parent's anchor plus its descendants' strays, not their anchors", async () => {
+    setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
+    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Legal"] });
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    // Court, Probate, Wills and Land anchors are NOT enumerated — the API
+    // expands 122797's subtree itself. Their strays are, because a stray sits
+    // outside that subtree and containment cannot reach it.
+    expect(body.coverage.recordTypeConceptIds.sort((a: number, b: number) => a - b)).toEqual(
+      [122797, 127571, 127073, 129547].sort((a, b) => a - b)
+    );
+  });
+
+  it("treats an empty recordTypeGroups array as no filter", async () => {
+    setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
+    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: [] });
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    // Upstream treats an empty id list as no filter; omit it rather than send a
+    // no-op that reads like a filter.
+    expect(body.coverage.recordTypeConceptIds).toBeUndefined();
+  });
+
+  it("throws on an unknown group name and names the valid set", async () => {
+    await expect(
+      volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Taxation"] })
+    ).rejects.toThrow(/Unknown record-type group\(s\): Taxation.*Tax/s);
+    // Never falls through to an unfiltered search: upstream answers an
+    // unrecognised id with totalCount 0 and status 200, which is
+    // indistinguishable from a genuine absence of records.
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects the sibling tools' singular recordType instead of ignoring it", async () => {
+    // record_search and fulltext_search both take `recordType`, and nothing
+    // validates input against the advertised schema, so without this guard the
+    // field is dropped and the search silently returns everything.
+    await expect(
+      volumeSearchTool({
+        standardPlace: EDENSOR_P,
+        recordType: "probate",
+      } as unknown as VolumeSearchInput)
+    ).rejects.toThrow(/filters by recordTypeGroups.*not recordType/s);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("resends recordTypeGroups unchanged on the paginated follow-up call", async () => {
+    // Two real invocations: page 1 returns a cursor, page 2 sends it back. The
+    // point is that the filter is identical across them — omitting it mid-
+    // pagination would silently widen the search rather than error.
+    setupCalls(
+      [2968392],
+      makeSearchResponse([makeGroup()], { nextPageToken: "page-2-cursor" }),
+      []
+    );
+    const first = await volumeSearchTool({
+      standardPlace: EDENSOR_P,
+      recordTypeGroups: ["Tax"],
+    });
+    expect(first.nextPageToken).toBe("page-2-cursor");
+
+    setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
+    await volumeSearchTool({
+      standardPlace: EDENSOR_P,
+      recordTypeGroups: ["Tax"],
+      pageToken: first.nextPageToken,
+    });
+
+    // calls: [0] page-1 search, [1] page-1 fulltext, [2] page-2 search.
+    const page1 = JSON.parse(mockFetch.mock.calls[0][1].body);
+    const page2 = JSON.parse(mockFetch.mock.calls[2][1].body);
+    expect(page2.nextPageToken).toBe("page-2-cursor");
+    expect(page2.coverage.recordTypeConceptIds).toEqual(
+      page1.coverage.recordTypeConceptIds
+    );
+    expect(page2.coverage.recordTypeConceptIds).toEqual([124410, 129065]);
+  });
+
+  it("rejects a non-array recordTypeGroups with a readable error", async () => {
+    // The schema's enum is client-advisory — nothing validates input server-side
+    // — so a bare string is a reachable mistake. Without this the tool would
+    // throw "filter is not a function" from inside validate().
+    await expect(
+      volumeSearchTool({
+        standardPlace: EDENSOR_P,
+        recordTypeGroups: "Tax",
+      } as unknown as VolumeSearchInput)
+    ).rejects.toThrow(/recordTypeGroups must be an array/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("echoes recordTypeGroups in query", async () => {
+    setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
+    const result = await volumeSearchTool({
+      standardPlace: EDENSOR_P,
+      recordTypeGroups: ["Tax"],
+    });
+    expect(result.query.recordTypeGroups).toEqual(["Tax"]);
   });
 
   // 16. Pagination — nextPageToken returned and used
