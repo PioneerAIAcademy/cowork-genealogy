@@ -14,8 +14,8 @@ description: >-
   conflict-resolution), to declare exhaustiveness (use
   research-exhaustiveness), to select the next question (use
   question-selection), or to declare exhaustiveness (research-exhaustiveness
-  owns that field). It DOES resolve the question it concluded, in the same
-  batch as the summary.
+  owns that field). It resolves a question it concluded, in the same batch as
+  the summary, and leaves it open when the gate blocked it.
 model: claude-sonnet-4-6
 tools:
   - mcp__genealogy__research_append
@@ -283,7 +283,9 @@ After the batched tree write(s) — the `tree_edit` batch plus any `tree_correct
 
 ### 7. Resolve the question — in the same batch, never separately
 
-You own the resolution of the question you concluded: `status: "resolved"`, `resolved`, and `resolution_assertion_ids`. Write them in the `ops[]` batch from §5, after the summary op — never as a second call.
+You own the resolution of **the question you actually concluded**: `status: "resolved"`, `resolved`, and `resolution_assertion_ids`. Write them in the `ops[]` batch from §5, after the summary op — never as a second call.
+
+**Only when you concluded it.** If the preconditions gate blocked you and you recorded the attempt at `not_proved`, the question stays **open** — you were prevented from concluding, which is not the same as concluding that nothing is there. A `not_proved` summary written after an exhaustive search that came back empty DOES close its question; a `not_proved` summary written because a conflict blocked the correlation does not. Leave it open and route.
 
 **What you do NOT write on the question:** `exhaustive_declaration` (research-exhaustiveness owns it) and the question's structure or text (question-selection mints questions and owns them). Do not create a follow-on question either — name what would advance the work in §9 and let question-selection mint it.
 

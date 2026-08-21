@@ -352,10 +352,59 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
  * one) and non-empty `resolution_assertion_ids` (9 of 150 are empty). Both are
  * surfaced advisorily by `project_context`'s `questionStatuses` instead.
  */
-function questionResolvedInvariants(entry: any, research: any): string[] {
+function questionResolvedInvariants(
+  entry: any,
+  research: any,
+  beforeResearch?: any,
+): string[] {
   const resolving = entry?.status === "resolved" || Boolean(entry?.resolved);
   if (!resolving) return [];
   const summaries = Array.isArray(research?.proof_summaries) ? research.proof_summaries : [];
+
+  // A conclusion blocked by an unresolved conflict does not close its question.
+  //
+  // `not_proved` legitimately resolves a question that was researched and came
+  // back empty — the message below says so. What it must not do is close a
+  // question the researcher was PREVENTED from concluding: there the work is
+  // unfinished, not finished-with-nothing. The two are told apart by the same
+  // test the tier rule uses — does an open conflict dispute a source this
+  // conclusion leans on. Conflicts read from the pre-call snapshot so a batch
+  // cannot resolve one and spend it here; summaries read live so a summary
+  // written earlier in the same batch counts.
+  //
+  // Observed 2026-08-21: correctly refused `probable`, correctly recorded
+  // `not_proved`, correctly wrote no tree — and then marked the question
+  // resolved anyway, closing a question whose evidence had never been
+  // correlated.
+  if (beforeResearch) {
+    const disputed = disputedSourceIds(beforeResearch);
+    if (disputed.size > 0) {
+      const assertionSource = new Map<string, string>();
+      for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
+        if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+      }
+      const blocking = new Set<string>();
+      for (const ps of summaries) {
+        if (ps?.question_id !== entry?.id) continue;
+        for (const aid of Array.isArray(ps?.supporting_assertion_ids) ? ps.supporting_assertion_ids : []) {
+          const src = assertionSource.get(aid);
+          for (const cid of (src ? disputed.get(src) : undefined) ?? []) blocking.add(cid);
+        }
+      }
+      if (blocking.size > 0) {
+        return [
+          `question ${entry?.id ?? "(no id)"} cannot be marked resolved while ` +
+            `${[...blocking].sort().join(", ")} ${blocking.size === 1 ? "is" : "are"} ` +
+            "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
+            "sources behind it have never been correlated. This is not the same as a question " +
+            "researched and found empty, which `not_proved` does close — here the work is " +
+            "unfinished rather than finished with nothing. Leave the question open, record the " +
+            "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
+        ];
+      }
+    }
+  }
+
   if (summaries.some((s: any) => s?.question_id === entry?.id)) return [];
   return [
     `question ${entry?.id ?? "(no id)"} cannot be marked resolved (via \`status\` or the ` +
@@ -1210,7 +1259,7 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(fields, "status") ||
       Object.prototype.hasOwnProperty.call(fields, "resolved");
     if (resolutionTouchedThisOp) {
-      invariantErrors.push(...questionResolvedInvariants(resultEntry, research));
+      invariantErrors.push(...questionResolvedInvariants(resultEntry, research, preCallResearch));
     }
   }
   if (section === "conflicts") invariantErrors.push(...conflictInvariants(resultEntry));

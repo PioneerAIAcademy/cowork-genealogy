@@ -1053,6 +1053,68 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
 
+
+    it("refuses to resolve the question while the conflict blocks the conclusion", async () => {
+      // The 2026-08-21 escape. Everything else was right — probable refused,
+      // not_proved recorded, no tree written — and then the question was closed
+      // anyway, on evidence that had never been correlated.
+      const state = conflicted() as any;
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("not_proved", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved", resolution_assertion_ids: ["a_004", "a_013"] },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("c_001");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("still allows not_proved to close a question that was simply empty", async () => {
+      // The distinction this rule turns on, and the one it must not break:
+      // `not_proved` legitimately closes a question researched and found empty.
+      // Only a question the researcher was PREVENTED from concluding stays open.
+      const state = conflicted() as any;
+      state.conflicts = [];  // nothing disputed
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("not_proved", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved", resolution_assertion_ids: ["a_004"] },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows the resolve once the conflict touches no source the conclusion uses", async () => {
+      const state = conflicted() as any;
+      // c_002 disputes src_001 only; the conclusion leans on src_004 only.
+      state.conflicts = [
+        { id: "c_002", status: "unresolved", competing_assertion_ids: ["a_002"] },
+      ];
+      state.proof_summaries = [{ id: "ps_001", ...summary("probable", ["a_013"]) }];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved", resolution_assertion_ids: ["a_013"] },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
     it("cannot be cleared by resolving the conflict in the same batch", async () => {
       // Same discipline as the exhaustiveness gate: read from the PRE-CALL
       // snapshot, so a batch may not manufacture its own precondition.
