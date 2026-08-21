@@ -171,8 +171,11 @@ type SessionLogStatus = 'included' | 'not-requested' | 'requested-but-empty'
 
 export async function readSessionLog(folderPath: string): Promise<SessionLog> {
   // Claude Code stores sessions in ~/.claude/projects/<path-with-dashes>/
-  const projectHash = folderPath.replace(/^\//, '').replace(/\//g, '-')
-  const claudeProjectDir = path.join(os.homedir(), '.claude', 'projects', `-${projectHash}`)
+  // Replace every non-alphanumeric-non-hyphen char with '-'.
+  // On macOS /Users/joe/project → -Users-joe-project (leading / becomes -).
+  // On Windows C:\Users\joe\project → C--Users-joe-project (: and \ become -).
+  const projectHash = folderPath.replace(/[^a-zA-Z0-9-]/g, '-')
+  const claudeProjectDir = path.join(os.homedir(), '.claude', 'projects', projectHash)
 
   try {
     const files = await fs.readdir(claudeProjectDir)
