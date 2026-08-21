@@ -153,6 +153,16 @@ did these jobs until 2026-08-02, when all three were deleted as stale — see
 
 ### Follow-on work you find along the way
 
+**Never write "does not close #N" in a PR body.** GitHub's closing-keyword
+parser matches the substring `close #N` and has no notion of negation, so a
+sentence disclaiming an issue closes it on merge. To say an issue is *not*
+addressed, name it without the keyword — "issue #N stays open". This is not
+hypothetical: PR #1696's body carried "Does NOT close #1499", and issue #1499
+closed one second after that PR merged. It carries `nothing-checks`, so while
+closed it was also invisible in the register `docs/architecture.md` points
+readers at.
+
+
 Implementing one task almost always turns up others — a stale doc, a missing
 test, a defect you're not fixing here. The rest of this section is about
 filing what you *defer* — it assumes you've already decided not to fix it now.
