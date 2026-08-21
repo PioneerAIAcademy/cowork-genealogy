@@ -4,7 +4,7 @@
     "skill": "init-project",
     "name": "Initialize an isolated person with no relatives and flag the isolation",
     "type": "positive",
-    "description": "The person_read fixture returns a person with no parents, spouse, or children. The project should still initialize fully, and the summary should flag the isolation as a research constraint (FAN research is harder; reliance on direct records increases). Confirms init does not silently drop or fabricate relatives when the tree person stands alone.",
+    "description": "The person_read fixture returns a person with no parents, spouse, or children — the isolated payload, and the only init-project test that still uses it as the whole tree (ut_init_project_001 imports the four-person family). The project should still initialize fully, and the summary should flag the isolation as a research constraint (FAN research is harder; reliance on direct records increases). Confirms init does not silently drop or fabricate relatives when the tree person stands alone.",
     "tags": ["initialization", "no-relatives", "isolated-person", "fan-principle", "single-turn-decomposition"]
   },
   "input": {
@@ -14,6 +14,8 @@
   "mcp_fixtures": ["person-read-flynn"],
   "judge_context": [
     "person-read-flynn returns no parents, spouse, or children — an isolated person. The project must still initialize: both research.json and tree.gedcomx.json created with the Patrick Flynn stub",
+    "An empty `relationships[]` is a fact about this person, not a reason to skip the flags: `relatives` and `sourceDescriptions` both default to false and a call that omits them cannot tell an isolated person from an unasked question. Judge the call arguments, not only the resulting tree.",
+    "The fixture's facts carry two standardized sidecars — `standard_place` and `standard_date` — and neither is a string copy of its raw field. Judge whether both standardized values in the tree are the ones the tool returned.",
     "The summary should flag the isolation — note that with no linked relatives, FAN (Family, Associates, Neighbors) research is harder and reliance on direct records increases",
     "Should NOT fabricate relatives to fill the gap, and should NOT create placeholder unknown-person stubs",
     "tree.gedcomx.json should contain exactly one person (the subject) and no relationships"

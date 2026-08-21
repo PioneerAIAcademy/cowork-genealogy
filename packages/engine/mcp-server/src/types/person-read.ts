@@ -36,6 +36,9 @@ export interface TreeFact {
   date?: string;
   standard_date?: string;
   place?: string;
+  // Reaches callers through `shapePersons`' type predicate, which narrows
+  // without stripping properties — so the field shipped undeclared.
+  standard_place?: string;
   value?: string;
 }
 
