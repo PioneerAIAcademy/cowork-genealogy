@@ -14,8 +14,10 @@ import { buildMockContext } from '../contexts/__tests__/mockContext'
 import { FolderNotice } from '../App'
 
 // The banner is the half that was silently broken before #1317's fix — the
-// message reached state but never became pixels. These pin that it renders and
-// that dismiss clears it, so deleting <FolderNotice /> can't pass green again.
+// message reached state but never became pixels. These pin the component's own
+// behaviour: it renders its message and dismiss clears it. They render
+// <FolderNotice /> directly, so they can NOT catch App failing to mount it —
+// that half is pinned by App.test.tsx.
 describe('FolderNotice', () => {
   beforeEach(() => vi.clearAllMocks())
 

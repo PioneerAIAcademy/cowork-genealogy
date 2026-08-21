@@ -189,6 +189,11 @@ export function ResearchDataProvider({
       if (path) {
         setFolderPath(path)
         setError(null)
+        // The old folder's notice (e.g. "research.json is in a subfolder") does
+        // not apply to the newly chosen one. Unreachable today — there is no
+        // folder-switch control once a folder is open — so this is hardening for
+        // whenever one appears (#1722 review).
+        setNotice(null)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to select folder')
