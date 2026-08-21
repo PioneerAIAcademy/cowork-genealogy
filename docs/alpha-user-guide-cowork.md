@@ -315,6 +315,7 @@ Being straight with you, so you don't waste time:
 | It's slow | Real research is genuinely slow — it reads records one at a time. Minutes is normal. |
 | It asks who you want to research after you already said | It missed your first message. Repeat it with the details. |
 | The agent says a tool isn't available, or improvises a workaround for a missing tool | Your MCP extension is older than the plugin. Pull the latest code (`git pull` or GitHub Desktop's **Fetch origin** / **Pull origin**), rebuild the `.mcpb` (step 3), and reinstall it (step 4). |
+| The agent loses connection to its tools mid-session | Almost always a brief hiccup in Cowork's link between your computer and the tools — not something you did, and not the research being lost. Wait a few seconds and say "continue"; it usually reconnects on its own. If it keeps interrupting, fully quit and reopen Claude Desktop to re-establish the connection, then say "continue". Worth reporting if it happens often. |
 | Something looks wrong genealogically | **That's the point — submit feedback.** |
 
 Anything else, or anything alarming: send feedback and describe it. There is no
