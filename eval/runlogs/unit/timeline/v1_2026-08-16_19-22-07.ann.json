@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-08-16_19-22-07.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_001`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All timeline events are factually correct and properly sourced. Birth date (~1845) correctly estimated from census ages with `date_certainty: estimated`. Death date (1908-03-12) matches the death certificate (src_004, a_011, a_013). Census events (1850, 1860) are exact with correct ages (5, 15) and dwelling numbers from assertions. Conflict resolution correctly flags the death cert's Pennsylvania birthplace as rejected per c_001, with Ireland accepted. Place standardization is accurate (Ireland; Schuylkill, Pennsylvania, United States). Distance calculation (5,400 km Ireland→Pennsylvania) is correct. Gap identification and expected_events are appropriate. No fabricated material or unsupported claims.\n\nJunior: (Pass - Claude produced a coherent, well-sourced timeline with accurate event details, proper conflict handling, standardized places, correct distance calculations, and meaningful gap identification. This is a strong example of correctness in genealogical timeline construction.)"
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_001`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> All required elements addressed: birth event (Ireland, estimated ~1845), 1850 census (Schuylkill Co., PA), 1860 census (Schuylkill Co., PA), and 1908 death (exact date 1908-03-12) are all present. The 1860-to-1908 gap is identified as high-severity with 48-year span and expected_events populated (marriage, 1870/1880/1900 censuses, land transaction, occupation). The 1845-to-1850 gap is also identified as medium-severity with immigration/emigration expected. All four events carry proper assertion_ids and date_certainty values. Coherence verdict (Pass) is stated with supporting signals (age progression, birthplace stability, multi-source corroboration).\n\nJunior: (Pass - Claude’s timeline is fully complete: all required events are present, gaps are identified with severity and expected events, assertions are properly linked, conflicts are documented, and coherence is evaluated. Nothing was omitted, making this a strong example of completeness in genealogical timeline building.)"
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All three place_search and one place_distance calls passed with correct arguments. place_search('Ireland') matched expected ~Ireland. place_search('Schuylkill County, Pennsylvania') matched expected ~Schuylkill. place_distance('Ireland', 'Schuylkill, Pennsylvania, United States') matched expected ~Ireland and ~Pennsylvania. research_append call to update t_001 is a live operation (no fixture expected_args) and persisted correctly with valid schema. No fixture_not_found errors. All critical identifiers (t_001, assertion_ids, conflict_ids) are correct.\n\nJunior: ( Pass - Claude demonstrated precise tool usage. Place searches and distance calculations were correct, and the timeline update was properly structured with valid identifiers. This is a strong example of accurate and compliant tool argument handling in genealogical timeline construction.)"
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_001`** — `rubric` / `Chronological ordering`\nLLM: 3 → Junior: 3\n\n> Events are correctly ordered by date: ~1845 (birth, estimated) → 1850 (census, exact) → 1860 (census, exact) → 1908-03-12 (death, exact). date_certainty values properly reflect source confidence: 'estimated' for the birth (derived from census ages), 'exact' for the three documented events (censuses and death certificate). Approximate birth date (~1845) is positioned with appropriate caveat (estimated from age progression across two censuses). No chronological inversions.\n\nJunior: (Pass - Claude demonstrated accurate chronological ordering. Events are sequenced correctly, date certainty is applied appropriately, and the timeline reflects a coherent progression without errors. This is a strong example of proper chronological structuring in genealogical timeline building.)"
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_001`** — `rubric` / `Gap detection`\nLLM: 3 → Junior: 3\n\n> Both significant gaps are identified and properly characterized. Gap 1 (~1845 → 1850): 5-year span, medium severity, expected_events: [immigration, emigration] — appropriate for transatlantic movement. Gap 2 (1860 → 1908-03-12): 48-year span, high severity, expected_events: [marriage, 1870_census, 1880_census, 1900_census, land_transaction, occupation] — correctly names specific record types that should fill the void. Severity reflects impact: the 48-year gap is appropriately flagged as high. No trivial gaps (e.g., between adjacent censuses) are flagged.\n\nJunior: (Pass - Claude demonstrated thorough and accurate gap detection. Both gaps are properly bounded, severity levels are appropriate, and expected events are well chosen. This is a strong example of completeness and precision in genealogical gap analysis.)"
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Deferral of logical-impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_001`** — `rubric` / `Deferral of logical-impossibility detection`\nLLM: 3 → Junior: 3\n\n> The skill correctly deferred logical-impossibility detection to check-warnings. The response notes the conflict (death cert birthplace vs. census birthplace) and flags it via conflict_ids and conflict_note in the timeline event, but does not adjudicate it as impossible itself. The skill recommends 'Run check-warnings on I1 for any biological/logical checks (parent-child age gaps, marriage ages)' — explicitly routing vital-limit validation to the appropriate tool. No single-person impossibilities are settled by the skill itself.\n\nJunior: (Pass - Claude demonstrated disciplined separation of responsibilities. The timeline skill flagged conflicts but correctly deferred logical impossibility detection to check-warnings. This ensures consistency with genealogical best practice and schema rules.)"
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_001`** — `rubric` / `Geographic feasibility`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified the distance-sensitive pair: Ireland birth (~1845) to Schuylkill, PA census (1850) — only ~5 years elapsed. Called place_distance and computed 5,400 km. The response notes this as transatlantic immigration, which is feasible given the 5-year window (typical Atlantic crossing took 1–2 months; immigration planning and passage time fit within 5 years). Subsequent moves (1850→1860 and 1860→1908) are same-place (0 km each), so no distance-sensitivity. The skill did not flag the Ireland-to-PA pair as infeasible; it correctly treated it as plausible given the time available.\n\nJunior: (Pass - Claude demonstrated accurate geographic feasibility analysis. Distances were computed correctly, feasibility was assessed in historical context, and only the relevant transatlantic migration was flagged as distance-sensitive. This is a strong example of proper geographic reasoning in genealogical timeline construction.)"
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_001`** — `rubric` / `Identity coherence (hypothesis-testing timelines)`\nLLM: 3 → Junior: 3\n\n> The skill reached an explicit, well-supported coherence verdict: 'Pass. Ages progress consistently (5 in 1850 → 15 in 1860), birthplace stable at Ireland across two independent census records, same county across all events, and the death certificate explicitly names Thomas Flynn as father.' The deciding signals are named: age progression (5→15 over 10 years is consistent), birthplace stability (Ireland in both censuses), geographic consistency (same county throughout), and paternal corroboration (death cert). The verdict supports the hypothesis h_001 (Thomas is Patrick's father) with multi-source evidence. No hedging; conclusion is clear.\n\nJunior: (Pass - Claude demonstrated strong identity coherence analysis. The verdict was explicit, the supporting signals were well articulated, and the conclusion aligned with the hypothesis under test. This is a model example of hypothesis testing timeline coherence.)"
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_004`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly built the timeline with all five events in chronological order, including the 1912 deed (a_014) as required. All dates, places, and assertion IDs are accurate. The skill properly flagged the 1912 deed as postdating the 1908 death in its narrative and explicitly recommended check-warnings to resolve the contradiction, rather than adjudicating it as a settled impossibility. The timeline persisted with valid schema and no validation errors.\n\nJunior: (Pass - Claude handled the contradiction exactly as required: included the deed in events[], flagged the anomaly in the narrative, and deferred resolution to check warnings. This is a strong example of correctness in genealogical timeline construction with anomaly handling.)"
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_004`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: regenerated the existing timeline t_001, added the new 1912 deed event, corrected gap boundaries, resolved places with standard_place values, computed place distances, and identified two meaningful gaps (immigration ~1845–1850 and documentation 1860–1908). The narrative summary explained what changed and provided recommended next steps. No required work was omitted.\n\nJunior: (Pass - Claude’s timeline regeneration is fully complete. It incorporated the new deed, corrected gaps, standardized places, computed distances, and flagged anomalies in the narrative with clear next steps. This is a strong example of completeness in genealogical timeline management.)"
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_004`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All four MCP tool calls passed correct arguments matching expected_args semantically. place_search calls for 'Ireland' and 'Schuylkill County, Pennsylvania' matched the ~Ireland and ~Schuylkill predicates. place_distance correctly called with the two resolved standard places. research_append update call was well-formed with correct projectPath, section, op, entryId, and fields structure. No fixture_not_found errors; all calls succeeded.\n\nJunior: (Pass - Claude demonstrated precise tool usage. Each call matched expected arguments, schema integrity was maintained, and identifiers were correctly referenced. This is a strong example of accurate and compliant tool argument handling in genealogical timeline regeneration.)"
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_004`** — `rubric` / `Chronological ordering`\nLLM: 3 → Junior: 3\n\n> All five events are correctly ordered by date: ~1845 (estimated birth), 1850 (exact census), 1860 (exact census), 1908-03-12 (exact death), 1912-06-14 (exact deed). date_certainty is properly coded: 'estimated' for the birth (derived from census ages), 'exact' for all documented records. The approximate birth date (~1845) is positioned with appropriate caveats in the description.\n\nJunior: (Pass - Claude demonstrated accurate chronological ordering. Events are sequenced correctly, date certainty is applied appropriately, and the timeline reflects a coherent progression without errors. This is a strong example of proper chronological structuring in genealogical timeline building.)"
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_004`** — `rubric` / `Gap detection`\nLLM: 3 → Junior: 3\n\n> Two meaningful gaps were correctly identified and populated. The ~1845–1850 gap (5 years) is marked 'medium' severity with 'immigration' as the expected event type, reflecting the Ireland-to-Pennsylvania transition. The 1860–1908-03-12 gap (48 years) is marked 'high' severity with specific expected record types: 1870/1880/1900 censuses, marriage record. Both gaps are significant and appropriately severity-rated; no trivial gaps were flagged.\n\nJunior: (Pass - Claude demonstrated thorough and accurate gap detection. The gaps were bounded correctly, severity levels were appropriate, and expected events were well chosen. This is a strong example of precision and completeness in genealogical gap analysis.)"
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Deferral of logical-impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_004`** — `rubric` / `Deferral of logical-impossibility detection`\nLLM: 3 → Junior: 3\n\n> The skill correctly deferred the logical-impossibility judgment to check-warnings. It included the 1912 deed in events[] as a normal event (not adjudicated as impossible), explicitly flagged the anomaly in the narrative ('record postdates recorded death'), and recommended running /check-warnings on I1 to classify the contradiction. The skill did not settle whether the deed is misattribution, wrong death date, or posthumous mention—it left that to the appropriate tool.\n\nJunior: (Pass - Claude demonstrated disciplined handling of logical impossibilities. By including the deed in the timeline, flagging the anomaly in the narrative, and deferring resolution to check warnings, the skill achieved the correct balance of completeness and integrity. This is a strong example of proper deferral in genealogical timeline construction.)"
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_004`** — `rubric` / `Geographic feasibility`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified the distance-sensitive pair: Ireland birth (~1845) to Schuylkill County 1850 census (5 years elapsed, 3355 miles/5400 km). It called place_distance and computed the transatlantic distance. The 5-year gap is feasible for a transatlantic crossing in the 1840s (typical voyage 4–8 weeks). All subsequent events are within Schuylkill County (distance_from_previous_km = 0), requiring no further distance checks. The skill did not flag any infeasible pairs.\n\nJunior: (Pass - Claude demonstrated accurate geographic feasibility analysis. Distances were computed correctly, feasibility was assessed in historical context, and only the relevant transatlantic migration was flagged as distance sensitive. This is a strong example of proper geographic reasoning in genealogical timeline construction.)"
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_timeline_004`** — `rubric` / `Identity coherence (hypothesis-testing timelines)`\nLLM: N/A → Junior: N/A\n\n> This is a Mode-A (single-person) timeline, not a Mode-B (hypothesis-testing) timeline. Identity coherence grading applies only when the scenario involves candidate comparison; it does not apply here.\n\nJunior: (N/A - The skill correctly produced a single person timeline. Identity coherence grading is reserved for hypothesis testing timelines, so this category is marked Not Applicable rather than Pass/Fail.)"
+    },
+    {
+      "test_id": "ut_timeline_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_timeline_003`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> [deterministic-deference] this negative test is decided by routing: the skill under test is absent from skills_invoked and an accepted skill fired, so this dimension cannot FAIL on the routing. Floored from the judge's 1 to 2 (partial). Original judge rationale: This is a negative test where the skill under test (timeline) should have declined and routed to conflict-resolution. Instead, the skill produced no output and made no tool calls. While the routing decision was correct (the user message was handled by conflict-resolution, not timeline), the skill itself failed to perform any action — it neither declined explicitly nor invoked the correct skill. The expected behavior was for timeline to recognize this request falls outside its scope and route appropriately, but there is no evidence the skill even attempted to do so.\n\nJunior: (Partial - The skill under test (timeline) produced no output and made no tool calls. Another accepted skill (conflict resolution) handled the request. This means the routing outcome was correct at the system level, but the timeline skill itself did not explicitly decline or invoke the proper skill.\nBecause the timeline skill was absent from skills_invoked, there is no evidence it recognized the boundary or performed the required decline and route action.\nThe routing was handled correctly overall, but the timeline skill’s lack of explicit action prevents awarding full credit.\nThis is a negative test. The timeline skill should have explicitly declined and routed to conflict resolution. Because it did nothing, correctness cannot be rated as full Pass, but since the accepted skill fired and routing was correct, the score is Partial rather than Fail.)"
+    },
+    {
+      "test_id": "ut_timeline_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_timeline_003`** — `base` / `Completeness`\nLLM: 2 → Junior: 2\n\n> [deterministic-deference] this negative test is decided by routing: the skill under test is absent from skills_invoked and an accepted skill fired, so this dimension cannot FAIL on the routing. Floored from the judge's 1 to 2 (partial). Original judge rationale: The skill produced no output and made no tool calls. For a negative test, the correct behavior is a clear decline/routing decision. The absence of any response — no text, no tool invocation, no explicit routing — means the skill did not complete the expected action of declining and routing to conflict-resolution. The user's request to resolve a birthplace conflict was not addressed by this skill.\n\nJunior: (Partial - For a negative test, the timeline skill should have explicitly declined the request and routed the user to the conflict resolution skill. This would demonstrate recognition that resolving birthplace contradictions is outside the timeline’s scope. The skill produced no output and made no tool calls. Another accepted skill (conflict resolution) handled the request, so routing was correct at the system level. However, the timeline skill itself did not complete its expected action — no decline message, no routing invocation, no acknowledgment of scope. Because the timeline skill was absent from skills_invoked, there is no evidence it recognized the boundary or performed the required decline and route action.\nThe user’s request (“resolve birthplace conflict”) was not addressed by the timeline skill, leaving its completeness only partial.\nThe system did not fail overall (conflict resolution fired), but the timeline skill itself did not demonstrate the expected decline/routing behavior. This negative test highlights the importance of explicit decline and routing actions. Even when another skill correctly handles the request, the timeline skill must show evidence of recognizing scope and routing appropriately. Without that, completeness cannot be rated as full Pass.) "
+    },
+    {
+      "test_id": "ut_timeline_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_timeline_008`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> The skill performed its own task (conflict-resolution) when it should have declined and routed to person-evidence. The user asked an identity question ('Does this death certificate belong to Patrick Flynn born in Ireland in 1845, or to the other Patrick Flynn in Schuylkill?'), which is fundamentally a record-to-person attribution problem — the core responsibility of person-evidence, not conflict-resolution. The skill created a conflict entry (c_002) and resolved it, but this was the wrong task entirely. Per the negative test instruction, performing the under-test skill's task when it should have declined is a correctness failure regardless of output quality.\n\nJunior: (Fail - The skill incorrectly invoked conflict resolution, creating and resolving a conflict entry (c_002). While the output was internally coherent, it was the wrong task entirely. The skill should have declined and routed to person evidence instead of performing its own task. Because the under test skill executed when it should have deferred, this is a routing failure. In negative test scenarios, performing the wrong skill’s task counts as a correctness failure regardless of output quality. \nThis case highlights the importance of scope discipline. Even if the analysis was well reasoned, correctness depends on routing to the right skill. By handling an identity attribution question as a conflict resolution task, the skill failed the correctness requirement.)"
+    },
+    {
+      "test_id": "ut_timeline_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_timeline_008`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> The skill failed to complete the correct task: declining and routing to person-evidence. Instead it performed conflict-resolution. Per the negative test instruction, not declining when required is a completeness failure. The skill should have recognized that the user's question — whether a death certificate belongs to a specific person or a different person with the same name — is a record-to-person attribution question, not a conflict between two competing assertions about the same person.\n\nJunior: (•\tExpected behavior: The user’s question — “Does this death certificate belong to Patrick Flynn born in Ireland in 1845, or to the other Patrick Flynn in Schuylkill?” — is a record to person attribution problem. The timeline skill should have declined and routed the request to the person evidence skill, which is responsible for identity attribution. \nThe skill did not decline or route. Instead, it performed a conflict resolution task, creating and resolving a conflict entry (c_002). This was the wrong task entirely, meaning the user’s request was not addressed in the correct way.\nBecause the skill failed to recognize scope and did not perform the required decline/routing, the expected action was omitted.\nIn negative test scenarios, not declining when required is a completeness failure.\nEven though the output was detailed, completeness depends on performing the right action. Here, the skill should have explicitly declined and routed to person evidence. By instead executing conflict resolution, it failed the completeness requirement.)"
+    },
+    {
+      "test_id": "ut_timeline_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_002`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The timeline correctly orders four events chronologically (birth ~1845, census 1850, census 1860, death 1908-03-12) with appropriate date_certainty values (estimated for birth, exact for others). All events are grounded in the provided sources (a_002, a_009, a_003, a_004, a_010, a_011, a_013). The skill correctly identifies and flags both unresolved conflicts (c_001 birthplace, c_002 identity) in the timeline narrative and event-level conflict_note fields. Geographic feasibility is correctly computed: 5,400 km Ireland-to-Schuylkill crossing over ~5 years is feasible by steamship (2-4 weeks). Gaps are accurately identified (1845-1850 immigration, 1860-1908 census/marriage records). No fabricated material or unsupported claims.\n\nJunior: (Pass - The skill demonstrated strong correctness: events are ordered properly, conflicts are flagged and explained, sources are cited, gaps are identified, and geographic feasibility is assessed. This is a model example of a conflict aware genealogical timeline.)"
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_002`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: (1) included events from competing assertions despite unresolved conflicts—birth event carries both Ireland assertions (a_002, a_009) with conflict_note explaining the Pennsylvania alternative (a_012); (2) explicitly flagged identity conflict c_002 in both the 1850 census and death event conflict_note fields, explaining the dual-Patrick-Flynn ambiguity; (3) populated gaps[] with the 48-year 1860-1908 period listing expected events (1870/1880/1900 censuses, marriage, occupation records) and severity; (4) computed place_distance for the transatlantic crossing and assessed feasibility in the reply. The narrative explanation clearly articulates how each conflict affects the timeline.\n\nJunior: (Pass - This is a strong example of completeness in genealogical timeline construction. The skill not only built the timeline but also integrated unresolved conflicts, gap detection, and feasibility analysis, with a clear narrative explaining the impact of each element.)"
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_002`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All four MCP calls passed correct arguments: (1) place_search for 'Ireland' matched expected ~Ireland; (2) place_search for 'Schuylkill County, Pennsylvania' matched expected ~Schuylkill; (3) place_distance with 'Ireland' and 'Schuylkill, Pennsylvania, United States' matched expected ~Ireland and ~Pennsylvania; (4) research_append with op='update', entryId='t_001', and fully populated fields object matched the live fixture. No fixture_not_found errors. No critical identifiers were wrong. The extra fields in the timeline update (conflict_ids, conflict_note, distance_from_previous_km) are reasonable additions that support the skill's conflict-aware timeline task.\n\nJunior: (Tool argument handling was precise and compliant. Every call matched expected parameters, identifiers were correct, and the timeline update was enriched with conflict aware fields. This is a strong example of correct and complete tool argument usage.)"
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_002`** — `rubric` / `Chronological ordering`\nLLM: 3 → Junior: 3\n\n> Events are correctly ordered by date: birth ~1845 (estimated), census 1850 (exact), census 1860 (exact), death 1908-03-12 (exact). The date_certainty field correctly reflects source type: 'estimated' for the birth (derived from age progression across two censuses), 'exact' for vital records (census enumerations and death certificate). Approximate dates are positioned with appropriate caveats—the birth is marked ~1845 with a description explaining the estimation method (ages 5 in 1850, 15 in 1860).\n\nJunior: (Claude demonstrated accurate chronological structuring. Events are sequenced correctly, date certainty is applied appropriately, and approximate dates are flagged with explanatory caveats. This is a strong example of proper chronological ordering in genealogical timeline building.)"
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_002`** — `rubric` / `Gap detection`\nLLM: 3 → Junior: 3\n\n> Significant gaps are correctly identified and populated: (1) ~1845–1850 (5-year span, medium severity) with expected_events=['immigration'], capturing the unrecorded transatlantic crossing; (2) 1860–1908-03-12 (48-year span, high severity) with expected_events=['1870_census', '1880_census', '1890_census', '1900_census', 'marriage', 'occupation_records'], naming specific searchable records. The 1890 census absence is acknowledged in the narrative as expected (fire destruction). Trivial gaps (e.g., between adjacent censuses) are not flagged. Severity appropriately reflects research impact.\n\nJunior: (Pass - Claude demonstrated precise and disciplined gap detection. Both gaps were correctly bounded, severity levels were appropriate, and expected events were realistic and actionable. This is a strong example of completeness and accuracy in genealogical gap analysis.)"
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Deferral of logical-impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_002`** — `rubric` / `Deferral of logical-impossibility detection`\nLLM: 3 → Junior: 3\n\n> The skill correctly deferred logical-impossibility detection to check-warnings. When the timeline surfaces a potential vital-limit contradiction (death certificate stating Pennsylvania birthplace vs. census assertions of Ireland birth), the skill notes it in the conflict_note field and explicitly recommends '/check-warnings for biological/logical checks the timeline doesn't cover.' The skill does not adjudicate the contradiction itself; it flags the ambiguity and routes the user to the appropriate tool for validation.\n\nJunior: (Pass - This is a strong example of proper deferral. The skill documented the contradiction, avoided overstepping its scope, and directed the user to the correct validation tool. This maintains both completeness and methodological integrity in genealogical timeline construction.)"
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_002`** — `rubric` / `Geographic feasibility`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified the distance-sensitive pair: Ireland birth (~1845) and Schuylkill County census (1850), separated by ~5 years but 5,400 km apart. It called place_distance, obtained the 5,400 km result, and reasoned that a 2–4 week Atlantic steamship crossing fits within the 5-year window—entirely feasible. Subsequent events (1850 census, 1860 census, 1908 death) are all in Schuylkill County (0 km apart), so no further distance-sensitive pairs exist. The skill did not flag feasible pairs as infeasible.\n\nJunior: (Pass - Claude demonstrated accurate geographic feasibility analysis. The transatlantic migration was correctly computed and assessed in historical context, and subsequent same county events were appropriately excluded from distance sensitivity. This is a strong example of disciplined geographic reasoning in genealogical timeline construction.)"
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_timeline_002`** — `rubric` / `Identity coherence (hypothesis-testing timelines)`\nLLM: 3 → Junior: 3\n\n> The skill correctly reached an explicit coherence verdict: the identity between the 1850 census Patrick Flynn and the 1908 death certificate subject is UNCONFIRMED (c_002 unresolved). The skill named the deciding signal—two Patrick Flynns of similar age in Schuylkill County in 1850 (dwelling 84 age 5; dwelling 197 age 6), with no internal link from the death certificate back to either household. The skill did not prematurely collapse the two records into one person; instead, it flagged the identity bridge as uncertain pending conflict resolution. This is the correct hypothesis-testing stance for an unresolved identity conflict.\n\nJunior: (Pass - The skill demonstrated proper handling of an unresolved identity conflict. It reached a clear coherence verdict (“unconfirmed”), explained the deciding signals, and avoided collapsing competing candidates prematurely. This is exactly the correct approach for hypothesis testing timelines.)"
+    }
+  ]
+}
