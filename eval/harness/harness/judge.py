@@ -43,11 +43,12 @@ JUDGE_PRICING = {
     # Per-million-token prices as of January 2026 list price. Update here
     # when Anthropic publishes new rates; the judge will pick them up.
     "claude-haiku-4-5-20251001": {"input": 1.0, "output": 5.0, "cached_input": 0.10},
-    # Sonnet 4.6 — included so a harness invoked with --judge-model
-    # claude-sonnet-4-6 doesn't silently report $0 cost.
+    # Sonnet 4.6 and Opus 4.7 are listed even though nothing selects them today:
+    # the judge model is a module constant with no CLI override, so these entries
+    # exist so that changing DEFAULT_JUDGE_MODEL cannot silently start reporting
+    # $0. An unpriced model falls back to _FALLBACK_PRICING and warns.
     "claude-sonnet-4-6": {"input": 3.0, "output": 15.0, "cached_input": 0.30},
-    # Opus 4.7 — same rationale; cost is much higher but the table prevents
-    # silent under-reporting.
+    # Opus 4.7 — cost is much higher, so the table matters more, not less.
     "claude-opus-4-7": {"input": 15.0, "output": 75.0, "cached_input": 1.50},
 }
 

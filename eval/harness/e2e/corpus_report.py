@@ -67,6 +67,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 from e2e.runlog_selection import (
+    REPO_ROOT,
     add_since_arg,
     all_result_jsons,
     describe_window,
@@ -74,6 +75,20 @@ from e2e.runlog_selection import (
     result_jsons_for,
 )
 from e2e.result import axes_from_runlog
+from e2e import pricing
+
+# `check_guardrail_compliance` lives in `harness.skill_invocation` (SDK-free) so
+# `--recompute` can import it without pulling `claude_agent_sdk` into this
+# module's pure-analysis posture — importing it from `e2e.orchestrator` (which
+# re-exports it) would drag the SDK in. See issue #1484.
+from harness.skill_invocation import check_guardrail_compliance
+
+# Where a run's committed seed tree lives, for `--recompute`. A run whose fixture
+# has no readable `starting-tree.gedcomx.json` is named in a skip list and left
+# out of both counts (mirrors `guardrail_shadow_report.replay_provenance`): with
+# no baseline every person reads as new and the recompute would manufacture
+# exactly the violations it measures.
+E2E_FIXTURES = REPO_ROOT / "eval" / "tests" / "e2e"
 
 VERDICT_ORDER = ("pass", "partial", "fail", "ungraded", "skipped")
 
@@ -243,7 +258,19 @@ def tally(paths: list[Path]) -> Tally:
             verdict, compliance_axis, outcome = axes_from_runlog(data)
             violations = violations_of(data)
             hits = bash_protected_hits(data, path)
-        except (OSError, json.JSONDecodeError, TypeError, AttributeError) as e:
+        except (
+            OSError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+            TypeError,
+            AttributeError,
+        ) as e:
+            # `UnicodeDecodeError` is a `ValueError`, not a `JSONDecodeError`, and
+            # `read_text` decodes before `json` sees the bytes — so without it one
+            # file truncated mid-character aborts the whole sweep with a traceback
+            # instead of being named and skipped. Same hole found in
+            # `judge_report.py`, which cites this function as its precedent (#1485
+            # review); fixed in both so the precedent is one worth citing.
             problems.append(f"{path}: {e}")
             continue
         recall[verdict] += 1
@@ -255,6 +282,180 @@ def tally(paths: list[Path]) -> Tally:
         for violation in violations:
             arms[classify(violation)] += 1
     return Tally(recall, compliance, gate, problems, arms, per_fixture, bash)
+
+
+def _load_json(path: Path) -> dict | None:
+    """Parse one committed file, or None on any read/parse failure.
+
+    A None is a signal the caller records in a skip/problems list — never a
+    silent zero. Mirrors the exception set `tally` catches.
+    """
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+class RecomputeTally(NamedTuple):
+    """What `--recompute` derives by re-running the detectors over committed data.
+
+    `arms`/`per_fixture` mirror `Tally`'s; `scanned` is the number of runs the
+    detectors actually ran on; `skipped` names every run left out of THIS
+    recompute (and why), so a shrunk denominator can never read as a clean
+    corpus. (A skipped run still appears in the report's stored column, which
+    spans all paths to stay byte-identical with the default report — the skip
+    only removes it from the recomputed side.)
+
+    `regressed` names every run whose stored count EXCEEDS its recomputed one: a
+    violation the run recorded that today's detector clears (a detector
+    correction, not a corpus change). Surfaced for the same reason skips are: a
+    `stored > recomputed` case otherwise vanishes into the aggregate and the
+    report reads as if the recompute could only ever find more.
+    """
+
+    arms: Counter
+    per_fixture: Counter
+    scanned: int
+    skipped: list[str]
+    regressed: list[str]
+
+
+def recompute_tally(paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES) -> RecomputeTally:
+    """Derive violations by calling `check_guardrail_compliance` over each run's
+    committed `tool_calls` + `final-research`/`final-tree` sidecars + the
+    fixture's committed seed tree — instead of reading the stored field, which is
+    absent on every run written before the detector (they read `not_checked` and
+    contribute zero). Issue #1484 (a).
+
+    Skip discipline follows `replay_provenance`: a run whose seed tree is
+    unreadable — or which is missing a required sidecar — is NAMED in `skipped`
+    and excluded from the recomputed count, never counted as zero (it still shows
+    in the stored column — see `RecomputeTally`). `william-ferber-ancestry`
+    has a committed run log but no fixture directory, so it is the one expected
+    skip on today's corpus (recomputing it with `starting_tree=None` would
+    manufacture spurious `same_person` violations).
+
+    Deterministic against the stored data: this runs the SAME detector over the
+    SAME committed `tool_calls` the harness recorded. The ledger truncates and
+    summarises some writer entries (issue #1484 comment 2026-08-16), so a small
+    population of assigned ids was never written down; the recomputed number
+    inherits that ceiling rather than introducing a discrepancy — it is a
+    function of an imperfect ledger, documented, not a bug here.
+    """
+    arms: Counter = Counter()
+    per_fixture: Counter = Counter()
+    skipped: list[str] = []
+    regressed: list[str] = []
+    scanned = 0
+    for path in paths:
+        slug = path.parent.name
+        seed = _load_json(fixtures_root / slug / "starting-tree.gedcomx.json")
+        if seed is None:
+            skipped.append(f"{slug}/{path.name}: no readable starting-tree.gedcomx.json")
+            continue
+        data = _load_json(path)
+        if data is None:
+            skipped.append(f"{slug}/{path.name}: unreadable run log")
+            continue
+        final_research = _load_json(path.with_name(path.stem + ".final-research.json"))
+        final_tree = _load_json(path.with_name(path.stem + ".final-tree.gedcomx.json"))
+        if final_research is None or final_tree is None:
+            skipped.append(f"{slug}/{path.name}: missing final-research/final-tree sidecar")
+            continue
+        tool_calls = data.get("tool_calls") or []
+        scanned += 1
+        recomputed_here = 0
+        for violation in check_guardrail_compliance(
+            tool_calls, final_research, final_tree, starting_tree=seed
+        ):
+            arms[classify(violation)] += 1
+            per_fixture[slug] += 1
+            recomputed_here += 1
+        stored_here = len(violations_of(data))
+        if stored_here > recomputed_here:
+            regressed.append(
+                f"{slug}/{path.name}  stored {stored_here} -> recomputed {recomputed_here}"
+            )
+    return RecomputeTally(arms, per_fixture, scanned, skipped, regressed)
+
+
+class Spend(NamedTuple):
+    """Abort-path cost, never blended into one total (issue #1484 b).
+
+    `recorded` sums the authoritative `total_cost_usd`; `estimated` sums the
+    flat-rate `pricing.estimate_cost_usd` over runs that carry a token block but
+    no recorded cost; `neither` counts runs with neither (the pre-fallback runs
+    with no token counts, unrecoverable).
+    """
+
+    recorded: float
+    recorded_n: int
+    estimated: float
+    estimated_n: int
+    neither_n: int
+
+
+def _median(values: list[float]) -> float | None:
+    if not values:
+        return None
+    s = sorted(values)
+    mid = len(s) // 2
+    return s[mid] if len(s) % 2 else (s[mid - 1] + s[mid]) / 2
+
+
+def _usage_block(data: dict) -> dict:
+    usage = data.get("usage")
+    return usage if isinstance(usage, dict) else {}
+
+
+def spend_tally(paths: list[Path]) -> Spend:
+    """Recorded / estimated / neither — three numbers, never blended.
+
+    Report-time estimation is what recovers the committed null-cost runs: a
+    write-time field on `_fallback_usage` alone would leave every already-committed
+    aborted run at zero. Only runs carrying a token block are recoverable; the
+    rest fall in `neither` rather than being imputed.
+    """
+    recorded = estimated = 0.0
+    recorded_n = estimated_n = neither_n = 0
+    for path in paths:
+        data = _load_json(path)
+        if data is None:
+            continue  # already surfaced by `tally`'s problems list
+        usage = _usage_block(data)
+        cost = usage.get("total_cost_usd")
+        if isinstance(cost, (int, float)) and not isinstance(cost, bool):
+            recorded += cost
+            recorded_n += 1
+            continue
+        est = pricing.estimate_cost_usd(usage.get("usage"))
+        if est is not None:
+            estimated += est
+            estimated_n += 1
+        else:
+            neither_n += 1
+    return Spend(recorded, recorded_n, estimated, estimated_n, neither_n)
+
+
+def _calibration_ratios(paths: list[Path]) -> list[float]:
+    """estimated/recorded for every run carrying BOTH a recorded cost and a token
+    block — the free, offline accuracy measurement (issue #1484 3a). Single
+    source for both the inline accuracy note and `--calibrate-cost`.
+    """
+    ratios: list[float] = []
+    for path in paths:
+        data = _load_json(path)
+        if data is None:
+            continue
+        usage = _usage_block(data)
+        cost = usage.get("total_cost_usd")
+        if not isinstance(cost, (int, float)) or isinstance(cost, bool) or cost <= 0:
+            continue
+        est = pricing.estimate_cost_usd(usage.get("usage"))
+        if est is not None:
+            ratios.append(est / cost)
+    return ratios
 
 
 def _counts(c: Counter, order: tuple[str, ...]) -> str:
@@ -454,6 +655,85 @@ def format_report(
     return "\n".join(lines)
 
 
+def format_spend(spend: Spend, ratios: list[float]) -> str:
+    """The three-number spend line (issue #1484 step 4), with the estimate's
+    measured accuracy beside it (3a). Recorded, estimated and unrecoverable are
+    never blended into one total: abort-path cost is estimated, and folding it
+    into recorded would launder an approximation into the authoritative figure.
+    """
+    median = _median(ratios)
+    acc = (
+        f" (~{median:.2f}x recorded, median over {len(ratios)} calibrating run(s))"
+        if median is not None
+        else ""
+    )
+    return "\n".join(
+        [
+            "  spend:",
+            f"    recorded    ${spend.recorded:,.2f}  over {spend.recorded_n} run(s) carrying total_cost_usd",
+            f"    estimated   ${spend.estimated:,.2f}  over {spend.estimated_n} null-cost run(s) with token counts{acc}",
+            f"    unrecovered {spend.neither_n} run(s) carry neither a cost nor token counts",
+        ]
+    )
+
+
+def format_recompute(stored_arms: Counter, rt: RecomputeTally) -> str:
+    """Stored vs recomputed, per arm, labelled — then every regressed run and
+    every named skip.
+
+    The two columns are not the same measurement: `stored` is what each run
+    recorded at the time (pre-detector runs recorded none), `recomputed` is
+    today's detectors over the same committed data. Recomputed is NOT guaranteed
+    to be >= stored: today's detector can clear a violation a contemporaneous
+    checker recorded, which the regressed list below names.
+    """
+    lines = [
+        "",
+        "  --recompute: violations re-derived from tool_calls + committed sidecars.",
+        "               stored = what each run recorded at the time (pre-detector runs record none); ",
+        "               recomputed = today's detectors over the same committed data. Not the same ",
+        "               measurement: recomputed is not guaranteed >= stored.",
+        f"    {'arm':<34} {'stored':>7} {'recomputed':>11}",
+    ]
+    # Tiebreak alphabetically so equal-count arms order deterministically across
+    # processes (set iteration is hash-seed-dependent); matches `_counts`.
+    for arm in sorted(set(stored_arms) | set(rt.arms), key=lambda a: (-rt.arms.get(a, 0), a)):
+        lines.append(f"    {arm:<34} {stored_arms.get(arm, 0):>7} {rt.arms.get(arm, 0):>11}")
+    lines.append(
+        f"    {'TOTAL':<34} {sum(stored_arms.values()):>7} {sum(rt.arms.values()):>11}"
+        f"   ({rt.scanned} run(s) scanned)"
+    )
+    if rt.regressed:
+        lines.append(
+            f"    {len(rt.regressed)} run(s) where TODAY's detector clears a violation the run recorded"
+        )
+        lines.append("      (a detector correction, not a corpus change):")
+        lines.extend(f"      {r}" for r in rt.regressed)
+    if rt.skipped:
+        lines.append(
+            f"    {len(rt.skipped)} skip(s) — excluded from the recomputed count, never counted as zero:"
+        )
+        lines.extend(f"      {s}" for s in rt.skipped)
+    return "\n".join(lines)
+
+
+def format_calibration(ratios: list[float]) -> str:
+    """`--calibrate-cost`: median + range of estimated/recorded, offline and free
+    over the runs carrying both (issue #1484 3a). Anything materially worse than
+    ~0.90x median means the price table is wrong, not the corpus — re-measure,
+    do not reword.
+    """
+    if not ratios:
+        return "  calibrate-cost: no run carries both a recorded cost and token counts."
+    return "\n".join(
+        [
+            "  calibrate-cost (estimated / recorded, flat sonnet table w/ 1h cache-write):",
+            f"    median {_median(ratios):.2f}x   range {min(ratios):.2f}x - {max(ratios):.2f}x"
+            f"   over {len(ratios)} run(s)",
+        ]
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description=(
@@ -462,6 +742,19 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     ap.add_argument("--test", help="restrict to one fixture slug")
+    ap.add_argument(
+        "--recompute",
+        action="store_true",
+        help="also re-derive violations from tool_calls + committed sidecars. "
+        "Prints stored vs recomputed — not the same measurement, and neither "
+        "bounds the other; the default stays the stored path.",
+    )
+    ap.add_argument(
+        "--calibrate-cost",
+        action="store_true",
+        help="report median + range of estimated/recorded cost over runs carrying "
+        "both — the offline accuracy check for the flat price table.",
+    )
     # `--since` is the shared one (`harness/since_window.py`), not a second
     # spelling of it: `type=parse_since` rejects a malformed value at parse
     # time, and `filter_since` KEEPS a run whose filename carries no parseable
@@ -507,6 +800,16 @@ def main(argv: list[str] | None = None) -> int:
             skipped=skipped,
         )
     )
+    # Everything above this line is byte-identical to the pre-#1484 report — the
+    # spend line is the only always-added output (issue #1484 step 4). The
+    # accuracy note beside the estimate reuses the same ratios `--calibrate-cost`
+    # would print (3a).
+    ratios = _calibration_ratios(paths)
+    print(format_spend(spend_tally(paths), ratios))
+    if args.recompute:
+        print(format_recompute(counts.arms, recompute_tally(paths)))
+    if args.calibrate_cost:
+        print(format_calibration(ratios))
     # Nothing readable is a failure, not an empty success: a caller keying on the
     # exit code must be able to tell "clean run, nothing to say" from "the whole
     # corpus was unreadable", and both print a report.

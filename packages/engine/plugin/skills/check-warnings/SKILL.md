@@ -1,14 +1,15 @@
 ---
 name: check-warnings
-description: Genealogical data integrity guardrail — catches logical
-  impossibilities in a person's data (impossible lifespans, events after death,
-  child born after parent died, burial before death) and retrieves
-  FamilySearch's live quality score. Invoke whenever the user wants to check for
-  warnings, spot data problems, verify consistency before closing research, or
-  get a sanity check on any person's dates and family relationships. Route
-  source conflicts (two records disagreeing about the same fact) to
-  conflict-resolution; route schema validation (malformed data, bad ids, broken
-  references) to validate-schema.
+description: Genealogical data integrity guardrail — catches contradictions
+  (data that cannot be true as recorded, such as death before birth or events
+  after death) and implausible patterns (possible but unlikely enough to need
+  corroboration, such as a 13-year-old father or a 120-year lifespan) in a
+  person's data, and retrieves FamilySearch's live quality score. Invoke
+  whenever the user wants to check for warnings, spot data problems, verify
+  consistency before closing research, or get a sanity check on any person's
+  dates and family relationships. Route source conflicts (two records
+  disagreeing about the same fact) to conflict-resolution; route schema
+  validation (malformed data, bad ids, broken references) to validate-schema.
 allowed-tools:
   - person_warnings
   - person_quality
@@ -20,19 +21,19 @@ allowed-tools:
 
 This skill runs two complementary checks and reports both, in separate sections:
 
-- **`person_warnings`** (offline, deterministic) -- logical *impossibilities* in your **local** `tree.gedcomx.json`: death before birth, event after death, impossible ages. Same person, same warnings, every time.
+- **`person_warnings`** (offline, deterministic) -- logical *contradictions* and *implausible patterns* in your **local** `tree.gedcomx.json`: death before birth, event after death, impossible ages, suspiciously young parents. Same person, same warnings, every time.
 - **`person_quality`** (online, FamilySearch) -- FamilySearch's own *data-quality score* for the live profile: missing dates/places, untagged sources, consistency and coherence issues, returned as ready-made English sentences.
 
-They mean different things and must not be merged into one list: warnings are impossibilities in local data; quality issues are FamilySearch's assessment of the live tree profile (suggestions to improve it, not errors). Your job is to decide *whom* to check, run both, present the results clearly, and interpret them.
+They mean different things and must not be merged into one list: warnings are contradictions and implausible patterns in local data; quality issues are FamilySearch's assessment of the live tree profile (suggestions to improve it, not errors). Your job is to decide *whom* to check, run both, present the results clearly, and interpret them.
 
-**Warnings ≠ conflicts:** Warnings are logical impossibilities in a single person's data. Conflicts are disagreements between two or more sources about the same fact. Use `conflict-resolution` for the latter.
+**Warnings ≠ conflicts:** Warnings are contradictions or implausible patterns in a single person's data. Conflicts are disagreements between two or more sources about the same fact. Use `conflict-resolution` for the latter.
 
 **Phrasing rule (apply everywhere):** Phrase all next-step recommendations as research actions the user can take, not as instructions to run a named skill. Internal names like `timeline`, `person-evidence`, and `conflict-resolution` are routing references only -- do not put them in user-facing text.
 
 ## Assumption framework
 
-- **Fundamental** (physical laws) → tool emits `severity: "error"`
-- **Valid** (biological/social norms) → tool emits `severity: "warning"`
+- **Fundamental** (physical laws) → tool emits `severity: "contradiction"` — data that cannot be true as recorded; investigate immediately
+- **Valid** (biological/social norms) → tool emits `severity: "implausible"` — possible but unlikely enough to need corroboration
 - **Unsound** (unproven premises) → tool does not fire
 
 Full tag catalog: `references/warning-checks.md`.
@@ -73,18 +74,18 @@ The tool returns `{ personId, segment, overallScore, issueCount, categories: [{ 
 
 For each warning, report:
 
-- Severity icon: `severity: "error"` → `[!] Critical`; `severity: "warning"` → `[!] Note`
+- Severity icon: `severity: "contradiction"` → `[!] Contradiction`; `severity: "implausible"` → `[!] Implausible`
 - The `issueType` tag (for traceability)
 - The tool's `message` (already user-friendly)
 - The assumption category violated (Fundamental / Valid)
 - **The facts involved — only when the tool named them.** If the warning includes a `factIds` field, name those facts. If it doesn't, **do not read `tree.gedcomx.json` to hunt for them** — report the `message` as-is and don't invent fact ids, dates, or sources the tool didn't return. (Most warnings are about a single constrained event — Birth, Death, Burial — so the `message` alone already makes clear which fact is meant.)
 - A concrete next step, phrased from the tool's `message` (e.g. "verify the recorded death date against the original death record"). Don't cite a specific fact/source id unless the tool provided it.
 
-**Before listing individual warnings, count.** If 2 or more `severity: "error"` warnings fire on the same person, open the report with a cluster verdict: "2 errors plus N warnings on this one person is a strong signal that records from two different individuals have been merged into one profile." Then recommend: "I'd recommend rebuilding a chronological timeline of every recorded event for this person and going through each one to identify where one person's records end and another's begin -- once we find the split point, we can reassign the records that belong to the other individual." List individual warnings *under* that verdict, not above it.
+**Before listing individual warnings, count.** If 2 or more `severity: "contradiction"` warnings fire on the same person, open the report with a cluster verdict: "2 contradictions plus N implausible warnings on this one person is a strong signal that records from two different individuals have been merged into one profile." Then recommend: "I'd recommend rebuilding a chronological timeline of every recorded event for this person and going through each one to identify where one person's records end and another's begin -- once we find the split point, we can reassign the records that belong to the other individual." List individual warnings *under* that verdict, not above it.
 
-**Special case -- `missingFactsAndRelatives`:** Report with Note severity and add: "Note: this person has limited data, so most warning checks need dates and relatives to fire. Adding more research may surface additional issues currently hidden."
+**Special case -- `missingFactsAndRelatives`:** Report with Implausible severity and add: "Note: this person has limited data, so most warning checks need dates and relatives to fire. Adding more research may surface additional issues currently hidden."
 
-**Special case -- `hasEventAfterDeath1`:** This tag has three legitimate causes. Do NOT default to identity confusion just because the severity is `error`. The corrective action depends on the source type, which this skill cannot determine -- the source must be inspected first.
+**Special case -- `hasEventAfterDeath1`:** This tag has three legitimate causes. Do NOT default to identity confusion just because the severity is `contradiction`. The corrective action depends on the source type, which this skill cannot determine -- the source must be inspected first.
 
 The three causes, with cues and recommended actions:
 
@@ -99,7 +100,7 @@ When the cause is ambiguous (the most common case), report the warning, list the
 ```
 WARNINGS FOR: Patrick Flynn (I1)
 
-[!]  Critical -- Event after death  [hasEventAfterDeath1]
+[!]  Contradiction -- Event after death  [hasEventAfterDeath1]
     [Fundamental: people cannot act after their death -- but a
     posthumous mention can be misattached to their profile.]
     An event is dated more than 1 year after this person's latest
@@ -116,7 +117,7 @@ WARNINGS FOR: Patrick Flynn (I1)
     itself -- what kind of document is it? The right corrective
     action depends on what you find.
 
-[!]  Note -- Long lifespan  [hasAgeRangeGreaterThan120]
+[!]  Implausible -- Long lifespan  [hasAgeRangeGreaterThan120]
     [Valid: people rarely live past 120.]
     This person's lifespan is greater than 120 years, which is
     implausible.
@@ -156,8 +157,8 @@ FAMILYSEARCH QUALITY: Patrick Flynn (KD96-TV2)   overall 0.97
 
 ### 4. Interpret and recommend
 
-- **`severity: "error"`** -- Investigate immediately. Almost always indicates data errors or conflated identities (records from two people merged into one profile).
-- **`severity: "warning"`** -- Note and recommend verification. May indicate twins, blended families, or transcription errors. Phrase to the user as: "Let's verify [the specific assertion or fact] against its original source. If the original record genuinely shows that, we'll document it as an exception; if not, we'll correct the fact."
+- **`severity: "contradiction"`** -- Investigate immediately. The data cannot be true as recorded. Almost always indicates data errors or conflated identities (records from two people merged into one profile).
+- **`severity: "implausible"`** -- Note and recommend corroboration. Possible but unlikely enough to flag. May indicate twins, blended families, or transcription errors. Phrase to the user as: "Let's verify [the specific assertion or fact] against its original source. If the original record genuinely shows that, we'll document it as an exception; if not, we'll correct the fact."
 - **Relative warnings (`relatives*` tags)** -- The problem is in the relationship, not the focal person. Verify the relationship link *before* any data fix on the relative. Recommend: "This warning is about [Patrick]'s relative [Thomas], not [Patrick] directly. The first thing to check is whether [Thomas] is actually [Patrick]'s father, or whether a same-name record was linked here by mistake. Once we confirm the relationship is correct, then we can look at whether [Thomas]'s data needs fixing." A "fix the data" step on a `relatives*` warning with no link-verification first commits the user to research time on a relationship that may not be real.
 
 Load `references/warnings-as-identity-signals.md` for the full escalation table.
@@ -172,7 +173,7 @@ When the tool returns `warningCount: 0`, report: "No genealogical warnings found
 - **Don't auto-correct.** Report the warning; let the user or other skills investigate.
 - **The tool is the arbiter; don't re-derive.** The tool's output is ground truth. Do not read the tree to verify whether the tool's verdict is correct. Do not perform your own date arithmetic to explain a warning the tool already explained -- the number "208 years" was never in the tool's response; do not invent it. Cite only the `factIds`, sources, and persons the tool's response actually mentions.
 - **Don't speculate about the underlying data or how the tool derived a warning.** Do not claim a fact does or does not exist, or narrate how a date was inferred — you cannot see that, and guessing produces self-contradictions (e.g. saying "no death fact is recorded" while explaining a death-based warning). Report the tool's `message`, the facts it cites, and the *general* reason the warning matters (e.g. "a father cannot die more than ~300 days before his child is born — gestation is finite"). Never make a claim about the tree's contents that the tool's response didn't state, and never one that contradicts the warning you're reporting.
-- **Quality issues are improvements, not impossibilities.** A missing date or untagged source lowers FamilySearch's quality score but is not an error -- never escalate a `person_quality` issue the way you would a `severity: "error"` warning. Report its `sentence` verbatim; don't re-derive, re-score, or invent a band.
+- **Quality issues are improvements, not impossibilities.** A missing date or untagged source lowers FamilySearch's quality score but is not an error -- never escalate a `person_quality` issue the way you would a `severity: "contradiction"` warning. Report its `sentence` verbatim; don't re-derive, re-score, or invent a band.
 - **Historical exceptions exist.** A 13-year-old bride or a 105-year-old death is unusual by modern standards but documented historically. Present warnings with appropriate context.
 - **Surface tool errors verbatim.** If the tool returns an error (e.g. `personId` not found in `tree.gedcomx.json`), surface it as-is. Do not fall back to manual reasoning -- the whole point is determinism.
 

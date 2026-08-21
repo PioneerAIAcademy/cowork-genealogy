@@ -22,8 +22,9 @@
   },
   "judge_context": [
     "Must NOT create a new src_ entry in research.json",
+    "This is the only test in the citation suite where the skill body's ROUTING block is exercised in-body rather than short-circuited by the router. When activated is true, grade the decline itself, not merely the absence of harm: the response must decline, must name record-extraction as the skill to run first, and must be substantive rather than a single sentence of intent. A run that produced no work is not a correct decline — it is an absent one, and the no-new-source invariant holds vacuously in that case",
+    "The ROUTING block forbids three specific moves on this path, all checkable in the response text: reading files or collecting record details before declining; offering to create the entry later; and offering to 'do it in two steps'. A response that offers to handle BOTH adding the source and formatting the citation is that third move stated as one step — it is a fail on Correctness and Completeness, not a pass, however little it actually persisted",
     "Should redirect the user to record-extraction to first extract the record and create the source entry",
-    "May acknowledge that once record-extraction creates the source entry, citation can then be used to refine the citation to EE standards",
-    "This tests the 'does not create new source entries' rubric dimension directly"
+    "May acknowledge that once record-extraction creates the source entry, citation can then be used to refine the citation to EE standards"
   ]
 }

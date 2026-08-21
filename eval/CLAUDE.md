@@ -105,10 +105,13 @@ A run is **releasable** iff invoked as `--skill <name>` with no `--tag`. Anythin
 two reader families handle it differently (`harness/since_window.py`):
 
 - **Aggregating reports FILTER** — `make e2e-corpus`, `make e2e-guardrail-shadow`,
-  `make e2e-latency`, `make e2e-skill-episodes` tally many runs into one number, so mixing eras corrupts
+  `make e2e-latency`, `make e2e-skill-episodes`, `make e2e-wiki-failures` tally many runs into one number, so mixing eras corrupts
   it. They window to 14 days and print the window plus how many runs they
-  excluded. `SINCE=all` opts back in.
-- **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency` show
+  excluded. `SINCE=all` opts back in. (`make e2e-wiki-failures`'s useful horizon
+  IS the 14-day default: it classifies calls from `response_summary`, and the e2e
+  capture strip below drops that field past 14 days — so `SINCE=all` there mostly
+  reports how many older calls are stripped-and-unclassifiable, not more causes.)
+- **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency`, `make judge-report` show
   the newest 1–2 run logs per skill, so there is no sample to narrow: a date
   cut would delete the *skill*, hiding that it needs a re-run. They show every
   row, mark stale ones, sort them last, and name them in a summary line.
@@ -169,7 +172,7 @@ Per-dimension scores: **`3` = pass, `2` = partial, `1` = fail, `null` = N/A.** T
 
 The run-log-level `outcome` (`pass | partial | fail | aborted | xfail | xpass`) is per-test, not per-dimension — aggregated across runs for dashboard reporting.
 
-**Reading an `aborted` row.** `aborted` is not a failed test — it produced no gradeable result, so nothing about it says anything about the skill. **Always read its reason before treating it as a signal**, and the harness now prints one everywhere: inline on the live progress line (`✗ [3/20] ut_x (citation) — aborted [sdk_stream_silence]`), in the `REASON` column of the end-of-suite table, and grouped in the `Outcomes:` line beneath it. The reason decides who owns it, and the split is the same one the exit code makes: `not_runnable` and `unmatched_tool_call` are **test-corpus** problems (exit 2) and belong to whoever wrote the test; everything else — `error`, `sdk_stream_silence`, the caps — is an **execution** problem (exit 3) and is usually the environment, not the corpus. A suite where nearly every test aborted with the same reason is an environment failure, not twenty skill regressions; re-run it before reading anything into the results.
+**Reading an `aborted` row.** `aborted` is not a failed test — it produced no gradeable result, so nothing about it says anything about the skill. **Always read its reason before treating it as a signal**, and the harness now prints one everywhere: inline on the live progress line (`✗ [3/20] ut_x (citation) — aborted [sdk_stream_silence]`), in the `REASON` column of the end-of-suite table, and grouped in the `Outcomes:` line beneath it. The reason decides who owns it, and the split is the same one the exit code makes: `not_runnable` and `unmatched_tool_call` are **test-corpus** problems (exit 2) and belong to whoever wrote the test; everything else — `error`, `sdk_stream_silence`, the caps — is an **execution** problem (exit 3) and is usually the environment, not the corpus. A suite where nearly every test aborted with the same reason is an environment failure, not twenty skill regressions; re-run it before reading anything into the results. The harness now enforces this: a suite-level breaker stops submitting new tests when transient aborts (`error`, `sdk_stream_silence`) reach the threshold, and writes a scratch log instead of a releasable candidate.
 
 ## Snapshot model
 
@@ -253,12 +256,13 @@ A third warn-only lint runs alongside them: `eval/harness/scripts/check_negative
 
 ### E2E checks (`check-e2e-fixtures.yml`)
 
-A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` — one blocking check plus one warn:
+A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` — one blocking check plus two warns:
 
 | Check | Severity | What |
 |---|---|---|
 | Grading gate | **block** | Every `run-<ts>.json` **added in the PR** that produced a final tree (`run-<ts>.final-tree.gedcomx.json` present) must ship its `run-<ts>.ann.json` sibling in the same PR. Grading is same-PR. Treeless runs (crash/skip before a tree) are exempt. Scoped to PR-added logs via `git diff --diff-filter=A` (`BASE_SHA`/`HEAD_SHA`); presence only — content validity is the maintainer's `calibrate_judge --dry-run`, not CI. |
 | Unresolved draft | warn | A PR-added run log whose fixture README still carries `DRAFT PENDING ADJUDICATION` — the run scored an unverified record hint rather than a genealogist-resolved answer, so its verdict and grade mean less than they appear to. One warning per fixture. Cleared by `/resolve-record-hint` (e2e-testing-guide.md Step 1a) removing the marker. |
+| Component-derivation drift | warn | A PR-added run log whose finding has a stored `matched` disagreeing with `derive_matched` of its own `link` components. `apply_component_derivation` reconciles this for `relationship` findings only, so a `source`, `fact` or `person` finding keeps whatever label the judge wrote (`e2e-test-spec.md` §3.4.2). Reports the disagreement; does **not** widen the derivation — `fact` is excluded from the derivation but deliberately *not* from this report. Skipped only for findings already derived (`matched_model` present), `avoid` findings, and findings carrying no `link` component to derive from. **Mostly forward-looking:** of 448 findings across the 155 committed run logs, 433 predate `components` entirely and 8 are evaluated, so a clean run is thin evidence rather than calibration. |
 
 **Fixture validity is not CI-gated.** Whether a fixture has a committed *passing* run log (proof it is solvable from live FamilySearch — spec §14) is a recommended authoring practice surfaced in the docs, not a check. A fixture can land without one (draft/PID-less fixtures routinely do). This used to be an advisory warning; it was removed because it re-flagged every un-run fixture in the repo on every e2e PR — pure noise. The unresolved-draft warn above avoids that trap by firing only on fixtures the PR itself committed a run for.
 

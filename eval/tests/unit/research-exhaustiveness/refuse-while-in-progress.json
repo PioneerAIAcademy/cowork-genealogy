@@ -21,6 +21,6 @@
     "Claude should recommend completing the death certificate search before evaluating exhaustiveness.",
     "Claude must NOT set q_001.exhaustive_declaration.declared to true or q_001.status to 'exhaustive_declared'.",
     "Claude should NOT write any changes to research.json — the refusal is conversational, not a data write. If Claude does call validate_research_schema that is acceptable but not required since no changes were made.",
-    "Since the skill is refusing to declare (no declaration is being written), the Stop criteria coverage dimension should be scored as pass or N/A — a refusal to evaluate does not need to include a formal stop_criteria object. The rubric says 'when the skill writes a declaration (either direction)' — a refusal is neither direction, it is a procedural gate before evaluation begins."
+    "Stop criteria coverage: this run stops at the plan-item precondition, before exhaustiveness is evaluated at all, so no stop_criteria assessment is owed in either object or prose form. The dimension grades a situation this run does not create."
   ]
 }

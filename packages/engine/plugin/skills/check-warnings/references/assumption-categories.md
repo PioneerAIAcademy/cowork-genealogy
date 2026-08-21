@@ -5,7 +5,7 @@ carry equal weight. The BCG standards identify three categories that
 determine how much trust to place in unproven premises. For warning
 detection, these categories define what should and should not trigger
 an alert. The `person_warnings` tool's `severity` field reflects
-this framework: `error` for fundamental violations, `warning` for
+this framework: `contradiction` for fundamental violations, `implausible` for
 valid violations, and no emission at all for unsound conditions.
 
 ## Fundamental Assumptions
@@ -25,7 +25,7 @@ Examples relevant to the tool's checks:
 - A recorded lifespan cannot exceed plausible biological limits
   (~120 years)
 
-**Tool emission:** `severity: "error"`. Always investigate -- these
+**Tool emission:** `severity: "contradiction"`. Always investigate -- these
 almost always indicate data errors or two distinct individuals
 incorrectly merged into one profile.
 
@@ -37,7 +37,7 @@ documented evidence. They are reasonable defaults that should be
 assumed true until proven otherwise.
 
 Examples relevant to the tool's checks:
-- Mothers conceive children between approximately ages 12 and 55
+- Mothers conceive children between approximately ages 12 and 45
 - Fathers conceive children between approximately ages 14 and the
   late decades
 - Marriage occurs between approximately ages 14 and 90
@@ -49,8 +49,8 @@ Examples relevant to the tool's checks:
 - A family's children are born within a reasonable span (under
   ~40 years between oldest and youngest)
 
-**Tool emission:** `severity: "warning"`. Note and recommend
-verification. A 55-year-old mother is rare but documented; a
+**Tool emission:** `severity: "implausible"`. Note and recommend
+corroboration. A 45-year-old mother is rare but documented; a
 13-year-old bride is unusual by modern standards but occurred in
 some historical contexts.
 
@@ -88,9 +88,9 @@ violation is not a signal of error.
 When the `person_warnings` tool emits a warning:
 
 1. Look at `severity`:
-   - `"error"` -> fundamental violation -> always investigate;
+   - `"contradiction"` -> fundamental violation -> always investigate;
      almost always indicates a data error or identity confusion.
-   - `"warning"` -> valid violation -> note and verify; document
+   - `"implausible"` -> valid violation -> note and corroborate; document
      the exception if the source evidence supports the unusual
      condition.
 

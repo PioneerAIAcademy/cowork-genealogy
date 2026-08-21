@@ -45,10 +45,8 @@ from harness.context_policy import (
 )
 from harness.judge import _summarize_response
 from harness.skill_invocation import (
+    check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
     find_citation_nulling_in_conclusions,
-    find_effects_without_invocation,
-    find_missing_mentor_verdicts,
-    find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
@@ -58,6 +56,7 @@ from harness.skill_invocation import (
     unguarded_new_person_evidence_links,
 )
 
+from e2e import pricing
 from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
@@ -245,15 +244,80 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
 # tree_edit, tree_correct), which validate before persisting. See
 # docs/specs/guardrail-enforcement-spec.md §6.
 PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+# The device-bridge writer, matched on the BARE TAIL because Cowork namespaces it
+# (`mcp__remote-devices__device_commit_files`) and the plugin cannot control the
+# prefix. This is the route that actually mattered: measured live 2026-08-15,
+# `init-project` created both protected files through it in a run where
+# Write/Edit/NotebookEdit appear nowhere, while `Write` could not reach the
+# user's disk at all. `device_bash` is deliberately absent — its input is a
+# command string where `cat research.json` and `cat > research.json` are
+# indistinguishable without parsing a shell, and 37 of 40 shell touches of a
+# protected file in the committed corpus are reads.
+#
+# Mirrored in all three lockdown copies even though only the plugin one ever
+# sees the bridge; the parity test holds them to one vector set.
+DEVICE_WRITE_TOOLS = ("device_commit_files",)
+
+# A path has no newline and is no longer than the platform allows. Both bounds
+# keep the payload walk below off file CONTENT travelling alongside the paths,
+# though only the newline bound does real work there. 4096 = Linux PATH_MAX; it
+# was 400, which is under every real path limit and let a 401-char path to a
+# protected file through. Pinned by vectors in test_write_lockdown_parity.py.
+_MAX_PATH_LEN = 4096
+
+
+def _basename(value: str) -> str:
+    """The trailing segment, under either separator."""
+    return value.replace("\\", "/").rsplit("/", 1)[-1]
+
+
+def _path_like_strings(value, depth: int = 0):
+    """Every string in `value` that could be a path, walked structurally.
+
+    The bridge's payload shape is not ours and is recorded nowhere in this repo,
+    so this guesses no key: it walks whatever arrives. A content string that
+    merely mentions a protected file is still safe, because whole basenames are
+    compared — "see research.json" has basename "see research.json".
+    """
+    if depth > 6:
+        return
+    if isinstance(value, str):
+        if value and "\n" not in value and len(value) <= _MAX_PATH_LEN:
+            yield value
+    elif isinstance(value, dict):
+        for v in value.values():
+            yield from _path_like_strings(v, depth + 1)
+    elif isinstance(value, (list, tuple)):
+        for v in value:
+            yield from _path_like_strings(v, depth + 1)
+
+
+def _device_bridge_target(tool_name: str, tool_input) -> str | None:
+    """The protected filename a device-bridge write targets, or None.
+
+    **Fails open on an unrecognised payload, deliberately.** Denying whenever the
+    shape cannot be parsed would block a user asking Cowork to write their OWN
+    files into a connected folder, which is not this guard's business and is a
+    worse failure than the hole.
+    """
+    if _basename(tool_name.replace("__", "/")) not in DEVICE_WRITE_TOOLS:
+        return None
+    for candidate in _path_like_strings(tool_input or {}):
+        name = _basename(candidate)
+        if name in PROTECTED_PROJECT_FILES:
+            return name
+    return None
 
 
 def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
-    """The protected filename a raw file-write call targets, or None.
+    """The protected filename a write call targets, or None.
 
-    Only the file-write tools are candidates — every other tool (including the
-    MCP writer tools) is a different code path. Matched on the `file_path`
-    argument's basename, so it doesn't matter whether the model passed an
-    absolute or relative path.
+    Two arms. A file-write tool names its destination in `file_path`; anything
+    else falls through to `_device_bridge_target`, which claims only the
+    device-bridge writers and returns None for every other tool — the MCP writer
+    tools included, since those are the sanctioned route. Matched on the
+    `file_path` argument's basename, so it doesn't matter whether the model
+    passed an absolute or relative path.
 
     Both path separators are handled. Splitting on "/" alone made this a no-op
     on Windows, where the workspace is a `C:\\Users\\...\\Temp\\e2e-<id>` path
@@ -263,7 +327,7 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
     (issue #940), which cannot import from here.
     """
     if tool_name not in ("Write", "Edit", "NotebookEdit"):
-        return None
+        return _device_bridge_target(tool_name, tool_input)
     file_path = str((tool_input or {}).get("file_path") or "")
     name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
     return name if name in PROTECTED_PROJECT_FILES else None
@@ -935,12 +999,10 @@ def _timeline_tool_label(tool: str, args: dict | None) -> str:
     return _bare_tool_name(tool)
 
 
-_USAGE_FIELDS = (
-    "input_tokens",
-    "output_tokens",
-    "cache_read_input_tokens",
-    "cache_creation_input_tokens",
-)
+# The token fields `_accumulate_usage` sums, and the presence test the estimator
+# uses — one definition (`pricing.PRICED_FIELDS`), so `_fallback_usage`'s emitted
+# block and the estimator that prices it can never silently diverge (#1484).
+_USAGE_FIELDS = pricing.PRICED_FIELDS
 
 
 def _accumulate_usage(acc: dict[str, dict[str, int]], message: Any) -> None:
@@ -994,6 +1056,9 @@ def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str
     `duration_api_ms` is absent for the same reason: only the SDK knows the
     API/local split, and a monotonic clock can't recover it.
     """
+    usage_tokens = {
+        field: sum(m[field] for m in acc.values()) for field in _USAGE_FIELDS
+    }
     return {
         "duration_ms": elapsed_ms,
         "duration_api_ms": None,
@@ -1002,9 +1067,13 @@ def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str
         "is_error": True,
         "stop_reason": None,
         "total_cost_usd": None,
-        "usage": {
-            field: sum(m[field] for m in acc.values()) for field in _USAGE_FIELDS
-        },
+        # A separate, clearly-approximate field (#1484). `total_cost_usd` stays
+        # null on purpose (see the docstring above); this flat-rate estimate is
+        # what keeps abort-path spend from reading as zero. Report-time
+        # estimation in corpus_report covers the runs already committed with a
+        # null cost; this only ever fills a FUTURE aborted run.
+        "total_cost_usd_estimated": pricing.estimate_cost_usd(usage_tokens),
+        "usage": usage_tokens,
     }
 
 
@@ -2093,55 +2162,6 @@ def _find_session_transcript(workspace: Path) -> Path | None:
     if not candidates:
         return None
     return max(candidates, key=lambda p: p.stat().st_mtime)
-
-
-def check_guardrail_compliance(
-    tool_calls: list[dict[str, Any]],
-    final_research: dict[str, Any] | None,
-    final_tree: dict[str, Any] | None,
-    *,
-    starting_tree: dict[str, Any] | None = None,
-) -> list[str]:
-    """The §8 HARD guardrail detector — every non-windowed check, in one call.
-
-    docs/specs/guardrail-enforcement-spec.md §8. A guardrail skill's
-    effect present in the FINAL project state with no matching successful
-    invocation anywhere in the run, or a resolved question's proof_summary
-    missing its mandatory gps-mentor proof-critique verdict. Mirrors the unit
-    harness's `test_positive_fails_when_skill_not_in_skills_invoked`, which
-    had no e2e equivalent. Unlike §4.1's shadow-mode recency check, this only
-    asks whether the skill ran AT ALL across the whole run, so it is far less
-    prone to false positives and was safe to hard-fail on immediately rather
-    than rolling out in shadow mode first.
-
-    `find_person_evidence_missing_same_person` is a separate, also-hard,
-    also-non-windowed check added after the first real run of
-    bagley-father-1884 showed the gap in "invoked anywhere": that run linked a
-    brand-new person across 13 person_evidence entries with zero same_person
-    calls in the whole run, while person-evidence ITSELF was invoked 52 tool
-    calls later for unrelated work — passing the "invoked anywhere" bar while
-    still skipping the identity-scoring doctrine entirely. It checks the
-    specific required tool for the specific person instead of the skill's mere
-    presence in the run.
-
-    Note this is NOT vacuous on a treeless run: `find_missing_mentor_verdicts`
-    takes no tree at all, and the exhaustiveness arm reads only
-    `research["questions"]`. That is why compliance is always a real result
-    and never "not checked" for a run this harness performed.
-
-    Extracted from `run_e2e_test` so it is unit-testable — the fused-verdict
-    bug this replaced (issue #972) lived in an assembly statement buried in a
-    1200-line async function that needs the SDK and a live FamilySearch session.
-    """
-    return (
-        find_effects_without_invocation(
-            tool_calls, final_research, final_tree, starting_tree=starting_tree
-        )
-        + find_missing_mentor_verdicts(final_research)
-        + find_person_evidence_missing_same_person(
-            tool_calls, final_research, final_tree, starting_tree=starting_tree
-        )
-    )
 
 
 async def run_e2e_test(

@@ -373,7 +373,7 @@ the subject with FamilySearch's own matcher (the engine `same_person` uses),
 re-orders by real match quality — **not** FamilySearch's search rank, which is
 unreliable — and returns the **top 10** in `matches[]`. Each carries `matchRank`,
 `searchRank` (its original position — shows how far the ranker missed),
-`matchScore` (0–1), `matchConfidence`, the key facts, and `attachedToSubject` /
+`matchScore` (0–1), `matchConfidence` (1–10), the key facts, and `attachedToSubject` /
 `attachedToOther`. The bulk GedcomX stays host-side, and a per-result
 `same_person` loop plus a separate `source_attachments` call are both unnecessary.
 
@@ -452,8 +452,9 @@ candidates; you still confirm the top ones:
   signals. Write the listing and mark the family structure inferred — not "head
   Daniel + wife Margaret + daughter Hannah" but "Daniel, Margaret, Hannah in one
   dwelling; family structure inferred from surname, ages and order, not stated."
-  Same caution for any field that year didn't collect:
-  `references/census-field-availability.md`.
+  **Before summarizing any census household, read
+  `references/census-field-availability.md` for that year** — same caution for
+  any field that year didn't collect.
 - **Cite `matchScore`, never `results[].score` — they are different numbers.** A
   raw search stub's `score` (and `confidence`) is FamilySearch's own *search
   relevance*, the unreliable ordering the match-ranker exists to replace;

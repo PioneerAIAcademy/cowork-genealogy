@@ -6,16 +6,18 @@ the rule, and what it usually means.
 
 The tool emits two severities:
 
-- **`error`** -- violates a Fundamental assumption (physical /
-  biological / temporal impossibility). Almost always a data error
-  or two distinct identities merged into one profile.
-- **`warning`** -- violates a Valid assumption (biologically or
-  socially improbable). Exceptions exist; verification recommended.
+- **`contradiction`** -- violates a Fundamental assumption (physical /
+  biological / temporal impossibility). Data that cannot be true as
+  recorded. Almost always a data error or two distinct identities
+  merged into one profile.
+- **`implausible`** -- violates a Valid assumption (biologically or
+  socially improbable). Possible but unlikely enough to need
+  corroboration. Exceptions exist; verification recommended.
 
 See `assumption-categories.md` for the framework these severities
 map to.
 
-## Fundamental violations (`severity: "error"`)
+## Fundamental violations (`severity: "contradiction"`)
 
 These conditions are impossible under physical or biological law.
 Always investigate.
@@ -86,7 +88,7 @@ Always investigate.
 - Cause: data error or wrong mother attribution.
 - Action: verify dates.
 
-## Valid violations (`severity: "warning"`)
+## Valid violations (`severity: "implausible"`)
 
 These conditions are improbable but not impossible. Exceptions are
 documented but rare. Verify against original sources before
@@ -96,7 +98,7 @@ treating as established.
 - `earliestChildBirthToBirth12` -- parent had a child before age 12.
 - `earliestChildBirthToBirthMale14` -- father had a child before age 14.
 - `latestChildBirthToBirth80` -- child born 80+ years after this person's birth.
-- `latestChildBirthToBirthFemale55` -- mother was age 55 or older at a child's birth.
+- `latestChildBirthToBirthFemale45` -- mother was age 45 or older at a child's birth.
 
 ### Marriage timing
 - `hasEarlyMarriage14` -- married before age 14.
@@ -129,7 +131,7 @@ treating as established.
 
 Most checks above have a "relatives" variant that fires when the
 same condition is detected on a parent, spouse, or child of the
-focal person. They emit `severity: "warning"` regardless of the
+focal person. They emit `severity: "implausible"` regardless of the
 original severity, because the focal person's own data isn't
 necessarily wrong -- the issue is in the relationship.
 
@@ -146,7 +148,7 @@ The current set of relative-mob tags: `relativesDeathRangeGreaterThan2`,
 `relativesEarliestChildBirthToBirth12`,
 `relativesHasEventBeforeChristening365_3`,
 `maleRelativesEarliestChildBirthToBirth14`,
-`femaleRelativesLatestChildBirthToBirth55`,
+`femaleRelativesLatestChildBirthToBirth45`,
 `relativesHasDeathBeforeChildBirth365_2`,
 `relativesHasDeathBeforeChildBirth30_10`,
 `relativesEarliestChildMarriageToBirth30`,
