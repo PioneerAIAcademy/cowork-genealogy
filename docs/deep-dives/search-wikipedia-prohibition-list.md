@@ -6,7 +6,7 @@ Built from `packages/engine/plugin/skills/search-wikipedia/SKILL.md` and
 below is checkable by eye against a run-log transcript (`output.text_response`,
 `output.tool_calls`, `output.files_created`) or against the workspace snapshot the
 validators receive (`after_state["files"]`, which holds the saved file's **full
-text** — see `workspace.py:218`).
+text** — written by `snapshot_files` in `workspace.py`).
 
 Judgement calls ("was this the best article", "is the extract a good summary")
 are deliberately excluded — they belong to the judge, per the guide.

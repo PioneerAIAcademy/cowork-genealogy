@@ -762,8 +762,9 @@ CLAUDE.md's list of ways a check silently passes.**
    `run_validators`, and `grade` — so removing the `run_validators` one leaves it
    green. This is CLAUDE.md's "field-name match that collides with an unrelated
    key," and it was replaced with a behavioural test that monkeypatches
-   `run_validators` and asserts the reply arrives. Proven by deleting line 465
-   and watching it go red.
+   `run_validators` and asserts the reply arrives. Proven by deleting the
+   `text_response=` argument from the `run_validators` call and watching it go
+   red.
 
    A third, smaller one: the first attempt to *break* the plumbing was a
    `\n`-anchored string replace against a **CRLF** file. It matched nothing and
