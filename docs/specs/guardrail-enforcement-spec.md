@@ -148,6 +148,7 @@ depends on another shipping first.
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
+| §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **neither harness** | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload) |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 
@@ -156,6 +157,14 @@ depends on another shipping first.
 > project files are written through the **device bridge**, whose tool names its
 > matcher does not cover — while `Write`, which it does deny, cannot reach the
 > user's files at all. It denies the harmless operation and permits the real one.
+> **Closed for `device_commit_files` on 2026-08-18** — predicate *and* matcher,
+> the second of which the first attempt shipped without.
+
+> **The caller row above is the same instrument, asking a different question.**
+> The lockdown asks what file a write is going to; the caller rule asks who is
+> calling. It is the only row here that binds in production and in neither
+> harness, so its e2e counterpart is a separate function
+> (`is_main_thread_owned_section_write`) rather than a shared predicate.
 
 ### The ownership declaration: promoted out of Python, still not a hard deny
 
@@ -508,13 +517,32 @@ No raw `Write`, `Edit`, or `NotebookEdit` may target `research.json` or
 (`research_append`, `research_log_append`, `tree_edit`, `tree_correct`); a
 direct file write never validates.
 
-Three implementations, deliberately:
+Three shipping copies, plus the unit harness — which *imports* the plugin
+predicate rather than re-implementing it:
 
 | Where | File | Reaches |
 |---|---|---|
 | Plugin `PreToolUse` command hook | `packages/engine/plugin/hooks/{hooks.json,guard_project_files.py}` | Cowork, hosted, anywhere the plugin loads |
 | SDK `PreToolUse` hook | `apps/server/app/agent/real_agent.py` (`_pretool_hook`) | hosted only |
-| Harness hook | `eval/harness/e2e/orchestrator.py` | e2e runs |
+| Harness hook (e2e) | `eval/harness/e2e/orchestrator.py` | e2e runs |
+| Harness hook (unit) | `eval/harness/harness/context_policy.py` (`protected_file_denial`, wired in `skill_runner.py`'s `pretool_hook`) — **imports** `guard_project_files.protected_target`, does not copy it | unit runs (all 25 skills) |
+
+The unit-tier row is deliberately not a fourth *copy*: it binds the live
+`protected_target` object out of the plugin hook (the only stdlib-only copy, so
+importing it drags in no `claude_agent_sdk`), so it cannot drift from what ships.
+That is why `IMPLEMENTATIONS` in `test_write_lockdown_parity.py` stays at three —
+there is no fourth textual predicate to vector-check — and why the unit deny is
+pinned instead by `test_context_policy.py`, which asserts the harness bound the
+shipped file (`__file__`) and denies the right targets.
+
+The unit tier denies **identically to the three shipping copies**, creates
+included: a raw `Write`/`Edit`/`NotebookEdit` to `research.json` or
+`tree.gedcomx.json` is denied whether or not the file already exists, because
+`protected_file_denial` matches on basename alone. No skill legitimately
+raw-creates these files — the `project_create` tool seeds both in one validated
+call and `init-project` uses it — so nothing breaks. (In Cowork *with a
+connected folder* the seed instead goes through `device_commit_files` and the
+`Write` guard never fires — see §6.1 — so that path is unaffected either way.)
 
 **Why the plugin copy exists.** A per-agent `tools:` allow-list is subtractive —
 it can only narrow what a subagent inherits — so nothing but a hook can restrain
@@ -835,6 +863,35 @@ session_id, tool_input, tool_name, tool_use_id, transcript_path
 - The hook **cannot** read the project documents: `cwd` is the sandbox, and the
   connected folder is not mounted there.
 
+### 6.3 `settings.json` is **not** in the protected set — and why (measured 2026-08-15)
+
+`settings.json` is deliberately not protected here. The question "can an agent
+widen its own permissions by writing `.claude/settings.json`?" was raised while
+adding the unit-harness lockdown and answered empirically by the lead (recorded
+so it is not flattened back to "it was denied"):
+
+- Under `permission_mode="bypassPermissions"` (what the unit harness and the
+  hosted control plane both run) a raw write to a project-local **or** global
+  `.claude/settings.json` **lands** — nothing refuses it.
+- But it is **inert in the same session**: after writing a `Read` deny, `Read`
+  still worked. So it is **not** same-session privilege escalation.
+- The real exposure is **cross-session persistence**: the project folder is the
+  only thing that survives between sessions, so a settings file left behind
+  would bind the *next* session opened there.
+- In **Cowork with a connected folder it is inert entirely** — consistent with
+  §6.1: those files arrive as staged data over the device bridge, not as a
+  project whose settings configure the sandbox session.
+- The global `~/.claude/settings.json` half is already closed: hosted and unit
+  both run `setting_sources=["project"]`, and the E2B image creates only
+  `~/.familysearch-mcp`.
+
+Net: protecting `settings.json` is worth doing on the **hosted web** path only,
+for **persistence** rather than escalation, and it cannot ride the unit-harness
+change: the parity test forces all three shipping copies to protect the *same*
+set, so a hosted-only entry needs a per-path protected-set design first. Tracked
+as separate follow-up work; the unit-harness rule stands
+on its own.
+
 ## 7. Caller-attributed recency check (shadow mode)
 
 `find_unguarded_protected_writes` (`eval/harness/harness/skill_invocation.py`)
@@ -981,6 +1038,38 @@ this section before reopening one.
   would each set a new high-water mark for a plugin agent body — against
   `record-extractor`'s 894 today. `research-exhaustiveness` (413) and
   `proof-conclusion` (519) are the cheap candidates if this is revisited.
+
+  **Revisited and acted on for `proof-conclusion`, 2026-08-19.** It is now a
+  pair: a thin routing skill (4.8 KB) plus `agents/proof-conclusion.md`, the
+  whole doctrine inlined at 49,900 bytes — between `gps-mentor.md` (40,802) and
+  `record-extractor.md` (58,541), so no new high-water mark. Both ends of that
+  band moved during the work (the agent grew as rules landed, `record-extractor`
+  grew on main), which is the argument for measuring a ceiling rather than
+  quoting one. Both `references/` files were deleted rather than kept
+  beside it — an agent reading its own reference material on demand scored 6/19
+  against a 12–14/19 baseline, and failed silently. What this bought beyond
+  attribution: the agent emits a
+  real `agent_id`, which is the thing the success gate below has never had. It
+  does **not** by itself graduate that gate — one of four skills is not a
+  completion instrument — but it is the first of the four, and the route is now
+  demonstrated rather than argued.
+
+  **What the conversion cost, and the rules that came out of it:**
+  `docs/skill-to-agent-pair-conversion.md`. The short version, because it bears
+  on every later pair: a prose gate weakens when it moves behind a delegation
+  boundary — the caller's framing competes with it — so a rule that must hold
+  belongs in the writer tool before the prose moves. Five tests that were stable
+  across five pre-fold runs became unstable across five post-fold ones.
+
+  **Two things the first paid run taught, both worth keeping.** The agent is
+  pinned to the model the doctrine ran under *before* the fold, not to the model
+  the nearest analogue uses: the 2026-08-19 run pinned `claude-sonnet-5` and so
+  moved the doctrine and changed its executor in one step, which makes a
+  regression unattributable. And the routing skill holds `project_context`
+  only — with a query tool it read `conflicts` itself and concluded a conflict
+  was "collateral" before delegating, deciding the agent's preconditions gate
+  from the one participant that cannot see the evidence. A thin caller needs to
+  be thin in capability, not just in wording.
 
   **This is the only route that reopens §7.** An agent is the one form a
   guardrail skill can take that emits a completion signal (`SubagentStop`) and

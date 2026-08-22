@@ -16,9 +16,24 @@ Is the proof tier (proved/probable/possible/not_proved/disproved) justified by t
 
 Does the narrative read as a self-contained GPS conclusion without reference to the rest of the JSON? It must include inline citations, the evidence summary, conflict resolution, and the confidence declaration.
 
-- **pass:** (write) A reader with no access to research.json can follow the narrative — every assertion referenced is described in prose, citations are inline, conflict resolution rationale is included, the tier is declared. OR (review, `no-new-proof-expected`) The skill correctly assesses whether the EXISTING `ps_NNN.narrative_markdown` is self-contained — flagging any reliance on unexplained `a_NNN` / `c_NNN` references and noting any missing prose explanations. The review itself need not be a publication-shape narrative; it's a structured assessment of an existing one.
-- **partial:** In write-mode, narrative relies on reader knowing what `a_004` or `c_001` refers to without describing them. In review-mode, the assessment misses one self-containment issue in the existing narrative.
-- **fail:** In write-mode, narrative is a JSON summary rather than a prose conclusion, or omits citations / conflict resolution / tier declaration. In review-mode, the assessment doesn't actually evaluate the narrative's standalone readability.
+**Pick the branch FIRST, by the tag, then score only that branch.** A test tagged
+`no-new-proof-expected` writes no narrative of its own, so the write-mode wording
+below does not apply to it at all — do not carry any write-mode expectation into
+a review-mode score. This dimension grades two different artifacts depending on
+the tag, and scoring a correct review against the write-mode bar is a known
+misgrade (observed 2026-08-19: a rationale stating the assessment "correctly
+identifies" the defect "and explains why" was nonetheless scored fail).
+
+**(write) — the skill produced a narrative.**
+- **pass:** A reader with no access to research.json can follow the narrative — every assertion referenced is described in prose, citations are inline, conflict resolution rationale is included, the tier is declared.
+- **partial:** The narrative relies on the reader knowing what `a_004` or `c_001` refers to without describing them.
+- **fail:** The narrative is a JSON summary rather than a prose conclusion, or omits citations / conflict resolution / tier declaration.
+
+**(review, `no-new-proof-expected`) — the skill assessed an EXISTING narrative.**
+The deliverable is the assessment, in chat. It need not be publication-shape prose.
+- **pass:** The assessment states whether the existing `ps_NNN.narrative_markdown` is self-contained, and says why — flagging reliance on unexplained `a_NNN` / `c_NNN` / `src_NNN` references and any missing prose descriptions or citations. **A verdict of "not self-contained", reached by working through the check, is a PASS**: the dimension grades whether the check was performed, never which verdict it reached.
+- **partial:** The assessment performs the check but misses one self-containment issue in the existing narrative.
+- **fail:** The assessment never evaluates the existing narrative's standalone readability at all.
 
 ## Evidence completeness
 
@@ -37,6 +52,29 @@ Does the chosen proof conclusion — written as a Statement, Summary, or Argumen
 - **fail:** In write-mode, the form is clearly wrong for the evidence — e.g. a bare Statement for a contested, indirect-evidence case, leaving the reader unable to evaluate the reasoning — or no recognizable proof-conclusion structure at all. In review-mode, the assessment doesn't identify or judge the existing form at all.
 
 ## Tree encoding
+
+**Decide N/A FIRST, and decide it on the TIER THIS RUN WROTE — not on a tag.**
+Score `null` and stop reading here when the run wrote no conclusion at
+`probable` or above:
+
+- the skill **assessed** an existing proof and wrote nothing (`gps-review`) —
+  the tree's state is then the FIXTURE's setup, not the skill's output, and a
+  planted tree defect is what the assessment is supposed to FIND. Scoring the
+  dimension on that defect fails the skill for the fixture's own content.
+  Observed 2026-08-20: scored fail on a rationale reading "the assessment
+  correctly flags this". If the rationale you are about to write praises the
+  assessment, the score is `null`, not 1.
+- the concluded tier is `not_proved` or `disproved` — nothing is encoded below
+  the threshold, except the bounded/documented-negative case, which encodes at
+  `possible` and IS graded here.
+- the test is a negative routing test.
+
+**`no-new-proof-expected` is NOT one of those conditions.** It means no *new*
+entry was created, which is also true of a re-invocation that UPDATES an
+existing conclusion in place — and an updated `probable` conclusion must still
+reach the tree. Observed 2026-08-21, the mirror of the misgrade above: a
+re-invocation test was scored on this dimension after the tag had been read as
+"skip". One tag, three situations; the tier is what separates them.
 
 At tier `probable` or higher, does the skill actually *encode the conclusion in `tree.gedcomx.json`* — marking the concluded value as `primary` (facts) / `preferred` (names) on the right person, not merely narrating it in the proof summary? Evidence facts already sit on the tree — materialized continuously at identity-link time by person-evidence, un-`primary` and carrying their source-refs — so proof-conclusion's tree act is to declare which value is the *conclusion*, not to first populate the tree. A conclusion that lives only in `narrative_markdown` while the tree carries no `primary`/concluded value is a **found-but-lost** result (proof-conclusion SKILL.md §6).
 

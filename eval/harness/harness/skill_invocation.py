@@ -708,6 +708,58 @@ def find_person_evidence_missing_same_person(
     ]
 
 
+def check_guardrail_compliance(
+    tool_calls: list[dict[str, Any]],
+    final_research: dict[str, Any] | None,
+    final_tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[str]:
+    """The §8 HARD guardrail detector — every non-windowed check, in one call.
+
+    docs/specs/guardrail-enforcement-spec.md §8. A guardrail skill's
+    effect present in the FINAL project state with no matching successful
+    invocation anywhere in the run, or a resolved question's proof_summary
+    missing its mandatory gps-mentor proof-critique verdict. Mirrors the unit
+    harness's `test_positive_fails_when_skill_not_in_skills_invoked`, which
+    had no e2e equivalent. Unlike §4.1's shadow-mode recency check, this only
+    asks whether the skill ran AT ALL across the whole run, so it is far less
+    prone to false positives and was safe to hard-fail on immediately rather
+    than rolling out in shadow mode first.
+
+    `find_person_evidence_missing_same_person` is a separate, also-hard,
+    also-non-windowed check added after the first real run of
+    bagley-father-1884 showed the gap in "invoked anywhere": that run linked a
+    brand-new person across 13 person_evidence entries with zero same_person
+    calls in the whole run, while person-evidence ITSELF was invoked 52 tool
+    calls later for unrelated work — passing the "invoked anywhere" bar while
+    still skipping the identity-scoring doctrine entirely. It checks the
+    specific required tool for the specific person instead of the skill's mere
+    presence in the run.
+
+    Note this is NOT vacuous on a treeless run: `find_missing_mentor_verdicts`
+    takes no tree at all, and the exhaustiveness arm reads only
+    `research["questions"]`. That is why compliance is always a real result
+    and never "not checked" for a run this harness performed.
+
+    Lives here beside the three detectors it composes so `e2e.corpus_report`
+    can import it without dragging `claude_agent_sdk` into its pure-analysis
+    posture (issue #1484); `e2e.orchestrator` re-exports it so `run_e2e_test`
+    and the `monkeypatch.setattr(orchestrator, ...)` tests keep resolving it as
+    a module global unchanged. Originally extracted from `run_e2e_test` (issue
+    #972) to be unit-testable away from the 1200-line async function.
+    """
+    return (
+        find_effects_without_invocation(
+            tool_calls, final_research, final_tree, starting_tree=starting_tree
+        )
+        + find_missing_mentor_verdicts(final_research)
+        + find_person_evidence_missing_same_person(
+            tool_calls, final_research, final_tree, starting_tree=starting_tree
+        )
+    )
+
+
 # The four dedicated Cowork agents under packages/engine/plugin/agents/*.md —
 # each carries its own self-contained, baked-in doctrine (per CLAUDE.md's "No
 # playbook/reference files for agents": the agent body IS the doctrine), so a
@@ -719,7 +771,18 @@ def find_person_evidence_missing_same_person(
 # without updating this set makes find_protected_writes_by_unnamed_delegate
 # under-flag (fail toward false-negative, not false-positive).
 DEDICATED_AGENT_NAMES = frozenset(
-    {"record-extractor", "image-reader", "image-reader-opus", "gps-mentor"}
+    {
+        "record-extractor",
+        "image-reader",
+        "image-reader-opus",
+        "gps-mentor",
+        # Added when proof_summaries moved behind the hook's caller check: the
+        # owning skill now delegates the write, so EVERY legitimate proof
+        # summary arrives from this agent. Without the name here each one reads
+        # as an unnamed-delegate bypass — the detector would fire hardest on
+        # exactly the runs that did the right thing.
+        "proof-conclusion",
+    }
 )
 
 

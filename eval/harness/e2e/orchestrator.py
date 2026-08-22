@@ -39,16 +39,16 @@ from claude_agent_sdk import (
 
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
+    OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
     is_subagent_call,
+    owned_section_denial,
     subagent_only_denial,
 )
 from harness.judge import _summarize_response
 from harness.skill_invocation import (
+    check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
     find_citation_nulling_in_conclusions,
-    find_effects_without_invocation,
-    find_missing_mentor_verdicts,
-    find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
@@ -58,6 +58,7 @@ from harness.skill_invocation import (
     unguarded_new_person_evidence_links,
 )
 
+from e2e import pricing
 from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
@@ -225,6 +226,46 @@ def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
         _bare_tool_name(input_data["tool_name"]) == "extraction_append"
         and not is_subagent_call(input_data)
     )
+
+
+def main_thread_owned_section(input_data: dict[str, Any]) -> str | None:
+    """The agent-owned research.json section this call writes from elsewhere.
+
+    Returns the section name so the caller can name it in the deny, or None.
+
+    Keyed on tool **and section**, unlike `is_main_thread_extraction_append`
+    above. That function can key on the tool alone because `extraction_append`
+    is declared by no skill, so any caller is the wrong caller. `research_append`
+    is the opposite: it is the general writer, called legitimately from the main
+    thread constantly. Only the owned SECTIONS are routed.
+
+    Keyed on `agent_type` as well as `agent_id`, again unlike the function
+    above. Presence of `agent_id` alone would permit a `general-purpose`
+    stand-in — the shape the model falls back to when a delegation misses —
+    which is precisely the caller this exists to catch.
+    """
+    if not (input_data.get("tool_name") or "").startswith("mcp__"):
+        return None
+    if _bare_tool_name(input_data["tool_name"]) != "research_append":
+        return None
+    tool_input = input_data.get("tool_input") or {}
+    ops = tool_input.get("ops")
+    ops = ops if isinstance(ops, list) else [tool_input]
+    section = next(
+        (
+            op["section"]
+            for op in ops
+            if isinstance(op, dict) and op.get("section") in OWNED_SECTION_OWNERS
+        ),
+        None,
+    )
+    if section is None:
+        return None
+    owner = OWNED_SECTION_OWNERS[section]
+    if not is_subagent_call(input_data):
+        return section
+    agent_type = str(input_data.get("agent_type") or "")
+    return section if agent_type.rsplit(":", 1)[-1] != owner else None
 
 
 def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
@@ -1000,12 +1041,10 @@ def _timeline_tool_label(tool: str, args: dict | None) -> str:
     return _bare_tool_name(tool)
 
 
-_USAGE_FIELDS = (
-    "input_tokens",
-    "output_tokens",
-    "cache_read_input_tokens",
-    "cache_creation_input_tokens",
-)
+# The token fields `_accumulate_usage` sums, and the presence test the estimator
+# uses — one definition (`pricing.PRICED_FIELDS`), so `_fallback_usage`'s emitted
+# block and the estimator that prices it can never silently diverge (#1484).
+_USAGE_FIELDS = pricing.PRICED_FIELDS
 
 
 def _accumulate_usage(acc: dict[str, dict[str, int]], message: Any) -> None:
@@ -1059,6 +1098,9 @@ def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str
     `duration_api_ms` is absent for the same reason: only the SDK knows the
     API/local split, and a monotonic clock can't recover it.
     """
+    usage_tokens = {
+        field: sum(m[field] for m in acc.values()) for field in _USAGE_FIELDS
+    }
     return {
         "duration_ms": elapsed_ms,
         "duration_api_ms": None,
@@ -1067,9 +1109,13 @@ def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str
         "is_error": True,
         "stop_reason": None,
         "total_cost_usd": None,
-        "usage": {
-            field: sum(m[field] for m in acc.values()) for field in _USAGE_FIELDS
-        },
+        # A separate, clearly-approximate field (#1484). `total_cost_usd` stays
+        # null on purpose (see the docstring above); this flat-rate estimate is
+        # what keeps abort-path spend from reading as zero. Report-time
+        # estimation in corpus_report covers the runs already committed with a
+        # null cost; this only ever fills a FUTURE aborted run.
+        "total_cost_usd_estimated": pricing.estimate_cost_usd(usage_tokens),
+        "usage": usage_tokens,
     }
 
 
@@ -1306,6 +1352,37 @@ async def _run_agent(
             )
             _emit(f"[blocked context call] {bare} (main-thread extraction_append)")
             return subagent_only_denial(bare)
+
+        # An owned SECTION, not an owned tool — a separate arm on purpose. The
+        # block above says the whole tool is reserved for a subagent, which is
+        # true of extraction_append and false of research_append: that one is
+        # the general writer, called from the main thread constantly for plans,
+        # questions, conflicts and the log. Sharing the branch handed the agent
+        # a deny telling it the tool was off-limits, and a narration naming the
+        # wrong agent and the wrong artifact.
+        if (owned := main_thread_owned_section(input_data)) is not None:
+            bare = _bare_tool_name(tool_name)
+            blocked_context_calls.append(
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "context",
+                }
+            )
+            owner = OWNED_SECTION_OWNERS[owned]
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "blocked",
+                    "text": (
+                        f"`{bare}` denied on `{owned}` — that section is routed to "
+                        f"the {owner} agent. Everything else in `{bare}` is "
+                        "unaffected; delegate this write rather than making it here."
+                    ),
+                }
+            )
+            _emit(f"[blocked context call] {bare} (main-thread {owned} write)")
+            return owned_section_denial(owned)
 
         # Block tree-reading tools BEFORE counting toward the cap — a denied
         # call never runs, so it shouldn't consume the budget. The run
@@ -2158,55 +2235,6 @@ def _find_session_transcript(workspace: Path) -> Path | None:
     if not candidates:
         return None
     return max(candidates, key=lambda p: p.stat().st_mtime)
-
-
-def check_guardrail_compliance(
-    tool_calls: list[dict[str, Any]],
-    final_research: dict[str, Any] | None,
-    final_tree: dict[str, Any] | None,
-    *,
-    starting_tree: dict[str, Any] | None = None,
-) -> list[str]:
-    """The §8 HARD guardrail detector — every non-windowed check, in one call.
-
-    docs/specs/guardrail-enforcement-spec.md §8. A guardrail skill's
-    effect present in the FINAL project state with no matching successful
-    invocation anywhere in the run, or a resolved question's proof_summary
-    missing its mandatory gps-mentor proof-critique verdict. Mirrors the unit
-    harness's `test_positive_fails_when_skill_not_in_skills_invoked`, which
-    had no e2e equivalent. Unlike §4.1's shadow-mode recency check, this only
-    asks whether the skill ran AT ALL across the whole run, so it is far less
-    prone to false positives and was safe to hard-fail on immediately rather
-    than rolling out in shadow mode first.
-
-    `find_person_evidence_missing_same_person` is a separate, also-hard,
-    also-non-windowed check added after the first real run of
-    bagley-father-1884 showed the gap in "invoked anywhere": that run linked a
-    brand-new person across 13 person_evidence entries with zero same_person
-    calls in the whole run, while person-evidence ITSELF was invoked 52 tool
-    calls later for unrelated work — passing the "invoked anywhere" bar while
-    still skipping the identity-scoring doctrine entirely. It checks the
-    specific required tool for the specific person instead of the skill's mere
-    presence in the run.
-
-    Note this is NOT vacuous on a treeless run: `find_missing_mentor_verdicts`
-    takes no tree at all, and the exhaustiveness arm reads only
-    `research["questions"]`. That is why compliance is always a real result
-    and never "not checked" for a run this harness performed.
-
-    Extracted from `run_e2e_test` so it is unit-testable — the fused-verdict
-    bug this replaced (issue #972) lived in an assembly statement buried in a
-    1200-line async function that needs the SDK and a live FamilySearch session.
-    """
-    return (
-        find_effects_without_invocation(
-            tool_calls, final_research, final_tree, starting_tree=starting_tree
-        )
-        + find_missing_mentor_verdicts(final_research)
-        + find_person_evidence_missing_same_person(
-            tool_calls, final_research, final_tree, starting_tree=starting_tree
-        )
-    )
 
 
 async def run_e2e_test(

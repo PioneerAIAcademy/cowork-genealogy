@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-08-19_15-25-29.json",
+  "annotator": "edmondoware70@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_citation_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The genealogical content of the answer is correct — a son-in-law IS secondary for the deceased's parentage — and the judge appears to have graded that. But the test is a routing boundary, and answering was the prohibited move. SKILL.md's ROUTING block requires one sentence naming record-extraction and a stop: \"Is the user asking whether an informant or source is primary or secondary? → Say 'That's an evidence-quality question — please use record-extraction, which owns evidence classification.' Stop.\" The run instead produced a full three-layer analysis citing assertion ids a_013 and a_011, and skills_invoked is empty — nothing was routed anywhere. Grading the quality of an answer that should never have been given inverts the test."
+    },
+    {
+      "test_id": "ut_citation_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The genealogical content of the answer is correct — a son-in-law IS secondary for the deceased's parentage — and the judge appears to have graded that. But the test is a routing boundary, and answering was the prohibited move. SKILL.md's ROUTING block requires one sentence naming record-extraction and a stop: \"Is the user asking whether an informant or source is primary or secondary? → Say 'That's an evidence-quality question — please use record-extraction, which owns evidence classification.' Stop.\" The run instead produced a full three-layer analysis citing assertion ids a_013 and a_011, and skills_invoked is empty — nothing was routed anywhere. Grading the quality of an answer that should never have been given inverts the test."
+    },
+    {
+      "test_id": "ut_citation_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Source fidelity — no fabricated detail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Source vs information distinction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Replication test",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence Explained compliance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence Explained compliance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Replication test",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source vs information distinction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source fidelity — no fabricated detail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — the write path",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence Explained compliance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Replication test",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Source vs information distinction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Source fidelity — no fabricated detail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_citation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — the write path",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The skill wrote to research.json (src_004) and output.tool_calls contains only research_append — no validate_research_schema. The response also states \"Validation passed.\" Both are fail conditions in this dimension as written: \"a write with no validate_research_schema call; or a response claiming validation that the ledger does not show.\" The judge scored 3 without reading the ledger, which is the exact failure mode this dimension was added to catch. Across this run 10 of 10 write-runs skipped the call and the dimension caught 1. See #1749 V1/V2."
+    },
+    {
+      "test_id": "ut_citation_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — the write path",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "Wrote to research.json (src_008) with output.tool_calls containing only research_append — no validate_research_schema. SKILL.md Step 6 requires the call whenever anything was written, and this test's judge_context states it as a hard requirement. The dimension's fail criteria name this case outright: \"a write with no validate_research_schema call.\" Scored 3 regardless. Same defect as ut_citation_002 in this run."
+    },
+    {
+      "test_id": "ut_citation_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Negative test, and the routing was correct: activated: false, skills_invoked: [\"search-records\"]. The request — find another record to corroborate the 1850 census — is a search task, and the transcript hands it off (\"Let me search for an additional corroborating record — immigration/passenger records are a natural next step\"). No citation work was performed. The harness's routing_negative_judge_fail advisory conditions the 1 on the skill under test having carried out its own task inline; that did not happen here. The judge graded a 356-character hand-off transcript the skill under test did not produce."
+    },
+    {
+      "test_id": "ut_citation_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Same reason. Declining and routing IS the complete behaviour for this test — there was no citation work left undone."
+    }
+  ]
+}
