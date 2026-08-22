@@ -238,6 +238,24 @@ def test_flags_the_read_and_improvise_bypass_shape():
     assert violations[0]["required_skill"] == "person-evidence"
 
 
+def test_does_not_flag_a_no_project_write_that_never_landed():
+    """Issue #1695. A no-project write persisted nothing and deliberately
+    carries NO `is_error` — it is an answer, not a failure. Counting it would
+    manufacture a protected-write violation for a write that never happened,
+    in paid e2e grading."""
+    call = _mcp_call("research_append", {"section": "proof_summaries", "entry": {"question_id": "q_001", "tier": "probable"}})
+    call["response_summary"] = '{"ok":false,"reason":"no_project","errors":["…"]}'
+    assert find_unguarded_protected_writes([call], window=10) == []
+
+
+def test_still_flags_a_landed_write_whose_payload_merely_mentions_no_project():
+    """The guard is the quoted JSON value, not the bare words — without this the
+    test above would pass on a check that skipped everything."""
+    call = _mcp_call("research_append", {"section": "proof_summaries", "entry": {"question_id": "q_001", "tier": "probable"}})
+    call["response_summary"] = '{"ok":true,"entryId":"ps_001","note":"no project needed"}'
+    assert len(find_unguarded_protected_writes([call], window=10)) == 1
+
+
 def test_flags_the_untyped_agent_bypass_shape():
     """An Agent call with no subagent_type never sets skill_name_if_skill_call
     to anything, so it never opens a window either."""
@@ -1483,6 +1501,25 @@ def test_warnings_unchecked_still_fires_when_the_call_errored():
     count as consulting the guardrail."""
     out = find_relationship_writes_without_warnings_check(
         [_person_warnings_call(is_error=True)],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert len(out) == 1
+
+
+def test_warnings_unchecked_still_fires_on_a_no_project_person_warnings_call():
+    """Issue #1695, and note the INVERTED polarity against the write detectors.
+
+    Everywhere else `did_not_land` makes a detector SKIP a call. Here it must
+    stop a call being CREDITED: a no-project person_warnings checked no tree, so
+    crediting it would mark the guardrail consulted when it never ran — a MISSED
+    violation, which is silent. That is why this test exists rather than being
+    folded into the write-side one.
+    """
+    call = _person_warnings_call()
+    call["response_summary"] = '{"ok":false,"reason":"no_project","errors":["…"]}'
+    out = find_relationship_writes_without_warnings_check(
+        [call],
         _tree_with_parentchild(),
         starting_tree={"relationships": []},
     )

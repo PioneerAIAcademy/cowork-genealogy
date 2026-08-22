@@ -21,7 +21,14 @@ const CANONICAL = join(srcRoot, "utils", "project-io.ts");
 // a helper name is deliberate: the copies were named readJson, readProjectJson
 // and nothing at all (inlined), so a name-based check misses the inlined case,
 // which is exactly the one that slipped in last time.
-const MESSAGES = ["not found in projectPath", "is not valid JSON"];
+// The no-project text (issue #1695) is held to the same rule for the same
+// reason: it is relayed to a person unedited, so a second copy drifting in a
+// tool file is a second thing the user might read.
+const MESSAGES = [
+  "not found in projectPath",
+  "is not valid JSON",
+  "is not a research project",
+];
 
 function collectTsFiles(dir: string): string[] {
   const out: string[] = [];

@@ -702,6 +702,7 @@ plain entry write fits here, the computed build may warrant its own tool),
 | `record_id` matching no sidecar result while a persona is claimed (§3.5) | op-indexed hard error naming the sidecar's recordIds; write nothing |
 | resolved/supplied `standard_place` country contradicts the place text (§3.6) | op-indexed hard error; write nothing |
 | `resolveStandardPlace` network call fails | best-effort: leave `standard_place` unset, add a warning; never fail the op |
+| `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting documents carry a **call-introduced** `validateParsed` error | write nothing (neither file); `{ ok: false, errors, opsReceived? }`. A pre-existing error the call did not introduce rides as a warning and does not block |
 
 ---

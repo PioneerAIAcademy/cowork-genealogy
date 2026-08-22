@@ -7,6 +7,7 @@
 
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { classifyProjectPath, noProjectResult } from "../utils/project-io.js";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -3429,6 +3430,19 @@ export async function personWarningsTool(
   }
   if (!input.personId || typeof input.personId !== "string") {
     throw new Error("personId is required");
+  }
+
+  // The one tool outside the readProjectJson seam that still owes the
+  // no-project answer: it reads the tree directly, and `loadAnchor` below would
+  // hand a user who simply is not in a research project a raw path error.
+  // A folder holding research.json but no tree classifies as "project" and
+  // falls through to loadAnchor's own message, which is the better one (it says
+  // to run person_read first).
+  switch (await classifyProjectPath(input.projectPath)) {
+    case "no_project":
+      return noProjectResult();
+    case "missing_dir":
+      throw new Error(`projectPath does not exist: ${input.projectPath}`);
   }
 
   const { tree, anchor } = await loadAnchor(input.projectPath, input.personId);

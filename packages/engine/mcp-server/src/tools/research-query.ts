@@ -23,7 +23,7 @@
 // against a per-section allow-list — supplying a filter a section doesn't
 // support is a clear error, not a silent no-op.
 
-import { readProjectJson } from "../utils/project-io.js";
+import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 
 const MAX_ITEMS = 50;
 
@@ -73,7 +73,10 @@ export type ResearchQueryResult =
        *  relying on this being everything. */
       truncated: boolean;
     }
-  | { ok: false; errors: string[] };
+  // `reason: "no_project"` marks the one ok:false that is an answer rather than
+  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
+  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
+  | { ok: false; errors: string[]; reason?: "no_project" };
 
 class ResearchQueryError extends Error {}
 
@@ -81,6 +84,11 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
+    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
+    // outer catch can return noProjectResult(). This tool is one of the two
+    // READS that issue #1695 calls out: a skill that merely looks at project
+    // state before answering must not surface a path error.
+    if (e instanceof NoProjectError) throw e;
     throw new ResearchQueryError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -264,6 +272,7 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       truncated: filtered.length > start + MAX_ITEMS,
     };
   } catch (e) {
+    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof ResearchQueryError) return { ok: false, errors: [e.message] };
     throw e;
   }
