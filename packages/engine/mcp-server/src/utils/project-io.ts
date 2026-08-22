@@ -47,10 +47,24 @@ function serialize(obj: unknown): string {
  *  file the caller wanted. See `classifyProjectPath`. */
 export type ProjectPathClass = "missing_arg" | "missing_dir" | "no_project" | "project";
 
-/** The user is not in a research project. Not a failure — see NO_PROJECT_MESSAGE. */
-export const NO_PROJECT_MESSAGE =
-  "This folder is not a research project — there is no research.json here, so " +
-  "nothing was saved. The answer stands; only the record of it is missing.";
+// The user is not in a research project. Not a failure — these are relayed to a
+// person unedited, so they are worded for a reader rather than for a log.
+//
+// Two variants because four of the twelve tools that return this are NOT
+// writers: `research_query` and `project_context` are reads, and
+// `person_warnings` / `merge_warnings` are previews. Telling someone who asked
+// "where are we?" in a non-project folder that their work was not saved is both
+// wrong and alarming.
+const NO_PROJECT_BASE = "This folder is not a research project — there is no research.json here.";
+
+export const NO_PROJECT_MESSAGE_WRITE =
+  `${NO_PROJECT_BASE} Nothing was saved; the answer stands, only the record of it is missing.`;
+
+export const NO_PROJECT_MESSAGE_READ =
+  `${NO_PROJECT_BASE} There is no project state to read — anything you are working on is standalone.`;
+
+/** Which of the two sentences a tool's no-project answer carries. */
+export type NoProjectKind = "write" | "read";
 
 export const MISSING_PROJECT_PATH_MESSAGE = "projectPath is required";
 
@@ -62,7 +76,7 @@ export const MISSING_PROJECT_PATH_MESSAGE = "projectPath is required";
  */
 export class NoProjectError extends Error {
   constructor() {
-    super(NO_PROJECT_MESSAGE);
+    super(NO_PROJECT_BASE);
     this.name = "NoProjectError";
   }
 }
@@ -81,8 +95,12 @@ export type NoProjectResult = {
  * `writerToolResult` reads to leave `isError` unset. A caller that only reads
  * `errors` still relays a sentence that reads as an answer.
  */
-export function noProjectResult(): NoProjectResult {
-  return { ok: false, reason: "no_project", errors: [NO_PROJECT_MESSAGE] };
+export function noProjectResult(kind: NoProjectKind = "write"): NoProjectResult {
+  return {
+    ok: false,
+    reason: "no_project",
+    errors: [kind === "read" ? NO_PROJECT_MESSAGE_READ : NO_PROJECT_MESSAGE_WRITE],
+  };
 }
 
 /**
@@ -108,11 +126,29 @@ export async function classifyProjectPath(projectPath: unknown): Promise<Project
   } catch {
     return "missing_dir";
   }
-  const [hasResearch, hasTree] = await Promise.all([
-    fileExists(join(projectPath, "research.json")),
-    fileExists(join(projectPath, "tree.gedcomx.json")),
+  // NOT `fileExists`, which swallows every access() failure as "absent". A real
+  // project directory that has lost its execute bit (mode 600 — restored from a
+  // backup, copied from a restrictive archive, an odd sandbox mount) stats fine
+  // as a directory while both probes throw EACCES. Read as "absent" that becomes
+  // `no_project`, and a write against a genuine project is dropped with a
+  // cheerful message — the exact silent loss the half-a-project rule exists to
+  // prevent. Anything that is not a clean ENOENT stays "project" so the read
+  // below fails loudly.
+  const [research, tree] = await Promise.all([
+    fileState(join(projectPath, "research.json")),
+    fileState(join(projectPath, "tree.gedcomx.json")),
   ]);
-  return !hasResearch && !hasTree ? "no_project" : "project";
+  return research === "absent" && tree === "absent" ? "no_project" : "project";
+}
+
+/** Three-way, unlike `fileExists`: an unreadable path is not an absent one. */
+async function fileState(path: string): Promise<"present" | "absent" | "unreadable"> {
+  try {
+    await access(path);
+    return "present";
+  } catch (e: any) {
+    return e?.code === "ENOENT" ? "absent" : "unreadable";
+  }
 }
 
 /**

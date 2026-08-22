@@ -3440,7 +3440,7 @@ export async function personWarningsTool(
   // to run person_read first).
   switch (await classifyProjectPath(input.projectPath)) {
     case "no_project":
-      return noProjectResult();
+      return noProjectResult("read");
     case "missing_dir":
       throw new Error(`projectPath does not exist: ${input.projectPath}`);
   }

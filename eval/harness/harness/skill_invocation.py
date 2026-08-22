@@ -190,12 +190,22 @@ def did_not_land(entry: dict[str, Any]) -> bool:
 
     Matched as a substring rather than by parsing: `response_summary` arrives
     single-encoded, double-encoded, and truncated across the committed corpus,
-    so a parse fails on shapes a substring handles. A false positive here skips
-    a violation, which is the conservative direction.
+    so a parse fails on shapes a substring handles.
+
+    MATCH THE BARE NAME, never `'"no_project"'`. `_summarize_tool_response` in
+    `e2e/orchestrator.py` passes any response under 500 chars through VERBATIM as
+    the raw MCP envelope, where the tool's document is an escaped string —
+    `[{"type": "text", "text": "{\\"reason\\": \\"no_project\\"}"}]`. The quoted
+    key does not occur in that, because a backslash sits where the closing quote
+    would be. The no-project envelope is ~131 chars, so it ALWAYS takes the
+    verbatim path, and the envelope shape outnumbers the unwrapped one in every
+    committed run. A quoted-key match therefore never fires in production while
+    passing every hand-built test. That orchestrator docstring says this
+    outright: "grep the bare name, which matches both."
     """
     if entry.get("is_error") is True:
         return True
-    return '"no_project"' in str(entry.get("response_summary") or "")
+    return "no_project" in str(entry.get("response_summary") or "")
 
 
 def find_unguarded_protected_writes(

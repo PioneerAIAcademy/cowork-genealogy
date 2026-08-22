@@ -108,7 +108,7 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     // The other READ issue #1695 calls out: a skill that looks at project state
     // before answering must not surface a path error to a user who simply is
     // not in a project.
-    if (e instanceof NoProjectError) return noProjectResult();
+    if (e instanceof NoProjectError) return noProjectResult("read");
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
   }
 

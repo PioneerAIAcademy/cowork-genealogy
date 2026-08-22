@@ -491,6 +491,21 @@ consumer keeps working, and `writerToolResult` reads `reason` to leave `isError`
 unset — the only `ok: false` exempt from that flag, because nothing was asked of
 a project that exists.
 
+**The sentence has two variants, because four of the twelve tools are not
+writers.** `research_query` and `project_context` are reads; `person_warnings`
+and `merge_warnings` are previews. Telling someone who asked "where are we?" in a
+non-project folder that their work was not saved is both wrong and alarming, so
+those four carry `NO_PROJECT_MESSAGE_READ` and the eight writers carry
+`NO_PROJECT_MESSAGE_WRITE`. Both share a base clause, which is what the
+single-phrasing packaging lint keys on.
+
+**An unreadable directory is not an absent project.** `classifyProjectPath`
+distinguishes a clean `ENOENT` from any other `access()` failure. A real project
+directory that has lost its execute bit still stats as a directory while every
+probe inside it throws `EACCES`; read as "absent" that becomes `no_project`, and
+a write against a genuine project is dropped with a cheerful message — the same
+silent loss the half-a-project row exists to prevent.
+
 **The harness must mirror this, and one of the three mirrors is inverted.**
 `is_error` is how the detectors know a call never landed, so a no-project write
 that kept its `isError` would be counted as a landed protected write and

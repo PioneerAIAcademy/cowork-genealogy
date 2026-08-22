@@ -272,7 +272,7 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       truncated: filtered.length > start + MAX_ITEMS,
     };
   } catch (e) {
-    if (e instanceof NoProjectError) return noProjectResult();
+    if (e instanceof NoProjectError) return noProjectResult("read");
     if (e instanceof ResearchQueryError) return { ok: false, errors: [e.message] };
     throw e;
   }

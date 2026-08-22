@@ -20,7 +20,7 @@
  * is dropped with a cheerful message.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { mkdtemp, writeFile, rm } from "fs/promises";
+import { mkdtemp, writeFile, rm, chmod } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
@@ -42,7 +42,15 @@ import { researchQuery } from "../../src/tools/research-query.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
 import { personWarningsTool } from "../../src/tools/person-warnings.js";
-import { NO_PROJECT_MESSAGE } from "../../src/utils/project-io.js";
+import {
+  NO_PROJECT_MESSAGE_READ,
+  NO_PROJECT_MESSAGE_WRITE,
+} from "../../src/utils/project-io.js";
+
+/** The four tools that are not writers. Telling someone who asked "where are
+ *  we?" in a non-project folder that their work was not saved is both wrong and
+ *  alarming, so these carry the read sentence. */
+const READERS = new Set(["research_query", "project_context", "person_warnings", "merge_warnings"]);
 
 const minimalResearch = {
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -143,8 +151,13 @@ describe("an existing directory holding neither project file", () => {
       expect(r.reason, `${tool} must carry the no_project discriminator`).toBe("no_project");
       expect(r.ok).toBe(false);
       // The text is relayed to a person unedited, so it is pinned, not just present.
-      expect(r.errors).toEqual([NO_PROJECT_MESSAGE]);
+      expect(r.errors).toEqual([
+        READERS.has(tool) ? NO_PROJECT_MESSAGE_READ : NO_PROJECT_MESSAGE_WRITE,
+      ]);
       expect(r.errors[0]).not.toMatch(/projectPath|research\.json not found|tree\.gedcomx/);
+      // A read must not claim the user's work went unsaved — it was never asked
+      // to save anything.
+      if (READERS.has(tool)) expect(r.errors[0]).not.toMatch(/saved/);
     });
   }
 });
@@ -215,6 +228,29 @@ describe("half a project — research.json present, tree.gedcomx.json missing", 
       await expectLoud(tool, call, dir, /tree\.gedcomx\.json not found in projectPath/);
     });
   }
+});
+
+describe("a real project directory that cannot be read", () => {
+  // `access()` failing is not the same as a file being absent. A project folder
+  // that lost its execute bit — restored from a backup, copied from a
+  // restrictive archive, an odd sandbox mount — still stats as a directory while
+  // every probe inside it throws EACCES. Read as "absent" that becomes
+  // no_project, and a write against a genuine project is dropped with a
+  // cheerful message: the silent loss the half-a-project rule exists to prevent.
+  it("stays loud rather than claiming the folder is not a project", async () => {
+    await writeResearch();
+    await writeTree();
+    await chmod(dir, 0o600);
+    try {
+      const r: any = await researchAppend({
+        projectPath: dir, section: "sources", op: "append", entry: { id: "src_001" },
+      } as any);
+      expect(r.ok).toBe(false);
+      expect(r.reason, "an unreadable project must not be reported as no_project").toBeUndefined();
+    } finally {
+      await chmod(dir, 0o700);
+    }
+  });
 });
 
 describe("a project file that is present but unparseable", () => {
