@@ -96,6 +96,11 @@ time, regardless of how directly the request named the destination.
    counts. Reach for `Read` only when you genuinely need a full entry body
    that `research_query` cannot project.
 
+   **`research_query` returns at most 50 `items` per call; `count` is the true
+   total.** When `truncated` is true you are routing on part of the set — page
+   with `offset` (50, then 100) before concluding a section is empty, complete,
+   or that some step has produced nothing.
+
    **Query what the routing decision needs and no more.** Each call is a turn.
    Pull the one section that answers the question in front of you rather than
    surveying several, and don't re-query state you fetched earlier in the same

@@ -477,6 +477,96 @@ def _relational_name_hit(value):
     return None
 
 
+# `structured_value.relationship_type` and the human-readable `value` must agree
+# about WHICH relation and in WHICH direction. They are compared by category, not
+# literally, because `rt: "spouse"` beside `value: "wife of George Bennett"` is
+# correct — wife IS a spouse — and a literal comparison flags 39 assertions in the
+# committed corpus of which only 7 are real.
+_RELATION_CATEGORY = {
+    "father": "parent", "mother": "parent", "parent": "parent",
+    "son": "child", "daughter": "child", "child": "child",
+    "wife": "spouse", "husband": "spouse", "spouse": "spouse",
+    "widow": "spouse", "widower": "spouse",
+    "brother": "sibling", "sister": "sibling", "sibling": "sibling",
+}
+
+_RELATION_WORD_IN_VALUE = re.compile(
+    r"\b(" + "|".join(_RELATION_CATEGORY) + r")\b", re.IGNORECASE
+)
+
+
+def _relationship_category(relationship_type):
+    """Category for a `relationship_type`, ignoring an `_inferred` suffix.
+    Returns None for a spelling this table does not know (`stepfather`,
+    `father_in_law`, …) so the check SKIPS rather than guesses — an unknown
+    type is not evidence of disagreement."""
+    base = str(relationship_type or "").lower().replace("_inferred", "").strip()
+    return _RELATION_CATEGORY.get(base)
+
+
+def test_relationship_type_agrees_with_its_value(before_state, after_state):
+    """A relationship assertion's machine-readable `relationship_type` must not
+    contradict its own human-readable `value`.
+
+    Found by a genealogist annotating `v1_2026-08-17_18-57-51`: Grace Tolman
+    persisted as `relationship_type: "child"` where the obituary calls her
+    Harold's SISTER. Two shapes occur in the committed corpus, 7 instances
+    across ut_017 and ut_027 in three separate run logs:
+
+      category swap        rt=child   value='sister of Harold Dean Whitaker'
+      direction inversion  rt=parent  value='child of Louise Becker'
+
+    This is the most dangerous classification defect of its family because the
+    two layers disagree SILENTLY. Downstream materialisation reads
+    `structured_value`, so a wrong `relationship_type` writes a wrong family
+    edge into the tree — or one pointing the wrong way — while the assertion
+    still reads correctly to a human checking `value`. The LLM judge reads the
+    prose and passes it; a `value`-only matcher passes it too. Nothing else in
+    the harness looks at both fields at once.
+
+    Compared by CATEGORY (parent / child / spouse / sibling), so `spouse` beside
+    "wife of …" agrees. A value naming several relations passes if the type
+    matches any of them, and a value naming none is skipped — there is nothing
+    to disagree with.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    before_ids = {a.get("id") for a in before.get("assertions", [])}
+
+    errors = []
+    for a in after.get("assertions", []):
+        if a.get("id") in before_ids:
+            continue
+        if not _fact_type_matches(a.get("fact_type"), "relationship"):
+            continue
+        rel_type = (a.get("structured_value") or {}).get("relationship_type")
+        value = str(a.get("value") or "")
+        want = _relationship_category(rel_type)
+        if not want or not value:
+            continue
+        found = {
+            _RELATION_CATEGORY[w.lower()]
+            for w in _RELATION_WORD_IN_VALUE.findall(value)
+        }
+        if found and want not in found:
+            errors.append(
+                f"assertions[{a.get('id', '?')}] (record_role="
+                f"'{a.get('record_role')}'): relationship_type="
+                f"{rel_type!r} is a {want} relation, but value={value!r} "
+                f"states a {'/'.join(sorted(found))} relation. The two layers "
+                f"must agree — materialisation reads structured_value, so this "
+                f"writes the wrong family edge (or the right one backwards) "
+                f"while the value still reads correctly"
+            )
+
+    assert not errors, (
+        "relationship_type contradicts its own value:\n  - " + "\n  - ".join(errors)
+    )
+
+
 def test_name_value_is_a_bare_name(before_state, after_state):
     """A `name` assertion's value is the NAME, not the name plus the person's
     tie to someone else (#1627).

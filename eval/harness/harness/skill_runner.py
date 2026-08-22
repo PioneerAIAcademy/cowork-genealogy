@@ -314,7 +314,7 @@ async def run_skill(
     max_tool_calls: int = DEFAULT_MAX_TOOL_CALLS,
     max_input_tokens_per_turn: int = DEFAULT_MAX_INPUT_TOKENS_PER_TURN,
     sdk_message_silence_seconds: int = DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
-    allowed_tools_override: list[str] | None = None,
+    allowed_tools_override: list[str] | None = None,  # IGNORED — see below
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     declared_tools: set[str] | None = None,
@@ -323,6 +323,12 @@ async def run_skill(
 
     The caller is responsible for snapshotting workspace state before/after
     and running validators + judge.
+
+    `allowed_tools_override` is accepted but **explicitly ignored** — the
+    session now grants every registered MCP tool (issue #1748). The
+    parameter survives so the acceptance test can pass a restrictive
+    list and prove it has no effect; deleting it would make the test
+    non-discriminating (it would pass on main too).
 
     `declared_tools` is the BARE tool names this skill claims in its own
     `allowed-tools` (`allowed_tools.declared_skill_tools`) — NOT the unioned
@@ -336,28 +342,16 @@ async def run_skill(
         fixture_names, fixtures_dir, workspace=workspace
     )
 
-    if allowed_tools_override is not None:
-        # Caller is asserting full control of the allowlist (typically the
-        # orchestrator passing compute_allowed_tools output). Mock tools
-        # registered for fixtures the skill isn't allowed to call remain
-        # invisible to the SDK.
-        allowed_tools = list(allowed_tools_override)
-    else:
-        # Standalone use of run_skill (e.g., one-off scripts): permissive
-        # baseline + every loaded mock tool.
-        allowed_tools = list(BASELINE_ALLOWED) + [
-            f"mcp__genealogy__{name}" for name in tools_by_name
-        ]
-
-    # Compute disallowed_tools as the fixed dangerous-tool backstop PLUS
-    # every mcp__genealogy__* mock tool the skill is NOT allowed to call.
-    # Belt + suspenders against the spec §15 known risk: the explicit
-    # disallow list rejects out-of-allowlist MCP calls at call time,
-    # independent of the permission_mode setting.
-    allowed_set = set(allowed_tools)
-    all_mock_mcp = {f"mcp__genealogy__{name}" for name in tools_by_name}
-    extra_disallowed = sorted(all_mock_mcp - allowed_set)
-    disallowed_tools = list(DISALLOWED_BACKSTOP) + extra_disallowed
+    # Permissive: baseline + every registered mock tool, matching
+    # production (issue #1748). Per-skill narrowing was retired because
+    # `allowed-tools` frontmatter is a grant, not a restriction —
+    # deriving a deny list as its complement inverted the field's
+    # documented meaning. The advisory test_tool_allowlist validator
+    # still warns on undeclared tool calls without failing the test.
+    allowed_tools = list(BASELINE_ALLOWED) + [
+        f"mcp__genealogy__{name}" for name in tools_by_name
+    ]
+    disallowed_tools = list(DISALLOWED_BACKSTOP)
 
     skills_invoked: list[str] = []
     # Mutable counter shared between hook and loop so the hook can flag

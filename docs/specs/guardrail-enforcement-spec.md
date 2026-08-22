@@ -148,6 +148,7 @@ depends on another shipping first.
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
+| §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **neither harness** | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload) |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 
@@ -156,6 +157,14 @@ depends on another shipping first.
 > project files are written through the **device bridge**, whose tool names its
 > matcher does not cover — while `Write`, which it does deny, cannot reach the
 > user's files at all. It denies the harmless operation and permits the real one.
+> **Closed for `device_commit_files` on 2026-08-18** — predicate *and* matcher,
+> the second of which the first attempt shipped without.
+
+> **The caller row above is the same instrument, asking a different question.**
+> The lockdown asks what file a write is going to; the caller rule asks who is
+> calling. It is the only row here that binds in production and in neither
+> harness, so its e2e counterpart is a separate function
+> (`is_main_thread_owned_section_write`) rather than a shared predicate.
 
 ### The ownership declaration: promoted out of Python, still not a hard deny
 
@@ -1029,6 +1038,38 @@ this section before reopening one.
   would each set a new high-water mark for a plugin agent body — against
   `record-extractor`'s 894 today. `research-exhaustiveness` (413) and
   `proof-conclusion` (519) are the cheap candidates if this is revisited.
+
+  **Revisited and acted on for `proof-conclusion`, 2026-08-19.** It is now a
+  pair: a thin routing skill (4.8 KB) plus `agents/proof-conclusion.md`, the
+  whole doctrine inlined at 49,900 bytes — between `gps-mentor.md` (40,802) and
+  `record-extractor.md` (58,541), so no new high-water mark. Both ends of that
+  band moved during the work (the agent grew as rules landed, `record-extractor`
+  grew on main), which is the argument for measuring a ceiling rather than
+  quoting one. Both `references/` files were deleted rather than kept
+  beside it — an agent reading its own reference material on demand scored 6/19
+  against a 12–14/19 baseline, and failed silently. What this bought beyond
+  attribution: the agent emits a
+  real `agent_id`, which is the thing the success gate below has never had. It
+  does **not** by itself graduate that gate — one of four skills is not a
+  completion instrument — but it is the first of the four, and the route is now
+  demonstrated rather than argued.
+
+  **What the conversion cost, and the rules that came out of it:**
+  `docs/skill-to-agent-pair-conversion.md`. The short version, because it bears
+  on every later pair: a prose gate weakens when it moves behind a delegation
+  boundary — the caller's framing competes with it — so a rule that must hold
+  belongs in the writer tool before the prose moves. Five tests that were stable
+  across five pre-fold runs became unstable across five post-fold ones.
+
+  **Two things the first paid run taught, both worth keeping.** The agent is
+  pinned to the model the doctrine ran under *before* the fold, not to the model
+  the nearest analogue uses: the 2026-08-19 run pinned `claude-sonnet-5` and so
+  moved the doctrine and changed its executor in one step, which makes a
+  regression unattributable. And the routing skill holds `project_context`
+  only — with a query tool it read `conflicts` itself and concluded a conflict
+  was "collateral" before delegating, deciding the agent's preconditions gate
+  from the one participant that cannot see the evidence. A thin caller needs to
+  be thin in capability, not just in wording.
 
   **This is the only route that reopens §7.** An agent is the one form a
   guardrail skill can take that emits a completion signal (`SubagentStop`) and

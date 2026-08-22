@@ -208,3 +208,25 @@ def test_every_row_declares_an_artifact_the_harness_knows():
         {r["artifact"] for r in rows()} - {RESEARCH_JSON, TREE_GEDCOMX_JSON}
     )
     assert unknown == []
+
+
+def test_hook_plane_rows_name_the_agent_that_may_write():
+    """A row claiming the `hook` plane must say WHICH agent the hook permits.
+
+    `callers` cannot carry it: the unit plane keys on the calling skill's
+    frontmatter name, so a row enforced at both planes would raise (the test
+    above pins that). The agent therefore lives in `hookCallers`, and without
+    this assertion a row could claim the plane while naming no permitted caller
+    at all — from which a later phase would derive a rule that denies everyone,
+    the `deny unless ==` polarity ADR-0011 warns about.
+    """
+    missing = [
+        r["section"]
+        for r in rows()
+        if "hook" in r.get("enforceableAt", [])
+        and not [c for c in r.get("hookCallers", []) if c.startswith("agent:")]
+    ]
+    assert missing == [], (
+        "these rows are declared enforceable at the hook plane but name no "
+        f"`hookCallers` agent, so nothing says who may write them: {missing}"
+    )

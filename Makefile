@@ -443,7 +443,7 @@ optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger q
 	cd eval/triggering && uv run python -m scripts.run_loop \
 	  --eval-set eval_sets/$(SKILL).json \
 	  --skill-path ../../packages/engine/plugin/skills/$(SKILL) \
-	  --model "$${MODEL:-claude-sonnet-4-6}" --results-dir ../runlogs/optimizer --verbose
+	  --model "$(if $(MODEL),$(MODEL),claude-sonnet-4-6)" --results-dir ../runlogs/optimizer --verbose
 
 .PHONY: e2e-preflight
 e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps, live MCP connection ~30s)
@@ -524,7 +524,7 @@ e2e-author: ## Fixture-authoring script, for developers: make e2e-author ARGS="s
 
 .PHONY: e2e-validate
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
-	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
+	cd eval/harness && uv run python -m e2e.validate_fixture $(if $(TEST),$(TEST),--all)
 
 .PHONY: judge-report
 judge-report: ## Non-discrimination scan of the UNIT judge over committed run logs: make judge-report | SKILL=<name>. Reads committed JSON only — no API calls, no cost.
