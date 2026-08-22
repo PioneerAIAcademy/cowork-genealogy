@@ -1100,7 +1100,7 @@ Shared validation code in `eval/harness/validators/`. These run on every test re
 One file per skill in `eval/harness/validators/`, following pytest naming (`test_conflict_resolution.py`).
 
 - **Ownership enforcement** — the skill only wrote to sections it owns per the ownership table in research-schema-spec.md Section 4. Operates on the diff.
-- **Tool allowlist** — the skill only called MCP tools listed in its SKILL.md `allowed-tools` frontmatter. Operates on the tool calls list.
+- **Tool allowlist (advisory)** — warns when the skill called MCP tools not listed in its SKILL.md `allowed-tools` frontmatter. Does not fail the test — the session grants all tools. Operates on the tool calls list.
 - **Skill structural rules** — requirements from SKILL.md that are deterministically checkable (e.g., "every conflict must have ≥2 competing_assertion_ids"). Operates on the diff.
 
 ### Conventions
@@ -1123,13 +1123,14 @@ def test_log_append_only(before_state, after_state, tool_calls):
     for entry in before_log:
         assert entry in after_log, f"log entry {entry['id']} was modified or removed"
 
-def test_tool_allowlist(before_state, after_state, tool_calls):
-    """Skill-specific: only tools in SKILL.md frontmatter were called."""
-    allowed = before_state["skill_frontmatter"].get("allowed-tools", [])
-    for call in tool_calls:
-        # Strip the mcp__<server>__ prefix
-        bare_name = call["tool"].split("__")[-1]
-        assert bare_name in allowed, f"skill called {bare_name}, not in allowed-tools"
+def test_tool_allowlist(tool_calls, skill_frontmatter, test):
+    """Advisory: warns when undeclared tools were called."""
+    import warnings
+    allowed = (skill_frontmatter or {}).get("allowed-tools", [])
+    bad = [c["tool"].split("__")[-1] for c in tool_calls
+           if c["tool"].split("__")[-1] not in allowed]
+    if bad:
+        warnings.warn(f"undeclared tools called: {sorted(set(bad))}")
 ```
 
 **The three arguments:**
@@ -1686,44 +1687,36 @@ Key settings:
 
 - `cwd` — the temp directory. The SDK discovers skills from `.claude/skills/` relative to this path.
 - `setting_sources=["project"]` — required for skill discovery. `"project"` loads `.claude/` from cwd. v1.5 dropped `"user"` because eval runs on developer machines where `~/.claude/skills/` may contain custom user skills that contaminate routing tests; outcomes need to be reproducible across machines and CI. Production Cowork loads both, but it runs in a fresh VM where `~/.claude/` is a known clean state.
-- `allowed_tools` — **per-skill, derived from the skill's SKILL.md frontmatter** (see below). Combined with `permission_mode="dontAsk"`, this enforces the tool allowlist at execution time rather than only catching violations after the fact.
+- `allowed_tools` — the filesystem baseline plus every registered MCP tool (see below). No per-skill narrowing: `allowed-tools` frontmatter is a grant, not a restriction, and the `test_tool_allowlist` validator reports undeclared calls after the fact.
 - `model` — pinned to a specific version for reproducibility across runs.
 - `temperature=0` — deterministic decoding within a single run. **v1.5 implementation note:** the installed `claude-agent-sdk` does not currently expose a `temperature` field on `ClaudeAgentOptions` — the harness relies on the underlying Claude Code CLI's default decoding behaviour. Variance is acknowledged in `harness/skill_runner.py` and captured by bumping `runs_per_test` when needed.
 - `hooks` — `PreToolUse` hooks let the harness observe every tool invocation, including `Skill` calls (used to populate `skills_invoked`) and MCP calls (used to populate `tool_calls` and route to the mock server).
 
 ### Deriving `allowed_tools` per skill
 
-Cowork honors a skill's `allowed-tools` frontmatter; the Agent SDK currently does not (master testing plan, Appendix F). To match production fidelity, the harness parses each skill's SKILL.md frontmatter and constructs `allowed_tools` as the union of:
+The harness grants every registered MCP tool to every skill, matching
+production. Neither Cowork nor the hosted control plane builds a
+per-skill allowlist: `allowed-tools` is a **grant** ("tools Claude can use
+without asking permission"), not a restriction — the field that removes a tool
+is `disallowed-tools`, which no skill declares. The previous harness behavior
+of deriving a deny list as the complement inverted the field's documented
+meaning (anthropics/claude-code#37683).
 
-1. **Baseline filesystem tools.** Every skill needs `Read` (so it can read project files), `Glob` + `Grep` (so it can find them), and `Write` + `Edit` (so it can produce its output). These are added unconditionally — Cowork doesn't require them to be declared either, and the `research.json` ownership table isn't a clean source for "does the skill need Write/Edit": search-wikipedia writes markdown to the user's folder, tree-edit writes `tree.gedcomx.json`, neither shows up in the ownership table but both need Write/Edit. The universal `test_ownership_table` validator catches research.json misuse, and the `disallowed_tools` backstop blocks dangerous host tools (`Bash`, `WebFetch`, etc.).
-2. **Declared MCP tools.** Every entry in the skill's `allowed-tools` frontmatter, qualified to its full `mcp__<server>__<tool>` form.
-3. **`Skill`.** Always included so the skill-routing mechanism works.
+The session allowlist is:
 
-```python
-def compute_allowed_tools(skill_name: str, tmp_dir: Path) -> list[str]:
-    fm = parse_frontmatter(tmp_dir / ".claude/skills" / skill_name / "SKILL.md")
-    declared = [f"mcp__genealogy__{t}" if "__" not in t else t
-                for t in fm.get("allowed-tools", [])]
-    # Write and Edit are always in the baseline — the research.json
-    # ownership table isn't a clean source for "does the skill write any
-    # file" (see prose above). The universal ownership validator catches
-    # research.json misuse and the disallowed-tools backstop blocks
-    # dangerous host tools.
-    # Task is always in the baseline — plugin subagents are staged into
-    # every workspace and a skill delegates only when its SKILL.md says to.
-    baseline = ["Read", "Glob", "Grep", "Write", "Edit", "Skill", "Task"]
-    # Plus the frontmatter `tools:` of every plugin agent the skill
-    # delegates to via `@plugin:<name>`. A delegated agent's MCP calls run
-    # in the SAME session and go through the same allow/deny lists, so they
-    # must be in the union or the SDK denies them. Per-agent `tools:` is
-    # subtractive (it narrows a set inherited from the session), which is
-    # why this union is required rather than a leak to be fixed.
-    for agent in agent_refs_for_skill(skill_md):
-        declared.extend(parse_frontmatter(agents_dir / f"{agent}.md").get("tools", []))
-    return baseline + declared
-```
+1. **Baseline filesystem tools.** `Read, Glob, Grep, Write, Edit, Skill, Task` — added unconditionally. The `disallowed_tools` backstop blocks dangerous host tools (`Bash`, `WebFetch`, etc.).
+2. **Every registered MCP tool.** Every tool the mock server registered, qualified to `mcp__genealogy__<tool>` form.
 
-A skill that calls a tool not in its derived list is rejected by the SDK at call time. The harness records the rejection as a tool_call with `matched.kind: "none"` and an error envelope, and the run typically fails the tool-allowlist validator.
+`compute_allowed_tools` still resolves the **declared** set (skill frontmatter +
+agent union + run_skills callees) for two advisory consumers:
+
+- The `test_tool_allowlist` universal validator, which **warns** on undeclared
+  calls but does not fail the test.
+- The `ValueError` guard that validates `execution.run_skills` references.
+
+The advisory validator's warning is the signal that a skill's frontmatter is
+out of date — the call succeeds (the tool is available), but the declaration
+should be updated.
 
 **The allowlist cannot express a per-*context* rule.** Because the union above makes the session set a superset of every delegated agent's set, the main session is granted every tool its subagents need — including ones only a subagent may safely call (`image_read` returns inline base64 that overflows the transport buffer if it lands in the caller's context). That policy lives in the **PreToolUse hook** instead, which can discriminate by context via `agent_id` — absent on the main thread, present inside a Task-spawned subagent.
 
@@ -1826,7 +1819,7 @@ def create_mock_server(fixture_manifest):
 
 The `matched.kind` field in `call_log` is either `"predicate"` (a fixture matched) or `"none"` (no fixture matched — the handler returned the `fixture_not_found` envelope above). `expected_args` carries the matched fixture's `args` block so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file.
 
-Any call recorded with `matched.kind == "none"` — and any MCP call the model emitted that never reached the mock at all, because the tool had no fixture or the skill's `allowed-tools` didn't grant it — aborts the run with `aborted_reason: unmatched_tool_call`. The harness diffs the MCP calls the model emitted against the calls that matched a fixture predicate; any shortfall is an uncovered call. A skill that ran against a `fixture_not_found` (or denied-tool) error produced output from bad data, so grading it would be meaningless — the fix is always a corpus fix (add or correct a fixture).
+Any call recorded with `matched.kind == "none"` — and any MCP call the model emitted that never reached the mock at all, because the tool had no fixture — aborts the run with `aborted_reason: unmatched_tool_call`. The harness diffs the MCP calls the model emitted against the calls that matched a fixture predicate; any shortfall is an uncovered call. A skill that ran against a `fixture_not_found` error produced output from bad data, so grading it would be meaningless — the fix is always a corpus fix (add or correct a fixture). (Per-skill tool denial was retired; all MCP tools are granted.)
 
 The SDK is configured to use the mock server:
 
@@ -1837,7 +1830,7 @@ mock_server, call_log = create_mock_server(manifest)
 options = ClaudeAgentOptions(
     cwd=tmp_dir,
     mcp_servers={"genealogy": mock_server},
-    allowed_tools=[f"mcp__genealogy__{t}" for t in manifest],
+    allowed_tools=BASELINE_ALLOWED + [f"mcp__genealogy__{t}" for t in tools_by_name],
     # ...
 )
 ```
@@ -1972,7 +1965,6 @@ A companion **static** check — `eval/harness/scripts/check_tool_coverage.py`, 
 
 - **Skill discovery on Linux:** The testing plan flags issue #268 — hardcoded macOS paths in the SDK's skill discovery. Verify that `.claude/skills/<name>/SKILL.md` is found correctly on Linux before trusting results.
 - **Session storage pollution:** Temp directories create orphaned session entries in `~/.claude/projects/`. The harness must clean these up or the directory will grow unboundedly.
-- **`permission_mode="dontAsk"` must actually block unlisted tools.** The harness relies on this SDK setting to enforce per-skill allowlists at call time (see "Deriving `allowed_tools` per skill"). Verify on every SDK version bump that an unlisted tool is rejected rather than silently prompting. If the SDK regresses, fall back to `disallowed_tools` populated as the complement of the per-skill allowlist.
 - **Hook API stability:** The PreToolUse hook interface may change between SDK versions. Pin the SDK version in `eval/harness/pyproject.toml`.
 
 ---
@@ -2014,11 +2006,14 @@ Eight fixtures in `eval/fixtures/mcp/`:
 
 ### Deterministic Validators
 
-Two seed validators in `eval/harness/validators/`:
+Validators in `eval/harness/validators/` fall into two tiers:
+
+- **Gating** — failure prevents the LLM judge from running (saves cost). All universal validators except `test_tool_allowlist` are gating.
+- **Advisory** — emits a warning but does not fail the test. `test_tool_allowlist` is advisory: it warns when a skill calls undeclared tools, but the session grants all tools regardless.
 
 | Validator | Path | Scope |
 |-----------|------|-------|
-| Universal | `eval/harness/validators/test_universal.py` | All skills. Checks: schema structure, enum values, ID prefixes, ID referential integrity, full reference integrity (dangling/cross-file/cycles, via the compiled TS `validateParsed`), duplicate tree IDs, append-only log, no-delete enforcement. |
+| Universal | `eval/harness/validators/test_universal.py` | All skills. Checks: schema structure, enum values, ID prefixes, ID referential integrity, full reference integrity (dangling/cross-file/cycles, via the compiled TS `validateParsed`), duplicate tree IDs, append-only log, no-delete enforcement, tool allowlist (advisory). |
 | Conflict-resolution | `eval/harness/validators/test_conflict_resolution.py` | One skill. Checks: ownership enforcement (only writes to `conflicts`), no MCP tool calls, fact conflicts have ≥2 competing assertions, resolved conflicts have required fields, preferred assertion is in competing list. |
 
-The universal validator demonstrates the pattern for general validators. The conflict-resolution validator demonstrates the pattern for skill-specific validators (ownership, tool allowlist, structural rules from SKILL.md). Use these as templates when writing validators for other skills.
+The universal validator demonstrates the pattern for general validators. The conflict-resolution validator demonstrates the pattern for skill-specific validators (ownership, structural rules from SKILL.md). Use these as templates when writing validators for other skills.

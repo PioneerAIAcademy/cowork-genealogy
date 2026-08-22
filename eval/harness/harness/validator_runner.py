@@ -41,6 +41,7 @@ def run_validators(
     test: dict[str, Any] | None = None,
     blocked_context_calls: list[dict[str, Any]] | None = None,
     blocked_protected_writes: list[dict[str, Any]] | None = None,
+    attempted_mcp_calls: list[dict[str, Any]] | None = None,
     skills_invoked: list[str] | None = None,
     text_response: str | None = None,
 ) -> list[ValidatorRunResult]:
@@ -75,6 +76,12 @@ def run_validators(
         # `tool_calls`, so this is the only place a raw-write attempt is visible.
         # The universal validator asserts it is empty (issue #1493).
         "blocked_protected_writes": blocked_protected_writes or [],
+        # MCP calls the model emitted that never reached a fixture match —
+        # denied by policy, fixture caps, or aborts. Distinct from tool_calls,
+        # which records only successful dispatches. Used by test_tool_allowlist
+        # to check the full set of tools the skill *tried* to call, not just
+        # the ones that succeeded (issue #1748).
+        "attempted_mcp_calls": attempted_mcp_calls or [],
         # `test` is the parsed test JSON dict (the inner "test" block,
         # plus top-level validator-facing blocks the orchestrator threads
         # in — currently `expected_classifications`). Validators gate
