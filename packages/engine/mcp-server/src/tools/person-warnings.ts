@@ -7,7 +7,7 @@
 
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { classifyProjectPath, noProjectResult } from "../utils/project-io.js";
+import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -3442,7 +3442,7 @@ export async function personWarningsTool(
     case "no_project":
       return noProjectResult("read");
     case "missing_dir":
-      throw new Error(`projectPath does not exist: ${input.projectPath}`);
+      throw new Error(missingProjectDirMessage(input.projectPath));
   }
 
   const { tree, anchor } = await loadAnchor(input.projectPath, input.personId);

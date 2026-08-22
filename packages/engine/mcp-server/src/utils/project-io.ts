@@ -68,6 +68,14 @@ export type NoProjectKind = "write" | "read";
 
 export const MISSING_PROJECT_PATH_MESSAGE = "projectPath is required";
 
+/** The second sentence a person reads out of `classifyProjectPath`'s loud rows,
+ *  and the one that takes an argument. A function rather than a constant so the
+ *  single-phrasing packaging guard can hold it to the same rule as the others —
+ *  `person_warnings` classifies the directory itself and would otherwise carry
+ *  its own copy. */
+export const missingProjectDirMessage = (projectPath: unknown): string =>
+  `projectPath does not exist: ${projectPath}`;
+
 /**
  * Raised by `readProjectJson` when `projectPath` is a real directory holding
  * neither project file. Tools re-raise this class UNCHANGED (rather than
@@ -170,7 +178,7 @@ export async function readProjectJson(projectPath: string, filename: string): Pr
     case "missing_arg":
       throw new Error(MISSING_PROJECT_PATH_MESSAGE);
     case "missing_dir":
-      throw new Error(`projectPath does not exist: ${projectPath}`);
+      throw new Error(missingProjectDirMessage(projectPath));
     case "no_project":
       throw new NoProjectError();
   }
