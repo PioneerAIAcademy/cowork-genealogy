@@ -771,7 +771,18 @@ def check_guardrail_compliance(
 # without updating this set makes find_protected_writes_by_unnamed_delegate
 # under-flag (fail toward false-negative, not false-positive).
 DEDICATED_AGENT_NAMES = frozenset(
-    {"record-extractor", "image-reader", "image-reader-opus", "gps-mentor"}
+    {
+        "record-extractor",
+        "image-reader",
+        "image-reader-opus",
+        "gps-mentor",
+        # Added when proof_summaries moved behind the hook's caller check: the
+        # owning skill now delegates the write, so EVERY legitimate proof
+        # summary arrives from this agent. Without the name here each one reads
+        # as an unnamed-delegate bypass — the detector would fire hardest on
+        # exactly the runs that did the right thing.
+        "proof-conclusion",
+    }
 )
 
 

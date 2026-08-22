@@ -252,6 +252,39 @@ def _load_guard():
 _guard = _load_guard()
 
 
+#: research.json sections the shipped hook routes to a named agent, mapped to
+#: that agent's bare name. Reached through `_guard` so there is exactly ONE
+#: definition — the plugin hook's — rather than a harness copy that drifts.
+#: Same discipline as PROTECTED_PROJECT_FILES above: do not rebind this to a
+#: module-level literal, or the copy is back.
+OWNED_SECTIONS = _guard.OWNED_SECTIONS
+
+
+def owned_section_denial(section: str) -> dict[str, Any]:
+    """A PreToolUse deny for a `research_append` op on an agent-owned section.
+
+    Built from the SHIPPED hook's own `OWNER_REASON` and `OWNED_SECTIONS`, the
+    same import-don't-copy discipline `protected_file_denial` below follows, so
+    the harness denies with the text the agent meets in Cowork.
+
+    It cannot reuse `subagent_only_denial`: that one says the TOOL is reserved
+    for a subagent, which is true of `extraction_append` and flatly false of
+    `research_append` — the general writer, called from the main thread
+    constantly for plans, questions, conflicts and the log. An agent told
+    otherwise stops writing all of them. Only the section is routed, and only
+    `OWNER_REASON` says so.
+    """
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": _guard.OWNER_REASON.format(
+                section=section, agent=_guard.OWNED_SECTIONS[section]
+            ),
+        },
+    }
+
+
 def protected_file_denial(tool_name: str, tool_input: Any) -> dict[str, Any] | None:
     """A PreToolUse deny payload for a raw write to a protected project file.
 

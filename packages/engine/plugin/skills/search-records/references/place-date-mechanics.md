@@ -49,13 +49,13 @@ matching.
   places within 3 jurisdiction levels above it. `q.birthLikePlace=
   Lehi, Utah County, Utah` returns records in Lehi, Utah County,
   and Utah — but not all of USA.
-- **With `.exact=on`:** Still descends to child localities, but does
-  NOT expand upward. `q.birthLikePlace=Utah County, Utah` with
-  `.exact=on` finds Lehi, Provo, etc. but excludes records indexed
-  only as "Utah, USA."
+- **With `.exact=on`:** Does NOT expand upward — `q.birthLikePlace=Utah County,
+  Utah` with `.exact=on` excludes records indexed only as "Utah, USA." Whether it
+  still descends to child localities (Lehi, Provo) is recorded by no verdict —
+  treat it as unverified.
 
-**Key insight:** Exact place does NOT prevent matching child
-localities — it prevents matching parent localities.
+**Key insight:** Exact place stops matching parent localities. Do not assume it
+keeps child localities; that half is unmeasured.
 
 ### What place expansion actually costs — measured 2026-08-04
 
@@ -221,11 +221,13 @@ Each name field independently supports wildcards and `.exact=on`.
   relative-name bullet below, and getting it backwards will make you
   misread every nil result:
 
-  - For a field the index virtually always carries — the searched person's
-    **own** given name and surname — there is nothing to be silent about,
-    so required collapses to *must match*. One term that does not match
-    collapses the result set — measured, a few hundred results fell to
-    single digits on a gibberish given name.
+  - For the searched person's **own** surname, required collapses to *must
+    match*: measured 2026-08-20, an unqualified `surname` DROPS records with
+    no indexed surname. But its own given name does NOT — an unqualified
+    `givenName` KEEPS records with no indexed given name, so it behaves like
+    the relative fields below. One term that does not match still collapses
+    the result set — measured, a few hundred results fell to single digits on
+    a gibberish given name.
   - For a field a record can simply **omit**, silence is not a
     contradiction, so those records are kept. A father term that nothing
     could match still returned about **97%** of its baseline: only the
@@ -271,12 +273,13 @@ Each name field independently supports wildcards and `.exact=on`.
   drop, and the 300-result `fatherGivenName=William` survey that once stood
   here is a sample of a pool too large to read to the end.
 - **How much a relative name narrows depends on WHICH relative — the spread is
-  wide enough to change what a nil means.** Measured on two marriage
-  populations, for the **father** and **spouse** names only, every pool read to
-  the end: an unmatchable *father* name returned about 70-93% of the baseline,
-  while an unmatchable *spouse* name returned 10% in one population and 81% in
-  the other — the spread tracking how often each relative is indexed there.
-  Mother, parent and other names were not enumerated.
+  wide enough to change what a nil means.** Enumerated on two marriage
+  populations, for the **father**, **spouse**, **mother** and **parent** names,
+  every pool read to the end: an unmatchable *father* name returned about 70-93%
+  of the baseline, an unmatchable *mother* name about 70-99%, an unmatchable
+  *parent* name about 70-93%, while an unmatchable *spouse* name returned 10% in
+  one population and 81% in the other — the spread tracking how often each
+  relative is indexed there. `other` names were not enumerated.
   A father-anchored nil is therefore weak evidence that no record exists; a
   spouse-anchored one can be stronger, though it varies too much to lean on
   alone.
