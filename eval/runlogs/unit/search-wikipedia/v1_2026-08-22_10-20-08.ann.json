@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-08-22_10-20-08.json",
+  "annotator": "edmondoware70@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool query and response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Reply economy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Reply economy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool query and response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool query and response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool query and response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Reply economy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_p4t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_p4t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_p4t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_p4t",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_p4t",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool query and response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Reply economy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree with 2. The reply opens \"Now I'll write the filled-in template to the\nfile.\" before the confirmation, which is mid-workflow narration that step 5\nexcludes (\"One sentence only\"). This is pre-existing behaviour and not something\nthis PR introduced: the identical shape appeared on ut_search_wikipedia_010 in\nthe 07-28 run and scored 3 on every dimension there, which is the reason this\ndimension exists. Now also caught deterministically by\ntest_reply_does_not_narrate_pending_step."
+    },
+    {
+      "test_id": "ut_search_wikipedia_p4t",
+      "dimension_source": "rubric",
+      "dimension_name": "Reply economy",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Corrected 3 to 2. The reply is not one sentence: it opens \"Now I'll fill in the\ntemplate and write the file.\" before the confirmation, the same shape the judge\nscored 2 on ut_search_wikipedia_001 in this same run. The judge's rationale here\nquotes the reply as \"exactly one sentence\" and omits that opening clause, so\nthis is a judge miss and not a borderline call. Recorded as calibration evidence\nfor the deterministic check this PR adds."
+    }
+  ]
+}
