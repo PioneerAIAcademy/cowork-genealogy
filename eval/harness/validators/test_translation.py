@@ -39,16 +39,11 @@ def test_no_mcp_tools_called(tool_calls, test):
     )
 
 
-# --- Text-response checks (requires harness text_response injection) --------
+# --- Text-response checks --------------------------------------------------
 #
-# Both functions below use 	ext_response: str which is NOT yet injected by
-# eval/harness/harness/validator_runner.py.  To enable them a developer must:
-#   1. Add 	ext_response: str = "" to the run_validators() call-site in
-#      validator_runner.py, passing the run's output.text_response value.
-#   2. Add "text_response" to the kwargs dict that the runner builds before
-#      calling each validator function via inspect.signature injection.
-# Until then the harness will raise TypeError on these and they should be
-# treated as pending / skipped in CI.
+# `text_response` is injected by validator_runner.py (parameter at its
+# run_validators() signature, threaded into the kwargs dict it builds for
+# inspect.signature injection). Both checks below run for real.
 
 import re
 
@@ -60,9 +55,24 @@ def test_next_step_offers(text_response: str, test: dict) -> None:
       - "Link [person] to the tree?"            (person-evidence)
     9 of 10 positive tests in v1_2026-07-27 omit the person-evidence offer,
     substituting open-ended genealogical research suggestions instead.
+
+    Single-term lookups are exempt. SKILL.md Step 5 carves out a response
+    that is a bare word-definition or date conversion with no extracted
+    record, and ut_translation_008's own judge_context agrees ("offering
+    record-extraction as an optional next step is fine"). Without the
+    exemption this validator fails that test for obeying SKILL.md, which
+    is a defect in the check rather than in the skill. Gated on the
+    `single-term` tag, which only that test carries; the other nine
+    positive tests are full record translations and still enforce both
+    offers.
     """
     if test.get("type") != "positive":
         pytest.skip("negative tests are graded by routing, not response content")
+    if "single-term" in (test.get("tags") or []):
+        pytest.skip(
+            "single-term lookups are exempt per SKILL.md Step 5 — a bare "
+            "definition or date conversion needs no workflow hand-off offer"
+        )
     has_extract = bool(re.search(r"Extract assertions from this record", text_response, re.IGNORECASE))
     has_link = bool(re.search(r"Link .{1,40} to the tree", text_response, re.IGNORECASE))
     assert has_extract, (

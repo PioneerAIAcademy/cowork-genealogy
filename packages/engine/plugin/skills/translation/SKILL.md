@@ -114,9 +114,15 @@ Highlight:
 
 ### 5. Suggest next steps
 
-After translation, offer:
+End every translation response with both offers, in this exact
+wording — not paraphrased, not replaced by open-ended research
+suggestions:
 - "Extract assertions from this record?" (record-extraction)
 - "Link [person] to the tree?" (person-evidence)
+
+Substitute the person's name for [person]. Offer both unless the
+response is a single-line lookup — a word definition or date
+conversion with no extracted record — which needs neither offer.
 
 The translation is a working tool. Record-extraction should cite
 the original record, not the translation.
@@ -132,15 +138,15 @@ auf den Nahmen Georg getauft worden. Pathe: Georg Ba[u/v]er.'"*
 *Original (as written):* Den 12ten Märtz 1789 … ein Söhnlein gebohren
 und … auf den Nahmen Georg getauft worden. Pathe: Georg Ba[?]er.
 
-*Translation (derivative — the original governs):* On 12 March 1789, a
-little son was born to Joh[ann] Schmid and his wife Anna Maria, and
-baptized Georg. Godfather: Georg Bauer [surname reading uncertain —
-could be *Baver*].
+*Translation (derivative — the original governs):* On 12 March 1789
+(1789-03-12), a little son was born to Joh[ann] Schmid and his wife
+Anna Maria, and baptized Georg. Godfather: Georg Bauer [surname
+reading uncertain — could be *Baver*].
 
 *What matters genealogically:*
 - **gebohren / getauft** — *born* vs. *baptized*: this entry gives the
-  **birth** date (12 March); baptism followed. Record both; don't
-  conflate them.
+  **birth** date, 12 March 1789 (1789-03-12); baptism followed.
+  Record both; don't conflate them.
 - **Pathe** — godfather/sponsor, not a parent — a FAN figure worth
   researching; the child sharing the name *Georg* hints at kinship.
 - **Söhnlein** — diminutive of *Sohn*, confirms a male child.
@@ -166,8 +172,13 @@ character by character through ambiguous passages.
 
 These conventions govern how the translation is written up:
 
-- **Date conventions vary.** German: day.month.year. French: day
-  month year. Latin: varies. Convert to ISO 8601 in the summary.
+- **Every date carries its ISO 8601 form.** Write the prose date
+  followed by ISO 8601 in parentheses, everywhere a date appears in
+  the response: "12 March 1789 (1789-03-12)". Source conventions
+  vary — German: day.month.year; French: day month year; Latin:
+  varies — so read the original convention before converting. When
+  the day or month is unknown, give only what the record states
+  (1789-03, or 1789); never invent the missing part.
 - **Genitive names aren't errors.** "Johannis" is genitive of
   "Johannes" — normalize to nominative form.
 - **Foreign text in English narrative.** Italicize foreign words
