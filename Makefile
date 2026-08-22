@@ -582,18 +582,23 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
-e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 stored shadow families over committed runs: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1
+e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc shadow families over committed runs, stored and recomputed: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1
 	# Also pure analysis, no API. Windowed to 14 days like every other reader;
 	# SINCE=all for a maximum-sample replay.
 	# NOT a calibration tool: §7 is shadow-only permanently (its success gate
 	# cannot see skill completion — see guardrail-enforcement-spec.md §7 and
 	# `make e2e-skill-episodes`), so WINDOWS= compares are for reading the
 	# signal, not for choosing a value to ship.
-	# REPLAY=1 additionally RECOMPUTES the §8 person_evidence provenance check
-	# from tool_calls + each fixture's committed seed tree (issue #1231). The
-	# stored-entry count above only covers runs made after #1178 merged; the
-	# replay is what makes the pre-hook corpus readable, and what lets a
-	# candidate narrowing of the rule be scored before it ships.
+	# REPLAY=1 additionally RECOMPUTES all four post-hoc families: the §8
+	# person_evidence provenance check from tool_calls + each fixture's committed
+	# seed tree, and the three §7/§7.5 checks from each run's committed
+	# final-research / final-tree sidecars.
+	# READ THE REPLAY BEFORE CONCLUDING A CHECK NEVER FIRES. The stored counts
+	# above only cover runs made after each check shipped -- all three post-hoc
+	# checks landed in August against a corpus that is 84% July, so their zeros
+	# measured the corpus's age, not the behaviour. Replaying turns two of the
+	# three into real counts. Counts, never rates: this is behaviour presence over
+	# the corpus, not a per-run compliance score.
 	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),) $(if $(REPLAY),--replay,)
 
 .PHONY: e2e-skill-episodes

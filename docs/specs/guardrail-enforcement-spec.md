@@ -304,18 +304,25 @@ array of id-bearing entries and so has nothing for either check to read.
 
 ### What is actually in the shadow-to-graduate pipeline
 
-Measured over the whole corpus, `make e2e-guardrail-shadow SINCE=all`, 154 runs,
-2026-08-16 — **the pipeline is not full of checks waiting on a measurement;
-three of them have one, and it is zero:**
+Measured over the whole corpus, `make e2e-guardrail-shadow REPLAY=1 SINCE=all`,
+157 runs, 2026-08-21. **Read the STORED and REPLAYED columns as different
+questions** — the distinction is the single most important thing on this page,
+and getting it wrong is what made three checks look dead for a fortnight:
 
-| Check | Fires | Status |
-|---|---:|---|
-| §7 caller-attributed recency | 811 (window 40), 127 runs | **retired permanently**, not queued |
-| §8 live `same_person` provenance | **7**, 5 runs | the only graduatable check with a real rate |
-| §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | never fired |
-| §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | never fired |
-| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **0**, 0 runs | never fired |
-| §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | attribution reaches 15 of 154 runs | blocked on corpus growth |
+| Check | Stored | Replayed | Status |
+|---|---:|---:|---|
+| §7 caller-attributed recency | 823 (window 40), 130 runs | n/a — windowed replay, see the table above | **retired permanently**, not queued |
+| §8 live `same_person` provenance | 12, across 7 runs | 120 of 147 runs that link a person | the graduation candidate with the largest sample |
+| §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 157 scanned | never observed either way |
+| §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 157 scanned | behaviour confirmed; live store path never exercised |
+| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **58 runs**, of 156 scanned | behaviour confirmed; live store path exercised |
+| §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | attribution reaches 18 of 157 runs | — | blocked on corpus growth |
+
+Reading the two columns: **stored** is what a run recorded when it ran;
+**replayed** is the same detector recomputed now from that run's committed final
+state. A stored count therefore measures the corpus's age, not the behaviour —
+why that is, and what each number is worth, is under "Re-measure; do not read a
+count out of this page" below, stated once.
 
 **A zero fire rate is not a licence to graduate.** The citation-nulling check's
 own graduation gate reads "only
@@ -323,11 +330,39 @@ if the rate is low enough that a fail is a signal and not a wall" — zero is no
 "low enough", it is *nobody has seen this detector fire*. Graduating it promotes
 an unexercised predicate to a hard failure.
 
-**And nothing distinguishes the two readings of a zero:** either the behaviour
-never occurs, or the detector is broken. That failure is already documented here
-— the mentor-verdict arm read 0 where recomputation gives 8. **Before any of the
-three graduates, it needs a synthetic fixture that makes it fire** — a positive
-control, offline and free.
+**What each check still owes, on two axes.** The predicates are not the open
+question: all three have firing controls in
+`eval/harness/tests/unit/test_skill_invocation.py`, green on every
+`make harness-test`. What a predicate control cannot see is the *wiring* — the
+detector called with the wrong argument, an entry never stored, a bucket
+predicate that misses. That is what "the detector is broken" means here, and it
+splits in two:
+
+| | is the zero ambiguous? | has the live store path ever been exercised? |
+|---|---|---|
+| warnings-unchecked | **no** — 58 corpus fires | **yes** — `stribling-father-1821/run-2026-08-17_23-35-44`, the corpus's only stored entry |
+| conflict-unpersisted | **no** — 4 corpus fires | **no** |
+| citation-nulling | **yes** — zero on both axes | **no** |
+
+So **only citation-nulling still owes a synthetic fixture that makes it fire.**
+The other two have observed behaviour; what they lack is a live run that stored
+an entry, which the next committed e2e run producing one supplies for free. The
+replay plumbing itself is controlled by
+`tests/unit/test_guardrail_shadow_report.py`, whose tests are written against
+sidecar resolution, seed-tree loading and per-check skip discipline rather than
+against the predicates.
+
+**What the replay claims, and what it does not.** It is a **behaviour-presence**
+measurement: did this shape occur in the corpus at all. It is **not** a per-run
+compliance score. `docs/specs/e2e-test-spec.md` ("Historical runs") withholds
+that — a replay only scores a run if the checks are pinned to the version that
+run executed, and nothing records that version per run — and `docs/architecture.md`
+says not to quote a violation rate at all, which is why every figure here is a
+count against a named denominator. One check is genuinely affected by the version
+gap: `find_unpersisted_conflict_resolutions`'s predicate was corrected after it
+first shipped, so replaying it over older runs measures today's rule rather than
+the rule those runs ran under. For "did this shape ever occur" that is the right
+direction; it is not a historical compliance figure.
 
 Read the status column literally. Only §5 and §6 restrain a real user's session
 today; §7 and §8 are measurement over eval runs. §8 cannot port to production
@@ -359,29 +394,38 @@ corpus only grows:
 make e2e-guardrail-shadow REPLAY=1 SINCE=all
 ```
 
-`REPLAY=1` recomputes the check from each run's `tool_calls` and its fixture's
-committed seed tree. That is a distinct number from the *stored* count printed
-above it, and the distinction is the thing to understand before reading either:
+`REPLAY=1` recomputes **all four** post-hoc families, not just `same_person`
+provenance: that one from each run's `tool_calls` plus its fixture's committed
+seed tree, and the three §7/§7.5 checks from each run's committed
+`.final-research.json` / `.final-tree.gedcomx.json` sidecars. Each is a distinct
+number from the *stored* count printed above it, and the distinction is the thing
+to understand before reading either:
 
-- The **stored** count covers only runs made after the live check shipped
-  (`2026-08-04 23:45Z`). At the time of writing that is **zero of 144 committed
-  runs** — the newest committed run predates the merge by an hour — which is why
-  the graduation gate ("run a real suite and read the entries") could not be answered
-  from the corpus at all. It needs no code: the next committed e2e run produces
-  stored entries by itself.
+- The **stored** count covers only runs made after each live check shipped. That
+  is what made every post-hoc check read zero: `same_person` provenance shipped
+  `2026-08-04 23:45Z`, citation-nulling `2026-08-06`, warnings-unchecked
+  `2026-08-10`, conflict-unpersisted `2026-08-12`, against a corpus that is 84%
+  July. Today the stored counts are 12 (`same_person`, 7 runs), 1
+  (warnings-unchecked, 1 run) and 0 for the other two. This needs no code — each
+  committed e2e run produces stored entries by itself.
 - Both counts are **branch-scoped** — they read `eval/runlogs/e2e/` in the
   current checkout, so a graded run committed on an unmerged branch is not
-  skipped, it is never seen. Two are known to sit outside `main` today, one of
-  them the first run to store live entries for this check at all. Read a rate
-  off an up-to-date `main` with in-flight fixture PRs merged, or it is biased at
-  the moment it is used.
-- The **replayed** count reads the whole pre-hook corpus: at the time of writing
-  **111 of the 137 runs that link a person have ≥1 gap (750 links, 72
-  fixtures)**, with one run skipped and named for having no committed seed tree.
-  It is a **lower bound** — the live hook may not yet see a `same_person` issued
-  in the same turn as the write, while the replay always sees the full prefix.
-  Its second job is scoring a candidate *narrowing* of the rule against history
-  before that narrowing ships.
+  skipped, it is never seen. Read a count off an up-to-date `main` with in-flight
+  fixture PRs merged, or it is biased at the moment it is used.
+- The **replayed** counts read the whole corpus. `same_person` provenance: **120
+  of the 147 runs that link a person have ≥1 gap (788 links, 79 fixtures)**, with
+  one run skipped and named for having no committed seed tree. It is a **lower
+  bound** — the live hook may not yet see a `same_person` issued in the same turn
+  as the write, while the replay always sees the full prefix. Its second job is
+  scoring a candidate *narrowing* of the rule against history before that
+  narrowing ships. The three post-hoc checks: citation-nulling **0** of 157
+  scanned, conflict-unpersisted **4 runs** of 157, warnings-unchecked **58 runs**
+  of 156 — the 157th being the corpus's one orphan run log
+  (`william-ferber-ancestry`, a committed run with no fixture directory, and so
+  no baseline to diff a relationship against). Every replay **names** the runs it
+  could not read rather than counting them clean, per check: a denominator that
+  quietly shrank reads as a clean corpus, which is the failure this whole section
+  exists to correct.
 
 **Why a deny needs more than a number: the reason has to be satisfiable.** The
 original reason said a brand-new identity "should be scored before it is

@@ -10,7 +10,7 @@
 | 2 — device-bridge route closure | **landed** 2026-08-18. `device_commit_files` covered in all three lockdown copies *and* in the `hooks.json` matcher that decides whether the guard runs; `device_bash` deliberately not. Still unproven against a real bridge payload — only a live Cowork session can do that |
 | 3 — first skill-agent pair (proof summaries) | **landed** 2026-08-19. `proof-conclusion` folded into an agent; the plugin hook denies a `proof_summaries` write to any other caller. Unproven against a real Cowork payload — no CI job sees one |
 | 4 — remaining pairs | **not started** |
-| 5 — detectors + positive controls | **not started.** Independent and free; can run at any time |
+| 5 — detectors + positive controls | **part 1 landed** 2026-08-21 — the shadow report can now replay all four post-hoc families over history, and the replay plumbing has controls. Outstanding: citation-nulling's synthetic fixture, and issue #1431 (the deny run) |
 
 Three gates, the phase function, and the replay engine were built during the
 investigation — they are *inputs* to this programme, not one of its phases.
@@ -136,28 +136,52 @@ caller's suite — verified: the `record-extraction` run log's snapshot contains
 
 Independent of everything above, offline, and free. Can run at any point.
 
-**The instrument now exists.** `harness/replay.py` reconstructs `research.json`
-at any point in a run — 136/154 (88%) exact reconstruction, `make replay-check`.
-Both halves of the guardrail-detector corrections and the violation recompute
-were blocked on exactly this.
+**Part 1 landed 2026-08-21.** `make e2e-guardrail-shadow REPLAY=1 SINCE=all` now
+recomputes all four post-hoc families from each run's committed final state
+instead of only reading what a run stored, and the replay plumbing has its own
+controls in `tests/unit/test_guardrail_shadow_report.py`.
 
-**Positive controls first.** Three shadow checks fire **zero** times across 154
-runs, and nothing distinguishes "the behaviour never happens" from "the detector
-is broken" — a failure already on record here, where the mentor-verdict arm read
-0 where recomputation gives 8. **Before any of the three graduates, each needs a
-synthetic fixture that makes it fire.** Hand-built `research.json`, no live run.
+**The premise this section carried was wrong, and the correction is the finding.**
+It said three shadow checks fire zero times and that nothing distinguishes "the
+behaviour never happens" from "the detector is broken". For two of the three it
+was a third thing: the behaviour happens, the detector works, and the *report*
+could not see history — a stored count reads 0 over every run made before its
+check shipped. Replayed, both conflict-unpersisted and warnings-unchecked fire on
+real committed runs. Only citation-nulling is a genuine zero, and it alone still
+owes a synthetic fixture. **The counts are in the spec, deliberately not here** —
+see below.
 
-**One graduation is genuinely ready:** the live `same_person` provenance check
-fires 7 times across 5 runs, and nobody has ever observed how the agent behaves
-when that write is actually blocked. One fixture at `PERSON_EVIDENCE_GUARD=deny`,
-~$7–25.
+**The current measurements, what each check still owes, and what a
+behaviour-presence replay does and does not claim now live in
+`docs/specs/guardrail-enforcement-spec.md`** ("What is actually in the
+shadow-to-graduate pipeline"), which owns measured findings. Read it there —
+this section is deleted when the phase ships, and a durable finding cannot live
+in a file with that property.
+
+**`harness/replay.py` is not a dependency of this phase.** It reconstructs
+`research.json` at any point in a run (136/154 exact, `make replay-check`) and
+this section used to name it as the blocker. All three post-hoc checks read final
+state, and every committed run ships `.final-research.json` /
+`.final-tree.gedcomx.json` sidecars, so no reconstruction is needed. It remains
+the right instrument for a mid-run question.
+
+**Still outstanding:**
+
+- **citation-nulling's synthetic fixture** — the one check with no observed fire
+  on either axis. Hand-built `research.json`, no live run.
+- **Issue #1431**, the one graduation with a real sample: replayed, the
+  `same_person` provenance check reaches the large majority of runs that link a
+  person (count in the spec), and nobody has observed how the agent behaves when
+  that write is actually blocked. One fixture at `PERSON_EVIDENCE_GUARD=deny`,
+  ~$7–25.
 
 **Carries a ceiling worth knowing.** The ledger never recorded every assigned id
 — truncated responses and `_first_n` batch summaries — so any recompute keyed on
 ids inherits it. 11,582 of 20,992 ids in a full replay are reconstructed by the
-tool's sequential convention rather than observed.
+tool's sequential convention rather than observed. It does not touch the post-hoc
+replay above, which reads committed final state rather than reconstructing.
 
-**Closes** #1569, #1484, #1431.
+**Closes** #1569, #1484 (both already closed); #1431 remains open.
 
 ---
 
