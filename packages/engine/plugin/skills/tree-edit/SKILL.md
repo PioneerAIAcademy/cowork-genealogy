@@ -43,7 +43,7 @@ Handles direct modifications to `tree.gedcomx.json`. Two use cases: **ad-hoc cor
 
 Each ad-hoc edit is one tool call: **additions** (`add_*`) go through `tree_edit`; **corrections and removals** (`update_*`, `remove`) go through `tree_correct` — same batched `ops[]`, id rules, validate-on-write, and `.bak` semantics, split only by op authority. Supply content WITHOUT ids — the tool assigns the next `F`/`N`/`I`/`R` id, swaps primary/preferred, resolves `standard_place`, validates the whole project, and writes only `tree.gedcomx.json`. On `{ ok: false, errors }` nothing is written — surface those errors rather than retrying.
 
-**Actually call `tree_edit`/`tree_correct` — do not describe the edit or print a summary of what you "would" write.** The change isn't real until the tool call returns `ok: true`; narrate the result only from that returned summary, never from a fabricated one.
+**Actually call `tree_edit`/`tree_correct` — do not describe the edit or print a summary of what you "would" write.** The change isn't real until the tool call returns `ok: true`; narrate the result only from that returned summary, never from a fabricated one. **Then call `Skill("check-warnings")` before you report done — every ad-hoc edit ends with it, not just merges** (skip it only on a true no-op where nothing was written).
 
 ```
 tree_edit({
@@ -76,7 +76,7 @@ When proof-conclusion confirms two persons are the same individual, execute the 
 
 (Folding a record's personas into the tree is **not** a merge here — that is person-evidence's job, per-persona via `materialize_facts`. This skill only collapses two persons already in the tree.)
 
-**Once you've picked the survivor and gotten the user's go-ahead, actually call the merge tool — do not stop at a plan or report a merge you haven't executed.** The merge is real only when the tool returns `ok: true`; narrate the folded counts from that returned summary, never from a description of what you intend to do.
+**Once you've picked the survivor and gotten the user's go-ahead, actually call the merge tool — do not stop at a plan or report a merge you haven't executed.** The merge is real only when the tool returns `ok: true`; narrate the folded counts from that returned summary, never from a description of what you intend to do. **Then call `Skill("check-warnings")`** — a merge is exactly the kind of edit that can leave someone as their own ancestor; skipping it here is not optional.
 
 On `{ ok: false, errors }` the merge writes nothing — surface the errors.
 
@@ -90,7 +90,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 ## Validation
 
-`tree_edit`, `tree_correct`, and `merge_tree_persons` all validate-before-persist; no separate `validate_research_schema` call is needed. After ANY edit or merge, run **`check-warnings`** to catch genealogical impossibilities the structural validator cannot (impossible dates, relationship loops, etc.).
+`tree_edit`, `tree_correct`, and `merge_tree_persons` all validate-before-persist; no separate `validate_research_schema` call is needed. That is structural validity only — `Skill("check-warnings")` (required after every edit and merge, per above) is what catches genealogical impossibilities the structural validator cannot (impossible dates, relationship loops, etc.).
 
 ## Important rules
 

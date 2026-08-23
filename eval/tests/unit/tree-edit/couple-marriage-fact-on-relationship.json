@@ -5,7 +5,13 @@
     "name": "A marriage fact must be written on the Couple relationship, not on a person",
     "type": "positive",
     "description": "The marriage of Thomas Flynn (I2) and Mary Flynn (I3) is documented (St. Patrick's, Schuylkill County, 12 May 1843). The flynn-couple-marriage tree has both persons but NO Couple relationship between them. Because tree_edit has no update_relationship operation, the only correct way to record a couple event is a single add_relationship that creates the Couple relationship WITH the Marriage fact in its facts array. Tests the improvement in tree-edit/SKILL.md and references/relationship-accuracy.md: couple-event facts belong on the Couple relationship, never as a person-level add_fact.",
-    "tags": ["tree-edit", "couple-relationship", "marriage-fact", "add-relationship", "fact-placement"]
+    "tags": [
+      "tree-edit",
+      "couple-relationship",
+      "marriage-fact",
+      "add-relationship",
+      "fact-placement"
+    ]
   },
   "input": {
     "user_message": "tree-edit: the marriage of Thomas Flynn (I2) and Mary Flynn (I3) is documented in the church marriage register (assertion a_005, source src_005 / S5): married 12 May 1843 at St. Patrick's Church, Schuylkill County, Pennsylvania. Record this marriage in the tree.",
@@ -19,11 +25,16 @@
     "The marriage IS evidence-grounded here: assertion a_005 / source src_005 (tree source S5) documents it as direct primary evidence. The skill should attach that source to the marriage fact AND to the new Couple edge, then proceed — it must NOT refuse or defer for lack of a source",
     "There was no Couple relationship in the starting tree, so creating one is expected here (not a duplicate) — this is the fresh-create path, since tree_edit has no update_relationship operation to add facts to an existing relationship",
     "Edit-minimality still applies: the skill should create exactly the one Couple relationship with the marriage fact and not churn the existing ParentChild relationships (RT1, RT2) or person facts",
-    "COMPLETENESS GRADING NOTE for the judge: this test targets the tree-edit WRITE (creating the Couple relationship with the Marriage fact correctly placed and sourced). SKILL.md § Validation requires check-warnings after ANY edit — a `person-warnings-no-warnings` fixture is loaded so the call succeeds cleanly. Score Completeness on both: the marriage write done correctly, AND check-warnings actually invoked afterward. Do not accept \"the tool is unavailable\" as a reason to skip it"
+    "COMPLETENESS GRADING NOTE for the judge: this test targets the tree-edit WRITE (creating the Couple relationship with the Marriage fact correctly placed and sourced). SKILL.md § Validation requires `Skill(\"check-warnings\")` after ANY edit. This is stubbed via `execution.stub_skills` (the callee has its own unit suite) — score Completeness on both: the marriage write done correctly, AND check-warnings actually launched afterward (visible in `skills_invoked`), not on the canned response's content"
   ],
-  "mcp_fixtures": ["person-warnings-no-warnings"],
   "execution": {
     "max_wall_clock_seconds": 600,
-    "sdk_message_silence_seconds": 600
+    "sdk_message_silence_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "check-warnings",
+        "response": "No warnings found for the edited person's data -- no impossible dates, no relationship loops, nothing implausible. FamilySearch's online quality check was not run in this environment."
+      }
+    ]
   }
 }

@@ -24,12 +24,15 @@
     "Should NOT 'normalize' adjacent fields opportunistically (e.g., re-resolving F2.place via place_search when only the date was wrong)",
     "Source-grounding requirement (per evidence-grounded-edits.md): the correction must be tied to S3 — the user cited it explicitly. The skill should reflect that in the explanation",
     "Should report what was changed and confirm post-edit schema validity in the response",
-    "Should invoke `check-warnings` after this edit — SKILL.md § Validation requires it after ANY edit or merge. A `person-warnings-no-warnings` fixture is loaded (matches any personId) so the call succeeds cleanly; do not accept \"the tool is unavailable\" as a reason to skip it."
+    "Should invoke `Skill(\"check-warnings\")` after this edit — SKILL.md § Validation requires it after ANY edit or merge. This is stubbed via `execution.stub_skills` (the callee has its own unit suite), so the launch is what's graded, not a real check-warnings run — score on whether the skill actually called it (visible in `skills_invoked`), not on the canned response's content."
   ],
   "execution": {
-    "max_wall_clock_seconds": 600
-  },
-  "mcp_fixtures": [
-    "person-warnings-no-warnings"
-  ]
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "check-warnings",
+        "response": "No warnings found for the edited person's data -- no impossible dates, no relationship loops, nothing implausible. FamilySearch's online quality check was not run in this environment."
+      }
+    ]
+  }
 }
