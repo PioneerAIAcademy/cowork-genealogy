@@ -522,9 +522,15 @@ describe("measured figures stay traceable to the probe artifact", () => {
       // "year-silent records" story from stale memory or an old doc.
       verdict: "H.verdict:index-silent personas exist",
       activeWhen: /^NO/,
+      // Two families of forbidden wording: (a) the disproven "silence" story, and
+      // (b) the pre-#1771 "not established / no direction measured" story, which now
+      // contradicts a measured verdict just as much as an outright reversal does.
+      // (b) is scoped to the YEAR-RANGE / undated-record claim so it does not catch
+      // the legitimately-unmeasured sub-points (in-range approximate dates, the
+      // `any` family) that the refreshed surfaces still, correctly, flag.
       mustNotSay:
-        /tolerates year-silent records|keeps (?:year-silent|undated) records|tolerates silence/i,
-      why: "the index places every persona in time; do not say an unqualified range keeps year-silent/undated records",
+        /tolerates year-silent records|keeps (?:year-silent|undated) records|tolerates silence|no direction was measured|not a reliable way to include or exclude undated|what it does to undated records is not established|(?:year range|unqualified range|indexed year)[^.\n]{0,80}\bnot established\b/i,
+      why: "the index places every persona in time; do not say an unqualified range keeps year-silent/undated records, nor that its treatment of undated records is unmeasured",
     },
   ];
 

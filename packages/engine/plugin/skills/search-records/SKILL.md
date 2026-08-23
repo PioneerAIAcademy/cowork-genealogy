@@ -194,12 +194,14 @@ spouse families; other fields follow the same pattern.
   discriminates — a *wrong* county can return nearly the same total as the right
   one. Set it when you are about to record `results_available` or argue a search
   was reasonably exhaustive; leave it unset while still looking.
-- **`<event>YearExact` narrows hard.** It is meant to remove the fuzz around the
-  range bounds, but that fuzz is only weakly evidenced. What it does to records
-  carrying **no indexed year** is **not established**, and neither is whether an
-  unqualified range keeps them — so do not use a year range, set or unset, to
-  include or exclude undated records. Whether it drops in-range approximate dates
-  is also not established. Use it only with a firm date from a vital record.
+- **`<event>YearExact` keeps only in-range indexed dates.** An unqualified range
+  also matches records whose *estimated* date range overlaps it — a record with no
+  year of its own carries an estimated range (from others on the record), so there
+  are no year-silent records a range keeps regardless. `.exact` drops those
+  estimate-overlap matches, so a range reliably includes them and `.exact` reliably
+  excludes them; a small cohort with no indexed date at all is reached by no range.
+  Whether `.exact` also drops in-range approximate dates is unmeasured. Use it only
+  with a firm date from a vital record.
 - **Wildcards survive exactness; variant spellings do not.** `Sm?th` plus
   `surnameExact` still returns both `Smith` and `Smyth`, while the same query
   without the wildcard drops `Smyth`. A wildcard plus exactness controls the
@@ -208,9 +210,9 @@ spouse families; other fields follow the same pattern.
 **There is no "required" toggle, and this changes how you read a nil.** Every
 term you supply is already required in one sense: a record must not *contradict*
 it. A record simply **silent** about a *name* field is kept — enumerated for the
-father, spouse, mother and parent names. (How a *year range* treats a record with no indexed year
-is **not established** in either direction, so do not assume a range either keeps
-or excludes undated records.) The searched person's own two name fields behave
+father, spouse, mother and parent names. (A *year range* matches records dated into it by estimate too, so an unqualified
+range keeps records with no year of their own and `.exact` drops them — see the
+year lever below.) The searched person's own two name fields behave
 OPPOSITELY, measured 2026-08-20: an unqualified `givenName` keeps records with no
 indexed given name, but an unqualified `surname` drops records with no indexed
 surname outright — a record indexed with a given name only (infant burials,
