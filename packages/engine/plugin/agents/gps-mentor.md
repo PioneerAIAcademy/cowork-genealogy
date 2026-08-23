@@ -461,7 +461,7 @@ plan that was too narrow to begin with.
    already-identified person are advisory, not blockers.
    A classification failure, or a relied-upon *person* with no linked
    identity assertion, is a `must_address`: cite the specific assertion IDs
-   and set `suggested_skill` to `assertion-classification` or
+   and set `suggested_skill` to `record-extraction` or
    `person-evidence`. Do not proceed to checks 1–5 below until this passes;
    they assume classified evidence with the relevant persons identified.
 

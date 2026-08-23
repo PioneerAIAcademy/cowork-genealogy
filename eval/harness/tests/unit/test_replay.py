@@ -183,3 +183,47 @@ def test_synthesised_plan_item_ids_do_not_collide():
     ids = [it["id"] for it in r.research["plans"][0]["items"]]
     assert ids == ["pli_001", "pli_002", "pli_003"]
     assert len(ids) == len(set(ids))
+
+
+def test_a_batched_update_past_the_id_cut_finds_its_target():
+    """An UPDATE names its target in `op["entryId"]`; the response only echoes
+    it. A summarised batch records only `_first_n` ids, so every update past
+    that cut arrives with no reported id — and the lookup consulted `id`, which
+    an update payload does not carry. The op was dropped as `no-such-id` while
+    naming its target in plain sight."""
+    resp = (
+        '[{"type": "text", "text": "{\\"ok\\": true, \\"results\\": {\\"_summary_truncated\\": true, '
+        '\\"_full_length\\": 2, \\"_first_n\\": [{\\"entryId\\": \\"q_001\\"}]}}"}]'
+    )
+    ops = [
+        {"section": "questions", "op": "update", "entryId": "q_001", "fields": {"status": "exhaustive_declared"}},
+        {"section": "questions", "op": "update", "entryId": "q_002", "fields": {"status": "resolved"}},
+    ]
+    r = replay(
+        [_call("research_append", {"ops": ops}, resp)],
+        {"questions": [{"id": "q_001", "status": "open"}, {"id": "q_002", "status": "open"}]},
+    )
+    assert [q["status"] for q in r.research["questions"]] == ["exhaustive_declared", "resolved"]
+    assert "update:no-such-id:questions" not in r.unmodelled
+
+
+def test_a_batched_plan_item_update_past_the_cut_finds_its_target():
+    """The plan_items path nests into `plans[].items` and carries its own copy
+    of the id lookup. It bites hardest here: a status flip across several items
+    is the op most often batched."""
+    resp = (
+        '[{"type": "text", "text": "{\\"ok\\": true, \\"results\\": {\\"_summary_truncated\\": true, '
+        '\\"_full_length\\": 2, \\"_first_n\\": [{\\"entryId\\": \\"pli_001\\"}]}}"}]'
+    )
+    ops = [
+        {"section": "plan_items", "op": "update", "entryId": "pli_001", "fields": {"status": "completed"}},
+        {"section": "plan_items", "op": "update", "entryId": "pli_002", "fields": {"status": "skipped"}},
+    ]
+    r = replay(
+        [_call("research_append", {"ops": ops}, resp)],
+        {"plans": [{"id": "pl_001", "items": [
+            {"id": "pli_001", "status": "in_progress"},
+            {"id": "pli_002", "status": "in_progress"},
+        ]}]},
+    )
+    assert [i["status"] for i in r.research["plans"][0]["items"]] == ["completed", "skipped"]
