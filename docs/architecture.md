@@ -675,25 +675,23 @@ the most expensive mistake in this layer, because two of the three fail
 
 | Surface | Spelling | Binds in production? |
 |---|---|---|
-| Skill `allowed-tools:` | **bare** (`research_query`) | **No** — the hosted path runs `bypassPermissions` with no allowlist at all. Still enforcing in the unit harness. |
+| Skill `allowed-tools:` | **bare** (`research_query`) | **No** — neither production path nor the unit harness narrows per skill. The field is a grant, not a restriction. Advisory only: the `test_tool_allowlist` validator warns on undeclared calls. |
 | Agent `tools:` / `disallowedTools:` | **spelled under all three registrars**, matched exactly | **Yes** — and a deny binds even under `bypassPermissions`. |
 | `PreToolUse` hook | n/a — matches on tool name + input | **Yes**, in Cowork and the hosted path. **Neither harness loads the plugin's hooks** (§5.4). |
 
-### 5.1 Skill `allowed-tools` — declarative in production, enforcing in tests
+### 5.1 Skill `allowed-tools` — declarative everywhere
 
-A skill lists the MCP tools it calls **by bare name**. The unit harness compiles
-this into the SDK session allowlist: a filesystem baseline
-(`Read, Glob, Grep, Write, Edit, Skill, Task`) **plus** the skill's declared
-tools qualified onto the server key, **plus the union of the `tools:` of every
-plugin agent the skill references via `@plugin:`** — because a delegated agent's
-MCP calls travel through the same session lists, so denying them would break the
-delegation.
+A skill lists the MCP tools it calls **by bare name**. The unit harness grants
+every registered MCP tool to every skill, matching production.
+`allowed-tools` is a grant — "tools Claude can use without asking permission" —
+not a restriction; the field that removes a tool is `disallowed-tools`, which no
+skill declares. Deriving a deny list as the complement inverted the field's
+documented meaning.
 
-**This is not what restrains a production session.** But do not treat it as
-decoration: in the unit harness an undeclared tool is **denied at call time**,
-and the gap between a skill's own declaration and its agents' union is exactly
-what the per-context policy uses to tell a legitimate direct call from a boundary
-violation. **Declare accurately.**
+**Still declare accurately.** The `test_tool_allowlist` validator warns on
+undeclared calls (advisory, not gating), and the gap between a skill's own
+declaration and its agents' union is exactly what the per-context policy uses to
+tell a legitimate direct call from a boundary violation.
 
 ### 5.2 Agent frontmatter: spelled per registrar, exactly matched
 
@@ -1254,7 +1252,7 @@ Four environments run the engine, and they load the plugin differently.
 | **Cowork** (cloud) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` via the remote-device bridge |
 | **Cowork** (on this computer) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` **directly**, no bridge — `mcp__Genealogy_Research__*` |
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
-| **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — no plugin hooks, and **no write-lockdown rule at all** | `bypassPermissions` — chosen over `dontAsk` precisely so declared `Write`/`Edit` still work, while out-of-allowlist MCP tools stay blocked | mock server under `genealogy` |
+| **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — no plugin hooks, and **no write-lockdown rule at all** | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
 
 **The permission-mode column is not a footnote.** It is why the e2e tier and the
