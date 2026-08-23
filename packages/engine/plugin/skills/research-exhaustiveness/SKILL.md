@@ -222,11 +222,18 @@ the offending field — do not blindly retry the same payload.
   ultimate test: could a real, unsearched source plausibly change the
   conclusion?
 - **Named decisive records gate the declaration.** If a record type
-  directly answers this question type (parentage: the subject's death
-  record, baptism, or a parent's probate; marriage: the marriage
-  record) — or the draft conclusion itself names a record as
-  tier-advancing — do not declare until that record has been searched
-  or the declaration explicitly justifies why it is inaccessible. A
+  directly answers this question type (parentage: the subject's own
+  birth record or civil registration **where the jurisdiction and period
+  kept one**, the subject's death record, baptism, or a parent's
+  probate; marriage: the marriage record) — or the draft conclusion
+  itself names a record as tier-advancing — do not declare until that
+  record has been searched or the declaration explicitly justifies why
+  it is inaccessible. Where civil registration existed, the subject's
+  own birth record outranks the death record for parentage: its
+  informant is a parent at the event rather than a survivor recalling it
+  decades later. Where it did not — Irish births before 1864, most
+  jurisdictions before the nineteenth century — its absence is not a
+  gap, and the baptism is what to gate on instead. A
   known, decisive, accessible record left unsearched fails the
   overturn-risk test by definition — but a decisive record that is
   **sealed by privacy law** (e.g. a recent birth certificate embargoed
