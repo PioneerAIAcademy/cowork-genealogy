@@ -1663,6 +1663,7 @@
       "inNoBand": 22,
       "closureHolds": true,
       "controlHolds": true,
+      "controlVacuous": false,
       "bandRowsRead": 341,
       "exactRowsRead": 174
     },
@@ -1687,6 +1688,7 @@
       "inNoBand": 24,
       "closureHolds": true,
       "controlHolds": true,
+      "controlVacuous": false,
       "bandRowsRead": 545,
       "exactRowsRead": 71
     },
@@ -1710,6 +1712,7 @@
       "inNoBand": 22,
       "closureHolds": true,
       "controlHolds": true,
+      "controlVacuous": false,
       "bandRowsRead": 509,
       "exactRowsRead": 56
     },
@@ -1735,10 +1738,11 @@
       "inNoBand": 22,
       "closureHolds": true,
       "controlHolds": true,
+      "controlVacuous": false,
       "bandRowsRead": 699,
       "exactRowsRead": 75
     },
-    "measured_at": "2026-08-22T21:20:41.902Z"
+    "measured_at": "2026-08-23T02:12:36.669Z"
   },
   "Q": {
     "bands:records-death": {

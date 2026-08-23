@@ -2293,15 +2293,16 @@ async function sectionH(): Promise<void> {
   // the payload predicts the indexed date? (renamed from "payload-silent is the
   // tolerated population".) Every persona whose payload exposes a birth year lands in
   // the band that year names — so a payload date predicts the band the index sorts it
-  // into. This is the payload-dated control, restated as a finding.
+  // into. This is the payload-dated control, restated as a finding. Only two
+  // outcomes are reachable: `runRecordsFamily` returns null when the control FAILS
+  // (H then records no verdict), so a non-null `r` here always has controlHolds OR
+  // controlVacuous — never a held=false, vacuous=false "NO".
   record(
     "H",
     "verdict:the payload predicts the indexed date",
     r.controlHolds
       ? `YES — all ${r.datedInAxis} payload-dated personas land in the band their own payload year names`
-      : r.controlVacuous
-        ? `NOT MEASURED — no persona on this pool exposes a payload birth year to check`
-        : `NO — some payload-dated personas do not land in the band their payload year names`
+      : `NOT MEASURED — no persona on this pool exposes a payload birth year to check`
   );
 }
 
