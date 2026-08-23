@@ -32,6 +32,18 @@ tool is worse than no replay, because it looks complete. `ReplayResult.unmodelle
 names every tool and section this module did not know how to apply, so a caller
 can decide whether its question survives the gap.
 
+**Its useful horizon is the capture window, and most of the corpus is past it.**
+This module reads ids out of each call's `response_summary`, and the e2e capture
+strip reclaims that field past 14 days. Until 2026-08-23 the strip dropped it
+outright: measured that day, 133 of the 134 stripped runs could no longer be
+replayed against 18 of the 23 unstripped ones that could — an 88% -> 13%
+collapse in `make replay-check` that looked like a regression here and was not.
+The strip now keeps a replay remnant (`scripts/prune_runlogs.py::replay_remnant`),
+so it stops getting worse, but **the runs already stripped are not recoverable**.
+Anything that needs mid-run state across the whole historical corpus cannot have
+it; ask the question over recent runs, or measure how many runs actually carry
+the ids before quoting a rate. `make replay-check` reports the current figure.
+
 Stdlib only, and **no `claude_agent_sdk` import** — `corpus_report` states in its
 own module docstring that it is pure analysis over committed data, and importing
 `e2e.orchestrator` would drag the SDK in. Keep it that way.
