@@ -214,10 +214,10 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | **47** | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **4** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list, any `disallowedTools:` denies (today only `record-extractor` has them), and its `model:` pin. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **6** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list, any `disallowedTools:` denies (every shipped agent declares them), and its `model:` pin. |
 
-The four agents are `gps-mentor`, `record-extractor`, `image-reader`, and
-`image-reader-opus`.
+The six agents are `gps-mentor`, `record-extractor`, `image-reader`,
+`image-reader-opus`, `proof-conclusion` and `research-exhaustiveness`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -392,7 +392,7 @@ Per-step model routing exists **only through plugin agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `image-reader-opus` → `claude-opus-4-8`; `record-extractor` + `image-reader` → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `image-reader-opus` → `claude-opus-4-8`; `record-extractor`, `image-reader`, `proof-conclusion` + `research-exhaustiveness` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Reasoning effort** | session-wide; never set by `real_agent.build_options` | not a per-step lever |
 
