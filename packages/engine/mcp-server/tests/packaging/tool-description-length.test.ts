@@ -11,14 +11,15 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * of the 43 toggles have EVER appeared in a call.
  *
  * **The justification is clarity; the token saving is small.** Measured after the
- * rewrite: `record_search` 15,509 -> 14,137 and `person_search` 3,745 -> 4,982
- * (its toggles were stubs that were also wrong, so correctness cost tokens
- * there), for a combined 19,254 -> 19,119 — a net saving of about 135 characters,
- * under 1%. This figure has been an increase and a saving at different points in
- * the same branch, which is the point: it is a side effect, not the argument.
- * `record_search.birthYearExact` at 475 chars is most of the remaining bulk. What
- * this lint buys is that the shared rule is stated once and cannot silently be
- * re-expanded into 43 paragraphs.
+ * #1409 rewrite and #1771's year-clause edit: `record_search` 15,509 -> 13,869 and
+ * `person_search` 3,745 -> 5,012 (its toggles were stubs that were also wrong, so
+ * correctness cost tokens there), for a combined 19,254 -> 18,881 — a net saving of
+ * about 373 characters, under 2%. This figure has been an increase and a saving at
+ * different points in the same branch, which is the point: it is a side effect, not
+ * the argument. #1771 brought `record_search.birthYearExact` from 475 down to 207
+ * (the year behaviour is now measured, so its paragraph collapses to a one-liner)
+ * and deleted its exemption. What this lint buys is that the shared rule is stated
+ * once and cannot silently be re-expanded into 43 paragraphs.
  *
  * The assertion below caught this pair going stale when the tool-level rule was
  * corrected — which is the first time a guard here caught my own staleness before it
@@ -30,13 +31,12 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * how it got here.
  *
  * The ceiling is SIZED FROM THE ONE-LINERS ACTUALLY WRITTEN, not guessed. The
- * three longest non-exempt descriptions are `record_search.givenNameExact` at
+ * three longest descriptions are `record_search.givenNameExact` at
  * **238**, `record_search.surnameExact` at **237**, and
- * `record_search.birthPlaceExact` at **226**. `person_search.birthYearExact` is
- * the longest one below them at 178 — not exempt (only `record_search`'s
- * `birthYearExact` is), just shorter than `birthPlaceExact`, so it does not make
- * the top three. Before #1409 six toggles exceeded the old ceiling: 475, 402,
- * 375, 341, 269, 255.
+ * `record_search.birthPlaceExact` at **226**. Both `birthYearExact` toggles now
+ * sit just below them at **207** (tied), so neither makes the top three, and since
+ * #1771 there is no exemption. Before #1409 six toggles exceeded the old ceiling:
+ * 475, 402, 375, 341, 269, 255.
  *
  * This list has been wrong in BOTH directions. An early revision named
  * `birthPlaceExact` third from a measurement whose filter had excluded BOTH tools'
@@ -123,27 +123,20 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14137],
-  ["person_search", 4982],
+  ["record_search", 13869],
+  ["person_search", 5012],
 ];
 
 /**
- * Exempt, by name and with the reason, so an exemption cannot outlive it.
- *
- * `birthYearExact` is the one toggle whose behaviour is unestablished and under
- * revision (nothing is actively measuring it today):
- * the population its current text is phrased around — records with no indexed
- * year — is reported by a session probe as empty, with the index carrying estimated date
- * RANGES instead. Issue #1771 rewrites that paragraph and DELETES this
- * exemption. Do not add an entry here without an issue number and a removal
- * condition.
+ * Empty since #1771. The sole former entry, `record_search.birthYearExact`, was
+ * exempt while the year behaviour was under measurement; #1771 measured it (the
+ * "records with no indexed year" population is empty — the index carries estimated
+ * date RANGES matched by overlap), rewrote the paragraph to a 207-char one-liner,
+ * and deleted this entry. Do not add an entry without an issue number and a
+ * removal condition — an exemption is for a description whose behaviour is under
+ * active measurement, never a way to keep a paragraph.
  */
-const EXEMPT = new Map<string, string>([
-  [
-    "record_search.birthYearExact",
-    "behaviour under re-measurement; #1771 rewrites the paragraph and deletes this entry",
-  ],
-]);
+const EXEMPT = new Map<string, string>([]);
 
 describe("*Exact descriptions stay one-liners", () => {
   const TOOLS = ["record_search", "person_search"];
