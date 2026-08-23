@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_021",
+    "skill": "proof-conclusion",
+    "name": "Summarising where competing hypotheses stand should not trigger proof-conclusion",
+    "type": "negative",
+    "description": "User asks for a write-up of where two competing candidate fathers stand and what the evidence says about each, after one is eliminated. The phrasing (\"write up\", \"what the evidence says\") and the scenario's existing ps_001 make proof-conclusion tempting — but the deliverable is a status account of the `hypotheses` section, which is hypothesis-tracking's own trigger territory (\"summarize hypothesis status\", \"where do hypotheses stand?\"). This is the reciprocal of ut_hypothesis_tracking_016.",
+    "tags": [
+      "near-miss",
+      "hypothesis-tracking-vs-proof-conclusion",
+      "routing",
+      "reciprocal"
+    ]
+  },
+
+  "input": {
+    "user_message": "Now that the Luzerne candidate is out, write up where the two hypotheses stand and what the evidence says for and against each.",
+    "scenario": "flynn-competing-fathers"
+  },
+
+  "negative": {
+    "correct_skill": ["hypothesis-tracking"],
+    "explanation": "Accounting for competing candidates — their status, and the assertions for and against each — is hypothesis-tracking's owned workflow over the `hypotheses` section, and \"summarize hypothesis status\" / \"where do hypotheses stand?\" are among its stated triggers. proof-conclusion selects a tier and writes one self-contained narrative resolving a question; it is not the skill for a side-by-side account of two candidates, one of which is still `active`. The scenario's h_002 remains unresolved, so there is no settled answer to conclude — and ps_001 already exists at tier probable, so this is not a request for a first conclusion either."
+  },
+
+  "judge_context": [
+    "Should route to hypothesis-tracking rather than writing or revising a proof summary",
+    "\"Write up\" and \"what the evidence says\" are not sufficient to activate — proof-conclusion's trigger surface is conclusion-writing for a resolved question, and h_002 is still `active`, so nothing is settled to conclude",
+    "Must not write to `proof_summaries`, and must not revise ps_001. Producing a tiered narrative in place of a hypothesis-status account is the specific failure this test pins",
+    "A correct decline should be legible as such: naming hypothesis-tracking, or producing nothing, both count — what must not happen is proof-conclusion performing the account itself under its own name"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
