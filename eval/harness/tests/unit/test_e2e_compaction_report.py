@@ -77,6 +77,21 @@ def test_tool_count_mismatch_is_excluded_not_misattributed():
     assert reason == "tool-count-mismatch"
 
 
+def test_more_tool_calls_than_timeline_names_is_excluded_not_undercounted():
+    """The other mismatch direction: trailing tool_calls the timeline never
+    accounted for must exclude the run, not go silently unexamined."""
+    doc = {
+        "usage": {"timeline": [_assistant(["record_search"])]},
+        "tool_calls": [
+            _tool_call("mcp__genealogy__record_search", subject_id="I1"),
+            _tool_call("mcp__genealogy__record_search", subject_id=None),
+        ],
+    }
+    calls, reason = segment_run(doc)
+    assert calls == []
+    assert reason == "tool-count-mismatch"
+
+
 def test_early_late_boundary_is_exactly_at_segment_three():
     """Segment 2 is early, segment 3 is late — the issue's own split point."""
     assert EARLY_MAX_SEGMENT == 2
@@ -244,10 +259,12 @@ def test_main_exits_nonzero_when_nothing_in_the_window_is_readable(tmp_path, mon
     assert main(["--since", "all"]) == 1
 
 
-def test_main_test_flag_ignores_the_since_cutoff(tmp_path, monkeypatch, capsys):
-    """An explicit --test is a deliberate request for that fixture's runs —
-    the SINCE cutoff guards aggregate reads, same convention as
-    latency_report.py's --test/--all split."""
+def test_main_test_flag_still_honors_the_since_cutoff(tmp_path, monkeypatch, capsys):
+    """Unlike latency_report.py's --test (one latest run, where a date filter
+    is meaningless), this --test still aggregates EVERY run for the fixture —
+    an aggregate read, which is exactly what SINCE exists to protect. A stale
+    fixture's runs must stay filtered under the default window, and only
+    reappear under --since all."""
     import e2e.runlog_selection as runlog_selection
 
     monkeypatch.setattr(runlog_selection, "E2E_RUNLOGS", tmp_path)
@@ -262,6 +279,12 @@ def test_main_test_flag_ignores_the_since_cutoff(tmp_path, monkeypatch, capsys):
     )
 
     rc = main(["--test", "old-fixture"])
+    captured = capsys.readouterr()
+    assert rc == 1
+    assert "No committed runs found" in captured.err
+
+    rc = main(["--test", "old-fixture", "--since", "all"])
     out = capsys.readouterr().out
     assert rc == 0
+    assert "Fixture: old-fixture" in out
     assert "Window: entire corpus (1 run(s))." in out

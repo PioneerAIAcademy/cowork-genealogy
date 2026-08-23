@@ -520,18 +520,23 @@ narrow for most compaction questions, since heavy compaction only shows up in
 long runs and the corpus turns over quickly. Pass an explicit `SINCE=<date>`
 or `SINCE=all`. The two windows issue #1155 was asked to compare:
 `SINCE=2026-07-27` (the day the ranking fold shipped) and `SINCE=2026-08-04`
-(the day `rankingSkipped` landed, meant to counteract exactly this decay). A
-run committed before 2026-07-26 (#895) carries no per-message tool names and
-can't be segmented; it's excluded from the report and the exclusion is
-counted, never silently dropped.
+(the day `rankingSkipped` landed, meant to counteract exactly this decay).
+Both are cumulative — the first *includes* the second, so the pre-nudge-only
+row in ADR-0003 is the first window's counts minus the second's, not a window
+this target can print. A run committed before 2026-07-26 (#895) carries no
+per-message tool names and can't be segmented; it's excluded from the report
+and the exclusion is counted, never silently dropped.
 
 ---
 
 ## Windows equivalents
 
-Every `make` target above has a batch file in `eval\`. Double-click it or run
-it from that folder; each prompts for what it needs instead of taking
-`TEST=`-style arguments, and builds the MCP server first where that matters.
+Every `make` target in the fixture-authoring steps above has a batch file in
+`eval\`. The corpus reports (`make e2e-corpus`, `e2e-nudges`, `e2e-latency`,
+`e2e-wiki-failures`, `e2e-compaction`) do not — run those from Git Bash or
+WSL. Double-click a batch file or run it from that folder; each prompts for
+what it needs instead of taking `TEST=`-style arguments, and builds the MCP
+server first where that matters.
 
 | Instead of | Double-click |
 |---|---|

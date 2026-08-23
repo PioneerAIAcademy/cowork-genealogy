@@ -245,21 +245,21 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     all_paths = result_jsons_for(args.test) if args.test else all_result_jsons()
-    if args.test:
-        # An explicit --test is a deliberate request for that fixture's runs;
-        # the cutoff guards *aggregate* reads, same convention as
-        # latency_report.py's --test/--all split.
-        cutoff = None
-        paths = all_paths
-    else:
-        cutoff = args.since
-        paths = filter_since(all_paths, cutoff)
+    # Unlike latency_report's --test (one latest run, where a date filter is
+    # meaningless), this --test still aggregates EVERY run for the fixture via
+    # result_jsons_for() -- an aggregate read, which is exactly what SINCE
+    # exists to protect. So the window applies here too; pass SINCE=all for
+    # that fixture's whole history.
+    cutoff = args.since
+    paths = filter_since(all_paths, cutoff)
     if not paths:
         where = f" on/after {cutoff.isoformat()}" if (cutoff and all_paths) else ""
         print(f"No committed runs found{where}.", file=sys.stderr)
         return 1
 
     calls, excluded, unreadable_files = scan(paths)
+    if args.test:
+        print(f"Fixture: {args.test}")
     print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
     print(format_report(calls, n_runs=len(paths), excluded=excluded, unreadable_files=unreadable_files))
     # Nothing readable is a failure, not an empty success — same convention as

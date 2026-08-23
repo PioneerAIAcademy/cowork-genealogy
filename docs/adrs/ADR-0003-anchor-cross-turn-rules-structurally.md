@@ -110,12 +110,18 @@ left unmeasured under compaction. A compaction-segment audit of
 ranking-call rate; `make e2e-compaction`, issue #1155 — **not** the "second
 skill body" audit the "Revisit when" clause below names, since this
 re-checks the same skill) found early-segment (0–2) supply markedly higher
-than late-segment (3+) throughout: 45.8% vs. 43.6% before `rankingSkipped`
-shipped (2026-07-27..08-03, 34 segmentable runs / 101 late-segment calls),
-64.7% vs. 44.0% after (2026-08-04+, 14 runs / 25 late-segment calls).
-Comparing the two **disjoint** windows: early-segment supply rose 19 points
-after `rankingSkipped` (45.8% → 64.7%) while late-segment supply moved
-essentially not at all (43.6% → 44.0%).
+than late-segment (3+) throughout. Both `--since` windows are cumulative — a
+later cutoff is a subset of an earlier one, not a disjoint slice — so the
+pre-nudge-only row below is not one command's output; it is
+`--since 2026-07-27` minus `--since 2026-08-04`, call by call: 45.8% vs.
+43.6% before `rankingSkipped` shipped (2026-07-27..08-03, 312 early-segment
+calls / 101 late-segment calls, 34 segmentable runs), against 58.1% vs. 44.8%
+after (`--since 2026-08-04` itself, 2026-08-04+, 16 runs / 29 late-segment
+calls). The "after" count moves as the corpus grows — reproduce both with the
+commands in `docs/e2e-testing-guide.md`. Comparing the two **disjoint**
+windows: early-segment supply rose about 12 points after `rankingSkipped`
+(45.8% → 58.1%) while late-segment supply moved barely at all
+(43.6% → 44.8%).
 
 That raw gap is not, on inspection, mostly the decay it looks like. The
 tool's own schema permits omitting `subjectId` when the search "is not about
