@@ -293,11 +293,13 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
+import { fetchWithTimeout } from "../src/utils/http.js";
 import {
   yearOf,
   yearOfDate,
   datedFromGedcomx,
   givenOf,
+  type Gedcomx,
 } from "./payload-extract.js";
 
 const SEARCH_URL =
@@ -852,6 +854,79 @@ async function searchOnce(query: string, attempt: number): Promise<Hit | typeof 
 async function search(query: string): Promise<Hit> {
   for (let attempt = 0; ; attempt++) {
     const r = await searchOnce(query, attempt);
+    if (r !== RETRY) return r;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Tree endpoint (person_search). A separate primitive, not a parameter on
+// searchOnce, because three things differ from the records endpoint and each
+// cost a wrong finding before it was pinned (see the explore-tree-* scripts):
+//   - base URL and `Accept: application/x-gedcomx-atom+json`;
+//   - a zero-result query answers HTTP 204 with an EMPTY BODY, where records
+//     answers 200 with `entries: []`. So the 204 branch below is load-bearing
+//     here and is exactly the branch searchOnce does NOT have — without it the
+//     empty body falls into the JSON parse and a meaningful zero reads as an
+//     error, which the pager then treats as "the pool ended here";
+//   - the payload shape: `entries[].content.gedcomx` per matched person.
+// The retry discipline is shared with searchOnce on purpose: same throttle(),
+// RETRYABLE_STATUS, MAX_RETRIES, backoff() and RETRY sentinel, so a run's retry
+// tally covers both endpoints. `fetchWithTimeout`, not the bare `fetch`
+// searchOnce uses: the tree endpoint throttles hardest of all and a stalled
+// connection would hang the whole run (CLAUDE.md: volume_search hung 236 min).
+const TREE_URL = "https://api.familysearch.org/platform/tree/search";
+
+interface TreeHit {
+  total: number | null;
+  /** Matched tree persons on this page: id plus the record gedcomx (for payload dates). */
+  persons: Array<{ id: string; gx: Gedcomx }>;
+  error: string | null;
+}
+
+async function treeSearchOnce(
+  query: string,
+  attempt: number
+): Promise<TreeHit | typeof RETRY> {
+  await throttle();
+  const res = await fetchWithTimeout(
+    `${TREE_URL}?${query}`,
+    { headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } },
+    60_000
+  );
+  // Status first, before the body — a 429/502 often carries an HTML or JSON
+  // envelope the parse below would turn into a terminal error, hiding the retry.
+  if (RETRYABLE_STATUS.has(res.status) && attempt < MAX_RETRIES) {
+    await backoff(res, attempt, query);
+    return RETRY;
+  }
+  // 204 = zero results, a MEANINGFUL ZERO. `res.ok` is true for 204 and the body
+  // is empty; this is the branch searchOnce does not need and this endpoint does.
+  if (res.status === 204) return { total: 0, persons: [], error: null };
+  const body = await res.text();
+  if (!res.ok) return { total: null, persons: [], error: `HTTP ${res.status}` };
+  // An empty 200 body is a transient the tree endpoint also emits; surface it as
+  // an error so the pager refuses rather than reading it as end-of-pool.
+  if (!body.trim()) return { total: null, persons: [], error: "empty body (HTTP 200)" };
+  let parsed: { results?: number; entries?: Array<{ id?: string; content?: { gedcomx?: Gedcomx & { persons?: Array<{ id?: string }> } } }> };
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return { total: null, persons: [], error: `HTTP ${res.status}: unparseable` };
+  }
+  const persons = (parsed.entries ?? []).map((e) => ({
+    id: e?.content?.gedcomx?.persons?.[0]?.id ?? e?.id ?? "?",
+    gx: (e?.content?.gedcomx ?? {}) as Gedcomx,
+  }));
+  return {
+    total: typeof parsed.results === "number" ? parsed.results : null,
+    persons,
+    error: null,
+  };
+}
+
+async function treeSearch(query: string): Promise<TreeHit> {
+  for (let attempt = 0; ; attempt++) {
+    const r = await treeSearchOnce(query, attempt);
     if (r !== RETRY) return r;
   }
 }
@@ -5886,6 +5961,511 @@ async function sectionY(): Promise<void> {
   record("Y", "verdict:generalises past birth", overall);
 }
 
+// ---------------------------------------------------------------------------
+// P. person_search (tree endpoint): year-range band instrument, all four
+// year families.
+//
+// #1771 step 0. The records endpoint's year behaviour (sections H/N/Y) rests on
+// a probe recorded to the artifact; the tree endpoint's did not — every tree
+// figure came from throwaway session scripts that no longer exist. This section
+// gives person_search the same trail, so the YEAR clause can be stated about it
+// at all. (The NAME rule needs no probe here — the lead's 2026-08-17 ruling
+// states it as search-engine internals with no figure; person_search stays out
+// of EVIDENCE_SURFACES. This is only for the year axis.)
+//
+// The design is the records band instrument (`explore-year-bands-records.ts`),
+// with the guard the tree explorer lacked: the payload-dated CONTROL. Closure
+// alone is weak — it survives a silently dropped `m.queryRequireDefault=on` or
+// date param (every band returns the whole pool; both sums rise together). Only
+// the control sees that: a payload-dated persona must land in the band holding
+// its own year, and must NOT span every band.
+//
+// One anchor pool, `q.surname=<rare>&q.givenName=<rare>`, run once per family on
+// the family's own `q.*Date` param. All four params filter on the tree endpoint
+// (measured: baseline 272 -> 46/87/76/105 for 1800-1849, 0 for 1400-1449). The
+// payload year lives in different places per family: birth/death/residence are
+// facts on the matched person (`persons[0]`); MARRIAGE is a Couple-relationship
+// fact, so its control attributes the marriage year through the relationship the
+// matched person participates in, not through `persons[0].facts`.
+const TREE_POOL = "q.surname=Pocklington&q.givenName=Thomae";
+
+/** Years of a family carried as facts on the matched person (`persons[0]`). */
+function treePersonYears(gx: Gedcomx, kind: RegExp): number[] {
+  return datedFromGedcomx(gx)
+    .filter((d) => d.personIdx === 0 && kind.test(d.kind) && d.year !== null)
+    .map((d) => d.year as number);
+}
+
+/**
+ * The matched person's marriage years, from the Couple relationships it is a
+ * partner in. Marriage is not a `persons[0]` fact on the tree endpoint — it sits
+ * on the relationship — so `treePersonYears` would find nothing and every
+ * marriage persona would read as silent.
+ */
+function treeMarriageYears(gx: Gedcomx): number[] {
+  const self = gx.persons?.[0]?.id;
+  if (!self) return [];
+  const years: number[] = [];
+  for (const r of gx.relationships ?? []) {
+    if (!/Couple$/.test(r.type ?? "")) continue;
+    if (r.person1?.resourceId !== self && r.person2?.resourceId !== self) continue;
+    for (const f of r.facts ?? []) {
+      if (!/Marriage$/.test(f.type ?? "")) continue;
+      const y = yearOfDate(f.date);
+      if (y !== null) years.push(y);
+    }
+  }
+  return years;
+}
+
+interface TreeFamily {
+  family: string;
+  /** The `q.*Date` parameter on the tree endpoint. */
+  param: string;
+  /** The matched person's payload years for this family. */
+  yearsOf: (gx: Gedcomx) => number[];
+}
+
+const TREE_YEAR_FAMILIES: TreeFamily[] = [
+  { family: "birth", param: "q.birthLikeDate", yearsOf: (gx) => treePersonYears(gx, /^(Birth|Christening|Baptism|birthDate)$/i) },
+  { family: "death", param: "q.deathLikeDate", yearsOf: (gx) => treePersonYears(gx, /^(Death|Burial|Cremation|deathDate)$/i) },
+  { family: "marriage", param: "q.marriageLikeDate", yearsOf: treeMarriageYears },
+  { family: "residence", param: "q.residenceDate", yearsOf: (gx) => treePersonYears(gx, /^(Residence|Census|residenceDate)$/i) },
+];
+
+/**
+ * Enumerate a tree query to the end. `null` = did not enumerate (a page errored,
+ * or the cap was hit with a full last page) — never a partial handed back as
+ * complete, which RULE 0 forbids. The pool is 272 unranged, so the cap is roomy.
+ */
+async function treeReadAll(
+  extra: string,
+  yearsOf: (gx: Gedcomx) => number[],
+  cap = 2000
+): Promise<{ total: number | null; rows: Array<{ id: string; years: number[] }> } | null> {
+  const rows: Array<{ id: string; years: number[] }> = [];
+  let total: number | null = null;
+  for (let offset = 0; offset < cap; offset += 100) {
+    const h = await treeSearch(`${TREE_POOL}${extra}&count=100&offset=${offset}&${REQUIRE_SWITCH}`);
+    if (h.error !== null) return null; // an errored page is not an exhausted one
+    total ??= h.total;
+    for (const p of h.persons) rows.push({ id: p.id, years: yearsOf(p.gx) });
+    if (h.persons.length < 100) return { total, rows }; // short page (incl. a 204) = complete
+  }
+  return null; // cap hit with a full page: partial
+}
+
+/** One family: enumerate, band, control, record `P.bands:tree-<family>`. */
+async function runTreeFamily(fam: TreeFamily): Promise<void> {
+  console.log(`\n  --- ${fam.family} (${fam.param}) ---`);
+  const u = await treeReadAll("", fam.yearsOf);
+  if (!u) {
+    console.log(`  [RULE 0] unranged ${fam.family} pool did not enumerate — REFUSING`);
+    record("P", `bands:tree-${fam.family}`, { pool: TREE_POOL, param: fam.param, status: "refused: unranged did not enumerate" });
+    return;
+  }
+  const distinct = new Set(u.rows.map((r) => r.id));
+  const dated = u.rows.filter((r) => r.years.length > 0);
+  console.log(
+    `  unranged: total ${u.total}, read ${u.rows.length}, distinct ${distinct.size}; ` +
+      `payload-dated ${dated.length}, silent ${u.rows.length - dated.length}`
+  );
+
+  const BANDS: Array<[number, number]> = [];
+  for (let y = 1400; y < 2000; y += 50) BANDS.push([y, y + 49]);
+
+  // Membership counts DISTINCT bands per persona (a Set per band), not row
+  // occurrences: a persona that paginates twice inside one band must not read as
+  // spanning two.
+  const membership = new Map<string, number>();
+  const exactMembership = new Map<string, number>();
+  const bandMembers = new Map<string, Set<string>>();
+  let bandRowsRead = 0;
+  let exactRowsRead = 0;
+  let unenumerable = 0;
+  let exactFailed = 0;
+  console.log("  band         rows | .exact");
+  console.log("  " + "-".repeat(24));
+  for (const [from, to] of BANDS) {
+    const range = `&${fam.param}.from=${from}&${fam.param}.to=${to}`;
+    const set = await treeReadAll(range, fam.yearsOf);
+    const ex = await treeReadAll(`${range}&${fam.param}.exact=on`, fam.yearsOf);
+    if (!set) {
+      unenumerable++;
+      console.log(`  ${from}-${to}   DID NOT ENUMERATE`);
+      continue;
+    }
+    const ids = new Set(set.rows.map((r) => r.id));
+    bandMembers.set(`${from}-${to}`, ids);
+    bandRowsRead += ids.size;
+    for (const id of ids) membership.set(id, (membership.get(id) ?? 0) + 1);
+    if (!ex) exactFailed++;
+    else {
+      const exIds = new Set(ex.rows.map((r) => r.id));
+      exactRowsRead += exIds.size;
+      for (const id of exIds) exactMembership.set(id, (exactMembership.get(id) ?? 0) + 1);
+    }
+    console.log(
+      `  ${from}-${to}  ${String(ids.size).padStart(4)} | ` +
+        `${ex ? String(new Set(ex.rows.map((r) => r.id)).size).padStart(4) : " err"}`
+    );
+  }
+  const N = BANDS.length - unenumerable;
+
+  // Closure (WEAK): every band id is an unranged id, and the per-id band count
+  // summed over unranged ids equals the distinct band rows read.
+  let accountedFor = 0;
+  for (const id of distinct) accountedFor += membership.get(id) ?? 0;
+  const strays = [...membership.keys()].filter((id) => !distinct.has(id));
+  const closureHolds = bandRowsRead === accountedFor && strays.length === 0;
+  console.log(
+    `  CLOSURE: band rows ${bandRowsRead} = accounted ${accountedFor}, strays ${strays.length} -> ${closureHolds}`
+  );
+
+  if (unenumerable > 0 || exactFailed > 0 || !closureHolds) {
+    const reason = unenumerable > 0
+      ? `${unenumerable} band(s) did not enumerate`
+      : exactFailed > 0
+        ? `${exactFailed} .exact read(s) failed`
+        : "closure failed (a band returned an id absent from the unranged read)";
+    console.log(`  [RULE 0] REFUSING a verdict: ${reason}.`);
+    record("P", `bands:tree-${fam.family}`, { pool: TREE_POOL, param: fam.param, poolTotal: u.total, status: `refused: ${reason}` });
+    return;
+  }
+
+  // Payload-dated CONTROL (STRONG) — the guard the tree explorer lacked, in the
+  // form the year-range finding forces. Two invariants, and NOT the "exactly one
+  // band" the records explorer asserts (that contradicts the finding — an
+  // unqualified range matches by OVERLAP, so a dated persona can reach an
+  // adjacent band):
+  //   - RIGHT BAND: for EACH in-axis payload year the persona carries, the band
+  //     holding that year contains the persona. Catches mis-sorting.
+  //   - NOT AXIS-SPANNING: no payload-dated persona is in ALL N bands — the
+  //     degenerate shape a dropped require switch / ignored date param produces
+  //     (every band returns the whole pool). Proven to fire: without the switch
+  //     both 1400-1449 and 1900-1949 return the full 3,952-row surname pool.
+  const bandOf = (y: number): number => Math.floor((y - 1400) / 50);
+  const inAxis = (y: number): boolean => bandOf(y) >= 0 && bandOf(y) < BANDS.length;
+  const datedInAxis = dated.filter((r) => r.years.some(inAxis));
+  const wrongBand = datedInAxis.filter((r) =>
+    r.years.filter(inAxis).some((y) => {
+      const [from, to] = BANDS[bandOf(y)]!;
+      return !(bandMembers.get(`${from}-${to}`)?.has(r.id) ?? false);
+    })
+  );
+  const axisSpanning = datedInAxis.filter((r) => (membership.get(r.id) ?? 0) === N);
+  const overlapping = datedInAxis.filter((r) => (membership.get(r.id) ?? 0) > 1).length;
+  // A control with no payload-dated subjects is VACUOUS, not passing — a census
+  // collection that indexes birth from age exposes no birth fact, so the birth
+  // axis there has nothing to check. Record it as vacuous rather than a spurious
+  // `true`; the switch-integrity guarantee then rests on the residence axis of
+  // the same pool (which does expose dates) and on closure.
+  const controlVacuous = datedInAxis.length === 0;
+  const controlHolds = controlVacuous ? false : wrongBand.length === 0 && axisSpanning.length === 0;
+  console.log(
+    `  CONTROL: payload-dated-in-axis ${datedInAxis.length}; in every own-year band: ` +
+      `${datedInAxis.length - wrongBand.length}; spanning all ${N} bands: ${axisSpanning.length}; ` +
+      `in >1 band (range overlap): ${overlapping} -> ${controlVacuous ? "VACUOUS (no payload-dated subjects)" : controlHolds}`
+  );
+  if (!controlVacuous && !controlHolds) {
+    const why = wrongBand.length
+      ? `${wrongBand.length} dated persona(s) absent from a band holding one of their own years`
+      : `${axisSpanning.length} dated persona(s) span all ${N} bands (dropped require switch or ignored date param)`;
+    console.log(`  [RULE 0] REFUSING a verdict: the payload-dated control failed — ${why}, which closure cannot see.`);
+    record("P", `bands:tree-${fam.family}`, { pool: TREE_POOL, param: fam.param, poolTotal: u.total, status: `refused: control failed (${why})` });
+    return;
+  }
+
+  const hist = new Map<number, number>();
+  for (const id of distinct) {
+    const c = membership.get(id) ?? 0;
+    hist.set(c, (hist.get(c) ?? 0) + 1);
+  }
+  const indexSilent = [...distinct].filter((id) => (membership.get(id) ?? 0) === N && N > 0);
+  const indexSilentKept = indexSilent.filter((id) => (exactMembership.get(id) ?? 0) > 0).length;
+  const noBand = [...distinct].filter((id) => (membership.get(id) ?? 0) === 0);
+  console.log(`  ${N} bands enumerated. membership over ${distinct.size} distinct personas:`);
+  for (const [c, n] of [...hist].sort((a, b) => a[0] - b[0])) {
+    const tag = c === 0 ? "  <- in NO band"
+      : c === N ? "  <- in EVERY band (index-silent)"
+      : c === 1 ? "  <- one index date" : "  <- estimated SPAN";
+    console.log(`     ${String(c).padStart(2)} band(s): ${String(n).padStart(4)}${tag}`);
+  }
+  console.log(`  index-silent (in every band): ${indexSilent.length}; of those kept by .exact in >=1 band: ${indexSilentKept}`);
+
+  // Data only. Verdict keys + FORBIDDEN_WHEN rules are #1771 step 4.
+  record("P", `bands:tree-${fam.family}`, {
+    pool: TREE_POOL,
+    param: fam.param,
+    poolTotal: u.total,
+    read: u.rows.length,
+    distinct: distinct.size,
+    payloadDated: dated.length,
+    payloadDatedInMultipleBands: overlapping,
+    bandsEnumerated: N,
+    membership: Object.fromEntries([...hist].sort((a, b) => a[0] - b[0])),
+    indexSilent: indexSilent.length,
+    indexSilentKeptByExact: indexSilentKept,
+    inNoBand: noBand.length,
+    closureHolds,
+    controlHolds,
+    controlVacuous,
+    bandRowsRead,
+    exactRowsRead,
+  });
+}
+
+async function sectionP(): Promise<void> {
+  console.log("\n=== P. person_search (tree): year-range bands + payload-dated control, all families ===");
+  for (const fam of TREE_YEAR_FAMILIES) await runTreeFamily(fam);
+}
+
+// ---------------------------------------------------------------------------
+// Q. record_search (records endpoint): year-range band instrument, all four
+// year families.
+//
+// #1771 steps 1-2. The records companion to section P. Section N already
+// re-derives the year question enumerably, but with a SINGLE window (1850-1850)
+// plus one impossible-range control; this builds the full disjoint-band
+// membership instrument — every band and its `.exact` counterpart read to the
+// end, personas classified by how many bands contain them — so "there are no
+// year-silent records" is measured by membership rather than inferred from one
+// window.
+//
+// One anchor, `q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England`,
+// run once per family on the family's own `f.recordType` and `q.*Date` param.
+// All four unranged pools enumerate (birth 583, death 194, marriage 269,
+// residence 198). The given name is load-bearing: the dateless surname-only pool
+// is too deep to read to the end (`mustEnumerate` returns too-deep), which is
+// exactly what step 3's non-parish census pool exists to complement.
+//
+// This section records DATA only. The H/N verdict-key renames and the deletion
+// of H's dead estimator (partition algebra, smallest-bucket, silentEstimatesAgree)
+// are step 4, which must land atomically with the FORBIDDEN_WHEN rewire — a
+// deleted key otherwise dangles its rule and the guard-resolves test fails.
+//
+// The payload-dated control is the reformed one from section P, NOT the "exactly
+// one band" the records explorer asserts: an unqualified range matches by
+// OVERLAP, so a dated persona can reach an adjacent band. On the records birth
+// pool overlap is 0 (so "exactly one band" would have passed here), but it is
+// unsound as a law — the tree pool shows real overlap — so both endpoints use
+// RIGHT BAND (present in the band of each own year) + NOT AXIS-SPANNING.
+const RECORDS_ANCHOR = "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England";
+
+const RECORDS_DEATH_KIND = /^(Death|Burial|Cremation|deathDate)$/i;
+const RECORDS_MARRIAGE_KIND = /^(Marriage|marriageDate)$/i;
+const RECORDS_RESIDENCE_KIND = /^(Residence|Census|residenceDate)$/i;
+
+/** The matched persona's payload birth years (birthLike facts + display fallback). */
+function recordsBirthYears(p: Persona): number[] {
+  const ys = p.birthLike.map((f) => f.year).filter((y): y is number => y !== null);
+  if (ys.length) return ys;
+  const disp = yearOf(p.matchedBirthDate);
+  return disp === null ? [] : [disp];
+}
+
+/** Matched-persona facts of a family (`personIdx === 0`). */
+function recordsPersonYears(p: Persona, kind: RegExp): number[] {
+  return p.allDated
+    .filter((d) => d.personIdx === 0 && kind.test(d.kind) && d.year !== null)
+    .map((d) => d.year as number);
+}
+
+/** Record-level family years (any person, incl. relationship facts at -1). Marriage
+ *  is a Couple-relationship fact, not a `persons[0]` fact, so it is read here. */
+function recordsRecordYears(p: Persona, kind: RegExp): number[] {
+  return p.allDated
+    .filter((d) => kind.test(d.kind) && d.year !== null)
+    .map((d) => d.year as number);
+}
+
+interface RecordsFamily {
+  family: string;
+  recordType: number;
+  param: string;
+  yearsOf: (p: Persona) => number[];
+}
+
+const RECORDS_YEAR_FAMILIES: RecordsFamily[] = [
+  { family: "birth", recordType: 0, param: "q.birthLikeDate", yearsOf: recordsBirthYears },
+  { family: "death", recordType: 2, param: "q.deathLikeDate", yearsOf: (p) => recordsPersonYears(p, RECORDS_DEATH_KIND) },
+  { family: "marriage", recordType: 1, param: "q.marriageLikeDate", yearsOf: (p) => recordsRecordYears(p, RECORDS_MARRIAGE_KIND) },
+  { family: "residence", recordType: 3, param: "q.residenceDate", yearsOf: (p) => recordsPersonYears(p, RECORDS_RESIDENCE_KIND) },
+];
+
+/** One family: enumerate, band, control, record `Q.bands:records-<family>`. */
+async function runRecordsFamily(
+  fam: RecordsFamily,
+  opts: { pool?: string; keyPrefix?: string } = {}
+): Promise<void> {
+  const pool = opts.pool ?? `${RECORDS_ANCHOR}&f.recordType=${fam.recordType}`;
+  const key = `${opts.keyPrefix ?? "bands:records"}-${fam.family}`;
+  console.log(`\n  --- ${fam.family} (${fam.param}) on ${pool} ---`);
+  const u = await mustEnumerate(pool);
+  if (u.why !== null) {
+    console.log(`  [RULE 0] unranged ${fam.family} pool did not enumerate (${u.why}) — REFUSING`);
+    record("Q", key, { pool, param: fam.param, status: `refused: unranged ${u.why}` });
+    return;
+  }
+  const rows = u.personas.map((p) => ({ id: p.id, years: fam.yearsOf(p) }));
+  const distinct = new Set(rows.map((r) => r.id));
+  const dated = rows.filter((r) => r.years.length > 0);
+  console.log(
+    `  unranged: total ${u.total}, read ${rows.length}, distinct ${distinct.size}; ` +
+      `payload-dated ${dated.length}, silent ${rows.length - dated.length}`
+  );
+
+  const BANDS: Array<[number, number]> = [];
+  for (let y = 1400; y < 2000; y += 50) BANDS.push([y, y + 49]);
+
+  const membership = new Map<string, number>();
+  const exactMembership = new Map<string, number>();
+  const bandMembers = new Map<string, Set<string>>();
+  let bandRowsRead = 0;
+  let exactRowsRead = 0;
+  let unenumerable = 0;
+  let exactFailed = 0;
+  console.log("  band         rows | .exact");
+  console.log("  " + "-".repeat(24));
+  for (const [from, to] of BANDS) {
+    const range = `&${fam.param}.from=${from}&${fam.param}.to=${to}`;
+    const set = await mustEnumerate(`${pool}${range}`);
+    const ex = await mustEnumerate(`${pool}${range}&${fam.param}.exact=on`);
+    if (set.why !== null) {
+      unenumerable++;
+      console.log(`  ${from}-${to}   DID NOT ENUMERATE (${set.why})`);
+      continue;
+    }
+    const ids = new Set(set.personas.map((p) => p.id));
+    bandMembers.set(`${from}-${to}`, ids);
+    bandRowsRead += ids.size;
+    for (const id of ids) membership.set(id, (membership.get(id) ?? 0) + 1);
+    if (ex.why !== null) exactFailed++;
+    else {
+      const exIds = new Set(ex.personas.map((p) => p.id));
+      exactRowsRead += exIds.size;
+      for (const id of exIds) exactMembership.set(id, (exactMembership.get(id) ?? 0) + 1);
+    }
+    console.log(
+      `  ${from}-${to}  ${String(ids.size).padStart(4)} | ` +
+        `${ex.why === null ? String(new Set(ex.personas.map((p) => p.id)).size).padStart(4) : " err"}`
+    );
+  }
+  const N = BANDS.length - unenumerable;
+
+  let accountedFor = 0;
+  for (const id of distinct) accountedFor += membership.get(id) ?? 0;
+  const strays = [...membership.keys()].filter((id) => !distinct.has(id));
+  const closureHolds = bandRowsRead === accountedFor && strays.length === 0;
+  console.log(
+    `  CLOSURE: band rows ${bandRowsRead} = accounted ${accountedFor}, strays ${strays.length} -> ${closureHolds}`
+  );
+
+  if (unenumerable > 0 || exactFailed > 0 || !closureHolds) {
+    const reason = unenumerable > 0
+      ? `${unenumerable} band(s) did not enumerate`
+      : exactFailed > 0
+        ? `${exactFailed} .exact read(s) failed`
+        : "closure failed (a band returned an id absent from the unranged read)";
+    console.log(`  [RULE 0] REFUSING a verdict: ${reason}.`);
+    record("Q", key, { pool, param: fam.param, poolTotal: u.total, status: `refused: ${reason}` });
+    return;
+  }
+
+  const bandOf = (y: number): number => Math.floor((y - 1400) / 50);
+  const inAxis = (y: number): boolean => bandOf(y) >= 0 && bandOf(y) < BANDS.length;
+  const datedInAxis = dated.filter((r) => r.years.some(inAxis));
+  const wrongBand = datedInAxis.filter((r) =>
+    r.years.filter(inAxis).some((y) => {
+      const [from, to] = BANDS[bandOf(y)]!;
+      return !(bandMembers.get(`${from}-${to}`)?.has(r.id) ?? false);
+    })
+  );
+  const axisSpanning = datedInAxis.filter((r) => (membership.get(r.id) ?? 0) === N);
+  const overlapping = datedInAxis.filter((r) => (membership.get(r.id) ?? 0) > 1).length;
+  // A control with no payload-dated subjects is VACUOUS, not passing — a census
+  // collection that indexes birth from age exposes no birth fact, so the birth
+  // axis there has nothing to check. Record it as vacuous rather than a spurious
+  // `true`; the switch-integrity guarantee then rests on the residence axis of
+  // the same pool (which does expose dates) and on closure.
+  const controlVacuous = datedInAxis.length === 0;
+  const controlHolds = controlVacuous ? false : wrongBand.length === 0 && axisSpanning.length === 0;
+  console.log(
+    `  CONTROL: payload-dated-in-axis ${datedInAxis.length}; in every own-year band: ` +
+      `${datedInAxis.length - wrongBand.length}; spanning all ${N} bands: ${axisSpanning.length}; ` +
+      `in >1 band (range overlap): ${overlapping} -> ${controlVacuous ? "VACUOUS (no payload-dated subjects)" : controlHolds}`
+  );
+  if (!controlVacuous && !controlHolds) {
+    const why = wrongBand.length
+      ? `${wrongBand.length} dated persona(s) absent from a band holding one of their own years`
+      : `${axisSpanning.length} dated persona(s) span all ${N} bands (dropped require switch or ignored date param)`;
+    console.log(`  [RULE 0] REFUSING a verdict: the payload-dated control failed — ${why}, which closure cannot see.`);
+    record("Q", key, { pool, param: fam.param, poolTotal: u.total, status: `refused: control failed (${why})` });
+    return;
+  }
+
+  const hist = new Map<number, number>();
+  for (const id of distinct) {
+    const c = membership.get(id) ?? 0;
+    hist.set(c, (hist.get(c) ?? 0) + 1);
+  }
+  const indexSilent = [...distinct].filter((id) => (membership.get(id) ?? 0) === N && N > 0);
+  const indexSilentKept = indexSilent.filter((id) => (exactMembership.get(id) ?? 0) > 0).length;
+  const noBand = [...distinct].filter((id) => (membership.get(id) ?? 0) === 0);
+  console.log(`  ${N} bands enumerated. membership over ${distinct.size} distinct personas:`);
+  for (const [c, n] of [...hist].sort((a, b) => a[0] - b[0])) {
+    const tag = c === 0 ? "  <- in NO band"
+      : c === N ? "  <- in EVERY band (index-silent)"
+      : c === 1 ? "  <- one index date" : "  <- estimated SPAN";
+    console.log(`     ${String(c).padStart(2)} band(s): ${String(n).padStart(4)}${tag}`);
+  }
+  console.log(`  index-silent (in every band): ${indexSilent.length}; of those kept by .exact in >=1 band: ${indexSilentKept}`);
+
+  record("Q", key, {
+    pool,
+    param: fam.param,
+    poolTotal: u.total,
+    read: rows.length,
+    distinct: distinct.size,
+    payloadDated: dated.length,
+    payloadDatedInMultipleBands: overlapping,
+    bandsEnumerated: N,
+    membership: Object.fromEntries([...hist].sort((a, b) => a[0] - b[0])),
+    indexSilent: indexSilent.length,
+    indexSilentKeptByExact: indexSilentKept,
+    inNoBand: noBand.length,
+    closureHolds,
+    controlHolds,
+    controlVacuous,
+    bandRowsRead,
+    exactRowsRead,
+  });
+}
+
+// #1771 step 3. The main pool above is one Yorkshire parish collection
+// (Pocklington/England). A non-parish US CENSUS pool must show the same
+// estimated-range mechanism, or the year prose rests on a single collection —
+// and this also replaces H's unenumerable ~11.4M `q.surname=Martin&q.residenceDate`
+// population. The pool is recordType=3 (census) throughout; the BIRTH axis is run
+// inside it (`q.birthLikeDate` bands census records by their index birth year),
+// not only the residence axis, because birth is the family every verdict follows
+// from. Pethick/John enumerates clean at 560 with both axes payload-exposed
+// (405 birth, 459 residence), so both controls are real here — unlike a
+// residence-only census indexing (e.g. Steptoe/John, 0 birth exposed), where the
+// birth control would be vacuous.
+const US_CENSUS_CONTROL = "q.recordCountry=United%20States&q.surname=Pethick&q.givenName=John&f.recordType=3";
+
+async function sectionQ(): Promise<void> {
+  console.log("\n=== Q. record_search (records): year-range bands + payload-dated control, all families ===");
+  for (const fam of RECORDS_YEAR_FAMILIES) await runRecordsFamily(fam);
+
+  console.log("\n  === step-3 non-parish control: US census (Pethick/John, recordType=3) ===");
+  const birth = RECORDS_YEAR_FAMILIES.find((f) => f.family === "birth")!;
+  const residence = RECORDS_YEAR_FAMILIES.find((f) => f.family === "residence")!;
+  await runRecordsFamily(birth, { pool: US_CENSUS_CONTROL, keyPrefix: "bands:records-uscensus" });
+  await runRecordsFamily(residence, { pool: US_CENSUS_CONTROL, keyPrefix: "bands:records-uscensus" });
+}
+
 const SECTIONS: Record<string, () => Promise<void>> = {
   A: sectionA,
   B: sectionB,
@@ -5897,6 +6477,8 @@ const SECTIONS: Record<string, () => Promise<void>> = {
   H: sectionH,
   I: sectionI,
   N: sectionN,
+  P: sectionP,
+  Q: sectionQ,
   R: sectionR,
   S: sectionS,
   T: sectionT,
