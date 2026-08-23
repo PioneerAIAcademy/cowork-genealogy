@@ -137,10 +137,14 @@ depend on a manual step at the end of a long session.
 
 ### The ledger
 
-*Empty. `/find-big-wins` has not been run.*
-
 | First proposed | Claim | Verdict | What was learned | Issue |
 |---|---|---|---|---|
+| 2026-08-23 | Stop gating a skill edit on a paid eval run plus an annotation pass | rejected | Committed run logs are converged states — the failing intermediate runs the gate exists to catch never enter the corpus, so no measurement over them can price the gate. The between-run figures that motivated this (14% of test outcomes flip, 5% of dimension scores move, both under the measured 22–26% / 9–17% same-code noise floor) measure convergence, not the gate. The annotation half was re-measured separately and is improving, not failing: the 5-test sampler (#1637, 2026-08-15) cut median rows per pass 72→35 while raising the score-disagreement rate 0.3%→4.2% and cutting "agree with all" passes 74%→30%. The flat-dimension finding (104 of 170 dimension keys never vary) falls to the same selection effect — "always 3" is equally consistent with authors fixing the 1s before landing, and `make judge-report` cannot tell the two apart | |
+| 2026-08-23 | Per-subagent `effort` shipped upstream; three repo sites still record it as session-wide | accepted | Resolves the contradiction blocking issue #1136, and adds a second payoff to skill→agent-pair conversion beyond attribution | |
+| 2026-08-23 | Have the plugin self-report its resolved tool roster instead of testing binding from outside | accepted | Six core issues, not the ten first claimed; buys a repeatable per-mode check, not CI coverage | |
+| 2026-08-23 | Production telemetry as one bet across four issues | deferred | | |
+| 2026-08-23 | Replay the guardrail detectors over feedback-bundle session logs | accepted | Yields production examples, not rates — the half of ADR-0009's satisfiability constraint that binds | |
+| 2026-08-23 | Delete the dead `flaky` field and settle the six warn-only checks | set aside (magnitude) | Direction right, too small to carry an issue; folded into the next harness PR | |
 
 ## Alternatives considered
 
