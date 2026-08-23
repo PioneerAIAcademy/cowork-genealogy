@@ -158,7 +158,10 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   fields: { status: "exhaustive_declared", exhaustive_declaration: { declared,
   log_entry_ids, stop_criteria } } })`. Early termination → `declared: false` form.
   Re-declaring an already-declared question is a structural no-op. **Keep**
-  `references/research-exhaustiveness.md` in full.
+  `references/research-exhaustiveness.md` in full. **Superseded 2026-08-23:**
+  `research-exhaustiveness` is now a skill-agent pair, so that reference file is
+  folded into `agents/research-exhaustiveness.md` and deleted, and the
+  `research_append` write is made by the agent rather than the skill.
 
 ### 4.10 `question-selection` — Wave 2
 - **Step 4:** `research_append({ section: "questions", op: "append" })`. **Supersede:**

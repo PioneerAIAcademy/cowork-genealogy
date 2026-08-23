@@ -612,6 +612,18 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   const inFlight: string[] = [];
   for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
     if (!plan || plan.question_id !== qid) continue;
+    // ONLY the active plan blocks, and this is what keeps the gate escapable.
+    // `research-plan` supersedes a plan by flipping `plans.status` alone — its
+    // items keep whatever status they held — and then forbids touching it ever
+    // again ("Never modify a superseded plan — it is part of the audit trail").
+    // So a question re-planned while one item sat `in_progress` carries that
+    // item forever. Blocking on it would make the declaration permanently
+    // unwritable: the exhaustiveness agent may not reach `plan_items`, the
+    // search skills may not edit a superseded plan, and no other route exists.
+    // That is the unrecoverable false deny ADR-0011's first limit exists to
+    // prevent, and it costs nothing to avoid — a superseded or completed plan
+    // is not the plan the question is being worked from.
+    if (plan.status !== "active") continue;
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
       if (item?.status === "in_progress" && typeof item?.id === "string") inFlight.push(item.id);
     }
@@ -1367,12 +1379,17 @@ function applyOne(
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
     }
-    // Keyed on `status`, not on the declaration: this gate is about the status
-    // claiming more than the declaration carries, and an op that sets only
-    // `status` is exactly the shape it exists to catch.
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
-    if (statusTouchedThisOp) {
+    // EITHER side, because the invariant couples two fields and an op that
+    // touches one can break it without naming the other. Gating on `status`
+    // alone left the mirror-image hole open: an update lowering
+    // `exhaustive_declaration.declared` to false on a question already sitting
+    // at `status: "exhaustive_declared"` never ran the check and persisted
+    // exactly the state it forbids. That is not hypothetical — it is the
+    // agent's own documented re-invocation path, which writes `declared: false`
+    // and is told to leave `status` alone.
+    if (statusTouchedThisOp || declarationTouchedThisOp) {
       invariantErrors.push(...declarationStatusInvariants(resultEntry));
     }
   }
@@ -2067,7 +2084,7 @@ export async function researchAppend(
    *  depending on the right SKILL.md having been loaded. */
   const fail = (
     errors: string[],
-    hint?: Array<{ section: string; op: "append" | "update" }>,
+    hint?: Array<{ section: string; op: "append" | "update"; fields?: readonly string[] }>,
   ): ResearchAppendResult => {
     const all = hint && hint.length > 0 ? [...errors, ...exampleHints(hint)] : errors;
     return opsReceived !== undefined ? { ok: false, errors: all, opsReceived } : { ok: false, errors: all };
@@ -2194,7 +2211,14 @@ export async function researchAppend(
           // Identify the failing op; nothing has been written.
           return fail(
             e.errors.map((m) => fmt(i, m)),
-            [{ section: String(ops[i].section), op: ops[i].op === "update" ? "update" : "append" }],
+            [{
+              section: String(ops[i].section),
+              op: ops[i].op === "update" ? "update" : "append",
+              // The field names the failing op actually set. The worked example
+              // is keyed on these so a caller refused on one field is not handed
+              // a payload for another — see exampleFor.
+              fields: Object.keys(ops[i].fields ?? ops[i].entry ?? {}),
+            }],
           );
         }
         throw e;

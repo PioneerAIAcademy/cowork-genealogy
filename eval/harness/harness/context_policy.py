@@ -272,11 +272,11 @@ OWNED_DECLARATIONS = _guard.OWNED_DECLARATIONS
 owner_denied = _guard.owner_denied
 
 
-def owned_section_denial(denied: str | tuple[str, str, str]) -> dict[str, Any]:
+def owned_section_denial(denied: tuple[str, str, str]) -> dict[str, Any]:
     """A PreToolUse deny for a `research_append` op the ownership rule refuses.
 
-    Accepts either `owner_denied`'s `(section, rule, caller)` triple or, for
-    back-compat, a bare section name meaning the `routed` rule.
+    Takes `owner_denied`'s `(section, rule, caller)` triple directly, so there is
+    no second shape to keep in step.
 
     Built from the SHIPPED hook's own reason strings and maps, the same
     import-don't-copy discipline `protected_file_denial` below follows, so the
@@ -293,9 +293,7 @@ def owned_section_denial(denied: str | tuple[str, str, str]) -> dict[str, Any]:
     constantly for plans, questions, conflicts and the log. An agent told
     otherwise stops writing all of them. Only the section is routed.
     """
-    section, rule, caller = ("", "routed", "") if isinstance(denied, str) else denied
-    if isinstance(denied, str):
-        section = denied
+    section, rule, caller = denied
 
     if rule == "routed":
         reason = _guard.OWNER_REASON.format(

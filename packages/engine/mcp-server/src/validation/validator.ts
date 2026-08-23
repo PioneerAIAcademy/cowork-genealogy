@@ -660,11 +660,13 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       // (47 of them declaring), and 39 of the 154 persisted declared questions
       // carry one — 25% of the corpus persisting a shape
       // `research.schema.json` has always forbidden, with nothing checking.
-      // `typeof [] === "object"`, so an Array.isArray arm is required and not
-      // belt-and-braces: without it a JSON array of criterion strings — the
-      // other natural way to get this wrong — passes the type check and then
-      // skips the seven-field loop, because `"goal_alignment" in []` is false
-      // for every key. Caught by its own vector while this guard was written.
+      // `typeof [] === "object"`, so an array needs its own arm — but only for
+      // the `declared: false` case, and the narrower claim is the true one. On
+      // `declared: true` the seven-field loop below already fires (its test is
+      // `!(field in sc)`, false for every key on an array) and a non-empty
+      // array's numeric indices are already rejected by `checkAllowedKeys`. An
+      // EMPTY array on an undeclared question is what slipped all three, which
+      // is exactly the vector that failed while this guard was written.
       if (ed.stop_criteria !== undefined && ed.stop_criteria !== null
           && (typeof ed.stop_criteria !== "object" || Array.isArray(ed.stop_criteria))) {
         addError(

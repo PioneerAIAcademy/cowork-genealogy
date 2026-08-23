@@ -310,10 +310,6 @@ second declaration for the same question.
 
 ## The framework
 
-Folded from what was `references/research-exhaustiveness.md`. An agent reading
-its own reference files on demand measured 6/19 against a 12–14/19 baseline and
-failed silently, so this ships inline.
-
 Guidance for determining when research on a question qualifies as
 "reasonably exhaustive" under GPS Component 1.
 

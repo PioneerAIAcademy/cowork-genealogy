@@ -367,7 +367,7 @@ def test_owned_section_deny_uses_the_shipped_hooks_own_words():
     """
     from harness.context_policy import owned_section_denial
 
-    reason = owned_section_denial("proof_summaries")["hookSpecificOutput"][
+    reason = owned_section_denial(("proof_summaries", "routed", ""))["hookSpecificOutput"][
         "permissionDecisionReason"
     ]
     assert "proof_summaries" in reason
@@ -543,3 +543,26 @@ def test_out_of_lane_write_by_a_dedicated_agent_is_blocked():
 
     reason = owned_section_denial(denied)["hookSpecificOutput"]["permissionDecisionReason"]
     assert "`questions`" in reason
+
+
+def test_out_of_lane_write_by_proof_conclusion_is_blocked():
+    """The widening this PR causes for an agent that already existed.
+
+    Importing the shipped `owner_denied` brings the hook's out-of-lane arm into
+    e2e for the first time, and `proof-conclusion` — which has shipped since
+    Phase 3 — is the agent it newly binds: it may write
+    {proof_summaries, questions, project} and nothing else. The sibling test
+    above covers the same arm for the agent this PR adds, which cannot regress
+    anything because it did not exist before. This one can.
+    """
+    denied = main_thread_owned_section(
+        _owned(
+            section="conflicts",
+            fields={"status": "resolved"},
+            agent_id="a1",
+            agent_type="genealogy-research:proof-conclusion",
+        )
+    )
+    assert denied is not None
+    assert denied[0] == "conflicts"
+    assert denied[1] == "out_of_lane"

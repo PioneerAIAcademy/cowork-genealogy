@@ -16,7 +16,7 @@ This is a *report*, not a pass/fail gate: the corpus grows weekly and the
 reconstruction rate moves with it. Run it after any change to `replay.py` and
 compare against the recorded baseline below.
 
-    Baseline, 2026-08-15, 154 runs:
+    Baseline, 2026-08-15, 154 runs — SUPERSEDED, see below:
       exact id match on all 12 sections : 136 (88%)
       1-2 sections differ               :  13
       3+ sections differ                :   5

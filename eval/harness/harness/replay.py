@@ -339,12 +339,19 @@ def _apply_op(state: dict, op: dict, entry_id: str | None, out: ReplayResult) ->
         if verb == "append":
             items.append({**entry, "id": entry_id} if entry_id else dict(entry))
         else:
+            target = entry_id or op.get("entryId") or op.get("id")
+            # Same fix as the generic section path below, and this one bites
+            # hardest: plan-item status flips are the op most often batched.
             for it in items:
-                # Same fix as the generic section path below, and this one bites
-                # hardest: plan-item status flips are the op most often batched.
-                if it.get("id") == (entry_id or op.get("entryId") or op.get("id")):
+                if it.get("id") == target:
                     it.update(entry)
                     break
+            else:
+                # Counting a miss as applied is the same dishonest-count class
+                # the `entryId` fix above removes: the generic path reports it,
+                # this one silently inflated `applied` and reported nothing.
+                out.note_unmodelled("update:no-such-id:plan_items")
+                return
         out.applied += 1
         return
 

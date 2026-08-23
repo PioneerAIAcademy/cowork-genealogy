@@ -23,7 +23,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
-import { __testing } from "../../src/tools/research-append-examples.js";
+import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 
 const citationDetail = {
@@ -4233,6 +4233,71 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
     expect(singleOk(r).ok).toBe(true);
   });
 
+
+  // --- vectors from the high-effort code review -------------------------
+
+  it("a superseded plan's stale in_progress item does not block forever", async () => {
+    // research-plan supersedes by flipping `plans.status` alone — items keep
+    // whatever status they held — and then forbids touching that plan again.
+    // Blocking on its items makes the declaration permanently unwritable: the
+    // agent may not reach plan_items, and the search skills may not edit a
+    // superseded plan. ADR-0011's first limit is exactly this.
+    const research = exhResearch(["completed"]);
+    const stale: any = validPlan("pl_000", "q_001", "superseded");
+    stale.items = [{ ...validPlanItem(), id: "pli_099", status: "in_progress" }];
+    (research.plans as any[]).unshift(stale);
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    });
+    expect(singleOk(r).ok).toBe(true);
+  });
+
+  it("a completed plan's items do not block either", async () => {
+    const research = exhResearch(["completed"]);
+    const done: any = validPlan("pl_000", "q_001", "completed");
+    done.items = [{ ...validPlanItem(), id: "pli_098", status: "in_progress" }];
+    (research.plans as any[]).unshift(done);
+    await writeProject(research);
+    expect(singleOk(await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    })).ok).toBe(true);
+  });
+
+  it("refuses lowering `declared` to false while the status still claims exhaustive", async () => {
+    // The mirror image of the status-side vector, and the one a status-only
+    // gate misses. It is the agent's own documented re-invocation path: write
+    // `declared: false`, leave `status` alone — which on an already-declared
+    // question leaves `exhaustive_declared` standing over nothing.
+    const research = exhResearch(["completed"]);
+    (research.questions[0] as any).exhaustive_declaration = DECLARATION;
+    (research.questions[0] as any).status = "exhaustive_declared";
+    await writeProject(research);
+    const errs = failure(await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: {
+        exhaustive_declaration: {
+          declared: false,
+          justification: "Terminating: probate destroyed in an 1862 fire.",
+          log_entry_ids: ["log_001"],
+          stop_criteria: null,
+        },
+      },
+    })).errors.join(" ");
+    expect(errs).toMatch(/exhaustive_declaration\.declared/);
+  });
+
   it("allows the status when the declaration landed in an EARLIER call", async () => {
     // The hannah-earnest-children / jens-nielsen shape: declare at one call,
     // flip the status at the next. Both were misread as violations while the
@@ -4248,5 +4313,34 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       fields: { status: "exhaustive_declared" },
     });
     expect(singleOk(r).ok).toBe(true);
+  });
+});
+
+describe("research_append — the declaring worked example is aimed, not blanket", () => {
+  // The example teaches the seven-key stop_criteria object, and it is attached
+  // to a REJECTION. Returning it for every failing `questions` update handed a
+  // caller refused on, say, a `resolved` write a full `declared: true` payload
+  // — which on the main thread is the one shape the plugin hook denies. A hint
+  // that teaches the next refusal is worse than no hint.
+  it("teaches the seven keys when the failing op named exhaustive_declaration", () => {
+    const hints = exampleHints([
+      { section: "questions", op: "update", fields: ["exhaustive_declaration"] },
+    ]);
+    expect(hints.join("\n")).toContain("overturn_risk");
+    expect(hints.join("\n")).toContain("goal_alignment");
+  });
+
+  it("falls back to the generic skeleton for any other questions update", () => {
+    const hints = exampleHints([
+      { section: "questions", op: "update", fields: ["status", "resolved"] },
+    ]);
+    expect(hints.join("\n")).not.toContain("overturn_risk");
+    expect(hints.join("\n")).not.toContain("declared: true");
+    expect(hints.join("\n")).toContain("only the fields you are changing");
+  });
+
+  it("falls back when the failing op names no fields at all", () => {
+    const hints = exampleHints([{ section: "questions", op: "update" }]);
+    expect(hints.join("\n")).not.toContain("overturn_risk");
   });
 });

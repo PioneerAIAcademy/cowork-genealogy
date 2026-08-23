@@ -312,14 +312,21 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
         for (owned_section, field), owner in OWNED_DECLARATIONS.items():
             if section != owned_section or caller == owner:
                 continue
-            payload_obj = op.get("fields")
-            if not isinstance(payload_obj, dict):
-                payload_obj = op.get("entry")
-            if not isinstance(payload_obj, dict):
-                continue
-            value = payload_obj.get(field)
-            if isinstance(value, dict) and value.get("declared") is True:
-                return (f"{section}.{field}", "declaration", caller)
+            # BOTH keys, never one-or-the-other. `research_append`'s op schema
+            # declares `entry` and `fields`, and nothing stops a caller sending
+            # both — `applyOne` simply ignores `fields` on an append. Reading
+            # `fields` first and falling back only when it is not a dict let
+            # `{op: "append", entry: {…declared: true…}, fields: {}}` through:
+            # the empty dict is a dict, so the fallback never fired and the
+            # declaration landed. This is the only plane that binds in Cowork,
+            # and a missing deny here fails open silently.
+            for key in ("fields", "entry"):
+                payload_obj = op.get(key)
+                if not isinstance(payload_obj, dict):
+                    continue
+                value = payload_obj.get(field)
+                if isinstance(value, dict) and value.get("declared") is True:
+                    return (f"{section}.{field}", "declaration", caller)
         # A known agent reaching outside its own set.
         if writable is not None and section not in writable:
             return (section, "out_of_lane", caller)

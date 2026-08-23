@@ -20,10 +20,10 @@ Did the skill resist the temptation to declare exhaustive prematurely? An honest
 
 ## Stop criteria coverage
 
-When the run **declines**, are all 7 stop criteria addressed in prose? N/A on a run that declares, and N/A when the run refuses before evaluating (a plan-item precondition, or an already-declared question).
+Are the 7 stop criteria assessed with **substance** — each tied to specific project state rather than merely asserted? N/A when the run refuses before evaluating (a plan-item precondition, or an already-declared question).
 
-**This grades the declining path only.** On a declaring run the seven keys are asserted deterministically by `test_declared_has_full_stop_criteria` in the skill's validator, and a validator names the defect in one line where a judge gives an opinion that moves between runs. Grading the same fact twice let the two disagree: on `ut_research_exhaustiveness_017` this dimension has scored 2 / 3 / 1 / 1 across four runs, and the 3 is the one run that declared.
+**Grade the content, not the presence.** That the seven keys exist at all on a declaring run is asserted deterministically by `test_declared_has_full_stop_criteria` in the skill's validator, so do not spend this dimension on it — a validator names a missing key in one line, where a judge gives an opinion that moves between runs. What only a reader can judge is whether each assessment says anything: "Census, vital records and probate all searched" is an assessment, "Yes" is not. That distinction applies on both paths — as object values when the run declares, as named prose when it declines. An earlier revision narrowed this dimension to the declining path and so left a declaration with seven one-word criteria graded by nothing at all.
 
-- **pass:** All seven criteria (`goal_alignment`, `repository_breadth`, `original_substitution`, `independent_verification`, `evidence_class`, `conflict_resolution`, `overturn_risk`) are addressed as named prose, each tied to a specific log entry or assertion.
+- **pass:** All seven criteria (`goal_alignment`, `repository_breadth`, `original_substitution`, `independent_verification`, `evidence_class`, `conflict_resolution`, `overturn_risk`) carry a 1–2 sentence assessment tied to a specific log entry or assertion — as object values when declaring, as named prose when declining.
 - **partial:** All seven addressed but at least one is generic boilerplate ("yes" with no specifics), or one is missing but the surrounding justification covers it.
 - **fail:** Two or more of the seven unaddressed, or the assessments are all generic without reference to project state.

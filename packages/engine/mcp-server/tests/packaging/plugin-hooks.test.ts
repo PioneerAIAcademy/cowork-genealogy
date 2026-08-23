@@ -438,6 +438,14 @@ describe("the guard script's decisions", () => {
       { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARE } }, {}],
     ["append carrying a true declaration",
       { section: "questions", op: "append", entry: { exhaustive_declaration: DECLARE } }, {}],
+    // An append carrying BOTH keys. research_append's op schema declares
+    // `entry` and `fields`, and applyOne ignores `fields` on an append — so a
+    // check that read `fields` first and fell back only when it was not a dict
+    // saw an empty dict, found no declaration, and let the write land. This is
+    // the only plane that binds in Cowork; a missing deny fails open silently.
+    ["append carrying both entry and an empty fields",
+      { section: "questions", op: "append",
+        entry: { exhaustive_declaration: DECLARE }, fields: {} }, {}],
     ["batched ops form",
       { ops: [{ section: "plan_items", op: "update" },
               { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARE } }] }, {}],
