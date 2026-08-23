@@ -237,7 +237,10 @@ describe("a real project directory that cannot be read", () => {
   // every probe inside it throws EACCES. Read as "absent" that becomes
   // no_project, and a write against a genuine project is dropped with a
   // cheerful message: the silent loss the half-a-project rule exists to prevent.
-  it("stays loud rather than claiming the folder is not a project", async () => {
+  // Skipped on Windows: chmod there does not clear a directory's read bit, so
+  // access() succeeds and this never reaches the EACCES branch — it would pass
+  // whether or not the distinction exists.
+  it.skipIf(process.platform === "win32")("stays loud rather than claiming the folder is not a project", async () => {
     await writeResearch();
     await writeTree();
     await chmod(dir, 0o600);

@@ -197,7 +197,7 @@ def did_not_land(entry: dict[str, Any]) -> bool:
     the raw MCP envelope, where the tool's document is an escaped string —
     `[{"type": "text", "text": "{\\"reason\\": \\"no_project\\"}"}]`. The quoted
     key does not occur in that, because a backslash sits where the closing quote
-    would be. The no-project envelope measures 242 chars, or 255 for the read
+    would be. The no-project envelope measures 236 chars, or 248 for the read
     variant, against `_RUNLOG_VERBATIM_MAX` of 500 — so it ALWAYS takes the
     verbatim path, and the envelope shape outnumbers the unwrapped one in every
     committed run. A quoted-key match therefore never fires in production while

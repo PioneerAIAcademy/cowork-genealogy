@@ -242,9 +242,10 @@ def _no_project_summary(escaped: bool) -> str:
     """The two shapes `response_summary` actually arrives in.
 
     `escaped=True` is the MCP envelope the e2e orchestrator passes through
-    VERBATIM for any response under 500 chars — which the ~131-char no-project
-    response always is, making this the DOMINANT production shape. A detector
-    tested only against the unwrapped form is dark in every real run.
+    VERBATIM for any response under 500 chars — which the no-project response
+    always is, at 236 chars enveloped (248 for the read variant), making this the
+    DOMINANT production shape. A detector tested only against the unwrapped form
+    is dark in every real run.
     """
     doc = '{"ok": false, "reason": "no_project", "errors": ["not a project"]}'
     if not escaped:
