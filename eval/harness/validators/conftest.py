@@ -86,7 +86,7 @@ def skill_frontmatter() -> dict:
 
 @pytest.fixture
 def text_response() -> str:
-    """The skill's final reply to the user.
+    """Every assistant text block concatenated, not the final reply alone.
 
     Empty is the right standalone default for the same reason the lists above
     default empty: a validator asserting a reply does NOT contain something

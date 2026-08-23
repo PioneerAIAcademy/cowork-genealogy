@@ -88,8 +88,9 @@ def run_validators(
         # test-specific checks on test["tags"], e.g.
         #   if "slug-apostrophe" not in test.get("tags", []): pytest.skip(...)
         "test": test or {},
-        # The skill's final reply to the user, verbatim — the same string the
-        # run log stores as `output.text_response` and the judge grades.
+        # Every assistant text block concatenated, not the final reply alone
+        # — the same string the run log stores as `output.text_response` and
+        # the judge grades.
         #
         # Here so a reply-shape rule can be decided mechanically instead of
         # inferred. Several skill bodies state one ("One sentence only", "do

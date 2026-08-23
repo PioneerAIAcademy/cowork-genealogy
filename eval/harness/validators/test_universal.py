@@ -25,11 +25,12 @@ before_state/after_state.**
       tools that the PreToolUse hook denied, with shape
       {"tool": "image_read", "args": dict}. Empty = healthy. These calls
       were blocked, so they never appear in `tool_calls`.
-  - `text_response` (str): the skill's final reply to the user, verbatim
-      — the same string the run log stores as `output.text_response`.
-      Empty when the run produced no reply. For a LITERAL property of the
-      text (a phrase that must never appear, an identifier that must be
-      named); not for re-grading prose quality, which is the judge's job.
+  - `text_response` (str): every assistant text block concatenated, not
+      the final reply alone — the same string the run log stores as
+      `output.text_response`. Empty when the run produced no assistant
+      text. For a LITERAL property of the text (a phrase that must never
+      appear, an identifier that must be named); not for re-grading prose
+      quality, which is the judge's job.
 
 A validator can take any subset of these. Functions are plain pytest
 test functions (raise AssertionError on failure). pytest.skip("...") is
