@@ -146,11 +146,14 @@ the right instrument for a mid-run question.
 
 - **citation-nulling's synthetic fixture** — the one check with no observed fire
   on either axis. Hand-built `research.json`, no live run.
-- **Issue #1431**, the one graduation with a real sample: replayed, the
-  `same_person` provenance check reaches the large majority of runs that link a
-  person (count in the spec), and nobody has observed how the agent behaves when
-  that write is actually blocked. One fixture at `PERSON_EVIDENCE_GUARD=deny`,
-  ~$7–25.
+**The deny run has now happened** — PR #1844 carries both runs and their
+gradings, and issue #1431 closes with it. The agent recovers unaided: on
+`hannah-earnest-children` the gate blocked twice with the loop valve never
+opening, and each time the agent scored the identities with `same_person` and
+retried the write, which landed. `mary-mcandrew-son` is the null control — every
+link there was to a seeded person, so the check correctly never fired. What that
+leaves for a graduation decision is a judgement about breadth, not a missing
+observation.
 
 **Carries a ceiling worth knowing.** The ledger never recorded every assigned id
 — truncated responses and `_first_n` batch summaries — so any recompute keyed on
@@ -158,7 +161,10 @@ ids inherits it. 11,582 of 20,992 ids in a full replay are reconstructed by the
 tool's sequential convention rather than observed. It does not touch the post-hoc
 replay above, which reads committed final state rather than reconstructing.
 
-**Closes** #1569, #1484 (both already closed); #1431 remains open.
+**Closes** #1569, #1484 (both already closed); #1431 with PR #1844.
+
+**Phase 5 is then done bar one item** — citation-nulling's synthetic fixture,
+above. Everything else this phase named has either landed or been answered.
 
 ---
 
