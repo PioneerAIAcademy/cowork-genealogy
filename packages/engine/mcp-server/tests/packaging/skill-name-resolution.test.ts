@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(here, "..", "..", "..", "..", "..");
@@ -56,7 +56,12 @@ const NOT_SKILL_NAMES = new Set([
   "o-brien-surname",
 ]);
 
-/** Lowercase kebab-case inside backticks: two or more `-`-joined segments. */
+/**
+ * Lowercase kebab-case inside backticks: two or more `-`-joined segments.
+ * Single-word names — `citation`, `research`, `timeline`, `translation` —
+ * are therefore out of range. Widening to bare words would match ordinary
+ * prose, so this guard covers hyphenated names only.
+ */
 const KEBAB_IN_BACKTICKS = /`([a-z][a-z0-9]*(?:-[a-z0-9]+)+)`/g;
 
 function shippedNames(): Set<string> {
@@ -90,7 +95,7 @@ describe("plugin prose names only skills and agents that ship", () => {
 
     for (const file of pluginMarkdown()) {
       const body = readFileSync(file, "utf-8");
-      const rel = file.slice(file.indexOf("packages/engine/plugin"));
+      const rel = relative(projectRoot, file).split(sep).join("/");
       const seen = new Set<string>();
       for (const [, token] of body.matchAll(KEBAB_IN_BACKTICKS)) {
         if (known.has(token) || NOT_SKILL_NAMES.has(token) || seen.has(token)) continue;
