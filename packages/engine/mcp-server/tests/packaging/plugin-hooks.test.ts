@@ -74,6 +74,15 @@ function guardToolNames(): {
 }
 
 /** The section names in the guard script's `OWNED_SECTIONS` map. */
+/**
+ * Every research.json section the guard routes by caller, from BOTH maps.
+ *
+ * `OWNED_SECTIONS` routes a whole section; `OWNED_DECLARATIONS` routes one FIELD
+ * within a section, keyed on `("<section>", "<field>")`. The manifest records
+ * both as `enforceableAt: ["hook", …]` on the section's row, so a helper reading
+ * only the first map reports drift the moment a field-scoped row lands — which
+ * is exactly what happened when `questions` was added.
+ */
 function ownedSections(src: string): string[] {
   const body = src.match(/^OWNED_SECTIONS\s*=\s*\{([^}]*)\}/m)?.[1];
   if (body === undefined) {
@@ -82,7 +91,19 @@ function ownedSections(src: string): string[] {
         `helper — do not hardcode the section names back into the test.`,
     );
   }
-  return [...body.matchAll(/["']([^"']+)["']\s*:/g)].map((m) => m[1]);
+  const sections = [...body.matchAll(/["']([^"']+)["']\s*:/g)].map((m) => m[1]);
+
+  const declBody = src.match(/^OWNED_DECLARATIONS\s*=\s*\{([^}]*)\}/m)?.[1];
+  if (declBody === undefined) {
+    throw new Error(
+      `OWNED_DECLARATIONS not found in ${GUARD}. If it was renamed, update this ` +
+        `helper — do not hardcode the section names back into the test.`,
+    );
+  }
+  for (const [, section] of declBody.matchAll(/\(\s*["']([^"']+)["']\s*,/g)) {
+    if (!sections.includes(section)) sections.push(section);
+  }
+  return sections;
 }
 
 // Resolved once, not per call: probing costs a process launch each time.
@@ -153,13 +174,22 @@ describe("plugin hooks are packaged and wired", () => {
     expect(declared.length).toBeGreaterThan(0);
     expect(ownedSections.sort()).toEqual(declared);
 
-    // And the agent each row names is the one the script routes to.
+    // And the agent each row names is the one the script routes to. Both maps
+    // again: a field-scoped row's owner lives in OWNED_DECLARATIONS, keyed on
+    // the (section, field) tuple, so reading only OWNED_SECTIONS leaves the
+    // owner `undefined` and the assertion fails on a row that is in fact
+    // correct.
     const src = readFileSync(GUARD, "utf-8");
-    const owners = Object.fromEntries(
+    const owners: Record<string, string> = Object.fromEntries(
       [...(src.match(/^OWNED_SECTIONS\s*=\s*\{([^}]*)\}/m)?.[1] ?? "").matchAll(
         /["']([^"']+)["']\s*:\s*["']([^"']+)["']/g,
       )].map((m) => [m[1], m[2]]),
     );
+    for (const m of (src.match(/^OWNED_DECLARATIONS\s*=\s*\{([^}]*)\}/m)?.[1] ?? "").matchAll(
+      /\(\s*["']([^"']+)["']\s*,\s*["'][^"']+["']\s*\)\s*:\s*["']([^"']+)["']/g,
+    )) {
+      owners[m[1]] = m[2];
+    }
     for (const row of manifest.rows) {
       if (!(row.enforceableAt ?? []).includes("hook")) continue;
       const fromManifest = (row.hookCallers ?? [])
@@ -392,4 +422,84 @@ describe("the guard script's decisions", () => {
     expect(runGuard(null)).toEqual({});
     expect(JSON.parse(execGuard("not json"))).toEqual({});
   });
+
+  // ── caller-routed CLAIM: research_append + exhaustive_declaration ──
+  //
+  // Field-scoped, not section-scoped, and the difference is the whole design.
+  // `exhaustive_declaration` is a REQUIRED property of every question, so
+  // `question-selection` writes it on every question it creates from the main
+  // thread — 197 of the 392 corpus ops carrying the field are exactly those.
+  // A section rule, or a presence-keyed field rule, denies all of them.
+  const EXH_OWNER = "genealogy-research:research-exhaustiveness";
+  const DECLARE = { declared: true, log_entry_ids: ["log_001"] };
+
+  it.each([
+    ["update, no agent_id (main thread)",
+      { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARE } }, {}],
+    ["append carrying a true declaration",
+      { section: "questions", op: "append", entry: { exhaustive_declaration: DECLARE } }, {}],
+    ["batched ops form",
+      { ops: [{ section: "plan_items", op: "update" },
+              { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARE } }] }, {}],
+    // agent_type WITHOUT agent_id is the `--agent` main thread, not a subagent.
+    ["agent_type present but agent_id absent",
+      { section: "questions", op: "update", fields: { exhaustive_declaration: DECLARE } }, { agent_type: EXH_OWNER }],
+    // Another owning agent is still not THIS owner: proof-conclusion may write
+    // `questions`, but not the exhaustiveness claim.
+    ["the proof-conclusion agent",
+      { section: "questions", op: "update", fields: { exhaustive_declaration: DECLARE } },
+      { agent_id: "a1", agent_type: "genealogy-research:proof-conclusion" }],
+  ])("denies a true exhaustive_declaration — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:research-exhaustiveness");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["the owning agent, namespaced", { agent_id: "a1", agent_type: EXH_OWNER }],
+    ["the owning agent, bare", { agent_id: "a1", agent_type: "research-exhaustiveness" }],
+  ])("permits the owner to declare — %s", (_label, extra) => {
+    expect(runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARE } },
+      ...extra,
+    })).toEqual({});
+  });
+
+  it.each([
+    // The vector a SECTION-scoped route would have broken, and the one a
+    // presence-keyed field rule would have broken too: question-selection
+    // creating a question. The schema makes the field required, so every
+    // creation carries it.
+    ["question-selection creating a question (declared: false)",
+      { section: "questions", op: "append",
+        entry: { question: "Who were the parents?", exhaustive_declaration: { declared: false, log_entry_ids: [] } } }],
+    // The owning skill's own honest early-termination path. It claims nothing,
+    // so it is not routed.
+    ["an honest early termination (declared: false)",
+      { section: "questions", op: "update", entryId: "q_001",
+        fields: { exhaustive_declaration: { declared: false, log_entry_ids: ["log_001"] } } }],
+    // An unrelated question edit from the main thread.
+    ["a status-only update",
+      { section: "questions", op: "update", entryId: "q_001", fields: { status: "in_progress" } }],
+  ])("has no opinion on %s", (_label, tool_input) => {
+    expect(runGuard({ tool_name: "mcp__genealogy__research_append", tool_input })).toEqual({});
+  });
+
+  it("holds the exhaustiveness agent to its own lane", () => {
+    // The out-of-lane arm, for the agent this PR adds. Its lane is `questions`
+    // and nothing else — deliberately excluding `plan_items`, so it cannot
+    // clear the in-flight-plan refusal it meets in research_append by flipping
+    // the blocking item itself (issue #1821).
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "plan_items", op: "update", entryId: "pli_009", fields: { status: "completed" } },
+      agent_id: "a1",
+      agent_type: EXH_OWNER,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("`questions`");
+  });
+
 });
