@@ -21,7 +21,11 @@ allowed-tools:
 
 ## 1. Identify the question
 
-Resolve the user's request to ONE `q_` id via `project_context`. If the request names no question and more than one is open, ask which before proceeding.
+Resolve the user's request to ONE `q_` id via `project_context`, **matching on the question's TEXT** in `openQuestions`. "The parentage question" is the question whose text asks about a parent; "the marriage question" the one that asks about a marriage.
+
+**`questionStatuses` is advisory and must never rule a question in or out.** It reports how far a question has got, not whether it is the one the user means — and it is derived, so a question with a draft proof summary reads `concluded` while its `status` is still `in_progress`. Using it to eliminate a candidate sends the evaluation to a different question with a matching-sounding state.
+
+If the text matches no question, or matches more than one, ask which before proceeding. Never fall back to "the only one left".
 
 **Read nothing else, and judge nothing.** Do not query assertions, plan items, log entries or the existing declaration, and do not form a view on whether the question is ready. The preconditions — classification, identity links, tentative values, and whether the plan is still in flight — belong to the agent, which declines and names the blocker when one fails. A plan item you judge "finished really" from out here is a gate being decided by the one participant that cannot see the evidence.
 
