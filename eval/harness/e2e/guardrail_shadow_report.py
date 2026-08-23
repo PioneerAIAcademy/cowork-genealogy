@@ -422,18 +422,18 @@ def replay_post_hoc(
 
     **The seed tree is today's, not the one that run started from.** Warnings are
     diffed against `eval/tests/e2e/<slug>/starting-tree.gedcomx.json` as it exists
-    in the current checkout. Exactly **one** committed fixture has had its
-    relationship key set changed after a run against it already existed:
-    `teitje-harkema-parents-1833`, whose seed was touched 2026-07-03, a day after
-    its only committed run. Replaying that run against its run-time seed changes
-    no count, so this is a live hazard rather than a current error — the
-    fixture-side twin of the predicate-version gap noted above.
+    in the current checkout. Of the 18 fixtures with committed runs whose
+    seed-tree file changed after their earliest run, exactly one changed its
+    relationship key SET: `teitje-harkema-parents-1833`, which gained 25 keys
+    (1 -> 26) the day after its only committed run. That run fires on neither
+    seed, so replaying changed no count as of 2026-08-22 — a live hazard rather
+    than a current error, and the fixture-side twin of the predicate-version gap
+    noted above.
 
-    An earlier draft of this docstring named five fixtures. Four do not qualify
-    and the check is one command: `crowder-grandparents` and
-    `scotland-thomson-grandparents` have no committed runs at all, and
-    `young-marriage-1828` and `anders-monsen-ancestry` had their seeds finalised
-    *before* their runs, which is the ordinary case rather than drift.
+    An earlier draft named five fixtures on a review agent's say-so. Two have no
+    committed runs at all and two had their seeds finalised *before* their runs,
+    which is the ordinary case rather than drift. A file's mtime changing is not
+    the same as its key set changing, and only the second matters here.
     """
     out = PostHocReplay()
     for path in paths:
@@ -728,6 +728,15 @@ def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
+    # and dies on the `≥` in `format_provenance_replay` — which prints BEFORE the
+    # post-hoc replay block, so the whole of `--replay`'s new output is
+    # unreachable there. This module's own docstring now tells readers to run
+    # `--replay` before concluding a check never fires, and the team it is
+    # written for is on Windows.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(
         description=(
             "Replay the §7 shadow window and report the §8/§7.5 post-hoc families "
