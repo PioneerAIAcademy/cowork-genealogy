@@ -12,10 +12,10 @@
 // that file exports nothing and calls `await server.connect(transport)` at module
 // scope, so importing it to reuse a helper would start a stdio server.
 
-/** The only field this helper reads. Deliberately NOT an index-signature type:
+/** The only fields this helper reads. Deliberately NOT an index-signature type:
  *  the concrete result types (`ResearchAppendResult`, `TreeEditResult`, …) have
  *  no index signature, so requiring one would reject every real caller. */
-export type OkFalseResult = { ok?: boolean };
+export type OkFalseResult = { ok?: boolean; reason?: string };
 
 /** The MCP `CallToolResult` shape this server returns.
  *
@@ -70,11 +70,21 @@ export const OK_FALSE_IS_FAILURE = [
  * `isError` is left unset (not `false`) on success, so the envelope is
  * byte-identical to what the un-wrapped arms returned before — nothing that
  * reads a successful result changes shape.
+ *
+ * ONE `ok: false` is exempt: `reason: "no_project"`. The user is not in a
+ * research project, so nothing was asked of a project that exists — the call
+ * did exactly what it could, and the rule above is scoped to "the call could
+ * not do what was asked". Marking it would tell the model its work failed when
+ * only the record of it is missing. The message in `errors` is written to be
+ * relayed to a person unedited.
+ *
+ * Mirrored by `_tool_envelope` in `eval/harness/harness/mock_mcp.py`, which
+ * bypasses this dispatch entirely.
  */
 export function writerToolResult(result: OkFalseResult): McpToolResult {
   const envelope: McpToolResult = {
     content: [{ type: "text", text: JSON.stringify(result) }],
   };
-  if (result?.ok === false) envelope.isError = true;
+  if (result?.ok === false && result?.reason !== "no_project") envelope.isError = true;
   return envelope;
 }

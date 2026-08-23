@@ -13,6 +13,7 @@ import {
   backupIfExists,
   readProjectJson as readProjectJsonBase,
   formatIssues,
+  NoProjectError as NoProjectErrorBase,
 } from "../utils/project-io.js";
 // Single source of the vital single-occurrence fact types — shared with the
 // merge core and materialize_facts's conflict-surfacing gate (spec §4.4).
@@ -49,14 +50,28 @@ export interface MergeSuccess {
 export interface MergeFailure {
   ok: false;
   errors: string[];
+  /** Marks the one ok:false that is an answer rather than a failure — the user
+   *  is not in a research project (see `noProjectResult`). Optional so every
+   *  existing `if (!r.ok) r.errors…` keeps narrowing as it does today. */
+  reason?: "no_project";
 }
 
 export type MergeResult = MergeSuccess | MergeFailure;
 
+/** Re-exported so the merge tools' outer catches can build the no-project
+ *  answer without importing project-io directly (the same back-compat shape
+ *  this module already uses for `backupIfExists`). */
+export { NoProjectError, noProjectResult } from "../utils/project-io.js";
+
 /** Raised for expected input problems; the tool turns these into `{ ok: false }`. */
 export class MergeInputError extends Error {}
 
-/** Read + parse a project JSON file, raising a clear MergeInputError on failure. */
+/** Read + parse a project JSON file, raising a clear MergeInputError on failure.
+ *
+ *  NoProjectError is the exception: it is an ANSWER, not a failure, and is
+ *  re-raised unchanged so each merge tool's outer catch can return
+ *  `noProjectResult()`. Flattening it here would leave both callers' catches
+ *  (`merge-warnings.ts`, `merge-tree-persons.ts`) unable to tell it apart. */
 export async function readProjectJson(
   projectPath: string,
   filename: string,
@@ -64,6 +79,7 @@ export async function readProjectJson(
   try {
     return await readProjectJsonBase(projectPath, filename);
   } catch (e) {
+    if (e instanceof NoProjectErrorBase) throw e;
     throw new MergeInputError(e instanceof Error ? e.message : String(e));
   }
 }

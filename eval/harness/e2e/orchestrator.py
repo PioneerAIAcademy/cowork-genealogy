@@ -23,6 +23,7 @@ import tempfile
 import time
 from dataclasses import dataclass, replace
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any
 
 from claude_agent_sdk import (
@@ -40,8 +41,10 @@ from claude_agent_sdk import (
 
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
+    OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
     is_subagent_call,
+    owned_section_denial,
     subagent_only_denial,
 )
 from harness.judge import _summarize_response
@@ -321,6 +324,46 @@ def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
         _bare_tool_name(input_data["tool_name"]) == "extraction_append"
         and not is_subagent_call(input_data)
     )
+
+
+def main_thread_owned_section(input_data: dict[str, Any]) -> str | None:
+    """The agent-owned research.json section this call writes from elsewhere.
+
+    Returns the section name so the caller can name it in the deny, or None.
+
+    Keyed on tool **and section**, unlike `is_main_thread_extraction_append`
+    above. That function can key on the tool alone because `extraction_append`
+    is declared by no skill, so any caller is the wrong caller. `research_append`
+    is the opposite: it is the general writer, called legitimately from the main
+    thread constantly. Only the owned SECTIONS are routed.
+
+    Keyed on `agent_type` as well as `agent_id`, again unlike the function
+    above. Presence of `agent_id` alone would permit a `general-purpose`
+    stand-in — the shape the model falls back to when a delegation misses —
+    which is precisely the caller this exists to catch.
+    """
+    if not (input_data.get("tool_name") or "").startswith("mcp__"):
+        return None
+    if _bare_tool_name(input_data["tool_name"]) != "research_append":
+        return None
+    tool_input = input_data.get("tool_input") or {}
+    ops = tool_input.get("ops")
+    ops = ops if isinstance(ops, list) else [tool_input]
+    section = next(
+        (
+            op["section"]
+            for op in ops
+            if isinstance(op, dict) and op.get("section") in OWNED_SECTION_OWNERS
+        ),
+        None,
+    )
+    if section is None:
+        return None
+    owner = OWNED_SECTION_OWNERS[section]
+    if not is_subagent_call(input_data):
+        return section
+    agent_type = str(input_data.get("agent_type") or "")
+    return section if agent_type.rsplit(":", 1)[-1] != owner else None
 
 
 def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
@@ -1412,6 +1455,37 @@ async def _run_agent(
             _emit(f"[blocked context call] {bare} (main-thread extraction_append)")
             return subagent_only_denial(bare)
 
+        # An owned SECTION, not an owned tool — a separate arm on purpose. The
+        # block above says the whole tool is reserved for a subagent, which is
+        # true of extraction_append and false of research_append: that one is
+        # the general writer, called from the main thread constantly for plans,
+        # questions, conflicts and the log. Sharing the branch handed the agent
+        # a deny telling it the tool was off-limits, and a narration naming the
+        # wrong agent and the wrong artifact.
+        if (owned := main_thread_owned_section(input_data)) is not None:
+            bare = _bare_tool_name(tool_name)
+            blocked_context_calls.append(
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "context",
+                }
+            )
+            owner = OWNED_SECTION_OWNERS[owned]
+            narration.append(
+                {
+                    "tool_calls_before": len(tool_calls),
+                    "kind": "blocked",
+                    "text": (
+                        f"`{bare}` denied on `{owned}` — that section is routed to "
+                        f"the {owner} agent. Everything else in `{bare}` is "
+                        "unaffected; delegate this write rather than making it here."
+                    ),
+                }
+            )
+            _emit(f"[blocked context call] {bare} (main-thread {owned} write)")
+            return owned_section_denial(owned)
+
         # Block tree-reading tools BEFORE counting toward the cap — a denied
         # call never runs, so it shouldn't consume the budget. The run
         # continues (no stopReason); the agent must find a records path.
@@ -2203,45 +2277,9 @@ async def _run_agent(
             "made by neither the main thread nor a dedicated agent (shadow mode — not denied)"
         )
 
-    # SHADOW MODE ONLY (issue #1133) — a post-hoc read of the FINAL research.json,
-    # not a tool_calls scan: a source that BACKS A WRITTEN CONCLUSION carries an
-    # empty ESM citation string (the provenance-nulling half the engine's
-    # write-seam ref guard deliberately disowns; see
-    # find_citation_nulling_in_conclusions). Folded into the same already-plumbed
-    # `guardrail_shadow_violations` field, discriminated by its `kind` key so the
-    # shadow report counts it in its own bucket. Logs; never fails the run.
-    # Graduating to a hard 4th §7.5 compliance check is gated on measuring this
-    # fire rate across the corpus (issue #1358; see the spec's §7.5 note).
-    final_research_for_shadow = read_research_json(workspace)
-    citation_nulling_shadow = find_citation_nulling_in_conclusions(
-        final_research_for_shadow
+    guardrail_shadow_violations = guardrail_shadow_violations + collect_post_hoc_shadow(
+        workspace, emit=_emit
     )
-    if citation_nulling_shadow:
-        guardrail_shadow_violations = guardrail_shadow_violations + citation_nulling_shadow
-        _emit(
-            f"[guardrail-shadow] {len(citation_nulling_shadow)} concluded source(s) "
-            "with a null/empty citation string (shadow mode — not failed)"
-        )
-
-    # SHADOW MODE ONLY (issue #1317) — the conflict-side sibling of the citation
-    # detector above: a written conclusion asserts a resolved conflict (in its
-    # exhaustive_declaration.stop_criteria.conflict_resolution) that no structured
-    # conflicts[] entry backs, so the resolution lives only in prose and the
-    # viewer's Conflicts section stays blank. Same already-plumbed field,
-    # discriminated by `kind`. Logs; never fails the run. Promotion to a hard gate
-    # is gated on measuring this fire rate across the corpus.
-    conflict_unpersisted_shadow = find_unpersisted_conflict_resolutions(
-        final_research_for_shadow
-    )
-    if conflict_unpersisted_shadow:
-        guardrail_shadow_violations = (
-            guardrail_shadow_violations + conflict_unpersisted_shadow
-        )
-        _emit(
-            f"[guardrail-shadow] {len(conflict_unpersisted_shadow)} concluded "
-            "question(s) relying on an unpersisted conflict resolution "
-            "(shadow mode — not failed)"
-        )
 
     return (
         tool_calls,
@@ -2254,6 +2292,58 @@ async def _run_agent(
         guardrail_shadow_violations,
         unnamed_delegate_violations,
     )
+
+
+def collect_post_hoc_shadow(
+    workspace: Path, *, emit: Callable[[str], None] | None = None
+) -> list[dict[str, Any]]:
+    """The two SHADOW-MODE post-hoc checks that read the FINAL research.json,
+    rather than scanning `tool_calls`. Returns entries for
+    `guardrail_shadow_violations`; never fails a run.
+
+    - **citation-nulling** (issue #1133): a source that BACKS A WRITTEN CONCLUSION
+      carries an empty ESM citation string — the provenance-nulling half the
+      engine's write-seam ref guard deliberately disowns.
+    - **conflict-unpersisted** (issue #1317): a written conclusion asserts a
+      resolved conflict that no structured `conflicts[]` entry backs, so the
+      resolution lives only in prose and the viewer's Conflicts section stays
+      blank.
+
+    Both share `guardrail_shadow_violations`, discriminated by `kind` so the
+    shadow report counts each in its own bucket.
+
+    **Extracted from `_run_agent` so it can be tested at all.** Inline, this ran
+    only inside a coroutine that needs the Claude Agent SDK and a live model, so
+    nothing offline could reach it — and `read_research_json` returns None on a
+    missing or unparseable file while both detectors return `[]` on None, which
+    means a broken workspace read is indistinguishable from a clean project. That
+    is exactly the "is the behaviour absent or is the detector broken" ambiguity
+    this phase exists to remove, sitting in the one path no test covered. The
+    citation-nulling check has never fired on the corpus, so this is its only
+    positive control.
+    """
+    research = read_research_json(workspace)
+    out: list[dict[str, Any]] = []
+
+    citation_nulling = find_citation_nulling_in_conclusions(research)
+    if citation_nulling:
+        out.extend(citation_nulling)
+        if emit:
+            emit(
+                f"[guardrail-shadow] {len(citation_nulling)} concluded source(s) "
+                "with a null/empty citation string (shadow mode — not failed)"
+            )
+
+    conflict_unpersisted = find_unpersisted_conflict_resolutions(research)
+    if conflict_unpersisted:
+        out.extend(conflict_unpersisted)
+        if emit:
+            emit(
+                f"[guardrail-shadow] {len(conflict_unpersisted)} concluded "
+                "question(s) relying on an unpersisted conflict resolution "
+                "(shadow mode — not failed)"
+            )
+    return out
 
 
 def _find_session_transcript(workspace: Path) -> Path | None:
