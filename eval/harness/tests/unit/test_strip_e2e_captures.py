@@ -289,6 +289,32 @@ def test_remnant_preserves_a_rejected_call() -> None:
     assert parse_tool_result(remnant)["ok"] is False
 
 
+def test_remnant_keeps_the_no_project_marker() -> None:
+    """`did_not_land` decides "this call changed nothing" by matching this marker,
+    and the no-project answer deliberately carries no `is_error`. Losing it makes
+    a write that never happened look landed — and in
+    `find_relationship_writes_without_warnings_check` the polarity inverts, so a
+    lost marker credits a `person_warnings` call that did nothing and the check
+    silently undercounts."""
+    from harness.skill_invocation import did_not_land
+
+    full = '[{"type": "text", "text": "{\\"reason\\": \\"no_project\\"}"}]'
+    assert did_not_land({"response_summary": full}) is True
+
+    remnant = replay_remnant(full)
+    assert remnant is not None
+    assert did_not_land({"response_summary": remnant}) is True
+
+
+def test_remnant_does_not_invent_a_no_project_marker() -> None:
+    """The other direction: an ordinary landed write must not come back reading
+    as a call that changed nothing."""
+    remnant = replay_remnant(json.dumps({"ok": True, "results": [{"entryId": "a_001"}]}))
+    from harness.skill_invocation import did_not_land
+
+    assert did_not_land({"response_summary": remnant}) is False
+
+
 def test_remnant_is_none_when_there_is_nothing_to_keep() -> None:
     assert replay_remnant("some prose carrying no ids at all") is None
     assert replay_remnant(None) is None

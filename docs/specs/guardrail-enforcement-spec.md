@@ -316,7 +316,7 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 159 scanned | behaviour confirmed; live store path never exercised |
 | §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | behaviour confirmed; live store path exercised |
-| §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | attribution reaches 18 of 159 runs | — | blocked on corpus growth |
+| §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | attribution reaches 20 of 159 runs | — | blocked on corpus growth |
 
 Reading the two columns: **stored** is what a run recorded when it ran;
 **replayed** is the same detector recomputed now from that run's committed final

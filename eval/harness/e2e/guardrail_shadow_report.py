@@ -422,14 +422,18 @@ def replay_post_hoc(
 
     **The seed tree is today's, not the one that run started from.** Warnings are
     diffed against `eval/tests/e2e/<slug>/starting-tree.gedcomx.json` as it exists
-    in the current checkout, and five committed fixtures have had their
-    relationship key set changed after runs against them already existed
-    (`crowder-grandparents`, `scotland-thomson-grandparents`, `young-marriage-1828`,
-    `anders-monsen-ancestry`, `teitje-harkema-parents-1833` — teitje gained 25
-    relationship keys the day after its only committed run). Replaying all runs
-    whose run-time seed blob is recoverable changed no count as of 2026-08-22, so
-    this is a live hazard rather than a current error. It is the fixture-side twin
-    of the predicate-version gap noted above.
+    in the current checkout. Exactly **one** committed fixture has had its
+    relationship key set changed after a run against it already existed:
+    `teitje-harkema-parents-1833`, whose seed was touched 2026-07-03, a day after
+    its only committed run. Replaying that run against its run-time seed changes
+    no count, so this is a live hazard rather than a current error — the
+    fixture-side twin of the predicate-version gap noted above.
+
+    An earlier draft of this docstring named five fixtures. Four do not qualify
+    and the check is one command: `crowder-grandparents` and
+    `scotland-thomson-grandparents` have no committed runs at all, and
+    `young-marriage-1828` and `anders-monsen-ancestry` had their seeds finalised
+    *before* their runs, which is the ordinary case rather than drift.
     """
     out = PostHocReplay()
     for path in paths:

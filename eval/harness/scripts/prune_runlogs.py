@@ -68,7 +68,9 @@ _E2E_SIBLING_SUFFIXES = (
     ".final-tree.gedcomx.json",
 )
 
-# The one exception to "nothing reads `response_summary` back". These four runs
+# A THIRD reader of `response_summary`, alongside `harness/replay.py` (entryIds)
+# and `did_not_land` (the no-project marker) — the belief that it had none is
+# what cost the replay engine most of its fidelity. These four runs
 # are the sole calibration evidence for `CONSECUTIVE_TOOL_SEARCH_MISSES`
 # (issue #941): `tests/unit/test_e2e_mcp_health.py` replays them through the
 # real detector, which decides a ToolSearch miss by matching a marker *inside*
@@ -237,18 +239,38 @@ def replay_remnant(response_summary: Any) -> str | None:
     essentially nothing and restores the engine outright. Returns None when there
     is nothing worth keeping, so the field is dropped as before.
     """
-    parsed = parse_tool_result(response_summary)
-    if not parsed:
-        return None
+    # The marker is checked INDEPENDENTLY of `parse_tool_result`, which returns
+    # None for a no-project response: it carries no ids, no `ok` and no batch
+    # length, so an early return on a falsy parse would drop exactly the field
+    # this is here to keep. (Caught by its own test, which is the only reason
+    # this is not still a silent hole.)
+    has_no_project = "no_project" in str(response_summary or "")
+    parsed = parse_tool_result(response_summary) or {}
     ids = parsed.get("ids") or []
     full_length = parsed.get("full_length")
-    if not ids and full_length is None and parsed.get("ok") is None:
+    if not ids and full_length is None and parsed.get("ok") is None and not has_no_project:
         return None
     remnant: dict[str, Any] = {"ok": parsed.get("ok")}
     if ids:
         remnant["results"] = [{"entryId": i} for i in ids]
     if full_length is not None:
         remnant["_full_length"] = full_length
+    # The no-project marker, which is NOT part of what `parse_tool_result`
+    # returns. `did_not_land` decides "this call changed nothing" by matching
+    # `no_project` inside this field, and that answer deliberately carries no
+    # `is_error` — so losing the marker makes a write that never happened look
+    # landed. The polarity is what makes it dangerous rather than merely lossy:
+    # in `find_relationship_writes_without_warnings_check` the same marker
+    # decides whether a `person_warnings` call SUCCEEDED, so a lost one credits a
+    # call that did nothing and the check silently undercounts.
+    #
+    # Latent today — no committed run carries a visible `no_project` response —
+    # which is exactly why it is worth closing while the remnant is being
+    # written rather than after a run trips it. Matched and re-emitted as the
+    # bare name, per `did_not_land`: the quoted-key form never appears in the
+    # verbatim envelope the summarizer passes through.
+    if has_no_project:
+        remnant["reason"] = "no_project"
     return json.dumps(remnant)
 
 

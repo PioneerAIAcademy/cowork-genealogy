@@ -355,12 +355,13 @@ replay-check: ## Acceptance check for the write-replay engine: reconstruct every
 	# Offline and free — no API key, no live calls. Reports reconstruction
 	# fidelity per section; it is a REPORT, not a gate (the corpus grows weekly
 	# and the rate moves with it). Measured 2026-08-23: 21/157 (13%) exact id
-	# match on all 12 sections, down from 136/154 (88%) recorded 2026-08-15 — a
-	# drop that predates this measurement and is NOT explained by any change to
-	# harness/replay.py, which is byte-identical across it. The unmodelled tally
-	# the report prints is the place to start: tree_edit and materialize_facts
-	# dominate it. Read the current number from a run, not from this comment.
-	# Run after any change to harness/replay.py.
+	# match on all 12 sections, down from 136/154 (88%) recorded 2026-08-15.
+	# CAUSE: the e2e capture strip, not harness/replay.py, which is
+	# byte-identical across the drop — the strip dropped the response_summary
+	# this engine reads its ids out of. Fixed forward, so the strip now keeps a
+	# remnant; the runs already stripped are not recoverable, so the rate returns
+	# only as new runs age in. Read the current number from a run, not from this
+	# comment. Run after any change to harness/replay.py.
 	cd eval/harness && uv run python scripts/check_replay_fidelity.py
 
 .PHONY: eval-skill
@@ -423,12 +424,16 @@ prune-runlogs: ## Maintenance sweep over the committed run logs: make prune-runl
 	# value is the same normalized string build_snapshot hashes, so no re-run
 	# is needed and no skill's active state changes.
 	#
-	# STRIP=1 drops response_summary from e2e run logs older than 14 days
-	# (STRIP=N for a different window), keeping tool / args / is_error. Unlike
-	# the unit corpus this is keyed on age and strips rather than deletes — e2e
-	# has no per-skill run-log invariant to protect, and response_summary is the
-	# only field with no programmatic reader. The .ann.json / .final-tree /
-	# .final-research calibration triple is never touched at any age.
+	# STRIP=1 reduces response_summary to its replay remnant in e2e run logs
+	# older than 14 days (STRIP=N for a different window), keeping tool / args /
+	# is_error plus the ids harness/replay.py reads back. Unlike the unit corpus
+	# this is keyed on age and strips rather than deletes — e2e has no per-skill
+	# run-log invariant to protect. It is NOT a field nothing reads: replay.py
+	# takes entryIds out of it, did_not_land reads the no-project marker, and
+	# test_e2e_mcp_health replays four exempt runs through it. Believing
+	# otherwise is what cost the replay engine 88% of its fidelity. The
+	# .ann.json / .final-tree / .final-research calibration triple is never
+	# touched at any age.
 	cd eval/harness && uv run python -m scripts.prune_runlogs \
 	  $(if $(REHASH),--rehash,) \
 	  $(if $(PRUNE),--prune-unit $(if $(filter-out 1,$(PRUNE)),$(PRUNE),),) \
