@@ -48,10 +48,10 @@ threshold questions, run two checks over the assertions tied to this question
 (via `extracted_for_question_ids`):
 
 - **Classification (hard block, all assertions).** Every assertion must have
-  a real `information_quality` and `evidence_type` from
-  `assertion-classification` (not a leftover record-extraction default). If
-  any assertion fails, stop here, name the specific assertion IDs, and
-  recommend `assertion-classification`.
+  a real, reasoned `information_quality` and `evidence_type` — not a
+  placeholder. If any assertion fails, stop here, name the specific assertion
+  IDs, and recommend `record-extraction`, which owns classification and
+  refines it in place.
 - **person_evidence (hard block scoped to person identity).** `person_evidence`
   is identity resolution. Confirm **each person the judgment depends on** — the
   subject and any candidate parent/relative — is identified by **at least one**

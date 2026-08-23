@@ -472,6 +472,13 @@ Architecturally:
   tool only when `ok: false` is its **answer about its subject** rather than its
   own failure — `merge_warnings`, whose dry run reports that a merge *would* be
   rejected, is the only such tool today.
+- **If your tool reads the project files** — a sixth site, and nothing will
+  tell you if you skip it. Catch `NoProjectError` from `readProjectJson` and
+  return `noProjectResult()` (`"read"` for a read or a preview), so a user who
+  is not in a research project gets an answer rather than `research.json not
+  found in projectPath`. Then add the tool to `CALLS` in
+  `tests/tools/no-project.test.ts` — that list is hand-maintained and nothing
+  derives it, so a tool left out is uncovered.
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),
