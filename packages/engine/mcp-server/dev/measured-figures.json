@@ -205,14 +205,14 @@
     "bands:records-birth": {
       "pool": "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=0",
       "param": "q.birthLikeDate",
-      "poolTotal": 586,
-      "read": 586,
-      "distinct": 586,
-      "payloadDated": 175,
+      "poolTotal": 591,
+      "read": 591,
+      "distinct": 591,
+      "payloadDated": 180,
       "payloadDatedInMultipleBands": 0,
       "bandsEnumerated": 12,
       "membership": {
-        "1": 175,
+        "1": 180,
         "2": 178,
         "4": 232,
         "7": 1
@@ -223,14 +223,14 @@
       "closureHolds": true,
       "controlHolds": true,
       "controlVacuous": false,
-      "bandRowsRead": 1466,
-      "exactRowsRead": 175
+      "bandRowsRead": 1471,
+      "exactRowsRead": 180
     },
     "verdict:index-silent personas exist": "NO — no persona matches all 12 bands; every persona is placed in time by the index, so none is year-silent",
     "verdict:an unqualified range admits estimate overlaps": "YES — 411 persona(s) match more than one disjoint band, so an unqualified range admits estimate-overlap matches, not only records dated inside it",
-    "verdict:.exact requires the indexed date inside the range": "YES — .exact keeps 175 of 1466 band matches, dropping the estimate-overlap matches an unqualified range admits",
-    "verdict:the payload predicts the indexed date": "YES — all 175 payload-dated personas land in the band their own payload year names",
-    "measured_at": "2026-08-23T01:50:55.503Z"
+    "verdict:.exact requires the indexed date inside the range": "YES — .exact keeps 180 of 1471 band matches, dropping the estimate-overlap matches an unqualified range admits",
+    "verdict:the payload predicts the indexed date": "YES — all 180 payload-dated personas land in the band their own payload year names",
+    "measured_at": "2026-08-23T03:23:36.065Z"
   },
   "X": {
     "yearsNoAnchor": 948,
@@ -1068,7 +1068,7 @@
     },
     "verdict:relative .exact drops the variant forms fuzzy reached": "HOLDS — forms present in the unqualified set are absent from the exact set, both read in full",
     "abbrev": {
-      "fuzzyRows": 437,
+      "fuzzyRows": 440,
       "exactRows": 4,
       "fuzzyAbbrev": 0,
       "exactAbbrev": 0,
@@ -1077,7 +1077,7 @@
     },
     "verdict:relative .exact drops indexed abbreviations": "NOT MEASURED — the unqualified set contained no abbreviated form to drop",
     "verdict:an unqualified range admits estimate overlaps": "HOLDS — 411 persona(s) match more than one disjoint band in H's instrument, so an unqualified range admits estimate-overlap matches, not only records dated inside it",
-    "verdict:.exact drops estimate-overlap matches": "HOLDS — .exact keeps 174 of 1465 band matches in H's instrument, dropping the estimate-overlap matches",
+    "verdict:.exact drops estimate-overlap matches": "HOLDS — .exact keeps 180 of 1471 band matches in H's instrument, dropping the estimate-overlap matches",
     "verdict:payload-silent means index-silent": "NO — H's instrument finds no persona in every band, so no record is index-silent; the payload-silent ones carry an estimated range and answer the band it overlaps",
     "diminutiveReach": {
       "boundId": "2332-PN2",
@@ -1097,7 +1097,7 @@
       "rankInNarrowedSet": 1
     },
     "verdict:initialsTransposition": "REACHED — the bound record is in the narrowed set, read in full",
-    "measured_at": "2026-08-23T00:43:21.836Z"
+    "measured_at": "2026-08-23T03:23:36.066Z"
   },
   "Y": {
     "silence:birth": {
@@ -1111,7 +1111,7 @@
     "impossiblePools:birth": [
       {
         "pool": "Pocklington/England",
-        "poolTotal": 6055,
+        "poolTotal": 6155,
         "tolerated": 11,
         "survived": 0,
         "inRange": 0,
@@ -1131,7 +1131,7 @@
       },
       {
         "pool": "Bickerdike/England",
-        "poolTotal": 26640,
+        "poolTotal": 26727,
         "tolerated": 56,
         "survived": 0,
         "inRange": 0,
@@ -1141,8 +1141,8 @@
       },
       {
         "pool": "Geach/England",
-        "poolTotal": 936185,
-        "tolerated": 1958,
+        "poolTotal": 938557,
+        "tolerated": 1962,
         "survived": 3,
         "inRange": null,
         "outOfRange": null,
@@ -1181,7 +1181,7 @@
     "impossiblePools:death": [
       {
         "pool": "Pocklington/England",
-        "poolTotal": 3654,
+        "poolTotal": 3667,
         "tolerated": 5,
         "survived": 1,
         "inRange": 2,
@@ -1201,7 +1201,7 @@
       },
       {
         "pool": "Bickerdike/England",
-        "poolTotal": 16420,
+        "poolTotal": 16430,
         "tolerated": 21,
         "survived": 1,
         "inRange": 1,
@@ -1211,7 +1211,7 @@
       },
       {
         "pool": "Geach/England",
-        "poolTotal": 618898,
+        "poolTotal": 619247,
         "tolerated": 796,
         "survived": 62,
         "inRange": null,
@@ -1251,7 +1251,7 @@
     "impossiblePools:marriage": [
       {
         "pool": "Pocklington/England",
-        "poolTotal": 5334,
+        "poolTotal": 5335,
         "tolerated": 0,
         "survived": 0,
         "inRange": null,
@@ -1281,7 +1281,7 @@
       },
       {
         "pool": "Geach/England",
-        "poolTotal": 634608,
+        "poolTotal": 634625,
         "tolerated": 22,
         "survived": 1,
         "inRange": 1,
@@ -1321,7 +1321,7 @@
     "impossiblePools:residence": [
       {
         "pool": "Pocklington/England",
-        "poolTotal": 4993,
+        "poolTotal": 4992,
         "tolerated": 0,
         "survived": 0,
         "inRange": null,
@@ -1335,7 +1335,7 @@
       },
       {
         "pool": "Bickerdike/England",
-        "poolTotal": 22535,
+        "poolTotal": 22530,
         "tolerated": 0,
         "survived": 0,
         "inRange": null,
@@ -1345,7 +1345,7 @@
       },
       {
         "pool": "Geach/England",
-        "poolTotal": 915108,
+        "poolTotal": 915089,
         "tolerated": 7,
         "survived": 0,
         "inRange": 0,
@@ -1378,7 +1378,7 @@
         "pools": [
           {
             "pool": "Pocklington/England",
-            "poolTotal": 6055,
+            "poolTotal": 6155,
             "tolerated": 11,
             "survived": 0,
             "inRange": 0,
@@ -1398,7 +1398,7 @@
           },
           {
             "pool": "Bickerdike/England",
-            "poolTotal": 26640,
+            "poolTotal": 26727,
             "tolerated": 56,
             "survived": 0,
             "inRange": 0,
@@ -1408,8 +1408,8 @@
           },
           {
             "pool": "Geach/England",
-            "poolTotal": 936185,
-            "tolerated": 1958,
+            "poolTotal": 938557,
+            "tolerated": 1962,
             "survived": 3,
             "inRange": null,
             "outOfRange": null,
@@ -1448,7 +1448,7 @@
         "pools": [
           {
             "pool": "Pocklington/England",
-            "poolTotal": 3654,
+            "poolTotal": 3667,
             "tolerated": 5,
             "survived": 1,
             "inRange": 2,
@@ -1468,7 +1468,7 @@
           },
           {
             "pool": "Bickerdike/England",
-            "poolTotal": 16420,
+            "poolTotal": 16430,
             "tolerated": 21,
             "survived": 1,
             "inRange": 1,
@@ -1478,7 +1478,7 @@
           },
           {
             "pool": "Geach/England",
-            "poolTotal": 618898,
+            "poolTotal": 619247,
             "tolerated": 796,
             "survived": 62,
             "inRange": null,
@@ -1518,7 +1518,7 @@
         "pools": [
           {
             "pool": "Pocklington/England",
-            "poolTotal": 5334,
+            "poolTotal": 5335,
             "tolerated": 0,
             "survived": 0,
             "inRange": null,
@@ -1548,7 +1548,7 @@
           },
           {
             "pool": "Geach/England",
-            "poolTotal": 634608,
+            "poolTotal": 634625,
             "tolerated": 22,
             "survived": 1,
             "inRange": 1,
@@ -1588,7 +1588,7 @@
         "pools": [
           {
             "pool": "Pocklington/England",
-            "poolTotal": 4993,
+            "poolTotal": 4992,
             "tolerated": 0,
             "survived": 0,
             "inRange": null,
@@ -1602,7 +1602,7 @@
           },
           {
             "pool": "Bickerdike/England",
-            "poolTotal": 22535,
+            "poolTotal": 22530,
             "tolerated": 0,
             "survived": 0,
             "inRange": null,
@@ -1612,7 +1612,7 @@
           },
           {
             "pool": "Geach/England",
-            "poolTotal": 915108,
+            "poolTotal": 915089,
             "tolerated": 7,
             "survived": 0,
             "inRange": 0,
@@ -1639,7 +1639,7 @@
       }
     ],
     "verdict:generalises past birth (impossible-range)": "DOES NOT GENERALISE — a family's band instrument does not show birth's shape (an index-silent persona, or .exact dropping nothing)",
-    "measured_at": "2026-08-23T01:50:55.504Z"
+    "measured_at": "2026-08-23T03:23:36.066Z"
   },
   "P": {
     "bands:tree-birth": {
@@ -1742,21 +1742,21 @@
       "bandRowsRead": 699,
       "exactRowsRead": 75
     },
-    "measured_at": "2026-08-23T02:12:36.669Z"
+    "measured_at": "2026-08-23T03:23:36.066Z"
   },
   "Q": {
     "bands:records-death": {
       "pool": "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=2",
       "param": "q.deathLikeDate",
-      "poolTotal": 195,
-      "read": 195,
-      "distinct": 195,
-      "payloadDated": 160,
+      "poolTotal": 196,
+      "read": 196,
+      "distinct": 196,
+      "payloadDated": 161,
       "payloadDatedInMultipleBands": 1,
       "bandsEnumerated": 12,
       "membership": {
         "0": 8,
-        "1": 164,
+        "1": 165,
         "2": 2,
         "3": 13,
         "4": 8
@@ -1767,8 +1767,8 @@
       "closureHolds": true,
       "controlHolds": true,
       "controlVacuous": false,
-      "bandRowsRead": 239,
-      "exactRowsRead": 166
+      "bandRowsRead": 240,
+      "exactRowsRead": 167
     },
     "bands:records-marriage": {
       "pool": "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=1",
@@ -1865,6 +1865,6 @@
       "bandRowsRead": 526,
       "exactRowsRead": 468
     },
-    "measured_at": "2026-08-23T01:50:55.504Z"
+    "measured_at": "2026-08-23T03:23:36.066Z"
   }
 }

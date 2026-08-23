@@ -508,9 +508,16 @@ describe("measured figures stay traceable to the probe artifact", () => {
       // two reversals.
       verdict: "Y.verdict:generalises past birth (impossible-range)",
       activeWhen: /^(?:NOT MEASURED|PARTIAL|DOES NOT GENERALISE)/,
+      // Also catches the #1771-round overclaim: the four-family year mechanism
+      // asserted as holding on the RECORD index (which Y denies — records residence
+      // dates are precise, so `.exact` drops nothing there). Scoped to "record
+      // index"/"record_search" near the four-family conjunction, so it does NOT
+      // catch the true tree-endpoint statement ("reproduced for all four families on
+      // the tree endpoint") — the `[^.]` bound keeps each alternative inside one
+      // sentence. Both orders, since the prose wrote it either way.
       mustNotSay:
-        /measured on the (?:birth, )?death, marriage and residence families|the year toggle's behaviour,? not birth's alone|treat it as how the year toggle works/i,
-      why: "section Y withholds the generalisation; these phrasings assert it as measured",
+        /measured on the (?:birth, )?death, marriage and residence families|the year toggle's behaviour,? not birth's alone|treat it as how the year toggle works|(?:record index|record_search)[^.]{0,140}(?:all four (?:record-index )?families|birth,? *death,? *marriage,? *and *residence)|(?:all four (?:record-index )?families|birth,? *death,? *marriage,? *and *residence)[^.]{0,140}(?:record index|record_search)/i,
+      why: "section Y withholds the generalisation; these phrasings assert it as measured across families on the record index",
     },
     {
       // #1771 step 4. Repointed from the retired `H.verdict:silence tolerated`.
@@ -544,8 +551,20 @@ describe("measured figures stay traceable to the probe artifact", () => {
       // twice and any offending line is reported twice in the failure message.
       for (const rel of new Set([...EVIDENCE_SURFACES, ...AGENT_SURFACES, ...WORDING_ONLY_SURFACES])) {
         const text = readFileSync(join(projectRoot, rel), "utf8");
-        for (const line of text.split("\n")) {
-          if (rule.mustNotSay.test(line)) offenders.push(`${rel}: ${line.trim().slice(0, 110)}`);
+        // Test per line AND against a whitespace-collapsed whole-file copy. A claim
+        // reflowed across two markdown lines ("birth, death, marriage and\nresidence
+        // … on the record index") slips a per-line pattern entirely — which is how a
+        // four-family record-index overclaim shipped past this guard once. Patterns
+        // here are `[^.]`-bounded, so collapsing whitespace (periods untouched) still
+        // stops at sentence boundaries and cannot manufacture a cross-sentence match.
+        const collapsed = text.replace(/\s+/g, " ");
+        if (rule.mustNotSay.test(collapsed)) {
+          const perLine = text.split("\n").filter((l) => rule.mustNotSay.test(l));
+          offenders.push(
+            ...(perLine.length
+              ? perLine.map((l) => `${rel}: ${l.trim().slice(0, 110)}`)
+              : [`${rel}: (wrapped) ${(collapsed.match(rule.mustNotSay)?.[0] ?? "").slice(0, 110)}`])
+          );
         }
       }
       expect(

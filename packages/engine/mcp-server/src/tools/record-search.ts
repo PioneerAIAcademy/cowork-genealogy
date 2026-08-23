@@ -1331,7 +1331,7 @@ export const recordSearchToolSchema = {
 
       residenceYearFrom: { type: "number", description: "Lower bound of the residence-year range (typically census-style anchor). 4-digit year (e.g., 1860). Must be paired with `residenceYearTo`." },
       residenceYearTo: { type: "number", description: "Upper bound of the residence-year range. 4-digit year (e.g., 1870). Must be paired with `residenceYearFrom`." },
-      residenceYearExact: { type: "boolean", description: "As `birthYearExact`, for the residence-year range." },
+      residenceYearExact: { type: "boolean", description: "For the residence-year range. Unlike `birthYearExact`, records residence dates are precise, so an unqualified range finds few estimate overlaps and `.exact` rarely changes the set." },
       residencePlace: { type: "string", description: "Residence place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
       residencePlaceExact: { type: "boolean", description: "As `birthPlaceExact`, for the residence place." },
 

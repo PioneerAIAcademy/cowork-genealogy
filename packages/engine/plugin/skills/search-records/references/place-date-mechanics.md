@@ -144,10 +144,11 @@ accepted but discarded for matching.
 With `.exact=on` on a date parameter (`<event>YearExact` on the tool),
 the range is matched hard instead of with the usual fuzz around its
 bounds. Like the place qualifier this narrows the count; its effect on the
-order of what it keeps was not measured. Measured by the disjoint-band instrument on the birth, death, marriage and
-residence families of the record index, and reproduced on the tree endpoint
-(qualifier probe, sections H, Q and P — host-side; the `any` family was never
-tested):
+order of what it keeps was not measured. Measured by the disjoint-band instrument on the record index for the birth, death and marriage families — records
+**residence** is the exception (its dates are precise, so a range finds no overlaps
+there and `.exact` changes nothing) — and reproduced for all four families on the
+tree endpoint (qualifier probe, sections H, Q and P — host-side; the `any` family
+was never tested):
 
 - **An unqualified range matches by estimate overlap.** A record with no year of
   its own on the searched event is not year-silent — the index carries an
