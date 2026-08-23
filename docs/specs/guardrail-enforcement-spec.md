@@ -305,7 +305,7 @@ array of id-bearing entries and so has nothing for either check to read.
 ### What is actually in the shadow-to-graduate pipeline
 
 Measured over the whole corpus, `make e2e-guardrail-shadow REPLAY=1 SINCE=all`,
-157 runs, 2026-08-21. **Read the STORED and REPLAYED columns as different
+159 runs, 2026-08-23. **Read the STORED and REPLAYED columns as different
 questions** — the distinction is the single most important thing on this page,
 and getting it wrong is what made three checks look dead for a fortnight:
 
@@ -313,10 +313,10 @@ and getting it wrong is what made three checks look dead for a fortnight:
 |---|---:|---:|---|
 | §7 caller-attributed recency | 823 (window 40), 130 runs | n/a — windowed replay, see the table above | **retired permanently**, not queued |
 | §8 live `same_person` provenance | 12, across 7 runs | 120 of 147 runs that link a person | the graduation candidate with the largest sample |
-| §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 157 scanned | never observed either way |
-| §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 157 scanned | behaviour confirmed; live store path never exercised |
-| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **58 runs**, of 156 scanned | behaviour confirmed; live store path exercised |
-| §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | attribution reaches 18 of 157 runs | — | blocked on corpus growth |
+| §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
+| §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 159 scanned | behaviour confirmed; live store path never exercised |
+| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | behaviour confirmed; live store path exercised |
+| §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | attribution reaches 18 of 159 runs | — | blocked on corpus growth |
 
 Reading the two columns: **stored** is what a run recorded when it ran;
 **replayed** is the same detector recomputed now from that run's committed final
@@ -340,7 +340,7 @@ splits in two:
 
 | | is the zero ambiguous? | has the live store path ever been exercised? |
 |---|---|---|
-| warnings-unchecked | **no** — 58 corpus fires | **yes** — `stribling-father-1821/run-2026-08-17_23-35-44`, the corpus's only stored entry |
+| warnings-unchecked | **no** — 59 corpus fires | **yes** — `stribling-father-1821/run-2026-08-17_23-35-44`, the corpus's only stored entry |
 | conflict-unpersisted | **no** — 4 corpus fires | **no** |
 | citation-nulling | **yes** — zero on both axes | **no** |
 
@@ -356,8 +356,8 @@ the predicates.
 
 **warnings-unchecked was considered for graduation and declined — 2026-08-23.**
 It is the check with by far the largest sample, so it is the one a future reader
-will reach for first; the reasoning is recorded here so it is not re-derived. 58
-runs of 156 is a **corpus behaviour count, not a production signal**, and
+will reach for first; the reasoning is recorded here so it is not re-derived. 59
+runs of 158 is a **corpus behaviour count, not a production signal**, and
 `docs/architecture.md` ("Every measurement in this repo describes the eval
 corpus, not production") says outright not to graduate a gate on a violation
 rate. A hard compliance check at that frequency would fail a large share of a
@@ -433,9 +433,9 @@ to understand before reading either:
   bound** — the live hook may not yet see a `same_person` issued in the same turn
   as the write, while the replay always sees the full prefix. Its second job is
   scoring a candidate *narrowing* of the rule against history before that
-  narrowing ships. The three post-hoc checks: citation-nulling **0** of 157
-  scanned, conflict-unpersisted **4 runs** of 157, warnings-unchecked **58 runs**
-  of 156 — the 157th being the corpus's one orphan run log
+  narrowing ships. The three post-hoc checks: citation-nulling **0** of 159
+  scanned, conflict-unpersisted **4 runs** of 159, warnings-unchecked **59 runs**
+  of 158 — the 159th being the corpus's one orphan run log
   (`william-ferber-ancestry`, a committed run with no fixture directory, and so
   no baseline to diff a relationship against). Every replay **names** the runs it
   could not read rather than counting them clean, per check: a denominator that
