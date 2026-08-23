@@ -344,13 +344,28 @@ splits in two:
 | conflict-unpersisted | **no** — 4 corpus fires | **no** |
 | citation-nulling | **yes** — zero on both axes | **no** |
 
-So **only citation-nulling still owes a synthetic fixture that makes it fire.**
-The other two have observed behaviour; what they lack is a live run that stored
-an entry, which the next committed e2e run producing one supplies for free. The
-replay plumbing itself is controlled by
-`tests/unit/test_guardrail_shadow_report.py`, whose tests are written against
-sidecar resolution, seed-tree loading and per-check skip discipline rather than
-against the predicates.
+Both remaining gaps are now closed. citation-nulling's synthetic fixture is
+`tests/unit/test_post_hoc_shadow.py`, which drives
+`orchestrator.collect_post_hoc_shadow` from a hand-built `research.json` on disk
+— the live path, offline and free. The other two lack only a live run that
+stored an entry, which the next committed e2e run producing one supplies for
+free. The replay plumbing has its own controls in
+`tests/unit/test_guardrail_shadow_report.py`, written against sidecar
+resolution, seed-tree loading and per-check skip discipline rather than against
+the predicates.
+
+**warnings-unchecked was considered for graduation and declined — 2026-08-23.**
+It is the check with by far the largest sample, so it is the one a future reader
+will reach for first; the reasoning is recorded here so it is not re-derived. 58
+runs of 156 is a **corpus behaviour count, not a production signal**, and
+`docs/architecture.md` ("Every measurement in this repo describes the eval
+corpus, not production") says outright not to graduate a gate on a violation
+rate. A hard compliance check at that frequency would fail a large share of a
+suite costing $7–25 a run, over a process omission that corrupts no document —
+ADR-0011's satisfiability limit reads that as a constant rather than a
+guardrail. What the number argues for instead is moving the check to the write
+boundary, where the guardrail runs itself rather than a detector reporting that
+nobody asked; that is a separate piece of work with its own measurements.
 
 **What the replay claims, and what it does not.** It is a **behaviour-presence**
 measurement: did this shape occur in the corpus at all. It is **not** a per-run
