@@ -213,8 +213,7 @@ be defensible, not to find a record.
 An unqualified range matches by estimate overlap. A record with no year of its
 own is not year-silent — the index carries an *estimated* date range for it, from
 the dated facts of others on the record, and an unqualified range returns it
-whenever that estimate overlaps the range. Measured on the record index for birth, death and marriage; records residence
-dates are precise, so a range finds no overlaps there. Reproduced for all four
+whenever that estimate overlaps the range. Measured on the record index for birth, death and marriage; record-index residence dates are precise, so a range finds no overlaps there. Reproduced for all four
 families on the tree endpoint; the `any` family was never tested.
 
 `<event>YearExact` keeps only records whose indexed date falls inside the range,
