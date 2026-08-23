@@ -2164,7 +2164,7 @@ describe("ISO_DATE_PATTERN mirrors the iso_date $def", () => {
 // one — 25% of the corpus holding a shape research.schema.json has always
 // forbidden, with nothing checking.
 describe("stop_criteria type guard (#1834)", () => {
-  function declaredResearch(stopCriteria: unknown): any {
+  function researchWithStopCriteria(stopCriteria: unknown): any {
     return {
       project: {
         id: "rp_001",
@@ -2219,7 +2219,7 @@ describe("stop_criteria type guard (#1834)", () => {
 
   it("rejects a flat string — the shape 39 corpus questions persist today", async () => {
     const result = await validateParsed(
-      declaredResearch(
+      researchWithStopCriteria(
         "All seven criteria met: broad repository coverage, originals consulted, " +
           "two independent sources, no conflicts, low overturn risk.",
       ),
@@ -2231,19 +2231,29 @@ describe("stop_criteria type guard (#1834)", () => {
 
   it("rejects a number and an array too — the arm is a type check, not a string check", async () => {
     for (const bad of [42, ["goal_alignment"]]) {
-      const result = await validateParsed(declaredResearch(bad), tree);
+      const result = await validateParsed(researchWithStopCriteria(bad), tree);
       expect(stopCriteriaErrors(result).length).toBeGreaterThan(0);
     }
   });
 
+  it("names an array as an array, not as an object", async () => {
+    // `typeof [] === "object"`, so the naive message told a caller its array
+    // was the wrong type by calling it the right one — on the single case the
+    // surrounding guard exists for. Refusals are teaching aids here; one that
+    // says "got object" to someone who passed an object-shaped thing teaches
+    // nothing.
+    const result = await validateParsed(researchWithStopCriteria(["goal_alignment"]), tree);
+    expect(stopCriteriaErrors(result)[0]?.message ?? "").toContain("got array");
+  });
+
   it("accepts null — 192 corpus writes leave it null on an undeclared question", async () => {
-    const result = await validateParsed(declaredResearch(null), tree);
+    const result = await validateParsed(researchWithStopCriteria(null), tree);
     expect(stopCriteriaErrors(result)).toHaveLength(0);
   });
 
   it("accepts the seven-key object", async () => {
     const result = await validateParsed(
-      declaredResearch({
+      researchWithStopCriteria({
         goal_alignment: "Yes — three sources name the father.",
         repository_breadth: "Census, vital records and probate searched.",
         original_substitution: "Originals accessed.",
@@ -2258,7 +2268,7 @@ describe("stop_criteria type guard (#1834)", () => {
   });
 
   it("the refusal names the seven keys, so it teaches the shape it demands", async () => {
-    const result = await validateParsed(declaredResearch("prose instead of the object"), tree);
+    const result = await validateParsed(researchWithStopCriteria("prose instead of the object"), tree);
     const msg = stopCriteriaErrors(result)[0]?.message ?? "";
     for (const key of [
       "goal_alignment", "repository_breadth", "original_substitution",

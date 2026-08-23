@@ -672,7 +672,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         addError(
           report,
           `${qp}/exhaustive_declaration/stop_criteria`,
-          `must be an object with the seven stop criteria, or null — got ${typeof ed.stop_criteria}. ` +
+          `must be an object with the seven stop criteria, or null — got ${Array.isArray(ed.stop_criteria) ? "array" : typeof ed.stop_criteria}. ` +
             "A prose summary of the criteria does not satisfy GPS Component 1's per-criterion " +
             "assessment: write the seven keys (goal_alignment, repository_breadth, " +
             "original_substitution, independent_verification, evidence_class, conflict_resolution, " +

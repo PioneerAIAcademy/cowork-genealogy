@@ -574,7 +574,7 @@ audit's recommendation #5):
 The LLM still makes every substantive decision and supplies the fields — the tool
 only refuses to persist a structurally incoherent combination.
 
-**Five of these are checked against pre-call state, not final state** — the tier gate, the mentor gate, the completion conflict gate, the disputed-source tier rule, and plan completeness. (This sentence said "One" until 2026-08-23, having been written when the tier gate was the only one; count them in `research-append.ts` rather than trusting a number here.) The batch
+**Six of these are checked against pre-call state, not final state** — the tier gate, the mentor gate, the completion conflict gate, the disputed-source tier rule, the resolved-question conflict gate, and plan completeness. (This sentence said "One" until 2026-08-23, having been written when the tier gate was the only one; count them in `research-append.ts` rather than trusting a number here.) The batch
 form mutates a single in-memory document across `ops[]` and validates the result
 once (§3.3), so an invariant evaluated at the end can be satisfied by a value
 written earlier *in the same call*. For the tier gate that is a live hole, not a
