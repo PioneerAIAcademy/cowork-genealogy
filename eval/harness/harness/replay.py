@@ -340,7 +340,9 @@ def _apply_op(state: dict, op: dict, entry_id: str | None, out: ReplayResult) ->
             items.append({**entry, "id": entry_id} if entry_id else dict(entry))
         else:
             for it in items:
-                if it.get("id") == (entry_id or op.get("id")):
+                # Same fix as the generic section path below, and this one bites
+                # hardest: plan-item status flips are the op most often batched.
+                if it.get("id") == (entry_id or op.get("entryId") or op.get("id")):
                     it.update(entry)
                     break
         out.applied += 1
@@ -360,7 +362,14 @@ def _apply_op(state: dict, op: dict, entry_id: str | None, out: ReplayResult) ->
         out.applied += 1
         return
 
-    target_id = entry_id or op.get("id") or entry.get("id")
+    # `op["entryId"]` is the caller's own target, and for an UPDATE it is the
+    # authoritative one — the response merely echoes it back. Consulting it
+    # matters whenever the ledger did not report an id for this op, which is not
+    # an edge case: a summarised batch records only `_first_n` entries, so every
+    # UPDATE past that cut arrived here with `entry_id = None`, fell through to
+    # `id` (which an update payload does not carry), and was dropped as
+    # `no-such-id` — silently, and while naming its target in plain sight.
+    target_id = entry_id or op.get("entryId") or op.get("id") or entry.get("id")
     for existing in arr:
         if existing.get("id") == target_id:
             existing.update(entry)
