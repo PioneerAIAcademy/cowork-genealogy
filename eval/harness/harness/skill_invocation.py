@@ -177,6 +177,43 @@ def recently_succeeded(
     return False
 
 
+def did_not_land(entry: dict[str, Any]) -> bool:
+    """True when this tool call changed nothing on disk.
+
+    Two ways that happens. `is_error` is the old one. The other is the
+    no-project answer (issue #1695): the user was not in a research project, so
+    the writer tool wrote nothing and returned `reason: "no_project"` —
+    deliberately WITHOUT `is_error`, because it is an answer rather than a
+    failure. Every detector that skips a call because it never landed must skip
+    this one too, or a write that did not happen is counted as a landed
+    protected write and manufactures a violation in paid e2e grading.
+
+    Matched as a substring rather than by parsing: `response_summary` arrives
+    single-encoded, double-encoded, and truncated across the committed corpus,
+    so a parse fails on shapes a substring handles.
+
+    MATCH THE BARE NAME, never `'"no_project"'`. `_summarize_tool_response` in
+    `e2e/orchestrator.py` passes any response under 500 chars through VERBATIM as
+    the raw MCP envelope, where the tool's document is an escaped string —
+    `[{"type": "text", "text": "{\\"reason\\": \\"no_project\\"}"}]`. The quoted
+    key does not occur in that, because a backslash sits where the closing quote
+    would be. The no-project envelope measures 236 chars, or 248 for the read
+    variant, against `_RUNLOG_VERBATIM_MAX` of 500 — so it ALWAYS takes the
+    verbatim path, and the envelope shape outnumbers the unwrapped one in every
+    committed run. A quoted-key match therefore never fires in production while
+    passing every hand-built test. That orchestrator docstring says this
+    outright: "grep the bare name, which matches both."
+
+    The bare name survives the other branch too: past the threshold the
+    summarizer unwraps the document and keeps every dict key, so `reason` lands
+    as a real JSON key and matches there as well. Nothing rests on the message
+    staying short.
+    """
+    if entry.get("is_error") is True:
+        return True
+    return "no_project" in str(entry.get("response_summary") or "")
+
+
 def find_unguarded_protected_writes(
     tool_calls: list[dict[str, Any]],
     *,
@@ -189,7 +226,7 @@ def find_unguarded_protected_writes(
     rate is measured)."""
     violations: list[dict[str, Any]] = []
     for i, entry in enumerate(tool_calls):
-        if entry.get("is_error") is True:
+        if did_not_land(entry):
             continue
         tool = entry.get("tool", "")
         args = entry.get("args") or {}
@@ -1328,10 +1365,16 @@ def find_relationship_writes_without_warnings_check(
     if not new_relationship:
         return []  # the gate: nothing was written that a warnings check should have preceded
 
+    # NOTE the polarity: unlike every other `is_error` gate in this module, this
+    # one CREDITS a call rather than skipping it — a successful person_warnings
+    # means the tree was checked. So the no-project answer has to be excluded
+    # from `consulted`, not added to a skip. Get it backwards and a warnings
+    # check that never ran is credited as done, which is a MISSED violation and
+    # therefore silent (issue #1695).
     consulted = any(
         isinstance(call, dict)
         and bare_tool_name(call.get("tool") or "") == "person_warnings"
-        and not call.get("is_error")
+        and not did_not_land(call)
         for call in (tool_calls or [])
     )
     if consulted:

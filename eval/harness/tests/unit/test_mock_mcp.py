@@ -18,6 +18,7 @@ from harness.mock_mcp import (
     LIVE_TOOLS,
     OK_FALSE_IS_FAILURE_LIVE,
     RANKING_SKIPPED_NOTE,
+    _tool_envelope,
     create_mock_server,
 )
 
@@ -382,3 +383,24 @@ def test_ok_false_gate_set_has_not_drifted_from_the_typescript_source():
     ts_names = set(re.findall(r'"([a-z_]+)"', decl.group(1)))
     assert ts_names, "parsed an empty list — the declaration's shape changed"
     assert ts_names & LIVE_TOOLS == OK_FALSE_IS_FAILURE_LIVE
+
+
+def test_no_project_answer_is_not_marked_is_error():
+    """Mirrors `writerToolResult`'s one ok:false exemption (issue #1695).
+
+    A user who is simply not in a research project gets an answer, not a fault.
+    Without this mirror the unit tier would show an error where production shows
+    an answer — the exact drift `_tool_envelope` exists to prevent.
+    """
+    envelope = _tool_envelope(
+        "research_append",
+        {"ok": False, "reason": "no_project", "errors": ["not a project"]},
+    )
+    assert "is_error" not in envelope
+
+
+def test_ordinary_returned_failure_is_still_marked_is_error():
+    """The other half — without it the test above would pass on a gate that had
+    stopped marking anything at all."""
+    envelope = _tool_envelope("research_append", {"ok": False, "errors": ["bad"]})
+    assert envelope["is_error"] is True

@@ -1,12 +1,12 @@
 # Enforcement layer — the phase programme
 
-**Status, 2026-08-19.**
+**Status, 2026-08-21.**
 
 | Phase | State |
 |---|---|
 | 0 — ownership declaration | **landed** 2026-08-16. `docs/specs/schemas/ownership.json`, 19 rows, two lints |
 | 1 — creation path | **landed** 2026-08-17. `project_create`, and `init-project` rewritten onto it |
-| 1 — standalone (answer, don't error) | **not started**, and no longer a seed writer. Blocked on the `readProjectJson` consolidation |
+| 1b — standalone (answer, don't error) | **landed** 2026-08-21. `classifyProjectPath` in `project-io.ts` decides five states from the directory rather than the file; twelve tools return `reason: "no_project"` with no `isError`, and the three harness detectors that read `is_error` to mean "never landed" mirror it |
 | 2 — device-bridge route closure | **landed** 2026-08-18. `device_commit_files` covered in all three lockdown copies *and* in the `hooks.json` matcher that decides whether the guard runs; `device_bash` deliberately not. Still unproven against a real bridge payload — only a live Cowork session can do that |
 | 3 — first skill-agent pair (proof summaries) | **landed** 2026-08-19. `proof-conclusion` folded into an agent; the plugin hook denies a `proof_summaries` write to any other caller. Unproven against a real Cowork payload — no CI job sees one |
 | 4 — remaining pairs | **not started** |
@@ -41,7 +41,7 @@ system, not the objective.
 ```
 Phase 0  manifest ────────── LANDED ┐
 Phase 1  creation path ───── LANDED ┼──> Phase 2  route closure ── LANDED
-Phase 1b standalone ──────── issue #1695, after #988
+Phase 1b standalone ──────── LANDED
 Phase 3  first pair ──────── LANDED
 Phase 4  remaining pairs      (needs #1253)
 Phase 5  detectors + controls (independent, free, any time)
@@ -61,30 +61,6 @@ impossible: measured 2026-08-15, `init-project` created both files through
 `device_commit_files` in Cowork with a connected folder. `project_create` landed
 first; the route closed after. That is ADR-0011's satisfiability rule — a deny
 must leave a working alternative — and it is the reason for the ordering above.
-
----
-
-## Phase 1b — standalone use: answer, don't error
-
-**The creation half shipped** as `project_create` (2026-08-17), so this section
-is only what remains. **Auto-seeding the writer tools — the design this section
-used to describe — was rejected**, twice, under review: it lets any skill bring
-an objective-less project into being, which `init-project`'s guard then refuses
-to touch and no routing table has a row for. A dead end with no sanctioned exit.
-
-**What remains is smaller than a seed writer**, and is a lead ruling
-(2026-08-17): *it is fine for standalone work not to be persisted; it is not
-fine for the user to see an error merely because they are not in a project.*
-
-Measured: of 21 skills declaring a tool that touches the project files, **1**
-(`locality-guide`) handles the absence. The rest would surface
-`research.json not found in projectPath` to someone who simply is not in a
-project — including the search path, which is the 27,699-results loss this
-programme opened with.
-
-The fix belongs at the writer tools, not in 19 skill bodies (~19 paid eval runs,
-and ~19 drifting copies of one rule). Tracked as issue #1695, which **must follow
-#988** — the message is thrown from nine sites until that consolidation lands.
 
 ---
 
@@ -159,7 +135,8 @@ this section is deleted when the phase ships, and a durable finding cannot live
 in a file with that property.
 
 **`harness/replay.py` is not a dependency of this phase.** It reconstructs
-`research.json` at any point in a run (136/154 exact, `make replay-check`) and
+`research.json` at any point in a run (fidelity moves with the corpus — read it
+from `make replay-check`, never from a figure written down here) and
 this section used to name it as the blocker. All three post-hoc checks read final
 state, and every committed run ships `.final-research.json` /
 `.final-tree.gedcomx.json` sidecars, so no reconstruction is needed. It remains

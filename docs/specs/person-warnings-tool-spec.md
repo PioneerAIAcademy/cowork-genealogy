@@ -379,7 +379,9 @@ is worth recording so it isn't "fixed" back later by mistake:
 | `projectPath` not provided | Throw: `"projectPath is required"` |
 | `personId` not provided | Throw: `"personId is required"` |
 | `tree.gedcomx.json` is invalid JSON | Throw: `"Failed to parse tree.gedcomx.json: {parseError}"` |
-| `tree.gedcomx.json` not found at path | Throw: `"tree.gedcomx.json not found at {projectPath}. Run person_read first to populate the tree file."` |
+| `projectPath` is a real directory holding **neither** project file | **Return**, do not throw: `{ ok: false, reason: "no_project", errors }`. The user is not in a research project, which is an answer rather than a failure. This is the one tool that owes this answer without reading through `readProjectJson`, so it calls `classifyProjectPath` itself. Discriminate the result with `"ok" in result` — the success shape has no `ok` field. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is not an existing directory | Throw: `"projectPath does not exist: {projectPath}"` |
+| `tree.gedcomx.json` not found at path, in a folder that *does* hold `research.json` | Throw: `"tree.gedcomx.json not found at {projectPath}. Run person_read first to populate the tree file."` — a broken project stays loud, and this message is the more useful one |
 | `personId` not found | Throw: `"Person '{personId}' not found in tree.gedcomx.json."` |
 | File has no `persons` array | Throw: `"No persons found in tree.gedcomx.json."` |
 | Date is unparseable | `extractYear()` returns `null`, warning check skips silently |

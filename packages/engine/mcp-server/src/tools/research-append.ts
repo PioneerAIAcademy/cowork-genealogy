@@ -29,6 +29,8 @@ import {
   isInsideProject,
   readProjectJson,
   formatIssues,
+  NoProjectError,
+  noProjectResult,
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { exampleHints } from "./research-append-examples.js";
@@ -641,7 +643,10 @@ interface BatchSuccess {
 export type ResearchAppendResult =
   | SingleSuccess
   | BatchSuccess
-  | { ok: false; errors: string[]; opsReceived?: number };
+  // `reason: "no_project"` marks the one ok:false that is an answer rather than
+  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
+  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
+  | { ok: false; errors: string[]; opsReceived?: number; reason?: "no_project" };
 
 /** Carries one or more user-facing messages: the single form echoes them
  *  verbatim; the batch form prefixes each with `ops[i]:`. */
@@ -658,6 +663,10 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
+    // NoProjectError is an ANSWER, not a failure — the outer catch turns it into
+    // noProjectResult(). Flattening it into ResearchAppendError here would lose
+    // the `reason` discriminator and ship it with isError.
+    if (e instanceof NoProjectError) throw e;
     throw new ResearchAppendError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -2169,6 +2178,7 @@ export async function researchAppend(
       validation: validationBlock,
     };
   } catch (e) {
+    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof ResearchAppendError) {
       // Single-op path (and pre-pass throws): the section is only known when
       // the caller used the non-batch form.

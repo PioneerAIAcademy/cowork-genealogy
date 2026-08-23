@@ -354,8 +354,13 @@ harness-lint: ## Undefined-name check for eval/harness (ruff F821 — catches a 
 replay-check: ## Acceptance check for the write-replay engine: reconstruct every committed e2e run and compare against its final-state sidecar
 	# Offline and free — no API key, no live calls. Reports reconstruction
 	# fidelity per section; it is a REPORT, not a gate (the corpus grows weekly
-	# and the rate moves with it). Baseline 2026-08-15: 136/154 (88%) exact id
-	# match on all 12 sections. Run after any change to harness/replay.py.
+	# and the rate moves with it). Measured 2026-08-23: 21/157 (13%) exact id
+	# match on all 12 sections, down from 136/154 (88%) recorded 2026-08-15 — a
+	# drop that predates this measurement and is NOT explained by any change to
+	# harness/replay.py, which is byte-identical across it. The unmodelled tally
+	# the report prints is the place to start: tree_edit and materialize_facts
+	# dominate it. Read the current number from a run, not from this comment.
+	# Run after any change to harness/replay.py.
 	cd eval/harness && uv run python scripts/check_replay_fidelity.py
 
 .PHONY: eval-skill
