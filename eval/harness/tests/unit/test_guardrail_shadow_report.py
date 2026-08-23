@@ -448,6 +448,33 @@ def test_replay_provenance_ignores_a_write_that_never_landed(tmp_path):
     assert rep.runs_linking == 0  # nothing landed, so nothing to have a gap
 
 
+def test_replay_provenance_ignores_a_no_project_write(tmp_path):
+    """The other way a write never lands (issue #1695): the user was not in a
+    research project, so the tool wrote nothing and returned
+    `reason: "no_project"` — deliberately WITHOUT `is_error`, because that is an
+    answer rather than a failure. Counting it would report a provenance gap for
+    a write that never happened.
+
+    Tested here and not only against the shared `did_not_land` helper because
+    this detector reads a COMMITTED corpus, where the marker arrives inside
+    `response_summary` — a field with its own truncation and double-encoding
+    lifecycle — rather than as a structured key.
+    """
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    # The MCP-envelope shape the orchestrator passes through verbatim for any
+    # response under 500 chars — which this one always is. Testing only the
+    # unwrapped form leaves the detector dark in every real run.
+    no_project = _pe_write("I1") | {
+        "response_summary": json.dumps(
+            [{"type": "text", "text": '{"ok": false, "reason": "no_project"}'}]
+        )
+    }
+    p = _write_replay_run(tmp_path, "fx", "run-1.json", [no_project])
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert rep.violations == []
+    assert rep.runs_linking == 0  # nothing landed, so nothing to have a gap
+
+
 def test_replay_provenance_counts_the_retry_after_a_denial_once(tmp_path):
     """The deny-mode shape end to end: blocked attempt, then an unscored retry
     that lands. Exactly one gap, not two."""

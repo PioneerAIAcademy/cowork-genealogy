@@ -461,6 +461,63 @@ Two things about a deny-mode run's output:
 
 ## 5. Write-boundary invariants
 
+### Not being in a project is an answer, not a failure
+
+The lead ruling: it is fine for standalone work not to be persisted; it is not
+fine for the user to see an error merely because they are not in a project. A
+search that ran, returned results, and had nowhere to log them must say so in a
+sentence a skill can relay unedited.
+
+`classifyProjectPath` in `packages/engine/mcp-server/src/utils/project-io.ts`
+decides five states, and it is deliberately **independent of which file the
+current read wanted** — six of the twelve project-reading tools read
+`tree.gedcomx.json` first, so a file-derived verdict hands those six the wrong
+message in a folder that is simply not a project.
+
+| State of `projectPath` | Verdict |
+|---|---|
+| absent or not a string | loud — `projectPath is required` |
+| not an existing directory | loud — `projectPath does not exist: <path>` |
+| a directory holding **neither** project file | `reason: "no_project"`, **no `isError`** |
+| a directory holding **exactly one** of the two | loud — a *broken* project |
+| a file present but unparseable | loud |
+
+The half-a-project row runs in both directions, and it is the one that matters.
+A folder whose `research.json` was deleted still holds a real project, so a write
+against it must stay loud; softening it drops the write with a cheerful message.
+
+`reason` is the sole discriminator. `errors` is retained so every existing
+consumer keeps working, and `writerToolResult` reads `reason` to leave `isError`
+unset — the only `ok: false` exempt from that flag, because nothing was asked of
+a project that exists.
+
+**The sentence has two variants, because four of the twelve tools are not
+writers.** `research_query` and `project_context` are reads; `person_warnings`
+and `merge_warnings` are previews. Telling someone who asked "where are we?" in a
+non-project folder that their work was not saved is both wrong and alarming, so
+those four carry `NO_PROJECT_MESSAGE_READ` and the eight writers carry
+`NO_PROJECT_MESSAGE_WRITE`. Both share a base clause, which is what the
+single-phrasing packaging lint keys on.
+
+**An unreadable directory is not an absent project.** `classifyProjectPath`
+distinguishes a clean `ENOENT` from any other `access()` failure. A real project
+directory that has lost its execute bit still stats as a directory while every
+probe inside it throws `EACCES`; read as "absent" that becomes `no_project`, and
+a write against a genuine project is dropped with a cheerful message — the same
+silent loss the half-a-project row exists to prevent.
+
+**The harness must mirror this, and one of the three mirrors is inverted.**
+`is_error` is how the detectors know a call never landed, so a no-project write
+that kept its `isError` would be counted as a landed protected write and
+manufacture violations in paid grading. `did_not_land` in
+`eval/harness/harness/skill_invocation.py` is the shared predicate. Two callers
+use it to **skip** a call (`find_unguarded_protected_writes`, and
+`guardrail_shadow_report.py`'s person-evidence scan). The third —
+`find_relationship_writes_without_warnings_check` — uses it to withhold
+**credit**: there a successful `person_warnings` means the tree was checked, so a
+no-project call must not count as consulting the guardrail. Getting that one
+backwards is a *missed* violation, and therefore silent.
+
 ### Set-once project fields
 
 `objective`, `title` and `subject_person_ids` on the `project` singleton may be
