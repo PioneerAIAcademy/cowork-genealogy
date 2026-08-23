@@ -132,7 +132,7 @@ MEASURED — the per-field verdicts are withheld under RULE 0"* — so it was me
 directly on 2026-08-20 with the unmatchable-token method R and S validated, via
 `dev/explore-name-empty-field-leg-records.ts`:
 
-- **`givenName` keeps them.** Three unmatchable tokens each retain ~251 of a 6,038
+- **`givenName` keeps them.** Three unmatchable tokens each retain ~251 of a 5,958
   pool (spread under 2%, which is S's control separating silence from fuzzy reach);
   58 of 60 sampled retained rows are given-name-empty, on the typed parts AND on the
   `fullText` cross-check the surname leg below uses — the two agree exactly, so no
@@ -150,7 +150,7 @@ ones among them.
 
 The retention counts and the 1,100-row Brazil pool are not in
 `dev/measured-figures.json`; the script is the trail until a probe section records
-them. The 6,038 pool total *is* already recorded, as
+them. The 5,958 pool total *is* already recorded, as
 `Y.impossiblePools:birth[0].poolTotal` — it is the same Pocklington pool.
 
 The lead states the rule as the search engine's rather than this endpoint's, from
@@ -163,14 +163,21 @@ cross-referenced from one.
 **Two carve-outs.** *Places* are a different mechanism — `*PlaceExact` stops
 upward expansion to parent jurisdictions, which is neither fuzz, initials, nor an
 empty field. (Whether it still descends to child localities is stated in the
-original spec prose but is recorded by no verdict; treat it as unverified.) *Years* are the exception, and the artifact is
-the authority on why. `H.verdict:silence tolerated` reads **OPEN** and
-`N.verdict:payload-silent means index-silent` reads **NOT MEASURED**: nothing here
-establishes what a year range does to a record carrying no indexed year, in either
-direction. The lead's account is that no such record exists — the index carries an
-estimated date *range* matched by overlap — and a session probe on 2026-08-19 found no such record in an enumerated Pocklington pool, but that probe left **no artifact** and no probe in `dev/` reproduces it, so it is not
-citable here. Until an instrument records it, `birthYearExact`'s text is unchanged
-and is **not** part of this rule.
+original spec prose but is recorded by no verdict; treat it as unverified.) *Years* are the exception, and the artifact now measures why.
+`H.verdict:index-silent personas exist` reads **NO** and
+`H.verdict:an unqualified range admits estimate overlaps` reads **YES**: there is
+no record carrying "no indexed year". A persona with no year of its own carries an
+estimated date *range*, derived from the dated facts of others on the record, and
+an unqualified range matches it by overlapping that estimate, while
+`.exact` (`H.verdict:.exact requires the indexed date inside the range`) keeps only
+records whose indexed date falls inside the range.
+`N.verdict:payload-silent means index-silent` reads **NO** for the same reason —
+the payload not exposing a year does not mean the index holds none. Measured by a
+disjoint-band membership instrument (`dev/probe-search-qualifiers.ts` sections H
+and Q) on enumerated pools across four record families plus a non-parish US census
+control; the tree endpoint reproduces it (section P). So a year range behaves like
+the other qualifiers after all: without `birthYearExact` a range admits
+estimate-overlap matches; with it, only records dated inside the range survive.
 
 Setting `surnameAlt` or `givenNameAlt` performs a UNION — the result
 set includes records that match the primary name AND records that

@@ -426,6 +426,14 @@ describe("measured figures stay traceable to the probe artifact", () => {
       a: "R.verdict:retention equals the silent share",
       b: "S.verdict:retention tracks the indexed share",
     },
+    {
+      // #1771 step 4. After the year rename H and N record the same question, from
+      // the same band instrument — H owns the birth pool, N reads H's result — so
+      // they must agree.
+      question: "does an unqualified range match records by estimate overlap, beyond those dated inside it?",
+      a: "H.verdict:an unqualified range admits estimate overlaps",
+      b: "N.verdict:an unqualified range admits estimate overlaps",
+    },
   ];
 
   /** Which way a verdict points, or null when it declines to answer. */
@@ -503,14 +511,18 @@ describe("measured figures stay traceable to the probe artifact", () => {
       why: "section Y withholds the generalisation; these phrasings assert it as measured",
     },
     {
-      // Section H states its own prohibition in the verdict string. Honour it
-      // literally: while H declines to answer, no surface may claim the thing it
-      // names. Six documents said this while H read OPEN.
-      verdict: "H.verdict:silence tolerated",
-      activeWhen: /^(?:OPEN|STILL OPEN|NOT MEASURED)/,
+      // #1771 step 4. Repointed from the retired `H.verdict:silence tolerated`.
+      // The band instrument measures index-silent personas at ZERO, so this reads
+      // NO. The rule FAILS CLOSED: `/^NO/` matches the measured "NO —" and also
+      // "NOT MEASURED", so it stays active whenever the measurement is absent
+      // rather than implying it tracks a measured negative. `mustNotSay` is the OLD
+      // vocabulary, so the rule now guards against reintroducing the disproven
+      // "year-silent records" story from stale memory or an old doc.
+      verdict: "H.verdict:index-silent personas exist",
+      activeWhen: /^NO/,
       mustNotSay:
-        /an unqualified range (?:does \*\*not\*\*|does not) require an indexed year|still returned year-silent records|tolerates year-silent records/i,
-      why: "H's verdict explicitly says: do not say an unqualified range keeps year-silent records",
+        /tolerates year-silent records|keeps (?:year-silent|undated) records|tolerates silence/i,
+      why: "the index places every persona in time; do not say an unqualified range keeps year-silent/undated records",
     },
   ];
 
@@ -853,16 +865,13 @@ describe("recorded verdicts are still producible by the probe", () => {
      * blinding the check to the rot it exists for. Two entries, both verified by
      * reading the record() call; anything added here needs the same.
      */
-    const HEAD_EXEMPT = new Map<string, string>([
-      [
-        "H.verdict:an unqualified range fuzzes past its bounds",
-        'template opens with `${fuzzes ? "CONFIRMED" : "NOT CONFIRMED"}` (probe ~line 2208)',
-      ],
-      [
-        "H.verdict:.exact hardens the range",
-        'template opens with `${hardens ? "CONFIRMED" : "NOT CONFIRMED"}` (probe ~line 2213)',
-      ],
-    ]);
+    // Empty since #1771 step 4: both former entries were section-H year verdicts
+    // whose templates opened with a `${cond ? "..." : "..."}` head. Section H was
+    // rebuilt around the band instrument and its verdicts now open with a LITERAL
+    // directional word ("YES — ", "NO — "), so none needs a head exemption. A new
+    // entry here needs the same justification the old ones had — read the record()
+    // call and confirm the template opens with a substitution.
+    const HEAD_EXEMPT = new Map<string, string>([]);
 
     const HEAD = 28;
     const orphans: string[] = [];

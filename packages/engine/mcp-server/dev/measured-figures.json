@@ -202,88 +202,35 @@
     "measured_at": "2026-08-11T03:23:42.479Z"
   },
   "H": {
-    "population": "US Martin/John",
-    "unqualifiedOutOfRange": 3,
-    "unqualifiedSampled": 300,
-    "unqualifiedApproximate": 3,
-    "exactOutOfRange": 0,
-    "exactSampled": 300,
-    "unqualifiedTotal": 357893,
-    "exactTotal": 3056,
-    "verdict:an unqualified range fuzzes past its bounds": "CONFIRMED (SAMPLED — 3/300 rows of a 357,893-record pool; section N enumerates this and records WEAK)",
-    "verdict:.exact hardens the range": "CONFIRMED (SAMPLED — an ABSENCE inside 300 rows of a 3,056-record pool, which RULE 0 does not accept as evidence; section N enumerates and finds an out-of-range row SURVIVING .exact)",
-    "verdict:year-silent": "DROPPED",
-    "verdict:in-range approximate": "NOT MEASURED",
-    "verdict:in-range precise": "KEPT",
-    "widePopulation": "US Martin residence-1880",
-    "wideBaseline": 11386631,
-    "wideUnqualified": 11279569,
-    "wideUnqualifiedPct": 99.1,
-    "wideExact": 2748979,
-    "wideExactPct": 24.1,
-    "silentPersonaSampled": 261,
-    "silentPersonaRecordHasYear": 0,
-    "silentPersonaRecordAlsoSilent": 261,
-    "verdict:year-less personas sit on records carrying another person's year": "NO — those records carry no birth year on any person",
-    "impossibleRangeTotals": [
-      152371,
-      195372
-    ],
-    "impossibleRangeSampled": 100,
-    "impossibleRangePayloadSilent": 0,
-    "verdict:payload-silent is the tolerated population": "NO — only 0% of an impossible range's results are payload-year-less, so something else is also being kept",
-    "yearlessByOffset": [
-      {
-        "offset": 0,
-        "sampled": 100,
-        "noYear": 86
+    "bands:records-birth": {
+      "pool": "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=0",
+      "param": "q.birthLikeDate",
+      "poolTotal": 585,
+      "read": 585,
+      "distinct": 585,
+      "payloadDated": 174,
+      "payloadDatedInMultipleBands": 0,
+      "bandsEnumerated": 12,
+      "membership": {
+        "1": 174,
+        "2": 178,
+        "4": 232,
+        "7": 1
       },
-      {
-        "offset": 1000,
-        "sampled": 100,
-        "noYear": 1
-      },
-      {
-        "offset": 2000,
-        "sampled": 100,
-        "noYear": 86
-      },
-      {
-        "offset": 3000,
-        "sampled": 100,
-        "noYear": 86
-      },
-      {
-        "offset": 4000,
-        "sampled": 100,
-        "noYear": 86
-      }
-    ],
-    "yearlessSpreadPct": 85,
-    "sweepCoveragePctOfPool": 0.0044,
-    "verdict:the sampled year-less share describes the population": "NO — the sampled window is a vanishing fraction of the pool, and it is not even stable across offsets",
-    "meanBucketsSpannedPerRecord": 1.78,
-    "partitionRecordsSampled": 300,
-    "partitionBuckets": [
-      573517,
-      3011190,
-      7268009,
-      7759854,
-      3313850
-    ],
-    "partitionSum": 21926420,
-    "partitionRatioToWide": 1.944,
-    "partitionImpliedSilent": 2661713,
-    "narrowKeptPct": 45.1,
-    "smallestBucket": 573517,
-    "silentCeilingPctOfWide": 5.1,
-    "silentEstimate": 585228,
-    "silentEstimatePctOfWide": 5.2,
-    "impossibleRangeMean": 173872,
-    "silentEstimatesAgree": false,
-    "silentEstimateCount": 3,
-    "verdict:silence tolerated": "OPEN — the three independent estimates of the silent population disagree, and the impossible-range test refutes the match-every-range model they assume. Do not quote a share, and do not say an unqualified range keeps year-silent records.",
-    "measured_at": "2026-08-11T12:54:16.929Z"
+      "indexSilent": 0,
+      "indexSilentKeptByExact": 0,
+      "inNoBand": 0,
+      "closureHolds": true,
+      "controlHolds": true,
+      "controlVacuous": false,
+      "bandRowsRead": 1465,
+      "exactRowsRead": 174
+    },
+    "verdict:index-silent personas exist": "NO — no persona matches all 12 bands; every persona is placed in time by the index, so none is year-silent",
+    "verdict:an unqualified range admits estimate overlaps": "YES — 411 persona(s) match more than one disjoint band, so an unqualified range admits estimate-overlap matches, not only records dated inside it",
+    "verdict:.exact requires the indexed date inside the range": "YES — .exact keeps 174 of 1465 band matches, dropping the estimate-overlap matches an unqualified range admits",
+    "verdict:the payload predicts the indexed date": "YES — all 174 payload-dated personas land in the band their own payload year names",
+    "measured_at": "2026-08-23T00:43:21.834Z"
   },
   "X": {
     "yearsNoAnchor": 948,
@@ -1121,7 +1068,7 @@
     },
     "verdict:relative .exact drops the variant forms fuzzy reached": "HOLDS — forms present in the unqualified set are absent from the exact set, both read in full",
     "abbrev": {
-      "fuzzyRows": 439,
+      "fuzzyRows": 437,
       "exactRows": 4,
       "fuzzyAbbrev": 0,
       "exactAbbrev": 0,
@@ -1129,30 +1076,14 @@
       "exactForms": "William:4"
     },
     "verdict:relative .exact drops indexed abbreviations": "NOT MEASURED — the unqualified set contained no abbreviated form to drop",
-    "yearImpossibleRange": {
-      "rows": 11,
-      "yearSilent": 11
-    },
-    "verdict:an unqualified range tolerates year-silent records": "NOT MEASURED — no payload-based classifier can decide year-silence here. Scope test: a record whose only indexed year is 1565 is ABSENT from a 1565 range and PRESENT in an impossible 1500-1501 range, so neither the matched persona's dates nor the record's predict what the index matched on. A genuinely year-less record would answer every range; these answer one.",
-    "verdict:payload-silent means index-silent": "NOT MEASURED — no payload-based classifier can decide year-silence here. Scope test: a record whose only indexed year is 1565 is ABSENT from a 1565 range and PRESENT in an impossible 1500-1501 range, so neither the matched persona's dates nor the record's predict what the index matched on. A genuinely year-less record would answer every range; these answer one.",
-    "verdict:.exact drops year-silent records": "NOT MEASURED — no payload-based classifier can decide year-silence here. Scope test: a record whose only indexed year is 1565 is ABSENT from a 1565 range and PRESENT in an impossible 1500-1501 range, so neither the matched persona's dates nor the record's predict what the index matched on. A genuinely year-less record would answer every range; these answer one.",
-    "yearFuzz": {
-      "fuzzyRows": 715,
-      "out": 1,
-      "approx": 0,
-      "noYear": 693,
-      "exactRows": 22,
-      "exactOut": 1,
-      "exactNoYear": 0
-    },
-    "yearFuzzClassifiable": 22,
-    "yearFuzzRecordLevelInRange": 21,
-    "verdict:an unqualified year range fuzzes past its bounds": "WEAK — 1 of 22 classifiable rows (of 715 returned; the rest carry no year in the payload). 1 out-of-range row(s) ALSO survive .exact, which is not the shape of fuzz. Scored on the matched persona only; the record-level check is not applied.",
+    "verdict:an unqualified range admits estimate overlaps": "HOLDS — 411 persona(s) match more than one disjoint band in H's instrument, so an unqualified range admits estimate-overlap matches, not only records dated inside it",
+    "verdict:.exact drops estimate-overlap matches": "HOLDS — .exact keeps 174 of 1465 band matches in H's instrument, dropping the estimate-overlap matches",
+    "verdict:payload-silent means index-silent": "NO — H's instrument finds no persona in every band, so no record is index-silent; the payload-silent ones carry an estimated range and answer the band it overlaps",
     "diminutiveReach": {
       "boundId": "2332-PN2",
       "boundName": "Betty Riley",
       "narrowedOnSurname": "Riley",
-      "narrowedRows": 227,
+      "narrowedRows": 226,
       "present": true,
       "rankInNarrowedSet": 103
     },
@@ -1166,7 +1097,7 @@
       "rankInNarrowedSet": 1
     },
     "verdict:initialsTransposition": "REACHED — the bound record is in the narrowed set, read in full",
-    "measured_at": "2026-08-11T15:33:43.404Z"
+    "measured_at": "2026-08-23T00:43:21.836Z"
   },
   "Y": {
     "silence:birth": {
@@ -1180,7 +1111,7 @@
     "impossiblePools:birth": [
       {
         "pool": "Pocklington/England",
-        "poolTotal": 6038,
+        "poolTotal": 5958,
         "tolerated": 11,
         "survived": 0,
         "inRange": 0,
@@ -1190,7 +1121,7 @@
       },
       {
         "pool": "Bochenek/Brazil",
-        "poolTotal": 733,
+        "poolTotal": 734,
         "tolerated": 3,
         "survived": 0,
         "inRange": 0,
@@ -1200,7 +1131,7 @@
       },
       {
         "pool": "Bickerdike/England",
-        "poolTotal": 26620,
+        "poolTotal": 26562,
         "tolerated": 56,
         "survived": 0,
         "inRange": 0,
@@ -1210,8 +1141,8 @@
       },
       {
         "pool": "Geach/England",
-        "poolTotal": 936568,
-        "tolerated": 2056,
+        "poolTotal": 934228,
+        "tolerated": 1951,
         "survived": 3,
         "inRange": null,
         "outOfRange": null,
@@ -1220,7 +1151,7 @@
       },
       {
         "pool": "Mingazzini/Italy",
-        "poolTotal": 10643,
+        "poolTotal": 10644,
         "tolerated": 0,
         "survived": 0,
         "inRange": null,
@@ -1242,7 +1173,7 @@
     "silence:death": {
       "genuinelySilent": 3,
       "silentKeptByExact": 0,
-      "fuzzRows": 40,
+      "fuzzRows": 41,
       "poolsClassified": 3,
       "poolsExcludedTooDeep": 1
     },
@@ -1250,7 +1181,7 @@
     "impossiblePools:death": [
       {
         "pool": "Pocklington/England",
-        "poolTotal": 3638,
+        "poolTotal": 3648,
         "tolerated": 5,
         "survived": 1,
         "inRange": 2,
@@ -1270,19 +1201,19 @@
       },
       {
         "pool": "Bickerdike/England",
-        "poolTotal": 16225,
-        "tolerated": 20,
+        "poolTotal": 16405,
+        "tolerated": 21,
         "survived": 1,
         "inRange": 1,
-        "outOfRange": 19,
+        "outOfRange": 20,
         "silent": 0,
         "silentKept": 0
       },
       {
         "pool": "Geach/England",
-        "poolTotal": 614951,
-        "tolerated": 785,
-        "survived": 61,
+        "poolTotal": 618565,
+        "tolerated": 796,
+        "survived": 62,
         "inRange": null,
         "outOfRange": null,
         "silent": null,
@@ -1300,7 +1231,7 @@
       },
       {
         "pool": "Zsigmondy/Hungary",
-        "poolTotal": 6000,
+        "poolTotal": 6001,
         "tolerated": 0,
         "survived": 0,
         "inRange": null,
@@ -1310,17 +1241,17 @@
       }
     ],
     "silence:marriage": {
-      "genuinelySilent": 51,
+      "genuinelySilent": 25,
       "silentKeptByExact": 0,
       "fuzzRows": 0,
       "poolsClassified": 3,
       "poolsExcludedTooDeep": 0
     },
-    "impossible:marriage": "TOLERATES SILENCE, AND .exact REMOVES IT — 51 genuinely year-silent row(s) across 3 pool(s), all removed by .exact (plus 0 fuzz row(s), dated outside the range, which are not silence)",
+    "impossible:marriage": "TOLERATES SILENCE, AND .exact REMOVES IT — 25 genuinely year-silent row(s) across 3 pool(s), all removed by .exact (plus 0 fuzz row(s), dated outside the range, which are not silence)",
     "impossiblePools:marriage": [
       {
         "pool": "Pocklington/England",
-        "poolTotal": 5335,
+        "poolTotal": 5333,
         "tolerated": 0,
         "survived": 0,
         "inRange": null,
@@ -1340,7 +1271,7 @@
       },
       {
         "pool": "Bickerdike/England",
-        "poolTotal": 22002,
+        "poolTotal": 22011,
         "tolerated": 1,
         "survived": 0,
         "inRange": 0,
@@ -1350,17 +1281,17 @@
       },
       {
         "pool": "Geach/England",
-        "poolTotal": 634076,
-        "tolerated": 48,
+        "poolTotal": 634555,
+        "tolerated": 22,
         "survived": 1,
         "inRange": 1,
         "outOfRange": 0,
-        "silent": 47,
+        "silent": 21,
         "silentKept": 0
       },
       {
         "pool": "Mingazzini/Italy",
-        "poolTotal": 9446,
+        "poolTotal": 9449,
         "tolerated": 0,
         "survived": 0,
         "inRange": null,
@@ -1404,7 +1335,7 @@
       },
       {
         "pool": "Bickerdike/England",
-        "poolTotal": 22534,
+        "poolTotal": 22536,
         "tolerated": 0,
         "survived": 0,
         "inRange": null,
@@ -1414,7 +1345,7 @@
       },
       {
         "pool": "Geach/England",
-        "poolTotal": 914952,
+        "poolTotal": 915142,
         "tolerated": 7,
         "survived": 0,
         "inRange": 0,
@@ -1424,7 +1355,7 @@
       },
       {
         "pool": "Mingazzini/Italy",
-        "poolTotal": 127,
+        "poolTotal": 144,
         "tolerated": 0,
         "survived": 0,
         "inRange": null,
@@ -1447,7 +1378,7 @@
         "pools": [
           {
             "pool": "Pocklington/England",
-            "poolTotal": 6038,
+            "poolTotal": 5958,
             "tolerated": 11,
             "survived": 0,
             "inRange": 0,
@@ -1457,7 +1388,7 @@
           },
           {
             "pool": "Bochenek/Brazil",
-            "poolTotal": 733,
+            "poolTotal": 734,
             "tolerated": 3,
             "survived": 0,
             "inRange": 0,
@@ -1467,7 +1398,7 @@
           },
           {
             "pool": "Bickerdike/England",
-            "poolTotal": 26620,
+            "poolTotal": 26562,
             "tolerated": 56,
             "survived": 0,
             "inRange": 0,
@@ -1477,8 +1408,8 @@
           },
           {
             "pool": "Geach/England",
-            "poolTotal": 936568,
-            "tolerated": 2056,
+            "poolTotal": 934228,
+            "tolerated": 1951,
             "survived": 3,
             "inRange": null,
             "outOfRange": null,
@@ -1487,7 +1418,7 @@
           },
           {
             "pool": "Mingazzini/Italy",
-            "poolTotal": 10643,
+            "poolTotal": 10644,
             "tolerated": 0,
             "survived": 0,
             "inRange": null,
@@ -1517,7 +1448,7 @@
         "pools": [
           {
             "pool": "Pocklington/England",
-            "poolTotal": 3638,
+            "poolTotal": 3648,
             "tolerated": 5,
             "survived": 1,
             "inRange": 2,
@@ -1537,19 +1468,19 @@
           },
           {
             "pool": "Bickerdike/England",
-            "poolTotal": 16225,
-            "tolerated": 20,
+            "poolTotal": 16405,
+            "tolerated": 21,
             "survived": 1,
             "inRange": 1,
-            "outOfRange": 19,
+            "outOfRange": 20,
             "silent": 0,
             "silentKept": 0
           },
           {
             "pool": "Geach/England",
-            "poolTotal": 614951,
-            "tolerated": 785,
-            "survived": 61,
+            "poolTotal": 618565,
+            "tolerated": 796,
+            "survived": 62,
             "inRange": null,
             "outOfRange": null,
             "silent": null,
@@ -1567,7 +1498,7 @@
           },
           {
             "pool": "Zsigmondy/Hungary",
-            "poolTotal": 6000,
+            "poolTotal": 6001,
             "tolerated": 0,
             "survived": 0,
             "inRange": null,
@@ -1587,7 +1518,7 @@
         "pools": [
           {
             "pool": "Pocklington/England",
-            "poolTotal": 5335,
+            "poolTotal": 5333,
             "tolerated": 0,
             "survived": 0,
             "inRange": null,
@@ -1607,7 +1538,7 @@
           },
           {
             "pool": "Bickerdike/England",
-            "poolTotal": 22002,
+            "poolTotal": 22011,
             "tolerated": 1,
             "survived": 0,
             "inRange": 0,
@@ -1617,17 +1548,17 @@
           },
           {
             "pool": "Geach/England",
-            "poolTotal": 634076,
-            "tolerated": 48,
+            "poolTotal": 634555,
+            "tolerated": 22,
             "survived": 1,
             "inRange": 1,
             "outOfRange": 0,
-            "silent": 47,
+            "silent": 21,
             "silentKept": 0
           },
           {
             "pool": "Mingazzini/Italy",
-            "poolTotal": 9446,
+            "poolTotal": 9449,
             "tolerated": 0,
             "survived": 0,
             "inRange": null,
@@ -1646,7 +1577,7 @@
             "silentKept": null
           }
         ],
-        "verdict": "TOLERATES SILENCE, AND .exact REMOVES IT — 51 genuinely year-silent row(s) across 3 pool(s), all removed by .exact (plus 0 fuzz row(s), dated outside the range, which are not silence)"
+        "verdict": "TOLERATES SILENCE, AND .exact REMOVES IT — 25 genuinely year-silent row(s) across 3 pool(s), all removed by .exact (plus 0 fuzz row(s), dated outside the range, which are not silence)"
       },
       {
         "family": "residence",
@@ -1671,7 +1602,7 @@
           },
           {
             "pool": "Bickerdike/England",
-            "poolTotal": 22534,
+            "poolTotal": 22536,
             "tolerated": 0,
             "survived": 0,
             "inRange": null,
@@ -1681,7 +1612,7 @@
           },
           {
             "pool": "Geach/England",
-            "poolTotal": 914952,
+            "poolTotal": 915142,
             "tolerated": 7,
             "survived": 0,
             "inRange": 0,
@@ -1691,7 +1622,7 @@
           },
           {
             "pool": "Mingazzini/Italy",
-            "poolTotal": 127,
+            "poolTotal": 144,
             "tolerated": 0,
             "survived": 0,
             "inRange": null,
@@ -1707,134 +1638,8 @@
         "verdict": "TOLERATES SILENCE, AND .exact REMOVES IT — 7 genuinely year-silent row(s) across 1 pool(s), all removed by .exact (plus 0 fuzz row(s), dated outside the range, which are not silence)"
       }
     ],
-    "verdict:generalises past birth (impossible-range)": "NOT MEASURED — the instrument did not reproduce the known BIRTH behaviour (birth: NO SILENCE OBSERVED — every one of the 70 row(s) an impossible 1500-1505 range retained carries a dated birth fact OUTSIDE the range. That is range fuzz, not silence tolerance, and it says nothing about either half of the claim (1 pool(s) excluded — too deep to enumerate and classify)), so nothing can be read off it for the other families",
-    "kinds:birth": {
-      "Birth": 141,
-      "birthDate": 141,
-      "Christening": 110,
-      "BirthRegistration": 38,
-      "Marriage": 10,
-      "marriageDate": 10,
-      "Death": 3,
-      "deathDate": 3,
-      "Baptism": 1
-    },
-    "verdict:birth": "NOT MEASURED — only 1 year-silent record(s) in the set (floor 5); 0 kept. Too few to be a rate either way",
-    "kinds:death": {
-      "Burial": 84,
-      "Death": 72,
-      "deathDate": 72,
-      "Birth": 58,
-      "birthDate": 58,
-      "Obituary": 4
-    },
-    "verdict:death": "NOT MEASURED — only 1 year-silent record(s) in the set (floor 5); 0 kept. Too few to be a rate either way",
-    "kinds:marriage": {
-      "Birth": 476,
-      "birthDate": 476,
-      "Marriage": 101,
-      "marriageDate": 15,
-      "MarriageNotice": 1
-    },
-    "verdict:marriage": "NOT MEASURED — only 101/469 rows carry a marriage date in the payload, so \"year-silent\" cannot be told from \"date not in the payload\". Section H: payload-silence is not index-silence",
-    "kinds:residence": {
-      "Census": 2081,
-      "Birth": 2081,
-      "birthDate": 2081
-    },
-    "verdict:residence": "NOT MEASURED — the unqualified set contains no year-silent record, so dropping and keeping predict the same result here",
-    "rows": [
-      {
-        "family": "birth",
-        "population": "q.surname=Bochenek&q.recordCountry=Brazil&f.recordType=0",
-        "window": [
-          1850,
-          1854
-        ],
-        "fuzzyTotal": 197,
-        "fuzzyRows": 197,
-        "exactTotal": 0,
-        "silent": 1,
-        "silentKept": 0,
-        "dated": 196,
-        "datedKept": 0,
-        "coveragePct": 99.5,
-        "collateralPct": 0,
-        "inRange": 0,
-        "inRangeKept": 0,
-        "fuzzRows": 196,
-        "fuzzKept": 0,
-        "verdict": "NOT MEASURED — only 1 year-silent record(s) in the set (floor 5); 0 kept. Too few to be a rate either way"
-      },
-      {
-        "family": "death",
-        "population": "q.surname=Pocklington&q.recordCountry=England&f.recordType=2",
-        "window": [
-          1850,
-          1854
-        ],
-        "fuzzyTotal": 144,
-        "fuzzyRows": 144,
-        "exactTotal": 102,
-        "silent": 1,
-        "silentKept": 0,
-        "dated": 143,
-        "datedKept": 102,
-        "coveragePct": 99.3,
-        "collateralPct": 1.9,
-        "inRange": 104,
-        "inRangeKept": 102,
-        "fuzzRows": 39,
-        "fuzzKept": 0,
-        "verdict": "NOT MEASURED — only 1 year-silent record(s) in the set (floor 5); 0 kept. Too few to be a rate either way"
-      },
-      {
-        "family": "marriage",
-        "population": "q.surname=Pocklington&q.recordCountry=England&f.recordType=1",
-        "window": [
-          1850,
-          1854
-        ],
-        "fuzzyTotal": 469,
-        "fuzzyRows": 469,
-        "exactTotal": 102,
-        "silent": 368,
-        "silentKept": 1,
-        "dated": 101,
-        "datedKept": 101,
-        "coveragePct": 21.5,
-        "collateralPct": 0,
-        "inRange": 101,
-        "inRangeKept": 101,
-        "fuzzRows": 0,
-        "fuzzKept": 0,
-        "verdict": "NOT MEASURED — only 101/469 rows carry a marriage date in the payload, so \"year-silent\" cannot be told from \"date not in the payload\". Section H: payload-silence is not index-silence"
-      },
-      {
-        "family": "residence",
-        "population": "q.surname=Pocklington&q.recordCountry=England&f.recordType=3",
-        "window": [
-          1850,
-          1854
-        ],
-        "fuzzyTotal": 348,
-        "fuzzyRows": 348,
-        "exactTotal": 348,
-        "silent": 0,
-        "silentKept": 0,
-        "dated": 348,
-        "datedKept": 348,
-        "coveragePct": 100,
-        "collateralPct": 0,
-        "inRange": 348,
-        "inRangeKept": 348,
-        "fuzzRows": 0,
-        "fuzzKept": 0,
-        "verdict": "NOT MEASURED — the unqualified set contains no year-silent record, so dropping and keeping predict the same result here"
-      }
-    ],
-    "verdict:generalises past birth": "NOT MEASURED — no non-birth family produced a testable population",
-    "measured_at": "2026-08-11T16:51:34.022Z"
+    "verdict:generalises past birth (impossible-range)": "DOES NOT GENERALISE — a family's band instrument does not show birth's shape (an index-silent persona, or .exact dropping nothing)",
+    "measured_at": "2026-08-23T00:43:21.836Z"
   },
   "P": {
     "bands:tree-birth": {
@@ -1936,30 +1741,6 @@
     "measured_at": "2026-08-22T21:20:41.902Z"
   },
   "Q": {
-    "bands:records-birth": {
-      "pool": "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=0",
-      "param": "q.birthLikeDate",
-      "poolTotal": 584,
-      "read": 584,
-      "distinct": 584,
-      "payloadDated": 173,
-      "payloadDatedInMultipleBands": 0,
-      "bandsEnumerated": 12,
-      "membership": {
-        "1": 173,
-        "2": 178,
-        "4": 232,
-        "7": 1
-      },
-      "indexSilent": 0,
-      "indexSilentKeptByExact": 0,
-      "inNoBand": 0,
-      "closureHolds": true,
-      "controlHolds": true,
-      "controlVacuous": false,
-      "bandRowsRead": 1464,
-      "exactRowsRead": 173
-    },
     "bands:records-death": {
       "pool": "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=2",
       "param": "q.deathLikeDate",
@@ -2080,6 +1861,6 @@
       "bandRowsRead": 526,
       "exactRowsRead": 468
     },
-    "measured_at": "2026-08-22T23:42:06.411Z"
+    "measured_at": "2026-08-23T00:43:21.836Z"
   }
 }
