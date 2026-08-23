@@ -250,6 +250,39 @@ export function exampleFor(section: string, op: "append" | "update" = "append"):
       : "";
   const indented = entry.split("\n").join("\n  ");
   if (op === "update") {
+    // `questions` gets a worked body rather than the generic skeleton. Nearly
+    // every exhaustive declaration in the corpus is an UPDATE, and the generic
+    // "only the fields you are changing" placeholder shows the shape of a call
+    // without showing the shape of a declaration — so a caller refused for
+    // writing `stop_criteria` as a prose string (48 corpus ops do) was handed
+    // nothing that teaches the seven-key object it is being asked for. The
+    // `questions` APPEND example is no help either: it shows `stop_criteria:
+    // null` on an undeclared question, which is the other legal shape.
+    if (section === "questions") {
+      return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "questions",
+  op: "update",
+  entryId: "<existing-q_-id>",
+  fields: {
+    status: "exhaustive_declared",
+    exhaustive_declaration: {
+      declared: true,
+      justification: "Searched 1850/1860 censuses, death certificate, and probate. Three independent sources confirm parentage.",
+      log_entry_ids: ["log_001", "log_002", "log_003"],
+      stop_criteria: {
+        goal_alignment: "Yes — three sources name Thomas Flynn as father.",
+        repository_breadth: "Census, vital records, and probate all searched.",
+        original_substitution: "Original images accessed; derivative index confirmed.",
+        independent_verification: "Three independent sources, different informants.",
+        evidence_class: "1860 census (original, primary) and death certificate (original, direct).",
+        conflict_resolution: "Birthplace conflict resolved per preponderance hierarchy.",
+        overturn_risk: "Low. No unexamined record type likely to name a different father."
+      }
+    }
+  }
+})`;
+    }
     return `research_append({
   projectPath: "<absolute-path-to-project-directory>",
   section: "${section}",

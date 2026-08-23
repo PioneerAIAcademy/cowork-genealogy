@@ -2154,3 +2154,117 @@ describe("ISO_DATE_PATTERN mirrors the iso_date $def", () => {
     expect(ISO_DATE_PATTERN.source).toBe(enums.$defs.iso_date.pattern);
   });
 });
+
+// `stop_criteria` is an object or null, never anything else (#1834). A flat
+// string cleared every check: the `=== null` arm misses it, `typeof ===
+// "object"` skips the seven-field loop AND the allowed-keys check, and
+// `stop_criteria` is itself an allowed KEY so the enclosing shape check passes.
+// Measured over the 157 committed e2e runs before the guard landed: 48 write
+// ops put a string here, and 39 of the 154 persisted declared questions carry
+// one — 25% of the corpus holding a shape research.schema.json has always
+// forbidden, with nothing checking.
+describe("stop_criteria type guard (#1834)", () => {
+  function declaredResearch(stopCriteria: unknown): any {
+    return {
+      project: {
+        id: "rp_001",
+        title: "Smith origins",
+        objective: "Find John Smith's parents",
+        subject_person_ids: ["I1"],
+        status: "active",
+        created: "2026-01-01",
+        updated: "2026-01-02",
+      },
+      questions: [
+        {
+          id: "q_001",
+          question: "Who were the parents of John Smith?",
+          rationale: "Timeline gap before 1850",
+          selection_basis: "timeline_gap",
+          priority: "high",
+          status: "open",
+          depends_on: [],
+          unblocks: [],
+          created: "2026-01-01",
+          resolved: null,
+          resolution_assertion_ids: [],
+          exhaustive_declaration: {
+            declared: false,
+            log_entry_ids: [],
+            justification: null,
+            stop_criteria: stopCriteria,
+          },
+        },
+      ],
+      plans: [],
+      log: [],
+      sources: [],
+      assertions: [],
+      person_evidence: [],
+      conflicts: [],
+      hypotheses: [],
+      timelines: [],
+      proof_summaries: [],
+      evaluations: [],
+      localities: [],
+    };
+  }
+  const tree = {
+    persons: [{ id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] }],
+    relationships: [],
+    sources: [],
+  };
+  const stopCriteriaErrors = (r: { errors: Array<{ message: string }> }) =>
+    r.errors.filter((e) => e.message.includes("seven stop criteria"));
+
+  it("rejects a flat string — the shape 39 corpus questions persist today", async () => {
+    const result = await validateParsed(
+      declaredResearch(
+        "All seven criteria met: broad repository coverage, originals consulted, " +
+          "two independent sources, no conflicts, low overturn risk.",
+      ),
+      tree,
+    );
+    expect(result.valid).toBe(false);
+    expect(stopCriteriaErrors(result).length).toBeGreaterThan(0);
+  });
+
+  it("rejects a number and an array too — the arm is a type check, not a string check", async () => {
+    for (const bad of [42, ["goal_alignment"]]) {
+      const result = await validateParsed(declaredResearch(bad), tree);
+      expect(stopCriteriaErrors(result).length).toBeGreaterThan(0);
+    }
+  });
+
+  it("accepts null — 192 corpus writes leave it null on an undeclared question", async () => {
+    const result = await validateParsed(declaredResearch(null), tree);
+    expect(stopCriteriaErrors(result)).toHaveLength(0);
+  });
+
+  it("accepts the seven-key object", async () => {
+    const result = await validateParsed(
+      declaredResearch({
+        goal_alignment: "Yes — three sources name the father.",
+        repository_breadth: "Census, vital records and probate searched.",
+        original_substitution: "Originals accessed.",
+        independent_verification: "Three independent informants.",
+        evidence_class: "1860 census, original/primary.",
+        conflict_resolution: "No conflicts identified.",
+        overturn_risk: "Low.",
+      }),
+      tree,
+    );
+    expect(stopCriteriaErrors(result)).toHaveLength(0);
+  });
+
+  it("the refusal names the seven keys, so it teaches the shape it demands", async () => {
+    const result = await validateParsed(declaredResearch("prose instead of the object"), tree);
+    const msg = stopCriteriaErrors(result)[0]?.message ?? "";
+    for (const key of [
+      "goal_alignment", "repository_breadth", "original_substitution",
+      "independent_verification", "evidence_class", "conflict_resolution", "overturn_risk",
+    ]) {
+      expect(msg).toContain(key);
+    }
+  });
+});

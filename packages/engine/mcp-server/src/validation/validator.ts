@@ -649,6 +649,34 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       if (ed.declared && ed.stop_criteria === null) {
         addError(report, `${qp}/exhaustive_declaration`, "declared is true but stop_criteria is null");
       }
+      // `stop_criteria` is an object or null, never anything else. Without this
+      // arm a flat STRING cleared every check below it: `=== null` is false, so
+      // the arm above misses it; `typeof === "object"` is false, so the
+      // seven-field loop and the allowed-keys check are both skipped; and
+      // `stop_criteria` is itself an allowed KEY, so the enclosing
+      // checkAllowedKeys passes. The write then lands.
+      //
+      // Measured over the 157 committed e2e runs: 48 write ops put a string here
+      // (47 of them declaring), and 39 of the 154 persisted declared questions
+      // carry one — 25% of the corpus persisting a shape
+      // `research.schema.json` has always forbidden, with nothing checking.
+      // `typeof [] === "object"`, so an Array.isArray arm is required and not
+      // belt-and-braces: without it a JSON array of criterion strings — the
+      // other natural way to get this wrong — passes the type check and then
+      // skips the seven-field loop, because `"goal_alignment" in []` is false
+      // for every key. Caught by its own vector while this guard was written.
+      if (ed.stop_criteria !== undefined && ed.stop_criteria !== null
+          && (typeof ed.stop_criteria !== "object" || Array.isArray(ed.stop_criteria))) {
+        addError(
+          report,
+          `${qp}/exhaustive_declaration/stop_criteria`,
+          `must be an object with the seven stop criteria, or null — got ${typeof ed.stop_criteria}. ` +
+            "A prose summary of the criteria does not satisfy GPS Component 1's per-criterion " +
+            "assessment: write the seven keys (goal_alignment, repository_breadth, " +
+            "original_substitution, independent_verification, evidence_class, conflict_resolution, " +
+            "overturn_risk), each with its own 1-2 sentence assessment.",
+        );
+      }
       if (ed.declared && typeof ed.stop_criteria === "object" && ed.stop_criteria !== null) {
         const sc = ed.stop_criteria;
         for (const field of ["goal_alignment", "repository_breadth", "original_substitution",

@@ -533,6 +533,102 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
   ];
 }
 
+/** A question's `status` may not claim an exhaustiveness that its declaration
+ *  does not carry.
+ *
+ *  **Why both spellings need gating.** `status: "exhaustive_declared"` is what
+ *  every downstream reader treats as "GPS Component 1 is satisfied", and
+ *  `exhaustive_declaration.declared` is the record that is supposed to back it.
+ *  The harness has asserted one direction since the validator shipped —
+ *  `test_declared_implies_exhaustive_declared_status`, declared ⟹ status — and
+ *  nothing has ever asserted the other, which is the direction that leaves a
+ *  question looking finished with no declaration behind it.
+ *
+ *  **Reads the MERGED entry, deliberately.** `applyOne` shallow-merges `fields`
+ *  before invariants run, so `entry.exhaustive_declaration` is "set by this op,
+ *  or already true from an earlier call" — exactly the live read ADR-0011
+ *  prescribes when the precondition is the same author's own prior step. A
+ *  pre-call snapshot would refuse the 123 corpus writes that declare and set the
+ *  status in one op, which is the common and correct shape.
+ *
+ *  **A zero-violation arm, and named as one.** Replayed over 157 committed e2e
+ *  runs: 125 ops set this status and none of them would be refused. It ships as
+ *  a cheap invariant closing a reachable hole — `exhaustive_declaration` is a
+ *  required question property so it is always present, and 219 corpus writes set
+ *  `declared: false` — not as a gate with demonstrated catches. Its test vector
+ *  is synthetic for that reason. */
+function declarationStatusInvariants(entry: any): string[] {
+  if (entry?.status !== "exhaustive_declared") return [];
+  if (entry?.exhaustive_declaration?.declared === true) return [];
+  return [
+    `status 'exhaustive_declared' requires exhaustive_declaration.declared === true on ` +
+      `question '${entry?.id}', and it is ` +
+      `${entry?.exhaustive_declaration === undefined ? "absent" : JSON.stringify(entry?.exhaustive_declaration?.declared)}. ` +
+      "That status is what every later reader treats as GPS Component 1 satisfied, so it may " +
+      "not stand without the declaration that backs it. Set both in this call, or leave the " +
+      "status alone: an honest early termination writes `declared: false` and keeps " +
+      "`status: \"in_progress\"`.",
+  ];
+}
+
+/** Exhaustiveness may not be declared while the question's own plan says a
+ *  search is still running.
+ *
+ *  **A bookkeeping gate, not a doctrine one** (lead ruling, 2026-08-23), so
+ *  ADR-0011's overridable-doctrine-gate tier does not bind it. It second-guesses
+ *  no genealogical judgment — it only refuses a declaration that contradicts the
+ *  project's own plan state. That classification is also what the routes allow:
+ *  measured 2026-08-23, no skill can move a plan item out of `in_progress` on
+ *  the FamilySearch path, so there is no researcher-directed override to honour
+ *  yet. Issue #1821 owns the fix and, once it lands, the classification is worth
+ *  revisiting.
+ *
+ *  **`planned` does NOT block, and that is load-bearing.** `research/SKILL.md`
+ *  routes here deliberately before the plan is drained — "even with plan items
+ *  still `planned` → research-exhaustiveness (consult the stop criteria before
+ *  draining the rest of the plan)" — and 122 corpus items sit at `planned`
+ *  across 31 declarations that are all correct. The skill body's opening
+ *  sentence is stricter than its own operative rule; the operative rule and the
+ *  orchestrator agree, and this follows them.
+ *
+ *  **Reads the PRE-CALL snapshot, unlike the sibling above, and the asymmetry is
+ *  the whole gate.** Plan-item completion is the search work's step, not this
+ *  writer's: `docs/specs/schemas/ownership.json` lists six permitted writers of
+ *  `plan_items` and `research-exhaustiveness` is not among them. So the
+ *  precondition must be satisfied by someone else, which is exactly ADR-0011's
+ *  snapshot condition. Read live it would be self-satisfying — measured, three
+ *  corpus calls batch the item flips ahead of the declaration in one op list,
+ *  including `antonio-lucas-spouse`, the run issue #1335 was filed from. Live,
+ *  this refuses 2 of 170; snapshotted, 5.
+ *
+ *  Matching is on `plans[].question_id`; a plan attached to another question is
+ *  not evidence about this one. All 205 corpus plans carry the field, so the
+ *  looser reading that also counts unattached plans is indistinguishable today —
+ *  it is pinned here and by a synthetic test rather than by the corpus. */
+function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
+  if (entry?.exhaustive_declaration?.declared !== true) return [];
+  const qid = entry?.id;
+  if (typeof qid !== "string" || qid === "") return [];
+  const inFlight: string[] = [];
+  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
+    if (!plan || plan.question_id !== qid) continue;
+    for (const item of Array.isArray(plan.items) ? plan.items : []) {
+      if (item?.status === "in_progress" && typeof item?.id === "string") inFlight.push(item.id);
+    }
+  }
+  if (inFlight.length === 0) return [];
+  const ids = inFlight.sort().join(", ");
+  return [
+    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
+      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
+      "search has not finished, so the declaration would rest on work still running. " +
+      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
+      "the search finish; declaring is available on the next call once the plan reflects it. " +
+      "Items still at `planned` do not block — consulting the stop criteria before draining " +
+      "the plan is the sanctioned path.",
+  ];
+}
+
 function proofSummaryInvariants(
   entry: any,
   preCallExhaustiveDeclared: Map<string, boolean> | undefined,
@@ -1260,6 +1356,24 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(fields, "resolved");
     if (resolutionTouchedThisOp) {
       invariantErrors.push(...questionResolvedInvariants(resultEntry, research, preCallResearch));
+    }
+    // Both exhaustiveness gates run only when THIS op touches the field they
+    // govern, the same discipline as the block above: an unrelated update to a
+    // question that was legitimately declared in an earlier call must not
+    // re-trigger either. `append` always sets both.
+    const declarationTouchedThisOp =
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(fields, "exhaustive_declaration");
+    if (declarationTouchedThisOp) {
+      invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
+    }
+    // Keyed on `status`, not on the declaration: this gate is about the status
+    // claiming more than the declaration carries, and an op that sets only
+    // `status` is exactly the shape it exists to catch.
+    const statusTouchedThisOp =
+      op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
+    if (statusTouchedThisOp) {
+      invariantErrors.push(...declarationStatusInvariants(resultEntry));
     }
   }
   if (section === "conflicts") invariantErrors.push(...conflictInvariants(resultEntry));
