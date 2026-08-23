@@ -10,7 +10,7 @@
 | 2 — device-bridge route closure | **landed** 2026-08-18. `device_commit_files` covered in all three lockdown copies *and* in the `hooks.json` matcher that decides whether the guard runs; `device_bash` deliberately not. Still unproven against a real bridge payload — only a live Cowork session can do that |
 | 3 — first skill-agent pair (proof summaries) | **landed** 2026-08-19. `proof-conclusion` folded into an agent; the plugin hook denies a `proof_summaries` write to any other caller. Unproven against a real Cowork payload — no CI job sees one |
 | 4 — remaining pairs | **not started** |
-| 5 — detectors + positive controls | **part 1 landed** 2026-08-21 — the shadow report can now replay all four post-hoc families over history, and the replay plumbing has controls. Outstanding: citation-nulling's synthetic fixture, and issue #1431 (the deny run) |
+| 5 — detectors + positive controls | **landed** 2026-08-23. The shadow report replays all four post-hoc families over history rather than reading only what a run stored; citation-nulling has its positive control on the live path; the deny run happened (PR #1844) and the agent recovers. Also fixed the capture strip, which was destroying `replay.py`'s input |
 
 Three gates, the phase function, and the replay engine were built during the
 investigation — they are *inputs* to this programme, not one of its phases.
@@ -134,18 +134,31 @@ shadow-to-graduate pipeline"), which owns measured findings. Read it there —
 this section is deleted when the phase ships, and a durable finding cannot live
 in a file with that property.
 
-**`harness/replay.py` is not a dependency of this phase.** It reconstructs
-`research.json` at any point in a run (fidelity moves with the corpus — read it
-from `make replay-check`, never from a figure written down here) and
+**`harness/replay.py` is not a dependency of this phase — and it was quietly
+broken.** The e2e capture strip drops `response_summary` past 14 days, which is
+where `replay.py` reads the `entryId` each writer reported back, so 133 of the
+134 stripped runs could no longer be replayed against 18 of 23 unstripped ones
+that could. That read as a fidelity collapse in an engine nobody had touched.
+The sweep now keeps a replay remnant — ids, `ok`, batch length, 0.4% of the
+summary bytes — so it stops happening; the 134 already stripped are not
+recoverable, so fidelity returns only as new runs age in. It reconstructs
+`research.json` at any point in a run (read the current rate from
+`make replay-check`, never from a figure written down here) and
 this section used to name it as the blocker. All three post-hoc checks read final
 state, and every committed run ships `.final-research.json` /
 `.final-tree.gedcomx.json` sidecars, so no reconstruction is needed. It remains
 the right instrument for a mid-run question.
 
-**Still outstanding:**
+**citation-nulling's synthetic fixture — the last thing this phase owed — is
+built.** `collect_post_hoc_shadow` was extracted from `_run_agent` so the live
+path could be reached offline at all, and
+`tests/unit/test_post_hoc_shadow.py` drives it from a hand-built
+`research.json` on disk, exactly as Phase 5 specified: no live run, no API
+spend. That closes the one place a zero was still ambiguous — the predicate
+tests hand the detector a dict and the replay tests read committed sidecars, so
+neither reached the path where a broken workspace read is indistinguishable from
+a clean project.
 
-- **citation-nulling's synthetic fixture** — the one check with no observed fire
-  on either axis. Hand-built `research.json`, no live run.
 **The deny run has now happened** — PR #1844 carries both runs and their
 gradings, and issue #1431 closes with it. The agent recovers unaided: on
 `hannah-earnest-children` the gate blocked twice with the loop valve never
@@ -163,8 +176,8 @@ replay above, which reads committed final state rather than reconstructing.
 
 **Closes** #1569, #1484 (both already closed); #1431 with PR #1844.
 
-**Phase 5 is then done bar one item** — citation-nulling's synthetic fixture,
-above. Everything else this phase named has either landed or been answered.
+**This phase is done.** Everything it named has landed or been answered, so this
+section goes when the programme's remaining phase does.
 
 ---
 

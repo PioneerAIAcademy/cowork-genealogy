@@ -5,8 +5,9 @@
                           sha256 digests, dropping the dead mcp-server/src keys.
     --prune-unit K        one-time backfill to the keep-newest-K rule the
                           harness now applies on every write (harness.runlog).
-    --strip-e2e-captures  drop `response_summary` from e2e run logs past the
-                          cutoff, keeping tool / args / is_error.
+    --strip-e2e-captures  reduce `response_summary` to its replay remnant in
+                          e2e run logs past the cutoff, keeping tool / args /
+                          is_error and the ids `harness/replay.py` reads back.
 
 Run via `make prune-runlogs`. Read-modify-write over
 `eval/runlogs/unit/<skill>/*.json` and `eval/runlogs/e2e/<slug>/run-*.json`;
@@ -33,11 +34,13 @@ import json
 import sys
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Any
 
 HERE = Path(__file__).resolve().parent
 HARNESS_DIR = HERE.parent
 sys.path.insert(0, str(HARNESS_DIR))
 
+from harness.replay import parse_tool_result  # noqa: E402
 from harness.runlog import prune_old_candidates  # noqa: E402
 from harness.since_window import DEFAULT_SINCE_DAYS, run_date  # noqa: E402
 from harness.snapshot import _MCP_SRC_PREFIX, hash_snapshot, is_hashed_snapshot  # noqa: E402
@@ -216,12 +219,50 @@ def committed_e2e_runlogs(root: Path) -> list[Path]:
     return out
 
 
+def replay_remnant(response_summary: Any) -> str | None:
+    """The smallest `response_summary` that `harness/replay.py` can still read.
+
+    **Why a remnant and not a plain drop.** The strip shipped believing nothing
+    read this field back; `replay.py` does, and reconstructs `research.json` from
+    it. It needs exactly three things, all recovered here through `replay`'s own
+    parser so there is one implementation of the parsing:
+
+      * the `entryId` / `logId` values, in order — what each write actually created;
+      * `ok`, since a rejected call changed nothing and must not be applied;
+      * `_full_length` on a summarised batch, which is how ids the ledger never
+        recorded get reconstructed by convention instead of silently dropped.
+
+    Measured over the corpus, that is **0.4% of the bytes** the full summaries
+    occupy, against the 24% of a run log they account for — so keeping it costs
+    essentially nothing and restores the engine outright. Returns None when there
+    is nothing worth keeping, so the field is dropped as before.
+    """
+    parsed = parse_tool_result(response_summary)
+    if not parsed:
+        return None
+    ids = parsed.get("ids") or []
+    full_length = parsed.get("full_length")
+    if not ids and full_length is None and parsed.get("ok") is None:
+        return None
+    remnant: dict[str, Any] = {"ok": parsed.get("ok")}
+    if ids:
+        remnant["results"] = [{"entryId": i} for i in ids]
+    if full_length is not None:
+        remnant["_full_length"] = full_length
+    return json.dumps(remnant)
+
+
 def strip_captures_one(path: Path, *, cutoff: date) -> tuple[bool, int, int]:
-    """Drop `response_summary` from one e2e run log's `tool_calls`.
+    """Reduce `response_summary` to its replay remnant in one e2e run log.
 
     Returns (changed, bytes_before, bytes_after). Leaves the file untouched —
     byte-identical, not merely equivalent — when it is newer than the cutoff,
     carries no parseable date, or has already been stripped.
+
+    Was a plain drop until 2026-08-23. Measured then: 133 of the 134 already
+    stripped runs could no longer be replayed, against 18 of the 23 unstripped
+    ones that could — the strip was destroying the replay engine's only input.
+    Those 134 are not recoverable; this keeps it from happening to the rest.
     """
     before = path.stat().st_size
 
@@ -234,8 +275,13 @@ def strip_captures_one(path: Path, *, cutoff: date) -> tuple[bool, int, int]:
         return False, before, before
 
     for call in log.get("tool_calls") or []:
-        if isinstance(call, dict):
+        if not isinstance(call, dict):
+            continue
+        remnant = replay_remnant(call.get("response_summary"))
+        if remnant is None:
             call.pop("response_summary", None)
+        else:
+            call["response_summary"] = remnant
     log[CAPTURES_STRIPPED_KEY] = True
 
     path.write_text(json.dumps(log, indent=2), encoding="utf-8")
@@ -245,14 +291,25 @@ def strip_captures_one(path: Path, *, cutoff: date) -> tuple[bool, int, int]:
 def cmd_strip_e2e_captures(root: Path, *, days: int, dry_run: bool) -> int:
     """Sweep the e2e corpus, reclaiming the one field nothing reads back.
 
-    `response_summary` is the largest field in an e2e run log and the only one
-    with no programmatic reader: the committed-corpus readers
+    `response_summary` is the largest field in an e2e run log, at 24% of its
+    bytes. It was believed to have no programmatic reader, and this docstring
+    enumerated four that take `tool` / `args` / `is_error` only
     (`e2e/calibrate_judge.py`, `e2e/guardrail_shadow_report.py`,
-    `e2e/runlog_selection.py`, `scripts/check_e2e_fixtures.py`) take
-    `tool` / `args` / `is_error` only, and `e2e/mcp_health.py` reads summaries
-    in-flight during a run, never off disk. Its remaining consumers are
-    "diagnose the run that just happened" human workflows — the ones the
-    14-day query window already serves.
+    `e2e/runlog_selection.py`, `scripts/check_e2e_fixtures.py`) plus
+    `e2e/mcp_health.py`, which reads summaries in-flight and never off disk.
+
+    **That enumeration was incomplete, and the cost was the replay engine.**
+    `harness/replay.py` reconstructs `research.json` from the `entryId` each
+    writer reported back — inside this field. By the time it was noticed, 134 of
+    157 committed runs were stripped and 133 of those could no longer be
+    replayed, which read as an 88% -> 13% collapse in reconstruction fidelity and
+    looked like a regression in an engine nobody had touched.
+
+    So the sweep now keeps a **replay remnant** rather than dropping the field:
+    ids, `ok`, and a batch's `_full_length`, measured at 0.4% of the summary
+    bytes. Everything else still goes, and the human "diagnose the run that just
+    happened" workflows are still served by the 14-day query window rather than
+    by the archive.
     """
     if not root.is_dir():
         print(f"no e2e runlog root at {root}")

@@ -20,10 +20,12 @@ HARNESS_DIR = Path(__file__).resolve().parents[2]
 if str(HARNESS_DIR) not in sys.path:
     sys.path.insert(0, str(HARNESS_DIR))
 
+from harness.replay import parse_tool_result  # noqa: E402
 from scripts.prune_runlogs import (  # noqa: E402
     CAPTURES_STRIPPED_KEY,
     cmd_strip_e2e_captures,
     committed_e2e_runlogs,
+    replay_remnant,
     strip_captures_one,
 )
 
@@ -227,3 +229,99 @@ def test_cutoff_is_relative_to_the_days_argument(tmp_path: Path, days: int) -> N
     original = inside.read_bytes()
     cmd_strip_e2e_captures(tmp_path, days=days, dry_run=False)
     assert inside.read_bytes() == original
+
+
+# --- the replay remnant (2026-08-23) -----------------------------------------
+# The strip shipped believing nothing read `response_summary` back. `replay.py`
+# does — it reconstructs research.json from the entryIds inside it — and by the
+# time that was noticed, 133 of the 134 stripped runs could no longer be
+# replayed, against 18 of the 23 unstripped ones that could. The sweep now keeps
+# the three things replay needs and drops everything else.
+
+
+def _writer_call(summary: str) -> dict:
+    return {
+        "tool": "mcp__genealogy__research_append",
+        "args": {"section": "assertions", "op": "append"},
+        "response_summary": summary,
+    }
+
+
+def test_remnant_keeps_ids_ok_and_full_length_and_drops_the_rest() -> None:
+    full = json.dumps(
+        {
+            "ok": True,
+            "results": [
+                {"entryId": "a_001", "prose": "x" * 400},
+                {"entryId": "a_002", "prose": "y" * 400},
+            ],
+        }
+    )
+    remnant = replay_remnant(full)
+
+    assert remnant is not None
+    assert len(remnant) < len(full) / 10  # the point of keeping a remnant at all
+    assert "prose" not in remnant
+    assert parse_tool_result(remnant) == parse_tool_result(full)
+
+
+def test_remnant_survives_a_truncated_batch_summary() -> None:
+    """The ledger truncates large batches, recording `_full_length` and only the
+    first few ids. That count is how the missing ones get reconstructed by
+    convention, so dropping it would silently shrink the replay."""
+    trunc = (
+        '{"ok": true, "results": {"_summary_truncated": true, "_full_length": 11, '
+        '"_first_n": [{"entryId": "a_1"}'
+    )
+    remnant = replay_remnant(trunc)
+
+    assert remnant is not None
+    assert parse_tool_result(remnant)["full_length"] == 11
+    assert parse_tool_result(remnant)["ids"] == ["a_1"]
+
+
+def test_remnant_preserves_a_rejected_call() -> None:
+    """A rejected write changed nothing and must not be applied on replay, so
+    `ok: false` has to survive the strip or the replay invents state."""
+    remnant = replay_remnant('{"ok": false, "errors": ["validation failed"]}')
+
+    assert remnant is not None
+    assert parse_tool_result(remnant)["ok"] is False
+
+
+def test_remnant_is_none_when_there_is_nothing_to_keep() -> None:
+    assert replay_remnant("some prose carrying no ids at all") is None
+    assert replay_remnant(None) is None
+
+
+def test_stripping_leaves_a_run_replayable(tmp_path: Path) -> None:
+    """The end-to-end point: strip a run log, then read the ids back out of it
+    exactly as `replay.py` would. Before the remnant this returned nothing."""
+    d = _fixture_dir(tmp_path)
+    target = d / f"{OLD}.json"
+    log = json.loads(target.read_text(encoding="utf-8"))
+    log["tool_calls"] = [
+        _writer_call(json.dumps({"ok": True, "results": [{"entryId": "a_001", "big": "z" * 900}]}))
+    ]
+    target.write_text(json.dumps(log), encoding="utf-8")
+
+    changed, before, after = strip_captures_one(target, cutoff=CUTOFF)
+
+    assert changed is True
+    assert after < before
+    stripped = json.loads(target.read_text(encoding="utf-8"))
+    summary = stripped["tool_calls"][0]["response_summary"]
+    assert "z" * 900 not in summary
+    assert parse_tool_result(summary)["ids"] == ["a_001"]
+
+
+def test_stripping_is_still_idempotent_with_a_remnant(tmp_path: Path) -> None:
+    """A second sweep must be a no-op. The remnant is itself parseable, so a
+    naive re-strip would keep rewriting the file and churning git history."""
+    d = _fixture_dir(tmp_path)
+    target = d / f"{OLD}.json"
+    assert strip_captures_one(target, cutoff=CUTOFF)[0] is True
+    first = target.read_text(encoding="utf-8")
+
+    assert strip_captures_one(target, cutoff=CUTOFF)[0] is False
+    assert target.read_text(encoding="utf-8") == first
