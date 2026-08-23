@@ -56,6 +56,7 @@ from e2e.mcp_health import (
     genealogy_mcp_config,
     unavailable_cause,
 )
+from e2e.mcp_stderr import read_mcp_stderr_lines
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FS_TOKENS = Path.home() / ".familysearch-mcp" / "tokens.json"
@@ -98,111 +99,6 @@ _MCP_TEARDOWN_GRACE_S = 15.0
 # (caps allow up to 60 min) might cross the 24h boundary mid-flight.
 _TOKEN_MAX_AGE_HOURS = 24.0
 _TOKEN_WARN_AGE_HOURS = 22.0
-
-# Bounds for _read_mcp_stderr_lines (issue #1301, rule 1). An unbounded capture
-# buries the actionable line — the defect #941's review fixed once already
-# (a WARN that interpolated every server's whole tools array).
-_STDERR_MAX_LINES = 20
-_STDERR_MAX_CHARS = 200
-
-
-def _read_mcp_stderr_lines(
-    *, cwd: Path, server_name: str, since: float,
-    max_lines: int = _STDERR_MAX_LINES, max_chars: int = _STDERR_MAX_CHARS,
-) -> tuple[list[str], str]:
-    """(lines, dir_looked_in). Best-effort: any failure -> ([], dir_looked_in).
-
-    The CLI writes each MCP server's stderr into its own per-connection JSONL
-    log — the SDK's `stderr:` callback never receives it (independently
-    verified 2026-08-18 against claude-agent-sdk 0.1.81 with a stub that wrote
-    one marker line and exited non-zero: the callback list stayed empty while
-    this log carried the marker verbatim). Log path, one per session:
-    ``<cache-root>/<cwd-slug>/mcp-logs-<server_name>/<ISO-timestamp>.jsonl``,
-    one JSON object per line, a captured line arriving as
-    ``{"error": "Server stderr: <the server's line>\\n", ...}``.
-
-    Never raises. A missing cache-root env var, a missing directory, an
-    unreadable file, a line that isn't valid JSON, or an unrecognized
-    `sys.platform` all degrade to an empty capture — the caller then prints
-    today's unchanged message plus `dir_looked_in`, per rule 2: an empty
-    capture must never read as "the server said nothing" when it might mean
-    "we didn't know where to look."
-    """
-    try:
-        if sys.platform == "win32":
-            base = os.environ.get("LOCALAPPDATA")
-            if not base:
-                return [], "(LOCALAPPDATA not set)"
-            cache_root = Path(base) / "claude-cli-nodejs" / "Cache"
-        elif sys.platform == "darwin":
-            cache_root = Path.home() / "Library" / "Caches" / "claude-cli-nodejs"
-        else:
-            xdg = os.environ.get("XDG_CACHE_HOME")
-            cache_root = Path(xdg) / "claude-cli-nodejs" if xdg else (
-                Path.home() / ".cache" / "claude-cli-nodejs"
-            )
-
-        # The CLI slugs the cwd IT resolved, not the one it was handed: on
-        # macOS Node's process.cwd() reports /private/var/... where Python's
-        # tempfile hands us /var/... (issue #1301 review, chesworthrm — 49 of
-        # 157 committed e2e run logs are macOS). Try the literal path first,
-        # then the resolved one; on Windows/Linux Path.cwd() is already
-        # resolved, so the two candidates collapse to one and behaviour is
-        # unchanged there.
-        log_dirs: list[Path] = []
-        for candidate in (Path(cwd), Path(cwd).resolve()):
-            slug = re.sub(r"[^A-Za-z0-9]", "-", str(candidate))
-            d = cache_root / slug / f"mcp-logs-{server_name}"
-            if d not in log_dirs:
-                log_dirs.append(d)
-        dir_looked_in = " or ".join(str(d) for d in log_dirs)
-
-        # Small bounded retry: the CLI's JSONL append can lag the moment its
-        # control protocol reports "failed" by up to a couple hundred ms
-        # (measured live, issue #1301 -- the very first end-to-end run of this
-        # feature missed the capture on attempt 1 and found it on attempt 2).
-        # Still "best-effort" per rule 2: on the last attempt an empty result
-        # is returned exactly as before, just after trying a little harder.
-        lines: list[str] = []
-        for attempt in range(3):
-            if attempt > 0:
-                time.sleep(0.3)
-            log_dir = next((d for d in log_dirs if d.is_dir()), None)
-            if log_dir is None:
-                continue
-            candidates = [
-                p for p in log_dir.glob("*.jsonl")
-                if p.stat().st_mtime >= since
-            ]
-            if not candidates:
-                continue
-            newest = max(candidates, key=lambda p: (p.stat().st_mtime, p.name))
-
-            for raw_line in newest.read_text(encoding="utf-8").splitlines():
-                if not raw_line.strip():
-                    continue
-                try:
-                    row = json.loads(raw_line)
-                except (json.JSONDecodeError, ValueError):
-                    continue
-                error = row.get("error") if isinstance(row, dict) else None
-                if isinstance(error, str) and error.startswith("Server stderr: "):
-                    # The CLI's own value carries a trailing "\n" (confirmed
-                    # live, issue #1301 §0) -- strip it or it reads as a stray
-                    # blank line wherever this gets interpolated into a
-                    # sentence.
-                    text = error[len("Server stderr: "):].rstrip("\n")
-                    lines.append(text[:max_chars])
-            if lines:
-                break
-
-        dropped = len(lines) - max_lines
-        kept = lines[-max_lines:]
-        if dropped > 0:
-            kept.append(f"(… {dropped} earlier lines dropped)")
-        return kept, dir_looked_in
-    except Exception:  # noqa: BLE001 — best-effort capture must never raise
-        return [], dir_looked_in if "dir_looked_in" in locals() else "(unresolved)"
 
 
 def _check_fs_token() -> tuple[str, str]:
@@ -653,7 +549,7 @@ def _read_stderr_for() -> Callable[[float], tuple[list[str], str]]:
     live, issue #1301 §0).
     """
     def _read(since: float) -> tuple[list[str], str]:
-        return _read_mcp_stderr_lines(
+        return read_mcp_stderr_lines(
             cwd=Path.cwd(), server_name=GENEALOGY_SERVER_NAME, since=since,
         )
 

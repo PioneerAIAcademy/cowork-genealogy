@@ -370,7 +370,12 @@ def test_injected_status_getter_leaves_the_real_clock_untouched(monkeypatch, tmp
     assert seen_since == [0.0]  # the closure cell's initial value, untouched
 
 
-# --- _read_mcp_stderr_lines (issue #1301) -------------------------------
+# --- read_mcp_stderr_lines (issue #1301), via preflight's own import -----
+#
+# e2e.mcp_stderr.read_mcp_stderr_lines is shared with orchestrator.py
+# (chesworthrm's review of this PR consolidated the two independent copies);
+# these tests exercise it through pf's own imported name rather than a
+# second, orchestrator-side copy of the same coverage.
 #
 # All of these pin sys.platform to "linux" and XDG_CACHE_HOME to tmp_path, so
 # the test controls exactly where the function will look — computing that
@@ -403,7 +408,7 @@ def test_read_mcp_stderr_lines_reads_the_newest_matching_log(monkeypatch, tmp_pa
     old_t = old.stat().st_mtime
     _os.utime(new, (old_t + 100, old_t + 100))  # force new to sort newer
 
-    lines, log_dir_str = pf._read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
+    lines, log_dir_str = pf.read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
     assert lines == ["NEW LINE"]
     # Substring, not exact-equality: `dir_looked_in` names every candidate
     # tried (literal cwd + its .resolve()'d form), and on a machine where a
@@ -423,7 +428,7 @@ def test_read_mcp_stderr_lines_filters_on_the_server_stderr_prefix(monkeypatch, 
         '{"error": "Connection failed: MCP error -32000"}\n',
         encoding="utf-8",
     )
-    lines, _ = pf._read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
+    lines, _ = pf.read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
     assert lines == ["real line"]
 
 
@@ -435,7 +440,7 @@ def test_read_mcp_stderr_lines_bounds_to_20_lines_with_a_truncation_note(monkeyp
     rows = "\n".join(f'{{"error": "Server stderr: line {i}\\n"}}' for i in range(25))
     (log_dir / "x.jsonl").write_text(rows, encoding="utf-8")
 
-    lines, _ = pf._read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
+    lines, _ = pf.read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
     assert len(lines) == 21  # 20 kept + 1 truncation note
     assert lines[-1] == "(… 5 earlier lines dropped)"
     assert lines[0] == "line 5"  # oldest of the KEPT lines (0-4 dropped)
@@ -451,7 +456,7 @@ def test_read_mcp_stderr_lines_truncates_long_lines_to_200_chars(monkeypatch, tm
     (log_dir / "x.jsonl").write_text(
         f'{{"error": "Server stderr: {long_line}\\n"}}\n', encoding="utf-8"
     )
-    lines, _ = pf._read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
+    lines, _ = pf.read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
     assert len(lines) == 1
     assert len(lines[0]) == 200
 
@@ -467,13 +472,13 @@ def test_read_mcp_stderr_lines_skips_one_malformed_json_line_among_valid_ones(mo
         '{"error": "Server stderr: good line 2\\n"}\n',
         encoding="utf-8",
     )
-    lines, _ = pf._read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
+    lines, _ = pf.read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
     assert lines == ["good line 1", "good line 2"]
 
 
 def test_read_mcp_stderr_lines_missing_directory_degrades_to_empty_plus_dir_name(monkeypatch, tmp_path):
     _use_linux_cache_root(monkeypatch, tmp_path)
-    lines, log_dir = pf._read_mcp_stderr_lines(
+    lines, log_dir = pf.read_mcp_stderr_lines(
         cwd=Path("/nonexistent-cwd"), server_name="genealogy", since=0,
     )
     assert lines == []
@@ -483,7 +488,7 @@ def test_read_mcp_stderr_lines_missing_directory_degrades_to_empty_plus_dir_name
 def test_read_mcp_stderr_lines_unrecognized_platform_degrades_to_empty(monkeypatch, tmp_path):
     monkeypatch.setattr(pf.sys, "platform", "some-unheard-of-os")
     monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
-    lines, log_dir = pf._read_mcp_stderr_lines(cwd=tmp_path, server_name="genealogy", since=0)
+    lines, log_dir = pf.read_mcp_stderr_lines(cwd=tmp_path, server_name="genealogy", since=0)
     assert lines == []
     assert isinstance(log_dir, str)
 
@@ -495,7 +500,7 @@ def test_read_mcp_stderr_lines_never_raises_on_an_unreadable_file(monkeypatch, t
     log_dir.mkdir(parents=True)
     (log_dir / "x.jsonl").write_bytes(b"\xff\xfe\x00\x01")  # not valid utf-8
 
-    lines, log_dir_str = pf._read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
+    lines, log_dir_str = pf.read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
     assert lines == []  # must not raise
     assert str(log_dir) in log_dir_str  # substring, not exact-equality; see note above
 
@@ -510,7 +515,7 @@ def test_read_mcp_stderr_lines_since_filter_skips_files_older_than_the_check(mon
     stale = log_dir / "old.jsonl"
     stale.write_text('{"error": "Server stderr: STALE\\n"}\n', encoding="utf-8")
 
-    lines, _ = pf._read_mcp_stderr_lines(
+    lines, _ = pf.read_mcp_stderr_lines(
         cwd=cwd, server_name="genealogy", since=time.time() + 3600,
     )
     assert lines == []
@@ -555,7 +560,7 @@ def test_read_mcp_stderr_lines_finds_the_log_when_the_cli_resolved_a_different_c
         encoding="utf-8",
     )
 
-    lines, dir_looked_in = pf._read_mcp_stderr_lines(
+    lines, dir_looked_in = pf.read_mcp_stderr_lines(
         cwd=literal_cwd, server_name="genealogy", since=0,
     )
     assert lines == ["STUB-MARKER: refused to start"]
