@@ -389,6 +389,24 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     tools: ["image_read"],
     denies: ["image_transcribe", "record_read", "record_search"],
   },
+  // The only caller permitted to write research.json's proof_summaries; the
+  // plugin PreToolUse hook denies that section to everyone else. It holds the
+  // BROAD research_append, which is what the hook's caller check — not this
+  // list — is doing the work of restricting.
+  "proof-conclusion.md": {
+    tools: [
+      "Read",
+      "merge_tree_persons",
+      "merge_warnings",
+      "project_context",
+      "research_append",
+      "research_query",
+      "source_attachments",
+      "tree_correct",
+      "tree_edit",
+    ],
+    denies: ["extraction_append"],
+  },
   "image-reader.md": {
     tools: ["image_transcribe"],
     denies: ["configure_openrouter", "record_read", "record_search"],
