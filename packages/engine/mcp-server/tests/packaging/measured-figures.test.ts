@@ -59,7 +59,8 @@ const EVIDENCE_SURFACES = [
   // `person_search` file that actually holds numbers.
   //
   // The 2026-08-17 ruling forbids adding `person-search.ts` — the TOOL file, whose
-  // text the model pays for and whose endpoint has no probe. It says nothing about
+  // text the model pays for and which the 2026-08-17 ruling keeps figure-free (its
+  // tree endpoint IS now probed -- section P -- but its surfaces quote no figure). It says nothing about
   // the spec, which is an evidence trail read by humans. The three figures below
   // predate `measured-figures.json` and are exempted by name; any NEW figure in that
   // spec must now trace.
@@ -75,8 +76,8 @@ const EVIDENCE_SURFACES = [
 const AGENT_SURFACES = [
   // `person-search.ts` is a MODEL-READ surface, so it belongs here even though it
   // is deliberately not an EVIDENCE surface: this list forbids absolute totals,
-  // which is exactly what should never appear in a description whose endpoint has
-  // no probe. Without it a stale comma-grouped total could be pasted into the
+  // which is exactly what should never appear in a description the ruling keeps
+  // figure-free (the endpoint is probed in section P; the surfaces still quote nothing). Without it a stale comma-grouped total could be pasted into the
   // shipped `person_search` description with the whole suite green — the same hole
   // this file closes elsewhere, left open one file over.
   "packages/engine/mcp-server/src/tools/person-search.ts",
@@ -92,7 +93,8 @@ const AGENT_SURFACES = [
  *
  * Note the one overlap, deliberate: `person-search.ts` is ALSO in `AGENT_SURFACES`,
  * which forbids absolute totals — a model-read surface should carry no comma-grouped
- * figure, and its endpoint has no probe to source one from. What neither list does is
+ * figure, and its surfaces quote none by the 2026-08-17 ruling (its tree endpoint is
+ * now probed in section P). What neither list does is
  * make it an EVIDENCE surface, which would invite the figures the 2026-08-17 ruling
  * forbids. So "wording only" describes the SPEC in this list, not both entries.
  *
@@ -621,7 +623,8 @@ describe("measured figures stay traceable to the probe artifact", () => {
    *
    * This is not speculative. Issue #1771 rewrites the year sections around indexed
    * date RANGES and renames several keys by name, including
-   * `H.verdict:silence tolerated`, which two specs currently cite. Nothing else
+   * `H.verdict:silence tolerated` -> `H.verdict:index-silent personas exist`, which
+   * two specs cited (updated to the new key in the same PR). Nothing else
    * here would notice: the traceability check reads FIGURES, the wording rules read
    * sentences, and the producibility check reads the artifact against the probe —
    * none of them reads a citation.

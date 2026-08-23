@@ -360,7 +360,7 @@ export const personSearchToolSchema = {
     "what its own field admits, so it only ever narrows and can drop the " +
     "target. This is the search engine's behaviour, measured against the " +
     "record index, not this endpoint. Years and places are " +
-    "outside the rule — a different mechanism — see `birthYearExact` and " +
+    "different from that rule — see `birthYearExact` and " +
     "`birthPlaceExact`.",
   inputSchema: {
     type: "object",

@@ -12,9 +12,9 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  *
  * **The justification is clarity; the token saving is small.** Measured after the
  * #1409 rewrite and #1771's year-clause edit: `record_search` 15,509 -> 13,869 and
- * `person_search` 3,745 -> 5,012 (its toggles were stubs that were also wrong, so
- * correctness cost tokens there), for a combined 19,254 -> 18,881 — a net saving of
- * about 373 characters, under 2%. This figure has been an increase and a saving at
+ * `person_search` 3,745 -> 4,996 (its toggles were stubs that were also wrong, so
+ * correctness cost tokens there), for a combined 19,254 -> 18,865 — a net saving of
+ * about 389 characters, under 2%. This figure has been an increase and a saving at
  * different points in the same branch, which is the point: it is a side effect, not
  * the argument. #1771 brought `record_search.birthYearExact` from 475 down to 207
  * (the year behaviour is now measured, so its paragraph collapses to a one-liner)
@@ -124,7 +124,7 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
   ["record_search", 13869],
-  ["person_search", 5012],
+  ["person_search", 4996],
 ];
 
 /**

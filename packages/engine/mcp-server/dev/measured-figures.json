@@ -205,14 +205,14 @@
     "bands:records-birth": {
       "pool": "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=0",
       "param": "q.birthLikeDate",
-      "poolTotal": 585,
-      "read": 585,
-      "distinct": 585,
-      "payloadDated": 174,
+      "poolTotal": 586,
+      "read": 586,
+      "distinct": 586,
+      "payloadDated": 175,
       "payloadDatedInMultipleBands": 0,
       "bandsEnumerated": 12,
       "membership": {
-        "1": 174,
+        "1": 175,
         "2": 178,
         "4": 232,
         "7": 1
@@ -223,14 +223,14 @@
       "closureHolds": true,
       "controlHolds": true,
       "controlVacuous": false,
-      "bandRowsRead": 1465,
-      "exactRowsRead": 174
+      "bandRowsRead": 1466,
+      "exactRowsRead": 175
     },
     "verdict:index-silent personas exist": "NO — no persona matches all 12 bands; every persona is placed in time by the index, so none is year-silent",
     "verdict:an unqualified range admits estimate overlaps": "YES — 411 persona(s) match more than one disjoint band, so an unqualified range admits estimate-overlap matches, not only records dated inside it",
-    "verdict:.exact requires the indexed date inside the range": "YES — .exact keeps 174 of 1465 band matches, dropping the estimate-overlap matches an unqualified range admits",
-    "verdict:the payload predicts the indexed date": "YES — all 174 payload-dated personas land in the band their own payload year names",
-    "measured_at": "2026-08-23T00:43:21.834Z"
+    "verdict:.exact requires the indexed date inside the range": "YES — .exact keeps 175 of 1466 band matches, dropping the estimate-overlap matches an unqualified range admits",
+    "verdict:the payload predicts the indexed date": "YES — all 175 payload-dated personas land in the band their own payload year names",
+    "measured_at": "2026-08-23T01:50:55.503Z"
   },
   "X": {
     "yearsNoAnchor": 948,
@@ -1101,8 +1101,8 @@
   },
   "Y": {
     "silence:birth": {
-      "genuinelySilent": 0,
-      "silentKeptByExact": null,
+      "estimateOverlapRows": 0,
+      "estimateOverlapKeptByExact": null,
       "fuzzRows": 70,
       "poolsClassified": 3,
       "poolsExcludedTooDeep": 1
@@ -1111,7 +1111,7 @@
     "impossiblePools:birth": [
       {
         "pool": "Pocklington/England",
-        "poolTotal": 5958,
+        "poolTotal": 6055,
         "tolerated": 11,
         "survived": 0,
         "inRange": 0,
@@ -1131,7 +1131,7 @@
       },
       {
         "pool": "Bickerdike/England",
-        "poolTotal": 26562,
+        "poolTotal": 26640,
         "tolerated": 56,
         "survived": 0,
         "inRange": 0,
@@ -1141,8 +1141,8 @@
       },
       {
         "pool": "Geach/England",
-        "poolTotal": 934228,
-        "tolerated": 1951,
+        "poolTotal": 936185,
+        "tolerated": 1958,
         "survived": 3,
         "inRange": null,
         "outOfRange": null,
@@ -1171,17 +1171,17 @@
       }
     ],
     "silence:death": {
-      "genuinelySilent": 3,
-      "silentKeptByExact": 0,
+      "estimateOverlapRows": 3,
+      "estimateOverlapKeptByExact": 0,
       "fuzzRows": 41,
       "poolsClassified": 3,
       "poolsExcludedTooDeep": 1
     },
-    "impossible:death": "NOT MEASURED — only 3 genuinely year-silent row(s) across 3 pool(s) (floor 5); 0 survived .exact. Too few to be a rate (1 pool(s) excluded — too deep to enumerate and classify)",
+    "impossible:death": "NOT MEASURED — only 3 payload-undated row(s) retained by the impossible range across 3 pool(s) (floor 5); 0 survived .exact. Too few to be a rate (1 pool(s) excluded — too deep to enumerate and classify)",
     "impossiblePools:death": [
       {
         "pool": "Pocklington/England",
-        "poolTotal": 3648,
+        "poolTotal": 3654,
         "tolerated": 5,
         "survived": 1,
         "inRange": 2,
@@ -1201,7 +1201,7 @@
       },
       {
         "pool": "Bickerdike/England",
-        "poolTotal": 16405,
+        "poolTotal": 16420,
         "tolerated": 21,
         "survived": 1,
         "inRange": 1,
@@ -1211,7 +1211,7 @@
       },
       {
         "pool": "Geach/England",
-        "poolTotal": 618565,
+        "poolTotal": 618898,
         "tolerated": 796,
         "survived": 62,
         "inRange": null,
@@ -1241,17 +1241,17 @@
       }
     ],
     "silence:marriage": {
-      "genuinelySilent": 25,
-      "silentKeptByExact": 0,
+      "estimateOverlapRows": 25,
+      "estimateOverlapKeptByExact": 0,
       "fuzzRows": 0,
       "poolsClassified": 3,
       "poolsExcludedTooDeep": 0
     },
-    "impossible:marriage": "TOLERATES SILENCE, AND .exact REMOVES IT — 25 genuinely year-silent row(s) across 3 pool(s), all removed by .exact (plus 0 fuzz row(s), dated outside the range, which are not silence)",
+    "impossible:marriage": "RETAINS ESTIMATE OVERLAPS, .exact REMOVES THEM — 25 row(s) with no payload marriage date, retained by an impossible 1500-1505 range because their indexed range overlaps it, all removed by .exact (plus 0 fuzz row(s), dated outside the range)",
     "impossiblePools:marriage": [
       {
         "pool": "Pocklington/England",
-        "poolTotal": 5333,
+        "poolTotal": 5334,
         "tolerated": 0,
         "survived": 0,
         "inRange": null,
@@ -1271,7 +1271,7 @@
       },
       {
         "pool": "Bickerdike/England",
-        "poolTotal": 22011,
+        "poolTotal": 22015,
         "tolerated": 1,
         "survived": 0,
         "inRange": 0,
@@ -1281,7 +1281,7 @@
       },
       {
         "pool": "Geach/England",
-        "poolTotal": 634555,
+        "poolTotal": 634608,
         "tolerated": 22,
         "survived": 1,
         "inRange": 1,
@@ -1311,13 +1311,13 @@
       }
     ],
     "silence:residence": {
-      "genuinelySilent": 7,
-      "silentKeptByExact": 0,
+      "estimateOverlapRows": 7,
+      "estimateOverlapKeptByExact": 0,
       "fuzzRows": 0,
       "poolsClassified": 1,
       "poolsExcludedTooDeep": 0
     },
-    "impossible:residence": "TOLERATES SILENCE, AND .exact REMOVES IT — 7 genuinely year-silent row(s) across 1 pool(s), all removed by .exact (plus 0 fuzz row(s), dated outside the range, which are not silence)",
+    "impossible:residence": "RETAINS ESTIMATE OVERLAPS, .exact REMOVES THEM — 7 row(s) with no payload residence date, retained by an impossible 1500-1505 range because their indexed range overlaps it, all removed by .exact (plus 0 fuzz row(s), dated outside the range)",
     "impossiblePools:residence": [
       {
         "pool": "Pocklington/England",
@@ -1335,7 +1335,7 @@
       },
       {
         "pool": "Bickerdike/England",
-        "poolTotal": 22536,
+        "poolTotal": 22535,
         "tolerated": 0,
         "survived": 0,
         "inRange": null,
@@ -1345,7 +1345,7 @@
       },
       {
         "pool": "Geach/England",
-        "poolTotal": 915142,
+        "poolTotal": 915108,
         "tolerated": 7,
         "survived": 0,
         "inRange": 0,
@@ -1378,7 +1378,7 @@
         "pools": [
           {
             "pool": "Pocklington/England",
-            "poolTotal": 5958,
+            "poolTotal": 6055,
             "tolerated": 11,
             "survived": 0,
             "inRange": 0,
@@ -1398,7 +1398,7 @@
           },
           {
             "pool": "Bickerdike/England",
-            "poolTotal": 26562,
+            "poolTotal": 26640,
             "tolerated": 56,
             "survived": 0,
             "inRange": 0,
@@ -1408,8 +1408,8 @@
           },
           {
             "pool": "Geach/England",
-            "poolTotal": 934228,
-            "tolerated": 1951,
+            "poolTotal": 936185,
+            "tolerated": 1958,
             "survived": 3,
             "inRange": null,
             "outOfRange": null,
@@ -1448,7 +1448,7 @@
         "pools": [
           {
             "pool": "Pocklington/England",
-            "poolTotal": 3648,
+            "poolTotal": 3654,
             "tolerated": 5,
             "survived": 1,
             "inRange": 2,
@@ -1468,7 +1468,7 @@
           },
           {
             "pool": "Bickerdike/England",
-            "poolTotal": 16405,
+            "poolTotal": 16420,
             "tolerated": 21,
             "survived": 1,
             "inRange": 1,
@@ -1478,7 +1478,7 @@
           },
           {
             "pool": "Geach/England",
-            "poolTotal": 618565,
+            "poolTotal": 618898,
             "tolerated": 796,
             "survived": 62,
             "inRange": null,
@@ -1507,7 +1507,7 @@
             "silentKept": null
           }
         ],
-        "verdict": "NOT MEASURED — only 3 genuinely year-silent row(s) across 3 pool(s) (floor 5); 0 survived .exact. Too few to be a rate (1 pool(s) excluded — too deep to enumerate and classify)"
+        "verdict": "NOT MEASURED — only 3 payload-undated row(s) retained by the impossible range across 3 pool(s) (floor 5); 0 survived .exact. Too few to be a rate (1 pool(s) excluded — too deep to enumerate and classify)"
       },
       {
         "family": "marriage",
@@ -1518,7 +1518,7 @@
         "pools": [
           {
             "pool": "Pocklington/England",
-            "poolTotal": 5333,
+            "poolTotal": 5334,
             "tolerated": 0,
             "survived": 0,
             "inRange": null,
@@ -1538,7 +1538,7 @@
           },
           {
             "pool": "Bickerdike/England",
-            "poolTotal": 22011,
+            "poolTotal": 22015,
             "tolerated": 1,
             "survived": 0,
             "inRange": 0,
@@ -1548,7 +1548,7 @@
           },
           {
             "pool": "Geach/England",
-            "poolTotal": 634555,
+            "poolTotal": 634608,
             "tolerated": 22,
             "survived": 1,
             "inRange": 1,
@@ -1577,7 +1577,7 @@
             "silentKept": null
           }
         ],
-        "verdict": "TOLERATES SILENCE, AND .exact REMOVES IT — 25 genuinely year-silent row(s) across 3 pool(s), all removed by .exact (plus 0 fuzz row(s), dated outside the range, which are not silence)"
+        "verdict": "RETAINS ESTIMATE OVERLAPS, .exact REMOVES THEM — 25 row(s) with no payload marriage date, retained by an impossible 1500-1505 range because their indexed range overlaps it, all removed by .exact (plus 0 fuzz row(s), dated outside the range)"
       },
       {
         "family": "residence",
@@ -1602,7 +1602,7 @@
           },
           {
             "pool": "Bickerdike/England",
-            "poolTotal": 22536,
+            "poolTotal": 22535,
             "tolerated": 0,
             "survived": 0,
             "inRange": null,
@@ -1612,7 +1612,7 @@
           },
           {
             "pool": "Geach/England",
-            "poolTotal": 915142,
+            "poolTotal": 915108,
             "tolerated": 7,
             "survived": 0,
             "inRange": 0,
@@ -1635,11 +1635,11 @@
             "why": "empty pool"
           }
         ],
-        "verdict": "TOLERATES SILENCE, AND .exact REMOVES IT — 7 genuinely year-silent row(s) across 1 pool(s), all removed by .exact (plus 0 fuzz row(s), dated outside the range, which are not silence)"
+        "verdict": "RETAINS ESTIMATE OVERLAPS, .exact REMOVES THEM — 7 row(s) with no payload residence date, retained by an impossible 1500-1505 range because their indexed range overlaps it, all removed by .exact (plus 0 fuzz row(s), dated outside the range)"
       }
     ],
     "verdict:generalises past birth (impossible-range)": "DOES NOT GENERALISE — a family's band instrument does not show birth's shape (an index-silent persona, or .exact dropping nothing)",
-    "measured_at": "2026-08-23T00:43:21.836Z"
+    "measured_at": "2026-08-23T01:50:55.504Z"
   },
   "P": {
     "bands:tree-birth": {
@@ -1744,15 +1744,15 @@
     "bands:records-death": {
       "pool": "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=2",
       "param": "q.deathLikeDate",
-      "poolTotal": 194,
-      "read": 194,
-      "distinct": 194,
-      "payloadDated": 159,
+      "poolTotal": 195,
+      "read": 195,
+      "distinct": 195,
+      "payloadDated": 160,
       "payloadDatedInMultipleBands": 1,
       "bandsEnumerated": 12,
       "membership": {
         "0": 8,
-        "1": 163,
+        "1": 164,
         "2": 2,
         "3": 13,
         "4": 8
@@ -1763,8 +1763,8 @@
       "closureHolds": true,
       "controlHolds": true,
       "controlVacuous": false,
-      "bandRowsRead": 238,
-      "exactRowsRead": 165
+      "bandRowsRead": 239,
+      "exactRowsRead": 166
     },
     "bands:records-marriage": {
       "pool": "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England&f.recordType=1",
@@ -1861,6 +1861,6 @@
       "bandRowsRead": 526,
       "exactRowsRead": 468
     },
-    "measured_at": "2026-08-23T00:43:21.836Z"
+    "measured_at": "2026-08-23T01:50:55.504Z"
   }
 }

@@ -132,8 +132,7 @@ MEASURED — the per-field verdicts are withheld under RULE 0"* — so it was me
 directly on 2026-08-20 with the unmatchable-token method R and S validated, via
 `dev/explore-name-empty-field-leg-records.ts`:
 
-- **`givenName` keeps them.** Three unmatchable tokens each retain ~251 of a 5,958
-  pool (spread under 2%, which is S's control separating silence from fuzzy reach);
+- **`givenName` keeps them.** Three unmatchable tokens each retain ~251 of a pool of about six thousand (spread under 2%, which is S's control separating silence from fuzzy reach);
   58 of 60 sampled retained rows are given-name-empty, on the typed parts AND on the
   `fullText` cross-check the surname leg below uses — the two agree exactly, so no
   row had a given name misfiled under another part type; `.exact` takes it to 0.
@@ -150,8 +149,9 @@ ones among them.
 
 The retention counts and the 1,100-row Brazil pool are not in
 `dev/measured-figures.json`; the script is the trail until a probe section records
-them. The 5,958 pool total *is* already recorded, as
-`Y.impossiblePools:birth[0].poolTotal` — it is the same Pocklington pool.
+them. That pool total *is* recorded exactly, as
+`Y.impossiblePools:birth[0].poolTotal` (it re-measures on each run, so it is not
+pinned here) — it is the same Pocklington pool.
 
 The lead states the rule as the search engine's rather than this endpoint's, from
 FamilySearch internals. See `docs/specs/person-search-tool-spec.md` → *Person fields* → *The

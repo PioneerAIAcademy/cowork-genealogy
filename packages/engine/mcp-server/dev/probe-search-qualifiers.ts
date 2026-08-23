@@ -4834,25 +4834,32 @@ async function sectionY(): Promise<void> {
         `That is range fuzz, not silence tolerance, and it says nothing about either half of the claim${caveat}`;
     } else if (totalSilent < MIN_SILENT_PRIMARY) {
       verdict =
-        `NOT MEASURED — only ${totalSilent} genuinely year-silent row(s) across ${classified.length} pool(s) ` +
+        `NOT MEASURED — only ${totalSilent} payload-undated row(s) retained by the impossible range across ${classified.length} pool(s) ` +
         `(floor ${MIN_SILENT_PRIMARY}); ${totalSilentKept} survived .exact. Too few to be a rate${caveat}`;
     } else if (totalSilentKept === 0) {
+      // NOT "silence": the band instrument (sections H/Q) measures index-silent
+      // personas at ZERO for every family. A row with no payload date that an
+      // impossible 1500-1505 range still retains carries an indexed estimate RANGE
+      // reaching that window — it is an estimate overlap, not a year-silent record.
       verdict =
-        `TOLERATES SILENCE, AND .exact REMOVES IT — ${measurableSilent} genuinely year-silent row(s) ` +
-        `across ${withSilentMeasured.length} pool(s), all removed by .exact (plus ${totalFuzz} fuzz row(s), ` +
-        `dated outside the range, which are not silence)${caveat}`;
+        `RETAINS ESTIMATE OVERLAPS, .exact REMOVES THEM — ${measurableSilent} row(s) with no payload ` +
+        `${fam.family} date, retained by an impossible ${IMP_FROM}-${IMP_TO} range because their indexed ` +
+        `range overlaps it, all removed by .exact (plus ${totalFuzz} fuzz row(s), dated outside the range)${caveat}`;
     } else {
       verdict =
-        `TOLERATES SILENCE, .exact DOES NOT REMOVE IT — .exact kept ${totalSilentKept} of ` +
-        `${measurableSilent} genuinely year-silent row(s) across ${withSilentMeasured.length} pool(s)${caveat}`;
+        `RETAINS ESTIMATE OVERLAPS, .exact DOES NOT REMOVE THEM — .exact kept ${totalSilentKept} of ` +
+        `${measurableSilent} such row(s) across ${withSilentMeasured.length} pool(s)${caveat}`;
     }
     // `removalPct` is deliberately GONE. It was survived/tolerated over rows
     // that were mostly fuzz, so it answered no question anyone asked, and the
     // two shipped doc sentences quoting it ("about 96% for death, 98% for
     // marriage") were both artifacts of the two parser bugs fixed above.
     record("Y", `silence:${fam.family}`, {
-      genuinelySilent: totalSilent,
-      silentKeptByExact: withSilentMeasured.length ? totalSilentKept : null,
+      // "estimate overlap" not "silence": these are payload-undated rows an
+      // impossible range retained via an indexed estimate range (band instrument
+      // measures index-silent = 0 for every family).
+      estimateOverlapRows: totalSilent,
+      estimateOverlapKeptByExact: withSilentMeasured.length ? totalSilentKept : null,
       fuzzRows: totalFuzz,
       poolsClassified: classified.length,
       poolsExcludedTooDeep: excluded,
