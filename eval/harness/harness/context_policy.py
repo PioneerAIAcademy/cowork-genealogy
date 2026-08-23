@@ -259,28 +259,64 @@ _guard = _load_guard()
 #: module-level literal, or the copy is back.
 OWNED_SECTIONS = _guard.OWNED_SECTIONS
 
+#: The field-scoped half of the same map: `(section, field) -> owning agent`.
+#: Same import-don't-copy discipline as `OWNED_SECTIONS` above.
+OWNED_DECLARATIONS = _guard.OWNED_DECLARATIONS
 
-def owned_section_denial(section: str) -> dict[str, Any]:
-    """A PreToolUse deny for a `research_append` op on an agent-owned section.
+#: The shipped hook's own ownership predicate, re-exported rather than
+#: reimplemented. `e2e/orchestrator.py` carried a second copy of the rule until
+#: 2026-08-23 — it imported the map above and the reason text below, so the two
+#: planes looked single-sourced while the RULE was written twice. It had no
+#: out-of-lane arm at all, so a dedicated agent writing outside its section set
+#: was denied in Cowork and allowed in e2e.
+owner_denied = _guard.owner_denied
 
-    Built from the SHIPPED hook's own `OWNER_REASON` and `OWNED_SECTIONS`, the
-    same import-don't-copy discipline `protected_file_denial` below follows, so
-    the harness denies with the text the agent meets in Cowork.
+
+def owned_section_denial(denied: str | tuple[str, str, str]) -> dict[str, Any]:
+    """A PreToolUse deny for a `research_append` op the ownership rule refuses.
+
+    Accepts either `owner_denied`'s `(section, rule, caller)` triple or, for
+    back-compat, a bare section name meaning the `routed` rule.
+
+    Built from the SHIPPED hook's own reason strings and maps, the same
+    import-don't-copy discipline `protected_file_denial` below follows, so the
+    harness denies with the text the agent meets in Cowork.
+
+    **Branch on `rule`, never on the shape of the first element.** A
+    `declaration` denial carries a dotted `section.field` that is a key in
+    neither owner map, so an unconditional lookup raises `KeyError` on exactly
+    the arm this function was extended to serve.
 
     It cannot reuse `subagent_only_denial`: that one says the TOOL is reserved
     for a subagent, which is true of `extraction_append` and flatly false of
     `research_append` — the general writer, called from the main thread
     constantly for plans, questions, conflicts and the log. An agent told
-    otherwise stops writing all of them. Only the section is routed, and only
-    `OWNER_REASON` says so.
+    otherwise stops writing all of them. Only the section is routed.
     """
+    section, rule, caller = ("", "routed", "") if isinstance(denied, str) else denied
+    if isinstance(denied, str):
+        section = denied
+
+    if rule == "routed":
+        reason = _guard.OWNER_REASON.format(
+            section=section, agent=_guard.OWNED_SECTIONS[section]
+        )
+    elif rule == "declaration":
+        owned_section, _, field = section.partition(".")
+        reason = _guard.DECLARATION_REASON.format(
+            section=owned_section,
+            field=field,
+            agent=_guard.OWNED_DECLARATIONS[(owned_section, field)],
+        )
+    else:
+        allowed = ", ".join(f"`{s}`" for s in sorted(_guard.AGENT_WRITABLE_SECTIONS[caller]))
+        reason = _guard.OUT_OF_LANE_REASON.format(section=section, allowed=allowed)
+
     return {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
-            "permissionDecisionReason": _guard.OWNER_REASON.format(
-                section=section, agent=_guard.OWNED_SECTIONS[section]
-            ),
+            "permissionDecisionReason": reason,
         },
     }
 

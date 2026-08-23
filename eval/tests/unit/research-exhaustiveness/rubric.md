@@ -20,8 +20,10 @@ Did the skill resist the temptation to declare exhaustive prematurely? An honest
 
 ## Stop criteria coverage
 
-Once the skill evaluates exhaustiveness, are all 7 stop criteria addressed — in the `stop_criteria` object when it declares, or in prose when it declines? N/A when the run refuses before evaluating (a plan-item precondition, or an already-declared question).
+When the run **declines**, are all 7 stop criteria addressed in prose? N/A on a run that declares, and N/A when the run refuses before evaluating (a plan-item precondition, or an already-declared question).
 
-- **pass:** All seven criteria (`goal_alignment`, `repository_breadth`, `original_substitution`, `independent_verification`, `evidence_class`, `conflict_resolution`, `overturn_risk`) are addressed with 1–2 sentence assessments tied to specific log entries or assertions — as object keys when declaring, or as named prose when declining.
+**This grades the declining path only.** On a declaring run the seven keys are asserted deterministically by `test_declared_has_full_stop_criteria` in the skill's validator, and a validator names the defect in one line where a judge gives an opinion that moves between runs. Grading the same fact twice let the two disagree: on `ut_research_exhaustiveness_017` this dimension has scored 2 / 3 / 1 / 1 across four runs, and the 3 is the one run that declared.
+
+- **pass:** All seven criteria (`goal_alignment`, `repository_breadth`, `original_substitution`, `independent_verification`, `evidence_class`, `conflict_resolution`, `overturn_risk`) are addressed as named prose, each tied to a specific log entry or assertion.
 - **partial:** All seven addressed but at least one is generic boilerplate ("yes" with no specifics), or one is missing but the surrounding justification covers it.
 - **fail:** Two or more of the seven unaddressed, or the assessments are all generic without reference to project state.
