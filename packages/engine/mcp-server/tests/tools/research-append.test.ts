@@ -828,6 +828,455 @@ describe("research_append (Phase 3)", () => {
     expect(r.ok && singleOk(r).entryId).toBe("ps_001");
   });
 
+
+  // The conclusion and its resolution are ONE write — the shape proof-conclusion
+  // emits. Both properties below are load-bearing and neither is obvious:
+  //
+  //  - Order matters WITHIN the batch. The resolve gate reads the project as the
+  //    batch applies, not a pre-call snapshot, so the summary op satisfies it for
+  //    an op later in the same call. Reverse them and it refuses.
+  //  - All-or-nothing means a question is never left resolved with nothing behind
+  //    it. That is the reason for one call rather than two.
+  it("accepts a proof summary and its question resolve in ONE batch", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "proof_summaries",
+          op: "append",
+          entry: {
+            question_id: "q_001",
+            tier: "probable",
+            vehicle: "summary",
+            supporting_assertion_ids: ["a_001"],
+            resolved_conflict_ids: [],
+            exhaustive_search_summary: "Searched census + vitals",
+            narrative_markdown: "## Conclusion\n...",
+          },
+        },
+        {
+          section: "questions",
+          op: "update",
+          entryId: "q_001",
+          fields: { status: "resolved", resolution_assertion_ids: ["a_001"] },
+        },
+      ],
+    });
+    expect(r.ok, `batch was refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    const after = await readResearch();
+    expect(after.proof_summaries).toHaveLength(1);
+    expect(after.questions[0].status).toBe("resolved");
+  });
+
+  it("refuses the same two ops in the reverse order, and writes nothing", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "questions",
+          op: "update",
+          entryId: "q_001",
+          fields: { status: "resolved", resolution_assertion_ids: ["a_001"] },
+        },
+        {
+          section: "proof_summaries",
+          op: "append",
+          entry: {
+            question_id: "q_001",
+            tier: "probable",
+            vehicle: "summary",
+            supporting_assertion_ids: ["a_001"],
+            resolved_conflict_ids: [],
+            exhaustive_search_summary: "Searched census + vitals",
+            narrative_markdown: "## Conclusion\n...",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    // The message must teach the ordering, since that is the whole fix.
+    expect(r.errors.join(" ")).toContain("order the proof_summaries append BEFORE");
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+
+  // ── correlation presupposes identity (lead ruling, 2026-08-19) ──
+  //
+  // A conclusion may not out-tier the reliability of the sources it rests on.
+  // The rule moved into the tool after five successive wordings of the agent's
+  // own gate failed to hold it — the last of them recording a birthplace
+  // conflict as "non-blocking, it doesn't touch identity" while its own body
+  // named birthplace an identifying attribute.
+  //
+  // Blast radius, measured across all 88 committed scenarios before landing:
+  // 83 carry no unresolved conflict so the rule cannot fire, 1 carries
+  // conflicts that share no source with a conclusion, and 4 would fire — all
+  // of them the flynn-* fixtures built to exercise conflict handling.
+  describe("a conclusion may not out-tier a disputed source", () => {
+    const conflicted = () => ({
+      project: { objective: "x" },
+      questions: [{ id: "q_001", question: "parents?", status: "open" }],
+      sources: [{ id: "src_001", citation: "1850 census" }, { id: "src_004", citation: "death cert" }],
+      assertions: [
+        // The conflict disputes the death certificate's birthplace...
+        { id: "a_012", source_id: "src_004", value: "Born 1845, Pennsylvania" },
+        { id: "a_002", source_id: "src_001", value: "Ireland" },
+        // ...and the conclusion leans on that same death certificate for the father.
+        { id: "a_013", source_id: "src_004", value: "Father: Thomas Flynn" },
+        { id: "a_004", source_id: "src_001", value: "in Thomas's household" },
+      ],
+      conflicts: [
+        { id: "c_001", status: "unresolved", competing_assertion_ids: ["a_002", "a_012"] },
+      ],
+      proof_summaries: [],
+    });
+
+    const summary = (tier: string, supporting: string[]) => ({
+      question_id: "q_001",
+      tier,
+      vehicle: "summary",
+      supporting_assertion_ids: supporting,
+      resolved_conflict_ids: [],
+      exhaustive_search_summary: "census + vitals",
+      narrative_markdown: "## Conclusion\n...",
+    });
+
+    it.each(["possible", "probable"])(
+      "refuses tier '%s' when an open conflict disputes a source the conclusion relies on",
+      async (tier) => {
+        await writeProject(conflicted());
+        const before = await readFile(join(dir, "research.json"), "utf-8");
+        const r = await researchAppend({
+          projectPath: dir,
+          section: "proof_summaries",
+          op: "append",
+          entry: summary(tier, ["a_004", "a_013"]),
+        });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        const msg = r.errors.join(" ");
+        expect(msg).toContain("c_001");
+        expect(msg).toContain("src_004");
+        // The message must leave a working move, or it repeats the bypass this
+        // whole guardrail exists to stop.
+        expect(msg).toContain("not_proved");
+        expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      },
+    );
+
+    it("allows not_proved — recording the blocked attempt is the sanctioned move", async () => {
+      await writeProject(conflicted());
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summary("not_proved", ["a_004", "a_013"]),
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does NOT fire when the conflict shares no source with the conclusion", async () => {
+      // The narrow case that keeps this from becoming "any open conflict
+      // blocks everything": a dispute confined to sources the conclusion does
+      // not lean on leaves the correlation intact.
+      const state = conflicted();
+      state.conflicts = [
+        { id: "c_002", status: "unresolved", competing_assertion_ids: ["a_002"] },
+      ];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summary("probable", ["a_013"]), // src_004 only; c_002 disputes src_001
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does NOT fire once the conflict is resolved", async () => {
+      const state = conflicted();
+      state.conflicts[0].status = "resolved";
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summary("probable", ["a_004", "a_013"]),
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+
+    it("refuses an update that leaves a forbidden tier standing, without naming tier", async () => {
+      // The 2026-08-21 escape, replayed. The agent updated the summary's other
+      // fields and never mentioned `tier`, so the stale `probable` stayed —
+      // and a rule gated on "did this op set the tier" never ran. The tier did
+      // not need to be touched; it was already wrong.
+      const state = conflicted() as any;
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("probable", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields: { narrative_markdown: "## Conclusion\nrewritten, tier untouched" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("c_001");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("accepts the same update when it brings the tier down in the same call", async () => {
+      // The deny has to stay satisfiable: fixing the entry is one call, not a
+      // deadlock where you cannot edit it without first editing it.
+      const state = conflicted() as any;
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("probable", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields: { tier: "not_proved", narrative_markdown: "## Conclusion\nidentity unsettled" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+
+    it("refuses to resolve the question while the conflict blocks the conclusion", async () => {
+      // The 2026-08-21 escape. Everything else was right — probable refused,
+      // not_proved recorded, no tree written — and then the question was closed
+      // anyway, on evidence that had never been correlated.
+      const state = conflicted() as any;
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("not_proved", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved", resolution_assertion_ids: ["a_004", "a_013"] },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("c_001");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("still allows not_proved to close a question that was simply empty", async () => {
+      // The distinction this rule turns on, and the one it must not break:
+      // `not_proved` legitimately closes a question researched and found empty.
+      // Only a question the researcher was PREVENTED from concluding stays open.
+      const state = conflicted() as any;
+      state.conflicts = [];  // nothing disputed
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("not_proved", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved", resolution_assertion_ids: ["a_004"] },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows the resolve once the conflict touches no source the conclusion uses", async () => {
+      const state = conflicted() as any;
+      // c_002 disputes src_001 only; the conclusion leans on src_004 only.
+      state.conflicts = [
+        { id: "c_002", status: "unresolved", competing_assertion_ids: ["a_002"] },
+      ];
+      state.proof_summaries = [{ id: "ps_001", ...summary("probable", ["a_013"]) }];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved", resolution_assertion_ids: ["a_013"] },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("cannot be cleared by resolving the conflict in the same batch", async () => {
+      // Same discipline as the exhaustiveness gate: read from the PRE-CALL
+      // snapshot, so a batch may not manufacture its own precondition.
+      await writeProject(conflicted());
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          {
+            section: "conflicts",
+            op: "update",
+            entryId: "c_001",
+            // A FULLY VALID resolution, so the batch's only remaining defect is
+            // the one under test. With a partial resolution the batch is
+            // refused for a missing weighing/rationale instead, and this test
+            // passes with the rule disconnected entirely — which it did.
+            fields: {
+              status: "resolved",
+              preferred_assertion_id: "a_002",
+              independence_analysis: "separate records, separate informants",
+              weighing_analysis: "two censuses outweigh a later secondary informant",
+              resolution_rationale: "contemporaneous household enumeration preferred",
+            },
+          },
+          { section: "proof_summaries", op: "append", entry: summary("probable", ["a_004", "a_013"]) },
+        ],
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("c_001");
+    });
+  });
+
+
+  // ── one conclusion per question ──
+  //
+  // The ownership manifest has required this since it landed and nothing
+  // enforced it. Observed 2026-08-20: blocked from concluding at `probable`,
+  // the agent recorded a correct `not_proved` summary by APPENDING it, leaving
+  // the stale `probable` entry beside it — two contradictory conclusions on one
+  // question, with nothing marking which is current.
+  describe("a question carries only one proof summary", () => {
+    const withSummary = () => ({
+      project: { objective: "x" },
+      questions: [{ id: "q_001", question: "parents?", status: "open" }],
+      sources: [{ id: "src_001", citation: "1850 census" }],
+      assertions: [{ id: "a_004", source_id: "src_001", value: "in household" }],
+      conflicts: [],
+      proof_summaries: [
+        {
+          id: "ps_001",
+          question_id: "q_001",
+          tier: "probable",
+          vehicle: "summary",
+          supporting_assertion_ids: ["a_004"],
+          resolved_conflict_ids: [],
+          exhaustive_search_summary: "census",
+          narrative_markdown: "## Conclusion\n...",
+        },
+      ],
+    });
+
+    const entry = (tier: string) => ({
+      question_id: "q_001",
+      tier,
+      vehicle: "summary",
+      supporting_assertion_ids: ["a_004"],
+      resolved_conflict_ids: [],
+      exhaustive_search_summary: "census",
+      narrative_markdown: "## Conclusion\n...",
+    });
+
+    it("refuses a second append, and names the id to update instead", async () => {
+      await writeProject(withSummary());
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: entry("not_proved"),
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toContain("ps_001");
+      // The deny must leave a working move — the id to retry against.
+      expect(msg).toContain('op: "update"');
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+
+    it("refuses an UPDATE that repoints a summary onto a question that already has one", async () => {
+      // The append gate was the same mistake as the tier gate two commits
+      // earlier: it asked "is this op an append" when the rule is "does this
+      // question end up with two summaries". An update that sets question_id
+      // walks straight past it and leaves the exact state the deny message
+      // describes — two contradictory conclusions, nothing saying which wins.
+      const state = withSummary() as any;
+      state.questions.push({ id: "q_002", question: "birth?", status: "open" });
+      state.proof_summaries.push({
+        id: "ps_002",
+        ...entry("possible"),
+        question_id: "q_002",
+      });
+      await writeProject(state);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_002",
+        fields: { question_id: "q_001" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("ps_001");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("allows updating the existing summary", async () => {
+      await writeProject(withSummary());
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields: { tier: "not_proved" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect((await readResearch()).proof_summaries).toHaveLength(1);
+    });
+
+    it("allows a first summary for a DIFFERENT question", async () => {
+      const state = withSummary();
+      state.questions.push({ id: "q_002", question: "birth?", status: "open" });
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: { ...entry("probable"), question_id: "q_002" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("catches two appends for one question inside a single batch", async () => {
+      // Reads live state rather than the pre-call snapshot, so the second op
+      // collides with the first. A snapshot-based check would let a batch
+      // create the duplicate it exists to prevent.
+      const state = withSummary();
+      state.proof_summaries = [];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "proof_summaries", op: "append", entry: entry("possible") },
+          { section: "proof_summaries", op: "append", entry: entry("not_proved") },
+        ],
+      });
+      expect(r.ok).toBe(false);
+    });
+  });
+
   // docs/specs/guardrail-enforcement-spec.md §5 — tier/exhaustiveness cross-field guardrail.
   it("rejects tier 'proved' when the question's exhaustive_declaration.declared is false", async () => {
     await writeProject(); // phase3Research(): q_001 defaults to exhaustive_declaration.declared: false

@@ -1,3 +1,24 @@
+# Normalize line endings for all text files regardless of any contributor's or
+# environment's core.autocrlf setting. Without this, whether a file is stored
+# as LF or CRLF depends on whoever last touched it — a real source of drift
+# across a Windows dev, a Linux CI/VM, and the Cowork sandbox bridge, all
+# writing to the same repo. text=auto lets git still skip binaries.
+#
+# Order matters: later rules win. This line MUST stay above the *.sh and *.bat
+# rules below — moved under them it would force .bat to LF and silently break
+# every Windows batch script. Nothing about that failure is loud, so it is
+# guarded by packages/engine/mcp-server/tests/packaging/gitattributes.test.ts.
+* text=auto eol=lf
+
+# Belt and braces for scanned evidence documents: text=auto samples only the
+# first 8000 bytes for a NUL, and an uncompressed or ASCII-heavy scan can slip
+# past that and get mangled. eval/tests/e2e/*/provided-documents/ is a growing
+# pile of exactly that shape.
+*.pdf binary
+*.png binary
+*.ico binary
+*.icns binary
+
 # Shell scripts must keep LF endings on every platform.
 #
 # Git for Windows defaults core.autocrlf=true, so without this these files check
@@ -11,8 +32,9 @@
 # checkout — meaning on Windows it fails *silently*, leaving the new worktree
 # with no linked node_modules or .env and no clue why.
 #
-# Extensionless scripts (git hooks) are covered separately, next to the hooks
-# themselves.
+# Extensionless scripts (git hooks) have no rule of their own — they had none
+# at all before the blanket `* text=auto eol=lf` above, which is what covers
+# them now.
 *.sh text eol=lf
 
 *.bat text eol=crlf

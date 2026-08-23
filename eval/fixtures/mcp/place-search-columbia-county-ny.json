@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Columbia County, New York (formed 1786 from Albany County; on the Massachusetts border opposite Berkshire County). Supports test 026's cross-border adjoining-jurisdiction search (issue #1415).",
+  "args": {
+    "placeName": "~Columbia"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Columbia, New York, United States",
+        "type": "County",
+        "dateRange": "+1786/",
+        "latitude": 42.25,
+        "longitude": -73.63,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Columbia%2C%20New%20York"
+      }
+    ]
+  }
+}

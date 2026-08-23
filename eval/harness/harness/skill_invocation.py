@@ -177,6 +177,43 @@ def recently_succeeded(
     return False
 
 
+def did_not_land(entry: dict[str, Any]) -> bool:
+    """True when this tool call changed nothing on disk.
+
+    Two ways that happens. `is_error` is the old one. The other is the
+    no-project answer (issue #1695): the user was not in a research project, so
+    the writer tool wrote nothing and returned `reason: "no_project"` —
+    deliberately WITHOUT `is_error`, because it is an answer rather than a
+    failure. Every detector that skips a call because it never landed must skip
+    this one too, or a write that did not happen is counted as a landed
+    protected write and manufactures a violation in paid e2e grading.
+
+    Matched as a substring rather than by parsing: `response_summary` arrives
+    single-encoded, double-encoded, and truncated across the committed corpus,
+    so a parse fails on shapes a substring handles.
+
+    MATCH THE BARE NAME, never `'"no_project"'`. `_summarize_tool_response` in
+    `e2e/orchestrator.py` passes any response under 500 chars through VERBATIM as
+    the raw MCP envelope, where the tool's document is an escaped string —
+    `[{"type": "text", "text": "{\\"reason\\": \\"no_project\\"}"}]`. The quoted
+    key does not occur in that, because a backslash sits where the closing quote
+    would be. The no-project envelope measures 236 chars, or 248 for the read
+    variant, against `_RUNLOG_VERBATIM_MAX` of 500 — so it ALWAYS takes the
+    verbatim path, and the envelope shape outnumbers the unwrapped one in every
+    committed run. A quoted-key match therefore never fires in production while
+    passing every hand-built test. That orchestrator docstring says this
+    outright: "grep the bare name, which matches both."
+
+    The bare name survives the other branch too: past the threshold the
+    summarizer unwraps the document and keeps every dict key, so `reason` lands
+    as a real JSON key and matches there as well. Nothing rests on the message
+    staying short.
+    """
+    if entry.get("is_error") is True:
+        return True
+    return "no_project" in str(entry.get("response_summary") or "")
+
+
 def find_unguarded_protected_writes(
     tool_calls: list[dict[str, Any]],
     *,
@@ -189,7 +226,7 @@ def find_unguarded_protected_writes(
     rate is measured)."""
     violations: list[dict[str, Any]] = []
     for i, entry in enumerate(tool_calls):
-        if entry.get("is_error") is True:
+        if did_not_land(entry):
             continue
         tool = entry.get("tool", "")
         args = entry.get("args") or {}
@@ -708,6 +745,58 @@ def find_person_evidence_missing_same_person(
     ]
 
 
+def check_guardrail_compliance(
+    tool_calls: list[dict[str, Any]],
+    final_research: dict[str, Any] | None,
+    final_tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[str]:
+    """The §8 HARD guardrail detector — every non-windowed check, in one call.
+
+    docs/specs/guardrail-enforcement-spec.md §8. A guardrail skill's
+    effect present in the FINAL project state with no matching successful
+    invocation anywhere in the run, or a resolved question's proof_summary
+    missing its mandatory gps-mentor proof-critique verdict. Mirrors the unit
+    harness's `test_positive_fails_when_skill_not_in_skills_invoked`, which
+    had no e2e equivalent. Unlike §4.1's shadow-mode recency check, this only
+    asks whether the skill ran AT ALL across the whole run, so it is far less
+    prone to false positives and was safe to hard-fail on immediately rather
+    than rolling out in shadow mode first.
+
+    `find_person_evidence_missing_same_person` is a separate, also-hard,
+    also-non-windowed check added after the first real run of
+    bagley-father-1884 showed the gap in "invoked anywhere": that run linked a
+    brand-new person across 13 person_evidence entries with zero same_person
+    calls in the whole run, while person-evidence ITSELF was invoked 52 tool
+    calls later for unrelated work — passing the "invoked anywhere" bar while
+    still skipping the identity-scoring doctrine entirely. It checks the
+    specific required tool for the specific person instead of the skill's mere
+    presence in the run.
+
+    Note this is NOT vacuous on a treeless run: `find_missing_mentor_verdicts`
+    takes no tree at all, and the exhaustiveness arm reads only
+    `research["questions"]`. That is why compliance is always a real result
+    and never "not checked" for a run this harness performed.
+
+    Lives here beside the three detectors it composes so `e2e.corpus_report`
+    can import it without dragging `claude_agent_sdk` into its pure-analysis
+    posture (issue #1484); `e2e.orchestrator` re-exports it so `run_e2e_test`
+    and the `monkeypatch.setattr(orchestrator, ...)` tests keep resolving it as
+    a module global unchanged. Originally extracted from `run_e2e_test` (issue
+    #972) to be unit-testable away from the 1200-line async function.
+    """
+    return (
+        find_effects_without_invocation(
+            tool_calls, final_research, final_tree, starting_tree=starting_tree
+        )
+        + find_missing_mentor_verdicts(final_research)
+        + find_person_evidence_missing_same_person(
+            tool_calls, final_research, final_tree, starting_tree=starting_tree
+        )
+    )
+
+
 # The four dedicated Cowork agents under packages/engine/plugin/agents/*.md —
 # each carries its own self-contained, baked-in doctrine (per CLAUDE.md's "No
 # playbook/reference files for agents": the agent body IS the doctrine), so a
@@ -719,7 +808,18 @@ def find_person_evidence_missing_same_person(
 # without updating this set makes find_protected_writes_by_unnamed_delegate
 # under-flag (fail toward false-negative, not false-positive).
 DEDICATED_AGENT_NAMES = frozenset(
-    {"record-extractor", "image-reader", "image-reader-opus", "gps-mentor"}
+    {
+        "record-extractor",
+        "image-reader",
+        "image-reader-opus",
+        "gps-mentor",
+        # Added when proof_summaries moved behind the hook's caller check: the
+        # owning skill now delegates the write, so EVERY legitimate proof
+        # summary arrives from this agent. Without the name here each one reads
+        # as an unnamed-delegate bypass — the detector would fire hardest on
+        # exactly the runs that did the right thing.
+        "proof-conclusion",
+    }
 )
 
 
@@ -1265,10 +1365,16 @@ def find_relationship_writes_without_warnings_check(
     if not new_relationship:
         return []  # the gate: nothing was written that a warnings check should have preceded
 
+    # NOTE the polarity: unlike every other `is_error` gate in this module, this
+    # one CREDITS a call rather than skipping it — a successful person_warnings
+    # means the tree was checked. So the no-project answer has to be excluded
+    # from `consulted`, not added to a skip. Get it backwards and a warnings
+    # check that never ran is credited as done, which is a MISSED violation and
+    # therefore silent (issue #1695).
     consulted = any(
         isinstance(call, dict)
         and bare_tool_name(call.get("tool") or "") == "person_warnings"
-        and not call.get("is_error")
+        and not did_not_land(call)
         for call in (tool_calls or [])
     )
     if consulted:

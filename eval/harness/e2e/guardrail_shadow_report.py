@@ -45,6 +45,7 @@ from e2e.runlog_selection import (
 from harness.skill_invocation import (
     CITATION_NULLING_KIND,
     CONFLICT_UNPERSISTED_KIND,
+    did_not_land,
     find_unguarded_protected_writes,
     PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
@@ -266,9 +267,10 @@ def replay_provenance(
     violations this measures. An unreadable run log is recorded the same way, for
     the same reason: a count that quietly shrank reads as a clean corpus.
 
-    Writes that never landed (`is_error: true`) are skipped, which is what keeps
-    a deny-mode run from double-counting — a blocked attempt and its retry are
-    one logical gap, not two.
+    Writes that never landed are skipped, which is what keeps a deny-mode run
+    from double-counting — a blocked attempt and its retry are one logical gap,
+    not two. "Never landed" is `is_error: true` OR the no-project answer, which
+    writes nothing and carries no `is_error`; `did_not_land` decides both.
     """
     out = ProvenanceReplay()
     for path in paths:
@@ -312,7 +314,10 @@ def replay_provenance(
             # `same_person_scored_ids` and `find_unguarded_protected_writes`
             # already apply. No effect on today's corpus, where no committed log
             # carries the key at all — so the baseline does not move.
-            if entry.get("is_error") is True:
+            # The no-project answer (issue #1695) drops out here too: it wrote
+            # nothing and deliberately carries no `is_error`, so `did_not_land`
+            # covers both shapes.
+            if did_not_land(entry):
                 continue
             if not _links_any_person_evidence(tool, args):
                 continue

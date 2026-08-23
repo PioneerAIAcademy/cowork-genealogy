@@ -290,25 +290,118 @@ def test_reinvocation_no_duplicate_proof(after_state, test):
 
 
 def test_conflict_blocks_proved(after_state, test):
-    """Tagged `conflict-blocks-proved`: with an unresolved conflict that
-    blocks the question, the skill must not declare `proved`. Any proof
-    summary for q_001 must be at a tier below proved (or absent, if the
-    skill deferred to conflict-resolution)."""
+    """Tagged `conflict-blocks-proved`: an unresolved conflict on an
+    IDENTIFYING attribute blocks the conclusion outright, and the blocked
+    attempt is recorded at `not_proved`.
+
+    Three assertions, deliberately deterministic. Every one of them was a
+    judge-graded nuance before, and the test flip-flopped across four runs on
+    exactly these points while the skill produced three different behaviours:
+    concluding at probable, declining silently, and resolving the conflict
+    itself.
+
+    The rule (lead ruling, 2026-08-19): correlation presupposes identity, so
+    sources whose identity to one another is unsettled cannot be correlated at
+    any tier. Tiering down does not fix it — tiering happens after identity is
+    established. `probable` is NOT an acceptable hedge here, which is what the
+    earlier version of this check allowed by testing only for `proved`.
+    """
     if "conflict-blocks-proved" not in test.get("tags", []):
         pytest.skip("not a conflict-blocks-proved scenario")
     after = after_state.get("research_json")
     if after is None:
         pytest.skip("Missing research.json")
-    proved = [
+
+    for_q = [
         ps for ps in after.get("proof_summaries", [])
-        if ps.get("question_id") == "q_001" and ps.get("tier") == "proved"
+        if ps.get("question_id") == "q_001"
     ]
-    assert not proved, (
-        "proof-conclusion declared q_001 `proved` while an unresolved "
-        "conflict (c_001) blocks it — unresolved conflicts hard-block the "
-        "proved tier"
+    # 1. The attempt is recorded. A silent decline loses the reasoning.
+    assert for_q, (
+        "proof-conclusion recorded nothing for q_001. A blocked conclusion is "
+        "still a research finding: write a `not_proved` summary naming the "
+        "conflict and what would settle it, then route to conflict-resolution."
+    )
+    # 2. At not_proved — not proved, and not probable either.
+    bad = [ps for ps in for_q if ps.get("tier") != "not_proved"]
+    assert not bad, (
+        "proof-conclusion concluded q_001 at "
+        f"{[ps.get('tier') for ps in bad]} while an unresolved conflict on an "
+        "identifying attribute (c_001, birthplace) is open. The disputed "
+        "attribute goes to whether the cited sources describe the same person, "
+        "so no tier is available — record it at `not_proved`."
+    )
+    # 3. The question stays open — resolving it is the downstream step's call.
+    q = next((x for x in after.get("questions", []) if x.get("id") == "q_001"), None)
+    if q is not None:
+        assert q.get("status") != "resolved" and not q.get("resolved"), (
+            "proof-conclusion marked q_001 resolved on a blocked conclusion. "
+            "The question stays open until the conflict is adjudicated."
+        )
+
+
+
+def test_bounded_conclusion_is_tiered_and_encoded(after_state, test):
+    """Tagged `bounded-conclusion`: a well-supported bounded finding is tiered
+    at `probable` or better AND lands in the tree as a fact carrying the
+    bracket.
+
+    Both halves are one rule. The tier says whether a finding was reached; the
+    encoding says whether it reached the researcher's tree. A bounded finding
+    can be honestly uncertain about WHERE INSIDE the range the event falls while
+    being certain the event happened — so it encodes at `possible` too, carrying
+    the range verbatim as the fact's date (lead ruling, 2026-08-21). What it may
+    not do is collapse to `not_proved` because the exact value is unreachable,
+    or reach a tier and never touch the tree.
+
+    `possible` is the expected tier for the committed fixture, and for a reason
+    worth keeping: a reachable, unsearched 1880 census would halve its bracket,
+    which is a Component 1 failure rather than a corroboration gap. A bracket
+    with a named record that would narrow it is not reasonably exhaustive.
+
+    Deterministic on purpose — both halves were judge-graded before, and the
+    test failed on 2026-08-19 with a rationale that misread its own fixture.
+    """
+    if "bounded-conclusion" not in test.get("tags", []):
+        pytest.skip("not a bounded-conclusion scenario")
+    after = after_state.get("research_json")
+    tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
+    if after is None or tree is None:
+        pytest.skip("Missing research.json or tree.gedcomx.json")
+
+    summaries = [
+        ps for ps in after.get("proof_summaries", [])
+        if ps.get("question_id") == "q_001"
+    ]
+    assert summaries, "no proof summary written for q_001"
+
+    ACCEPTED = {"possible", "probable", "proved"}
+    tiers = [ps.get("tier") for ps in summaries]
+    assert any(t in ACCEPTED for t in tiers), (
+        f"bounded conclusion tiered {tiers} — a bounded finding is tiered on the "
+        "strength of what CAN be established (the bracket, the documented "
+        "negative), not on the unreachable exact value. `not_proved` says no "
+        "finding was reached; a defensible range IS a finding."
     )
 
+    facts = [
+        f
+        for p in tree.get("persons", [])
+        if p.get("id") == "I1"
+        for f in p.get("facts", []) or []
+    ]
+    deaths = [f for f in facts if f.get("type") == "Death"]
+    assert deaths, (
+        "no Death fact on I1 — the conclusion exists only in the narrative and "
+        "the tree is silent on the vital event the question asked about. Encode "
+        "the bracket as the fact's date. A `possible` tier is NOT a reason to "
+        "skip this: the probable threshold asks whether a conclusion was "
+        "reached, and a bracket is one."
+    )
+    assert any(str(f.get("date") or "").strip() for f in deaths), (
+        "the Death fact on I1 carries no date — the bracket IS the finding, so "
+        "it belongs in the date (e.g. 'after 1870, before 1885')."
+    )
 
 # --- Tag-gated: research_query tool coverage (SKILL.md §1) -------------
 

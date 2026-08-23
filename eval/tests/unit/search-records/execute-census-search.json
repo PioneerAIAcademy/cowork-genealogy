@@ -12,7 +12,8 @@
       "plan-execution",
       "log-quality",
       "log-positive-record-search",
-      "rank-search-matches"
+      "rank-search-matches",
+      "pre-1880-census-household"
     ]
   },
   "input": {

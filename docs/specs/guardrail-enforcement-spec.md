@@ -148,6 +148,7 @@ depends on another shipping first.
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
+| §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **neither harness** | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload) |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 
@@ -156,6 +157,14 @@ depends on another shipping first.
 > project files are written through the **device bridge**, whose tool names its
 > matcher does not cover — while `Write`, which it does deny, cannot reach the
 > user's files at all. It denies the harmless operation and permits the real one.
+> **Closed for `device_commit_files` on 2026-08-18** — predicate *and* matcher,
+> the second of which the first attempt shipped without.
+
+> **The caller row above is the same instrument, asking a different question.**
+> The lockdown asks what file a write is going to; the caller rule asks who is
+> calling. It is the only row here that binds in production and in neither
+> harness, so its e2e counterpart is a separate function
+> (`is_main_thread_owned_section_write`) rather than a shared predicate.
 
 ### The ownership declaration: promoted out of Python, still not a hard deny
 
@@ -451,6 +460,63 @@ Two things about a deny-mode run's output:
   mode is recorded in the runlog's `usage` block so a reader can tell.
 
 ## 5. Write-boundary invariants
+
+### Not being in a project is an answer, not a failure
+
+The lead ruling: it is fine for standalone work not to be persisted; it is not
+fine for the user to see an error merely because they are not in a project. A
+search that ran, returned results, and had nowhere to log them must say so in a
+sentence a skill can relay unedited.
+
+`classifyProjectPath` in `packages/engine/mcp-server/src/utils/project-io.ts`
+decides five states, and it is deliberately **independent of which file the
+current read wanted** — six of the twelve project-reading tools read
+`tree.gedcomx.json` first, so a file-derived verdict hands those six the wrong
+message in a folder that is simply not a project.
+
+| State of `projectPath` | Verdict |
+|---|---|
+| absent or not a string | loud — `projectPath is required` |
+| not an existing directory | loud — `projectPath does not exist: <path>` |
+| a directory holding **neither** project file | `reason: "no_project"`, **no `isError`** |
+| a directory holding **exactly one** of the two | loud — a *broken* project |
+| a file present but unparseable | loud |
+
+The half-a-project row runs in both directions, and it is the one that matters.
+A folder whose `research.json` was deleted still holds a real project, so a write
+against it must stay loud; softening it drops the write with a cheerful message.
+
+`reason` is the sole discriminator. `errors` is retained so every existing
+consumer keeps working, and `writerToolResult` reads `reason` to leave `isError`
+unset — the only `ok: false` exempt from that flag, because nothing was asked of
+a project that exists.
+
+**The sentence has two variants, because four of the twelve tools are not
+writers.** `research_query` and `project_context` are reads; `person_warnings`
+and `merge_warnings` are previews. Telling someone who asked "where are we?" in a
+non-project folder that their work was not saved is both wrong and alarming, so
+those four carry `NO_PROJECT_MESSAGE_READ` and the eight writers carry
+`NO_PROJECT_MESSAGE_WRITE`. Both share a base clause, which is what the
+single-phrasing packaging lint keys on.
+
+**An unreadable directory is not an absent project.** `classifyProjectPath`
+distinguishes a clean `ENOENT` from any other `access()` failure. A real project
+directory that has lost its execute bit still stats as a directory while every
+probe inside it throws `EACCES`; read as "absent" that becomes `no_project`, and
+a write against a genuine project is dropped with a cheerful message — the same
+silent loss the half-a-project row exists to prevent.
+
+**The harness must mirror this, and one of the three mirrors is inverted.**
+`is_error` is how the detectors know a call never landed, so a no-project write
+that kept its `isError` would be counted as a landed protected write and
+manufacture violations in paid grading. `did_not_land` in
+`eval/harness/harness/skill_invocation.py` is the shared predicate. Two callers
+use it to **skip** a call (`find_unguarded_protected_writes`, and
+`guardrail_shadow_report.py`'s person-evidence scan). The third —
+`find_relationship_writes_without_warnings_check` — uses it to withhold
+**credit**: there a successful `person_warnings` means the tree was checked, so a
+no-project call must not count as consulting the guardrail. Getting that one
+backwards is a *missed* violation, and therefore silent.
 
 ### Set-once project fields
 
@@ -1029,6 +1095,38 @@ this section before reopening one.
   would each set a new high-water mark for a plugin agent body — against
   `record-extractor`'s 894 today. `research-exhaustiveness` (413) and
   `proof-conclusion` (519) are the cheap candidates if this is revisited.
+
+  **Revisited and acted on for `proof-conclusion`, 2026-08-19.** It is now a
+  pair: a thin routing skill (4.8 KB) plus `agents/proof-conclusion.md`, the
+  whole doctrine inlined at 49,900 bytes — between `gps-mentor.md` (40,802) and
+  `record-extractor.md` (58,541), so no new high-water mark. Both ends of that
+  band moved during the work (the agent grew as rules landed, `record-extractor`
+  grew on main), which is the argument for measuring a ceiling rather than
+  quoting one. Both `references/` files were deleted rather than kept
+  beside it — an agent reading its own reference material on demand scored 6/19
+  against a 12–14/19 baseline, and failed silently. What this bought beyond
+  attribution: the agent emits a
+  real `agent_id`, which is the thing the success gate below has never had. It
+  does **not** by itself graduate that gate — one of four skills is not a
+  completion instrument — but it is the first of the four, and the route is now
+  demonstrated rather than argued.
+
+  **What the conversion cost, and the rules that came out of it:**
+  `docs/skill-to-agent-pair-conversion.md`. The short version, because it bears
+  on every later pair: a prose gate weakens when it moves behind a delegation
+  boundary — the caller's framing competes with it — so a rule that must hold
+  belongs in the writer tool before the prose moves. Five tests that were stable
+  across five pre-fold runs became unstable across five post-fold ones.
+
+  **Two things the first paid run taught, both worth keeping.** The agent is
+  pinned to the model the doctrine ran under *before* the fold, not to the model
+  the nearest analogue uses: the 2026-08-19 run pinned `claude-sonnet-5` and so
+  moved the doctrine and changed its executor in one step, which makes a
+  regression unattributable. And the routing skill holds `project_context`
+  only — with a query tool it read `conflicts` itself and concluded a conflict
+  was "collateral" before delegating, deciding the agent's preconditions gate
+  from the one participant that cannot see the evidence. A thin caller needs to
+  be thin in capability, not just in wording.
 
   **This is the only route that reopens §7.** An agent is the one form a
   guardrail skill can take that emits a completion signal (`SubagentStop`) and

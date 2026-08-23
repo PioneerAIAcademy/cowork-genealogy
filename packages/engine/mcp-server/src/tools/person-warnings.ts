@@ -7,6 +7,7 @@
 
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -151,7 +152,9 @@ export function getPersonName(person: SimplifiedPerson): string {
 const COHERENCE = "COHERENCE";
 
 // Java MobWarnings warning tags. These strings match warnings.java exactly so
-// the TS port emits the same `issueType` identifiers a Java caller would.
+// the TS port emits the same `issueType` identifiers a Java caller would —
+// except the two `...Female45` tags below, whose cutoff we lowered from the
+// port's 55 (issue #1191).
 const HAS_EVENT_BEFORE_BIRTH_365_2 = "hasEventBeforeBirth365_2";
 const EARLIEST_CHILD_BIRTH_TO_BIRTH_MALE_14 = "earliestChildBirthToBirthMale14";
 const HAS_EVENT_AFTER_DEATH_1 = "hasEventAfterDeath1";
@@ -166,7 +169,7 @@ const TOO_MANY_CHILDREN_18 = "tooManyChildren18";
 const TOO_MANY_FATHERS_2 = "tooManyFathers2";
 const TOO_MANY_MOTHERS_2 = "tooManyMothers2";
 const HAS_BLANK_NAME = "hasBlankName";
-const LATEST_CHILD_BIRTH_TO_BIRTH_FEMALE_55 = "latestChildBirthToBirthFemale55";
+const LATEST_CHILD_BIRTH_TO_BIRTH_FEMALE_45 = "latestChildBirthToBirthFemale45";
 const HAS_DEATH_AFTER_CHILD_BIRTH_90 = "hasDeathAfterChildBirth90";
 const HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200 = "hasChildDeathAfterParentBirth200";
 const MISSING_FACTS_AND_RELATIVES = "missingFactsAndRelatives";
@@ -193,7 +196,7 @@ const RELATIVES_DEATH_RANGE_GREATER_THAN_2 = "relativesDeathRangeGreaterThan2";
 const RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_12 = "relativesEarliestChildBirthToBirth12";
 const RELATIVES_HAS_EVENT_BEFORE_CHRISTENING_365_3 = "relativesHasEventBeforeChristening365_3";
 const MALE_RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_14 = "maleRelativesEarliestChildBirthToBirth14";
-const FEMALE_RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_55 = "femaleRelativesLatestChildBirthToBirth55";
+const FEMALE_RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_45 = "femaleRelativesLatestChildBirthToBirth45";
 const RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_365_2 = "relativesHasDeathBeforeChildBirth365_2";
 const RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_30_10 = "relativesHasDeathBeforeChildBirth30_10";
 const RELATIVES_EARLIEST_CHILD_MARRIAGE_TO_BIRTH_30 = "relativesEarliestChildMarriageToBirth30";
@@ -1228,16 +1231,16 @@ function checkHasBlankName(mob: Mob): PersonWarning | null {
   };
 }
 
-function checkLatestChildBirthToBirthFemale55(
+function checkLatestChildBirthToBirthFemale45(
   mob: Mob,
 ): PersonWarning | null {
   if (mob.getGender() !== "Female") return null;
-  if (!latestChildBirthToBirth(mob, 55)) return null;
+  if (!latestChildBirthToBirth(mob, 45)) return null;
   const child = childWithLatestYear(mob, BIRTHLIKE_FACT_TYPES);
   const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
-    issueType: LATEST_CHILD_BIRTH_TO_BIRTH_FEMALE_55,
+    issueType: LATEST_CHILD_BIRTH_TO_BIRTH_FEMALE_45,
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
@@ -1246,7 +1249,7 @@ function checkLatestChildBirthToBirthFemale55(
       ? { relatedPersonId: childC.relatedPersonId }
       : {}),
     message:
-      "This person (female) had a child 55 or more years after her own birth, which is biologically unusual.",
+      "This person (female) had a child 45 or more years after her own birth, which is biologically unusual.",
   };
 }
 
@@ -1722,18 +1725,18 @@ function checkMaleRelativesEarliestChildBirthToBirth14(
   };
 }
 
-function checkFemaleRelativesLatestChildBirthToBirth55(
+function checkFemaleRelativesLatestChildBirthToBirth45(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
   const females = relativeMobs.filter((r) => r.getGender() === "Female");
-  const rel = females.find((r) => latestChildBirthToBirth(r, 55));
+  const rel = females.find((r) => latestChildBirthToBirth(r, 45));
   if (!rel) return null;
   const child = childWithLatestYear(rel, BIRTHLIKE_FACT_TYPES);
   const c = relativeMobContribution(rel, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
-    issueType: FEMALE_RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_55,
+    issueType: FEMALE_RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_45,
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
@@ -1743,7 +1746,7 @@ function checkFemaleRelativesLatestChildBirthToBirth55(
     ),
     relatedPersonId: c.relatedPersonId,
     message:
-      "A female relative of this person had a child after age 55, which is biologically unusual.",
+      "A female relative of this person had a child after age 45, which is biologically unusual.",
   };
 }
 
@@ -3238,8 +3241,8 @@ export function calculateWarnings(
   const blankName = checkHasBlankName(mergedMob);
   if (blankName) warnings.push(blankName);
 
-  const female55 = checkLatestChildBirthToBirthFemale55(mergedMob);
-  if (female55) warnings.push(female55);
+  const female45 = checkLatestChildBirthToBirthFemale45(mergedMob);
+  if (female45) warnings.push(female45);
 
   const deathAfterChild = checkHasDeathAfterChildBirth90(mergedMob);
   if (deathAfterChild) warnings.push(deathAfterChild);
@@ -3313,11 +3316,11 @@ export function calculateWarnings(
   );
   if (maleRelChild14) warnings.push(maleRelChild14);
 
-  const femRelChild55 = checkFemaleRelativesLatestChildBirthToBirth55(
+  const femRelChild45 = checkFemaleRelativesLatestChildBirthToBirth45(
     mergedMob,
     relativeMobs,
   );
-  if (femRelChild55) warnings.push(femRelChild55);
+  if (femRelChild45) warnings.push(femRelChild45);
 
   warnings.push(...checkRelativesHasDeathBeforeChildBirth365_2(relativeMobs));
   warnings.push(...checkRelativesHasDeathBeforeChildBirth30_10(relativeMobs));
@@ -3427,6 +3430,19 @@ export async function personWarningsTool(
   }
   if (!input.personId || typeof input.personId !== "string") {
     throw new Error("personId is required");
+  }
+
+  // The one tool outside the readProjectJson seam that still owes the
+  // no-project answer: it reads the tree directly, and `loadAnchor` below would
+  // hand a user who simply is not in a research project a raw path error.
+  // A folder holding research.json but no tree classifies as "project" and
+  // falls through to loadAnchor's own message, which is the better one (it says
+  // to run person_read first).
+  switch (await classifyProjectPath(input.projectPath)) {
+    case "no_project":
+      return noProjectResult("read");
+    case "missing_dir":
+      throw new Error(missingProjectDirMessage(input.projectPath));
   }
 
   const { tree, anchor } = await loadAnchor(input.projectPath, input.personId);

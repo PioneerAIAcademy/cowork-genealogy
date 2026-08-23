@@ -1,6 +1,6 @@
 {
   "tool": "person_search",
-  "description": "FamilySearch Family Tree search for Patrick Flynn — 3 ranked candidates, LZNY-BRF as the top match (born 1845 Ireland, Schuylkill County residence)",
+  "description": "FamilySearch Family Tree search for Patrick Flynn — 3 ranked candidates, LZNY-BRF as the top match (born 1845 Ireland, Schuylkill County residence). `ark` is the canonical `ark:/61903/...` form `toArk` produces (src/utils/ark.ts) — the resolver-URL prefix is stripped before the value reaches the caller, per simplified-gedcomx-spec.md §4.6.",
   "args": { "surname": "Flynn", "givenName": "Patrick" },
   "response": {
     "query": { "givenName": "Patrick", "surname": "Flynn" },
@@ -18,7 +18,7 @@
           "persons": [
             {
               "id": "LZNY-BRF",
-              "ark": "https://familysearch.org/ark:/61903/4:1:LZNY-BRF",
+              "ark": "ark:/61903/4:1:LZNY-BRF",
               "gender": "Male",
               "names": [{ "given": "Patrick", "surname": "Flynn" }],
               "facts": [
@@ -38,7 +38,7 @@
           "persons": [
             {
               "id": "LZNY-QRS",
-              "ark": "https://familysearch.org/ark:/61903/4:1:LZNY-QRS",
+              "ark": "ark:/61903/4:1:LZNY-QRS",
               "gender": "Male",
               "names": [{ "given": "Patrick", "surname": "Flynn" }],
               "facts": [
@@ -57,7 +57,7 @@
           "persons": [
             {
               "id": "KWCJ-PAT",
-              "ark": "https://familysearch.org/ark:/61903/4:1:KWCJ-PAT",
+              "ark": "ark:/61903/4:1:KWCJ-PAT",
               "gender": "Male",
               "names": [{ "given": "Patrick", "surname": "Flynn" }],
               "facts": [

@@ -244,10 +244,15 @@ describe("research_query read failures", () => {
   const call = () =>
     researchQuery({ projectPath: dir, section: "sources" });
 
-  it("missing research.json → ok:false", async () => {
+  // The one case in this file whose verdict CHANGED with issue #1695. Unlike
+  // its four siblings above, this one never wrote a tree — so the directory
+  // holds neither project file and the user is simply not in a project. That is
+  // an answer, not a read failure, and research_query is one of the two READS
+  // the issue calls out. Its half-a-project sibling is in no-project.test.ts.
+  it("neither project file → the no-project answer, not an error", async () => {
     const r = await call();
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.errors.join(" ")).toMatch(/research\.json not found in projectPath/);
+    expect((r as any).reason).toBe("no_project");
   });
 
   it("invalid research.json → ok:false", async () => {

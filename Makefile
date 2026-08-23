@@ -443,7 +443,7 @@ optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger q
 	cd eval/triggering && uv run python -m scripts.run_loop \
 	  --eval-set eval_sets/$(SKILL).json \
 	  --skill-path ../../packages/engine/plugin/skills/$(SKILL) \
-	  --model "$${MODEL:-claude-sonnet-4-6}" --results-dir ../runlogs/optimizer --verbose
+	  --model "$(if $(MODEL),$(MODEL),claude-sonnet-4-6)" --results-dir ../runlogs/optimizer --verbose
 
 .PHONY: e2e-preflight
 e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps, live MCP connection ~30s)
@@ -524,7 +524,7 @@ e2e-author: ## Fixture-authoring script, for developers: make e2e-author ARGS="s
 
 .PHONY: e2e-validate
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
-	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
+	cd eval/harness && uv run python -m e2e.validate_fixture $(if $(TEST),$(TEST),--all)
 
 .PHONY: judge-report
 judge-report: ## Non-discrimination scan of the UNIT judge over committed run logs: make judge-report | SKILL=<name>. Reads committed JSON only — no API calls, no cost.
@@ -538,7 +538,7 @@ e2e-calibrate: ## Run judge calibration against committed run annotations (maint
 	cd eval/harness && uv run python -m e2e.calibrate_judge
 
 .PHONY: e2e-corpus
-e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD | RECOMPUTE=1 | CALIBRATE=1
 	# Pure analysis over committed run JSONs — no live run, no API.
 	#
 	# Defaults to the last 14 days and prints the window it used: the repo
@@ -554,7 +554,19 @@ e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: mak
 	# so pre-#972 runs whose verdict was overwritten by a guardrail bypass show
 	# their real genealogical verdict. Runs with unknown compliance are reported
 	# as `not_checked` and never counted as clean.
-	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+	#
+	# RECOMPUTE=1 also re-derives violations from tool_calls + committed sidecars
+	# (the stored field is a floor; pre-detector runs record none) and prints a
+	# spend line (recorded / estimated / unrecoverable, never blended). CALIBRATE=1
+	# reports the estimate's measured accuracy over runs carrying both (issue #1484).
+	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),) $(if $(RECOMPUTE),--recompute,) $(if $(CALIBRATE),--calibrate-cost,)
+
+.PHONY: eval-inventory
+eval-inventory: ## Six corpus counts (unit tests/suites, e2e fixtures/runs/costed, specs), each by its predicate: make eval-inventory
+	# Pure analysis over committed files — no live run, no API. Reproduces the
+	# counts that drift in docs/architecture.md §9.1/§9.3, each defined by a
+	# printed predicate rather than a hand count (issue #1484 c).
+	cd eval/harness && uv run python -m e2e.inventory
 
 .PHONY: e2e-agent-tools
 e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over committed e2e runs (issue #1085): make e2e-agent-tools | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
