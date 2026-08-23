@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Lydia Grice present as person I1 with ParentChild links to both Edwin Grice (9DJ7-2BY) and Hannah Earnest (9DJ7-219), christening 8 Aug 1878 West Bromwich, cited to the expected Staffordshire Church Records baptism entry (ark QL3R-C5SR). Birth date recorded as 4 Aug 1878 rather than the fixture's 10 July 1878, taken from the same index entry; graded true because the child, parents, christening and source are all correct and the birth-date difference is an index-transcription detail, not a failure to recover the child."
+  },
+  "annotator": "dallan",
+  "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145"
+}
