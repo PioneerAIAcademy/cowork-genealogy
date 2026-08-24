@@ -12,12 +12,14 @@ to the harness observes skill *completion* (spec §7, "What the success gate can
 and cannot see"; `e2e/skill_episode_report.py` is the measurement). The window
 barely changes the count from 10 to 150, which was the early tell. What this
 report is still for: reading the shadow signal as measurement, and the §8/§7.5
-post-hoc families below, whose graduations are live questions.
+post-hoc families and the §11 unnamed-delegate check below, whose graduations
+(§11 aside — it stays shadow, reported) are live questions.
 
 **Stored and replayed are different questions.** Each family is printed twice: a
-STORED count, read from what a run wrote into `guardrail_shadow_violations` when
-it ran, and — under `--replay` — a REPLAYED count, recomputed now from the run's
-committed final state. A stored count reads 0 over every run made before that
+STORED count, read from what a run recorded when it ran, and — under `--replay` —
+a REPLAYED count, recomputed now from the run's committed log: its final-state
+sidecars, or its `tool_calls` ledger for the #963 provenance and §11
+unnamed-delegate checks. A stored count reads 0 over every run made before that
 check shipped, so on a corpus that is 84% July it measures the corpus's age
 rather than the behaviour. Read `--replay` before concluding a check never fires.
 
@@ -57,6 +59,7 @@ from harness.skill_invocation import (
     did_not_land,
     find_citation_nulling_in_conclusions,
     find_missing_mentor_verdicts,
+    find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
     find_unpersisted_conflict_resolutions,
@@ -220,6 +223,78 @@ def scan_warnings_unchecked(paths: list[Path]) -> list[dict[str, Any]]:
     `kind == WARNINGS_UNCHECKED_KIND`.
     """
     return _scan_stored(paths, lambda v: v.get("kind") == WARNINGS_UNCHECKED_KIND)
+
+
+@dataclass
+class UnnamedDelegateScan:
+    """The §11 unnamed-delegate detector's output across a corpus.
+
+    Its own scan, not a `_scan_stored` `kind` predicate: the detector writes a
+    plain `protected_writes_by_unnamed_delegate` list of strings on the run, not
+    a `kind` entry in `guardrail_shadow_violations`.
+
+    Both a STORED read and a REPLAY, like every other family here — the module's
+    own docstring warns not to conclude a check never fires from the stored count
+    alone. The stored strings are frozen at capture time, so only the replay
+    reflects a later detector change (e.g. the namespaced-`agent_type` tolerance).
+    They agree on today's corpus.
+
+    `runs_attributed` is the denominator that makes the count readable: a run can
+    only flag if its ledger carries caller attribution at all, i.e. at least one
+    `tool_calls` entry stamped with a non-None `agent_id` (the subagent marker the
+    detector keys on — absent, not merely falsy, on a main-thread call). Without
+    it a "1 in N" reads as "almost never fires" when it mostly means "could not
+    fire." It counts caller-attributed runs, which differs from "the field is
+    present" for an attribution-capable run that happened to spawn no subagent.
+    """
+
+    stored: list[dict[str, Any]] = field(default_factory=list)
+    replayed: list[dict[str, Any]] = field(default_factory=list)
+    runs_stored_affected: int = 0
+    runs_replay_affected: int = 0
+    runs_attributed: int = 0
+    runs_scanned: int = 0
+
+
+def scan_unnamed_delegate(paths: list[Path], *, replay: bool) -> UnnamedDelegateScan:
+    """STORED read of `protected_writes_by_unnamed_delegate` across the corpus,
+    plus (when `replay`) a recompute via `find_protected_writes_by_unnamed_delegate`
+    over each run's `tool_calls`, and the caller-attribution denominator."""
+    out = UnnamedDelegateScan()
+    for path in paths:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"  skip {path}: {e}", file=sys.stderr)
+            continue
+        out.runs_scanned += 1
+        try:
+            display_path = str(path.relative_to(REPO_ROOT))
+        except ValueError:
+            display_path = str(path)
+        fixture = path.parent.name
+
+        tool_calls = data.get("tool_calls") or []
+        if any(
+            isinstance(e, dict) and e.get("agent_id") is not None for e in tool_calls
+        ):
+            out.runs_attributed += 1
+
+        stored = data.get("protected_writes_by_unnamed_delegate") or []
+        if stored:
+            out.runs_stored_affected += 1
+        for detail in stored:
+            out.stored.append({"detail": detail, "file": display_path, "fixture": fixture})
+
+        if replay:
+            replayed = find_protected_writes_by_unnamed_delegate(tool_calls)
+            if replayed:
+                out.runs_replay_affected += 1
+            for detail in replayed:
+                out.replayed.append(
+                    {"detail": detail, "file": display_path, "fixture": fixture}
+                )
+    return out
 
 
 @dataclass
@@ -730,6 +805,27 @@ def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
     )
 
 
+def format_unnamed_delegate(scan: UnnamedDelegateScan, *, replay: bool) -> str:
+    """The §11 unnamed-delegate count with its attribution denominator (issue
+    #980, shadow — reported, never a gate). The denominator is the whole point:
+    without it a "1 in N" reads as "almost never fires" when it mostly means the
+    other N-1 runs carry no caller attribution to fire on."""
+    lines = [
+        "\n§11 unnamed-delegate check (issue #980, shadow): "
+        f"{len(scan.stored)} protected write(s) attributed to an unnamed delegate "
+        f"(neither the main thread nor a dedicated agent), across "
+        f"{scan.runs_stored_affected} run(s) — of {scan.runs_attributed} run(s) that "
+        f"carry any caller attribution at all, {scan.runs_scanned} scanned."
+    ]
+    if replay:
+        lines.append(
+            "  replayed over tool_calls (reflects the current detector, incl. the "
+            f"namespaced-agent_type tolerance): {len(scan.replayed)} violation(s) "
+            f"across {scan.runs_replay_affected} run(s)."
+        )
+    return "\n".join(lines)
+
+
 # ── Hosted feedback bundles (issue #1558) ────────────────────────────────────
 # Run the two detectors valid over a feedback bundle — the transcript-only
 # `find_unguarded_protected_writes` and the research.json-only
@@ -947,7 +1043,8 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description=(
             "Replay the §7 shadow window and report the §8/§7.5 post-hoc families "
-            "over committed e2e runs, stored and (with --replay) recomputed."
+            "and the §11 unnamed-delegate check over committed e2e runs, stored and "
+            "(with --replay) recomputed."
         )
     )
     ap.add_argument("--test", help="scan every committed run for this fixture slug only")
@@ -961,12 +1058,13 @@ def main(argv: list[str] | None = None) -> int:
         "--replay",
         action="store_true",
         help=(
-            "additionally RECOMPUTE all four post-hoc families instead of only reading "
-            "what runs stored: the #963 provenance check from tool_calls + each "
-            "fixture's committed seed tree, and the three §7/§7.5 checks from each run's "
-            "committed final-research / final-tree sidecars. The stored path sees only "
-            "runs made after each check shipped, which on today's corpus is a small "
-            "minority; this reads the whole historical corpus."
+            "additionally RECOMPUTE the four post-hoc families and the §11 "
+            "unnamed-delegate check instead of only reading what runs stored: the "
+            "#963 provenance check from tool_calls + each fixture's committed seed "
+            "tree, the three §7/§7.5 checks from each run's committed final-research "
+            "/ final-tree sidecars, and §11 from each run's tool_calls. The stored "
+            "path sees only runs made after each check shipped, which on today's "
+            "corpus is a small minority; this reads the whole historical corpus."
         ),
     )
     ap.add_argument(
@@ -1028,6 +1126,9 @@ def main(argv: list[str] | None = None) -> int:
     warnings_unchecked = scan_warnings_unchecked(paths)
     print(format_warnings_unchecked(warnings_unchecked))
 
+    unnamed_delegate = scan_unnamed_delegate(paths, replay=args.replay)
+    print(format_unnamed_delegate(unnamed_delegate, replay=args.replay))
+
     # `fixtures_root=E2E_FIXTURES` is passed EXPLICITLY rather than left to the
     # parameter default. A default is bound once, when the `def` executes at
     # import, so a test that reassigns the module global cannot reach it — which
@@ -1058,6 +1159,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\nWarnings unchecked (issue #1193), {len(warnings_unchecked)}:")
         for v in warnings_unchecked:
             print(f"  {v['fixture']:<35} {v['detail']}")
+        print(f"\nUnnamed delegate (issue #980), {len(unnamed_delegate.stored)}:")
+        for v in unnamed_delegate.stored:
+            print(f"  {v['fixture']:<35} {v['detail']}")
+        if unnamed_delegate.replayed:
+            print(f"\nReplayed unnamed delegate (issue #980), {len(unnamed_delegate.replayed)}:")
+            for v in unnamed_delegate.replayed:
+                print(f"  {v['fixture']:<35} {v['detail']}")
         if replay is not None:
             print(f"\nReplayed provenance gaps (issue #1231), {len(replay.violations)}:")
             for v in replay.violations:

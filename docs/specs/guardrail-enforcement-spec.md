@@ -324,13 +324,25 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 159 scanned | behaviour confirmed; live store path never exercised |
 | §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | behaviour confirmed; live store path exercised |
-| §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | attribution reaches 20 of 159 runs | — | blocked on corpus growth |
+| §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | **15**, across 1 run (of 20 that carry any attribution, 159 scanned) | **15**, 1 run | shadow, reported, no graduation count — revisit only if a **second** attributed run flags |
 
 Reading the two columns: **stored** is what a run recorded when it ran;
 **replayed** is the same detector recomputed now from that run's committed final
 state. A stored count therefore measures the corpus's age, not the behaviour —
 why that is, and what each number is worth, is under "Re-measure; do not read a
 count out of this page" below, stated once.
+
+**§11 unnamed-delegate stays in shadow — reported, not a gate (lead ruling,
+2026-08-21).** One flagged run in 159, and the runs that do not flag mostly carry
+no caller attribution at all rather than a clean bill, so the low fire rate is
+mostly non-coverage, not compliance. A hard-fail threshold set from a single
+example is a coin flip dressed as a number, and graduating was beaten on exactly
+that ground. Revisit only if a **second** attributed run flags. The hook and this
+detector differ **deliberately**, and this is not drift: the
+PreToolUse hook DENIES a main-thread protected write, while the unnamed-delegate
+half is only shadow-logged, never denied, until its false-positive rate is
+measured — the same split `find_protected_writes_by_unnamed_delegate`'s docstring
+records.
 
 **A zero fire rate is not a licence to graduate.** The citation-nulling check's
 own graduation gate reads "only
@@ -417,10 +429,11 @@ corpus only grows:
 make e2e-guardrail-shadow REPLAY=1 SINCE=all
 ```
 
-`REPLAY=1` recomputes **all four** post-hoc families, not just `same_person`
-provenance: that one from each run's `tool_calls` plus its fixture's committed
-seed tree, and the three §7/§7.5 checks from each run's committed
-`.final-research.json` / `.final-tree.gedcomx.json` sidecars. Each is a distinct
+`REPLAY=1` recomputes **the four post-hoc families and the §11 unnamed-delegate
+check**, not just `same_person` provenance: that one from each run's `tool_calls`
+plus its fixture's committed seed tree, the three §7/§7.5 checks from each run's
+committed `.final-research.json` / `.final-tree.gedcomx.json` sidecars, and §11
+from each run's `tool_calls`. Each is a distinct
 number from the *stored* count printed above it, and the distinction is the thing
 to understand before reading either:
 
@@ -1391,7 +1404,12 @@ degradation `response_summary` already has.
 `E2eResult.protected_writes_by_unnamed_delegate`, a list of human-readable
 violation strings. **Deliberately not read by `__post_init__`**: it must not
 move the `compliance` axis until its false-positive rate is measured. Detector:
-`harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate`.
+`harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate`. It is
+also reported across the committed corpus by `make e2e-guardrail-shadow` — a
+stored read plus, under `REPLAY=1`, a recompute over `tool_calls` —
+printed with its attribution denominator (how many runs carry any caller
+attribution to fire on at all); and read by `make e2e-detector-diff
+DETECTOR=lane-check`. It is no longer read only inline.
 
 ## Related
 
