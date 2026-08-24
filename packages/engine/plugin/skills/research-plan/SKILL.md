@@ -299,9 +299,11 @@ Order items for efficient discovery (BCG Standard 15):
 5. **Include contingencies** — use `fallback_for` to link alternate
    sources when a primary may fail
 6. **Include FAN items where they earn their place** — relatives, neighbors,
-   or associates whose records would bear on the subject. Not a quota: if none
-   could speak to this question, don't manufacture one. State in the item's
-   `rationale` what it reveals *about the subject*
+   or associates whose records would bear on the subject. State in the item's
+   `rationale` what it reveals *about the subject*. **A parentage, identity,
+   or undated-event question requires at least one FAN item**; elsewhere it is
+   not a quota — if no associate could speak to this question, don't
+   manufacture one
 
 **Plan size guidance:** A typical plan has 4-10 items: fewer than 3
 usually isn't exhaustive enough; more than 12 suggests the question is

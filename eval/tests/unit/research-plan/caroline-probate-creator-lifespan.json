@@ -27,7 +27,7 @@
   ],
   "judge_context": [
     "The plan MUST include at least one probate/estate plan item targeting Caroline's father. Its `date_range` must extend to approximately the father's plausible lifespan — roughly Caroline's birth year (1839) through birth+55 to birth+65 (circa 1894-1904) — not stop at or shortly after Caroline's own circa-1858 marriage or any other subject-centric bound well short of that.",
-    "If the probate item's date_range ends by the 1860s or earlier (i.e., capped near Caroline's own marriage rather than her father's plausible death), score Record type selection as 1 (fail) — the item excludes most of the range where the record could actually sit.",
+    "How the probate item's date_range is sized is what Record type selection turns on for this test. Assess whose plausible lifespan bounds the window: the record's creator, or the research subject.",
     "The item's rationale should say whose lifespan set the window's bounds (the father's, not Caroline's) — ideal but grade generously if the reasoning is present even without using that exact phrase.",
     "Additional breadth items (marriage records for Caroline's own parents, land records, cemetery records) strengthen the plan but are not individually required."
   ],

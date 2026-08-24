@@ -29,7 +29,7 @@
   ],
   "judge_context": [
     "The plan MUST include a co-equal plan item for BOTH East Feliciana Parish AND West Feliciana Parish marriage records for the target period (circa 1824-1830) — not one item with the other set as fallback_for. The 1824 split is geographic, not temporal, and the locality entry already says the records could be under either successor's name; that means both are primaries from the start, searched together, not one searched only if the other yields nothing.",
-    "If the plan names only ONE of the two successor parishes, or sets the second one's item as fallback_for the first (searched only if the first is empty), score Jurisdiction accuracy as 1 (fail) — that is exactly the failure this test guards against.",
+    "How the plan relates the two successor parishes to each other is what Jurisdiction accuracy turns on for this test. Assess whether each is planned as a primary in its own right, or whether one is made conditional on the other.",
     "A plan item's rationale should reflect the split (citing the 1824 date and that the successor is unknown without more information) — ideal but grade generously if the reasoning is present even without citing the exact year.",
     "fallback_for chains ARE appropriate elsewhere in the same plan (e.g. an Ancestry item as a fallback for a FamilySearch item of the SAME jurisdiction) — the failure is specifically using fallback_for to relate the two SUCCESSOR JURISDICTIONS to each other, not the mechanism itself.",
     "Additional breadth items (census, church records, land records for either parish) strengthen the plan but are not individually required."

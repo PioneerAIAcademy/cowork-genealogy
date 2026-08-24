@@ -15,8 +15,17 @@ contextual factors that affect availability.
 | Find birth date/place | Vital records (birth cert), census (age), church (baptism), death cert (secondary) | Military records, immigration, delayed birth cert |
 | Find death date/place | Vital records (death cert), cemetery/FindAGrave, obituary, probate | Church burial, pension file, Social Security |
 | Find marriage | Vital records (marriage cert), church (marriage register), newspaper (announcement) | Census (married status), county bonds/licenses |
-| Track migration | Census (residence across decades), land records, tax records | Church transfers, newspaper, city directories |
-| FAN research | Land deeds (witnesses), census (neighbors), probate (witnesses), church (godparents) | Business records, court records, military unit records |
+| Track migration | Census (residence across decades), land records, tax records, county/state histories (biographical sketches often name the origin place — a lead to verify, not evidence), migration-corridor databases where one applies (e.g. Utah, Mormon Pioneer Overland Travel Database, 1847-1868; Saints by Sea for the ocean leg) | Church transfers, newspaper, city directories |
+| FAN research | Land deeds (others mentioned), census (neighbors), probate (others mentioned), church (godparents) | Business records, court records, military unit records |
+
+**FAN research — "others mentioned" is deliberate.** In a deed the FAN names
+are not only the witnesses: the boundary recital names the adjoining
+landowners ("bounded on the north by John Smith's property"), who are
+neighbours by definition and frequently kin. In a probate file they are the
+creditors listed among the debts, the purchasers at the estate sale, the
+appraisers, the bondsmen and the guardians — and the people named in a will
+are often not immediate family but still supply FAN names. Planning only for
+"witnesses" tells `search-records` to ignore all of that.
 
 **Identifying parents — plan a dedicated search for the parents'
 marriage record.** For a parentage question, add a **separate plan
@@ -68,8 +77,11 @@ across the whole corpus, executed via the **search-full-text** skill. For
 a compound (Iberian / Latin-American) surname `Given Paterno Materno`,
 the two surnames are the father's and the mother's — so the co-occurrence
 `+Paterno +Materno` lands the parents' own acts (the child's baptism, a
-parent's burial or marriage). Do **not** plan this as a phrase search of
-the child's compound name, and do **not** scope it to a record
+parent's burial or marriage). Priests, clerks and later transcribers do
+reverse or conflate the two surnames, so treat which one is paterno as
+unsettled until a record names the parents separately — that widens the
+candidate set, it does not license a match. Do **not** plan this as a phrase
+search of the child's compound name, and do **not** scope it to a record
 collection id. This is the highest-yield item for "where was X from / who
 were X's parents" once indexed search has stalled.
 

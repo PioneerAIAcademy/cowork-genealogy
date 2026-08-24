@@ -44,10 +44,15 @@
   "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600,
+    "max_turns": 30,
     "stub_skills": [
       {
         "skill": "search-records",
         "response": "Executing pl_001 now, in sequence. pli_001 (1860 census, Schuylkill County, PA): searched FamilySearch, one candidate found and logged as log_001; plan item updated to in_progress. Continuing to pli_002 without stopping to check in, per your instruction -- each subsequent planned item will be searched and logged the same way in turn. No further confirmation needed from you for this batch."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Executing the plan's external-repository items now, without stopping to check in, per your instruction. For each one I generated targeted search URLs (Ancestry and FindAGrave, Schuylkill County, Pennsylvania, surname Doyle) and logged each as an external_site entry with outcome 'partial' -- the URL is generated but no capture has been received yet. No MyHeritage or FindMyPast links: researcher_profile lists no subscription to either. Those items stay in_progress until the researcher opens the URLs in their own authenticated browser and uploads the PDF captures. Every remaining external item in the plan is handled the same way in turn."
       }
     ]
   }
