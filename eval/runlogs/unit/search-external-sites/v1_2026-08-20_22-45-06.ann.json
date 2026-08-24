@@ -1,0 +1,326 @@
+{
+  "run_log": "v1_2026-08-20_22-45-06.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly followed the autonomous research workflow, standardized the place, used appropriate search strategies, logged all actions accurately, and avoided claiming unsupported discoveries. It maintained good genealogical research practices by distinguishing between a completed search attempt and actual evidence found."
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully satisfied the autonomous-mode requirements by completing the planned external-site search workflow, generating the correct pre-filled URL, maintaining an accurate audit trail, and properly marking the plan item as completed with the appropriate terminal status. It clearly documented the fallback decision and avoided overstating results, demonstrating good genealogical research discipline."
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill generated a correct and usable Ancestry fallback search URL with the required genealogical parameters. The URL accurately preserved the research details (name, birth information, and residence information), used proper encoding, and correctly reflected the absence of a curated record link. The construction and documentation demonstrate accurate search methodology and good research-trail practices."
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This dimension does not apply because no capture was provided. The skill correctly deferred evaluation without fabricating search results, so there is no result triage or evidence assessment to grade."
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill correctly handled the fallback workflow by recognizing that no curated MyHeritage link was available and generating a site-wide search URL. However, the URL used an incorrect parameter by placing Schuylkill County, Pennsylvania as birth_place instead of Patrick Flynn’s documented birthplace Ireland. This is a factual genealogy error in the search construction, though the overall workflow and fallback handling were correct."
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill correctly generated a valid MyHeritage fallback URL and used the appropriate site when no curated link was available. However, the search parameter mapping was genealogically incorrect: it placed Schuylkill County, Pennsylvania (residence) in the birth_place field instead of Patrick Flynn’s documented birthplace Ireland. The workflow was mostly correct, but the incorrect use of a key identifying fact reduces accuracy."
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

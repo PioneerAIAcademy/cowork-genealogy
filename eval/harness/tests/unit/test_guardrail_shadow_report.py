@@ -30,6 +30,9 @@ from e2e.guardrail_shadow_report import (
     scan_corpus,
     scan_provenance,
     scan_one,
+    scan_unnamed_delegate,
+    format_unnamed_delegate,
+    UnnamedDelegateScan,
 )
 from harness.skill_invocation import (
     CITATION_NULLING_KIND,
@@ -827,3 +830,150 @@ def test_replay_post_hoc_lines_appear_in_main_under_replay(tmp_path, capsys, mon
     assert "of 1 scanned" in out
     assert "Skipped" not in out.split("Post-hoc checks REPLAYED")[1]
     assert "warnings-unchecked        1 run(s)" in out
+    # §11 unnamed-delegate (issue #980) must ALSO print in main(), WITH its
+    # attribution denominator — the number the issue insists on. Guards the main()
+    # wiring + the denominator on this controlled 1-run corpus, so deleting the
+    # §11 print, or the denominator from its format string, fails a test.
+    assert "§11 unnamed-delegate" in out
+    assert "carry any caller attribution at all" in out
+
+
+def test_stored_unnamed_delegate_line_prints_in_main_without_replay(
+    tmp_path, capsys, monkeypatch
+):
+    """The §11 STORED line + its denominator must print on the DEFAULT
+    `make e2e-guardrail-shadow` (no --replay), not only under --replay. The other
+    main() test pins the replay path; without this, gating the §11 print behind
+    `if args.replay:` would drop it from the default command with every test still
+    green — the can't-fail shape on the feature's own most-common output."""
+    import e2e.guardrail_shadow_report as mod
+
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    d = tmp_path / "eval" / "runlogs" / "e2e" / "antonio"
+    d.mkdir(parents=True, exist_ok=True)
+    run = d / "run-2026-07-01_00-00-00.json"
+    run.write_text(
+        json.dumps(
+            {
+                "protected_writes_by_unnamed_delegate": [
+                    "tool_calls[5] extraction_append ... general-purpose"
+                ],
+                "tool_calls": [
+                    {"tool": "Read", "agent_id": "s1", "agent_type": "general-purpose"}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(mod, "E2E_FIXTURES", fixtures)
+    monkeypatch.setattr(mod, "all_result_jsons", lambda: [run])
+
+    assert mod.main(["--since", "all"]) == 0
+    out = capsys.readouterr().out
+    assert "§11 unnamed-delegate" in out
+    assert "1 protected write(s)" in out
+    assert "of 1 run(s) that carry any caller attribution at all" in out
+    # the replay-only line must NOT appear without --replay.
+    assert "replayed over tool_calls" not in out
+
+
+# --- scan_unnamed_delegate (issue #980) ------------------------------------
+
+
+def _write_delegate_run(dir_, name, *, flagged, tool_calls):
+    """A run JSON carrying both the stored `protected_writes_by_unnamed_delegate`
+    list and a `tool_calls` ledger (for the replay + attribution denominator)."""
+    dir_.mkdir(parents=True, exist_ok=True)
+    (dir_ / name).write_text(
+        json.dumps(
+            {"protected_writes_by_unnamed_delegate": flagged, "tool_calls": tool_calls}
+        ),
+        encoding="utf-8",
+    )
+    return dir_ / name
+
+
+def test_scan_unnamed_delegate_counts_stored_affected_and_attribution(tmp_path):
+    # A: attributed (agent_id present) AND flagged.
+    a = _write_delegate_run(
+        tmp_path / "fix-a",
+        "run-a.json",
+        flagged=["tool_calls[5] extraction_append ... general-purpose"],
+        tool_calls=[{"tool": "Read", "agent_id": "s1", "agent_type": "general-purpose"}],
+    )
+    # B: attributed but clean (no stored flags).
+    b = _write_delegate_run(
+        tmp_path / "fix-b",
+        "run-b.json",
+        flagged=[],
+        tool_calls=[{"tool": "Read", "agent_id": "s2", "agent_type": "record-extractor"}],
+    )
+    # C: NOT attributed (no agent_id on any entry) and clean — the denominator
+    # must exclude it, since the check could not fire on it.
+    c = _write_delegate_run(
+        tmp_path / "fix-c", "run-c.json", flagged=[], tool_calls=[{"tool": "Read"}]
+    )
+
+    scan = scan_unnamed_delegate([a, b, c], replay=False)
+    assert len(scan.stored) == 1
+    assert scan.runs_stored_affected == 1
+    assert scan.runs_attributed == 2  # A and B, not C
+    assert scan.runs_scanned == 3
+    assert scan.stored[0]["fixture"] == "fix-a"
+
+
+def test_scan_unnamed_delegate_replay_recomputes_from_tool_calls(tmp_path):
+    # Stored field is empty, but the tool_calls carry a real violation (an
+    # extraction_append by a non-record-extractor delegate). Only the replay
+    # sees it — this is the half that reflects a later detector change.
+    r = _write_delegate_run(
+        tmp_path / "fix-r",
+        "run-r.json",
+        flagged=[],
+        tool_calls=[
+            {"tool": "extraction_append", "agent_id": "s1", "agent_type": "general-purpose"}
+        ],
+    )
+    scan = scan_unnamed_delegate([r], replay=True)
+    assert scan.stored == []
+    assert len(scan.replayed) == 1
+    assert scan.runs_replay_affected == 1
+    # And the namespaced spelling is tolerated on replay: a namespaced
+    # record-extractor is NOT flagged (guards the #980 spelling fix end to end).
+    ok = _write_delegate_run(
+        tmp_path / "fix-ok",
+        "run-ok.json",
+        flagged=[],
+        tool_calls=[
+            {
+                "tool": "extraction_append",
+                "agent_id": "s2",
+                "agent_type": "genealogy-research:record-extractor",
+            }
+        ],
+    )
+    assert scan_unnamed_delegate([ok], replay=True).replayed == []
+
+
+def test_format_unnamed_delegate_always_prints_the_attribution_denominator():
+    """The denominator is the whole point (issue #980): without it "1 in N" reads
+    as "almost never fires". Guard the FORMAT output, not just the scan — dropping
+    the denominator from the format string must fail HERE, or the feature's own
+    output is a can't-fail check (the #1804/#1797 shape)."""
+    scan = UnnamedDelegateScan(
+        stored=[{"detail": "x", "file": "f", "fixture": "fx"}],
+        replayed=[{"detail": "x", "file": "f", "fixture": "fx"}],
+        runs_stored_affected=1,
+        runs_replay_affected=1,
+        runs_attributed=20,
+        runs_scanned=159,
+    )
+    out = format_unnamed_delegate(scan, replay=True)
+    assert "1 protected write" in out
+    assert "of 20 run(s) that carry any caller attribution at all" in out  # denominator
+    assert "159 scanned" in out
+    assert "replayed over tool_calls" in out  # replay line present under replay=True
+    # replay=False omits the replay line but keeps the stored count + denominator.
+    plain = format_unnamed_delegate(scan, replay=False)
+    assert "replayed over tool_calls" not in plain
+    assert "of 20 run(s) that carry any caller attribution at all" in plain
