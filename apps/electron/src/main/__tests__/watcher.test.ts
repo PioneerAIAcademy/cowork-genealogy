@@ -178,7 +178,7 @@ describe('formatNestedNotice (issue #1317, bug 2 — cap the path list)', () => 
     expect(msg).toContain('"a/research.json"')
     expect(msg).toContain('"b/research.json"')
     expect(msg).not.toContain('more')
-    expect(msg).toContain('open that folder instead')
+    expect(msg).toContain('reopen the viewer on that folder')
   })
 
   it('caps at 3 and collapses the rest to "and N more"', () => {

@@ -105,7 +105,7 @@ export function formatNestedNotice(nested: string[]): string {
   return (
     `Heads up: this folder also has research.json in a subfolder (${shown}${rest}). ` +
     `The viewer only shows the top-level project — if your research is in the ` +
-    `subfolder, open that folder instead.`
+    `subfolder, reopen the viewer on that folder.`
   )
 }
 
