@@ -237,9 +237,12 @@ Do **not** detect or record those contradictions here.
   does not do geography. When two place-bound events sit close together in
   time, use `distance_from_previous_km` (Step 3.5) and the era's travel speed
   (`references/timeline-analysis-guide.md`) to judge whether one person could
-  have been at both — including the same person enumerated in two different
-  states in one census year. Report an infeasible pair **in your reply** as a
-  coherence signal (this identity-coherence finding has no persisted field).
+  have been at both; for a household appearing twice in one census year,
+  measure from the enumeration dates written on the pages rather than the
+  census year, and treat an identical family composition as a legitimate
+  double enumeration rather than two people. Report an infeasible pair **in
+  your reply** as a coherence signal (this identity-coherence finding has no
+  persisted field).
 
 Identity uncertainty ("which Patrick Flynn is this?"), source disagreement
 ("informant said X, another said Y"), and any other non-chronological dispute
