@@ -62,7 +62,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^\.github/workflows/server-tests\.yml$'
+          # `^docs/specs/schemas/` (issue #1776): tests/test_mock_agent_schema.py
+          # loads docs/specs/schemas/{research,tree-gedcomx,enums}.schema.json.
+          # Without it a schema-only diff reported success without running the
+          # test that validates the mock agent's output against them.
+          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^docs/specs/schemas/|^\.github/workflows/server-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
