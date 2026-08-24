@@ -509,8 +509,10 @@ describe("measured figures stay traceable to the probe artifact", () => {
       verdict: "Y.verdict:generalises past birth (impossible-range)",
       activeWhen: /^(?:NOT MEASURED|PARTIAL|DOES NOT GENERALISE)/,
       // Also catches the #1771-round overclaim: the four-family year mechanism
-      // asserted as holding on the RECORD index (which Y denies — records residence
-      // dates are precise, so `.exact` drops nothing there). Scoped to "record
+      // asserted as holding on the RECORD index (which Y denies — the residence
+      // band pool was all-dated, so `.exact` dropped nothing there; residence dates
+      // are not intrinsically precise — undated residence records behave like the
+      // rest, per the impossible-range residence block). Scoped to "record
       // index"/"record_search" near the four-family conjunction, so it does NOT
       // catch the true tree-endpoint statement ("reproduced for all four families on
       // the tree endpoint") — the `[^.]` bound keeps each alternative inside one
