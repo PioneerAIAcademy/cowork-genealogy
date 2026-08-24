@@ -1,16 +1,16 @@
 # Enforcement layer — the phase programme
 
-**Status, 2026-08-17.**
+**Status, 2026-08-21.**
 
 | Phase | State |
 |---|---|
 | 0 — ownership declaration | **landed** 2026-08-16. `docs/specs/schemas/ownership.json`, 19 rows, two lints |
 | 1 — creation path | **landed** 2026-08-17. `project_create`, and `init-project` rewritten onto it |
-| 1 — standalone (answer, don't error) | **not started**, and no longer a seed writer. Blocked on the `readProjectJson` consolidation |
+| 1b — standalone (answer, don't error) | **landed** 2026-08-21. `classifyProjectPath` in `project-io.ts` decides five states from the directory rather than the file; twelve tools return `reason: "no_project"` with no `isError`, and the three harness detectors that read `is_error` to mean "never landed" mirror it |
 | 2 — device-bridge route closure | **landed** 2026-08-18. `device_commit_files` covered in all three lockdown copies *and* in the `hooks.json` matcher that decides whether the guard runs; `device_bash` deliberately not. Still unproven against a real bridge payload — only a live Cowork session can do that |
-| 3 — first skill-agent pair (proof summaries) | **not started.** Premise re-measured 2026-08-17 and it holds: 52 of 142 runs that wrote a proof summary never launched the skill that owns it |
-| 4 — remaining pairs | **not started** |
-| 5 — detectors + positive controls | **not started.** Independent and free; can run at any time |
+| 3 — first skill-agent pair (proof summaries) | **landed** 2026-08-19. `proof-conclusion` folded into an agent; the plugin hook denies a `proof_summaries` write to any other caller. Unproven against a real Cowork payload — no CI job sees one |
+| 4 — remaining pairs | **first pair landed** 2026-08-23. `research-exhaustiveness` folded into an agent; the plugin hook routes the exhaustiveness CLAIM (`declared: true`) to it, field-scoped rather than section-scoped. Two writer-tool preconditions landed with it. Remaining: `conflict-resolution`, and `research/SKILL.md` itself |
+| 5 — detectors + positive controls | **landed** 2026-08-23. The shadow report replays the post-hoc families and the §11 unnamed-delegate check over history rather than reading only what a run stored; citation-nulling has its positive control on the live path; the deny run happened (PR #1844) and the agent recovers. Also fixed the capture strip, which was destroying `replay.py`'s input |
 
 Three gates, the phase function, and the replay engine were built during the
 investigation — they are *inputs* to this programme, not one of its phases.
@@ -30,7 +30,7 @@ system, not the objective.
 
 | Artifact | Role |
 |---|---|
-| **ADR-0011** | the layer map — six substrates, the decision procedure, snapshot-vs-live, override tiers. **The durable decision.** |
+| **ADR-0011** | the layer map — six substrates, the decision procedure, snapshot-vs-live, and why gates ship without an override. **The durable decision.** |
 | `docs/specs/schemas/ownership.json` | who may write each section of each project document, and on which planes that is checkable. The declaration every later phase keys on |
 | `docs/specs/guardrail-enforcement-spec.md` | what is enforced today, what is measurement, the measured findings |
 | root `PLAN.md` (gitignored) | the *current* phase only, as a per-task plan |
@@ -41,16 +41,19 @@ system, not the objective.
 ```
 Phase 0  manifest ────────── LANDED ┐
 Phase 1  creation path ───── LANDED ┼──> Phase 2  route closure ── LANDED
-Phase 1b standalone ──────── issue #1695, after #988
-Phase 3  first pair ──────── next
-Phase 4  remaining pairs      (needs #1253)
+Phase 1b standalone ──────── LANDED
+Phase 3  first pair ──────── LANDED
+Phase 4  remaining pairs      first pair LANDED; #1253 does not block a PAIRED agent
 Phase 5  detectors + controls (independent, free, any time)
 ```
 
-Phase 3 takes its row from the landed manifest: `proof_summaries`, owner
-`skill:proof-conclusion`, `enforceableAt: ["unit"]` today. What that phase adds
-is the `tool` and `hook` planes — both already in the manifest's plane
-vocabulary, both claimed by no row yet.
+Phase 3 took its row from the landed manifest: `proof_summaries`, now
+`enforceableAt: ["unit", "hook"]` with `hookCallers: ["agent:proof-conclusion"]`.
+It added the **`hook`** plane only. The `tool` plane stayed empty on purpose: a
+narrow per-section writer tool is the alternative ADR-0011 rejects — *"a split
+tool is exactly as callable by the router as a section branch is"* — so the
+constraint comes from the caller check, not from a second tool name. Phase 4
+inherits that shape.
 
 **The hard constraint held, and was honoured.** A sanctioned creation path had to
 exist before the bridge route closed, or project creation would have become
@@ -61,89 +64,42 @@ must leave a working alternative — and it is the reason for the ordering above
 
 ---
 
-## Phase 1b — standalone use: answer, don't error
-
-**The creation half shipped** as `project_create` (2026-08-17), so this section
-is only what remains. **Auto-seeding the writer tools — the design this section
-used to describe — was rejected**, twice, under review: it lets any skill bring
-an objective-less project into being, which `init-project`'s guard then refuses
-to touch and no routing table has a row for. A dead end with no sanctioned exit.
-
-**What remains is smaller than a seed writer**, and is a lead ruling
-(2026-08-17): *it is fine for standalone work not to be persisted; it is not
-fine for the user to see an error merely because they are not in a project.*
-
-Measured: of 21 skills declaring a tool that touches the project files, **1**
-(`locality-guide`) handles the absence. The rest would surface
-`research.json not found in projectPath` to someone who simply is not in a
-project — including the search path, which is the 27,699-results loss this
-programme opened with.
-
-The fix belongs at the writer tools, not in 19 skill bodies (~19 paid eval runs,
-and ~19 drifting copies of one rule). Tracked as issue #1695, which **must follow
-#988** — the message is thrown from nine sites until that consolidation lands.
-
----
-
-## Phase 3 — the first skill-agent pair (proof summaries)
-
-**Goal.** One artifact whose owner is enforceable, end to end, as the reference
-implementation of the layer map.
-
-Chosen because proof summaries carry the highest measured bypass rate.
-**Re-measured 2026-08-17, after the three write-boundary gates landed: 52 of the
-142 runs that wrote a proof summary never launched the skill that owns it — 37%,
-against the 35% first measured.** The premise holds.
-
-Note what that re-measurement cannot say. Every run in the corpus predates the
-gates (newest 2026-08-14; the gates merged 2026-08-16), so this is the pre-gate
-rate re-counted on a larger corpus, not evidence about the gates. Nor should it
-be: nothing in #1685 requires `proof-conclusion` to have run — the
-`resolved`-needs-a-summary gate pushes agents *toward* writing summaries and
-never asks who wrote them. Closing that is exactly this phase.
-
-**Six changes, each in exactly one substrate, no prose:**
-
-1. `proof_summary_append` — narrow tool, schema derived from
-   `researchAppendSchema` (export and parameterise `narrowedInputSchema()`; it is
-   module-local today).
-2. `research_append` refuses `section: "proof_summaries"`.
-3. `proof-conclusion` becomes a **pair**: skill half acquires and routes, agent
-   half holds the narrow tool under all three spellings and denies
-   `research_append`.
-4. Hook denies the narrow tool unless `agent_type` is `proof-conclusion` **or**
-   `genealogy-research:proof-conclusion` — the namespaced form is what production
-   reports, and a bare equality never fires.
-5. The completion precondition — already built.
-6. The manifest row + regenerated detector.
-
-**Why a pair and not just a narrow tool.** Only an agent has an enforceable
-capability envelope in production; a skill's `allowed-tools` is documentation
-(the hosted path runs `bypassPermissions` with no allowlist). And the pair is how
-an agent gets eval coverage — the caller skill's suite spawns it for real.
-
-**Closes** #1490 (with its phase 2), #1491. **Depends on** Phase 0 for the row,
-a trustworthy hook. **Cost:** ~1 week + one paid `proof-conclusion` run.
-
----
-
 ## Phase 4 — the remaining pairs
 
-**Ranked by measured traffic, not by tractability.** Across 154 e2e runs only 18
-distinct skills are ever routed to; `timeline`, `hypothesis-tracking`,
-`citation`, `convert-dates` and `tree-edit` are invoked **zero** times, so
-pairing them would enforce a path no run takes.
+**Read `docs/skill-to-agent-pair-conversion.md` first.** The first conversion
+took nine paid runs, most of them avoidable; that document is the measured
+record and the ordered process. The two rules that would have saved the most:
+move a rule that must hold into the writer tool *before* the prose moves, and
+fold verbatim then run once unchanged to get the pair's own baseline.
+
+
+**Ranked by measured traffic, not by tractability.** Across the e2e corpus only
+18 distinct skills are ever routed to; `timeline`, `hypothesis-tracking`,
+`citation`, `convert-dates` and `tree-edit` are invoked **zero** times.
+
+**"Pairing them would enforce a path no run takes" is true of four of those five
+and FALSE of `hypothesis-tracking`** — measured 2026-08-23, 32 runs write
+`hypotheses[]` across 79 ops while the skill is invoked zero times, which is a
+100% bypass rather than a dead path. `timeline` is the genuine dead path: zero
+writes and zero invocations. The lead ruled 2026-08-23 not to widen Phase 4 to
+it — the discriminator is that a deny on a routed skill REDIRECTS traffic that
+already exists, while a deny on `hypotheses` must INDUCE routing that has never
+once occurred. It goes to that skill's own deep dive (issue #1644), which must
+fix a known-unsatisfiable gate in the body first.
 
 | Candidate | e2e invocations | Folded size |
 |---|---:|---|
-| `research-exhaustiveness` | 114 | 19.4 KB |
-| `conflict-resolution` | 9 | 47.7 KB |
-| `person-evidence` | 149 | 49.5 KB |
+| ~~`research-exhaustiveness`~~ | 115 | **landed 2026-08-23** — folded to 21,632 bytes |
+| `conflict-resolution` | 9 | 48,513 bytes |
+| `person-evidence` | 149 | 49,473 bytes |
 
-**The fold ceiling is ~54 KB**, taken from `record-extractor.md` (53,845 bytes) —
+**The fold ceiling is whatever `record-extractor.md` currently measures** — 58,541
+bytes as of 2026-08-21, up from the 53,845 this line used to quote, which is why
+it says "measure it" rather than naming a number. `wc -c` on that file is the
+check —
 the only agent body the team has shipped and lived with. `search-records` folds
-to 140,882 bytes and is disqualified on size before anything else. Agent bodies
-only grow: `record-extractor` went 32,042 → 53,845 in about a month, because an
+to 142,746 bytes and is disqualified on size before anything else. Agent bodies
+only grow: `record-extractor` went 32,042 → 58,541 in under two months, because an
 agent cannot offload to `references/`.
 
 **Do not split references back out.** Measured and reverted: on-demand `Read`
@@ -165,28 +121,72 @@ caller's suite — verified: the `record-extraction` run log's snapshot contains
 
 Independent of everything above, offline, and free. Can run at any point.
 
-**The instrument now exists.** `harness/replay.py` reconstructs `research.json`
-at any point in a run — 136/154 (88%) exact reconstruction, `make replay-check`.
-Both halves of the guardrail-detector corrections and the violation recompute
-were blocked on exactly this.
+**Part 1 landed 2026-08-21.** `make e2e-guardrail-shadow REPLAY=1 SINCE=all` now
+recomputes the post-hoc families and the §11 unnamed-delegate check from each
+run's committed log instead of only reading what a run stored, and the replay
+plumbing has its own controls in `tests/unit/test_guardrail_shadow_report.py`.
 
-**Positive controls first.** Three shadow checks fire **zero** times across 154
-runs, and nothing distinguishes "the behaviour never happens" from "the detector
-is broken" — a failure already on record here, where the mentor-verdict arm read
-0 where recomputation gives 8. **Before any of the three graduates, each needs a
-synthetic fixture that makes it fire.** Hand-built `research.json`, no live run.
+**The premise this section carried was wrong, and the correction is the finding.**
+It said three shadow checks fire zero times and that nothing distinguishes "the
+behaviour never happens" from "the detector is broken". For two of the three it
+was a third thing: the behaviour happens, the detector works, and the *report*
+could not see history — a stored count reads 0 over every run made before its
+check shipped. Replayed, both conflict-unpersisted and warnings-unchecked fire on
+real committed runs. Only citation-nulling is a genuine zero, and it alone still
+owes a synthetic fixture. **The counts are in the spec, deliberately not here** —
+see below.
 
-**One graduation is genuinely ready:** the live `same_person` provenance check
-fires 7 times across 5 runs, and nobody has ever observed how the agent behaves
-when that write is actually blocked. One fixture at `PERSON_EVIDENCE_GUARD=deny`,
-~$7–25.
+**The current measurements, what each check still owes, and what a
+behaviour-presence replay does and does not claim now live in
+`docs/specs/guardrail-enforcement-spec.md`** ("What is actually in the
+shadow-to-graduate pipeline"), which owns measured findings. Read it there —
+this section is deleted when the phase ships, and a durable finding cannot live
+in a file with that property.
+
+**`harness/replay.py` is not a dependency of this phase — and it was quietly
+broken.** The e2e capture strip drops `response_summary` past 14 days, which is
+where `replay.py` reads the `entryId` each writer reported back, so 133 of the
+134 stripped runs could no longer be replayed against 18 of 23 unstripped ones
+that could. That read as a fidelity collapse in an engine nobody had touched.
+The sweep now keeps a replay remnant — ids, `ok`, batch length, 0.4% of the
+summary bytes — so it stops happening; the 134 already stripped are not
+recoverable, so fidelity returns only as new runs age in. It reconstructs
+`research.json` at any point in a run (read the current rate from
+`make replay-check`, never from a figure written down here) and
+this section used to name it as the blocker. All three post-hoc checks read final
+state, and every committed run ships `.final-research.json` /
+`.final-tree.gedcomx.json` sidecars, so no reconstruction is needed. It remains
+the right instrument for a mid-run question.
+
+**citation-nulling's synthetic fixture — the last thing this phase owed — is
+built.** `collect_post_hoc_shadow` was extracted from `_run_agent` so the live
+path could be reached offline at all, and
+`tests/unit/test_post_hoc_shadow.py` drives it from a hand-built
+`research.json` on disk, exactly as Phase 5 specified: no live run, no API
+spend. That closes the one place a zero was still ambiguous — the predicate
+tests hand the detector a dict and the replay tests read committed sidecars, so
+neither reached the path where a broken workspace read is indistinguishable from
+a clean project.
+
+**The deny run has now happened** — PR #1844 carries both runs and their
+gradings, and issue #1431 closes with it. The agent recovers unaided: on
+`hannah-earnest-children` the gate blocked twice with the loop valve never
+opening, and each time the agent scored the identities with `same_person` and
+retried the write, which landed. `mary-mcandrew-son` is the null control — every
+link there was to a seeded person, so the check correctly never fired. What that
+leaves for a graduation decision is a judgement about breadth, not a missing
+observation.
 
 **Carries a ceiling worth knowing.** The ledger never recorded every assigned id
 — truncated responses and `_first_n` batch summaries — so any recompute keyed on
-ids inherits it. 11,582 of 20,992 ids in a full replay are reconstructed by the
-tool's sequential convention rather than observed.
+ids inherits it. 21,582 of 22,637 ids in a full replay (95%) are reconstructed by the
+tool's sequential convention rather than observed. It does not touch the post-hoc
+replay above, which reads committed final state rather than reconstructing.
 
-**Closes** #1569, #1484, #1431.
+**Closes** #1569, #1484 (both already closed); #1431 with PR #1844.
+
+**This phase is done.** Everything it named has landed or been answered, so this
+section goes when the programme's remaining phase does.
 
 ---
 

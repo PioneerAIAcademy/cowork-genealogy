@@ -68,10 +68,10 @@ Already done? Skip ahead.
 - FamilySearch tokens in `~/.familysearch-mcp/tokens.json`. If you've used the
   plugin from Cowork this exists already; otherwise run the `login` tool once.
 - This repo cloned. The walk-through below assumes `~/cowork-genealogy` on
-  macOS/Linux and `%USERPROFILE%\cowork-genealogy\` on Windows; adjust paths if
-  yours is elsewhere. (GitHub Desktop's default clone location is
-  `%USERPROFILE%\Documents\GitHub\cowork-genealogy\` — use whichever path you
-  actually cloned to.)
+  macOS/Linux and `C:\src\cowork-genealogy` on Windows; adjust paths if
+  yours is elsewhere. (GitHub Desktop defaults to `%USERPROFILE%\Documents\GitHub\` — **don't use it**,
+  `Documents` is normally synced to OneDrive and the install will fail there.
+  Clone to `C:\src\cowork-genealogy` instead.)
 - Windows users: GitHub Desktop installed and signed in. You don't need to know
   git from the command line — the workflow uses the GUI to make a branch and
   commit, and resetting a case is its own double-click script.
@@ -197,7 +197,7 @@ scripts/setup-feedback-case.sh ~/Downloads/feedback-2026-07-21T09-14-22Z.zip
 it prints at the end):**
 
 ```bat
-%USERPROFILE%\cowork-genealogy\scripts\setup-feedback-case.bat ^
+scripts\setup-feedback-case.bat ^
     "%USERPROFILE%\Downloads\feedback-2026-07-21T09-14-22Z.zip"
 ```
 
@@ -302,9 +302,19 @@ Not every report is a skill problem. Using the `results/` files — the real too
 responses — check:
 
 - Does `_feedback/feedback.json` say `"worked_as_expected": true` (in FEEDBACK.md,
-  **Worked as expected: Yes**)? → **nothing went wrong.** It's a positive report.
-  Note anything useful from it on the issue, close the issue, and stop — there is
-  no fix to make and no test to mine. ✅
+  **Worked as expected: Yes**)? → the agent did nothing wrong. **That flag is about
+  the agent's behavior, not about whether the tester got what they came for**, so
+  read the Notes box before you decide anything. Two different cases hide behind
+  one Yes:
+  - Notes are empty, or say it went well → a **positive report.** Note anything
+    useful on the issue, close it, and stop — no fix to make, no test to mine. ✅
+  - Notes describe something the tester wanted and couldn't get, or a workflow
+    they gave up on → **not a positive report.** "It behaved correctly and still
+    couldn't do what I needed" is a product gap, not a non-event. Keep the issue
+    open and work it like any other finding: classify it against the checks
+    below, fix what's fixable, and close it only once you have. **Never close on
+    the flag alone.** If the Notes are thin, the bundle's
+    `_feedback/session-log.jsonl` transcript has the tool-level detail.
 - Did `record_search` **return** the second Robert Schuster, and the skill
   ignore him? → a **skill** problem. Continue. ✅ *(This is the case.)*
 - Did the search **never surface** him? → a **tool** problem. Different fix, an
@@ -584,10 +594,10 @@ script first, then `cd` into the resulting directory.
 For `user_prompt` or `agent_did`, the submission really is missing a required
 field — ask them to resubmit (those are required by the submission format,
 `apps/electron/docs/feedback-json-spec.md`). But an empty **`agent_should_have`**
-is legitimate, not a broken submission: `worked_as_expected: true` is a positive
-report (nothing went wrong), and even on a bug the reporter may not have known the
-ideal behavior. Don't ask them to resubmit — read `worked_as_expected` to tell a
-clean report from a problem.
+is legitimate, not a broken submission: `worked_as_expected: true` means the agent
+did nothing wrong, and even on a bug the reporter may not have known the ideal
+behavior. Don't ask them to resubmit. Whether there's anything to fix is Step 4's
+call (whose fault is it), and it turns on the Notes box, not on the flag.
 
 **`/mine-unit-test` can't identify the failing skill.**
 Run it as `/mine-unit-test --skill <name>` and pick the skill you edited.

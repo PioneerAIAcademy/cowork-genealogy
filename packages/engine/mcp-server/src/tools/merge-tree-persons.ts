@@ -21,6 +21,8 @@ import {
   remapResearchPersonIds,
   backupIfExists,
   formatIssues,
+  NoProjectError,
+  noProjectResult,
 } from "./merge-shared.js";
 import type { MergeResult } from "./merge-shared.js";
 
@@ -105,6 +107,7 @@ export async function mergeTreePersons(
       },
     };
   } catch (e) {
+    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof MergeInputError) return { ok: false, errors: [e.message] };
     throw e;
   }

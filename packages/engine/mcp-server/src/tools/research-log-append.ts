@@ -22,7 +22,14 @@ import { unlink } from "fs/promises";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import { atomicWriteJson, readProjectJson, formatIssues, withProjectLock } from "../utils/project-io.js";
+import {
+  atomicWriteJson,
+  readProjectJson,
+  formatIssues,
+  withProjectLock,
+  NoProjectError,
+  noProjectResult,
+} from "../utils/project-io.js";
 import { finalizeStagedResults } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 
@@ -116,7 +123,10 @@ export type ResearchLogAppendResult =
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
     }
-  | { ok: false; errors: string[] };
+  // `reason: "no_project"` marks the one ok:false that is an answer rather than
+  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
+  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
+  | { ok: false; errors: string[]; reason?: "no_project" };
 
 /** Raised for expected input problems; turned into `{ ok: false }`. */
 class LogAppendError extends Error {}
@@ -149,6 +159,9 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
+    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
+    // outer catch can return noProjectResult().
+    if (e instanceof NoProjectError) throw e;
     throw new LogAppendError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -473,6 +486,7 @@ export async function researchLogAppend(
       },
     };
   } catch (e) {
+    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof LogAppendError) return { ok: false, errors: [e.message] };
     throw e;
   }

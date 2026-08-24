@@ -148,14 +148,31 @@ depends on another shipping first.
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
+| §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm) | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload) |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
+| §5 | Declaration/status agreement | engine (MCP tool) — so Cowork, hosted, both harnesses | `status: "exhaustive_declared"` on a question whose `exhaustive_declaration.declared` is not true, from either side of the pair | **enforcing** (since 2026-08-23; a zero-violation arm over 159 runs — a cheap invariant, not a gate with catches) |
+| §5 | Plan completeness before a declaration | engine (MCP tool) — so Cowork, hosted, both harnesses | `declared: true` while an item on the question's **active** plan is `in_progress` | **enforcing** (since 2026-08-23; 5 of 170 corpus declarations, classified **bookkeeping** not doctrine — it contradicts the project's own plan state, not a genealogical judgment, which is what lets it be scoped this tightly) |
+| §5 | `stop_criteria` shape | engine (validator) — so Cowork, hosted, both harnesses | `stop_criteria` written as prose, a number or an array instead of the seven-key object | **enforcing** (since 2026-08-23; 48 corpus write ops, all of them on the bypassed path — 0 of 241 writes made by runs that invoked the owning skill) |
+| §6 | Claim ownership by caller (`exhaustive_declaration`) | plugin hook — Cowork, hosted, wherever the plugin loads; and the e2e harness | an op setting `exhaustive_declaration.declared` to true from anything but the `research-exhaustiveness` agent. FIELD-scoped, not section-scoped: `declared: false` is not routed, because the schema makes the field required and question creation would otherwise be denied | **enforcing** (since 2026-08-23; unproven against a real Cowork payload) |
 
 > **§6's "Reaches" claim is narrower than it looks — see §6.1.** Measured
 > 2026-08-15: in Cowork with a connected folder the lockdown never fires, because
 > project files are written through the **device bridge**, whose tool names its
 > matcher does not cover — while `Write`, which it does deny, cannot reach the
 > user's files at all. It denies the harmless operation and permits the real one.
+> **Closed for `device_commit_files` on 2026-08-18** — predicate *and* matcher,
+> the second of which the first attempt shipped without.
+
+> **The caller rows above are the same instrument, asking a different question.**
+> The lockdown asks what file a write is going to; a caller rule asks who is
+> calling. Its e2e counterpart used to be a separate function, and that is what
+> let the two drift: the harness imported the hook's *map* and *reason text*
+> while re-implementing the *rule*, so the planes looked single-sourced and were
+> not — the copy had no out-of-lane arm at all, and a dedicated agent writing
+> outside its section set was denied in Cowork and allowed in e2e. Since
+> 2026-08-23 the harness calls the shipped `owner_denied` itself. The unit plane
+> still has neither arm.
 
 ### The ownership declaration: promoted out of Python, still not a hard deny
 
@@ -295,18 +312,37 @@ array of id-bearing entries and so has nothing for either check to read.
 
 ### What is actually in the shadow-to-graduate pipeline
 
-Measured over the whole corpus, `make e2e-guardrail-shadow SINCE=all`, 154 runs,
-2026-08-16 — **the pipeline is not full of checks waiting on a measurement;
-three of them have one, and it is zero:**
+Measured over the whole corpus, `make e2e-guardrail-shadow REPLAY=1 SINCE=all`,
+159 runs, 2026-08-23. **Read the STORED and REPLAYED columns as different
+questions** — the distinction is the single most important thing on this page,
+and getting it wrong is what made three checks look dead for a fortnight:
 
-| Check | Fires | Status |
-|---|---:|---|
-| §7 caller-attributed recency | 811 (window 40), 127 runs | **retired permanently**, not queued |
-| §8 live `same_person` provenance | **7**, 5 runs | the only graduatable check with a real rate |
-| §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | never fired |
-| §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | never fired |
-| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **0**, 0 runs | never fired |
-| §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | attribution reaches 15 of 154 runs | blocked on corpus growth |
+| Check | Stored | Replayed | Status |
+|---|---:|---:|---|
+| §7 caller-attributed recency | 823 (window 40), 130 runs | n/a — windowed replay, see the table above | **retired permanently**, not queued |
+| §8 live `same_person` provenance | 12, across 7 runs | 120 of 147 runs that link a person | the graduation candidate with the largest sample |
+| §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
+| §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 159 scanned | behaviour confirmed; live store path never exercised |
+| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | behaviour confirmed; live store path exercised |
+| §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | **15**, across 1 run (of 20 that carry any attribution, 159 scanned) | **15**, 1 run | shadow, reported, no graduation count — revisit only if a **second** attributed run flags |
+
+Reading the two columns: **stored** is what a run recorded when it ran;
+**replayed** is the same detector recomputed now from that run's committed final
+state. A stored count therefore measures the corpus's age, not the behaviour —
+why that is, and what each number is worth, is under "Re-measure; do not read a
+count out of this page" below, stated once.
+
+**§11 unnamed-delegate stays in shadow — reported, not a gate (lead ruling,
+2026-08-21).** One flagged run in 159, and the runs that do not flag mostly carry
+no caller attribution at all rather than a clean bill, so the low fire rate is
+mostly non-coverage, not compliance. A hard-fail threshold set from a single
+example is a coin flip dressed as a number, and graduating was beaten on exactly
+that ground. Revisit only if a **second** attributed run flags. The hook and this
+detector differ **deliberately**, and this is not drift: the
+PreToolUse hook DENIES a main-thread protected write, while the unnamed-delegate
+half is only shadow-logged, never denied, until its false-positive rate is
+measured — the same split `find_protected_writes_by_unnamed_delegate`'s docstring
+records.
 
 **A zero fire rate is not a licence to graduate.** The citation-nulling check's
 own graduation gate reads "only
@@ -314,11 +350,54 @@ if the rate is low enough that a fail is a signal and not a wall" — zero is no
 "low enough", it is *nobody has seen this detector fire*. Graduating it promotes
 an unexercised predicate to a hard failure.
 
-**And nothing distinguishes the two readings of a zero:** either the behaviour
-never occurs, or the detector is broken. That failure is already documented here
-— the mentor-verdict arm read 0 where recomputation gives 8. **Before any of the
-three graduates, it needs a synthetic fixture that makes it fire** — a positive
-control, offline and free.
+**What each check still owes, on two axes.** The predicates are not the open
+question: all three have firing controls in
+`eval/harness/tests/unit/test_skill_invocation.py`, green on every
+`make harness-test`. What a predicate control cannot see is the *wiring* — the
+detector called with the wrong argument, an entry never stored, a bucket
+predicate that misses. That is what "the detector is broken" means here, and it
+splits in two:
+
+| | is the zero ambiguous? | has the live store path ever been exercised? |
+|---|---|---|
+| warnings-unchecked | **no** — 59 corpus fires | **yes** — `stribling-father-1821/run-2026-08-17_23-35-44`, the corpus's only stored entry |
+| conflict-unpersisted | **no** — 4 corpus fires | **no** |
+| citation-nulling | **yes** — zero on both axes | **no** |
+
+Both remaining gaps are now closed. citation-nulling's synthetic fixture is
+`tests/unit/test_post_hoc_shadow.py`, which drives
+`orchestrator.collect_post_hoc_shadow` from a hand-built `research.json` on disk
+— the live path, offline and free. The other two lack only a live run that
+stored an entry, which the next committed e2e run producing one supplies for
+free. The replay plumbing has its own controls in
+`tests/unit/test_guardrail_shadow_report.py`, written against sidecar
+resolution, seed-tree loading and per-check skip discipline rather than against
+the predicates.
+
+**warnings-unchecked was considered for graduation and declined — 2026-08-23.**
+It is the check with by far the largest sample, so it is the one a future reader
+will reach for first; the reasoning is recorded here so it is not re-derived. 59
+runs of 158 is a **corpus behaviour count, not a production signal**, and
+`docs/architecture.md` ("Every measurement in this repo describes the eval
+corpus, not production") says outright not to graduate a gate on a violation
+rate. A hard compliance check at that frequency would fail a large share of a
+suite costing $7–25 a run, over a process omission that corrupts no document —
+ADR-0011's satisfiability limit reads that as a constant rather than a
+guardrail. What the number argues for instead is moving the check to the write
+boundary, where the guardrail runs itself rather than a detector reporting that
+nobody asked; that is a separate piece of work with its own measurements.
+
+**What the replay claims, and what it does not.** It is a **behaviour-presence**
+measurement: did this shape occur in the corpus at all. It is **not** a per-run
+compliance score. `docs/specs/e2e-test-spec.md` ("Historical runs") withholds
+that — a replay only scores a run if the checks are pinned to the version that
+run executed, and nothing records that version per run — and `docs/architecture.md`
+says not to quote a violation rate at all, which is why every figure here is a
+count against a named denominator. One check is genuinely affected by the version
+gap: `find_unpersisted_conflict_resolutions`'s predicate was corrected after it
+first shipped, so replaying it over older runs measures today's rule rather than
+the rule those runs ran under. For "did this shape ever occur" that is the right
+direction; it is not a historical compliance figure.
 
 Read the status column literally. Only §5 and §6 restrain a real user's session
 today; §7 and §8 are measurement over eval runs. §8 cannot port to production
@@ -350,29 +429,39 @@ corpus only grows:
 make e2e-guardrail-shadow REPLAY=1 SINCE=all
 ```
 
-`REPLAY=1` recomputes the check from each run's `tool_calls` and its fixture's
-committed seed tree. That is a distinct number from the *stored* count printed
-above it, and the distinction is the thing to understand before reading either:
+`REPLAY=1` recomputes **the four post-hoc families and the §11 unnamed-delegate
+check**, not just `same_person` provenance: that one from each run's `tool_calls`
+plus its fixture's committed seed tree, the three §7/§7.5 checks from each run's
+committed `.final-research.json` / `.final-tree.gedcomx.json` sidecars, and §11
+from each run's `tool_calls`. Each is a distinct
+number from the *stored* count printed above it, and the distinction is the thing
+to understand before reading either:
 
-- The **stored** count covers only runs made after the live check shipped
-  (`2026-08-04 23:45Z`). At the time of writing that is **zero of 144 committed
-  runs** — the newest committed run predates the merge by an hour — which is why
-  the graduation gate ("run a real suite and read the entries") could not be answered
-  from the corpus at all. It needs no code: the next committed e2e run produces
-  stored entries by itself.
+- The **stored** count covers only runs made after each live check shipped. That
+  is what made every post-hoc check read zero: `same_person` provenance shipped
+  `2026-08-04 23:45Z`, citation-nulling `2026-08-06`, warnings-unchecked
+  `2026-08-10`, conflict-unpersisted `2026-08-12`, against a corpus that is 84%
+  July. Today the stored counts are 12 (`same_person`, 7 runs), 1
+  (warnings-unchecked, 1 run) and 0 for the other two. This needs no code — each
+  committed e2e run produces stored entries by itself.
 - Both counts are **branch-scoped** — they read `eval/runlogs/e2e/` in the
   current checkout, so a graded run committed on an unmerged branch is not
-  skipped, it is never seen. Two are known to sit outside `main` today, one of
-  them the first run to store live entries for this check at all. Read a rate
-  off an up-to-date `main` with in-flight fixture PRs merged, or it is biased at
-  the moment it is used.
-- The **replayed** count reads the whole pre-hook corpus: at the time of writing
-  **111 of the 137 runs that link a person have ≥1 gap (750 links, 72
-  fixtures)**, with one run skipped and named for having no committed seed tree.
-  It is a **lower bound** — the live hook may not yet see a `same_person` issued
-  in the same turn as the write, while the replay always sees the full prefix.
-  Its second job is scoring a candidate *narrowing* of the rule against history
-  before that narrowing ships.
+  skipped, it is never seen. Read a count off an up-to-date `main` with in-flight
+  fixture PRs merged, or it is biased at the moment it is used.
+- The **replayed** counts read the whole corpus. `same_person` provenance: **120
+  of the 147 runs that link a person have ≥1 gap (788 links, 79 fixtures)**, with
+  one run skipped and named for having no committed seed tree. It is a **lower
+  bound** — the live hook may not yet see a `same_person` issued in the same turn
+  as the write, while the replay always sees the full prefix. Its second job is
+  scoring a candidate *narrowing* of the rule against history before that
+  narrowing ships. The three post-hoc checks: citation-nulling **0** of 159
+  scanned, conflict-unpersisted **4 runs** of 159, warnings-unchecked **59 runs**
+  of 158 — the 159th being the corpus's one orphan run log
+  (`william-ferber-ancestry`, a committed run with no fixture directory, and so
+  no baseline to diff a relationship against). Every replay **names** the runs it
+  could not read rather than counting them clean, per check: a denominator that
+  quietly shrank reads as a clean corpus, which is the failure this whole section
+  exists to correct.
 
 **Why a deny needs more than a number: the reason has to be satisfiable.** The
 original reason said a brand-new identity "should be scored before it is
@@ -452,6 +541,63 @@ Two things about a deny-mode run's output:
 
 ## 5. Write-boundary invariants
 
+### Not being in a project is an answer, not a failure
+
+The lead ruling: it is fine for standalone work not to be persisted; it is not
+fine for the user to see an error merely because they are not in a project. A
+search that ran, returned results, and had nowhere to log them must say so in a
+sentence a skill can relay unedited.
+
+`classifyProjectPath` in `packages/engine/mcp-server/src/utils/project-io.ts`
+decides five states, and it is deliberately **independent of which file the
+current read wanted** — six of the twelve project-reading tools read
+`tree.gedcomx.json` first, so a file-derived verdict hands those six the wrong
+message in a folder that is simply not a project.
+
+| State of `projectPath` | Verdict |
+|---|---|
+| absent or not a string | loud — `projectPath is required` |
+| not an existing directory | loud — `projectPath does not exist: <path>` |
+| a directory holding **neither** project file | `reason: "no_project"`, **no `isError`** |
+| a directory holding **exactly one** of the two | loud — a *broken* project |
+| a file present but unparseable | loud |
+
+The half-a-project row runs in both directions, and it is the one that matters.
+A folder whose `research.json` was deleted still holds a real project, so a write
+against it must stay loud; softening it drops the write with a cheerful message.
+
+`reason` is the sole discriminator. `errors` is retained so every existing
+consumer keeps working, and `writerToolResult` reads `reason` to leave `isError`
+unset — the only `ok: false` exempt from that flag, because nothing was asked of
+a project that exists.
+
+**The sentence has two variants, because four of the twelve tools are not
+writers.** `research_query` and `project_context` are reads; `person_warnings`
+and `merge_warnings` are previews. Telling someone who asked "where are we?" in a
+non-project folder that their work was not saved is both wrong and alarming, so
+those four carry `NO_PROJECT_MESSAGE_READ` and the eight writers carry
+`NO_PROJECT_MESSAGE_WRITE`. Both share a base clause, which is what the
+single-phrasing packaging lint keys on.
+
+**An unreadable directory is not an absent project.** `classifyProjectPath`
+distinguishes a clean `ENOENT` from any other `access()` failure. A real project
+directory that has lost its execute bit still stats as a directory while every
+probe inside it throws `EACCES`; read as "absent" that becomes `no_project`, and
+a write against a genuine project is dropped with a cheerful message — the same
+silent loss the half-a-project row exists to prevent.
+
+**The harness must mirror this, and one of the three mirrors is inverted.**
+`is_error` is how the detectors know a call never landed, so a no-project write
+that kept its `isError` would be counted as a landed protected write and
+manufacture violations in paid grading. `did_not_land` in
+`eval/harness/harness/skill_invocation.py` is the shared predicate. Two callers
+use it to **skip** a call (`find_unguarded_protected_writes`, and
+`guardrail_shadow_report.py`'s person-evidence scan). The third —
+`find_relationship_writes_without_warnings_check` — uses it to withhold
+**credit**: there a successful `person_warnings` means the tree was checked, so a
+no-project call must not count as consulting the guardrail. Getting that one
+backwards is a *missed* violation, and therefore silent.
+
 ### Set-once project fields
 
 `objective`, `title` and `subject_person_ids` on the `project` singleton may be
@@ -467,12 +613,14 @@ objective, and every later skill plans against a changed goal it never agreed
 to" — and that row's remedy, routing the change through `init-project`, was not
 enforceable by anything.
 
-**It constrains the system, not the researcher, and that is why it needs no
-override.** ADR-0011's override tier says a doctrine gate must be overridable by
-the human; here the override is the file itself. The raw-write lockdown binds
-the agent, never a text editor, and preventing a person from editing their own
-project is explicitly out of scope for this layer. The refusal message says so
-outright rather than leaving the researcher to guess.
+**It constrains the system, not the researcher.** No gate here carries an
+override mechanism (ADR-0011, ruling 2026-08-24), and on the desktop none needs
+one: the raw-write lockdown binds the agent, never a text editor, so the
+researcher's override is the file itself, and preventing a person from editing
+their own project is explicitly out of scope for this layer. The refusal message
+says so outright rather than leaving the researcher to guess. That route does
+not exist on the hosted path, where the project lives in a sandbox — see the
+ADR's two stated limits.
 
 ### Exhaustiveness before a proved tier
 
@@ -1030,6 +1178,38 @@ this section before reopening one.
   `record-extractor`'s 894 today. `research-exhaustiveness` (413) and
   `proof-conclusion` (519) are the cheap candidates if this is revisited.
 
+  **Revisited and acted on for `proof-conclusion`, 2026-08-19.** It is now a
+  pair: a thin routing skill (4.8 KB) plus `agents/proof-conclusion.md`, the
+  whole doctrine inlined at 49,900 bytes — between `gps-mentor.md` (40,802) and
+  `record-extractor.md` (58,541), so no new high-water mark. Both ends of that
+  band moved during the work (the agent grew as rules landed, `record-extractor`
+  grew on main), which is the argument for measuring a ceiling rather than
+  quoting one. Both `references/` files were deleted rather than kept
+  beside it — an agent reading its own reference material on demand scored 6/19
+  against a 12–14/19 baseline, and failed silently. What this bought beyond
+  attribution: the agent emits a
+  real `agent_id`, which is the thing the success gate below has never had. It
+  does **not** by itself graduate that gate — one of four skills is not a
+  completion instrument — but it is the first of the four, and the route is now
+  demonstrated rather than argued.
+
+  **What the conversion cost, and the rules that came out of it:**
+  `docs/skill-to-agent-pair-conversion.md`. The short version, because it bears
+  on every later pair: a prose gate weakens when it moves behind a delegation
+  boundary — the caller's framing competes with it — so a rule that must hold
+  belongs in the writer tool before the prose moves. Five tests that were stable
+  across five pre-fold runs became unstable across five post-fold ones.
+
+  **Two things the first paid run taught, both worth keeping.** The agent is
+  pinned to the model the doctrine ran under *before* the fold, not to the model
+  the nearest analogue uses: the 2026-08-19 run pinned `claude-sonnet-5` and so
+  moved the doctrine and changed its executor in one step, which makes a
+  regression unattributable. And the routing skill holds `project_context`
+  only — with a query tool it read `conflicts` itself and concluded a conflict
+  was "collateral" before delegating, deciding the agent's preconditions gate
+  from the one participant that cannot see the evidence. A thin caller needs to
+  be thin in capability, not just in wording.
+
   **This is the only route that reopens §7.** An agent is the one form a
   guardrail skill can take that emits a completion signal (`SubagentStop`) and
   carries an `agent_id`, which is what §7's success gate has never had. Weigh
@@ -1198,7 +1378,12 @@ degradation `response_summary` already has.
 `E2eResult.protected_writes_by_unnamed_delegate`, a list of human-readable
 violation strings. **Deliberately not read by `__post_init__`**: it must not
 move the `compliance` axis until its false-positive rate is measured. Detector:
-`harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate`.
+`harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate`. It is
+also reported across the committed corpus by `make e2e-guardrail-shadow` — a
+stored read plus, under `REPLAY=1`, a recompute over `tool_calls` —
+printed with its attribution denominator (how many runs carry any caller
+attribution to fire on at all); and read by `make e2e-detector-diff
+DETECTOR=lane-check`. It is no longer read only inline.
 
 ## Related
 
