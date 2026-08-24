@@ -386,15 +386,17 @@ The cost is knowingly accepted: there is no per-record-type ownership surface, s
 a probate specialist edits the same file as everyone else. **Revisit only with a
 mechanism that cannot silently skip.**
 
-### 3.5 Model routing
+### 3.5 Model and effort routing
 
-Per-step model routing exists **only through plugin agents.**
+Per-step routing of **model** and **reasoning effort** exists **only through plugin
+agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
 | **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `image-reader-opus` → `claude-opus-4-8`; `record-extractor`, `image-reader`, `proof-conclusion` + `research-exhaustiveness` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
-| **Reasoning effort** | session-wide; never set by `real_agent.build_options` | not a per-step lever |
+| **Agent `effort:`** | hosted + both harnesses; **Cowork unverified** | no agent pins one |
+| **Session effort** | `.claude/settings.json` `effortLevel`; never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted inherits |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
 > unit harness (`harness/orchestrator.py` honours the field, falling back to
@@ -402,6 +404,13 @@ Per-step model routing exists **only through plugin agents.**
 > the harness default — and were deleted, because a pin that changes nothing
 > makes per-step routing look like it exists. To route a step to a different
 > model, delegate it to a plugin agent.
+>
+> **Agent `effort:` takes `low|medium|high|xhigh|max` or an integer**, and is a
+> property of the agent *definition* — the `Agent` tool's call site accepts only
+> `model`. It binds wherever `.claude/agents/*.md` is parsed, which is the hosted
+> control plane (`stage_plugin_agents` + `setting_sources=["project"]`) and both
+> harnesses. **Whether Cowork honours it has not been checked on a live session**,
+> the way the `model:` pins were; check before relying on it there.
 >
 > **And know the ceiling before you plan around it.** Because agents are the only
 > surface, the share of work that *can* be routed to another model is the share
