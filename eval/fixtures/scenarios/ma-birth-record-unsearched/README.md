@@ -25,7 +25,7 @@ identity-linked via `person_evidence`, all five assertions are classified, and
 
 **Ida's own 1875 Massachusetts birth registration is not a plan item and appears
 nowhere in `log`.** Massachusetts kept statewide civil registration of births
-from 1842, and those returns are public — held by the Registry of Vital Records,
+from 1841, and those returns are public — held by the Registry of Vital Records,
 the State Archives and the town clerks, and digitized. So the record exists for
 this time and place and is obtainable.
 
