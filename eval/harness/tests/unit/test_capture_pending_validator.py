@@ -7,7 +7,8 @@ avenue was searched when nothing was.
 
 The two "buggy"/"correct" shapes below are reduced from the five committed
 `ut_search_records_026` run logs, where the same scenario ends at `completed`
-in v1_2026-08-13_17-42-37 and v1_2026-08-17_18-06-27 and at `in_progress` in
+in v1_2026-08-17_18-06-27 (and in v1_2026-08-13_17-42-37, aged out of the
+directory by the 5-candidate retention prune in this commit) and at `in_progress` in
 the other three. That 2-of-5 split is why this test exists at all: the eval
 suite cannot demonstrate the guard deterministically, so the guard is
 mutation-tested here instead — it must fire on the bad shape AND stay quiet on
@@ -202,3 +203,90 @@ def test_skips_when_no_research_json():
     with pytest.raises(BaseException) as exc:
         assert_capture_pending_item_not_terminal({}, after, {"tags": []})
     assert exc.typename == "Skipped"
+
+
+# --- Holes John found in e9fce0a0's every-tool `latest` (review #1799) --------
+
+def test_fires_when_a_later_nil_search_follows_the_handoff():
+    """A later search that found NOTHING must not switch the guard off.
+
+    Keying `latest` on every tool was meant to let a record turning up on
+    FamilySearch close the item — but that case needs the later entry to be a
+    *positive* result. A nil `record_search` leaves the outstanding capture
+    outstanding, so `completed` must still fire.
+    """
+    before, after = _states("completed")
+    after["research_json"]["log"].append(
+        {
+            "id": "log_005",
+            "plan_item_id": "pli_001",
+            "tool": "record_search",
+            "outcome": "negative",
+            "results_examined": 0,
+            "external_site": None,
+        }
+    )
+    with pytest.raises(AssertionError, match="capture never arrived"):
+        assert_capture_pending_item_not_terminal(before, after, {"tags": []})
+
+
+def test_fires_when_a_later_external_links_search_follows_the_handoff():
+    """`external_links_search` only DISCOVERS links — it searches nothing.
+
+    Even with `outcome: positive` it cannot be what closed the item, so it must
+    not clear an outstanding capture.
+    """
+    before, after = _states("completed")
+    after["research_json"]["log"].append(
+        {
+            "id": "log_005",
+            "plan_item_id": "pli_001",
+            "tool": "external_links_search",
+            "outcome": "positive",
+            "external_site": None,
+        }
+    )
+    with pytest.raises(AssertionError, match="capture never arrived"):
+        assert_capture_pending_item_not_terminal(before, after, {"tags": []})
+
+
+def test_fires_when_the_capture_names_a_different_plan_item():
+    """An arrival scoped to another item must not launder this one.
+
+    `captured` was keyed on `(site, url_generated)` with no plan item, so a
+    capture belonging to a different item — or one already sitting in the
+    scenario fixture — cleared this one.
+    """
+    before, after = _states("completed")
+    after["research_json"]["log"].append(
+        {
+            "id": "log_005",
+            "plan_item_id": "pli_009",
+            "tool": "external_site",
+            "outcome": "positive",
+            "external_site": {
+                "site": "ancestry",
+                "url_generated": "https://www.ancestry.com/search/?name=Patrick_Flynn",
+                "capture_received": True,
+            },
+        }
+    )
+    with pytest.raises(AssertionError, match="capture never arrived"):
+        assert_capture_pending_item_not_terminal(before, after, {"tags": []})
+
+
+def test_passes_when_a_later_positive_search_closes_the_item():
+    """The case e9fce0a0 was fixing, kept working: the record turns up on
+    FamilySearch after the handoff was logged, so `completed` is legitimate."""
+    before, after = _states("completed")
+    after["research_json"]["log"].append(
+        {
+            "id": "log_005",
+            "plan_item_id": "pli_001",
+            "tool": "record_search",
+            "outcome": "positive",
+            "results_examined": 1,
+            "external_site": None,
+        }
+    )
+    assert_capture_pending_item_not_terminal(before, after, {"tags": []})

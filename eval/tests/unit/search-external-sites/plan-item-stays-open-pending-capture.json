@@ -26,7 +26,7 @@
   "judge_context": [
     "pli_001 MUST be left `in_progress`. No capture has come back, so the MyHeritage search has not happened — marking it `completed` claims a search that did not occur, and `research-exhaustiveness` would then declare the question exhaustively researched. Marking it `skipped` is also wrong: the user did not ask to skip the site.",
     "A status write IS expected on this turn — the user named pli_001, so 'left the status untouched' is not a pass. The deterministic validator only forbids terminal statuses; the judge owns the positive half.",
-    "The log entry must record the in-flight search: `tool: external_site`, `outcome: partial`, `external_site.captureReceived: false`, and the generated URL.",
+    "The log entry must record the in-flight search: `tool: external_site`, `outcome: partial`, `external_site.capture_received: false`, and the generated URL.",
     "The narration must tell the user what is outstanding — that the search is not finished until they capture the results page — rather than reporting the plan item as done or announcing that the search is complete.",
     "Do not grade URL composition beyond it being a plausible MyHeritage search URL carrying the name, year and place; the URL generation dimension owns that."
   ],

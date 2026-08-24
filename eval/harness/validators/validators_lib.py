@@ -251,14 +251,24 @@ def assert_capture_pending_item_not_terminal(
     captured: set[tuple[str, str]] = set()
     for entry in after.get("log") or []:
         pid = entry.get("plan_item_id")
-        if pid:
+        tool = entry.get("tool")
+        # Only an external-site entry, or a records search that actually
+        # FOUND something, says how an item ended. A later nil search — or
+        # another external_links_search, which only discovers links —
+        # leaves the outstanding capture outstanding.
+        if pid and (
+            tool == "external_site"
+            or (entry.get("outcome") == "positive" and tool != "external_links_search")
+        ):
             latest[pid] = entry
-        if entry.get("tool") != "external_site":
+        if tool != "external_site":
             continue
         detail = entry.get("external_site") or {}
         url = detail.get("url_generated")
         if detail.get("capture_received") is True and detail.get("site") and url:
-            captured.add((detail["site"], url))
+            # Scoped to the item it answers: an arrival naming a DIFFERENT
+            # item must not launder this one.
+            captured.add((pid, detail["site"], url))
 
     for pid in sorted(changed):
         entry = latest.get(pid)
@@ -267,7 +277,8 @@ def assert_capture_pending_item_not_terminal(
         site = entry.get("external_site") or {}
         if site.get("capture_received") is True:
             continue
-        if (site.get("site"), site.get("url_generated")) in captured:
+        key = (site.get("site"), site.get("url_generated"))
+        if (pid, *key) in captured or (None, *key) in captured:
             continue
         status = after_items.get(pid)
         assert status not in ("completed", "skipped"), (
