@@ -248,7 +248,7 @@ def assert_capture_pending_item_not_terminal(
     # Captures that arrived, keyed by the search they answer. Step 6 does not
     # say to carry `planItemId` onto the arrival, so a triaged capture can be
     # invisible per-item; `(site, url_generated)` identifies the same handoff.
-    captured: set[tuple[str, str]] = set()
+    captured: set[tuple[str | None, str, str]] = set()
     for entry in after.get("log") or []:
         pid = entry.get("plan_item_id")
         tool = entry.get("tool")
