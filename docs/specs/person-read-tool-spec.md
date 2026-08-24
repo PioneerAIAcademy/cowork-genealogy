@@ -92,9 +92,12 @@ Each person object:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `id` | string | no | Fact id, passed through when FamilySearch supplies one (`simplifyFact`). Absent otherwise — the caller mints one before persisting |
 | `type` | string | yes | Fact type — last segment of the GEDCOMX URI (e.g., `"Birth"`, `"Death"`, `"MilitaryService"`) |
 | `date` | string | no | Date string as entered (from `date.original`) |
+| `standard_date` | string | no | Canonical GEDCOM-form sidecar for `date`, from `stdDate` (e.g., `"Abt 1845"`, `"12 Mar 1908"`). Omitted only when `stdDate` cannot parse the input |
 | `place` | string | no | Place string as entered (from `place.original`) |
+| `standard_place` | string | no | Standardized place-name sidecar for `place`: from the raw GedcomX `place.normalized` when present, otherwise filled by the document-level resolver pass (`toSimplifiedStandardized`). Best-effort — omitted when the resolver cannot match the free-text place |
 | `value` | string | no | Fact value when present (e.g., job title for Occupation) |
 
 ### `relationships[]`
@@ -142,11 +145,11 @@ Present when `sourceDescriptions: true`. Each source object:
       "living": false,
       "names": [{ "prefix": "General", "given": "George", "surname": "Washington" }],
       "facts": [
-        { "type": "Birth", "date": "22 February 1732", "place": "Westmoreland, Virginia, British Colonial America" },
-        { "type": "Death", "date": "14 December 1799", "place": "Mount Vernon, Fairfax County, Virginia, United States" },
-        { "type": "Burial", "date": "18 December 1799", "place": "Mount Vernon Estate, Mount Vernon, Fairfax, Virginia, United States" },
-        { "type": "Occupation", "date": "1749", "value": "Surveyor" },
-        { "type": "MilitaryService", "date": "between 1752 and 1758", "place": "Virginia, British Colonial America" }
+        { "type": "Birth", "date": "22 February 1732", "standard_date": "22 Feb 1732", "place": "Westmoreland, Virginia, British Colonial America", "standard_place": "Westmoreland, Virginia, United States" },
+        { "type": "Death", "date": "14 December 1799", "standard_date": "14 Dec 1799", "place": "Mount Vernon, Fairfax County, Virginia, United States", "standard_place": "Mount Vernon, Fairfax, Virginia, United States" },
+        { "type": "Burial", "date": "18 December 1799", "standard_date": "18 Dec 1799", "place": "Mount Vernon Estate, Mount Vernon, Fairfax, Virginia, United States", "standard_place": "Mount Vernon, Fairfax, Virginia, United States" },
+        { "type": "Occupation", "date": "1749", "standard_date": "1749", "value": "Surveyor" },
+        { "type": "MilitaryService", "date": "between 1752 and 1758", "standard_date": "Bet 1752 and 1758", "place": "Virginia, British Colonial America", "standard_place": "Virginia, United States" }
       ]
     },
     {
@@ -155,8 +158,8 @@ Present when `sourceDescriptions: true`. Each source object:
       "living": false,
       "names": [{ "given": "Martha", "surname": "Dandridge" }],
       "facts": [
-        { "type": "Birth", "date": "2 June 1731" },
-        { "type": "Death", "date": "22 May 1802" }
+        { "type": "Birth", "date": "2 June 1731", "standard_date": "2 Jun 1731" },
+        { "type": "Death", "date": "22 May 1802", "standard_date": "22 May 1802" }
       ]
     },
     {
@@ -165,8 +168,8 @@ Present when `sourceDescriptions: true`. Each source object:
       "living": false,
       "names": [{ "given": "Augustine", "surname": "Washington", "suffix": "Sr." }],
       "facts": [
-        { "type": "Birth", "date": "1694", "place": "Westmoreland, Virginia, British Colonial America" },
-        { "type": "Death", "date": "12 April 1743", "place": "King George, Virginia, British Colonial America" }
+        { "type": "Birth", "date": "1694", "standard_date": "1694", "place": "Westmoreland, Virginia, British Colonial America", "standard_place": "Westmoreland, Virginia, United States" },
+        { "type": "Death", "date": "12 April 1743", "standard_date": "12 Apr 1743", "place": "King George, Virginia, British Colonial America", "standard_place": "King George, Virginia, United States" }
       ]
     }
   ],
@@ -177,7 +180,7 @@ Present when `sourceDescriptions: true`. Each source object:
       "person1": "KNDX-MKG",
       "person2": "KNZC-6QV",
       "facts": [
-        { "type": "Marriage", "date": "6 January 1759", "place": "New Kent, Virginia, British Colonial America" }
+        { "type": "Marriage", "date": "6 January 1759", "standard_date": "6 Jan 1759", "place": "New Kent, Virginia, British Colonial America", "standard_place": "New Kent, Virginia, United States" }
       ]
     }
   ],

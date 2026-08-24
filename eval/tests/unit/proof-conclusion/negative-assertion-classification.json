@@ -5,21 +5,27 @@
     "name": "Informant primary/secondary question should route to record-extraction",
     "type": "negative",
     "description": "The user challenges the persisted 'secondary' informant classification for the father's name on src_004 and asks for a reevaluation. That is GPS Step 3 evidence classification — owned by record-extraction since the assertion-classification merge (2026-07-11) — not writing a proof conclusion. A reevaluation is a classification-change request, so neither a generic informant lecture nor an inline read-back of the stored value can satisfy it.",
-    "expected_outcome": "xfail",
-    "xfail_reason": "Routing-flaky near-miss with no non-vacuous state invariant to grade on — the sibling case to _010. proof-conclusion is graded here on activation/routing (did it decline+route to record-extraction vs. reevaluate the classification inline), and whether it invokes record-extraction or just narrates the handoff is model-variance — single runs flip pass/fail (passed 2 of 3 recent runs; failed in v1_2026-07-23_17-10-20 where the skill produced an inline reclassification analysis instead of routing). It cannot use negative.grade_on_invariant: in the failing run the skill persisted NOTHING to research.json, and proof-conclusion structurally cannot write an assertion classification (that is record-extraction's extraction_append), so 'no classification change persisted' always holds and the invariant validator would pass vacuously — the exact case docs/plan/invariant-grading.md excludes (cf. _010, citation _011). Remove when proof-conclusion gains a reliable decline-guard for out-of-scope classification-reevaluation prompts (the /research orchestrator already handles this routing in production, so the skill never sees this prompt live).",
-    "tags": ["near-miss", "proof-vs-classification", "boundary"]
+    "expected_outcome": "pass",
+    "tags": [
+      "near-miss",
+      "proof-vs-classification",
+      "boundary"
+    ]
   },
   "input": {
     "user_message": "I'm not sure 'secondary' is right for the father's name on src_004 — can you reevaluate the informant classification?",
     "scenario": "mid-research-flynn"
   },
   "negative": {
-    "correct_skill": ["record-extraction"],
+    "correct_skill": [
+      "record-extraction"
+    ],
     "explanation": "Judging whether an informant provides primary or secondary information is three-layer evidence classification — record-extraction's job (it writes classifications at extraction and refines them on request; the former assertion-classification skill was merged into it). proof-conclusion uses classifications that already exist on assertions; it does not assign them."
   },
   "judge_context": [
     "Should route to record-extraction (the classification owner since the assertion-classification merge) rather than producing a GPS proof narrative",
     "The user asks to REEVALUATE a persisted classification — a classification-change request against src_004 (Patrick's 1908 death certificate), whose father's-name assertion a_013 already exists in research.json with information_quality 'secondary' and informant James Brown (son-in-law). Correct behavior routes the reevaluation to record-extraction; an inline read-back of the stored value, however accurate, does not satisfy the request and fails",
-    "Reporting what a_013 currently says on file (with attribution to the stored assertion) alongside the record-extraction redirect is acceptable; any write to research.json from this boundary fails"
+    "Reporting what a_013 currently says on file (with attribution to the stored assertion) alongside the record-extraction redirect is acceptable; any write to research.json from this boundary fails",
+    "Relabelled from `xfail` to `pass` on 2026-08-21. It xfailed in all five runs before the proof-conclusion agent conversion and xpassed in all five after, with the boundary exactly at the conversion. That is a behavioural change, not variance: routing an out-of-scope prompt is the whole job of the thin routing skill, which is 2.8 KB against the 28.9 KB monolith it replaced, so there is far less competing for its attention. If this regresses, suspect the routing skill growing."
   ]
 }
