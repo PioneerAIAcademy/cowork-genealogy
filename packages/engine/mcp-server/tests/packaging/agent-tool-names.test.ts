@@ -424,6 +424,25 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     ],
     denies: ["materialize_facts", "research_append", "tree_edit"],
   },
+  // The only caller permitted to set `exhaustive_declaration.declared: true`;
+  // the plugin PreToolUse hook denies that claim to everyone else. Like
+  // proof-conclusion it holds the BROAD research_append, and the hook's caller
+  // check — not this list — is what restricts it.
+  //
+  // Every tree writer is denied, not just `tree_edit`. This agent writes one
+  // field on one question and must never reach the tree; a deny naming one of
+  // five writers fails open on the other four, silently, and no CI job sees it.
+  "research-exhaustiveness.md": {
+    tools: ["Read", "project_context", "research_append", "research_query"],
+    denies: [
+      "extraction_append",
+      "materialize_facts",
+      "merge_tree_persons",
+      "tree_correct",
+      "tree_edit",
+      "tree_forget",
+    ],
+  },
 };
 
 /** Bare name for an MCP entry; non-MCP built-ins (`Read`) pass through as-is. */

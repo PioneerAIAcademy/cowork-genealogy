@@ -384,9 +384,9 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
 
 .PHONY: gate-skill
-gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test + holdout (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
+gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
 	# The verify step of the skill-improvement loop (docs/skill-lifecycle.md §6).
-	# Runs the mined motivating test + the skill's holdout tests on your working-tree
+	# Runs the mined motivating test on your working-tree
 	# candidate (one side, mock-backed) and compares to the incumbent scores from the
 	# skill's most recent run-log — the pre-edit `make eval-skill` run you did at
 	# step 4, with human .ann corrections overlaid. Prints a per-dimension comparison
