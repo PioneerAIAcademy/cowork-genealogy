@@ -12,12 +12,14 @@ to the harness observes skill *completion* (spec §7, "What the success gate can
 and cannot see"; `e2e/skill_episode_report.py` is the measurement). The window
 barely changes the count from 10 to 150, which was the early tell. What this
 report is still for: reading the shadow signal as measurement, and the §8/§7.5
-post-hoc families below, whose graduations are live questions.
+post-hoc families and the §11 unnamed-delegate check below, whose graduations
+(§11 aside — it stays shadow, reported) are live questions.
 
 **Stored and replayed are different questions.** Each family is printed twice: a
-STORED count, read from what a run wrote into `guardrail_shadow_violations` when
-it ran, and — under `--replay` — a REPLAYED count, recomputed now from the run's
-committed final state. A stored count reads 0 over every run made before that
+STORED count, read from what a run recorded when it ran, and — under `--replay` —
+a REPLAYED count, recomputed now from the run's committed log: its final-state
+sidecars, or its `tool_calls` ledger for the #963 provenance and §11
+unnamed-delegate checks. A stored count reads 0 over every run made before that
 check shipped, so on a corpus that is 84% July it measures the corpus's age
 rather than the behaviour. Read `--replay` before concluding a check never fires.
 
@@ -834,7 +836,8 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description=(
             "Replay the §7 shadow window and report the §8/§7.5 post-hoc families "
-            "over committed e2e runs, stored and (with --replay) recomputed."
+            "and the §11 unnamed-delegate check over committed e2e runs, stored and "
+            "(with --replay) recomputed."
         )
     )
     ap.add_argument("--test", help="scan every committed run for this fixture slug only")
@@ -848,12 +851,13 @@ def main(argv: list[str] | None = None) -> int:
         "--replay",
         action="store_true",
         help=(
-            "additionally RECOMPUTE all four post-hoc families instead of only reading "
-            "what runs stored: the #963 provenance check from tool_calls + each "
-            "fixture's committed seed tree, and the three §7/§7.5 checks from each run's "
-            "committed final-research / final-tree sidecars. The stored path sees only "
-            "runs made after each check shipped, which on today's corpus is a small "
-            "minority; this reads the whole historical corpus."
+            "additionally RECOMPUTE the four post-hoc families and the §11 "
+            "unnamed-delegate check instead of only reading what runs stored: the "
+            "#963 provenance check from tool_calls + each fixture's committed seed "
+            "tree, the three §7/§7.5 checks from each run's committed final-research "
+            "/ final-tree sidecars, and §11 from each run's tool_calls. The stored "
+            "path sees only runs made after each check shipped, which on today's "
+            "corpus is a small minority; this reads the whole historical corpus."
         ),
     )
     add_since_arg(ap)

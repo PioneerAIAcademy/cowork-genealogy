@@ -973,8 +973,12 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
         # One segment only: a hypothetical double-namespace ("a:b:record-extractor")
         # over-flags rather than over-exempts, which is the safe direction for a
         # shadow-only report; the live probe only ever showed the single-colon form.
+        # A non-str agent_type (never seen from the SDK, which stamps str|None) maps
+        # to None so the `in DEDICATED_AGENT_NAMES` membership test below cannot raise
+        # TypeError on an unhashable value under a corpus-wide replay; None flags,
+        # the same safe over-flag direction.
         bare_agent_type = (
-            agent_type.split(":", 1)[-1] if isinstance(agent_type, str) else agent_type
+            agent_type.split(":", 1)[-1] if isinstance(agent_type, str) else None
         )
 
         if bare_tool_name(tool) == "extraction_append":

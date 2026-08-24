@@ -838,6 +838,45 @@ def test_replay_post_hoc_lines_appear_in_main_under_replay(tmp_path, capsys, mon
     assert "carry any caller attribution at all" in out
 
 
+def test_stored_unnamed_delegate_line_prints_in_main_without_replay(
+    tmp_path, capsys, monkeypatch
+):
+    """The §11 STORED line + its denominator must print on the DEFAULT
+    `make e2e-guardrail-shadow` (no --replay), not only under --replay. The other
+    main() test pins the replay path; without this, gating the §11 print behind
+    `if args.replay:` would drop it from the default command with every test still
+    green — the can't-fail shape on the feature's own most-common output."""
+    import e2e.guardrail_shadow_report as mod
+
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    d = tmp_path / "eval" / "runlogs" / "e2e" / "antonio"
+    d.mkdir(parents=True, exist_ok=True)
+    run = d / "run-2026-07-01_00-00-00.json"
+    run.write_text(
+        json.dumps(
+            {
+                "protected_writes_by_unnamed_delegate": [
+                    "tool_calls[5] extraction_append ... general-purpose"
+                ],
+                "tool_calls": [
+                    {"tool": "Read", "agent_id": "s1", "agent_type": "general-purpose"}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(mod, "E2E_FIXTURES", fixtures)
+    monkeypatch.setattr(mod, "all_result_jsons", lambda: [run])
+
+    assert mod.main(["--since", "all"]) == 0
+    out = capsys.readouterr().out
+    assert "§11 unnamed-delegate" in out
+    assert "1 protected write(s)" in out
+    assert "of 1 run(s) that carry any caller attribution at all" in out
+    # the replay-only line must NOT appear without --replay.
+    assert "replayed over tool_calls" not in out
+
+
 # --- scan_unnamed_delegate (issue #980) ------------------------------------
 
 

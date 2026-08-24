@@ -429,10 +429,11 @@ corpus only grows:
 make e2e-guardrail-shadow REPLAY=1 SINCE=all
 ```
 
-`REPLAY=1` recomputes **all four** post-hoc families, not just `same_person`
-provenance: that one from each run's `tool_calls` plus its fixture's committed
-seed tree, and the three §7/§7.5 checks from each run's committed
-`.final-research.json` / `.final-tree.gedcomx.json` sidecars. Each is a distinct
+`REPLAY=1` recomputes **the four post-hoc families and the §11 unnamed-delegate
+check**, not just `same_person` provenance: that one from each run's `tool_calls`
+plus its fixture's committed seed tree, the three §7/§7.5 checks from each run's
+committed `.final-research.json` / `.final-tree.gedcomx.json` sidecars, and §11
+from each run's `tool_calls`. Each is a distinct
 number from the *stored* count printed above it, and the distinction is the thing
 to understand before reading either:
 
