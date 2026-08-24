@@ -20,8 +20,10 @@ Did the skill resist the temptation to declare exhaustive prematurely? An honest
 
 ## Stop criteria coverage
 
-Once the skill evaluates exhaustiveness, are all 7 stop criteria addressed — in the `stop_criteria` object when it declares, or in prose when it declines? N/A when the run refuses before evaluating (a plan-item precondition, or an already-declared question).
+Are the 7 stop criteria assessed with **substance** — each tied to specific project state rather than merely asserted? N/A when the run refuses before evaluating — ANY precondition (classification, identity links, tentative values, an in-flight plan item), or an already-declared question. A decline at a precondition is not a thin assessment; it is a run that never reached the criteria.
 
-- **pass:** All seven criteria (`goal_alignment`, `repository_breadth`, `original_substitution`, `independent_verification`, `evidence_class`, `conflict_resolution`, `overturn_risk`) are addressed with 1–2 sentence assessments tied to specific log entries or assertions — as object keys when declaring, or as named prose when declining.
+**Grade the content, not the presence.** That the seven keys exist at all on a declaring run is asserted deterministically by `test_declared_has_full_stop_criteria` in the skill's validator, so do not spend this dimension on it — a validator names a missing key in one line, where a judge gives an opinion that moves between runs. What only a reader can judge is whether each assessment says anything: "Census, vital records and probate all searched" is an assessment, "Yes" is not. That distinction applies on both paths — as object values when the run declares, as named prose when it declines. An earlier revision narrowed this dimension to the declining path and so left a declaration with seven one-word criteria graded by nothing at all.
+
+- **pass:** All seven criteria (`goal_alignment`, `repository_breadth`, `original_substitution`, `independent_verification`, `evidence_class`, `conflict_resolution`, `overturn_risk`) carry a 1–2 sentence assessment tied to a specific log entry or assertion — as object values when declaring, as named prose when declining.
 - **partial:** All seven addressed but at least one is generic boilerplate ("yes" with no specifics), or one is missing but the surrounding justification covers it.
 - **fail:** Two or more of the seven unaddressed, or the assessments are all generic without reference to project state.

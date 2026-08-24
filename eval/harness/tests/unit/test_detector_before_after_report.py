@@ -89,6 +89,27 @@ def test_lane_check_old_and_new_agree_when_the_same_entry_is_not_errored():
     assert len(_lane_check_old(calls)) == len(_lane_check_new(calls)) == 1
 
 
+def test_lane_check_old_mirrors_the_namespace_strip_no_divergence_on_a_namespaced_agent():
+    """The replica must strip the plugin namespace exactly as the live detector does,
+    or the old-vs-new diff would blame a namespaced value on the #1569 is_error fix
+    (#1856, found in review). A namespaced record-extractor is exempt under BOTH
+    clauses, so old and new must agree at zero. Reverting the strip in _lane_check_old
+    makes old flag the namespaced value while new does not -> a spurious divergence."""
+    # owning_skills clause (materialize_facts owned by person-evidence)
+    owned = [_owned_write(agent_id="a1", agent_type="genealogy-research:record-extractor")]
+    assert _lane_check_old(owned) == _lane_check_new(owned) == []
+    # extraction_append clause
+    extraction = [
+        {
+            "tool": "mcp__genealogy__extraction_append",
+            "args": {},
+            "agent_id": "a1",
+            "agent_type": "genealogy-research:record-extractor"
+        }
+    ]
+    assert _lane_check_old(extraction) == _lane_check_new(extraction) == []
+
+
 def test_format_divergences_on_an_empty_list():
     out = format_divergences("lane-check", [])
     assert "no divergence" in out

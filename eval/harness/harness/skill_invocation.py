@@ -797,16 +797,20 @@ def check_guardrail_compliance(
     )
 
 
-# The four dedicated Cowork agents under packages/engine/plugin/agents/*.md —
-# each carries its own self-contained, baked-in doctrine (per CLAUDE.md's "No
+# The dedicated Cowork agents under packages/engine/plugin/agents/*.md — each
+# carries its own self-contained, baked-in doctrine (per CLAUDE.md's "No
 # playbook/reference files for agents": the agent body IS the doctrine), so a
 # protected write made by one of these is trusted without further doctrine
 # checks. `general-purpose` (the SDK's own blank-slate fallback) and any
 # other subagent_type are NOT in this set and start with no doctrine of their
 # own. Hand-maintained: no existing code enumerates this list (build_workspace
-# globs the directory but never hardcodes names), so adding a 5th agent file
+# globs the directory but never hardcodes names), so adding an agent file
 # without updating this set makes find_protected_writes_by_unnamed_delegate
 # under-flag (fail toward false-negative, not false-positive).
+#
+# The count is derivable — `ls packages/engine/plugin/agents/*.md` — so this
+# comment does not state one. It said "four" over a set of five for the four
+# days after proof-conclusion was added.
 DEDICATED_AGENT_NAMES = frozenset(
     {
         "record-extractor",
@@ -819,8 +823,31 @@ DEDICATED_AGENT_NAMES = frozenset(
         # as an unnamed-delegate bypass — the detector would fire hardest on
         # exactly the runs that did the right thing.
         "proof-conclusion",
+        # Same shape, for the exhaustiveness claim (issue #1335, Phase 4): the
+        # hook routes `exhaustive_declaration.declared: true` to this agent, so
+        # every legitimate declaration now arrives from it.
+        "research-exhaustiveness",
     }
 )
+
+
+def strip_agent_namespace(agent_type: Any) -> str | None:
+    """The bare agent name for comparison, from a hook-stamped ``agent_type``.
+
+    Cowork logs a plugin-namespaced spelling ("genealogy-research:record-extractor")
+    while the harness reports bare names; strip a leading "<plugin>:" segment so an
+    equality/membership test that is green in CI is not dead the moment it sees
+    production data — the #650/#698/#939 failure shape (a live 2026-08-15 Cowork
+    probe logged "genealogy-research:image-reader"). One segment only: a double
+    namespace ("a:b:record-extractor") over-flags rather than over-exempts, the safe
+    direction for a shadow-only report. A non-str (never stamped by the SDK, which
+    emits str|None) maps to ``None`` so a ``in DEDICATED_AGENT_NAMES`` membership
+    test cannot raise ``TypeError`` on an unhashable value under a corpus-wide
+    replay; ``None`` flags, the same safe over-flag direction. Callers keep the RAW
+    ``agent_type`` for violation messages. Shared by the live detector below and its
+    lane-check replica (``e2e/detector_before_after_report.py::_lane_check_old``) so
+    the two cannot drift on the strip (#1856)."""
+    return agent_type.split(":", 1)[-1] if isinstance(agent_type, str) else None
 
 
 def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) -> list[str]:
@@ -919,19 +946,27 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     empty) — the same structural reason `find_effects_without_invocation`
     never needed a gps-mentor special case either.
 
-    Known gap, not yet exercised in the corpus: this treats ANY of
-    `DEDICATED_AGENT_NAMES` as sufficient for a `GUARDRAIL_SKILLS`-owned
-    write, unlike `extraction_append`'s tighter single-name check. That is
-    currently a no-op in practice — `record-extractor` explicitly disallows
-    `research_append` and never declares `materialize_facts`/`tree_edit`,
-    `image-reader`/`image-reader-opus` hold no writer tool at all, and
-    `gps-mentor`'s only writer tool is structurally exempted via the
-    `evaluations[]` carve-out above — but that's enforced by each agent's
-    own `tools:`/`disallowedTools` declaration, not by this function. A
-    future agent-file edit that gave any dedicated agent a legitimate-but-
-    narrow reason to touch a `GUARDRAIL_SKILLS`-owned section would make
-    this check silently accept it — see the identical caution already on
-    `DEDICATED_AGENT_NAMES` above about a 5th agent file.
+    Known gap, and it is LIVE — this paragraph used to say it was not.
+
+    This treats ANY of `DEDICATED_AGENT_NAMES` as sufficient for a
+    `GUARDRAIL_SKILLS`-owned write, unlike `extraction_append`'s tighter
+    single-name check. It was a no-op while the set held only agents that
+    could not reach such a section: `record-extractor` disallows
+    `research_append` and never declares `materialize_facts`/`tree_edit`, the
+    two image readers hold no writer tool at all, and `gps-mentor`'s only
+    writer tool is structurally exempted via the `evaluations[]` carve-out
+    above.
+
+    Two agents since have exactly the shape the old text warned a future edit
+    would create, and both are in `GUARDRAIL_SKILLS` above: `proof-conclusion`
+    holds `research_append` and writes `proof_summaries`, and
+    `research-exhaustiveness` holds it and writes `questions`. So a
+    `proof_summaries` write attributed to the exhaustiveness agent — or a
+    declaration attributed to proof-conclusion — is accepted here today. What
+    actually stops it is the plugin hook's per-agent lane
+    (`AGENT_WRITABLE_SECTIONS`), which does not reach either harness. Closing
+    it here means keying the exemption on (agent, section) rather than on
+    agent alone, which is the same map the hook already carries.
 
     Ships in shadow mode only (`e2e/orchestrator.py`'s
     `protected_writes_by_unnamed_delegate`, logged, never denied): historical
@@ -948,9 +983,13 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
         args = entry.get("args") or {}
         agent_id = entry.get("agent_id")
         agent_type = entry.get("agent_type")
+        # Compare on the namespace-stripped name (Cowork logs "<plugin>:record-extractor";
+        # the harness logs bare) but keep the RAW agent_type in the messages below. See
+        # strip_agent_namespace for the #650/#698/#939 rationale and the over-flag safety.
+        bare_agent_type = strip_agent_namespace(agent_type)
 
         if bare_tool_name(tool) == "extraction_append":
-            if agent_id is None or agent_type == "record-extractor":
+            if agent_id is None or bare_agent_type == "record-extractor":
                 continue
             violations.append(
                 f"tool_calls[{i}] extraction_append was made by agent_type="
@@ -960,7 +999,7 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
             continue
 
         owners = owning_skills(tool, args)
-        if not owners or agent_id is None or agent_type in DEDICATED_AGENT_NAMES:
+        if not owners or agent_id is None or bare_agent_type in DEDICATED_AGENT_NAMES:
             continue
         for owner in owners:
             violations.append(

@@ -384,9 +384,9 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
 
 .PHONY: gate-skill
-gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test + holdout (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
+gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
 	# The verify step of the skill-improvement loop (docs/skill-lifecycle.md §6).
-	# Runs the mined motivating test + the skill's holdout tests on your working-tree
+	# Runs the mined motivating test on your working-tree
 	# candidate (one side, mock-backed) and compares to the incumbent scores from the
 	# skill's most recent run-log — the pre-edit `make eval-skill` run you did at
 	# step 4, with human .ann corrections overlaid. Prints a per-dimension comparison
@@ -592,17 +592,21 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
-e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc shadow families over committed runs, stored and recomputed: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1
+e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc + §11 unnamed-delegate shadow families over committed runs, stored and recomputed: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1
 	# Also pure analysis, no API. Windowed to 14 days like every other reader;
 	# SINCE=all for a maximum-sample replay.
 	# NOT a calibration tool: §7 is shadow-only permanently (its success gate
 	# cannot see skill completion — see guardrail-enforcement-spec.md §7 and
 	# `make e2e-skill-episodes`), so WINDOWS= compares are for reading the
 	# signal, not for choosing a value to ship.
-	# REPLAY=1 additionally RECOMPUTES all four post-hoc families: the §8
-	# person_evidence provenance check from tool_calls + each fixture's committed
-	# seed tree, and the three §7/§7.5 checks from each run's committed
-	# final-research / final-tree sidecars.
+	# REPLAY=1 additionally RECOMPUTES the shadow families instead of only reading
+	# what runs stored: the four post-hoc families (the §8 person_evidence
+	# provenance check from tool_calls + each fixture's committed seed tree, and the
+	# three §7/§7.5 checks from each run's committed final-research / final-tree
+	# sidecars) and the §11 unnamed-delegate check (issue #980) from tool_calls,
+	# which is the only half that reflects a later detector change such as the
+	# namespaced-agent_type tolerance. The §11 count always prints its attribution
+	# denominator — how many runs carry any caller attribution to fire on at all.
 	# READ THE REPLAY BEFORE CONCLUDING A CHECK NEVER FIRES. The stored counts
 	# above only cover runs made after each check shipped -- all three post-hoc
 	# checks landed in August against a corpus that is 84% July, so their zeros
