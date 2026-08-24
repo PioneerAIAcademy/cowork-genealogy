@@ -399,3 +399,29 @@ def test_feedback_window_matches_the_e2e_shadow_window():
         f"GUARDRAIL_SHADOW_WINDOW in e2e/orchestrator.py — the #1484 e2e "
         f"baseline comparison is only meaningful at one window."
     )
+
+
+def test_report_footer_marks_the_proof_summaries_arm_as_by_construction():
+    """The zero this arm prints is not a measurement, and #1054 is waiting on
+    these numbers — so the report must never let it read as one. Deleting the
+    sentence otherwise breaks no test, which is how an unguarded prose claim
+    goes missing in a refactor. Matched on the load-bearing terms rather than
+    the full sentence, so rewording stays free and deletion does not."""
+    report = format_feedback_report([
+        {
+            "bundle": "b", "platform": "web", "has_transcript": False,
+            "truncated": False, "could_not_adapt": False, "tool_call_count": 0,
+            "skill_call_count": 0, "session_ids": [], "has_research": True,
+            "research_unreadable": False, "unguarded_writes": [],
+            "missing_mentor_verdicts": [],
+        }
+    ])
+    lowered = report.lower()
+    assert "proof_summaries" in lowered
+    assert "by construction" in lowered, (
+        "the report no longer says the proof_summaries zero is by construction — "
+        "since the 2026-08-19 skill/agent split that write happens inside the "
+        "proof-conclusion agent, whose transcript a bundle does not carry, so the "
+        "count is 0 whatever happened (spec § 'Options set aside')."
+    )
+    assert "not by measurement" in lowered
