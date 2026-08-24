@@ -976,13 +976,18 @@ describe("tree_forget", () => {
   });
 
   it("reports a missing project file without throwing", async () => {
+    // `dir` is a bare temp directory here — writeProject was never called — so
+    // this is the no-project answer rather than a read failure (issue #1695).
+    // The original point of the test survives: it returns rather than throwing.
+    // The loud case this used to assert (a real project whose tree is gone) is
+    // pinned in tests/tools/no-project.test.ts.
     const r = await treeForget({
       projectPath: dir,
       forget: [{ selector: "person", personId: "I1" }],
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors[0]).toMatch(/tree\.gedcomx\.json not found/);
+    expect((r as any).reason).toBe("no_project");
   });
 
   // ─── validate before persist ───────────────────────────────────────────────

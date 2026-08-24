@@ -119,15 +119,17 @@ export const VALIDATOR_ENUMS = {
   external_site: EXTERNAL_SITE_VALUES,
 } satisfies Record<string, ReadonlySet<string>>;
 
-// research.schema.json binds these fields to enums.schema.json#/$defs/iso_date
-// (^\d{4}-\d{2}-\d{2}$): project.created/updated, known_holdings[].created,
-// questions[].created/resolved, plans[].created, sources[].access_date, and
-// person_evidence[].created. The hand-maintained validator must enforce the
-// same pattern at exactly those sites — prose dates ("12 July 2026") persisted
-// through the writer tools while this check was missing.
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+// The iso_date pattern (enums.schema.json#/$defs/iso_date), hand-copied here for
+// LLM-actionable error text. validator.test.ts asserts this source against that
+// $def so the copy cannot drift. The list of fields it is applied at is
+// deliberately not enumerated — that list went stale (named 8, applied at 10)
+// and the enumeration is what created the staleness.
+export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-const ID_PREFIXES: Record<string, string> = {
+// Hand-copied from each section's `properties.id.pattern` in research.schema.json.
+// validator.test.ts diffs this against the schema (key-set both ways + prefix)
+// so a new id-prefixed section cannot get here without a check, or drift from it.
+export const ID_PREFIXES: Record<string, string> = {
   project: "rp_",
   known_holdings: "kh_",
   questions: "q_",
@@ -646,6 +648,36 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       }
       if (ed.declared && ed.stop_criteria === null) {
         addError(report, `${qp}/exhaustive_declaration`, "declared is true but stop_criteria is null");
+      }
+      // `stop_criteria` is an object or null, never anything else. Without this
+      // arm a flat STRING cleared every check below it: `=== null` is false, so
+      // the arm above misses it; `typeof === "object"` is false, so the
+      // seven-field loop and the allowed-keys check are both skipped; and
+      // `stop_criteria` is itself an allowed KEY, so the enclosing
+      // checkAllowedKeys passes. The write then lands.
+      //
+      // Measured over the 157 committed e2e runs: 48 write ops put a string here
+      // (47 of them declaring), and 39 of the 154 persisted declared questions
+      // carry one — 25% of the corpus persisting a shape
+      // `research.schema.json` has always forbidden, with nothing checking.
+      // `typeof [] === "object"`, so an array needs its own arm — but only for
+      // the `declared: false` case, and the narrower claim is the true one. On
+      // `declared: true` the seven-field loop below already fires (its test is
+      // `!(field in sc)`, false for every key on an array) and a non-empty
+      // array's numeric indices are already rejected by `checkAllowedKeys`. An
+      // EMPTY array on an undeclared question is what slipped all three, which
+      // is exactly the vector that failed while this guard was written.
+      if (ed.stop_criteria !== undefined && ed.stop_criteria !== null
+          && (typeof ed.stop_criteria !== "object" || Array.isArray(ed.stop_criteria))) {
+        addError(
+          report,
+          `${qp}/exhaustive_declaration/stop_criteria`,
+          `must be an object with the seven stop criteria, or null — got ${Array.isArray(ed.stop_criteria) ? "array" : typeof ed.stop_criteria}. ` +
+            "A prose summary of the criteria does not satisfy GPS Component 1's per-criterion " +
+            "assessment: write the seven keys (goal_alignment, repository_breadth, " +
+            "original_substitution, independent_verification, evidence_class, conflict_resolution, " +
+            "overturn_risk), each with its own 1-2 sentence assessment.",
+        );
       }
       if (ed.declared && typeof ed.stop_criteria === "object" && ed.stop_criteria !== null) {
         const sc = ed.stop_criteria;

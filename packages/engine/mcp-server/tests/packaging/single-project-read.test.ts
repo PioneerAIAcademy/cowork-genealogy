@@ -9,7 +9,7 @@ import { dirname, join, relative } from "node:path";
 // readProjectJson recorded that and ended "Nothing enforces the line above."
 // That was true, which is how one copy became six. Consolidating without a
 // guard just resets the counter, so this is the guard: utils/project-io.ts is
-// the only place these two messages may be phrased.
+// the only place these messages may be phrased.
 //
 // Modelled on no-bare-fetch.test.ts, same shape and same reason.
 
@@ -17,11 +17,22 @@ const here = dirname(fileURLToPath(import.meta.url));
 const srcRoot = join(here, "..", "..", "src");
 const CANONICAL = join(srcRoot, "utils", "project-io.ts");
 
-// The two messages every private copy carried. Matching the STRINGS rather than
-// a helper name is deliberate: the copies were named readJson, readProjectJson
-// and nothing at all (inlined), so a name-based check misses the inlined case,
-// which is exactly the one that slipped in last time.
-const MESSAGES = ["not found in projectPath", "is not valid JSON"];
+// The first two are the messages every private copy carried. Matching the
+// STRINGS rather than a helper name is deliberate: the copies were named
+// readJson, readProjectJson and nothing at all (inlined), so a name-based check
+// misses the inlined case, which is exactly the one that slipped in last time.
+// The last two arrived with issue #1695 and are held to the same rule for the
+// same reason: both are relayed to a person unedited, so a second copy drifting
+// in a tool file is a second thing the user might read. `person_warnings`
+// classifies the directory itself instead of reading through readProjectJson,
+// so it is the one that would grow that copy — it calls
+// `missingProjectDirMessage` rather than phrasing the sentence again.
+const MESSAGES = [
+  "not found in projectPath",
+  "is not valid JSON",
+  "is not a research project",
+  "projectPath does not exist",
+];
 
 function collectTsFiles(dir: string): string[] {
   const out: string[] = [];
