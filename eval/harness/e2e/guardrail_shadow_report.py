@@ -824,6 +824,16 @@ def scan_feedback_bundle(
     if research_path.exists():
         try:
             research = json.loads(_submitted_research(bundle_dir, research_path))
+            # Valid JSON of the wrong TYPE is the gap `research_unreadable`
+            # otherwise misses. `_redact_living` rewrites only tree.gedcomx.json
+            # and says so ("a privacy filter, not a validator"), so research.json
+            # enters the bundle as raw bytes with nothing checking its shape. A
+            # truthy non-dict (a non-empty array, a string, a number) survives
+            # `research or {}` and reaches `.get()`, which raises and takes every
+            # other bundle's result down with it. Falsy non-dicts (`[]`, `null`)
+            # never crashed, but they are not a research document either.
+            if not isinstance(research, dict):
+                raise json.JSONDecodeError("research.json is not a JSON object", "", 0)
         except (json.JSONDecodeError, OSError):
             research = None
             out["research_unreadable"] = True
@@ -914,6 +924,11 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
         f"missing-mentor-verdict findings {mentor_total} across "
         f"{len(with_research)} bundle(s) with a readable research.json. "
         f"Corpus is small and self-selected — a signal, not a rate. "
+        f"The proof_summaries arm reports 0 BY CONSTRUCTION, not by measurement: "
+        f"since the 2026-08-19 skill/agent split that write is made inside the "
+        f"proof-conclusion AGENT, whose transcript a bundle does not carry, and a "
+        f"main-thread attempt is hook-denied and so skipped as is_error. The "
+        f"tree_edit/tree_correct arms are blind only to the agent route. "
         f"e2e baseline comparison pending issue #1484."
     )
     return "\n".join(lines)

@@ -1239,6 +1239,20 @@ this section before reopening one.
   `find_missing_mentor_verdicts` (reads `research.json` alone) are valid over a
   bundle; the adapter and report live in `eval/harness/e2e/`
   (`feedback_transcript_adapter.py`, `guardrail_shadow_report.py`).
+  **Two of `find_unguarded_protected_writes`' owner arms are blind over a bundle,
+  and one of those completely.** A bundle carries only the main session's
+  `{sid}.jsonl`, never the `subagents/agent-*.jsonl` beside it: `feedback.py`
+  reads `{sid}.jsonl` and its fallback loop skips anything `is_dir`, and
+  `readSessionLog` does a non-recursive `readdir`. Since the 2026-08-19
+  skill/agent split the `proof_summaries` write is made inside the
+  `proof-conclusion` agent, so it is invisible — and a main-thread attempt is
+  denied by `OWNED_SECTIONS` in `plugin/hooks/guard_project_files.py`, which the
+  transcript records as `is_error: true`, which the detector skips. That arm's
+  count is 0 whatever happened, so it must never be read as a measurement. The
+  `tree_edit`/`tree_correct` arms are blind only to the agent route: the hook
+  covers `research_append` alone, so a main-thread `primary: true` or
+  `ParentChild`/`Couple` write still fires. Recovering the agent route means
+  bundling the subagent transcripts, a change to `apps/server/app/feedback.py`.
 
 ## 10. Residual risks
 

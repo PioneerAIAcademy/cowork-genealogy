@@ -190,6 +190,27 @@ def test_unreadable_research_json_is_flagged_not_counted_as_clean(tmp_path):
     assert r_missing["has_research"] is False
     assert r_missing["research_unreadable"] is False
 
+    # Valid JSON of the wrong TYPE. Nothing validates research.json on its way
+    # into a bundle (`_redact_living` rewrites only tree.gedcomx.json and calls
+    # itself "a privacy filter, not a validator"), so this is reachable. A TRUTHY
+    # non-dict is the one that used to raise AttributeError out of
+    # `find_missing_mentor_verdicts` and take every other bundle's result with
+    # it — `research or {}` absorbs the falsy ones, so `[]` alone would not have
+    # caught the crash. Both must flag rather than read as a clean zero.
+    for name, payload in [
+        ("nonempty-list", '[{"question_id": "q_001"}]'),  # crashed before the guard
+        ("json-string", '"not a research document"'),  # crashed before the guard
+        ("number", "42"),  # crashed before the guard
+        ("empty-list", "[]"),  # falsy: never crashed, still not a research doc
+    ]:
+        wrong = tmp_path / f"wrong-type-{name}"
+        wrong.mkdir()
+        (wrong / "research.json").write_text(payload, encoding="utf-8")
+        r_wrong = scan_feedback_bundle(wrong)
+        assert r_wrong["has_research"] is True, name
+        assert r_wrong["research_unreadable"] is True, name
+        assert r_wrong["missing_mentor_verdicts"] == [], name
+
 
 # ── could_not_adapt vs quiet-session distinction (#1558 item 3) ───────────────
 
@@ -356,3 +377,25 @@ def test_scan_reads_submitted_research_not_a_mutated_working_tree(tmp_path):
     # Baseline (submitted) still had the gap -> one finding, despite the fix on disk.
     assert len(result["missing_mentor_verdicts"]) == 1
     assert "ps_001" in result["missing_mentor_verdicts"][0]
+
+
+# ── the feedback window must equal the e2e shadow window (#1484 comparison) ───
+
+def test_feedback_window_matches_the_e2e_shadow_window():
+    """`_FEEDBACK_WINDOW` is a copied literal, not an import: importing the
+    orchestrator would drag in the Claude Agent SDK, which this module is
+    deliberately free of. Copying means the two can drift silently, and the
+    report's own footer promises a comparison against the e2e baseline that a
+    divergence would quietly invalidate. Read the orchestrator's source as text
+    instead — no import, no SDK, and no line number to go stale."""
+    from e2e.guardrail_shadow_report import _FEEDBACK_WINDOW
+
+    src = Path(__file__).parents[2] / "e2e" / "orchestrator.py"
+    assert (
+        f"GUARDRAIL_SHADOW_WINDOW = {_FEEDBACK_WINDOW}\n"
+        in src.read_text(encoding="utf-8")
+    ), (
+        f"_FEEDBACK_WINDOW ({_FEEDBACK_WINDOW}) no longer matches "
+        f"GUARDRAIL_SHADOW_WINDOW in e2e/orchestrator.py — the #1484 e2e "
+        f"baseline comparison is only meaningful at one window."
+    )
