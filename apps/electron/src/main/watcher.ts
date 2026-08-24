@@ -49,6 +49,9 @@ export function getCurrentState(): {
 // so they don't need listing here.
 const NESTED_SCAN_SKIP_DIRS = new Set(['results', '_feedback', 'node_modules'])
 const NESTED_SCAN_MAX_DEPTH = 6
+// The picker's scan runs inside the ipcMain handler, so its cost is a freeze the
+// user watches. Kept shallow deliberately — see assertResearchProject.
+export const PICKER_SCAN_MAX_DEPTH = 2
 
 /**
  * Find `research.json` files sitting in SUBFOLDERS of the watched folder.
@@ -61,12 +64,15 @@ const NESTED_SCAN_MAX_DEPTH = 6
  * the top-level file itself is never included. Bounded in depth, and skips
  * hidden dirs and the known-legit nests so it stays cheap and quiet.
  */
-export async function findNestedResearchJson(folderPath: string): Promise<string[]> {
+export async function findNestedResearchJson(
+  folderPath: string,
+  maxDepth: number = NESTED_SCAN_MAX_DEPTH
+): Promise<string[]> {
   const found: string[] = []
   const root = resolve(folderPath)
 
   async function walk(dir: string, depth: number): Promise<void> {
-    if (depth > NESTED_SCAN_MAX_DEPTH) return
+    if (depth > maxDepth) return
     let entries: import('node:fs').Dirent[]
     try {
       entries = await readdir(dir, { withFileTypes: true })
@@ -147,7 +153,11 @@ export async function assertResearchProject(folderPath: string): Promise<void> {
     // No top-level research.json — work out which error the user needs.
   }
 
-  const nested = await findNestedResearchJson(folderPath)
+  // Bounded harder than the background scan: this one blocks the folder picker,
+  // and the wrong-folder path is exactly where a user lands here. At the full
+  // depth, picking a home directory by mistake freezes the dialog for seconds
+  // with no feedback; depth 2 still catches the reported shape.
+  const nested = await findNestedResearchJson(folderPath, PICKER_SCAN_MAX_DEPTH)
   if (nested.length > 0) {
     throw new Error(formatNestedPicker(nested))
   }

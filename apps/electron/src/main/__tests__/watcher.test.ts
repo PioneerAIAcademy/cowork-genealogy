@@ -10,7 +10,8 @@ import {
   findNestedResearchJson,
   formatNestedNotice,
   formatNestedPicker,
-  assertResearchProject
+  assertResearchProject,
+  PICKER_SCAN_MAX_DEPTH
 } from '../watcher'
 
 // Pure-helper tests. The chokidar integration (lifecycle, awaitWriteFinish,
@@ -245,10 +246,29 @@ describe('assertResearchProject (the select-folder gate)', () => {
     await mkdir(join(dir, 'sub'), { recursive: true })
     await writeFile(join(dir, 'sub', 'research.json'), '{}', 'utf-8')
     await expect(assertResearchProject(dir)).rejects.toThrow(/is in a subfolder/)
-    await expect(assertResearchProject(dir)).rejects.toThrow(/"sub\/research\.json"/)
+    // relative() yields the platform separator, so build the expected the same
+    // way (see findNestedResearchJson above). A regex with a literal "/" is
+    // green on Linux CI and red on Windows — and there it cannot distinguish
+    // "the lookup works" from "the lookup is gone".
+    await expect(assertResearchProject(dir)).rejects.toThrow(`"${join('sub', 'research.json')}"`)
   })
 
   it('falls back to the generic error when there is no research.json anywhere', async () => {
+    await expect(assertResearchProject(dir)).rejects.toThrow(/Not a research project/)
+  })
+
+  // The picker's scan blocks the folder dialog, so it is bounded harder than the
+  // background one (PICKER_SCAN_MAX_DEPTH). Pins that the bound is real: a hit
+  // deeper than it falls back to the generic error, while the background scan at
+  // full depth still finds it. Raising the picker's bound to the full depth
+  // fails this; lowering `depth > maxDepth` back to the constant fails it too.
+  it('does not walk the whole tree for the picker — deep hits fall back', async () => {
+    const deep = join(dir, 'a', 'b', 'c', 'd')
+    await mkdir(deep, { recursive: true })
+    await writeFile(join(deep, 'research.json'), '{}', 'utf-8')
+
+    await expect(findNestedResearchJson(dir)).resolves.toHaveLength(1)
+    await expect(findNestedResearchJson(dir, PICKER_SCAN_MAX_DEPTH)).resolves.toEqual([])
     await expect(assertResearchProject(dir)).rejects.toThrow(/Not a research project/)
   })
 })
