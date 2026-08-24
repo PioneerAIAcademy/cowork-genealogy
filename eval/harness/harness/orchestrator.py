@@ -353,10 +353,20 @@ def _skill_tokens(usage: dict[str, Any]) -> tuple[int, int, int, int, dict[str, 
     only reading that reconciles with the cost the run log already records.
 
     Measured before this existed: pricing each committed run log's own tokens
-    against its own cost put unpaired skills in a stable 1.6-1.8x band (the
-    uncaptured cache writes), `research-exhaustiveness` at 1.7x before it became
-    a skill-agent pair and 4.9x after on the same fixtures, and `proof-conclusion`
-    at 7.2x. The jump is the agent's tokens, billed and uncounted.
+    against its own cost put the 21 skills whose runs spawned no agent between
+    1.50x and 2.53x (median 1.78x; the spread is the uncaptured cache writes),
+    while every skill that did spawn one sat above that range —
+    `record-extraction` 3.90x, `research-exhaustiveness` 4.91x (against 1.75x on
+    the same fixtures one run earlier, before it became a skill-agent pair) and
+    `proof-conclusion` 6.58x. The jump is the agent's tokens, billed and
+    uncounted. Read a single ratio with the spread in mind: only a value clear
+    of 2.53x says anything on its own.
+
+    The e2e harness does NOT have this defect and must not be "fixed" to match:
+    all 78 committed e2e runs carrying a usable cost spawned an agent, and they
+    price at median 0.90x of recorded — pricing.py's own calibration figure —
+    where a main-thread-only count would put them near the 0.15-0.20x the unit
+    harness's paired skills show. Its `usage` block is already a session total.
 
     Falls back to `usage` when `model_usage` is absent — an older CLI, or the
     abort path where no ResultMessage arrived. The fallback cannot report cache

@@ -1273,7 +1273,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
     "duration_ms": "number (sum of all runs)",
     "input_tokens": "number",
     "cached_input_tokens": "number (cache hits — should be substantial across N>1 runs)",
-    "cache_creation_input_tokens": "number (cache WRITES — priced ~12x reads)",
+    "cache_creation_input_tokens": "number (cache WRITES — priced 20x reads at the 1-hour rate in e2e/pricing.py)",
     "output_tokens": "number",
     "skill_cost_usd": "number (sum across runs)",
     "judge_cost_usd": "number (sum across runs)",
@@ -1386,8 +1386,9 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
   tokens were billed and uncounted. A run's `model_usage` with more than one key
   is the record of what an agent's `model:` pin actually cost; use it, rather
   than the sums, when attributing spend between the two halves of a pair.
-- **`totals.cache_creation_input_tokens`** — cache WRITES, priced at roughly 12x
-  cache reads. Without it a run log cannot be reconciled against its own
+- **`totals.cache_creation_input_tokens`** — cache WRITES, priced at **20x**
+  cache reads at the 1-hour rate the repo's table uses (`eval/harness/e2e/pricing.py`,
+  which measured the 5-minute rate at 12.5x and rejected it). Without it a run log cannot be reconciled against its own
   `skill_cost_usd`, so a divergence between tokens and cost cannot be told from a
   missing column. It is not part of the cache-hit rate below, which is a read
   statistic.

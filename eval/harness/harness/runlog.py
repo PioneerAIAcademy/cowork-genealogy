@@ -105,10 +105,12 @@ class SingleRun:
     # Skill-execution attempts (1 = clean first try; >1 = transient
     # stall/error retries). The per-run stall-tax signal.
     skill_attempts: int = 1
-    # Cache WRITES. Priced separately from cache reads and roughly 12x
-    # them, so a run log without this cannot be reconciled against its own
-    # `skill_cost_usd` — which is what let a paired skill's tokens read as
-    # a 72% saving that was really the subagent's usage going uncounted.
+    # Cache WRITES. Priced separately from cache reads and 20x them at the
+    # 1-hour rate the repo's table uses (e2e/pricing.py, which measured the
+    # 5-minute rate at 12.5x and rejected it), so a run log without this
+    # cannot be reconciled against its own `skill_cost_usd` — which is what
+    # let a paired skill's tokens read as a 72% saving that was really the
+    # subagent's usage going uncounted.
     cache_creation_input_tokens: int = 0
     # The SDK's per-model ledger for this run, keyed by model id, verbatim.
     # The token fields above are its column sums. Two keys here means the
