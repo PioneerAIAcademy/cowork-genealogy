@@ -979,8 +979,8 @@ classification rationale — that lives in the persisted artifact. Return
 - key findings: gaps, conflicts, negative evidence, shared-informant
   units, any tentative/`[?]` identity flag, and any **"original not
   examined"** limitation
-- next-step hint for the caller (e.g. "check-warnings on I5/I6", "image
-  confirmation of the father's patronymic outstanding", "record 2 of 3
-  ready for extraction")
+- next-step hint for the caller (e.g. "6 household members ready for
+  person-evidence linking", "image confirmation of the father's
+  patronymic outstanding", "record 2 of 3 ready for extraction")
 
 No closing essay. The caller relays this summary and moves on.

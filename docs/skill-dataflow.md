@@ -234,7 +234,9 @@ touch either side.
 7. **What follows extraction.** `record-extraction` hands off to `check-warnings` and then
    `person-evidence`. The orchestrator says the extractor's output "ALWAYS flows through
    `person-evidence` next", with no `check-warnings` step. The extractor is assertion-only,
-   so the tree persons that handoff names do not exist yet. — issue #1863
+   so the tree persons that handoff names do not exist yet. — issue #1863, ruled: the
+   orchestrator is right; the `check-warnings` hop is deleted from the router's handoff and
+   from the agent's next-step-hint example, which named the same non-existent persons
 8. **`tree-edit` writes `research.json` and no row permits it.** A merge through
    `merge_tree_persons` repoints `project.subject_person_ids`,
    `person_evidence[].person_id`, `timelines[].person_ids` and
