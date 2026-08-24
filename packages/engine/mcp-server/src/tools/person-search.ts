@@ -351,65 +351,75 @@ export const personSearchToolSchema = {
     "expand a chosen match into parents, spouses, and children, call " +
     "person_read with relatives: true. Requires authentication — call the " +
     "login tool first if not logged in. For ambiguous place names, call the " +
-    "place_search tool first.",
+    "place_search tool first. " +
+    "EXACT-MATCH TOGGLES: without an `*Exact` flag a name field also matches " +
+    "fuzzy spellings, and it keeps persons where that field is EMPTY — for " +
+    "`givenName` and for a father's, mother's, parent's or spouse's name " +
+    "(the four this tool has), but NOT for `surname`, where an unqualified " +
+    "value drops surname-empty persons. Setting a flag excludes " +
+    "what its own field admits, so it only ever narrows and can drop the " +
+    "target. This is the search engine's behaviour, measured against the " +
+    "record index, not this endpoint. Years and places are " +
+    "outside the rule and unestablished here — see `birthYearExact` and " +
+    "`birthPlaceExact`.",
   inputSchema: {
     type: "object",
     properties: {
       givenName: { type: "string", description: "Given (first) name. Counts as a qualifying 'other' field alongside the required surname." },
       surname: { type: "string", description: "Family name. Required on every search, and must be accompanied by at least one other search field (a given name, a life-event year/place, or a relative's name). `sex` and `*Exact` toggles do not count." },
       sex: { type: "string", enum: ["Male", "Female", "Unknown"], description: "Sex of the person. Case-insensitive on input — `'male'` is normalized to `'Male'`. Does not satisfy the surname-plus-one rule on its own." },
-      givenNameExact: { type: "boolean", description: "When `true`, requires an exact given-name match (no fuzzy nicknames or spelling variants)." },
-      surnameExact: { type: "boolean", description: "When `true`, requires an exact surname match (no fuzzy nicknames or spelling variants)." },
+      givenNameExact: { type: "boolean", description: "Restrict the given name to its exact spelling. Excludes diminutives — pass a variant as its own `givenName` instead." },
+      surnameExact: { type: "boolean", description: "Restrict the surname to its exact spelling. Fuzzy matching is what bridges a misspelling, so this can drop the target; use only with a spelling you have confirmed." },
 
       birthYearFrom: { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1809). Must be paired with `birthYearTo`." },
       birthYearTo: { type: "number", description: "Upper bound of the birth-year range. 4-digit year. Must be paired with `birthYearFrom`. For a single year, set From and To equal." },
-      birthYearExact: { type: "boolean", description: "When `true`, the birth-year range is matched exactly." },
+      birthYearExact: { type: "boolean", description: "Require the birth year to match the range exactly. Years are outside the rule above and unestablished here — use only with a firm date, not to include or exclude undated persons." },
       birthPlace: { type: "string", description: "Birth place name. For ambiguous place names, call the `place_search` tool first." },
-      birthPlaceExact: { type: "boolean", description: "When `true`, requires an exact place match (no expansion to parent jurisdictions)." },
+      birthPlaceExact: { type: "boolean", description: "Stop upward expansion to parent jurisdictions. Outside the rule above — expansion, not fuzz — and measured against the record index, not this endpoint." },
 
       deathYearFrom: { type: "number", description: "Lower bound of the death-year range. 4-digit year. Must be paired with `deathYearTo`." },
       deathYearTo: { type: "number", description: "Upper bound of the death-year range. 4-digit year. Must be paired with `deathYearFrom`." },
-      deathYearExact: { type: "boolean", description: "When `true`, the death-year range is matched exactly." },
+      deathYearExact: { type: "boolean", description: "As `birthYearExact`, for the death-year range." },
       deathPlace: { type: "string", description: "Death place name." },
-      deathPlaceExact: { type: "boolean", description: "When `true`, requires an exact place match." },
+      deathPlaceExact: { type: "boolean", description: "As `birthPlaceExact`, for the death place." },
 
       marriageYearFrom: { type: "number", description: "Lower bound of the marriage-year range. 4-digit year. Must be paired with `marriageYearTo`." },
       marriageYearTo: { type: "number", description: "Upper bound of the marriage-year range. 4-digit year. Must be paired with `marriageYearFrom`." },
-      marriageYearExact: { type: "boolean", description: "When `true`, the marriage-year range is matched exactly." },
+      marriageYearExact: { type: "boolean", description: "As `birthYearExact`, for the marriage-year range." },
       marriagePlace: { type: "string", description: "Marriage place name." },
-      marriagePlaceExact: { type: "boolean", description: "When `true`, requires an exact place match." },
+      marriagePlaceExact: { type: "boolean", description: "As `birthPlaceExact`, for the marriage place." },
 
       residenceYearFrom: { type: "number", description: "Lower bound of the residence-year range. 4-digit year. Must be paired with `residenceYearTo`." },
       residenceYearTo: { type: "number", description: "Upper bound of the residence-year range. 4-digit year. Must be paired with `residenceYearFrom`." },
-      residenceYearExact: { type: "boolean", description: "When `true`, the residence-year range is matched exactly." },
+      residenceYearExact: { type: "boolean", description: "As `birthYearExact`, for the residence-year range." },
       residencePlace: { type: "string", description: "Residence place name." },
-      residencePlaceExact: { type: "boolean", description: "When `true`, requires an exact place match." },
+      residencePlaceExact: { type: "boolean", description: "As `birthPlaceExact`, for the residence place." },
 
       spouseGivenName: { type: "string", description: "Spouse's given name." },
       spouseSurname: { type: "string", description: "Spouse's family name." },
-      spouseGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the spouse's given name." },
-      spouseSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the spouse's family name." },
+      spouseGivenNameExact: { type: "boolean", description: "Require the spouse's given name to be present and match exactly." },
+      spouseSurnameExact: { type: "boolean", description: "Require the spouse's family name to be present and match exactly." },
 
       fatherGivenName: { type: "string", description: "Father's given name." },
       fatherSurname: { type: "string", description: "Father's family name." },
-      fatherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the father's given name." },
-      fatherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the father's family name." },
+      fatherGivenNameExact: { type: "boolean", description: "Require the father's given name to be present and match exactly. Unqualified, the field keeps persons with no father recorded; this drops them." },
+      fatherSurnameExact: { type: "boolean", description: "Require the father's family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
       fatherBirthPlace: { type: "string", description: "Father's birth place name." },
-      fatherBirthPlaceExact: { type: "boolean", description: "When `true`, requires an exact match on the father's birth place." },
+      fatherBirthPlaceExact: { type: "boolean", description: "As `birthPlaceExact`, for the father's birth place. No `record_search` counterpart." },
 
       motherGivenName: { type: "string", description: "Mother's given name." },
       motherSurname: { type: "string", description: "Mother's family name." },
-      motherGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the mother's given name." },
-      motherSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the mother's family name." },
+      motherGivenNameExact: { type: "boolean", description: "Require the mother's given name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
+      motherSurnameExact: { type: "boolean", description: "Require the mother's family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
       motherBirthPlace: { type: "string", description: "Mother's birth place name." },
-      motherBirthPlaceExact: { type: "boolean", description: "When `true`, requires an exact match on the mother's birth place." },
+      motherBirthPlaceExact: { type: "boolean", description: "As `birthPlaceExact`, for the mother's birth place. No `record_search` counterpart." },
 
       parentGivenName: { type: "string", description: "A parent's given name when the parent's sex is unknown." },
       parentSurname: { type: "string", description: "A parent's family name when the parent's sex is unknown." },
-      parentGivenNameExact: { type: "boolean", description: "When `true`, requires an exact match on the parent's given name." },
-      parentSurnameExact: { type: "boolean", description: "When `true`, requires an exact match on the parent's family name." },
+      parentGivenNameExact: { type: "boolean", description: "Require the parent's given name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
+      parentSurnameExact: { type: "boolean", description: "Require the parent's family name to be present and match exactly. Same trade-off as `fatherGivenNameExact`." },
       parentBirthPlace: { type: "string", description: "A parent's birth place name." },
-      parentBirthPlaceExact: { type: "boolean", description: "When `true`, requires an exact match on the parent's birth place." },
+      parentBirthPlaceExact: { type: "boolean", description: "As `birthPlaceExact`, for the parent's birth place. No `record_search` counterpart." },
 
       count: { type: "number", description: "Results per call. Default 20, range 1–100." },
       offset: { type: "number", description: "0-based index of the first result. Default 0, range 0–4999 (FamilySearch's search-depth limit)." },

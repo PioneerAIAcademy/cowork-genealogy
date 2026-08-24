@@ -8,7 +8,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-04
-- **Last updated:** 2026-08-05 (#1351)
+- **Last updated:** 2026-08-21 (#1015)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -68,6 +68,16 @@ one of them.**
 A generate step that a human must remember to run is worse than a lint, because
 a lint fails loudly and a forgotten regenerate ships silently.
 
+**Scope: `research.json` and `tree.gedcomx.json` only.** This ADR governs the
+copies of `enums.schema.json` and `research.schema.json`, and the corollary that
+anything JSON Schema can express belongs in the schema — a closed enum the
+validator checks with no schema `$def` behind it is a bug, not a category, which
+is why `VALIDATOR_ONLY` in `enum-drift.test.ts` stays empty (#1015). The
+eval-harness schemas (`run-log.schema.json`, `unit-test.schema.json`,
+`ann.schema.json`) are out: their closed-set copies are string literals scattered
+through the Python harness rather than a single `Set` a cheap lint could diff, so
+extending the policy there would write a rule nothing enforces.
+
 **"No entry point can forget it" has to be enumerated, because two mechanisms
 cover most of them and neither covers all.** turbo's `dependsOn: ["^build"]`
 carries `build`, `typecheck`, and `test` for every consumer of
@@ -102,6 +112,8 @@ explicit `&&` — a `prebuild` hook would silently never fire.
 | One shared TS module every consumer imports | No import crosses the island boundaries: the engine is out of the pnpm workspace for `.mcpb` reasons, `eval/app` has its own lockfile, and two consumers are Python | `pnpm-workspace.yaml`, `eval/app/package-lock.json` |
 | Leave the copies unguarded and rely on the multi-site edit lists in `CLAUDE.md` | Measured failure: `packages/schema/src/index.ts` had two interface fields silently drifted, and five closed enums had no TS union at all | #1165; `date_certainty` typed `string` at `packages/schema/src/index.ts:269`; missing — `date_certainty_timeline`, `severity`, `external_site`, `gender`, `relationship_type` |
 | `--ignore-scripts` on the shipping builds makes engine codegen impossible | **Factually wrong**, recorded so it is not re-derived: those installs run against an already-compiled tree; the engine's own `npm run build` runs earlier with scripts enabled | `scripts/build-mcpb.mjs:26-27`, `apps/server/sandbox/build-image.sh:41` |
+| Lint single-value prose mentions (`` `evidence_type: indirect` ``) alongside the full value lists | Guards a failure mode that has never occurred: replaying all 16 commits that have touched `enums.schema.json`, a closed-enum value has been removed or renamed **zero** times. Both changes ever were additions, which the full-list lint already covers, and the asymmetry is the point — an addition bites silently, while a rename is a deliberate act by someone already holding the old string. The scan also cannot be made clean: 16 of its 18 failures are the one `severity` collision, and clearing it means renaming a tool output field the model reads across two tools, their type file, three test files, two specs and five plugin bodies — a product-visible change made for a lint's benefit. One line in the schema-change rules requiring a repo-wide grep on removal catches the same failure at the only moment it can be caught | #1013, #1015; 38 single-value mentions, 20 correct, 18 failing, 16 of those the check-warnings tool's `error`/`warning` against the schema's `high` / `medium` / `low`; the rule as landed in `CLAUDE.md` § "New value on a closed enum" and `docs/specs/research-schema-spec.md` |
+| A retired-values list in `enums.schema.json` plus a lint that fails on any mention of a dead value | Inverts the search so the name collisions stop mattering, and costs nothing until the first removal. But it still depends on the author populating the list, so it fires exactly when the grep rule would have and buys no independent coverage. Cheaper to revisit than to build now | #1015; argued, not measured — revisit if a first value removal ever happens |
 
 ## Consequences
 
@@ -175,7 +187,8 @@ What this does **not** catch: interface **types** — optionality, `| null`, and
 `date_certainty: string` in `packages/schema/src/index.ts` — which need the
 TypeScript compiler API (#1165); the enum tables in
 `docs/specs/research-schema-spec.md`, whose markdown-table format needs its own
-parser; the sixth inline enum `locality.pages_read[].section`, re-typed in
+parser; the one closed enum still defined inline rather than in
+`enums.schema.json` — `locality.pages_read[].section`, re-typed in
 `packages/engine/mcp-server/src/tools/wiki-place-page.ts` and bound to no
 validator entry to collapse into (#1270); and the `eval/app` fork.
 

@@ -206,10 +206,10 @@ def main() -> int:
             )
 
         # Reverse: a test references a fixture for a tool the skill's
-        # allowed-tools does not grant. If the skill makes that call it is
-        # denied and the run aborts (unmatched_tool_call); at best the
-        # fixture is dead weight. This is the static catch for the
-        # "allowed-tools contradicts the test corpus" class of bug.
+        # allowed-tools does not declare. The session grants the tool
+        # (issue #1748), so the call succeeds, but the fixture suggests
+        # the skill should declare the tool — otherwise the advisory
+        # test_tool_allowlist validator will warn.
         for tool in sorted(refs):
             if tool in declared:
                 continue
@@ -218,10 +218,11 @@ def main() -> int:
                 gh_warning(
                     f"test `{test_name}` (skill `{skill}`) references an "
                     f"mcp_fixture for `{tool}`, but `{tool}` is not in "
-                    f"`{skill}`'s allowed-tools {declared or '[]'}. The skill "
-                    f"cannot call it — the call would be denied and the run "
-                    f"would abort. Inline the data into the test, or move "
-                    f"the test to a skill that declares `{tool}`.",
+                    f"`{skill}`'s allowed-tools {declared or '[]'}. The call "
+                    f"succeeds (all MCP tools are granted), but the advisory "
+                    f"validator will warn. Either add `{tool}` to the skill's "
+                    f"allowed-tools, or move the test to a skill that "
+                    f"declares it.",
                     file=f"eval/tests/unit/{skill}/{test_name}",
                 )
 

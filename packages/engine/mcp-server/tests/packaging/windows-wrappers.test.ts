@@ -60,7 +60,9 @@ const EVAL_OWNED: Record<string, string> = {
  * a NEW `eval\` script forces a decision here rather than silently escaping
  * the map above.
  */
-const EVAL_NOT_A_TARGET = new Set(["Setup.bat"]);
+// A leading underscore marks an internal helper (called by other .bat files)
+// rather than a double-clickable entry point — so it has no Makefile target.
+const EVAL_NOT_A_TARGET = new Set(["Setup.bat", "_CheckSync.bat"]);
 
 /**
  * `.bat` files allowed to stay in `scripts/` rather than `scripts/windows/`.

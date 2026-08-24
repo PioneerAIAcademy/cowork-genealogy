@@ -1,7 +1,13 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "../utils/http.js";
+import {
+  RECORD_TYPE_GROUP_NAMES,
+  assertKnownGroupNames,
+  conceptIdsForGroups,
+} from "../utils/record-type-groups.js";
 import { standardPlaceToPlaceId, placeIdToRepIds } from "../utils/place-resolver.js";
+import { formatYearRange } from "../utils/search-helpers.js";
 import type {
   VolumeSearchInput,
   VolumeSearchResult,
@@ -57,6 +63,40 @@ function validate(input: VolumeSearchInput): void {
     input.endYear < input.startYear
   ) {
     throw new Error("endYear must be greater than or equal to startYear.");
+  }
+  // Near-miss spellings of *this* field only. `record_search` and
+  // `fulltext_search` both take a singular `recordType`, so that is the name an
+  // LLM reaches for here; `record_type` is the snake_case convention
+  // `research.json` uses elsewhere. Nothing validates input against the
+  // advertised JSON Schema — `src/index.ts` casts `request.params.arguments`
+  // straight to the handler — so an unrecognised field is ignored and the search
+  // silently runs unfiltered, returning everything with no signal.
+  //
+  // Deliberately not a general unknown-field check: the tool's year inputs have
+  // their own live spellings elsewhere (`yearFrom`/`yearTo`, `fromYear`/`toYear`)
+  // and catching those too is the schema-wide `additionalProperties` question the
+  // spec puts out of scope, not a bigger version of this list.
+  for (const alias of ["recordType", "record_type", "recordTypes"]) {
+    if (alias in input) {
+      throw new Error(
+        `volume_search filters by recordTypeGroups (an array of group names), ` +
+          `not ${alias}. Valid groups: ` +
+          RECORD_TYPE_GROUP_NAMES.join(", ") +
+          "."
+      );
+    }
+  }
+  if (input.recordTypeGroups != null) {
+    if (!Array.isArray(input.recordTypeGroups)) {
+      throw new Error("recordTypeGroups must be an array of group names.");
+    }
+    // Never fall through to an unfiltered or empty search: upstream answers an
+    // unrecognised concept id with `totalCount: 0` and status 200, which is
+    // indistinguishable from a genuine absence of records. Shared with
+    // `conceptIdsForGroups`, which repeats the check as a backstop for any
+    // future caller that skips this one — one template, so the two cannot word
+    // the same failure differently.
+    assertKnownGroupNames(input.recordTypeGroups);
   }
 }
 
@@ -143,17 +183,55 @@ function computeRecordSearchablePercent(group: MetadataRmsGroup): number | null 
   return Math.round((indexed / denominator) * 100);
 }
 
+/**
+ * The year at the start of an ISO-shaped span (`"1683-01-01T00:00:00"` -> 1683).
+ *
+ * Not `earliestYear`/`latestYear` from `utils/date-helpers.ts`: those parse the
+ * repo's genealogical standard-date strings ("11 Sep 1718", "Bet 1870 and 1880")
+ * and return null for every ISO form. Widening them would touch the timeline,
+ * conflict and warning paths for no gain here.
+ *
+ * Nor is it `parseYear` in `external-links-search.ts`, which looks like the same
+ * job but is not: that one is `Number.parseInt`, which reads 16 out of "16xx"
+ * and 999 out of "999-01-01". This wants the leading *four* digits or nothing,
+ * because the value is an ISO timestamp and a partial parse would put a
+ * plausible-looking wrong year on a coverage. Merging the two means either
+ * loosening this or tightening a shipped tool's behaviour.
+ */
+function leadingYear(value: string | undefined): number | undefined {
+  if (value == null) return undefined;
+  const match = /^(\d{4})/.exec(value);
+  return match ? Number(match[1]) : undefined;
+}
+
 function mapCoverage(entry: MetadataRmsCoverageEntry): SimplifiedCoverage {
   const coverage: SimplifiedCoverage = { place: entry.place ?? "" };
-  const rawDates = entry.datesOrig;
-  if (rawDates != null) {
-    const dateRange = rawDates.replace(TITLE_PREFIX_RE, "").trim();
-    if (dateRange) coverage.dateRange = dateRange;
-  }
+  const startYear = leadingYear(entry.fromdateString);
+  const endYear = leadingYear(entry.todateString);
+  if (startYear != null) coverage.startYear = startYear;
+  if (endYear != null) coverage.endYear = endYear;
+
+  // Strip first, then decide: the fallback has to key off "nothing survived",
+  // not "the field was absent". A `datesOrig` of `"title:"` strips to empty, and
+  // keying off presence would skip the fallback and emit years with no range —
+  // the very outcome the fallback exists to prevent.
+  const displayRange =
+    entry.datesOrig?.replace(TITLE_PREFIX_RE, "").trim() ?? "";
+  // `datesOrig` is display text and is absent more often than the structured
+  // pair — Wayne, Ohio carries it on 335 of 463 coverages against 462 for the
+  // pair — so fall back rather than emitting no date at all. The fallback is
+  // `collections_search`'s own formatter, so the two tools cannot describe one
+  // span differently; `""` from it means "no range", which leaves the optional
+  // field off.
+  const dateRange = displayRange || formatYearRange(startYear, endYear);
+  if (dateRange) coverage.dateRange = dateRange;
   const rawType = entry.recordTypeOrig;
   if (rawType != null && !RECORD_TYPE_OPAQUE_RE.test(rawType)) {
     const recordType = rawType.replace(TITLE_PREFIX_RE, "").trim();
     if (recordType) coverage.recordType = recordType;
+  }
+  if (typeof entry.recordTypeConceptId === "number") {
+    coverage.recordTypeConceptId = entry.recordTypeConceptId;
   }
   return coverage;
 }
@@ -219,6 +297,13 @@ export async function volumeSearchTool(
   const toDateString =
     input.endYear != null ? `${input.endYear}-12-31` : undefined;
 
+  // Anchors plus strays for each requested group. An empty array is left off the
+  // body entirely: upstream treats `recordTypeConceptIds: []` as no filter, so
+  // sending it would be a no-op that reads like a filter in the request log.
+  const recordTypeConceptIds = input.recordTypeGroups?.length
+    ? conceptIdsForGroups(input.recordTypeGroups)
+    : undefined;
+
   const body: MetadataRmsSearchRequest = {
     coverage: {
       // RMS expects numeric rep IDs; the resolver returns them as strings.
@@ -226,6 +311,7 @@ export async function volumeSearchTool(
       placeRepIds: placeRepIds.map(Number).filter((n) => !Number.isNaN(n)),
       ...(fromDateString ? { fromDateString } : {}),
       ...(toDateString ? { toDateString } : {}),
+      ...(recordTypeConceptIds?.length ? { recordTypeConceptIds } : {}),
     },
     types: ["NATURAL"],
     returnChildCounts: true,
@@ -248,6 +334,12 @@ export async function volumeSearchTool(
   const query: VolumeSearchResult["query"] = { standardPlace: input.standardPlace };
   if (input.startYear != null) query.startYear = input.startYear;
   if (input.endYear != null) query.endYear = input.endYear;
+  // Only when a filter was actually applied. An empty array means "no filter"
+  // upstream and is omitted from the request body, so echoing it back would
+  // describe a filtered search that never happened.
+  if (input.recordTypeGroups?.length) {
+    query.recordTypeGroups = input.recordTypeGroups;
+  }
 
   const result: VolumeSearchResult = {
     query,
@@ -265,16 +357,17 @@ export async function volumeSearchTool(
 export const volumeSearchSchema = {
   name: "volume_search",
   description:
-    "Search FamilySearch's Records Management Service for digitized volumes — " +
-    "image groups of historical documents (microfilm rolls, book scans) — " +
+    "Search FamilySearch's Records Management Service for image groups — " +
+    "digitized volumes of historical documents (microfilm rolls, book scans) — " +
     "covering a place and year range. Provide a standardPlace from place_search and an " +
     "optional year range. For each volume it returns coverage (places, dates, " +
     "record types), how much of the volume is indexed for record_search " +
     "(recordSearchablePercent), and whether it is full-text searchable " +
     "(fulltextSearchable). Use the returned imageGroupNumber with image_search to " +
     "list the volume's images, or with fulltext_search to search its text. " +
-    "Results are paginated — pass back nextPageToken (with the same standardPlace and " +
-    "years) as pageToken to get the next page. " +
+    "Results are paginated — pass back nextPageToken (with the same standardPlace, " +
+    "years and record-type groups) as pageToken to get the next page. " +
+    "Optionally narrow to record-type groups with recordTypeGroups. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -297,12 +390,23 @@ export const volumeSearchSchema = {
           "Latest year of interest (inclusive), e.g. 1810. Must be >= startYear. " +
           "Omit for all periods.",
       },
+      recordTypeGroups: {
+        type: "array",
+        items: { type: "string", enum: [...RECORD_TYPE_GROUP_NAMES] },
+        description:
+          "Restrict to volumes of these record-type groups. Multiple groups are " +
+          "OR-ed. Selecting a group also returns the groups nested beneath it — " +
+          "'Government' also returns Tax, Prison, Poor Law, Passports and more. " +
+          "This filters volumes, not coverages: a matched volume is returned with " +
+          "all of its coverage rows, so some will carry other record types and " +
+          "years outside the requested range. Omit to search all record types.",
+      },
       pageToken: {
         type: "string",
         description:
           "Pagination cursor. Pass the nextPageToken from a previous " +
-          "response, together with the same standardPlace/startYear/endYear, to " +
-          "fetch the next page.",
+          "response, together with the same standardPlace/startYear/endYear/" +
+          "recordTypeGroups, to fetch the next page.",
       },
     },
     required: ["standardPlace"],

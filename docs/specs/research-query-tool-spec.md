@@ -194,7 +194,8 @@ whole section, one 50-item page at a time.
 |---|---|
 | `section` not one of the eleven supported values | `{ ok: false, errors }` |
 | A supplied filter not in that section's allow-list (§2.1) | `{ ok: false, errors }` naming the filter and the section |
-| `research.json` missing or invalid JSON | `{ ok: false, errors }` |
+| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `research.json` missing or invalid JSON — with `tree.gedcomx.json` present, i.e. a *broken* project | `{ ok: false, errors }`, loud |
 | The named section is missing or not an array | `{ ok: false, errors }` |
 | No filters supplied | the whole section, one 50-item page (page with `offset` for the rest) |
 | No items match | `{ ok: true, count: 0, items: [] }` — a legitimate answer, not an error |

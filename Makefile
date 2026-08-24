@@ -366,8 +366,14 @@ harness-lint: ## Undefined-name check for eval/harness (ruff F821 — catches a 
 replay-check: ## Acceptance check for the write-replay engine: reconstruct every committed e2e run and compare against its final-state sidecar
 	# Offline and free — no API key, no live calls. Reports reconstruction
 	# fidelity per section; it is a REPORT, not a gate (the corpus grows weekly
-	# and the rate moves with it). Baseline 2026-08-15: 136/154 (88%) exact id
-	# match on all 12 sections. Run after any change to harness/replay.py.
+	# and the rate moves with it). Measured 2026-08-23: 21/157 (13%) exact id
+	# match on all 12 sections, down from 136/154 (88%) recorded 2026-08-15.
+	# CAUSE: the e2e capture strip, not harness/replay.py, which is
+	# byte-identical across the drop — the strip dropped the response_summary
+	# this engine reads its ids out of. Fixed forward, so the strip now keeps a
+	# remnant; the runs already stripped are not recoverable, so the rate returns
+	# only as new runs age in. Read the current number from a run, not from this
+	# comment. Run after any change to harness/replay.py.
 	cd eval/harness && uv run python scripts/check_replay_fidelity.py
 
 .PHONY: eval-skill
@@ -390,9 +396,9 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
 
 .PHONY: gate-skill
-gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test + holdout (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
+gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
 	# The verify step of the skill-improvement loop (docs/skill-lifecycle.md §6).
-	# Runs the mined motivating test + the skill's holdout tests on your working-tree
+	# Runs the mined motivating test on your working-tree
 	# candidate (one side, mock-backed) and compares to the incumbent scores from the
 	# skill's most recent run-log — the pre-edit `make eval-skill` run you did at
 	# step 4, with human .ann corrections overlaid. Prints a per-dimension comparison
@@ -430,12 +436,16 @@ prune-runlogs: ## Maintenance sweep over the committed run logs: make prune-runl
 	# value is the same normalized string build_snapshot hashes, so no re-run
 	# is needed and no skill's active state changes.
 	#
-	# STRIP=1 drops response_summary from e2e run logs older than 14 days
-	# (STRIP=N for a different window), keeping tool / args / is_error. Unlike
-	# the unit corpus this is keyed on age and strips rather than deletes — e2e
-	# has no per-skill run-log invariant to protect, and response_summary is the
-	# only field with no programmatic reader. The .ann.json / .final-tree /
-	# .final-research calibration triple is never touched at any age.
+	# STRIP=1 reduces response_summary to its replay remnant in e2e run logs
+	# older than 14 days (STRIP=N for a different window), keeping tool / args /
+	# is_error plus the ids harness/replay.py reads back. Unlike the unit corpus
+	# this is keyed on age and strips rather than deletes — e2e has no per-skill
+	# run-log invariant to protect. It is NOT a field nothing reads: replay.py
+	# takes entryIds out of it, did_not_land reads the no-project marker, and
+	# test_e2e_mcp_health replays four exempt runs through it. Believing
+	# otherwise is what cost the replay engine 88% of its fidelity. The
+	# .ann.json / .final-tree / .final-research calibration triple is never
+	# touched at any age.
 	cd eval/harness && uv run python -m scripts.prune_runlogs \
 	  $(if $(REHASH),--rehash,) \
 	  $(if $(PRUNE),--prune-unit $(if $(filter-out 1,$(PRUNE)),$(PRUNE),),) \
@@ -455,7 +465,7 @@ optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger q
 	cd eval/triggering && uv run python -m scripts.run_loop \
 	  --eval-set eval_sets/$(SKILL).json \
 	  --skill-path ../../packages/engine/plugin/skills/$(SKILL) \
-	  --model "$${MODEL:-claude-sonnet-4-6}" --results-dir ../runlogs/optimizer --verbose
+	  --model "$(if $(MODEL),$(MODEL),claude-sonnet-4-6)" --results-dir ../runlogs/optimizer --verbose
 
 .PHONY: e2e-preflight
 e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps, live MCP connection ~30s)
@@ -536,7 +546,7 @@ e2e-author: ## Fixture-authoring script, for developers: make e2e-author ARGS="s
 
 .PHONY: e2e-validate
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
-	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
+	cd eval/harness && uv run python -m e2e.validate_fixture $(if $(TEST),$(TEST),--all)
 
 .PHONY: judge-report
 judge-report: ## Non-discrimination scan of the UNIT judge over committed run logs: make judge-report | SKILL=<name>. Reads committed JSON only — no API calls, no cost.
@@ -594,18 +604,23 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
-e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 stored shadow families over committed runs: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1
+e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc shadow families over committed runs, stored and recomputed: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1
 	# Also pure analysis, no API. Windowed to 14 days like every other reader;
 	# SINCE=all for a maximum-sample replay.
 	# NOT a calibration tool: §7 is shadow-only permanently (its success gate
 	# cannot see skill completion — see guardrail-enforcement-spec.md §7 and
 	# `make e2e-skill-episodes`), so WINDOWS= compares are for reading the
 	# signal, not for choosing a value to ship.
-	# REPLAY=1 additionally RECOMPUTES the §8 person_evidence provenance check
-	# from tool_calls + each fixture's committed seed tree (issue #1231). The
-	# stored-entry count above only covers runs made after #1178 merged; the
-	# replay is what makes the pre-hook corpus readable, and what lets a
-	# candidate narrowing of the rule be scored before it ships.
+	# REPLAY=1 additionally RECOMPUTES all four post-hoc families: the §8
+	# person_evidence provenance check from tool_calls + each fixture's committed
+	# seed tree, and the three §7/§7.5 checks from each run's committed
+	# final-research / final-tree sidecars.
+	# READ THE REPLAY BEFORE CONCLUDING A CHECK NEVER FIRES. The stored counts
+	# above only cover runs made after each check shipped -- all three post-hoc
+	# checks landed in August against a corpus that is 84% July, so their zeros
+	# measured the corpus's age, not the behaviour. Replaying turns two of the
+	# three into real counts. Counts, never rates: this is behaviour presence over
+	# the corpus, not a per-run compliance score.
 	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),) $(if $(REPLAY),--replay,)
 
 .PHONY: e2e-skill-episodes

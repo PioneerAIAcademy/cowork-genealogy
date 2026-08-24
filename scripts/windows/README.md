@@ -83,3 +83,9 @@ Two rules the guard enforces, because breaking either fails silently:
   `npm ci` is skipped with no error.
 - Call a sibling wrapper by its own location — `call "%~dp0install.bat"`, not
   `call scripts\install.bat`, which breaks the moment the directory moves.
+
+### Why there is no `windows-latest` CI job
+
+Adding one was considered and declined: it would arrive red on every pre-existing
+Windows-only failure and pull unrelated noise into every PR. The workaround is
+manual: `scripts\windows\test-all.bat` on the branch, output pasted in the PR.

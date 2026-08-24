@@ -557,3 +557,45 @@ def test_write_does_not_call_on_prune_when_nothing_is_pruned(tmp_path):
         on_prune=seen.append,
     )
     assert seen == []
+
+
+# ---- Token accounting fields (see orchestrator._skill_tokens) -------------
+
+
+def test_the_new_token_fields_reach_the_run_log_and_validate():
+    """Cache writes and the per-model ledger survive assembly + schema check.
+
+    Both are optional in the schema, which is what keeps historical logs
+    valid — so an `additionalProperties: false` node that forgot to declare
+    them would only show up here, at the first run that emits them.
+    """
+    run = _stub_run()
+    run.cache_creation_input_tokens = 4_242
+    run.model_usage = {
+        "claude-opus-5": {"outputTokens": 100, "cacheCreationInputTokens": 4_000},
+        "claude-sonnet-4-6": {"outputTokens": 100, "cacheCreationInputTokens": 242},
+    }
+    entry = assemble_test_entry(
+        test_id="ut_tokens_001", test_type="positive", expected_outcome="pass",
+        scenario=None, mcp_fixtures=[], runs=[run],
+        timestamp_for_run_id="2026-08-23_10-00-00",
+    )
+    log = _wrap_envelope(entry)
+    validate_run_log(log)
+
+    assert log["totals"]["cache_creation_input_tokens"] == 4_242
+    logged = log["tests"][0]["runs"][0]
+    assert logged["cache_creation_input_tokens"] == 4_242
+    assert set(logged["model_usage"]) == {"claude-opus-5", "claude-sonnet-4-6"}
+
+
+def test_a_run_log_without_the_new_fields_still_validates():
+    """Every committed run log predates them; none may be invalidated."""
+    log = _wrap_envelope(_make_entry())
+    del log["totals"]["cache_creation_input_tokens"]
+    for test in log["tests"]:
+        del test["totals"]["cache_creation_input_tokens"]
+        for run in test["runs"]:
+            del run["cache_creation_input_tokens"]
+            del run["model_usage"]
+    validate_run_log(log)
