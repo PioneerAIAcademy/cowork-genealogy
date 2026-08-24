@@ -1072,6 +1072,102 @@ def test_bare_name_rule_only_scans_name_facts():
     assert result.passed is True, result.error
 
 
+# --- relationship_type must agree with its own value (found while annotating) ---
+
+
+def _run_rel_agreement(assertions):
+    before, after = _classification_state(assertions)
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": []},
+    )
+    result = next(
+        (r for r in results
+         if r.name == "test_relationship_type_agrees_with_its_value"), None
+    )
+    assert result is not None, "the relationship-agreement validator did not run"
+    return result
+
+
+def _rel(rel_type, value):
+    return [{
+        "id": "a_1", "record_role": "child_1", "fact_type": "relationship",
+        "value": value, "structured_value": {"relationship_type": rel_type},
+        "evidence_type": "direct",
+    }]
+
+
+@pytest.mark.parametrize(
+    "rel_type,value,states",
+    [
+        # The genealogist's find on ut_017: a sister typed as a child.
+        ("child", "sister of Harold Dean Whitaker", "sibling"),
+        ("child", "Sibling of Grace (Whitaker) Tolman", "sibling"),
+        ("parent", "sibling of Grace Tolman (nee Whitaker)", "sibling"),
+        # ut_027: the edge written BACKWARDS — typed parent, value says child of.
+        ("parent", "child of Louise Becker", "child"),
+        ("parent", "child of Edward Becker", "child"),
+    ],
+)
+def test_rel_agreement_catches_the_corpus_disagreements(rel_type, value, states):
+    """The 7 genuine instances in the committed run logs reduce to these two
+    shapes: a category swap and a direction inversion."""
+    result = _run_rel_agreement(_rel(rel_type, value))
+    assert result.passed is False
+    assert states in (result.error or ""), result.error
+
+
+@pytest.mark.parametrize(
+    "rel_type,value",
+    [
+        # Category-equivalent, NOT disagreements. A literal string comparison
+        # flags all of these — 39 hits corpus-wide, only 7 of them real.
+        ("spouse", "wife of George Bennett"),
+        ("spouse", "husband of Mary Flynn"),
+        ("child", "son of George Bennett"),
+        ("child", "daughter of John Becker"),
+        ("child_inferred", "son of Sarah Bennett (inferred)"),
+        ("parent", "father of Louise Becker"),
+        ("parent", "mother of Louise Becker"),
+        ("child", "daughter of head of household John Becker"),
+        ("sibling", "brother of Harold"),
+    ],
+)
+def test_rel_agreement_accepts_category_equivalents(rel_type, value):
+    result = _run_rel_agreement(_rel(rel_type, value))
+    assert result.passed is True, f"false positive on {rel_type}/{value}: {result.error}"
+
+
+@pytest.mark.parametrize(
+    "rel_type,value",
+    [
+        ("stepfather", "stepfather of Charles Ferber"),   # type not in the table
+        ("father_in_law", "father-in-law of X"),          # ditto
+        ("child", "Jacob Lang"),                          # value names no relation
+        ("child", ""),                                     # no value at all
+    ],
+)
+def test_rel_agreement_skips_what_it_cannot_compare(rel_type, value):
+    """Fails OPEN. An unrecognised relationship_type or a value naming no
+    relation is not evidence of disagreement, and guessing would cost the whole
+    test's grade — a failing validator suppresses the judge."""
+    result = _run_rel_agreement(_rel(rel_type, value))
+    assert result.passed is True, result.error
+
+
+def test_rel_agreement_accepts_a_value_naming_several_relations():
+    """`want in found` — the type only has to match one of them."""
+    result = _run_rel_agreement(
+        _rel("child", "child of Thomas Flynn and brother of Mary Flynn")
+    )
+    assert result.passed is True, result.error
+
+
 # --- record_persona_id corruption signature (shared persona across roles) ---
 
 _PERSONA_ARK = "https://www.familysearch.org/ark:/61903/1:1:ABCD-123"

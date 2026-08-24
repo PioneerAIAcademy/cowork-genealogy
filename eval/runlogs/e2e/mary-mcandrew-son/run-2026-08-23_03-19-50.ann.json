@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Avoid guard holds by absence: the final tree links exactly five children to Mary McAndrew and John Mogan, and 9NJ7-Z6L, 9NJ7-Z6R, 9NJ7-Z61, F4RF-FV9 and 1873 appear nowhere in the tree or the research document. The agent never encountered the hinted candidate at all — it identified and ruled out four different candidates (Ralph J. Mogan 1906, Elizabeth Mitchell 1891, a Migan infant 1888, John H. Magan 1910). Graded true because the fixture's pass condition is an absence test and the agent did not over-claim, but note that the avoidance was not earned by testing and rejecting the hint.",
+    "f2": "The agent documented a full negative conclusion — proof summary ps_001, tier probable, 'no additional children are established by the available record set' — with a candidates-eliminated section, a negative-evidence section caveating poor pre-1893 Detroit civil-registration compliance, and unsearched Catholic parish records named as the reason the tier is not proved. Graded partial because the second clause of f2, showing that the 1873 John A Morgan birth belongs to a different family, is entirely absent: that record never entered the agent's research."
+  },
+  "annotator": "dallan",
+  "findings_hash": "553168f84d68d273ca3625f5aaf14ad1fbcb0b0cbbd4eb40c6a7a1a5539ff8a7"
+}

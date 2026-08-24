@@ -164,11 +164,20 @@ def _tool_envelope(tool_name: str, response: dict[str, Any]) -> dict[str, Any]:
     successes (every one of these returns `ok: true` when it works), and gating
     on `ok` alone would flip `merge_warnings`, which shares the compiled-tool
     builder and whose `ok: false` is a legitimate answer.
+
+    `reason == "no_project"` is exempt, mirroring `writerToolResult` in
+    `src/tool-result.ts`: the user is not in a research project, so nothing was
+    asked of a project that exists. Without this mirror the unit tier would show
+    an error where production shows an answer.
     """
     envelope: dict[str, Any] = {
         "content": [{"type": "text", "text": json.dumps(response)}]
     }
-    if tool_name in OK_FALSE_IS_FAILURE_LIVE and response.get("ok") is False:
+    if (
+        tool_name in OK_FALSE_IS_FAILURE_LIVE
+        and response.get("ok") is False
+        and response.get("reason") != "no_project"
+    ):
         envelope["is_error"] = True
     return envelope
 

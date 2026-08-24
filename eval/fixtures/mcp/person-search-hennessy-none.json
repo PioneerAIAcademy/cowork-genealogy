@@ -1,0 +1,19 @@
+{
+  "tool": "person_search",
+  "description": "Nil FamilySearch Family Tree search — no candidates. Covers the no-ID path so the skill's \"call person_search before falling back to stubs\" rule can actually run: without a fixture the tool is absent from the mock server and the run reports it unavailable, which is indistinguishable from skipping the search. Matches any surname containing Hennessy, so a search on the mother or a relative resolves too. Per person-search-tool-spec.md a 204 from upstream returns totalMatches 0 with an empty results array.",
+  "args": {
+    "surname": "~Hennessy"
+  },
+  "response": {
+    "query": {
+      "givenName": "Sarah",
+      "surname": "Hennessy"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 4999,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

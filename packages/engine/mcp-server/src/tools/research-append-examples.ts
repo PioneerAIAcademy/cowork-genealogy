@@ -227,7 +227,20 @@ const PROJECT_EXAMPLE = `research_append({
  * A worked `research_append` call for `section`, or null when the section has
  * no example. `op` selects the call shape (`plan_items` needs a `planId`).
  */
-export function exampleFor(section: string, op: "append" | "update" = "append"): string | null {
+export function exampleFor(
+  section: string,
+  op: "append" | "update" = "append",
+  /** Field names the failing op actually named. When it includes
+   *  `exhaustive_declaration`, the `questions` update example teaches the
+   *  seven-key `stop_criteria` object instead of the generic skeleton.
+   *
+   *  Without this the declaring body went to EVERY failing `questions` update —
+   *  so a caller refused on, say, a `resolved` write was handed a
+   *  `declared: true` payload, which on the main thread is the one shape the
+   *  plugin hook denies outright. A hint that teaches the next refusal is worse
+   *  than no hint. */
+  fieldsNamed: readonly string[] = [],
+): string | null {
   if (section === "project") return PROJECT_EXAMPLE;
   // hasOwn, not a bare index: `section` is LLM-supplied, and `constructor`
   // indexes out `Object`, which is truthy — so `!entry` lets it through and the
@@ -250,6 +263,39 @@ export function exampleFor(section: string, op: "append" | "update" = "append"):
       : "";
   const indented = entry.split("\n").join("\n  ");
   if (op === "update") {
+    // `questions` gets a worked body rather than the generic skeleton. Nearly
+    // every exhaustive declaration in the corpus is an UPDATE, and the generic
+    // "only the fields you are changing" placeholder shows the shape of a call
+    // without showing the shape of a declaration — so a caller refused for
+    // writing `stop_criteria` as a prose string (48 corpus ops do) was handed
+    // nothing that teaches the seven-key object it is being asked for. The
+    // `questions` APPEND example is no help either: it shows `stop_criteria:
+    // null` on an undeclared question, which is the other legal shape.
+    if (section === "questions" && fieldsNamed.includes("exhaustive_declaration")) {
+      return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "questions",
+  op: "update",
+  entryId: "<existing-q_-id>",
+  fields: {
+    status: "exhaustive_declared",
+    exhaustive_declaration: {
+      declared: true,
+      justification: "Searched 1850/1860 censuses, death certificate, and probate. Three independent sources confirm parentage.",
+      log_entry_ids: ["log_001", "log_002", "log_003"],
+      stop_criteria: {
+        goal_alignment: "Yes — three sources name Thomas Flynn as father.",
+        repository_breadth: "Census, vital records, and probate all searched.",
+        original_substitution: "Original images accessed; derivative index confirmed.",
+        independent_verification: "Three independent sources, different informants.",
+        evidence_class: "1860 census (original, primary) and death certificate (original, direct).",
+        conflict_resolution: "Birthplace conflict resolved per preponderance hierarchy.",
+        overturn_risk: "Low. No unexamined record type likely to name a different father."
+      }
+    }
+  }
+})`;
+    }
     return `research_append({
   projectPath: "<absolute-path-to-project-directory>",
   section: "${section}",
@@ -272,16 +318,16 @@ export function exampleFor(section: string, op: "append" | "update" = "append"):
  * actual errors under example text.
  */
 export function exampleHints(
-  sections: Array<{ section: string; op: "append" | "update" }>,
+  sections: Array<{ section: string; op: "append" | "update"; fields?: readonly string[] }>,
   max = 2,
 ): string[] {
   const seen = new Set<string>();
   const hints: string[] = [];
-  for (const { section, op } of sections) {
+  for (const { section, op, fields } of sections) {
     if (hints.length >= max) break;
     if (seen.has(section)) continue;
     seen.add(section);
-    const ex = exampleFor(section, op);
+    const ex = exampleFor(section, op, fields ?? []);
     if (ex) hints.push(`worked example for '${section}':\n${ex}`);
   }
   return hints;

@@ -1,11 +1,32 @@
 // Shared helpers for the FamilySearch search tools (`record_search`,
-// `person_search`). Both wrap FS search endpoints and need the same generic
-// input validators and response helpers — kept here so there is a single
-// copy rather than a near-duplicate in each tool.
+// `person_search`, `collections_search`, `volume_search`). They wrap FS search
+// endpoints and need the same generic input validators, output shaping and
+// response helpers — kept here so there is a single copy rather than a
+// near-duplicate in each tool.
 
 /** True for a plausible 4-digit calendar year. */
 export function isFourDigitYear(value: number): boolean {
   return Number.isInteger(value) && value >= 1000 && value <= 9999;
+}
+
+/**
+ * A display date range from a `startYear`/`endYear` pair.
+ *
+ * One format for every search tool that shows a span, so two tools cannot
+ * describe the same years differently. Equal years are **not** collapsed —
+ * `1683-1683`, not `1683` — and a lone `endYear` yields `""`, because only
+ * `startYear` is special-cased. Callers whose field is optional treat `""` as
+ * "omit"; `collections_search`, whose `dateRange` is a required string, emits it.
+ */
+export function formatYearRange(
+  startYear: number | undefined,
+  endYear: number | undefined
+): string {
+  return startYear != null && endYear != null
+    ? `${startYear}-${endYear}`
+    : startYear != null
+      ? `${startYear}`
+      : "";
 }
 
 /**
