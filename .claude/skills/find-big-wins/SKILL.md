@@ -695,8 +695,11 @@ Four rules:
   `deferred` cell means it belongs in the issue.
 - **Write nothing he has not decided.** An idea he did not reach is `deferred`,
   which is a decision about the run, not about the idea.
-- **This file and this table only.** Your `Edit` grant does not reach anything
-  else, including the rest of this ADR.
+- **This table and the `Last updated:` line only.** Bump that line every time you
+  write a row — `docs/adrs/_template.md` requires it on every edit, and a header
+  two weeks older than the rows beneath it is what a reviewer catches instead of
+  the reasoning. Your `Edit` grant does not reach anything else, including the
+  rest of this ADR.
 
 ## Output shape
 

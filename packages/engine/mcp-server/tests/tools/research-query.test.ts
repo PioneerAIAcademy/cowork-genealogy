@@ -187,11 +187,16 @@ describe("research_query", () => {
     expect(result.errors.join(" ")).toMatch(/missing or not an array/);
   });
 
-  it("rejects when research.json is missing", async () => {
+  it("answers rather than erroring when the folder is not a project", async () => {
+    // `dir` is a bare temp directory — neither project file. That is not a read
+    // failure, it is a user who is not in a research project (issue #1695), and
+    // research_query is one of the two READS the issue calls out. The loud
+    // half-a-project case (a tree present, research.json gone) is pinned in
+    // tests/tools/no-project.test.ts.
     const result = await researchQuery({ projectPath: dir, section: "assertions" });
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.errors.join(" ")).toMatch(/not found/);
+    expect((result as any).reason).toBe("no_project");
   });
 
   it("evaluations takes only targetId/focus — another filter is an error naming them", async () => {

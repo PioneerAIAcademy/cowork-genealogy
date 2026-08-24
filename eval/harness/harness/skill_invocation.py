@@ -177,6 +177,43 @@ def recently_succeeded(
     return False
 
 
+def did_not_land(entry: dict[str, Any]) -> bool:
+    """True when this tool call changed nothing on disk.
+
+    Two ways that happens. `is_error` is the old one. The other is the
+    no-project answer (issue #1695): the user was not in a research project, so
+    the writer tool wrote nothing and returned `reason: "no_project"` —
+    deliberately WITHOUT `is_error`, because it is an answer rather than a
+    failure. Every detector that skips a call because it never landed must skip
+    this one too, or a write that did not happen is counted as a landed
+    protected write and manufactures a violation in paid e2e grading.
+
+    Matched as a substring rather than by parsing: `response_summary` arrives
+    single-encoded, double-encoded, and truncated across the committed corpus,
+    so a parse fails on shapes a substring handles.
+
+    MATCH THE BARE NAME, never `'"no_project"'`. `_summarize_tool_response` in
+    `e2e/orchestrator.py` passes any response under 500 chars through VERBATIM as
+    the raw MCP envelope, where the tool's document is an escaped string —
+    `[{"type": "text", "text": "{\\"reason\\": \\"no_project\\"}"}]`. The quoted
+    key does not occur in that, because a backslash sits where the closing quote
+    would be. The no-project envelope measures 236 chars, or 248 for the read
+    variant, against `_RUNLOG_VERBATIM_MAX` of 500 — so it ALWAYS takes the
+    verbatim path, and the envelope shape outnumbers the unwrapped one in every
+    committed run. A quoted-key match therefore never fires in production while
+    passing every hand-built test. That orchestrator docstring says this
+    outright: "grep the bare name, which matches both."
+
+    The bare name survives the other branch too: past the threshold the
+    summarizer unwraps the document and keeps every dict key, so `reason` lands
+    as a real JSON key and matches there as well. Nothing rests on the message
+    staying short.
+    """
+    if entry.get("is_error") is True:
+        return True
+    return "no_project" in str(entry.get("response_summary") or "")
+
+
 def find_unguarded_protected_writes(
     tool_calls: list[dict[str, Any]],
     *,
@@ -189,7 +226,7 @@ def find_unguarded_protected_writes(
     rate is measured)."""
     violations: list[dict[str, Any]] = []
     for i, entry in enumerate(tool_calls):
-        if entry.get("is_error") is True:
+        if did_not_land(entry):
             continue
         tool = entry.get("tool", "")
         args = entry.get("args") or {}
@@ -760,16 +797,20 @@ def check_guardrail_compliance(
     )
 
 
-# The four dedicated Cowork agents under packages/engine/plugin/agents/*.md —
-# each carries its own self-contained, baked-in doctrine (per CLAUDE.md's "No
+# The dedicated Cowork agents under packages/engine/plugin/agents/*.md — each
+# carries its own self-contained, baked-in doctrine (per CLAUDE.md's "No
 # playbook/reference files for agents": the agent body IS the doctrine), so a
 # protected write made by one of these is trusted without further doctrine
 # checks. `general-purpose` (the SDK's own blank-slate fallback) and any
 # other subagent_type are NOT in this set and start with no doctrine of their
 # own. Hand-maintained: no existing code enumerates this list (build_workspace
-# globs the directory but never hardcodes names), so adding a 5th agent file
+# globs the directory but never hardcodes names), so adding an agent file
 # without updating this set makes find_protected_writes_by_unnamed_delegate
 # under-flag (fail toward false-negative, not false-positive).
+#
+# The count is derivable — `ls packages/engine/plugin/agents/*.md` — so this
+# comment does not state one. It said "four" over a set of five for the four
+# days after proof-conclusion was added.
 DEDICATED_AGENT_NAMES = frozenset(
     {
         "record-extractor",
@@ -782,6 +823,10 @@ DEDICATED_AGENT_NAMES = frozenset(
         # as an unnamed-delegate bypass — the detector would fire hardest on
         # exactly the runs that did the right thing.
         "proof-conclusion",
+        # Same shape, for the exhaustiveness claim (issue #1335, Phase 4): the
+        # hook routes `exhaustive_declaration.declared: true` to this agent, so
+        # every legitimate declaration now arrives from it.
+        "research-exhaustiveness",
     }
 )
 
@@ -882,19 +927,27 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     empty) — the same structural reason `find_effects_without_invocation`
     never needed a gps-mentor special case either.
 
-    Known gap, not yet exercised in the corpus: this treats ANY of
-    `DEDICATED_AGENT_NAMES` as sufficient for a `GUARDRAIL_SKILLS`-owned
-    write, unlike `extraction_append`'s tighter single-name check. That is
-    currently a no-op in practice — `record-extractor` explicitly disallows
-    `research_append` and never declares `materialize_facts`/`tree_edit`,
-    `image-reader`/`image-reader-opus` hold no writer tool at all, and
-    `gps-mentor`'s only writer tool is structurally exempted via the
-    `evaluations[]` carve-out above — but that's enforced by each agent's
-    own `tools:`/`disallowedTools` declaration, not by this function. A
-    future agent-file edit that gave any dedicated agent a legitimate-but-
-    narrow reason to touch a `GUARDRAIL_SKILLS`-owned section would make
-    this check silently accept it — see the identical caution already on
-    `DEDICATED_AGENT_NAMES` above about a 5th agent file.
+    Known gap, and it is LIVE — this paragraph used to say it was not.
+
+    This treats ANY of `DEDICATED_AGENT_NAMES` as sufficient for a
+    `GUARDRAIL_SKILLS`-owned write, unlike `extraction_append`'s tighter
+    single-name check. It was a no-op while the set held only agents that
+    could not reach such a section: `record-extractor` disallows
+    `research_append` and never declares `materialize_facts`/`tree_edit`, the
+    two image readers hold no writer tool at all, and `gps-mentor`'s only
+    writer tool is structurally exempted via the `evaluations[]` carve-out
+    above.
+
+    Two agents since have exactly the shape the old text warned a future edit
+    would create, and both are in `GUARDRAIL_SKILLS` above: `proof-conclusion`
+    holds `research_append` and writes `proof_summaries`, and
+    `research-exhaustiveness` holds it and writes `questions`. So a
+    `proof_summaries` write attributed to the exhaustiveness agent — or a
+    declaration attributed to proof-conclusion — is accepted here today. What
+    actually stops it is the plugin hook's per-agent lane
+    (`AGENT_WRITABLE_SECTIONS`), which does not reach either harness. Closing
+    it here means keying the exemption on (agent, section) rather than on
+    agent alone, which is the same map the hook already carries.
 
     Ships in shadow mode only (`e2e/orchestrator.py`'s
     `protected_writes_by_unnamed_delegate`, logged, never denied): historical
@@ -1328,10 +1381,16 @@ def find_relationship_writes_without_warnings_check(
     if not new_relationship:
         return []  # the gate: nothing was written that a warnings check should have preceded
 
+    # NOTE the polarity: unlike every other `is_error` gate in this module, this
+    # one CREDITS a call rather than skipping it — a successful person_warnings
+    # means the tree was checked. So the no-project answer has to be excluded
+    # from `consulted`, not added to a skip. Get it backwards and a warnings
+    # check that never ran is credited as done, which is a MISSED violation and
+    # therefore silent (issue #1695).
     consulted = any(
         isinstance(call, dict)
         and bare_tool_name(call.get("tool") or "") == "person_warnings"
-        and not call.get("is_error")
+        and not did_not_land(call)
         for call in (tool_calls or [])
     )
     if consulted:

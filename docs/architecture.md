@@ -214,10 +214,10 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | **47** | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **4** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list, any `disallowedTools:` denies (today only `record-extractor` has them), and its `model:` pin. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **6** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list, any `disallowedTools:` denies (every shipped agent declares them), and its `model:` pin. |
 
-The four agents are `gps-mentor`, `record-extractor`, `image-reader`, and
-`image-reader-opus`.
+The six agents are `gps-mentor`, `record-extractor`, `image-reader`,
+`image-reader-opus`, `proof-conclusion` and `research-exhaustiveness`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -386,15 +386,17 @@ The cost is knowingly accepted: there is no per-record-type ownership surface, s
 a probate specialist edits the same file as everyone else. **Revisit only with a
 mechanism that cannot silently skip.**
 
-### 3.5 Model routing
+### 3.5 Model and effort routing
 
-Per-step model routing exists **only through plugin agents.**
+Per-step routing of **model** and **reasoning effort** exists **only through plugin
+agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `image-reader-opus` → `claude-opus-4-8`; `record-extractor` + `image-reader` → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `image-reader-opus` → `claude-opus-4-8`; `record-extractor`, `image-reader`, `proof-conclusion` + `research-exhaustiveness` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
-| **Reasoning effort** | session-wide; never set by `real_agent.build_options` | not a per-step lever |
+| **Agent `effort:`** | hosted + both harnesses; **Cowork unverified** | no agent pins one |
+| **Session effort** | `.claude/settings.json` `effortLevel`; never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted inherits |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
 > unit harness (`harness/orchestrator.py` honours the field, falling back to
@@ -402,6 +404,13 @@ Per-step model routing exists **only through plugin agents.**
 > the harness default — and were deleted, because a pin that changes nothing
 > makes per-step routing look like it exists. To route a step to a different
 > model, delegate it to a plugin agent.
+>
+> **Agent `effort:` takes `low|medium|high|xhigh|max` or an integer**, and is a
+> property of the agent *definition* — the `Agent` tool's call site accepts only
+> `model`. It binds wherever `.claude/agents/*.md` is parsed, which is the hosted
+> control plane (`stage_plugin_agents` + `setting_sources=["project"]`) and both
+> harnesses. **Whether Cowork honours it has not been checked on a live session**,
+> the way the `model:` pins were; check before relying on it there.
 >
 > **And know the ceiling before you plan around it.** Because agents are the only
 > surface, the share of work that *can* be routed to another model is the share
@@ -461,6 +470,13 @@ Architecturally:
   tool only when `ok: false` is its **answer about its subject** rather than its
   own failure — `merge_warnings`, whose dry run reports that a merge *would* be
   rejected, is the only such tool today.
+- **If your tool reads the project files** — a sixth site, and nothing will
+  tell you if you skip it. Catch `NoProjectError` from `readProjectJson` and
+  return `noProjectResult()` (`"read"` for a read or a preview), so a user who
+  is not in a research project gets an answer rather than `research.json not
+  found in projectPath`. Then add the tool to `CALLS` in
+  `tests/tools/no-project.test.ts` — that list is hand-maintained and nothing
+  derives it, so a tool left out is uncovered.
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),
@@ -544,6 +560,11 @@ and note that no CI job runs it.
 ---
 
 ## 4. Orchestration — the `research` skill
+
+> For the whole run laid out unit by unit — every skill and agent in call order, its
+> gate, what it owns, what it reads and what it writes — see
+> [`docs/skill-dataflow.md`](skill-dataflow.md). It maps the routing table below onto
+> the write-ownership manifest; both of those stay authoritative.
 
 There **is** an orchestrator, and it is a skill:
 `packages/engine/plugin/skills/research/SKILL.md`. It is deliberately thin —
@@ -1545,6 +1566,7 @@ questions that only look open.
 | What rule must I follow to make a correct change? | [`CLAUDE.md`](../CLAUDE.md) — the operating manual, auto-loaded every session |
 | What does tool X do? | `docs/specs/<tool>-tool-spec.md` — **wins over this guide on conflict** |
 | What tools / skills / agents exist, for a user? | [`README.md`](../README.md) |
+| Which skill or agent runs when, and what does it read and write? | [`docs/skill-dataflow.md`](skill-dataflow.md) — every skill and agent in call order with its gate, its responsibility, and its reads and writes, plus the inverse view of who may write each section of persisted state |
 | Why is it built this way? | [`docs/adrs/`](adrs/) — one decision per file, with the alternatives that were tried and rejected. Index in §0. For decisions with no ADR yet, the linked spec. |
 | Has this idea already been tried and disproved? | [`ADR-0009`](adrs/ADR-0009-refuted-agent-design-claims.md), each ADR's `Alternatives considered`, and [`guardrail-enforcement-spec.md`](specs/guardrail-enforcement-spec.md) §9 "Options set aside" — three ledgers, all negative records. Plus [`ADR-0010`](adrs/ADR-0010-record-structural-bets-in-a-ledger.md)'s structural-bet ledger, where **only a `rejected` row is a bar** — its `set aside` and `deferred` rows record ideas nobody researched, and re-proposing one is expected |
 | What is wrong with it, and what's next? | The **project board** — it is the register, and §9.4 and §10 here deliberately point at it rather than copy it. Read them for the handful of gaps whose *consequence* changes how you build, not for a list. There is no standing critique document either; the one that existed was retired 2026-08-09 because its priorities went stale faster than they were re-read. |
