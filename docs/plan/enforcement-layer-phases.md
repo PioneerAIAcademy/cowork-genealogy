@@ -30,7 +30,7 @@ system, not the objective.
 
 | Artifact | Role |
 |---|---|
-| **ADR-0011** | the layer map — six substrates, the decision procedure, snapshot-vs-live, override tiers. **The durable decision.** |
+| **ADR-0011** | the layer map — six substrates, the decision procedure, snapshot-vs-live, and why gates ship without an override. **The durable decision.** |
 | `docs/specs/schemas/ownership.json` | who may write each section of each project document, and on which planes that is checkable. The declaration every later phase keys on |
 | `docs/specs/guardrail-enforcement-spec.md` | what is enforced today, what is measurement, the measured findings |
 | root `PLAN.md` (gitignored) | the *current* phase only, as a per-task plan |
