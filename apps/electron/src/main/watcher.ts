@@ -23,9 +23,7 @@ export const SIDECAR_BASENAME = /^(log_[a-zA-Z0-9_-]+)\.json$/
 // Pure classifier — pulled out so the basename routing is testable without
 // spinning up chokidar or Electron. Used inside the watch handler below.
 export type Classification =
-  | { kind: 'fixed'; file: FixedFile }
-  | { kind: 'sidecar'; logId: string }
-  | { kind: 'ignore' }
+  { kind: 'fixed'; file: FixedFile } | { kind: 'sidecar'; logId: string } | { kind: 'ignore' }
 
 export function classifyBasename(base: string): Classification {
   if ((WATCHED_FILES as readonly string[]).includes(base)) {
