@@ -5,7 +5,7 @@ the three reference files it actually names — `references/planning-standards.m
 `references/record-type-guide.md`, `references/places-guidance.md` — as `main`
 leaves them at `c44350dc`. The other two reference files in the folder
 (`locality-survey-guide.md`, `validation-protocol.md`) are named by nothing and
-contribute no rule; see finding F-REF.
+contribute no rule; see finding F6.
 
 Every line below is checkable by eye against a run-log transcript
 (`runs[].output.text_response`, `.tool_calls`, `.files_created`) or against the
@@ -158,6 +158,9 @@ rebuilding it.**
 51. A FAN item is included when the associate's records may hold evidence **about
     the question's subject**, and its `rationale` states what it reveals about
     the subject. Purpose is the test, not the relative's presence in the tree.
+    **A parentage, identity or undated-event question requires at least one**;
+    elsewhere it is not a quota, and an associate who could not speak to the
+    question is not manufactured into one.
 52. Emigrant origin or an unindexed parish register → a plan item with
     `record_type: church` whose rationale names a **full-text co-occurrence
     search on the two surnames as separate terms, run unscoped, via
@@ -201,10 +204,19 @@ jurisdiction was weighted more heavily. Rules 38–57 above capture only the
 mechanically checkable half of those instructions — the presence of an item, the
 value in a field, the phrase in a rationale.
 
-## Known internal contradiction
+## Internal contradiction — found by this dive, resolved by it
 
-Rule 51 (SKILL.md Step 4: FAN items are "**Not a quota**: if none could speak to
-this question, don't manufacture one") contradicts
-`references/planning-standards.md` Standard 14, which the body tells the model to
-load and which reads "**Every plan should include at least one FAN-directed
-item**". A checker cannot enforce both. See finding F-FAN.
+**Recorded as resolved. Do not re-litigate it.**
+
+`SKILL.md` Step 4 item 6 used to read "FAN items are **not a quota**: if none
+could speak to this question, don't manufacture one", while
+`references/planning-standards.md` Standard 14 — which the body tells the model
+to load — read "**Every plan should include at least one FAN-directed item**".
+No checker could enforce both, and the judge graded against whichever it read
+last.
+
+Settled 2026-08-24 by scoping the mandate to question type: a FAN item is
+**required** for parentage, identity and undated-event questions, and earns its
+place everywhere else. Both files now say that, and rule 51 above states the
+version that shipped. See finding F-FAN in the findings doc for the evidence
+and the ruling.

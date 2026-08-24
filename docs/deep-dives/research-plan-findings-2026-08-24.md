@@ -23,8 +23,14 @@ without comment by the human annotator.
 | | issue said | measured 2026-08-24 | how |
 |---|---|---|---|
 | Tests in the suite | 21 | **21** ✅ | `ls eval/tests/unit/research-plan/*.json` minus `rubric.md` |
-| Flat rubric+base dimensions | 6 of 8 | **6 of 8** ✅ | walk `tests[].runs[].judge.dimensions[]` |
+| Flat rubric+base dimensions | 6 of 8 | **6 of 8 in the newest run log; 5 of 8 across the corpus** ✅ | walk `tests[].runs[].judge.dimensions[]` |
 | `judge_context` naming a score branch | 0 | **0 on the prescribed pattern, 7 on the real one** ❌ | see F7 |
+
+The two counts differ because the populations do. In `v1_2026-08-17_17-52-29`
+base `Completeness` is flat (`3` × 19), which is the sixth. Across all five
+committed logs it moves once, so corpus-wide only the five rubric dimensions are
+flat. **Everything later in this document says "the five flat dimensions" and
+means the corpus-wide count.**
 
 **The flat half is more durable than the issue claimed.** Across all five
 committed run logs — 65 graded runs per dimension, 325 cells — every one of the
@@ -346,19 +352,54 @@ carry zero FAN-directed items** (`qxr`, `fbn`, `005`, `010`) — and all four
 scored 3 on every rubric dimension. Under the Standard 14 gloss all four fail;
 under SKILL.md they may be fine.
 
-All four are parentage or identity questions with an obvious FAN item available:
-`fbn` planned no marriage bondsman or surety for an antebellum Louisiana
-marriage (the bondsman is frequently the bride's father or brother); `005`
-planned nine items for a parentage question with an unidentified mother and not
-one sibling record; `qxr` planned no estate-sale purchasers or 1850 census
-neighbours; `010` planned no tax list or neighbouring household to bracket an
-undated death.
+Three of the four fall inside the mandate as it was ruled, and each had an
+obvious FAN item available: `005` planned nine items for a parentage question
+with an unidentified mother and not one sibling record; `qxr` planned no
+estate-sale purchasers or 1850 census neighbours for a parentage question; `010`
+planned no tax list or neighbouring household to bracket an undated death.
+
+**`fbn` is outside the mandate and is not closed by the ruling.** Its question is
+"Where did Silas Bankston marry, circa 1828?" — a marriage *place* question with
+a known approximate date, so it is neither parentage, nor identity, nor an
+undated event. Under the wording that shipped, its plan owes no FAN item.
+
+That is worth stating rather than glossing, because genealogically `fbn` had the
+single best FAN item of the four available to it: the marriage bondsman or
+surety, who in an antebellum Louisiana marriage is frequently the bride's father
+or brother, and who bears directly on where the marriage was recorded. A
+question type that can be answered by an associate's record while sitting outside
+the mandate is the first known limit of the 2026-08-24 ruling.
+
+### The mandate worked, and the model showed where its wording gives way
+
+Measured across the three verification runs. Before the wording landed, 4 of 12
+plans carried **zero** FAN items — `qxr`, `fbn`, `005`, `010`. After it, in
+`v1_2026-08-24_17-21-19`, **every plan that got written carries at least one**,
+those four included. The only plan without one is `016`, which failed before it
+finished (see F2).
+
+The model now cites the rule by name. `005` writes "FAN cluster item — mandatory
+for a parentage question."
+
+And `fbn` writes: **"FAN item — required for a location-of-event question where
+associates can corroborate the jurisdiction."**
+
+There is no such category. The ruling names parentage, identity and
+undated-event; `fbn` is a marriage-place question and owes nothing. The model
+invented a fourth type to fit the case that genealogically deserved a FAN item
+anyway. It reached the right plan through a rule that does not exist.
+
+That is the sharpest evidence available on the ruling's limit, and it points the
+same way as the paragraph above: **the three-type list is not how the work
+divides.** Whether to widen it to event-location questions is a genealogist's
+call and is deliberately not taken here.
 
 **Resolved 2026-08-24 (genealogist's ruling): scope the mandate by question
 type.** A FAN item is **required** for parentage, identity and undated-event
 questions, and "earns its place" everywhere else. This tracks BCG's own hedged
-wording ("plans *often* include") for the general case while closing the four
-failures above, every one of which falls inside the mandated set. Applied to
+wording ("plans *often* include") for the general case while closing three of
+the four failures above. The fourth, `fbn`, sits outside the mandated set and is
+not closed by it — see the note above. Applied to
 `SKILL.md` Step 4 item 6 and to `planning-standards.md` Standard 14.
 
 **Open question the ruling exposes — for the lead, not the genealogist.**
@@ -548,11 +589,20 @@ The PR's changes bought two `make eval-skill SKILL=research-plan` runs, both on
 2026-08-24: `v1_2026-08-24_13-37-16` ($6.60) and `v1_2026-08-24_14-32-36`
 ($6.56). The second was bought by a fixture fix, not by a finding; see F8.
 
-**Both cap fixes worked, and the aborts are gone.** The 08-17 run had two tests
-abort on the wall clock; both verification runs have none. `wzk` produced its
-first graded result since 08-13 (`partial`, then `pass`), so **F3's
-never-graded state is resolved** — the married-surname guard now demonstrably
-holds.
+**The aborts are gone.** The 08-17 run had two tests abort on the wall clock
+(`wzk` and `016`); both verification runs have none.
+
+Be precise about which caps moved, because only one of the two aborts was
+answered with a cap. `wzk`'s `max_wall_clock_seconds` went 600 → 900, and
+`plan-continue-authorized-in-message` gained an explicit `max_turns: 30` where it
+had been inheriting the default 20 and aborting on it in three consecutive runs.
+**`016`'s cap was deliberately left at 600** — its abort was caused by doing
+forbidden work, so more time would have let it finish the forbidden survey and
+turn a visible failure into a quiet pass. It stopped aborting on its own; see F2.
+
+`wzk` produced its first graded result since 08-13 (`partial`, then `pass`), so
+**F3's never-graded state is resolved** — the married-surname guard now
+demonstrably holds.
 
 **Two findings were confirmed as intermittent, not constant.** F1's fabricated
 `1401638` did not recur in either run: `SYNTH-PA-CHURCH` was copied correctly 46
@@ -562,12 +612,37 @@ the 08-17 log — but both are **intermittent**, which is an argument for V1 and
 rather than against them. A human reading only run 1 would have concluded the
 skill was clean.
 
-**F2 survives in a milder form.** `ut_research_plan_016` no longer usurps
-`locality-guide` or writes `localities`. It now says, in run 1's transcript,
-"no `localities` entry exists for Kentucky, which ideally would be populated by
-`locality-guide` before planning. **However** … I'll proceed and flag the gap in
-narration." Rule 12 says stop and return to the orchestrator. It proceeded, and
-scored 3 on every dimension in both runs.
+**F2 survives, and in run 3 it came back in full — with the wiki tools actually
+executing.** In runs 1 and 2 `ut_research_plan_016` no longer usurped
+`locality-guide`; it said "no `localities` entry exists for Kentucky … **However**
+… I'll proceed and flag the gap in narration", which still breaks rule 12 (stop
+and return to the orchestrator) but breaks nothing else. It scored 3 on every
+dimension both times.
+
+In `v1_2026-08-24_17-21-19` it did the whole forbidden thing:
+
+```
+skills_invoked:      ["research-plan", "locality-guide"]
+sections_modified:   ["localities", "plans"]
+tools:               … wiki_search, wiki_place_page ×4, place_population …
+```
+
+**Those three tools are locality-guide's, and rule 8 says this skill has none of
+its own.** Compare the same test in `v1_2026-08-17_17-52-29`, whose tool list is
+`place_search, collections_search, volume_search, external_links_search,
+place_search_all, research_append` and nothing else — the wiki calls were
+*denied* then, so they never reached the mock and never appear. Here
+`wiki_search` matched `wiki-search-kentucky`, `wiki_place_page` ran four times,
+and `place_population` matched `place-population-muhlenberg`. They ran.
+
+This is the prediction in V2 arriving on schedule: #1774 retired the per-skill
+deny on 2026-08-22, and the first full run after it is the first run in which
+this skill successfully performed a wiki-backed locality survey.
+
+**What caught it was the write, not the calls.** `test_ownership_table` fired on
+`localities`. Had the skill run the same six forbidden tool calls and *not*
+persisted a `loc_` entry, nothing in the suite would have reported anything. That
+is V2's entire argument, no longer hypothetical.
 
 **A new judge defect.** In run 2 the judge emitted a rubric dimension named
 `Completeness` on `ut_research_plan_wzk`, duplicating the base dimension of that
@@ -580,9 +655,9 @@ not a `research-plan` question.
 
 Written after run 1 and corrected after run 2. **Do not cite run 1 alone.**
 
-| | run 1 (13-37) | run 2 (14-32) |
-|---|---|---|
-| rubric dimensions scoring below 3 | Sequencing logic ×1, Plan mode and lifecycle ×1 | **none** |
+| | run 1 (13-37) | run 2 (14-32) | run 3 (17-21) |
+|---|---|---|---|
+| rubric dimensions scoring below 3 | Sequencing logic ×1, Plan mode and lifecycle ×1 | **none** | **none** |
 
 After run 1 this was written up as evidence that "part of the flatness was the
 leak, not the dimensions." Run 2 contradicts it on an identical snapshot apart
@@ -592,8 +667,9 @@ the judge quoted the clause forbidding that deduction and applied it anyway. So
 of the two movements, one was a judge error a human overturned and one has not
 recurred.
 
-**Two runs, ten dimension-runs, two sub-3 scores, one overturned.** That is not
-a restored signal. The five rubric dimensions remain the open question #1404 and
+**Three runs, fifteen dimension-runs, two sub-3 scores, one overturned.** In run
+3 every dimension including all three base ones is flat at 3. That is not a
+restored signal. The five rubric dimensions remain the open question #1404 and
 #1668 own, and this dive's contribution to them is the measurement below, not
 the rewrite.
 
@@ -617,6 +693,15 @@ this class in its own docstring, for negative tests: "any research.json change
 was made by the routed-to skill, which has its own ownership rights, and
 attributing those writes to the skill under test is a false positive." Only the
 skip condition is narrower than the reasoning behind it.
+
+**`q7m` passes in run 3, and that is not evidence the bug is fixed.** The PR adds
+a `search-external-sites` stub, so both executors SKILL.md Step 7 names are now
+stubbed. `search-images` is not, and in run 2 the plan routed there and the test
+failed. In run 3 it routed to the two stubbed skills and passed. **The outcome
+tracks which executor the plan happens to produce, not whether the validator is
+correct.** Anyone reading the green `q7m` in the newest run log as a fix should
+read run 2 first. In run 3 the same false positive simply landed on `016`
+instead, via `localities` — see F2.
 
 **Why it stayed hidden until now.** `q7m` aborted on the default 20-turn cap in
 three consecutive committed runs before ever reaching the handoff. Raising that
@@ -721,7 +806,21 @@ may not have counted, `references/validation-protocol.md`, which is unreachable
 by the same test (no SKILL.md and no sibling names it) and whose single
 instruction cannot apply to a skill that writes only `plans` and `plan_items`.
 
-*(Genealogist's verdict to be appended before this PR opens.)*
+**Genealogist's verdict, 2026-08-24: both files are safe to delete outright, and
+nothing in either needs rewiring.** Posted in full on issue #1633. The reasoning
+that settles it: `locality-survey-guide.md`'s only live content is its five-type
+contingency taxonomy, and every one of the five is already stated in a file the
+skill actually loads — record destruction in `record-type-guide.md`'s contextual
+factors checklist, variant spellings in `planning-standards.md` Standard 17,
+access paths in `SKILL.md` Step 2, conflicting evidence in Standard 17 again, and
+broadening in `places-guidance.md`. The taxonomy is a restatement, not unique
+content. `validation-protocol.md`'s single instruction cannot fire in this skill
+at all.
+
+One caution carried to #1633: `validation-protocol.md` may exist byte-identical
+under skills that *do* write assertions or `person_evidence`, where the
+`check-warnings` instruction genuinely applies. The verdict covers the
+`research-plan` copy only.
 
 ---
 

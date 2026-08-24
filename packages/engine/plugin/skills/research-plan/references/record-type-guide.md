@@ -18,10 +18,12 @@ contextual factors that affect availability.
 | Track migration | Census (residence across decades), land records, tax records, county/state histories (biographical sketches often name the origin place — a lead to verify, not evidence), migration-corridor databases where one applies (e.g. Utah, Mormon Pioneer Overland Travel Database, 1847-1868; Saints by Sea for the ocean leg) | Church transfers, newspaper, city directories |
 | FAN research | Land deeds (others mentioned), census (neighbors), probate (others mentioned), church (godparents) | Business records, court records, military unit records |
 
-**FAN research — "others mentioned" is deliberate.** In a deed the FAN names
-are not only the witnesses: the boundary recital names the adjoining
-landowners ("bounded on the north by John Smith's property"), who are
-neighbours by definition and frequently kin. In a probate file they are the
+**FAN research — "others mentioned" is deliberate, and it widens rather than
+replaces.** Witnesses still count in both record types; they are simply not the
+whole set. In a deed the FAN names are not only the witnesses: the boundary
+recital names the adjoining landowners ("bounded on the north by John Smith's
+property"), who are neighbours by definition and frequently kin. In a probate
+file the attesting witnesses to the will remain a FAN source, and so are the
 creditors listed among the debts, the purchasers at the estate sale, the
 appraisers, the bondsmen and the guardians — and the people named in a will
 are often not immediate family but still supply FAN names. Planning only for
