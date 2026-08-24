@@ -43,7 +43,7 @@ Handles direct modifications to `tree.gedcomx.json`. Two use cases: **ad-hoc cor
 
 Each ad-hoc edit is one tool call: **additions** (`add_*`) go through `tree_edit`; **corrections and removals** (`update_*`, `remove`) go through `tree_correct` — same batched `ops[]`, id rules, validate-on-write, and `.bak` semantics, split only by op authority. Supply content WITHOUT ids — the tool assigns the next `F`/`N`/`I`/`R` id, swaps primary/preferred, resolves `standard_place`, validates the whole project, and writes only `tree.gedcomx.json`. On `{ ok: false, errors }` nothing is written — surface those errors rather than retrying.
 
-**Actually call `tree_edit`/`tree_correct` — do not describe the edit or print a summary of what you "would" write.** The change isn't real until the tool call returns `ok: true`; narrate the result only from that returned summary, never from a fabricated one.
+**Actually call `tree_edit`/`tree_correct` — do not describe the edit or print a summary of what you "would" write.** The change isn't real until the tool call returns `ok: true`; narrate the result only from that returned summary, never from a fabricated one. **Then call `Skill("check-warnings")` before you report done — every ad-hoc edit ends with it, not just merges** (skip it only on a true no-op where nothing was written).
 
 ```
 tree_edit({
@@ -64,7 +64,7 @@ Other additions via `tree_edit`: `add_person` · `add_relationship` · `add_sour
 ### Writing facts correctly
 
 - **Dates must be GedcomX-parseable.** Write a bare year (`1773`), an ISO date (`1908-03-12`), or a spelled date (`12 March 1908`); record any approximation in the source `page` or your reply, not in the `date` string.
-- **Couple-event facts go on the `Couple` relationship, not on a person.** Marriage, Divorce, and other couple events belong in the relationship's `facts` array — supply them in the `add_relationship` call itself: `relationship: { type: "Couple", person1, person2, facts: [{ type: "Marriage", date, place, sources }] }`. A Marriage written as a person `add_fact` misplaces the event. See `references/relationship-accuracy.md`.
+- **Couple-event facts go on the `Couple` relationship, not on a person.** Marriage, Divorce, and other couple events belong in the relationship's `facts` array — supply them in the `add_relationship` call itself. The relationship edge needs its own source-ref, separate from the fact's — see `references/relationship-accuracy.md` for the exact mechanics. A Marriage written as a person `add_fact` misplaces the event.
 
 ## Person merging
 
@@ -76,7 +76,7 @@ When proof-conclusion confirms two persons are the same individual, execute the 
 
 (Folding a record's personas into the tree is **not** a merge here — that is person-evidence's job, per-persona via `materialize_facts`. This skill only collapses two persons already in the tree.)
 
-**Once you've picked the survivor and gotten the user's go-ahead, actually call the merge tool — do not stop at a plan or report a merge you haven't executed.** The merge is real only when the tool returns `ok: true`; narrate the folded counts from that returned summary, never from a description of what you intend to do.
+**Once you've picked the survivor and gotten the user's go-ahead, actually call the merge tool — do not stop at a plan or report a merge you haven't executed.** The merge is real only when the tool returns `ok: true`; narrate the folded counts from that returned summary, never from a description of what you intend to do. **Then call `Skill("check-warnings")`** — skipping it here is not optional.
 
 On `{ ok: false, errors }` the merge writes nothing — surface the errors.
 
@@ -90,7 +90,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 ## Validation
 
-`tree_edit`, `tree_correct`, and `merge_tree_persons` all validate-before-persist; no separate `validate_research_schema` call is needed. After ANY edit or merge, run **`check-warnings`** to catch genealogical impossibilities the structural validator cannot (impossible dates, relationship loops, etc.).
+`tree_edit`, `tree_correct`, and `merge_tree_persons` all validate-before-persist; no separate `validate_research_schema` call is needed. That is structural validity only — `Skill("check-warnings")` (required after every edit and merge, per above) is what catches genealogical impossibilities the structural validator cannot (impossible dates, relationship loops, etc.).
 
 ## Important rules
 
@@ -111,7 +111,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 **Conflicting evidence not yet resolved:** Do not pick a side. Coexisting sourced evidence facts may both live in the tree, each carrying its own ref — what waits for proof-conclusion is the *concluded* value (`primary`/`preferred`), not the evidence itself. Do not set the concluded value until the conflict is resolved in proof-conclusion.
 
-**Requested state already satisfied:** If what the user asks for already exists in `tree.gedcomx.json` with the correct value and supporting source, make NO changes. Report: "No edit needed — F1 already reflects this with source S1." Do NOT add `confidence`, `notes`, or any field not in `docs/specs/simplified-gedcomx-spec.md` §4.2 — the audit trail belongs in your reply, not in tree fields.
+**Requested state already satisfied:** If what the user asks for already exists in `tree.gedcomx.json` with the correct value and supporting source, make NO changes. Report: "No edit needed — F1 already reflects this with source S1." Do NOT add `confidence` or any field the spec doesn't define for that object type (`docs/specs/simplified-gedcomx-spec.md` §4.1 facts / §4.2 relationships) — e.g. a fact has no `notes` field. The audit trail belongs in your reply, not in tree fields.
 
 **Do not duplicate:** If the person, relationship, or fact already exists at an id, use `update_*` (via `tree_correct`) against that id rather than adding a second entry.
 
