@@ -571,7 +571,12 @@ research together, so a per-file lock would still lose one of them. The mutex wr
 `merge_tree_persons`, `tree_forget` — at the shared-core function only;
 `extraction_append` (→ `researchAppend`) and `tree_correct` (→ `executeTreeOps`)
 lock through their core and are **not** wrapped again, since the mutex is not
-reentrant.
+reentrant. A same-project re-acquire — a locked writer calling another locked
+writer for the same project, the deadlock this non-reentrancy invites — is
+**rejected synchronously** with an error naming the key (tracked via an
+`AsyncLocalStorage` of held keys), so the trap surfaces as a thrown error at the
+call site instead of a silent hang. Nested locks on *different* projects remain
+allowed.
 
 **This beat compare-and-swap** (capture a hash at read, reject on change, return
 a retryable error). CAS changes the error contract of all six tools, and
