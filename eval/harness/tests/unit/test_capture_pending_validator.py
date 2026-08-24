@@ -5,14 +5,20 @@ site, so it builds a URL, hands it to the user, and waits for a PDF. Marking
 the plan item `completed` at that point tells `research-exhaustiveness` the
 avenue was searched when nothing was.
 
-The two "buggy"/"correct" shapes below are reduced from the five committed
-`ut_search_records_026` run logs, where the same scenario ends at `completed`
-in v1_2026-08-17_18-06-27 (and in v1_2026-08-13_17-42-37, aged out of the
-directory by the 5-candidate retention prune in this commit) and at `in_progress` in
-the other three. That 2-of-5 split is why this test exists at all: the eval
-suite cannot demonstrate the guard deterministically, so the guard is
-mutation-tested here instead — it must fire on the bad shape AND stay quiet on
-every good one.
+The two "buggy"/"correct" shapes below are reduced from committed
+`ut_search_records_026` run logs. The buggy shape — `pli_001` ending at
+`completed` with the capture still outstanding — is in
+`v1_2026-08-21_19-08-50`, a `main` run made without this PR's SKILL.md fix.
+The correct shape is in `v1_2026-08-21_00-13-34` and `v1_2026-08-21_18-09-48`,
+also without the fix, which is the 2-in-5 variance the PR body describes: the
+model sometimes wrote `in_progress` on its own. With the fix, `v1_2026-08-20_21-55-13`
+and `v1_2026-08-24_09-59-31` write `in_progress` on every run.
+
+Reduced to inline fixtures rather than read from those files because retention
+keeps only the newest five candidates per skill, so any run log cited here ages
+out. That is why the guard is mutation-tested against fixtures instead: the eval
+suite cannot demonstrate a 2-in-5 bug deterministically, so this test must fire
+on the bad shape AND stay quiet on every good one.
 """
 
 from __future__ import annotations
