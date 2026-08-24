@@ -1604,3 +1604,32 @@ def test_warnings_unchecked_no_relationship_no_finding():
 def test_warnings_unchecked_defensive_on_none():
     assert find_relationship_writes_without_warnings_check(None, None) == []
     assert find_relationship_writes_without_warnings_check([], {}) == []
+
+
+def test_dedicated_agent_names_matches_the_shipped_agent_files():
+    """The set must name every agent that ships, and nothing else.
+
+    `DEDICATED_AGENT_NAMES`'s own comment warns that adding an agent file
+    without updating it makes `find_protected_writes_by_unnamed_delegate`
+    under-flag — a false NEGATIVE, so silent. Nothing enforced that:
+    `test_dedicated_agent_write_not_flagged` above iterates the set, so it
+    passes whatever the set happens to contain and cannot see a missing member.
+    Removing `research-exhaustiveness` from the set left the whole harness suite
+    green, which is the shape `CLAUDE.md` calls worse than no check at all.
+
+    Deriving it from the directory also closes the reverse direction: a name
+    left behind after an agent file is deleted silently exempts a caller that no
+    longer exists.
+    """
+    repo_root = Path(__file__).resolve().parents[4]
+    agents_dir = repo_root / "packages" / "engine" / "plugin" / "agents"
+    shipped = {p.stem for p in agents_dir.glob("*.md")}
+    assert shipped, f"no agent files found under {agents_dir}"
+    assert set(DEDICATED_AGENT_NAMES) == shipped, (
+        "DEDICATED_AGENT_NAMES is out of step with packages/engine/plugin/agents/. "
+        f"Only in the set: {sorted(set(DEDICATED_AGENT_NAMES) - shipped)}; "
+        f"only on disk: {sorted(shipped - set(DEDICATED_AGENT_NAMES))}. "
+        "An agent on disk but not in the set makes every protected write it "
+        "makes read as an unnamed-delegate bypass — the detector fires hardest "
+        "on exactly the runs that did the right thing."
+    )
