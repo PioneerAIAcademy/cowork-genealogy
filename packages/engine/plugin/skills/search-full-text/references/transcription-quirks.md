@@ -11,17 +11,21 @@ compensate.
 
 | Pattern | Substitution | Example | Wildcard |
 |---|---|---|---|
-| long-s `ʃ` | f, l, t | Massachusetts → Mafsachusetts | `Ma?sachusetts` |
-| `rn` | m, in, iii | Turnpike → Tumpike | `Tu*pike` |
-| `u` | n, ii | Mountain → Mountan | `Mo?ntain` |
-| `m` | rn, in, iii | William → Williain | `Willi*m` |
-| `c` | e, o | Cole → Cele | `C?le` |
-| `e` | c, o | execute → cxccute | `*xecute` |
-| `l` | I, 1, t | Alice → Atice | `A?ice` |
-| ornate capital S | F | Scott → Fcott | `?cott` |
-| double-l | tt, H | Allen → Atten | `A??en` |
+| long-s `ʃ` | f, l, t, p | Massachusetts → Mafsachusetts | `Ma?sachusetts` |
+| `rn` | m, in, iii, w, ui, iu, nr | Turnpike → Tumpike | `Tu*pike` |
+| `u` | n, v | Mountain → Monntain | `Mo?ntain` |
+| `m` | rn, in, iii, w, ui, iu, nr | William → Williain | `Willia*` |
+| `c` | e, o, a, d (a/d mainly after a flourish or before `l`) | uncle → unele | `un?le` |
+| `e` | c, o, a, d (a/d mainly after a flourish or before `l`) | angel → angcl | `ang?l` |
+| `l` | I, 1, t, d, b, i (d/b vary with neighboring letters) | Alice → Atice | `A?ice` |
+| ornate capital S | F | Scott → Fcott | search both |
+| double-l | tt, H | Powell → Powett | `Powe*` |
 | `&` ligature | et, &c | & → et | search both |
 | superscript abbrev | dropped | Mrs → Mes | `M?s` |
+
+Confusable letters compound within a word: `Mountain` could also surface
+as `Moiiiitain`, `Momitain`, or `Morritan` when several of the above
+collide — a single `?`/`*` reaches one substitution, not a stacked run.
 
 ## Faithful representation symbols
 
