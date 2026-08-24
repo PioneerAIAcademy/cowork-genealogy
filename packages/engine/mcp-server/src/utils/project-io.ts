@@ -8,7 +8,7 @@
 // here as independently unit-tested utils rather than being reimplemented per
 // tool. Spec: docs/specs/validate-project-refactor-spec.md §10.
 
-import { writeFile, readFile, rename, mkdir, unlink, copyFile, access } from "fs/promises";
+import { writeFile, readFile, rename, mkdir, unlink, copyFile, access, stat } from "fs/promises";
 import { dirname, join, resolve, relative, isAbsolute } from "path";
 import { randomUUID } from "node:crypto";
 import type { ValidationError } from "../validation/types.js";
@@ -43,18 +43,145 @@ function serialize(obj: unknown): string {
   return JSON.stringify(obj, null, 2);
 }
 
+/** What `projectPath` actually points at, decided WITHOUT reference to which
+ *  file the caller wanted. See `classifyProjectPath`. */
+export type ProjectPathClass = "missing_arg" | "missing_dir" | "no_project" | "project";
+
+// The user is not in a research project. Not a failure — these are relayed to a
+// person unedited, so they are worded for a reader rather than for a log.
+//
+// Two variants because four of the twelve tools that return this are NOT
+// writers: `research_query` and `project_context` are reads, and
+// `person_warnings` / `merge_warnings` are previews. Telling someone who asked
+// "where are we?" in a non-project folder that their work was not saved is both
+// wrong and alarming.
+const NO_PROJECT_BASE = "This folder is not a research project — there is no research.json here.";
+
+export const NO_PROJECT_MESSAGE_WRITE =
+  `${NO_PROJECT_BASE} Nothing was saved; the answer stands, only the record of it is missing.`;
+
+export const NO_PROJECT_MESSAGE_READ =
+  `${NO_PROJECT_BASE} There is no project state to read — anything you are working on is standalone.`;
+
+/** Which of the two sentences a tool's no-project answer carries. */
+export type NoProjectKind = "write" | "read";
+
+export const MISSING_PROJECT_PATH_MESSAGE = "projectPath is required";
+
+/** The second sentence a person reads out of `classifyProjectPath`'s loud rows,
+ *  and the one that takes an argument. A function rather than a constant so the
+ *  single-phrasing packaging guard can hold it to the same rule as the others —
+ *  `person_warnings` classifies the directory itself and would otherwise carry
+ *  its own copy. */
+export const missingProjectDirMessage = (projectPath: unknown): string =>
+  `projectPath does not exist: ${projectPath}`;
+
+/**
+ * Raised by `readProjectJson` when `projectPath` is a real directory holding
+ * neither project file. Tools re-raise this class UNCHANGED (rather than
+ * flattening it into their own error class) so their outer catch can return
+ * `noProjectResult()` instead of a failure.
+ */
+export class NoProjectError extends Error {
+  constructor() {
+    super(NO_PROJECT_BASE);
+    this.name = "NoProjectError";
+  }
+}
+
+export type NoProjectResult = {
+  ok: false;
+  reason: "no_project";
+  errors: string[];
+};
+
+/**
+ * The one place the no-project answer is constructed.
+ *
+ * `ok: false` because nothing was written, `errors` retained so every existing
+ * consumer keeps working — `reason` is the sole discriminator, and it is what
+ * `writerToolResult` reads to leave `isError` unset. A caller that only reads
+ * `errors` still relays a sentence that reads as an answer.
+ */
+export function noProjectResult(kind: NoProjectKind = "write"): NoProjectResult {
+  return {
+    ok: false,
+    reason: "no_project",
+    errors: [kind === "read" ? NO_PROJECT_MESSAGE_READ : NO_PROJECT_MESSAGE_WRITE],
+  };
+}
+
+/**
+ * Classify `projectPath` itself — deliberately independent of any filename.
+ *
+ * Six of the twelve project-reading tools read `tree.gedcomx.json` FIRST, so a
+ * verdict derived from the file the current read wanted would hand those six a
+ * `tree.gedcomx.json not found` message in a folder that simply is not a
+ * project. The state of the directory is the same question whichever file the
+ * caller asked for, so it is answered here once.
+ *
+ * `"project"` covers both-files-present AND exactly-one-present: a folder
+ * holding one half of a project is a BROKEN project, not a missing one, and
+ * must stay loud — otherwise a write against a project whose `research.json`
+ * was deleted is dropped with a cheerful message.
+ */
+export async function classifyProjectPath(projectPath: unknown): Promise<ProjectPathClass> {
+  // Checked before any stat: `stat(undefined)` throws ERR_INVALID_ARG_TYPE
+  // rather than the ENOENT the "missing directory" branch expects.
+  if (typeof projectPath !== "string" || projectPath.trim() === "") return "missing_arg";
+  try {
+    if (!(await stat(projectPath)).isDirectory()) return "missing_dir";
+  } catch {
+    return "missing_dir";
+  }
+  // NOT `fileExists`, which swallows every access() failure as "absent". A real
+  // project directory that has lost its execute bit (mode 600 — restored from a
+  // backup, copied from a restrictive archive, an odd sandbox mount) stats fine
+  // as a directory while both probes throw EACCES. Read as "absent" that becomes
+  // `no_project`, and a write against a genuine project is dropped with a
+  // cheerful message — the exact silent loss the half-a-project rule exists to
+  // prevent. Anything that is not a clean ENOENT stays "project" so the read
+  // below fails loudly.
+  const [research, tree] = await Promise.all([
+    fileState(join(projectPath, "research.json")),
+    fileState(join(projectPath, "tree.gedcomx.json")),
+  ]);
+  return research === "absent" && tree === "absent" ? "no_project" : "project";
+}
+
+/** Three-way, unlike `fileExists`: an unreadable path is not an absent one. */
+async function fileState(path: string): Promise<"present" | "absent" | "unreadable"> {
+  try {
+    await access(path);
+    return "present";
+  } catch (e: any) {
+    return e?.code === "ENOENT" ? "absent" : "unreadable";
+  }
+}
+
 /**
  * Read and parse one of the project's JSON documents.
  *
- * Throws a plain Error with one of two messages:
- *   - `<filename> not found in projectPath`
- *   - `<filename> is not valid JSON`
+ * Throws:
+ *   - `NoProjectError` — the directory exists and holds neither project file.
+ *     Re-raise this class unchanged; it is an answer, not a failure.
+ *   - a plain Error with `projectPath is required`, `projectPath does not
+ *     exist: <path>`, `<filename> not found in projectPath`, or `<filename> is
+ *     not valid JSON`.
  *
  * Every project-file read goes through this helper. The caller maps its plain
  * Error onto its own result shape (typically `{ ok: false, errors }` via a
  * tool-specific error class wrapper — see tree-forget.ts for the pattern).
  */
 export async function readProjectJson(projectPath: string, filename: string): Promise<any> {
+  switch (await classifyProjectPath(projectPath)) {
+    case "missing_arg":
+      throw new Error(MISSING_PROJECT_PATH_MESSAGE);
+    case "missing_dir":
+      throw new Error(missingProjectDirMessage(projectPath));
+    case "no_project":
+      throw new NoProjectError();
+  }
   let text: string;
   try {
     text = await readFile(join(projectPath, filename), "utf-8");

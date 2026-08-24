@@ -214,10 +214,10 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | **47** | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **4** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list, any `disallowedTools:` denies (today only `record-extractor` has them), and its `model:` pin. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **6** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list, any `disallowedTools:` denies (every shipped agent declares them), and its `model:` pin. |
 
-The four agents are `gps-mentor`, `record-extractor`, `image-reader`, and
-`image-reader-opus`.
+The six agents are `gps-mentor`, `record-extractor`, `image-reader`,
+`image-reader-opus`, `proof-conclusion` and `research-exhaustiveness`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -386,15 +386,17 @@ The cost is knowingly accepted: there is no per-record-type ownership surface, s
 a probate specialist edits the same file as everyone else. **Revisit only with a
 mechanism that cannot silently skip.**
 
-### 3.5 Model routing
+### 3.5 Model and effort routing
 
-Per-step model routing exists **only through plugin agents.**
+Per-step routing of **model** and **reasoning effort** exists **only through plugin
+agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `image-reader-opus` → `claude-opus-4-8`; `record-extractor` + `image-reader` → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `image-reader-opus` → `claude-opus-4-8`; `record-extractor`, `image-reader`, `proof-conclusion` + `research-exhaustiveness` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
-| **Reasoning effort** | session-wide; never set by `real_agent.build_options` | not a per-step lever |
+| **Agent `effort:`** | hosted + both harnesses; **Cowork unverified** | no agent pins one |
+| **Session effort** | `.claude/settings.json` `effortLevel`; never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted inherits |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
 > unit harness (`harness/orchestrator.py` honours the field, falling back to
@@ -402,6 +404,13 @@ Per-step model routing exists **only through plugin agents.**
 > the harness default — and were deleted, because a pin that changes nothing
 > makes per-step routing look like it exists. To route a step to a different
 > model, delegate it to a plugin agent.
+>
+> **Agent `effort:` takes `low|medium|high|xhigh|max` or an integer**, and is a
+> property of the agent *definition* — the `Agent` tool's call site accepts only
+> `model`. It binds wherever `.claude/agents/*.md` is parsed, which is the hosted
+> control plane (`stage_plugin_agents` + `setting_sources=["project"]`) and both
+> harnesses. **Whether Cowork honours it has not been checked on a live session**,
+> the way the `model:` pins were; check before relying on it there.
 >
 > **And know the ceiling before you plan around it.** Because agents are the only
 > surface, the share of work that *can* be routed to another model is the share
@@ -461,6 +470,13 @@ Architecturally:
   tool only when `ok: false` is its **answer about its subject** rather than its
   own failure — `merge_warnings`, whose dry run reports that a merge *would* be
   rejected, is the only such tool today.
+- **If your tool reads the project files** — a sixth site, and nothing will
+  tell you if you skip it. Catch `NoProjectError` from `readProjectJson` and
+  return `noProjectResult()` (`"read"` for a read or a preview), so a user who
+  is not in a research project gets an answer rather than `research.json not
+  found in projectPath`. Then add the tool to `CALLS` in
+  `tests/tools/no-project.test.ts` — that list is hand-maintained and nothing
+  derives it, so a tool left out is uncovered.
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),
@@ -675,25 +691,23 @@ the most expensive mistake in this layer, because two of the three fail
 
 | Surface | Spelling | Binds in production? |
 |---|---|---|
-| Skill `allowed-tools:` | **bare** (`research_query`) | **No** — the hosted path runs `bypassPermissions` with no allowlist at all. Still enforcing in the unit harness. |
+| Skill `allowed-tools:` | **bare** (`research_query`) | **No** — neither production path nor the unit harness narrows per skill. The field is a grant, not a restriction. Advisory only: the `test_tool_allowlist` validator warns on undeclared calls. |
 | Agent `tools:` / `disallowedTools:` | **spelled under all three registrars**, matched exactly | **Yes** — and a deny binds even under `bypassPermissions`. |
 | `PreToolUse` hook | n/a — matches on tool name + input | **Yes**, in Cowork and the hosted path. **Neither harness loads the plugin's hooks** (§5.4). |
 
-### 5.1 Skill `allowed-tools` — declarative in production, enforcing in tests
+### 5.1 Skill `allowed-tools` — declarative everywhere
 
-A skill lists the MCP tools it calls **by bare name**. The unit harness compiles
-this into the SDK session allowlist: a filesystem baseline
-(`Read, Glob, Grep, Write, Edit, Skill, Task`) **plus** the skill's declared
-tools qualified onto the server key, **plus the union of the `tools:` of every
-plugin agent the skill references via `@plugin:`** — because a delegated agent's
-MCP calls travel through the same session lists, so denying them would break the
-delegation.
+A skill lists the MCP tools it calls **by bare name**. The unit harness grants
+every registered MCP tool to every skill, matching production.
+`allowed-tools` is a grant — "tools Claude can use without asking permission" —
+not a restriction; the field that removes a tool is `disallowed-tools`, which no
+skill declares. Deriving a deny list as the complement inverted the field's
+documented meaning.
 
-**This is not what restrains a production session.** But do not treat it as
-decoration: in the unit harness an undeclared tool is **denied at call time**,
-and the gap between a skill's own declaration and its agents' union is exactly
-what the per-context policy uses to tell a legitimate direct call from a boundary
-violation. **Declare accurately.**
+**Still declare accurately.** The `test_tool_allowlist` validator warns on
+undeclared calls (advisory, not gating), and the gap between a skill's own
+declaration and its agents' union is exactly what the per-context policy uses to
+tell a legitimate direct call from a boundary violation.
 
 ### 5.2 Agent frontmatter: spelled per registrar, exactly matched
 
@@ -1254,7 +1268,7 @@ Four environments run the engine, and they load the plugin differently.
 | **Cowork** (cloud) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` via the remote-device bridge |
 | **Cowork** (on this computer) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` **directly**, no bridge — `mcp__Genealogy_Research__*` |
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
-| **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — no plugin hooks, and **no write-lockdown rule at all** | `bypassPermissions` — chosen over `dontAsk` precisely so declared `Write`/`Edit` still work, while out-of-allowlist MCP tools stay blocked | mock server under `genealogy` |
+| **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — no plugin hooks, and **no write-lockdown rule at all** | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
 
 **The permission-mode column is not a footnote.** It is why the e2e tier and the
