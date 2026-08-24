@@ -8,11 +8,10 @@ coarse advisory signal; a human decides and adopts.
 
 What it does (`make gate-skill SKILL=<x> TEST=<mined-id>`):
 
-1. Runs the **gate test set** = `{TEST}` (the mined motivating test) plus the
-   skill's **holdout** tests against the **candidate** (your working-tree
-   SKILL.md, edits applied), mock-backed (`run_one_test` serves every tool from
-   `eval/fixtures/mcp/`).
-2. Reads the **incumbent** scores for those same tests from the skill's most
+1. Runs the **mined motivating test** `{TEST}` against the **candidate** (your
+   working-tree SKILL.md, edits applied), mock-backed (`run_one_test` serves
+   every tool from `eval/fixtures/mcp/`).
+2. Reads the **incumbent** scores for that same test from the skill's most
    recent run-log — the pre-edit `make eval-skill` run you did at **step 4**, with
    human `.ann` corrections overlaid **where they exist** and the judge's own
    score used otherwise.
@@ -35,9 +34,9 @@ working tree. The only artifact is a `gate-report.md`, printed to stdout.
 
 Design (plan §5, §6.3): credit the named fix only when the failure **reproduced
 on the incumbent** (baseline scored 1/2) and then **passed on the candidate**
-(scored 3). Holdout no-regression is a weak secondary check — a drop is flagged
-for the human, never auto-rejected; generalization-by-inspection is the primary
-guard.
+(scored 3). This gate compares the motivating test only; regression across the
+rest of the suite is covered by the full `make eval-skill` run that `check_runlogs`
+requires before a skill edit can merge, not here.
 """
 
 from __future__ import annotations
@@ -124,11 +123,14 @@ class GateSignal:
 
 def compute_signal(
     mined_rows: list[DimRow],
-    holdout_rows_by_test: dict[str, list[DimRow]],
     *,
     named_dimension: str | None = None,
 ) -> GateSignal:
     """Turn the per-dimension comparison into the coarse advisory verdict.
+
+    Compares the motivating test only. A regression elsewhere in the suite is not
+    this gate's job — the full `make eval-skill` run required before merge covers
+    that.
 
     - INCONCLUSIVE: the motivating failure did not reproduce on the incumbent
       (no target dimension scored 1/2) — nothing to credit a fix for.
@@ -172,12 +174,7 @@ def compute_signal(
             )
         )
 
-    regressions = [
-        r
-        for rows in ([mined_rows] + list(holdout_rows_by_test.values()))
-        for r in rows
-        if r.regressed
-    ]
+    regressions = [r for r in mined_rows if r.regressed]
     for r in regressions:
         reasons.append(
             f"regression: {r.name} {_SCORE_LABEL[r.incumbent]}->"
@@ -194,8 +191,6 @@ def compute_signal(
     ungraded: list[str] = []
     if _has_gap(mined_rows):
         ungraded.append("the motivating test")
-    ungraded += [f"holdout {tid}" for tid, rows in holdout_rows_by_test.items()
-                 if _has_gap(rows)]
     for u in ungraded:
         reasons.append(
             f"{u} could not be graded on the candidate (it aborted or the judge "
@@ -219,19 +214,6 @@ def _iter_test_files(skill_tests_dir: Path):
         if path.name == "rubric.md":
             continue
         yield path
-
-
-def holdout_test_paths(skill_tests_dir: Path) -> list[Path]:
-    """Test JSONs under a skill whose `test.holdout` is true (raw scan)."""
-    out: list[Path] = []
-    for path in _iter_test_files(skill_tests_dir):
-        try:
-            raw = json.loads(path.read_text(encoding="utf-8"))
-        except (ValueError, OSError):
-            continue
-        if (raw.get("test") or {}).get("holdout") is True:
-            out.append(path)
-    return out
 
 
 def find_test_path_by_id(test_id: str, skill_tests_dir: Path) -> Path | None:
@@ -282,11 +264,11 @@ def incumbent_baseline(
     """Per-test incumbent scores from the skill's most recent run-log, with human
     `.ann` corrections overlaid where present (human score wins over the judge's).
 
-    `gate_test_ids` scopes the `corrected`/`total` counters to the tests this
-    gate actually compares — the mined test plus its holdouts. Counting over the
-    whole run log would report e.g. "10/54 human-corrected" while none of the
-    compared dimensions carried a correction, which is exactly the misreading
-    the header exists to prevent.
+    `gate_test_ids` scopes the `corrected`/`total` counters to the test this
+    gate actually compares — the mined motivating test. Counting over the whole
+    run log would report e.g. "10/54 human-corrected" while none of the compared
+    dimensions carried a correction, which is exactly the misreading the header
+    exists to prevent.
 
     Returns None when the skill has no run-log yet — the caller tells the user to
     run `make eval-skill SKILL=<x>` (step 4) first.
@@ -380,9 +362,7 @@ def render_report(
     *,
     skill: str,
     mined_test_id: str,
-    holdout_ids: list[str],
     mined_rows: list[DimRow],
-    holdout_rows_by_test: dict[str, list[DimRow]],
     signal: GateSignal,
     baseline: Baseline,
     no_edit: bool,
@@ -392,6 +372,8 @@ def render_report(
     out = [f"# Gate report — skill `{skill}`", ""]
     out.append(f"- **Signal: {signal.verdict}**")
     out += [f"  - {r}" for r in signal.reasons]
+    out.append("- Compares the motivating test only. Regression is covered by the "
+               "full `make eval-skill` run required before this can merge.")
     # Name the correction coverage rather than asserting "human-corrected".
     # Under sampled annotation most dimensions carry no correction, so the
     # incumbent side is mostly raw judge scores — LOOKS GOOD must not be read
@@ -410,21 +392,12 @@ def render_report(
                f"{corrected_note})  ·  Candidate: working tree"
                + ("  ·  ⚠ no uncommitted edit to this skill — did you apply the "
                   "improver's edits?" if no_edit else ""))
-    out.append(f"- Motivating test: `{mined_test_id}`  ·  Holdout: "
-               f"{', '.join(f'`{h}`' for h in holdout_ids) or '(none)'}")
+    out.append(f"- Motivating test: `{mined_test_id}`")
     out.append(f"- Judge: `{judge_model}`  ·  ~${total_cost:.2f} this round "
                f"(candidate side only)")
     out += ["", "Scores: 3 = pass, 2 = partial, 1 = fail, - = n/a. Advisory only — "
             "a person adopts (plan §5, §6.3).", ""]
     out += _render_table(f"Motivating test `{mined_test_id}`", mined_rows)
-    if holdout_ids:
-        for hid in holdout_ids:
-            out += _render_table(f"Holdout `{hid}`", holdout_rows_by_test.get(hid, []))
-    else:
-        out += ["### Holdout", "",
-                "_No holdout tests for this skill — the no-regression check is "
-                "**inert**. Designate 2-3 via the CRUD UI Hold-out toggle "
-                "(plan §6.5)._", ""]
     return "\n".join(out)
 
 
@@ -470,7 +443,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="skill_gate.py",
         description="Gate a candidate SKILL.md edit against its step-4 baseline on "
-        "the mined test + holdout set. Advisory; writes no run-logs and never "
+        "the mined motivating test. Advisory; writes no run-logs and never "
         "mutates the working tree.",
     )
     p.add_argument("--skill", required=True, help="Skill under test.")
@@ -503,10 +476,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: no test '{args.test_id}' under eval/tests/unit/{args.skill}/.",
               file=sys.stderr)
         return 2
-    holdout_paths = [p for p in holdout_test_paths(skill_tests_dir) if p != mined_path]
     try:
         mined_spec = load_test(mined_path)
-        holdout_specs = [load_test(p) for p in holdout_paths]
     except InvalidTestError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 2
@@ -514,7 +485,7 @@ def main(argv: list[str] | None = None) -> int:
     baseline = incumbent_baseline(
         args.skill,
         REPO_ROOT / "eval/runlogs",
-        gate_test_ids={mined_spec.id, *(s.id for s in holdout_specs)},
+        gate_test_ids={mined_spec.id},
     )
     if baseline is None:
         print(f"ERROR: no run-log for '{args.skill}' — run `make eval-skill "
@@ -527,17 +498,6 @@ def main(argv: list[str] | None = None) -> int:
               f"SKILL={args.skill}` (step 4) so the gate has an incumbent baseline "
               f"for it.", file=sys.stderr)
         return 2
-
-    missing_holdout = [s.id for s in holdout_specs if s.id not in baseline.scores]
-    if missing_holdout:
-        print(f"  NOTE: {len(missing_holdout)} holdout test(s) are absent from the "
-              f"baseline run-log and will be skipped: {', '.join(missing_holdout)}. "
-              f"Re-run `make eval-skill SKILL={args.skill}` to include them.",
-              file=sys.stderr)
-    holdout_specs = [s for s in holdout_specs if s.id in baseline.scores]
-    if not holdout_specs:
-        print("  NOTE: no holdout tests in the baseline — the no-regression check "
-              "is inert (plan §6.5).", file=sys.stderr)
 
     try:
         auth = resolve_auth()
@@ -557,7 +517,7 @@ def main(argv: list[str] | None = None) -> int:
     # git whether the operator has actually changed the skill.
     no_edit = not _has_uncommitted_skill_edit(args.skill)
 
-    gate_specs = [mined_spec] + holdout_specs
+    gate_specs = [mined_spec]
     from harness.versioning import now_utc_filename_timestamp
     ts = now_utc_filename_timestamp()
     print(f"\nGating {args.skill}: {len(gate_specs)} candidate test(s) vs the "
@@ -569,9 +529,7 @@ def main(argv: list[str] | None = None) -> int:
                        scores_of(cand_entries.get(test_id, {})))
 
     mined_rows = rows_for(mined_spec.id)
-    holdout_rows_by_test = {s.id: rows_for(s.id) for s in holdout_specs}
-    signal = compute_signal(mined_rows, holdout_rows_by_test,
-                            named_dimension=args.dimension)
+    signal = compute_signal(mined_rows, named_dimension=args.dimension)
     if no_edit and signal.verdict != "NEEDS YOUR EYES":
         signal = GateSignal("NEEDS YOUR EYES", [
             "no uncommitted edit to this skill's SKILL.md — there is nothing to "
@@ -586,9 +544,8 @@ def main(argv: list[str] | None = None) -> int:
 
     from harness.judge import DEFAULT_JUDGE_MODEL
     report = render_report(
-        skill=args.skill, mined_test_id=mined_spec.id,
-        holdout_ids=[s.id for s in holdout_specs], mined_rows=mined_rows,
-        holdout_rows_by_test=holdout_rows_by_test, signal=signal, baseline=baseline,
+        skill=args.skill, mined_test_id=mined_spec.id, mined_rows=mined_rows,
+        signal=signal, baseline=baseline,
         no_edit=no_edit, judge_model=DEFAULT_JUDGE_MODEL, total_cost=total_cost,
     )
     fd, report_path = tempfile.mkstemp(prefix=f"gate-report-{args.skill}-", suffix=".md")

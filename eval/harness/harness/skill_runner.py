@@ -591,6 +591,16 @@ async def run_skill(
                     "stop_reason": message.stop_reason,
                     "total_cost_usd": message.total_cost_usd,
                     "usage": message.usage,
+                    # Per-model ledger, keyed by model id, each entry carrying
+                    # inputTokens / outputTokens / cacheReadInputTokens /
+                    # cacheCreationInputTokens. This is the authoritative token
+                    # count: the CLI documents it as covering the same
+                    # query-pipeline calls as `total_cost_usd` and sharing its
+                    # lifecycle, whereas `usage` above may be a per-turn
+                    # main-loop value. A skill that delegates to a plugin agent
+                    # on its own `model:` pin shows up here as a second key and
+                    # nowhere in `usage`. See orchestrator._skill_tokens.
+                    "model_usage": message.model_usage,
                 }
                 if message.is_error:
                     error = message.result or message.stop_reason
