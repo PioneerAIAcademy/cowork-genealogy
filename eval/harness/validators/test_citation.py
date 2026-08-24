@@ -138,7 +138,7 @@ _CUSTODY_KEYWORDS = frozenset({
     "catalog number",
 })
 
-_MARKER_RE = re.compile(r'\[([A-Z_ ]+?)(?:\s+NOT RECORDED)\]', re.IGNORECASE)
+_MARKER_RE = re.compile(r'\[([^\]]+?)\s+NOT RECORDED\]', re.IGNORECASE)
 
 
 def _marker_names_custody_element(element_text: str) -> str | None:
@@ -214,14 +214,17 @@ def test_informant_not_in_who(before_state, after_state, test):
         sid = src.get("id")
         if sid not in before_sources:
             continue
+        before_src = before_sources[sid]
         cd = src.get("citation_detail", {}) or {}
         who = cd.get("who", "") or ""
         citation = src.get("citation", "") or ""
-        if "informant" in who.lower():
+        before_who = (before_src.get("citation_detail", {}) or {}).get("who", "") or ""
+        before_citation = before_src.get("citation", "") or ""
+        if "informant" in who.lower() and who != before_who:
             violations.append(
                 f"{sid}: citation_detail.who contains 'informant': {who!r}"
             )
-        if "informant" in citation.lower():
+        if "informant" in citation.lower() and citation != before_citation:
             violations.append(
                 f"{sid}: citation string contains 'informant': {citation!r}"
             )

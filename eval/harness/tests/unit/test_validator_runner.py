@@ -1682,6 +1682,7 @@ def test_unknown_marker_vocabulary_passes_on_valid_markers(marker_text):
     ("[MICROFILM NUMBER NOT RECORDED]", "microfilm"),
     ("[MICROFICHE NOT RECORDED]", "microfiche"),
     ("[FHL CALL NUMBER NOT RECORDED]", "fhl"),
+    ("[FHL FILM #1234 NOT RECORDED]", "fhl"),
     ("[CATALOG NUMBER NOT RECORDED]", "catalog number"),
     ("[ACCESSION NUMBER NOT RECORDED]", "accession"),
 ])
@@ -1751,3 +1752,36 @@ def test_informant_not_in_who_fails_when_who_contains_informant():
     assert result is not None, "test_informant_not_in_who did not run"
     assert result.passed is False
     assert "informant" in (result.error or "").lower()
+
+
+def test_informant_not_in_who_ignores_preexisting_informant():
+    """Pre-existing 'informant' in who that the skill did not change must
+    not trigger a false positive — the mid-research-flynn null-run case."""
+    src = {
+        "id": "src_004",
+        "citation": "",
+        "citation_detail": {
+            "who": "Pennsylvania Department of Health; informant: James Brown",
+        },
+        "notes": "Informant is son-in-law James Brown.",
+    }
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [dict(src)]  # identical — skill changed nothing
+
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_informant_not_in_who"), None
+    )
+    assert result is not None, "test_informant_not_in_who did not run"
+    assert result.passed is True, (
+        f"false positive on pre-existing informant data: {result.error}"
+    )
