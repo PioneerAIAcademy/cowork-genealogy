@@ -35,6 +35,7 @@ set "FAILED="
 
 REM Typecheck first: turbo.json defines `test` and `typecheck` as separate
 REM tasks, so no test suite ever runs tsc. It costs seconds.
+call :suite "ESLint"                       "%~dp0lint.bat"
 call :suite "Typecheck (turbo)"            "%~dp0typecheck.bat"
 call :suite "JS workspace tests (turbo)"   "%~dp0test-js.bat"
 call :suite "Control-plane tests (pytest)" "%~dp0server-test.bat"
