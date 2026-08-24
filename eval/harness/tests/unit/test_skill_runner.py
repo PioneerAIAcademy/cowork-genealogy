@@ -246,6 +246,78 @@ def test_run_skill_collects_builtin_calls_through_the_real_hook(tmp_path, monkey
     ]
 
 
+def test_the_result_messages_ledger_reaches_the_key_skill_tokens_reads(
+    tmp_path, monkeypatch
+):
+    """Both halves of the token seam, spelled once, against a real ResultMessage.
+
+    `run_skill` writes the ledger under a key and `_skill_tokens` reads it back
+    out; each was tested against its own hand-built dict, so the two spelled it
+    independently. Renaming the key here leaves the whole suite green — the
+    reader silently falls back to `usage`, which is the defect the ledger read
+    exists to fix. The `usage` block below deliberately disagrees with the
+    ledger, so a fallback cannot pass by coincidence.
+    """
+    import asyncio
+
+    from claude_agent_sdk import ResultMessage
+
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+    from harness.orchestrator import _skill_tokens
+
+    ledger = {
+        "claude-opus-5": {
+            "inputTokens": 100,
+            "outputTokens": 2_000,
+            "cacheReadInputTokens": 1_000,
+            "cacheCreationInputTokens": 500,
+        },
+        "claude-sonnet-4-6": {
+            "inputTokens": 50,
+            "outputTokens": 8_000,
+            "cacheReadInputTokens": 900,
+            "cacheCreationInputTokens": 400,
+        },
+    }
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook,
+            [],
+            [
+                ResultMessage(
+                    subtype="result",
+                    duration_ms=1,
+                    duration_api_ms=1,
+                    is_error=False,
+                    num_turns=1,
+                    session_id="S1",
+                    total_cost_usd=1.0,
+                    usage={"input_tokens": 1, "output_tokens": 1},
+                    model_usage=ledger,
+                )
+            ],
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    result = asyncio.run(
+        sr.run_skill(
+            user_message="go",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(
+                skill_runner_mode="api_key", api_key="x", detail="stub"
+            ),
+        )
+    )
+
+    # The subagent's 8,000 output tokens are the ones that used to vanish.
+    assert _skill_tokens(result.usage) == (150, 1_900, 900, 10_000, ledger)
+
+
 def test_read_skill_tool_input_reads_the_documented_key():
     """"skill" is the claude-agent-sdk 0.1.81 contract."""
     from harness.skill_runner import read_skill_tool_input

@@ -833,6 +833,18 @@ def test_extraction_append_by_unnamed_delegate_flagged():
     assert "record-extractor" in violations[0]
 
 
+def test_unhashable_agent_type_flags_without_raising():
+    """An unhashable agent_type (a list/dict -- never stamped by the SDK, which
+    emits str|None) must not crash the `in DEDICATED_AGENT_NAMES` membership test
+    under a corpus-wide replay, and must still flag (the safe over-flag
+    direction). Guards the else-None normalization at skill_invocation.py: revert
+    it to `else agent_type` and this raises TypeError instead of flagging."""
+    owned = find_protected_writes_by_unnamed_delegate(
+        [_owned_write("person-evidence", agent_id="a1", agent_type=["genealogy-research"])]
+    )
+    assert len(owned) == 1 and "person-evidence" in owned[0]
+
+
 def test_extraction_append_by_unnamed_delegate_still_flagged_when_errored():
     """The is_error skip that used to sit before this branch split (issue #1569)
     covered the extraction_append path too -- pin it separately from the
@@ -851,6 +863,42 @@ def test_extraction_append_by_wrong_dedicated_agent_still_flagged():
     calls = [_extraction_call(agent_id="a1", agent_type="gps-mentor")]
     violations = find_protected_writes_by_unnamed_delegate(calls)
     assert len(violations) == 1
+
+
+def test_namespaced_record_extractor_treated_as_bare():
+    """Cowork logs a plugin-namespaced agent_type ("genealogy-research:record-extractor")
+    while the harness reports bare names (#980 ruling; live probe 2026-08-15). The
+    detector must strip the leading "<plugin>:" before comparing, on BOTH clauses,
+    or an equality/membership test green in CI is dead against production data
+    (#650/#698/#939). Bare and namespaced must behave identically."""
+    # extraction_append clause (== "record-extractor")
+    assert (
+        find_protected_writes_by_unnamed_delegate(
+            [_extraction_call(agent_id="a1", agent_type="genealogy-research:record-extractor")]
+        )
+        == []
+    )
+    # owning_skills clause (in DEDICATED_AGENT_NAMES)
+    assert (
+        find_protected_writes_by_unnamed_delegate(
+            [_owned_write("person-evidence", agent_id="a1", agent_type="genealogy-research:record-extractor")]
+        )
+        == []
+    )
+
+
+def test_namespaced_general_purpose_still_flagged():
+    """The prefix strip must not over-exempt: a namespaced NON-dedicated agent
+    still flags on both clauses (guards against stripping turning every
+    namespaced caller into a pass)."""
+    ext = find_protected_writes_by_unnamed_delegate(
+        [_extraction_call(agent_id="a1", agent_type="genealogy-research:general-purpose")]
+    )
+    assert len(ext) == 1 and "record-extractor" in ext[0]
+    owned = find_protected_writes_by_unnamed_delegate(
+        [_owned_write("person-evidence", agent_id="a1", agent_type="genealogy-research:general-purpose")]
+    )
+    assert len(owned) == 1 and "person-evidence" in owned[0]
 
 
 def test_gps_mentor_evaluations_write_not_flagged():
@@ -1604,3 +1652,32 @@ def test_warnings_unchecked_no_relationship_no_finding():
 def test_warnings_unchecked_defensive_on_none():
     assert find_relationship_writes_without_warnings_check(None, None) == []
     assert find_relationship_writes_without_warnings_check([], {}) == []
+
+
+def test_dedicated_agent_names_matches_the_shipped_agent_files():
+    """The set must name every agent that ships, and nothing else.
+
+    `DEDICATED_AGENT_NAMES`'s own comment warns that adding an agent file
+    without updating it makes `find_protected_writes_by_unnamed_delegate`
+    under-flag — a false NEGATIVE, so silent. Nothing enforced that:
+    `test_dedicated_agent_write_not_flagged` above iterates the set, so it
+    passes whatever the set happens to contain and cannot see a missing member.
+    Removing `research-exhaustiveness` from the set left the whole harness suite
+    green, which is the shape `CLAUDE.md` calls worse than no check at all.
+
+    Deriving it from the directory also closes the reverse direction: a name
+    left behind after an agent file is deleted silently exempts a caller that no
+    longer exists.
+    """
+    repo_root = Path(__file__).resolve().parents[4]
+    agents_dir = repo_root / "packages" / "engine" / "plugin" / "agents"
+    shipped = {p.stem for p in agents_dir.glob("*.md")}
+    assert shipped, f"no agent files found under {agents_dir}"
+    assert set(DEDICATED_AGENT_NAMES) == shipped, (
+        "DEDICATED_AGENT_NAMES is out of step with packages/engine/plugin/agents/. "
+        f"Only in the set: {sorted(set(DEDICATED_AGENT_NAMES) - shipped)}; "
+        f"only on disk: {sorted(shipped - set(DEDICATED_AGENT_NAMES))}. "
+        "An agent on disk but not in the set makes every protected write it "
+        "makes read as an unnamed-delegate bypass — the detector fires hardest "
+        "on exactly the runs that did the right thing."
+    )

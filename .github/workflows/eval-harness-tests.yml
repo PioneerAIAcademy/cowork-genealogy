@@ -89,7 +89,13 @@ jobs:
           # with this check green. All apps/ Python lives under apps/server/, so
           # ^apps/server/ (not the broader ^apps/) is exact coverage -- apps/web and
           # apps/electron hold no .py.
-          PATTERNS: '^eval/harness/|^eval/runlogs/|^packages/engine/plugin/skills/|^packages/engine/plugin/hooks/|^apps/server/|^eval/triggering/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/schema/schemas/|^packages/engine/mcp-server/|^\.github/workflows/eval-harness-tests\.yml$'
+          #
+          # `^scripts/` (issue #1776): test_setup_feedback_case.py shells out to
+          # scripts/setup-feedback-case.sh, and the encoding lint above AST-scans
+          # scripts/claude-hooks/*.py — the only scanned .py outside the trees
+          # already matched here. Without it a scripts/-only diff reported success
+          # without running either check.
+          PATTERNS: '^eval/harness/|^eval/runlogs/|^packages/engine/plugin/skills/|^packages/engine/plugin/hooks/|^apps/server/|^eval/triggering/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/schema/schemas/|^packages/engine/mcp-server/|^scripts/|^\.github/workflows/eval-harness-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \

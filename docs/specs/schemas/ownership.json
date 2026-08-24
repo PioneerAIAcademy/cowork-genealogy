@@ -4,8 +4,8 @@
   "enforcementPlanes": {
     "unit": "eval/harness/validators/test_universal.py \u2014 diffs before/after project state against the calling skill's SKILL.md frontmatter name. Cannot see an agent caller, and runs only inside a paid per-skill eval run.",
     "e2e": "eval/harness/e2e \u2014 whole-run detectors. Eval-only; never reaches production.",
-    "tool": "a writer-tool precondition in packages/engine/mcp-server/src/tools. The only plane that binds in every environment. Nothing keys on this manifest yet.",
-    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Nothing keys on this manifest yet."
+    "tool": "a writer-tool precondition in packages/engine/mcp-server/src/tools. The only plane that binds in every environment, and the only one that is caller-agnostic \u2014 it constrains the WRITE, never who made it. Claimed by the questions row since 2026-08-23 (two exhaustiveness preconditions in research_append). Nothing reads this manifest at runtime: a row claiming this plane is a pointer to a hand-written check, kept in step by review.",
+    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19) and by questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23). Nothing reads this manifest at runtime \u2014 the hook runs in the VM with no repo access \u2014 so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
   },
   "rows": [
     {
@@ -75,9 +75,15 @@
         "research_append"
       ],
       "enforceableAt": [
-        "unit"
+        "unit",
+        "hook",
+        "tool"
       ],
-      "requires": "question-selection mints questions and owns their structure; research-exhaustiveness advances `status` to `exhaustive_declared` and writes `exhaustive_declaration`; proof-conclusion advances `status` to `resolved` and writes `resolved` and `resolution_assertion_ids` for the question it concluded. A `resolved` write additionally requires a proof summary referencing the question \u2014 a writer-tool precondition, not an ownership rule.",
+      "hookCallers": [
+        "agent:research-exhaustiveness"
+      ],
+      "notes": "Enforced at the hook plane since 2026-08-23, but FIELD-scoped rather than section-scoped \u2014 the only row of that shape. `exhaustive_declaration` is a REQUIRED property of every question, so question-selection writes it on every creation from the main thread; 197 of the 392 corpus ops carrying the field are exactly those, and a section route or a presence-keyed field route denies all of them. The hook therefore keys on the CLAIM \u2014 an op setting `exhaustive_declaration.declared` to true \u2014 and lives in the guard's `OWNED_DECLARATIONS`, not `OWNED_SECTIONS`. A `declared: false` write claims nothing and is not routed: that is both question creation and the owning skill's own honest early-termination path. 47 of the 131 corpus runs that declared a question exhaustive never invoked the skill that owns it. `callers` stays skill-only and the agent lives in `hookCallers`, per the proof_summaries row: the unit plane keys on the calling skill's frontmatter name and cannot see an agent.",
+      "requires": "question-selection mints questions and owns their structure; research-exhaustiveness advances `status` to `exhaustive_declared` and writes `exhaustive_declaration`; proof-conclusion advances `status` to `resolved` and writes `resolved` and `resolution_assertion_ids` for the question it concluded. A `resolved` write additionally requires a proof summary referencing the question \u2014 a writer-tool precondition, not an ownership rule. Two further preconditions on the same plane, also not ownership rules: `status: \"exhaustive_declared\"` requires `exhaustive_declaration.declared === true` (read live \u2014 the same author's own step), and `declared: true` is refused while a plan item for that question is `in_progress` (read from the pre-call snapshot \u2014 plan-item completion is the search work's step, and this skill is not a permitted writer of `plan_items`). Items still `planned` do NOT block: the orchestrator routes here before the plan is drained.",
       "failure": "`status: \"resolved\"` is the orchestrator's stop condition. A skill that flips it without concluding the question ends the project on an unanswered question.",
       "remedy": "Conclude the question through proof-conclusion, which writes the proof summary carrying `question_id` and then resolves it.",
       "override": "none"

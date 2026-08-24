@@ -299,11 +299,9 @@ has nothing to compare to.
 > open each in the grading UI, and flip the **"Hold out from the
 > skill-improver"** switch on. Leave them set.
 >
-> Why it matters: step 6's gate re-runs your hold-outs to check nothing broke.
-> **If the skill has no hold-outs, that check silently does nothing** and a
-> "LOOKS GOOD" means less than it looks. Setting or changing a hold-out also
-> changes how the run is graded, so doing it *after* a run invalidates that
-> run — if you've already run, set them and run again.
+> Setting or changing a hold-out changes how the run is graded, so doing it
+> *after* a run invalidates that run — if you've already run, set them and run
+> again.
 
 Now read the **sampled** tests and correct the judge. The sidebar marks the
 rest `not sampled` — five tests per run get reviewed, not all of them, and the
@@ -525,14 +523,18 @@ make gate-skill SKILL=<skill> TEST=<test-id>
 **Windows:** double-click `eval\GateSkill.bat` — it asks for the skill and the
 test id.
 
-The gate re-runs just the test you mined plus the skill's hold-outs, and
-compares them against **your corrected grades** from step 4 — human judgment,
-not judge-versus-judge. It's fast and cheap, so iterate here rather than
-re-running the whole suite. It prints one of:
+The gate re-runs just the test you mined and compares it against **your
+corrected grades** from step 4 — human judgment, not judge-versus-judge. It's
+fast and cheap, so iterate here rather than re-running the whole suite. It checks
+the motivating test only; a regression elsewhere in the suite is caught by the
+full `make eval-skill` run you must land before the PR can merge, not here. It
+prints one of:
 
-- **LOOKS GOOD** — the failing dimension passes and nothing else broke.
-- **NEEDS YOUR EYES** — the fix didn't land, or a hold-out got worse. Read the
-  table, adjust your edit, run it again. Don't open the PR yet.
+- **LOOKS GOOD** — the failing dimension passes and nothing else in that test
+  broke.
+- **NEEDS YOUR EYES** — the fix didn't land, or another dimension of that test
+  got worse. Read the table, adjust your edit, run it again. Don't open the PR
+  yet.
 - **INCONCLUSIVE** — the bug never showed up on the *old* skill, so nothing was
   proven either way. Usually the test is too weak. Grading isn't perfectly
   repeatable, so run it once more before going back to step 3 for a sharper
