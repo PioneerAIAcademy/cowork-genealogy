@@ -44,6 +44,13 @@ scripts\windows\test-all.bat    REM == make test-all, the pre-PR gate
 ```
 
 [`scripts/windows/README.md`](./scripts/windows/README.md) lists all of them.
+
+> **Do not clone the repo under a syncing folder** (OneDrive, Dropbox, Google
+> Drive, iCloud Drive). The sync client's filesystem hooks conflict with build
+> tools — `uv` fails on hardlinks, Next.js never writes `routes-manifest.json`,
+> and transient ENOENT/EINVAL errors appear under `.next/` and `node_modules/`.
+> Clone to a plain local path instead (e.g. `C:\src\`).
+
 Running e2e fixtures, skill evals, and building the shipped artifacts go
 through the double-clickable scripts in `eval\` instead — see
 [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) and
@@ -145,6 +152,16 @@ did these jobs until 2026-08-02, when all three were deleted as stale — see
 `CLAUDE.md` § "Subagents" and issue #1161.)
 
 ### Follow-on work you find along the way
+
+**Never write "does not close #N" in a PR body.** GitHub's closing-keyword
+parser matches the substring `close #N` and has no notion of negation, so a
+sentence disclaiming an issue closes it on merge. To say an issue is *not*
+addressed, name it without the keyword — "issue #N stays open". This is not
+hypothetical: PR #1696's body carried "Does NOT close #1499", and issue #1499
+closed one second after that PR merged. It carries `nothing-checks`, so while
+closed it was also invisible in the register `docs/architecture.md` points
+readers at.
+
 
 Implementing one task almost always turns up others — a stale doc, a missing
 test, a defect you're not fixing here. The rest of this section is about

@@ -16,26 +16,26 @@ novel; where the system takes an opinionated position, it says so.
         Define the problem, survey what's known
                         │
                         ▼
-             Choose the next question  ◀──────────────┐
-                        │                             │
-                        ▼                             │
-                  Plan the search                     │
-                        │                             │
-                        ▼                             │
-                     Search                           │
-                        │                             │
-                        ▼                             │
-        Extract the evidence from each record         │
-                        │                             │
-                        ▼                             │
-            Decide who the record is about            │
-                        │                             │
-              ┌─────────┴─────────┐                   │
-              ▼                   ▼                   │
-        Resolve conflicts    Track hypotheses         │
-              └─────────┬─────────┘                   │
-                        ▼                             │
-          Is the research exhaustive? ── not yet ─────┘
+             Choose the next question  ◀──── FAN pivot ─────┐
+                        │                                   │
+                        ▼                                   │
+                  Plan the search  ◀──────────────┐         │
+                        │                         │         │
+                        ▼                         │         │
+                     Search                       │         │
+                        │                         │         │
+                        ▼                         │         │
+        Extract the evidence from each record     │         │
+                        │                         │         │
+                        ▼                         │         │
+            Decide who the record is about        │         │
+                        │                         │         │
+              ┌─────────┴─────────┐               │         │
+              ▼                   ▼               │         │
+        Resolve conflicts    Track hypotheses     │         │
+              └─────────┬─────────┘               │         │
+                        ▼                         │         │
+          Is the research exhaustive? ── not yet ─┴─────────┘
                         │ yes
                         ▼
               Write the conclusion
@@ -46,7 +46,10 @@ novel; where the system takes an opinionated position, it says so.
 
 The plan is not a checklist to be drained. As soon as the evidence in hand
 *plausibly* answers the question, the system moves to the exhaustiveness
-test. If that test finds a gap, it returns to planning.
+test. If that test finds a gap, it returns to planning — the same question,
+with the plan extended to cover what is missing. It goes back to choosing a
+question only for a FAN pivot, when direct evidence on the current question
+is spent and the next move is a question about an associate.
 
 You can work through this two ways: step by step, with the system pausing
 for your judgment at each decision, or continuously, where it works the

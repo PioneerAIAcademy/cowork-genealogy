@@ -22,7 +22,7 @@ You'll install three things outside the repo, then run a single batch file insid
    2. Click **File → Clone repository**.
    3. Click the **URL** tab. ⚠️ The dialog opens on the **GitHub.com** tab — pasting a URL there gives a "repository can't be found" error. You must switch to the **URL** tab *first*.
    4. Paste the repo URL: `https://github.com/PioneerAIAcademy/cowork-genealogy`
-   5. Next to **Local path**, click **Choose...** and pick a folder (somewhere you'll easily find again). The **Local path** box then shows the exact spot where GitHub Desktop will put the repo — glance at it before moving on.
+   5. Next to **Local path**, click **Choose...** and pick a folder. **Not OneDrive, Dropbox, Google Drive or iCloud** — and not `Documents` or `Desktop`, which are usually inside OneDrive on Windows 11 even when they don't look like it. `C:\src` is a safe choice; type it into the box and it'll be created for you. The **Local path** box then shows the exact spot where GitHub Desktop will put the repo — glance at it before moving on.
    6. Click **Clone** and wait for it to finish.
 
    **Option B — Terminal** (if you're comfortable with the command line)

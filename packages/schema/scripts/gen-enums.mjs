@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Emits src/enums.generated.ts from schemas/enums.schema.json.
 //
 // Reads the LOCAL mirror, not docs/specs/schemas/: turbo's `inputs` are
