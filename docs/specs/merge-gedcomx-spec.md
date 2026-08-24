@@ -481,7 +481,8 @@ Tool-level (the rows above are the pure core's throws):
 | Condition | Behavior |
 |-----------|----------|
 | `projectPath` has no `tree.gedcomx.json`, or it is invalid JSON | clear input error before merging; write nothing |
-| `merge_tree_persons` and `research.json` is missing/invalid | clear input error; write nothing |
+| `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }`; write nothing. The user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. Applies to `merge_warnings` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `merge_tree_persons` and `research.json` is missing/invalid — with `tree.gedcomx.json` present, i.e. a *broken* project | clear input error; write nothing |
 | `candidateGedcomx` is not valid SimplifiedGedcomX | clear input error (reuse the exported `validateGedcomx`, `validate-project-refactor-spec.md` §10); write nothing |
 | Merge result carries a **merge-introduced** validation error | **write nothing**; return `{ ok: false, errors }` (§5b.2 step 4). A pre-existing error rides as a warning; for `merge_warnings` a drift-only project returns `{ ok: true }` |
 | A `merges` survivor id not found in the **on-disk** tree | staleness error (§5b.1); write nothing |

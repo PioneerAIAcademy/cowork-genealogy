@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_timeline_010",
+    "skill": "timeline",
+    "name": "Ruling out a candidate on chronological grounds should not trigger timeline",
+    "type": "negative",
+    "description": "User states a chronological impossibility — the Luzerne candidate died five years before Patrick's birth — and asks for that candidate to be ruled out. The reasoning is purely chronological, which makes timeline tempting, but the requested action is a hypothesis status transition (active → ruled_out with a ruled_out_reason), which hypothesis-tracking owns. This is the reciprocal of ut_hypothesis_tracking_015.",
+    "tags": [
+      "near-miss",
+      "hypothesis-tracking-vs-timeline",
+      "routing",
+      "reciprocal"
+    ]
+  },
+
+  "input": {
+    "user_message": "Thomas of Luzerne died in 1840, five years before Patrick was born — rule him out as a candidate father.",
+    "scenario": "flynn-competing-fathers"
+  },
+
+  "negative": {
+    "correct_skill": ["hypothesis-tracking"],
+    "explanation": "The deliverable is a state change on h_002: status to ruled_out, the death assertion added to contradicting_assertion_ids, and an affirmative ruled_out_reason citing the death date — all in the `hypotheses` section, which hypothesis-tracking owns. timeline arranges events and surfaces gaps; it does not adjudicate candidates, and the `timelines` section has nowhere to record an elimination. The user has already done the chronological reasoning and supplied the conclusion, so no chronology needs building."
+  },
+
+  "judge_context": [
+    "Should route to hypothesis-tracking rather than building or amending a timeline",
+    "Chronological *reasoning* in the user's message is not a request for a chronology — the requested artifact is the ruled-out hypothesis",
+    "Note this skill also defers single-person logical impossibilities to check-warnings; neither that nor a candidate elimination is timeline's to adjudicate"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

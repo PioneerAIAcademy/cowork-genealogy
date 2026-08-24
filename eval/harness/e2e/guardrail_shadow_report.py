@@ -12,7 +12,14 @@ to the harness observes skill *completion* (spec §7, "What the success gate can
 and cannot see"; `e2e/skill_episode_report.py` is the measurement). The window
 barely changes the count from 10 to 150, which was the early tell. What this
 report is still for: reading the shadow signal as measurement, and the §8/§7.5
-stored families below, whose graduations are live questions.
+post-hoc families below, whose graduations are live questions.
+
+**Stored and replayed are different questions.** Each family is printed twice: a
+STORED count, read from what a run wrote into `guardrail_shadow_violations` when
+it ran, and — under `--replay` — a REPLAYED count, recomputed now from the run's
+committed final state. A stored count reads 0 over every run made before that
+check shipped, so on a corpus that is 84% July it measures the corpus's age
+rather than the behaviour. Read `--replay` before concluding a check never fires.
 
 This module adds NO instrumentation to a run (same posture as
 `latency_report.py`); it's pure analysis over already-committed data.
@@ -22,6 +29,7 @@ CLI (from eval/harness/):
   uv run python -m e2e.guardrail_shadow_report --windows 10,20,40,80,150
   uv run python -m e2e.guardrail_shadow_report --windows 40 --detail
   uv run python -m e2e.guardrail_shadow_report --test bagley-father-1884
+  uv run python -m e2e.guardrail_shadow_report --replay --since all
 """
 
 from __future__ import annotations
@@ -45,7 +53,11 @@ from e2e.runlog_selection import (
 from harness.skill_invocation import (
     CITATION_NULLING_KIND,
     CONFLICT_UNPERSISTED_KIND,
+    did_not_land,
+    find_citation_nulling_in_conclusions,
+    find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
+    find_unpersisted_conflict_resolutions,
     PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
     unguarded_new_person_evidence_links,
@@ -122,14 +134,24 @@ def _scan_stored(
     """Read STORED shadow entries across a corpus, keeping those `keep` selects,
     each enriched with its source file/fixture.
 
-    Read rather than replayed, unlike the §7 sweep above: that check is a pure
-    function of `tool_calls` at a given window, so it can be recomputed for any
-    window from a committed log. The stored families are not — the #963
-    provenance gap depends on the seed tree and on what the live hook could see;
-    the #1133 citation-nulling and #1317 conflict-unpersisted classes are post-hoc
-    reads of the final research.json. All share `guardrail_shadow_violations` and
-    are told apart by their `kind`, so each family passes its own predicate here.
-    Unreadable files are skipped with a stderr note, never raised.
+    This is the STORED read. It reports what a run recorded when it ran, so a
+    check reads 0 over every run made before it shipped — on today's corpus that
+    is most of it. **It is not evidence that a check never fires**; for that, read
+    `replay_post_hoc` (the three post-hoc families) or `replay_provenance` (#963),
+    which recompute from committed state.
+
+    This docstring used to say the stored families could not be replayed at all,
+    giving as the reason that citation-nulling and conflict-unpersisted "are
+    post-hoc reads of the final research.json". That is backwards: being a
+    post-hoc read of a **committed sidecar** is exactly what makes them
+    replayable, and replaying them turned two of the three zeros above into real
+    counts. Only the #963 gap has a genuine replay caveat — it is a lower bound,
+    because the live hook may not see a same-turn `same_person` while the replay
+    always sees the full prefix.
+
+    All families share `guardrail_shadow_violations` and are told apart by their
+    `kind`, so each passes its own predicate here. Unreadable files are skipped
+    with a stderr note, never raised.
     """
     out: list[dict[str, Any]] = []
     for path in paths:
@@ -195,6 +217,259 @@ def scan_warnings_unchecked(paths: list[Path]) -> list[dict[str, Any]]:
     `kind == WARNINGS_UNCHECKED_KIND`.
     """
     return _scan_stored(paths, lambda v: v.get("kind") == WARNINGS_UNCHECKED_KIND)
+
+
+@dataclass
+class RunInputs:
+    """Everything a replay may need for ONE committed run, loaded once.
+
+    Each check asks for ITSELF whether this run is scannable, via the two
+    `missing_for_*` methods below — the research-only checks need
+    `final_research` and nothing else, while the warnings check additionally
+    needs `final_tree` and `seed_tree`. A single shared skip list would drop a run
+    from all three denominators because one check's input was absent (see
+    `PostHocReplay`).
+
+    The requirements are expressed as **field reads, not as string matching on a
+    skip message**. An earlier draft filtered a shared `missing: list[str]` by
+    comparing against one message's exact wording; rewording the message would
+    have silently stopped excluding it, and the warnings check would then have
+    skipped every run whose only absent input was a research sidecar it never
+    reads. Each method returns the reason to skip, or None to scan.
+    """
+
+    slug: str
+    display_path: str
+    run_log: dict[str, Any] | None = None
+    final_research: dict[str, Any] | None = None
+    final_tree: dict[str, Any] | None = None
+    seed_tree: dict[str, Any] | None = None
+
+    @property
+    def tool_calls(self) -> list[dict[str, Any]]:
+        return (self.run_log or {}).get("tool_calls") or []
+
+    def missing_for_research_only(self) -> str | None:
+        """Why `find_citation_nulling_in_conclusions` /
+        `find_unpersisted_conflict_resolutions` cannot read this run, or None."""
+        if self.run_log is None:
+            return "unreadable run log"
+        if self.final_research is None:
+            return "no readable final-research.json sidecar"
+        return None
+
+    def missing_for_warnings(self) -> str | None:
+        """Why `find_relationship_writes_without_warnings_check` cannot read this
+        run, or None. The seed tree is required, not optional: without it the
+        detector treats every relationship as new, which manufactures exactly the
+        violation being measured."""
+        if self.run_log is None:
+            return "unreadable run log"
+        absent = [
+            name
+            for name, value in (
+                ("no readable final-tree.gedcomx.json sidecar", self.final_tree),
+                ("no readable starting-tree.gedcomx.json", self.seed_tree),
+            )
+            if value is None
+        ]
+        return ", ".join(absent) or None
+
+
+def _load_json(path: Path) -> dict[str, Any] | None:
+    """Parse one JSON file, or None if it cannot be read as a JSON OBJECT.
+
+    The `isinstance` check is load-bearing, not defensive noise: a sidecar that
+    parses to a JSON array is not None, so without it the value passes every
+    `is None` skip test and then reaches `.get(...)`, raising `AttributeError`
+    and aborting the whole report instead of naming one run as unreadable.
+    `UnicodeDecodeError` is caught for the same reason — it is a `ValueError`,
+    not an `OSError`, so a file with invalid UTF-8 would otherwise propagate.
+    """
+    try:
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def load_run_inputs(path: Path, *, fixtures_root: Path = E2E_FIXTURES) -> RunInputs:
+    """Load one committed run's log, both final-state sidecars, and its fixture's
+    seed tree, recording what was absent rather than raising.
+
+    The sidecar names mirror `e2e/result.py`'s writer (`{stem}.final-research.json`
+    / `{stem}.final-tree.gedcomx.json`), which is why replaying from them is
+    faithful: the orchestrator writes them from the same post-run reads the live
+    detectors saw.
+
+    Serves `replay_post_hoc`. **`replay_provenance` deliberately does not use it**,
+    though the plan for this change said it would. Two reasons found on contact:
+    that function needs only the run log and the seed — routing it through a
+    four-input loader would parse ~19 MB of final-state sidecars it never reads,
+    twice over, since `--replay` now runs both replays — and its skip message
+    carries the exception type (`unreadable run log (JSONDecodeError)`) plus a
+    stderr note, which this loader does not preserve. Merging them would trade a
+    real diagnostic for a cosmetic de-duplication. They are two loaders because
+    they load two different things.
+
+    The near-identical copies in `e2e/corpus_report.py` (`recompute_tally`) and
+    `e2e/detector_before_after_report.py` are left alone for a separate reason:
+    each carries its own skip semantics, and folding them in would widen a change
+    whose subject is this module.
+    """
+    try:
+        display_path = str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        display_path = str(path)  # outside REPO_ROOT (ad hoc/test usage) -- show absolute
+    slug = path.parent.name
+    return RunInputs(
+        slug=slug,
+        display_path=display_path,
+        run_log=_load_json(path),
+        final_research=_load_json(path.with_name(f"{path.stem}.final-research.json")),
+        final_tree=_load_json(path.with_name(f"{path.stem}.final-tree.gedcomx.json")),
+        seed_tree=_load_json(fixtures_root / slug / "starting-tree.gedcomx.json"),
+    )
+
+
+@dataclass
+class CheckReplay:
+    """One post-hoc check's replay over a corpus: what it found, over how many
+    runs it could actually read, and which runs it could not.
+
+    `runs_scanned` is that check's OWN denominator. A count without one is
+    unreadable — the whole defect this module is being changed to fix is a number
+    printed against a corpus it silently could not see.
+
+    **It counts runs READ, not runs that could fire**, which is a weaker claim
+    than `ProvenanceReplay.runs_linking` makes and is deliberate: these are
+    behaviour-PRESENCE numbers ("does this shape occur at all"), not conditional
+    rates. Both research-only checks are gated on a non-empty `proof_summaries`
+    and warnings-unchecked on a new relationship, so some scanned runs could
+    never have fired. Do not read `4 of 157` as a rate over eligible runs; it is
+    4 occurrences across a corpus of 157 that were readable.
+    """
+
+    violations: list[dict[str, Any]] = field(default_factory=list)
+    runs_scanned: int = 0
+    skipped: list[str] = field(default_factory=list)
+
+
+@dataclass
+class PostHocReplay:
+    """`replay_post_hoc`'s result: one `CheckReplay` per check, never a shared one.
+
+    The three checks read different inputs — `find_citation_nulling_in_conclusions`
+    and `find_unpersisted_conflict_resolutions` take only the final research.json,
+    while `find_relationship_writes_without_warnings_check` also needs the final
+    tree and the fixture's seed tree. On today's corpus exactly one run
+    (`william-ferber-ancestry`, a committed run log with no fixture directory)
+    has no seed tree, so a shared denominator would report the two research-only
+    checks over 156 runs when they can be computed over 157, and would discard
+    any violation that run held in them.
+    """
+
+    citation: CheckReplay = field(default_factory=CheckReplay)
+    conflict: CheckReplay = field(default_factory=CheckReplay)
+    warnings: CheckReplay = field(default_factory=CheckReplay)
+
+
+def _record(
+    check: CheckReplay, violations: list[dict[str, Any]], inputs: RunInputs
+) -> None:
+    """Count this run against `check`'s denominator and file its violations,
+    each tagged with the source file so an aggregate stays traceable back to a
+    transcript. Scanning is recorded whether or not anything fired — a check that
+    read a run cleanly is part of its own denominator."""
+    check.runs_scanned += 1
+    for v in violations:
+        check.violations.append(
+            {**v, "file": inputs.display_path, "fixture": inputs.slug}
+        )
+
+
+def replay_post_hoc(
+    paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES
+) -> PostHocReplay:
+    """Recompute the three post-hoc shadow checks from each run's COMMITTED final
+    state, instead of reading what a run stored.
+
+    Why this exists. `scan_citation_nulling`, `scan_conflict_unpersisted` and
+    `scan_warnings_unchecked` above read `guardrail_shadow_violations` — what a run
+    recorded when it ran. Each check therefore reads zero over every run made
+    before it shipped, and all three landed in August against a corpus that is 84%
+    July. That is not a measurement of the behaviour; it is a measurement of the
+    corpus's age. Replaying answers the question the stored counts were being read
+    as answering: does this shape occur at all?
+
+    **What this claims, and what it does not.** This is a BEHAVIOUR-PRESENCE
+    measurement, not a per-run compliance score. `docs/specs/e2e-test-spec.md`
+    ("Historical runs") withholds the latter — a replay only scores a run if the
+    checks are pinned to the version that run executed, and nothing records that
+    version per run — and `docs/architecture.md` says not to quote a violation
+    rate at all. Nothing here writes an `axes_from_runlog` verdict or moves a
+    committed run's outcome, and the formatter prints counts against denominators
+    rather than rates. One check is genuinely affected by the version gap:
+    `find_unpersisted_conflict_resolutions`'s predicate was corrected after it
+    first shipped, so replaying it over older runs measures today's rule rather
+    than the rule those runs ran under. For "did this shape ever occur" that is
+    the right direction, but it is not a historical compliance figure.
+
+    Skip discipline follows `replay_provenance` and `recompute_tally`: a run
+    missing an input a check needs is NAMED in that check's `skipped` and excluded
+    from that check's denominator, never counted as a clean zero. A count that
+    quietly shrank reads as a clean corpus — which is the failure being fixed.
+
+    **The seed tree is today's, not the one that run started from.** Warnings are
+    diffed against `eval/tests/e2e/<slug>/starting-tree.gedcomx.json` as it exists
+    in the current checkout. Of the 18 fixtures with committed runs whose
+    seed-tree file changed after their earliest run, exactly one changed its
+    relationship key SET: `teitje-harkema-parents-1833`, which gained 25 keys
+    (1 -> 26) the day after its only committed run. That run fires on neither
+    seed, so replaying changed no count as of 2026-08-22 — a live hazard rather
+    than a current error, and the fixture-side twin of the predicate-version gap
+    noted above.
+
+    An earlier draft named five fixtures on a review agent's say-so. Two have no
+    committed runs at all and two had their seeds finalised *before* their runs,
+    which is the ordinary case rather than drift. A file's mtime changing is not
+    the same as its key set changing, and only the second matters here.
+    """
+    out = PostHocReplay()
+    for path in paths:
+        inputs = load_run_inputs(path, fixtures_root=fixtures_root)
+        where = f"{inputs.slug}/{path.name}"
+
+        # The two research-only checks. Neither takes a tree or a seed, so a run
+        # with no seed tree is still fully scannable for them.
+        research_skip = inputs.missing_for_research_only()
+        if research_skip:
+            out.citation.skipped.append(f"{where}: {research_skip}")
+            out.conflict.skipped.append(f"{where}: {research_skip}")
+        else:
+            _record(
+                out.citation,
+                find_citation_nulling_in_conclusions(inputs.final_research),
+                inputs,
+            )
+            _record(
+                out.conflict,
+                find_unpersisted_conflict_resolutions(inputs.final_research),
+                inputs,
+            )
+
+        warnings_skip = inputs.missing_for_warnings()
+        if warnings_skip:
+            out.warnings.skipped.append(f"{where}: {warnings_skip}")
+        else:
+            _record(
+                out.warnings,
+                find_relationship_writes_without_warnings_check(
+                    inputs.tool_calls, inputs.final_tree, starting_tree=inputs.seed_tree
+                ),
+                inputs,
+            )
+    return out
 
 
 @dataclass
@@ -266,9 +541,10 @@ def replay_provenance(
     violations this measures. An unreadable run log is recorded the same way, for
     the same reason: a count that quietly shrank reads as a clean corpus.
 
-    Writes that never landed (`is_error: true`) are skipped, which is what keeps
-    a deny-mode run from double-counting — a blocked attempt and its retry are
-    one logical gap, not two.
+    Writes that never landed are skipped, which is what keeps a deny-mode run
+    from double-counting — a blocked attempt and its retry are one logical gap,
+    not two. "Never landed" is `is_error: true` OR the no-project answer, which
+    writes nothing and carries no `is_error`; `did_not_land` decides both.
     """
     out = ProvenanceReplay()
     for path in paths:
@@ -312,7 +588,10 @@ def replay_provenance(
             # `same_person_scored_ids` and `find_unguarded_protected_writes`
             # already apply. No effect on today's corpus, where no committed log
             # carries the key at all — so the baseline does not move.
-            if entry.get("is_error") is True:
+            # The no-project answer (issue #1695) drops out here too: it wrote
+            # nothing and deliberately carries no `is_error`, so `did_not_land`
+            # covers both shapes.
+            if did_not_land(entry):
                 continue
             if not _links_any_person_evidence(tool, args):
                 continue
@@ -359,6 +638,41 @@ def format_provenance_replay(replay: ProvenanceReplay) -> str:
     if replay.skipped:
         lines.append(f"  Skipped {len(replay.skipped)} run(s) with no committed seed tree:")
         lines.extend(f"    {s}" for s in replay.skipped)
+    return "\n".join(lines)
+
+
+def format_post_hoc_replay(replay: PostHocReplay) -> str:
+    """The three post-hoc checks REPLAYED, each against its own denominator.
+
+    Prints per-check denominators rather than one corpus size because the checks
+    read different inputs and therefore cover different numbers of runs. Counts,
+    never rates: see `replay_post_hoc` on what a behaviour-presence replay does
+    and does not claim.
+    """
+    lines = ["", "Post-hoc checks REPLAYED from each run's committed final state:"]
+    # `per_run` says whether this check's headline number is its violation count
+    # or its affected-RUN count. warnings-unchecked emits at most one record per
+    # run today, so printing len(violations) under a "run(s)" noun happens to be
+    # true — and would silently become a relationship count labelled "runs" the
+    # moment that detector is refined to emit one record per new relationship,
+    # which is what the other two already do per source and per question.
+    for label, unit, per_run, check in (
+        ("citation-nulling", "concluded source(s) with a null/empty citation string", False, replay.citation),
+        ("conflict-unpersisted", "concluded question(s) relying on an unpersisted conflict resolution", False, replay.conflict),
+        ("warnings-unchecked", "run(s) that wrote a new ParentChild/Couple relationship without calling person_warnings", True, replay.warnings),
+    ):
+        affected = len({v["file"] for v in check.violations})
+        headline = affected if per_run else len(check.violations)
+        lines.append(
+            f"  {label:<22} {headline:>4} {unit}, "
+            f"across {affected} run(s), of {check.runs_scanned} scanned."
+        )
+        if check.skipped:
+            lines.append(f"    Skipped {len(check.skipped)}:")
+            lines.extend(f"      {s}" for s in check.skipped)
+    lines.append(
+        "  Behaviour presence over the committed corpus, not a per-run compliance score."
+    )
     return "\n".join(lines)
 
 
@@ -414,8 +728,20 @@ def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
+    # and dies on the `≥` in `format_provenance_replay` — which prints BEFORE the
+    # post-hoc replay block, so the whole of `--replay`'s new output is
+    # unreachable there. This module's own docstring now tells readers to run
+    # `--replay` before concluding a check never fires, and the team it is
+    # written for is on Windows.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(
-        description="Replay the §7 shadow window and the stored shadow families over committed e2e runs."
+        description=(
+            "Replay the §7 shadow window and report the §8/§7.5 post-hoc families "
+            "over committed e2e runs, stored and (with --replay) recomputed."
+        )
     )
     ap.add_argument("--test", help="scan every committed run for this fixture slug only")
     ap.add_argument(
@@ -428,10 +754,12 @@ def main(argv: list[str] | None = None) -> int:
         "--replay",
         action="store_true",
         help=(
-            "additionally RECOMPUTE the #963 provenance check from tool_calls + each "
-            "fixture's committed seed tree, instead of only reading what runs stored. "
-            "The stored path sees only runs made after #1178 merged; this reads the "
-            "whole historical corpus (issue #1231)."
+            "additionally RECOMPUTE all four post-hoc families instead of only reading "
+            "what runs stored: the #963 provenance check from tool_calls + each "
+            "fixture's committed seed tree, and the three §7/§7.5 checks from each run's "
+            "committed final-research / final-tree sidecars. The stored path sees only "
+            "runs made after each check shipped, which on today's corpus is a small "
+            "minority; this reads the whole historical corpus."
         ),
     )
     add_since_arg(ap)
@@ -461,9 +789,19 @@ def main(argv: list[str] | None = None) -> int:
     warnings_unchecked = scan_warnings_unchecked(paths)
     print(format_warnings_unchecked(warnings_unchecked))
 
-    replay = replay_provenance(paths) if args.replay else None
+    # `fixtures_root=E2E_FIXTURES` is passed EXPLICITLY rather than left to the
+    # parameter default. A default is bound once, when the `def` executes at
+    # import, so a test that reassigns the module global cannot reach it — which
+    # made the seed-tree lookup here untestable, and left the test that pins this
+    # very wiring passing while warnings-unchecked silently scanned nothing.
+    # Naming it here makes it a module-global read at CALL time.
+    replay = replay_provenance(paths, fixtures_root=E2E_FIXTURES) if args.replay else None
     if replay is not None:
         print(format_provenance_replay(replay))
+
+    post_hoc = replay_post_hoc(paths, fixtures_root=E2E_FIXTURES) if args.replay else None
+    if post_hoc is not None:
+        print(format_post_hoc_replay(post_hoc))
 
     if args.detail:
         smallest = min(windows)
@@ -485,6 +823,15 @@ def main(argv: list[str] | None = None) -> int:
             print(f"\nReplayed provenance gaps (issue #1231), {len(replay.violations)}:")
             for v in replay.violations:
                 print(f"  {v['fixture']:<35} idx={v['index']:<4} {v['detail']}")
+        if post_hoc is not None:
+            for label, check in (
+                ("citation-nulling", post_hoc.citation),
+                ("conflict-unpersisted", post_hoc.conflict),
+                ("warnings-unchecked", post_hoc.warnings),
+            ):
+                print(f"\nReplayed {label}, {len(check.violations)}:")
+                for v in check.violations:
+                    print(f"  {v['fixture']:<35} {v['detail']}")
     return 0
 
 

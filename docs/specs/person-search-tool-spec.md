@@ -69,8 +69,82 @@ parameters is in *FamilySearch API Reference → mapping table*.
 | `givenName` | string | Given (first) name. Counts as the required "other" field alongside `surname`. |
 | `surname` | string | Family name. **Required on every search**, plus at least one other search field (see the surname-plus-one rule). |
 | `sex` | `"Male"` \| `"Female"` \| `"Unknown"` | Sex of the person. Case-insensitive — `"male"` normalizes to `"Male"`. |
-| `givenNameExact` | boolean | When `true`, disables fuzzy matching on the given name (no nicknames/spelling variants). |
-| `surnameExact` | boolean | When `true`, disables fuzzy matching on the surname. |
+| `givenNameExact` | boolean | Restricts the given name to its exact spelling — see the exact-match rule below. Excludes diminutives — the lead's 2026-08-17 sourcing, not a measurement, and not measured on this endpoint at all (see `record-search-tool-spec-v2.md` → `givenNameExact`). |
+| `surnameExact` | boolean | Restricts the surname to its exact spelling — see the exact-match rule below. Fuzzy matching is what bridges a misspelling, so this can drop the target. |
+
+#### The exact-match rule
+
+One rule, belonging to the search engine rather than to this endpoint — with one
+measured exception, on `surname`:
+
+> **Without `exact=on` on a name field**, results include fuzzy matches, and
+> persons where **that field is empty** — for `givenName` and for a father's,
+> mother's, parent's or spouse's name (the four this tool has), but **not** for
+> `surname`, where an unqualified value drops surname-empty persons. **With
+> `exact=on`**, whatever its own field admits is excluded.
+
+**Provenance, and its limit.** The rule is the lead's, from FamilySearch
+search-engine internals, so it belongs to the engine rather than to either
+endpoint — but **every figure behind it was measured against the record index**
+(`/service/search/hr/v2/personas`), and **no figure in `dev/measured-figures.json`
+was taken on `platform/tree/search`**. For the method and the figures see
+`record-search-tool-spec-v2.md` → *Person fields* → *The exact-match rule*; the
+script is `dev/explore-name-empty-field-leg-records.ts`. So the rule is stated on
+the lead's authority, not on a measurement of this endpoint, and the tool
+description says as much. Treat a tree-side figure as absent rather than unstated.
+
+Four exploratory scripts under `dev/` do reach this endpoint —
+`explore-tree-require-switch.ts`, `explore-tree-204-vs-429.ts`,
+`explore-tree-empty-field-leg.ts`, `explore-year-bands-tree.ts` — so a reader can
+re-run the checks by hand. What none of them does is call `record()`, so nothing
+they print is traceable, contradictable, or diffable against a re-run. An
+`explore-*` script is not a probe section.
+
+Those four scripts do not share one disposition, and each says which it has in its
+own header:
+
+- `explore-tree-empty-field-leg.ts` — **never citable.** The 2026-08-17 ruling says
+  of `person_search` to "state the direction and the mechanism only, carry no figure
+  from it, and do not add `person-search.ts` to `EVIDENCE_SURFACES`". Promoting this
+  one would manufacture exactly the figures that forbids, because what it measures
+  IS the name rule.
+- `explore-tree-require-switch.ts`, `explore-tree-204-vs-429.ts` — **not
+  measurements.** Each demonstrates an instrument defect on this endpoint, so
+  citability does not apply; their promotion path is a test.
+- `explore-year-bands-tree.ts` — **should become citable**, and that is not in
+  tension with the ruling. The ruling constrains what the NAME rule may claim about
+  this endpoint; it says nothing about whether YEAR behaviour may be measured here.
+  Until a probe section records it, the year toggles say their behaviour here is
+  unestablished.
+
+No figure belongs in a tool description here, and
+`person-search.ts` is deliberately **not** in `EVIDENCE_SURFACES` in
+`tests/packaging/measured-figures.test.ts` — it carries no figures and must not
+start. It *is* scanned for contradicted wording (`WORDING_ONLY_SURFACES`).
+
+**Two mistakes this endpoint invites**, both silent and both inverting the result
+— recorded because each produced a wrong finding before being caught:
+
+- **`m.queryRequireDefault=on` is mandatory.** Without it, `q.*` terms only
+  rerank; they do not filter. Omitting it makes every query return the
+  surname-only total rather than the filtered one, which reads convincingly as
+  "the given name does not filter". The figures behind that observation are
+  deliberately not quoted: no tree-side figure is in the artifact, so citing one
+  here is exactly what the provenance note above warns against. `buildSearchUrl` always sends it; anything probing the endpoint by hand must too.
+- **A zero-result query returns HTTP 204 with an empty body**, not 200 with an
+  empty `entries` array. `res.ok` is true for 204, so a reader that parses the body
+  or retries on emptiness turns a meaningful zero into an error. `personSearchTool`
+  handles this correctly (its 204 branch returns `emptyResponse`); copy it.
+
+**Years and places are both outside the rule, and neither has been measured
+here.** The year finding — that the population the old wording was phrased around
+(objects with no indexed year) is empty, and the index carries estimated date
+*ranges* matched by overlap — is the lead's account, and the session probe behind
+it left no artifact, on either endpoint. The artifact still reads
+`H.verdict:silence tolerated` = OPEN.
+Places are a different mechanism altogether — upward expansion, not fuzz — also
+measured on the record index, with the descent half recorded by no verdict at all.
+Both toggles' descriptions say as much.
 
 ### Life-event fields
 
@@ -81,9 +155,9 @@ and a place, each with an `Exact` toggle.
 |-------|------|-------------|
 | `birthYearFrom` | number | Lower bound of the birth-year range. 4-digit year. Pair with `birthYearTo`. |
 | `birthYearTo` | number | Upper bound of the birth-year range. Pair with `birthYearFrom`. |
-| `birthYearExact` | boolean | When `true`, the year range is matched exactly (no fuzz). |
+| `birthYearExact` | boolean | Requires the birth year to match the range exactly. **Years are the exception to the exact-match rule** and their behaviour is provisional — use only with a firm date, and do not rely on a range to include or exclude undated persons. |
 | `birthPlace` | string | Birth place name. |
-| `birthPlaceExact` | boolean | When `true`, the place is matched exactly (no expansion to parent jurisdictions). |
+| `birthPlaceExact` | boolean | Stops upward expansion to parent jurisdictions. A **different mechanism** from the exact-match rule — expansion, not fuzz. Measured against the record index, not here. |
 | `deathYearFrom` / `deathYearTo` / `deathYearExact` | number / number / boolean | Death-year range and exactness. |
 | `deathPlace` / `deathPlaceExact` | string / boolean | Death place and exactness. |
 | `marriageYearFrom` / `marriageYearTo` / `marriageYearExact` | number / number / boolean | Marriage-year range and exactness. |
@@ -101,15 +175,15 @@ the same value.
 | Field | Type | Description |
 |-------|------|-------------|
 | `spouseGivenName` / `spouseSurname` | string | Spouse's given / family name. |
-| `spouseGivenNameExact` / `spouseSurnameExact` | boolean | Strict match on the spouse's given / family name. |
+| `spouseGivenNameExact` / `spouseSurnameExact` | boolean | Requires the spouse's given / family name to be present and match exactly — the exact-match rule, including its empty-field leg. |
 | `fatherGivenName` / `fatherSurname` | string | Father's given / family name. |
-| `fatherGivenNameExact` / `fatherSurnameExact` | boolean | Strict match on the father's given / family name. |
+| `fatherGivenNameExact` / `fatherSurnameExact` | boolean | Requires the father's given / family name to be present and match exactly. Unqualified, the field keeps persons with no father recorded; this drops them. |
 | `fatherBirthPlace` / `fatherBirthPlaceExact` | string / boolean | Father's birth place and exactness. |
 | `motherGivenName` / `motherSurname` | string | Mother's given / family name. |
-| `motherGivenNameExact` / `motherSurnameExact` | boolean | Strict match on the mother's given / family name. |
+| `motherGivenNameExact` / `motherSurnameExact` | boolean | As `fatherGivenNameExact`, for the mother. |
 | `motherBirthPlace` / `motherBirthPlaceExact` | string / boolean | Mother's birth place and exactness. |
 | `parentGivenName` / `parentSurname` | string | A parent's given / family name when the parent's sex is unknown. |
-| `parentGivenNameExact` / `parentSurnameExact` | boolean | Strict match on the parent's given / family name. |
+| `parentGivenNameExact` / `parentSurnameExact` | boolean | As `fatherGivenNameExact`, for a parent of unknown sex. |
 | `parentBirthPlace` / `parentBirthPlaceExact` | string / boolean | A parent's birth place and exactness. |
 
 ### Pagination
@@ -143,6 +217,20 @@ Strict surname + birth-place match:
 { "surname": "Smyth", "surnameExact": true,
   "birthPlace": "Hodgenville, Kentucky", "birthPlaceExact": true }
 ```
+
+Kept deliberately, with what it costs stated — the two toggles here do different
+things, and this is the one shape where both are the right call. `surnameExact`
+holds the count to persons indexed exactly `Smyth`, and it will miss the target
+outright if the tree spells it `Smith`. It is *not* claimed to drop
+initials-only forms — that is not established. It does not change what happens to
+persons with no surname recorded: per the rule above, the unqualified `surname`
+value has already dropped those, and `surname` is required on every search — so
+`person_search` cannot reach a surname-less tree person at all, flag or no flag.
+Use it only with a spelling you have confirmed. `birthPlaceExact` is
+not the same mechanism: it stops upward expansion to parent jurisdictions, which
+is what makes the count mean something for an exhaustiveness claim. Reach for
+this pair when you need a defensible total, not when you are still looking for
+the person.
 
 ---
 
@@ -203,7 +291,7 @@ Example:
         "persons": [
           {
             "id": "LZJW-C31",
-            "ark": "https://familysearch.org/ark:/61903/4:1:LZJW-C31",
+            "ark": "ark:/61903/4:1:LZJW-C31",
             "gender": "Male",
             "names": [{ "preferred": true, "type": "BirthName", "given": "Abraham", "surname": "Lincoln" }],
             "facts": [
@@ -536,7 +624,10 @@ Run `dev/try-person-search.ts` for the smoke layer; OAuth setup per
 - `docs/specs/record-search-tool-spec-v2.md` — sibling tool; input-naming convention and shared `q.*` family.
 - `docs/specs/person-read-tool-spec.md` — the chained tool for expanding a chosen match.
 
-Evidence trail: `packages/engine/mcp-server/dev/probe-tree-search.ts`,
+Evidence: a session probe run 2026-05-28. **No script was ever committed for it** —
+the four filenames this line used to cite (`probe-tree-search.ts`,
 `probe-tree-search-narrowing.ts`, `probe-svc-tree-search.ts`,
-`probe-tree-search-platform-lang.ts` (run 2026-05-28).
-```
+`probe-tree-search-platform-lang.ts`) appear in no commit on any branch, so the
+trail was unfollowable from the day it was written. The figures it backs — the
+56,177 and ~9,700 pools above, and the 56,177 / 2,916 require-switch contrast in
+the flag table — are reproducible only by re-running those queries by hand.
