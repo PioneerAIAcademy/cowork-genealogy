@@ -861,7 +861,7 @@ run: the main-thread half is **denied**, the delegate half is only **logged**.
 false-positive rate is calibrated. A non-`record-extractor` delegate's
 `extraction_append` therefore still succeeds today; it is recorded, not blocked.
 Beyond the detector itself, `make e2e-guardrail-shadow` reports this family across
-the committed corpus (issue #980), stored plus a `REPLAY=1` recompute, with the
+the committed corpus, stored plus a `REPLAY=1` recompute, with the
 attribution denominator; it stays a reported signal, not a graduation count.
 
 ### 6.2 Provided documents (bundled external evidence)
