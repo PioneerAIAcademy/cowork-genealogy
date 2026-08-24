@@ -207,6 +207,18 @@ class LocalProvider(SandboxProvider):
             "AGENT_MODE": settings.agent_mode,
             "MODEL": model,
             "PYTHONPATH": str(SERVER_ROOT),  # so `-m app.sandbox_server` resolves
+            # UTF-8 mode, not PYTHONIOENCODING. The agent's own summaries carry
+            # non-ASCII (mock_agent's "1 match -> logged as ..." uses U+2192), and
+            # this env reaches BOTH children: sandbox_server passes os.environ.copy()
+            # to agent_runner. Two streams need it, and only UTF-8 mode covers both --
+            # sandbox_server's stdout, redirected to ws.log below (a bare print of an
+            # arrow raises UnicodeEncodeError under cp1252, killing the _pump task
+            # mid-relay so broadcast() never runs and the client hangs), and
+            # sandbox_server's text=True pipe off agent_runner, which decodes with
+            # locale.getpreferredencoding(). PYTHONIOENCODING fixes only the first.
+            # No-op on Linux/macOS, where both are already UTF-8; this is why CI is
+            # green while every Windows run hangs.
+            "PYTHONUTF8": "1",
             # LocalProvider maps sandbox-absolute paths under a per-sandbox dir
             # on the dev host, so the agent can't read the literal SECRETS_PATH
             # (/run/secrets/... belongs to the real machine). Point it at where
