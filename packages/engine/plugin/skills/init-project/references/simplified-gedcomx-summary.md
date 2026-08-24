@@ -17,7 +17,7 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 
 ```json
 {
-  "id": "KWCJ-RN4",
+  "id": "I1",
   "gender": "Male",
   "names": [
     {
@@ -34,7 +34,9 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
       "type": "Birth",
       "primary": true,
       "date": "~1845",
+      "standard_date": "Abt 1845",
       "place": "Ireland",
+      "standard_place": "Ireland",
       "sources": [{ "ref": "S1", "page": "1850 Census, dwelling 84" }]
     }
   ]
@@ -42,11 +44,18 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 ```
 
 - `gender`: `Male`, `Female`, `Unknown`
+- `ark`: the FamilySearch anchor, and what marks tree membership. For a person
+  read from the tree it is `ark:/61903/4:1:<their FamilySearch person id>` — the
+  canonical form, identical to what `person_search` returns for that person.
+  Omit the key on local stubs. Never a page URL, never a bare id
 - `preferred` on names: omit rather than setting false
 - `primary` on facts: omit rather than setting false
 - `type` on names: `BirthName`, `MarriedName`, `AlsoKnownAs`, etc.
 - `type` on facts: PascalCase — `Birth`, `Death`, `Marriage`,
   `Residence`, `Immigration`, `Military`, `Occupation`, etc.
+- `standard_date` / `standard_place` on facts: the standardized sidecars beside
+  the raw `date`/`place`. `person_read` supplies both — carry them through, do
+  not re-derive them
 - `sources` on facts/names: optional array of source references
 
 ## Stub persons (minimal valid person)
@@ -66,8 +75,8 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 {
   "id": "R1",
   "type": "ParentChild",
-  "parent": "KWCJ-RN4",
-  "child": "KWCJ-RN5",
+  "parent": "I1",
+  "child": "I2",
   "sources": [{ "ref": "S1", "page": "..." }]
 }
 ```
@@ -77,8 +86,8 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 {
   "id": "R2",
   "type": "Couple",
-  "person1": "KWCJ-RN4",
-  "person2": "KWCJ-RN6",
+  "person1": "I1",
+  "person2": "I3",
   "facts": [
     { "id": "F5", "type": "Marriage", "date": "1870", "place": "..." }
   ]
@@ -93,6 +102,9 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 
 - `citation`: omit during active research (populated at upload time)
 - `url`: optional
+- The whole allowed set is `id`, `title`, `citation`, `author`, `url`. Any other
+  key fails the write. `person_read` may return a source carrying `notes` —
+  drop it
 
 ## Source references (on facts, names, relationships)
 
@@ -112,9 +124,27 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 
 ## ID conventions
 
-- FamilySearch persons: use their real IDs (e.g., `KWCJ-RN4`)
-- Locally created persons: `I` prefix (`I1`, `I2`)
+- ALL persons: `I` prefix (`I1`, `I2`) — including FamilySearch-seeded ones.
+  Never a FamilySearch PID. A person's FamilySearch identity travels in `ark`,
+  not in `id`
 - Names: `N` prefix (`N1`, `N2`)
 - Facts: `F` prefix (`F1`, `F2`)
 - Relationships: `R` prefix (`R1`, `R2`)
 - Sources: `S` prefix (`S1`, `S2`)
+
+## Converting a `person_read` response
+
+`person_read` already returns this format — persons/relationships/sources,
+snake_case, `standard_place` on facts. It is not full GedcomX and needs no
+field renaming. What it does need:
+
+- **Re-id.** Persons get `I` ids; names and relationships arrive with no ids, so
+  mint `N`/`R`, and mint `F` for any fact the tool did not id. Rewrite every
+  relationship endpoint to the new person ids
+- **Drop `notes`** from returned source descriptions
+- **Add source references** — `{ "ref": "S1", "quality": 1 }` on every fact and
+  every relationship
+- **Keep both standardized sidecars** — `standard_place` and `standard_date` —
+  exactly as returned; never re-derive either from the raw `place`/`date`. For a
+  fact that has `place` but no `standard_place`, resolve it with `place_search` —
+  never copy `place` into `standard_place`

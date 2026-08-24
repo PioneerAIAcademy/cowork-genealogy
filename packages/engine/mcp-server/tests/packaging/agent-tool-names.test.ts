@@ -389,6 +389,24 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     tools: ["image_read"],
     denies: ["image_transcribe", "record_read", "record_search"],
   },
+  // The only caller permitted to write research.json's proof_summaries; the
+  // plugin PreToolUse hook denies that section to everyone else. It holds the
+  // BROAD research_append, which is what the hook's caller check — not this
+  // list — is doing the work of restricting.
+  "proof-conclusion.md": {
+    tools: [
+      "Read",
+      "merge_tree_persons",
+      "merge_warnings",
+      "project_context",
+      "research_append",
+      "research_query",
+      "source_attachments",
+      "tree_correct",
+      "tree_edit",
+    ],
+    denies: ["extraction_append"],
+  },
   "image-reader.md": {
     tools: ["image_transcribe"],
     denies: ["configure_openrouter", "record_read", "record_search"],
@@ -405,6 +423,25 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_log_append",
     ],
     denies: ["materialize_facts", "research_append", "tree_edit"],
+  },
+  // The only caller permitted to set `exhaustive_declaration.declared: true`;
+  // the plugin PreToolUse hook denies that claim to everyone else. Like
+  // proof-conclusion it holds the BROAD research_append, and the hook's caller
+  // check — not this list — is what restricts it.
+  //
+  // Every tree writer is denied, not just `tree_edit`. This agent writes one
+  // field on one question and must never reach the tree; a deny naming one of
+  // five writers fails open on the other four, silently, and no CI job sees it.
+  "research-exhaustiveness.md": {
+    tools: ["Read", "project_context", "research_append", "research_query"],
+    denies: [
+      "extraction_append",
+      "materialize_facts",
+      "merge_tree_persons",
+      "tree_correct",
+      "tree_edit",
+      "tree_forget",
+    ],
   },
 };
 

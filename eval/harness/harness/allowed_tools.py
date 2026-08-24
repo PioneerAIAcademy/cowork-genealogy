@@ -1,39 +1,19 @@
-"""Compute per-skill allowed_tools list per unit-test-spec.md §15.
+"""Per-skill tool declarations and callee-fixture preflight.
 
-Each skill's SKILL.md frontmatter declares which MCP tools it may call.
-The harness derives the SDK's `allowed_tools` from that declaration plus a
-baseline of filesystem tools, plus the frontmatter `tools:` of every plugin
-agent the skill delegates to via `@plugin:<name>`, plus — only for the
-sub-skills a test names in `execution.run_skills` — the `allowed-tools:`
-of each such `Skill("<name>")` callee. All three run in the same session,
-so a tool missing from the union is denied by the SDK at call time (in
-addition to the after-the-fact universal validator).
+The harness grants every registered MCP tool to every skill, matching
+production: neither Cowork nor the hosted control plane builds a per-skill
+allowlist (issue #1748). `allowed-tools` frontmatter is a GRANT — "tools
+Claude can use without asking permission" — not a restriction; the field
+that removes a tool is `disallowed-tools`, which no skill declares.
 
-The agent union is unconditional; the sub-skill union is opt-in per test.
-The asymmetry is deliberate and explained at the call site.
+`compute_allowed_tools` still resolves the declared set (skill + agent union
++ run_skills callees) for two consumers that need it:
+  - the advisory `test_tool_allowlist` validator (warns on undeclared calls)
+  - the `ValueError` guard that validates `execution.run_skills` references
 
-**This narrowing is a harness construct, not a product behavior.** Neither
-production path builds a per-skill allowlist: the hosted control plane
-passes `permission_mode="bypassPermissions"` with no `allowed_tools` at all
-(`apps/server/app/agent/real_agent.py`), and Cowork loads the plugin whole,
-so a real session holds every MCP tool the server advertises. A skill's
-`allowed-tools` frontmatter narrows what it *should* reach for, not what
-the session *has*. The harness narrows for real to keep tests honest about
-that declaration — which is why a gap here shows up as a test-only failure
-with no product symptom, and why the fix is measured against production
-rather than against what feels safe (issue #1012).
-
-**And `allowed-tools` is a GRANT, not a restriction.** Claude Code documents
-it as "tools Claude can use without asking permission during the turn that
-invokes this skill"; the field that removes a tool from the pool is
-`disallowed-tools`, which no skill in this repo declares. Omission denies
-nothing anywhere. anthropics/claude-code#37683 -- that `allowed-tools` does
-not restrict tool access -- is closed as not planned. So deriving a deny list
-as this list's complement does not merely narrow more than production: it
-inverts the field's meaning. Retiring that narrowing is issue #1748; see
-CLAUDE.md, "The eval harness emulates production's permission model", for the
-boundary (a deny that hides the answer is a fixture and stays; a deny that
-changes what the agent may do is a distortion and goes).
+`uncovered_callee_fixtures` and `declared_skill_tools` are independent
+helpers used by runnability preflight and the per-context policy
+respectively; they were never part of the narrowing and are unchanged.
 """
 
 from __future__ import annotations
@@ -73,33 +53,17 @@ def compute_allowed_tools(
     agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
     run_skills: set[str] | None = None,
 ) -> list[str]:
-    """Return the allowed_tools list for the SDK when running this skill.
+    """Return the *declared* tool set for a skill (advisory, not enforced).
 
-    Composes:
-      - Baseline filesystem tools (Read, Glob, Grep, Skill)
-      - Write/Edit always — skills may need to write a markdown file
-        (search-wikipedia), update research.json (most others), or modify
-        tree.gedcomx.json (tree-edit). A previous version maintained a
-        hardcoded no-write set, but it was a parallel source of truth
-        that drifted from the ownership table. Layer-1 defense against
-        misuse comes from test_universal.test_ownership_table for
-        research.json writes, and the disallowed-tools backstop
-        (Bash/WebFetch/etc.) for dangerous host tools. Read-only skills
-        that don't write to anything simply ignore Write/Edit at runtime;
-        granting them adds no risk.
-      - Task always — plugin subagents are staged into every workspace
-        (workspace.build_workspace) and a skill delegates only when its
-        SKILL.md instructs it to, so no per-test flag gates delegation.
-      - Every MCP tool from the skill's `allowed-tools` frontmatter,
-        qualified to `mcp__<server>__<tool>` form.
-      - Every tool from the frontmatter `tools:` of each plugin agent the
-        skill's SKILL.md references via `@plugin:<name>` — a delegated
-        agent's MCP calls go through the same session allow/deny lists, so
-        they must be in the union or the SDK denies them.
-      - Every tool from the `allowed-tools:` of each sub-skill named in
-        `run_skills` (from the test's `execution.run_skills`). Same reason —
-        a `Skill()` callee runs in this session — but opt-in per test; see
-        the WHY OPT-IN note at the call site.
+    The session grants every registered MCP tool regardless of this list
+    (issue #1748). This function's output is used only by:
+      - the advisory ``test_tool_allowlist`` validator (warns on undeclared
+        tool calls without failing the test)
+      - the ``ValueError`` guard below (validates ``run_skills`` references)
+
+    The returned list still composes the same union as before (baseline +
+    skill frontmatter + agent frontmatter + run_skills callees) so the
+    advisory check and the guard remain accurate.
     """
     skill_md = skills_dir / skill_name / "SKILL.md"
     fm = load_skill_frontmatter(skill_md)
