@@ -28,6 +28,7 @@ there.
 | `make web` | `scripts\windows\web.bat` | Web client for `server` |
 | `make db-reset` | `scripts\windows\db-reset.bat` | Wipe the local SQLite DB and sandbox dirs |
 | `make test-all` | `scripts\windows\test-all.bat` | **The pre-PR gate** — every suite, all failures reported together |
+| `make lint` | `scripts\windows\lint.bat` | ESLint (apps/electron, eval/app) |
 | `make test-js` | `scripts\windows\test-js.bat` | JS workspace tests (turbo) |
 | `make typecheck` | `scripts\windows\typecheck.bat` | TypeScript typecheck (turbo) |
 | `make server-test` | `scripts\windows\server-test.bat` | Control-plane tests (pytest) |
