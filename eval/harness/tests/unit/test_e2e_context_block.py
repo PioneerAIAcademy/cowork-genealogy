@@ -27,6 +27,7 @@ from e2e import orchestrator
 from e2e.orchestrator import (
     _run_agent,
     is_main_thread_extraction_append,
+    main_thread_owned_section,
     load_fixture,
 )
 
@@ -251,3 +252,317 @@ def _result(session="S1"):
         num_turns=1,
         session_id=session,
     )
+
+
+# ── agent-owned sections: research_append + proof_summaries ──
+#
+# Keyed on tool AND section, unlike the extraction_append block above: that one
+# can key on the tool alone because no skill declares it, whereas research_append
+# is the general writer and only its owned sections are routed. Keyed on
+# agent_type as well as agent_id, because agent_id alone would permit the
+# general-purpose stand-in the model falls back to when a delegation misses.
+
+
+def _owned(
+    section=None,
+    ops=None,
+    agent_id=None,
+    agent_type=None,
+    tool="research_append",
+    op=None,
+    fields=None,
+    entry=None,
+):
+    """A PreToolUse payload.
+
+    `fields` / `entry` / `op` exist for the field-scoped declaration rule, which
+    reads the op's own payload rather than the section alone — a section-only
+    vector cannot distinguish `declared: true` from `declared: false`, and that
+    distinction is the whole rule.
+    """
+    payload = {"tool_name": f"mcp__genealogy__{tool}", "tool_input": {}}
+    if ops is not None:
+        payload["tool_input"]["ops"] = ops
+    elif section is not None:
+        payload["tool_input"]["section"] = section
+        if op is not None:
+            payload["tool_input"]["op"] = op
+        if fields is not None:
+            payload["tool_input"]["fields"] = fields
+        if entry is not None:
+            payload["tool_input"]["entry"] = entry
+    if agent_id is not None:
+        payload["agent_id"] = agent_id
+    if agent_type is not None:
+        payload["agent_type"] = agent_type
+    return payload
+
+
+@pytest.mark.parametrize(
+    "payload,label",
+    [
+        (_owned(section="proof_summaries"), "main thread"),
+        (
+            _owned(ops=[{"section": "questions"}, {"section": "proof_summaries"}]),
+            "batched with another section",
+        ),
+        (
+            _owned(section="proof_summaries", agent_id="a1", agent_type="general-purpose"),
+            "a general-purpose stand-in, which agent_id alone would permit",
+        ),
+        (
+            _owned(section="proof_summaries", agent_type="genealogy-research:proof-conclusion"),
+            "agent_type without agent_id -- the --agent main thread",
+        ),
+    ],
+)
+def test_owned_section_write_is_blocked(payload, label):
+    # The predicate returns the SHIPPED hook's (section, rule, caller) triple
+    # since 2026-08-23, when the harness stopped carrying its own copy of the
+    # rule. A bare section name is no longer the shape.
+    denied = main_thread_owned_section(payload)
+    assert denied is not None, label
+    assert denied[0] == "proof_summaries", label
+    assert denied[1] == "routed", label
+
+
+@pytest.mark.parametrize(
+    "payload,label",
+    [
+        (
+            _owned(
+                section="proof_summaries",
+                agent_id="a1",
+                agent_type="genealogy-research:proof-conclusion",
+            ),
+            "the owner, namespaced as production reports it",
+        ),
+        (
+            _owned(section="proof_summaries", agent_id="a1", agent_type="proof-conclusion"),
+            "the owner, bare",
+        ),
+        (_owned(section="assertions"), "an unowned section on the main thread"),
+        (_owned(ops=[{"section": "questions"}]), "a batch with no owned section"),
+        (_owned(section="proof_summaries", tool="research_query"), "a different tool"),
+        ({"tool_name": "Write", "tool_input": {"section": "proof_summaries"}}, "not an MCP tool"),
+    ],
+)
+def test_owned_section_write_is_allowed(payload, label):
+    assert main_thread_owned_section(payload) is None, label
+
+
+# ── the deny TEXT, not just the decision ──
+
+
+def test_owned_section_deny_uses_the_shipped_hooks_own_words():
+    """The harness must deny with the text the agent meets in Cowork.
+
+    This arm previously shared a branch with the extraction_append block and so
+    reused its denial, which told the agent `research_append may not be called
+    from the main session — it is reserved for a delegated subagent`. That is
+    true of extraction_append and flatly false of research_append: it is the
+    general writer, used from the main thread constantly for plans, questions,
+    conflicts and the log. An agent that believed it would stop writing all of
+    them — in the plane that measures whether this guardrail works.
+    """
+    from harness.context_policy import owned_section_denial
+
+    reason = owned_section_denial(("proof_summaries", "routed", ""))["hookSpecificOutput"][
+        "permissionDecisionReason"
+    ]
+    assert "proof_summaries" in reason
+    assert "proof-conclusion" in reason
+    # The load-bearing half: the rest of the tool is still available.
+    assert "unaffected" in reason
+    # The sentence that made the old text dangerous must not reappear.
+    assert "may not be called from the main session" not in reason
+
+
+def test_owned_sections_is_the_shipped_hooks_map_not_a_copy():
+    """One definition, reached through the plugin hook module.
+
+    Three places state this fact — the hook, the harness, and the ownership
+    manifest's hook-plane rows. The harness reads the hook's rather than
+    restating it, so only the manifest is left to keep in step, and the
+    packaging test does that.
+    """
+    from harness import context_policy
+
+    assert context_policy.OWNED_SECTIONS is context_policy._guard.OWNED_SECTIONS
+
+
+# ── the declaration arm: field-scoped routing (issue #1335, Phase 4) ──
+#
+# `exhaustive_declaration` is a REQUIRED property of every question, so
+# question-selection writes it on every creation from the main thread. Routing
+# the SECTION, or the field's mere presence, denies all 197 of those in the
+# corpus. The rule keys on the CLAIM — `declared: true` — and these vectors are
+# what pin that apart.
+
+_DECLARE = {"declared": True, "log_entry_ids": ["log_001"]}
+_EXH_OWNER = "genealogy-research:research-exhaustiveness"
+
+
+@pytest.mark.parametrize(
+    "payload,label",
+    [
+        (
+            _owned(section="questions", fields={"exhaustive_declaration": _DECLARE}),
+            "main thread",
+        ),
+        (
+            _owned(
+                ops=[
+                    {"section": "plan_items", "op": "update"},
+                    {
+                        "section": "questions",
+                        "op": "update",
+                        "fields": {"exhaustive_declaration": _DECLARE},
+                    },
+                ]
+            ),
+            "batched behind another section",
+        ),
+        (
+            _owned(
+                section="questions",
+                fields={"exhaustive_declaration": _DECLARE},
+                agent_id="a1",
+                agent_type="general-purpose",
+            ),
+            "a general-purpose stand-in",
+        ),
+        (
+            _owned(
+                section="questions",
+                fields={"exhaustive_declaration": _DECLARE},
+                agent_id="a1",
+                agent_type="genealogy-research:proof-conclusion",
+            ),
+            "another owning agent -- proof-conclusion may write questions, not the claim",
+        ),
+    ],
+)
+def test_exhaustive_declaration_claim_is_blocked(payload, label):
+    denied = main_thread_owned_section(payload)
+    assert denied is not None, label
+    assert denied[0] == "questions.exhaustive_declaration", label
+    assert denied[1] == "declaration", label
+
+
+@pytest.mark.parametrize(
+    "payload,label",
+    [
+        (
+            _owned(
+                section="questions",
+                fields={"exhaustive_declaration": _DECLARE},
+                agent_id="a1",
+                agent_type=_EXH_OWNER,
+            ),
+            "the owner, namespaced as production reports it",
+        ),
+        (
+            _owned(
+                section="questions",
+                fields={"exhaustive_declaration": _DECLARE},
+                agent_id="a1",
+                agent_type="research-exhaustiveness",
+            ),
+            "the owner, bare",
+        ),
+        # The vector a section-scoped route breaks, and a presence-keyed field
+        # route breaks too: question-selection creating a question. The schema
+        # makes the field required, so EVERY creation carries it.
+        (
+            _owned(
+                section="questions",
+                op="append",
+                entry={
+                    "question": "Who were the parents?",
+                    "exhaustive_declaration": {"declared": False, "log_entry_ids": []},
+                },
+            ),
+            "question-selection creating a question (declared: false)",
+        ),
+        # The owning skill's own honest early-termination path. It claims
+        # nothing, so it is not routed.
+        (
+            _owned(
+                section="questions",
+                fields={"exhaustive_declaration": {"declared": False, "log_entry_ids": ["log_001"]}},
+            ),
+            "an honest early termination (declared: false)",
+        ),
+    ],
+)
+def test_exhaustive_declaration_claim_is_allowed(payload, label):
+    assert main_thread_owned_section(payload) is None, label
+
+
+def test_declaration_deny_uses_the_shipped_hooks_own_words():
+    from harness.context_policy import owned_section_denial
+
+    reason = owned_section_denial(
+        ("questions.exhaustive_declaration", "declaration", "")
+    )["hookSpecificOutput"]["permissionDecisionReason"]
+    assert "@plugin:research-exhaustiveness" in reason
+    # It must say what is NOT routed, or a reader concludes the whole section is.
+    assert "declared: false" in reason
+
+
+# ── the out-of-lane arm, which the harness gained on 2026-08-23 ──
+
+
+def test_out_of_lane_write_by_a_dedicated_agent_is_blocked():
+    """The arm the harness did NOT have while it carried its own predicate.
+
+    `main_thread_owned_section` used to walk `ops` itself and could only produce
+    the `routed` rule, so a dedicated agent writing outside its own section set
+    was denied in Cowork and allowed here. Delegating to the shipped
+    `owner_denied` brings it across — a widening, and no pre-existing vector
+    could have caught it.
+
+    This is also the specific deny that stops the exhaustiveness agent clearing
+    its own blocker: refused for an in-flight plan item, it cannot flip that
+    item, because `plan_items` is outside its lane (issue #1821).
+    """
+    denied = main_thread_owned_section(
+        _owned(
+            section="plan_items",
+            fields={"status": "completed"},
+            agent_id="a1",
+            agent_type=_EXH_OWNER,
+        )
+    )
+    assert denied is not None
+    assert denied[0] == "plan_items"
+    assert denied[1] == "out_of_lane"
+
+    from harness.context_policy import owned_section_denial
+
+    reason = owned_section_denial(denied)["hookSpecificOutput"]["permissionDecisionReason"]
+    assert "`questions`" in reason
+
+
+def test_out_of_lane_write_by_proof_conclusion_is_blocked():
+    """The widening this PR causes for an agent that already existed.
+
+    Importing the shipped `owner_denied` brings the hook's out-of-lane arm into
+    e2e for the first time, and `proof-conclusion` — which has shipped since
+    Phase 3 — is the agent it newly binds: it may write
+    {proof_summaries, questions, project} and nothing else. The sibling test
+    above covers the same arm for the agent this PR adds, which cannot regress
+    anything because it did not exist before. This one can.
+    """
+    denied = main_thread_owned_section(
+        _owned(
+            section="conflicts",
+            fields={"status": "resolved"},
+            agent_id="a1",
+            agent_type="genealogy-research:proof-conclusion",
+        )
+    )
+    assert denied is not None
+    assert denied[0] == "conflicts"
+    assert denied[1] == "out_of_lane"

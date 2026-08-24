@@ -42,7 +42,14 @@ import type {
 } from "../types/materialize-facts.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import { atomicWriteJson, backupIfExists, readProjectJson, formatIssues } from "../utils/project-io.js";
+import {
+  atomicWriteJson,
+  backupIfExists,
+  readProjectJson,
+  formatIssues,
+  NoProjectError,
+  noProjectResult,
+} from "../utils/project-io.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { factsEquivalent, VITAL_PRIMARY_TYPES } from "../utils/merge-gedcomx.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
@@ -103,6 +110,9 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
+    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
+    // outer catch can return noProjectResult().
+    if (e instanceof NoProjectError) throw e;
     throw new MaterializeFactsError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -505,6 +515,7 @@ export async function materializeFacts(
       },
     };
   } catch (e) {
+    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof MaterializeFactsError) return { ok: false, errors: [e.message] };
     throw e;
   }
