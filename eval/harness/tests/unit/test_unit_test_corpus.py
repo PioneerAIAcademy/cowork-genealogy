@@ -32,7 +32,7 @@ from harness.loader import InvalidTestError, load_test
 REPO_ROOT = Path(__file__).resolve().parents[4]
 CORPUS = REPO_ROOT / "eval/tests/unit"
 
-# A floor, not an equality. 396 files measured 2026-08-21; the corpus grows with
+# A floor, not an equality. 400 files measured 2026-08-21; the corpus grows with
 # every mined test, so pinning the exact number would fail every PR that adds
 # one. The floor exists because without it a mistyped path makes this test pass
 # over zero files — the silent-success mode that is worse than no check.
