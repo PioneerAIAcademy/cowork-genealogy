@@ -23,7 +23,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
-import { __testing } from "../../src/tools/research-append-examples.js";
+import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 
 const citationDetail = {
@@ -4058,5 +4058,289 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.validation.warnings.join(" ")).not.toMatch(/match_score/);
+  });
+});
+
+describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-exh-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  /** A project with one question and one plan whose items carry the given
+   *  statuses. `planQuestionId` defaults to the question, so a caller can point
+   *  the plan at a DIFFERENT question to exercise the matching rule. */
+  function exhResearch(itemStatuses: string[], planQuestionId = "q_001") {
+    const r = baseResearch();
+    r.questions = [validQuestion("q_001")];
+    const plan: any = validPlan("pl_001", planQuestionId);
+    plan.items = itemStatuses.map((status, i) => ({
+      ...validPlanItem(),
+      id: `pli_00${i + 1}`,
+      sequence: i + 1,
+      status,
+    }));
+    r.plans = [plan];
+    return r;
+  }
+  async function writeProject(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const DECLARATION = {
+    declared: true,
+    justification: "Census, vital and probate all searched; three independent sources agree.",
+    log_entry_ids: ["log_001"],
+    stop_criteria: {
+      goal_alignment: "Yes — three sources name the father.",
+      repository_breadth: "Census, vital records and probate searched.",
+      original_substitution: "Originals accessed.",
+      independent_verification: "Three independent informants.",
+      evidence_class: "1860 census, original/primary.",
+      conflict_resolution: "No conflicts identified.",
+      overturn_risk: "Low.",
+    },
+  };
+
+  // --- G2: the plan-completeness gate ------------------------------------
+
+  it("refuses a declaration while a plan item is in_progress, and names the item", async () => {
+    await writeProject(exhResearch(["completed", "in_progress"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    });
+    const errs = failure(r).errors.join(" ");
+    expect(errs).toMatch(/pli_002/);
+    expect(errs).toMatch(/in_progress/);
+  });
+
+  it("refuses the antonio-lucas-spouse shape: the item flips are BATCHED ahead of the declaration", async () => {
+    // The corpus call issue #1335 was filed from is one research_append with
+    // three ops — the pli flips first, the declaration last. Read LIVE those
+    // flips satisfy the gate the declaration must pass, so the run that
+    // motivated this whole phase would sail through. This vector is the reason
+    // G2 reads the pre-call snapshot, and a single-op vector cannot pin it.
+    await writeProject(exhResearch(["in_progress", "planned"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
+        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "skipped" } },
+        { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARATION } },
+      ],
+    } as any);
+    expect(failure(r).errors.join(" ")).toMatch(/pli_001/);
+  });
+
+  it("allows a declaration when every item is completed or skipped", async () => {
+    await writeProject(exhResearch(["completed", "skipped"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    });
+    expect(singleOk(r).ok).toBe(true);
+  });
+
+  it("allows a declaration while items are still `planned` — the licensed early consultation", async () => {
+    // research/SKILL.md routes here deliberately before the plan is drained.
+    // 122 corpus items sit at `planned` across 31 correct declarations; a gate
+    // built from the skill body's stricter opening sentence refuses all 31.
+    await writeProject(exhResearch(["completed", "planned", "planned"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    });
+    expect(singleOk(r).ok).toBe(true);
+  });
+
+  it("ignores an in_progress item on a plan belonging to a DIFFERENT question", async () => {
+    // Synthetic: all 205 corpus plans carry a question_id, so the looser
+    // reading that also counts unattached plans is indistinguishable on real
+    // data. This vector is the only thing pinning the matching rule.
+    await writeProject(exhResearch(["in_progress"], "q_999"));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    });
+    expect(singleOk(r).ok).toBe(true);
+  });
+
+  it("the refusal names no plan_items action — the agent's lane cannot reach it", async () => {
+    // After the conversion the agent holds {questions} and no plan_items write.
+    // A refusal telling it to complete or skip the item names a locked door,
+    // which guard_project_files.py's OWNER_REASON comment records as the thing
+    // that produces bypasses. It also must not invite the status flip, which is
+    // the falsification route. Naming the blocking item and stopping is the
+    // whole message.
+    await writeProject(exhResearch(["in_progress"]));
+    const errs = failure(await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    })).errors.join(" ");
+    expect(errs).not.toMatch(/mark .{0,20}(completed|skipped)/i);
+    expect(errs).not.toMatch(/updat\w* (its|the item's) status/i);
+    expect(errs).not.toMatch(/set .{0,20}status/i);
+  });
+
+  // --- G1: the declaration/status agreement gate ---------------------------
+
+  it("refuses status exhaustive_declared when the declaration does not carry it", async () => {
+    // Synthetic — zero corpus instances across the 125 ops that set this
+    // status. The shape is reachable: exhaustive_declaration is a required
+    // question property so it is always present, and 219 corpus writes set
+    // declared:false.
+    await writeProject(exhResearch(["completed"]));
+    const errs = failure(await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { status: "exhaustive_declared" },
+    })).errors.join(" ");
+    expect(errs).toMatch(/exhaustive_declaration\.declared/);
+  });
+
+  it("allows the status and the declaration set in the SAME op", async () => {
+    // 123 of 125 corpus ops take this shape. A pre-call snapshot here would
+    // refuse every one of them, which is why G1 reads the merged entry.
+    await writeProject(exhResearch(["completed"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { status: "exhaustive_declared", exhaustive_declaration: DECLARATION },
+    });
+    expect(singleOk(r).ok).toBe(true);
+  });
+
+
+  // --- vectors from the high-effort code review -------------------------
+
+  it("a superseded plan's stale in_progress item does not block forever", async () => {
+    // research-plan supersedes by flipping `plans.status` alone — items keep
+    // whatever status they held — and then forbids touching that plan again.
+    // Blocking on its items makes the declaration permanently unwritable: the
+    // agent may not reach plan_items, and the search skills may not edit a
+    // superseded plan. ADR-0011's first limit is exactly this.
+    const research = exhResearch(["completed"]);
+    const stale: any = validPlan("pl_000", "q_001", "superseded");
+    stale.items = [{ ...validPlanItem(), id: "pli_099", status: "in_progress" }];
+    (research.plans as any[]).unshift(stale);
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    });
+    expect(singleOk(r).ok).toBe(true);
+  });
+
+  it("a completed plan's items do not block either", async () => {
+    const research = exhResearch(["completed"]);
+    const done: any = validPlan("pl_000", "q_001", "completed");
+    done.items = [{ ...validPlanItem(), id: "pli_098", status: "in_progress" }];
+    (research.plans as any[]).unshift(done);
+    await writeProject(research);
+    expect(singleOk(await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    })).ok).toBe(true);
+  });
+
+  it("refuses lowering `declared` to false while the status still claims exhaustive", async () => {
+    // The mirror image of the status-side vector, and the one a status-only
+    // gate misses. It is the agent's own documented re-invocation path: write
+    // `declared: false`, leave `status` alone — which on an already-declared
+    // question leaves `exhaustive_declared` standing over nothing.
+    const research = exhResearch(["completed"]);
+    (research.questions[0] as any).exhaustive_declaration = DECLARATION;
+    (research.questions[0] as any).status = "exhaustive_declared";
+    await writeProject(research);
+    const errs = failure(await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: {
+        exhaustive_declaration: {
+          declared: false,
+          justification: "Terminating: probate destroyed in an 1862 fire.",
+          log_entry_ids: ["log_001"],
+          stop_criteria: null,
+        },
+      },
+    })).errors.join(" ");
+    expect(errs).toMatch(/exhaustive_declaration\.declared/);
+  });
+
+  it("allows the status when the declaration landed in an EARLIER call", async () => {
+    // The hannah-earnest-children / jens-nielsen shape: declare at one call,
+    // flip the status at the next. Both were misread as violations while the
+    // replay engine was dropping stripped updates.
+    const research = exhResearch(["completed"]);
+    (research.questions[0] as any).exhaustive_declaration = DECLARATION;
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { status: "exhaustive_declared" },
+    });
+    expect(singleOk(r).ok).toBe(true);
+  });
+});
+
+describe("research_append — the declaring worked example is aimed, not blanket", () => {
+  // The example teaches the seven-key stop_criteria object, and it is attached
+  // to a REJECTION. Returning it for every failing `questions` update handed a
+  // caller refused on, say, a `resolved` write a full `declared: true` payload
+  // — which on the main thread is the one shape the plugin hook denies. A hint
+  // that teaches the next refusal is worse than no hint.
+  it("teaches the seven keys when the failing op named exhaustive_declaration", () => {
+    const hints = exampleHints([
+      { section: "questions", op: "update", fields: ["exhaustive_declaration"] },
+    ]);
+    expect(hints.join("\n")).toContain("overturn_risk");
+    expect(hints.join("\n")).toContain("goal_alignment");
+  });
+
+  it("falls back to the generic skeleton for any other questions update", () => {
+    const hints = exampleHints([
+      { section: "questions", op: "update", fields: ["status", "resolved"] },
+    ]);
+    expect(hints.join("\n")).not.toContain("overturn_risk");
+    expect(hints.join("\n")).not.toContain("declared: true");
+    expect(hints.join("\n")).toContain("only the fields you are changing");
+  });
+
+  it("falls back when the failing op names no fields at all", () => {
+    const hints = exampleHints([{ section: "questions", op: "update" }]);
+    expect(hints.join("\n")).not.toContain("overturn_risk");
   });
 });

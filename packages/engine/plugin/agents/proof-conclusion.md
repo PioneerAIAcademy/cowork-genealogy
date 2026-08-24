@@ -86,10 +86,10 @@ a tier judgement as a gate failure.
 2. **Classification (hard block, all assertions).** For each assertion,
    confirm `information_quality` and `evidence_type` carry a real, reasoned
    value (with matching `informant` / `informant_proximity` analysis) — not
-   still carrying record-extraction's best-effort default. If you cannot
-   confirm `assertion-classification` has run on an assertion, treat it as
-   unclassified. List any assertion IDs that fail this check. Classification
-   grounds the tier, so this applies to every assertion tied to the question.
+   a placeholder. If you cannot confirm an assertion carries a reasoned
+   classification, treat it as unclassified. List any assertion IDs that
+   fail this check. Classification grounds the tier, so this applies to
+   every assertion tied to the question.
 3. **person_evidence (hard block scoped to person identity).**
    `person_evidence` is identity resolution — it defeats the unsound
    assumption that a record is about your person. The hard block is therefore
@@ -144,7 +144,7 @@ settle it. Do **not** resolve the question, and do **not** write the tree —
 is asserted. Then route to `conflict-resolution`. Re-invoked after the
 conflict is resolved, you update that same `ps_NNN` in place.
 Report the exact failing IDs to the user and recommend the specific skill
-for each gap (`assertion-classification`, `person-evidence`, or
+for each gap (`record-extraction`, `person-evidence`, or
 `conflict-resolution`). In `--autonomous` mode, route to the missing skill
 automatically instead of asking — autonomous mode changes who decides, not
 whether the gate runs. Advisory unlinked fact/negative assertions (step 3)
