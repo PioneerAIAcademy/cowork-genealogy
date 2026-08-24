@@ -314,7 +314,7 @@ async def run_skill(
     max_tool_calls: int = DEFAULT_MAX_TOOL_CALLS,
     max_input_tokens_per_turn: int = DEFAULT_MAX_INPUT_TOKENS_PER_TURN,
     sdk_message_silence_seconds: int = DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
-    allowed_tools_override: list[str] | None = None,
+    allowed_tools_override: list[str] | None = None,  # IGNORED — see below
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     declared_tools: set[str] | None = None,
@@ -324,9 +324,11 @@ async def run_skill(
     The caller is responsible for snapshotting workspace state before/after
     and running validators + judge.
 
-    `allowed_tools_override` is accepted for backward compatibility but
-    ignored — the session now grants every registered MCP tool (issue
-    #1748).
+    `allowed_tools_override` is accepted but **explicitly ignored** — the
+    session now grants every registered MCP tool (issue #1748). The
+    parameter survives so the acceptance test can pass a restrictive
+    list and prove it has no effect; deleting it would make the test
+    non-discriminating (it would pass on main too).
 
     `declared_tools` is the BARE tool names this skill claims in its own
     `allowed-tools` (`allowed_tools.declared_skill_tools`) — NOT the unioned
@@ -589,6 +591,16 @@ async def run_skill(
                     "stop_reason": message.stop_reason,
                     "total_cost_usd": message.total_cost_usd,
                     "usage": message.usage,
+                    # Per-model ledger, keyed by model id, each entry carrying
+                    # inputTokens / outputTokens / cacheReadInputTokens /
+                    # cacheCreationInputTokens. This is the authoritative token
+                    # count: the CLI documents it as covering the same
+                    # query-pipeline calls as `total_cost_usd` and sharing its
+                    # lifecycle, whereas `usage` above may be a per-turn
+                    # main-loop value. A skill that delegates to a plugin agent
+                    # on its own `model:` pin shows up here as a second key and
+                    # nowhere in `usage`. See orchestrator._skill_tokens.
+                    "model_usage": message.model_usage,
                 }
                 if message.is_error:
                     error = message.result or message.stop_reason

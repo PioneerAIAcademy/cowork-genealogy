@@ -23,7 +23,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
-import { __testing } from "../../src/tools/research-append-examples.js";
+import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 
 const citationDetail = {
@@ -826,6 +826,455 @@ describe("research_append (Phase 3)", () => {
       },
     });
     expect(r.ok && singleOk(r).entryId).toBe("ps_001");
+  });
+
+
+  // The conclusion and its resolution are ONE write — the shape proof-conclusion
+  // emits. Both properties below are load-bearing and neither is obvious:
+  //
+  //  - Order matters WITHIN the batch. The resolve gate reads the project as the
+  //    batch applies, not a pre-call snapshot, so the summary op satisfies it for
+  //    an op later in the same call. Reverse them and it refuses.
+  //  - All-or-nothing means a question is never left resolved with nothing behind
+  //    it. That is the reason for one call rather than two.
+  it("accepts a proof summary and its question resolve in ONE batch", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "proof_summaries",
+          op: "append",
+          entry: {
+            question_id: "q_001",
+            tier: "probable",
+            vehicle: "summary",
+            supporting_assertion_ids: ["a_001"],
+            resolved_conflict_ids: [],
+            exhaustive_search_summary: "Searched census + vitals",
+            narrative_markdown: "## Conclusion\n...",
+          },
+        },
+        {
+          section: "questions",
+          op: "update",
+          entryId: "q_001",
+          fields: { status: "resolved", resolution_assertion_ids: ["a_001"] },
+        },
+      ],
+    });
+    expect(r.ok, `batch was refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    const after = await readResearch();
+    expect(after.proof_summaries).toHaveLength(1);
+    expect(after.questions[0].status).toBe("resolved");
+  });
+
+  it("refuses the same two ops in the reverse order, and writes nothing", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "questions",
+          op: "update",
+          entryId: "q_001",
+          fields: { status: "resolved", resolution_assertion_ids: ["a_001"] },
+        },
+        {
+          section: "proof_summaries",
+          op: "append",
+          entry: {
+            question_id: "q_001",
+            tier: "probable",
+            vehicle: "summary",
+            supporting_assertion_ids: ["a_001"],
+            resolved_conflict_ids: [],
+            exhaustive_search_summary: "Searched census + vitals",
+            narrative_markdown: "## Conclusion\n...",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    // The message must teach the ordering, since that is the whole fix.
+    expect(r.errors.join(" ")).toContain("order the proof_summaries append BEFORE");
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+
+  // ── correlation presupposes identity (lead ruling, 2026-08-19) ──
+  //
+  // A conclusion may not out-tier the reliability of the sources it rests on.
+  // The rule moved into the tool after five successive wordings of the agent's
+  // own gate failed to hold it — the last of them recording a birthplace
+  // conflict as "non-blocking, it doesn't touch identity" while its own body
+  // named birthplace an identifying attribute.
+  //
+  // Blast radius, measured across all 88 committed scenarios before landing:
+  // 83 carry no unresolved conflict so the rule cannot fire, 1 carries
+  // conflicts that share no source with a conclusion, and 4 would fire — all
+  // of them the flynn-* fixtures built to exercise conflict handling.
+  describe("a conclusion may not out-tier a disputed source", () => {
+    const conflicted = () => ({
+      project: { objective: "x" },
+      questions: [{ id: "q_001", question: "parents?", status: "open" }],
+      sources: [{ id: "src_001", citation: "1850 census" }, { id: "src_004", citation: "death cert" }],
+      assertions: [
+        // The conflict disputes the death certificate's birthplace...
+        { id: "a_012", source_id: "src_004", value: "Born 1845, Pennsylvania" },
+        { id: "a_002", source_id: "src_001", value: "Ireland" },
+        // ...and the conclusion leans on that same death certificate for the father.
+        { id: "a_013", source_id: "src_004", value: "Father: Thomas Flynn" },
+        { id: "a_004", source_id: "src_001", value: "in Thomas's household" },
+      ],
+      conflicts: [
+        { id: "c_001", status: "unresolved", competing_assertion_ids: ["a_002", "a_012"] },
+      ],
+      proof_summaries: [],
+    });
+
+    const summary = (tier: string, supporting: string[]) => ({
+      question_id: "q_001",
+      tier,
+      vehicle: "summary",
+      supporting_assertion_ids: supporting,
+      resolved_conflict_ids: [],
+      exhaustive_search_summary: "census + vitals",
+      narrative_markdown: "## Conclusion\n...",
+    });
+
+    it.each(["possible", "probable"])(
+      "refuses tier '%s' when an open conflict disputes a source the conclusion relies on",
+      async (tier) => {
+        await writeProject(conflicted());
+        const before = await readFile(join(dir, "research.json"), "utf-8");
+        const r = await researchAppend({
+          projectPath: dir,
+          section: "proof_summaries",
+          op: "append",
+          entry: summary(tier, ["a_004", "a_013"]),
+        });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        const msg = r.errors.join(" ");
+        expect(msg).toContain("c_001");
+        expect(msg).toContain("src_004");
+        // The message must leave a working move, or it repeats the bypass this
+        // whole guardrail exists to stop.
+        expect(msg).toContain("not_proved");
+        expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      },
+    );
+
+    it("allows not_proved — recording the blocked attempt is the sanctioned move", async () => {
+      await writeProject(conflicted());
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summary("not_proved", ["a_004", "a_013"]),
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does NOT fire when the conflict shares no source with the conclusion", async () => {
+      // The narrow case that keeps this from becoming "any open conflict
+      // blocks everything": a dispute confined to sources the conclusion does
+      // not lean on leaves the correlation intact.
+      const state = conflicted();
+      state.conflicts = [
+        { id: "c_002", status: "unresolved", competing_assertion_ids: ["a_002"] },
+      ];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summary("probable", ["a_013"]), // src_004 only; c_002 disputes src_001
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does NOT fire once the conflict is resolved", async () => {
+      const state = conflicted();
+      state.conflicts[0].status = "resolved";
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: summary("probable", ["a_004", "a_013"]),
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+
+    it("refuses an update that leaves a forbidden tier standing, without naming tier", async () => {
+      // The 2026-08-21 escape, replayed. The agent updated the summary's other
+      // fields and never mentioned `tier`, so the stale `probable` stayed —
+      // and a rule gated on "did this op set the tier" never ran. The tier did
+      // not need to be touched; it was already wrong.
+      const state = conflicted() as any;
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("probable", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields: { narrative_markdown: "## Conclusion\nrewritten, tier untouched" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("c_001");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("accepts the same update when it brings the tier down in the same call", async () => {
+      // The deny has to stay satisfiable: fixing the entry is one call, not a
+      // deadlock where you cannot edit it without first editing it.
+      const state = conflicted() as any;
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("probable", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields: { tier: "not_proved", narrative_markdown: "## Conclusion\nidentity unsettled" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+
+    it("refuses to resolve the question while the conflict blocks the conclusion", async () => {
+      // The 2026-08-21 escape. Everything else was right — probable refused,
+      // not_proved recorded, no tree written — and then the question was closed
+      // anyway, on evidence that had never been correlated.
+      const state = conflicted() as any;
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("not_proved", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved", resolution_assertion_ids: ["a_004", "a_013"] },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("c_001");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("still allows not_proved to close a question that was simply empty", async () => {
+      // The distinction this rule turns on, and the one it must not break:
+      // `not_proved` legitimately closes a question researched and found empty.
+      // Only a question the researcher was PREVENTED from concluding stays open.
+      const state = conflicted() as any;
+      state.conflicts = [];  // nothing disputed
+      state.proof_summaries = [
+        { id: "ps_001", ...summary("not_proved", ["a_004", "a_013"]) },
+      ];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved", resolution_assertion_ids: ["a_004"] },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows the resolve once the conflict touches no source the conclusion uses", async () => {
+      const state = conflicted() as any;
+      // c_002 disputes src_001 only; the conclusion leans on src_004 only.
+      state.conflicts = [
+        { id: "c_002", status: "unresolved", competing_assertion_ids: ["a_002"] },
+      ];
+      state.proof_summaries = [{ id: "ps_001", ...summary("probable", ["a_013"]) }];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "questions",
+        op: "update",
+        entryId: "q_001",
+        fields: { status: "resolved", resolution_assertion_ids: ["a_013"] },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("cannot be cleared by resolving the conflict in the same batch", async () => {
+      // Same discipline as the exhaustiveness gate: read from the PRE-CALL
+      // snapshot, so a batch may not manufacture its own precondition.
+      await writeProject(conflicted());
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          {
+            section: "conflicts",
+            op: "update",
+            entryId: "c_001",
+            // A FULLY VALID resolution, so the batch's only remaining defect is
+            // the one under test. With a partial resolution the batch is
+            // refused for a missing weighing/rationale instead, and this test
+            // passes with the rule disconnected entirely — which it did.
+            fields: {
+              status: "resolved",
+              preferred_assertion_id: "a_002",
+              independence_analysis: "separate records, separate informants",
+              weighing_analysis: "two censuses outweigh a later secondary informant",
+              resolution_rationale: "contemporaneous household enumeration preferred",
+            },
+          },
+          { section: "proof_summaries", op: "append", entry: summary("probable", ["a_004", "a_013"]) },
+        ],
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("c_001");
+    });
+  });
+
+
+  // ── one conclusion per question ──
+  //
+  // The ownership manifest has required this since it landed and nothing
+  // enforced it. Observed 2026-08-20: blocked from concluding at `probable`,
+  // the agent recorded a correct `not_proved` summary by APPENDING it, leaving
+  // the stale `probable` entry beside it — two contradictory conclusions on one
+  // question, with nothing marking which is current.
+  describe("a question carries only one proof summary", () => {
+    const withSummary = () => ({
+      project: { objective: "x" },
+      questions: [{ id: "q_001", question: "parents?", status: "open" }],
+      sources: [{ id: "src_001", citation: "1850 census" }],
+      assertions: [{ id: "a_004", source_id: "src_001", value: "in household" }],
+      conflicts: [],
+      proof_summaries: [
+        {
+          id: "ps_001",
+          question_id: "q_001",
+          tier: "probable",
+          vehicle: "summary",
+          supporting_assertion_ids: ["a_004"],
+          resolved_conflict_ids: [],
+          exhaustive_search_summary: "census",
+          narrative_markdown: "## Conclusion\n...",
+        },
+      ],
+    });
+
+    const entry = (tier: string) => ({
+      question_id: "q_001",
+      tier,
+      vehicle: "summary",
+      supporting_assertion_ids: ["a_004"],
+      resolved_conflict_ids: [],
+      exhaustive_search_summary: "census",
+      narrative_markdown: "## Conclusion\n...",
+    });
+
+    it("refuses a second append, and names the id to update instead", async () => {
+      await writeProject(withSummary());
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: entry("not_proved"),
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toContain("ps_001");
+      // The deny must leave a working move — the id to retry against.
+      expect(msg).toContain('op: "update"');
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+
+    it("refuses an UPDATE that repoints a summary onto a question that already has one", async () => {
+      // The append gate was the same mistake as the tier gate two commits
+      // earlier: it asked "is this op an append" when the rule is "does this
+      // question end up with two summaries". An update that sets question_id
+      // walks straight past it and leaves the exact state the deny message
+      // describes — two contradictory conclusions, nothing saying which wins.
+      const state = withSummary() as any;
+      state.questions.push({ id: "q_002", question: "birth?", status: "open" });
+      state.proof_summaries.push({
+        id: "ps_002",
+        ...entry("possible"),
+        question_id: "q_002",
+      });
+      await writeProject(state);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_002",
+        fields: { question_id: "q_001" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("ps_001");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("allows updating the existing summary", async () => {
+      await writeProject(withSummary());
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields: { tier: "not_proved" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect((await readResearch()).proof_summaries).toHaveLength(1);
+    });
+
+    it("allows a first summary for a DIFFERENT question", async () => {
+      const state = withSummary();
+      state.questions.push({ id: "q_002", question: "birth?", status: "open" });
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: { ...entry("probable"), question_id: "q_002" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("catches two appends for one question inside a single batch", async () => {
+      // Reads live state rather than the pre-call snapshot, so the second op
+      // collides with the first. A snapshot-based check would let a batch
+      // create the duplicate it exists to prevent.
+      const state = withSummary();
+      state.proof_summaries = [];
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "proof_summaries", op: "append", entry: entry("possible") },
+          { section: "proof_summaries", op: "append", entry: entry("not_proved") },
+        ],
+      });
+      expect(r.ok).toBe(false);
+    });
   });
 
   // docs/specs/guardrail-enforcement-spec.md §5 — tier/exhaustiveness cross-field guardrail.
@@ -3609,5 +4058,289 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.validation.warnings.join(" ")).not.toMatch(/match_score/);
+  });
+});
+
+describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-exh-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  /** A project with one question and one plan whose items carry the given
+   *  statuses. `planQuestionId` defaults to the question, so a caller can point
+   *  the plan at a DIFFERENT question to exercise the matching rule. */
+  function exhResearch(itemStatuses: string[], planQuestionId = "q_001") {
+    const r = baseResearch();
+    r.questions = [validQuestion("q_001")];
+    const plan: any = validPlan("pl_001", planQuestionId);
+    plan.items = itemStatuses.map((status, i) => ({
+      ...validPlanItem(),
+      id: `pli_00${i + 1}`,
+      sequence: i + 1,
+      status,
+    }));
+    r.plans = [plan];
+    return r;
+  }
+  async function writeProject(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const DECLARATION = {
+    declared: true,
+    justification: "Census, vital and probate all searched; three independent sources agree.",
+    log_entry_ids: ["log_001"],
+    stop_criteria: {
+      goal_alignment: "Yes — three sources name the father.",
+      repository_breadth: "Census, vital records and probate searched.",
+      original_substitution: "Originals accessed.",
+      independent_verification: "Three independent informants.",
+      evidence_class: "1860 census, original/primary.",
+      conflict_resolution: "No conflicts identified.",
+      overturn_risk: "Low.",
+    },
+  };
+
+  // --- G2: the plan-completeness gate ------------------------------------
+
+  it("refuses a declaration while a plan item is in_progress, and names the item", async () => {
+    await writeProject(exhResearch(["completed", "in_progress"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    });
+    const errs = failure(r).errors.join(" ");
+    expect(errs).toMatch(/pli_002/);
+    expect(errs).toMatch(/in_progress/);
+  });
+
+  it("refuses the antonio-lucas-spouse shape: the item flips are BATCHED ahead of the declaration", async () => {
+    // The corpus call issue #1335 was filed from is one research_append with
+    // three ops — the pli flips first, the declaration last. Read LIVE those
+    // flips satisfy the gate the declaration must pass, so the run that
+    // motivated this whole phase would sail through. This vector is the reason
+    // G2 reads the pre-call snapshot, and a single-op vector cannot pin it.
+    await writeProject(exhResearch(["in_progress", "planned"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
+        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "skipped" } },
+        { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARATION } },
+      ],
+    } as any);
+    expect(failure(r).errors.join(" ")).toMatch(/pli_001/);
+  });
+
+  it("allows a declaration when every item is completed or skipped", async () => {
+    await writeProject(exhResearch(["completed", "skipped"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    });
+    expect(singleOk(r).ok).toBe(true);
+  });
+
+  it("allows a declaration while items are still `planned` — the licensed early consultation", async () => {
+    // research/SKILL.md routes here deliberately before the plan is drained.
+    // 122 corpus items sit at `planned` across 31 correct declarations; a gate
+    // built from the skill body's stricter opening sentence refuses all 31.
+    await writeProject(exhResearch(["completed", "planned", "planned"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    });
+    expect(singleOk(r).ok).toBe(true);
+  });
+
+  it("ignores an in_progress item on a plan belonging to a DIFFERENT question", async () => {
+    // Synthetic: all 205 corpus plans carry a question_id, so the looser
+    // reading that also counts unattached plans is indistinguishable on real
+    // data. This vector is the only thing pinning the matching rule.
+    await writeProject(exhResearch(["in_progress"], "q_999"));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    });
+    expect(singleOk(r).ok).toBe(true);
+  });
+
+  it("the refusal names no plan_items action — the agent's lane cannot reach it", async () => {
+    // After the conversion the agent holds {questions} and no plan_items write.
+    // A refusal telling it to complete or skip the item names a locked door,
+    // which guard_project_files.py's OWNER_REASON comment records as the thing
+    // that produces bypasses. It also must not invite the status flip, which is
+    // the falsification route. Naming the blocking item and stopping is the
+    // whole message.
+    await writeProject(exhResearch(["in_progress"]));
+    const errs = failure(await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    })).errors.join(" ");
+    expect(errs).not.toMatch(/mark .{0,20}(completed|skipped)/i);
+    expect(errs).not.toMatch(/updat\w* (its|the item's) status/i);
+    expect(errs).not.toMatch(/set .{0,20}status/i);
+  });
+
+  // --- G1: the declaration/status agreement gate ---------------------------
+
+  it("refuses status exhaustive_declared when the declaration does not carry it", async () => {
+    // Synthetic — zero corpus instances across the 125 ops that set this
+    // status. The shape is reachable: exhaustive_declaration is a required
+    // question property so it is always present, and 219 corpus writes set
+    // declared:false.
+    await writeProject(exhResearch(["completed"]));
+    const errs = failure(await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { status: "exhaustive_declared" },
+    })).errors.join(" ");
+    expect(errs).toMatch(/exhaustive_declaration\.declared/);
+  });
+
+  it("allows the status and the declaration set in the SAME op", async () => {
+    // 123 of 125 corpus ops take this shape. A pre-call snapshot here would
+    // refuse every one of them, which is why G1 reads the merged entry.
+    await writeProject(exhResearch(["completed"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { status: "exhaustive_declared", exhaustive_declaration: DECLARATION },
+    });
+    expect(singleOk(r).ok).toBe(true);
+  });
+
+
+  // --- vectors from the high-effort code review -------------------------
+
+  it("a superseded plan's stale in_progress item does not block forever", async () => {
+    // research-plan supersedes by flipping `plans.status` alone — items keep
+    // whatever status they held — and then forbids touching that plan again.
+    // Blocking on its items makes the declaration permanently unwritable: the
+    // agent may not reach plan_items, and the search skills may not edit a
+    // superseded plan. ADR-0011's first limit is exactly this.
+    const research = exhResearch(["completed"]);
+    const stale: any = validPlan("pl_000", "q_001", "superseded");
+    stale.items = [{ ...validPlanItem(), id: "pli_099", status: "in_progress" }];
+    (research.plans as any[]).unshift(stale);
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    });
+    expect(singleOk(r).ok).toBe(true);
+  });
+
+  it("a completed plan's items do not block either", async () => {
+    const research = exhResearch(["completed"]);
+    const done: any = validPlan("pl_000", "q_001", "completed");
+    done.items = [{ ...validPlanItem(), id: "pli_098", status: "in_progress" }];
+    (research.plans as any[]).unshift(done);
+    await writeProject(research);
+    expect(singleOk(await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    })).ok).toBe(true);
+  });
+
+  it("refuses lowering `declared` to false while the status still claims exhaustive", async () => {
+    // The mirror image of the status-side vector, and the one a status-only
+    // gate misses. It is the agent's own documented re-invocation path: write
+    // `declared: false`, leave `status` alone — which on an already-declared
+    // question leaves `exhaustive_declared` standing over nothing.
+    const research = exhResearch(["completed"]);
+    (research.questions[0] as any).exhaustive_declaration = DECLARATION;
+    (research.questions[0] as any).status = "exhaustive_declared";
+    await writeProject(research);
+    const errs = failure(await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: {
+        exhaustive_declaration: {
+          declared: false,
+          justification: "Terminating: probate destroyed in an 1862 fire.",
+          log_entry_ids: ["log_001"],
+          stop_criteria: null,
+        },
+      },
+    })).errors.join(" ");
+    expect(errs).toMatch(/exhaustive_declaration\.declared/);
+  });
+
+  it("allows the status when the declaration landed in an EARLIER call", async () => {
+    // The hannah-earnest-children / jens-nielsen shape: declare at one call,
+    // flip the status at the next. Both were misread as violations while the
+    // replay engine was dropping stripped updates.
+    const research = exhResearch(["completed"]);
+    (research.questions[0] as any).exhaustive_declaration = DECLARATION;
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { status: "exhaustive_declared" },
+    });
+    expect(singleOk(r).ok).toBe(true);
+  });
+});
+
+describe("research_append — the declaring worked example is aimed, not blanket", () => {
+  // The example teaches the seven-key stop_criteria object, and it is attached
+  // to a REJECTION. Returning it for every failing `questions` update handed a
+  // caller refused on, say, a `resolved` write a full `declared: true` payload
+  // — which on the main thread is the one shape the plugin hook denies. A hint
+  // that teaches the next refusal is worse than no hint.
+  it("teaches the seven keys when the failing op named exhaustive_declaration", () => {
+    const hints = exampleHints([
+      { section: "questions", op: "update", fields: ["exhaustive_declaration"] },
+    ]);
+    expect(hints.join("\n")).toContain("overturn_risk");
+    expect(hints.join("\n")).toContain("goal_alignment");
+  });
+
+  it("falls back to the generic skeleton for any other questions update", () => {
+    const hints = exampleHints([
+      { section: "questions", op: "update", fields: ["status", "resolved"] },
+    ]);
+    expect(hints.join("\n")).not.toContain("overturn_risk");
+    expect(hints.join("\n")).not.toContain("declared: true");
+    expect(hints.join("\n")).toContain("only the fields you are changing");
+  });
+
+  it("falls back when the failing op names no fields at all", () => {
+    const hints = exampleHints([{ section: "questions", op: "update" }]);
+    expect(hints.join("\n")).not.toContain("overturn_risk");
   });
 });

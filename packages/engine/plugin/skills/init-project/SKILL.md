@@ -23,13 +23,12 @@ allowed-tools:
 # Init Project
 
 **Guard clause — run BEFORE anything else, including file reads:**
-If `research.json` already exists, respond with exactly this and stop — no tool calls, no file reads:
+If `research.json` already exists, do not initialize: make no MCP tool call and read no project file. Hand the turn off instead — **project-status** for status/resume wording, **question-selection** for next-question wording — and stop. If you cannot delegate, reply with exactly this and stop:
 > "This project already has a `research.json` — use **question-selection** to add a research question, or **project-status** to review the current state."
-Do NOT call any tool or read any file. Stop immediately.
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it. If absent (new project being initialized), default to a one-line preamble per action.
+**Narration** (initialize path only — the guard clause above reads nothing): read `researcher_profile.narration_guidance` from `research.json` and apply it. If absent (new project being initialized), default to a one-line preamble per action.
 
-**Places:** Follow `references/places-guidance.md`. Facts from `person_read` already carry `standard_place`; for hand-entered places, resolve with `place_search`.
+**Places:** Follow `references/places-guidance.md`. Keep the `standard_place` a `person_read` fact carries; resolve anything else — hand-entered, or a fact returned with `place` and no `standard_place` — with `place_search`.
 
 ## Opening-turn questions
 
@@ -166,20 +165,22 @@ Call `person_read({ personId: "<id>", relatives: true, sourceDescriptions: true 
 
 Build the simplified-GedcomX document in memory — you pass it to `project_create` in Step 4, which writes it. Do NOT write either project file yourself; `Write` on them is blocked. Follow `references/simplified-gedcomx-summary.md`.
 
-**Simplified GedcomX is NOT the same as full GedcomX.** `person_read` returns full GedcomX — you must convert. Key differences: top-level array is `sources` (NOT `sourceDescriptions`); persons have no `fsid` or `extracted` fields; use snake_case for all field names (`standard_place`, not `standardPlace`). Structure: `{ "persons": [], "relationships": [], "sources": [] }`.
+**`person_read` already returns this format** — `{ "persons": [], "relationships": [], "sources": [] }`, snake_case, no field renaming. What it returns is still not persistable as-is: its ids, its source `notes`, and its missing source refs all need work below. Everything else — including both standardized sidecars — is carried through untouched.
 
-**Include:** subject person (names, facts — source refs live on each fact, never as a person-level property), all relatives (parents, spouse, children), all relationships, all source descriptions in the top-level `sources` array. A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`.
+**Include:** subject person (names, facts — source refs live on each fact, never as a person-level property), all relatives (parents, spouse, children), all relationships, all source descriptions in the top-level `sources` array — minus `notes`, which is not an allowed source field and fails the write. A person object allows only `id`, `ark`, `living`, `gender`, `names`, `facts`. `ark` is what marks a person as being *in* the FamilySearch tree, so every person read from it carries `ark: "ark:/61903/4:1:<their FamilySearch person ID>"` — that exact form, which is what `person_search` returns for the same person. Omit the key entirely on local stubs. Never a page URL, never a bare ID.
 
-**ID conventions (overrides the reference doc):** ALL persons get local `I` IDs (`I1`, `I2`…) — including FamilySearch-seeded persons. Do NOT use FamilySearch PIDs as person IDs. Names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`….
+**ID conventions:** ALL persons get local `I` IDs (`I1`, `I2`…) — including FamilySearch-seeded persons. Do NOT use FamilySearch PIDs as person IDs. Names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`… — mint any the tool did not supply (it returns no name or relationship IDs), and rewrite every relationship endpoint to the new person IDs.
 
 **Source every FamilySearch fact with `quality: 1`** (questionable — compiled/unverified tree data). Create one source description for the FamilySearch tree using only the schema-allowed fields (`id`, `title`, `citation`, `author`, `url` — NO `quality`, `notes`, `repository`, or `accessed`). Then attach a source reference to every fact and relationship (`quality` goes here, on fact-level refs, not on source descriptions):
 ```json
-{ "id": "F1", "type": "Birth", "date": "~1845", "place": "Ireland", "standard_place": "Ireland", "sources": [{ "ref": "S1", "quality": 1 }] }
+{ "id": "F1", "type": "Birth", "date": "~1845", "standard_date": "Abt 1845", "place": "Ireland", "standard_place": "Ireland", "sources": [{ "ref": "S1", "quality": 1 }] }
 ```
 
-Facts from `person_read` already carry `standard_place` — keep it. Hand-entered places: resolve with `place_search`, use `standardPlace` from the first result.
+`person_read` facts arrive with two standardized sidecars — `standard_place` and `standard_date`. **Carry both through exactly as returned; never re-derive either from the raw `place`/`date`.** Hand-entered places, and any returned fact with a `place` but no `standard_place`: resolve with `place_search` and use `standardPlace` from the first result. Never copy `place` into `standard_place`.
 
 Do NOT call data "unsourced" — it IS sourced to the FamilySearch tree. `quality: 1` signals it's unverified.
+
+**With no FamilySearch data (objective-only build), the researcher's own statement is the source.** Create one source description for it and attach a `quality: 1` reference to every fact and relationship built from it, exactly as for a tree import. Do not leave hand-built facts with no `sources` array: a sourceless fact reads downstream as a claim with no provenance, and it is not what "unsourced" means here.
 
 **Simplified GedcomX rules:** gender as flat string (`Male`/`Female`/`Unknown`); names with `given`, `surname`, optional `preferred: true`; facts with PascalCase `type`; ParentChild uses `parent`/`child`; Couple uses `person1`/`person2`; `preferred`/`primary` omit-when-false.
 
@@ -216,11 +217,11 @@ Then relay to the user that the project was created, naming the folder.
 
 ### 4a. Profile and holdings
 
-Two `research_append` calls, after `project_create` — never before, and never bundled into it.
+`research_append` runs after `project_create` — never before, and never bundled into it. Two sections to write; one call each or one call carrying both in an `ops` array, either is fine.
 
 **`researcher_profile`** — `research_append({ section: "researcher_profile", op: "update", fields: {...} })`. Scan the opening message for a stated experience level and access first. Map `experience_level`; normalize `subscriptions` to the canonical enum (alias table above); store the verbatim `narration_guidance` for that level (table above). When the message supplied answers, never persist the `intermediate` / `["none"]` default in their place. Since the opening-turn rule above always asks and always proceeds, this call always writes — with whichever mix of stated answers and defaults applies, matching what the final summary told the user was defaulted.
 
-**`known_holdings`** — one `research_append({ section: "known_holdings", op: "append", entry: {...} })` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in the tree; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
+**`known_holdings`** — one `{ section: "known_holdings", op: "append", entry: {...} }` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in the tree; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
 
 ### 5. Pedigree analysis and project summary
 
@@ -232,7 +233,7 @@ Analyze imported data before presenting results:
 
 **Obvious error detection:** birth after death; parent-child age gaps outside 15-50 years; children born in locations inconsistent with parents; dates referencing non-existent jurisdictions; sibling births <9 months apart.
 
-**Historical context signals:** military age during major conflict? Significant migration in area? Jurisdiction existence at recorded date?
+**Historical context signals** — per person, what the era and place imply about where the records will be. Were they of military age during a conflict that reached where they lived, so service, draft or pension files exist? Did a famine, emigration wave or internal migration move this population, leaving the records in the origin jurisdiction rather than the residence? Had civil registration begun there by the recorded date — before it, church registers are the only vitals? And did the named jurisdiction exist at that date, or does the record belong to the parent county or parish it was later split from?
 
 **Source evaluation:** which facts have citations vs. unsourced claims needing priority verification?
 

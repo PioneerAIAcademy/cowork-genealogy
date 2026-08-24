@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_014",
+    "skill": "hypothesis-tracking",
+    "name": "Resolving a fact conflict should not trigger hypothesis-tracking",
+    "type": "negative",
+    "description": "User asks which of two competing birthplaces is correct and wants the evidence on each side weighed. The phrasing (\"weigh what's for and against each\") sits close to hypothesis-tracking's own trigger language about organizing evidence for and against a claim, and the scenario carries an unresolved identity conflict as well — but the request is a single fact-level conflict over one attribute, which SKILL.md's DO-NOT clause assigns to conflict-resolution.",
+    "tags": [
+      "near-miss",
+      "hypothesis-tracking-vs-conflict-resolution",
+      "routing"
+    ]
+  },
+
+  "input": {
+    "user_message": "The 1850 and 1860 censuses both say Ireland but the death certificate says Pennsylvania. Weigh what's for and against each one and tell me which birthplace is right.",
+    "scenario": "flynn-multi-conflict"
+  },
+
+  "negative": {
+    "correct_skill": ["conflict-resolution"],
+    "explanation": "This is c_001 — one person, one fact type, one disputed attribute (birthplace), with competing assertions already in research.json. Resolving it requires source-independence analysis and the GPS preponderance hierarchy, which conflict-resolution owns and writes into the `conflicts` section. hypothesis-tracking's SKILL.md states: 'Do NOT use when the user wants to resolve a specific fact conflict (use conflict-resolution).' Competing *values for one attribute* are not competing *candidates*; no candidate person or parentage claim is in question here, so nothing belongs in `hypotheses`."
+  },
+
+  "judge_context": [
+    "Should route to conflict-resolution rather than opening or updating a hypothesis",
+    "The distinguishing marker: hypothesis-tracking tracks competing candidate persons or claims (is X the father? is this the same man?); conflict-resolution adjudicates competing values for one attribute of one person",
+    "Must not manufacture a hypothesis such as 'Patrick was born in Ireland' to hold the two birthplaces — restating a fact conflict as a pair of hypotheses is the specific failure this test pins"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

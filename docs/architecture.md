@@ -214,10 +214,10 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | **47** | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **4** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list, any `disallowedTools:` denies (today only `record-extractor` has them), and its `model:` pin. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **6** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list, any `disallowedTools:` denies (every shipped agent declares them), and its `model:` pin. |
 
-The four agents are `gps-mentor`, `record-extractor`, `image-reader`, and
-`image-reader-opus`.
+The six agents are `gps-mentor`, `record-extractor`, `image-reader`,
+`image-reader-opus`, `proof-conclusion` and `research-exhaustiveness`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -386,15 +386,17 @@ The cost is knowingly accepted: there is no per-record-type ownership surface, s
 a probate specialist edits the same file as everyone else. **Revisit only with a
 mechanism that cannot silently skip.**
 
-### 3.5 Model routing
+### 3.5 Model and effort routing
 
-Per-step model routing exists **only through plugin agents.**
+Per-step routing of **model** and **reasoning effort** exists **only through plugin
+agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `image-reader-opus` → `claude-opus-4-8`; `record-extractor` + `image-reader` → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `image-reader-opus` → `claude-opus-4-8`; `record-extractor`, `image-reader`, `proof-conclusion` + `research-exhaustiveness` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
-| **Reasoning effort** | session-wide; never set by `real_agent.build_options` | not a per-step lever |
+| **Agent `effort:`** | hosted + both harnesses; **Cowork unverified** | no agent pins one |
+| **Session effort** | `.claude/settings.json` `effortLevel`; never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted inherits |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
 > unit harness (`harness/orchestrator.py` honours the field, falling back to
@@ -402,6 +404,13 @@ Per-step model routing exists **only through plugin agents.**
 > the harness default — and were deleted, because a pin that changes nothing
 > makes per-step routing look like it exists. To route a step to a different
 > model, delegate it to a plugin agent.
+>
+> **Agent `effort:` takes `low|medium|high|xhigh|max` or an integer**, and is a
+> property of the agent *definition* — the `Agent` tool's call site accepts only
+> `model`. It binds wherever `.claude/agents/*.md` is parsed, which is the hosted
+> control plane (`stage_plugin_agents` + `setting_sources=["project"]`) and both
+> harnesses. **Whether Cowork honours it has not been checked on a live session**,
+> the way the `model:` pins were; check before relying on it there.
 >
 > **And know the ceiling before you plan around it.** Because agents are the only
 > surface, the share of work that *can* be routed to another model is the share
@@ -461,6 +470,13 @@ Architecturally:
   tool only when `ok: false` is its **answer about its subject** rather than its
   own failure — `merge_warnings`, whose dry run reports that a merge *would* be
   rejected, is the only such tool today.
+- **If your tool reads the project files** — a sixth site, and nothing will
+  tell you if you skip it. Catch `NoProjectError` from `readProjectJson` and
+  return `noProjectResult()` (`"read"` for a read or a preview), so a user who
+  is not in a research project gets an answer rather than `research.json not
+  found in projectPath`. Then add the tool to `CALLS` in
+  `tests/tools/no-project.test.ts` — that list is hand-maintained and nothing
+  derives it, so a tool left out is uncovered.
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),
@@ -471,6 +487,13 @@ Architecturally:
   `~/.familysearch-mcp/config.json`. **Never a `process.env` fallback** — the
   file is the sole source. Throw **LLM-instruction errors**: the message must
   tell Claude what to do next, not just what failed.
+- **Every network leg goes through `fetchWithTimeout` (`src/utils/http.ts`)** —
+  the global `fetch` never times out and a stalled upstream hangs the call
+  forever. Size the budget under **60s** or accept that Cowork loses the tail:
+  the device bridge caps every MCP call at 60s (see "Other environment
+  differences that bite"), so any budget above it is honoured only on the
+  stdio paths (harnesses and hosted, both verified) and silently truncated in
+  Cowork. Size a raise from the measured e2e corpus, not by guessing.
 - **Reuse before you write:** `getValidToken()` for auth (never re-implement
   token plumbing), `place-resolver.ts` / `place-api.ts` for places, and
   `BROWSER_USER_AGENT` from `src/constants.ts` for any FamilySearch endpoint —
@@ -537,6 +560,11 @@ and note that no CI job runs it.
 ---
 
 ## 4. Orchestration — the `research` skill
+
+> For the whole run laid out unit by unit — every skill and agent in call order, its
+> gate, what it owns, what it reads and what it writes — see
+> [`docs/skill-dataflow.md`](skill-dataflow.md). It maps the routing table below onto
+> the write-ownership manifest; both of those stay authoritative.
 
 There **is** an orchestrator, and it is a skill:
 `packages/engine/plugin/skills/research/SKILL.md`. It is deliberately thin —
@@ -1090,15 +1118,12 @@ only `$ref`s it). Edit `enums.schema.json` in **both** schema trees,
 **Do not hand-edit the TypeScript union.** `packages/schema/src/enums.generated.ts`
 is emitted from that package's own `schemas/enums.schema.json` by
 `scripts/gen-enums.mjs`, chained into `build`, `typecheck` and each app's `dev`
-(ADR-0008 tier 2), and gitignored. `src/index.ts` re-exports it. The exception is
-the **five unions defined inline in `research.schema.json`** rather than in
-`enums.schema.json` — `EvaluationFocus`, `EvaluationTargetType`,
-`EvaluationVerdict`, `ExperienceLevel`, `Subscription` — which the generator
-cannot see and which are therefore hand-written in `src/index.ts` until they move
-(#1015). If your value belongs to one of those five, edit `src/index.ts`;
-otherwise regeneration is automatic and typing it by hand creates a sixth copy.
+(ADR-0008 tier 2), and gitignored. `src/index.ts` re-exports it. Every closed enum
+in `enums.schema.json` is generated, with no exceptions. Regeneration is automatic
+and typing a union by hand creates a sixth copy — `gen-enums.mjs` throws rather
+than let a hand-written union silently shadow a generated one.
 
-> **Direction (#1087/#1015/#1014; [ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).**
+> **Direction (#1087/#1014; [ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).**
 > These are **four-plus hand-maintained copies of one source**, kept in sync by
 > elimination, automatic generation, or lint — never by a step a human has to
 > remember. `packages/schema`'s enum unions are generated; everything else is
@@ -1248,7 +1273,7 @@ Four environments run the engine, and they load the plugin differently.
 | **Cowork** (cloud) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` via the remote-device bridge |
 | **Cowork** (on this computer) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` **directly**, no bridge — `mcp__Genealogy_Research__*` |
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
-| **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — no plugin hooks, and **no write-lockdown rule at all** | `bypassPermissions` — chosen over `dontAsk` precisely so declared `Write`/`Edit` still work, while out-of-allowlist MCP tools stay blocked | mock server under `genealogy` |
+| **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — no plugin hooks, and **no write-lockdown rule at all** | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
 
 **The permission-mode column is not a footnote.** It is why the e2e tier and the
@@ -1277,6 +1302,22 @@ Other environment differences that bite:
   §5.4's raw-write class is entirely ungated at call time there.
 - **Tool deferral.** Cowork defers tool schemas above a size threshold and offers
   no control over it, so `ToolSearch` is the real load path there (§5.2).
+- **The Cowork bridge caps every MCP call at 60s.** A client-side ceiling this
+  repo does not set — no `MCP_TOOL_TIMEOUT`/`MCP_TIMEOUT` or equivalent per-tool
+  ceiling is defined anywhere in the code — and cannot change from the plugin or
+  the `.mcpb`. Any tool timeout
+  budget above 60s is therefore aspirational in Cowork: the call is aborted with
+  `tool "…" timed out after 60s` before the tool's own budget fires, and its
+  eventual result is discarded. The harnesses and the hosted control plane
+  register the server over stdio and are **not** capped (committed e2e run
+  logs carry `image_transcribe`'s own 180s timeout as a result, so calls ran
+  past 60s there). `image_transcribe`'s `OCR_TIMEOUT_MS = 180s` is the first
+  budget this bites (roughly 10-15% of healthy calls exceed 60s — see the
+  spec's Timeout budget section for why it is a range, not a point), but
+  it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
+  budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
+  above the ceiling too. **No automated check reaches this** — neither harness
+  goes through the bridge — so it is only observable in a live Cowork session.
 
 ### If you're asked to…
 
@@ -1525,6 +1566,7 @@ questions that only look open.
 | What rule must I follow to make a correct change? | [`CLAUDE.md`](../CLAUDE.md) — the operating manual, auto-loaded every session |
 | What does tool X do? | `docs/specs/<tool>-tool-spec.md` — **wins over this guide on conflict** |
 | What tools / skills / agents exist, for a user? | [`README.md`](../README.md) |
+| Which skill or agent runs when, and what does it read and write? | [`docs/skill-dataflow.md`](skill-dataflow.md) — every skill and agent in call order with its gate, its responsibility, and its reads and writes, plus the inverse view of who may write each section of persisted state |
 | Why is it built this way? | [`docs/adrs/`](adrs/) — one decision per file, with the alternatives that were tried and rejected. Index in §0. For decisions with no ADR yet, the linked spec. |
 | Has this idea already been tried and disproved? | [`ADR-0009`](adrs/ADR-0009-refuted-agent-design-claims.md), each ADR's `Alternatives considered`, and [`guardrail-enforcement-spec.md`](specs/guardrail-enforcement-spec.md) §9 "Options set aside" — three ledgers, all negative records. Plus [`ADR-0010`](adrs/ADR-0010-record-structural-bets-in-a-ledger.md)'s structural-bet ledger, where **only a `rejected` row is a bar** — its `set aside` and `deferred` rows record ideas nobody researched, and re-proposing one is expected |
 | What is wrong with it, and what's next? | The **project board** — it is the register, and §9.4 and §10 here deliberately point at it rather than copy it. Read them for the handful of gaps whose *consequence* changes how you build, not for a list. There is no standing critique document either; the one that existed was retired 2026-08-09 because its priorities went stale faster than they were re-read. |

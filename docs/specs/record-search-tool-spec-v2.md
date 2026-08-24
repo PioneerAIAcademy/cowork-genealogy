@@ -12,6 +12,25 @@ Requires authentication (OAuth tokens obtained via the `login`
 tool). Uses the lower-level FamilySearch search service at
 `/service/search/hr/v2/personas`.
 
+**Its sibling is `person_search`** (`docs/specs/person-search-tool-spec.md`),
+which searches the FamilySearch **Family Tree** — a conclusion graph of
+user-maintained tree persons — at `platform/tree/search`. Different endpoint,
+different objects: this tool returns records, that one returns tree persons.
+
+The two share **18 identically-named `*Exact` parameters** out of 22 here and 21
+there, and the pairing has been a trap: same names, and for a long time two
+incompatible stories about what they did. They now mean **the same thing**, stated in
+both specs — see *Input → Person fields → The exact-match rule* in either. The
+figures behind the rule were measured against **this** endpoint's index; the tree
+endpoint has no probe, so `person_search` states the rule on the lead's authority. Four `*Exact` parameters exist
+only here (`anyPlaceExact`, `anyYearExact`, `otherGivenNameExact`,
+`otherSurnameExact`) and three only there (`fatherBirthPlaceExact`,
+`motherBirthPlaceExact`, `parentBirthPlaceExact`).
+
+**When a change touches this family, it touches both tools.** A measurement taken
+against one endpoint does not transfer to the other on its own, so measure both
+or say which one you measured.
+
 The tool is the **find** primitive of the genealogy toolkit. It
 chains naturally with the other tools:
 
@@ -77,8 +96,81 @@ but the anchor rule above must be satisfied.
 | `surnameAlt` | string | Alternate family name (e.g., maiden name when also searching by married name). |
 | `givenNameAlt` | string | Alternate given name. |
 | `sex` | `"Male"` \| `"Female"` \| `"Unknown"` | Sex of the person. Case-insensitive — `"male"` is normalized to `"Male"`. |
-| `surnameExact` | boolean | When `true`, only records with the exact surname spelling match. By default the search uses fuzzy matching (nicknames, spelling variants). When `surnameAlt` is also set, the strict-match toggle applies to both the primary and the alternate. **Narrows the count, reorders the records it keeps, and it can drop the target** — read over complete sets, the exact result is a strict subset of the fuzzy one, so it cannot surface a record a fuzzy search buried (measured on `surname` in marriage populations only). See "What `.exact=on` actually does" under the API reference before recommending it. |
-| `givenNameExact` | boolean | Same idea for given name. Applies to `givenNameAlt` too when both are set. Expected to exclude period diminutives, though only the fuzzy direction was measured (see the `givenName` row below); same caveat as `surnameExact`. |
+| `surnameExact` | boolean | Restricts the surname to its exact spelling — see the exact-match rule below. Applies to `surnameAlt` too when both are set. **Narrows the count, reorders the records it keeps, and can drop the target**: read over complete sets the exact result is a strict subset of the fuzzy one, so it cannot surface a record a fuzzy search buried (measured on `surname` in marriage populations only). |
+| `givenNameExact` | boolean | Restricts the given name to its exact spelling — see the exact-match rule below. Applies to `givenNameAlt` too. Excludes period diminutives (`Betty` for `Elizabeth`); pass a variant as its own `givenName` instead. **The exclusion direction is the lead's (2026-08-17), not measured**: the artifact records only the fuzzy REACH — `N.verdict:diminutiveReach` = REACHED, and section E's membership tests — never that `.exact` drops them. The ruling sourced it, which is why the description states it flatly. |
+
+#### The exact-match rule
+
+One rule, belonging to the search engine rather than to this endpoint — with one
+measured exception, on `surname`:
+
+> **Without `exact=on` on a name field**, results include fuzzy matches, and
+> records where **that field is empty** — for `givenName` and for a father's,
+> mother's, parent's or spouse's name (`other` not measured), but **not** for
+> `surname`, where an unqualified value drops surname-empty records outright.
+> **With `exact=on`**, whatever its own field admits is excluded.
+
+**What is measured, and what is not.** The relative half is enumerated on this
+endpoint for four kinship families: `R.verdict:keep-silent` HOLDS, and the
+presence requirement is CONFIRMED in each of
+`R.verdict:father .exact requires the relative to be present`,
+`R.verdict:spouse .exact requires the spouse to be present`,
+`R.verdict:mother .exact requires the relative to be present` (one population —
+the other indexes no mother given names at all) and
+`R.verdict:parent .exact requires the relative to be present`;
+`F.verdict:relative .exact requires the relative to be present` is the
+independent father measurement. `other` is the exception:
+`R.verdict:other names behave like the four kinship families` reads NOT
+MEASURED — excluded by decision, not untried, being a co-occurrence term rather
+than a kinship one. The fuzzy half is enumerated too:
+`B.verdict:exact surfaces records fuzzy does not` reads NO — exact is a strict
+subset.
+
+**The two principal fields behave oppositely, and that is the surprise.** The
+artifact leaves this open — `T.verdict:all name fields behave alike` reads *"NOT
+MEASURED — the per-field verdicts are withheld under RULE 0"* — so it was measured
+directly on 2026-08-20 with the unmatchable-token method R and S validated, via
+`dev/explore-name-empty-field-leg-records.ts`:
+
+- **`givenName` keeps them.** Three unmatchable tokens each retain ~251 of a 6,038
+  pool (spread under 2%, which is S's control separating silence from fuzzy reach);
+  58 of 60 sampled retained rows are given-name-empty, on the typed parts AND on the
+  `fullText` cross-check the surname leg below uses — the two agree exactly, so no
+  row had a given name misfiled under another part type; `.exact` takes it to 0.
+- **`surname` drops them.** A bound surname-empty record — `fullText` "Escolastica",
+  one Given part, zero Surname parts — is present in a 1,100-row set read to the end,
+  and each of three unmatchable tokens returns an **empty set**. Zero rows, so this is
+  not a ranking artifact.
+
+One explanation to rule out, because it is the intuitive one and it is wrong:
+**not** "`surname` is a required anchor, so a surname-empty record is never put in
+front of you." `surname` is one of three anchors, and the pool above is anchored on
+country, type, date and place with no name term at all — 1,100 records, surname-empty
+ones among them.
+
+The retention counts and the 1,100-row Brazil pool are not in
+`dev/measured-figures.json`; the script is the trail until a probe section records
+them. The 6,038 pool total *is* already recorded, as
+`Y.impossiblePools:birth[0].poolTotal` — it is the same Pocklington pool.
+
+The lead states the rule as the search engine's rather than this endpoint's, from
+FamilySearch internals. See `docs/specs/person-search-tool-spec.md` → *Person fields* → *The
+exact-match rule* for what is and is not established there — no probe covers that
+endpoint — and for two instrumentation traps specific to it. **The same rule, the same parameter names, the same
+meaning** on both tools; that is why it is stated in both specs rather than
+cross-referenced from one.
+
+**Two carve-outs.** *Places* are a different mechanism — `*PlaceExact` stops
+upward expansion to parent jurisdictions, which is neither fuzz, initials, nor an
+empty field. (Whether it still descends to child localities is stated in the
+original spec prose but is recorded by no verdict; treat it as unverified.) *Years* are the exception, and the artifact is
+the authority on why. `H.verdict:silence tolerated` reads **OPEN** and
+`N.verdict:payload-silent means index-silent` reads **NOT MEASURED**: nothing here
+establishes what a year range does to a record carrying no indexed year, in either
+direction. The lead's account is that no such record exists — the index carries an
+estimated date *range* matched by overlap — and a session probe on 2026-08-19 found no such record in an enumerated Pocklington pool, but that probe left **no artifact** and no probe in `dev/` reproduces it, so it is not
+citable here. Until an instrument records it, `birthYearExact`'s text is unchanged
+and is **not** part of this rule.
 
 Setting `surnameAlt` or `givenNameAlt` performs a UNION — the result
 set includes records that match the primary name AND records that
@@ -126,7 +218,8 @@ day even if supplied.
 
 **The `*Exact` toggles in this table change the result count.** A place toggle
 stops upward expansion to parent jurisdictions
-(it still descends to child localities); a year toggle removes the fuzz
+(and is generally said to still descend to child localities, though no verdict
+records that half — see the carve-outs above); a year toggle removes the fuzz
 around the range bounds, excluding records whose indexed year falls just
 outside it — though that fuzz is only weakly evidenced: 3 of 300 sampled
 records fell outside an unqualified single-year range on 2026-08-08 and every
@@ -548,11 +641,36 @@ as a behavioural change and re-verify against a live run, not unit tests alone.
 > which is exactly what happened below, so read the two classes above as the whole
 > test, not as a summary of a wider scan.
 >
-> Applied once, for the `\bco\.?\b` fix below, and the numbers are the criterion
-> run verbatim: **class 1 — 1623 distinct tree-fact places** (1405 from
+> Applied twice. **First** for the `\bco\.?\b` fix below, and the numbers are the
+> criterion run verbatim: **class 1 — 1623 distinct tree-fact places** (1405 from
 > `starting-tree.gedcomx.json`, the rest across 144 `*.final-tree.gedcomx.json`),
 > **0 changed**; **class 2 — 54 distinct recorded search arguments, 0 changed**.
 > Exempt.
+>
+> **Second, 2026-08-19**, for the three qualifier-stripping defects below (the
+> ASCII-only boundary, the internal qualifier that fused two locality levels into
+> one token, and `CO` the postal abbreviation): **class 1 — 1007 distinct
+> tree-fact places, 0 changed**; **class 2 — 61 distinct recorded search
+> arguments, 0 changed**. Exempt.
+>
+> Class 1 is `standard_place || place` **per fact**, so a raw `place` is skipped
+> wherever the fact carries a `standard_place`: the tokenizer reads the standardized
+> form, and measuring the raw one reports changes that cannot happen. The criterion
+> lives at `dev/probe-placeparts-criterion.ts` — run it *after* merging `main`, since
+> the counts move with the corpus, and read its header for why it collects what it
+> collects.
+>
+> The postal-abbreviation change moves nothing in either class, because neither
+> holds a `CO`: of class 1's 12 places whose last comma-part is two letters, the 9
+> uppercase ones are `UT`, `NY`, `FL`, `MT` and `LA`, and the rest are `Ny`, `Ca`
+> and `Ma`; class 2 has none at all. Neither class holds a place with a standalone
+> `co` token. A **wider scan** — every `place`/`standard_place` under
+> `eval/tests/e2e` and `eval/runlogs`, which is outside the criterion by design —
+> finds 9 such places, including the leading-qualifier Irish forms `"Co Kilkenny"`
+> and `"Co Down"` in `eval/runlogs/e2e/butler-ancestry/`. All 9 still strip;
+> `placeParts` was run over each rather than eyeballed. Deliberately not quoted
+> here: a count of files scanned. Three reviewers produced three different numbers
+> for it and it decides nothing — the distinct-string counts are the measurement.
 >
 > Seven strings *did* change elsewhere in `eval/` — run-log outputs, one fixture
 > README line, and two `unstripped-tree.gedcomx.json` files. That is why the
@@ -589,12 +707,17 @@ need the string narrowed test `!== undefined` themselves; that explicit check is
 what makes `jurisdictionHints.searchedPlace` a sound required `string`.
 
 **The `Co.` qualifier, and why the first spelling of the regex was wrong.**
-`placeParts` drops `County`/`Co.` with `/\bcounty\b|\bco\b\.?/`. The abbreviation's
-dot is part of the qualifier and must be consumed with it. The original
-`\bco\.?\b` could not: after matching `co.` the trailing `\b` fails, so the engine
-backtracks and matches bare `co`, leaving a `"."` that survives the empty-string
-filter and counts as a locality. `\bco\b\.?` asserts the boundary first, then eats
-the dot.
+`placeParts` consumes `County`/`Co` **as a part separator** — not as a deletion —
+through `stripCountyQualifier`, which matches
+`/(?<![\p{L}\p{N}_-])(county|co)(?![\p{L}\p{N}_-])(\.?)/giu` and decides per match
+whether to replace it with `","`. The abbreviation's dot is part of the qualifier
+and must be consumed with it, so `\.?` sits **outside** the closing assertion. The
+original `\bco\.?\b` could not do that: after matching `co.` the trailing `\b`
+fails, so the engine backtracks to bare `co`, leaving a `"."` that survives the
+empty-string filter and counts as a locality. Asserting the boundary first and
+eating the dot after is the fix. Because a single `\.?` now follows one shared
+assertion covering both spellings, `"County."` strips clean as well — under
+`\bcounty\b` it left the same stray dot.
 
 That stray token had two effects, and the reported one was the smaller. It made
 `isSubCountryPlace("Co., USA")` return `true`, so a country-wide search read as
@@ -613,8 +736,88 @@ exemption at the top of this section. Pinned by two tests in
 exclusion case scoped `"Hill Co., Texas"` that pins the root cause rather than the
 symptom.
 
+**Why the boundary is a `[\p{L}\p{N}_-]` lookaround pair and not `\b`.** JavaScript's
+`\b` is defined over `[A-Za-z0-9_]`, so every non-ASCII letter — and the hyphen —
+reads as a word edge, and a leading `co` matches as a whole word *inside the place's
+own name*: `"Coïmbra, Portugal"` tokenized as `["ïmbra","portugal"]`, `"Coévrons,
+France"` as `["évrons","france"]`. `\p{L}` alone is **not** sufficient, and this is
+the part worth not re-deriving: `-` is not a letter either, so
+`"Co-operative Township, Ohio"` still lost its first two letters. Both alternatives
+carry the same class — leaving `county` ASCII-only would be an asymmetry the next
+reader has to work out. The mangling is *symmetric*, which is why it is invisible
+through `marriageJurisdictionCandidates`: `"Coïmbra"` reduced to `["ïmbra"]` whether
+it arrived as the searched place or as the candidate, so the exclusion still matched
+and no behavioural assertion could fail. `placeParts` is exported for that reason
+alone — the tokens are the only level at which this defect is observable.
+
+**Why the qualifier is a separator, not a deletion.** The qualifier marks a locality
+boundary whether or not a comma also marks one. Deleting it fused the levels into a
+single token — `"Hill Co. Texas"` became `["hill texas"]` — which no comma-separated
+spelling of the same jurisdiction can ever equal, so `samePlace` never matched
+`"Hill, Texas, United States"` and the exclusion failed. Replacing it with `","`
+makes `"Hill Co. Texas"`, `"Hill County Texas"` and `"Hill, Texas"` all reduce to
+`["hill","texas"]`. Note that collapsing whitespace *before* the strip was a
+second-order symptom of the same defect, not its cause: it left the two spaces that
+used to flank the qualifier, so fixing only the spacing yields `["hill texas"]` —
+tidier, still unmatched, no behaviour changed. Whitespace is therefore collapsed
+after the split.
+
+**`CO` the postal abbreviation, and the ruling that governs it (lead, 2026-08-13).**
+`CO` is also Colorado's postal abbreviation, and the model does write postal
+abbreviations. Eating it reduced `"Denver, CO"` to `["denver"]`, and since
+`samePlace` is a subset test, a Colorado-scoped search that came back empty
+**suppressed a tree place of `"Denver, Iowa"` from its own candidate list** —
+deleting precisely the alternative jurisdiction this hint exists to surface. The
+qualifier is therefore stripped when **any** of these holds, and kept otherwise:
+(1) it carries a dot; (2) another token follows it in the same comma part; or (3) it
+is spelled with a lowercase `o`. So it survives only as bare uppercase `CO` ending
+its comma part.
+
+Three options were considered and each fails alone: requiring the **dot** breaks
+`"Hill Co Texas"`; the **token-follows** test alone breaks `"Hill Co., Texas"`,
+because the dot ends that comma part; and a **postal-abbreviation set** is fifty
+entries to maintain against a signal already present in the string. Knowingly
+accepted: `"Denver, Co"`, Colorado written with a lowercase `o`, still strips and so
+still compares equal to `"Denver, Iowa"` — the price of catching `"Hill Co"`, which
+has no other tell. Do not "fix" that without reopening this ruling.
+
+**The inverse cost, and why it is not accepted.** Keeping `co` as a token has a
+second consequence that review caught, and it is the more common of the two:
+`["denver","co"]` is not a subset of `["denver","colorado"]`, so a `CO`-scoped
+search stopped excluding its own **spelled-out** tree place and offered
+`"Denver, Colorado, United States"` straight back as a candidate — the very failure
+the `Co.` paragraph above says this tokenizer exists to prevent, arriving from the
+other side. It was first read as a documentation-only cost on the grounds that
+matching `CO` to `Colorado` needs the fifty-entry postal-abbreviation set the
+ruling rejected. **That reasoning is wrong, and the trap is worth naming:** the set
+was rejected as a way to decide *whether to strip*, and by the time a bare `co`
+survives tokenization the ruling has already decided it is Colorado and nothing
+else. Only the comparison is left, so it costs one mapping, not fifty.
+`placeTokens` therefore compares a surviving `co` as `colorado`. `placeParts` is
+untouched — `"Denver, CO"` still tokenizes as `["denver","co"]` — so the ruling and
+every assertion resting on it stand. Net effect: a postal abbreviation now neither
+suppresses a same-named place in another state nor resurfaces its own.
+
+**A kept qualifier is still a boundary.** The keep branch first returned the match
+bare, which left it fused into the token before it — `"Hill CO, Texas"` tokenized as
+`["hill co","texas"]`. That is wrong under both readings (the county abbreviation
+wants `["hill","texas"]`, Colorado wants `["hill","co","texas"]`, neither wants one
+fused token), and it was the internal-qualifier defect surviving in the one branch
+that had stopped honouring the separator rule. The kept match is wrapped in
+separators instead. Not an all-caps-only case, as first supposed: any place with an
+uppercase standalone `CO` and text before it in the same comma part hits it.
+
+Two consequences for anyone editing `stripCountyQualifier`. The strip must run
+**above** the `.toLowerCase()`, because that call destroys the case signal the rule
+rests on. And the `i` flag makes the match read as case-insensitive when the
+*decision* is case-sensitive: matching is deliberately case-blind so the callback
+can inspect the spelling it captured (`word !== "CO"`). A pattern that looks
+case-insensitive and is not is exactly the trap this note exists to flag.
+
 It is compared to each candidate on comma-separated tokens, lowercased, with
-`County`/`Co.` dropped and the country term dropped unless it is all that remains.
+`County`/`Co.` consumed as a further part separator — except bare uppercase `CO`
+ending its comma part, which is kept — and the country term dropped unless it is
+all that remains.
 The match is **one-directional**: a candidate is excluded only when it is equal to
 or **narrower** than what was searched. So `"Hill County, Texas"` excludes
 `"Hill, Texas, United States"`, and searching `"Texas, United States"` excludes
@@ -979,7 +1182,7 @@ User-Agent: <browser-like user agent string>
 
 | Flag | Value | Purpose |
 |-----|------|---------|
-| `m.queryRequireDefault` | `on` | Treats every `q.*` term as a required filter. Without this, most `q.*` terms only rerank the result list without narrowing it. **This flag is the only "required" mechanism the API offers** — there is no per-field qualifier. `q.<field>.required=on` is rejected outright (`400 {"errors":["Unable to map supplied value=required to term modifier"]}`), so a caller cannot make one term required and another optional. Because the tool sends the flag unconditionally, **every supplied `q.*` term is already a hard requirement** — but "required" means the record must not *contradict* the term, not that it must carry it. For the searched person's own name, which the index virtually always holds, that collapses to *must match*, which is why a nil result means one of the terms **on the person you searched** did not match. For a field a record can omit, silence is not a contradiction and those records are kept: an unmatchable `fatherGivenName` still returned about 441,000 of a roughly 456,000 baseline, dropping only the records that named a *different* father. See "Relative names keep records where the relative is absent" below. `f.*` filters apply either way; only `q.*` terms are governed by the switch. Verified live 2026-08-04 on `q.surname=Zsigmondy&q.surname.exact=on` (634 hits): adding a gibberish given name, an impossible 1700–1710 birth range, or Alaska as the birthplace returned **6 / 4 / 4** with the flag and **634 / 634 / 634 — unchanged** without it. Each added term was ignored outright. |
+| `m.queryRequireDefault` | `on` | Treats every `q.*` term as a required filter. Without this, most `q.*` terms only rerank the result list without narrowing it. **This flag is the only "required" mechanism the API offers** — there is no per-field qualifier. `q.<field>.required=on` is rejected outright (`400 {"errors":["Unable to map supplied value=required to term modifier"]}`), so a caller cannot make one term required and another optional. Because the tool sends the flag unconditionally, **every supplied `q.*` term is already a hard requirement** — but "required" means the record must not *contradict* the term, not that it must carry it. For the searched person's own surname this collapses to *must match* — an unqualified `surname` drops records with no indexed surname (measured 2026-08-20) — while an unqualified `givenName` keeps given-name-empty records, so the two principal fields differ; see *The exact-match rule* above. Either way a nil result means one of the terms **on the person you searched** did not match. For a field a record can omit, silence is not a contradiction and those records are kept: an unmatchable `fatherGivenName` still returned about 441,000 of a roughly 456,000 baseline, dropping only the records that named a *different* father. See "Relative names keep records where the relative is absent" below. `f.*` filters apply either way; only `q.*` terms are governed by the switch. Verified live 2026-08-04 on `q.surname=Zsigmondy&q.surname.exact=on` (634 hits): adding a gibberish given name, an impossible 1700–1710 birth range, or Alaska as the birthplace returned **6 / 4 / 4** with the flag and **634 / 634 / 634 — unchanged** without it. Each added term was ignored outright. |
 | `m.defaultFacets` | `off` | Tells the server not to compute facet aggregations. The tool doesn't consume facet data; turning them off speeds up broad queries by up to 9×. |
 
 **Tool input → API parameter mapping:**
@@ -1143,8 +1346,8 @@ general statement about place ranking.
 | Family | Unqualified behavior | What `.exact=on` costs |
 |---|---|---|
 | `surname` | Filters, and expands loosely to spelling neighbours | **Can drop the target.** On a record indexed `Neill`, `q.surname=Neal` returns it and `q.surname=Neal&q.surname.exact=on` returns **0**. Fuzzy matching is the mechanism that bridges an index misspelling — the commonest reason a record cannot be found |
-| `givenName` | Filters, and expands. It bridges standardized abbreviations (an unqualified `fatherGivenName=William` returned `Wm:52 Wm.:31` in a 300-result survey, re-measured 2026-08-08 after a father-detection fix in the probe). It also reaches period diminutives: membership tests on 2026-08-08 (probe section E) returned the diminutive's own record from the fuzzy search for the formal name 8 times out of 8, across Elizabeth→Betty, Margaret→Peggy and Mary→Polly. **The limit is rank, not coverage** — each record was ranked only within its own pool — the best at rank 347 in a pool of 1,019 (2 of the 8 fell inside the 500-deep scan), the other six unseen within that scan in pools of 55,514, 90,037 and 219,494, so a top-N sample cannot establish what the expansion reaches (an earlier revision of this row concluded "no `Betty`" from exactly such a sample). Narrowing works: with the query narrowed on the surname to a 227-row set read in full, the bound `Betty` record was present, at rank 103. Nothing widens the expansion — qualifiers only subtract — so to surface a diminutive, narrow the query until the pool is scannable or search it as its own `givenName` value | Excludes every variant, including the nicknames the default *does* reach; the abbreviation figures in the middle column are a 300-row sample of a pool too large to enumerate, so treat the size of that loss as indicative |
-| relative names (`father*`, `mother*`, `spouse*`, `parent*`, `other*`) | **Keep-matching / keep-silent / drop-contradicting** — see below. Enumerated for `father*` and `spouse*` only, on marriage records in two countries; `mother*`, `parent*` and `other*` are assumed to follow, not measured | Drops the silent records *and* variant forms the unqualified search did reach: on a pool read in full, `João Baptista` and `Thiago J` are present unqualified and absent from the `.exact` set. Whether it drops indexed **abbreviations** specifically is NOT MEASURED — that enumerated unqualified set contained no abbreviated form to drop, and the `Wm:52 Wm.:31` of 300 that stood here is a sample of a pool too large to enumerate |
+| `givenName` | Filters, and expands. It bridges standardized abbreviations (an unqualified `fatherGivenName=William` returned `Wm:52 Wm.:31` in a 300-result survey, re-measured 2026-08-08 after a father-detection fix in the probe). It also reaches period diminutives: membership tests on 2026-08-08 (probe section E) returned the diminutive's own record from the fuzzy search for the formal name 8 times out of 8, across Elizabeth→Betty, Margaret→Peggy and Mary→Polly. **The limit is rank, not coverage** — each record was ranked only within its own pool — the best at rank 347 in a pool of 1,019 (2 of the 8 fell inside the 500-deep scan), the other six unseen within that scan in pools of 55,514, 90,037 and 219,494, so a top-N sample cannot establish what the expansion reaches (an earlier revision of this row concluded "no `Betty`" from exactly such a sample). Narrowing works: with the query narrowed on the surname to a 227-row set read in full, the bound `Betty` record was present, at rank 103. Nothing widens the expansion — qualifiers only subtract — so to surface a diminutive, narrow the query until the pool is scannable or search it as its own `givenName` value. **Initials, in the one direction that is measured:** an initials *value* reaches its transposition — `I.verdict:.exact pins the initials ORDER` is CONFIRMED (ENUMERATED), the transposed record present in the fuzzy set and absent from the `.exact` set, both read to the end. Whether a **spelled-out** query reaches records indexed as initials only is unmeasured, and `I.verdict:fuzzy swallows initials into spelled-out names` reads NO for the converse direction, so do not state it. The sampled `J W:66 W J:29` forms breakdown is a 100-row sample of a 1,025,885-row pool and is indicative only | Excludes every variant, including the nicknames the default *does* reach; the abbreviation figures in the middle column are a 300-row sample of a pool too large to enumerate, so treat the size of that loss as indicative |
+| relative names (`father*`, `mother*`, `spouse*`, `parent*`, `other*`) | **Keep-matching / keep-silent / drop-contradicting** — see below. Enumerated for `father*`, `spouse*`, `mother*` and `parent*`, on marriage records in two countries (Brazil, England) — see the exact-match rule above for which verdict covers which family. `other*` is excluded by decision, not untried: `R.verdict:other names behave like the four kinship families` reads NOT MEASURED | Drops the silent records *and* variant forms the unqualified search did reach: on a pool read in full, `João Baptista` and `Thiago J` are present unqualified and absent from the `.exact` set. Whether it drops indexed **abbreviations** specifically is NOT MEASURED — that enumerated unqualified set contained no abbreviated form to drop, and the `Wm:52 Wm.:31` of 300 that stood here is a sample of a pool too large to enumerate |
 | `<event>Place` | Expands upward far enough that a county scope barely discriminates — from the same query, the **wrong** Arkansas county returned the same total as the right one to within 0.1% (about 35,500 each). Two *different* English counties measured counts 0.001% apart (`dev/explore-wildcard-scope.ts`), so treat an unqualified county scope as no scope at all | It makes the count meaningful. Its effect on ordering was not measured beyond one target, which ranked first either way. Useful mainly where a total has to mean something (an exhaustiveness claim) |
 | `<event>Year` | Fuzz around the range bounds — weakly evidenced (see above). Whether an unqualified range requires an indexed year is **not established**: the instrument that addressed it could not tell a record with no indexed year from one whose year the result payload merely does not expose, so no direction is recorded. Do not quote a share of tolerated silence, and do not rely on an unqualified range to include undated records. `any` was never tested at all | Meant to exclude records whose indexed year falls just outside the range, though the enumerated check found one out-of-range row SURVIVING it, so do not rely on the exclusion being complete. Whether it also drops records carrying no indexed year, or in-range *approximate* dates, is **not established** — so it cannot be relied on to exclude undated records either. Use only with a firm date |
 | `recordCountry` | **Already strict** — `q.recordCountry=Narnia` returns 0 rather than being ignored | No flag exists and none is needed |
@@ -1176,13 +1379,19 @@ The gibberish row — 1 father-bearing result of 300 sampled — points the
 same way, and the question was then settled by enumeration rather than
 sampling. Reading whole result sets to the end on two marriage populations
 (Brazil / `Bochenek`, 521 rows; England / `Pocklington`, 469 rows) and on the
-`father` and `spouse` families only: an unmatchable name left **zero** records
-naming a different relative, retained exactly the records the baseline was
-silent about, and a real name drawn from the data returned matching records.
-Retention therefore equals the baseline's silent share — 70.2% against a 70.1%
-silent share and 92.8% against 92.8% for `father`, 10.2% against 9.8% and 81%
-against 81% for `spouse`. That is what makes the father/spouse difference an
-artifact of how often each is indexed, not a property of the parameter.
+`father`, `spouse`, `mother` and `parent` families: an unmatchable name left
+**zero** records naming a different relative, retained exactly the records the
+baseline was silent about, and — wherever the baseline held a real relative
+name to draw from — a real name returned matching records. Retention therefore
+equals the baseline's silent share: for `father`, 70.2% against 70.2% (Brazil)
+and 92.8% against 92.8% (England); for `mother`, 70.1% against 70.1% and 99.1%
+against 99.1%; for `parent`, 70.1% against 70.1% and 92.8% against 92.8%; for
+`spouse`, 10.2% against 9.8% and 81% against 81%. That is what makes the
+between-relative difference an artifact of how often each is indexed, not a
+property of the parameter. The one leg not exercised is the real-name control
+for `mother` in England: that pool indexes no mother given name at all, so there
+was none to draw — the keep-silent side still held (99.1% against 99.1%), and
+the presence requirement is confirmed for `mother` on Brazil alone.
 
 So an unqualified relative name keeps matching records, keeps records where
 that relative was never indexed, and drops contradicting ones — the right

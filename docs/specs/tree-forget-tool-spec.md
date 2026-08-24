@@ -297,6 +297,13 @@ identifier-casing rule).
 
 On failure: `{ ok: false, errors: string[] }`, with nothing written.
 
+When `projectPath` is a real directory holding **neither** project file, the
+result is `{ ok: false, reason: "no_project", errors }` and is **not** marked
+`isError` — the user is not in a research project, which is an answer rather
+than a failure. A directory holding exactly one of the two files is a *broken*
+project and stays loud. See the write-boundary invariants in
+`guardrail-enforcement-spec.md`.
+
 ### 3.1 The redaction contract
 
 **The return value carries counts and kinds only — never a name, date, place, or

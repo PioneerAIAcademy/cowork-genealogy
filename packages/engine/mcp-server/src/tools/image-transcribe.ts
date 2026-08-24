@@ -73,7 +73,12 @@ function recordBrowseAndCheckBudget(
 // Across the committed e2e corpus a healthy transcription runs p90 79s / p95
 // 98s with a 167s maximum, and the image download it follows adds ~7s — so
 // 180s clears every real read with margin while still cutting the 190–316s
-// calls of the one run that hung. Sized in the spec, not guessed.
+// calls of the one run that hung. Sized in the spec, not guessed. This budget
+// holds only where the call is not bridged (the harnesses and the hosted
+// control plane, both verified over stdio): in Cowork the device bridge aborts
+// every MCP call at 60s, so any OCR past a minute is lost there regardless of
+// this value. Whether the desktop `.mcpb` is bridged too has not been measured;
+// see docs/architecture.md "Other environment differences that bite".
 const OCR_TIMEOUT_MS = 180_000;
 
 // OpenRouter attribution headers (recommended, not required). Stable app id.
