@@ -8,7 +8,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09 (on the fourth independent re-derivation in one week)
-- **Last updated:** 2026-08-21 (the proof-conclusion pair conversion measured five prose rules failing and holding once moved into the writer tool)
+- **Last updated:** 2026-08-24 (the override tier is retired — gates ship without one until a false deny is observed)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -141,30 +141,80 @@ halves of one author's conclusion, so that gate reads live — measured: 7 of 15
 corpus resolve-calls write both in one batch, all with the summary ordered first,
 so a snapshot would refuse 7 correct writes.
 
-### Overridable or not — two tiers
+### Overridable or not — no override until a false deny is observed
 
-The researcher **must** be able to override a doctrine gate (lead ruling,
-2026-08-15). A system that can only refuse, used by professionals who are
-sometimes right, becomes the thing people route around — which is the failure
-being fixed.
+**A gate ships with no override mechanism (lead ruling, 2026-08-24).** This
+replaces the ruling of 2026-08-15, which said a researcher must be able to
+override a doctrine gate through a recorded refusal id and a separate
+human-attributable write. That machinery was never built. In the nine days the
+rule stood, the one gate that engaged with it satisfied it by being reclassified
+as bookkeeping so the tier would not bind — and two doctrine gates already
+shipped without an override and were never classified at all. A rule honoured
+only by relabelling is worse than no rule: it teaches the next author to
+mislabel a gate rather than to think about one.
 
-- **Integrity gates are not overridable**: schema validity, and the raw-write
-  lockdown. Overriding either yields an unvalidated document, which is what the
-  layer exists to prevent.
-- **Doctrine gates are overridable**, and the override must be attributable to
-  the *human*: the tool records the refusal with an id, and the override is a
-  **separate write** referencing that id and carrying a justification that
-  persists and is visible. An `override` field on the original call is forgeable
-  by the caller — the same reason a lane expressed as a tool parameter does not
-  hold (ADR-0006).
+Four reasons, in the order they carry weight:
 
-**The override rate is the calibration signal.** A rule overridden often is a
-wrong rule — and it is the only satisfiability measurement that generates itself
-in production, which every shadow-mode check in this repo has lacked.
+1. **No false deny has ever been observed.** That is this ADR's own revisit
+   trigger and it has not fired. What evidence exists runs the other way, twice
+   and independently, both on `hannah-earnest-children`: the completion gate's
+   refusal was followed by a substantive conflict resolution and a successful
+   retry (recorded under Consequences below), and the `same_person` provenance
+   check at `PERSON_EVIDENCE_GUARD=deny` fired twice and sent the agent to make
+   the eight `same_person` calls it had skipped. Both refusals redirected the
+   agent into doing the work rather than stopping it.
+2. **An override is an escape hatch the agent finds, not only the researcher.**
+   Every guardrail here exists because the agent rationalised past prose late in
+   long runs. An override is a prose guardrail with a sanctioned button on it,
+   and it would arrive during exactly the period when we are still learning
+   whether the gates are right.
+3. **On the desktop the researcher already has an override: the file.** The
+   raw-write lockdown binds the agent, never a text editor. The
+   set-once project fields already say this in
+   `docs/specs/guardrail-enforcement-spec.md` — "the override is the file
+   itself" — and it generalises: the researcher owns the project folder.
+4. **Forgeability was the wrong objection.** The 2026-08-15 design rejected an
+   `override` parameter because the caller could forge it. But the agent already
+   writes every genealogical claim in the document — the tier, the independence
+   analysis, the confidence — and this repo's stated posture on `match_score` is
+   that a present value does not prove the tool behind it ran. Holding an
+   override to a stricter standard than the tier it protects was never coherent.
 
-The first row is the default and the cheapest: it is caller-agnostic, so it binds
-identically in Cowork, the hosted path, and both harnesses, and it needs no new
-machinery. `docs/specs/guardrail-enforcement-spec.md`'s "Write-boundary
+**Two limits, so this is not read as more than it is.**
+
+- **Reason 3 does not hold on the hosted path.** There the project lives in a
+  sandbox and the viewer is a renderer with no write path, so a blocked hosted
+  researcher has no route except asking the agent to try something else.
+- **A false deny is close to invisible, so do not wait to be told.** The
+  researcher never sees a refusal; they see the agent doing something slightly
+  different — the same shape as a failed wiki call, where the agent gets an
+  actionable error and quietly ships a thinner answer. This ruling therefore
+  depends on refusals being **counted**, not on a user complaining. The hosted
+  feedback bundle already carries the full transcript with tool results, and
+  issue #1558 is the machinery to run detectors over it. Until something reads
+  them, treat silence as the absence of a measurement, not as evidence the gates
+  are right.
+
+**The two tiers still classify; they no longer imply a mechanism.** Integrity
+gates — schema validity, the raw-write lockdown — are the ones whose violation
+yields an unvalidated document. Doctrine gates are the rest, and the
+bookkeeping-versus-doctrine call made for the exhaustiveness plan-completeness
+gate on 2026-08-23 is the same axis: does the rule second-guess the researcher's
+judgment, or only the project's own bookkeeping. The answer still decides how
+conservatively to scope a gate and how fully its refusal must explain itself. It
+no longer decides whether machinery gets built, because none does — so a
+classification now buys no exemption, and there is nothing left to relabel a
+gate in order to escape.
+
+**The refusal rate is the calibration signal now.** The override rate was going
+to be the one satisfiability measurement that generates itself in production;
+retiring it costs us that. Count refusals instead — a gate that fires constantly
+is suspect whether or not anyone could have overridden it, and counting needs no
+mechanism beyond the error the tool already throws.
+
+The layer table's first row — the write-boundary invariant — is the default and
+the cheapest: it is caller-agnostic, so it binds identically in Cowork, the
+hosted path, and both harnesses, and it needs no new machinery. `docs/specs/guardrail-enforcement-spec.md`'s "Write-boundary
 invariant" section already says to prefer that shape for any new gate; this ADR
 makes it the standing answer rather than one gate's note.
 
@@ -239,10 +289,13 @@ them carry `needs-decision`.
 
 **Costs, knowingly accepted.**
 
-1. **A gate can refuse legitimate work, and there is no override.** A researcher
-   blocked by a wrong denial cannot finish correct work at all. That is the whole
-   reason for the false-allow preference and for conservative scoping, and it
-   means a semantic gate will knowingly let some violations through.
+1. **A gate can refuse legitimate work, and there is no override** — a ruling
+   (2026-08-24), not an oversight. On the desktop a blocked researcher can edit
+   the project file directly; on the hosted path they cannot, and cannot finish
+   correct work at all. That is the whole reason for the false-allow preference
+   and for conservative scoping, and it means a semantic gate will knowingly let
+   some violations through. It is also why the revisit trigger below is a single
+   observed false deny rather than a pattern of them.
 2. **Every gate is more work than a sentence** — a check, a spec row, and a test
    that has been made to go red — so there is standing pressure to write the
    sentence instead, exactly when the deadline makes the rule matter most.
@@ -295,8 +348,15 @@ out and the test watched to fail.
 ## Revisit when
 
 > A boundary check is observed denying correct work in the field — a false deny
-> that reaches a researcher — at which point conservative scoping needs teeth
-> beyond review, or gates need a documented override path.
+> that reaches a researcher. **One is enough**: it reverses the 2026-08-24 ruling
+> above for the gate that produced it, and the override is then built for that
+> gate rather than as a general mechanism. Conservative scoping would also need
+> teeth beyond review at that point.
+>
+> Or refusal counting lands (issue #1558) and shows a gate refusing at a rate
+> nobody can account for — the same trigger reached by measurement instead of by
+> a complaint, which is the route that does not depend on a researcher noticing
+> something invisible to them.
 >
 > Or a platform mechanism arrives that keeps a rule binding across a whole
 > session without a tool call (the "constraint pinning" class of mitigation that

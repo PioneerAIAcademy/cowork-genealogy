@@ -600,12 +600,14 @@ objective, and every later skill plans against a changed goal it never agreed
 to" — and that row's remedy, routing the change through `init-project`, was not
 enforceable by anything.
 
-**It constrains the system, not the researcher, and that is why it needs no
-override.** ADR-0011's override tier says a doctrine gate must be overridable by
-the human; here the override is the file itself. The raw-write lockdown binds
-the agent, never a text editor, and preventing a person from editing their own
-project is explicitly out of scope for this layer. The refusal message says so
-outright rather than leaving the researcher to guess.
+**It constrains the system, not the researcher.** No gate here carries an
+override mechanism (ADR-0011, ruling 2026-08-24), and on the desktop none needs
+one: the raw-write lockdown binds the agent, never a text editor, so the
+researcher's override is the file itself, and preventing a person from editing
+their own project is explicitly out of scope for this layer. The refusal message
+says so outright rather than leaving the researcher to guess. That route does
+not exist on the hosted path, where the project lives in a sandbox — see the
+ADR's two stated limits.
 
 ### Exhaustiveness before a proved tier
 
