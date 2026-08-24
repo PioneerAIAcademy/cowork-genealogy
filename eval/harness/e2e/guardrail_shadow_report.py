@@ -1,4 +1,11 @@
-"""Replay of the §7 shadow-mode recency window over committed e2e runs.
+"""Replay of the §7 shadow-mode recency window over committed e2e runs, and
+(with `--feedback-dir`) over unpacked hosted feedback bundles.
+
+TWO MODES, and only the first reads the committed corpus. `--feedback-dir`
+scans bundles OUTSIDE the repo, ignores `--test/--windows/--since/--replay`
+(it says so on stderr), and is not windowed by `since_window` — a bundle
+corpus is small and hand-collected, so dropping old ones would discard the
+sample rather than refresh it (issue #1558).
 
 docs/specs/guardrail-enforcement-spec.md §7. Every committed e2e runlog persists
 its full `tool_calls` list, so
@@ -1194,7 +1201,9 @@ def main(argv: list[str] | None = None) -> int:
         description=(
             "Replay the §7 shadow window and report the §8/§7.5 post-hoc families "
             "and the §11 unnamed-delegate check over committed e2e runs, stored and "
-            "(with --replay) recomputed."
+            "(with --replay) recomputed. With --feedback-dir, instead scan unpacked "
+            "hosted feedback bundles (issue #1558); the corpus flags do not apply "
+            "there and that run is not windowed."
         )
     )
     ap.add_argument("--test", help="scan every committed run for this fixture slug only")
@@ -1243,13 +1252,57 @@ def main(argv: list[str] | None = None) -> int:
         if not root.is_dir():
             print(f"No such directory: {root}", file=sys.stderr)
             return 1
+        # Flags that belong to the committed-corpus path are READ NOWHERE below
+        # this branch, so accepting them silently prints a report that ignores
+        # them. The Makefile advertises them all on one target.
+        ignored = [
+            f"--{n}" for n, v in (("test", args.test), ("windows", args.windows != ",".join(str(w) for w in DEFAULT_WINDOWS)),
+                                  ("since", args.since), ("replay", args.replay)) if v
+        ]
+        if ignored:
+            print(
+                f"note: {', '.join(ignored)} do not apply to --feedback-dir and were "
+                f"ignored (they read the committed e2e corpus, not bundles).",
+                file=sys.stderr,
+            )
+
         platforms: dict[str, str] = {}
-        if args.platforms:
-            for pair in args.platforms.split(","):
-                if "=" in pair:
-                    name, _, plat = pair.partition("=")
-                    platforms[name.strip()] = plat.strip()
-        print(format_feedback_report(scan_feedback_dir(root, platforms=platforms)))
+        for pair in (args.platforms or "").split(","):
+            pair = pair.strip()
+            if not pair:
+                continue
+            if "=" not in pair:
+                # Silently dropping this printed platform=None for every bundle
+                # and folded the per-platform totals back into one.
+                print(
+                    f"note: --platforms entry {pair!r} has no '=' and was ignored; "
+                    f"expected <bundle-dir>=<platform>.",
+                    file=sys.stderr,
+                )
+                continue
+            name, _, plat = pair.partition("=")
+            platforms[name.strip()] = plat.strip()
+
+        results = scan_feedback_dir(root, platforms=platforms)
+        if not results:
+            # #1558 item 3: name what you could not read, never print a
+            # confident zero. `scan_feedback_dir` looks at immediate children
+            # only, so pointing it at ONE case dir (what `make feedback-case`
+            # prints) matches nothing and used to exit 0 saying "0 bundle(s)".
+            print(
+                f"note: no bundle directories directly under {root} — each child must hold "
+                f"a research.json and/or _feedback/session-log.jsonl. If you pointed at a "
+                f"single case dir, pass its PARENT.",
+                file=sys.stderr,
+            )
+        unmatched = sorted(set(platforms) - {r["bundle"] for r in results})
+        if unmatched:
+            print(
+                f"note: --platforms named {', '.join(unmatched)}, which matched no bundle "
+                f"directory under {root}; those mappings were unused.",
+                file=sys.stderr,
+            )
+        print(format_feedback_report(results))
         return 0
 
     windows = sorted({int(w) for w in args.windows.split(",") if w.strip()})

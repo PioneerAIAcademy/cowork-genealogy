@@ -1254,20 +1254,39 @@ this section before reopening one.
   `find_missing_mentor_verdicts` (reads `research.json` alone) are valid over a
   bundle; the adapter and report live in `eval/harness/e2e/`
   (`feedback_transcript_adapter.py`, `guardrail_shadow_report.py`).
-  **Two of `find_unguarded_protected_writes`' owner arms are blind over a bundle,
-  and one of those completely.** A bundle carries only the main session's
-  `{sid}.jsonl`, never the `subagents/agent-*.jsonl` beside it: `feedback.py`
-  reads `{sid}.jsonl` and its fallback loop skips anything `is_dir`, and
-  `readSessionLog` does a non-recursive `readdir`. Since the 2026-08-19
-  skill/agent split the `proof_summaries` write is made inside the
-  `proof-conclusion` agent, so it is invisible — and a main-thread attempt is
-  denied by `OWNED_SECTIONS` in `plugin/hooks/guard_project_files.py`, which the
-  transcript records as `is_error: true`, which the detector skips. That arm's
-  count is 0 whatever happened, so it must never be read as a measurement. The
-  `tree_edit`/`tree_correct` arms are blind only to the agent route: the hook
-  covers `research_append` alone, so a main-thread `primary: true` or
-  `ParentChild`/`Couple` write still fires. Recovering the agent route means
-  bundling the subagent transcripts, a change to `apps/server/app/feedback.py`.
+  **Three of `find_unguarded_protected_writes`' owner arms are blind over a
+  bundle, two of them completely — but only for bundles submitted after each
+  arm's split date, and the report decides that per bundle rather than
+  globally.** A bundle carries only the main session's `{sid}.jsonl`, never the
+  `subagents/agent-*.jsonl` beside it: `feedback.py` reads `{sid}.jsonl` and its
+  fallback loop skips anything `is_dir`, and `readSessionLog` does a
+  non-recursive `readdir`. Two arms have since moved their write inside an
+  agent — `proof_summaries` into `proof-conclusion` on 2026-08-21 (`73b3d98e`,
+  #1819) and `questions.exhaustive_declaration` into `research-exhaustiveness`
+  on 2026-08-23 (`c78efb0b`, #1847), enforced by `OWNED_SECTIONS` and
+  `OWNED_DECLARATIONS` in `plugin/hooks/guard_project_files.py`.
+
+  **The date cuts both ways, and getting this wrong in either direction
+  falsifies the number #1054 is waiting on.** For a bundle submitted BEFORE an
+  arm's split, that write came from the MAIN thread, was un-denied, and is in
+  the transcript — the count is a real measurement, and every bundle in the
+  #1558 corpus (2026-08-05 onward; the newest `feedback` issue is 2026-08-20) is
+  on that side of both dates. For a bundle submitted on or after, the write may
+  have happened inside the agent (invisible) and a main-thread attempt would be
+  denied and recorded as `is_error: true`, which the detector skips — so a 0
+  there is not evidence. "May", not "was": a deploy does not ship the sandbox
+  image (`docs/architecture.md` §9.4 point 2), so a post-split bundle can still
+  have run a pre-split plugin. The label is therefore **"plugin era unknown"**,
+  never a clean cutoff, and an undated bundle takes the same label rather than
+  being assumed live.
+
+  The `tree_edit`/`tree_correct` arms are blind only to the agent route
+  regardless of date: the hook covers `research_append` alone, so a main-thread
+  `primary: true` or `ParentChild`/`Couple` write still fires. Recovering the
+  agent route means bundling the subagent transcripts, a change to
+  `apps/server/app/feedback.py` — tracked as issue #1880 (`nothing-checks`),
+  since two arms that return 0 unconditionally for post-split bundles are a
+  check that cannot fail.
 
 ## 10. Residual risks
 

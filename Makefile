@@ -594,6 +594,8 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 .PHONY: e2e-guardrail-shadow
 e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc + §11 unnamed-delegate shadow families over committed runs, stored and recomputed: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1 | FEEDBACK_DIR=~/feedback PLATFORMS=<dir>=web,<dir>=darwin
 	# Also pure analysis, no API. Windowed to 14 days like every other reader;
+	# FEEDBACK_DIR= is the exception -- it scans hosted feedback bundles outside
+	# the repo, is NOT windowed, and ignores TEST/WINDOWS/SINCE/REPLAY (#1558).
 	# SINCE=all for a maximum-sample replay.
 	# NOT a calibration tool: §7 is shadow-only permanently (its success gate
 	# cannot see skill completion — see guardrail-enforcement-spec.md §7 and

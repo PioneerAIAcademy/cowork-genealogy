@@ -11,6 +11,7 @@ from pathlib import Path
 from e2e.feedback_transcript_adapter import adapt_bundle_transcript
 from e2e.guardrail_shadow_report import (
     format_feedback_report,
+    main,
     scan_feedback_bundle,
     scan_feedback_dir,
 )
@@ -385,19 +386,27 @@ def test_feedback_window_matches_the_e2e_shadow_window():
     """`_FEEDBACK_WINDOW` is a copied literal, not an import: importing the
     orchestrator would drag in the Claude Agent SDK, which this module is
     deliberately free of. Copying means the two can drift silently, and the
-    report's own footer promises a comparison against the e2e baseline that a
-    divergence would quietly invalidate. Read the orchestrator's source as text
-    instead — no import, no SDK, and no line number to go stale."""
+    report offers an e2e baseline to compare against that a divergence would
+    quietly invalidate.
+
+    Parsed with a regex rather than matched as a raw substring: a substring
+    match false-alarms on a trailing comment or a type annotation
+    (`GUARDRAIL_SHADOW_WINDOW: int = 40`) while the two VALUES still agree, and
+    a check that cries wolf on a no-op edit gets deleted."""
+    import re
+
     from e2e.guardrail_shadow_report import _FEEDBACK_WINDOW
 
-    src = Path(__file__).parents[2] / "e2e" / "orchestrator.py"
-    assert (
-        f"GUARDRAIL_SHADOW_WINDOW = {_FEEDBACK_WINDOW}\n"
-        in src.read_text(encoding="utf-8")
-    ), (
-        f"_FEEDBACK_WINDOW ({_FEEDBACK_WINDOW}) no longer matches "
-        f"GUARDRAIL_SHADOW_WINDOW in e2e/orchestrator.py — the #1484 e2e "
-        f"baseline comparison is only meaningful at one window."
+    src = (Path(__file__).parents[2] / "e2e" / "orchestrator.py").read_text(encoding="utf-8")
+    m = re.search(r"^GUARDRAIL_SHADOW_WINDOW\s*(?::\s*\w+\s*)?=\s*(\d+)", src, re.MULTILINE)
+    assert m is not None, (
+        "GUARDRAIL_SHADOW_WINDOW is no longer a module-level int literal in "
+        "e2e/orchestrator.py — re-derive this check rather than deleting it."
+    )
+    assert int(m.group(1)) == _FEEDBACK_WINDOW, (
+        f"_FEEDBACK_WINDOW ({_FEEDBACK_WINDOW}) has drifted from "
+        f"GUARDRAIL_SHADOW_WINDOW ({m.group(1)}) in e2e/orchestrator.py — the "
+        f"e2e baseline comparison is only meaningful at one window."
     )
 
 
@@ -564,3 +573,55 @@ def test_response_summary_survives_a_plain_string_result(tmp_path):
         ]}},
     ])
     assert adapt_bundle_transcript(log)["tool_calls"][0]["response_summary"] == "plain text result"
+
+
+# ── main(): the branch a person actually runs (should-fix, round 4) ───────────
+# Every test above calls the three functions directly, so all of them stay green
+# while `main()`'s --feedback-dir branch prints the wrong thing or silently
+# swallows a flag. The sibling suite names this exact trap for the §7 families.
+
+def test_main_feedback_dir_prints_the_report_and_exits_zero(tmp_path, capsys):
+    _bundle(tmp_path, "feedback-2026-08-14T10-00-00Z", "2026-08-14T10:00:00Z")
+    rc = main(["--feedback-dir", str(tmp_path)])
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "Hosted feedback bundle guardrail scan" in out
+    assert "submitted=2026-08-14" in out
+    assert "By platform" in out
+
+
+def test_main_warns_when_corpus_only_flags_are_passed_with_feedback_dir(tmp_path, capsys):
+    """`--test/--windows/--since/--replay` are read only BELOW this branch, so
+    accepting them silently produces a report that ignored them — while the
+    Makefile advertises them all on the one target."""
+    _bundle(tmp_path, "feedback-2026-08-14T10-00-00Z", "2026-08-14T10:00:00Z")
+    main(["--feedback-dir", str(tmp_path), "--replay", "--windows", "10,20"])
+    err = capsys.readouterr().err
+    assert "--replay" in err and "--windows" in err and "ignored" in err
+
+
+def test_main_warns_on_a_platforms_entry_with_no_equals(tmp_path, capsys):
+    """`PLATFORMS=b1web` used to be dropped in silence, printing platform=None
+    for every bundle and folding the per-platform totals back into one."""
+    _bundle(tmp_path, "feedback-2026-08-14T10-00-00Z", "2026-08-14T10:00:00Z")
+    main(["--feedback-dir", str(tmp_path), "--platforms", "b1web"])
+    assert "has no '='" in capsys.readouterr().err
+
+
+def test_main_warns_when_a_platforms_name_matches_no_bundle(tmp_path, capsys):
+    _bundle(tmp_path, "feedback-2026-08-14T10-00-00Z", "2026-08-14T10:00:00Z")
+    main(["--feedback-dir", str(tmp_path), "--platforms", "typo=web"])
+    assert "matched no bundle" in capsys.readouterr().err
+
+
+def test_main_warns_instead_of_printing_a_confident_zero_for_a_case_dir(tmp_path, capsys):
+    """`scan_feedback_dir` inspects immediate children only, so pointing it at a
+    single case dir (what `make feedback-case` prints) matched nothing and
+    exited 0 saying "0 bundle(s)" — a confident zero, which is the failure this
+    whole feature exists to avoid."""
+    case = tmp_path / "some-case"
+    (case / "_feedback").mkdir(parents=True)
+    (case / "research.json").write_text("{}", encoding="utf-8")
+    rc = main(["--feedback-dir", str(case)])
+    assert rc == 0
+    assert "no bundle directories directly under" in capsys.readouterr().err
