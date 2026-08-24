@@ -237,7 +237,8 @@ class UnnamedDelegateScan:
     detector changes made since a run was captured: the namespaced-`agent_type`
     tolerance, and the #1273 `research_append`->`sources`/`assertions` arm, which
     the replay finds on any run captured before it (antonio-lucas-spouse, for one:
-    stored 15, replayed 57). Read the replay for what the detector flags today.
+    stored 15, replayed 18 — the three research_append batches at tool_calls[197],
+    [203] and [209]). Read the replay for what the detector flags today.
 
     `runs_attributed` is the denominator that makes the count readable: a run can
     only flag if its ledger carries caller attribution at all, i.e. at least one
