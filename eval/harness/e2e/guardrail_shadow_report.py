@@ -840,6 +840,80 @@ def format_unnamed_delegate(scan: UnnamedDelegateScan, *, replay: bool) -> str:
 # bundle-derived content is ever committed.
 _FEEDBACK_WINDOW = 40  # == GUARDRAIL_SHADOW_WINDOW; count barely moves 10..150.
 
+# Owner arms whose protected write moved INSIDE an agent, and the date it did.
+# This is date-conditional on purpose, and the condition runs BOTH ways:
+#
+#   - A bundle submitted BEFORE the split ran a plugin where the write came from
+#     the MAIN thread, un-denied and present in `{sid}.jsonl`. The arm was live
+#     and a count over that bundle is a REAL MEASUREMENT. Every bundle in the
+#     #1558 corpus (2026-08-05 onward, newest feedback issue 2026-08-20) is on
+#     this side of both dates, which is exactly the population #1054 is waiting
+#     on — so a blanket "0 by construction" disclaimer would tell its reader to
+#     discard the number the issue exists to produce.
+#   - A bundle submitted ON OR AFTER the split MAY have run the post-split
+#     plugin, in which case the write happens inside the agent, whose transcript
+#     a bundle never carries, and a main-thread attempt is hook-denied and
+#     recorded as `is_error: true`, which the detector skips. Both routes closed,
+#     so 0 there is not evidence of anything.
+#
+# "MAY" is load-bearing: docs/architecture.md §9.4 point 2 — a deploy does not
+# ship the sandbox image — so a post-split bundle can still have run a pre-split
+# plugin. The label on that side is therefore "plugin era unknown", never a
+# clean cutoff.
+_AGENT_SPLIT_DATES = {
+    # bare agent name -> (ISO date the skill/agent split merged, what it owns)
+    "proof-conclusion": ("2026-08-21", "proof_summaries"),  # 73b3d98e (#1819)
+    "research-exhaustiveness": ("2026-08-23", "questions.exhaustive_declaration"),  # c78efb0b (#1847)
+}
+
+
+def _bundle_metadata(bundle_dir: Path) -> tuple[str | None, str | None]:
+    """`(submitted date as YYYY-MM-DD, platform)` for one bundle.
+
+    Both producers write `_feedback/feedback.json` with a `submitted_at` ISO
+    timestamp and a `platform` (`"web"` from the server, `process.platform` from
+    the desktop viewer) — so the platform IS in the bundle, contrary to the
+    assumption behind `--platforms`, which stays as the override for bundles
+    that predate the field or carry no feedback.json at all.
+
+    Falls back to the directory name, which both producers derive from the same
+    timestamp (`feedback-<ISO with : and . replaced by ->`). Returns `(None,
+    None)` rather than raising: a bundle with no date must be reported as
+    undated, not crash the scan or silently claim an era."""
+    meta_path = bundle_dir / "_feedback" / "feedback.json"
+    submitted = platform = None
+    try:
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        if isinstance(meta, dict):
+            raw = meta.get("submitted_at")
+            if isinstance(raw, str) and len(raw) >= 10:
+                submitted = raw[:10]
+            plat = meta.get("platform")
+            if isinstance(plat, str) and plat:
+                platform = plat
+    except (ValueError, OSError):
+        pass  # undated/unreadable metadata is reported, never fatal
+    if submitted is None:
+        name = bundle_dir.name
+        if name.startswith("feedback-") and len(name) >= 19:
+            candidate = name[len("feedback-"):len("feedback-") + 10]
+            if len(candidate) == 10 and candidate[4] == "-" and candidate[7] == "-":
+                submitted = candidate
+    return submitted, platform
+
+
+def arm_visibility(submitted: str | None) -> dict[str, str]:
+    """Per-agent-owned-arm visibility for a bundle submitted on `submitted`.
+
+    `"live"` — the write came from the main thread and IS in the transcript, so
+    a count is a real measurement. `"unknown"` — the bundle may have run the
+    post-split plugin, where both routes are closed, so 0 is not evidence."""
+    out: dict[str, str] = {}
+    for agent, (split, _owns) in _AGENT_SPLIT_DATES.items():
+        out[agent] = "unknown" if submitted is None or submitted >= split else "live"
+    return out
+
+
 
 def _submitted_research(bundle_dir: Path, research_path: Path) -> str:
     """The research.json the tester *submitted*, not the one triage rewrote.
@@ -879,9 +953,21 @@ def scan_feedback_bundle(
     # the bundle root, or every real bundle silently reports has_transcript=False.
     transcript = bundle_dir / "_feedback" / "session-log.jsonl"
     research_path = bundle_dir / "research.json"
+    submitted, meta_platform = _bundle_metadata(bundle_dir)
     out: dict[str, Any] = {
         "bundle": bundle_dir.name,
-        "platform": platform,
+        # An explicit --platforms mapping wins; otherwise use the platform the
+        # bundle itself carries. Only None when neither exists.
+        "platform": platform or meta_platform,
+        # The submission date decides whether each agent-owned arm was live for
+        # this bundle (see _AGENT_SPLIT_DATES). None means undated, which is
+        # reported as such rather than assumed either way.
+        "submitted": submitted,
+        "arms": arm_visibility(submitted),
+        # A transcript we could not DECODE, as distinct from one we could not
+        # adapt. Invalid UTF-8 used to propagate out of parse_jsonl and take
+        # every other bundle's result with it.
+        "transcript_unreadable": False,
         "has_transcript": transcript.exists(),
         "truncated": False,
         # A transcript file present but with zero adaptable records is a shape
@@ -901,7 +987,19 @@ def scan_feedback_bundle(
     }
 
     if transcript.exists():
-        adapted = adapt_bundle_transcript(transcript)
+        try:
+            adapted = adapt_bundle_transcript(transcript)
+        except (ValueError, OSError):
+            # `UnicodeDecodeError` is a ValueError, and `parse_jsonl` catches
+            # only OSError, so one cp1252 byte or smart quote in one bundle's
+            # transcript killed the whole directory scan. Tag this bundle and
+            # keep going -- the same shape `research_unreadable` already has.
+            # Caught here rather than widened inside the shared `parse_jsonl`,
+            # which would silently hand its other caller [] instead of raising.
+            adapted = None
+            out["transcript_unreadable"] = True
+        if adapted is None:
+            return out
         tool_calls = adapted["tool_calls"]
         out["truncated"] = adapted["truncated"]
         out["could_not_adapt"] = adapted.get("adapted_records", 0) == 0
@@ -930,7 +1028,11 @@ def scan_feedback_bundle(
             # never crashed, but they are not a research document either.
             if not isinstance(research, dict):
                 raise json.JSONDecodeError("research.json is not a JSON object", "", 0)
-        except (json.JSONDecodeError, OSError):
+        except (ValueError, OSError):
+            # ValueError, not json.JSONDecodeError: `UnicodeDecodeError` is a
+            # ValueError and is NOT a JSONDecodeError, so a cp1252 research.json
+            # escaped and took the whole scan down. `_load_json` in this same
+            # module already catches exactly this tuple, for exactly this reason.
             research = None
             out["research_unreadable"] = True
         out["missing_mentor_verdicts"] = find_missing_mentor_verdicts(research)
@@ -978,10 +1080,17 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
         # item 3) — and kept out of the attributable denominator below.
         if r.get("could_not_adapt"):
             tag += " [could not adapt]"
+        if r.get("transcript_unreadable"):
+            tag += " [transcript unreadable]"
         if r.get("research_unreadable"):
             tag += " [research unreadable]"
         elif not r.get("has_research"):
             tag += " [no research.json]"
+        # Name the arms that could not have been seen for THIS bundle, rather
+        # than disclaiming them globally in the footer for every bundle.
+        blind = sorted(a for a, v in (r.get("arms") or {}).items() if v == "unknown")
+        if blind:
+            tag += f" [plugin era unknown for: {', '.join(blind)}]"
         shape_warn = (
             "  ⚠ protected writes with zero Skill calls — likely a Skill-shape "
             "mismatch, investigate before trusting"
@@ -989,7 +1098,8 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
             else ""
         )
         lines.append(
-            f"\n  {r['bundle']} (platform={r['platform']}){tag}: "
+            f"\n  {r['bundle']} (platform={r['platform']}, "
+            f"submitted={r.get('submitted') or 'unknown'}){tag}: "
             f"{r['tool_call_count']} tool calls, {r['skill_call_count']} Skill calls, "
             f"{len(r['unguarded_writes'])} unguarded-write finding(s), "
             f"{len(r['missing_mentor_verdicts'])} missing-mentor-verdict finding(s)"
@@ -1019,13 +1129,53 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
         f"({len(truncated)} truncated, {len(could_not_adapt)} could not adapt, excluded); "
         f"missing-mentor-verdict findings {mentor_total} across "
         f"{len(with_research)} bundle(s) with a readable research.json. "
-        f"Corpus is small and self-selected — a signal, not a rate. "
-        f"The proof_summaries arm reports 0 BY CONSTRUCTION, not by measurement: "
-        f"since the 2026-08-19 skill/agent split that write is made inside the "
-        f"proof-conclusion AGENT, whose transcript a bundle does not carry, and a "
-        f"main-thread attempt is hook-denied and so skipped as is_error. The "
-        f"tree_edit/tree_correct arms are blind only to the agent route. "
-        f"e2e baseline comparison pending issue #1484."
+        f"Corpus is small and self-selected — a signal, not a rate."
+    )
+
+    # Per platform, never one combined number (#1558: "separate columns; never a
+    # combined number"). A tagged row plus a folded total is still a combined
+    # number, which is what the rows-only version shipped.
+    lines.append("\nBy platform (the ruling in #1558 — never a combined number):")
+    for plat in sorted({str(r["platform"]) for r in results}):
+        p_attr = [r for r in attributable if str(r["platform"]) == plat]
+        p_res = [r for r in with_research if str(r["platform"]) == plat]
+        lines.append(
+            f"  {plat}: unguarded-write {sum(len(r['unguarded_writes']) for r in p_attr)} "
+            f"across {len(p_attr)} attributable transcript(s); "
+            f"missing-mentor-verdict {sum(len(r['missing_mentor_verdicts']) for r in p_res)} "
+            f"across {len(p_res)} bundle(s) with a readable research.json"
+        )
+
+    # Owner-arm visibility, decided per bundle from its submission date rather
+    # than asserted globally. Both directions matter: over a PRE-split bundle the
+    # write came from the main thread and IS in the transcript, so the count is a
+    # real measurement — #1054 is waiting on exactly that number and a blanket
+    # "0 by construction" would tell its reader to discard it.
+    lines.append(
+        "\nOwner-arm visibility (a bundle carries only the main session's "
+        "{sid}.jsonl, never the subagents/ transcripts beside it):"
+    )
+    for agent, (split, owns) in sorted(_AGENT_SPLIT_DATES.items()):
+        live = [r for r in results if (r.get("arms") or {}).get(agent) == "live"]
+        unknown = [r for r in results if (r.get("arms") or {}).get(agent) != "live"]
+        lines.append(
+            f"  {agent} ({owns}) became a skill-agent pair {split}: "
+            f"{len(live)} bundle(s) submitted BEFORE it — the write came from the "
+            f"main thread, un-denied and in the transcript, so those counts are "
+            f"real measurements; {len(unknown)} on/after or undated — the write "
+            f"may have happened inside the agent (invisible) and a main-thread "
+            f"attempt would be hook-denied and skipped as is_error, so 0 there is "
+            f"NOT evidence. 'May' because a deploy does not ship the sandbox image "
+            f"(docs/architecture.md §9.4 pt 2), so the era is unknown, not post-split."
+        )
+    lines.append(
+        "  The tree_edit/tree_correct arms are blind only to the agent route: the "
+        "hook covers research_append alone, so a main-thread primary:true or "
+        "ParentChild/Couple write still fires regardless of date."
+    )
+    lines.append(
+        "\nRun with --replay for the recomputed e2e baseline to compare against "
+        "(the recompute that closed issue #1484)."
     )
     return "\n".join(lines)
 

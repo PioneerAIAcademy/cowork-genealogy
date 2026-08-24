@@ -20,6 +20,7 @@ bundles unpacked outside the repo (root `CLAUDE.md`; `docs/alpha-feedback-guide.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +31,25 @@ from e2e.subagent_capture import parse_jsonl
 # so a violation in a truncated session is unattributable — callers bucket these
 # separately rather than reading a finding from them.
 _TRUNCATION_TYPE = "_truncation_note"
+
+
+def _response_summary(content: Any) -> str | None:
+    """The tool_result's content as a string, for `did_not_land`'s no-project
+    clause. That clause is a SUBSTRING match on the bare name `no_project`, not
+    a parse — `response_summary` arrives single-encoded, double-encoded and
+    truncated across the corpus, so serialising the block whole is both
+    sufficient and closer to what the orchestrator stores (a response under 500
+    chars goes through VERBATIM as the raw MCP envelope). Returns None only for
+    a genuinely absent content, so an absent field stays distinguishable from an
+    empty one."""
+    if content is None:
+        return None
+    if isinstance(content, str):
+        return content
+    try:
+        return json.dumps(content)
+    except (TypeError, ValueError):
+        return str(content)
 
 
 def adapt_bundle_transcript(path: Path) -> dict[str, Any]:
@@ -82,6 +102,15 @@ def adapt_bundle_transcript(path: Path) -> dict[str, Any]:
                 entry: dict[str, Any] = {
                     "tool": block.get("name", ""),
                     "args": dict(block.get("input") or {}),
+                    # Filled in from the matching tool_result below. It must NOT
+                    # stay None: `did_not_land`'s second clause reads this field
+                    # for the no-project answer (issue #1695), which is
+                    # deliberately the one failure that does NOT set `is_error`
+                    # (`tool-result.ts`), and Phase 1b put twelve tools on that
+                    # return shape. With None the clause can never fire over a
+                    # bundle, so a `research_append` that wrote nothing is
+                    # counted as a landed protected write and manufactures a
+                    # violation — that function's own docstring says so.
                     "response_summary": None,
                     # Default False; the matching tool_result flips it (below).
                     # `is_error` on a tool_result may be absent, explicitly
@@ -101,6 +130,7 @@ def adapt_bundle_transcript(path: Path) -> dict[str, Any]:
                 entry = by_tool_use_id.get(tid) if isinstance(tid, str) else None
                 if entry is not None:
                     entry["is_error"] = bool(block.get("is_error"))
+                    entry["response_summary"] = _response_summary(block.get("content"))
 
     return {
         "tool_calls": tool_calls,

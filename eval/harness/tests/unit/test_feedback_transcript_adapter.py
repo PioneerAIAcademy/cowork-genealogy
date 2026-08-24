@@ -401,27 +401,166 @@ def test_feedback_window_matches_the_e2e_shadow_window():
     )
 
 
-def test_report_footer_marks_the_proof_summaries_arm_as_by_construction():
-    """The zero this arm prints is not a measurement, and #1054 is waiting on
-    these numbers — so the report must never let it read as one. Deleting the
-    sentence otherwise breaks no test, which is how an unguarded prose claim
-    goes missing in a refactor. Matched on the load-bearing terms rather than
-    the full sentence, so rewording stays free and deletion does not."""
-    report = format_feedback_report([
-        {
-            "bundle": "b", "platform": "web", "has_transcript": False,
-            "truncated": False, "could_not_adapt": False, "tool_call_count": 0,
-            "skill_call_count": 0, "session_ids": [], "has_research": True,
-            "research_unreadable": False, "unguarded_writes": [],
-            "missing_mentor_verdicts": [],
-        }
-    ])
-    lowered = report.lower()
-    assert "proof_summaries" in lowered
-    assert "by construction" in lowered, (
-        "the report no longer says the proof_summaries zero is by construction — "
-        "since the 2026-08-19 skill/agent split that write happens inside the "
-        "proof-conclusion agent, whose transcript a bundle does not carry, so the "
-        "count is 0 whatever happened (spec § 'Options set aside')."
+def _bundle(tmp_path, name, submitted, platform="web"):
+    b = tmp_path / name
+    (b / "_feedback").mkdir(parents=True)
+    (b / "_feedback" / "feedback.json").write_text(
+        json.dumps({"submitted_at": submitted, "platform": platform}), encoding="utf-8"
     )
-    assert "not by measurement" in lowered
+    (b / "research.json").write_text('{"questions": []}', encoding="utf-8")
+    return b
+
+
+def test_agent_owned_arms_are_labelled_from_the_bundle_date_not_globally(tmp_path):
+    """The arm labels must be decided per bundle, in BOTH directions.
+
+    A blanket "0 by construction" is wrong for the corpus this tool exists to
+    scan: the proof-conclusion split merged 2026-08-21 and the newest feedback
+    issue is 2026-08-20, so over every real bundle the write came from the MAIN
+    thread, un-denied and in the transcript. Telling #1054's reader to discard
+    that count discards the number the issue exists to produce."""
+    pre = scan_feedback_bundle(_bundle(tmp_path, "feedback-2026-08-14T10-00-00Z",
+                                       "2026-08-14T10:00:00Z"))
+    post = scan_feedback_bundle(_bundle(tmp_path, "feedback-2026-08-24T10-00-00Z",
+                                        "2026-08-24T10:00:00Z"))
+    assert pre["submitted"] == "2026-08-14"
+    # Both agent-owned arms, not just proof-conclusion: research-exhaustiveness
+    # became a pair on 2026-08-23 and is in exactly the same position.
+    assert pre["arms"] == {"proof-conclusion": "live", "research-exhaustiveness": "live"}
+    assert post["arms"] == {
+        "proof-conclusion": "unknown",
+        "research-exhaustiveness": "unknown",
+    }
+
+    report = format_feedback_report([pre, post])
+    # The date is printed per bundle, so a reader can check the label themselves.
+    assert "submitted=2026-08-14" in report and "submitted=2026-08-24" in report
+    # Only the post-split bundle is tagged.
+    pre_line = next(ln for ln in report.split("\n") if "feedback-2026-08-14" in ln and "platform=" in ln)
+    post_line = next(ln for ln in report.split("\n") if "feedback-2026-08-24" in ln and "platform=" in ln)
+    assert "plugin era unknown" not in pre_line
+    assert "plugin era unknown for: proof-conclusion, research-exhaustiveness" in post_line
+    # Pinned as ONE CONTIGUOUS PHRASE, not a bag of substrings: a scattered
+    # match let a footer asserting the OPPOSITE pass while containing every
+    # individual term.
+    assert "so those counts are real measurements" in report
+    assert "so 0 there is NOT evidence" in report
+    # And the retracted global claim must not come back.
+    assert "BY CONSTRUCTION" not in report
+
+
+def test_undated_bundle_is_labelled_unknown_never_assumed_live(tmp_path):
+    """No date means the era cannot be decided, and the safe direction is
+    `unknown` — claiming `live` would assert a measurement nobody can support."""
+    b = tmp_path / "no-date-at-all"
+    (b / "_feedback").mkdir(parents=True)
+    (b / "research.json").write_text("{}", encoding="utf-8")
+    r = scan_feedback_bundle(b)
+    assert r["submitted"] is None
+    assert set(r["arms"].values()) == {"unknown"}
+
+
+def test_one_bad_encoding_does_not_take_down_the_whole_scan(tmp_path):
+    """`UnicodeDecodeError` is a `ValueError`, so neither `json.JSONDecodeError`
+    nor `parse_jsonl`'s `OSError` catches it. One cp1252 byte in one bundle used
+    to lose every other bundle's result — the Windows genealogist team is the
+    population (CLAUDE.md, encoding section)."""
+    bad_res = tmp_path / "bad-research"
+    (bad_res / "_feedback").mkdir(parents=True)
+    (bad_res / "research.json").write_bytes('{"a": "se\u00f1or"}'.encode("cp1252"))
+
+    bad_tx = tmp_path / "bad-transcript"
+    (bad_tx / "_feedback").mkdir(parents=True)
+    (bad_tx / "_feedback" / "session-log.jsonl").write_bytes(
+        '{"sessionId": "s", "message": {"content": []}}\n// se\u00f1or'.encode("cp1252")
+    )
+    (bad_tx / "research.json").write_text("{}", encoding="utf-8")
+
+    healthy = _bundle(tmp_path, "feedback-2026-08-14T10-00-00Z", "2026-08-14T10:00:00Z")
+
+    results = scan_feedback_dir(tmp_path)
+    by_name = {r["bundle"]: r for r in results}
+    assert by_name["bad-research"]["research_unreadable"] is True
+    assert by_name["bad-transcript"]["transcript_unreadable"] is True
+    # The whole point: the healthy sibling still produced a result.
+    assert by_name[healthy.name]["research_unreadable"] is False
+    assert len(results) == 3
+
+
+def test_totals_are_reported_per_platform_never_only_combined(tmp_path):
+    """#1558's ruling: "separate columns; never a combined number." Tagging each
+    ROW with its platform and then folding every platform into one total is
+    still a combined number."""
+    web = scan_feedback_bundle(_bundle(tmp_path, "feedback-2026-08-14T10-00-00Z",
+                                       "2026-08-14T10:00:00Z", platform="web"))
+    mac = scan_feedback_bundle(_bundle(tmp_path, "feedback-2026-08-15T10-00-00Z",
+                                       "2026-08-15T10:00:00Z", platform="darwin"))
+    report = format_feedback_report([web, mac])
+    assert "By platform" in report
+    assert "  web: unguarded-write" in report
+    assert "  darwin: unguarded-write" in report
+
+
+def test_platform_comes_from_the_bundle_when_no_mapping_is_given(tmp_path):
+    """Both producers write `platform` into `_feedback/feedback.json` (`"web"`
+    server-side, `process.platform` on the desktop), so it IS in the bundle.
+    `--platforms` stays as the override, not the only source."""
+    b = _bundle(tmp_path, "feedback-2026-08-14T10-00-00Z", "2026-08-14T10:00:00Z",
+                platform="darwin")
+    assert scan_feedback_bundle(b)["platform"] == "darwin"
+    # An explicit mapping still wins.
+    assert scan_feedback_bundle(b, platform="web")["platform"] == "web"
+
+
+def test_no_project_write_does_not_manufacture_a_violation(tmp_path):
+    """`did_not_land` has two clauses and the second reads `response_summary`
+    for the no-project answer (issue #1695) — deliberately the ONE failure that
+    does NOT set `is_error` (`tool-result.ts`), with twelve tools on that return
+    shape since Phase 1b. Hardwiring `response_summary: None` in the adapter made
+    that clause unfirable over a bundle, so a `research_append` that wrote
+    NOTHING was counted as a landed protected write. That function's own
+    docstring names the consequence: "manufactures a violation"."""
+    from harness.skill_invocation import did_not_land, find_unguarded_protected_writes
+
+    log = tmp_path / "session-log.jsonl"
+    # The envelope shape the orchestrator stores verbatim under 500 chars, where
+    # the tool's document is an escaped string — so the BARE name is what
+    # matches, never '"no_project"'.
+    envelope = [{"type": "text", "text": json.dumps({"reason": "no_project"})}]
+    _write_jsonl(log, [
+        _assistant([{
+            "type": "tool_use", "id": "t1",
+            "name": "mcp__genealogy__research_append",
+            "input": {"section": "proof_summaries", "question_id": "q_001",
+                      "entries": [{}]},
+        }]),
+        # No `is_error` key at all: that is the point of the no-project answer.
+        {"type": "user", "sessionId": "s1", "message": {"content": [
+            {"type": "tool_result", "tool_use_id": "t1", "content": envelope}
+        ]}},
+    ])
+    adapted = adapt_bundle_transcript(log)
+    entry = adapted["tool_calls"][0]
+
+    assert entry["is_error"] is False, "no-project deliberately does not set is_error"
+    assert entry["response_summary"] is not None, (
+        "response_summary must carry the tool_result content, or did_not_land's "
+        "no-project clause can never fire over a bundle"
+    )
+    assert did_not_land(entry) is True
+    assert find_unguarded_protected_writes(adapted["tool_calls"], window=40) == [], (
+        "a write that never landed was counted as a bypass"
+    )
+
+
+def test_response_summary_survives_a_plain_string_result(tmp_path):
+    """Real transcripts carry `content` as a bare string as well as a block
+    list; both must reach `did_not_land` rather than only the list shape."""
+    log = tmp_path / "session-log.jsonl"
+    _write_jsonl(log, [
+        _assistant([{"type": "tool_use", "id": "t1", "name": "record_search", "input": {}}]),
+        {"type": "user", "sessionId": "s1", "message": {"content": [
+            {"type": "tool_result", "tool_use_id": "t1", "content": "plain text result"}
+        ]}},
+    ])
+    assert adapt_bundle_transcript(log)["tool_calls"][0]["response_summary"] == "plain text result"
