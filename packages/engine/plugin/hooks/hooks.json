@@ -11,6 +11,16 @@
             "timeout": 20
           }
         ]
+      },
+      {
+        "matcher": ".*project_context|.*record_read|.*extraction_append|.*research_query",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/probe_runtime_context.py",
+            "timeout": 20
+          }
+        ]
       }
     ]
   }

@@ -14,6 +14,7 @@ description: >-
   agents cannot nest agents), to acquire or triage input, or to format
   citations.
 model: claude-sonnet-4-6
+effort: low
 tools:
   # Every MCP tool appears under ALL THREE server spellings, because the name is
   # chosen by whoever registers the server and the VM-side plugin cannot control
