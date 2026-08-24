@@ -42,6 +42,7 @@ from harness.skill_invocation import (
     find_effects_without_invocation,
     find_protected_writes_by_unnamed_delegate,
     owning_skills,
+    strip_agent_namespace,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -61,8 +62,11 @@ class Divergence:
 
 
 def _lane_check_old(tool_calls: list[dict[str, Any]]) -> list[str]:
-    """Pre-fix replica: skips any entry with `is_error: true`. Kept local rather
-    than imported — the real function no longer has this bug to import."""
+    """Pre-fix replica: the live detector minus ONLY the #1569 fix, i.e. it still
+    skips any entry with `is_error: true`. Kept local rather than imported (the real
+    function no longer has that bug), but it shares the namespace strip via
+    `strip_agent_namespace` so the old-vs-new diff stays isolated to `is_error`
+    rather than also firing on a namespaced agent_type (#1856)."""
     violations: list[str] = []
     for i, entry in enumerate(tool_calls):
         if entry.get("is_error") is True:
@@ -71,15 +75,19 @@ def _lane_check_old(tool_calls: list[dict[str, Any]]) -> list[str]:
         args = entry.get("args") or {}
         agent_id = entry.get("agent_id")
         agent_type = entry.get("agent_type")
+        # Mirror the live detector's namespace strip so this replica's ONLY difference
+        # from _lane_check_new is the #1569 is_error skip above — otherwise the
+        # old-vs-new diff would blame a namespaced value on #1569 (#1856, found in review).
+        bare_agent_type = strip_agent_namespace(agent_type)
 
         if bare_tool_name(tool) == "extraction_append":
-            if agent_id is None or agent_type == "record-extractor":
+            if agent_id is None or bare_agent_type == "record-extractor":
                 continue
             violations.append(f"tool_calls[{i}] extraction_append by {agent_type!r}")
             continue
 
         owners = owning_skills(tool, args)
-        if not owners or agent_id is None or agent_type in DEDICATED_AGENT_NAMES:
+        if not owners or agent_id is None or bare_agent_type in DEDICATED_AGENT_NAMES:
             continue
         for owner in owners:
             violations.append(f"tool_calls[{i}] {tool} owned by {owner!r}, made by {agent_type!r}")
