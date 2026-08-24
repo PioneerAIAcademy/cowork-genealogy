@@ -389,19 +389,28 @@ def test_slug_wurttemberg(before_state, after_state, test):
 # and the `Reply economy` rubric dimension keeps the rest (extra sentences that
 # do not narrate, characterising the article, restating its content).
 #
-# `Let me know` is excluded: a closing offer is not step narration. It is still
-# a second sentence, and the judge dimension is what grades that.
+# `Let me ...` is the one opener that needs a verb to decide it. Excluding only
+# `know` was too narrow in a way that FAILS CORRECT RUNS: "Let me be clear: the
+# file has been saved." reports a completed action and was matched. Enumerating
+# the benign openers is unbounded, so the branch now requires a verb naming work
+# this skill actually does.
+_PENDING_VERB = r"""(?: write | fill | save | create | check | add | populate
+                      | generate | run | search | look | produce | prepare
+                      | update | put | format | output )"""
+
 _NARRATION_RE = re.compile(
-    r"""(?ix)
+    rf"""(?ix)
     \b(?:
         now \s+ i(?:'|\u2019)?ll                      # Now I'll / Now Ill
       | now \s+ i \s+ will
       | i(?:'|\u2019)?ll \s+ now
       | i \s+ will \s+ now
-      | i(?:'|\u2019)?m \s+ going \s+ to
-      | i \s+ am \s+ going \s+ to
+        # One optional adverb between the subject and `going to`, so
+        # "I'm now going to check ..." is caught as well as "I'm going to check ...".
+      | i(?:'|\u2019)?m \s+ (?: \w+ \s+ )? going \s+ to
+      | i \s+ am \s+ (?: \w+ \s+ )? going \s+ to
       | (?:next|then) ,? \s+ i(?:'|\u2019)?ll
-      | let \s+ me \s+ (?!know\b)                     # "Let me fill in…" but not "Let me know…"
+      | let \s+ me \s+ {_PENDING_VERB} \b
     )
     """
 )
