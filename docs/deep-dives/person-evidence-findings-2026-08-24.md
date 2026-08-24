@@ -254,3 +254,66 @@ The unit tier captures **no tool responses at all** (#1646 comment 4: 284 calls,
 0 responses, all 13 tools), so a warn-only guardrail riding `validation.warnings`
 on a successful response leaves no trace here. That bears on #1550's
 shadow-then-graduate decision rather than on this skill, and is not folded in.
+
+---
+
+## What the verification run established
+
+`v1_2026-08-24_18-17-08` — 22 tests, **15 pass / 5 partial / 2 fail**, $6.89, 0
+aborts, 1 transient retry, drift 0 (and still 0 after merging `main`). Baseline
+for comparison is `v1_2026-08-20_15-53-03` at 16 / 3 / 2 of 21.
+
+**F6's step works, including where it was not aimed.** `ut_person_evidence_027`
+passes both validators and emits exactly the intended call —
+`{personId: "I1", recordId: "ark:/61903/1:1:MDEF", recordRole: "deceased"}` —
+and surfaces the Ireland-vs-Pennsylvania birthplace as coexisting sourced facts
+instead of declining to materialize. The clause also reached
+`ut_person_evidence_026`, which was not written for it: its materialize ops now
+carry `personId: "I1"` for the matched head-of-household, where the 08-20 run
+omitted it entirely.
+
+**F3's validator fires.**
+`test_same_person_called_when_persona_meets_existing_candidate` fails on `n7v`
+and short-circuits the judge (every dimension `None`). `n7v` was already a
+`fail`, so the headline cost is zero and an intermittent miss is now decided by
+a program.
+
+**F1's rubric fix is not implicated in the one regression.**
+`ut_person_evidence_026` went pass → fail, but the judge graded the
+absence-flagging clause — "it failed to detect and flag Catherine's unexplained
+absence … only a parenthetical remark" — which this branch did not touch. Two
+targeted probes of `_026` on this same branch then **passed 2 for 2** ($1.03),
+so the fail is single-run variance, not the step-4 edit and not the rubric
+rewrite. Recorded rather than re-run: buying a second full suite to get a
+prettier headline is the waste the guide warns about.
+
+### Two findings the run itself produced
+
+**F7 — the skill gets `tree_edit` argument shapes wrong on the first attempt,
+and self-corrects at the cost of a round trip.** `base/Tool Arguments`, the
+suite's only non-discriminating dimension (n=17, always 3 across five run logs),
+**now varies**: `ut_person_evidence_021` passed
+`"type": "http://gedcomx.org/ParentChild"` where the tool wants the bare
+`ParentChild`, and `ut_person_evidence_022` passed `add_person` with a
+`nameForms` structure instead of `given`/`surname`. Both were rejected and
+immediately corrected.
+
+To be exact about causation: this is **not** the F2 `judge_context` fix paying
+off — that edit was on `_020`, and the judge is per-test. The dimension varies
+because the skill made different calls this run. F2 remains worth having on its
+own terms, but it earns no credit here.
+
+Both defects convert. **Validator request:** no `tree_edit` op may carry a
+`relationship.type` containing `://`, and no `add_person` op may use
+`nameForms`; both are closed argument shapes the tool already rejects, so a
+validator reading `tool_calls` decides them without judgement, and catches the
+wasted round trip that a self-correcting run otherwise hides.
+
+**F8 — `project_context` is called outside `allowed-tools`.** The advisory
+"skill called MCP tools not in allowed-tools frontmatter: ['project_context']"
+fires on most tests in this run and on none in the 08-20 run. Advisory only
+under #1748 (the session grants every tool), but it is H5 on the prohibition
+list, and the change between two consecutive runs on nearly the same body is
+what makes it worth recording. Either `project_context` belongs in the
+frontmatter or the body should stop reaching for it — a question for whoever
+owns the #1748 decision, not one to settle here.
