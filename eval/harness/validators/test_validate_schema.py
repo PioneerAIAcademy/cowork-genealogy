@@ -72,3 +72,35 @@ def test_does_not_modify_project_files(before_state, after_state, test):
         assert before_tree == after_tree, (
             "validate-schema modified tree.gedcomx.json — it must be read-only"
         )
+
+
+def test_does_not_modify_sidecars_or_other_files(before_state, after_state, test):
+    """validate-schema is read-only for EVERY file, not just the two main JSONs.
+
+    `test_does_not_modify_project_files` above guards research.json and
+    tree.gedcomx.json. `snapshot_files` puts every *other* workspace file into
+    the `files` map as `{rel_path: content}` (research.json / tree.gedcomx.json
+    are lifted out into their own keys, so they are not double-checked here).
+    Comparing the two `files` maps therefore catches anything this skill must
+    never touch but the whole-file check never sees — a `results/*.json` sidecar
+    (e.g. the skill "fixing" the bad sidecar in ut_validate_schema_009 instead of
+    reporting it) or any other file added, removed, or modified.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("negative tests don't run the skill body")
+    before_files = (before_state or {}).get("files", {}) or {}
+    after_files = (after_state or {}).get("files", {}) or {}
+
+    added = sorted(set(after_files) - set(before_files))
+    removed = sorted(set(before_files) - set(after_files))
+    modified = sorted(
+        p
+        for p in (set(before_files) & set(after_files))
+        if before_files[p] != after_files[p]
+    )
+    assert not (added or removed or modified), (
+        "validate-schema must be read-only for every file, but the run changed "
+        f"the workspace — added: {added}, removed: {removed}, modified: {modified}. "
+        "It reports errors and leaves the fix to the user; it never edits a file, "
+        "including results/*.json sidecars."
+    )
