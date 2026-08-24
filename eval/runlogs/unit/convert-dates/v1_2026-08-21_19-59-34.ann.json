@@ -329,6 +329,86 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill did the wrong task. This was explicitly a negative test requiring a decline/routing to validate-schema."
+    },
+    {
+      "test_id": "ut_convert_dates_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "It failed to execute the required behavior: decline calendar conversion and route/answer as a schema question."
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical presentation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Conversion accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     }
   ]
 }

@@ -896,6 +896,25 @@ graded response does not contain. Verified by counting markers in
 the skill did or did not do, not generalities." A rationale citing content that
 was never produced is the inverse of that instruction.
 
+**Narrowed by the genealogist's verdict.** `_005`'s Completeness was annotated
+after this was written, and the human **confirmed 3 → 3**, with no override. So
+the fabricated rationale did **not** produce a wrong score: the bullet it invented
+compliance with was not load-bearing for Completeness, and 3 was the right answer.
+
+That makes F10 a **fabricated-justification** finding, not a false-pass one, and
+the distinction is worth keeping straight:
+
+- **Still true and still serious:** the judge cited two specific examples that do
+  not exist in the text it graded. A rationale is the only artifact a human reads
+  when deciding whether to trust a score, and this one described a response that
+  was never written.
+- **Not supported:** that this changed the outcome. It did not, here.
+
+The consequence for F5 is unchanged, though, and it is the part that matters:
+a grader that believes a bullet was satisfied cannot be bound by wording that
+tells it how much a bullet weighs. So `_005` still does not test the Authority arm
+— whatever the score turned out to be.
+
 **Gap: this is the ceiling on F5's whole family of fixes.** F5 assumed the
 failure mode was *authority* — the judge treating a binding note as advisory. At
 least once, the failure mode is *perception*: the judge reports having seen
@@ -904,9 +923,12 @@ per-test bullet, because the bullet is not being overruled — it is being
 hallucinated as satisfied. This is strictly worse than the three F5 witnesses,
 which at least mis-weighted things that were really there.
 
-It also explains the shape of the original 20-of-20 measurement better than
-"ignored the override" did: a judge that narrates compliance it did not observe
-produces exactly that pattern — bullet unmet, score 3, rationale confident.
+It may also explain the shape of the original 20-of-20 measurement better than
+"ignored the override" did — a judge that narrates compliance it did not observe
+produces exactly that pattern: bullet unmet, score 3, rationale confident. Stated
+as a hypothesis, not a finding: only `_005`'s rationale has been read closely
+enough to establish fabrication, and on that one the score was independently
+confirmed correct.
 
 **Not fixed here, and not fixable by prompt wording alone.** The mechanical
 counterpart is a validator asserting a claimed-cited string actually appears in
@@ -1057,10 +1079,19 @@ Designed, not built; wants a developer, because a false positive aborts a paid r
 rationale claims to cite actually appears in the graded response. F10 is the case
 for it: the judge quoted two examples that were not in the text. Wants a developer.
 
-**6. Two annotation cells the conclusions rest on.** `_012` is the only failure in
-the shipped run and `_005` is the Authority canary; neither carries human
-judgment. `_005` is the one that matters, because a corpus-wide prompt decision
-rests on reading its rationale.
+**6. Both outstanding annotation cells are now done** — 51 entries over eight
+tests. `_012` confirmed 1/1 ("The skill did the wrong task. This was explicitly a
+negative test requiring a decline/routing to validate-schema"), which independently
+backs F9's reading that activation is the right basis for that failure. `_005`
+confirmed 3 → 3, which narrowed F10 from a false-pass finding to a
+fabricated-justification one — see F10.
+
+What is still open on F10 is one question only the annotator can answer: whether
+the confirmation of 3 was a judgment that the score is right *despite* the invented
+rationale, or an agreement reached without reading it. The former makes F10 a
+rationale-integrity finding worth a validator (VR-6); the latter leaves the
+fabrication unadjudicated. The write-up takes the narrower reading until that is
+resolved.
 
 ## A note on the paid run
 
