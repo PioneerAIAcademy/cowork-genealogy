@@ -1086,12 +1086,20 @@ backs F9's reading that activation is the right basis for that failure. `_005`
 confirmed 3 → 3, which narrowed F10 from a false-pass finding to a
 fabricated-justification one — see F10.
 
-What is still open on F10 is one question only the annotator can answer: whether
-the confirmation of 3 was a judgment that the score is right *despite* the invented
-rationale, or an agreement reached without reading it. The former makes F10 a
-rationale-integrity finding worth a validator (VR-6); the latter leaves the
-fabrication unadjudicated. The write-up takes the narrower reading until that is
-resolved.
+`_005` now carries a written comment on all seven dimensions, and they settle F10's
+standing without needing to adjudicate the judge's rationale directly. The
+Completeness comment enumerates what the response covered — "original and converted
+dates, the 13-day calculation, Russia's 1918 calendar transition, and the reason for
+the offset" — and **the item the judge claimed to see is absent from that list.** So
+the human assessment rests on the response's real content, arrived at independently,
+and 3 stands on that basis rather than on the invented examples.
+
+That is the strongest form the finding can take from one cell: the score is
+independently correct, *and* the judge's stated justification for it describes
+content that was never written. The two facts are compatible, which is precisely
+why this class of defect is dangerous — a fabricated rationale attached to a
+correct score is invisible to everything except someone re-reading the response.
+VR-6 is the mechanical counterpart and is requested on that basis.
 
 ## A note on the paid run
 

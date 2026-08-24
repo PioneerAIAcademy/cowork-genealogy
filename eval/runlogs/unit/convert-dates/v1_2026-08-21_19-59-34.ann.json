@@ -356,43 +356,11 @@
     },
     {
       "test_id": "ut_convert_dates_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool response interpretation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Genealogical presentation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Ambiguity handling",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Conversion accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_005",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "The skill correctly identified the request as a calendar conversion and returned 1 February 1918 (Julian) → 14 February 1918 (Gregorian) using the correct 13-day offset."
     },
     {
       "test_id": "ut_convert_dates_005",
@@ -400,15 +368,47 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "The response covered the key requirements: original and converted dates, the 13-day calculation, Russia's 1918 calendar transition, and the reason for the offset. The historical boundary explanation was especially useful for genealogical context."
     },
     {
       "test_id": "ut_convert_dates_005",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "The tool call was appropriate and correctly structured with year: 1918, month: 2, day: 1, and julianToGregorianDay: true."
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Conversion accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The conversion is accurate for St. Petersburg in 1918. The response correctly recognized the Russian calendar transition and did not apply a generic or incorrect historical offset."
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The location and date provide sufficient context to determine the applicable calendar rule."
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical presentation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The response preserved the original record date while clearly providing the Gregorian equivalent, which is important when working with historical genealogical records."
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly interpreted the tool's returned +13-day offset and converted date. There is no indication that the model substituted its own calculation for the tool result."
     }
   ]
 }
