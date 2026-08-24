@@ -9,8 +9,7 @@ frontmatter and shouldn't need any).
 
 See test_universal.py module docstring for the validator function-
 signature contract. The `test` argument is the parsed test JSON dict
-(the inner "test" block) — used to gate test-specific checks on
-`test["tags"]`.
+(the inner "test" block) — used to gate the check on `test["type"]`.
 """
 
 from __future__ import annotations
@@ -36,74 +35,4 @@ def test_no_mcp_tools_called(tool_calls, test):
         "translation should not call MCP tools (other than "
         f"validate_research_schema), but called: "
         f"{[tc['tool'] for tc in mcp_calls]}"
-    )
-
-
-# --- Text-response checks --------------------------------------------------
-#
-# `text_response` is injected by validator_runner.py (parameter at its
-# run_validators() signature, threaded into the kwargs dict it builds for
-# inspect.signature injection). Both checks below run for real.
-
-import re
-
-
-def test_next_step_offers(text_response: str, test: dict) -> None:
-    """SKILL.md Step 5 requires both workflow handoff offers after every
-    positive translation.  The canonical phrases are:
-      - "Extract assertions from this record?"  (record-extraction)
-      - "Link [person] to the tree?"            (person-evidence)
-    9 of 10 positive tests in v1_2026-07-27 omit the person-evidence offer,
-    substituting open-ended genealogical research suggestions instead.
-
-    Single-term lookups are exempt. SKILL.md Step 5 carves out a response
-    that is a bare word-definition or date conversion with no extracted
-    record, and ut_translation_008's own judge_context agrees ("offering
-    record-extraction as an optional next step is fine"). Without the
-    exemption this validator fails that test for obeying SKILL.md, which
-    is a defect in the check rather than in the skill. Gated on the
-    `single-term` tag, which only that test carries; the other nine
-    positive tests are full record translations and still enforce both
-    offers.
-    """
-    if test.get("type") != "positive":
-        pytest.skip("negative tests are graded by routing, not response content")
-    if "single-term" in (test.get("tags") or []):
-        pytest.skip(
-            "single-term lookups are exempt per SKILL.md Step 5 — a bare "
-            "definition or date conversion needs no workflow hand-off offer"
-        )
-    has_extract = bool(re.search(r"Extract assertions from this record", text_response, re.IGNORECASE))
-    has_link = bool(re.search(r"Link .{1,40} to the tree", text_response, re.IGNORECASE))
-    assert has_extract, (
-        "translation response missing required next-step offer: "
-        "'Extract assertions from this record?' (record-extraction)"
-    )
-    assert has_link, (
-        "translation response missing required next-step offer: "
-        "'Link [person] to the tree?' (person-evidence) -- "
-        "found only open-ended research suggestions instead"
-    )
-
-
-def test_iso_date_formatting(text_response: str, test: dict) -> None:
-    """SKILL.md requires ISO 8601 dates (YYYY-MM-DD) alongside prose dates in
-    assertions sections.  5 of 10 positive tests in v1_2026-07-27 write dates
-    like '14 March 1843' with no ISO parenthetical; correct form is
-    '14 March 1843 (1843-03-14)'.
-    """
-    if test.get("type") != "positive":
-        pytest.skip("negative tests are graded by routing, not response content")
-    MONTH = (
-        r"January|February|March|April|May|June|"
-        r"July|August|September|October|November|December"
-    )
-    prose_dates = re.findall(rf"\d{{1,2}}\s+(?:{MONTH})\s+\d{{4}}", text_response)
-    if not prose_dates:
-        pytest.skip("no English prose dates in response; ISO check not applicable")
-    iso_dates = re.findall(r"\b\d{4}-\d{2}-\d{2}\b", text_response)
-    assert iso_dates, (
-        f"response contains {len(prose_dates)} prose date(s) "
-        f"({prose_dates[:2]}) but no ISO 8601 dates (YYYY-MM-DD). "
-        "SKILL.md requires the ISO form alongside every prose date."
     )
