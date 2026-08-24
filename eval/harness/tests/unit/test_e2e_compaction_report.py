@@ -213,6 +213,57 @@ def test_format_report_states_exclusions_and_early_late_split():
     assert "LATE (segments 3+): 2 record_search call(s), 0 carrying subjectId (0.0%)" in out
     assert "0/1 (0.0%)  fixture-a/run-1" in out
     assert "0/1 (0.0%)  fixture-b/run-1" in out
+    # fixture-a/run-1 has both an early and a late call; fixture-b/run-1 has
+    # only a late call, so it must not count toward the paired figure.
+    assert "Paired (runs with both early- and late-segment calls, 1 of 2): EARLY 1/1 (100.0%), LATE 0/1 (0.0%)" in out
+
+
+def test_segment_two_lands_in_early_not_late():
+    """Guards the operator in `_bucket` (`segment <= EARLY_MAX_SEGMENT`).
+    Changing `<=` to `<` reverses the published early/late finding (T-FEH's
+    review of PR #1812) while every other test in this file stays green --
+    none of them exercises segment 2 through format_report."""
+    calls = [
+        RecordSearchCall("fixture/run", 2, True),
+        RecordSearchCall("fixture/run", 3, False),
+    ]
+    out = format_report(calls, n_runs=1, excluded={})
+    assert "EARLY (segments 0-2): 1 record_search call(s), 1 carrying subjectId (100.0%)" in out
+    assert "LATE (segments 3+): 1 record_search call(s), 0 carrying subjectId (0.0%)" in out
+
+
+def test_format_report_prints_per_segment_breakdown():
+    """Per-segment supply is not monotone (T-FEH's review): this is the row
+    that would have surfaced it before publication."""
+    calls = [
+        RecordSearchCall("fixture/run-1", 0, True),
+        RecordSearchCall("fixture/run-1", 0, False),
+        RecordSearchCall("fixture/run-1", 1, True),
+        RecordSearchCall("fixture/run-1", 3, False),
+    ]
+    out = format_report(calls, n_runs=1, excluded={})
+    assert "By segment:" in out
+    assert "seg 0  1/2 (50.0%)" in out
+    assert "seg 1  1/1 (100.0%)" in out
+    assert "seg 3  0/1 (0.0%)" in out
+
+
+def test_format_report_paired_figure_covers_early_only_late_only_and_both():
+    """Three run shapes: early-only and late-only runs must not contribute to
+    the paired figure's numerator/denominator beyond the "of M" total; only
+    the run with both buckets contributes to the paired EARLY/LATE counts."""
+    calls = [
+        RecordSearchCall("fixture/early-only", 0, True),
+        RecordSearchCall("fixture/early-only", 1, True),
+        RecordSearchCall("fixture/late-only", 3, False),
+        RecordSearchCall("fixture/both", 0, True),
+        RecordSearchCall("fixture/both", 3, False),
+    ]
+    out = format_report(calls, n_runs=3, excluded={})
+    assert (
+        "Paired (runs with both early- and late-segment calls, 1 of 3): "
+        "EARLY 1/1 (100.0%), LATE 0/1 (0.0%)"
+    ) in out
 
 
 def test_format_report_with_no_calls_is_a_real_result_not_an_empty_one():

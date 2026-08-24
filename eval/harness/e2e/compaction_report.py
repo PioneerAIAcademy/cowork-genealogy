@@ -162,6 +162,12 @@ def scan(paths: list[Path]) -> tuple[list[RecordSearchCall], Counter, list[str]]
 
 
 def _bucket(segment: int) -> str:
+    # This operator and early_range/late_range below (both derived from
+    # EARLY_MAX_SEGMENT) must stay in agreement -- a one-character change
+    # here (`<=` to `<`) reverses the published early/late finding while
+    # every existing test stayed green (T-FEH's review of PR #1812); the
+    # regression test for that is on segment 2 specifically, since that's
+    # the segment whose bucket the mutation flips.
     return "early" if segment <= EARLY_MAX_SEGMENT else "late"
 
 
@@ -209,26 +215,66 @@ def format_report(
             f"call(s), {n_sub} carrying subjectId ({pct})"
         )
 
+    # Per-segment breakdown -- supply is not monotone across segments (T-FEH's
+    # review of PR #1812: segment 2 alone can outrank every other segment,
+    # including segment 1, which is why the early/late split above isn't the
+    # whole picture). Printed unconditionally so a reader never has to take
+    # the EARLY/LATE aggregate's word for "throughout".
+    by_segment: dict[int, list[RecordSearchCall]] = {}
+    for c in calls:
+        by_segment.setdefault(c.segment, []).append(c)
+    lines.append("")
+    lines.append("By segment:")
+    for seg in sorted(by_segment):
+        seg_calls = by_segment[seg]
+        n = len(seg_calls)
+        n_sub = sum(1 for c in seg_calls if c.has_subject)
+        pct = round(100 * n_sub / n, 1)
+        lines.append(f"  seg {seg}  {n_sub}/{n} ({pct}%)")
+
     lines.append("")
     lines.append(CAVEAT)
 
-    late_by_run: dict[str, list[RecordSearchCall]] = {}
+    # Per-run, both buckets -- NOT an extension of a late-only dict: a run
+    # with only early calls needs a presence here too, or the paired figure
+    # below has no way to know it exists and should be excluded.
+    by_run: dict[str, dict[str, int]] = {}
     for c in calls:
-        if _bucket(c.segment) == "late":
-            late_by_run.setdefault(c.run, []).append(c)
+        r = by_run.setdefault(
+            c.run, {"early_n": 0, "early_sub": 0, "late_n": 0, "late_sub": 0}
+        )
+        prefix = "early" if _bucket(c.segment) == "early" else "late"
+        r[f"{prefix}_n"] += 1
+        if c.has_subject:
+            r[f"{prefix}_sub"] += 1
 
-    if late_by_run:
+    late_rows = [(run, r["late_n"], r["late_sub"]) for run, r in by_run.items() if r["late_n"]]
+    if late_rows:
         lines.append("")
         lines.append("Per-run late-segment supply, worst first:")
-        rows = []
-        for run, run_calls in late_by_run.items():
-            n = len(run_calls)
-            n_sub = sum(1 for c in run_calls if c.has_subject)
-            rows.append((run, n, n_sub))
-        rows.sort(key=lambda r: (r[2] / r[1], -r[1]))
-        for run, n, n_sub in rows:
+        late_rows.sort(key=lambda row: (row[2] / row[1], -row[1]))
+        for run, n, n_sub in late_rows:
             pct = round(100 * n_sub / n, 1)
             lines.append(f"  {n_sub}/{n} ({pct}%)  {run}")
+
+    # Paired (within-run) figure -- the published EARLY/LATE split above is
+    # between-run and diluted by runs that never compact at all (T-FEH's
+    # review). Restricting to runs that have BOTH an early and a late call
+    # isolates the actual decay comparison from that dilution.
+    paired = {run: r for run, r in by_run.items() if r["early_n"] and r["late_n"]}
+    if paired:
+        e_sub = sum(r["early_sub"] for r in paired.values())
+        e_n = sum(r["early_n"] for r in paired.values())
+        l_sub = sum(r["late_sub"] for r in paired.values())
+        l_n = sum(r["late_n"] for r in paired.values())
+        e_pct = round(100 * e_sub / e_n, 1)
+        l_pct = round(100 * l_sub / l_n, 1)
+        lines.append("")
+        lines.append(
+            f"Paired (runs with both early- and late-segment calls, "
+            f"{len(paired)} of {len(by_run)}): EARLY {e_sub}/{e_n} ({e_pct}%), "
+            f"LATE {l_sub}/{l_n} ({l_pct}%)"
+        )
 
     return "\n".join(lines)
 
