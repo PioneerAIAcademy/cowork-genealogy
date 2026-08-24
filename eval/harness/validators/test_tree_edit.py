@@ -106,3 +106,36 @@ def test_tree_edit_noop(before_state, after_state, test):
         "tree-edit modified tree.gedcomx.json on a no-op scenario; "
         "expected byte-identical content before and after"
     )
+
+
+# --- Post-edit check-warnings (deep dive #1657, Finding F) ------------
+
+def test_check_warnings_runs_after_any_tree_write(before_state, after_state, skills_invoked):
+    """SKILL.md § Validation: "After ANY edit or merge, run check-warnings
+    to catch genealogical impossibilities the structural validator cannot"
+    -- unconditional, no carve-out for a single-field correction. Deep dive
+    #1657 finding F: across the 5 committed run logs, this fired in at most
+    2 of 5 runs for any one edit test, and 0 of 5 for three of them
+    (`ut_tree_edit_006`, `_008`, `_009`) -- including the currently-active
+    run log, where it is 0 of 5 across every edit test. One test's
+    judge_context excused this as "person_warnings ... not available in the
+    unit-test harness", which is not true (14 reusable person-warnings-*
+    fixtures already exist under eval/fixtures/mcp/; tree-edit's tests just
+    never referenced one -- now fixed alongside this validator).
+
+    Grounded firing case: `ut_tree_edit_008`, run `v1_2026-07-30_18-18-04`
+    -- F2's date is corrected (tree.gedcomx.json changes), skills_invoked ==
+    ["tree-edit"], no check-warnings anywhere. Grounded passing case:
+    `ut_tree_edit_010`, run `v1_2026-07-28_13-02-56` -- Mary (I5) and her
+    ParentChild relationship are created, skills_invoked == ["tree-edit",
+    "check-warnings"]."""
+    before_tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    after_tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
+    if before_tree is None or after_tree is None:
+        pytest.skip("missing tree.gedcomx.json on one side")
+    if before_tree == after_tree:
+        pytest.skip("tree.gedcomx.json unchanged -- no edit to validate")
+    assert "check-warnings" in (skills_invoked or []), (
+        "tree.gedcomx.json changed but check-warnings was never invoked -- "
+        "SKILL.md § Validation requires it after ANY edit or merge"
+    )

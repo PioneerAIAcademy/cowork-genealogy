@@ -833,6 +833,18 @@ def test_extraction_append_by_unnamed_delegate_flagged():
     assert "record-extractor" in violations[0]
 
 
+def test_unhashable_agent_type_flags_without_raising():
+    """An unhashable agent_type (a list/dict -- never stamped by the SDK, which
+    emits str|None) must not crash the `in DEDICATED_AGENT_NAMES` membership test
+    under a corpus-wide replay, and must still flag (the safe over-flag
+    direction). Guards the else-None normalization at skill_invocation.py: revert
+    it to `else agent_type` and this raises TypeError instead of flagging."""
+    owned = find_protected_writes_by_unnamed_delegate(
+        [_owned_write("person-evidence", agent_id="a1", agent_type=["genealogy-research"])]
+    )
+    assert len(owned) == 1 and "person-evidence" in owned[0]
+
+
 def test_extraction_append_by_unnamed_delegate_still_flagged_when_errored():
     """The is_error skip that used to sit before this branch split (issue #1569)
     covered the extraction_append path too -- pin it separately from the
@@ -851,6 +863,42 @@ def test_extraction_append_by_wrong_dedicated_agent_still_flagged():
     calls = [_extraction_call(agent_id="a1", agent_type="gps-mentor")]
     violations = find_protected_writes_by_unnamed_delegate(calls)
     assert len(violations) == 1
+
+
+def test_namespaced_record_extractor_treated_as_bare():
+    """Cowork logs a plugin-namespaced agent_type ("genealogy-research:record-extractor")
+    while the harness reports bare names (#980 ruling; live probe 2026-08-15). The
+    detector must strip the leading "<plugin>:" before comparing, on BOTH clauses,
+    or an equality/membership test green in CI is dead against production data
+    (#650/#698/#939). Bare and namespaced must behave identically."""
+    # extraction_append clause (== "record-extractor")
+    assert (
+        find_protected_writes_by_unnamed_delegate(
+            [_extraction_call(agent_id="a1", agent_type="genealogy-research:record-extractor")]
+        )
+        == []
+    )
+    # owning_skills clause (in DEDICATED_AGENT_NAMES)
+    assert (
+        find_protected_writes_by_unnamed_delegate(
+            [_owned_write("person-evidence", agent_id="a1", agent_type="genealogy-research:record-extractor")]
+        )
+        == []
+    )
+
+
+def test_namespaced_general_purpose_still_flagged():
+    """The prefix strip must not over-exempt: a namespaced NON-dedicated agent
+    still flags on both clauses (guards against stripping turning every
+    namespaced caller into a pass)."""
+    ext = find_protected_writes_by_unnamed_delegate(
+        [_extraction_call(agent_id="a1", agent_type="genealogy-research:general-purpose")]
+    )
+    assert len(ext) == 1 and "record-extractor" in ext[0]
+    owned = find_protected_writes_by_unnamed_delegate(
+        [_owned_write("person-evidence", agent_id="a1", agent_type="genealogy-research:general-purpose")]
+    )
+    assert len(owned) == 1 and "person-evidence" in owned[0]
 
 
 def test_gps_mentor_evaluations_write_not_flagged():
