@@ -818,8 +818,10 @@ subagent is its only legitimate caller and every legitimate call carries
 `agent_id`. The unit harness's third clause (the skill declared the tool itself)
 can never fire for it. The block keys on `SUBAGENT_ONLY_TOOLS` membership
 (`is_main_thread_subagent_only_tool`) rather than the full per-skill
-`subagent_only_violation`, so that a future skill legitimately declaring a
-guarded tool is not denied here.
+`subagent_only_violation`, which takes a `declared_tools` argument e2e cannot
+supply. So e2e carries no declared-tools exemption: a future skill that
+legitimately declares a guarded tool would be denied here too, and closing
+that needs the predicate widened by hand.
 
 Both members are enforced. Neither `extraction_append` nor `image_read` is
 declared by any skill — `image_read` lives only on `agents/image-reader-opus.md`

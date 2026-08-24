@@ -212,10 +212,11 @@ def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
     sufficient discriminator — which is all e2e can see, since its sub-skills run
     in the same session via the `Skill` tool with no `agent_id` to attribute them
     (see `harness.context_policy` docstring). We deny the bare tool directly
-    rather than routing through `subagent_only_violation`, which guards the whole
-    set and takes a `declared_tools` argument e2e cannot supply; keeping the check
-    tool-set-specific also means a future skill that legitimately declares a
-    guarded tool is not denied here. Membership in `SUBAGENT_ONLY_TOOLS` is what
+    rather than routing through `subagent_only_violation`, which takes a
+    `declared_tools` argument e2e cannot supply. The consequence is that e2e has no
+    declared-tools exemption at all: a future skill that legitimately declares a
+    guarded tool WOULD be denied here, and closing that needs this predicate
+    widened by hand. Membership in `SUBAGENT_ONLY_TOOLS` is what
     generalizes it: a third guarded tool is covered here the moment it joins that
     set (pinned by a per-member test).
     """
@@ -1330,14 +1331,21 @@ async def _run_agent(
                     "blocked_by": "context",
                 }
             )
+            # Name the owning subagent per tool (issue #1273 Item 1 asks for
+            # per-tool guidance) rather than deferring to "the deny reason", which
+            # `blocked_context_calls` does not store, so a runlog reader can act on
+            # this line alone. The fallback covers a future third guarded tool.
+            owner = {
+                "extraction_append": "@plugin:record-extractor",
+                "image_read": "@plugin:image-reader",
+            }.get(bare, "the owning subagent")
             narration.append(
                 {
                     "tool_calls_before": len(tool_calls),
                     "kind": "blocked",
                     "text": (
                         f"`{bare}` denied on the main thread — it is a subagent-only "
-                        "tool; delegate to the owning subagent, which the deny reason "
-                        "names, rather than doing the work here."
+                        f"tool; delegate to {owner} rather than doing the work here."
                     ),
                 }
             )
