@@ -51,9 +51,9 @@ Verify:
 - `user_prompt` is a non-empty string.
 - For `--against=what-went-wrong`: `agent_did` is present and non-empty.
 - For `--against=desired`: `agent_should_have` is present and a string. It may
-  legitimately be **empty** — `worked_as_expected: true` is a positive report
-  (nothing went wrong), and even on a bug the reporter may not have known the
-  ideal behavior. An empty value is NOT a malformed fixture.
+  legitimately be **empty** — `worked_as_expected: true` means the agent did
+  nothing wrong, and even on a bug the reporter may not have known the ideal
+  behavior. An empty value is NOT a malformed fixture.
 
 If any of the above fails — missing/unparseable file, wrong `schema_version`,
 empty `user_prompt`, empty `agent_did` for `what-went-wrong`, or a
@@ -64,8 +64,10 @@ than a downstream judgment producing nonsense.
 
 **Exception, not an abort:** for `--against=desired` when `agent_should_have` is
 empty, stop with a plain result — there is no desired-state description to compare
-against (note it is a positive report when `worked_as_expected` is true). This is
-the "nothing to report" case the format distinguishes from a substantive answer.
+against. This is the "nothing to report" case the format distinguishes from a
+substantive answer. When `worked_as_expected` is true, say so and add that the
+flag covers the agent's behavior only: quote the submission's Notes verbatim if
+it has any, since a tester can report correct behavior and still have hit a wall.
 
 ### 2. Read the current state
 

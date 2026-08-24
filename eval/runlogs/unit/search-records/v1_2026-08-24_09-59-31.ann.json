@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-08-20_11-04-51.json",
-  "annotator": "florencemashipei4@gmail.com",
+  "run_log": "v1_2026-08-24_09-59-31.json",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_search_records_016",
+      "test_id": "ut_search_records_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_016",
+      "test_id": "ut_search_records_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_016",
+      "test_id": "ut_search_records_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,7 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_016",
+      "test_id": "ut_search_records_001",
       "dimension_source": "rubric",
       "dimension_name": "Search strategy",
       "llm_score": 3,
@@ -35,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_016",
+      "test_id": "ut_search_records_001",
       "dimension_source": "rubric",
       "dimension_name": "Result triage",
       "llm_score": 3,
@@ -43,7 +43,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_016",
+      "test_id": "ut_search_records_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_001",
       "dimension_source": "rubric",
       "dimension_name": "Nil escalation",
       "llm_score": null,
@@ -51,191 +59,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_016",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "Persisted query is \"surname\" \"Price\",\"givenName\":\"Sarah2 of the 12 parameters actually sent, missing the Dodge County/1880 scope and the James Price father anchor, so the search can't be re-run from the log; the judge scored 3 by quoting the chat summary instead of the field. "
-    },
-    {
-      "test_id": "ut_search_records_011",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_011",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_011",
+      "test_id": "ut_search_records_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_024",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_024",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_024",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_024",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_024",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_024",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_024",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_013",
+      "test_id": "ut_search_records_003",
       "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
+      "dimension_name": "Correctness",
+      "llm_score": 1,
       "corrected_score": 3,
-      "comment": null
+      "comment": "It correctly invoked the record-extraction skill"
     },
     {
-      "test_id": "ut_search_records_013",
+      "test_id": "ut_search_records_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "It correctly invoked the record-extraction skill"
+    },
+    {
+      "test_id": "ut_search_records_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -243,15 +91,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "test_id": "ut_search_records_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_013",
+      "test_id": "ut_search_records_002",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -259,27 +107,147 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_013",
+      "test_id": "ut_search_records_002",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": null,
-      "corrected_score": null,
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_013",
+      "test_id": "ut_search_records_002",
       "dimension_source": "rubric",
       "dimension_name": "Result triage",
       "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "Response says Top match and a strong candidate, calls both the surname variant and the 3-year age gap non-disqualifying, then offers extraction exactly what judge_context and SKILL.md:408-419 forbid for a needs-review candidate."
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_search_records_013",
+      "test_id": "ut_search_records_002",
       "dimension_source": "rubric",
       "dimension_name": "Log quality",
       "llm_score": 3,
       "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     }
   ]
