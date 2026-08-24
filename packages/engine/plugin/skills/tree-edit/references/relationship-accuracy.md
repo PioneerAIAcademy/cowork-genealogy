@@ -34,6 +34,17 @@ relationship**, not of either spouse. Record them in the relationship's
 person-level fact. A marriage stored on a person record misplaces the
 event; the couple relationship is its only correct home.
 
+**The relationship edge needs its own source-ref, separate from the
+fact's** — a `sources` array nested only inside `facts[]` fails
+validation (the edge and each fact are checked independently). A
+marriage record's assertion has `fact_type: "marriage"`, which
+`sourceAssertionId` rejects — for a Couple edge, supply
+`relationship.sources` *and* each fact's own `sources`: `relationship:
+{ type: "Couple", person1, person2, sources: [{ ref: "S5", page }],
+facts: [{ type: "Marriage", date, place, sources: [{ ref: "S5", page
+}] }] }`. Use `sourceAssertionId` only when a `fact_type: "relationship"`
+assertion establishes the edge.
+
 ## When to create relationships
 
 Relationships follow the same two layers as facts
