@@ -110,6 +110,34 @@ def test_lane_check_old_mirrors_the_namespace_strip_no_divergence_on_a_namespace
     assert _lane_check_old(extraction) == _lane_check_new(extraction) == []
 
 
+def test_lane_check_old_mirrors_the_1273_item4_arm_no_divergence():
+    """The replica must carry the #1273 research_append->sources/assertions arm the
+    live detector gained after it first shipped, or the old-vs-new diff blames those
+    hits on the #1569 is_error fix (same replica-drift class as #1856, found in
+    review). A non-errored general-purpose sources write is flagged by BOTH, so old
+    and new must agree at 1. Dropping the arm from _lane_check_old makes new exceed
+    old -> a spurious #1569 divergence."""
+    calls = [
+        {
+            "tool": "mcp__genealogy__research_append",
+            "args": {"section": "sources", "op": "append", "entry": {}},
+            "agent_id": "a1",
+            "agent_type": "general-purpose",
+        }
+    ]
+    assert len(_lane_check_old(calls)) == len(_lane_check_new(calls)) == 1
+    # a namespaced record-extractor is exempt under both arms -> agree at zero
+    exempt = [
+        {
+            "tool": "mcp__genealogy__research_append",
+            "args": {"section": "assertions", "op": "append", "entry": {}},
+            "agent_id": "a1",
+            "agent_type": "genealogy-research:record-extractor",
+        }
+    ]
+    assert _lane_check_old(exempt) == _lane_check_new(exempt) == []
+
+
 def test_format_divergences_on_an_empty_list():
     out = format_divergences("lane-check", [])
     assert "no divergence" in out

@@ -1326,9 +1326,11 @@ another door.** Those two sections carry the extracted evidence
 belong to record-extraction, which creates them, and to citation, which refines
 `sources`. So a delegate denied `extraction_append` could still write them
 through the broad `research_append`. The detector flags such a write by the same
-unnamed-delegate test — a named non-record-extractor subagent — while leaving the
-main thread (citation refines on the main thread) and the dedicated agents
-exempt. This half is shadow only, logged and never denied, and covers the
+tight test the sibling `extraction_append` arm uses — anyone but the main thread
+(citation refines `sources` there) or the `record-extractor` agent. A *different*
+dedicated agent (gps-mentor, proof-conclusion, research-exhaustiveness) writing
+these sections is out of lane, exactly as it is for `extraction_append`, so it is
+not exempt here. This half is shadow only, logged and never denied, and covers the
 delegate route only; a main-thread router doing the same substitution is a
 separate, deny-side gap that nothing owns today.
 

@@ -962,6 +962,50 @@ def test_research_append_to_sources_on_main_or_by_dedicated_agent_not_flagged():
     )
 
 
+def test_research_append_to_sources_by_non_record_extractor_dedicated_agent_flagged():
+    """#1273 Item 4: sources/assertions are record-extraction/citation's writes, NOT
+    owning_skills sections, so the exemption is the sibling extraction_append arm's
+    tight `== record-extractor`, not the broad DEDICATED_AGENT_NAMES. A dedicated
+    agent that is not record-extractor (gps-mentor, proof-conclusion,
+    research-exhaustiveness) writing them is out of lane and must flag. Reverting the
+    gate to `not in DEDICATED_AGENT_NAMES` makes this pass silently (false negative)."""
+    for agent in ("gps-mentor", "proof-conclusion", "research-exhaustiveness"):
+        calls = [
+            _mcp_call(
+                "research_append",
+                {"section": "sources", "op": "append", "entry": {}},
+                agent_id="a1",
+                agent_type=agent,
+            )
+        ]
+        violations = find_protected_writes_by_unnamed_delegate(calls)
+        assert len(violations) == 1, f"{agent} writing sources must flag"
+
+
+def test_research_append_batch_to_sources_flags_once_per_call_not_per_op():
+    """#1273 Item 4: one violation per offending CALL, matching the sibling arms'
+    granularity, so a batch does not inflate the shadow signal the graduation
+    decision reads. A 3-op batch all to sources/assertions by an unnamed delegate is
+    ONE violation, not three; reverting to a per-op append makes this assert 3."""
+    calls = [
+        _mcp_call(
+            "research_append",
+            {
+                "ops": [
+                    {"section": "sources", "op": "append", "entry": {}},
+                    {"section": "assertions", "op": "append", "entry": {}},
+                    {"section": "sources", "op": "append", "entry": {}},
+                ]
+            },
+            agent_id="a1",
+            agent_type="general-purpose",
+        )
+    ]
+    violations = find_protected_writes_by_unnamed_delegate(calls)
+    assert len(violations) == 1
+    assert "sources" in violations[0] and "assertions" in violations[0]
+
+
 def test_gps_mentor_evaluations_write_not_flagged():
     """gps-mentor holds research_append but only ever writes evaluations[] --
     a section owning_skills never attributes to any guardrail skill, so this

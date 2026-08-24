@@ -865,6 +865,9 @@ run: the main-thread half is **denied**, the delegate half is only **logged**.
 `E2eResult.__post_init__`, so it never moves the compliance axis until its
 false-positive rate is calibrated. A non-`record-extractor` delegate's
 `extraction_append` therefore still succeeds today; it is recorded, not blocked.
+The same detector now also records such a delegate's `research_append` to
+`sources` or `assertions` — the same protected write by another door
+(guardrail-enforcement-spec §11) — likewise logged, never denied.
 Beyond the detector itself, `make e2e-guardrail-shadow` reports this family across
 the committed corpus, stored plus a `REPLAY=1` recompute, with the
 attribution denominator; it stays a reported signal, not a graduation count.

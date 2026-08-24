@@ -1003,24 +1003,34 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
             # protected write extraction_append is denied for. record-extraction
             # creates these and citation refines `sources` (ownership.json); because
             # owning_skills does not attribute those sections, without this branch an
-            # unnamed delegate writes them through the broad tool unflagged. Same
-            # unnamed-delegate gate as the owning_skills clause below — a main-thread
-            # call (agent_id None; citation is a main-thread skill, exempt for free)
-            # and a dedicated agent are allowed. Shadow only. No `continue`: a batch
-            # may ALSO touch an owning_skills section, still checked below.
-            # Uses `bare_agent_type` (the shared namespace strip #1856 added) so a
-            # namespaced dedicated agent is exempted here exactly as in the clauses
-            # around it, rather than trailing the namespaced-spelling fix.
-            if agent_id is not None and bare_agent_type not in DEDICATED_AGENT_NAMES:
-                for op in _iter_ops(args):
-                    section = op.get("section")
-                    if section in ("sources", "assertions"):
-                        violations.append(
-                            f"tool_calls[{i}] research_append to {section!r} was made "
-                            f"by agent_type={agent_type!r} (agent_id={agent_id!r}) — "
-                            "this is record-extraction/citation's protected write, "
-                            "made by neither the main thread nor a dedicated agent"
-                        )
+            # unnamed delegate writes them through the broad tool unflagged. The
+            # legitimate callers are exactly the sibling extraction_append arm's: the
+            # main thread (agent_id None; citation refines `sources` there, exempt for
+            # free) and the `record-extractor` agent alone — NOT every dedicated
+            # agent, because sources/assertions are not owning_skills sections, so a
+            # gps-mentor/proof-conclusion/research-exhaustiveness delegate writing
+            # them is out of lane exactly as it is for extraction_append (which uses
+            # the same tight `== record-extractor`). Uses `bare_agent_type` (the
+            # shared namespace strip #1856 added) so the namespaced spelling of
+            # record-extractor is exempt too. Shadow only. No `continue`: a batch may
+            # ALSO touch an owning_skills section, still checked below. One violation
+            # per offending CALL (not per op), matching the sibling arms' granularity
+            # so a batch does not inflate the shadow signal.
+            if agent_id is not None and bare_agent_type != "record-extractor":
+                sections = sorted(
+                    {
+                        op.get("section")
+                        for op in _iter_ops(args)
+                        if op.get("section") in ("sources", "assertions")
+                    }
+                )
+                if sections:
+                    violations.append(
+                        f"tool_calls[{i}] research_append to {'/'.join(sections)} was "
+                        f"made by agent_type={agent_type!r} (agent_id={agent_id!r}) — "
+                        "this is record-extraction/citation's protected write, made "
+                        "by neither the main thread nor the record-extractor agent"
+                    )
 
         owners = owning_skills(tool, args)
         if not owners or agent_id is None or bare_agent_type in DEDICATED_AGENT_NAMES:
