@@ -350,7 +350,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "holdout": {
           "type": "boolean",
           "default": false,
-          "description": "Reserves this test as a generalization check for the skill-improvement loop. The body-optimizer must not read or tune against it; it is consulted only to measure whether an edit generalized. The harness runs holdout tests like any other. See docs/skill-lifecycle.md."
+          "description": "Holds this test out of the set /improve-skill forms edits from, so it stays a generalization check. gate-skill no longer reads this field (see the note under the §5.1 field table); the harness runs holdout tests like any other. See docs/skill-lifecycle.md."
         },
         "expected_outcome": {
           "type": "string",
@@ -522,9 +522,21 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
 | `type` | string | yes | `"positive"` or `"negative"`. Determines which other fields are present |
 | `description` | string | yes | 1-2 sentences explaining what this test verifies and why it matters |
 | `tags` | string[] | yes | Freeform tags for filtering and grouping. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`) |
-| `holdout` | boolean | no | `false` (default) or `true`. Reserves this test as a generalization check for the skill-improvement loop. The body-optimizer never reads a holdout test when proposing a SKILL.md edit — it consults holdout tests only afterward, to confirm the edit helped cases it was not written from. The harness runs holdout tests like any other; the flag governs only the improver. Mark ~2-3 of a skill's tests holdout (diverse, representative ones — not the easy ones), and keep them stable across iterations. See `docs/skill-lifecycle.md` |
+| `holdout` | boolean | no | `false` (default) or `true`. Holds this test out of the set `/improve-skill` forms edits from, so a fix can be judged against cases it was not written from. The harness runs holdout tests like any other; the flag governs only the improver — `gate-skill` **no longer reads it** (see the note below this table). Mark ~2-3 of a skill's tests holdout (diverse, representative ones — not the easy ones), and keep them stable across iterations. See `docs/skill-lifecycle.md` |
 | `expected_outcome` | string | no | `"pass"` (default) or `"xfail"`. Marks a known-failing test. xfail tests still run; their failures aggregate to `outcome: xfail` (expected, not a regression). If an xfail test starts passing, the run reports `outcome: xpass` so the marker can be removed |
 | `xfail_reason` | string | conditional | Required when `expected_outcome` is `"xfail"`. Brief explanation, ideally with an issue link and a removal condition (e.g., "blocked on #312; remove when fixed") |
+
+**`holdout` and the gate.** `gate-skill` (`docs/skill-lifecycle.md` §6) once re-ran a
+skill's holdout tests as a no-regression preview; that comparison was **removed**. It
+was inert for most skills (the majority carried no holdouts), and where present it only
+previewed a check already mandatory downstream: no skill edit merges without a full
+`make eval-skill` run, which `check_runlogs` gates and which covers every test in the
+suite. **That full run is the regression gate**, not the preview. The field is retained
+because `/improve-skill` still holds these tests out of the set it forms edits from, and
+because it is snapshot-tracked (removing it would invalidate the run logs of the suites
+that carry it). If the gate's holdout comparison is ever revived, it must select holdouts
+**automatically** from run-log history (stability across committed runs, shape spread) — a
+human picking 2-3 by hand does not give real regression coverage.
 
 ### 5.2 `input`
 
