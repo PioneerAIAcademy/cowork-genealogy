@@ -11,7 +11,7 @@ import { join } from "path";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { mergeGedcomx } from "../utils/merge-gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
-import { atomicWriteBoth } from "../utils/project-io.js";
+import { atomicWriteBoth, withProjectLock } from "../utils/project-io.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   MergeInputError,
@@ -37,6 +37,10 @@ export async function mergeTreePersons(
   const { projectPath } = input;
   const merges = (input.merges ?? []) as Array<[string, string]>;
 
+  // Serialize the read-modify-write against every other writer on this project
+  // (issue #1715) — writes tree + research together, so the per-project lock is
+  // what keeps a concurrent tree-only writer from clobbering half of it.
+  return withProjectLock(projectPath, async () => {
   try {
     // 1. Read both files fresh from disk.
     const treeSanitized = sanitizeTree(
@@ -107,6 +111,7 @@ export async function mergeTreePersons(
     if (e instanceof MergeInputError) return { ok: false, errors: [e.message] };
     throw e;
   }
+  });
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
