@@ -853,6 +853,42 @@ def test_extraction_append_by_wrong_dedicated_agent_still_flagged():
     assert len(violations) == 1
 
 
+def test_namespaced_record_extractor_treated_as_bare():
+    """Cowork logs a plugin-namespaced agent_type ("genealogy-research:record-extractor")
+    while the harness reports bare names (#980 ruling; live probe 2026-08-15). The
+    detector must strip the leading "<plugin>:" before comparing, on BOTH clauses,
+    or an equality/membership test green in CI is dead against production data
+    (#650/#698/#939). Bare and namespaced must behave identically."""
+    # extraction_append clause (== "record-extractor")
+    assert (
+        find_protected_writes_by_unnamed_delegate(
+            [_extraction_call(agent_id="a1", agent_type="genealogy-research:record-extractor")]
+        )
+        == []
+    )
+    # owning_skills clause (in DEDICATED_AGENT_NAMES)
+    assert (
+        find_protected_writes_by_unnamed_delegate(
+            [_owned_write("person-evidence", agent_id="a1", agent_type="genealogy-research:record-extractor")]
+        )
+        == []
+    )
+
+
+def test_namespaced_general_purpose_still_flagged():
+    """The prefix strip must not over-exempt: a namespaced NON-dedicated agent
+    still flags on both clauses (guards against stripping turning every
+    namespaced caller into a pass)."""
+    ext = find_protected_writes_by_unnamed_delegate(
+        [_extraction_call(agent_id="a1", agent_type="genealogy-research:general-purpose")]
+    )
+    assert len(ext) == 1 and "record-extractor" in ext[0]
+    owned = find_protected_writes_by_unnamed_delegate(
+        [_owned_write("person-evidence", agent_id="a1", agent_type="genealogy-research:general-purpose")]
+    )
+    assert len(owned) == 1 and "person-evidence" in owned[0]
+
+
 def test_gps_mentor_evaluations_write_not_flagged():
     """gps-mentor holds research_append but only ever writes evaluations[] --
     a section owning_skills never attributes to any guardrail skill, so this

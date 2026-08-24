@@ -964,9 +964,18 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
         args = entry.get("args") or {}
         agent_id = entry.get("agent_id")
         agent_type = entry.get("agent_type")
+        # Cowork logs a plugin-namespaced agent_type ("genealogy-research:record-extractor")
+        # while the harness reports bare names; strip a leading "<plugin>:" segment before
+        # comparing, so an equality/membership test that is green in CI is not dead the moment
+        # it sees production data — the #650/#698/#939 failure shape (a live 2026-08-15 Cowork
+        # probe logged agent_type "genealogy-research:image-reader"). The RAW agent_type is
+        # kept in the violation messages below so they report what was actually logged.
+        bare_agent_type = (
+            agent_type.split(":", 1)[-1] if isinstance(agent_type, str) else agent_type
+        )
 
         if bare_tool_name(tool) == "extraction_append":
-            if agent_id is None or agent_type == "record-extractor":
+            if agent_id is None or bare_agent_type == "record-extractor":
                 continue
             violations.append(
                 f"tool_calls[{i}] extraction_append was made by agent_type="
@@ -976,7 +985,7 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
             continue
 
         owners = owning_skills(tool, args)
-        if not owners or agent_id is None or agent_type in DEDICATED_AGENT_NAMES:
+        if not owners or agent_id is None or bare_agent_type in DEDICATED_AGENT_NAMES:
             continue
         for owner in owners:
             violations.append(
