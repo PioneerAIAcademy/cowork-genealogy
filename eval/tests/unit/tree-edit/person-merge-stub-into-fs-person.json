@@ -28,9 +28,16 @@
     "Should explicitly present a coordination plan: which research.json sections need rewriting and which skills own them (project → init-project / proof-conclusion; person_evidence → person-evidence; timelines → timeline). The actual I3 deletion happens only after those rewrites are coordinated",
     "MERGE-CORRECTNESS GRADING NOTE for the judge: the standard rubric clause 'every reference is rewritten' does NOT apply here because tree-edit lacks ownership of the research.json sections involved (per the harness OWNERSHIP_TABLE: project belongs to init-project / proof-conclusion, person_evidence to person-evidence, timelines to timeline). The CORRECT behavior in this test is consolidate-data-on-I4 + present-plan-for-coordinated-rewrites + do-not-delete-I3-yet. Judges MUST score Merge correctness as `pass` when the skill (a) consolidates data on I4 without dropping conflicting facts, (b) leaves I3 in place pending coordination, and (c) explicitly names the owning skills that need to do the research.json rewrites. Do NOT mark partial because the rewrites weren't done — that's the entire point of the test",
     "Should NOT need a separate validate_research_schema call — tree_edit, tree_correct, and merge_tree_persons all validate-before-persist (SKILL.md § Validation), and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
-    "Should present the merge plan to the user before executing — SKILL.md 'Important rules' requires confirmation since merges are irreversible in practice"
+    "Should present the merge plan to the user before executing — SKILL.md 'Important rules' requires confirmation since merges are irreversible in practice",
+    "Should invoke `Skill(\"check-warnings\")` after this edit — SKILL.md § Validation requires it after ANY edit or merge. This is stubbed via `execution.stub_skills` (the callee has its own unit suite), so the launch is what's graded, not a real check-warnings run — score on whether the skill actually called it (visible in `skills_invoked`), not on the canned response's content."
   ],
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "check-warnings",
+        "response": "No warnings found for the edited person's data -- no impossible dates, no relationship loops, nothing implausible. FamilySearch's online quality check was not run in this environment."
+      }
+    ]
   }
 }

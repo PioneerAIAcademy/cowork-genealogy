@@ -86,7 +86,8 @@ Instead, for each capture-required external-site plan item:
    and `notes` stating the search was **deferred — requires an interactive
    user capture and is not obtainable in an autonomous run**, with the
    generated URL recorded so a later interactive session can capture it.
-4. Mark the plan item terminal (step 7).
+4. Mark the plan item `skipped` (step 7) — terminal, and honest that
+   nothing was searched.
 5. **Return to the orchestrator and keep going** — do not wait.
 
 This keeps the audit trail honest — the external avenue is logged as a
@@ -437,18 +438,36 @@ in courthouses, parish archives, and historical societies.
 
 ### 7. Update status and suggest the next step
 
-Once the search is logged, found or not, set the plan item to `completed`
-with a one-line `research_append` call (`section: "plan_items"`,
-`op: "update"`, the parent `planId` and the `entryId` you searched,
-`fields: { status: "completed" }`). On `{ ok: false }`, surface the errors
-and fix the inputs — never hand-edit `research.json`. This skill writes only
-`log[]` entries and the plan-item status; record-extraction writes any
+Once the search is logged, set the plan item's status with a one-line
+`research_append` call (`section: "plan_items"`, `op: "update"`, the parent
+`planId` and the `entryId` you searched, `fields: { status: "<below>" }`).
+**A capture-required search is not finished until the capture arrives** — do
+not mark it `completed` for handing over a URL.
+
+| Ending | Status |
+|--------|--------|
+| URL handed over, no capture back yet | `in_progress` |
+| Capture triaged (results, or a captured empty page) | `completed` |
+| Capture arrived unusable (login page, truncated) | `in_progress` |
+| User *reports* a nil, no capture | `in_progress` |
+| Site inaccessible **and the user asks to skip it** | `skipped` |
+| Site inaccessible, user has not decided | `in_progress` |
+| `--autonomous` (no user can ever capture) | `skipped` |
+
+Outside `--autonomous`, `skipped` requires the user to have asked for it —
+never infer it from an access failure alone. On `{ ok: false }`, surface the errors and fix the
+inputs — never hand-edit `research.json`. This skill writes only `log[]`
+entries and the plan-item status; record-extraction writes any
 source/assertion entries when you hand it a single-record capture. Then offer
 the natural next move:
 - More plan items → "Shall I continue with the next search?"
 - A record worth examining → "Capture the full record page for result #1?"
-- All done → "All planned searches are complete — evaluate whether
-  research is exhaustive?"
+- All done, **every plan item `completed`/`skipped`** → "All planned
+  searches are complete — evaluate whether research is exhaustive?"
+- Any item left `in_progress` → do **not** offer the exhaustiveness
+  evaluation (`research-exhaustiveness` refuses while one is open). Name
+  what is outstanding, and offer the plan's `fallback_for` item if one
+  exists, or research-plan for re-planning if none does.
 - Nil result → "No matches on [site]; the plan's fallback is [next item].
   Proceed?"
 - Index hit → "This is an index entry — shall we locate the original
@@ -464,7 +483,7 @@ the natural next move:
 | PDF cuts off results (lazy loading) | "Scroll to the bottom and back to the top before printing to PDF" |
 | PDF missing images/thumbnails | "Record images may not print — screenshot the document viewer separately" |
 | PDF links aren't clickable | Construct record URLs from visible record IDs/database names instead of extracted links |
-| User can't access the site | Log `outcome: "error"` with the access limitation; move to the fallback plan item |
+| User can't access the site | Log `outcome: "error"` with the access limitation. Ask whether to skip the site: on their yes, `skipped`; otherwise `in_progress` (step 7). Offer the fallback plan item if one exists |
 
 ## User-contributed sources
 
