@@ -833,6 +833,18 @@ def test_extraction_append_by_unnamed_delegate_flagged():
     assert "record-extractor" in violations[0]
 
 
+def test_unhashable_agent_type_flags_without_raising():
+    """An unhashable agent_type (a list/dict -- never stamped by the SDK, which
+    emits str|None) must not crash the `in DEDICATED_AGENT_NAMES` membership test
+    under a corpus-wide replay, and must still flag (the safe over-flag
+    direction). Guards the else-None normalization at skill_invocation.py: revert
+    it to `else agent_type` and this raises TypeError instead of flagging."""
+    owned = find_protected_writes_by_unnamed_delegate(
+        [_owned_write("person-evidence", agent_id="a1", agent_type=["genealogy-research"])]
+    )
+    assert len(owned) == 1 and "person-evidence" in owned[0]
+
+
 def test_extraction_append_by_unnamed_delegate_still_flagged_when_errored():
     """The is_error skip that used to sit before this branch split (issue #1569)
     covered the extraction_append path too -- pin it separately from the
