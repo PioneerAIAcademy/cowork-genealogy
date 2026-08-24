@@ -103,22 +103,47 @@ it derives its own precondition (a new `pe_` entry linking a persona with a
 non-null `record_persona_id` to a person that was already in the tree) and
 stands down otherwise.
 
-## F4 — `check-warnings` is skipped on 2 of 12 write-runs, both of them all-3 passes
+## F4 — `check-warnings` is skipped on ~20% of write-runs, on a different test each time
 
-**Did:** `ut_person_evidence_025` (three `confident` links) and
-`ut_person_evidence_014` (mints a stub, then links it) finish without invoking
-`check-warnings`. The other ten write-runs invoke it. Both scored **3 on all
-eight dimensions**.
+**Did:** across two consecutive runs, **five different tests** finished a write
+without invoking `check-warnings`, every one of them scoring 3 on all eight
+dimensions in the run where it skipped:
+
+| Run | Skipped it | Of |
+|---|---|---|
+| `v1_2026-08-20_15-53-03` | `_025`, `_014` | 12 write-runs |
+| `v1_2026-08-24_18-17-08` | `_011`, `_002`, `_022` | 13 write-runs |
 
 **Should:** SKILL.md §8 — "After creating links and any stub persons, **invoke
 `check-warnings`** on the affected persons to catch genealogical
 impossibilities."
 
-**Gap:** nothing checks it and no dimension names it. This is the guard that
-would catch a stub minted with an impossible lifespan, so a silent skip on a
-stub-creation test is the case that matters most.
+**Gap:** the miss is not a property of any test — it moves. That is precisely
+what a judge dimension cannot report and a program can. `_014` is the case that
+matters most: it mints a brand-new stub person and skips the guard that would
+catch that stub carrying an impossible lifespan.
 
-**Validator request** — I could not ship this one, see below.
+**Closed by a validator, shipped here** — `test_check_warnings_runs_after_a_write`.
+It triggers on a new `pe_` entry **or** a newly minted tree person, and stands
+down on a read-only audit run and on a negative routing test.
+
+**Correction to this finding as first written.** I recorded F4 as un-shippable,
+on the grounds that `skills_invoked` "is not among the fixtures
+`validator_runner.run_validators` supplies", and filed #1881 on that basis. That
+was wrong, and wrong in an avoidable way: I read `validators/conftest.py`, which
+supplies *standalone-pytest* defaults, and never opened `validator_runner.py`,
+which has supplied `skills_invoked` from the PreToolUse hook all along.
+`test_search_records.py` was already using it, and
+`test_tree_edit.py::test_check_warnings_runs_after_any_tree_write` — landed by
+deep dive #1657, which arrived in this branch's `main` merge — already asserts
+this very rule for the other skill that writes to the tree. The work was one
+validator, not a harness change, and #1881 is closed as folded in.
+
+One real gap did turn up underneath the wrong one: `conftest.py` had no
+`skills_invoked` fixture, so tree-edit's validator errored with "fixture not
+found" under a standalone `pytest validators/`. Fixed here. Whole-directory
+standalone runs remain broken for older, separate reasons (a missing `test`
+fixture, and `validators_lib` not being on the import path); not addressed.
 
 ## F5 — A `judge_context` quotes a retired version of §5, and blesses the shape the rubric calls a shortfall
 
@@ -220,8 +245,9 @@ carve-out and F6's step. No rule the skill already obeyed was restated.
 > those tests instead of surfacing the defect. Ungate once they are brought up
 > to the rule.
 
-**V3 — `check-warnings` after a write. NOT SHIPPED — needs one harness change
-first.**
+**V3 — `check-warnings` after a write. SHIPPED** as
+`test_check_warnings_runs_after_a_write`. (First written up as blocked; the
+blocker did not exist — see the correction under F4.)
 
 > **Rule:** a run that creates `person_evidence` entries or mints a tree person
 > must invoke the `check-warnings` skill.
@@ -232,15 +258,13 @@ first.**
 > `ut_person_evidence_014`, run `v1_2026-08-20_15-53-03` — wrote links (and in
 > `_014`'s case minted a stub) with `skills_invoked: ["person-evidence"]`. Both
 > scored 3 on every dimension.
-> **What blocks it:** `skills_invoked` is not among the fixtures
-> `validator_runner.run_validators` supplies (`before_state`, `after_state`,
-> `tool_calls`, `skill_frontmatter`, `blocked_context_calls`,
-> `blocked_protected_writes`). `check-warnings` is a skill, not an MCP tool, and
-> the ten runs that did invoke it emitted no MCP call of their own, so it is
-> invisible in `tool_calls`. Adding the fixture touches `run_validators`, its
-> orchestrator call site, and `validators/conftest.py` — shared harness
-> machinery, and a different reviewer, which is why it is a request rather than
-> another commit on this branch.
+> **Why a validator and not the judge:** the miss moves between runs — five
+> different tests across two consecutive runs — so no per-test dimension sees a
+> pattern, and each skipping run scored 3 on all eight dimensions.
+> **Expected cost:** on a run where the skill does skip, this converts that
+> test to a validator-driven `fail` and short-circuits its judge. That is the
+> intended behaviour, but it means the next run's headline may drop by a test
+> or two until compliance is consistent.
 
 ## What this dive did not settle
 

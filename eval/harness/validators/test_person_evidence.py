@@ -551,3 +551,53 @@ def test_matched_persona_is_materialized_onto_its_person(
         "persona, matched as well as newly minted, on a single-person record "
         "as well as a household (SKILL.md §4, tree-materialization-spec)."
     )
+
+
+def test_check_warnings_runs_after_a_write(before_state, after_state, skills_invoked):
+    """SKILL.md §8: "After creating links and any stub persons, invoke
+    `check-warnings` on the affected persons to catch genealogical
+    impossibilities (married before 12, died after 120, child born after a
+    parent's death, etc.)" — plausibility the persistence step does not check.
+
+    Deep dive #1646 finding F4. The miss is intermittent and moves between
+    runs, which is why it belongs to a program rather than a dimension: in
+    `v1_2026-08-20_15-53-03` it was `ut_person_evidence_025` and
+    `ut_person_evidence_014` (2 of 12 write-runs); in
+    `v1_2026-08-24_18-17-08` it was `ut_person_evidence_011`, `_002` and
+    `_022` (3 of 13) — five different tests across two runs, every one of
+    them scoring 3 on all eight dimensions in the run where it skipped.
+
+    `_014` is the case that matters most: it mints a brand-new stub person
+    and skips the guard that would catch that stub carrying an impossible
+    lifespan.
+
+    Mirrors `test_tree_edit.py::test_check_warnings_runs_after_any_tree_write`
+    (deep dive #1657), which asserts the same rule for the other skill that
+    writes to the tree. Trigger differs because the skills write different
+    things: tree-edit keys off the tree changing, person-evidence off a new
+    `pe_` entry or a new tree person, either of which is a write §8 covers.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    wrote_links = bool(_new_person_evidence(before, after))
+    before_tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    after_tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
+    minted = _tree_person_ids(after_tree) - _tree_person_ids(before_tree)
+
+    if not wrote_links and not minted:
+        pytest.skip("no new pe_ entries and no new persons — nothing §8 covers")
+
+    what = []
+    if wrote_links:
+        what.append(f"{len(_new_person_evidence(before, after))} new pe_ entr(ies)")
+    if minted:
+        what.append(f"minted {sorted(minted)}")
+    assert "check-warnings" in (skills_invoked or []), (
+        f"wrote to the project ({'; '.join(what)}) but never invoked "
+        f"check-warnings — SKILL.md §8 requires it after creating links and "
+        f"any stub persons, to catch impossibilities the writer tools do not "
+        f"check. skills_invoked={list(skills_invoked or [])}"
+    )
