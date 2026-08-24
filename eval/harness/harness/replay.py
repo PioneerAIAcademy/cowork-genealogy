@@ -32,6 +32,18 @@ tool is worse than no replay, because it looks complete. `ReplayResult.unmodelle
 names every tool and section this module did not know how to apply, so a caller
 can decide whether its question survives the gap.
 
+**Its useful horizon is the capture window, and most of the corpus is past it.**
+This module reads ids out of each call's `response_summary`, and the e2e capture
+strip reclaims that field past 14 days. Until 2026-08-23 the strip dropped it
+outright: measured that day, 133 of the 134 stripped runs could no longer be
+replayed against 18 of the 23 unstripped ones that could — an 88% -> 13%
+collapse in `make replay-check` that looked like a regression here and was not.
+The strip now keeps a replay remnant (`scripts/prune_runlogs.py::replay_remnant`),
+so it stops getting worse, but **the runs already stripped are not recoverable**.
+Anything that needs mid-run state across the whole historical corpus cannot have
+it; ask the question over recent runs, or measure how many runs actually carry
+the ids before quoting a rate. `make replay-check` reports the current figure.
+
 Stdlib only, and **no `claude_agent_sdk` import** — `corpus_report` states in its
 own module docstring that it is pure analysis over committed data, and importing
 `e2e.orchestrator` would drag the SDK in. Keep it that way.
@@ -327,10 +339,19 @@ def _apply_op(state: dict, op: dict, entry_id: str | None, out: ReplayResult) ->
         if verb == "append":
             items.append({**entry, "id": entry_id} if entry_id else dict(entry))
         else:
+            target = entry_id or op.get("entryId") or op.get("id")
+            # Same fix as the generic section path below, and this one bites
+            # hardest: plan-item status flips are the op most often batched.
             for it in items:
-                if it.get("id") == (entry_id or op.get("id")):
+                if it.get("id") == target:
                     it.update(entry)
                     break
+            else:
+                # Counting a miss as applied is the same dishonest-count class
+                # the `entryId` fix above removes: the generic path reports it,
+                # this one silently inflated `applied` and reported nothing.
+                out.note_unmodelled("update:no-such-id:plan_items")
+                return
         out.applied += 1
         return
 
@@ -348,7 +369,14 @@ def _apply_op(state: dict, op: dict, entry_id: str | None, out: ReplayResult) ->
         out.applied += 1
         return
 
-    target_id = entry_id or op.get("id") or entry.get("id")
+    # `op["entryId"]` is the caller's own target, and for an UPDATE it is the
+    # authoritative one — the response merely echoes it back. Consulting it
+    # matters whenever the ledger did not report an id for this op, which is not
+    # an edge case: a summarised batch records only `_first_n` entries, so every
+    # UPDATE past that cut arrived here with `entry_id = None`, fell through to
+    # `id` (which an update payload does not carry), and was dropped as
+    # `no-such-id` — silently, and while naming its target in plain sight.
+    target_id = entry_id or op.get("entryId") or op.get("id") or entry.get("id")
     for existing in arr:
         if existing.get("id") == target_id:
             existing.update(entry)

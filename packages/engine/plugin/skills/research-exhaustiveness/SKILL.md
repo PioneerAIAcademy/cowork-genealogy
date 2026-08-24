@@ -12,264 +12,52 @@ description: Evaluates whether research on a question is reasonably
   for an open question (use research-plan), or when the user wants to
   write the proof conclusion (use proof-conclusion).
 allowed-tools:
-  - research_append
+  - project_context
 ---
 
 # Research Exhaustiveness
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-Evaluates whether research on a single question qualifies as
-"reasonably exhaustive" under GPS Component 1.
+## 1. Identify the question
 
-**Before proceeding**, read `references/research-exhaustiveness.md` for
-the framework (five threshold questions, overturn risk test,
-termination criteria).
+Resolve the user's request to ONE `q_` id via `project_context`, **matching on the question's TEXT** in `openQuestions`. "The parentage question" is the question whose text asks about a parent; "the marriage question" the one that asks about a marriage.
 
-**First, confirm this is an exhaustiveness evaluation.** This skill judges
-whether an *already-planned, already-searched* question is reasonably
-exhaustive. If the request is really to pick the **next question** (→
-`question-selection`), to **plan more searches** for an open question (→
-`research-plan`), or to **write the conclusion** (→ `proof-conclusion`),
-**decline and route there — do not run the evaluation below.** The
-declare/proof guidance in this skill applies only *after* you have decided
-this genuinely is an exhaustiveness check.
+**`questionStatuses` is advisory and must never rule a question in or out.** It reports how far a question has got, not whether it is the one the user means — and it is derived, so a question with a draft proof summary reads `concluded` while its `status` is still `in_progress`. Using it to eliminate a candidate sends the evaluation to a different question with a matching-sounding state.
 
-Only evaluate a question whose plan items are all `completed` or
-`skipped`. If any is `in_progress`, refuse to declare and recommend
-finishing the in-flight work first.
+If the text matches no question, or matches more than one, ask which before proceeding. Never fall back to "the only one left".
 
-## 0. Precondition check (run first)
+**Read nothing else, and judge nothing.** Do not query assertions, plan items, log entries or the existing declaration, and do not form a view on whether the question is ready. The preconditions — classification, identity links, tentative values, and whether the plan is still in flight — belong to the agent, which declines and names the blocker when one fails. A plan item you judge "finished really" from out here is a gate being decided by the one participant that cannot see the evidence.
 
-The `evidence_class` and `independent_verification` criteria in Step 3 are
-meaningless against unclassified assertions, or when the persons the judgment
-depends on have not been identified in the tree. Before applying the five
-threshold questions, run two checks over the assertions tied to this question
-(via `extracted_for_question_ids`):
+## 2. Delegate the evaluation
 
-- **Classification (hard block, all assertions).** Every assertion must have
-  a real `information_quality` and `evidence_type` from
-  `assertion-classification` (not a leftover record-extraction default). If
-  any assertion fails, stop here, name the specific assertion IDs, and
-  recommend `assertion-classification`.
-- **person_evidence (hard block scoped to person identity).** `person_evidence`
-  is identity resolution. Confirm **each person the judgment depends on** — the
-  subject and any candidate parent/relative — is identified by **at least one**
-  linked assertion. If any such person has no linked identity assertion, stop
-  and recommend `person-evidence`. Unlinked *fact* and *negative* assertions
-  about an already-identified person are advisory, not blockers — note them and
-  continue.
-- **Tentative-value sweep (hard block).** Collect every assertion linked to this
-  question whose value is marked tentative (contains "[?]", "[tentative]", or
-  whose informant_bias_notes flags an unresolved OCR or transcription ambiguity).
-  For each, ask explicitly: does the uncertainty stem from (a) genuine source
-  inaccessibility — the one source that would resolve it cannot be reached by any
-  available tool — or (b) a single source's data quality issue that a *different*
-  record type might independently resolve? If (b), do not declare exhaustive.
-  Route to research-plan with a specific new plan item targeting the alternative
-  record type. The inaccessibility exception in Step 4 applies only when (a) is
-  confirmed.
+Invoke `@plugin:research-exhaustiveness` with a delegation message carrying `questionId` and `projectPath`, and asking it to **assess whether the question is reasonably exhaustive and record the outcome** — declaring if the criteria are met, and recording an honest `declared: false` termination if they are not.
 
-Do not declare exhaustive while a blocking check fails.
+**Do not ask it to "declare the question exhaustive."** An instruction to declare overrides the agent's own preconditions, and it will write past a block it would otherwise have stopped on. Equally, do not ask it merely to "evaluate whether you can declare" — that invites a decline on evidence that in fact supports a declaration. Ask for the assessment and let the body decide.
 
-## 1. Gather evidence
+The agent owns every step from there: the preconditions, the five threshold questions, the 7-point stop criteria, the tier of the outcome, and the `exhaustive_declaration` write.
 
-Read:
-- The question and its `exhaustive_declaration`
-- Log entries for its plan items (via `plan_item_id`)
-- Assertions from those searches (via each assertion's `log_entry_id`)
-- Skipped plan items and their reasons
+**Do not write `exhaustive_declaration` yourself.** Declaring a question exhaustive is routed to the agent and a direct `research_append` setting `declared: true` is denied. If the delegation fails, report the failure and stop — do not write the declaration inline.
 
-## 2. Apply the five threshold questions
+One invocation per question.
 
-(From `references/research-exhaustiveness.md`.) If any answer is "no,"
-identify what is missing and stop here.
+## 3. Relay
 
-1. Answered with sufficient evidence?
-2. Broad range of record types searched?
-3. All relevant strategies employed (FAN, variant spellings)?
-4. Derivative sources replaced with originals where accessible?
-5. Enough evidence to resolve conflicts?
+Relay the agent's returned outcome as-is. Do not re-run the threshold questions, re-state the stop criteria, or re-argue the judgment.
 
-## 3. Assess the 7-Point Stop Criteria
-
-Write a 1-2 sentence assessment for each:
-
-| Criterion | Key question |
-|-----------|-------------|
-| `goal_alignment` | Convincing answer obtained? |
-| `repository_breadth` | All relevant repositories, jurisdictions, and name variants tried? |
-| `original_substitution` | Derivatives replaced with originals where available? |
-| `independent_verification` | At least two independent sources? (Same informant = one unit.) |
-| `evidence_class` | At least one original record with primary information? |
-| `conflict_resolution` | All discrepancies resolved? Unresolved conflicts block proof. |
-| `overturn_risk` | Could an unsearched source plausibly change the conclusion? |
-
-## 4. Decide: declare or continue
-
-- **Declare exhaustive** — all criteria met. Persist the declaration
-  and set `status: "exhaustive_declared"` in one call (Step 5).
-- **Do not declare** — criteria unmet because a genuinely **unsearched**
-  source remains. Explain what is missing and recommend expanding the plan
-  (`research-plan`). **When in doubt, a gap is unsearched, not unobtainable —
-  default to `research-plan`.**
-  - *Narrow exception — a source verified **inaccessible*** (a browse-only
-    image over the MCP transport cap; a record **sealed by privacy law** —
-    e.g. a recent U.S. vital record embargoed ~100 years and released before
-    then only to the registrant or a direct heir; nil across
-    `record_search` / `fulltext_search` / `image_search` / external sites
-    after the bounded search-records attempts; or a negative result from
-    `record_search` / `fulltext_search` for a record type **not indexed in
-    that repository** — confirmed by the collection's coverage, e.g. South
-    Dakota vital records pre-1940 not on FamilySearch) is
-    *pursued-and-unavailable*, not an unsearched gap. A privacy-sealed record must **not** be counted as
-    an outstanding gap in the threshold questions, nor recommended as a next
-    step to obtain. **Only** when the **accessible** evidence already supports a
-    defensible conclusion, do not loop `research-plan` to re-attempt it: set
-    `status: "exhaustive_declared"` (note the limitation in a `stop_criteria`
-    note + `overturn_risk`) and route to `proof-conclusion`, which sets the
-    honest tier the available (often indirect) evidence supports. Documenting
-    an unobtainable source is exhaustive research; re-searching it is not. This
-    exception applies only when the inaccessible source is the **only known
-    avenue** to the fact in question. If a different record type could
-    independently resolve the same uncertainty — for example, premarital census
-    or vital records to verify a bride's maiden surname when the marriage
-    certificate image is unreadable — the exception does not apply. That
-    alternative avenue is unsearched, not unavailable, and must be planned before
-    declaration.
-- **Early termination** — valid for resource limits or no further known
-  sources, but the declaration must honestly state `declared: false`.
-  **Do not change `status`** — leave it `"in_progress"`.
-  `"exhaustive_declared"` means the research WAS exhaustive; a
-  `declared: false` termination is explicitly not, so the status stays
-  `"in_progress"`. Terminating before sufficient evidence means the
-  conclusion cannot meet the GPS standard.
-
-## 5. Write the declaration
-
-Persist via `research_append` `op: "update"` on the question. You pass
-the analytical judgment (the `stop_criteria` assessments and the
-`log_entry_ids` you gathered); the tool validates-before-persist and
-writes atomically.
-
-**Declare exhaustive** (all criteria met) — sets `status` and the
-declaration in one call:
-
-```
-research_append({
-  projectPath: "<absolute-path-to-project-directory>",
-  section: "questions",
-  op: "update",
-  entryId: "<q_ id of the question being evaluated>",
-  fields: {
-    status: "exhaustive_declared",
-    exhaustive_declaration: {
-      declared: true,
-      justification: "Searched 1850/1860 censuses, death certificate, and probate (FamilySearch, Ancestry). Three independent sources confirm parentage.",
-      log_entry_ids: ["log_001", "log_002", "log_003"],
-      stop_criteria: {
-        goal_alignment: "Yes — three sources name Thomas Flynn as father.",
-        repository_breadth: "Census, vital records, and probate all searched.",
-        original_substitution: "Original images accessed; derivative index confirmed.",
-        independent_verification: "Three independent sources, different informants.",
-        evidence_class: "1860 census (original, primary) and death certificate (original, direct).",
-        conflict_resolution: "Birthplace conflict resolved per preponderance hierarchy.",
-        overturn_risk: "Low. No unexamined record type likely to name a different father."
-      }
-    }
-  }
-})
-```
-
-**Early termination** (`declared: false`) — leave `status` as
-`"in_progress"`; pass only `exhaustive_declaration`, NOT `status`:
-
-```
-research_append({
-  projectPath: "<absolute-path-to-project-directory>",
-  section: "questions",
-  op: "update",
-  entryId: "<q_ id of the question being evaluated>",
-  fields: {
-    exhaustive_declaration: {
-      declared: false,
-      justification: "Probate and church records were destroyed in an 1862 fire; no surviving source names the father. Terminating for lack of further known sources.",
-      log_entry_ids: ["log_001", "log_002"],
-      stop_criteria: { /* honest per-criterion assessment of what was and wasn't met */ }
-    }
-  }
-})
-```
-
-If the call returns `{ ok: false, errors }`, surface the errors and fix
-the offending field — do not blindly retry the same payload.
-
-## 6. Present
-
-- If exhaustive: "Research declared reasonably exhaustive. Ready for
-  proof-conclusion."
-- If not: "Not yet exhaustive. [What's missing.] Create a plan to
-  address the gaps?" (research-plan)
-
-## Rules
-
-- **One declaration at a time.** Each invocation evaluates exactly one
-  question.
-- **Plan must be complete.** Only evaluate questions whose plan items
-  are all `completed` or `skipped`; if any is `in_progress`, recommend
-  completing them first instead of declaring.
-- **Exhaustive does not mean exhausting.** Overturn risk is the
-  ultimate test: could a real, unsearched source plausibly change the
-  conclusion?
-- **Named decisive records gate the declaration.** If a record type
-  directly answers this question type (parentage: the subject's own
-  birth record or civil registration **where the jurisdiction and period
-  kept one**, the subject's death record, baptism, or a parent's
-  probate; marriage: the marriage record) — or the draft conclusion
-  itself names a record as tier-advancing — do not declare until that
-  record has been searched or the declaration explicitly justifies why
-  it is inaccessible. Where civil registration existed, the subject's
-  own birth record outranks the death record for parentage: its
-  informant is a parent at the event rather than a survivor recalling it
-  decades later. Where it did not — Irish births before 1864, most
-  jurisdictions before the nineteenth century — its absence is not a
-  gap, and the baptism is what to gate on instead. A
-  known, decisive, accessible record left unsearched fails the
-  overturn-risk test by definition — but a decisive record that is
-  **sealed by privacy law** (e.g. a recent birth certificate embargoed
-  ~100 years, heir-request only) counts as inaccessible: note the
-  limitation and declare on the accessible evidence; do not gate on it.
-- **Proof is all-or-nothing.** If exhaustiveness cannot be declared
-  honestly, say so.
-- **Historical context matters.** Factor in jurisdictional boundary
-  changes, migration, wars, and record availability for the time and
-  place when judging breadth.
-
-## Edge cases
-
-- **User wants to stop early:** Record `declared: false` with an
-  honest explanation. Do not inflate exhaustiveness to justify
-  stopping.
-- **Plan items still in progress:** Refuse to declare; recommend
-  completing the in-flight work first.
-- **Already declared:** If `exhaustive_declaration.declared` is already
-  `true`, do not re-declare — re-running Step 5's `update` is a
-  structural no-op. Report the existing declaration and suggest
-  `proof-conclusion` instead.
+Then recommend the next step: declared exhaustive → proof-conclusion; not declared because a gap remains → research-plan; not declared because a precondition blocked it → the skill the agent named.
 
 ## Re-invocation behavior
 
-**Writes:** the `exhaustive_declaration` object and `status` on a single
-`question` (`q_` id) via `research_append` `op: "update"`. Nothing else
-— no new questions, no `tree.gedcomx.json` changes.
+**Writes:** nothing directly. Every write is made by the `research-exhaustiveness` agent this skill delegates to — the `exhaustive_declaration` object and `status` on a single question in `research.json`. Nothing else, and no `tree.gedcomx.json` changes.
 
-**On repeat invocation:** if `exhaustive_declaration.declared` is
-already `true`, does not re-declare — it reports the existing
-declaration and points to `proof-conclusion`. If not yet declared, it
-re-evaluates the same question against the five threshold questions and
-the 7-point stop criteria, and may reach a different result as evidence
-changes.
+**On repeat invocation for the same question:** delegate again, unchanged. The agent finds an existing declaration and refines it in place rather than writing a second one; if it is already `declared: true` it reports that and points at proof-conclusion.
 
-**Do not duplicate:** each invocation evaluates exactly one question and
-refines that question's `exhaustive_declaration` in place. Never write a
-second declaration for the same question.
+**Safe to re-invoke.** A repeat run re-evaluates the same question; it never duplicates a declaration.
+
+## Never
+
+- Never write `research.json` yourself — not the declaration, not the question's `status`.
+- Never decide, on the agent's behalf, that a precondition does not apply. If the agent declines and names a blocker, relay that — it is the correct outcome, not a failure to work around.
+- Never clear a blocker the agent reports. A plan item still `in_progress` is finished by the search skill that owns it, an unclassified assertion by record-extraction; flipping a status to unblock a declaration falsifies the record.
+- Never evaluate more than one question per invocation.
