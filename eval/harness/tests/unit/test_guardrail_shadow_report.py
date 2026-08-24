@@ -19,20 +19,26 @@ from e2e.guardrail_shadow_report import (
     format_citation_nulling,
     format_conflict_unpersisted,
     format_detail,
+    format_post_hoc_replay,
     format_summary,
     format_provenance,
     format_provenance_replay,
+    replay_post_hoc,
     replay_provenance,
     scan_citation_nulling,
     scan_conflict_unpersisted,
     scan_corpus,
     scan_provenance,
     scan_one,
+    scan_unnamed_delegate,
+    format_unnamed_delegate,
+    UnnamedDelegateScan,
 )
 from harness.skill_invocation import (
     CITATION_NULLING_KIND,
     CONFLICT_UNPERSISTED_KIND,
     PERSON_EVIDENCE_DENY_KIND,
+    WARNINGS_UNCHECKED_KIND,
 )
 
 
@@ -448,6 +454,33 @@ def test_replay_provenance_ignores_a_write_that_never_landed(tmp_path):
     assert rep.runs_linking == 0  # nothing landed, so nothing to have a gap
 
 
+def test_replay_provenance_ignores_a_no_project_write(tmp_path):
+    """The other way a write never lands (issue #1695): the user was not in a
+    research project, so the tool wrote nothing and returned
+    `reason: "no_project"` — deliberately WITHOUT `is_error`, because that is an
+    answer rather than a failure. Counting it would report a provenance gap for
+    a write that never happened.
+
+    Tested here and not only against the shared `did_not_land` helper because
+    this detector reads a COMMITTED corpus, where the marker arrives inside
+    `response_summary` — a field with its own truncation and double-encoding
+    lifecycle — rather than as a structured key.
+    """
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    # The MCP-envelope shape the orchestrator passes through verbatim for any
+    # response under 500 chars — which this one always is. Testing only the
+    # unwrapped form leaves the detector dark in every real run.
+    no_project = _pe_write("I1") | {
+        "response_summary": json.dumps(
+            [{"type": "text", "text": '{"ok": false, "reason": "no_project"}'}]
+        )
+    }
+    p = _write_replay_run(tmp_path, "fx", "run-1.json", [no_project])
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert rep.violations == []
+    assert rep.runs_linking == 0  # nothing landed, so nothing to have a gap
+
+
 def test_replay_provenance_counts_the_retry_after_a_denial_once(tmp_path):
     """The deny-mode shape end to end: blocked attempt, then an unscored retry
     that lands. Exactly one gap, not two."""
@@ -484,3 +517,463 @@ def test_format_provenance_replay_reports_rate_against_the_denominator(tmp_path)
     text = format_provenance_replay(replay_provenance([a, b], fixtures_root=fixtures))
     assert "2 of 2" in text  # runs with >=1 gap, out of runs that link anyone
     assert "lower bound" in text  # the same-turn caveat is stated, not implied
+
+
+# --- replay_post_hoc: the three post-hoc checks, recomputed over history ------
+# The scan_* readers above report what a run STORED, so each check reads zero
+# over every run made before it shipped — all three landed in August against a
+# corpus that is 84% July. These tests are controls for the REPLAY PLUMBING
+# (sidecar resolution, seed-tree load, per-check skip discipline), not for the
+# detectors: those already have firing predicate controls in
+# test_skill_invocation.py. Breaking a detector reddens those; breaking the
+# plumbing must redden these.
+
+
+def _write_posthoc_run(root, slug, name, *, tool_calls=None, research=None, tree=None):
+    """A committed-run layout: the run log plus its two final-state sidecars.
+    A sidecar passed as None is not written, which is how a skip is provoked."""
+    d = root / "eval" / "runlogs" / "e2e" / slug
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / name
+    p.write_text(json.dumps({"tool_calls": tool_calls or []}), encoding="utf-8")
+    if research is not None:
+        p.with_name(f"{p.stem}.final-research.json").write_text(
+            json.dumps(research), encoding="utf-8"
+        )
+    if tree is not None:
+        p.with_name(f"{p.stem}.final-tree.gedcomx.json").write_text(
+            json.dumps(tree), encoding="utf-8"
+        )
+    return p
+
+
+def _research_nulled_citation(citation=""):
+    """A written conclusion whose supporting assertion reaches a source with no
+    citation string — the shape find_citation_nulling_in_conclusions fires on."""
+    return {
+        "proof_summaries": [
+            {"id": "ps_001", "question_id": "q_001", "supporting_assertion_ids": ["a_001"]}
+        ],
+        "assertions": [{"id": "a_001", "source_id": "src_001", "fact_type": "birth"}],
+        "sources": [{"id": "src_001", "citation": citation}],
+    }
+
+
+def _research_unpersisted_conflict(conflicts):
+    """A concluded question asserting a resolved conflict. With `conflicts` empty
+    nothing structured backs it, which is what the check fires on."""
+    return {
+        "proof_summaries": [
+            {"id": "ps_001", "question_id": "q_001", "resolved_conflict_ids": []}
+        ],
+        "questions": [
+            {
+                "id": "q_001",
+                "exhaustive_declaration": {
+                    "stop_criteria": {
+                        "conflict_resolution": "Birth-year conflict resolved -- census age estimated."
+                    }
+                },
+            }
+        ],
+        "conflicts": conflicts,
+    }
+
+
+def _tree_with_parentchild():
+    """Simplified-GedcomX shape, matching the committed seed trees: a ParentChild
+    carries bare `parent`/`child` id strings (a Couple carries person1/person2).
+    Endpoint values must be hashable — `_relationship_key` puts them in a set."""
+    return {
+        "persons": [{"id": "I1"}, {"id": "I2"}],
+        "relationships": [
+            {"id": "R1", "type": "ParentChild", "parent": "I1", "child": "I2", "subtype": "Biological"}
+        ],
+    }
+
+
+def _tree_edit_call():
+    return {"tool": "mcp__genealogy__tree_edit", "is_error": None}
+
+
+def test_replay_citation_nulling_fires_on_a_synthetic_concluded_source(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_posthoc_run(
+        tmp_path, "fx", "run-1.json", research=_research_nulled_citation(""), tree={}
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert len(rep.citation.violations) == 1
+    v = rep.citation.violations[0]
+    assert v["kind"] == CITATION_NULLING_KIND
+    assert v["fixture"] == "fx"
+    assert "run-1.json" in v["file"]
+    assert rep.citation.runs_scanned == 1
+    assert rep.citation.skipped == []
+
+
+def test_replay_conflict_unpersisted_fires_on_a_synthetic_conclusion(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_posthoc_run(
+        tmp_path, "fx", "run-1.json", research=_research_unpersisted_conflict([]), tree={}
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert len(rep.conflict.violations) == 1
+    assert rep.conflict.violations[0]["kind"] == CONFLICT_UNPERSISTED_KIND
+    assert rep.conflict.runs_scanned == 1
+    assert rep.conflict.skipped == []
+
+
+def test_replay_warnings_unchecked_fires_on_a_synthetic_run(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-1.json",
+        tool_calls=[_tree_edit_call()],
+        research={},
+        tree=_tree_with_parentchild(),
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert len(rep.warnings.violations) == 1
+    assert rep.warnings.violations[0]["kind"] == WARNINGS_UNCHECKED_KIND
+    assert rep.warnings.runs_scanned == 1
+    assert rep.warnings.skipped == []
+
+
+def test_replay_warnings_unchecked_silent_when_the_relationship_is_seeded(tmp_path):
+    """The paired negative, and the one that can tell a LOADED seed tree from a
+    silently missed one: the detector treats starting_tree=None as "everything is
+    new", so without this a replay that never opened the seed fires identically
+    to one that did. That is the defect that put a 59th run in this change's own
+    headline figure before it was caught."""
+    d = tmp_path / "eval" / "tests" / "e2e" / "fx"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "starting-tree.gedcomx.json").write_text(
+        json.dumps(_tree_with_parentchild()), encoding="utf-8"
+    )
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-1.json",
+        tool_calls=[_tree_edit_call()],
+        research={},
+        tree=_tree_with_parentchild(),
+    )
+    rep = replay_post_hoc([p], fixtures_root=d.parent)
+    assert rep.warnings.violations == []
+    assert rep.warnings.runs_scanned == 1
+    assert rep.warnings.skipped == []
+
+
+def test_replay_citation_nulling_silent_on_a_populated_citation(tmp_path):
+    """A POPULATED research.json, plus the denominator assertions. Both detectors
+    return [] on None, so a bare "zero violations" assertion passes even when the
+    sidecar was never opened — the run would then be skipped and scanned zero
+    times, which is what the last two lines catch."""
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-1.json",
+        research=_research_nulled_citation(
+            "1850 U.S. Census, Schuylkill Co., Pa., dwelling 84."
+        ),
+        tree={},
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert rep.citation.violations == []
+    assert rep.citation.runs_scanned == 1
+    assert rep.citation.skipped == []
+
+
+def test_replay_conflict_unpersisted_silent_when_a_resolved_conflict_backs_it(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-1.json",
+        research=_research_unpersisted_conflict(
+            [{"id": "c_001", "status": "resolved", "blocks_question_ids": ["q_001"]}]
+        ),
+        tree={},
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert rep.conflict.violations == []
+    assert rep.conflict.runs_scanned == 1
+    assert rep.conflict.skipped == []
+
+
+def test_replay_post_hoc_names_a_run_with_no_seed_tree_and_still_scans_research_only(tmp_path):
+    """The per-check denominators. One run in the corpus today
+    (william-ferber-ancestry) has a committed run log and no fixture directory.
+    It cannot be scanned for warnings-unchecked, which needs a baseline — but the
+    two research-only checks need no tree at all, so a single shared skip list
+    would drop it from their denominators too and discard anything it held."""
+    empty_fixtures = tmp_path / "eval" / "tests" / "e2e"
+    empty_fixtures.mkdir(parents=True, exist_ok=True)
+    p = _write_posthoc_run(
+        tmp_path,
+        "orphan",
+        "run-1.json",
+        tool_calls=[_tree_edit_call()],
+        research=_research_nulled_citation(""),
+        tree=_tree_with_parentchild(),
+    )
+    rep = replay_post_hoc([p], fixtures_root=empty_fixtures)
+
+    assert len(rep.warnings.skipped) == 1
+    assert "orphan/run-1.json" in rep.warnings.skipped[0]
+    assert rep.warnings.runs_scanned == 0
+    assert rep.warnings.violations == []
+
+    assert rep.citation.skipped == []
+    assert rep.citation.runs_scanned == 1
+    assert len(rep.citation.violations) == 1
+    assert rep.conflict.runs_scanned == 1
+
+
+def test_replay_post_hoc_names_a_run_with_no_research_sidecar(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_posthoc_run(tmp_path, "fx", "run-1.json", tool_calls=[], tree={})
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert len(rep.citation.skipped) == 1
+    assert "final-research" in rep.citation.skipped[0]
+    assert rep.citation.runs_scanned == 0
+    assert len(rep.conflict.skipped) == 1
+
+
+def test_replay_post_hoc_names_a_sidecar_that_is_json_but_not_an_object(tmp_path):
+    """A sidecar holding a JSON ARRAY must be named as unreadable, not handed to
+    a detector. It is not None, so without the isinstance guard in `_load_json`
+    it passes every skip test and then hits `.get(...)` — an AttributeError that
+    aborts the whole corpus report instead of skipping one run."""
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_posthoc_run(tmp_path, "fx", "run-1.json", tool_calls=[], tree={})
+    p.with_name(f"{p.stem}.final-research.json").write_text("[]", encoding="utf-8")
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert rep.citation.runs_scanned == 0
+    assert len(rep.citation.skipped) == 1
+    assert "final-research" in rep.citation.skipped[0]
+
+
+def test_replay_post_hoc_names_a_sidecar_with_invalid_utf8(tmp_path):
+    """UnicodeDecodeError is a ValueError, not an OSError, so a file with invalid
+    UTF-8 propagates out of `_load_json` unless caught explicitly."""
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_posthoc_run(tmp_path, "fx", "run-1.json", tool_calls=[], tree={})
+    p.with_name(f"{p.stem}.final-research.json").write_bytes(b'{"a": "\xff\xfe"}')
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert rep.citation.runs_scanned == 0
+    assert len(rep.citation.skipped) == 1
+
+
+def test_replay_post_hoc_names_an_unreadable_run_log(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    d = tmp_path / "eval" / "runlogs" / "e2e" / "fx"
+    d.mkdir(parents=True, exist_ok=True)
+    bad = d / "run-1.json"
+    bad.write_text("{ not json", encoding="utf-8")
+    rep = replay_post_hoc([bad], fixtures_root=fixtures)
+    for check in (rep.citation, rep.conflict, rep.warnings):
+        assert check.runs_scanned == 0
+        assert len(check.skipped) == 1
+        assert "run-1.json" in check.skipped[0]
+
+
+def test_format_post_hoc_replay_prints_each_denominator_separately(tmp_path):
+    empty_fixtures = tmp_path / "eval" / "tests" / "e2e"
+    empty_fixtures.mkdir(parents=True, exist_ok=True)
+    p = _write_posthoc_run(
+        tmp_path,
+        "orphan",
+        "run-1.json",
+        tool_calls=[_tree_edit_call()],
+        research=_research_nulled_citation(""),
+        tree=_tree_with_parentchild(),
+    )
+    out = format_post_hoc_replay(replay_post_hoc([p], fixtures_root=empty_fixtures))
+    assert "citation-nulling" in out and "of 1 scanned" in out
+    assert "warnings-unchecked" in out and "of 0 scanned" in out
+    assert "orphan/run-1.json" in out  # the skip is named, not swallowed
+    # Counts, never rates: architecture.md forbids quoting a violation rate.
+    assert "%" not in out
+
+
+def test_replay_post_hoc_lines_appear_in_main_under_replay(tmp_path, capsys, monkeypatch):
+    """The test that pins the DELIVERABLE. Every other test here calls
+    replay_post_hoc directly, so all of them stay green while main() still prints
+    only the provenance family — i.e. while the report still cannot see history."""
+    import e2e.guardrail_shadow_report as mod
+
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-2026-07-01_00-00-00.json",
+        tool_calls=[_tree_edit_call()],
+        research=_research_nulled_citation(""),
+        tree=_tree_with_parentchild(),
+    )
+    monkeypatch.setattr(mod, "E2E_FIXTURES", fixtures)
+    monkeypatch.setattr(mod, "all_result_jsons", lambda: [p])
+
+    assert mod.main(["--replay", "--since", "all"]) == 0
+    out = capsys.readouterr().out
+    assert "Post-hoc checks REPLAYED" in out
+    for label in ("citation-nulling", "conflict-unpersisted", "warnings-unchecked"):
+        assert label in out
+    # Every check must have actually SCANNED the run, not skipped it. Asserting
+    # only the labels is not enough: they print unconditionally, so the test
+    # passed while main()'s seed-tree lookup missed entirely and
+    # warnings-unchecked reported "of 0 scanned". These two lines are what tie
+    # the pinned deliverable to working wiring.
+    assert "of 1 scanned" in out
+    assert "Skipped" not in out.split("Post-hoc checks REPLAYED")[1]
+    assert "warnings-unchecked        1 run(s)" in out
+    # §11 unnamed-delegate (issue #980) must ALSO print in main(), WITH its
+    # attribution denominator — the number the issue insists on. Guards the main()
+    # wiring + the denominator on this controlled 1-run corpus, so deleting the
+    # §11 print, or the denominator from its format string, fails a test.
+    assert "§11 unnamed-delegate" in out
+    assert "carry any caller attribution at all" in out
+
+
+def test_stored_unnamed_delegate_line_prints_in_main_without_replay(
+    tmp_path, capsys, monkeypatch
+):
+    """The §11 STORED line + its denominator must print on the DEFAULT
+    `make e2e-guardrail-shadow` (no --replay), not only under --replay. The other
+    main() test pins the replay path; without this, gating the §11 print behind
+    `if args.replay:` would drop it from the default command with every test still
+    green — the can't-fail shape on the feature's own most-common output."""
+    import e2e.guardrail_shadow_report as mod
+
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    d = tmp_path / "eval" / "runlogs" / "e2e" / "antonio"
+    d.mkdir(parents=True, exist_ok=True)
+    run = d / "run-2026-07-01_00-00-00.json"
+    run.write_text(
+        json.dumps(
+            {
+                "protected_writes_by_unnamed_delegate": [
+                    "tool_calls[5] extraction_append ... general-purpose"
+                ],
+                "tool_calls": [
+                    {"tool": "Read", "agent_id": "s1", "agent_type": "general-purpose"}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(mod, "E2E_FIXTURES", fixtures)
+    monkeypatch.setattr(mod, "all_result_jsons", lambda: [run])
+
+    assert mod.main(["--since", "all"]) == 0
+    out = capsys.readouterr().out
+    assert "§11 unnamed-delegate" in out
+    assert "1 protected write(s)" in out
+    assert "of 1 run(s) that carry any caller attribution at all" in out
+    # the replay-only line must NOT appear without --replay.
+    assert "replayed over tool_calls" not in out
+
+
+# --- scan_unnamed_delegate (issue #980) ------------------------------------
+
+
+def _write_delegate_run(dir_, name, *, flagged, tool_calls):
+    """A run JSON carrying both the stored `protected_writes_by_unnamed_delegate`
+    list and a `tool_calls` ledger (for the replay + attribution denominator)."""
+    dir_.mkdir(parents=True, exist_ok=True)
+    (dir_ / name).write_text(
+        json.dumps(
+            {"protected_writes_by_unnamed_delegate": flagged, "tool_calls": tool_calls}
+        ),
+        encoding="utf-8",
+    )
+    return dir_ / name
+
+
+def test_scan_unnamed_delegate_counts_stored_affected_and_attribution(tmp_path):
+    # A: attributed (agent_id present) AND flagged.
+    a = _write_delegate_run(
+        tmp_path / "fix-a",
+        "run-a.json",
+        flagged=["tool_calls[5] extraction_append ... general-purpose"],
+        tool_calls=[{"tool": "Read", "agent_id": "s1", "agent_type": "general-purpose"}],
+    )
+    # B: attributed but clean (no stored flags).
+    b = _write_delegate_run(
+        tmp_path / "fix-b",
+        "run-b.json",
+        flagged=[],
+        tool_calls=[{"tool": "Read", "agent_id": "s2", "agent_type": "record-extractor"}],
+    )
+    # C: NOT attributed (no agent_id on any entry) and clean — the denominator
+    # must exclude it, since the check could not fire on it.
+    c = _write_delegate_run(
+        tmp_path / "fix-c", "run-c.json", flagged=[], tool_calls=[{"tool": "Read"}]
+    )
+
+    scan = scan_unnamed_delegate([a, b, c], replay=False)
+    assert len(scan.stored) == 1
+    assert scan.runs_stored_affected == 1
+    assert scan.runs_attributed == 2  # A and B, not C
+    assert scan.runs_scanned == 3
+    assert scan.stored[0]["fixture"] == "fix-a"
+
+
+def test_scan_unnamed_delegate_replay_recomputes_from_tool_calls(tmp_path):
+    # Stored field is empty, but the tool_calls carry a real violation (an
+    # extraction_append by a non-record-extractor delegate). Only the replay
+    # sees it — this is the half that reflects a later detector change.
+    r = _write_delegate_run(
+        tmp_path / "fix-r",
+        "run-r.json",
+        flagged=[],
+        tool_calls=[
+            {"tool": "extraction_append", "agent_id": "s1", "agent_type": "general-purpose"}
+        ],
+    )
+    scan = scan_unnamed_delegate([r], replay=True)
+    assert scan.stored == []
+    assert len(scan.replayed) == 1
+    assert scan.runs_replay_affected == 1
+    # And the namespaced spelling is tolerated on replay: a namespaced
+    # record-extractor is NOT flagged (guards the #980 spelling fix end to end).
+    ok = _write_delegate_run(
+        tmp_path / "fix-ok",
+        "run-ok.json",
+        flagged=[],
+        tool_calls=[
+            {
+                "tool": "extraction_append",
+                "agent_id": "s2",
+                "agent_type": "genealogy-research:record-extractor",
+            }
+        ],
+    )
+    assert scan_unnamed_delegate([ok], replay=True).replayed == []
+
+
+def test_format_unnamed_delegate_always_prints_the_attribution_denominator():
+    """The denominator is the whole point (issue #980): without it "1 in N" reads
+    as "almost never fires". Guard the FORMAT output, not just the scan — dropping
+    the denominator from the format string must fail HERE, or the feature's own
+    output is a can't-fail check (the #1804/#1797 shape)."""
+    scan = UnnamedDelegateScan(
+        stored=[{"detail": "x", "file": "f", "fixture": "fx"}],
+        replayed=[{"detail": "x", "file": "f", "fixture": "fx"}],
+        runs_stored_affected=1,
+        runs_replay_affected=1,
+        runs_attributed=20,
+        runs_scanned=159,
+    )
+    out = format_unnamed_delegate(scan, replay=True)
+    assert "1 protected write" in out
+    assert "of 20 run(s) that carry any caller attribution at all" in out  # denominator
+    assert "159 scanned" in out
+    assert "replayed over tool_calls" in out  # replay line present under replay=True
+    # replay=False omits the replay line but keeps the stored count + denominator.
+    plain = format_unnamed_delegate(scan, replay=False)
+    assert "replayed over tool_calls" not in plain
+    assert "of 20 run(s) that carry any caller attribution at all" in plain

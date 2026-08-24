@@ -16,11 +16,18 @@ This is a *report*, not a pass/fail gate: the corpus grows weekly and the
 reconstruction rate moves with it. Run it after any change to `replay.py` and
 compare against the recorded baseline below.
 
-    Baseline, 2026-08-15, 154 runs:
-      exact id match on all 12 sections : 136 (88%)
-      1-2 sections differ               :  13
-      3+ sections differ                :   5
-      per-section exact-match rate      : 94-100%
+    Baseline, 2026-08-23, 159 runs:
+      exact id match on all 12 sections :  22 (13%)
+      1-2 sections differ               :   1
+      3+ sections differ                : 136
+      per-section exact-match rate      : 14-100%
+
+Down from 136/154 (88%) recorded 2026-08-15. The cause is the e2e capture strip,
+not this engine: the strip dropped the `response_summary` the ids are read out
+of. Runs already stripped are not recoverable, so the rate returns only as new
+runs age in, and the whole-run figure is dominated by the two worst sections —
+read the per-section table, where `questions` and `plans` sit at 14% and
+`timelines` at 100%.
 
 Two ledger properties bound this permanently and are why it is not 100%:
 responses are truncated mid-JSON (~1,600 of ~4,800), and a large batch reports

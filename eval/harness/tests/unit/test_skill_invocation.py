@@ -238,6 +238,44 @@ def test_flags_the_read_and_improvise_bypass_shape():
     assert violations[0]["required_skill"] == "person-evidence"
 
 
+def _no_project_summary(escaped: bool) -> str:
+    """The two shapes `response_summary` actually arrives in.
+
+    `escaped=True` is the MCP envelope the e2e orchestrator passes through
+    VERBATIM for any response under 500 chars — which the no-project response
+    always is, at 236 chars enveloped (248 for the read variant), making this the
+    DOMINANT production shape. A detector tested only against the unwrapped form
+    is dark in every real run.
+    """
+    doc = '{"ok": false, "reason": "no_project", "errors": ["not a project"]}'
+    if not escaped:
+        return doc
+    return json.dumps([{"type": "text", "text": doc}])
+
+
+@pytest.mark.parametrize("escaped", [True, False], ids=["mcp-envelope", "unwrapped"])
+def test_does_not_flag_a_no_project_write_that_never_landed(escaped):
+    """Issue #1695. A no-project write persisted nothing and deliberately
+    carries NO `is_error` — it is an answer, not a failure. Counting it would
+    manufacture a protected-write violation for a write that never happened,
+    in paid e2e grading.
+
+    Parametrized over both shapes because the envelope one is what production
+    emits, and a quoted-key match passes the unwrapped case while failing it.
+    """
+    call = _mcp_call("research_append", {"section": "proof_summaries", "entry": {"question_id": "q_001", "tier": "probable"}})
+    call["response_summary"] = _no_project_summary(escaped)
+    assert find_unguarded_protected_writes([call], window=10) == []
+
+
+def test_still_flags_a_landed_write_whose_payload_merely_mentions_no_project():
+    """The marker is the underscored token, not the English words — without this
+    the test above would pass on a check that skipped everything."""
+    call = _mcp_call("research_append", {"section": "proof_summaries", "entry": {"question_id": "q_001", "tier": "probable"}})
+    call["response_summary"] = '{"ok":true,"entryId":"ps_001","note":"no project needed"}'
+    assert len(find_unguarded_protected_writes([call], window=10)) == 1
+
+
 def test_flags_the_untyped_agent_bypass_shape():
     """An Agent call with no subagent_type never sets skill_name_if_skill_call
     to anything, so it never opens a window either."""
@@ -795,6 +833,18 @@ def test_extraction_append_by_unnamed_delegate_flagged():
     assert "record-extractor" in violations[0]
 
 
+def test_unhashable_agent_type_flags_without_raising():
+    """An unhashable agent_type (a list/dict -- never stamped by the SDK, which
+    emits str|None) must not crash the `in DEDICATED_AGENT_NAMES` membership test
+    under a corpus-wide replay, and must still flag (the safe over-flag
+    direction). Guards the else-None normalization at skill_invocation.py: revert
+    it to `else agent_type` and this raises TypeError instead of flagging."""
+    owned = find_protected_writes_by_unnamed_delegate(
+        [_owned_write("person-evidence", agent_id="a1", agent_type=["genealogy-research"])]
+    )
+    assert len(owned) == 1 and "person-evidence" in owned[0]
+
+
 def test_extraction_append_by_unnamed_delegate_still_flagged_when_errored():
     """The is_error skip that used to sit before this branch split (issue #1569)
     covered the extraction_append path too -- pin it separately from the
@@ -813,6 +863,42 @@ def test_extraction_append_by_wrong_dedicated_agent_still_flagged():
     calls = [_extraction_call(agent_id="a1", agent_type="gps-mentor")]
     violations = find_protected_writes_by_unnamed_delegate(calls)
     assert len(violations) == 1
+
+
+def test_namespaced_record_extractor_treated_as_bare():
+    """Cowork logs a plugin-namespaced agent_type ("genealogy-research:record-extractor")
+    while the harness reports bare names (#980 ruling; live probe 2026-08-15). The
+    detector must strip the leading "<plugin>:" before comparing, on BOTH clauses,
+    or an equality/membership test green in CI is dead against production data
+    (#650/#698/#939). Bare and namespaced must behave identically."""
+    # extraction_append clause (== "record-extractor")
+    assert (
+        find_protected_writes_by_unnamed_delegate(
+            [_extraction_call(agent_id="a1", agent_type="genealogy-research:record-extractor")]
+        )
+        == []
+    )
+    # owning_skills clause (in DEDICATED_AGENT_NAMES)
+    assert (
+        find_protected_writes_by_unnamed_delegate(
+            [_owned_write("person-evidence", agent_id="a1", agent_type="genealogy-research:record-extractor")]
+        )
+        == []
+    )
+
+
+def test_namespaced_general_purpose_still_flagged():
+    """The prefix strip must not over-exempt: a namespaced NON-dedicated agent
+    still flags on both clauses (guards against stripping turning every
+    namespaced caller into a pass)."""
+    ext = find_protected_writes_by_unnamed_delegate(
+        [_extraction_call(agent_id="a1", agent_type="genealogy-research:general-purpose")]
+    )
+    assert len(ext) == 1 and "record-extractor" in ext[0]
+    owned = find_protected_writes_by_unnamed_delegate(
+        [_owned_write("person-evidence", agent_id="a1", agent_type="genealogy-research:general-purpose")]
+    )
+    assert len(owned) == 1 and "person-evidence" in owned[0]
 
 
 def test_gps_mentor_evaluations_write_not_flagged():
@@ -1489,6 +1575,26 @@ def test_warnings_unchecked_still_fires_when_the_call_errored():
     assert len(out) == 1
 
 
+def test_warnings_unchecked_still_fires_on_a_no_project_person_warnings_call():
+    """Issue #1695, and note the INVERTED polarity against the write detectors.
+
+    Everywhere else `did_not_land` makes a detector SKIP a call. Here it must
+    stop a call being CREDITED: a no-project person_warnings checked no tree, so
+    crediting it would mark the guardrail consulted when it never ran — a MISSED
+    violation, which is silent. That is why this test exists rather than being
+    folded into the write-side one.
+    """
+    call = _person_warnings_call()
+    # The MCP-envelope shape, i.e. what production actually emits.
+    call["response_summary"] = _no_project_summary(escaped=True)
+    out = find_relationship_writes_without_warnings_check(
+        [call],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert len(out) == 1
+
+
 def test_warnings_unchecked_matches_the_tool_under_any_server_spelling():
     """bare_tool_name strips the mcp__<server>__ prefix, so the on-computer /
     bridge spellings are recognized too."""
@@ -1546,3 +1652,32 @@ def test_warnings_unchecked_no_relationship_no_finding():
 def test_warnings_unchecked_defensive_on_none():
     assert find_relationship_writes_without_warnings_check(None, None) == []
     assert find_relationship_writes_without_warnings_check([], {}) == []
+
+
+def test_dedicated_agent_names_matches_the_shipped_agent_files():
+    """The set must name every agent that ships, and nothing else.
+
+    `DEDICATED_AGENT_NAMES`'s own comment warns that adding an agent file
+    without updating it makes `find_protected_writes_by_unnamed_delegate`
+    under-flag — a false NEGATIVE, so silent. Nothing enforced that:
+    `test_dedicated_agent_write_not_flagged` above iterates the set, so it
+    passes whatever the set happens to contain and cannot see a missing member.
+    Removing `research-exhaustiveness` from the set left the whole harness suite
+    green, which is the shape `CLAUDE.md` calls worse than no check at all.
+
+    Deriving it from the directory also closes the reverse direction: a name
+    left behind after an agent file is deleted silently exempts a caller that no
+    longer exists.
+    """
+    repo_root = Path(__file__).resolve().parents[4]
+    agents_dir = repo_root / "packages" / "engine" / "plugin" / "agents"
+    shipped = {p.stem for p in agents_dir.glob("*.md")}
+    assert shipped, f"no agent files found under {agents_dir}"
+    assert set(DEDICATED_AGENT_NAMES) == shipped, (
+        "DEDICATED_AGENT_NAMES is out of step with packages/engine/plugin/agents/. "
+        f"Only in the set: {sorted(set(DEDICATED_AGENT_NAMES) - shipped)}; "
+        f"only on disk: {sorted(shipped - set(DEDICATED_AGENT_NAMES))}. "
+        "An agent on disk but not in the set makes every protected write it "
+        "makes read as an unnamed-delegate bypass — the detector fires hardest "
+        "on exactly the runs that did the right thing."
+    )

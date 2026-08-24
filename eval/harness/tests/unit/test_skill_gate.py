@@ -19,7 +19,6 @@ from skill_gate import (  # noqa: E402
     compare,
     compute_signal,
     find_test_path_by_id,
-    holdout_test_paths,
     incumbent_baseline,
     scores_of,
 )
@@ -78,9 +77,7 @@ def test_compare_handles_missing_candidate_side():
 def test_signal_looks_good_when_fix_lands_and_no_regression():
     mined = compare(_scores([("base", "Correctness", 1)]),
                     scores_of(_entry([("base", "Correctness", 3)])))
-    holdout = {"ut_h_001": compare(_scores([("base", "Completeness", 3)]),
-                                   scores_of(_entry([("base", "Completeness", 3)])))}
-    sig = compute_signal(mined, holdout)
+    sig = compute_signal(mined)
     assert sig.verdict == "LOOKS GOOD"
     assert any("named fix landed" in r for r in sig.reasons)
 
@@ -88,37 +85,39 @@ def test_signal_looks_good_when_fix_lands_and_no_regression():
 def test_signal_inconclusive_when_failure_does_not_reproduce():
     mined = compare(_scores([("base", "Correctness", 3)]),  # incumbent already passes
                     scores_of(_entry([("base", "Correctness", 3)])))
-    assert compute_signal(mined, {}).verdict == "INCONCLUSIVE"
+    assert compute_signal(mined).verdict == "INCONCLUSIVE"
 
 
 def test_signal_needs_eyes_when_fix_does_not_land():
     mined = compare(_scores([("base", "Correctness", 1)]),
                     scores_of(_entry([("base", "Correctness", 2)])))  # still not pass
-    sig = compute_signal(mined, {})
+    sig = compute_signal(mined)
     assert sig.verdict == "NEEDS YOUR EYES"
     assert any("did NOT land" in r for r in sig.reasons)
 
 
-def test_signal_needs_eyes_on_holdout_regression_even_if_fix_lands():
-    mined = compare(_scores([("base", "Correctness", 1)]),
-                    scores_of(_entry([("base", "Correctness", 3)])))
-    holdout = {"ut_h_001": compare(_scores([("rubric", "Locality depth", 3)]),
-                                   scores_of(_entry([("rubric", "Locality depth", 2)])))}
-    sig = compute_signal(mined, holdout)
+def test_signal_needs_eyes_on_regression_even_if_fix_lands():
+    # The fix landed on Correctness, but another dimension of the same motivating
+    # test regressed -> the gate must not report LOOKS GOOD.
+    mined = compare(
+        _scores([("base", "Correctness", 1), ("rubric", "Locality depth", 3)]),
+        scores_of(_entry([("base", "Correctness", 3), ("rubric", "Locality depth", 2)])),
+    )
+    sig = compute_signal(mined)
     assert sig.verdict == "NEEDS YOUR EYES"
     assert any("regression" in r for r in sig.reasons)
 
 
 def test_signal_needs_eyes_when_a_gate_test_is_ungraded():
-    # A holdout test that aborted on the candidate produces no dims -> baseline
-    # graded it, candidate scored None. That can't be a "regression" score-wise,
-    # but it must block LOOKS GOOD (we can't confirm no regression). Regression
-    # of the ut_citation_014 dry-run bug.
-    mined = compare(_scores([("base", "Correctness", 1)]),
-                    scores_of(_entry([("base", "Correctness", 3)])))  # fix landed
-    holdout = {"ut_h_001": compare(_scores([("base", "Completeness", 3)]),
-                                   scores_of({}))}  # candidate: no dims (aborted)
-    sig = compute_signal(mined, holdout)
+    # The fix landed on Correctness, but a dimension the baseline graded is absent
+    # on the candidate (the run aborted or the judge was skipped) -> candidate
+    # scored None. That can't be a "regression" score-wise, but it must block
+    # LOOKS GOOD, because we can't confirm no regression.
+    mined = compare(
+        _scores([("base", "Correctness", 1), ("base", "Completeness", 3)]),
+        scores_of(_entry([("base", "Correctness", 3)])),  # Completeness missing
+    )
+    sig = compute_signal(mined)
     assert sig.verdict == "NEEDS YOUR EYES"
     assert any("could not be graded" in r for r in sig.reasons)
 
@@ -130,35 +129,32 @@ def test_signal_named_dimension_restricts_target():
         _scores([("base", "Correctness", 1), ("base", "Completeness", 3)]),
         scores_of(_entry([("base", "Correctness", 3), ("base", "Completeness", 3)])),
     )
-    assert compute_signal(mined, {}, named_dimension="Completeness").verdict == "INCONCLUSIVE"
+    assert compute_signal(mined, named_dimension="Completeness").verdict == "INCONCLUSIVE"
 
 
 def test_signal_named_dimension_absent_is_flagged():
     mined = compare(_scores([("base", "Correctness", 1)]),
                     scores_of(_entry([("base", "Correctness", 3)])))
-    sig = compute_signal(mined, {}, named_dimension="Nonexistent Dim")
+    sig = compute_signal(mined, named_dimension="Nonexistent Dim")
     assert sig.verdict == "NEEDS YOUR EYES"
     assert any("not scored" in r for r in sig.reasons)
 
 
-# ---- holdout / id resolution --------------------------------------------
+# ---- id resolution -------------------------------------------------------
 
 
-def _write_test(dir_: Path, tid: str, *, holdout: bool) -> Path:
+def _write_test(dir_: Path, tid: str) -> Path:
     p = dir_ / f"{tid}.json"
-    p.write_text(json.dumps({"test": {"id": tid, "holdout": holdout}}),
-                 encoding="utf-8")
+    p.write_text(json.dumps({"test": {"id": tid}}), encoding="utf-8")
     return p
 
 
-def test_holdout_paths_and_find_by_id(tmp_path):
+def test_find_test_path_by_id(tmp_path):
     skill_dir = tmp_path / "citation"
     skill_dir.mkdir()
-    h1 = _write_test(skill_dir, "ut_citation_h1", holdout=True)
-    _write_test(skill_dir, "ut_citation_002", holdout=False)
+    _write_test(skill_dir, "ut_citation_002")
     (skill_dir / "rubric.md").write_text("# rubric", encoding="utf-8")
 
-    assert holdout_test_paths(skill_dir) == [h1]
     assert find_test_path_by_id("ut_citation_002", skill_dir).name == "ut_citation_002.json"
     assert find_test_path_by_id("nope", skill_dir) is None
 
