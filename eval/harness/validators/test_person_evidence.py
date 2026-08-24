@@ -576,6 +576,17 @@ def test_check_warnings_runs_after_a_write(before_state, after_state, skills_inv
     writes to the tree. Trigger differs because the skills write different
     things: tree-edit keys off the tree changing, person-evidence off a new
     `pe_` entry or a new tree person, either of which is a write §8 covers.
+
+    **What this does NOT assert.** That the impossibility check actually ran.
+    No test in either directory declares a `person-warnings-*` mcp_fixture (13
+    exist under `eval/fixtures/mcp/`), so `check-warnings` reaches
+    `person_warnings`, finds no fixture, and reports the tool unavailable —
+    which is what `ut_person_evidence_027` did on `v1_2026-08-24_18-17-08`
+    ("the offline impossibility check cannot run"). This assertion therefore
+    covers the delegation, not its result. #1657's docstring states the
+    fixture gap was "now fixed alongside this validator"; it was not, on
+    either side. Referencing a fixture from a test is what would close it,
+    and that edit flips the run-log snapshot.
     """
     before = before_state.get("research_json")
     after = after_state.get("research_json")

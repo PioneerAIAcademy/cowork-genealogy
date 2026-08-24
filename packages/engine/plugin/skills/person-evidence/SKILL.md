@@ -442,7 +442,9 @@ and no name assertion of her own, so `materialize_facts` has nothing to mint
 from. Create her with `tree_edit add_person` (gender plus the name the record
 gives), then link per Step 4. This is the **only** case where `tree_edit
 add_person` is correct; a persona that has its own `record_role` always goes
-through `materialize_facts`.
+through `materialize_facts`. The person takes `gender` and
+`names: [{ given, surname, type }]` — the simplified shape, **not** GedcomX's
+`nameForms`.
 
 **Stub person rules:**
 - Then create the `pe_` entry (Step 4) linking the assertion to the
@@ -575,7 +577,10 @@ hands a merge set to proof-conclusion to fold. For a household record:
    spouse-spouse relationships this record establishes and issue a single
    `tree_edit({ ops: [...] })` call — one
    `{ operation: "add_relationship", relationship: {...}, sourceAssertionId }`
-   entry per edge — rather than one `tree_edit` call per edge. Pass
+   entry per edge — rather than one `tree_edit` call per edge. `relationship.type`
+   is the bare `ParentChild` or `Couple`, **not** the `http://gedcomx.org/…`
+   URI; endpoints are `parent`/`child` for ParentChild and `person1`/`person2`
+   for Couple. Pass
    **`sourceAssertionId`** (the `id` of the `relationship`-type assertion
    this edge comes from) — do **not** hand-walk `assertion.source_id →
    research source → tree S-entry` and supply a literal
