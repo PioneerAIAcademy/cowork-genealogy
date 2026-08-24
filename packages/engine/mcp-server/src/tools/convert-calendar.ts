@@ -116,8 +116,11 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
   const applied: AppliedCorrection[] = [];
   const notes: string[] = [];
 
-  // 1. Double-dated year → the later (New Style) year. The slash already signals
-  //    the Jan 1–Mar 24 boundary, so the New-Style year is always +1.
+  // 1. Double-dated year → the later (New Style) year. Inside the Jan 1–Mar 24
+  //    window the New-Style year is always +1; outside it there is nothing to
+  //    resolve, so the guard below refuses rather than bumping. (This comment
+  //    used to assert the slash *proved* the window, which is what let the
+  //    unguarded bump ship — see issue #1654.)
   if (c.doubleDatedYear) {
     // A legitimate double date spans consecutive years, so the New-Style year is
     // always year + 1; the recorded "/N" must be consistent with that.

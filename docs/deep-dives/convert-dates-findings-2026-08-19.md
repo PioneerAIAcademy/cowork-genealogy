@@ -487,12 +487,23 @@ error F3 is about, and would have written it into a researcher's notes.
 noting rather than refusing a March date with no day, and leaving a year-only
 input alone so the spec's documented `{1750, doubleYear:1}` case still resolves.
 
-The instructive part is the spread. **Five places carried the same error:**
+The instructive part is the spread. **Seven places carried the same error** —
+five in code and tests, plus two in the spec that review found and that would have
+re-seeded it: §5b used "25 March 1750/1" as the worked example for two corrections
+that now disagree by a year on exactly that date, and §8's test plan named the same
+date. All seven are fixed here. The five originally counted:
 `convert-calendar.ts`, its vitest case (which asserted `{1750, month:3, day:25}`
 → 1751, i.e. the test *encoded* the bug), a second vitest case using the same
 date incidentally, `convert-dates/SKILL.md`'s worked example, and
 `ut_convert_dates_007`'s input. Each looked locally consistent because they all
 agreed with each other. Full vitest after the fix: 102 files, 2443 tests, green.
+
+**It reaches a second skill, too.** `conflict-resolution/SKILL.md` declares
+`convert_calendar` as well, so registering it live changes that skill's next run
+while its committed run logs stay active — `LIVE_TOOLS` is not snapshot-tracked.
+Net positive (a tool it declares becomes callable), but it is a cross-skill effect
+from a single-skill PR, and the next person to run `conflict-resolution` should
+know it moved underneath them.
 
 **And this one hides from the run-log snapshot.** MCP source is deliberately not
 snapshotted, but `LIVE_TOOLS` executes the *compiled* build — so a tool fix
@@ -514,6 +525,22 @@ after that change and failed the next.
 **Should:** a routing test should discriminate on the routing rule, not on
 sampling noise.
 
+**It is not the judge-prompt change, and the timing invites that misreading.**
+`_compute_outcome`'s negative branch (`eval/harness/harness/orchestrator.py`)
+decides a routing negative on **activation alone** — `if activated: return "fail"`
+— and the judge's dimensions do not gate it. So:
+
+| | what the skill did | outcome |
+|---|---|---|
+| run 3 | `tool_calls: []` → did not activate | pass |
+| run 4 | called `convert_calendar {doubleDatedYear: true}` → activated | fail |
+
+That is a behaviour flip in the skill; the judge prompt has no influence on
+`activated`. A reviewer proposed the opposite reading — that the F5 fix made the
+negative-test context bind and so graded `_012` as written — and asked to be
+confirmed or corrected rather than agreed with. **Corrected:** the code path shows
+the judge cannot reach this outcome.
+
 **Gap: lane 2, and the cause is not in the body.** `convert-dates`'s **description
 frontmatter** advertises `double-dated years (e.g. "1749/50")` and, in the same
 paragraph, `date schema validation (use validate-schema)`. `_012`'s input is *"Is
@@ -524,8 +551,50 @@ description defers. The test sits on the boundary by construction, so it flaps.
 Three ways out, none a body edit: change the test's input to a double date the
 description does not name; drop the `(e.g. "1749/50")` example from the
 description, which is optimiser-owned and shifts routing corpus-wide; or accept it
-as known-flaky and stop reading its individual outcomes. **Left for the lead** —
-the middle option touches an optimiser-owned field.
+as known-flaky and stop reading its individual outcomes. **Left for the lead** — a
+description edit invalidates the run log and pulls in the routing pairs, so it does
+not belong in this PR.
+
+**One thing was free and is done:** `_012` now carries the
+`no-spurious-conversion` tag. Tags are stripped before hashing
+(`snapshot.py::_COSMETIC_TEST_FIELDS`), so this does not flip the run log —
+verified. `test_no_spurious_conversion` gates on that tag rather than on test type,
+so the next run grades `_012`'s spurious `convert_calendar` call as a
+**deterministic validator failure** instead of leaving it to a judge narration.
+That is this dive's own thesis applied to its last open failure.
+
+---
+
+### F11 — the tool accepts impossible dates, and `_013` is the one test that could send one
+
+**Did:** `convertCalendar` validates `day` as 1–31 without reference to `month`,
+so an impossible date is accepted and silently normalised. Verified against the
+live handler:
+
+| input | returns |
+|---|---|
+| `{1712, month:2, day:30}` + `julianToGregorianDay` | `ok: true`, Gregorian **12 March 1712** |
+| `{1712, month:2, day:29}` (the correct Julian date) | `ok: true`, Gregorian **11 March 1712** |
+
+Julian February 1712 had 29 days, so `day: 30` does not exist in that calendar.
+The tool takes it, rolls into March, and returns an answer one day wrong — with
+`ok: true` and no note.
+
+**Should:** an impossible day/month combination is an input error, the same class
+as `month` outside 1–12, which the tool already rejects.
+
+**Gap: lane 1, pre-existing, out of scope here.** Raised in review and recorded
+because this corpus has exactly one test that could feed it:
+`ut_convert_dates_013` asks about **Swedish 30 February 1712** — a date that
+genuinely existed in the Swedish calendar and in no other. The correct chain routes
+through Julian 29 February, and in run 4 the skill did exactly that. But a model
+passing the Swedish date straight through would get 11 March silently turned into
+12 March: a wrong answer that looks like a right one, on the single test in the
+suite whose input is a real-but-impossible-elsewhere date.
+
+Not fixed here — unrelated to F8's window guard, wants its own vitest cases per
+month, and this PR has already paid for four runs. The fix is a days-in-month check
+inside the existing 1–31 validation, Julian leap rules included.
 
 ---
 
@@ -790,79 +859,91 @@ whole test from `fail` to `pass` (all seven dimensions 3). The rationale inverte
 Same skill, same test, same asserted fact. The judge stopped contradicting an
 established per-test fact, which is what the Facts paragraph was added to stop.
 
-### Authority arm — DISPROVEN, not merely unverified
+### Authority arm — NOT TESTABLE with this canary, and the reason is worse
 
-The `_005` canary **did** present a violation this run: zero of the bullet's named
-example jurisdictions, and no cross-jurisdiction variation conveyed any other way.
-The bullet was genuinely unmet.
+An earlier draft of this section called the Authority arm **disproven**. Review
+corrected that, and the correction matters more than the original claim.
 
-Completeness scored **3**, rationale "The skill addressed all requirements".
+The measurement stands: `_005`'s run-4 response contains **zero** occurrences of
+1582, 1752, England, Catholic, "10 days", "11 days", "vary", "varies",
+"jurisdiction", "country" or "countries". The bullet was genuinely unmet, and
+Completeness scored 3.
 
-So the Authority wording did not work. That is a stronger result than the
-"unverified" this section previously claimed — a measured negative beats an
-absence of evidence. Caveats: n=1, one test, and a `Completeness` case
-specifically. But the arm exists to make exactly that deduction and it did not
-make it.
+But read *why* the judge scored 3:
 
-**What that leaves for the lead.** The Facts half earns its tokens. The Authority
-half is, on this evidence, billed prose on every judge call for every skill that
-changes nothing. Keeping or cutting it is the same global-prompt call that
-authorised it; this dive is not going to iterate on a corpus-wide file one
-unverified wording at a time. Recorded rather than quietly left in.
+> "The skill addressed all requirements: … and **briefly explained that offsets
+> vary by country and time period with examples (10 days for Catholic Europe
+> 1582, 11 days for England 1752)**."
 
-## The three full runs, and why the suite is not green
+The judge did not weigh a known-unmet requirement and decline to deduct. It
+asserted the requirement **was met**, and **invented the two parenthetical
+examples** — which appear nowhere in the response it was grading. No wording in
+"Which rule wins" can bind a grader that believes the bullet was satisfied, so
+`_005` never exercised the Authority arm at all.
 
-| | Run 1 | Run 2 | Run 3 (committed) |
-|---|---|---|---|
-| Outcome | 15 pass, 1 fail | 12 pass, 1 partial, 2 fail, 1 aborted | **14 pass, 1 partial, 1 fail** |
-| Cost / wall | $1.56 / 351s | $1.06 / 613s | $1.10 / 359s |
-| Judge time | 139s | **300s** | 172s |
-| Transient retries | 0 | **1** | 0 |
-| Environment | clean | **degraded** | clean |
+**So the Authority paragraph is untested, not ineffective**, and "billed prose
+that changes nothing" was a stronger conclusion than one observation supports.
+It stays.
 
-**Run 2 carries no corpus signal and should not be read as one.** Its two "fails"
-were judge API timeouts — `_001`'s judge ran 108s and `_008`'s 56s before giving
-up, against a 4–14s norm in the same run, returning zero dimensions on responses
-of 1034 and 1185 characters. `_012` never reached the judge at all (wall-clock
-cap, judge time 0ms). The skill worked; the grader did not answer.
+### F10 — the judge fabricates compliance, and that defeats every per-test requirement at once
 
-**A harness reporting gap made that look like a skill regression.** A judge
-timeout produces a bare `fail`, indistinguishable in the summary table from the
-skill getting the answer wrong — while skill-side aborts print their reason
-(`aborted [max_wall_clock_seconds]`). `eval/CLAUDE.md` says a result with nothing
-gradeable is `aborted` with a reason; a judge-side failure does not follow that
-rule. Worth a `nothing-checks` label: it converts an API outage into what reads
-as two regressions.
+**Did:** `_005`, run `v1_2026-08-21_19-59-34`, Completeness 3, rationale quoting
+"examples (10 days for Catholic Europe 1582, 11 days for England 1752)" that the
+graded response does not contain. Verified by counting markers in
+`output.text_response`: every one is zero.
 
-### Why run 3 is the one to commit, at 14/16
+**Should:** the judge prompt requires "Be specific in your rationale: cite what
+the skill did or did not do, not generalities." A rationale citing content that
+was never produced is the inverse of that instruction.
 
-`_012` **passed** — the routing fix worked, which is the one thing runs 1 and 2
-could not tell us (run 1 failed it, run 2 aborted it).
+**Gap: this is the ceiling on F5's whole family of fixes.** F5 assumed the
+failure mode was *authority* — the judge treating a binding note as advisory. At
+least once, the failure mode is *perception*: the judge reports having seen
+content that is absent. Precedence wording cannot reach that, and neither can any
+per-test bullet, because the bullet is not being overruled — it is being
+hallucinated as satisfied. This is strictly worse than the three F5 witnesses,
+which at least mis-weighted things that were really there.
 
-The two non-passes are both understood, and **neither should be made to pass**:
+It also explains the shape of the original 20-of-20 measurement better than
+"ignored the override" did: a judge that narrates compliance it did not observe
+produces exactly that pattern — bullet unmet, score 3, rationale confident.
 
-- **`_013` fail — the judge is wrong, not the skill.** F5's third witness above.
-  The test is already correct and emphatic; the only way to turn it green is to
-  weaken a correct test to satisfy a judge that is not reading it. That is
-  precisely the failure mode this dive was commissioned to find, so doing it
-  would be self-defeating. Its `Tool response interpretation` 1 is collateral
-  from the same misread — the Swedish→Julian step has **no** tool correction, so
-  no call was "warranted and available" and the dimension's own text does not
-  fail it. A future run should carry a one-line carve-out naming the Swedish
-  case; it is not worth a paid run of its own.
-- **`_004` partial — a fair criticism.** `Genealogical presentation` 2 for
-  printing "Modern Gregorian date: 14 September 1582 — unchanged" on a date that
-  has no Gregorian equivalent. Correctness, Conversion accuracy and Tool response
-  interpretation all scored 3, so the substance was right and the labelling was
-  muddled. The sharper test would forbid a "Gregorian date" line entirely for a
-  pre-adoption date. Also a candidate for the next run, not a reason for one.
+**Not fixed here, and not fixable by prompt wording alone.** The mechanical
+counterpart is a validator asserting a claimed-cited string actually appears in
+the response, which is the natural VR-6 and wants a developer. Recorded for the
+lead beside F5.
 
-**Chasing 16/16 was the wrong target.** A green suite bought by loosening two
-correct tests is worth less than an amber one that discriminates — and this suite
-now discriminates: `_007` catches over-conversion when it happens, `_015` catches
-the offset threshold, `_016` catches the boundary day, `_004` catches
-pre-adoption over-claiming, and the new dimension has already taken three
-distinct values.
+## The four full runs, and what the committed one shows
+
+| | Run 1 | Run 2 | Run 3 | Run 4 (committed) |
+|---|---|---|---|---|
+| Outcome | 15 pass, 1 fail | 12 pass, 1 partial, 2 fail, 1 aborted | 14 pass, 1 partial, 1 fail | **15 pass, 1 fail** |
+| Cost / wall | $1.56 / 351s | $1.06 / 613s | $1.10 / 359s | $1.51 / 343s |
+| `judge_prompt_hash` | pre-fix | pre-fix | pre-fix (`0d186137`) | **`c39d7003` — matches this branch** |
+| Environment | clean | **degraded** | clean | clean |
+
+**Run 2 carries no corpus signal.** Its two "fails" were judge API timeouts —
+`_001`'s judge ran 108s and `_008`'s 56s against a 4–14s norm in the same run,
+returning zero dimensions on healthy 1034- and 1185-character responses — and
+`_012` never reached the judge at all. A harness reporting gap made that look like
+a skill regression: a judge-side timeout produces a bare `fail`, indistinguishable
+in the summary table from the skill getting the answer wrong, while skill-side
+aborts print their reason. `eval/CLAUDE.md` says a result with nothing gradeable is
+`aborted` with a reason; a judge-side failure does not follow that rule. Worth a
+`nothing-checks` label.
+
+**Run 4 is the committed one and the only one that can speak to the prompt
+change**, per the hash. It is the evidence for the Facts arm above.
+
+### The suite ships at 15/16, and the one failure is understood
+
+`_012` fails. It is **not** the judge prompt change — see F9 — and it is not worth
+another run to chase, because the cause is in a field this PR deliberately does not
+touch.
+
+Two findings that were open at run 3 are now closed by run 4: `_013` passes
+(Facts arm), and `_004` passes with `Genealogical presentation` 3 after the
+sharpened expectation and the Swedish carve-out both landed.
 
 ## Verified by scratch run
 
@@ -941,6 +1022,45 @@ designing a future check: in-run assertions may use the response, post-hoc
 analysis may not. It stays unrequested for the reason in "Considered and not
 requested" above — matching a date across prose renderings is a regex — not
 because it is impossible.
+
+## Handback — what is deliberately not fixed here
+
+Each of these was raised in review, agreed, and left out for a stated reason
+rather than missed.
+
+**1. `SKILL.md`'s only end-to-end worked example is a conversion the tool now
+refuses.** It reads "14 September 1582 (Julian) +10 days = 24 September 1582
+(Gregorian)" — the exact input of `_004`, which `convertCalendar` now returns
+`ok: false` for, and which that test's `judge_context` calls "the failure this
+test looks for". It is the same shape as F8: several sites locally consistent
+because they agreed with each other, with one left in. The fix is one line — use
+`_009`'s "15 January 1699 (Julian) +10 days = 25 January 1699" — but it flips the
+snapshot, and the reviewer's instruction was explicit: bundle it with the next run
+this skill takes for any other reason rather than buying a fifth run for one line.
+**Do this first on the next run.**
+
+**2. The description collision behind F9.** `convert-dates`'s description
+advertises `double-dated years (e.g. "1749/50")` two clauses before it sends
+`date schema validation (use validate-schema)` away, and `_012` asks *"Is '15 Feb
+1749/50' a valid value for a date field in research.json?"* — both at once. Run 4
+evidence: `_012` has now gone pass / fail / pass / pass / fail across five runs,
+and the run-4 failure is activation, not grading (F9). A description edit
+invalidates the run log and pulls in the routing pairs, so it is not this PR's to
+make. No issue filed, per standing instruction — this is the handback.
+
+**3. F11**, the impossible-date acceptance, above.
+
+**4. VR-3** — a gate asserting a `grade_on_invariant` validator can actually fail.
+Designed, not built; wants a developer, because a false positive aborts a paid run.
+
+**5. VR-6, new from F10** — a validator asserting that a string the judge's
+rationale claims to cite actually appears in the graded response. F10 is the case
+for it: the judge quoted two examples that were not in the text. Wants a developer.
+
+**6. Two annotation cells the conclusions rest on.** `_012` is the only failure in
+the shipped run and `_005` is the Authority canary; neither carries human
+judgment. `_005` is the one that matters, because a corpus-wide prompt decision
+rests on reading its rationale.
 
 ## A note on the paid run
 
