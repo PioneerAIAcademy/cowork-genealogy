@@ -16,34 +16,9 @@ import type {
   LogOutcome, PersonEvidenceConfidence, PlanItemStatus, PlanStatus, Priority,
   ProjectStatus, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
+  EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
+  Subscription,
 } from './enums.generated.js'
-
-// These are defined inline in research.schema.json rather than in
-// enums.schema.json, so the generator does not see them. They stay here until
-// they move (issue #1015).
-export type EvaluationFocus =
-  | 'pre-exhaustiveness'
-  | 'conclusion-readiness'
-  | 'proof-critique'
-  | 'on-demand'
-export type EvaluationTargetType = 'question' | 'proof_summary' | 'project'
-export type EvaluationVerdict =
-  | 'looks_solid'
-  | 'consider_addressing'
-  | 'address_first'
-  | 'refused'
-
-export type ExperienceLevel = 'novice' | 'intermediate' | 'experienced' | 'professional'
-
-export type Subscription =
-  | 'Ancestry'
-  | 'MyHeritage'
-  | 'FindMyPast'
-  | 'Newspapers.com'
-  | 'GenealogyBank'
-  | 'FindAGrave-Plus'
-  | 'other'
-  | 'none'
 
 // ============================================================
 // research.json section types

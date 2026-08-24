@@ -14,6 +14,8 @@ import {
   validateProject,
   validateParsed,
   RESEARCH_SHAPES,
+  ID_PREFIXES,
+  ISO_DATE_PATTERN,
 } from "../../src/validation/validator.js";
 
 describe("Project Validator", () => {
@@ -2071,6 +2073,208 @@ describe("Research closed shapes", () => {
         [...RESEARCH_SHAPES[name as keyof typeof RESEARCH_SHAPES]].sort(),
         `allow-list drift on ${name}`,
       ).toEqual(Object.keys(def.properties).sort());
+    }
+  });
+});
+
+// ─── Validator pattern copies vs research.schema.json (drift guards) ─────────
+//
+// ID_PREFIXES and ISO_DATE_PATTERN are hand-copies of declarative constraints
+// the schema already expresses (id `pattern`s, the iso_date `pattern`). Like
+// VALIDATOR_ENUMS, they are unguarded copies; these two tests diff them against
+// the schema so a copy that drifts fails loudly instead of shipping bad
+// validation. (issue #1015)
+
+describe("ID_PREFIXES mirrors research.schema.json id patterns", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const schemaPath = join(
+    here, "..", "..", "..", "..", "..",
+    "docs", "specs", "schemas", "research.schema.json",
+  );
+  const schema = JSON.parse(readFileSync(schemaPath, "utf-8"));
+
+  // ID_PREFIXES is keyed by SECTION name (`known_holdings`), the schema by SHAPE
+  // `$def` name (`known_holding`); `plan_items` nests under `plan` rather than
+  // being a top-level section. This translation is the only hand-written half —
+  // the SET of id-carrying $defs is derived by walking the schema below, so a new
+  // id-patterned section that no one maps here fails the set-equality assertion.
+  const SECTION_TO_DEF: Record<string, string> = {
+    project: "project",
+    known_holdings: "known_holding",
+    questions: "question",
+    plans: "plan",
+    plan_items: "plan_item",
+    log: "log_entry",
+    sources: "source",
+    assertions: "assertion",
+    person_evidence: "person_evidence_entry",
+    conflicts: "conflict",
+    hypotheses: "hypothesis",
+    timelines: "timeline",
+    proof_summaries: "proof_summary",
+    evaluations: "evaluation_entry",
+    localities: "locality",
+  };
+
+  /** Every `$def` in research.schema.json whose `id` carries a `pattern`. */
+  const defsWithIdPattern = Object.entries(schema.$defs as Record<string, any>)
+    .filter(([, def]) => typeof def?.properties?.id?.pattern === "string")
+    .map(([name]) => name);
+
+  it("every id-patterned $def is mapped (a new section can't dodge the check)", () => {
+    // Derived side (the schema walk) vs the map's targets. A `$def` added with an
+    // `id` pattern and no SECTION_TO_DEF entry appears here and fails.
+    expect(new Set(defsWithIdPattern)).toEqual(new Set(Object.values(SECTION_TO_DEF)));
+  });
+
+  it("ID_PREFIXES and the section→$def map cover the same sections", () => {
+    expect(Object.keys(ID_PREFIXES).sort()).toEqual(Object.keys(SECTION_TO_DEF).sort());
+  });
+
+  it("each schema id pattern starts with ^ + the ID_PREFIXES prefix", () => {
+    for (const [section, prefix] of Object.entries(ID_PREFIXES)) {
+      const def = schema.$defs[SECTION_TO_DEF[section]];
+      const pattern: string = def.properties.id.pattern;
+      expect(
+        pattern.startsWith("^" + prefix),
+        `${section}: schema pattern ${pattern} does not start with ^${prefix}`,
+      ).toBe(true);
+    }
+  });
+});
+
+describe("ISO_DATE_PATTERN mirrors the iso_date $def", () => {
+  it("its source equals enums.schema.json#/$defs/iso_date pattern", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const enumsPath = join(
+      here, "..", "..", "..", "..", "..",
+      "docs", "specs", "schemas", "enums.schema.json",
+    );
+    const enums = JSON.parse(readFileSync(enumsPath, "utf-8"));
+    expect(ISO_DATE_PATTERN.source).toBe(enums.$defs.iso_date.pattern);
+  });
+});
+
+// `stop_criteria` is an object or null, never anything else (#1834). A flat
+// string cleared every check: the `=== null` arm misses it, `typeof ===
+// "object"` skips the seven-field loop AND the allowed-keys check, and
+// `stop_criteria` is itself an allowed KEY so the enclosing shape check passes.
+// Measured over the 157 committed e2e runs before the guard landed: 48 write
+// ops put a string here, and 39 of the 154 persisted declared questions carry
+// one — 25% of the corpus holding a shape research.schema.json has always
+// forbidden, with nothing checking.
+describe("stop_criteria type guard (#1834)", () => {
+  function researchWithStopCriteria(stopCriteria: unknown): any {
+    return {
+      project: {
+        id: "rp_001",
+        title: "Smith origins",
+        objective: "Find John Smith's parents",
+        subject_person_ids: ["I1"],
+        status: "active",
+        created: "2026-01-01",
+        updated: "2026-01-02",
+      },
+      questions: [
+        {
+          id: "q_001",
+          question: "Who were the parents of John Smith?",
+          rationale: "Timeline gap before 1850",
+          selection_basis: "timeline_gap",
+          priority: "high",
+          status: "open",
+          depends_on: [],
+          unblocks: [],
+          created: "2026-01-01",
+          resolved: null,
+          resolution_assertion_ids: [],
+          exhaustive_declaration: {
+            declared: false,
+            log_entry_ids: [],
+            justification: null,
+            stop_criteria: stopCriteria,
+          },
+        },
+      ],
+      plans: [],
+      log: [],
+      sources: [],
+      assertions: [],
+      person_evidence: [],
+      conflicts: [],
+      hypotheses: [],
+      timelines: [],
+      proof_summaries: [],
+      evaluations: [],
+      localities: [],
+    };
+  }
+  const tree = {
+    persons: [{ id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] }],
+    relationships: [],
+    sources: [],
+  };
+  const stopCriteriaErrors = (r: { errors: Array<{ message: string }> }) =>
+    r.errors.filter((e) => e.message.includes("seven stop criteria"));
+
+  it("rejects a flat string — the shape 39 corpus questions persist today", async () => {
+    const result = await validateParsed(
+      researchWithStopCriteria(
+        "All seven criteria met: broad repository coverage, originals consulted, " +
+          "two independent sources, no conflicts, low overturn risk.",
+      ),
+      tree,
+    );
+    expect(result.valid).toBe(false);
+    expect(stopCriteriaErrors(result).length).toBeGreaterThan(0);
+  });
+
+  it("rejects a number and an array too — the arm is a type check, not a string check", async () => {
+    for (const bad of [42, ["goal_alignment"]]) {
+      const result = await validateParsed(researchWithStopCriteria(bad), tree);
+      expect(stopCriteriaErrors(result).length).toBeGreaterThan(0);
+    }
+  });
+
+  it("names an array as an array, not as an object", async () => {
+    // `typeof [] === "object"`, so the naive message told a caller its array
+    // was the wrong type by calling it the right one — on the single case the
+    // surrounding guard exists for. Refusals are teaching aids here; one that
+    // says "got object" to someone who passed an object-shaped thing teaches
+    // nothing.
+    const result = await validateParsed(researchWithStopCriteria(["goal_alignment"]), tree);
+    expect(stopCriteriaErrors(result)[0]?.message ?? "").toContain("got array");
+  });
+
+  it("accepts null — 192 corpus writes leave it null on an undeclared question", async () => {
+    const result = await validateParsed(researchWithStopCriteria(null), tree);
+    expect(stopCriteriaErrors(result)).toHaveLength(0);
+  });
+
+  it("accepts the seven-key object", async () => {
+    const result = await validateParsed(
+      researchWithStopCriteria({
+        goal_alignment: "Yes — three sources name the father.",
+        repository_breadth: "Census, vital records and probate searched.",
+        original_substitution: "Originals accessed.",
+        independent_verification: "Three independent informants.",
+        evidence_class: "1860 census, original/primary.",
+        conflict_resolution: "No conflicts identified.",
+        overturn_risk: "Low.",
+      }),
+      tree,
+    );
+    expect(stopCriteriaErrors(result)).toHaveLength(0);
+  });
+
+  it("the refusal names the seven keys, so it teaches the shape it demands", async () => {
+    const result = await validateParsed(researchWithStopCriteria("prose instead of the object"), tree);
+    const msg = stopCriteriaErrors(result)[0]?.message ?? "";
+    for (const key of [
+      "goal_alignment", "repository_breadth", "original_substitution",
+      "independent_verification", "evidence_class", "conflict_resolution", "overturn_risk",
+    ]) {
+      expect(msg).toContain(key);
     }
   });
 });

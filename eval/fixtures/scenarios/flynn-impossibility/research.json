@@ -737,6 +737,46 @@
       "match_score": null,
       "created": "2026-05-05",
       "superseded_by": null
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "The death fact from the same certificate as pe_005 (a_013). Names match, death location matches known residence, and the informant is the son-in-law. This is the recorded death the 1912 deed has to be tested against.",
+      "match_score": null,
+      "created": "2026-05-03",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birth inferred from the 1850 census age (5), same record as pe_001/pe_002. Gives the timeline a birth event to anchor the chronology.",
+      "match_score": null,
+      "created": "2026-05-03",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Residence from the 1850 census, same record as pe_001/pe_002. The enumeration place the household was recorded at.",
+      "match_score": null,
+      "created": "2026-05-03",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birth inferred from the 1860 census age (15), same record as pe_004. Corroborates pe_009's ~1845 birth year from an independent enumeration.",
+      "match_score": null,
+      "created": "2026-05-03",
+      "superseded_by": null
     }
   ],
   "conflicts": [

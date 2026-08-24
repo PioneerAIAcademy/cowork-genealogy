@@ -34,7 +34,14 @@ import type {
 } from "../types/gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import { atomicWriteJson, readProjectJson, fileExists, formatIssues } from "../utils/project-io.js";
+import {
+  atomicWriteJson,
+  readProjectJson,
+  fileExists,
+  formatIssues,
+  NoProjectError,
+  noProjectResult,
+} from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "../utils/date-helpers.js";
@@ -128,18 +135,24 @@ export type TreeForgetResult =
       restoreFile: string | null;
       validation: { valid: true; warnings: string[] };
     }
-  | { ok: false; errors: string[] };
+  // `reason: "no_project"` marks the one ok:false that is an answer rather than
+  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
+  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
+  | { ok: false; errors: string[]; reason?: "no_project" };
 
 /** A user-correctable problem: bad selector, unknown id, nothing to remove,
  *  or an unreadable project file. Anything else propagates. */
 class TreeForgetError extends Error {}
 
-/** readProjectJson's two expected failures, mapped onto the user-correctable
- *  class so they surface as `{ ok: false, errors }` rather than as a throw. */
+/** readProjectJson's expected failures, mapped onto the user-correctable class
+ *  so they surface as `{ ok: false, errors }` rather than as a throw. The one
+ *  exception is NoProjectError, which is an ANSWER rather than a failure and is
+ *  re-raised unchanged for the outer catch to turn into noProjectResult(). */
 async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
+    if (e instanceof NoProjectError) throw e;
     throw new TreeForgetError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -914,6 +927,7 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     result.restoreFile = RESTORE_FILE;
     return result;
   } catch (e) {
+    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof TreeForgetError) return { ok: false, errors: [e.message] };
     throw e;
   }

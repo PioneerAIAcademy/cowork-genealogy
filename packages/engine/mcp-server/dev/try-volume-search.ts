@@ -4,6 +4,7 @@
  * Usage:
  *   cd mcp-server
  *   npx tsx dev/try-volume-search.ts --standardPlace "Edensor, Derbyshire, England, United Kingdom" --startYear 1730 --endYear 1810
+ *   npx tsx dev/try-volume-search.ts --standardPlace "Harjager, Malmöhus, Sweden" --startYear 1650 --endYear 1720 --recordTypeGroups Tax,Census
  *
  * Requires a valid FamilySearch session (run the login tool first).
  * Edensor, Derbyshire is a known small result set.
@@ -25,9 +26,15 @@ const endYearArg = getArg("--endYear");
 const startYear = startYearArg != null ? Number(startYearArg) : undefined;
 const endYear = endYearArg != null ? Number(endYearArg) : undefined;
 const pageToken = getArg("--pageToken");
+// Comma-separated so a filtered search is expressible from the shell, e.g.
+// --recordTypeGroups Tax  or  --recordTypeGroups "Legal,Census"
+const recordTypeGroups = getArg("--recordTypeGroups")
+  ?.split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 console.log("volume_search smoke test");
-console.log("Input:", { standardPlace, startYear, endYear, pageToken });
+console.log("Input:", { standardPlace, startYear, endYear, recordTypeGroups, pageToken });
 console.log("---");
 
 try {
@@ -35,6 +42,7 @@ try {
     standardPlace,
     ...(startYear != null ? { startYear } : {}),
     ...(endYear != null ? { endYear } : {}),
+    ...(recordTypeGroups?.length ? { recordTypeGroups } : {}),
     ...(pageToken ? { pageToken } : {}),
   });
   console.log(JSON.stringify(result, null, 2));
