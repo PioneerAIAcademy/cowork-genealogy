@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   marriageJurisdictionCandidates,
   isSubCountryPlace,
+  placeParts,
 } from "../../src/utils/marriage-jurisdictions.js";
 
 /**
@@ -113,6 +114,21 @@ describe("marriageJurisdictionCandidates — excluding the place already searche
     expect(out.map((c) => c.place)).not.toContain("Hill, Texas, United States");
   });
 
+  // The qualifier marks a locality boundary whether or not a comma also marks one,
+  // so it is consumed AS a separator rather than deleted. Deleting it fused the two
+  // levels into a single token — "Hill Co. Texas" became ["hill texas"], which no
+  // comma-separated spelling of the same jurisdiction can ever equal — so
+  // `samePlace` did not match the tree's ["hill", "texas"] and the jurisdiction just
+  // searched was offered back as its own alternative. Collapsing whitespace before
+  // the strip additionally left the two spaces that used to flank the qualifier;
+  // it now runs after the split for that reason.
+  it("excludes a jurisdiction whose County qualifier is spaced, not comma-separated", () => {
+    for (const searchedPlace of ["Hill Co. Texas", "Hill County Texas", "Hill Co Texas"]) {
+      const out = marriageJurisdictionCandidates(tree(), "LKYG-VKB", { ...WINDOW, searchedPlace });
+      expect(out.map((c) => c.place)).not.toContain("Hill, Texas, United States");
+    }
+  });
+
   it("excludes a narrower tree place when a broader place was searched", () => {
     const out = marriageJurisdictionCandidates(tree(), "LKYG-VKB", { searchedPlace: "Texas, United States" });
     expect(out.map((c) => c.place).filter((p) => p.includes("Texas"))).toEqual([]);
@@ -126,6 +142,53 @@ describe("marriageJurisdictionCandidates — excluding the place already searche
   it("does not exclude a genuinely different place that shares a word", () => {
     const out = marriageJurisdictionCandidates(tree(), "LKYG-VKB", { searchedPlace: "Hill County, Georgia" });
     expect(out.map((c) => c.place)).toContain("Hill, Texas, United States");
+  });
+
+  // `CO` eaten as a County qualifier reduced "Denver, CO" to ["denver"], and
+  // `samePlace` is a subset test, so a Colorado-scoped search that came back empty
+  // suppressed a tree place of "Denver, Iowa" from its own candidate list — deleting
+  // precisely the alternative jurisdiction this function exists to surface. The model
+  // does write postal abbreviations, so this is the reachable half of #1584.
+  it("KEEPS a same-named place in another state when a postal abbreviation was searched", () => {
+    const t = {
+      persons: [
+        {
+          id: "I1",
+          facts: [
+            { type: "Residence", place: "Denver, Iowa, United States", date: "1870" },
+          ],
+        },
+      ],
+      relationships: [],
+    };
+    const out = marriageJurisdictionCandidates(t, "I1", { searchedPlace: "Denver, CO" });
+    expect(out.map((c) => c.place)).toContain("Denver, Iowa, United States");
+  });
+
+  // Review finding, and the other half of the one above. Keeping `co` as a token
+  // meant ["denver","co"] was not a subset of ["denver","colorado"], so a
+  // CO-scoped search stopped excluding its OWN spelled-out place and offered it
+  // back as an alternative — the failure the Co. fix exists to prevent, arriving
+  // from the other side. `placeTokens` compares a surviving `co` as `colorado`;
+  // one mapping, not the postal-abbreviation set the ruling rejected, because by
+  // then the token has already been ruled to be Colorado and nothing else.
+  it("EXCLUDES its own spelled-out state when a postal abbreviation was searched", () => {
+    const t = {
+      persons: [
+        {
+          id: "I1",
+          facts: [
+            { type: "Residence", place: "Denver, Colorado, United States", date: "1870" },
+            { type: "Residence", place: "Denver, Iowa, United States", date: "1871" },
+          ],
+        },
+      ],
+      relationships: [],
+    };
+    const out = marriageJurisdictionCandidates(t, "I1", { searchedPlace: "Denver, CO" });
+    const places = out.map((c) => c.place);
+    expect(places).not.toContain("Denver, Colorado, United States");
+    expect(places).toContain("Denver, Iowa, United States");
   });
 
   // Review defect: containment ran both ways, so a county-scoped search deleted the
@@ -269,6 +332,78 @@ describe("marriageJurisdictionCandidates — ranking", () => {
 // "United States" while the argument is plainly a string, so the compiler would
 // have narrowed a negative branch to `undefined`. It returns `boolean` now, and
 // these pin the behaviour the gate actually depends on.
+// Asserted on tokens rather than through `marriageJurisdictionCandidates` because
+// the mangling was consistent on both sides of every comparison: "Coïmbra" reduced
+// to ["ïmbra"] whether it arrived as the searched place or as the candidate, so the
+// exclusion still matched and no behavioural assertion could see the defect.
+describe("placeParts — qualifier boundaries", () => {
+  // `\b` is defined over [A-Za-z0-9_], so every non-ASCII letter reads as a word
+  // edge and a leading `co` matched as a whole word inside the place's own name.
+  it("keeps a leading 'co' that belongs to a non-ASCII place name", () => {
+    expect(placeParts("Coïmbra, Portugal")).toEqual(["coïmbra", "portugal"]);
+    expect(placeParts("Coévrons, France")).toEqual(["coévrons", "france"]);
+  });
+
+  // `\p{L}` alone does not fix this one — `-` is not a letter either.
+  it("keeps a leading 'co' that belongs to a hyphenated place name", () => {
+    expect(placeParts("Co-operative Township, Ohio")).toEqual([
+      "co-operative township",
+      "ohio",
+    ]);
+  });
+
+  it("still strips a real County qualifier, spelled out or abbreviated", () => {
+    expect(placeParts("Hill County, Texas")).toEqual(["hill", "texas"]);
+    expect(placeParts("Hill Co., Texas")).toEqual(["hill", "texas"]);
+  });
+
+  // One `\.?` after the shared boundary assertion covers both spellings, so the
+  // stray-"." token #1267 was about cannot come back via the spelled-out form.
+  it("takes the dot with the qualifier for either spelling", () => {
+    expect(placeParts("Co., USA")).toEqual(["usa"]);
+    expect(placeParts("County.")).toEqual([]);
+  });
+
+  // The qualifier is a locality boundary whether or not a comma also marks one.
+  it("reduces spaced and comma-separated spellings to the same tokens", () => {
+    expect(placeParts("Hill Co. Texas")).toEqual(["hill", "texas"]);
+    expect(placeParts("Hill County Texas")).toEqual(["hill", "texas"]);
+    expect(placeParts("Hill, Texas")).toEqual(["hill", "texas"]);
+  });
+
+  // The lead's ruling (2026-08-13): the qualifier is stripped when it carries a
+  // dot, when another token follows it in the same comma part, or when it is
+  // spelled with a lowercase `o`. It is kept only for bare uppercase `CO` ending
+  // its comma part — the postal abbreviation and nothing else. A fifty-entry
+  // postal-abbreviation set was rejected in favour of the case signal already in
+  // the string. The strip therefore has to run BEFORE the lowercasing, which is
+  // what destroys that signal.
+  it("keeps CO the state abbreviation, and strips every other spelling", () => {
+    expect(placeParts("Denver, CO")).toEqual(["denver", "co"]); // uppercase, no dot, part ends
+    expect(placeParts("Hill Co., Texas")).toEqual(["hill", "texas"]); // dot
+    expect(placeParts("Hill Co Texas")).toEqual(["hill", "texas"]); // token follows
+    expect(placeParts("Hill Co")).toEqual(["hill"]); // lowercase o
+  });
+
+  // Accepted cost of the ruling, not an oversight: Colorado written with a
+  // lowercase `o` still strips, because "Hill Co" has no other tell. Do not
+  // "fix" this without reopening the ruling.
+  it("still strips a lowercase 'Co' even when it means Colorado", () => {
+    expect(placeParts("Denver, Co")).toEqual(["denver"]);
+  });
+
+  // Review finding. A kept `CO` is still a locality boundary, so it gets its own
+  // token. Returning the match bare left it fused into the token before it, which
+  // is wrong under both readings — the county abbreviation wants ["hill","texas"]
+  // and Colorado wants ["hill","co","texas"], never one fused token. This is the
+  // separator rule above surviving into the keep branch.
+  it("gives a kept CO its own token instead of fusing it into the one before", () => {
+    expect(placeParts("Hill CO, Texas")).toEqual(["hill", "co", "texas"]);
+    expect(placeParts("Salt Lake CO, Utah")).toEqual(["salt lake", "co", "utah"]);
+    expect(placeParts("HILL CO")).toEqual(["hill", "co"]);
+  });
+});
+
 describe("isSubCountryPlace", () => {
   it("is false for nothing at all", () => {
     expect(isSubCountryPlace(undefined)).toBe(false);
