@@ -408,6 +408,17 @@ than retrying blindly.
   image-, and PDF-sourced assertions, searches with no sidecar, and any
   link where no score was obtained (an input to Step 3, not the verdict).
 
+**Materialize each linked persona onto its person.** Once the `pe_` links
+land, write the persona's assertions onto the tree person as sourced facts and
+names via `materialize_facts({ personId, recordId, recordRole })` — for a
+persona matched to an **existing** person as well as a newly minted one, and on
+a **single-person record** (a death certificate, a baptism) as well as a
+household. Batch one record's personas into a single `materialize_facts({ ops:
+[...] })` call. Skip a persona whose assertions are entirely `relationship`,
+`marriage`, or `age`: the tool skips those fact_types, so there is nothing to
+write. The facts you land here are what the next search reads off the tree
+person.
+
 ### 5. Handle new persons (stub creation)
 
 When an assertion's persona doesn't match any existing GedcomX person,
@@ -423,6 +434,15 @@ shell that a later step fills in. The tool allocates the synthetic
 `primary`/`preferred` (concluding the preferred value stays
 proof-conclusion's job). **Never use FamilySearch IDs for a new person** —
 those belong to persons already in the tree.
+
+**A persona with nothing to materialize from.** When an unmatched person is
+named only *inside* another persona's `relationship` or `marriage` assertion —
+a bride named in the groom's marriage register — she carries no persona role
+and no name assertion of her own, so `materialize_facts` has nothing to mint
+from. Create her with `tree_edit add_person` (gender plus the name the record
+gives), then link per Step 4. This is the **only** case where `tree_edit
+add_person` is correct; a persona that has its own `record_role` always goes
+through `materialize_facts`.
 
 **Stub person rules:**
 - Then create the `pe_` entry (Step 4) linking the assertion to the

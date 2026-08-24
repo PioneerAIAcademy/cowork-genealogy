@@ -387,3 +387,167 @@ def test_research_query_called_for_coverage(tool_calls, test):
         "person-evidence must gather assertions/links via scoped "
         "research_query, not a whole-file Read of research.json (SKILL.md §1)."
     )
+
+
+# --- Deep-dive #1646 additions ----------------------------------------
+#
+# Both come from the #1646 deep dive's Step 6. Neither is tag-gated on the
+# rule itself: each derives its own precondition from the run's state and
+# skips when it does not hold, so a test written next year is covered
+# without anyone remembering to add a tag (the failure mode #1757 records).
+
+# The fact_types materialize_facts refuses outright — a persona carrying
+# only these has nothing to write onto a person. Mirrors SKIP_TYPES in
+# packages/engine/mcp-server/src/tools/materialize-facts.ts.
+_UNMATERIALIZABLE = frozenset({"relationship", "marriage", "age"})
+
+
+def _new_person_evidence(before: dict, after: dict) -> list[dict]:
+    before_ids = {e.get("id") for e in (before.get("person_evidence") or [])}
+    return [
+        e
+        for e in (after.get("person_evidence") or [])
+        if e.get("id") not in before_ids
+    ]
+
+
+def _assertions_by_id(state: dict) -> dict:
+    return {a.get("id"): a for a in (state.get("assertions") or [])}
+
+
+def _tree_person_ids(tree: dict | None) -> set:
+    if not tree:
+        return set()
+    return {p.get("id") for p in (tree.get("persons") or [])}
+
+
+def test_same_person_called_when_persona_meets_existing_candidate(
+    before_state, after_state, tool_calls
+):
+    """`same_person` is mandatory when a record-search persona is linked to a
+    tree person that already existed (SKILL.md §2, "Score the match with
+    `same_person` when the assertion is `record_search`-sourced").
+
+    Skipping the call is the failure the `Score discipline` rubric dimension
+    nominally grades and had never once reported: across the five committed
+    run logs before this one the dimension took the value 3 on all 73
+    gradings. `ut_person_evidence_n7v` on `flynn-marriage-parent-match` is
+    what it looks like when missed — 9 of 9 assertions carry a
+    `record_persona_id`, no `same_person` call is made, and eleven `pe_`
+    entries land including three at `confident` with a null `match_score`.
+    Observed at roughly 1 in 3 on that one test (#1646 comment 4), which is
+    exactly the intermittency a judge dimension is worst at catching.
+
+    Self-gating: skips unless some NEW `pe_` entry links an assertion with a
+    non-null `record_persona_id` to a person that was already in the tree.
+    A newly minted person is not an identity match and does not qualify.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    assertions = _assertions_by_id(after)
+    existing_persons = _tree_person_ids(
+        before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    )
+
+    scored = [
+        e
+        for e in _new_person_evidence(before, after)
+        if (assertions.get(e.get("assertion_id")) or {}).get("record_persona_id")
+        and e.get("person_id") in existing_persons
+    ]
+    if not scored:
+        pytest.skip(
+            "no new pe_ entry links a record-search persona to a pre-existing "
+            "tree person — nothing to score"
+        )
+
+    called = [tc for tc in tool_calls if "same_person" in tc.get("tool", "")]
+    offenders = sorted(
+        f"{e.get('id')} ({e.get('assertion_id')} -> {e.get('person_id')})"
+        for e in scored
+    )
+    assert called, (
+        "person_evidence entries link a record-search persona (non-null "
+        "record_persona_id) to a tree person that already existed, but "
+        "same_person was never called: "
+        + ", ".join(offenders)
+        + ". SKILL.md §2 makes the score mandatory for a record_search-sourced "
+        "assertion meeting a serious candidate; §3 then treats it as an input, "
+        "never a substitute. A link written without it has no attestation "
+        "behind its match_score."
+    )
+
+
+def test_matched_persona_is_materialized_onto_its_person(
+    before_state, after_state, tool_calls, test
+):
+    """Tag-gated (`materialize`): linking a persona to an EXISTING tree person
+    must also write that persona's assertions onto the person via
+    `materialize_facts` (docs/specs/tree-materialization-spec.md — person-evidence
+    "write[s] the linked persona's assertions as sourced facts/names onto the
+    tree person" for every linked persona).
+
+    The gap this closes: SKILL.md covered materialization only in §5 (persona
+    matches NO existing person) and §7.3 (multi-person household record), so a
+    single-person record matched to someone already in the tree got a `pe_`
+    link and no facts. search-records reads its next query's name and date
+    parameters off the tree person, so the facts that never landed are the
+    ones that would have sharpened the next search (#1646, 2026-08-22).
+
+    Tag-gated deliberately, and this is the part to revisit. The rule is
+    universal but the corpus is not yet: several existing tests link to an
+    existing person without materializing, and an ungated assertion would
+    fail them all at once. A failing validator short-circuits the judge
+    (`_compute_outcome` returns "fail" before grading), so ungating it today
+    would delete the dimension scores that diagnose those tests rather than
+    surface the defect. Ungate once they are brought up to the rule.
+    """
+    if "materialize" not in test.get("tags", []):
+        pytest.skip("not a materialization test")
+
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    assertions = _assertions_by_id(after)
+    existing_persons = _tree_person_ids(
+        before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    )
+
+    owed = set()
+    for e in _new_person_evidence(before, after):
+        if e.get("person_id") not in existing_persons:
+            continue
+        fact_type = (assertions.get(e.get("assertion_id")) or {}).get("fact_type")
+        if fact_type and fact_type not in _UNMATERIALIZABLE:
+            owed.add(e.get("person_id"))
+    if not owed:
+        pytest.skip(
+            "no new pe_ entry carries a materializable fact_type onto a "
+            "pre-existing person"
+        )
+
+    materialize_args = [
+        tc.get("args") or {}
+        for tc in tool_calls
+        if "materialize_facts" in tc.get("tool", "")
+    ]
+    named = set()
+    for args in materialize_args:
+        for op in args.get("ops") or [args]:
+            if op.get("personId"):
+                named.add(op["personId"])
+
+    missing = sorted(owed - named)
+    assert not missing, (
+        "linked a persona carrying materializable facts to the existing tree "
+        f"person(s) {missing} but never called materialize_facts for them — "
+        "the pe_ link landed and the facts did not. person-evidence writes the "
+        "linked persona's assertions onto the tree person for EVERY linked "
+        "persona, matched as well as newly minted, on a single-person record "
+        "as well as a household (SKILL.md §4, tree-materialization-spec)."
+    )
