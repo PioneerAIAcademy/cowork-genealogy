@@ -120,7 +120,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PATTERNS: '^eval/app/|^\.github/workflows/js-tests\.yml$'
+          # `^docs/specs/schemas/` (issue #1776): eval/app/scripts/gen-zod.ts
+          # generates the Zod schemas this job's tests import, from
+          # docs/specs/schemas/*.schema.json. Without it a schema-only diff
+          # reported success without regenerating or checking them.
+          PATTERNS: '^eval/app/|^docs/specs/schemas/|^\.github/workflows/js-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
