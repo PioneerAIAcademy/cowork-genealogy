@@ -1261,17 +1261,17 @@ this section before reopening one.
   `subagents/agent-*.jsonl` beside it: `feedback.py` reads `{sid}.jsonl` and its
   fallback loop skips anything `is_dir`, and `readSessionLog` does a
   non-recursive `readdir`. Two arms have since moved their write inside an
-  agent — `proof_summaries` into `proof-conclusion` on 2026-08-21 (`73b3d98e`,
-  #1819) and `questions.exhaustive_declaration` into `research-exhaustiveness`
-  on 2026-08-23 (`c78efb0b`, #1847), enforced by `OWNED_SECTIONS` and
+  agent — `proof_summaries` into `proof-conclusion` on 2026-08-21 (`73b3d98e`) and
+  `questions.exhaustive_declaration` into `research-exhaustiveness` on
+  2026-08-23 (`c78efb0b`), enforced by `OWNED_SECTIONS` and
   `OWNED_DECLARATIONS` in `plugin/hooks/guard_project_files.py`.
 
   **The date cuts both ways, and getting this wrong in either direction
-  falsifies the number #1054 is waiting on.** For a bundle submitted BEFORE an
+  falsifies the counts this scan reports.** For a bundle submitted BEFORE an
   arm's split, that write came from the MAIN thread, was un-denied, and is in
-  the transcript — the count is a real measurement, and every bundle in the
-  #1558 corpus (2026-08-05 onward; the newest `feedback` issue is 2026-08-20) is
-  on that side of both dates. For a bundle submitted on or after, the write may
+  the transcript — the count is a real measurement, and every bundle collected so
+  far (2026-08-05 onward; the newest is 2026-08-20) is on that side of both
+  dates. For a bundle submitted on or after, the write may
   have happened inside the agent (invisible) and a main-thread attempt would be
   denied and recorded as `is_error: true`, which the detector skips — so a 0
   there is not evidence. "May", not "was": a deploy does not ship the sandbox
@@ -1284,9 +1284,10 @@ this section before reopening one.
   regardless of date: the hook covers `research_append` alone, so a main-thread
   `primary: true` or `ParentChild`/`Couple` write still fires. Recovering the
   agent route means bundling the subagent transcripts, a change to
-  `apps/server/app/feedback.py` — tracked as issue #1880 (`nothing-checks`),
-  since two arms that return 0 unconditionally for post-split bundles are a
-  check that cannot fail.
+  `apps/server/app/feedback.py`. Until that lands, two arms return 0
+  unconditionally for a post-split bundle, so no report can distinguish "no
+  bypasses" from "cannot see bypasses" — a gap carried in the `nothing-checks`
+  register rather than here.
 
 ## 10. Residual risks
 
