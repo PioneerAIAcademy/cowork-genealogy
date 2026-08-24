@@ -831,6 +831,25 @@ DEDICATED_AGENT_NAMES = frozenset(
 )
 
 
+def strip_agent_namespace(agent_type: Any) -> str | None:
+    """The bare agent name for comparison, from a hook-stamped ``agent_type``.
+
+    Cowork logs a plugin-namespaced spelling ("genealogy-research:record-extractor")
+    while the harness reports bare names; strip a leading "<plugin>:" segment so an
+    equality/membership test that is green in CI is not dead the moment it sees
+    production data — the #650/#698/#939 failure shape (a live 2026-08-15 Cowork
+    probe logged "genealogy-research:image-reader"). One segment only: a double
+    namespace ("a:b:record-extractor") over-flags rather than over-exempts, the safe
+    direction for a shadow-only report. A non-str (never stamped by the SDK, which
+    emits str|None) maps to ``None`` so a ``in DEDICATED_AGENT_NAMES`` membership
+    test cannot raise ``TypeError`` on an unhashable value under a corpus-wide
+    replay; ``None`` flags, the same safe over-flag direction. Callers keep the RAW
+    ``agent_type`` for violation messages. Shared by the live detector below and its
+    lane-check replica (``e2e/detector_before_after_report.py::_lane_check_old``) so
+    the two cannot drift on the strip (#1856)."""
+    return agent_type.split(":", 1)[-1] if isinstance(agent_type, str) else None
+
+
 def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) -> list[str]:
     """A protected write attributed to neither the main thread nor a
     dedicated agent.
@@ -964,9 +983,13 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
         args = entry.get("args") or {}
         agent_id = entry.get("agent_id")
         agent_type = entry.get("agent_type")
+        # Compare on the namespace-stripped name (Cowork logs "<plugin>:record-extractor";
+        # the harness logs bare) but keep the RAW agent_type in the messages below. See
+        # strip_agent_namespace for the #650/#698/#939 rationale and the over-flag safety.
+        bare_agent_type = strip_agent_namespace(agent_type)
 
         if bare_tool_name(tool) == "extraction_append":
-            if agent_id is None or agent_type == "record-extractor":
+            if agent_id is None or bare_agent_type == "record-extractor":
                 continue
             violations.append(
                 f"tool_calls[{i}] extraction_append was made by agent_type="
@@ -976,7 +999,7 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
             continue
 
         owners = owning_skills(tool, args)
-        if not owners or agent_id is None or agent_type in DEDICATED_AGENT_NAMES:
+        if not owners or agent_id is None or bare_agent_type in DEDICATED_AGENT_NAMES:
             continue
         for owner in owners:
             violations.append(
