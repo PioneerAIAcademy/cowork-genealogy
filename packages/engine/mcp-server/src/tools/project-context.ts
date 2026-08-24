@@ -9,7 +9,7 @@
 // Spec: docs/specs/project-context-tool-spec.md.
 
 import { questionStates, type QuestionStatus } from "../utils/question-state.js";
-import { readProjectJson } from "../utils/project-io.js";
+import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -60,7 +60,10 @@ export type ProjectContextResult =
       sources: ProjectContextSource[];
       localities: ProjectContextLocality[];
     }
-  | { ok: false; errors: string[] };
+  // `reason: "no_project"` marks the one ok:false that is an answer rather than
+  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
+  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
+  | { ok: false; errors: string[]; reason?: "no_project" };
 
 function truncateQuestion(text: string): string {
   if (text.length <= QUESTION_TRUNCATE_AT) return text;
@@ -102,6 +105,10 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     research = await readProjectJson(input.projectPath, "research.json");
     tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
   } catch (e) {
+    // The other READ issue #1695 calls out: a skill that looks at project state
+    // before answering must not surface a path error to a user who simply is
+    // not in a project.
+    if (e instanceof NoProjectError) return noProjectResult("read");
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
   }
 

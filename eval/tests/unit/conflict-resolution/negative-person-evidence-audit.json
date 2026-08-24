@@ -15,7 +15,7 @@
 
   "negative": {
     "correct_skill": ["person-evidence"],
-    "explanation": "The user wants to audit existing pe_* links — confirming each record's connection to I1 is appropriate and the confidence ratings are correct. The SKILL.md states explicitly: 'Do NOT use for confidence-calibration review or auditing existing person_evidence links — that's person-evidence's territory; conflict-resolution applies only when multiple candidate identifications genuinely compete.' No competing candidate persons are mentioned; the user wants a quality review of already-established linkages, which is person-evidence's domain."
+    "explanation": "The user wants to audit existing pe_* links — confirming each record's connection to I1 is appropriate and the confidence ratings are correct. The SKILL.md states explicitly: 'Do NOT use ... to audit existing person_evidence links or review their confidence (use person-evidence)'. No competing candidate persons are mentioned; the user wants a quality review of already-established linkages, which is person-evidence's domain."
   },
 
   "judge_context": [

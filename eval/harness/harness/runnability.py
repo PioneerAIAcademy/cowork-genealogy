@@ -193,13 +193,14 @@ def check_runnable(
     # stub check above, so it fails at load time instead of ~20 turns into a
     # paid run.
     #
-    # What the combination does: compute_allowed_tools unions the callee's
-    # allowed-tools into the session allowlist, while uncovered_callee_fixtures
-    # skips its fixture preflight (`if callee in stubbed_skills: continue`),
-    # and the hook then denies the launch. The session ends up holding tools
-    # that no fixture backs and no preflight warned about — so the *main
-    # thread* calling one trips `unmatched_tool_call` and aborts the caller,
-    # which is precisely the failure that preflight exists to prevent.
+    # What the combination does: the session already holds all MCP tools
+    # (issue #1748), but uncovered_callee_fixtures skips its fixture
+    # preflight for a stubbed callee (`if callee in stubbed_skills:
+    # continue`), and the hook then denies the launch. The callee's tools
+    # are available but no preflight checked that fixtures back them — so
+    # the *main thread* calling one trips `unmatched_tool_call` and aborts
+    # the caller, which is precisely the failure that preflight exists to
+    # prevent.
     #
     # This is the "silent fourth state" the three-state table in
     # docs/specs/unit-test-spec.md does not cover; with this gate there are
@@ -210,10 +211,11 @@ def check_runnable(
             False,
             f"execution declares {', '.join(repr(n) for n in both)} in BOTH "
             f"run_skills and stub_skills. They are mutually exclusive: "
-            f"run_skills grants the callee's tools and requires a fixture for "
-            f"each, stub_skills denies the launch and waives that requirement. "
-            f"Declaring both grants the tools AND waives the fixture check, so "
-            f"the session holds tools nothing backs. Keep the one you meant — "
+            f"run_skills requires a fixture for each of the callee's tools, "
+            f"stub_skills denies the launch and waives that requirement. "
+            f"Declaring both waives the fixture check while the callee's "
+            f"tools remain callable (all MCP tools are granted), so the "
+            f"session holds tools nothing backs. Keep the one you meant — "
             f"run_skills to execute the callee, stub_skills to deny it.",
         )
 

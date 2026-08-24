@@ -379,7 +379,9 @@ is worth recording so it isn't "fixed" back later by mistake:
 | `projectPath` not provided | Throw: `"projectPath is required"` |
 | `personId` not provided | Throw: `"personId is required"` |
 | `tree.gedcomx.json` is invalid JSON | Throw: `"Failed to parse tree.gedcomx.json: {parseError}"` |
-| `tree.gedcomx.json` not found at path | Throw: `"tree.gedcomx.json not found at {projectPath}. Run person_read first to populate the tree file."` |
+| `projectPath` is a real directory holding **neither** project file | **Return**, do not throw: `{ ok: false, reason: "no_project", errors }`. The user is not in a research project, which is an answer rather than a failure. This is the one tool that owes this answer without reading through `readProjectJson`, so it calls `classifyProjectPath` itself. Discriminate the result with `"ok" in result` — the success shape has no `ok` field. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is not an existing directory | Throw: `"projectPath does not exist: {projectPath}"` |
+| `tree.gedcomx.json` not found at path, in a folder that *does* hold `research.json` | Throw: `"tree.gedcomx.json not found at {projectPath}. Run person_read first to populate the tree file."` — a broken project stays loud, and this message is the more useful one |
 | `personId` not found | Throw: `"Person '{personId}' not found in tree.gedcomx.json."` |
 | File has no `persons` array | Throw: `"No persons found in tree.gedcomx.json."` |
 | Date is unparseable | `extractYear()` returns `null`, warning check skips silently |
@@ -547,7 +549,6 @@ These are not included in v1 but are good candidates for extension:
 | Warning ID | Severity | Description |
 |-----------|----------|-------------|
 | `MOTHER_TOO_YOUNG` | `warning` | Mother's age at child's birth < 12 |
-| `MOTHER_TOO_OLD` | `warning` | Mother's age at child's birth > 50 |
 | `FATHER_TOO_OLD` | `warning` | Father's age at child's birth > 75 |
 | `LIVED_TOO_LONG` | `warning` | Age at death > 120 years |
 | `BORN_TOO_EARLY` | `warning` | Birth year < 1000 |
@@ -562,6 +563,18 @@ These are not included in v1 but are good candidates for extension:
 > record, so it isn't a problem (Richard). Some candidates above —
 > notably mother/father child-spacing checks — need **full-date**
 > precision, not year-only; see the date-parsing note.
+>
+> **`MOTHER_TOO_OLD` struck — built:** shipped as
+> `latestChildBirthToBirthFemale45` (`person-warnings.ts`), female-gated,
+> on a >= cutoff (not the `> 50` this table listed). Cutoff is 45, lowered
+> from an original 55; severity unchanged (`implausible`, not promoted — the
+> check fired 0 times at 55 across the e2e corpus, so promotion would be
+> an unmeasured doctrine commitment). Two alternatives were rejected: a
+> gender-neutral 45 (flags 31 people vs. 6, 25 of them men — a 45-74 gap
+> is unremarkable for a father, unlike a mother); and keeping 55 plus a
+> second check banded to [50, 55) (superseded once both bands share one
+> severity, since two checks on one predicate double-fire on a single fact
+> and double-count in the check-warnings cluster rule).
 
 ---
 

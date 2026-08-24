@@ -4,12 +4,12 @@
     "skill": "person-evidence",
     "name": "Resolving a genuine identity conflict should route to conflict-resolution",
     "type": "negative",
-    "description": "User has two genuinely competing candidate persons and wants the conflict adjudicated — which of two different people is the real subject. That is conflict-resolution (resolve a genuine identity conflict where multiple candidate persons compete), per person-evidence's own 'Do NOT use when' clause. person-evidence assigns an assertion to a person during linking; it does not adjudicate a standing conflict between two competing identities. This is the nearest neighbor (competing identities vs. same-identity linking), so it is the most important boundary to hold.",
+    "description": "User has two genuinely competing candidate persons and wants the conflict adjudicated — which of two different people is the real subject. That is conflict-resolution (resolve a genuine identity conflict where multiple candidate persons compete), per person-evidence's own 'Do NOT use when' clause. person-evidence assigns an assertion to a person during linking; it does not adjudicate a standing conflict between two competing identities. This is the nearest neighbor (competing identities vs. same-identity linking), so it is the most important boundary to hold. The scenario carries the standing conflict the request asks to resolve — c_002 and c_003, both unresolved identity conflicts over which Patrick Flynn is the subject, plus a speculative person_evidence link. That state is what makes conflict-resolution correct here rather than the phrasing: a request to 'resolve the conflict' against a project holding no unresolved conflict would be asking for work there is nothing to do.",
     "tags": ["near-miss", "person-evidence-vs-conflict-resolution", "boundary"]
   },
   "input": {
     "user_message": "Two different Patrick Flynns are competing for this record — sort out which one is really our subject and resolve the conflict.",
-    "scenario": "mid-research-flynn"
+    "scenario": "flynn-identity-geographic-thin"
   },
   "execution": {
     "sdk_message_silence_seconds": 600,
@@ -17,10 +17,11 @@
   },
   "negative": {
     "correct_skill": ["conflict-resolution"],
-    "explanation": "Adjudicating a genuine conflict between two competing candidate persons is conflict-resolution. person-evidence creates a revisable link from an assertion to a person; it does not resolve a standing identity conflict. The skill's own description excludes this case ('resolve a genuine identity conflict where multiple candidate persons compete (use conflict-resolution)')."
+    "explanation": "Adjudicating a genuine conflict between two competing candidate persons is conflict-resolution. person-evidence creates a revisable link from an assertion to a person; it does not resolve a standing identity conflict. The skill's own description excludes this case ('resolve a genuine identity conflict where multiple candidate persons compete (use conflict-resolution)'). The routing is grounded in project state, not in the word 'conflict': the scenario holds c_002 and c_003 unresolved in `conflicts[]` and one `speculative` person_evidence entry, which conflict-resolution's SKILL.md names as an unresolved identity question it owns. Where no unresolved identity conflict exists in state, deciding which person a record describes is person-evidence's first-pass judgment and this boundary does not apply."
   },
   "judge_context": [
     "Should route to conflict-resolution — the user wants a standing conflict between two competing candidate persons adjudicated, which person-evidence's description explicitly excludes",
-    "Linking an assertion to a person (person-evidence) is not the same as resolving which of two competing people is real (conflict-resolution); declining and redirecting is the correct behavior"
+    "Linking an assertion to a person (person-evidence) is not the same as resolving which of two competing people is real (conflict-resolution); declining and redirecting is the correct behavior",
+    "The scenario's unresolved c_002/c_003 identity conflicts and its speculative link are the state that makes conflict-resolution the right destination — do not credit a decline that reasons only from the word 'conflict' in the request while ignoring what the project holds"
   ]
 }

@@ -5,7 +5,7 @@
     "name": "FamilySearch wiki — researching German ancestors",
     "type": "positive",
     "description": "User asks how to research German ancestors. Tests the country/region how-to path listed in the skill description.",
-    "tags": ["fs-wiki", "how-to", "germany", "country-research"]
+    "tags": ["fs-wiki", "how-to", "germany", "country-research", "expects-file-german-ancestors"]
   },
   "input": {
     "user_message": "Search the FamilySearch wiki for how to research my German ancestors",

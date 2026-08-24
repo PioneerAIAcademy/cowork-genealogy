@@ -73,7 +73,12 @@ function recordBrowseAndCheckBudget(
 // Across the committed e2e corpus a healthy transcription runs p90 79s / p95
 // 98s with a 167s maximum, and the image download it follows adds ~7s — so
 // 180s clears every real read with margin while still cutting the 190–316s
-// calls of the one run that hung. Sized in the spec, not guessed.
+// calls of the one run that hung. Sized in the spec, not guessed. This budget
+// holds only where the call is not bridged (the harnesses and the hosted
+// control plane, both verified over stdio): in Cowork the device bridge aborts
+// every MCP call at 60s, so any OCR past a minute is lost there regardless of
+// this value. Whether the desktop `.mcpb` is bridged too has not been measured;
+// see docs/architecture.md "Other environment differences that bite".
 const OCR_TIMEOUT_MS = 180_000;
 
 // OpenRouter attribution headers (recommended, not required). Stable app id.
@@ -100,6 +105,39 @@ function buildOcrPrompt(lookingFor?: string): string {
     );
   }
   return base;
+}
+
+// Node's global `fetch` rejects with `TypeError: fetch failed` and hangs the
+// real socket-level reason (ECONNRESET, ENOTFOUND, UND_ERR_*, a TLS error) off
+// `.cause` — the bare `.message` is always the useless string "fetch failed".
+// Walk that chain so the thrown "Could not reach OpenRouter" carries the code
+// that tells host-side from provider-side (#1594). `AggregateError.errors` is
+// flattened too — a DNS attempt arrives as a bundle. Depth- and cycle-bounded
+// so a self-referential cause cannot loop. `fetchWithTimeout`'s own timeout
+// error already carries a full message and no `.cause`, so it passes through
+// unchanged.
+function describeFetchError(error: unknown): string {
+  const parts: string[] = [];
+  const seen = new Set<unknown>();
+  const push = (label: string) => {
+    if (label && !parts.includes(label)) parts.push(label);
+  };
+  const labelOf = (e: unknown): string => {
+    if (!(e instanceof Error)) return String(e);
+    const code = (e as { code?: unknown }).code;
+    return typeof code === "string" && code.length > 0
+      ? `${code}: ${e.message}`
+      : e.message;
+  };
+  let current: unknown = error;
+  for (let depth = 0; depth < 6 && current != null && !seen.has(current); depth++) {
+    seen.add(current);
+    push(labelOf(current));
+    const agg = (current as { errors?: unknown }).errors;
+    if (Array.isArray(agg)) for (const e of agg) push(labelOf(e));
+    current = (current as { cause?: unknown }).cause;
+  }
+  return parts.join(" <- ") || "unknown error";
 }
 
 function parseFound(text: string): "FOUND" | "NOT FOUND" | undefined {
@@ -175,8 +213,7 @@ export async function imageTranscribeTool(
       OCR_TIMEOUT_MS
     );
   } catch (error) {
-    const cause = error instanceof Error ? error.message : String(error);
-    throw new Error(`Could not reach OpenRouter. (${cause})`);
+    throw new Error(`Could not reach OpenRouter. (${describeFetchError(error)})`);
   }
 
   // Auth failures are LLM-actionable — the key needs re-entering. Transient

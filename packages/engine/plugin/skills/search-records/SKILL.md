@@ -207,12 +207,16 @@ spouse families; other fields follow the same pattern.
 
 **There is no "required" toggle, and this changes how you read a nil.** Every
 term you supply is already required in one sense: a record must not *contradict*
-it. A record simply **silent** about a *name* field is kept — measured for the
-father and spouse names. (How a *year range* treats a record with no indexed year
+it. A record simply **silent** about a *name* field is kept — enumerated for the
+father, spouse, mother and parent names. (How a *year range* treats a record with no indexed year
 is **not established** in either direction, so do not assume a range either keeps
-or excludes undated records.) For the searched person's own name, which the index
-virtually always holds, that collapses to "must match" — a consequence of the
-index, not a separate measurement. So **a nil result means one of the terms on the person
+or excludes undated records.) The searched person's own two name fields behave
+OPPOSITELY, measured 2026-08-20: an unqualified `givenName` keeps records with no
+indexed given name, but an unqualified `surname` drops records with no indexed
+surname outright — a record indexed with a given name only (infant burials,
+foundlings, enslaved people, patronymic entries) cannot be reached by ANY query
+carrying a surname; to reach one, drop `surname` and anchor on `recordCountry` or
+`batchNumber` instead. So **a nil result means one of the terms on the person
 you searched did not match.** Drop or loosen one of *those* to recover; adding
 more criteria cannot help. A nil is *not* evidence that some relative was absent
 from the records.
@@ -226,9 +230,8 @@ and on how often that relative is indexed in the records you are searching:
 
 - **An unmatchable relative name keeps exactly the records silent about that
   relative, and drops every record naming a different one.** Enumerated for
-  `father*` and `spouse*` only, in marriage records; `mother*`, `parent*` and
-  `other*` are assumed to follow, not measured — so a mother-anchored nil is
-  weaker evidence than a father-anchored one.
+  `father*`, `spouse*`, `mother*` and `parent*` in marriage records; `other*` is
+  not measured, so an `other`-anchored nil is the weak one.
 - **So the narrowing you get is the share of records that name that relative at
   all.** Where parents are rarely indexed, a parent name barely narrows and a
   parent-anchored nil is weak evidence. Where spouses are almost always indexed
@@ -452,8 +455,9 @@ candidates; you still confirm the top ones:
   signals. Write the listing and mark the family structure inferred — not "head
   Daniel + wife Margaret + daughter Hannah" but "Daniel, Margaret, Hannah in one
   dwelling; family structure inferred from surname, ages and order, not stated."
-  Same caution for any field that year didn't collect:
-  `references/census-field-availability.md`.
+  **Before summarizing any census household, read
+  `references/census-field-availability.md` for that year** — same caution for
+  any field that year didn't collect.
 - **Cite `matchScore`, never `results[].score` — they are different numbers.** A
   raw search stub's `score` (and `confidence`) is FamilySearch's own *search
   relevance*, the unreliable ordering the match-ranker exists to replace;
