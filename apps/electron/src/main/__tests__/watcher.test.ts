@@ -8,7 +8,9 @@ import {
   WATCHED_FILES,
   SIDECAR_BASENAME,
   findNestedResearchJson,
-  formatNestedNotice
+  formatNestedNotice,
+  formatNestedPicker,
+  assertResearchProject
 } from '../watcher'
 
 // Pure-helper tests. The chokidar integration (lifecycle, awaitWriteFinish,
@@ -193,5 +195,60 @@ describe('formatNestedNotice (issue #1317, bug 2 — cap the path list)', () => 
     expect(msg).toContain('"c/research.json"')
     expect(msg).not.toContain('"d/research.json"')
     expect(msg).toContain('and 2 more')
+  })
+})
+
+describe('formatNestedPicker (issue #1317, bug 2 — the empty-top-folder case)', () => {
+  it('names the subfolder and does not say the folder "also" has one', () => {
+    const msg = formatNestedPicker(['sub/research.json'])
+    expect(msg).toContain('"sub/research.json"')
+    expect(msg).toContain('Reopen the viewer on that subfolder')
+    expect(msg).not.toContain('also')
+  })
+
+  it('caps the path list the same way the banner does', () => {
+    const msg = formatNestedPicker([
+      'a/research.json',
+      'b/research.json',
+      'c/research.json',
+      'd/research.json'
+    ])
+    expect(msg).toContain('"c/research.json"')
+    expect(msg).not.toContain('"d/research.json"')
+    expect(msg).toContain('and 1 more')
+  })
+})
+
+// Pins the branch behind `project:select-folder`. The folder-notice banner
+// cannot cover this shape — the handler rejects the folder before
+// startWatching runs — so the nested pointer has to come out of this
+// rejection. Deleting the findNestedResearchJson lookup in
+// assertResearchProject makes the middle case fall back to the generic
+// message and fail.
+describe('assertResearchProject (the select-folder gate)', () => {
+  let dir: string
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'assert-project-'))
+  })
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true })
+  })
+
+  it('accepts a folder with a top-level research.json', async () => {
+    await writeFile(join(dir, 'research.json'), '{}', 'utf-8')
+    await expect(assertResearchProject(dir)).resolves.toBeUndefined()
+  })
+
+  it('points at the subfolder when only a nested research.json exists', async () => {
+    await mkdir(join(dir, 'sub'), { recursive: true })
+    await writeFile(join(dir, 'sub', 'research.json'), '{}', 'utf-8')
+    await expect(assertResearchProject(dir)).rejects.toThrow(/is in a subfolder/)
+    await expect(assertResearchProject(dir)).rejects.toThrow(/"sub\/research\.json"/)
+  })
+
+  it('falls back to the generic error when there is no research.json anywhere', async () => {
+    await expect(assertResearchProject(dir)).rejects.toThrow(/Not a research project/)
   })
 })

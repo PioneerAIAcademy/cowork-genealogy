@@ -114,6 +114,7 @@ The allowed IPC channels (update this list when adding new ones):
 | `project:gedcomx-updated` | on (push) | Parsed tree.gedcomx.json |
 | `project:watch-error` | on (push) | Error string |
 | `project:sidecar-updated` | on (push) | A sidecar changed: `{ logId, mtime }` |
+| `project:folder-notice` | on (push) | Heads-up string: research.json found in a subfolder |
 
 If a channel exists in the preload but is not in this table, it is unauthorized.
 Push channels are sent from `src/main/watcher.ts` (the two `*-updated` file

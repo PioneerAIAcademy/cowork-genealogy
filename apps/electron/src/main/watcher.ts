@@ -23,9 +23,7 @@ export const SIDECAR_BASENAME = /^(log_[a-zA-Z0-9_-]+)\.json$/
 // Pure classifier — pulled out so the basename routing is testable without
 // spinning up chokidar or Electron. Used inside the watch handler below.
 export type Classification =
-  | { kind: 'fixed'; file: FixedFile }
-  | { kind: 'sidecar'; logId: string }
-  | { kind: 'ignore' }
+  { kind: 'fixed'; file: FixedFile } | { kind: 'sidecar'; logId: string } | { kind: 'ignore' }
 
 export function classifyBasename(base: string): Classification {
   if ((WATCHED_FILES as readonly string[]).includes(base)) {
@@ -47,12 +45,9 @@ export function getCurrentState(): {
 // Dirs a nested research.json legitimately lives in — not a wrong-folder signal.
 // `results/` holds sidecars; `_feedback/` is an unpacked feedback bundle; the
 // rest are noise we should never descend into.
-const NESTED_SCAN_SKIP_DIRS = new Set([
-  'results',
-  '_feedback',
-  'node_modules',
-  '.git'
-])
+// Hidden dirs (including .git) are skipped by the startsWith('.') test below,
+// so they don't need listing here.
+const NESTED_SCAN_SKIP_DIRS = new Set(['results', '_feedback', 'node_modules'])
 const NESTED_SCAN_MAX_DEPTH = 6
 
 /**
@@ -99,13 +94,65 @@ export async function findNestedResearchJson(folderPath: string): Promise<string
 // holding many projects can't produce a message no UI surface can show sensibly
 // (this repo alone has ~90 nested research.json); the rest collapse to "and N
 // more". Pure + exported so the cap is unit-testable without chokidar.
-export function formatNestedNotice(nested: string[]): string {
-  const shown = nested.slice(0, 3).map((p) => `"${p}"`).join(', ')
+export function formatNestedList(nested: string[]): string {
+  const shown = nested
+    .slice(0, 3)
+    .map((p) => `"${p}"`)
+    .join(', ')
   const rest = nested.length > 3 ? ` and ${nested.length - 3} more` : ''
+  return `${shown}${rest}`
+}
+
+export function formatNestedNotice(nested: string[]): string {
+  // Deliberately not "also has": startWatching is also reached via
+  // --project-dir, which does not require a top-level research.json, so
+  // "also" would be wrong there.
   return (
-    `Heads up: this folder also has research.json in a subfolder (${shown}${rest}). ` +
-    `The viewer only shows the top-level project — if your research is in the ` +
-    `subfolder, reopen the viewer on that folder.`
+    `Heads up: this folder has research.json in a subfolder ` +
+    `(${formatNestedList(nested)}). The viewer only shows the top-level ` +
+    `project — if your research is in the subfolder, reopen the viewer on ` +
+    `that folder.`
+  )
+}
+
+// The rejection message for `project:select-folder` when the picked folder has
+// NO top-level research.json but does have one below it. The folder-notice
+// banner cannot reach this case — the handler rejects the folder before
+// startWatching runs — so this error carries the pointer instead.
+export function formatNestedPicker(nested: string[]): string {
+  return (
+    `research.json is in a subfolder (${formatNestedList(nested)}), not in the ` +
+    `folder you picked. Reopen the viewer on that subfolder.`
+  )
+}
+
+/**
+ * Gate for `project:select-folder`: the picked folder must be a research
+ * project. Resolves when it has a top-level `research.json`; throws otherwise.
+ *
+ * When the top level has none but a subfolder does, the error names the
+ * subfolder instead of the generic "not a research project" — that is the
+ * literal "research.json hiding in a subfolder" case (issue #1317, bug 2),
+ * and the folder-notice banner can never reach it, because the handler
+ * rejects the folder before `startWatching` runs.
+ *
+ * Pulled out of the ipcMain handler so this branch is testable without
+ * `dialog`, `ipcMain`, or a BrowserWindow.
+ */
+export async function assertResearchProject(folderPath: string): Promise<void> {
+  try {
+    await fsStat(join(folderPath, 'research.json'))
+    return
+  } catch {
+    // No top-level research.json — work out which error the user needs.
+  }
+
+  const nested = await findNestedResearchJson(folderPath)
+  if (nested.length > 0) {
+    throw new Error(formatNestedPicker(nested))
+  }
+  throw new Error(
+    'Not a research project — research.json not found. Run the init-project skill to create a new project, or pick a folder that already has one.'
   )
 }
 
