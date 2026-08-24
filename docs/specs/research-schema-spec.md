@@ -105,19 +105,22 @@ flagged. (One row below is the exception, and says so.)
 | `holding_type` | `document`, `prior_research`, `oral_knowledge`, `gedcom`, `photo`, `artifact`, `other` | known_holdings |
 | `holding_confidence` | `confident`, `unsure` | known_holdings — how settled the researcher is about the item, so research prioritizes shaky holdings over settled ones |
 | `experience_level` | `novice`, `intermediate`, `experienced`, `professional` | researcher_profile (Section 5.1.1) |
-| `subscriptions` | `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none` | researcher_profile. Note the mixed casing: these are site brand names, not the lowercase_with_underscores used elsewhere |
+| `subscription` | `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none` | researcher_profile (the `subscriptions` array's items). Note the mixed casing: these are site brand names, not the lowercase_with_underscores used elsewhere |
 | `evaluation_focus` | `pre-exhaustiveness`, `conclusion-readiness`, `proof-critique`, `on-demand` | evaluations (Section 5.12). Note the hyphens — this is the one enum in the file that does not use underscores |
 | `evaluation_target_type` | `question`, `proof_summary`, `project` | evaluations |
 | `evaluation_verdict` | `looks_solid`, `consider_addressing`, `address_first`, `refused` | evaluations |
 | `locality_page_section` | `home`, `getting_started`, `online_records`, `research_tips` | localities' `pages_read[].section` (Section 5.13) — the four FamilySearch Research Wiki place-page sections. **The one closed enum `validate_research_schema` does not check**: it does not descend into a locality's nested objects, so a misspelled section reaches disk and only the JSON Schema catches it |
 
-**Where these live in the machine-readable schemas.** Most are shared with
-`tree.gedcomx.json` and live in `enums.schema.json`. The last six rows above
-(`experience_level` through `locality_page_section`) are defined inline in
-`research.schema.json` instead, so their names are this document's; a
-developer changing one edits `research.schema.json` rather than
-`enums.schema.json`. The blast radius of a change either way is in CLAUDE.md's
-schema-change site list.
+**Where these live in the machine-readable schemas.** All but one are defined in
+`enums.schema.json` and `$ref`'d from `research.schema.json`. The sole exception
+is `locality_page_section` (the last row above), still declared inline in the
+research schema: its `pages_read[].section` enum is bound to no validator check,
+and lifting it would change what the writer tools reject, so it waits on its own
+change. Removing or renaming any closed-enum value additionally requires
+a repo-wide grep for the old value — the drift lint checks the full value *list*,
+which catches an addition, but a renamed or dropped value can leave a stale
+single-value mention in prose that no lint sees. The blast radius of a
+closed-enum change is in CLAUDE.md's schema-change site list.
 
 > **`no_evidence` was considered and rejected as an `evidence_type` value
 > (2026-06-21).** The model reaches for it when a record simply does not speak
@@ -226,7 +229,7 @@ four rows, until the manifest was promoted out of a pytest validator.
 | `project` | init-project (objective, title, subject_person_ids — **once, at creation**), proof-conclusion (status, updated) | all | Mutable (status, updated). Any skill may refresh `updated` alone — it is a per-session activity ping. The three creation fields are **set-once**: `research_append` refuses to rewrite one that already holds a value, because every later step plans against them. That constrains the system, not the researcher — a human edits the file directly |
 | `researcher_profile` | init-project (at creation, from the interview); any caller may correct a field later | all (every skill reads `narration_guidance`) | Mutable, deliberately **not** set-once — a researcher who picked the wrong experience level needs a route that is not starting over. Written through `research_append` as a singleton section. Optional: the object is created on its first real write, and an agent must never fabricate one, since a wrong profile is indistinguishable downstream from a real one while an absent one has a working fallback everywhere |
 | `known_holdings` | init-project (survey at creation) | question-selection, research-plan, all | Mutable (`promoted` flag); never delete. Written after the tree persons exist — `relates_to_person_ids` names them, and the validator rejects a reference to a person that does not yet exist |
-| `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is. A `resolved` write is additionally refused by `research_append` unless a proof summary already references the question |
+| `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is. A `resolved` write is additionally refused by `research_append` unless a proof summary already references the question. Two further `research_append` preconditions guard the exhaustiveness pair: `status: "exhaustive_declared"` requires `exhaustive_declaration.declared === true` (checked from either side, on the post-merge entry), and `declared: true` is refused while an item on the question's **active** plan is `in_progress` (checked against the pre-call snapshot, since plan-item completion is the search work's step — a superseded or completed plan's items never block, or a re-planned question could never be declared). Items still `planned` do not block |
 | `plans` | research-plan; search-records, search-external-sites, search-full-text, search-images, record-extraction (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search and extraction skills update only an item's `status` after executing or extracting from it |
 | `log` | search-records, search-full-text, search-external-sites, search-images, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
 | `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete. citation refines and never creates — see §8 "Source ownership" |

@@ -90,9 +90,11 @@ in the sense that they cannot.
   full GedcomX and the simplified format defined in
   `docs/specs/simplified-gedcomx-spec.md`; implementation spec at
   `docs/specs/gedcomx-convert-spec.md`) and `search-helpers.ts` (shared
-  input validators and error parsing used by the search tools
-  `record_search` and `person_search`; `parseUpstreamErrorBody` is also
-  reused by `person_ancestors`).
+  input validators, output shaping and error parsing used by the search
+  tools `record_search`, `person_search`, `collections_search` and
+  `volume_search`; `parseUpstreamErrorBody` is also reused by
+  `person_ancestors`, and `formatYearRange` is the single date-range
+  format shared by `collections_search` and `volume_search`).
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
 
 ### Hosted web workbench (monorepo overlay)
@@ -431,12 +433,13 @@ change, with different (and easy-to-undercount) site lists:
   prose tables/discussion in `research-schema-spec.md`. **Do not hand-edit the TS
   union**: `packages/schema/src/enums.generated.ts` is emitted from that package's
   own `enums.schema.json` by `scripts/gen-enums.mjs`, chained into `build`,
-  `typecheck` and each app's `dev`, and gitignored (ADR-0008 tier 2). The one
-  exception is the five unions defined inline in `research.schema.json` rather
-  than in `enums.schema.json` — `EvaluationFocus`, `EvaluationTargetType`,
-  `EvaluationVerdict`, `ExperienceLevel`, `Subscription` — which the generator
-  cannot see and which stay hand-written in `packages/schema/src/index.ts` until
-  they move. Worked blast-radius and
+  `typecheck` and each app's `dev`, and gitignored (ADR-0008 tier 2). Every
+  closed enum in `enums.schema.json` is generated, with no exceptions —
+  `gen-enums.mjs` throws rather than let a hand-written union shadow a generated
+  one. Removing or renaming a
+  value additionally requires a repo-wide grep for the old value: the full-list
+  lint catches an added value, but a rename or removal can leave a stale
+  single-value mention in prose that no lint sees. Worked blast-radius and
   rationale: `docs/specs/research-schema-spec.md`, the `no_evidence` note in
   the enum section.
 - **Tree-schema (simplified-GedcomX) change** — a new/renamed field on tree
@@ -590,9 +593,18 @@ goes in the skill's spec or its rubric.
 agent body) to fix an e2e/eval/user finding, classify the finding:
 (1) tooling defect → MCP tool PR; (2) eval defect (judge/rubric/fixture
 wrong) → eval PR; (3) record-type craft gap → that type's
-playbook/table; (4) core doctrine → the stewarded prose edit, gated by
-the unit suite. Most findings are lanes 1–2; prose edits never
-compensate for a tool or eval bug. Full version:
+playbook/table; (4) core doctrine → **first ask whether it can be a tool
+rule**, and only then the stewarded prose edit, gated by the unit suite. Most
+findings are lanes 1–2; prose edits never compensate for a tool or eval bug.
+
+**Lane 4 means prose is the last resort, not the destination.** Apply ADR-0011's
+first question — *can this be decided by reading the project documents alone?*
+If yes it is a writer-tool precondition, where it binds everywhere and cannot be
+argued with. Measured while converting `proof-conclusion` to a skill-agent pair:
+five behaviours on one fixture were each stated correctly in the body, read, and
+not followed; each held on the first run after moving into `research_append`,
+and several of the rewordings broke a neighbouring test on the way, because a
+prompt has no scope. Full version:
 `docs/skill-lifecycle.md` §5.
 
 ### A new lint must be proven to fail

@@ -1,5 +1,7 @@
 @echo off
-cd %~dp0
+cd /d "%~dp0"
+
+call "%~dp0_CheckSync.bat" || exit /b 1
 
 echo === Cowork Genealogy E2E — Preflight check ===
 echo.

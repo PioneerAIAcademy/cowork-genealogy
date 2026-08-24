@@ -279,6 +279,11 @@ Seniors need **Triage** or **Write** access on the repo to apply labels.
 
 ## Windows users
 
+> **Do not clone the repo under a syncing folder** (OneDrive, Dropbox, Google
+> Drive, iCloud Drive) — including `Documents` and `Desktop`, which Windows 11
+> usually syncs to OneDrive. Setup will fail partway through, with errors that
+> change each time you retry. Clone to a plain local path such as `C:\src\`.
+
 `Setup.bat` performs the one-time setup. Then `Start.bat` launches the CRUD UI and `RunTests.bat` runs the harness against the current corpus.
 
 ## E2e tests

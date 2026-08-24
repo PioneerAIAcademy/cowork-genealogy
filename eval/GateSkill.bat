@@ -1,9 +1,11 @@
 @echo off
-cd %~dp0
+cd /d "%~dp0"
+
+call "%~dp0_CheckSync.bat" || exit /b 1
 
 echo === Cowork Genealogy - Gate a candidate SKILL.md edit ===
 echo.
-echo Runs the mined test plus this skill's holdout tests against the SKILL.md
+echo Runs the mined motivating test against the SKILL.md
 echo currently in your working tree, and compares to the baseline from the
 echo RunTests.bat run you did BEFORE editing (with your grading corrections
 echo overlaid). Prints LOOKS GOOD / NEEDS YOUR EYES / INCONCLUSIVE.

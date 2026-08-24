@@ -17,7 +17,7 @@
   },
   "judge_context": [
     "Should decline to initialize (research.json already exists) and route to project-status, not re-run the init workflow",
-    "Should make no MCP tool calls — no person_read, no person_search, no place_search, no validate_research_schema",
-    "The decline should be a single-line response per the guard clause, naming project-status (and optionally question-selection)"
+    "Should make no MCP tool calls — no person_read, no person_search, no place_search",
+    "Judge the routing decision and the absence of init work only. Once the run routes, the harness stops it and `text_response` is empty, so there is no decline wording to weigh here — the guard clause's literal one-line text is not gradable on this test and must not be scored as present or absent."
   ]
 }

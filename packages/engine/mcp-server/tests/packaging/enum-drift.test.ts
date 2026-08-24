@@ -37,28 +37,12 @@ const SCHEMA_PATHS = [
 type ClosedEnums = Map<string, Set<string>>;
 
 /**
- * Closed enums declared inline in research.schema.json instead of in
- * enums.schema.json, mapped to the name `VALIDATOR_ENUMS` gives them.
- *
- * These were invisible to this lint until they were listed here — canonical in
- * neither schema file, so `loadClosedEnums` never saw them and `VALIDATOR_ONLY`
- * excused them. Where they *should* live is issue #1015; until that is decided,
- * the values are at least checked.
- */
-const INLINE_ENUMS: Array<{ path: string[]; name: string }> = [
-  { path: ["researcher_profile", "experience_level"], name: "experience_level" },
-  { path: ["researcher_profile", "subscriptions", "items"], name: "subscription" },
-  { path: ["evaluation_entry", "focus"], name: "evaluation_focus" },
-  { path: ["evaluation_entry", "target_type"], name: "evaluation_target_type" },
-  { path: ["evaluation_entry", "verdict"], name: "evaluation_verdict" },
-];
-
-/**
- * `locality.pages_read[].section` is a sixth inline closed enum, re-typed at
- * src/tools/wiki-place-page.ts:174 and enforced by no validator check. Adding
- * one would change what the tool rejects, which is a behaviour change and its
- * own PR — issue #1270. Listed so the omission is deliberate and visible
- * rather than an enum this lint simply never noticed.
+ * `locality.pages_read[].section` is the only closed enum still declared inline
+ * in research.schema.json (the other five moved into enums.schema.json — #1015).
+ * It is re-typed in src/tools/wiki-place-page.ts and enforced by no validator
+ * check; adding one would change what the tool rejects, which is a behaviour
+ * change and its own PR — issue #1270. Listed so the omission is deliberate and
+ * visible rather than an enum this lint simply never noticed.
  */
 const INLINE_NOT_ENFORCED = ["locality.pages_read.items.section"];
 
@@ -71,24 +55,6 @@ function loadClosedEnums(schemaPath: string): ClosedEnums {
     // a *_recommended naming convention.
     if (Array.isArray(def.enum)) {
       result.set(name, new Set(def.enum as string[]));
-    }
-  }
-
-  // …plus the ones declared inline in research.schema.json next door.
-  const researchPath = join(dirname(schemaPath), "research.schema.json");
-  if (existsSync(researchPath)) {
-    const research = JSON.parse(readFileSync(researchPath, "utf8"));
-    for (const { path, name } of INLINE_ENUMS) {
-      let node: any = research.$defs;
-      for (const seg of path) node = node?.[seg] ?? node?.properties?.[seg];
-      if (!Array.isArray(node?.enum)) {
-        throw new Error(
-          `[enum-drift] INLINE_ENUMS path ${path.join(".")} no longer resolves to an ` +
-            `enum in research.schema.json — the value moved; update INLINE_ENUMS ` +
-            `(or delete the entry if it moved into enums.schema.json).`,
-        );
-      }
-      result.set(name, new Set(node.enum as string[]));
     }
   }
 
@@ -421,37 +387,30 @@ describe("enum-drift lint", () => {
  */
 
 /**
- * Enum names the validator enforces that `enums.schema.json` does NOT define
- * as a closed `$def`. Verified 2026-07-30, and each is deliberate rather than
- * an omission:
+ * Enum names the validator enforces that `enums.schema.json` does NOT define as
+ * a closed `$def`. This stays EMPTY, and the emptiness is the policy (#1015,
+ * ADR-0008): anything JSON Schema can express belongs in the schema, so a closed
+ * enum the validator checks with no schema definition behind it is a bug, not a
+ * category. The five that once sat here (`experience_level`, `subscription`,
+ * `evaluation_focus`, `evaluation_target_type`, `evaluation_verdict`) were moved
+ * into enums.schema.json and are now diffed against it like every other closed
+ * enum.
  *
- *   - `experience_level` — defined inline at
- *     `research.schema.json#/$defs/researcher_profile/properties/experience_level`
- *     (same four values), never lifted into the shared enums file.
- *   - `evaluation_focus`, `evaluation_target_type`, `evaluation_verdict`,
- *     `subscription` — code-only; no schema defines them at all.
- *
- * Asserted as an EXACT set, both directions. A new name appearing means
- * someone added a code-only enum that no schema constrains — decide whether it
- * belongs in enums.schema.json before adding it here. A name disappearing means
- * it was promoted into the schema, and it should come off this list so the
- * value-equality check below starts covering it.
+ * Asserted as an EXACT set, both directions. A name reappearing means the
+ * validator invented an enum with no schema behind it at all — add the `$def` to
+ * enums.schema.json instead of adding the name here.
  */
-// Empty: the five names that used to sit here are declared inline in
-// research.schema.json and are now loaded by loadClosedEnums via INLINE_ENUMS,
-// so they are diffed against the schema like every other closed enum. A name
-// reappearing here means the validator invented an enum with no schema behind
-// it at all.
 const VALIDATOR_ONLY = new Set<string>([]);
 
 describe("validator enums match enums.schema.json", () => {
   const validatorNames = new Set(Object.keys(VALIDATOR_ENUMS));
 
   it("the only unenforced inline enum is the one we know about", () => {
-    // Every inline `enum` array in research.schema.json is either mapped by
-    // INLINE_ENUMS (and therefore diffed above) or listed as knowingly
-    // unenforced. A new one must land in one list or the other, rather than
-    // being invisible the way these five were.
+    // Every inline `enum` array left in research.schema.json must be listed in
+    // INLINE_NOT_ENFORCED. #1015 moved the other five into enums.schema.json, so
+    // locality.pages_read[].section (#1270) is the only one that should remain. A
+    // new inline enum must move into enums.schema.json (and be $ref'd) or land in
+    // INLINE_NOT_ENFORCED, rather than being invisible the way those five were.
     const research = JSON.parse(
       readFileSync(join(projectRoot, "docs", "specs", "schemas", "research.schema.json"), "utf8"),
     );
@@ -467,21 +426,15 @@ describe("validator enums match enums.schema.json", () => {
     };
     walk(research.$defs, "");
 
-    const mappedPaths = INLINE_ENUMS.map(
-      (e) => e.path.join("."),
-    );
     const unaccounted = found.filter((p) => {
       const compact = p.replace(/\.properties\./g, ".").replace(/\.items(\[\d+\])?/g, ".items");
-      return (
-        !mappedPaths.some((m) => compact.endsWith(m)) &&
-        !INLINE_NOT_ENFORCED.includes(compact)
-      );
+      return !INLINE_NOT_ENFORCED.includes(compact);
     });
 
     expect(
       unaccounted,
-      "inline enum in research.schema.json accounted for by neither INLINE_ENUMS " +
-        "nor INLINE_NOT_ENFORCED — add it to one",
+      "inline enum in research.schema.json not listed in INLINE_NOT_ENFORCED — " +
+        "move it into enums.schema.json (and $ref it), or add it to INLINE_NOT_ENFORCED",
     ).toEqual([]);
   });
 

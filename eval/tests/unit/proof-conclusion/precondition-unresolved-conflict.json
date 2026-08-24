@@ -2,21 +2,31 @@
   "test": {
     "id": "ut_proof_conclusion_011",
     "skill": "proof-conclusion",
-    "name": "Refuse to finalize as proved while a conflict is unresolved",
+    "name": "Unresolved identity conflict blocks the conclusion, and the attempt is recorded",
     "type": "positive",
-    "description": "The flynn-with-birthplace-conflict scenario has an unresolved birthplace conflict (c_001) that blocks q_001. The user asks to finalize the parentage as proved. Unresolved conflicts hard-block the proved tier (GPS component 4); the skill must not declare proved. It should surface the unresolved conflict and recommend conflict-resolution (or, at most, keep a preliminary conclusion at probable while explicitly acknowledging the open conflict).",
-    "tags": ["proof", "parentage", "precondition", "conflict-blocks-proved", "no-new-proof-expected"]
+    "description": "The flynn-with-birthplace-conflict scenario has an unresolved birthplace conflict (c_001) touching q_001. The user asks to finalize the parentage as proved. Birthplace is an IDENTIFYING attribute, and the death certificate that disputes it is also the only direct evidence of parentage — so the conflict goes to whether the census entries and the death certificate describe the same Patrick Flynn. Correlation presupposes identity, so no conclusion may be drawn on this question until c_001 is adjudicated. The skill must not conclude at proved OR probable; it must write a not_proved summary recording the blocked attempt and route to conflict-resolution.",
+    "tags": [
+      "proof",
+      "parentage",
+      "precondition",
+      "conflict-blocks-proved",
+      "no-new-proof-expected"
+    ]
   },
   "input": {
     "user_message": "I think Patrick's parentage is settled now — finalize it as a proved conclusion.",
     "scenario": "flynn-with-birthplace-conflict"
   },
   "judge_context": [
-    "Must NOT declare the conclusion `proved` — an unresolved conflict (c_001, birthplace) hard-blocks the proved tier per GPS component 4",
-    "Should explicitly surface the unresolved birthplace conflict as the blocker, rather than silently ignoring it",
-    "Should recommend conflict-resolution to resolve c_001 before a proved conclusion is possible",
-    "Acceptable: leaving the proof at probable while acknowledging the open conflict. Not acceptable: escalating to proved, or writing a definitive conclusion that ignores the conflict",
-    "The correct behavior here is to DECLINE writing a finalized proof and route to conflict-resolution. Do NOT treat the absence of a standalone proof narrative as a deficiency: score 'Narrative standalone' on the clarity of the decline and redirect (a clean, well-explained refusal = pass), not as a missing deliverable. A full proof narrative is NOT expected when the skill correctly declines."
+    "Must NOT conclude the parentage — not at `proved`, and not at `probable` either. An unresolved conflict on an IDENTIFYING attribute (birthplace) means the cited sources have not been established as describing the same person, and correlation presupposes identity. This is not fixable by tiering down.",
+    "This supersedes an earlier version of this test that accepted `probable` while acknowledging the conflict. It was ruled wrong on 2026-08-19: the death certificate disputing the birthplace is also the sole direct evidence of parentage, so the dispute impeaches the very correlation the conclusion rests on.",
+    "MUST write a `not_proved` proof_summaries entry — the blocked attempt is a research finding and is worth recording. Its narrative must state that identity across the cited sources is not established, name c_001 and the disputed attribute, and say what would settle it. A bare refusal that persists nothing is a FAIL: it loses the reasoning.",
+    "Must NOT write to tree.gedcomx.json. `not_proved` is below the encoding threshold, so no ParentChild relationship and no primary/concluded fact may be written.",
+    "Must NOT resolve the question — `status`, `resolved` and `resolution_assertion_ids` on q_001 stay untouched. The question is still open.",
+    "Must NOT write to the `conflicts` section. Adjudicating c_001 is conflict-resolution's job; resolving it here to clear its own path is the failure mode this test exists to catch (observed 2026-08-19).",
+    "Should recommend conflict-resolution as the next step.",
+    "Score `Narrative standalone` on the not_proved narrative: it must be readable without research.json — name the records and the disputed values in prose, not by bare id.",
+    "The scenario ALREADY carries ps_001 for q_001, so the correct action is to UPDATE it to not_proved in place, never to append a second summary. That is why this test keeps the `no-new-proof-expected` tag: the generic 'a positive test must create a NEW summary' check does not apply here. That the summary exists and reads not_proved is enforced deterministically by test_conflict_blocks_proved, so nothing is lost by exempting it."
   ],
   "execution": {
     "max_wall_clock_seconds": 600,
