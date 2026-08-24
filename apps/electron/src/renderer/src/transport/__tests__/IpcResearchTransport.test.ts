@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { assertTransportContract } from '@genealogy/viewer-ui/contract'
-import { IpcResearchTransport } from '../IpcResearchTransport'
+import { IpcResearchTransport, unwrapIpcError } from '../IpcResearchTransport'
 
 let folderNoticeCb: ((m: string) => void) | null = null
 
@@ -50,5 +50,25 @@ describe('IpcResearchTransport', () => {
     })
     folderNoticeCb!('research.json is in a subfolder')
     expect(onNotice).toHaveBeenCalledWith('research.json is in a subfolder')
+  })
+
+  // The provider puts err.message straight into the error bar, so the Electron
+  // IPC wrapper has to come off here or the user reads boilerplate naming a
+  // channel instead of the one sentence that helps them (#1722 round-8).
+  it('strips the Electron IPC wrapper off a rejected selectFolder', async () => {
+    window.api.selectFolder = () =>
+      Promise.reject(
+        new Error(
+          "Error invoking remote method 'project:select-folder': Error: " +
+            'research.json is in a subfolder ("sub"), not in the folder you picked.'
+        )
+      )
+    await expect(new IpcResearchTransport().selectFolder()).rejects.toThrow(
+      /^research\.json is in a subfolder/
+    )
+  })
+
+  it('leaves a message that carries no IPC wrapper untouched', () => {
+    expect(unwrapIpcError(new Error('plain failure'))).toBe('plain failure')
   })
 })

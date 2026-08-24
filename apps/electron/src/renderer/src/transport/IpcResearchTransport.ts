@@ -13,6 +13,13 @@ import type {
 // The Electron adapter: maps the shared ResearchTransport onto the existing
 // preload `window.api`. No behavior change vs. the pre-extraction renderer —
 // this is just the seam that lets the shared viewer run unchanged in Electron.
+// "Error invoking remote method 'project:select-folder': Error: real message"
+//   -> "real message". Leaves anything that does not match untouched.
+export function unwrapIpcError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err)
+  return raw.replace(/^Error invoking remote method '[^']*':\s*(?:Error:\s*)?/, '')
+}
+
 export class IpcResearchTransport implements ResearchTransport {
   async getProjectState(): Promise<ProjectStateSnapshot> {
     const state = await window.api.getState()
@@ -44,8 +51,19 @@ export class IpcResearchTransport implements ResearchTransport {
     return window.api.submitFeedback(payload)
   }
 
-  selectFolder(): Promise<string | null> {
-    return window.api.selectFolder()
+  async selectFolder(): Promise<string | null> {
+    try {
+      return await window.api.selectFolder()
+    } catch (err) {
+      // ipcRenderer.invoke wraps a main-process throw as "Error invoking remote
+      // method '<channel>': Error: <message>". The provider puts err.message
+      // straight into the error bar, so without this the one sentence the user
+      // needs — e.g. "research.json is in a subfolder (…)" — sits behind
+      // boilerplate naming an IPC channel they have no concept of. Stripping it
+      // belongs here: this is the only layer that knows the transport is
+      // Electron IPC (#1722 round-8).
+      throw new Error(unwrapIpcError(err))
+    }
   }
 
   async getFeedbackContext(): Promise<FeedbackContext> {

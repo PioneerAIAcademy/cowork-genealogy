@@ -157,7 +157,9 @@ Check `package.json`:
 XSS in a desktop app is worse than in a web app because the attacker has
 access to the local filesystem via the main process IPC bridge.
 
-Check all `.tsx` files in `src/renderer/`:
+Check all `.tsx` files in `src/renderer/`, and in the shared
+`packages/viewer-ui/src/` where the extracted UI now lives
+(including the FolderNotice / ErrorNotice banners):
 
 - [ ] No `dangerouslySetInnerHTML` usage
 - [ ] No `rehype-raw` import (allows raw HTML in react-markdown)
