@@ -1379,7 +1379,7 @@ move the `compliance` axis until its false-positive rate is measured. Detector:
 also reported across the committed corpus by `make e2e-guardrail-shadow` — a
 stored read plus, under `REPLAY=1`, a recompute over `tool_calls` —
 printed with its attribution denominator (how many runs carry any caller
-attribution to fire on at all); and replayed old-vs-new by `make e2e-detector-diff
+attribution to fire on at all); and read by `make e2e-detector-diff
 DETECTOR=lane-check`. It is no longer read only inline.
 
 ## Related

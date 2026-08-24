@@ -31,6 +31,8 @@ from e2e.guardrail_shadow_report import (
     scan_provenance,
     scan_one,
     scan_unnamed_delegate,
+    format_unnamed_delegate,
+    UnnamedDelegateScan,
 )
 from harness.skill_invocation import (
     CITATION_NULLING_KIND,
@@ -828,6 +830,12 @@ def test_replay_post_hoc_lines_appear_in_main_under_replay(tmp_path, capsys, mon
     assert "of 1 scanned" in out
     assert "Skipped" not in out.split("Post-hoc checks REPLAYED")[1]
     assert "warnings-unchecked        1 run(s)" in out
+    # §11 unnamed-delegate (issue #980) must ALSO print in main(), WITH its
+    # attribution denominator — the number the issue insists on. Guards the main()
+    # wiring + the denominator on this controlled 1-run corpus, so deleting the
+    # §11 print, or the denominator from its format string, fails a test.
+    assert "§11 unnamed-delegate" in out
+    assert "carry any caller attribution at all" in out
 
 
 # --- scan_unnamed_delegate (issue #980) ------------------------------------
@@ -906,3 +914,27 @@ def test_scan_unnamed_delegate_replay_recomputes_from_tool_calls(tmp_path):
         ],
     )
     assert scan_unnamed_delegate([ok], replay=True).replayed == []
+
+
+def test_format_unnamed_delegate_always_prints_the_attribution_denominator():
+    """The denominator is the whole point (issue #980): without it "1 in N" reads
+    as "almost never fires". Guard the FORMAT output, not just the scan — dropping
+    the denominator from the format string must fail HERE, or the feature's own
+    output is a can't-fail check (the #1804/#1797 shape)."""
+    scan = UnnamedDelegateScan(
+        stored=[{"detail": "x", "file": "f", "fixture": "fx"}],
+        replayed=[{"detail": "x", "file": "f", "fixture": "fx"}],
+        runs_stored_affected=1,
+        runs_replay_affected=1,
+        runs_attributed=20,
+        runs_scanned=159,
+    )
+    out = format_unnamed_delegate(scan, replay=True)
+    assert "1 protected write" in out
+    assert "of 20 run(s) that carry any caller attribution at all" in out  # denominator
+    assert "159 scanned" in out
+    assert "replayed over tool_calls" in out  # replay line present under replay=True
+    # replay=False omits the replay line but keeps the stored count + denominator.
+    plain = format_unnamed_delegate(scan, replay=False)
+    assert "replayed over tool_calls" not in plain
+    assert "of 20 run(s) that carry any caller attribution at all" in plain

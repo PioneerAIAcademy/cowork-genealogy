@@ -970,6 +970,9 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
         # it sees production data — the #650/#698/#939 failure shape (a live 2026-08-15 Cowork
         # probe logged agent_type "genealogy-research:image-reader"). The RAW agent_type is
         # kept in the violation messages below so they report what was actually logged.
+        # One segment only: a hypothetical double-namespace ("a:b:record-extractor")
+        # over-flags rather than over-exempts, which is the safe direction for a
+        # shadow-only report; the live probe only ever showed the single-colon form.
         bare_agent_type = (
             agent_type.split(":", 1)[-1] if isinstance(agent_type, str) else agent_type
         )
