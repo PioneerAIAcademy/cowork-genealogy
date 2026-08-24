@@ -17,7 +17,7 @@ runs on tests carrying the tag, i.e. it is inert on the other ~19).
 
 ---
 
-## A. Request mode (Step 0, `:117-173`)
+## A. Request mode (Step 0)
 
 | # | Rule (body wording) | Where | Guard |
 |---|---|---|---|
@@ -26,14 +26,14 @@ runs on tests carrying the tag, i.e. it is inert on the other ~19).
 | A3 | A review that surfaces a concern: describe it, then "**stop and ask the user to authorize the action** before doing it" | response | — |
 | A4 | A review that reveals new linking work: note it and ask. "Don't roll it into the same response." | response + file_changes | — |
 
-## B. Reading project state (Step 1, `:174-203`)
+## B. Reading project state (Step 1)
 
 | # | Rule | Where | Guard |
 |---|---|---|---|
 | B1 | Use "**`research_query`, not a whole-file `Read`** of research.json" when entering cold | tool_calls | `test_research_query_called_for_coverage` `[research-query-coverage]` |
 | B2 | "**`assertionId` is NOT a valid filter on the `assertions` section**" — query `person_evidence` with `assertionId` instead. "Do not guess" | tool_calls (args) | — |
 
-## C. Scoring with `same_person` (Step 2, `:227-289`)
+## C. Scoring with `same_person` (Step 2)
 
 | # | Rule | Where | Guard |
 |---|---|---|---|
@@ -43,7 +43,7 @@ runs on tests carrying the tag, i.e. it is inert on the other ~19).
 | C4 | Household: after the focus call, call `matchRelatives: true` "**once**" — not per relative | tool_calls | — |
 | C5 | FTS-, image-, PDF-sourced or `results_ref: null` → no score is available | tool_calls + file_changes | `test_fts_assertion_no_score` `[no-score-fallback]` |
 
-## D. Match threshold policy (Step 3, `:290-383`) — "**This policy is non-negotiable**"
+## D. Match threshold policy (Step 3) — "**This policy is non-negotiable**"
 
 | # | Rule | Where | Guard |
 |---|---|---|---|
@@ -58,7 +58,7 @@ runs on tests carrying the tag, i.e. it is inert on the other ~19).
 | D9 | A **degenerate near-zero score** on an unresolvable id is "**no score available**"; fall back to correlation and "Note in the rationale that the score was uninformative and why" | file_changes | — |
 | D10 | "**Never auto-merge persons.**" No `merge_tree_persons`; links only | tool_calls | — |
 
-## E. Writing `pe_` entries (Steps 4 and 6, `:384-451`)
+## E. Writing `pe_` entries (Steps 4 and 6)
 
 | # | Rule | Where | Guard |
 |---|---|---|---|
@@ -69,7 +69,7 @@ runs on tests carrying the tag, i.e. it is inert on the other ~19).
 | E5 | "**One pe_ entry per assertion-person pair.** Don't create duplicate links" | file_changes | — |
 | E6 | Revision: "**never delete the old entry**" — append the correction, then `update` the old entry's `superseded_by` | file_changes | `test_person_evidence_no_deletions` (universal) |
 
-## F. Minting persons (Step 5, `:411-443`)
+## F. Minting persons (Step 5)
 
 | # | Rule | Where | Guard |
 |---|---|---|---|
@@ -77,7 +77,7 @@ runs on tests carrying the tag, i.e. it is inert on the other ~19).
 | F2 | "**Never use FamilySearch IDs for a new person**" | tool_calls (args) | — |
 | F3 | A brand-new stub is "`probable` at most … Do not use `confident` for a brand-new stub" | file_changes | — |
 
-## G. Household skeleton (Step 7, `:452-586`)
+## G. Household skeleton (Step 7)
 
 | # | Rule | Where | Guard |
 |---|---|---|---|
@@ -92,7 +92,7 @@ runs on tests carrying the tag, i.e. it is inert on the other ~19).
 | G9 | "**Both-sided `pe_` entries are mandatory** … write the link for the other party **in the same `research_append` call**. Do not defer it, do not ask first" | file_changes + response | `test_a010_has_second_side_link` `[multi-person-awareness, a_010]`, `test_pe004_unchanged_when_adding_second_side` `[multi-person-awareness, pe_004]` |
 | G10 | "Every household persona ends up **paired** … with none left dangling" | file_changes | — |
 
-## H. Cross-cutting (Step 8 and "Important rules", `:587-724`)
+## H. Cross-cutting (Step 8 and "Important rules")
 
 | # | Rule | Where | Guard |
 |---|---|---|---|

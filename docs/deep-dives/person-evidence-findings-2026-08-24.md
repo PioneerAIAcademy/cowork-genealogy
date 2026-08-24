@@ -142,7 +142,7 @@ The `judge_context` and the rubric actively contradict each other, and
 **Gap — and the skill turns out to be right.** Mary Doyle is named only *inside*
 the groom's marriage assertion. She has no `record_role` and no name assertion of
 her own, so `materialize_facts` has no persona to mint from — and
-`materialize-facts.ts:84` skips the `marriage` fact_type outright
+`materialize-facts.ts`'s `SKIP_TYPES` skips the `marriage` fact_type outright
 (`SKIP_TYPES = {relationship, age, marriage}`). `tree_edit add_person` was the
 only mechanism available, and §5 prohibited it by name. §7.3's nearest clause
 covers only a persona that is *matched*, which she is not. The body had a hole,
