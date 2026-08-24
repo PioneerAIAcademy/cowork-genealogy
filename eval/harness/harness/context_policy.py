@@ -68,8 +68,8 @@ from typing import Any
 #   scan as inline base64; in the router's context the bytes accumulate and
 #   overflow the transport buffer, so every caller must delegate.
 # - `extraction_append` — held only by `agents/record-extractor.md`. When that
-#   agent fails to spawn, the router must report the failure and stop, not do
-#   the extraction and append itself (issue #942).
+#   agent fails to spawn, the router must re-delegate to it (and skip the record
+#   after a repeat failure), never do the extraction and append itself (issue #942).
 #
 # No skill declares either, so the declared-tools exemption below still runs but
 # can never fire — no special-casing needed.
@@ -150,11 +150,11 @@ def subagent_only_violation(
 # Per-tool denial reasons. The reason text is the model's ONLY feedback on a
 # deny, so each guarded tool must name its own fix — a generic "not allowed here"
 # just relocates the substitution. The two fixes are genuinely different:
-# `image_read` has somewhere legitimate to go (delegate the read), whereas an
-# `extraction_append` deny means the delegation itself already failed, so the
-# only correct move is to surface that and stop — NOT to retry another way,
-# which would leave the goal in place and push the substitution elsewhere
-# (issue #942).
+# `image_read` has somewhere legitimate to go (delegate the read); an
+# `extraction_append` deny means the delegation already failed once, so the fix is
+# to re-delegate (and skip the record after a repeat failure) — NOT to retry
+# another way, which would leave the goal in place and push the substitution
+# elsewhere (issue #942).
 _DENIAL_REASONS = {
     "image_read": (
         "image_read may not be called from the main session — it returns "

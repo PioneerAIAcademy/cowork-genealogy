@@ -803,13 +803,14 @@ recoverable *from records alone*. A real validity run (§14) proves
 this — a run can only pass with these tools blocked, so an
 answer reachable only via the tree will fail and the fixture won't validate.
 
-### 6.1.1 Main-thread `extraction_append` block (subagent-only guard)
+### 6.1.1 Main-thread subagent-only tool block
 
-The same `PreToolUse` hook enforces one per-context rule in e2e:
-`extraction_append` may not be called on the main thread. Writing extracted
-assertions and sources is the Task-spawned `record-extractor` subagent's job; a
-main-thread call is the router substituting for a *failed* spawn and doing the
-extraction itself — a shape observed in production.
+The same `PreToolUse` hook enforces the per-context tool policy in e2e: neither
+member of `SUBAGENT_ONLY_TOOLS` (`extraction_append`, `image_read`) may be called
+on the main thread. Each is a Task-spawned subagent's private tool (writing
+extracted assertions and sources for `record-extractor`; returning a page scan
+for the image reader); a main-thread call is the router substituting for a
+*failed* spawn and doing the work itself — a shape observed in production.
 
 The discriminator is `agent_id` alone: **no skill declares `extraction_append`**
 in its `allowed-tools` — it lives only on `agents/record-extractor.md` — so the
@@ -1485,7 +1486,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
 | `tool_calls[]` | Every tool call attempted, in order — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, is_error, agent_id, agent_type }`. See 8.1.1. |
 | `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
-| `blocked_context_calls[]` | Denied main-thread `extraction_append` — the router substituting for a failed record-extractor spawn. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is a write denied by a different guard. §6.1.1. |
+| `blocked_context_calls[]` | Denied main-thread calls to a `SUBAGENT_ONLY_TOOLS` tool (`extraction_append`, `image_read`) — the router substituting for a failed subagent spawn. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
 | `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |
