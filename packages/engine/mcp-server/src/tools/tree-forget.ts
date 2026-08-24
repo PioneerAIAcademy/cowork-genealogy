@@ -93,11 +93,28 @@ const SELECTOR_KINDS: ReadonlySet<string> = new Set<ForgetSelectorKind>([
 // in the feedback-2026-08-03 session log confirmed FS emits it — an upstream
 // fact with an FS-native UUID id, not a value the agent wrote; do not repeat
 // that in reverse by adding unverified types.) `materialize-facts.ts`'s
-// `EVENT_TREE_TYPES` lists further
-// couple-event types (`Engagement`, `MarriageBanns`, …) whose person-level echo
-// is NOT yet confirmed — see issue #1549 before extending this set.
-const SWEPT_SPOUSE_FACT_TYPES = ["Marriage", "Divorce", "Annulment"] as const; // #1417, confirmed: 90 person-level Marriage facts across committed snapshot trees (2026-08-14); Divorce/Annulment have no corpus evidence yet — see #1549
-const SWEPT_PARENT_FACT_TYPES = ["Parents"] as const; // #1314, confirmed FS-native: a person_read result in the feedback-2026-08-03 session log returned type:"Parents" facts with FS UUID ids on GRNX-DFF ("Geo… Wilcox - Caroline E Woodruff") and GRN6-4MQ
+// `EVENT_TREE_TYPES` lists further couple-event types (`Engagement`,
+// `MarriageBanns`) confirmed NOT to echo person-level — see
+// COUPLE_TYPES_CONFIRMED_NOT_ECHOED below and issue #1549's corpus measurement.
+//
+// UNRESOLVED, left here rather than silently fixed (#1549): `Divorce` and
+// `Annulment` are in this set with the SAME "0 corpus occurrences" evidence
+// status that got Engagement/MarriageBanns/Separation excluded below. #1549's
+// 2026-08-20 ruling kept them in the swept set anyway while its own text says
+// "measures 0 person-level occurrences... so none earns a place" — that
+// sentence and this line contradict each other, and no unredacted-data
+// citation (the standard #1314's `Parents` met) was ever given for keeping
+// them. Do not resolve this by editing the set; it needs the lead's ruling.
+export const SWEPT_SPOUSE_FACT_TYPES = ["Marriage", "Divorce", "Annulment"] as const; // #1417, confirmed: 90 person-level Marriage facts across committed snapshot trees (2026-08-14); Divorce/Annulment have no corpus evidence yet — see #1549's open question above
+export const SWEPT_PARENT_FACT_TYPES = ["Parents"] as const; // #1314, confirmed FS-native: a person_read result in the feedback-2026-08-03 session log returned type:"Parents" facts with FS UUID ids on GRNX-DFF ("Geo… Wilcox - Caroline E Woodruff") and GRN6-4MQ
+
+// Couple-event types `materialize-facts.ts`'s `EVENT_TREE_TYPES` recognizes
+// that #1549 measured and found NOT to earn a place in the swept set above:
+// 0 person-level occurrences across the committed corpus (2026-08-20). Kept
+// as a named, evidenced exclusion — not just an absence from the swept set —
+// so the drift guard (tests/packaging/tree-forget-sweep-drift.test.ts) can
+// tell "considered and excluded" apart from "never considered at all".
+export const COUPLE_TYPES_CONFIRMED_NOT_ECHOED = ["Engagement", "MarriageBanns"] as const; // #1549, measured 2026-08-20: 0 person-level occurrences of either type across the committed corpus
 
 export interface ForgetSelector {
   selector: ForgetSelectorKind;
@@ -243,6 +260,45 @@ function factIdsOfTypes(
     factIdsOfType(tree, personId, factType).forEach((id) => ids.add(id));
   }
   return ids;
+}
+
+/** Leading token of a fact type, `+`/space-normalized: `"Marriage+bond"` and
+ *  `"Marriage Registration"` both yield `"Marriage"`. FS emits couple/parent
+ *  conclusions as free-text custom types that share this prefix with the
+ *  canonical swept type without being an exact match (#1549). */
+function leadingToken(factType: string): string {
+  return factType.replace(/\+/g, " ").trim().split(/\s+/)[0] ?? "";
+}
+
+/**
+ * Person-level facts whose type's leading token matches one of `sweptTypes`
+ * but which are NOT an exact-match member of `removedIds` — so the sweep
+ * above leaves them in place. Most such facts are distinct documentary
+ * events, not echoes of the conclusion (#1549's ruling: a marriage bond, a
+ * civil registration, a banns notice are real records in their own right),
+ * so this warns rather than removes. Ids and type only, never the fact's
+ * `value` — the same redaction rule every other notice in this file follows.
+ */
+function leftBehindCoupleFactWarnings(
+  tree: SimplifiedGedcomX,
+  personId: string,
+  kind: "parents-of" | "spouses-of",
+  sweptTypes: readonly string[],
+  removedIds: ReadonlySet<string>,
+): string[] {
+  const person = persons(tree).find((p) => p.id === personId);
+  const sweptTokens = new Set(sweptTypes.map((t) => t.toLowerCase()));
+  const warnings: string[] = [];
+  for (const f of person?.facts ?? []) {
+    if (!f.id || !f.type || removedIds.has(f.id)) continue;
+    if (!sweptTokens.has(leadingToken(f.type).toLowerCase())) continue;
+    warnings.push(
+      `${f.type} fact '${f.id}' on ${personId} was left in the tree — its type is not ` +
+        `an exact match for the ${kind} sweep, so it was not removed. Confirm it does not ` +
+        `duplicate the forgotten conclusion.`,
+    );
+  }
+  return warnings;
 }
 
 function personOwnsFact(tree: SimplifiedGedcomX, personId: string, factId: string): boolean {
@@ -606,6 +662,18 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
         // unique to this person either.
         const redundantLabel = kind === "parents-of" ? "Parents" : "Marriage/Divorce/Annulment";
         t.pendingFactNotices.push(...pendingFactNoticesForIds(pid, redundantFactIds, redundantLabel));
+        // A left-behind leading-token-only match (e.g. "Marriage Registration")
+        // is deliberately NOT swept (#1549) but is worth a warning regardless
+        // of whether an exact-match fact was also found this call.
+        if (kind === "parents-of") {
+          t.factSharingNotices.push(
+            ...leftBehindCoupleFactWarnings(tree, pid, kind, SWEPT_PARENT_FACT_TYPES, redundantFactIds),
+          );
+        } else if (kind === "spouses-of") {
+          t.factSharingNotices.push(
+            ...leftBehindCoupleFactWarnings(tree, pid, kind, SWEPT_SPOUSE_FACT_TYPES, redundantFactIds),
+          );
+        }
         break;
       }
       case "birth-of":
@@ -967,6 +1035,11 @@ export const treeForgetSchema = {
     "but if a resolved fact's id ALSO exists on a different owner not being " +
     "touched, `validation.warnings` says so (ids only, never a value). Not " +
     "an error; just tell the researcher.\n" +
+    "\n" +
+    "`parents-of`/`spouses-of` also WARNS (never removes) about a left-behind " +
+    "fact whose type starts with the same word as a swept type but isn't an " +
+    "exact match (e.g. `Marriage Registration`) — it may be a distinct " +
+    "documentary record, not an echo of the forgotten conclusion.\n" +
     "\n" +
     "For a date-bounded request ('forget everything before 1850'), use " +
     "facts-before/facts-after/facts-between with a year, NOT your own reading " +

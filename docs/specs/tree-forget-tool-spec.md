@@ -120,6 +120,27 @@ rather than erroring. Reported as `factsByType`, a kind not a value.
 `children-of` needs no such sweep: the redundant `Parents` fact lives on the
 child, whom `children-of` removes wholesale.
 
+**Left-behind facts that share a type prefix are warned about, not swept.**
+FamilySearch also emits free-text custom fact types built on
+a canonical prefix — `Marriage Registration`, `Marriage+bond`, `Marriage
+Notice` — that are real, distinct documentary events (a marriage bond, a
+civil registration, a banns notice), not redundant echoes of the couple
+conclusion. Exact-match is deliberate: pattern-matching the prefix to delete
+these would destroy evidence on an irreversible tool. Instead, after a
+`parents-of`/`spouses-of` sweep, one `validation.warnings` entry is emitted
+per left-behind person-level fact whose type's leading token (`+` normalized
+to a space, e.g. `Marriage+bond` → `Marriage`) matches a swept type without
+being an exact match — ids and type strings only, never the fact's `value`:
+
+> `${type} fact '${id}' on ${personId} was left in the tree — its type is not
+> an exact match for the ${selector} sweep, so it was not removed. Confirm it
+> does not duplicate the forgotten conclusion.`
+
+This does not generalize to every leak: a fact whose type string is free text
+naming the spouse directly (not a canonical-prefix variant) isn't caught by
+this check at all, and isn't pattern-matchable — a one-off data observation,
+not a mechanism this tool can implement.
+
 **Blast radius of the `spouses-of` sweep.** The fact match changes real behavior
 at scale: measured over committed snapshot trees (2026-08-14, scanning
 `eval/**/*.gedcomx.json`), 27 of the 86 persons carrying a person-level `Marriage`

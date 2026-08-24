@@ -224,6 +224,41 @@ describe("tree_forget", () => {
     expect(i1.facts.map((f: any) => f.id)).toEqual(["F1"]);
   });
 
+  it("parents-of warns about a left-behind fact sharing a leading word with `Parents` but not an exact match (#1549)", async () => {
+    // Synthetic — no real FS example of a "Parents"-prefixed custom type is on
+    // record the way the spouses-of ones below are (issue #1549 only measured
+    // the spouse side); this exercises the same leading-token mechanism.
+    const tree: any = family();
+    tree.persons[0].facts.push({
+      id: "FPR",
+      type: "Parents Registration",
+      date: "1850",
+      value: "Michael Ryan - Mary Doyle",
+    } as any);
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    // Nothing named `Parents` exactly, so nothing is removed for it — but the
+    // structural removal still happens.
+    expect(r.removed.persons).toBe(2);
+    expect(r.removed.factsByType.Parents).toBeUndefined();
+    expect(r.validation.warnings).toEqual([
+      expect.stringMatching(/^Parents Registration fact 'FPR' on I1 was left in the tree/),
+    ]);
+
+    // The left-behind fact really does survive, untouched.
+    const i1 = (await readTree()).persons.find((p: any) => p.id === "I1");
+    expect(i1.facts.map((f: any) => f.id)).toContain("FPR");
+    expect(JSON.stringify(r)).not.toContain("Michael");
+    expect(JSON.stringify(r)).not.toContain("Doyle");
+  });
+
   it("parents-of still errors when there is neither a parent link nor a `Parents` fact", async () => {
     await writeProject(family());
     const r = await treeForget({
@@ -260,6 +295,8 @@ describe("tree_forget", () => {
     const tree = await readTree();
     expect(tree.persons.map((p: any) => p.id)).not.toContain("I5");
     expect(tree.relationships.map((x: any) => x.id)).not.toContain("R6");
+    // No leading-token match present, so no left-behind warning fires.
+    expect(r.validation.warnings).toEqual([]);
   });
 
   it("spouses-of also strips the subject's own person-level `Marriage` fact", async () => {
@@ -344,6 +381,41 @@ describe("tree_forget", () => {
     const i1 = (await readTree()).persons.find((p: any) => p.id === "I1");
     expect(i1.facts.map((f: any) => f.type)).not.toContain("Divorce");
     expect(i1.facts.map((f: any) => f.type)).not.toContain("Annulment");
+  });
+
+  it("spouses-of warns about left-behind facts sharing a leading word with a swept type but not an exact match (#1549)", async () => {
+    // Real FS-observed custom types from committed run logs (issue #1549's
+    // measurement), not invented: "Marriage Registration" (space-separated)
+    // and "Marriage+bond" (`+`-separated, exercises the normalization).
+    // Distinct documentary events per the ruling — correctly not swept, but
+    // worth flagging.
+    const tree: any = family();
+    tree.persons[0].facts.push(
+      { id: "FMR", type: "Marriage Registration", date: "1845" } as any,
+      { id: "FMB", type: "Marriage+bond", date: "1844", value: "Marriage bond between…" } as any,
+    );
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "spouses-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    // Neither is an exact `Marriage` match, so neither is removed.
+    expect(r.removed.factsByType.Marriage).toBeUndefined();
+    expect(r.validation.warnings.sort()).toEqual(
+      [
+        expect.stringMatching(/^Marriage Registration fact 'FMR' on I1 was left in the tree/),
+        expect.stringMatching(/^Marriage\+bond fact 'FMB' on I1 was left in the tree/),
+      ].sort(),
+    );
+
+    const i1 = (await readTree()).persons.find((p: any) => p.id === "I1");
+    expect(i1.facts.map((f: any) => f.id)).toEqual(expect.arrayContaining(["FMR", "FMB"]));
+    // No fact value leaked into the warning.
+    expect(JSON.stringify(r)).not.toContain("Marriage bond between");
   });
 
   it("spouses-of still errors when there is neither a spouse link nor a marriage-class fact", async () => {

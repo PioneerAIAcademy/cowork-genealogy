@@ -350,7 +350,7 @@ The `Parent` suffix is dropped in the simplified format because the parent-child
 | `Christening` | yes | GedcomX-only — no lowercase equivalent in research.json (use `birth` assertions for baptism-related claims) |
 | `Marriage` | yes | Used on Couple relationship facts |
 | `Divorce` | yes | Used on Couple relationship facts. GedcomX-only — no research.json equivalent in v1 |
-| `Annulment` | yes | Used on Couple relationship facts, and echoed as a person-level fact (see `Parents` note). Swept by `tree_forget` `spouses-of` alongside `Marriage`/`Divorce` |
+| `Annulment` | yes | Used on Couple relationship facts. Person-level echo **unverified** — 0 occurrences in the committed corpus as of 2026-08-20; "echoed as a person-level fact" was previously asserted here without evidence, the same status `Divorce` also has. Swept by `tree_forget` `spouses-of` alongside `Marriage`/`Divorce` regardless, an inclusion with no evidence citation of its own — do not read this row as confirming that inclusion is settled. |
 | `Residence` | yes | |
 | `Census` | **no** | Extension. Standard GedcomX records census appearances as `Residence`. The conversion function maps `Census` → `Residence` with a qualifier at upload. Use `Census` in the simplified format for clarity |
 | `Immigration` | yes | |
