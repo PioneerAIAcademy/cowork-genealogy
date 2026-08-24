@@ -23,7 +23,7 @@ import json
 import os
 import re
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -105,6 +105,17 @@ class SingleRun:
     # Skill-execution attempts (1 = clean first try; >1 = transient
     # stall/error retries). The per-run stall-tax signal.
     skill_attempts: int = 1
+    # Cache WRITES. Priced separately from cache reads and roughly 12x
+    # them, so a run log without this cannot be reconciled against its own
+    # `skill_cost_usd` — which is what let a paired skill's tokens read as
+    # a 72% saving that was really the subagent's usage going uncounted.
+    cache_creation_input_tokens: int = 0
+    # The SDK's per-model ledger for this run, keyed by model id, verbatim.
+    # The token fields above are its column sums. Two keys here means the
+    # run delegated to a plugin agent on its own `model:` pin — the only
+    # record of what the pin actually cost. `{}` on the abort path and on
+    # any CLI old enough not to emit `modelUsage`.
+    model_usage: dict[str, Any] = field(default_factory=dict)
 
 
 # ---- Timing helpers ------------------------------------------------------
@@ -326,6 +337,9 @@ def assemble_test_entry(
         "num_turns": sum(r.num_turns for r in runs),
         "input_tokens": sum(r.input_tokens for r in runs),
         "cached_input_tokens": sum(r.cached_input_tokens for r in runs),
+        "cache_creation_input_tokens": sum(
+            r.cache_creation_input_tokens for r in runs
+        ),
         "output_tokens": sum(r.output_tokens for r in runs),
         "judge_input_tokens": sum(r.judge.input_tokens for r in runs),
         "judge_cached_input_tokens": sum(r.judge.cached_input_tokens for r in runs),
@@ -350,7 +364,9 @@ def assemble_test_entry(
             "skill_attempts": r.skill_attempts,
             "input_tokens": r.input_tokens,
             "cached_input_tokens": r.cached_input_tokens,
+            "cache_creation_input_tokens": r.cache_creation_input_tokens,
             "output_tokens": r.output_tokens,
+            "model_usage": r.model_usage,
             "skill_cost_usd": r.skill_cost_usd,
             "output": r.output,
             "validators": {
@@ -406,6 +422,7 @@ _TOTALS_KEYS = (
     "num_turns",
     "input_tokens",
     "cached_input_tokens",
+    "cache_creation_input_tokens",
     "output_tokens",
     "judge_input_tokens",
     "judge_cached_input_tokens",

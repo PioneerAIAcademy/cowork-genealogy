@@ -1273,6 +1273,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
     "duration_ms": "number (sum of all runs)",
     "input_tokens": "number",
     "cached_input_tokens": "number (cache hits — should be substantial across N>1 runs)",
+    "cache_creation_input_tokens": "number (cache WRITES — priced ~12x reads)",
     "output_tokens": "number",
     "skill_cost_usd": "number (sum across runs)",
     "judge_cost_usd": "number (sum across runs)",
@@ -1288,7 +1289,9 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       "duration_ms": "number",
       "input_tokens": "number",
       "cached_input_tokens": "number",
+      "cache_creation_input_tokens": "number",
       "output_tokens": "number",
+      "model_usage": "object (per-model ledger, keyed by model id; the token fields above are its column sums)",
       "skill_cost_usd": "number",
 
       "output": {
@@ -1374,6 +1377,20 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 - **`flaky`** — true when the per-run outcomes are not unanimous. Composes orthogonally with `outcome` (Section 7). A test can be `outcome: pass, flaky: true` (modal-passing but unstable).
 - **`harness_version`** — the semver of the harness package. Bumping the harness (new validator, new judge prompt scaffolding, fixture-matching changes) invalidates apples-to-apples comparison with prior runs. Pinning the version makes that explicit.
 - **`rubric_hash` / `judge_prompt_hash`** — SHA-256 of the rubric and judge prompt template files at run time. A change to either silently invalidates historical scores; recording the hash forces a re-baseline rather than letting old runs look comparable.
+- **Every token field covers every model the run touched** — the main thread plus
+  any plugin agent it delegated to. They are read from the SDK's per-model ledger
+  (`model_usage`), which the CLI documents as covering the same calls as
+  `total_cost_usd`, and NOT from the ResultMessage's `usage` block, which may
+  carry a per-turn main-loop value. Reading `usage` is what made a skill-agent
+  pair look 72% cheaper in output tokens while its cost went up: the agent's
+  tokens were billed and uncounted. A run's `model_usage` with more than one key
+  is the record of what an agent's `model:` pin actually cost; use it, rather
+  than the sums, when attributing spend between the two halves of a pair.
+- **`totals.cache_creation_input_tokens`** — cache WRITES, priced at roughly 12x
+  cache reads. Without it a run log cannot be reconciled against its own
+  `skill_cost_usd`, so a divergence between tokens and cost cannot be told from a
+  missing column. It is not part of the cache-hit rate below, which is a read
+  statistic.
 - **`totals.cached_input_tokens`** — input tokens served from the prompt cache. **`input_tokens` and `cached_input_tokens` are disjoint: `input_tokens` counts only the tokens NOT served from cache**, so the two are added to get the prompt total and never subtracted from one another. Read the cache hit rate as a share of that total — `cached_input_tokens / (cached_input_tokens + input_tokens)` — which should be 50%+ for a batched skill suite (all tests for one skill run consecutively) even at N=1, because the skill prompt is identical across tests within the batch. With N=3 batched, expect 70%+. Lower numbers indicate caching isn't firing and costs will be higher than estimated in Section 11. Stating it against `input_tokens` alone is unstateable rather than merely imprecise: on a warm cache the cached count routinely exceeds the fresh one, so the ratio runs into the thousands of percent.
 - **`outcome_summary.aggregated_dimensions`** — modal dimension scores across runs (ties resolve toward the lower score). Used by dashboards; per-run dimension scores remain in `runs[].judge.dimensions` for human review.
 

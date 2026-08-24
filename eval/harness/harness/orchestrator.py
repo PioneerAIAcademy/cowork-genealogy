@@ -332,6 +332,60 @@ def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
     return parse_stub_skills(spec.execution) or None
 
 
+# Field names inside one `modelUsage` entry, as the CLI emits them.
+_MODEL_USAGE_FIELDS = (
+    "inputTokens",
+    "cacheReadInputTokens",
+    "cacheCreationInputTokens",
+    "outputTokens",
+)
+
+
+def _skill_tokens(usage: dict[str, Any]) -> tuple[int, int, int, int, dict[str, Any]]:
+    """Token counts for one skill run: (input, cache_read, cache_write, output, per-model).
+
+    Read from `model_usage` — the SDK's per-model ledger — and NOT from
+    `usage`, which the CLI documents as possibly carrying a per-turn main-loop
+    value rather than a session total. The two disagree by however much work a
+    plugin agent did: a subagent runs on its own `model:` pin and gets its own
+    `model_usage` key, while `usage` reports only the thread that spawned it.
+    `total_cost_usd` covers the same calls as `model_usage`, so this is also the
+    only reading that reconciles with the cost the run log already records.
+
+    Measured before this existed: pricing each committed run log's own tokens
+    against its own cost put unpaired skills in a stable 1.6-1.8x band (the
+    uncaptured cache writes), `research-exhaustiveness` at 1.7x before it became
+    a skill-agent pair and 4.9x after on the same fixtures, and `proof-conclusion`
+    at 7.2x. The jump is the agent's tokens, billed and uncounted.
+
+    Falls back to `usage` when `model_usage` is absent — an older CLI, or the
+    abort path where no ResultMessage arrived. The fallback cannot report cache
+    writes (that key is not in `usage` at all), so it returns 0 for them rather
+    than inventing a number.
+    """
+    per_model = usage.get("model_usage")
+    if isinstance(per_model, dict) and per_model:
+        totals = []
+        for field in _MODEL_USAGE_FIELDS:
+            total = 0
+            for entry in per_model.values():
+                if isinstance(entry, dict):
+                    raw = entry.get(field)
+                    if isinstance(raw, int) and not isinstance(raw, bool):
+                        total += raw
+            totals.append(total)
+        return (*totals, per_model)
+
+    sdk_usage = usage.get("usage") or {}
+    return (
+        int(sdk_usage.get("input_tokens") or 0),
+        int(sdk_usage.get("cache_read_input_tokens") or 0),
+        0,
+        int(sdk_usage.get("output_tokens") or 0),
+        {},
+    )
+
+
 async def _execute_single_run(
     *,
     run_index: int,
@@ -571,10 +625,9 @@ async def _execute_single_run(
     )
 
     usage = result.usage or {}
-    sdk_usage = usage.get("usage") or {}
-    skill_input = int(sdk_usage.get("input_tokens") or 0)
-    skill_cached = int(sdk_usage.get("cache_read_input_tokens") or 0)
-    skill_output = int(sdk_usage.get("output_tokens") or 0)
+    skill_input, skill_cached, skill_cache_write, skill_output, per_model = (
+        _skill_tokens(usage)
+    )
     # SDK timing (present only when a ResultMessage arrived — i.e. not on a
     # wall-clock / stream-silence abort, where these stay 0).
     skill_duration_api_ms = float(usage.get("duration_api_ms") or 0.0)
@@ -590,14 +643,18 @@ async def _execute_single_run(
         started_at=_started_at,
         ended_at=_ended_at,
         skill_attempts=result.attempts,
-        # Run-level tokens are SKILL ONLY. Judge tokens live on the
-        # judge block so the spec's cache-hit-rate diagnostic —
-        # cached / (cached + input) on the skill side — stays meaningful.
-        # The two counts are disjoint (input excludes cache reads), so the
-        # rate is a share of their sum; see unit-test-spec.md § Run Log Format.
+        # Run-level tokens are SKILL ONLY, and cover every model the run
+        # touched — the main thread plus any plugin agent it delegated to.
+        # Judge tokens live on the judge block so the spec's cache-hit-rate
+        # diagnostic — cached / (cached + input) on the skill side — stays
+        # meaningful. Those two counts are disjoint (input excludes cache
+        # reads), so the rate is a share of their sum; see unit-test-spec.md
+        # § Run Log Format.
         input_tokens=skill_input,
         cached_input_tokens=skill_cached,
+        cache_creation_input_tokens=skill_cache_write,
         output_tokens=skill_output,
+        model_usage=per_model,
         skill_cost_usd=float(usage.get("total_cost_usd") or 0.0),
         output={
             "text_response": result.text_response,
