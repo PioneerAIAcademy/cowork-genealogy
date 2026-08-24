@@ -128,22 +128,36 @@ def test_creator_not_in_custody(before_state, after_state, test):
 
 # --- V6: Unknown-marker vocabulary --------------------------------------
 
-_ALLOWED_MARKER_ELEMENTS = {
-    "who", "what",
-    "when_created", "when created",
-    "when_accessed", "when accessed",
-    "where",
-    "where_within", "where within",
-}
+_CUSTODY_KEYWORDS = frozenset({
+    "repository",
+    "microfilm",
+    "microfiche",
+    "call number",
+    "accession",
+    "fhl",
+    "catalog number",
+})
 
 _MARKER_RE = re.compile(r'\[([A-Z_ ]+?)(?:\s+NOT RECORDED)\]', re.IGNORECASE)
 
 
-def test_unknown_marker_vocabulary(after_state, test):
-    """[...NOT RECORDED] markers must name a Who/What/When/Where/Wherein element.
+def _marker_names_custody_element(element_text: str) -> str | None:
+    """Return the matched custody keyword if the marker names a custody or
+    physical-media element, else None."""
+    lowered = element_text.lower()
+    for kw in _CUSTODY_KEYWORDS:
+        if kw in lowered:
+            return kw
+    return None
 
-    Markers for elements outside the framework — physical custody,
-    microfilm number — belong in `notes`, not in the citation.
+
+def test_unknown_marker_vocabulary(after_state, test):
+    """[...NOT RECORDED] markers must not name custody or physical-media elements.
+
+    Markers for elements outside the citation framework — physical custody,
+    microfilm number, call number — belong in `notes`, not in the citation.
+    Legitimate citation-element markers (page, volume, date, creator, etc.)
+    are allowed.
     """
     if test.get("type") == "negative":
         pytest.skip("negative test")
@@ -163,19 +177,17 @@ def test_unknown_marker_vocabulary(after_state, test):
         for field_label, value in fields_to_check:
             for m in _MARKER_RE.finditer(value):
                 raw = m.group(1).strip()
-                normalized = raw.lower().replace(" ", "_")
-                normalized_spaced = raw.lower()
-                if (normalized not in _ALLOWED_MARKER_ELEMENTS
-                        and normalized_spaced not in _ALLOWED_MARKER_ELEMENTS):
+                matched_kw = _marker_names_custody_element(raw)
+                if matched_kw is not None:
                     violations.append(
-                        f"{sid}.{field_label}: marker [{m.group(0)}] names "
-                        f"element {raw!r}, which is not in the sanctioned "
-                        f"vocabulary"
+                        f"{sid}.{field_label}: marker {m.group(0)} names "
+                        f"a custody/physical-media element (matched "
+                        f"{matched_kw!r}) — this belongs in notes, not "
+                        f"in the citation"
                     )
     assert not violations, (
-        "[...NOT RECORDED] markers must name a Who/What/When/Where/Wherein "
-        "element — markers for elements outside the framework belong in "
-        "notes, not in the citation:\n  "
+        "[...NOT RECORDED] markers must not name custody or physical-media "
+        "elements — those belong in notes, not in the citation:\n  "
         + "\n  ".join(violations)
     )
 

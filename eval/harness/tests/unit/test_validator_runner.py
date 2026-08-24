@@ -1644,8 +1644,8 @@ def _v6_state(marker_text):
     return after
 
 
-def test_unknown_marker_vocabulary_passes_on_valid_markers():
-    after = _v6_state("FamilySearch.org ([WHO NOT RECORDED])")
+def _run_v6(marker_text):
+    after = _v6_state(marker_text)
     before = _empty_research_state()
     results = run_validators(
         skill="citation",
@@ -1659,26 +1659,36 @@ def test_unknown_marker_vocabulary_passes_on_valid_markers():
         (r for r in results if r.name == "test_unknown_marker_vocabulary"), None
     )
     assert result is not None, "test_unknown_marker_vocabulary did not run"
-    assert result.passed is True, f"unexpected failure: {result.error}"
+    return result
 
 
-def test_unknown_marker_vocabulary_fails_on_invalid_marker():
-    after = _v6_state("FamilySearch.org ([PHYSICAL REPOSITORY NOT RECORDED])")
-    before = _empty_research_state()
-    results = run_validators(
-        skill="citation",
-        validators_dir=VALIDATORS_DIR,
-        before_state=before,
-        after_state=after,
-        tool_calls=[],
-        skill_frontmatter=_CITATION_FRONTMATTER,
-    )
-    result = next(
-        (r for r in results if r.name == "test_unknown_marker_vocabulary"), None
-    )
-    assert result is not None, "test_unknown_marker_vocabulary did not run"
+@pytest.mark.parametrize("marker_text", [
+    "[WHO NOT RECORDED]",
+    "[VOLUME AND PAGE NOT RECORDED]",
+    "[PAGE NOT RECORDED]",
+    "[CREATOR NOT RECORDED]",
+    "[DATE NOT RECORDED]",
+    "[ARTICLE TITLE NOT RECORDED]",
+    "[WILL BOOK AND PAGE NOT RECORDED]",
+    "[WHERE WITHIN NOT RECORDED]",
+])
+def test_unknown_marker_vocabulary_passes_on_valid_markers(marker_text):
+    result = _run_v6(f"FamilySearch.org ({marker_text})")
+    assert result.passed is True, f"unexpected failure on {marker_text}: {result.error}"
+
+
+@pytest.mark.parametrize("marker_text,expected_keyword", [
+    ("[PHYSICAL REPOSITORY NOT RECORDED]", "repository"),
+    ("[MICROFILM NUMBER NOT RECORDED]", "microfilm"),
+    ("[MICROFICHE NOT RECORDED]", "microfiche"),
+    ("[FHL CALL NUMBER NOT RECORDED]", "fhl"),
+    ("[CATALOG NUMBER NOT RECORDED]", "catalog number"),
+    ("[ACCESSION NUMBER NOT RECORDED]", "accession"),
+])
+def test_unknown_marker_vocabulary_fails_on_custody_markers(marker_text, expected_keyword):
+    result = _run_v6(f"FamilySearch.org ({marker_text})")
     assert result.passed is False
-    assert "PHYSICAL REPOSITORY" in (result.error or "")
+    assert expected_keyword in (result.error or "").lower()
 
 
 # --- V10: informant not in who ------------------------------------------
