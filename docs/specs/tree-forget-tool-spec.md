@@ -77,7 +77,7 @@ the `{ operation, ...fields }` shape `tree_edit` takes:
 |---|---|---|
 | `parents-of` | `personId` | the person's parents, the ParentChild links to them, **and the person's own `Parents` documentary facts** (see §2.1.1) |
 | `children-of` | `personId` | the person's children, and the ParentChild links to them |
-| `spouses-of` | `personId` | the person's spouses, the couple relationships, **and the person's own `Marriage`/`Divorce`/`Annulment` documentary facts** (see §2.1.1) |
+| `spouses-of` | `personId` | the person's spouses, the couple relationships, **and the person's own couple-event documentary facts** (`Marriage`, `Divorce`, `Annulment`, `Engagement`, `MarriageBanns`, `Separation`; see §2.1.1) |
 | `birth-of` | `personId` | that person's Birth facts |
 | `death-of` | `personId` | that person's Death facts |
 | `facts-of` | `personId`, `factType` | that person's facts of one type (e.g. `Marriage`); `factType` matches case-insensitively |
@@ -113,9 +113,10 @@ rather than erroring. Reported as `factsByType`, a kind not a value.
 
 - **`parents-of`** strips the subject's `Parents`-type fact (a fact whose
   `value` names the parents, e.g. `"Geo… Wilcox - Caroline E Woodruff"`).
-- **`spouses-of`** strips the subject's `Marriage`/`Divorce`/`Annulment`-type
-  facts, the person-level echo of the conclusion the `Couple` relationship also
-  carries as its own facts.
+- **`spouses-of`** strips the subject's couple-event facts (`Marriage`,
+  `Divorce`, `Annulment`, `Engagement`, `MarriageBanns`, `Separation`), the
+  person-level echo of the conclusion the `Couple` relationship also carries
+  as its own facts.
 
 `children-of` needs no such sweep: the redundant `Parents` fact lives on the
 child, whom `children-of` removes wholesale.
@@ -130,16 +131,18 @@ these would destroy evidence on an irreversible tool. Instead, after a
 `parents-of`/`spouses-of` sweep, one `validation.warnings` entry is emitted
 per left-behind person-level fact whose type's leading token (`+` normalized
 to a space, e.g. `Marriage+bond` → `Marriage`) matches a swept type without
-being an exact match — ids and type strings only, never the fact's `value`:
+being an exact match — ids and canonical type prefixes only, never the fact's
+full type string or `value` (free-text custom types can contain names):
 
-> `${type} fact '${id}' on ${personId} was left in the tree — its type is not
-> an exact match for the ${selector} sweep, so it was not removed. Confirm it
-> does not duplicate the forgotten conclusion.`
+> `A ${prefix}-prefixed fact '${id}' on ${personId} was left in the tree — its
+> type is not an exact match for the ${selector} sweep, so it was not removed.
+> Confirm it does not duplicate the forgotten conclusion.`
 
 This does not generalize to every leak: a fact whose type string is free text
 naming the spouse directly (not a canonical-prefix variant) isn't caught by
-this check at all, and isn't pattern-matchable — a one-off data observation,
-not a mechanism this tool can implement.
+this check at all, because the warning's token set is drawn from the swept
+types and a free-text sentence type may share no prefix. Widening that set is
+mechanically possible; whether it should widen is a separate question.
 
 **Blast radius of the `spouses-of` sweep.** The fact match changes real behavior
 at scale: measured over committed snapshot trees (2026-08-14, scanning

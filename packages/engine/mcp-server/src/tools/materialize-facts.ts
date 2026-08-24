@@ -83,15 +83,21 @@ const NAME_TYPES: ReadonlySet<string> = new Set(["name"]);
 const GENDER_TYPES: ReadonlySet<string> = new Set(["gender", "sex"]);
 const SKIP_TYPES: ReadonlySet<string> = new Set(["relationship", "age", "marriage"]);
 
+/** Couple-relationship event types, broken out so tree-forget.ts can import
+ *  the set and sweep all of them without maintaining a parallel list. */
+export const COUPLE_EVENT_TYPES: ReadonlySet<string> = new Set([
+  "Marriage", "Divorce", "Annulment", "Engagement", "MarriageBanns", "Separation",
+]);
+
 /** Tree fact types whose `value` is null (events + place/duration attributes) —
  *  the qualifier `value` field is meaningful only for value-bearing types
  *  (Occupation, Race, Religion, Nationality, …). Exported so
  *  tests/packaging/tree-forget-sweep-drift.test.ts (#1549) can cross-reference
- *  its couple-event members against tree-forget.ts's swept/confirmed-not-echoed
- *  sets without re-declaring this list. */
+ *  its couple-event members against tree-forget.ts's swept set without
+ *  re-declaring this list. */
 export const EVENT_TREE_TYPES: ReadonlySet<string> = new Set([
   "Birth", "Death", "Christening", "Burial", "Baptism", "Cremation",
-  "Marriage", "Divorce", "Annulment", "Engagement", "MarriageBanns",
+  ...COUPLE_EVENT_TYPES,
   "Residence", "Census", "MunicipalCensus", "Immigration", "Emigration",
   "Naturalization", "Will", "Probate", "Adoption",
 ]);

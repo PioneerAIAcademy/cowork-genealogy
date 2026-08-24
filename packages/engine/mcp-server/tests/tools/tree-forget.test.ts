@@ -249,7 +249,7 @@ describe("tree_forget", () => {
     expect(r.removed.persons).toBe(2);
     expect(r.removed.factsByType.Parents).toBeUndefined();
     expect(r.validation.warnings).toEqual([
-      expect.stringMatching(/^Parents Registration fact 'FPR' on I1 was left in the tree/),
+      expect.stringMatching(/^A Parents-prefixed fact 'FPR' on I1 was left in the tree/),
     ]);
 
     // The left-behind fact really does survive, untouched.
@@ -405,11 +405,12 @@ describe("tree_forget", () => {
 
     // Neither is an exact `Marriage` match, so neither is removed.
     expect(r.removed.factsByType.Marriage).toBeUndefined();
-    expect(r.validation.warnings.sort()).toEqual(
-      [
-        expect.stringMatching(/^Marriage Registration fact 'FMR' on I1 was left in the tree/),
-        expect.stringMatching(/^Marriage\+bond fact 'FMB' on I1 was left in the tree/),
-      ].sort(),
+    expect(r.validation.warnings).toHaveLength(2);
+    expect(r.validation.warnings).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/^A Marriage-prefixed fact 'FMR' on I1 was left in the tree/),
+        expect.stringMatching(/^A Marriage-prefixed fact 'FMB' on I1 was left in the tree/),
+      ]),
     );
 
     const i1 = (await readTree()).persons.find((p: any) => p.id === "I1");
@@ -676,7 +677,7 @@ describe("tree_forget", () => {
     if (!r.ok) return;
     expect(r.removed.factsByType).toEqual({ Marriage: 1 });
     expect(r.validation.warnings).toEqual([
-      expect.stringMatching(/Marriage\/Divorce\/Annulment fact 'SHARED2' also exists on: C2/),
+      expect.stringMatching(/couple-event fact 'SHARED2' also exists on: C2/),
     ]);
     const c2 = (await readTree()).persons.find((p: any) => p.id === "C2");
     expect(c2.facts.map((f: any) => f.id)).toEqual(["SHARED2"]);
