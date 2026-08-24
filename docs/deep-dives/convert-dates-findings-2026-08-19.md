@@ -661,13 +661,27 @@ check exercised against a state that must pass **and** the state that must fire.
 Then replayed against the committed run log
 (`v1_2026-08-19_22-13-16`): **0 failures across all 16 tests.**
 
-**What that replay is and is not.** It feeds each test's recorded `tool_calls`
-through the validator functions directly. It is not the harness running them: the
-committed run log was produced *before* the validators were added, so its
-`validators.results` list only `test_only_convert_calendar_called` and
-`test_no_spurious_conversion`. The first run log to show all four executing will
-be the next full run of this skill. Flagged because "0 failures on replay" should
-not be read as "verified in-run".
+**Verified in-run, not only by replay.** The replay above feeds each test's
+recorded `tool_calls` through the validator functions directly, which is weaker
+than the harness executing them. An earlier draft of this section said the
+in-harness proof would have to wait for the next full run — that run is
+`v1_2026-08-21_19-59-34`, and it is committed. From its `validators.results`:
+
+| validator | ran | skipped | failed | fired on |
+|---|---|---|---|---|
+| `test_requires_tool_conversion_calls_the_tool` | **8** | 8 | 0 | `_001 _002 _005 _006 _009 _013 _014 _015` |
+| `test_only_convert_calendar_called` | 12 | 4 | 0 | every positive |
+| `test_no_spurious_conversion` | **2** | 14 | 0 | `_003 _010` |
+| `test_refusal_to_convert_makes_no_call` | **1** | 15 | 0 | `_008` |
+
+All four executed with zero failures, and VR-1 fired on exactly the eight tagged
+tests — the tag gate resolves to the set it was meant to.
+
+One precision point, since the tag was added after that run:
+`test_no_spurious_conversion` fires on **two** tests here, not three. `_012`'s new
+`no-spurious-conversion` tag takes effect on the next run, which is when its
+spurious call becomes a deterministic validator failure rather than a judge
+narration.
 
 ### VR-2 was implemented, then deleted — and that is the reusable lesson
 
@@ -802,7 +816,7 @@ scratch run" below for what each one actually produced.
 | `tests/…/{scotland-hybrid, protestant-german-1700, julian-gregorian-1750}.json` + `catholic-europe-1582.json` | Struck the "note that offsets vary by country" bullet — already graded by each test's bullet 2, and complying only pads a billed response. | F5 | **made** — but see F5: striking it does not close the finding |
 | `tests/…/russia-1918.json` (`_005`) | Same bullet **deliberately retained** as a canary, so the next run can still distinguish "overrides now bind" from "the symptom was deleted". | F5 | **made** |
 | `tests/…/catholic-europe-1582.json` (`_004`) | Expectation rewritten: grades naming the pre-adoption status, saying no contemporaneous Gregorian equivalent exists, recording as written, and labelling 24 Sep 1582 proleptic if offered. `requires-tool-conversion` removed — the conversion is a specified input error. | F6 | **made & verified** — input error surfaced and explained |
-| `eval/harness/validators/test_convert_dates.py` | **VR-1** (a `requires-tool-conversion` test must call the tool) and **VR-4** (zero calls on a `refusal-to-convert` test), plus a recorded note on why VR-2 is not here. | VR-1, VR-4 | **made** — 11 unit tests + replayed against the committed run's recorded `tool_calls`, 0 failures. **Not yet exercised inside a harness run:** the committed run log predates them, so its `validators.results` show only the two pre-existing checks. |
+| `eval/harness/validators/test_convert_dates.py` | **VR-1** (a `requires-tool-conversion` test must call the tool) and **VR-4** (zero calls on a `refusal-to-convert` test), plus a recorded note on why VR-2 is not here. | VR-1, VR-4 | **made & verified in-run** — 11 unit tests, plus run 4's own `validators.results`: all four executed, 0 failures, VR-1 firing on exactly its eight tagged tests. |
 | `eval/harness/tests/unit/test_convert_dates_validators.py` **(new)** | 11 tests: every check exercised against a state that must pass and the state that must fire, per CLAUDE.md's "a new lint must be proven to fail". Not snapshot-tracked, so free. | VR-1, VR-4 | **made** |
 | `eval/harness/harness/mock_mcp.py` | **VR-0**: `convert_calendar` registered as a live tool — `LIVE_TOOLS`, a `_make_live_handler` branch on the generic compiled-tool builder, `OK_FALSE_IS_FAILURE_LIVE` (required by the drift lint), and the stale "three that are not live" comment. | F1 | **made** — handler verified live |
 | `tests/…/russia-1900-threshold.json` **(new, `ut_convert_dates_015`)** | Julian 14 Feb 1900, Moscow → Gregorian 26 Feb 1900. Names 27 February as the specific failure a year-band reading produces. Gives F2 something that verifies it. | F2 | **made & verified** — +12, not +13 |
