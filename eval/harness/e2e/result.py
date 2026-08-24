@@ -109,6 +109,14 @@ from typing import Any
 #       `merge_warnings` is deliberately excluded — its `ok: false` is a dry-run
 #       verdict about a merge, not the tool failing — so its 16/25 do not move.
 #
+#       One more `{ok: false}` is exempt, added after this bump and needing no
+#       bump of its own because the payload tells you: the no-project answer
+#       (`reason: "no_project"`, issue #1695), which the user gets for not being
+#       in a research project and which is not marked. Ask "did this call land?"
+#       with `did_not_land` in `harness/skill_invocation.py`, never with a bare
+#       `is_error` gate — a bare gate counts a write that never happened, and a
+#       miss in that direction is silent.
+#
 # A change readers can detect from the payload itself does NOT need a bump.
 # `narration` replacing `.transcript.md` is one: the field is a dataclass
 # `default_factory=list` and the writer emits `asdict(result)`, so every run
