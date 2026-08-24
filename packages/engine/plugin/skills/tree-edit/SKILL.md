@@ -64,7 +64,7 @@ Other additions via `tree_edit`: `add_person` · `add_relationship` · `add_sour
 ### Writing facts correctly
 
 - **Dates must be GedcomX-parseable.** Write a bare year (`1773`), an ISO date (`1908-03-12`), or a spelled date (`12 March 1908`); record any approximation in the source `page` or your reply, not in the `date` string.
-- **Couple-event facts go on the `Couple` relationship, not on a person.** Marriage, Divorce, and other couple events belong in the relationship's `facts` array — supply them in the `add_relationship` call itself. **The relationship edge needs its own source-ref, separate from the fact's** — a `sources` array nested only inside `facts[]` fails validation (the edge and each fact are checked independently). Prefer `sourceAssertionId` (a research.json assertion with `fact_type: "relationship"` — not the marriage-fact assertion) over a literal `relationship.sources`: it resolves the edge's ref and, when the inline fact carries none of its own, propagates that same ref onto it — `relationship: { type: "Couple", person1, person2, sourceAssertionId: "a_005", facts: [{ type: "Marriage", date, place }] }`. Without `sourceAssertionId`, supply `relationship.sources` directly *and* each fact's own `sources` — one does not inherit the other. A Marriage written as a person `add_fact` misplaces the event. See `references/relationship-accuracy.md`.
+- **Couple-event facts go on the `Couple` relationship, not on a person.** Marriage, Divorce, and other couple events belong in the relationship's `facts` array — supply them in the `add_relationship` call itself. The relationship edge needs its own source-ref, separate from the fact's — see `references/relationship-accuracy.md` for the exact mechanics. A Marriage written as a person `add_fact` misplaces the event.
 
 ## Person merging
 
@@ -76,7 +76,7 @@ When proof-conclusion confirms two persons are the same individual, execute the 
 
 (Folding a record's personas into the tree is **not** a merge here — that is person-evidence's job, per-persona via `materialize_facts`. This skill only collapses two persons already in the tree.)
 
-**Once you've picked the survivor and gotten the user's go-ahead, actually call the merge tool — do not stop at a plan or report a merge you haven't executed.** The merge is real only when the tool returns `ok: true`; narrate the folded counts from that returned summary, never from a description of what you intend to do. **Then call `Skill("check-warnings")`** — a merge is exactly the kind of edit that can leave someone as their own ancestor; skipping it here is not optional.
+**Once you've picked the survivor and gotten the user's go-ahead, actually call the merge tool — do not stop at a plan or report a merge you haven't executed.** The merge is real only when the tool returns `ok: true`; narrate the folded counts from that returned summary, never from a description of what you intend to do. **Then call `Skill("check-warnings")`** — skipping it here is not optional.
 
 On `{ ok: false, errors }` the merge writes nothing — surface the errors.
 

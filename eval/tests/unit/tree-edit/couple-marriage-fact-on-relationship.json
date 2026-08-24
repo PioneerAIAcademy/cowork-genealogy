@@ -27,6 +27,7 @@
     "Edit-minimality still applies: the skill should create exactly the one Couple relationship with the marriage fact and not churn the existing ParentChild relationships (RT1, RT2) or person facts",
     "COMPLETENESS GRADING NOTE for the judge: this test targets the tree-edit WRITE (creating the Couple relationship with the Marriage fact correctly placed and sourced). SKILL.md § Validation requires `Skill(\"check-warnings\")` after ANY edit. This is stubbed via `execution.stub_skills` (the callee has its own unit suite) — score Completeness on both: the marriage write done correctly, AND check-warnings actually launched afterward (visible in `skills_invoked`), not on the canned response's content"
   ],
+  "mcp_fixtures": ["place-search-schuylkill-county"],
   "execution": {
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 600,
