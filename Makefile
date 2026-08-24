@@ -632,6 +632,20 @@ e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-transcribe-failures
+e2e-transcribe-failures: ## How often image_transcribe fails to REACH OpenRouter, over committed e2e runs (issue #1594): make e2e-transcribe-failures | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. Replaces the shell snippet
+	# in issue #1594, which counted stripped calls in its denominator and could
+	# never match them in its numerator — so re-running it made a 9.7% rate print
+	# as 7.6% and read as the problem receding. Every rate here carries the
+	# denominator it was taken over, the stripped tally is a first-class line, and
+	# the by-author split states in words whether the corpus can actually separate
+	# a bad machine from a bad service (today it cannot). Same 14-day horizon as
+	# e2e-wiki-failures and for the same reason: it reads response_summary.
+	cd eval/harness && uv run python -m e2e.image_transcribe_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-wiki-failures
 e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (issue #1552): make e2e-wiki-failures | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs. Splits every wiki_search/
