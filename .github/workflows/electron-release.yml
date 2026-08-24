@@ -83,13 +83,45 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # The gate this workflow was missing (#1070). electron-builder logs a
+      # dependency it could not resolve at WARN, so a packaged app carrying none
+      # of its declared dependencies is a GREEN build that opens no window and
+      # prints nothing.
+      #
+      # No per-OS asar path: the script finds every app.asar under dist/ itself,
+      # which also covers mac emitting one per architecture, and hard-fails when
+      # it finds none rather than passing on an empty search.
+      #
+      # **What this does and does not stop on a tag push.** The packaging steps
+      # above carry `--publish always`, so assets are uploaded BEFORE this runs
+      # and this step cannot prevent the upload. electron-publish creates a
+      # **draft** release by default (`gitHubPublisher.js`), so nothing becomes
+      # public on its own: a red leg here is the signal not to publish that
+      # draft, and with `fail-fast: false` the other OS legs still upload theirs.
+      # Splitting packaging from publishing would make this a true gate; that is
+      # a change to a release path nothing has ever exercised end to end, so it
+      # is deliberately not bundled with this fix.
+      - name: Verify the packaged app has its dependencies
+        working-directory: apps/electron
+        run: npm run check-packaged
+
       # Keep the dry-run output so you can download + smoke-test installers
       # straight off the Actions run (only on manual dispatch; tag pushes publish
       # to the Release instead).
+      # `!cancelled()` so a FAILED verify still uploads: a broken artifact is
+      # exactly the one worth downloading and inspecting, and the default
+      # `success()` would withhold it precisely then. Not `always()` — that fires
+      # on cancellation too, and with `if-no-files-found: error` a cancelled run
+      # would report a spurious upload failure on top of the cancellation.
       - name: Upload dry-run artifacts
-        if: github.event_name == 'workflow_dispatch'
+        if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.target }}-dist
           path: apps/electron/dist/**
-          if-no-files-found: error
+          # `warn`, not `error`. This step now runs on failure too (so a failed
+          # verify still hands you the artifact to inspect), and the common
+          # failure is the BUILD failing before dist/ exists at all — where
+          # `error` would add a second red step blaming a missing artifact
+          # instead of the typecheck error that actually broke it.
+          if-no-files-found: warn
