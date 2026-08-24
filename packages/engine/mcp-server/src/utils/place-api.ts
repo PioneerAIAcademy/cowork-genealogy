@@ -64,18 +64,77 @@ export function extractPrimaryId(
   return last || undefined;
 }
 
-export async function searchPlace(name: string): Promise<SearchPlaceResult[]> {
+// FamilySearch's place search parses Lucene operator characters even inside a
+// phrase-quoted `name:"..."` value, so a recorded place carrying one silently
+// matches somewhere else. Measured live, each isolated to the single character
+// (dev/probe-place-special-chars.ts):
+//
+//   "…7 & 9 Ogden city Ward 2, Weber, Utah"  -> Election District S, Denver, COLORADO
+//   "Great & Little Singleton, …, Lancashire" -> Great and Little Elm, SOMERSET
+//   "??Gren"                                  -> Angren, Tashkent, UZBEKISTAN
+//   "Marshall Sal*, Missouri"                 -> Saline County Poor Farm CEMETERY
+//   "Alverson Cemetery #1, …, Indiana"        -> Alverson Cemetery, NORTH CAROLINA
+//
+// None of these are query syntax the caller meant — they are transcription
+// artifacts of census districts, cemetery plots and illegible text.
+//
+// Backslash-escaping instead of stripping was measured and does NOT work:
+// `\&` and `\#` behave exactly as the bare character (same wrong place, same
+// score), and `\?` / `\*` make FamilySearch return HTTP 400. The endpoint does
+// not honour Lucene escaping, so stripping is the only option that recovers
+// the right place.
+//
+// Stripping costs nothing even when the character is genuinely part of a place
+// name: the last case above then matches FamilySearch's own "Alverson Cemetery
+// #1" at 95, because their index normalises the character the same way. It is
+// legitimate in their DATA and merely unusable in the QUERY.
+//
+// Deliberately NOT stripped: `:` `(` `)` `[` `]` `/` `-` and doubled commas all
+// measured harmless (same top hit, lower score), and hyphens are load-bearing
+// in real names like "Hauts-de-France".
+const LUCENE_OPERATORS = /[&?*#!^~|]/g;
+
+function sanitizeForNameQuery(name: string): string {
+  return name.replace(LUCENE_OPERATORS, " ").replace(/\s+/g, " ").trim();
+}
+
+export async function searchPlace(
+  name: string,
+  opts: { date?: number } = {},
+): Promise<SearchPlaceResult[]> {
   // Phrase-quote the value: an unquoted multi-word `name:` query is parsed by
   // FamilySearch's search as an OR of tokens, so a place literally named just
   // one token (e.g. "West" in Cameroon) can outscore the real multi-word
   // place entirely — verified live: unquoted "West Bromwich" returns no
   // West-Bromwich-shaped result at all; quoted, the correct England/UK
   // entries rank first. See tests/utils/place-api.test.ts.
-  const url = `${FS_API_BASE}/search?q=name:${encodeURIComponent(`"${name}"`)}`;
+  // `+date:+YYYY` restricts scoring to the place representations that existed in
+  // that year. Jurisdictions move: "Rochdale, England" resolves to Greater
+  // Manchester undated (a county created in 1974) and to Lancashire at
+  // +date:+1880. Omitting the option leaves the URL byte-identical to the
+  // undated form. https://developers.familysearch.org/main/docs/search-for-places
+  const dateQualifier =
+    opts.date === undefined ? "" : encodeURIComponent(` +date:+${opts.date}`);
+  const safeName = sanitizeForNameQuery(name);
+  if (!safeName) return [];
+  const url = `${FS_API_BASE}/search?q=name:${encodeURIComponent(`"${safeName}"`)}${dateQualifier}`;
 
   const response = await fetchWithTimeout(url, {
     headers: {
       Accept: "application/x-gedcomx-atom+json",
+      // Pins the LANGUAGE THE ANSWER IS RENDERED IN, not what matches. Measured
+      // live: the same query scores identically under en/de/nl and only the
+      // returned fullName changes ("Bavaria, Germany" / "Bayern, Deutschland" /
+      // "Bayern, Duitsland"). Matching is already language-agnostic — a Dutch or
+      // Czech input resolves at full score with no header at all.
+      //
+      // Sent explicitly because the server default happens to be en today, and
+      // every persisted `standard_place` is that default. Without this header a
+      // change upstream (or an injected one from a proxy) would silently switch
+      // the language of every place we write, while `place.normalized` from the
+      // read tools stayed en — they already send this header. Plan §5.2 asked
+      // for it on reads; the resolver never got it.
+      "Accept-Language": "en",
     },
   });
 

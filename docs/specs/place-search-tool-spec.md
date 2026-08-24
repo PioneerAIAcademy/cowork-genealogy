@@ -208,9 +208,32 @@ None. The FamilySearch places endpoints and the Wikipedia API are all public.
 ### Places_Search_resource
 
 ```
-GET https://api.familysearch.org/platform/places/search?q=name:{query}
+GET https://api.familysearch.org/platform/places/search?q=name:"{query}"[ +date:+{year}]
 Accept: application/x-gedcomx-atom+json
+Accept-Language: en
 ```
+
+`{query}` is **phrase-quoted** (an unquoted multi-word value is parsed as an OR
+of its tokens) and **stripped of Lucene operator characters** (`& ? * # ! ^ ~ |`)
+before quoting. Those are parsed even inside the quotes, so a recorded place
+carrying one silently matches elsewhere — `"…7 & 9 Ogden city Ward 2, Weber,
+Utah"` resolves to *Denver, Colorado*. Escaping does not work: `\&` and `\#`
+behave as the bare character and `\?` / `\*` return HTTP 400. Evidence:
+`dev/probe-place-special-chars.ts`.
+
+`+date:+{year}` is optional and restricts scoring to the place representations
+that existed that year — jurisdictions move, so an undated query returns the
+modern one (`"Rochdale, England"` → Greater Manchester, a county created in
+1974, rather than Lancashire). It is a **hard filter**: where no representation
+records coverage for the year, FamilySearch returns nothing, so the resolver
+falls back to the undated query. Evidence:
+`dev/probe-place-date-disagreement.ts`.
+
+`Accept-Language` selects the language the answer is **rendered** in, not what
+matches — matching is language-agnostic (`"Bayern, Deutschland"` scores 100
+under every locale). Pinned to `en` so the persisted `standard_place` spelling
+cannot drift with a server default, and to agree with the read tools, which
+already send it.
 
 Response: `entries[]`, each with `id` (rep ID), `score`, and
 `content.gedcomx.places[0]` carrying `display.{name,fullName,type}`,

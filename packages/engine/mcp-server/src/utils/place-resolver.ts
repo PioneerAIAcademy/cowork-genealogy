@@ -24,6 +24,8 @@ import {
   getPlaceById,
   getPlaceRepIds,
 } from "./place-api.js";
+import { stdDate } from "./date-standardize.js";
+import { earliestYear } from "./date-helpers.js";
 
 // Element types of the existing fetchers, without needing their (unexported)
 // interfaces — keeps this module in lockstep with place-search.ts.
@@ -43,9 +45,14 @@ export interface ResolveOpts {
    */
   contextName?: string;
   /**
-   * The date of the fact/event, for forward-compat. NOT yet used: v1 bulk
-   * standardization is date-agnostic (we populate the stable NAME; date-aware
-   * placeRepId disambiguation lives in the consuming tools). See plan §11.
+   * The date of the fact/event. Used by `resolveStandardPlace`: its year is
+   * sent as FamilySearch's `+date:+YYYY` query qualifier so scoring is
+   * restricted to the place representations that existed then. Jurisdictions
+   * move, so an undated query returns the modern rep ("Rochdale, England" ->
+   * Greater Manchester, a county created in 1974, rather than Lancashire).
+   * Any date string `stdDate` understands; unparseable dates degrade to an
+   * undated query. The other resolvers still ignore it (plan §11 step 2,
+   * partially wired).
    */
   date?: string;
 }
@@ -83,6 +90,17 @@ export function __clearPlaceResolverCachesForTests(): void {
 
 function normalizeKey(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/**
+ * Best single year for a free-text fact date, for the `+date:` qualifier.
+ * Reuses the existing date pipeline (`stdDate` -> `earliestYear`) rather than
+ * re-parsing; returns undefined for anything it cannot read, which makes the
+ * query fall back to the undated form.
+ */
+function yearHint(date: string | undefined): number | undefined {
+  if (!date || !date.trim()) return undefined;
+  return earliestYear(stdDate(date)) ?? undefined;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -199,17 +217,28 @@ export function deriveContextName(text: string): string | undefined {
 async function getSearchEntries(
   name: string,
   contextName?: string,
+  year?: number,
 ): Promise<SearchEntry[]> {
   // Empty / whitespace-only name has nothing to search — short-circuit before
   // any network call. This is the single choke point all resolver fns go
   // through, so every public fn inherits the empty-input guard here.
   if (!normalizeKey(name)) return [];
   const effectiveContext = contextName ?? deriveContextName(name);
-  const key = `${normalizeKey(name)}|${normalizeKey(effectiveContext ?? "")}`;
+  const key = `${normalizeKey(name)}|${normalizeKey(effectiveContext ?? "")}|${year ?? ""}`;
   const cached = searchEntriesCache.get(key);
   if (cached) return cached;
 
-  let entries = await withRetry(() => searchPlace(name));
+  let entries = await withRetry(() => searchPlace(name, { date: year }));
+
+  // `+date:` is a hard filter, not a preference: when no place representation
+  // records coverage for that year FamilySearch returns nothing at all, even
+  // for a place that resolves fine undated (measured: 13/150 of the eval
+  // corpus, e.g. "Manger, Hordaland, Norge" 1801). Falling back to the undated
+  // query makes the qualifier strictly additive — it can sharpen an answer but
+  // never turns one into a blank. See dev/probe-place-date-disagreement.ts.
+  if (year !== undefined && entries.length === 0) {
+    entries = await withRetry(() => searchPlace(name));
+  }
 
   const context = effectiveContext?.trim().toLowerCase();
   if (context) {
@@ -345,19 +374,62 @@ export async function resolveStandardPlace(
   originalText: string,
   opts: ResolveOpts = {},
 ): Promise<string | null> {
-  const key = normalizeKey(originalText);
-  if (!key) return null;
+  if (!normalizeKey(originalText)) return null;
+  // Only date-qualify a place that names its own context. A bare single-segment
+  // input has nothing to anchor the year against, and the qualifier then picks
+  // whichever obscure same-named place happens to have coverage for it
+  // (measured: "Germany" 1827 -> "Germany, Pruzhany, Grodno, Russian Empire", a
+  // village; "Mohol" 1938 -> "Mol, Ada, Serbia"). `countryConsistency` does NOT
+  // catch these — it reads the standard place's leading segment as the country
+  // and returns "ok". Same threshold `deriveContextName` uses for the same
+  // reason: below two segments there is no context to disambiguate with.
+  const year =
+    placeSegments(originalText).length >= 2 ? yearHint(opts.date) : undefined;
+  const key = `${normalizeKey(originalText)}|${year ?? ""}`;
   if (standardizeCache.has(key)) return standardizeCache.get(key) ?? null;
 
   let entries: SearchEntry[];
   try {
-    entries = await getSearchEntries(originalText, opts.contextName);
+    entries = await getSearchEntries(originalText, opts.contextName, year);
   } catch {
     return null; // transient failure after retries — do not cache
   }
 
-  const best = pickBest(entries);
-  const standardPlace = best?.fullName ?? null;
+  let standardPlace = pickBest(entries)?.fullName ?? null;
+
+  // A date-qualified answer describes the place as it WAS, so it can legitimately
+  // name a different sovereign than the record's own text — "Bavaria, Germany"
+  // at 1843 resolves to "Bavaria" (the Kingdom predates the German Empire), and
+  // "Quebec, Canada" at 1819 to "British North America". `countryConsistency`
+  // reads both as contradictions, and research_append turns a contradiction into
+  // a hard error that rejects the entire append.
+  //
+  // Rather than weaken the guard for every caller — it is the only thing
+  // standing between a wrong resolution and the file — fall back to the undated
+  // answer whenever the dated one would trip it. The qualifier keeps every win
+  // it earns and can never turn a writable value into a rejected write. Same
+  // principle as the empty-result fallback in getSearchEntries: `+date:` may
+  // sharpen an answer, never break one.
+  //
+  // The cost is explicit: where the guard objects we keep the modern rendering
+  // and lose the historical one. That is the conservative side to err on, since
+  // the guard cannot tell a sovereignty change from a mis-resolution.
+  if (
+    year !== undefined &&
+    standardPlace &&
+    countryConsistency(originalText, standardPlace) === "contradiction"
+  ) {
+    try {
+      const undated = pickBest(
+        await getSearchEntries(originalText, opts.contextName),
+      )?.fullName;
+      if (undated) standardPlace = undated;
+    } catch {
+      // Undated retry failed; keep the dated answer and let the caller's guard
+      // decide. No worse than not having tried.
+    }
+  }
+
   standardizeCache.set(key, standardPlace); // definitive (incl. null for 0 hits)
   return standardPlace;
 }
