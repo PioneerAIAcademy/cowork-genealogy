@@ -20,12 +20,20 @@ criteria-demotion rollout.
 
 from __future__ import annotations
 
+import json
+import re
+
 import pytest
 
 from validators_lib import (
     assert_log_append_only,
     assert_no_section_deletions,
 )
+
+# Identifier extraction is shared with `make provenance-report` (issue #1667)
+# so the two agree on what counts as a traceable identifier: ARKs and 5+ digit
+# numbers only, which is what keeps four-digit years out of the match set.
+from provenance_report import candidate_identifiers
 
 
 # --- Append-only / no-delete on plans ---------------------------------
@@ -351,3 +359,235 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
                     f"expected 'planned'"
                 )
     assert not errors, "New plan items with non-planned status:\n  - " + "\n  - ".join(errors)
+
+
+# ===========================================================================
+# Deterministic checks over newly written plans (issue #1866, research-plan
+# deep dive #1650). Unlike the tag-gated validators above these run on EVERY
+# research-plan test and skip only when the run added no new plan: a tag
+# nobody sets is how a validator runs, passes, and cannot fail (#1755, #1788).
+# ===========================================================================
+
+
+def _new_plans(before: dict, after: dict) -> list[dict]:
+    """Plan objects present in after-state but not before-state."""
+    before_ids = {p.get("id") for p in (before.get("plans") or [])}
+    return [
+        p
+        for p in (after.get("plans") or [])
+        if p.get("id") and p.get("id") not in before_ids
+    ]
+
+
+def _bare(tool: str) -> str:
+    """Bare tool name, whatever server prefix the run exposed it under."""
+    tool = tool or ""
+    return tool.split("__")[-1] if "__" in tool else tool
+
+
+# --- V3: fallback_for must name an item in the same plan --------------------
+
+def test_research_plan_fallback_for_in_same_plan(before_state, after_state):
+    """A new plan item's non-null `fallback_for` must be the id of another
+    item in the same new plan. A fallback pointing into a different plan —
+    often a completed one — leaves the new plan with no internal fallback
+    chain at all. Issue #1866 V3, e.g. ut_research_plan_002 pli_013 →
+    pli_006, an item of the completed pl_002."""
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new_plans = _new_plans(before, after)
+    if not new_plans:
+        pytest.skip("run added no new plan")
+
+    errors: list[str] = []
+    for plan in new_plans:
+        item_ids = {
+            item.get("id") for item in (plan.get("items") or []) if item.get("id")
+        }
+        for item in plan.get("items") or []:
+            target = item.get("fallback_for")
+            if target and target not in item_ids:
+                errors.append(
+                    f"{plan.get('id')} item {item.get('id')} has "
+                    f"fallback_for={target!r}, not an item in the same plan "
+                    f"(items: {sorted(item_ids)})"
+                )
+    assert not errors, (
+        "fallback_for points outside its own plan:\n  - " + "\n  - ".join(errors)
+    )
+
+
+# --- V2: research-plan calls no MCP tool outside its six --------------------
+
+_FORBIDDEN_TOOLS = {"wiki_search", "wiki_place_page", "place_population"}
+_FORBIDDEN_SKILL = "locality-guide"
+
+
+def test_research_plan_no_out_of_lane_tools(
+    tool_calls, attempted_mcp_calls, skills_invoked
+):
+    """research-plan owns six tools and states "You have no wiki/place-fact
+    tools of your own" (SKILL.md 137). Fail on any call OR attempt of
+    wiki_search / wiki_place_page / place_population, or delegation to
+    locality-guide (SKILL.md 128, 499). Issue #1866 V2.
+
+    Named prohibition, not the complement of the six: project_context is
+    attempted by sibling skills and forbidden by nothing, so a complement
+    gate reds it. Deriving a deny from a grant is what PR #1774 retired. A
+    denied call never reaches tool_calls, so union the attempts (#1748)."""
+    called = [_bare(c.get("tool", "")) for c in (tool_calls or [])]
+    attempted = [_bare(c.get("tool", "")) for c in (attempted_mcp_calls or [])]
+    hit_tools = sorted({t for t in called + attempted if t in _FORBIDDEN_TOOLS})
+    delegated = _FORBIDDEN_SKILL in (skills_invoked or [])
+
+    problems: list[str] = []
+    if hit_tools:
+        problems.append(f"forbidden tool(s) called or attempted: {hit_tools}")
+    if delegated:
+        problems.append(f"delegated to {_FORBIDDEN_SKILL!r}")
+    assert not problems, (
+        "research-plan reached outside its six-tool lane:\n  - "
+        + "\n  - ".join(problems)
+    )
+
+
+# --- V1: identifiers in a rationale must trace to a served response ---------
+
+_TRACEABLE_ID_TOOLS = {"collections_search", "volume_search", "external_links_search"}
+
+
+def _served_identifiers(tool_calls) -> set[str]:
+    """Every ARK/5+digit identifier in a response this run received from a
+    tool that returns collection/volume identifiers."""
+    served: set[str] = set()
+    for c in tool_calls or []:
+        if _bare(c.get("tool", "")) not in _TRACEABLE_ID_TOOLS:
+            continue
+        resp = c.get("response")
+        if resp is None:
+            continue
+        served |= candidate_identifiers(json.dumps(resp))
+    return served
+
+
+def test_research_plan_rationale_identifiers_traceable(
+    before_state, after_state, tool_calls
+):
+    """A collection or volume identifier written into a new plan item's
+    rationale must appear in a tool response this run received — otherwise
+    search-records reads the persisted rationale and chases a collection the
+    skill was never shown. Issue #1866 V1, e.g. ut_research_plan_006 pli_007
+    cites collection 1401638, which no fixture that run served.
+
+    Scoped to ARKs and 5+ digit numbers (candidate_identifiers, shared with
+    make provenance-report), so four-digit years never enter the check."""
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new_plans = _new_plans(before, after)
+    if not new_plans:
+        pytest.skip("run added no new plan")
+
+    served = _served_identifiers(tool_calls)
+    errors: list[str] = []
+    for plan in new_plans:
+        for item in plan.get("items") or []:
+            rationale = item.get("rationale") or ""
+            for ident in sorted(candidate_identifiers(rationale)):
+                if ident not in served:
+                    errors.append(
+                        f"{plan.get('id')} item {item.get('id')} rationale "
+                        f"cites {ident!r}, which appears in no tool response "
+                        f"this run received"
+                    )
+    assert not errors, (
+        "untraceable identifier in a plan rationale:\n  - " + "\n  - ".join(errors)
+    )
+
+
+# --- V5: an availability claim must match the returned personCount ----------
+
+_INDEXED_RE = re.compile(r"\b(?:fully\s+)?indexed\b", re.I)
+_UNINDEXED_RE = re.compile(r"\b(?:un-?indexed|not\s+indexed)\b", re.I)
+_BROWSE_ONLY_RE = re.compile(r"\b(?:browse|image)[\s-]?only\b", re.I)
+
+
+def _collection_person_counts(tool_calls) -> dict[str, set[int]]:
+    """id -> set of personCounts across every collections_search response
+    this run received. An id can be served with different counts in
+    different responses (1999196 is 0 in schuylkill, 893214 in
+    pennsylvania), so key on the response, not the id."""
+    counts: dict[str, set[int]] = {}
+    for c in tool_calls or []:
+        if _bare(c.get("tool", "")) != "collections_search":
+            continue
+        resp = c.get("response") or {}
+        for r in resp.get("results") or []:
+            cid, pc = r.get("id"), r.get("personCount")
+            if cid is None or pc is None:
+                continue
+            counts.setdefault(str(cid), set()).add(int(pc))
+    return counts
+
+
+def test_research_plan_availability_claim_matches_counts(
+    before_state, after_state, tool_calls
+):
+    """A rationale that calls a served collection "indexed" must name one
+    whose returned personCount is > 0; "browse-only"/"image-only" must name
+    one whose personCount is 0. Issue #1866 V5, e.g. ut_research_plan_q7m
+    pli_007 calls 1999196 "indexed" against a served personCount of 0.
+
+    Bind the adjective to the identifier within one sentence and skip any
+    sentence naming more than one served collection — a rationale routinely
+    describes a browse-only volume and an indexed collection in one breath.
+    personCount is a property of the response, so key on what was served."""
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new_plans = _new_plans(before, after)
+    if not new_plans:
+        pytest.skip("run added no new plan")
+
+    counts = _collection_person_counts(tool_calls)
+    if not counts:
+        pytest.skip("no collections_search response to check against")
+
+    errors: list[str] = []
+    for plan in new_plans:
+        for item in plan.get("items") or []:
+            rationale = item.get("rationale") or ""
+            for sentence in re.split(r"(?<=[.;])\s+|\n+", rationale):
+                ids_here = [i for i in candidate_identifiers(sentence) if i in counts]
+                if len(ids_here) != 1:
+                    continue  # skip no-collection and multi-collection sentences
+                cid = ids_here[0]
+                pcs = counts[cid]
+                claims_indexed = bool(_INDEXED_RE.search(sentence)) and not (
+                    _UNINDEXED_RE.search(sentence)
+                )
+                claims_browse = bool(_BROWSE_ONLY_RE.search(sentence)) or bool(
+                    _UNINDEXED_RE.search(sentence)
+                )
+                if claims_indexed == claims_browse:
+                    continue  # neither claim, or a self-contradicting sentence
+                if claims_indexed and not any(pc > 0 for pc in pcs):
+                    errors.append(
+                        f"{plan.get('id')} item {item.get('id')} calls "
+                        f"collection {cid} \"indexed\" but every response this "
+                        f"run received returned personCount 0"
+                    )
+                elif claims_browse and not any(pc == 0 for pc in pcs):
+                    errors.append(
+                        f"{plan.get('id')} item {item.get('id')} calls "
+                        f"collection {cid} browse/image-only but the served "
+                        f"response returned personCount {sorted(pcs)}"
+                    )
+    assert not errors, (
+        "availability claim contradicts returned personCount:\n  - "
+        + "\n  - ".join(errors)
+    )

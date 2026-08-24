@@ -1,0 +1,180 @@
+"""Proof-of-failure tests for the research-plan deterministic validators
+(issue #1866, deep dive #1650).
+
+Nothing in CI checks that a gating validator can fail (the run-log gate only
+runs the validators, it never mutates a run to red one), so each check here is
+exercised against a state that must PASS and the state that must FIRE —
+CLAUDE.md, "a new lint must be proven to fail".
+
+The validators are pytest functions named `test_*` so the harness collects
+them; imported here they would be collected a second time as tests of this
+module, so they are aliased away from the `test_` prefix (the #1762 pattern).
+Shapes are reduced from `v1_2026-08-17_17-52-29`, the run the issue cites.
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import pytest
+
+_HARNESS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(_HARNESS))  # provenance_report
+sys.path.insert(0, str(_HARNESS / "validators"))  # validators_lib, the module
+
+from test_research_plan import (  # noqa: E402
+    test_research_plan_availability_claim_matches_counts as check_v5,
+    test_research_plan_fallback_for_in_same_plan as check_v3,
+    test_research_plan_no_out_of_lane_tools as check_v2,
+    test_research_plan_rationale_identifiers_traceable as check_v1,
+)
+
+QUAL = "mcp__genealogy__"
+
+
+def _item(item_id, *, fallback_for=None, rationale=""):
+    return {
+        "id": item_id,
+        "sequence": 1,
+        "record_type": "census",
+        "jurisdiction": "Schuylkill County, Pennsylvania",
+        "date_range": "1850",
+        "repository": "FamilySearch",
+        "rationale": rationale,
+        "fallback_for": fallback_for,
+        "status": "planned",
+    }
+
+
+def _states(new_items):
+    """A before/after pair whose only change is a new plan pl_002 carrying
+    `new_items`. pl_001 is a pre-existing completed plan."""
+    before = {
+        "research_json": {
+            "plans": [
+                {"id": "pl_001", "status": "completed", "items": [_item("pli_001")]}
+            ]
+        }
+    }
+    after = {
+        "research_json": {
+            "plans": [
+                {"id": "pl_001", "status": "completed", "items": [_item("pli_001")]},
+                {"id": "pl_002", "status": "active", "items": new_items},
+            ]
+        }
+    }
+    return before, after
+
+
+def _call(tool, response=None, args=None):
+    return {"tool": QUAL + tool, "args": args or {}, "response": response}
+
+
+def _collections(results):
+    return {"query": {}, "scope": "place", "totalForPlace": len(results), "results": results}
+
+
+# --- V3 -------------------------------------------------------------------
+
+def test_v3_fires_on_cross_plan_fallback():
+    # pli_011's fallback points at pli_001, an item of the OTHER (completed) plan.
+    before, after = _states([_item("pli_010"), _item("pli_011", fallback_for="pli_001")])
+    with pytest.raises(AssertionError, match="fallback_for"):
+        check_v3(before, after)
+
+
+def test_v3_passes_on_in_plan_fallback():
+    before, after = _states([_item("pli_010"), _item("pli_011", fallback_for="pli_010")])
+    check_v3(before, after)  # in-plan chain and null fallbacks are fine
+
+
+def test_v3_skips_when_no_new_plan():
+    before = {"research_json": {"plans": [{"id": "pl_001", "items": [_item("pli_001")]}]}}
+    with pytest.raises(pytest.skip.Exception):
+        check_v3(before, before)
+
+
+# --- V2 -------------------------------------------------------------------
+
+def test_v2_fires_on_wiki_call():
+    with pytest.raises(AssertionError, match="wiki_search"):
+        check_v2([_call("wiki_search")], [], [])
+
+
+def test_v2_fires_on_attempted_place_population():
+    # A denied call never reaches tool_calls; it must still red via attempts.
+    with pytest.raises(AssertionError, match="place_population"):
+        check_v2([], [_call("place_population")], [])
+
+
+def test_v2_fires_on_locality_guide_delegation():
+    with pytest.raises(AssertionError, match="locality-guide"):
+        check_v2([], [], ["locality-guide"])
+
+
+def test_v2_passes_on_lane_tools_and_project_context():
+    # project_context is forbidden by nothing — a complement-of-six gate would
+    # wrongly red this. Both a call and an attempt of it must stay green.
+    check_v2(
+        [_call("collections_search"), _call("project_context")],
+        [_call("project_context")],
+        [],
+    )
+
+
+# --- V1 -------------------------------------------------------------------
+
+_SERVED = [_call("collections_search", _collections([
+    {"id": "1999196", "title": "Pennsylvania, Probate Records", "personCount": 0},
+    {"id": "1921317", "title": "Pennsylvania, County Marriages", "personCount": 1048378},
+]))]
+
+
+def test_v1_fires_on_untraceable_identifier():
+    before, after = _states([_item("pli_010", rationale="Search collection 1401638 for the burial.")])
+    with pytest.raises(AssertionError, match="1401638"):
+        check_v1(before, after, _SERVED)
+
+
+def test_v1_passes_on_served_identifier():
+    before, after = _states([_item("pli_010", rationale="Search collection 1999196, the probate records.")])
+    check_v1(before, after, _SERVED)
+
+
+def test_v1_ignores_four_digit_years():
+    # A year is not identifier-shaped, so it is never demanded to trace.
+    before, after = _states([_item("pli_010", rationale="Cover the 1850 and 1860 census years.")])
+    check_v1(before, after, _SERVED)
+
+
+# --- V5 -------------------------------------------------------------------
+
+def test_v5_fires_on_indexed_claim_against_zero_count():
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is fully indexed.")])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_fires_on_browse_only_claim_against_indexed():
+    before, after = _states([_item("pli_010", rationale="Collection 1921317 is browse-only.")])
+    with pytest.raises(AssertionError, match="1921317"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_passes_when_claims_match_counts():
+    before, after = _states([
+        _item("pli_010", rationale="Collection 1999196 is image-only (personCount 0)."),
+        _item("pli_011", rationale="Collection 1921317 is fully indexed."),
+    ])
+    check_v5(before, after, _SERVED)
+
+
+def test_v5_skips_multi_collection_sentence():
+    # Two served collections in one sentence: the adjective cannot be bound to
+    # one identifier, so the sentence is skipped rather than mis-flagged.
+    before, after = _states([
+        _item("pli_010", rationale="Collection 1999196 is indexed and 1921317 is browse-only.")
+    ])
+    check_v5(before, after, _SERVED)  # no fire despite both adjectives being wrong
