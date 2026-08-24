@@ -815,20 +815,24 @@ The discriminator is `agent_id` alone: **no skill declares `extraction_append`**
 in its `allowed-tools` — it lives only on `agents/record-extractor.md` — so the
 subagent is its only legitimate caller and every legitimate call carries
 `agent_id`. The unit harness's third clause (the skill declared the tool itself)
-can never fire for it. The block is therefore a tool-specific check
-(`is_main_thread_extraction_append`), not the whole `SUBAGENT_ONLY_TOOLS` policy,
-so that a future skill legitimately declaring a guarded tool is not denied here.
+can never fire for it. The block keys on `SUBAGENT_ONLY_TOOLS` membership
+(`is_main_thread_subagent_only_tool`) rather than the full per-skill
+`subagent_only_violation`, so that a future skill legitimately declaring a
+guarded tool is not denied here.
 
-`image_read`, the set's other member, satisfies the same condition today — no
-skill has declared it since `search-images` moved to `@plugin:image-reader`
-(2026-07-17), and it now lives only on `agents/image-reader-opus.md` — so it is
-equally enforceable in e2e and is not enforced there yet. Generalizing the
-check to the whole set is tracked in `context_policy.py`'s own docstring.
+Both members are enforced. Neither `extraction_append` nor `image_read` is
+declared by any skill — `image_read` lives only on `agents/image-reader-opus.md`
+since `search-images` moved to `@plugin:image-reader` (2026-07-17) — so `agent_id`
+presence alone discriminates for each, and a third tool added to the set is
+covered here automatically.
 
 Semantics match the tree block — the denied call doesn't run, doesn't count
-toward the cap, and doesn't stop the run — but the denial reason tells the router
-to **report the spawn failure and stop**, not to retry another way (a deny that
-leaves the goal in place just relocates the substitution). Denied attempts are
+toward the cap, and doesn't stop the run. Here, continuing is the **intended**
+response: the denial reason names a reachable recovery — delegate the record to
+`@plugin:record-extractor`, and if that spawn fails again on the same record, skip
+it and note it in the run summary — not an unreachable "stop" the Stop hook would
+override anyway. The router must never extract the record itself or retry another
+way (a deny that leaves the goal in place just relocates the substitution). Denied attempts are
 recorded in a separate `blocked_context_calls` array
 (`{tool, args, blocked_by: "context"}`), kept apart from `blocked_tree_reads`
 because this is a write denied by a different guard.

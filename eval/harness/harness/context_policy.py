@@ -39,15 +39,15 @@ One scope limit (plan §4.1):
   stays because it is the mechanism a future skill would need, not because
   anything depends on it firing.
 
-e2e enforcement is **partial, and only for `extraction_append`** (#942). Because
-no skill declares it, `agent_id` presence alone discriminates a legitimate
-record-extractor call from a router substitution, which is all e2e can see — its
-sub-skills run in the same session via the `Skill` tool with no `agent_id` to
-attribute them. The e2e block is therefore tool-specific
-(`is_main_thread_extraction_append` in `e2e/orchestrator.py`) rather than a call
-to `subagent_only_violation`, which guards the whole set and takes a
-`declared_tools` argument e2e cannot supply. `image_read` meets the same
-condition today and is enforceable there too — issue #1273. e2e imports
+e2e enforcement covers **both members of `SUBAGENT_ONLY_TOOLS`** (`extraction_append`,
+#942, and `image_read`, #1273). Because no skill declares either, `agent_id`
+presence alone discriminates a legitimate subagent call from a router
+substitution, which is all e2e can see — its sub-skills run in the same session
+via the `Skill` tool with no `agent_id` to attribute them. The e2e block is
+therefore tool-set-specific (`is_main_thread_subagent_only_tool` in
+`e2e/orchestrator.py`, keyed on `SUBAGENT_ONLY_TOOLS` membership) rather than a
+call to `subagent_only_violation`, which takes a `declared_tools` argument e2e
+cannot supply. e2e imports
 `bare_tool_name`, `is_subagent_call`, and `subagent_only_denial` from here.
 
 (e2e imports from `harness.*`, never the reverse.)
@@ -136,7 +136,7 @@ def subagent_only_violation(
     # `or ""` rather than a get() default: a present-but-None `tool_name` would
     # make `bare_tool_name(None)` raise TypeError, and a raising PreToolUse hook
     # fails a call the agent was entitled to make (CLAUDE.md, "Plugin hooks").
-    # Mirrors the fail-closed guard in e2e's `is_main_thread_extraction_append`.
+    # Mirrors the fail-closed guard in e2e's `is_main_thread_subagent_only_tool`.
     bare = bare_tool_name(input_data.get("tool_name") or "")
     if bare not in SUBAGENT_ONLY_TOOLS:
         return None
@@ -163,13 +163,14 @@ _DENIAL_REASONS = {
         "which returns a text transcription."
     ),
     "extraction_append": (
-        "extraction_append may not be called from the main session — writing "
-        "extracted assertions and sources is the record-extractor subagent's "
-        "job (@plugin:record-extractor), never the router's. If that subagent "
-        "failed to spawn, report the spawn failure to the user and stop. Do "
-        "not extract the record and append it yourself, and do not retry "
-        "another way — the extraction must run in the subagent's isolated "
-        "context or not at all."
+        "extraction_append may not be called from the main session — extracting "
+        "and appending assertions and sources is the record-extractor subagent's "
+        "job (@plugin:record-extractor), never the router's. Delegate this record "
+        "to @plugin:record-extractor and hand it the record. If that subagent "
+        "fails to spawn a second time on the same record, skip that record and "
+        "note it in the run summary. Never extract the record and append it "
+        "yourself, and do not retry another way — the extraction must run in the "
+        "subagent's isolated context or not at all."
     ),
 }
 

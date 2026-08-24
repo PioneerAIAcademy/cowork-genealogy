@@ -901,6 +901,67 @@ def test_namespaced_general_purpose_still_flagged():
     assert len(owned) == 1 and "person-evidence" in owned[0]
 
 
+def test_research_append_to_sources_or_assertions_by_unnamed_delegate_flagged():
+    """#1273 Item 4: sources/assertions are record-extraction/citation's writes
+    that owning_skills does not attribute, so a NAMED non-record-extractor subagent
+    writing them through the broad research_append must flag (shadow)."""
+    for section in ("sources", "assertions"):
+        calls = [
+            _mcp_call(
+                "research_append",
+                {"section": section, "op": "append", "entry": {}},
+                agent_id="a1",
+                agent_type="general-purpose",
+            )
+        ]
+        violations = find_protected_writes_by_unnamed_delegate(calls)
+        assert len(violations) == 1 and section in violations[0]
+
+
+def test_research_append_to_sources_on_main_or_by_dedicated_agent_not_flagged():
+    """The unnamed-delegate gate exempts the legitimate callers for free: citation
+    refines `sources` on the MAIN thread (a skill, no agent_id), and
+    record-extraction runs as the record-extractor dedicated agent. No
+    citation-specific rule is needed (#1273 Item 4)."""
+    # citation on the main thread (no agent_id key at all)
+    assert (
+        find_protected_writes_by_unnamed_delegate(
+            [_mcp_call("research_append", {"section": "sources", "op": "append", "entry": {}})]
+        )
+        == []
+    )
+    # a dedicated agent
+    assert (
+        find_protected_writes_by_unnamed_delegate(
+            [
+                _mcp_call(
+                    "research_append",
+                    {"section": "assertions", "op": "append", "entry": {}},
+                    agent_id="a1",
+                    agent_type="record-extractor",
+                )
+            ]
+        )
+        == []
+    )
+    # a NAMESPACED dedicated agent (Cowork's spelling) must also be exempt, via the
+    # shared strip #1856 added — else this Item 4 branch would trail the
+    # namespaced-spelling fix (revert `bare_agent_type` to `agent_type` and this fails).
+    assert (
+        find_protected_writes_by_unnamed_delegate(
+            [
+                _mcp_call(
+                    "research_append",
+                    {"section": "sources", "op": "append", "entry": {}},
+                    agent_id="a1",
+                    agent_type="genealogy-research:record-extractor",
+                )
+            ]
+        )
+        == []
+    )
+
+
 def test_gps_mentor_evaluations_write_not_flagged():
     """gps-mentor holds research_append but only ever writes evaluations[] --
     a section owning_skills never attributes to any guardrail skill, so this
