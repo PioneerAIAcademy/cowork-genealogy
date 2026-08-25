@@ -433,3 +433,38 @@ describe("resolveStandardPlace date qualifier and its guards", () => {
     expect(mockSearchPlace).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("countryConsistency — diacritics and endonyms", () => {
+  it("folds diacritics so an accented country name is still recognised", () => {
+    // Before folding, "Guerrero, México" returned "unverifiable" while the
+    // unaccented "Guerrero, Mexico" returned "ok" — the same place, the same
+    // correct answer, and the guard silently switching itself off on an accent.
+    expect(countryConsistency("Guerrero, México", "Guerrero, Mexico")).toBe("ok");
+    expect(countryConsistency("Peñas de San Pedro, Albacete, España", "Peñas de San Pedro, Albacete, Spain")).toBe("ok");
+    expect(countryConsistency("Wien, Österreich", "Vienna, Austria")).toBe("ok");
+  });
+
+  it("reads endonyms on the recorded side against English on the standard side", () => {
+    expect(countryConsistency("Manger, Hordaland, Norge", "Manger, Hordaland, Norway")).toBe("ok");
+    expect(countryConsistency("Bayern, Deutschland", "Bavaria, Germany")).toBe("ok");
+    expect(countryConsistency("Hurup, Refs, Thisted, Danmark", "Hurup, Refs, Thisted, Denmark")).toBe("ok");
+    expect(countryConsistency("Paks, Tolna, Magyarország", "Paks, Tolna, Hungary")).toBe("ok");
+    expect(countryConsistency("Wanroij, Noord-Brabant, Nederland", "Wanroij, North Brabant, Netherlands")).toBe("ok");
+    expect(countryConsistency("Faenza, Ravenna, Italia", "Faenza, Ravenna, Emilia-Romagna, Italy")).toBe("ok");
+  });
+
+  it("now CATCHES a wrong resolution under an endonym that used to pass", () => {
+    // These are the cases the English-only map waved through: the recorded place
+    // names a country, the standard place is on another continent, and the
+    // verdict was "unverifiable" purely because the country was not in English.
+    expect(countryConsistency("Bayern, Deutschland", "Bavaria, Minnesota, United States")).toBe("contradiction");
+    expect(countryConsistency("Manger, Hordaland, Norge", "Manger, Bavaria, Germany")).toBe("contradiction");
+  });
+
+  it("still declines to judge a place that names no country at all", () => {
+    // The bulk of "unverifiable" is this, not language: a trailing US state or
+    // English county names no country, so there is nothing to compare.
+    expect(countryConsistency("Schuylkill County, Pennsylvania", "Schuylkill, Pennsylvania, United States")).toBe("unverifiable");
+    expect(countryConsistency("Sheffield, Staffordshire", "Sheffield, Staffordshire, England")).toBe("unverifiable");
+  });
+});

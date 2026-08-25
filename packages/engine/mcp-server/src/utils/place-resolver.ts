@@ -263,6 +263,26 @@ async function getSearchEntries(
 // copies. Small, conservative alias map: only when the place TEXT's own
 // trailing token names a recognized country can a contradiction be declared.
 
+// Keys are compared after `canonicalCountry` folds diacritics, so they are
+// written ASCII: "osterreich" matches "Österreich", "espana" matches "España".
+//
+// Endonyms are included because the input side is a RECORDED place, written in
+// whatever language the clerk used, while the standard side comes back in
+// English. Without them the guard silently declines to judge every non-English
+// place: corpus incidence is norge 109, danmark 69, rakousko 46 (Czech for
+// Austria), nederland 37, magyarorszag 33, italia 30.
+//
+// Still a hand-maintained subset of ~30 countries, and the corpus contains at
+// least ten more with real volume (chile 129, bolivia 87, honduras 67,
+// philippines 63, croatia 61, brazil 60, slovakia 54, south africa 51). Those
+// are NOT added here because expanding coverage raises a question this map
+// cannot answer on its own — "georgia" is both a US state and a country, and
+// the guard would be treating the state as the country. Tracked separately.
+//
+// Note what this map is NOT for: most `unverifiable` verdicts are place strings
+// whose trailing token is a US state or an English county (pennsylvania 1285,
+// ohio 322, staffordshire 73). Those name no country, and declining to judge
+// them is correct behaviour, not a gap.
 const COUNTRY_ALIASES: Record<string, string> = {
   "united states": "united states",
   "united states of america": "united states",
@@ -297,12 +317,42 @@ const COUNTRY_ALIASES: Record<string, string> = {
   hungary: "hungary",
   switzerland: "switzerland",
   mexico: "mexico",
+
+  // Endonyms and other-language forms for the countries above.
+  deutschland: "germany",
+  preussen: "germany",
+  norge: "norway",
+  noreg: "norway",
+  danmark: "denmark",
+  sverige: "sweden",
+  nederland: "netherlands",
+  belgie: "belgium",
+  belgique: "belgium",
+  osterreich: "austria",
+  rakousko: "austria",
+  schweiz: "switzerland",
+  suisse: "switzerland",
+  svizzera: "switzerland",
+  italia: "italy",
+  espana: "spain",
+  polska: "poland",
+  magyarorszag: "hungary",
+  eire: "ireland",
+  frankrike: "france",
 };
 
 const UK_CONSTITUENTS = new Set(["england", "scotland", "wales", "northern ireland"]);
 
 function canonicalCountry(segment: string): string | null {
-  const norm = segment.trim().toLowerCase().replace(/\./g, "");
+  // Fold diacritics before the lookup: "México" and "Mexico" are the same
+  // country, and without this the guard silently switched itself off on the
+  // accented spelling while checking the unaccented one.
+  const norm = segment
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/\./g, "");
   // hasOwn, not `?? null`: `??` only catches null/undefined, so a bare index on
   // a prototype key ("constructor") would return a function from a `string |
   // null` signature.
