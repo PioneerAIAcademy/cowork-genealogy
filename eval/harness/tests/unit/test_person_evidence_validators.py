@@ -139,6 +139,7 @@ def test_scored_stands_down_without_research_json():
 # --- test_matched_persona_is_materialized_onto_its_person ---------------
 
 _TAGGED = {"tags": ["materialize"]}
+_CW_TAGGED = {"tags": ["check-warnings-required"]}
 
 # The death-certificate shape: a_011/a_012 on src_004 linked to Patrick (I1),
 # who is already in the tree.
@@ -258,6 +259,7 @@ def test_check_warnings_fires_when_links_were_written():
             _state(_LINKED_BEFORE, _tree("I1", "I2")),
             _state(_LINKED_AFTER, _tree("I1", "I2")),
             ["person-evidence"],
+            _CW_TAGGED,
         )
     assert "never invoked check-warnings" in str(exc.value)
     assert "1 new pe_ entr" in str(exc.value)
@@ -272,6 +274,7 @@ def test_check_warnings_fires_when_a_person_was_minted_without_links():
             _state(same, _tree("I1")),
             _state(same, _tree("I1", "I4")),
             ["person-evidence"],
+            _CW_TAGGED,
         )
     assert "minted ['I4']" in str(exc.value)
 
@@ -281,6 +284,7 @@ def test_check_warnings_passes_when_invoked():
         _state(_LINKED_BEFORE, _tree("I1", "I2")),
         _state(_LINKED_AFTER, _tree("I1", "I2")),
         ["person-evidence", "check-warnings"],
+        _CW_TAGGED,
     )
 
 
@@ -293,10 +297,23 @@ def test_check_warnings_stands_down_on_a_read_only_run():
             _state(same, _tree("I1")),
             _state(same, _tree("I1")),
             ["person-evidence"],
+            _CW_TAGGED,
         )
 
 
 def test_check_warnings_stands_down_on_a_negative_test():
     """A declined routing test has no research.json diff to read."""
     with pytest.raises(pytest.skip.Exception):
-        check_warnings_after_write(_state(None), _state(None), [])
+        check_warnings_after_write(_state(None), _state(None), [], _CW_TAGGED)
+
+
+def test_check_warnings_stands_down_without_the_tag():
+    """Tag-gated: an untagged test must not be failed by it, which is what
+    keeps the measured-but-unenforced ungated rate out of the suite."""
+    with pytest.raises(pytest.skip.Exception):
+        check_warnings_after_write(
+            _state(_LINKED_BEFORE, _tree("I1", "I2")),
+            _state(_LINKED_AFTER, _tree("I1", "I2")),
+            ["person-evidence"],
+            {"tags": []},
+        )
