@@ -41,6 +41,9 @@ specific topic, person, place, or historical event.
    working folder using a file-write tool. **You must actually write
    the file — do not just describe it in your response.**
    Build `<title-slug>` from the article title by:
+   - replacing each accented or non-English letter with its ASCII
+     equivalent (`ü`→`u`, `ó`→`o`, `å`→`a`, `ł`→`l`, `ß`→`ss`, `ø`→`o`,
+     `æ`→`ae`) — never with a hyphen;
    - lowercasing the title;
    - replacing every run of non-alphanumeric characters (spaces, commas,
      periods, apostrophes, parentheses, etc.) with a single hyphen;
@@ -51,6 +54,8 @@ specific topic, person, place, or historical event.
    - `"Schuylkill County, Pennsylvania"` → `schuylkill-county-pennsylvania`
      (the comma collapses with the surrounding space into one hyphen)
    - `"O'Brien (surname)"` → `o-brien-surname`
+   - `"Württemberg"` → `wurttemberg`
+   - `"Preußen"` → `preussen`
 5. Tell the user the file was created. One sentence only — for example:
    "Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`."
    Do not restate, summarize, or paraphrase the article content.

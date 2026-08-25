@@ -29,6 +29,7 @@ import {
   isInsideProject,
   readProjectJson,
   formatIssues,
+  withProjectLock,
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
@@ -574,14 +575,15 @@ function declarationStatusInvariants(entry: any): string[] {
 /** Exhaustiveness may not be declared while the question's own plan says a
  *  search is still running.
  *
- *  **A bookkeeping gate, not a doctrine one** (lead ruling, 2026-08-23), so
- *  ADR-0011's overridable-doctrine-gate tier does not bind it. It second-guesses
- *  no genealogical judgment — it only refuses a declaration that contradicts the
- *  project's own plan state. That classification is also what the routes allow:
- *  measured 2026-08-23, no skill can move a plan item out of `in_progress` on
- *  the FamilySearch path, so there is no researcher-directed override to honour
- *  yet. Issue #1821 owns the fix and, once it lands, the classification is worth
- *  revisiting.
+ *  **A bookkeeping gate, not a doctrine one** (lead ruling, 2026-08-23). It
+ *  second-guesses no genealogical judgment — it only refuses a declaration that
+ *  contradicts the project's own plan state, which is why it can be scoped this
+ *  tightly. The classification no longer buys an exemption from anything:
+ *  ADR-0011 retired the overridable-doctrine tier on 2026-08-24 and NO gate
+ *  carries an override. What still bites is the route: measured 2026-08-23, no
+ *  skill can move a plan item out of `in_progress` on the FamilySearch path, so
+ *  a researcher who believes the search is done has no way to say so. Issue
+ *  #1821 owns that fix.
  *
  *  **`planned` does NOT block, and that is load-bearing.** `research/SKILL.md`
  *  routes here deliberately before the plan is drained — "even with plan items
@@ -2090,6 +2092,9 @@ export async function researchAppend(
     return opsReceived !== undefined ? { ok: false, errors: all, opsReceived } : { ok: false, errors: all };
   };
 
+  // Serialize the whole read-modify-write against every other writer on this
+  // project (issue #1715). Wraps extraction_append too, which routes here.
+  return withProjectLock(projectPath, async () => {
   try {
     const research = await readJson(projectPath, "research.json");
     // Snapshot BEFORE any op in this call/batch applies — see
@@ -2327,6 +2332,7 @@ export async function researchAppend(
     }
     throw e;
   }
+  });
 }
 
 /** Best-effort mapping of whole-document validation errors back to the batch op

@@ -20,6 +20,9 @@ import re
 import pytest
 
 from validators_lib import new_log_entries as _new_log_entries
+from validators_lib import (
+    assert_capture_pending_item_not_terminal as _assert_capture_pending_item_not_terminal,
+)
 
 
 # --- Structural rules from SKILL.md -----------------------------------
@@ -373,3 +376,10 @@ def test_live_callee_used_its_own_tools(tool_calls, skills_invoked, test):
         "third-party collection links. Absent, the skill can only have "
         f"invented any URLs it presented. tools called: {sorted(called)}"
     )
+
+
+def test_capture_pending_item_not_terminal(before_state, after_state, test):
+    """Issue #1226 — a plan item awaiting an external-site capture must not be
+    `completed`/`skipped`. Shared with the other suite that can reach this
+    state; the assertion lives in validators_lib."""
+    _assert_capture_pending_item_not_terminal(before_state, after_state, test)

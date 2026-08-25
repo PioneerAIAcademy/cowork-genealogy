@@ -1,0 +1,20 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for Württemberg — a German state central to German genealogical research, whose title carries an umlaut. Exercises the transliteration half of the slug rule: the returned title must slugify to 'wurttemberg', not 'w-rttemberg'. The extract also carries ü, ö and ß so a verbatim-copy check has something to lose.",
+  "args": { "query": "~rttemberg" },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "The topic to search for on Wikipedia"
+      }
+    },
+    "required": ["query"]
+  },
+  "response": {
+    "title": "Württemberg",
+    "extract": "Württemberg is a historical German territory in the south-west of present-day Baden-Württemberg, ruled as a county, then a duchy, and from 1806 to 1918 as the Kingdom of Württemberg with its capital at Stuttgart. For genealogists it is one of the better-documented German states: Lutheran and Catholic Kirchenbücher survive from the mid-1500s in many parishes, and the Familienregister — a household-by-household register unique to Württemberg and neighbouring Baden — consolidates a family's births, marriages and deaths onto a single page, often across three generations. Civil registration through the Standesamt began in 1876 following unification into the German Empire. Nineteenth-century emigration was heavy, driven by partible inheritance, the famine years of 1816-1817 and 1846-1847, and compulsory military service; departing families required an official release from citizenship, and the resulting Auswanderungsakten are held at the Staatsarchiv Ludwigsburg and often name every household member with an intended destination.",
+    "url": "https://en.wikipedia.org/wiki/W%C3%BCrttemberg"
+  }
+}

@@ -33,6 +33,10 @@ export function ResearchDataProvider({
   const [research, setResearch] = useState<ResearchData | null>(null)
   const [gedcomx, setGedcomx] = useState<GedcomxData | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Separate from `error`: a research load must NOT clear the notice (that was
+  // the #1317 bug — the folder-in-subfolder heads-up vanished on the next
+  // research.json load). Only an explicit dismiss clears it.
+  const [notice, setNotice] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [folderPath, setFolderPath] = useState<string | null>(null)
   const [devMode, setDevMode] = useState(false)
@@ -121,6 +125,10 @@ export function ResearchDataProvider({
       onError: (err) => {
         setError(err)
       },
+      // Deliberately NOT cleared by onResearch — the whole point of #1317's fix.
+      onNotice: (message) => {
+        setNotice(message)
+      },
       // Pointer-only events (logId + mtime); we refetch via readSidecar so the
       // drawer always sees the latest file.
       onSidecar: ({ logId, mtime }) => {
@@ -172,6 +180,7 @@ export function ResearchDataProvider({
   )
 
   const clearError = useCallback(() => setError(null), [])
+  const clearNotice = useCallback(() => setNotice(null), [])
 
   const selectFolder = useCallback(async () => {
     if (!transport.selectFolder) return
@@ -180,6 +189,11 @@ export function ResearchDataProvider({
       if (path) {
         setFolderPath(path)
         setError(null)
+        // The old folder's notice (e.g. "research.json is in a subfolder") does
+        // not apply to the newly chosen one. Unreachable today — there is no
+        // folder-switch control once a folder is open — so this is hardening for
+        // whenever one appears (#1722 review).
+        setNotice(null)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to select folder')
@@ -241,6 +255,8 @@ export function ResearchDataProvider({
       gedcomx,
       error,
       clearError,
+      notice,
+      clearNotice,
       lastUpdated,
       folderPath,
       devMode,
@@ -263,6 +279,8 @@ export function ResearchDataProvider({
       gedcomx,
       error,
       clearError,
+      notice,
+      clearNotice,
       lastUpdated,
       folderPath,
       devMode,

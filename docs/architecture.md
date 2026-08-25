@@ -250,6 +250,17 @@ Two qualifications, both from the source:
   It also exempts plugin agents, which get fresh context per invocation and
   cannot decay this way.
 
+`make e2e-compaction` is the corpus-scale follow-up to this single-session
+measurement — it splits every committed e2e run at its compaction boundaries
+and checks a narrower, already-partly-anchored case: whether `record_search`'s
+`subjectId` argument (`search-records/SKILL.md` prose, feeding a fold in
+`record-search.ts` — see ADR-0003) keeps being supplied late in a session.
+Raw supply is lower late in a session and the shipped nudge shows no lift
+there — but most of that gap is not decay: the tool's own schema permits
+omitting `subjectId` for a person not yet in the tree, and that is what most
+late-segment omissions turn out to be on manual review. See ADR-0003's
+Consequences for the caveat and the worked example.
+
 A rule is **structurally anchored** if any of these holds:
 
 1. **The tool rejects the violation.** (`research_append` refuses the write.)
@@ -395,7 +406,7 @@ agents.**
 |---|---|---|
 | **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `image-reader-opus` → `claude-opus-4-8`; `record-extractor`, `image-reader`, `proof-conclusion` + `research-exhaustiveness` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
-| **Agent `effort:`** | hosted + both harnesses; **Cowork unverified** | no agent pins one |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
 | **Session effort** | `.claude/settings.json` `effortLevel`; never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted inherits |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
@@ -408,9 +419,14 @@ agents.**
 > **Agent `effort:` takes `low|medium|high|xhigh|max` or an integer**, and is a
 > property of the agent *definition* — the `Agent` tool's call site accepts only
 > `model`. It binds wherever `.claude/agents/*.md` is parsed, which is the hosted
-> control plane (`stage_plugin_agents` + `setting_sources=["project"]`) and both
-> harnesses. **Whether Cowork honours it has not been checked on a live session**,
-> the way the `model:` pins were; check before relying on it there.
+> control plane (`stage_plugin_agents` + `setting_sources=["project"]`), both
+> harnesses, **and Cowork — verified live on 2026-08-25**, the way the `model:` pins
+> were. A probe plugin pinned `record-extractor` to `effort: low` and a `PreToolUse`
+> hook read the payload back: four subagent tool calls in a macOS Cowork session, every
+> one `{"level": "low"}` against the session's `high`. The same hook in Claude Code
+> showed `{"level": "low"}` for a pinned agent beside `{"level": "xhigh"}` on the main
+> thread, one session. **The payload spells it as an object, not a string** — a grep
+> for `"effort": "low"` finds nothing.
 >
 > **And know the ceiling before you plan around it.** Because agents are the only
 > surface, the share of work that *can* be routed to another model is the share
@@ -560,6 +576,11 @@ and note that no CI job runs it.
 ---
 
 ## 4. Orchestration — the `research` skill
+
+> For the whole run laid out unit by unit — every skill and agent in call order, its
+> gate, what it owns, what it reads and what it writes — see
+> [`docs/skill-dataflow.md`](skill-dataflow.md). It maps the routing table below onto
+> the write-ownership manifest; both of those stay authoritative.
 
 There **is** an orchestrator, and it is a skill:
 `packages/engine/plugin/skills/research/SKILL.md`. It is deliberately thin —
@@ -1380,7 +1401,7 @@ tools — what happens after you grant one), and `check_negative_reciprocity.py`
 (a negative routing edge `A → B` with no `B → A` test backing it — what happens
 after you widen a description).
 
-**Three more live outside `tests/packaging/`, and the inventory above will not
+**These live outside `tests/packaging/`, and the inventory above will not
 lead you to them:**
 
 - `packages/engine/mcp-server/tests/validation/tree-shape-drift.test.ts` —
@@ -1389,6 +1410,11 @@ lead you to them:**
 - `eval/harness/tests/unit/test_schema_mirrors.py` — the two schema trees stay
   byte-identical. `eval/harness/tests/unit/test_write_lockdown_parity.py` — the
   three write-lockdown copies agree. Both run under `make harness-test`.
+- `eval/harness/tests/unit/test_unit_test_corpus.py` — every committed file
+  under `eval/tests/unit/` validates against `unit-test.schema.json`, by calling
+  `loader.load_test` rather than re-implementing it. Catches a schema violation
+  and unparseable JSON alike; both were previously invisible until the next paid
+  eval run. Runs under `make harness-test`.
 - `eval/harness/scripts/check_e2e_fixtures.py` — **blocking**, from its own
   workflow (`.github/workflows/check-e2e-fixtures.yml`), on any change under
   `eval/tests/e2e/` or `eval/runlogs/e2e/`. It is not part of `make test-all`,
@@ -1398,15 +1424,16 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and 82 negative routing tests. **396** committed test definitions
+  run logs, and 87 negative routing tests. **404** committed test definitions
   (`make eval-inventory`) — one JSON file per test under `eval/tests/unit/` — and
-  across the 25 live suites the latest run log per suite totals **396 rows, 364
-  passing (92%)**. Those two numbers count different things and can diverge in
+  across the 25 live suites the latest run log per suite totals **403 rows, 362
+  passing (90%)**. Those two numbers count different things and can diverge in
   either direction: a test defined after its suite's last run has no row, and a
-  row survives for a test since deleted. They coincide exactly today — the latest
-  logs are snapshots taken between 2026-07-21 and 2026-08-20, and every defined
-  test appears in its suite's log — which is a fact about the snapshots, not an
-  identity.
+  row survives for a test since deleted. Today they differ by one, in the first
+  direction: `ut_timeline_010` was added to `timeline` after that suite's last
+  run, so it has no row; no row survives for a deleted test. Both numbers are
+  facts about the snapshots — taken between 2026-07-27 and 2026-08-24 — not an
+  identity, so re-derive rather than quoting them.
 - **E2e** (`eval/tests/e2e/<fixture>/`) — live FamilySearch, 106 fixtures
   (`make eval-inventory`; directories carrying a `fixture.json`; `eval/tests/e2e/` holds one more
   directory that is not one), blind
@@ -1501,7 +1528,7 @@ lives. A test is not just its definition: it usually needs a matching
 `eval/fixtures/mcp/` response, a dimension in that skill's `rubric.md`, and a
 check in `eval/harness/validators/`. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
-1 by policy. 82 of the 396 definitions are **negative** tests that exist to prove
+1 by policy. 87 of the 404 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is
@@ -1561,6 +1588,7 @@ questions that only look open.
 | What rule must I follow to make a correct change? | [`CLAUDE.md`](../CLAUDE.md) — the operating manual, auto-loaded every session |
 | What does tool X do? | `docs/specs/<tool>-tool-spec.md` — **wins over this guide on conflict** |
 | What tools / skills / agents exist, for a user? | [`README.md`](../README.md) |
+| Which skill or agent runs when, and what does it read and write? | [`docs/skill-dataflow.md`](skill-dataflow.md) — every skill and agent in call order with its gate, its responsibility, and its reads and writes, plus the inverse view of who may write each section of persisted state |
 | Why is it built this way? | [`docs/adrs/`](adrs/) — one decision per file, with the alternatives that were tried and rejected. Index in §0. For decisions with no ADR yet, the linked spec. |
 | Has this idea already been tried and disproved? | [`ADR-0009`](adrs/ADR-0009-refuted-agent-design-claims.md), each ADR's `Alternatives considered`, and [`guardrail-enforcement-spec.md`](specs/guardrail-enforcement-spec.md) §9 "Options set aside" — three ledgers, all negative records. Plus [`ADR-0010`](adrs/ADR-0010-record-structural-bets-in-a-ledger.md)'s structural-bet ledger, where **only a `rejected` row is a bar** — its `set aside` and `deferred` rows record ideas nobody researched, and re-proposing one is expected |
 | What is wrong with it, and what's next? | The **project board** — it is the register, and §9.4 and §10 here deliberately point at it rather than copy it. Read them for the handful of gaps whose *consequence* changes how you build, not for a list. There is no standing critique document either; the one that existed was retired 2026-08-09 because its priorities went stale faster than they were re-read. |

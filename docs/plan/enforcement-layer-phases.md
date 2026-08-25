@@ -10,7 +10,7 @@
 | 2 — device-bridge route closure | **landed** 2026-08-18. `device_commit_files` covered in all three lockdown copies *and* in the `hooks.json` matcher that decides whether the guard runs; `device_bash` deliberately not. Still unproven against a real bridge payload — only a live Cowork session can do that |
 | 3 — first skill-agent pair (proof summaries) | **landed** 2026-08-19. `proof-conclusion` folded into an agent; the plugin hook denies a `proof_summaries` write to any other caller. Unproven against a real Cowork payload — no CI job sees one |
 | 4 — remaining pairs | **first pair landed** 2026-08-23. `research-exhaustiveness` folded into an agent; the plugin hook routes the exhaustiveness CLAIM (`declared: true`) to it, field-scoped rather than section-scoped. Two writer-tool preconditions landed with it. Remaining: `conflict-resolution`, and `research/SKILL.md` itself |
-| 5 — detectors + positive controls | **landed** 2026-08-23. The shadow report replays all four post-hoc families over history rather than reading only what a run stored; citation-nulling has its positive control on the live path; the deny run happened (PR #1844) and the agent recovers. Also fixed the capture strip, which was destroying `replay.py`'s input |
+| 5 — detectors + positive controls | **landed** 2026-08-23. The shadow report replays the post-hoc families and the §11 unnamed-delegate check over history rather than reading only what a run stored; citation-nulling has its positive control on the live path; the deny run happened (PR #1844) and the agent recovers. Also fixed the capture strip, which was destroying `replay.py`'s input |
 
 Three gates, the phase function, and the replay engine were built during the
 investigation — they are *inputs* to this programme, not one of its phases.
@@ -30,7 +30,7 @@ system, not the objective.
 
 | Artifact | Role |
 |---|---|
-| **ADR-0011** | the layer map — six substrates, the decision procedure, snapshot-vs-live, override tiers. **The durable decision.** |
+| **ADR-0011** | the layer map — six substrates, the decision procedure, snapshot-vs-live, and why gates ship without an override. **The durable decision.** |
 | `docs/specs/schemas/ownership.json` | who may write each section of each project document, and on which planes that is checkable. The declaration every later phase keys on |
 | `docs/specs/guardrail-enforcement-spec.md` | what is enforced today, what is measurement, the measured findings |
 | root `PLAN.md` (gitignored) | the *current* phase only, as a per-task plan |
@@ -122,9 +122,9 @@ caller's suite — verified: the `record-extraction` run log's snapshot contains
 Independent of everything above, offline, and free. Can run at any point.
 
 **Part 1 landed 2026-08-21.** `make e2e-guardrail-shadow REPLAY=1 SINCE=all` now
-recomputes all four post-hoc families from each run's committed final state
-instead of only reading what a run stored, and the replay plumbing has its own
-controls in `tests/unit/test_guardrail_shadow_report.py`.
+recomputes the post-hoc families and the §11 unnamed-delegate check from each
+run's committed log instead of only reading what a run stored, and the replay
+plumbing has its own controls in `tests/unit/test_guardrail_shadow_report.py`.
 
 **The premise this section carried was wrong, and the correction is the finding.**
 It said three shadow checks fire zero times and that nothing distinguishes "the
