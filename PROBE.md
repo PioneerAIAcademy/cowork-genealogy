@@ -20,7 +20,28 @@ real `PreToolUse` payload instead of reading a declaration.
 Install this build, open a genealogy project, and run any extraction — one record
 through `record-extraction` is enough, since it delegates to `record-extractor`.
 
-Then send back `_probe/runtime-context.jsonl` from the project folder.
+Then read the log back **in the same session** — see below. Do not go looking for it on your
+own machine.
+
+### Where the log lands, which differs by environment
+
+The hook writes to the `cwd` the runtime hands it, and that is not the folder you think you
+are working in:
+
+| Environment | `cwd` the hook sees | Where the log lands |
+|---|---|---|
+| Claude Code | your checkout | `_probe/runtime-context.jsonl` in the repo |
+| **Cowork desktop** | the cloud container (`/home/claude`) | **inside the container** — your Mac or PC cannot see it |
+
+In Cowork the connected project folder is reached through the device bridge and is *not* the
+session's working directory, so the log is not written there. Read it back by asking the
+session itself, in the same conversation, before it ends:
+
+> Run: `cat /home/claude/_probe/runtime-context.jsonl`
+
+If that path is empty, have it search: `find / -name runtime-context.jsonl 2>/dev/null`. A
+genuinely absent file — after searching — is itself a finding: it would mean a plugin
+`PreToolUse` hook does not fire for MCP tool calls in Cowork.
 
 ## Reading the result
 
