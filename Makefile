@@ -273,6 +273,18 @@ electron: $(JS_DEPS) ## Run the Electron viewer (consumes the shared viewer-ui)
 typecheck: $(JS_DEPS) ## Typecheck the whole JS workspace (turbo)
 	pnpm typecheck
 
+.PHONY: lint
+lint: $(JS_DEPS) $(EVAL_APP_DEPS) ## ESLint — the two workspaces that have a config (apps/electron, eval/app)
+	# Not `pnpm -r lint`: only these two declare a lint script, and `-r` would
+	# report success for every workspace that simply has none. Named explicitly
+	# so adding a third config is a visible edit here rather than a silent
+	# no-op.
+	pnpm --filter @genealogy/electron lint
+	# eval/app is NOT a pnpm workspace member (same carve-out as the engine), so
+	# it is reached with npm from its own directory — exactly as eval-ui-test
+	# does. `pnpm --filter` matches no project here and exits non-zero.
+	cd eval/app && npm run lint
+
 .PHONY: test-all
 test-all: ## Run EVERY check before a PR: typecheck + JS + server + engine + CRUD UI + eval harness. Alias for scripts/test.sh
 	# One command, one contract. scripts/test.sh owns the implementation
@@ -592,24 +604,30 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
-e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc shadow families over committed runs, stored and recomputed: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1
+e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc + §11 unnamed-delegate shadow families over committed runs, stored and recomputed: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1 | FEEDBACK_DIR=~/feedback PLATFORMS=<dir>=web,<dir>=darwin
 	# Also pure analysis, no API. Windowed to 14 days like every other reader;
+	# FEEDBACK_DIR= is the exception -- it scans hosted feedback bundles outside
+	# the repo, is NOT windowed, and ignores TEST/WINDOWS/SINCE/REPLAY (#1558).
 	# SINCE=all for a maximum-sample replay.
 	# NOT a calibration tool: §7 is shadow-only permanently (its success gate
 	# cannot see skill completion — see guardrail-enforcement-spec.md §7 and
 	# `make e2e-skill-episodes`), so WINDOWS= compares are for reading the
 	# signal, not for choosing a value to ship.
-	# REPLAY=1 additionally RECOMPUTES all four post-hoc families: the §8
-	# person_evidence provenance check from tool_calls + each fixture's committed
-	# seed tree, and the three §7/§7.5 checks from each run's committed
-	# final-research / final-tree sidecars.
+	# REPLAY=1 additionally RECOMPUTES the shadow families instead of only reading
+	# what runs stored: the four post-hoc families (the §8 person_evidence
+	# provenance check from tool_calls + each fixture's committed seed tree, and the
+	# three §7/§7.5 checks from each run's committed final-research / final-tree
+	# sidecars) and the §11 unnamed-delegate check (issue #980) from tool_calls,
+	# which is the only half that reflects a later detector change such as the
+	# namespaced-agent_type tolerance. The §11 count always prints its attribution
+	# denominator — how many runs carry any caller attribution to fire on at all.
 	# READ THE REPLAY BEFORE CONCLUDING A CHECK NEVER FIRES. The stored counts
 	# above only cover runs made after each check shipped -- all three post-hoc
 	# checks landed in August against a corpus that is 84% July, so their zeros
 	# measured the corpus's age, not the behaviour. Replaying turns two of the
 	# three into real counts. Counts, never rates: this is behaviour presence over
 	# the corpus, not a per-run compliance score.
-	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),) $(if $(REPLAY),--replay,)
+	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(FEEDBACK_DIR),--feedback-dir $(FEEDBACK_DIR),) $(if $(PLATFORMS),--platforms $(PLATFORMS),) $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),) $(if $(REPLAY),--replay,)
 
 .PHONY: e2e-skill-episodes
 e2e-skill-episodes: ## Per-skill episode fingerprint over committed runs (issue #1463): make e2e-skill-episodes | TEST=<slug> | ALL_SKILLS=1 | SINCE=all|N|YYYY-MM-DD
@@ -661,6 +679,21 @@ e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latenc
 	# BY_SKILL needs a run committed after 2026-07-26 (timeline tool-name tagging);
 	# older runs report "no skill-phase data" rather than crashing.
 	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-compaction
+e2e-compaction: ## record_search subjectId supply by compaction segment, over committed e2e runs (issue #1155): make e2e-compaction | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs' usage.timeline +
+	# tool_calls. A run is segmentable only from a run committed after
+	# 2026-07-26 (#895, timeline tool-name tagging) -- older runs are excluded
+	# and the count is reported, not silently dropped. Segments 0-2 are
+	# "early", 3+ is "late" (issue #1155's split). The bare command's 14-day
+	# SINCE default is too narrow for this report's own question: both windows
+	# issue #1155 asks to compare are already past it as of writing --
+	# SINCE=2026-07-27 (the ranking fold) and SINCE=2026-08-04 (the
+	# rankingSkipped note) are the two invocations that answer it.
+	cd eval/harness && uv run python -m e2e.compaction_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: provenance-report
 provenance-report: ## Identifiers a skill persisted that no input supplied: make provenance-report [SKILL=<name>]

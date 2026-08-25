@@ -592,6 +592,15 @@ the `max_cost_usd` note in §6 step 5.
    `E2eResult` is constructed, and **the judge is never called**. "This run never
    happened."
 
+   **The printed error can now name the server's own cause.** The
+   SDK's `stderr:` callback never receives the MCP child's output — verified
+   live against claude-agent-sdk 0.1.81, a stub that wrote to stderr and exited
+   non-zero produced zero captured lines — so the CLI's per-server JSONL log
+   under its platform cache dir is read instead, best-effort and bounded to the
+   last 20 lines. A `genealogy_mcp_config()` tee/wrapper process was considered
+   and rejected: it would insert a process layer into the one config preflight
+   and the run deliberately share, and has to work on Windows.
+
    *Why this retention rule, and not the two obvious alternatives* — a settled
    decision, 2026-08-02. Every compliance, cost and recall figure in this repo
    is computed over `eval/runlogs/`, so what a failed run leaves behind is a
@@ -651,10 +660,14 @@ the `max_cost_usd` note in §6 step 5.
    a documented reporting threshold.
 
    **Agent `model:` pins interact with reasoning effort, and one pin is
-   load-bearing.** Effort is session-wide; `model:` is per-subagent (each
+   load-bearing.** Effort is per-agent too, since agent `effort:` was verified to
+   bind on 2026-08-25 — but no agent pins one today, so in practice every step runs
+   at the session effort and `model:` is the lever that has been used (each
    `packages/engine/plugin/agents/*.md`). So when one agent misbehaves at the
-   run's effort level, repinning that agent is the only change that does not
-   move every other step too. `record-extractor` was repinned `claude-sonnet-5`
+   run's effort level, repinning that agent — its model, its effort, or both —
+   is the change that does not move every other step too. **When the repin below
+   was made, effort was believed to be session-wide, so the model was the only
+   lever available; it is not any more.** `record-extractor` was repinned `claude-sonnet-5`
    → `claude-sonnet-4-6` on 2026-07-18 for exactly this: sonnet-5 hangs as a
    subagent at Cowork/e2e `effortLevel: high` — adaptive-thinking runaway, not a
    model defect, and fine at default effort. Capping its output at 8k instead was
@@ -860,6 +873,9 @@ run: the main-thread half is **denied**, the delegate half is only **logged**.
 `E2eResult.__post_init__`, so it never moves the compliance axis until its
 false-positive rate is calibrated. A non-`record-extractor` delegate's
 `extraction_append` therefore still succeeds today; it is recorded, not blocked.
+Beyond the detector itself, `make e2e-guardrail-shadow` reports this family across
+the committed corpus, stored plus a `REPLAY=1` recompute, with the
+attribution denominator; it stays a reported signal, not a graduation count.
 
 ### 6.2 Provided documents (bundled external evidence)
 

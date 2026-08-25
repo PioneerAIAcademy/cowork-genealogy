@@ -4,6 +4,7 @@ Runs against the actual seed validators in eval/harness/validators/ to verify
 the runner can drive them with realistic inputs.
 """
 
+import json
 from pathlib import Path
 
 import pytest
@@ -1483,3 +1484,301 @@ def test_validator_crash_is_not_reported_as_missing_build():
     result = validate_parsed(research, crash_tree)
     assert result is not None, "a crash must not be reported as missing-build (None)"
     assert result, "a crash must surface a non-empty error"
+
+
+# --- V1: write-then-validate -------------------------------------------
+
+_CITATION_FRONTMATTER = {
+    "name": "citation",
+    "allowed-tools": ["research_append", "validate_research_schema"],
+}
+
+
+def _v1_states(modify_research):
+    """State pair for V1 tests. `modify_research=True` makes after differ."""
+    before = _empty_research_state()
+    after = _empty_research_state()
+    if modify_research:
+        after["research_json"] = {
+            **after["research_json"],
+            "sources": [{"id": "src_001", "citation": "test"}],
+        }
+    return before, after
+
+
+def test_write_then_validate_passes_when_validator_called():
+    before, after = _v1_states(modify_research=True)
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[
+            {"tool": "mcp__genealogy__research_append", "args": {}},
+            {"tool": "mcp__genealogy__validate_research_schema", "args": {}},
+        ],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_write_then_validate"), None
+    )
+    assert result is not None, "test_write_then_validate did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_write_then_validate_fails_when_validator_missing():
+    before, after = _v1_states(modify_research=True)
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[
+            {"tool": "mcp__genealogy__research_append", "args": {}},
+        ],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_write_then_validate"), None
+    )
+    assert result is not None, "test_write_then_validate did not run"
+    assert result.passed is False
+    assert "validate_research_schema" in (result.error or "")
+
+
+# --- V5: creator not in custody ----------------------------------------
+
+def _v5_states(author_in_where_paren):
+    """State pair for V5 tests. Both carry a tree with source authors."""
+    tree = {
+        "persons": [],
+        "relationships": [],
+        "sources": [
+            {"id": "S1", "author": "County Recorder of Deeds"},
+        ],
+    }
+    src_before = {
+        "id": "src_001",
+        "gedcomx_source_description_id": "S1",
+        "citation": "",
+        "citation_detail": {"who": "", "where": "FamilySearch.org"},
+    }
+    src_after = dict(src_before)
+    if author_in_where_paren:
+        src_after = {
+            **src_after,
+            "citation_detail": {
+                "who": "",
+                "where": "FamilySearch.org (County Recorder of Deeds, Pennsylvania)",
+            },
+        }
+    else:
+        src_after = {
+            **src_after,
+            "citation_detail": {
+                "who": "County Recorder of Deeds",
+                "where": "FamilySearch.org (Pennsylvania State Archives)",
+            },
+        }
+
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src_before]
+    before["tree_gedcomx_json"] = tree
+    before["tree_gedcomx"] = tree
+
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [src_after]
+    after["tree_gedcomx_json"] = tree
+    after["tree_gedcomx"] = tree
+
+    return before, after
+
+
+def test_creator_not_in_custody_passes_on_clean():
+    before, after = _v5_states(author_in_where_paren=False)
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_creator_not_in_custody"), None
+    )
+    assert result is not None, "test_creator_not_in_custody did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_creator_not_in_custody_fails_when_author_in_parenthetical():
+    before, after = _v5_states(author_in_where_paren=True)
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_creator_not_in_custody"), None
+    )
+    assert result is not None, "test_creator_not_in_custody did not run"
+    assert result.passed is False
+    assert "custody" in (result.error or "").lower()
+    assert "County Recorder of Deeds" in (result.error or "")
+
+
+# --- V10: informant not in who ------------------------------------------
+
+def _v10_states(informant_in_who):
+    """State pair for V10 tests."""
+    src_before = {
+        "id": "src_001",
+        "citation": "",
+        "citation_detail": {"who": "Pennsylvania Department of Health"},
+        "notes": "Informant is son-in-law James Brown.",
+    }
+    if informant_in_who:
+        src_after = {
+            **src_before,
+            "citation_detail": {
+                "who": "Pennsylvania Department of Health; informant: James Brown",
+            },
+        }
+    else:
+        src_after = dict(src_before)
+
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src_before]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [src_after]
+    return before, after
+
+
+def test_informant_not_in_who_passes_when_clean():
+    before, after = _v10_states(informant_in_who=False)
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_informant_not_in_who"), None
+    )
+    assert result is not None, "test_informant_not_in_who did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_informant_not_in_who_fails_when_who_contains_informant():
+    before, after = _v10_states(informant_in_who=True)
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_informant_not_in_who"), None
+    )
+    assert result is not None, "test_informant_not_in_who did not run"
+    assert result.passed is False
+    assert "informant" in (result.error or "").lower()
+
+
+def test_informant_not_in_who_ignores_preexisting_informant():
+    """Pre-existing 'informant' in who that the skill did not change must
+    not trigger a false positive — the mid-research-flynn null-run case."""
+    src = {
+        "id": "src_004",
+        "citation": "",
+        "citation_detail": {
+            "who": "Pennsylvania Department of Health; informant: James Brown",
+        },
+        "notes": "Informant is son-in-law James Brown.",
+    }
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [dict(src)]  # identical — skill changed nothing
+
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_informant_not_in_who"), None
+    )
+    assert result is not None, "test_informant_not_in_who did not run"
+    assert result.passed is True, (
+        f"false positive on pre-existing informant data: {result.error}"
+    )
+# --- text_response plumbing (#1662) ------------------------------------
+#
+# A validator that reads the reply is inert if the harness stops supplying it.
+# Because the natural guard inside such a validator is "no reply -> skip",
+# that breakage reads as a pass, so these pin the wiring itself rather than
+# any one validator's behaviour.
+
+def test_text_response_reaches_a_validator(tmp_path):
+    """`text_response` is injected by name, verbatim."""
+    seen = {}
+    module = tmp_path / "test_probe_skill.py"
+    module.write_text(
+        "def test_capture(text_response):\n"
+        "    import json, pathlib\n"
+        "    pathlib.Path(__file__).with_name('seen.json').write_text(\n"
+        "        json.dumps({'reply': text_response}), encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="probe-skill",
+        validators_dir=tmp_path,
+        before_state=_empty_research_state(),
+        after_state=_empty_research_state(),
+        tool_calls=[],
+        text_response="Saved the Wikipedia summary to `x.md`.",
+    )
+    assert [r.name for r in results] == ["test_capture"], results
+    assert results[0].passed, results[0].error
+    seen = json.loads((tmp_path / "seen.json").read_text(encoding="utf-8"))
+    assert seen["reply"] == "Saved the Wikipedia summary to `x.md`."
+
+
+def test_text_response_defaults_to_empty_string_not_none(tmp_path):
+    """Omitting it yields "" — so a validator can treat it as a string
+    without a None guard, and an inert-because-unwired validator sees the
+    same value it would see for a genuinely silent run."""
+    module = tmp_path / "test_probe_skill.py"
+    module.write_text(
+        "def test_is_str(text_response):\n"
+        "    assert isinstance(text_response, str)\n"
+        "    assert text_response == ''\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="probe-skill",
+        validators_dir=tmp_path,
+        before_state=_empty_research_state(),
+        after_state=_empty_research_state(),
+        tool_calls=[],
+    )
+    assert results[0].passed, results[0].error
+
+
+# The orchestrator end of this wiring is pinned behaviourally in
+# test_orchestrator.py::test_orchestrator_passes_text_response_to_validators.
+# A source grep was tried here first and is NOT sufficient: the string
+# `text_response=result.text_response` appears three times in orchestrator.py
+# (derive_activated, run_validators, grade), so asserting its presence stays
+# green when the run_validators one specifically is removed.

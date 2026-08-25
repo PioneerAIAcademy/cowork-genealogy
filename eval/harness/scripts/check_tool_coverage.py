@@ -96,6 +96,22 @@ EXEMPT_TOOLS: dict[str, str] = {
         "rejection when an op strays outside the lane. No fixture needed; it "
         "is always available."
     ),
+    "convert_calendar": (
+        "registered as a LIVE_TOOL in mock_mcp.py (#1654) — pure calendar "
+        "arithmetic, so a fixture would have to hard-code the very answer the "
+        "test exists to measure, which is the one way of mocking this tool "
+        "that is worse than not mocking it. It calls the real compiled "
+        "implementation, deriving the Julian/Gregorian offset by JDN round-"
+        "trip. No fixture needed; it is always available. conflict-resolution "
+        "declares the same tool, so this exemption drops convert_calendar from "
+        "that skill's missing list too — it does NOT silence that skill, which "
+        "still warns for place_search_all, an unrelated pre-existing gap. "
+        "Before the "
+        "live registration this warning was true and unactioned for two "
+        "months, because the remedies it named — add a fixture, or drop the "
+        "tool — were both wrong here; the warning now had to stop firing or it "
+        "would assert something false about a tool 11 of 16 tests exercise."
+    ),
 }
 
 

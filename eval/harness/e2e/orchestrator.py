@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import shutil
 import sys
@@ -38,6 +39,7 @@ from claude_agent_sdk import (
     query,
 )
 
+from e2e.mcp_stderr import read_mcp_stderr_lines
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
@@ -65,6 +67,7 @@ from e2e import pricing
 from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
+    GENEALOGY_SERVER_NAME,
     backstop_fired,
     classify_server_status,
     find_server_entry,
@@ -105,7 +108,6 @@ DEFAULT_RUNLOG_ROOT = REPO_ROOT / "eval" / "runlogs" / "e2e"
 DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
 DEFAULT_PLUGIN_SKILLS = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 DEFAULT_PLUGIN_AGENTS = REPO_ROOT / "packages" / "engine" / "plugin" / "agents"
-
 
 # Tools always allowed alongside MCP tools. See e2e-test-spec.md §6.
 # "Task" lets the /research orchestrator delegate to the gps-mentor
@@ -800,7 +802,9 @@ def build_workspace(
     # route is kept because it is the one that provably reaches subagents; the
     # SDK option's subagent propagation is unverified. Do not restate this as
     # "the only lever" — that claim shaped a spend decision before it was
-    # checked. Session-wide (parent + every subagent). Left unset, the
+    # checked. Session-wide (parent + every subagent that does not pin its own
+    # `effort:` — agent frontmatter overrides this, verified live in Cowork and
+    # Claude Code on 2026-08-25; no agent pins one today). Left unset, the
     # run uses the CLI's bare default, which for sonnet-5 resolves to 'high' —
     # deep enough that the record-extractor subagent can spend its whole output
     # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
@@ -1223,6 +1227,10 @@ async def _run_agent(
     mcp_state: dict[str, Any] = {"unavailable": False, "misses": 0, "queries": []}
 
     run_started = time.monotonic()
+    # Wall-clock companion to the monotonic clock above (issue #1301) —
+    # time.monotonic() has no relationship to file mtimes, so a "since this
+    # check started" log-file filter needs its own real-clock timestamp.
+    run_started_wall = time.time()
 
     # Per-message timeline for forensics: [elapsed_seconds, kind, tool_names].
     # Lets a later analysis split a run into structural vs stall time, pinpoint
@@ -1741,7 +1749,28 @@ async def _run_agent(
             nonlocal aborted_reason, error
             mcp_state["unavailable"] = True
             aborted_reason = "mcp_unavailable"
-            error = unavailable_message(entry, backstop=backstop, queries=queries)
+            # Best-effort stderr capture (issue #1301) — this fires on an abort
+            # path that must never itself crash, so a failure here degrades to
+            # no lines rather than propagating.
+            try:
+                server_stderr, looked_in = read_mcp_stderr_lines(
+                    cwd=workspace, server_name=GENEALOGY_SERVER_NAME,
+                    since=run_started_wall,
+                )
+            except Exception:  # noqa: BLE001 — see comment above
+                server_stderr, looked_in = [], "(unresolved)"
+            error = unavailable_message(
+                entry, backstop=backstop, queries=queries,
+                server_stderr=server_stderr or None,
+            )
+            if not server_stderr:
+                # Rule 2 (issue #1301): an empty capture must never read as
+                # "the server said nothing" -- without this, the message here
+                # is byte-identical to the pre-#1301 text, so a genealogist
+                # has no hint a capture was even attempted, let alone where it
+                # looked (this silence is exactly what hid the macOS cwd-slug
+                # bug from a live run, chesworthrm's review).
+                error += f"\n(No server stderr captured; looked in {looked_in}.)"
             # Recorded like every other harness-side event even though THIS path
             # never persists it (the run writes no files at all — see
             # run_e2e_test). Kept so the in-memory trace is complete and so a
@@ -2364,9 +2393,28 @@ async def run_e2e_test(
         # reached, so no run-log files exist and no E2eResult is ever built.
         # "This run never happened" — print the error, exit non-zero.
         if stop_reason == "mcp_unavailable":
-            raise McpUnavailableError(
-                error or unavailable_message(None)
-            )
+            if error:
+                fallback_message = error
+            else:
+                # Rare defensive arm: aborted_reason latched but `error` is
+                # somehow falsy. Best-effort capture, same as the primary abort
+                # path (issue #1301) — must not itself crash this raise.
+                try:
+                    fallback_stderr, fallback_looked_in = read_mcp_stderr_lines(
+                        cwd=workspace, server_name=GENEALOGY_SERVER_NAME,
+                        since=started_at,
+                    )
+                except Exception:  # noqa: BLE001 — see comment above
+                    fallback_stderr, fallback_looked_in = [], "(unresolved)"
+                fallback_message = unavailable_message(
+                    None, server_stderr=fallback_stderr or None
+                )
+                if not fallback_stderr:
+                    # Same rule-2 guard as the primary abort path above.
+                    fallback_message += (
+                        f"\n(No server stderr captured; looked in {fallback_looked_in}.)"
+                    )
+            raise McpUnavailableError(fallback_message)
 
         judge_seconds = 0.0
         if skip_judge or final_tree is None:

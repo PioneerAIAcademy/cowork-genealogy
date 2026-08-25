@@ -5,7 +5,7 @@
     "name": "Cross-jurisdiction comparison — same calendar date, different calendar systems",
     "type": "positive",
     "description": "User compares two records with the same written date but from jurisdictions on different calendars in the same year. France was Gregorian by 1730; England was still Julian until 1752. Tests whether Claude recognizes that the SAME written date in two jurisdictions can refer to DIFFERENT real-world days, and computes the correct offset for each side before concluding whether they match.",
-    "tags": ["cross-jurisdiction", "england", "france", "1730", "comparison"]
+    "tags": ["cross-jurisdiction", "england", "france", "1730", "comparison", "requires-tool-conversion"]
   },
   "input": {
     "user_message": "I have a French baptism record dated 14 May 1730 and an English marriage record dated 14 May 1730. Are these the same day?",

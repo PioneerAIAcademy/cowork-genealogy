@@ -92,7 +92,7 @@ matching `corrections` key.
 
 ### Julian vs. Gregorian → `julianToGregorianDay: true`
 
-| Jurisdiction | Gregorian adoption | Offset | Notes |
+| Jurisdiction | Gregorian adoption | Offset at adoption | Notes |
 |---|---|---|---|
 | Catholic Europe (Spain, Portugal, Italy, Poland) | Oct 1582 | 10 days | Oct 4 → Oct 15 |
 | France | Dec 1582 | 10 days | |
@@ -105,9 +105,11 @@ matching `corrections` key.
 | Russia | Feb 1918 | 13 days | Jan 31 → Feb 14 |
 | Greece | 1923 | 13 days | |
 
-Offset grows by 1 day at each Julian leap year the Gregorian calendar
-skipped: before 1700 → 10 days; 1700–1799 → 11; 1800–1899 → 12;
-1900+ → 13.
+Offset grows by 1 day the day after each Julian Feb 29 the Gregorian
+calendar skipped — the threshold is 1 March (Julian), not New Year:
+10 days before 1 Mar 1700; 11 from 1 Mar 1700; 12 from 1 Mar 1800;
+13 from 1 Mar 1900. A Julian Jan–Feb date in 1700, 1800 or 1900 keeps
+the previous century's offset (Julian 14 Feb 1900 → +12, not +13).
 
 ### Old Style / New Style year → `osNsYear: true`
 
@@ -117,9 +119,12 @@ March 24 are in the "previous" year by modern reckoning:
 
 ### Double-dated years → `doubleDatedYear: true`
 
-Records often show both years: "25 March 1750/1" means 1750 OS but
-1751 NS. Pass `date: { year: 1750, doubleYear: 1 }` — the tool
-returns the later (New Style) year.
+Records often show both years: "6 January 1745/6" means 1745 OS but
+1746 NS. Pass `date: { year: 1745, doubleYear: 6 }` — the tool
+returns the later (New Style) year. Double dates belong to Jan 1 –
+Mar 24 only. On 25 March the two years are the same, so a slash on
+that date is anomalous: flag it and check where the year turns over in
+the surrounding register entries. Do not resolve it to the later year.
 
 ### Quaker numbered months → `quakerMonth: { era }`
 

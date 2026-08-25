@@ -26,9 +26,16 @@
     "Should NOT mark the new fact `primary: true` unless it's the primary Occupation (and only Occupation) for this person — the SKILL.md primary rule only applies when there are competing facts of the same type",
     "Edit-minimality: no other facts on I1 are changed (F1 Birth and F2 Death stay byte-identical); no other person, relationship, or source is touched; research.json is not modified",
     "Should NOT need a separate validate_research_schema call — tree_edit, tree_correct, and merge_tree_persons all validate-before-persist (SKILL.md § Validation), and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
-    "Should reuse S2 (1860 census already in tree.sources) — must NOT create a duplicate S-prefix source entry"
+    "Should reuse S2 (1860 census already in tree.sources) — must NOT create a duplicate S-prefix source entry",
+    "Should invoke `Skill(\"check-warnings\")` after this edit — SKILL.md § Validation requires it after ANY edit or merge. This is stubbed via `execution.stub_skills` (the callee has its own unit suite), so the launch is what's graded, not a real check-warnings run — score on whether the skill actually called it (visible in `skills_invoked`), not on the canned response's content."
   ],
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "check-warnings",
+        "response": "No warnings found for the edited person's data -- no impossible dates, no relationship loops, nothing implausible. FamilySearch's online quality check was not run in this environment."
+      }
+    ]
   }
 }

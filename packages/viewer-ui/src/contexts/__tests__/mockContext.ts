@@ -16,13 +16,19 @@ export function buildMockContext(
     setActiveSection?: ResearchDataState['setActiveSection']
     activeSection?: string
     getById?: ResearchDataState['getById']
+    notice?: string | null
+    clearNotice?: ResearchDataState['clearNotice']
+    error?: string | null
+    clearError?: ResearchDataState['clearError']
   } = {}
 ): ResearchDataState {
   return {
     research: overrides.research === undefined ? patrickFlynnResearch : overrides.research,
     gedcomx: overrides.gedcomx === undefined ? patrickFlynnGedcomx : overrides.gedcomx,
-    error: null,
-    clearError: () => {},
+    error: overrides.error ?? null,
+    clearError: overrides.clearError ?? (() => {}),
+    notice: overrides.notice ?? null,
+    clearNotice: overrides.clearNotice ?? (() => {}),
     lastUpdated: null,
     folderPath: null,
     devMode: false,

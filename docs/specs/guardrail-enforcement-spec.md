@@ -152,7 +152,7 @@ depends on another shipping first.
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 | §5 | Declaration/status agreement | engine (MCP tool) — so Cowork, hosted, both harnesses | `status: "exhaustive_declared"` on a question whose `exhaustive_declaration.declared` is not true, from either side of the pair | **enforcing** (since 2026-08-23; a zero-violation arm over 159 runs — a cheap invariant, not a gate with catches) |
-| §5 | Plan completeness before a declaration | engine (MCP tool) — so Cowork, hosted, both harnesses | `declared: true` while an item on the question's **active** plan is `in_progress` | **enforcing** (since 2026-08-23; 5 of 170 corpus declarations, classified **bookkeeping** not doctrine, so ADR-0011's overridable tier does not bind) |
+| §5 | Plan completeness before a declaration | engine (MCP tool) — so Cowork, hosted, both harnesses | `declared: true` while an item on the question's **active** plan is `in_progress` | **enforcing** (since 2026-08-23; 5 of 170 corpus declarations, classified **bookkeeping** not doctrine — it contradicts the project's own plan state, not a genealogical judgment, which is what lets it be scoped this tightly) |
 | §5 | `stop_criteria` shape | engine (validator) — so Cowork, hosted, both harnesses | `stop_criteria` written as prose, a number or an array instead of the seven-key object | **enforcing** (since 2026-08-23; 48 corpus write ops, all of them on the bypassed path — 0 of 241 writes made by runs that invoked the owning skill) |
 | §6 | Claim ownership by caller (`exhaustive_declaration`) | plugin hook — Cowork, hosted, wherever the plugin loads; and the e2e harness | an op setting `exhaustive_declaration.declared` to true from anything but the `research-exhaustiveness` agent. FIELD-scoped, not section-scoped: `declared: false` is not routed, because the schema makes the field required and question creation would otherwise be denied | **enforcing** (since 2026-08-23; unproven against a real Cowork payload) |
 
@@ -324,13 +324,25 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 159 scanned | behaviour confirmed; live store path never exercised |
 | §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | behaviour confirmed; live store path exercised |
-| §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | attribution reaches 20 of 159 runs | — | blocked on corpus growth |
+| §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | **15**, across 1 run (of 20 that carry any attribution, 159 scanned) | **15**, 1 run | shadow, reported, no graduation count — revisit only if a **second** attributed run flags |
 
 Reading the two columns: **stored** is what a run recorded when it ran;
 **replayed** is the same detector recomputed now from that run's committed final
 state. A stored count therefore measures the corpus's age, not the behaviour —
 why that is, and what each number is worth, is under "Re-measure; do not read a
 count out of this page" below, stated once.
+
+**§11 unnamed-delegate stays in shadow — reported, not a gate (lead ruling,
+2026-08-21).** One flagged run in 159, and the runs that do not flag mostly carry
+no caller attribution at all rather than a clean bill, so the low fire rate is
+mostly non-coverage, not compliance. A hard-fail threshold set from a single
+example is a coin flip dressed as a number, and graduating was beaten on exactly
+that ground. Revisit only if a **second** attributed run flags. The hook and this
+detector differ **deliberately**, and this is not drift: the
+PreToolUse hook DENIES a main-thread protected write, while the unnamed-delegate
+half is only shadow-logged, never denied, until its false-positive rate is
+measured — the same split `find_protected_writes_by_unnamed_delegate`'s docstring
+records.
 
 **A zero fire rate is not a licence to graduate.** The citation-nulling check's
 own graduation gate reads "only
@@ -417,10 +429,11 @@ corpus only grows:
 make e2e-guardrail-shadow REPLAY=1 SINCE=all
 ```
 
-`REPLAY=1` recomputes **all four** post-hoc families, not just `same_person`
-provenance: that one from each run's `tool_calls` plus its fixture's committed
-seed tree, and the three §7/§7.5 checks from each run's committed
-`.final-research.json` / `.final-tree.gedcomx.json` sidecars. Each is a distinct
+`REPLAY=1` recomputes **the four post-hoc families and the §11 unnamed-delegate
+check**, not just `same_person` provenance: that one from each run's `tool_calls`
+plus its fixture's committed seed tree, the three §7/§7.5 checks from each run's
+committed `.final-research.json` / `.final-tree.gedcomx.json` sidecars, and §11
+from each run's `tool_calls`. Each is a distinct
 number from the *stored* count printed above it, and the distinction is the thing
 to understand before reading either:
 
@@ -600,12 +613,14 @@ objective, and every later skill plans against a changed goal it never agreed
 to" — and that row's remedy, routing the change through `init-project`, was not
 enforceable by anything.
 
-**It constrains the system, not the researcher, and that is why it needs no
-override.** ADR-0011's override tier says a doctrine gate must be overridable by
-the human; here the override is the file itself. The raw-write lockdown binds
-the agent, never a text editor, and preventing a person from editing their own
-project is explicitly out of scope for this layer. The refusal message says so
-outright rather than leaving the researcher to guess.
+**It constrains the system, not the researcher.** No gate here carries an
+override mechanism (ADR-0011, ruling 2026-08-24), and on the desktop none needs
+one: the raw-write lockdown binds the agent, never a text editor, so the
+researcher's override is the file itself, and preventing a person from editing
+their own project is explicitly out of scope for this layer. The refusal message
+says so outright rather than leaving the researcher to guess. That route does
+not exist on the hosted path, where the project lives in a sandbox — see the
+ADR's two stated limits.
 
 ### Exhaustiveness before a proved tier
 
@@ -1227,6 +1242,52 @@ this section before reopening one.
   shipped provenance check flagged 63, with an empty set difference: it detects
   nothing the existing check misses, and is evadable via `moot` status or a
   `probable` tier.
+- **Running the tree-reading §8 arms over a hosted feedback bundle** — cannot be
+  done, so the hosted feedback bundle corpus is measured with the transcript-only
+  and `research.json`-only detectors instead. A feedback bundle carries no
+  `starting_tree` baseline, and its `tree.gedcomx.json` is redacted before it
+  leaves the sandbox (`_redact_person`, `apps/server/app/feedback.py`), so the
+  arms that diff the final tree against a seed — `find_effects_without_invocation`
+  and `check_guardrail_compliance` — would read every seeded relationship as a
+  violation (the same no-baseline defect that killed per-turn scoping, above).
+  Only `find_unguarded_protected_writes` (transcript-only) and
+  `find_missing_mentor_verdicts` (reads `research.json` alone) are valid over a
+  bundle; the adapter and report live in `eval/harness/e2e/`
+  (`feedback_transcript_adapter.py`, `guardrail_shadow_report.py`).
+  **Three of `find_unguarded_protected_writes`' owner arms are blind over a
+  bundle, two of them completely — but only for bundles submitted after each
+  arm's split date, and the report decides that per bundle rather than
+  globally.** A bundle carries only the main session's `{sid}.jsonl`, never the
+  `subagents/agent-*.jsonl` beside it: `feedback.py` reads `{sid}.jsonl` and its
+  fallback loop skips anything `is_dir`, and `readSessionLog` does a
+  non-recursive `readdir`. Two arms have since moved their write inside an
+  agent — `proof_summaries` into `proof-conclusion` on 2026-08-21 (`73b3d98e`) and
+  `questions.exhaustive_declaration` into `research-exhaustiveness` on
+  2026-08-23 (`c78efb0b`), enforced by `OWNED_SECTIONS` and
+  `OWNED_DECLARATIONS` in `plugin/hooks/guard_project_files.py`.
+
+  **The date cuts both ways, and getting this wrong in either direction
+  falsifies the counts this scan reports.** For a bundle submitted BEFORE an
+  arm's split, that write came from the MAIN thread, was un-denied, and is in
+  the transcript — the count is a real measurement, and every bundle collected so
+  far (2026-08-05 onward; the newest is 2026-08-20) is on that side of both
+  dates. For a bundle submitted on or after, the write may
+  have happened inside the agent (invisible) and a main-thread attempt would be
+  denied and recorded as `is_error: true`, which the detector skips — so a 0
+  there is not evidence. "May", not "was": a deploy does not ship the sandbox
+  image (`docs/architecture.md` §9.4 point 2), so a post-split bundle can still
+  have run a pre-split plugin. The label is therefore **"plugin era unknown"**,
+  never a clean cutoff, and an undated bundle takes the same label rather than
+  being assumed live.
+
+  The `tree_edit`/`tree_correct` arms are blind only to the agent route
+  regardless of date: the hook covers `research_append` alone, so a main-thread
+  `primary: true` or `ParentChild`/`Couple` write still fires. Recovering the
+  agent route means bundling the subagent transcripts, a change to
+  `apps/server/app/feedback.py`. Until that lands, two arms return 0
+  unconditionally for a post-split bundle, so no report can distinguish "no
+  bypasses" from "cannot see bypasses" — a gap carried in the `nothing-checks`
+  register rather than here.
 
 ## 10. Residual risks
 
@@ -1363,7 +1424,12 @@ degradation `response_summary` already has.
 `E2eResult.protected_writes_by_unnamed_delegate`, a list of human-readable
 violation strings. **Deliberately not read by `__post_init__`**: it must not
 move the `compliance` axis until its false-positive rate is measured. Detector:
-`harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate`.
+`harness/skill_invocation.py::find_protected_writes_by_unnamed_delegate`. It is
+also reported across the committed corpus by `make e2e-guardrail-shadow` — a
+stored read plus, under `REPLAY=1`, a recompute over `tool_calls` —
+printed with its attribution denominator (how many runs carry any caller
+attribution to fire on at all); and read by `make e2e-detector-diff
+DETECTOR=lane-check`. It is no longer read only inline.
 
 ## Related
 
