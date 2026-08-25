@@ -21,7 +21,7 @@ compensate.
 | ornate capital S | F | Scott → Fcott | search both |
 | double-l | tt, H | Powell → Powett | `Powe*` |
 | `&` ligature | et, &c | & → et | search both |
-| superscript abbrev | e | Mrs → Mes | `M?s` |
+| superscript abbrev | dropped, or a letter swap | Mrs → Ms, Mes | search both |
 
 Confusable letters compound within a word. `?` reaches exactly one
 character, so a run of several needs `*`, which absorbs any number
