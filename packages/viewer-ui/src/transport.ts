@@ -63,6 +63,9 @@ export interface SubscriptionHandlers {
   onGedcomx: (data: GedcomxData) => void
   onSidecar: (event: { logId: string; mtime: number }) => void
   onError: (message: string) => void
+  /** A non-error heads-up (e.g. research.json found in a subfolder). Unlike
+   *  onError it is NOT cleared by a research load — see ResearchDataProvider. */
+  onNotice: (message: string) => void
 }
 
 export interface ResearchTransport {
