@@ -26,6 +26,7 @@ import {
   atomicWriteJson,
   readProjectJson,
   formatIssues,
+  withProjectLock,
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
@@ -381,6 +382,9 @@ export async function researchLogAppend(
   // coerceJsonArg) before any shape checks.
   input.ops = coerceJsonArg(input.ops) as ResearchLogAppendOp[] | undefined;
 
+  // Serialize the read-modify-write against every other writer on this project
+  // (issue #1715).
+  return withProjectLock(projectPath, async () => {
   try {
     // Read project files once (research mutated in memory only; tree read for
     // cross-file checks during validation).
@@ -486,6 +490,7 @@ export async function researchLogAppend(
     if (e instanceof LogAppendError) return { ok: false, errors: [e.message] };
     throw e;
   }
+  });
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────

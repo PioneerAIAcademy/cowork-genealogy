@@ -47,7 +47,10 @@ export class WsResearchTransport implements ResearchTransport {
         case 'error':
           handlers.onError(msg.message as string)
           break
-        // status / agent_event are consumed by the chat UI, not the viewer.
+        // No 'notice' case: the folder-notice (research.json in a subfolder) is
+        // an on-computer concern. The hosted path pins the project to /project,
+        // so `handlers.onNotice` is never fired here. status / agent_event are
+        // consumed by the chat UI, not the viewer.
       }
     })
   }

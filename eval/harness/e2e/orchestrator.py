@@ -802,7 +802,9 @@ def build_workspace(
     # route is kept because it is the one that provably reaches subagents; the
     # SDK option's subagent propagation is unverified. Do not restate this as
     # "the only lever" — that claim shaped a spend decision before it was
-    # checked. Session-wide (parent + every subagent). Left unset, the
+    # checked. Session-wide (parent + every subagent that does not pin its own
+    # `effort:` — agent frontmatter overrides this, verified live in Cowork and
+    # Claude Code on 2026-08-25; no agent pins one today). Left unset, the
     # run uses the CLI's bare default, which for sonnet-5 resolves to 'high' —
     # deep enough that the record-extractor subagent can spend its whole output
     # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
