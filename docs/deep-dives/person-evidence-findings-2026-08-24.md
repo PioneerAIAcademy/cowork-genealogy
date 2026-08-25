@@ -3,6 +3,28 @@
 Issue #1646. Base `11c8e2cb`. Release candidate: `v1_2026-08-24_22-05-46` (22 tests,
 drift 0, annotated). Findings were read from `v1_2026-08-20_15-53-03` and the
 
+> ## ⚠ Three edits are written and NOT applied — they ride this skill's next paid run
+>
+> Each one edits a snapshot-tracked file, so each buys a `make eval-skill
+> SKILL=person-evidence` run. The lead deferred them rather than buy a fourth run
+> in one session. **Whoever next pays for a run on this skill should apply all
+> three first**, and they are worth more together than separately.
+>
+> 1. **The name-provenance sentence** on §5's carve-out — without it a
+>    record-derived person minted via `tree_edit add_person` lands with no ref at
+>    all. Wording is in "Deferred deliberately" below. Retired entirely if #1895
+>    lands first.
+> 2. **F9's `_023` grounding clause** — tells the judge to decide what a run did
+>    from its call list. Worth more now than when written: the judge prompt has
+>    since made `judge_context` binding on scores.
+> 3. **Ungating `test_check_warnings_runs_after_a_write`** — drop the
+>    `check-warnings-required` tag gate once the corpus complies consistently.
+>    Measured skip rate when this was written: 2 of 12, 3 of 13, 4 of 13.
+>
+> A fourth reason to run: the release candidate was graded under a judge prompt
+> that no longer ships (`judge_prompt_hash` mismatches after a `main` merge;
+> rule 2b is warn-only, so nothing blocks and nothing reminds you).
+
 Step 1's output is [`person-evidence-prohibition-list.md`](./person-evidence-prohibition-list.md)
 — 36 transcript-checkable rules, of which **11 have a guard and 9 of those are
 tag-gated**, so they fire on one or two named tests and are inert on the other
