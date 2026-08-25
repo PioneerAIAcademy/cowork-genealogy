@@ -28,12 +28,10 @@ totals shifted.
 | `judge_context` files naming a score branch | the issue's grep | 3 |
 | Existing validators | `grep -c '^def test_' eval/harness/validators/test_proof_conclusion.py` | **13** (the issue body says 14) |
 
-`rubric/Tree encoding` is `n=9 +8 N/A`. The issue asked whether it is flat or merely
-thinly sampled: **flat.** All nine graded runs are legitimate `probable`+ tree writes and
-all nine are correct — a ref-carrying `ParentChild`/`Couple` edge or a `primary` fact with
-its source-refs. Nothing in the suite plants a tree-encoding defect at `probable`+ for it
-to catch, so the dimension has never had the chance to score below 3. That is an
-unexercised-population problem, not a wording problem, and it is F6.
+`rubric/Tree encoding` was `n=9 +8 N/A` and flat across those five logs. The issue asked
+whether it is flat or merely thinly sampled, and I answered "flat". **That answer was
+wrong** — it was thinly sampled. The re-run this PR forced scored it a **1** on
+`ut_proof_conclusion_012` (`varies [1, 3]`). See the correction under F6.
 
 ## Results of the re-run this PR forced — two of my own claims refuted
 
@@ -567,5 +565,6 @@ the dimension.
 - **`base/Tool Arguments` grades `tool_calls` only** and is structurally blind to a
   builtin reached for in place of an MCP tool (F3). Base rubric — lead's call, proposed
   wording above.
-- **`rubric/Tree encoding` needs a fixture that can fail it, or retirement** (F6).
-  Needs its own paid run and a hypothesis about which shape discriminates.
+- ~~`rubric/Tree encoding` needs a fixture that can fail it, or retirement~~ (F6) —
+  **withdrawn, refuted by the re-run.** It scored 1 on `ut_proof_conclusion_012`, so it
+  discriminates and no fixture work is owed.
