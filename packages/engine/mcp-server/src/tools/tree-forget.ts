@@ -267,13 +267,12 @@ function leftBehindCoupleFactWarnings(
   const warnings: string[] = [];
   for (const { personId, kind } of checks) {
     const sweptTypes = kind === "parents-of" ? SWEPT_PARENT_FACT_TYPES : SWEPT_SPOUSE_FACT_TYPES;
-    const sweptTokens = new Set(sweptTypes.map((t: string) => t.toLowerCase()));
-    const sweptExact = new Set(sweptTypes.map((t: string) => t.toLowerCase()));
+    const sweptLower = new Set(sweptTypes.map((t: string) => t.toLowerCase()));
     const person = persons(tree).find((p) => p.id === personId);
     for (const f of person?.facts ?? []) {
       if (!f.id || !f.type) continue;
-      if (sweptExact.has(f.type.toLowerCase())) continue;
-      if (!sweptTokens.has(leadingToken(f.type).toLowerCase())) continue;
+      if (sweptLower.has(f.type.toLowerCase())) continue;
+      if (!sweptLower.has(leadingToken(f.type).toLowerCase())) continue;
       warnings.push(
         `A ${leadingToken(f.type)}-prefixed fact '${f.id}' on ${personId} was left in the tree — its type is not ` +
           `an exact match for the ${kind} sweep, so it was not removed. Confirm it does not ` +

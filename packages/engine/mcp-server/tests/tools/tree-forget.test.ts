@@ -419,6 +419,33 @@ describe("tree_forget", () => {
     expect(JSON.stringify(r)).not.toContain("Marriage bond between");
   });
 
+  it("multi-selector call does not falsely warn when a later selector removes the fact (#1549)", async () => {
+    const tree: any = family();
+    tree.persons[0].facts.push(
+      { id: "FMR", type: "Marriage Registration", date: "1845" } as any,
+    );
+    tree.persons[0].facts.push(
+      { id: "FP", type: "Parents", date: "1850" } as any,
+    );
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [
+        { selector: "spouses-of", personId: "I1" },
+        { selector: "parents-of", personId: "I1" },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    expect(r.removed.factsByType.Parents).toBe(1);
+    expect(r.validation.warnings).toHaveLength(1);
+    expect(r.validation.warnings[0]).toMatch(
+      /^A Marriage-prefixed fact 'FMR' on I1 was left in the tree/,
+    );
+  });
+
   it("spouses-of still errors when there is neither a spouse link nor a marriage-class fact", async () => {
     await writeProject(family());
     const r = await treeForget({

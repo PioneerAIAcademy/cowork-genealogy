@@ -4,7 +4,7 @@ import { EVENT_TREE_TYPES, COUPLE_EVENT_TYPES } from "../../src/tools/materializ
 
 /**
  * issue #1549: every couple-event type in COUPLE_EVENT_TYPES must appear in
- * EVENT_TREE_TYPES (catches a typo or rename), and `tree-forget.ts`'s
+ * EVENT_TREE_TYPES (catches un-spreading the derivation), and `tree-forget.ts`'s
  * SWEPT_SPOUSE_FACT_TYPES must cover every couple-event type (per the
  * 2026-08-24 ruling: sweep all couple events).
  *
@@ -12,7 +12,7 @@ import { EVENT_TREE_TYPES, COUPLE_EVENT_TYPES } from "../../src/tools/materializ
  * not added to COUPLE_EVENT_TYPES — that gap is unguarded.
  */
 describe("tree_forget sweep drift guard (#1549)", () => {
-  it("COUPLE_EVENT_TYPES stays a subset of EVENT_TREE_TYPES (catches a typo or rename)", () => {
+  it("COUPLE_EVENT_TYPES stays a subset of EVENT_TREE_TYPES (catches un-spreading the derivation)", () => {
     const missing = [...COUPLE_EVENT_TYPES].filter((t) => !EVENT_TREE_TYPES.has(t));
     expect(
       missing,
