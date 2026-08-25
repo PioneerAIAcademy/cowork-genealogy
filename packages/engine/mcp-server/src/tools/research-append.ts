@@ -29,6 +29,7 @@ import {
   isInsideProject,
   readProjectJson,
   formatIssues,
+  withProjectLock,
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
@@ -530,6 +531,115 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
       `with { section: "proof_summaries", op: "update", entryId: "${ids[0]}", fields: { … } }, ` +
       "passing only the fields that changed. Appending here would leave two contradictory " +
       "conclusions on one question, with nothing to say which is current.",
+  ];
+}
+
+/** A question's `status` may not claim an exhaustiveness that its declaration
+ *  does not carry.
+ *
+ *  **Why both spellings need gating.** `status: "exhaustive_declared"` is what
+ *  every downstream reader treats as "GPS Component 1 is satisfied", and
+ *  `exhaustive_declaration.declared` is the record that is supposed to back it.
+ *  The harness has asserted one direction since the validator shipped —
+ *  `test_declared_implies_exhaustive_declared_status`, declared ⟹ status — and
+ *  nothing has ever asserted the other, which is the direction that leaves a
+ *  question looking finished with no declaration behind it.
+ *
+ *  **Reads the MERGED entry, deliberately.** `applyOne` shallow-merges `fields`
+ *  before invariants run, so `entry.exhaustive_declaration` is "set by this op,
+ *  or already true from an earlier call" — exactly the live read ADR-0011
+ *  prescribes when the precondition is the same author's own prior step. A
+ *  pre-call snapshot would refuse the 123 corpus writes that declare and set the
+ *  status in one op, which is the common and correct shape.
+ *
+ *  **A zero-violation arm, and named as one.** Replayed over 157 committed e2e
+ *  runs: 125 ops set this status and none of them would be refused. It ships as
+ *  a cheap invariant closing a reachable hole — `exhaustive_declaration` is a
+ *  required question property so it is always present, and 219 corpus writes set
+ *  `declared: false` — not as a gate with demonstrated catches. Its test vector
+ *  is synthetic for that reason. */
+function declarationStatusInvariants(entry: any): string[] {
+  if (entry?.status !== "exhaustive_declared") return [];
+  if (entry?.exhaustive_declaration?.declared === true) return [];
+  return [
+    `status 'exhaustive_declared' requires exhaustive_declaration.declared === true on ` +
+      `question '${entry?.id}', and it is ` +
+      `${entry?.exhaustive_declaration === undefined ? "absent" : JSON.stringify(entry?.exhaustive_declaration?.declared)}. ` +
+      "That status is what every later reader treats as GPS Component 1 satisfied, so it may " +
+      "not stand without the declaration that backs it. Set both in this call, or leave the " +
+      "status alone: an honest early termination writes `declared: false` and keeps " +
+      "`status: \"in_progress\"`.",
+  ];
+}
+
+/** Exhaustiveness may not be declared while the question's own plan says a
+ *  search is still running.
+ *
+ *  **A bookkeeping gate, not a doctrine one** (lead ruling, 2026-08-23). It
+ *  second-guesses no genealogical judgment — it only refuses a declaration that
+ *  contradicts the project's own plan state, which is why it can be scoped this
+ *  tightly. The classification no longer buys an exemption from anything:
+ *  ADR-0011 retired the overridable-doctrine tier on 2026-08-24 and NO gate
+ *  carries an override. What still bites is the route: measured 2026-08-23, no
+ *  skill can move a plan item out of `in_progress` on the FamilySearch path, so
+ *  a researcher who believes the search is done has no way to say so. Issue
+ *  #1821 owns that fix.
+ *
+ *  **`planned` does NOT block, and that is load-bearing.** `research/SKILL.md`
+ *  routes here deliberately before the plan is drained — "even with plan items
+ *  still `planned` → research-exhaustiveness (consult the stop criteria before
+ *  draining the rest of the plan)" — and 122 corpus items sit at `planned`
+ *  across 31 declarations that are all correct. The skill body's opening
+ *  sentence is stricter than its own operative rule; the operative rule and the
+ *  orchestrator agree, and this follows them.
+ *
+ *  **Reads the PRE-CALL snapshot, unlike the sibling above, and the asymmetry is
+ *  the whole gate.** Plan-item completion is the search work's step, not this
+ *  writer's: `docs/specs/schemas/ownership.json` lists six permitted writers of
+ *  `plan_items` and `research-exhaustiveness` is not among them. So the
+ *  precondition must be satisfied by someone else, which is exactly ADR-0011's
+ *  snapshot condition. Read live it would be self-satisfying — measured, three
+ *  corpus calls batch the item flips ahead of the declaration in one op list,
+ *  including `antonio-lucas-spouse`, the run issue #1335 was filed from. Live,
+ *  this refuses 2 of 170; snapshotted, 5.
+ *
+ *  Matching is on `plans[].question_id`; a plan attached to another question is
+ *  not evidence about this one. All 205 corpus plans carry the field, so the
+ *  looser reading that also counts unattached plans is indistinguishable today —
+ *  it is pinned here and by a synthetic test rather than by the corpus. */
+function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
+  if (entry?.exhaustive_declaration?.declared !== true) return [];
+  const qid = entry?.id;
+  if (typeof qid !== "string" || qid === "") return [];
+  const inFlight: string[] = [];
+  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
+    if (!plan || plan.question_id !== qid) continue;
+    // ONLY the active plan blocks, and this is what keeps the gate escapable.
+    // `research-plan` supersedes a plan by flipping `plans.status` alone — its
+    // items keep whatever status they held — and then forbids touching it ever
+    // again ("Never modify a superseded plan — it is part of the audit trail").
+    // So a question re-planned while one item sat `in_progress` carries that
+    // item forever. Blocking on it would make the declaration permanently
+    // unwritable: the exhaustiveness agent may not reach `plan_items`, the
+    // search skills may not edit a superseded plan, and no other route exists.
+    // That is the unrecoverable false deny ADR-0011's first limit exists to
+    // prevent, and it costs nothing to avoid — a superseded or completed plan
+    // is not the plan the question is being worked from.
+    if (plan.status !== "active") continue;
+    for (const item of Array.isArray(plan.items) ? plan.items : []) {
+      if (item?.status === "in_progress" && typeof item?.id === "string") inFlight.push(item.id);
+    }
+  }
+  if (inFlight.length === 0) return [];
+  const ids = inFlight.sort().join(", ");
+  return [
+    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
+      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
+      "search has not finished, so the declaration would rest on work still running. " +
+      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
+      "the search finish; declaring is available on the next call once the plan reflects it. " +
+      "Items still at `planned` do not block — consulting the stop criteria before draining " +
+      "the plan is the sanctioned path.",
   ];
 }
 
@@ -1261,6 +1371,29 @@ function applyOne(
     if (resolutionTouchedThisOp) {
       invariantErrors.push(...questionResolvedInvariants(resultEntry, research, preCallResearch));
     }
+    // Both exhaustiveness gates run only when THIS op touches the field they
+    // govern, the same discipline as the block above: an unrelated update to a
+    // question that was legitimately declared in an earlier call must not
+    // re-trigger either. `append` always sets both.
+    const declarationTouchedThisOp =
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(fields, "exhaustive_declaration");
+    if (declarationTouchedThisOp) {
+      invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
+    }
+    const statusTouchedThisOp =
+      op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
+    // EITHER side, because the invariant couples two fields and an op that
+    // touches one can break it without naming the other. Gating on `status`
+    // alone left the mirror-image hole open: an update lowering
+    // `exhaustive_declaration.declared` to false on a question already sitting
+    // at `status: "exhaustive_declared"` never ran the check and persisted
+    // exactly the state it forbids. That is not hypothetical — it is the
+    // agent's own documented re-invocation path, which writes `declared: false`
+    // and is told to leave `status` alone.
+    if (statusTouchedThisOp || declarationTouchedThisOp) {
+      invariantErrors.push(...declarationStatusInvariants(resultEntry));
+    }
   }
   if (section === "conflicts") invariantErrors.push(...conflictInvariants(resultEntry));
   // One active plan per question — enforced on append OR an update that
@@ -1953,12 +2086,15 @@ export async function researchAppend(
    *  depending on the right SKILL.md having been loaded. */
   const fail = (
     errors: string[],
-    hint?: Array<{ section: string; op: "append" | "update" }>,
+    hint?: Array<{ section: string; op: "append" | "update"; fields?: readonly string[] }>,
   ): ResearchAppendResult => {
     const all = hint && hint.length > 0 ? [...errors, ...exampleHints(hint)] : errors;
     return opsReceived !== undefined ? { ok: false, errors: all, opsReceived } : { ok: false, errors: all };
   };
 
+  // Serialize the whole read-modify-write against every other writer on this
+  // project (issue #1715). Wraps extraction_append too, which routes here.
+  return withProjectLock(projectPath, async () => {
   try {
     const research = await readJson(projectPath, "research.json");
     // Snapshot BEFORE any op in this call/batch applies — see
@@ -2080,7 +2216,14 @@ export async function researchAppend(
           // Identify the failing op; nothing has been written.
           return fail(
             e.errors.map((m) => fmt(i, m)),
-            [{ section: String(ops[i].section), op: ops[i].op === "update" ? "update" : "append" }],
+            [{
+              section: String(ops[i].section),
+              op: ops[i].op === "update" ? "update" : "append",
+              // The field names the failing op actually set. The worked example
+              // is keyed on these so a caller refused on one field is not handed
+              // a payload for another — see exampleFor.
+              fields: Object.keys(ops[i].fields ?? ops[i].entry ?? {}),
+            }],
           );
         }
         throw e;
@@ -2189,6 +2332,7 @@ export async function researchAppend(
     }
     throw e;
   }
+  });
 }
 
 /** Best-effort mapping of whole-document validation errors back to the batch op

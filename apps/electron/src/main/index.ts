@@ -5,7 +5,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import icon from '../../resources/icon.png?asset'
 import { setupMenu } from './menu'
-import { startWatching, stopWatching, getCurrentState } from './watcher'
+import { startWatching, stopWatching, getCurrentState, assertResearchProject } from './watcher'
 import { readSidecar } from './sidecar'
 import { readSourceImage } from './image'
 import { walkProject, readSessionLog, buildFeedbackZip } from './feedback'
@@ -204,13 +204,7 @@ function setupIPC(): void {
     if (canceled || filePaths.length === 0) return null
     const folderPath = filePaths[0]
 
-    try {
-      await fs.stat(path.join(folderPath, 'research.json'))
-    } catch {
-      throw new Error(
-        'Not a research project — research.json not found. Run the init-project skill to create a new project, or pick a folder that already has one.'
-      )
-    }
+    await assertResearchProject(folderPath)
 
     stopWatching()
     startWatching(folderPath, mainWindow!)

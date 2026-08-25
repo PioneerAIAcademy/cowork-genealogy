@@ -350,7 +350,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "holdout": {
           "type": "boolean",
           "default": false,
-          "description": "Reserves this test as a generalization check for the skill-improvement loop. The body-optimizer must not read or tune against it; it is consulted only to measure whether an edit generalized. The harness runs holdout tests like any other. See docs/skill-lifecycle.md."
+          "description": "Holds this test out of the set /improve-skill forms edits from, so it stays a generalization check. gate-skill no longer reads this field (see the note under the §5.1 field table); the harness runs holdout tests like any other. See docs/skill-lifecycle.md."
         },
         "expected_outcome": {
           "type": "string",
@@ -435,7 +435,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "grade_on_invariant": {
           "type": "boolean",
           "default": false,
-          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe. REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. The runnability gate enforces this: it aborts the test unless one of its tags gates a validator in that file."
+          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe. REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. The runnability gate enforces this: it aborts the test unless one of its tags gates a validator in that file. It does NOT enforce reachability, which is also required: every tool the gated validator asserts about must be registered for THIS test — in its own mcp_fixtures, or in mock_mcp.LIVE_TOOLS — because the mock advertises only those. An assertion that tool X was not called, on a test that registers X nowhere, is offered to no model and can never fire. Declare the fixture even when it is expected to go unused."
         }
       },
       "additionalProperties": false
@@ -522,9 +522,21 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
 | `type` | string | yes | `"positive"` or `"negative"`. Determines which other fields are present |
 | `description` | string | yes | 1-2 sentences explaining what this test verifies and why it matters |
 | `tags` | string[] | yes | Freeform tags for filtering and grouping. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`) |
-| `holdout` | boolean | no | `false` (default) or `true`. Reserves this test as a generalization check for the skill-improvement loop. The body-optimizer never reads a holdout test when proposing a SKILL.md edit — it consults holdout tests only afterward, to confirm the edit helped cases it was not written from. The harness runs holdout tests like any other; the flag governs only the improver. Mark ~2-3 of a skill's tests holdout (diverse, representative ones — not the easy ones), and keep them stable across iterations. See `docs/skill-lifecycle.md` |
+| `holdout` | boolean | no | `false` (default) or `true`. Holds this test out of the set `/improve-skill` forms edits from, so a fix can be judged against cases it was not written from. The harness runs holdout tests like any other; the flag governs only the improver — `gate-skill` **no longer reads it** (see the note below this table). Mark ~2-3 of a skill's tests holdout (diverse, representative ones — not the easy ones), and keep them stable across iterations. See `docs/skill-lifecycle.md` |
 | `expected_outcome` | string | no | `"pass"` (default) or `"xfail"`. Marks a known-failing test. xfail tests still run; their failures aggregate to `outcome: xfail` (expected, not a regression). If an xfail test starts passing, the run reports `outcome: xpass` so the marker can be removed |
 | `xfail_reason` | string | conditional | Required when `expected_outcome` is `"xfail"`. Brief explanation, ideally with an issue link and a removal condition (e.g., "blocked on #312; remove when fixed") |
+
+**`holdout` and the gate.** `gate-skill` (`docs/skill-lifecycle.md` §6) once re-ran a
+skill's holdout tests as a no-regression preview; that comparison was **removed**. It
+was inert for most skills (the majority carried no holdouts), and where present it only
+previewed a check already mandatory downstream: no skill edit merges without a full
+`make eval-skill` run, which `check_runlogs` gates and which covers every test in the
+suite. **That full run is the regression gate**, not the preview. The field is retained
+because `/improve-skill` still holds these tests out of the set it forms edits from, and
+because it is snapshot-tracked (removing it would invalidate the run logs of the suites
+that carry it). If the gate's holdout comparison is ever revived, it must select holdouts
+**automatically** from run-log history (stability across committed runs, shape spread) — a
+human picking 2-3 by hand does not give real regression coverage.
 
 ### 5.2 `input`
 
@@ -587,6 +599,7 @@ Only present when `test.type` is `"negative"`.
 |-------|------|----------|-------------|
 | `correct_skill` | string[] | yes | Skills that should handle this request instead. Each entry must be a valid skill directory name. `[]` = no skill should fire (out-of-scope user message). `["x"]` = exactly skill x is expected. `["x", "y"]` = any one of these is acceptable |
 | `explanation` | string | yes | Why the tested skill should not activate. Documents the boundary between the two skills so reviewers (and the description optimizer) understand the discrimination |
+| `grade_on_invariant` | boolean | no | `false` (default). When `true`, this negative test is graded **solely** on its deterministic invariant validator(s) in `eval/harness/validators/test_<skill>.py`, gated on one of the test's tags — routing and activation are NOT gated. Use it for a routing-flaky negative where every plausible route is state-safe. Requires a tag-gated validator that actually runs; the runnability gate enforces that much. **It does not enforce enough:** every tool the gated validator asserts about must also be **reachable in this test** — present in the test's own `mcp_fixtures`, or in `mock_mcp.LIVE_TOOLS`. The mock server advertises only those (`mock_mcp.create_mock_server`, `for tool_name, bucket in manifest.items()`), so a "tool X was not called" assertion against a tool this test registers nowhere is offered to no model and can never fire — the test passes green forever while asserting nothing about X. Declare the fixture even when you expect it to go unused, and say so in the test `description` so it is not later removed as dead weight |
 
 ### 5.6 `runs_per_test`
 
@@ -1112,7 +1125,7 @@ One file per skill in `eval/harness/validators/`, following pytest naming (`test
 
 ### Validator signature
 
-All validators take the same three arguments. Validators that don't need an argument simply ignore it:
+Validators declare whichever subset of the available arguments they need. The harness inspects each function's signature and passes only the requested parameters — validators that don't need an argument simply omit it:
 
 ```python
 def test_log_append_only(before_state, after_state, tool_calls):
@@ -1132,11 +1145,17 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
         warnings.warn(f"undeclared tools called: {sorted(set(bad))}")
 ```
 
-**The three arguments:**
+**Available arguments** (a validator declares whichever subset it needs):
 
 - `before_state` (dict) — `{"research_json": {...}, "tree_gedcomx_json": {...}, "files": {<path>: <content>}, "skill_frontmatter": {...}}`. Files present in the temp dir before the skill ran. `research_json` and `tree_gedcomx_json` are convenience aliases for the parsed contents of those files; absent if the test is stateless. `skill_frontmatter` is the parsed YAML frontmatter of the skill under test's SKILL.md.
 - `after_state` (dict) — same shape as `before_state`, snapshotting state after the skill ran. Files created during the run appear here with no `before` counterpart.
 - `tool_calls` (list) — every MCP tool call made by the skill, with the shape `{"tool": "mcp__genealogy__record_search", "args": {...}, "matched": {...}, "response_fixture": "..."}` (Section 10).
+- `skill_frontmatter` (dict) — the parsed YAML frontmatter of the skill under test's SKILL.md (also available inside `before_state`/`after_state`).
+- `test` (dict) — the parsed test JSON dict, including `test.type`, `test.tags`, and any validator-facing blocks the orchestrator threads in.
+- `skills_invoked` (list) — skills invoked via the SDK `Skill` tool, captured by the PreToolUse hook.
+- `blocked_context_calls` (list) — main-thread calls to subagent-only tools that the PreToolUse hook denied.
+- `blocked_protected_writes` (list) — raw Write/Edit calls to a protected project file that the hook denied.
+- `text_response` (str) — every assistant text block concatenated, no separator: narration and closing reply in one string, not the final reply alone (`"".join(text_chunks)` in `skill_runner.run_skill`). Empty when the run produced no assistant text. Use it for a **literal** property of the text — a phrase that must never appear, an identifier that must be named — and **not** to re-grade prose quality, which is a rubric dimension's job. A validator that tries to score how well the reply reads becomes a dimension nobody can tune. The case it exists for: a reply-shape rule a skill body states outright ("One sentence only", "do not restate the article content") is graded unevenly by a judge — on `search-wikipedia`'s run `v1_2026-08-22_10-20-08` the `Reply economy` dimension caught a narrating reply on one test and scored a byte-identical shape 3 on another, quoting a reply it had not been given.
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.
 
@@ -1261,6 +1280,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
     "duration_ms": "number (sum of all runs)",
     "input_tokens": "number",
     "cached_input_tokens": "number (cache hits — should be substantial across N>1 runs)",
+    "cache_creation_input_tokens": "number (cache WRITES — priced 20x reads at the 1-hour rate in e2e/pricing.py)",
     "output_tokens": "number",
     "skill_cost_usd": "number (sum across runs)",
     "judge_cost_usd": "number (sum across runs)",
@@ -1276,7 +1296,9 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       "duration_ms": "number",
       "input_tokens": "number",
       "cached_input_tokens": "number",
+      "cache_creation_input_tokens": "number",
       "output_tokens": "number",
+      "model_usage": "object (per-model ledger, keyed by model id; the token fields above are its column sums)",
       "skill_cost_usd": "number",
 
       "output": {
@@ -1362,6 +1384,21 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 - **`flaky`** — true when the per-run outcomes are not unanimous. Composes orthogonally with `outcome` (Section 7). A test can be `outcome: pass, flaky: true` (modal-passing but unstable).
 - **`harness_version`** — the semver of the harness package. Bumping the harness (new validator, new judge prompt scaffolding, fixture-matching changes) invalidates apples-to-apples comparison with prior runs. Pinning the version makes that explicit.
 - **`rubric_hash` / `judge_prompt_hash`** — SHA-256 of the rubric and judge prompt template files at run time. A change to either silently invalidates historical scores; recording the hash forces a re-baseline rather than letting old runs look comparable.
+- **Every token field covers every model the run touched** — the main thread plus
+  any plugin agent it delegated to. They are read from the SDK's per-model ledger
+  (`model_usage`), which the CLI documents as covering the same calls as
+  `total_cost_usd`, and NOT from the ResultMessage's `usage` block, which may
+  carry a per-turn main-loop value. Reading `usage` is what made a skill-agent
+  pair look 72% cheaper in output tokens while its cost went up: the agent's
+  tokens were billed and uncounted. A run's `model_usage` with more than one key
+  is the record of what an agent's `model:` pin actually cost; use it, rather
+  than the sums, when attributing spend between the two halves of a pair.
+- **`totals.cache_creation_input_tokens`** — cache WRITES, priced at **20x**
+  cache reads at the 1-hour rate the repo's table uses (`eval/harness/e2e/pricing.py`,
+  which measured the 5-minute rate at 12.5x and rejected it). Without it a run log cannot be reconciled against its own
+  `skill_cost_usd`, so a divergence between tokens and cost cannot be told from a
+  missing column. It is not part of the cache-hit rate below, which is a read
+  statistic.
 - **`totals.cached_input_tokens`** — input tokens served from the prompt cache. **`input_tokens` and `cached_input_tokens` are disjoint: `input_tokens` counts only the tokens NOT served from cache**, so the two are added to get the prompt total and never subtracted from one another. Read the cache hit rate as a share of that total — `cached_input_tokens / (cached_input_tokens + input_tokens)` — which should be 50%+ for a batched skill suite (all tests for one skill run consecutively) even at N=1, because the skill prompt is identical across tests within the batch. With N=3 batched, expect 70%+. Lower numbers indicate caching isn't firing and costs will be higher than estimated in Section 11. Stating it against `input_tokens` alone is unstateable rather than merely imprecise: on a warm cache the cached count routinely exceeds the fresh one, so the ratio runs into the thousands of percent.
 - **`outcome_summary.aggregated_dimensions`** — modal dimension scores across runs (ties resolve toward the lower score). Used by dashboards; per-run dimension scores remain in `runs[].judge.dimensions` for human review.
 
@@ -2004,14 +2041,18 @@ Eight fixtures in `eval/fixtures/mcp/`:
 
 ### Deterministic Validators
 
-Validators in `eval/harness/validators/` fall into two tiers:
+Validators in `eval/harness/validators/` fall into three tiers:
 
-- **Gating** — failure prevents the LLM judge from running (saves cost). All universal validators except `test_tool_allowlist` are gating.
+- **Gating** — failure prevents the LLM judge from running (saves cost). All universal validators except `test_tool_allowlist` are gating. All citation-specific validators (V5, V10) are gating.
+- **Reporting** (not yet built) — checks that are regexes over Claude's prose response. Their findings are handed to the LLM judge as observations it weighs alongside the response, recorded in the run log, but they do not touch `validators_passed`. The mechanism is tracked as Group M of the citation deep-dive validators.
 - **Advisory** — emits a warning but does not fail the test. `test_tool_allowlist` is advisory: it warns when a skill calls undeclared tools, but the session grants all tools regardless.
+
+This three-tier system was decided against two alternatives: making every check gate (brittle — a prose regex reds a correct run and the judge never sees it), and dropping prose checks entirely (loses the finding). Only structured-field checks may gate.
 
 | Validator | Path | Scope |
 |-----------|------|-------|
-| Universal | `eval/harness/validators/test_universal.py` | All skills. Checks: schema structure, enum values, ID prefixes, ID referential integrity, full reference integrity (dangling/cross-file/cycles, via the compiled TS `validateParsed`), duplicate tree IDs, append-only log, no-delete enforcement, tool allowlist (advisory). |
-| Conflict-resolution | `eval/harness/validators/test_conflict_resolution.py` | One skill. Checks: ownership enforcement (only writes to `conflicts`), no MCP tool calls, fact conflicts have ≥2 competing assertions, resolved conflicts have required fields, preferred assertion is in competing list. |
+| Universal | `eval/harness/validators/test_universal.py` | All skills. Checks: schema structure, enum values, ID prefixes, ID referential integrity, full reference integrity (dangling/cross-file/cycles, via the compiled TS `validateParsed`), duplicate tree IDs, append-only log, no-delete enforcement, write-then-validate (V1 — skills declaring `validate_research_schema`), tool allowlist (advisory). |
+| Citation | `eval/harness/validators/test_citation.py` | One skill. Checks: no new source entries, source classification preservation, creator-not-in-custody (V5), informant-not-in-who (V10). |
+| Conflict-resolution | `eval/harness/validators/test_conflict_resolution.py` | One skill. Checks: fact conflicts have ≥2 competing assertions, resolved conflicts have required fields, preferred assertion is in competing list. |
 
-The universal validator demonstrates the pattern for general validators. The conflict-resolution validator demonstrates the pattern for skill-specific validators (ownership, structural rules from SKILL.md). Use these as templates when writing validators for other skills.
+The table is illustrative, not exhaustive — most skills have a `test_<skill>.py` file with skill-specific validators. Use the existing files as templates when writing validators for other skills.

@@ -545,6 +545,63 @@ Mirrors `research_log_append` minus the sidecar:
      commit order. The healed (sanitized) tree is what persists, as with any tree
      writer.
 
+### 4.1 Concurrency — one write lock per project
+
+Steps 1–6 are a read-modify-write, and step 3's id allocation is "highest
+existing + 1" from what step 1 read. Two writers running concurrently against
+one project both read the pre-write state, both allocate the same next id, and
+the losing write is **silently lost** — the losing caller still gets a success
+naming ids that ended up on the other writer's record, and validation passes
+afterward because a lost update leaves a consistent file that merely omits a
+record. `/research` and `record-extraction` actively encourage batching across
+records with parallel subagents, so this is reached by following the skills'
+own guidance.
+
+The whole tool body — from the first read to the last write — is therefore
+serialized behind an **in-process async mutex keyed on the canonical (realpath)
+project path** (`withProjectLock` in `src/utils/project-io.ts`), falling back to
+`resolve(projectPath)` before the directory exists. Canonicalizing is what makes
+the key genuinely one-per-project: two callers naming the same project through
+different symlinks — on macOS `/tmp` is itself a symlink to `/private/tmp` — or
+through case-variant spellings on Windows would otherwise get separate mutexes
+and silently unlock the race. **One lock per project, not per file:**
+`materialize_facts` writes the tree while the composite path here writes tree +
+research together, so a per-file lock would still lose one of them. The mutex wraps the six writer entry points — `research_append`,
+`research_log_append`, `tree_edit`'s `executeTreeOps`, `materialize_facts`,
+`merge_tree_persons`, `tree_forget` — at the shared-core function only;
+`extraction_append` (→ `researchAppend`) and `tree_correct` (→ `executeTreeOps`)
+lock through their core and are **not** wrapped again, since the mutex is not
+reentrant. A same-project re-acquire — a locked writer calling another locked
+writer for the same project, the deadlock this non-reentrancy invites — is
+**rejected synchronously** with an error naming the key (tracked via an
+`AsyncLocalStorage` of held keys), so the trap surfaces as a thrown error at the
+call site instead of a silent hang. Nested locks on *different* projects remain
+allowed.
+
+**This beat compare-and-swap** (capture a hash at read, reject on change, return
+a retryable error). CAS changes the error contract of all six tools, and
+`record-extractor.md`'s "fix ONLY the ops named in `errors`" / "never retry
+blindly" instructions mean a conflict error — which names no op — only works if
+that agent body and `record-extraction/SKILL.md` are edited too, flipping the
+record-extraction run log inactive and buying a fresh paid eval + annotation.
+Serialization needs no skill or agent edit. Prose-only ("delegate serially") was
+also rejected as unenforceable and leaves the gap on the `nothing-checks`
+register.
+
+**Two residuals, recorded rather than designed around:**
+
+- The mutex binds only **within one MCP server process**. Every deployment we
+  run is one server per session (hosted: one sandbox per session; harness: one
+  stdio server per run), so it holds there. Whether two Cowork desktop sessions
+  on the same project folder share one `.mcpb` process is **unverified**; if they
+  do not, the lock does not bind across them. The change is strictly better than
+  today either way.
+- Under contention the queued call now **waits** instead of losing its write. In
+  Cowork's cloud mode a bridged MCP call is killed at 60s (a limit imposed by the
+  bridge, not settable from our side), so a call queued behind a slow composite
+  append can be killed there — a **visible** failure replacing a silent loss. Do
+  not add a timeout or retry to work around it.
+
 ---
 
 ## 5. State-coupling invariants enforced as preconditions
@@ -567,12 +624,14 @@ audit's recommendation #5):
 | `project` update → `status: "completed"` | **every proof summary backing a resolved question carries a gps-mentor verdict** — reject while any `proof_summaries[]` entry whose `question_id` names a question that is resolved — by `status: "resolved"` **or** by a truthy `resolved` date, the same pair the row above gates — has no `evaluations[]` entry with `focus: "proof-critique"`, a matching `target_id`, and a null `superseded_by`. The critique set is snapshotted **before any op in the call applies**, so a batch cannot append its own verdict and consume it in the same call. A resolved question with **no** proof summary still passes vacuously, but that state is no longer reachable through this tool (the row above refuses the transition) — the vacuous pass now covers only documents seeded that way, so a gate on a transition does not retroactively invalidate a document that predates it | The same rule stated in the research orchestrator's prose did not hold: **23% of completed runs in the committed e2e corpus reach `completed` with at least one uncritiqued summary** — measured 2026-08-15 over 154 runs, corroborated to within 2 runs by an independent count. ADR-0011 |
 | `person_evidence` append/update → `confident` | rejected when the linked assertion's `value` carries an uncertain reading (`[?]`) **and** no other live `person_evidence` row ties that `person_id` to a distinct record. Conjunctive on purpose: a `confident` link off a single *clean* record is the ordinary case and stays legal | audit theme 8; `record-extractor.md` epistemic cap |
 | `proof_summaries` append/update setting `tier: proved`/`disproved` | the referenced question must already carry `exhaustive_declaration.declared === true` **as of the start of this call** | `guardrail-enforcement-spec.md` §5; `proofSummaryInvariants` |
+| `questions` append/update touching **either** `status` or `exhaustive_declaration` | `status: "exhaustive_declared"` requires `exhaustive_declaration.declared === true`. Checked on the post-merge entry (**live**, not snapshotted): the declaration and the status are two halves of one author's own step, and 123 of 125 corpus ops set both in the same op. Gated on EITHER field, because the invariant couples two and an op touching one can break it without naming the other — the agent's own re-invocation path lowers `declared` to false and leaves `status` alone | A zero-violation arm: **0 of 125** corpus ops refused. The converse (declared ⇒ status) has been asserted by the unit validator since it shipped and nothing asserted this direction, which is the one that leaves a question looking finished with no declaration behind it. ADR-0011 |
+| `questions` append/update setting `exhaustive_declaration.declared: true` | **no item on the question's ACTIVE plan is `in_progress`.** Read from the **pre-call snapshot**: plan-item completion is the search work's step, not this writer's — `ownership.json` lists six permitted writers of `plan_items` and `research-exhaustiveness` is not among them — so ADR-0011's snapshot condition applies. Read live it is self-satisfying: three corpus calls batch the item flips ahead of the declaration in one op list. Only `active` plans block, because `research-plan` supersedes by flipping `plans.status` alone and then forbids touching that plan again, so a stale `in_progress` item on a superseded plan would make the declaration permanently unwritable. Items still `planned` do **not** block — the orchestrator routes here before the plan is drained | **5 of 170** corpus declarations refused, one of them `antonio-lucas-spouse`, the run whose bypass opened this phase. Classified **bookkeeping**, not doctrine (lead ruling 2026-08-23) — it contradicts the project's own plan state rather than a genealogical judgment, which is what lets it be scoped this tightly. No gate carries an override in any case (ADR-0011, 2026-08-24); what a blocked researcher lacks here is a route to move the item out of `in_progress`, which no skill can do on the FamilySearch path today |
 | any section | `entry` for `append` must NOT carry an `id`; `update` must NOT change the `id` or the entry's prefix | `research-schema-spec.md:101` |
 
 The LLM still makes every substantive decision and supplies the fields — the tool
 only refuses to persist a structurally incoherent combination.
 
-**One of these is checked against pre-call state, not final state.** The batch
+**Six of these are checked against pre-call state, not final state** — the tier gate, the mentor gate, the completion conflict gate, the disputed-source tier rule, the resolved-question conflict gate, and plan completeness. (This sentence said "One" until 2026-08-23, having been written when the tier gate was the only one; count them in `research-append.ts` rather than trusting a number here.) The batch
 form mutates a single in-memory document across `ops[]` and validates the result
 once (§3.3), so an invariant evaluated at the end can be satisfied by a value
 written earlier *in the same call*. For the tier gate that is a live hole, not a
