@@ -592,6 +592,15 @@ the `max_cost_usd` note in §6 step 5.
    `E2eResult` is constructed, and **the judge is never called**. "This run never
    happened."
 
+   **The printed error can now name the server's own cause.** The
+   SDK's `stderr:` callback never receives the MCP child's output — verified
+   live against claude-agent-sdk 0.1.81, a stub that wrote to stderr and exited
+   non-zero produced zero captured lines — so the CLI's per-server JSONL log
+   under its platform cache dir is read instead, best-effort and bounded to the
+   last 20 lines. A `genealogy_mcp_config()` tee/wrapper process was considered
+   and rejected: it would insert a process layer into the one config preflight
+   and the run deliberately share, and has to work on Windows.
+
    *Why this retention rule, and not the two obvious alternatives* — a settled
    decision, 2026-08-02. Every compliance, cost and recall figure in this repo
    is computed over `eval/runlogs/`, so what a failed run leaves behind is a

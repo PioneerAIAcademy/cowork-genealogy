@@ -167,7 +167,7 @@ sponsors/witnesses). This is the answer key; keep it blind from the models.
 | **D** | Qwen-VL on OpenRouter | ablations (only if C≠B) |
 
 The prep pipeline prototyped from
-`~/pioneeradademy/book-to-tree/backend/src/book_to_tree/ocr/image_prep.py`
+`~/pioneeracademy/book-to-tree/backend/src/book_to_tree/ocr/image_prep.py`
 (`enhance_for_ocr`) was generated with that **existing Python** (PIL); the JS
 port was **not** built — §7 records the decision against prep.
 
@@ -886,7 +886,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `docs/specs/image-reader-agent-spec.md` (the subagent — **kept**; Qwen-only
   reader via `image_transcribe`; its OCR prompt/output protocol is reused
   verbatim)
-- `~/pioneeradademy/book-to-tree/backend/src/book_to_tree/ocr/image_prep.py`
+- `~/pioneeracademy/book-to-tree/backend/src/book_to_tree/ocr/image_prep.py`
   (`enhance_for_ocr` — the prep pipeline the spike evaluated and rejected; §7)
 - `src/tools/wiki-search.ts` + `tests/tools/wiki-search.test.ts` (HTTP-tool
   and mocked-`fetch` test patterns to mirror)
