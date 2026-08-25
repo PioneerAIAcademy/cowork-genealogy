@@ -31,8 +31,9 @@ shrinking evidence, not as good news.
 **There is no durable field to switch to.** `is_error` survives the strip, but
 every call carrying it is already unstripped — the stripped calls predate run-log
 schema v3 and have neither field. It also over-counts: `Unrecognized ark` is
-`is_error: true` and is a content error, not reachability (2 real instances in
-the corpus). So the horizon is genuinely the 14-day capture window, and
+`is_error: true` and is a content error, not reachability (3 in the corpus; the
+2 that postdate schema v3 carry the field). So the horizon is genuinely the
+14-day capture window, and
 `SINCE=all` mainly shows how much has been stripped. Pre-strip captures remain in
 git history if a whole-corpus pass is ever wanted.
 
@@ -106,9 +107,25 @@ def classify(response_summary: str) -> str:
     quoted-key matcher silently misses the escaped form. `wiki_failure_report.py`
     learned this the expensive way: 42 real responses fell into `unclassified`.
     """
-    s = (response_summary or "").lower()
-    if not s.strip():
-        # Never `success`. An empty summary means we cannot see the outcome, and
+    # Unescaped before matching. `response_summary` has two shapes, and in the
+    # escaped one the document's own keys read `\"error\"` — which contains
+    # neither `"error"` nor `error:`, so the two generic matchers below saw
+    # nothing and the call fell through to `success`. 52 of the 175 measurable
+    # calls are in that shape. None carries an error today, so no printed number
+    # moves; but "an unknown shape never lands in success" is the one guarantee
+    # this classifier exists for, and it was holding for only 70% of the corpus.
+    s = (response_summary or "").lower().replace('\\"', '"')
+    # `"null"` is what `json.dumps(None)` produces, and the orchestrator creates
+    # every tool-call entry with `response_summary: None`, filling it when the
+    # result streams back. A run cut off by its wall-clock or tool cap mid-call
+    # therefore commits a null summary — likeliest on this tool, the slowest one
+    # at 180s. Non-empty, so it sailed past the guard below into `success`.
+    # (Measured: 0 such calls in the committed corpus today — this is a latent
+    # hole in the guarantee, not a live miscount.) The sibling
+    # `wiki_failure_report.py` defaults to `unclassified` here; this one
+    # defaulted to `success`, so the guard was the only protection.
+    if s.strip() in ("", "null", "none"):
+        # Never `success`. An absent summary means we cannot see the outcome, and
         # folding it into success is the exact under-reporting this file exists
         # to stop. Stripped runs are excluded upstream, before reaching here.
         return UNCLASSIFIED
@@ -168,7 +185,15 @@ def scan(
         run = f"{p.parent.name}/{p.stem}"
         try:
             doc = json.loads(p.read_text(encoding="utf-8"))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            if not isinstance(doc, dict):
+                # Valid JSON that is not an object — a top-level [], a bare
+                # string, a number — reached `doc.get(...)` and raised
+                # AttributeError, which nothing caught, so ONE such file took the
+                # whole report down. The old robustness test only fed invalid
+                # UTF-8, so it passed while the case the guard exists for
+                # crashed.
+                raise ValueError("run log is not a JSON object")
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError):
             # UnicodeDecodeError is a ValueError, NOT a JSONDecodeError — an
             # interrupted write leaves exactly that, and omitting it here takes
             # the whole report down on one bad file (#1485 review).
@@ -180,13 +205,17 @@ def scan(
         author = author_of(p)
         hits = 0
         for tc in doc.get("tool_calls") or []:
-            if not str((tc or {}).get("tool") or "").endswith(TOOL_SUFFIX):
+            # `tc or {}` rescues a falsy entry but not a truthy non-dict, which
+            # crashes the same way the envelope did.
+            if not isinstance(tc, dict):
+                continue
+            if not str(tc.get("tool") or "").endswith(TOOL_SUFFIX):
                 continue
             if stripped:
                 stripped_calls += 1
                 hits += 1
                 continue
-            rs = (tc or {}).get("response_summary")
+            rs = tc.get("response_summary")
             rs = rs if isinstance(rs, str) else json.dumps(rs)
             calls.append(
                 Call(run, classify(rs), day, author, rs[:160].replace("\n", " "))
@@ -204,14 +233,23 @@ def interleaving_verdict(calls: list[Call]) -> tuple[str, list[str]]:
     no such day — or none carrying a failure — the by-author table below is a
     lead and nothing more, and saying that plainly is the point.
     """
+    # Three counters per cell: [reachability failures, total calls, REACHED].
+    # "Reached" is a demonstrated `success`, not merely the absence of a failure.
+    # An operator whose calls were all `unrecognized_ark` has no reachability
+    # failure and yet never got as far as OpenRouter — that error is raised
+    # before the call is made — so counting them as a concurrent success would
+    # print "points at the machine" on evidence that shows nothing about reach.
+    # This is the one function whose whole job is to not over-claim.
     by_day: dict[str, dict[str, list[int]]] = defaultdict(
-        lambda: defaultdict(lambda: [0, 0])
+        lambda: defaultdict(lambda: [0, 0, 0])
     )
     for c in calls:
         cell = by_day[c.day][c.author]
         cell[1] += 1
         if c.bucket in REACHABILITY_BUCKETS:
             cell[0] += 1
+        elif c.bucket == SUCCESS:
+            cell[2] += 1
 
     rows: list[str] = []
     split_days = 0
@@ -220,7 +258,7 @@ def interleaving_verdict(calls: list[Call]) -> tuple[str, list[str]]:
             continue
         split_days += 1
         parts = " ".join(
-            f"{a}={e}/{n}" for a, (e, n) in sorted(by_day[day].items())
+            f"{a}={e}/{n}" for a, (e, n, _r) in sorted(by_day[day].items())
         )
         rows.append(f"  {day}: {parts}")
 
@@ -234,8 +272,8 @@ def interleaving_verdict(calls: list[Call]) -> tuple[str, list[str]]:
         day
         for day in by_day
         if len(by_day[day]) >= 2
-        and any(e for e, _ in by_day[day].values())
-        and any(e == 0 for e, _ in by_day[day].values())
+        and any(e for e, _n, _r in by_day[day].values())
+        and any(reached > 0 for _e, _n, reached in by_day[day].values())
     ]
     if mixed:
         return (

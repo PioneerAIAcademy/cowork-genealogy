@@ -12,9 +12,11 @@ from pathlib import Path
 
 from e2e.image_transcribe_report import (
     SUCCESS,
+    TIMEOUT,
     UNCLASSIFIED,
     UNREACHABLE,
     UNRECOGNIZED_ARK,
+    UPSTREAM_ERROR,
     classify,
     format_report,
     interleaving_verdict,
@@ -120,7 +122,7 @@ def test_unrecognized_ark_is_not_counted_as_a_reachability_failure(tmp_path: Pat
     """`Unrecognized ark` is `is_error: true` but is a CONTENT error — the call
     reached OpenRouter and was refused for its argument. Folding it into the
     reachability count is why an `is_error`-only measurement over-counts; there
-    are 2 real instances in the committed corpus."""
+    are 3 in the committed corpus, 2 of them carrying `is_error`."""
     assert classify('{"error":"Unrecognized ark. Expected a FamilySearch...') == UNRECOGNIZED_ARK
 
     p = _run(tmp_path / "fix", "run-2026-08-20_00-00-00.json",
@@ -174,6 +176,79 @@ def test_one_unreadable_run_log_does_not_take_the_report_down(tmp_path: Path):
     r = scan([good, bad], author_of=_authors({}))
     assert r.unreadable == 1
     assert r.measurable == 1, "the readable run was still inspected"
+
+
+def test_a_timeout_counts_as_a_reachability_failure(tmp_path: Path):
+    """A 180s OCR timeout never got OpenRouter's answer, so it is reachability —
+    6 of the corpus's 30. Its real text also carries `{"error":...}`, so dropping
+    it from the bucket does NOT surface as `unclassified`: it silently becomes
+    `upstream_error`, a bucket defined as not-reachability, and leaves the
+    headline (17.1% -> 13.7%) with nothing going red."""
+    timed_out = (
+        '{"error":"Request to https://openrouter.ai/api/v1/chat/completions '
+        'timed out after 180000ms while reading the response body."}'
+    )
+    assert classify(timed_out) == TIMEOUT
+
+    p = _run(tmp_path / "fix", "run-2026-08-20_00-00-00.json", [timed_out, "ok"])
+    r = scan([p], author_of=_authors({}))
+    assert r.reachability_failures == 1
+    assert "1 of 2 measurable" in format_report(r)
+
+
+def test_an_error_is_caught_in_the_escaped_envelope_too():
+    """`response_summary` has two shapes and 52 of 175 measurable calls use the
+    escaped one, where the document's keys read `\\"error\\"` — containing
+    neither `"error"` nor `error:`. A matcher that only sees the unwrapped form
+    files an unknown failure as `success`, the defect this classifier exists to
+    prevent, one level down."""
+    unwrapped = '{"error":"OpenRouter OCR failed: 502 Bad Gateway"}'
+    escaped = (
+        '[{"type": "text", "text": '
+        '"{\\"error\\":\\"OpenRouter OCR failed: 502 Bad Gateway\\"}"}]'
+    )
+    assert classify(unwrapped) == UPSTREAM_ERROR
+    assert classify(escaped) == UPSTREAM_ERROR, "the escaped form must not read as success"
+
+
+def test_a_null_response_summary_is_never_a_success():
+    """The orchestrator creates every tool-call entry with
+    `response_summary: None` and fills it when the result streams back, so a run
+    cut off by its wall-clock or tool cap mid-call commits a null — likeliest on
+    this tool, the slowest at 180s. `json.dumps(None)` is the string `"null"`,
+    which is non-empty and sailed past the guard into `success`.
+
+    Measured 0 such calls in the committed corpus today: this closes a hole in
+    the guarantee, it does not correct a live number."""
+    import json as _json
+
+    assert classify(_json.dumps(None)) == UNCLASSIFIED
+    assert classify("null") == UNCLASSIFIED
+
+
+def test_a_run_log_that_is_not_a_json_object_does_not_take_the_report_down(tmp_path: Path):
+    """Valid JSON that is not an object — a top-level [], a bare string, a number
+    — reached `doc.get(...)` and raised AttributeError, which nothing caught. The
+    previous robustness test fed only invalid UTF-8, so it passed while this
+    crashed. A truthy non-dict `tool_calls` entry crashed the same way."""
+    good = _run(tmp_path / "fix", "run-2026-08-20_00-00-00.json", ["ok"])
+    listy = tmp_path / "fix" / "run-2026-08-21_00-00-00.json"
+    listy.write_text("[]", encoding="utf-8")
+    stringy = tmp_path / "fix" / "run-2026-08-22_00-00-00.json"
+    stringy.write_text('"not an object"', encoding="utf-8")
+
+    r = scan([good, listy, stringy], author_of=_authors({}))
+    assert r.unreadable == 2
+    assert r.measurable == 1, "the readable run was still inspected"
+
+    import json as _json
+
+    weird = tmp_path / "fix" / "run-2026-08-23_00-00-00.json"
+    weird.write_text(
+        _json.dumps({"tool_calls": ["a string, not a call", 42]}), encoding="utf-8"
+    )
+    r2 = scan([good, weird], author_of=_authors({}))
+    assert r2.measurable == 1, "a non-dict tool_calls entry is skipped, not fatal"
 
 
 # --- the verdict that keeps the by-author table honest ----------------------
@@ -230,3 +305,24 @@ def test_both_operators_failing_on_one_day_does_not_separate(tmp_path: Path):
     verdict, _ = interleaving_verdict(r.calls)
     assert "CANNOT SEPARATE" in verdict
     assert "lead, not a verdict" in verdict
+
+
+def test_an_operator_who_never_reached_the_service_is_not_a_concurrent_success(tmp_path: Path):
+    """`unrecognized_ark` is raised BEFORE the OpenRouter call, so an operator
+    whose calls were all arks demonstrated nothing about reachability. Treating
+    "no reachability failure" as "succeeded" made the verdict print
+    "points at the machine" on exactly that evidence — a false positive in the
+    one function whose job is to not over-claim."""
+    a = _run(tmp_path / "f1", "run-2026-08-20_00-00-00.json",
+             ["Could not reach OpenRouter. (fetch failed)"])
+    b = _run(tmp_path / "f2", "run-2026-08-20_11-00-00.json",
+             ['{"error":"Unrecognized ark. Expected..."}'])
+    r = scan([a, b], author_of=_authors({
+        "run-2026-08-20_00-00-00.json": "alice",
+        "run-2026-08-20_11-00-00.json": "bob",
+    }))
+
+    verdict, _ = interleaving_verdict(r.calls)
+    assert "CANNOT SEPARATE" in verdict, (
+        "bob never reached OpenRouter, so his day is no evidence about alice's failure"
+    )
