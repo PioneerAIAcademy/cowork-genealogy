@@ -7,7 +7,7 @@ description: >-
   "research guide for [jurisdiction]", "what can I find in
   [county/state/country]?", "where are the records for [place]?", "what records
   help trace families affected by a disaster in [place]?", or "what records
-  survive for [place] after [an event]?", or when research-plan needs
+  survive for [place] after [an event]?", or when the orchestrator needs
   jurisdiction context. Do NOT use when the user wants to search records or
   execute a specific search plan (use search-records or search-external-sites),
   or asks a generic "how do I find/research [record type]" how-to question (use
