@@ -43,7 +43,7 @@ def run_validators(
     blocked_protected_writes: list[dict[str, Any]] | None = None,
     attempted_mcp_calls: list[dict[str, Any]] | None = None,
     skills_invoked: list[str] | None = None,
-    text_response: str = "",
+    text_response: str | None = None,
 ) -> list[ValidatorRunResult]:
     """Run universal validators + the per-skill validator file if present."""
     results: list[ValidatorRunResult] = []
@@ -53,12 +53,6 @@ def run_validators(
         "after_state": after_state,
         "tool_calls": tool_calls,
         "skill_frontmatter": skill_frontmatter or {},
-        # The skill's final prose answer. Some rules live only in the narration
-        # — an offer to hand off, a required date format — and are otherwise
-        # gradeable only by the judge. A validator that declares an arg the
-        # runner cannot supply is recorded as FAILED, not skipped (see below),
-        # so this must stay in step with what validators ask for.
-        "text_response": text_response,
         # Every skill invoked through the SDK's `Skill` tool, in call order,
         # captured by the PreToolUse hook in skill_runner. Ground truth for
         # "did the skill delegate to X" — the hook fires on the real call, so
@@ -94,6 +88,23 @@ def run_validators(
         # test-specific checks on test["tags"], e.g.
         #   if "slug-apostrophe" not in test.get("tags", []): pytest.skip(...)
         "test": test or {},
+        # Every assistant text block concatenated, not the final reply alone
+        # — the same string the run log stores as `output.text_response` and
+        # the judge grades.
+        #
+        # Here so a reply-shape rule can be decided mechanically instead of
+        # inferred. Several skill bodies state one ("One sentence only", "do
+        # not restate the article content", "never claim a tool failed"), and
+        # a judge dimension grades those unevenly: on run
+        # v1_2026-08-22_10-20-08 the search-wikipedia `Reply economy`
+        # dimension caught a narrating reply on one test and scored a
+        # byte-identical shape 3 on another, quoting a reply it had not been
+        # given (#1662 finding F7).
+        #
+        # Use it for a literal, falsifiable property of the text. Do NOT use
+        # it to re-grade prose quality — that is the judge's job, and a
+        # validator that tries becomes a rubric dimension nobody can tune.
+        "text_response": text_response or "",
     }
 
     universal = validators_dir / "test_universal.py"
