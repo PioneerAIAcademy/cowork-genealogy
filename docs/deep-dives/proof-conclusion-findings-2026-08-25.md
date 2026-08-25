@@ -35,6 +35,59 @@ its source-refs. Nothing in the suite plants a tree-encoding defect at `probable
 to catch, so the dimension has never had the chance to score below 3. That is an
 unexercised-population problem, not a wording problem, and it is F6.
 
+## Results of the re-run this PR forced — two of my own claims refuted
+
+`v1_2026-08-25_13-34-10.json`, 21 tests, **$6.63**, 18 min wall (the issue quoted $5.64;
+the new judge prompt costs more). 17 pass, 3 partial (007, 018, 019), 1 fail (012).
+`releasable: true`, judge prompt `c39d7003…` — the snapshot-drift and stale-judge
+complaints both clear.
+
+**F1's fix did not work. `rubric/Proof-conclusion fit` is still flat at always-3**, over
+17 gradings, and **13 of 13** narratives are again over their declared budget. The
+criterion is being *read* — every rationale now cites the budgets, which it never did
+before — and then overridden. From `ut_proof_conclusion_020`:
+
+> "The narrative is approximately 1,200 words — **well within** the ~300–500 word Summary
+> budget but justified by the need to correlate three independent sources…"
+
+1,200 is not within 300–500. This is the scratch run's contradiction reproduced with the
+count now stated *correctly*, so it was never an arithmetic problem: the judge reaches for
+3 and writes whatever bridges to it. Telling it to score on shape instead did not help —
+it simply asserts the shape ("reads as a statement, not a summary or argument").
+
+**So the rubric edit was the wrong instrument and I should have known it.** ADR-0011's
+first question — can this be decided by reading the project documents alone? — answers yes
+for a word count against a closed enum, which makes it a mechanical check, not a judging
+criterion. This is the lesson `docs/skill-lifecycle.md` §5 already records for prose edits
+generally, now reproduced on a rubric. **V1 is the fix; the rubric edit is at best a
+prompt that makes the judge show its reasoning.** I have left it in — it costs nothing and
+the visible budget-citation is what made the override diagnosable — but it should not be
+counted as closing F1.
+
+**One honest weakening of F1's example.** `ut_proof_conclusion_017` this run is 383 words
+against the ≤150 statement budget (×2.55) — but it is **11 sentences under a single
+heading**. That is a genuinely statement-shaped document that is merely wordy, and the
+judge's 3 is defensible. The indefensible case is 020's 1,200-word "Summary", not 017.
+The count alone was never the finding; the count *plus* section headings and a per-source
+walk-through is.
+
+**The 4-of-8 → 3-of-8 improvement is not mine.** The composition churned under the new
+judge prompt, in both directions, across dimensions I never touched:
+
+| dimension | before | after |
+|---|---|---|
+| `base/Tool Arguments` | flat | varies [2,3] |
+| `rubric/Evidence completeness` | flat | varies [2,3] |
+| `rubric/Tree encoding` | flat | **varies [1,3]** |
+| `rubric/Proof-conclusion fit` | flat | **still flat** ← the one I edited |
+| `base/Completeness` | varies [1,3] | **now flat** |
+| `rubric/Narrative standalone` | varies [2,3] | **now flat** |
+
+Two dimensions went flat that were not flat before. Net 4→3 is coincidence, and the
+`.ann.json` will be the first real check on whether any of this movement is sound.
+
+**F6 is refuted — see the correction in F6 below.**
+
 ## One correction to a shared read-out
 
 `output.tool_calls[]` entries key on **`tool`** and **`args`**, not `name`/`input`. Any
@@ -254,7 +307,7 @@ currently runs on one tagged test only. **Converts — V5.**
 
 ---
 
-## F6 — `rubric/Tree encoding` is flat because no test plants a tree defect at `probable`+
+## F6 — ~~`rubric/Tree encoding` is flat because no test plants a tree defect~~ — REFUTED by the re-run
 
 **Did:** the dimension is graded on 9 of 21 tests (`+8 N/A`) and scores 3 on all nine.
 Reading the nine: `001`/`020` write a ref-carrying `ParentChild`, `016` adds the `primary`
@@ -268,8 +321,32 @@ never reaches the tree." That is the found-but-lost failure, and it is the whole
 §6 opens with "**This step — not the proof summary — is where the conclusion actually
 lands. Do not skip it.**"
 
-**Gap: lane 2, and it is a missing fixture, not wording.** The dimension is well written;
-the suite gives it nothing to discriminate. Every `probable`+ test in the suite is one
+**CORRECTION (2026-08-25, from the re-run this PR forced).** This finding was wrong, and
+wrong in its framing rather than its arithmetic. On `v1_2026-08-25_13-34-10`,
+`rubric/Tree encoding` scored **1** on `ut_proof_conclusion_012` and the dimension now
+reads `varies [1, 3]`. The judge's rationale is exactly the failure the dimension exists
+for:
+
+> "The skill concluded ps_001 at tier 'probable' but made **no tree writes** to encode the
+> conclusion … The conclusion lives only in narrative_markdown; the tree carries no
+> primary/concluded value. This is a found-but-lost result."
+
+**A tree defect does not have to be planted in a fixture — the agent produces it
+behaviourally.** 012 is the re-invocation test; it re-concluded at `probable` and wrote
+nothing to the tree. Five consecutive logs had simply never sampled that behaviour, so I
+read a sampling accident as a structural impossibility. The dimension discriminates; it
+does not need a new fixture, and it must not be retired. **No fixture work is owed here.**
+Per CLAUDE.md, a measurement that disagrees with belief is re-measured rather than
+reworded — this is the re-measurement, and it went against me.
+
+Note also that this is **F2's failure mode recurring in a second place**: a conclusion
+written, its consequence not landed. There it was the question left unresolved; here it is
+the tree left silent. V2 and the existing
+`test_tree_relationship_written_at_probable_plus` cover the two halves mechanically, which
+is the durable answer in both cases.
+
+~~**Gap: lane 2, and it is a missing fixture, not wording.** The dimension is well written;
+the suite gives it nothing to discriminate.~~ Every `probable`+ test in the suite is one
 the agent gets right. `test_tree_relationship_written_at_probable_plus` already covers the
 mechanical half deterministically for `tree-write-expected` tests, which is part of why
 the judge dimension has no work left — so the honest options are a fixture that makes the
