@@ -43,7 +43,9 @@ _OUT_FILENAME = "runtime-context.jsonl"
 _SCALARS = (
     "effort",
     "agent_id",
+    "agent_type",
     "tool_name",
+    "tool_use_id",
     "hook_event_name",
     "permission_mode",
     "session_id",
