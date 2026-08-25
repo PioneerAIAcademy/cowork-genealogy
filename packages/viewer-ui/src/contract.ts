@@ -28,7 +28,8 @@ export async function assertTransportContract(transport: ResearchTransport): Pro
     onResearch: () => {},
     onGedcomx: () => {},
     onSidecar: () => {},
-    onError: () => {}
+    onError: () => {},
+    onNotice: () => {}
   })
   assert(typeof unsubscribe === 'function', 'subscribe must return an unsubscribe function')
   unsubscribe() // must not throw

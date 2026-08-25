@@ -56,7 +56,9 @@ describe('readSourceImage', () => {
       await expect(readSourceImage('results/x.json', folder)).rejects.toThrow(
         'Invalid image filename'
       )
-      await expect(readSourceImage('images/x.png', folder)).rejects.toThrow('Invalid image filename')
+      await expect(readSourceImage('images/x.png', folder)).rejects.toThrow(
+        'Invalid image filename'
+      )
       await expect(readSourceImage('images/x', folder)).rejects.toThrow('Invalid image filename')
     })
 

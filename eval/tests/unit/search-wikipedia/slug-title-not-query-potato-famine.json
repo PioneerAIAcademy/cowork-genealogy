@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_search_wikipedia_p4t",
+    "skill": "search-wikipedia",
+    "name": "Slug comes from the returned title, not the query — potato famine",
+    "type": "positive",
+    "description": "The researcher uses the colloquial name ('the potato famine'); Wikipedia's summary endpoint follows the redirect and returns the article titled 'Great Famine (Ireland)'. SKILL.md step 4 says to build the slug from the article title, so the file must be great-famine-ireland.md, not potato-famine.md. This is the only test in the suite where the query slug and the title slug differ: in all seven other positive tests both routes produce the identical string, so none of them — including the two labelled slug regression checks — can detect a slug derived from the query. Filed from the #1662 deep dive.",
+    "tags": [
+      "wikipedia",
+      "slug",
+      "regression",
+      "irish",
+      "slug-great-famine-ireland"
+    ]
+  },
+  "input": {
+    "user_message": "Look up the potato famine on Wikipedia",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "wikipedia-search-potato-famine",
+    "wikipedia-search-great-famine-ireland"
+  ],
+  "judge_context": [
+    "Two fixtures are declared so either query phrasing resolves to the same article: 'wikipedia-search-potato-famine' matches a query containing 'potato', 'wikipedia-search-great-famine-ireland' matches one containing 'Great Famine'. Both return the title 'Great Famine (Ireland)'. Whichever the skill sent, the returned title is the same and the expected slug is the same.",
+    "The saved file must be named from the RETURNED TITLE ('Great Famine (Ireland)' -> great-famine-ireland.md), not from the query the skill sent. A file named potato-famine.md means the slug was built from the query, which SKILL.md step 4 prohibits — it says to build the slug from the article title.",
+    "Do not treat the difference between the user's wording and the article title as an error to flag or a disambiguation to raise with the user. Following a redirect to the formal title is the expected behavior; the only thing under test is which of the two strings the filename came from.",
+    "IMPORTANT — file visibility: this skill writes a standalone markdown file to the working folder, and that file does NOT appear in the file changes summary (which tracks only research.json and tree.gedcomx.json). Judge file creation from the text response and the tool call. Do not penalize Correctness or Completeness for '(no file changes)'. The saved file's contents are checked deterministically by test_saved_file_matches_template, not by you.",
+    "IMPORTANT — brief response is correct: SKILL.md step 5 says one sentence naming the file. 'Saved the Wikipedia summary to great-famine-ireland.md.' is the CORRECT and COMPLETE response. Do not penalize brevity or the absence of article content."
+  ]
+}
