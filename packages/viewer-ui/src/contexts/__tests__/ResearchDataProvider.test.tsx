@@ -37,6 +37,8 @@ function makeHarness(): {
 // Capture the transport's onSidecar callback so tests can fire fake events,
 // and the readSidecar fn the current test installed.
 let sidecarUpdatedHandler: ((e: { logId: string; mtime: number }) => void) | null = null
+let noticeHandler: ((message: string) => void) | null = null
+let researchHandler: ((data: unknown) => void) | null = null
 let currentReadSidecar: ReturnType<typeof vi.fn> = vi.fn()
 
 function installApiMock(readSidecar: ReturnType<typeof vi.fn>): void {
@@ -52,6 +54,8 @@ function makeMockTransport(): ResearchTransport {
     getProjectState: async () => ({ research: null, gedcomx: null, label: null }),
     subscribe: (handlers) => {
       sidecarUpdatedHandler = handlers.onSidecar
+      noticeHandler = handlers.onNotice
+      researchHandler = handlers.onResearch as (d: unknown) => void
       return () => {}
     },
     readSidecar: (logId: string) => currentReadSidecar(logId),
@@ -370,5 +374,47 @@ describe('ResearchDataProvider — closeSidecar cancellation', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+  })
+})
+
+// ============================================================
+// Folder notice (issue #1317 bug 2) — a heads-up that a research load must NOT clear
+// ============================================================
+
+const emptyResearch = {
+  known_holdings: [],
+  questions: [],
+  plans: [],
+  log: [],
+  sources: [],
+  assertions: [],
+  person_evidence: [],
+  conflicts: [],
+  hypotheses: [],
+  timelines: [],
+  proof_summaries: [],
+  evaluations: []
+}
+
+describe('ResearchDataProvider — folder notice', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('surfaces onNotice, keeps it across a research load, and clears only on dismiss', () => {
+    installApiMock(vi.fn())
+    const h = makeHarness()
+    h.render()
+
+    expect(h.ctx().notice).toBeNull()
+
+    act(() => noticeHandler!('research.json is in a subfolder — wrong folder level'))
+    expect(h.ctx().notice).toBe('research.json is in a subfolder — wrong folder level')
+
+    // The #1317 regression: a research load previously wiped the notice. It must not.
+    act(() => researchHandler!(emptyResearch))
+    expect(h.ctx().notice).toBe('research.json is in a subfolder — wrong folder level')
+
+    // Only an explicit dismiss clears it.
+    act(() => h.ctx().clearNotice())
+    expect(h.ctx().notice).toBeNull()
   })
 })

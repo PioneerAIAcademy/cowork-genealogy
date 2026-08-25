@@ -27,6 +27,10 @@ export interface ResearchDataState {
   gedcomx: GedcomxData | null
   error: string | null
   clearError: () => void
+  /** A non-error heads-up (e.g. research.json found in a subfolder). Separate
+   *  from `error` because a research load must NOT clear it (issue #1317). */
+  notice: string | null
+  clearNotice: () => void
   lastUpdated: Date | null
   folderPath: string | null
   devMode: boolean

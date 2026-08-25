@@ -114,6 +114,7 @@ The allowed IPC channels (update this list when adding new ones):
 | `project:gedcomx-updated` | on (push) | Parsed tree.gedcomx.json |
 | `project:watch-error` | on (push) | Error string |
 | `project:sidecar-updated` | on (push) | A sidecar changed: `{ logId, mtime }` |
+| `project:folder-notice` | on (push) | Heads-up string: research.json found in a subfolder |
 
 If a channel exists in the preload but is not in this table, it is unauthorized.
 Push channels are sent from `src/main/watcher.ts` (the two `*-updated` file
@@ -156,7 +157,9 @@ Check `package.json`:
 XSS in a desktop app is worse than in a web app because the attacker has
 access to the local filesystem via the main process IPC bridge.
 
-Check all `.tsx` files in `src/renderer/`:
+Check all `.tsx` files in `src/renderer/`, and in the shared
+`packages/viewer-ui/src/` where the extracted UI now lives
+(including the FolderNotice / ErrorNotice banners):
 
 - [ ] No `dangerouslySetInnerHTML` usage
 - [ ] No `rehype-raw` import (allows raw HTML in react-markdown)

@@ -111,6 +111,11 @@ two reader families handle it differently (`harness/since_window.py`):
   IS the 14-day default: it classifies calls from `response_summary`, and the e2e
   capture strip below drops that field past 14 days — so `SINCE=all` there mostly
   reports how many older calls are stripped-and-unclassifiable, not more causes.)
+  **One exception inside that list:** `make e2e-guardrail-shadow FEEDBACK_DIR=…`
+  reads hosted feedback bundles from outside the repo rather than run logs, so it
+  is NOT windowed and prints no window — that corpus is small and hand-collected,
+  and a window would discard the sample rather than refresh it. It also ignores
+  `TEST`/`WINDOWS`/`SINCE`/`REPLAY`, and says so on stderr (issue #1558).
 - **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency`, `make judge-report` show
   the newest 1–2 run logs per skill, so there is no sample to narrow: a date
   cut would delete the *skill*, hiding that it needs a re-run. They show every
