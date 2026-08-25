@@ -2,7 +2,7 @@
  * OCR quality spike — Qwen3-VL vs Claude on FamilySearch scans.
  *
  * Dev-only, NOT shipped. Standalone one-shot per the spike brief
- * (~/pioneeradademy/ocr-quality-spike-plan.md). It:
+ * (~/pioneeracademy/ocr-quality-spike-plan.md). It:
  *   1. Fetches each T13 "oversize" FamilySearch scan (reusing the repo's auth +
  *      ARK resolution, but WITHOUT image_read's 700 KB inline cap).
  *   2. Produces the enhanced variant via dev/ocr_prep.py (PIL enhance_for_ocr).
