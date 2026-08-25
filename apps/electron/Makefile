@@ -41,6 +41,15 @@ check:                        ## Run typecheck + lint + tests
 build:                        ## Production build (typecheck + compile)
 	npm run build
 
+# `npm run build:*` now runs check-packaged itself (package.json), so these
+# targets inherit the gate rather than repeating it — and so does anyone running
+# `pnpm build:mac` straight from the README, which is the invocation #1070 is
+# named after and which no make target covers.
+#
+# The dist/ clean that the check needs (it inspects EVERY app.asar under dist/,
+# so a stale bundle from an earlier build of a different OS would fail a good
+# one) lives in the npm scripts, not here — `pnpm build:mac` run straight from
+# the README has to clean too, and that invocation reaches no make target.
 build-linux:                  ## Build Linux AppImage
 	npm run build:linux
 
@@ -49,6 +58,9 @@ build-mac:                    ## Build macOS DMG (arm64 + x64)
 
 build-win:                    ## Build Windows NSIS installer
 	npm run build:win
+
+check-packaged:               ## Verify the packaged app carries its declared dependencies
+	npm run check-packaged
 
 preview:                      ## Preview the production build
 	npm start
@@ -69,11 +81,15 @@ ab-tabs:                      ## List all targets (windows, webviews)
 
 # ── Utilities ───────────────────────────────────────────
 
+# Delegates dist/ to the npm script so there is ONE implementation: `rm -rf` is
+# not usable on the Windows-based half of this team, and `clean:dist` is the
+# portable one the build scripts already call.
 clean:                        ## Remove build artifacts
-	rm -rf out dist
+	npm run clean:dist
+	node -e "require('node:fs').rmSync('out', { recursive: true, force: true })"
 
 help:                         ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: dev dev-sample dev-debug dev-debug-sample test test-watch typecheck lint format check build build-linux build-mac build-win preview ab-connect ab-snapshot ab-screenshot ab-tabs clean help
+.PHONY: dev dev-sample dev-debug dev-debug-sample test test-watch typecheck lint format check build build-linux build-mac build-win check-packaged preview ab-connect ab-snapshot ab-screenshot ab-tabs clean help
 .DEFAULT_GOAL := help

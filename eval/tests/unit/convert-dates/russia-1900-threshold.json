@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_convert_dates_015",
+    "skill": "convert-dates",
+    "name": "Russia February 1900 — the offset threshold is 1 March, not New Year",
+    "type": "positive",
+    "description": "Convert a Russian Empire date from February 1900. The Julian-to-Gregorian offset grows the day after each Julian Feb 29 the Gregorian calendar skipped, so it becomes 13 days only from 1 March 1900 (Julian); a February 1900 date still takes 12. A calendar-year reading of the offset table ('1900+ = 13 days') gives 27 February and is wrong by a day. Covers the two-month window at each century threshold (1700, 1800, 1900) that no other test in the suite reaches.",
+    "tags": ["julian-gregorian", "1900", "russia", "12-day-shift", "offset-threshold", "century-boundary", "requires-tool-conversion"]
+  },
+  "input": {
+    "user_message": "Convert this Russian parish register date to the Gregorian calendar: '14 February 1900, Moscow'.",
+    "scenario": null
+  },
+  "judge_context": [
+    "Should recognize that the Russian Empire used the Julian calendar until February 1918, so an 1900 Moscow date is Julian",
+    "Should apply a 12-day offset, NOT 13: the offset grows the day after each Julian 29 February the Gregorian calendar skipped, so it becomes 13 days only from 1 March 1900 (Julian). A February 1900 date is still 12 days behind",
+    "Should produce 26 February 1900 (Gregorian). '27 February 1900' is the specific failure this test looks for — it is what a calendar-year reading of the offset table ('1900 onward = 13 days') produces",
+    "Should preserve the original Julian date in the output, presenting both forms",
+    "Should present the conversion in step-by-step form so the genealogist can verify the offset that was used"
+  ]
+}
