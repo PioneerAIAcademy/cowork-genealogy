@@ -10,6 +10,14 @@ re-emitted on re-invocation.
 `file_changes`, `tool_calls` and `builtin_tool_calls` were read for every run before any
 score, per Step 2. Most of the time went on the quiet passes, per Step 3.
 
+**Retention caveat for a later reader.** `DEFAULT_KEEP_CANDIDATES = 5`
+(`harness/versioning.py`), so the re-run this PR forces writes a sixth log and prunes the
+oldest — `v1_2026-08-21_04-34-52.json`, which is cited by name below. Those citations
+will point at a file no longer in the tree; they were true when read, and the counts they
+support (64 of 65 narratives, 15 forbidden-modal sentences, 13 unpaired) are over all five
+logs including the pruned one. Recompute against what survives rather than assuming the
+totals shifted.
+
 ## Numbers, re-derived 2026-08-25
 
 | | command | value |
@@ -168,8 +176,11 @@ dedicated MCP query tool for is an argument defect, not a neutral alternative."*
   the first does not use `ops[]` at all —
   `{operation: "update_fact", personId: "LR9N-VGQ", factId: …, fact: {primary: true}}`.
 
-`base/Tool Arguments` scored 3 on both. On 002 its rationale reads "tree_edit
-(add_relationship, add_fact)" — describing two calls as one.
+`base/Tool Arguments` scored 3 on both, and the two rationales fail in opposite
+directions. On 002 it reads "tree_edit (add_relationship, add_fact)" — describing two
+calls as one. On 019 it counts them correctly and still scores 3: "**The tree_correct
+calls** properly updated the christening fact and marriage relationship." The dimension
+saw the split and had no criterion that made it matter.
 
 **Should:** agent body §6 — "Use `tree_edit`, **batched into ONE call via its `ops[]`
 array**", on the stated ground that "batching applies every op to a single in-memory tree,
