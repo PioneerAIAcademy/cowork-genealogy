@@ -1084,6 +1084,7 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
         f"({len(truncated)} truncated), {n - len(with_transcript)} without."
     )
     could_not_adapt = [r for r in with_transcript if r.get("could_not_adapt")]
+    unreadable_transcripts = [r for r in with_transcript if r.get("transcript_unreadable")]
     for r in results:
         tag = " [truncated]" if r["truncated"] else ""
         # A transcript we couldn't adapt is named, not silently dropped (#1558
@@ -1141,7 +1142,8 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
     lines.append(
         f"\nTotals: unguarded-write findings {unguarded_total} across "
         f"{len(attributable)} attributable transcript(s) "
-        f"({len(truncated)} truncated, {len(could_not_adapt)} could not adapt, excluded); "
+        f"({len(truncated)} truncated, {len(could_not_adapt)} could not adapt, "
+        f"{len(unreadable_transcripts)} unreadable, excluded); "
         f"missing-mentor-verdict findings {mentor_total} across "
         f"{len(with_research)} bundle(s) with a readable research.json. "
         f"Corpus is small and self-selected — a signal, not a rate."

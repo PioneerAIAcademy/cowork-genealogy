@@ -64,11 +64,14 @@ def test_non_dict_tool_use_input_coerces_to_empty_args(tmp_path):
             {"type": "tool_use", "id": "n", "name": "record_read", "input": 42},
             {"type": "tool_use", "id": "l", "name": "record_read", "input": ["a"]},
             {"type": "tool_use", "id": "b", "name": "record_read", "input": True},
+            # A bare string is the case a blocklist refactor would leak into
+            # `_iter_ops` — pin it explicitly, not just via the allowlist.
+            {"type": "tool_use", "id": "s", "name": "record_read", "input": "s"},
             {"type": "tool_use", "id": "d", "name": "record_read", "input": {"ok": 1}},
         ]),
     ])
     out = adapt_bundle_transcript(log)  # must not raise
-    assert [e["args"] for e in out["tool_calls"]] == [{}, {}, {}, {"ok": 1}]
+    assert [e["args"] for e in out["tool_calls"]] == [{}, {}, {}, {}, {"ok": 1}]
 
 
 def test_is_error_joins_from_matching_tool_result(tmp_path):
@@ -353,7 +356,7 @@ def test_format_feedback_report_excludes_could_not_adapt_from_denominator(tmp_pa
     assert "[could not adapt]" in report
     # 1 attributable transcript (good-01), the unadaptable one excluded.
     assert "across 1 attributable transcript(s)" in report
-    assert "1 could not adapt, excluded" in report
+    assert "1 could not adapt, 0 unreadable, excluded" in report
 
 
 def test_report_keeps_unreadable_bundles_out_of_both_denominators(tmp_path):
@@ -400,6 +403,9 @@ def test_report_keeps_unreadable_bundles_out_of_both_denominators(tmp_path):
     # A is out of the attributable denominator (unreadable transcript) and B has
     # no transcript, so zero attributable transcripts.
     assert "across 0 attributable transcript(s)" in report
+    # And the exclusion breakdown names the unreadable reason, so the excluded
+    # reasons still sum to the with-transcript count.
+    assert "1 unreadable, excluded" in report
 
 
 # ── _submitted_research: committed baseline beats a mutated working tree ──────
