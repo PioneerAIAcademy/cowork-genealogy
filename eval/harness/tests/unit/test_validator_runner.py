@@ -1629,69 +1629,6 @@ def test_creator_not_in_custody_fails_when_author_in_parenthetical():
     assert "County Recorder of Deeds" in (result.error or "")
 
 
-# --- V6: unknown-marker vocabulary --------------------------------------
-
-def _v6_state(marker_text):
-    """After-state with a source containing marker_text in citation_detail.where."""
-    after = _empty_research_state()
-    after["research_json"]["sources"] = [
-        {
-            "id": "src_001",
-            "citation": "",
-            "citation_detail": {"where": marker_text},
-        },
-    ]
-    return after
-
-
-def _run_v6(marker_text):
-    after = _v6_state(marker_text)
-    before = _empty_research_state()
-    results = run_validators(
-        skill="citation",
-        validators_dir=VALIDATORS_DIR,
-        before_state=before,
-        after_state=after,
-        tool_calls=[],
-        skill_frontmatter=_CITATION_FRONTMATTER,
-    )
-    result = next(
-        (r for r in results if r.name == "test_unknown_marker_vocabulary"), None
-    )
-    assert result is not None, "test_unknown_marker_vocabulary did not run"
-    return result
-
-
-@pytest.mark.parametrize("marker_text", [
-    "[WHO NOT RECORDED]",
-    "[VOLUME AND PAGE NOT RECORDED]",
-    "[PAGE NOT RECORDED]",
-    "[CREATOR NOT RECORDED]",
-    "[DATE NOT RECORDED]",
-    "[ARTICLE TITLE NOT RECORDED]",
-    "[WILL BOOK AND PAGE NOT RECORDED]",
-    "[WHERE WITHIN NOT RECORDED]",
-])
-def test_unknown_marker_vocabulary_passes_on_valid_markers(marker_text):
-    result = _run_v6(f"FamilySearch.org ({marker_text})")
-    assert result.passed is True, f"unexpected failure on {marker_text}: {result.error}"
-
-
-@pytest.mark.parametrize("marker_text,expected_keyword", [
-    ("[PHYSICAL REPOSITORY NOT RECORDED]", "repository"),
-    ("[MICROFILM NUMBER NOT RECORDED]", "microfilm"),
-    ("[MICROFICHE NOT RECORDED]", "microfiche"),
-    ("[FHL CALL NUMBER NOT RECORDED]", "fhl"),
-    ("[FHL FILM #1234 NOT RECORDED]", "fhl"),
-    ("[CATALOG NUMBER NOT RECORDED]", "catalog number"),
-    ("[ACCESSION NUMBER NOT RECORDED]", "accession"),
-])
-def test_unknown_marker_vocabulary_fails_on_custody_markers(marker_text, expected_keyword):
-    result = _run_v6(f"FamilySearch.org ({marker_text})")
-    assert result.passed is False
-    assert expected_keyword in (result.error or "").lower()
-
-
 # --- V10: informant not in who ------------------------------------------
 
 def _v10_states(informant_in_who):

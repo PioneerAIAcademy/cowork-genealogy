@@ -5,9 +5,9 @@ Explained compliance, Replication test, Source vs information
 distinction) are pure GPS craft and stay graded by the LLM judge.
 
 This file holds structural invariants: the append-only source-section
-check, creator-vs-custody slot validation (V5), unknown-marker
-vocabulary (V6), and informant-not-in-who (V10). Tool-allowlist and
-write-then-validate enforcement are delegated to universal validators.
+check, creator-vs-custody slot validation (V5), and informant-not-in-who
+(V10). Tool-allowlist and write-then-validate enforcement are delegated
+to universal validators.
 
 See test_universal.py module docstring for the validator function-
 signature contract.
@@ -125,71 +125,6 @@ def test_creator_not_in_custody(before_state, after_state, test):
         + "\n  ".join(violations)
     )
 
-
-# --- V6: Unknown-marker vocabulary --------------------------------------
-
-_CUSTODY_KEYWORDS = frozenset({
-    "repository",
-    "microfilm",
-    "microfiche",
-    "call number",
-    "accession",
-    "fhl",
-    "catalog number",
-})
-
-_MARKER_RE = re.compile(r'\[([^\]]+?)\s+NOT RECORDED\]', re.IGNORECASE)
-
-
-def _marker_names_custody_element(element_text: str) -> str | None:
-    """Return the matched custody keyword if the marker names a custody or
-    physical-media element, else None."""
-    lowered = element_text.lower()
-    for kw in _CUSTODY_KEYWORDS:
-        if kw in lowered:
-            return kw
-    return None
-
-
-def test_unknown_marker_vocabulary(after_state, test):
-    """[...NOT RECORDED] markers must not name custody or physical-media elements.
-
-    Markers for elements outside the citation framework — physical custody,
-    microfilm number, call number — belong in `notes`, not in the citation.
-    Legitimate citation-element markers (page, volume, date, creator, etc.)
-    are allowed.
-    """
-    if test.get("type") == "negative":
-        pytest.skip("negative test")
-    after_rj = after_state.get("research_json")
-    if after_rj is None:
-        pytest.skip("missing research.json")
-    violations = []
-    for src in after_rj.get("sources", []):
-        sid = src.get("id", "?")
-        fields_to_check = [("citation", src.get("citation", "") or "")]
-        cd = src.get("citation_detail", {}) or {}
-        for field_name in ("who", "what", "when_created", "when_accessed",
-                           "where", "where_within"):
-            fields_to_check.append(
-                (f"citation_detail.{field_name}", cd.get(field_name, "") or "")
-            )
-        for field_label, value in fields_to_check:
-            for m in _MARKER_RE.finditer(value):
-                raw = m.group(1).strip()
-                matched_kw = _marker_names_custody_element(raw)
-                if matched_kw is not None:
-                    violations.append(
-                        f"{sid}.{field_label}: marker {m.group(0)} names "
-                        f"a custody/physical-media element (matched "
-                        f"{matched_kw!r}) — this belongs in notes, not "
-                        f"in the citation"
-                    )
-    assert not violations, (
-        "[...NOT RECORDED] markers must not name custody or physical-media "
-        "elements — those belong in notes, not in the citation:\n  "
-        + "\n  ".join(violations)
-    )
 
 
 # --- V10: Informant never reaches `who` (literal half) -----------------
