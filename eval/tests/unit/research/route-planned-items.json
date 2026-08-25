@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_research_014",
+    "skill": "research",
+    "name": "Routes to search-records when plan has unexecuted items",
+    "type": "positive",
+    "description": "Routing table row 4: research.json has plan items not yet executed and no analyzed evidence plausibly answers the active question. The router must invoke Skill('search-records') to execute the next plan item. Uses anders-unna-marriage-search, which has one in_progress question, one plan with one planned item, and no log entries or assertions. search-records is stubbed (bare deny).",
+    "tags": [
+      "routing",
+      "routes-to:search-records"
+    ]
+  },
+  "input": {
+    "user_message": "Continue the research.",
+    "scenario": "anders-unna-marriage-search"
+  },
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300,
+    "stub_skills": [
+      "search-records"
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. The only assertion that matters is whether Skill('search-records') is the first Skill call. A deterministic validator (test_routes_to_expected_skill) owns that check — do not grade the routing decision yourself.",
+    "The project has a plan with an unexecuted (planned) item and no evidence yet. The routing table says: 'Plan items not yet executed, and no analyzed evidence yet plausibly answers the active question -> search-records'. Any other first Skill call is wrong.",
+    "search-records is stubbed and returns a bare denial. Grade only the quality of the router's own work.",
+    "Do not penalize the router for not completing the full research cycle."
+  ],
+  "judge_reads_files": true
+}

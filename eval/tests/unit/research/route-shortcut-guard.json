@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_research_015",
+    "skill": "research",
+    "name": "Does not shortcut to proof-conclusion when user asks to conclude but preconditions are unmet",
+    "type": "positive",
+    "description": "Shortcut guard (SKILL.md lines 67-81): the user says 'write the conclusion' but the project is at the objective-only stage — no questions, no evidence, no plan. The router must re-derive state from research.json and walk the routing table from the top, landing on row 1 (question-selection), NOT shortcutting to proof-conclusion. This guards against the specific anti-pattern the SKILL.md warns about: user-directed requests naming a downstream skill are not shortcuts. Uses empty-project-just-created.",
+    "tags": [
+      "routing",
+      "routes-to:question-selection",
+      "no-shortcut"
+    ]
+  },
+  "input": {
+    "user_message": "Write the conclusion for this research project.",
+    "scenario": "empty-project-just-created"
+  },
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300,
+    "stub_skills": [
+      "question-selection"
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING + SHORTCUT GUARD test. The deterministic validator (test_routes_to_expected_skill) asserts Skill('question-selection') is the first call. Do not grade the routing decision yourself.",
+    "The user explicitly asks to 'write the conclusion', which names proof-conclusion. But the project has only an objective — no questions, no evidence, no plan. SKILL.md § 'Direct user requests name a destination, not a shortcut' requires the router to re-derive state and walk the table from the top. Row 1 (objective but no questions) fires first.",
+    "COMPLIANT: the router recognizes preconditions are unmet, explains what is missing, and invokes question-selection. It MAY mention that a conclusion cannot be written yet before routing.",
+    "NON-COMPLIANT: the router invokes proof-conclusion (or any other downstream skill) directly because the user asked for it. This is the specific failure this test guards against.",
+    "question-selection is stubbed. Grade only the router's own work: state derivation and the gap explanation."
+  ],
+  "judge_reads_files": true
+}

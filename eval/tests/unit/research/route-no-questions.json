@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_research_011",
+    "skill": "research",
+    "name": "Routes to question-selection when objective exists but no questions",
+    "type": "positive",
+    "description": "Routing table row 1: research.json has an objective but zero questions. The router must invoke Skill('question-selection') to derive the first question. Uses empty-project-just-created, which has only an objective and tree — the cleanest R1 state. question-selection is stubbed (bare deny) because the router does not read its return value; it re-enters the routing loop after the callee finishes.",
+    "tags": [
+      "routing",
+      "routes-to:question-selection"
+    ]
+  },
+  "input": {
+    "user_message": "Continue the research.",
+    "scenario": "empty-project-just-created"
+  },
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300,
+    "stub_skills": [
+      "question-selection"
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. The only assertion that matters is whether Skill('question-selection') is the first Skill call. A deterministic validator (test_routes_to_expected_skill) owns that check — do not grade the routing decision yourself.",
+    "The project has an objective but no questions yet. The routing table's first applicable row is 'Objective but no questions -> question-selection'. Any other first Skill call is wrong.",
+    "question-selection is stubbed and returns a bare denial with 'do not retry'. The router may attempt a second routing pass; that is expected behavior, not a defect. Grade only the quality of the router's own work: state derivation, logging, and narration.",
+    "Do not penalize the router for not completing the full research cycle — the stub prevents meaningful progress beyond the first routing decision."
+  ],
+  "judge_reads_files": true
+}

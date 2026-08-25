@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_research_012",
+    "skill": "research",
+    "name": "Routes to locality-guide when question exists but no plan and no localities",
+    "type": "positive",
+    "description": "Routing table row 2: research.json has a question with no plan, and no localities entry for the question's target jurisdiction. The router must invoke Skill('locality-guide') to survey the jurisdiction before planning. Uses wilkins-first-plan, which has one in_progress question, zero plans, and zero localities. locality-guide is stubbed (bare deny).",
+    "tags": [
+      "routing",
+      "routes-to:locality-guide"
+    ]
+  },
+  "input": {
+    "user_message": "Continue the research.",
+    "scenario": "wilkins-first-plan"
+  },
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300,
+    "stub_skills": [
+      "locality-guide"
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. The only assertion that matters is whether Skill('locality-guide') is the first Skill call. A deterministic validator (test_routes_to_expected_skill) owns that check — do not grade the routing decision yourself.",
+    "The project has a question (in_progress) but no plan and no localities entry for its jurisdiction. The routing table says: 'A question with no plan, and no localities entry yet for its target jurisdiction -> locality-guide'. Any other first Skill call is wrong.",
+    "locality-guide is stubbed and returns a bare denial. The router may attempt further routing after the stub; that is expected. Grade only the quality of the router's own work.",
+    "Do not penalize the router for not completing the full research cycle."
+  ],
+  "judge_reads_files": true
+}
