@@ -56,12 +56,11 @@ would silently diverge:
   asked for a test that has nowhere to live.
 - Malformed JSON, or a test missing `test.skill`, contributes nothing rather
   than raising: a lint that cannot run is worse than one that under-reports.
-  Be aware this is a genuine blind spot rather than a deferral -- NO CI job
-  validates `eval/tests/unit/**` against unit-test.schema.json today. The
-  schema is enforced at harness load time (harness/loader.py) and by the CRUD
-  UI's generated Zod types, neither of which runs on a PR, and
-  check_runlogs.py rule 4 checks only `test.id` uniqueness. So a malformed
-  test file is silently absent from this graph, and nothing else will say so.
+  This is no longer a blind spot. `tests/unit/test_unit_test_corpus.py` runs
+  every committed file under `eval/tests/unit/` through `loader.load_test` on
+  any PR touching that tree, so a file this script silently skips fails there
+  instead -- for a schema violation and for unparseable JSON alike. What is
+  skipped here is therefore already reported, by name, somewhere that blocks.
 
 WARN-ONLY, AND UNCONDITIONALLY SO -- this always exits 0.
 
