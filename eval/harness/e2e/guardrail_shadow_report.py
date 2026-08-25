@@ -1005,22 +1005,25 @@ def scan_feedback_bundle(
             # which would silently hand its other caller [] instead of raising.
             adapted = None
             out["transcript_unreadable"] = True
-        if adapted is None:
-            return out
-        tool_calls = adapted["tool_calls"]
-        out["truncated"] = adapted["truncated"]
-        out["could_not_adapt"] = adapted.get("adapted_records", 0) == 0
-        out["session_ids"] = adapted["session_ids"]
-        out["tool_call_count"] = len(tool_calls)
-        out["skill_call_count"] = sum(
-            1
-            for e in tool_calls
-            if skill_name_if_skill_call(e.get("tool", ""), e.get("args")) is not None
-        )
-        # A truncated transcript reads as a bypass (a skill invoked before the
-        # cut is invisible), so its writes are unattributable — the caller
-        # buckets truncated bundles separately rather than counting them.
-        out["unguarded_writes"] = find_unguarded_protected_writes(tool_calls, window=window)
+        # Do NOT early-return when the transcript is unreadable or unadaptable:
+        # research.json is a separate file and may be perfectly readable, so the
+        # mentor-verdict scan below must still run. Only the transcript-derived
+        # fields are gated on a successful adapt.
+        if adapted is not None:
+            tool_calls = adapted["tool_calls"]
+            out["truncated"] = adapted["truncated"]
+            out["could_not_adapt"] = adapted.get("adapted_records", 0) == 0
+            out["session_ids"] = adapted["session_ids"]
+            out["tool_call_count"] = len(tool_calls)
+            out["skill_call_count"] = sum(
+                1
+                for e in tool_calls
+                if skill_name_if_skill_call(e.get("tool", ""), e.get("args")) is not None
+            )
+            # A truncated transcript reads as a bypass (a skill invoked before the
+            # cut is invisible), so its writes are unattributable — the caller
+            # buckets truncated bundles separately rather than counting them.
+            out["unguarded_writes"] = find_unguarded_protected_writes(tool_calls, window=window)
 
     if research_path.exists():
         try:
@@ -1123,10 +1126,15 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
     # a missing/unreadable one contributes no signal and must not inflate it.
     with_research = [r for r in results if r["has_research"] and not r["research_unreadable"]]
     # Attributable = has a transcript we could adapt AND that wasn't truncated;
-    # a truncated or unadaptable transcript can't attribute a write, so neither
-    # is in the denominator.
+    # a truncated, unadaptable, or undecodable transcript can't attribute a
+    # write, so none is in the denominator. An unreadable transcript never ran
+    # the detector, so it is strictly more unadaptable than a truncated one.
     attributable = [
-        r for r in with_transcript if not r["truncated"] and not r.get("could_not_adapt")
+        r
+        for r in with_transcript
+        if not r["truncated"]
+        and not r.get("could_not_adapt")
+        and not r.get("transcript_unreadable")
     ]
     unguarded_total = sum(len(r["unguarded_writes"]) for r in attributable)
     mentor_total = sum(len(r["missing_mentor_verdicts"]) for r in with_research)

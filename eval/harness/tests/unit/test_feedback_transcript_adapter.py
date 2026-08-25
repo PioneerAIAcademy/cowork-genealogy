@@ -53,6 +53,24 @@ def test_tool_use_block_becomes_one_entry(tmp_path):
     assert entry["args"] == {"section": "assertions", "op": "append"}
 
 
+def test_non_dict_tool_use_input_coerces_to_empty_args(tmp_path):
+    """A tool_use `input` that is a number, list or bool is valid JSONL but
+    `dict(42)` raises TypeError, which the scanner does not catch — one bad block
+    would take the whole directory scan down (#1741 round 5). Coerce a non-dict
+    input to empty args instead of raising."""
+    log = tmp_path / "session-log.jsonl"
+    _write_jsonl(log, [
+        _assistant([
+            {"type": "tool_use", "id": "n", "name": "record_read", "input": 42},
+            {"type": "tool_use", "id": "l", "name": "record_read", "input": ["a"]},
+            {"type": "tool_use", "id": "b", "name": "record_read", "input": True},
+            {"type": "tool_use", "id": "d", "name": "record_read", "input": {"ok": 1}},
+        ]),
+    ])
+    out = adapt_bundle_transcript(log)  # must not raise
+    assert [e["args"] for e in out["tool_calls"]] == [{}, {}, {}, {"ok": 1}]
+
+
 def test_is_error_joins_from_matching_tool_result(tmp_path):
     """is_error on a tool_result may be absent, explicitly false, or true — all
     three occur in real transcripts (explicit false is the most common). bool()
@@ -336,6 +354,52 @@ def test_format_feedback_report_excludes_could_not_adapt_from_denominator(tmp_pa
     # 1 attributable transcript (good-01), the unadaptable one excluded.
     assert "across 1 attributable transcript(s)" in report
     assert "1 could not adapt, excluded" in report
+
+
+def test_report_keeps_unreadable_bundles_out_of_both_denominators(tmp_path):
+    """An unreadable transcript must not silence the research-side detector or
+    inflate either denominator (#1741 round 5).
+
+    Bundle A has an undecodable transcript but a readable research.json with a
+    real mentor gap: the gap must still be reported (the research scan runs even
+    though the transcript did not), and A must stay OUT of the attributable-
+    transcript denominator. Bundle B has an unreadable research.json: it must
+    stay OUT of the readable-research denominator. Reverting either exclusion, or
+    the early-return that skipped the research scan on an unreadable transcript,
+    fails this one test."""
+    # Bundle A: undecodable transcript (a cp1252 byte) + readable research w/ gap.
+    a = tmp_path / "bundle-a"
+    (a / "_feedback").mkdir(parents=True)
+    (a / "_feedback" / "session-log.jsonl").write_bytes(b"\xf1 not utf-8\n")
+    (a / "research.json").write_text(
+        json.dumps(_mentor_gap_research()), encoding="utf-8"
+    )
+
+    # Bundle B: unreadable research.json, no transcript.
+    b = tmp_path / "bundle-b"
+    b.mkdir()
+    (b / "research.json").write_text("{not json", encoding="utf-8")
+
+    results = scan_feedback_dir(tmp_path)
+    by_name = {r["bundle"]: r for r in results}
+
+    # Fix 1: the mentor scan ran on A despite its unreadable transcript.
+    assert by_name["bundle-a"]["transcript_unreadable"] is True
+    assert len(by_name["bundle-a"]["missing_mentor_verdicts"]) == 1
+    assert by_name["bundle-b"]["research_unreadable"] is True
+
+    report = format_feedback_report(results)
+    assert "[transcript unreadable]" in report
+    assert "[research unreadable]" in report
+    # The gap is reported, not silenced by the unreadable transcript, and only
+    # bundle A (readable research) is in the mentor denominator — B is excluded.
+    assert (
+        "missing-mentor-verdict findings 1 across 1 bundle(s) with a readable "
+        "research.json" in report
+    )
+    # A is out of the attributable denominator (unreadable transcript) and B has
+    # no transcript, so zero attributable transcripts.
+    assert "across 0 attributable transcript(s)" in report
 
 
 # ── _submitted_research: committed baseline beats a mutated working tree ──────

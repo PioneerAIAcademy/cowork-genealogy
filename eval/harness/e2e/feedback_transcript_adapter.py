@@ -99,9 +99,15 @@ def adapt_bundle_transcript(path: Path) -> dict[str, Any]:
                 continue
             btype = block.get("type")
             if btype == "tool_use":
+                # `input` is untrusted JSON from the hosted SDK line shape. It is
+                # normally an object, but a number/bool/list is valid JSONL, and
+                # `dict(42)` raises TypeError — which is NOT in the (ValueError,
+                # OSError) the scanner catches, so one bad block would take the
+                # whole directory scan down. Coerce a non-dict to {}.
+                inp = block.get("input")
                 entry: dict[str, Any] = {
                     "tool": block.get("name", ""),
-                    "args": dict(block.get("input") or {}),
+                    "args": inp if isinstance(inp, dict) else {},
                     # Filled in from the matching tool_result below. It must NOT
                     # stay None: `did_not_land`'s second clause reads this field
                     # for the no-project answer (issue #1695), which is
