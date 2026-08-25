@@ -14,12 +14,12 @@
   "mcp_fixtures": ["person-warnings-cluster"],
   "judge_context": [
     "Should call person_warnings on Patrick (I1) and report all four warnings the tool returned",
-    "Should explicitly recognize the cluster of warnings ON PATRICK (2 contradictions + 1 implausible on I1) as a near-certain identity-confusion signal -- not just present four independent items",
+    "Should explicitly recognize the cluster of warnings ON PATRICK (2 contradictions + 1 implausible on I1) as a cluster rather than four independent items -- and should first ask whether ONE wrong fact would produce the whole cluster before treating it as identity confusion. All three of Patrick's warnings cite the same death fact, so a single wrong death date is a live explanation standing alongside a merge, not a lesser one.",
     "Should count ONLY Patrick's three warnings toward the cluster verdict, NOT the fourth warning which is on his relative Thomas (I2) -- relativesHasAgeRangeGreaterThan120 is a separate concern about the parent-child link, not another strike against Patrick",
     "Should treat Thomas's relative-warning per the relative-warning rule: recommend verifying the parent-child link via person-evidence BEFORE recommending data fixes on Thomas",
-    "Should hand off to the timeline skill to find Patrick's split point, AND to person-evidence to rebuild the assertion-to-person links once the split is identified",
+    "Should recommend verifying the shared fact -- the recorded death date -- against its original source as the FIRST move, since that one check distinguishes a data-entry error from an identity problem. Recommending a chronological timeline rebuild, and re-linking the assertions once a split is actually established, is correct as the follow-on rather than the opening move. Phrase both as research actions the user can take: naming an internal skill in user-facing text is itself a defect under the skill's phrasing rule.",
     "Should classify the severities correctly: hasEventAfterDeath1, hasAgeRangeGreaterThan120, and relativesHasAgeRangeGreaterThan120 as Critical (contradiction); tooManyDeathDates2 as Note (implausible)",
-    "Should NOT recommend fixing individual fields on Patrick when the cluster suggests the whole profile is the wrong thing -- fixing one date won't clear the underlying identity issue",
-    "Should reference the escalation rule from warnings-as-identity-signals.md (2+ contradictions -> split the profile, rebuild person_evidence)"
+    "Should not present a single field fix as resolving the cluster on its own. Recommending that the shared death date be verified first is correct and expected -- it is the discriminator -- but the report must keep the identity reading open until that check is done, rather than closing on either explanation.",
+    "Should reflect the escalation rule from warnings-as-identity-signals.md as it now stands: on 2+ contradictions, ask first whether one wrong fact explains all of them, and treat the merge reading as the stronger one only when no single error does."
   ]
 }
