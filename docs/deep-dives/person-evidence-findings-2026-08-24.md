@@ -139,11 +139,17 @@ deep dive #1657, which arrived in this branch's `main` merge — already asserts
 this very rule for the other skill that writes to the tree. The work was one
 validator, not a harness change, and #1881 is closed as folded in.
 
-One real gap did turn up underneath the wrong one: `conftest.py` had no
-`skills_invoked` fixture, so tree-edit's validator errored with "fixture not
-found" under a standalone `pytest validators/`. Fixed here. Whole-directory
-standalone runs remain broken for older, separate reasons (a missing `test`
-fixture, and `validators_lib` not being on the import path); not addressed.
+**And a second correction on top of the first**, found by @florencemashipei in
+review. I then reported that `conftest.py` "had no `skills_invoked` fixture" and
+added one. It had one — added by the search-wikipedia dive (`91723121`) and
+present on `main` throughout. Mine was a duplicate, and since the later
+definition wins it was dead code from the moment it landed, with a docstring
+asserting the opposite of what git shows. Removed. I cannot reconcile that with
+the "fixture not found" error I observed and reported at the time, and I am not
+going to invent a reason; what is checkable is that the fixture predates this
+branch and the addition was never needed. Whole-directory standalone runs remain
+broken for older, separate reasons (a missing `test` fixture, and
+`validators_lib` not being on the import path); not addressed.
 
 ## F5 — A `judge_context` quotes a retired version of §5, and blesses the shape the rubric calls a shortfall
 
@@ -421,3 +427,45 @@ specific disclosure by reading one. **Validator request:**
 > **What a violation looks like:** `ut_person_evidence_023`, run
 > `v1_2026-08-24_22-05-46` — quotes 0.71 from `flynn-record-matching`'s
 > `results/log_002.json` with zero `same_person` calls in the run.
+
+## Deferred deliberately — the name-provenance sentence on §5's carve-out
+
+Raised by @florencemashipei in review of #1882, verified, accepted, and **not
+shipped in this PR**. Recorded here rather than left implicit.
+
+**The gap.** §5's carve-out tells the skill to create a bride named only inside
+the groom's marriage assertion with `tree_edit add_person` — "gender plus the
+name the record gives". `assertNodeHasRef` runs on inline **facts** only in the
+`add_person` arm of `tree-edit.ts`, never on names, so she lands with **no
+provenance**. And the exemption she travels through is the one
+`tree-materialization-spec.md` §6 reserves for **hypothesis, oral, and manual**
+stubs, whose stated safety argument is that record-derived names "come through
+`materialize_facts`, which enforces a resolved ref on every name it authors."
+A bride in a marriage register is record-derived, so that argument is exactly
+what does not hold for her. Shipping the clause as drafted legitimises
+unsourced `add_person` for record-derived people.
+
+**The accepted wording**, to apply verbatim on the next run:
+
+> Create her with `tree_edit add_person` — gender, the name the record gives,
+> and that name's `sources: [{ ref, page }]` resolved from the marriage
+> assertion's `source_id`, since `add_person` enforces a ref on inline facts but
+> not on names and she is record-derived, not a hypothesis stub. Then link per
+> Step 4.
+
+**Why deferred.** It edits `SKILL.md`, so it flips the run-log snapshot and buys
+a paid eval run; it cannot take `eval-cosmetic-skip`, which is for
+behaviour-neutral edits only. The lead chose to let it ride the run
+`person-evidence` next pays for, alongside F9's judge-grounding clause.
+@florencemashipei stated she would approve on that basis provided the deferral
+is explicit, which is what this section is.
+
+**The better fix is filed, not written here.** #1895 — teach `materialize_facts`
+to mint from a relationship assertion's named party, so the ref is *enforced
+rather than remembered* and the carve-out retires entirely. That is a tool
+change with its own spec section and Vitest coverage, so it wants a tool
+reviewer rather than this dive.
+
+**Three things now ride the next paid run**, and they should go together: this
+sentence, F9's `_023` grounding clause, and — if the corpus has caught up — the
+ungating of `test_check_warnings_runs_after_a_write`.

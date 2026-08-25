@@ -81,20 +81,6 @@ def tool_calls() -> list:
 
 
 @pytest.fixture
-def skills_invoked() -> list:
-    """Skills the run delegated to, in call order, from the PreToolUse hook.
-
-    `run_validators` has supplied this all along; conftest had not, so any
-    validator declaring it errored under a standalone `pytest validators/`
-    with "fixture not found" — which is what `test_tree_edit.py`'s
-    `test_check_warnings_runs_after_any_tree_write` (deep dive #1657) does
-    today. Empty is the no-delegation case, so it is also the right
-    standalone default.
-    """
-    return []
-
-
-@pytest.fixture
 def blocked_context_calls() -> list:
     """Main-thread calls to subagent-only tools, denied by the PreToolUse hook.
 
