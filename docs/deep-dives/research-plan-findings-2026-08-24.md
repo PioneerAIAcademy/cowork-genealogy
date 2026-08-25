@@ -287,8 +287,9 @@ file's one instruction fires on a condition this skill **cannot reach**.
 **Gap — lane 2, and it belongs to issue #1633,** which owns the per-file verdict
 across all 18 unreachable reference files plus the both-directions lint.
 Nothing is renamed or deleted in this PR. What this dive contributes is the
-content call and one file #1633 may not have counted — see
-"What this dive contributes to #1633".
+content verdict on both files — see "What this dive contributes to #1633",
+including the fact that #1633 closed `not planned` on 2026-08-21, so that
+verdict currently has no owner.
 
 ---
 
@@ -305,7 +306,7 @@ suite is spelled `score <Dimension> as 1 (fail)`, which the pattern misses
 because a dimension name sits between "score" and the digit:
 
 ```sh
-grep -lE 'score [A-Za-z][A-Za-z ]+ as [123]' eval/tests/unit/research-plan/*.json
+grep -lniE 'score [A-Za-z][A-Za-z ]+ (as [123]|low|high)' eval/tests/unit/research-plan/*.json
 ```
 
 — returns **7 files**:
@@ -331,9 +332,23 @@ deduct** for the review declining to state a document's contents."
 `judge_context`). Every one of the three dimensions these branches target is
 flat at `3` across all 65 graded runs, so **not one branch has ever fired**.
 
-Recommended change to `docs/skill-deep-dive-guide.md` and to the issue
-template: widen the prescribed grep. The narrow pattern reported a clean
-result on a suite where a third of the tests leak.
+**Recommended: add the grep to `docs/skill-deep-dive-guide.md` Step 1, which
+carries none today.** There is no issue template either — the pattern lives only
+in #1650's body, so there is nothing to widen, only somewhere to put it.
+
+**And the widened form is still not enough.** `plan-continue-authorized-in-message.json:40`
+reads "Score Correctness low ONLY for this pattern" — dimension, verdict and
+condition, which is this finding's own definition of the leak. The pattern above
+misses it twice: it is case sensitive on `score`, and it requires `as [123]`
+rather than a bare `low`/`high`. Use:
+
+```sh
+grep -lniE 'score [A-Za-z][A-Za-z ]+ (as [123]|low|high)' eval/tests/unit/research-plan/*.json
+```
+
+That clause is **not fixed in this PR**: removing it flips this skill's snapshot
+inactive and buys a fourth ~$6.6 run for one sentence. It should ride the next
+paid run this skill takes. Recorded here so it is not rediscovered.
 
 ---
 
@@ -583,11 +598,17 @@ and V7 therefore read as gating; V4 reads `text_response` and does not.
 
 ---
 
-## What the two verification runs showed
+## What the three verification runs showed
 
-The PR's changes bought two `make eval-skill SKILL=research-plan` runs, both on
-2026-08-24: `v1_2026-08-24_13-37-16` ($6.60) and `v1_2026-08-24_14-32-36`
-($6.56). The second was bought by a fixture fix, not by a finding; see F8.
+The PR's changes bought three `make eval-skill SKILL=research-plan` runs, all on
+2026-08-24: `v1_2026-08-24_13-37-16` ($6.60), `v1_2026-08-24_14-32-36` ($6.56)
+and `v1_2026-08-24_17-21-19` ($6.77) — **$19.92 in total**. The second was bought
+by a fixture fix, not by a finding (see F8); the third by the review round.
+
+**Only the third is still active against the tree.** The first two predate the
+`SKILL.md`, `record-type-guide` and four `judge_context` edits, and are stale on
+six snapshot keys. Read them for F8's evidence and for the run-to-run comparison,
+not as a description of what the skill does now.
 
 **The aborts are gone.** The 08-17 run had two tests abort on the wall clock
 (`wzk` and `016`); both verification runs have none.
@@ -718,7 +739,11 @@ varies with the plan it writes; run 2 reached `search-images` instead. Closing
 it at the fixture level would mean stubbing every skill that can write `log`,
 which is a grading patch over a harness gap — the exact move
 `harness/skill_stubs.py` says the canned-response form exists to remove. **The
-test ships red, deliberately, as V9's reproducing evidence.**
+V9's reproducing evidence is runs 1 and 2, not the shipping run log.** In run 3
+`q7m` routed to the two stubbed executors and passed, so the red test in the
+newest run log is `ut_research_plan_016` on `['localities']` — which is F2, a
+live skill defect, not this false positive. `q7m` is now a latent flake rather
+than a fix, because `search-images` is still unstubbed and run 2 reached it.
 
 ## F9 — No rubric dimension grades breadth, which is the thing a research plan most has to get right
 
@@ -801,13 +826,22 @@ delete-rather-than-rewrite pilot, not against it. Recorded, not acted on.
 
 ## What this dive contributes to issue #1633
 
-The content call on `references/locality-survey-guide.md` — and one file #1633
-may not have counted, `references/validation-protocol.md`, which is unreachable
-by the same test (no SKILL.md and no sibling names it) and whose single
-instruction cannot apply to a skill that writes only `plans` and `plan_items`.
+The content call on both files #1633 lists for this skill,
+`references/locality-survey-guide.md` and `references/validation-protocol.md`.
+Both are unreachable by the same test (no SKILL.md and no sibling names either),
+and `validation-protocol.md`'s single instruction cannot apply to a skill that
+writes only `plans` and `plan_items`.
+
+**Correction.** An earlier draft called `validation-protocol.md` a file "#1633
+may not have counted". That is false: #1633's body names it twelve times. What
+this dive contributed is the content verdict, not the file.
 
 **Genealogist's verdict, 2026-08-24: both files are safe to delete outright, and
-nothing in either needs rewiring.** Posted in full on issue #1633. The reasoning
+nothing in either needs rewiring.** Posted in full on issue #1633 — **which
+closed as `not planned` on 2026-08-21**, three days before the comment landed.
+There is no 18-file sweep left to unblock, the verdict has no owner, and both
+files still ship in the plugin zip. **The next auditor has to re-file the sweep
+or carry this verdict forward; it will not act on itself.** The reasoning
 that settles it: `locality-survey-guide.md`'s only live content is its five-type
 contingency taxonomy, and every one of the five is already stated in a file the
 skill actually loads — record destruction in `record-type-guide.md`'s contextual
