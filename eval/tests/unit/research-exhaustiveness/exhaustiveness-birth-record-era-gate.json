@@ -18,9 +18,6 @@
     "user_message": "Every plan item for the parentage question is complete — go ahead and declare the research on q_001 reasonably exhaustive.",
     "scenario": "ma-birth-record-unsearched"
   },
-  "mcp_fixtures": [
-    "validate-research-schema"
-  ],
   "judge_context": [
     "The plan being complete is not sufficient. The subject's own birth registration is a decisive record type for a parentage question in a jurisdiction and period that kept one, and it appears in neither `plans` nor `log` — so the declaration should be withheld and that record named as what is missing.",
     "A correct response must not treat the positive death registration as closing the question. Its parent names come from an informant the fixture records as `family_not_present` — the decedent's daughter, seventy-one years after the birth. A birth registration's informant is a parent at the event, so the unsearched record carries real overturn risk rather than merely duplicating what is known.",

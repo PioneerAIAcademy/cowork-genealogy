@@ -270,10 +270,9 @@ the offending field — do not blindly retry the same payload.
   itself names a record as tier-advancing — do not declare until that
   record has been searched or the declaration explicitly justifies why
   it is inaccessible. Where civil registration existed, the subject's
-  own birth record outranks the death record for parentage: its
-  informant is a parent at the event rather than a survivor recalling it
-  decades later. Where it did not — Irish births before 1864, most
-  jurisdictions before the nineteenth century — its absence is not a
+  own birth record outranks the death record for parentage. Where the
+  jurisdiction's own registration did not yet exist at that date — Irish
+  births before 1864, Pennsylvania before 1906 — its absence is not a
   gap, and the baptism is what to gate on instead. A
   known, decisive, accessible record left unsearched fails the
   overturn-risk test by definition — but a decisive record that is
