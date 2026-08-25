@@ -212,4 +212,35 @@ describe("Windows wrapper drift", () => {
     );
     expect(bare).toEqual([]);
   });
+
+  /**
+   * The two `scripts/`-root `.bat` files are exempt from the stray check above,
+   * which meant nothing read them at all -- and they are the Windows entry
+   * point for the whole alpha-feedback loop. In cmd, `shift` moves `%1` into
+   * `%0`, so a `%~dp0` read AFTER an argument-parsing loop yields the first
+   * argument's directory, not the script's. `setup-feedback-case.bat` resolved
+   * the repo root that way and could not unpack any case (issue #1876); the
+   * `.sh` counterpart is unaffected because it reads SCRIPT_DIR before parsing.
+   */
+  it("every scripts/-root .bat reads %~dp0 before it shifts", () => {
+    const late = [...SCRIPTS_ROOT_BAT]
+      .filter((f) => existsSync(join(projectRoot, "scripts", f)))
+      .flatMap((f) => {
+        const body = read(join(projectRoot, "scripts", f));
+        const dp0 = body.search(/%~dp0/);
+        const shift = body.search(/^\s*shift\b/m);
+        if (dp0 === -1 || shift === -1) return [];
+        return dp0 > shift ? [`${f}: %~dp0 read after shift`] : [];
+      });
+    expect(late).toEqual([]);
+  });
+
+  it("a scripts/-root .bat actually uses %~dp0 (guards the reader itself)", () => {
+    const using = [...SCRIPTS_ROOT_BAT].filter(
+      (f) =>
+        existsSync(join(projectRoot, "scripts", f)) &&
+        /%~dp0/.test(read(join(projectRoot, "scripts", f))),
+    );
+    expect(using.length).toBeGreaterThan(0);
+  });
 });

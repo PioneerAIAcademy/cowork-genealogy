@@ -8,6 +8,9 @@ REM Counterpart to setup-feedback-case.sh.
 set "FORCE=0"
 set "ZIP_PATH="
 set "DEST_DIR="
+REM %~dp0 must be read BEFORE :parse -- `shift` moves %1 into %0, so
+REM after the loop %~dp0 is the zip's directory, not the script's (issue #1876).
+set "SCRIPT_DIR=%~dp0"
 
 :parse
 if "%~1"=="" goto :done_parse
@@ -44,7 +47,6 @@ if not exist "!ZIP_PATH!" (
 )
 
 REM --- Resolve repo root from script location ---
-set "SCRIPT_DIR=%~dp0"
 pushd "%SCRIPT_DIR%" >nul
 for /f "delims=" %%i in ('git rev-parse --show-toplevel 2^>nul') do set "REPO_ROOT=%%i"
 popd >nul
@@ -79,7 +81,10 @@ if exist "!DEST_DIR!\." (
 
 REM --- Unzip via PowerShell (Expand-Archive ships with Windows 10+) ---
 if not exist "!DEST_DIR!" mkdir "!DEST_DIR!"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -LiteralPath '!ZIP_PATH!' -DestinationPath '!DEST_DIR!' -Force"
+REM -ErrorAction Stop + exit 1: without them powershell.exe returns 0 even
+REM when Expand-Archive errors, so the errorlevel check below never fired
+REM and a corrupt zip printed "Imported to ..." and exited 0 (issue #1876).
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Expand-Archive -LiteralPath '!ZIP_PATH!' -DestinationPath '!DEST_DIR!' -Force -ErrorAction Stop } catch { exit 1 }"
 if errorlevel 1 (
     echo Error: failed to unzip !ZIP_PATH! 1>&2
     exit /b 1
@@ -98,9 +103,16 @@ if exist .gitignore (
 )
 
 REM --- git init + initial commit ---
+REM The .sh counterpart runs under `set -euo pipefail`, so a failing git
+REM baseline aborts there. cmd has no equivalent, so check each step --
+REM an unset user.email made all three fail while the script still
+REM reported success (issue #1876).
 git init -q
+if errorlevel 1 goto :git_baseline_failed
 git add .
+if errorlevel 1 goto :git_baseline_failed
 git commit -q -m "imported"
+if errorlevel 1 goto :git_baseline_failed
 
 REM --- Per-skill junctions under .claude\skills\ ---
 REM Junctions (mklink /J) work without admin or Developer Mode, unlike /D.
@@ -141,6 +153,12 @@ echo Then: /compare-state --against=what-went-wrong
 echo.
 echo Full workflow: docs\alpha-feedback-guide.md
 exit /b 0
+
+:git_baseline_failed
+echo Error: could not create the git baseline in !DEST_DIR!. 1>&2
+echo The case was unpacked, but `make feedback-reset` needs this commit. 1>&2
+echo If git reported an unknown author, set user.name and user.email. 1>&2
+exit /b 1
 
 :usage
 echo Usage: setup-feedback-case.bat ^<path-to-feedback.zip^> [^<dest-dir^>] [--force]
