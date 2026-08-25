@@ -645,14 +645,13 @@ record), and it never writes identity links or eliminations inline
 > [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md)** — it was the rev. 1
 > headline and was demoted after measurement.
 
-> **Direction.** There is **no `eval/tests/unit/research/`
-> suite.** The component that fails most is exercised only by live e2e runs. A
-> router suite is planned, with two prerequisites: settling the router's
-> `allowed-tools` and the agent-union semantics, and reconciling the two
-> contradictory `address_first` verdict tables in the body (item 3 above), which
-> currently cannot tell a test which behavior is correct. One design hazard on
-> top: #1012 — a `Skill()` callee can bind toolless in the unit path, so callee
-> binding must be made real before routing can be graded.
+> **Direction.** `eval/tests/unit/research/` now exists (#1494): trigger
+> corpus (10 tests) plus stubbed routing tests covering rows 1–4 and the
+> shortcut guard. Rows 14 (post-verdict `address_first` handler) and 16
+> (`project.status = "completed"`) remain blocked on #1492 (the two
+> contradictory verdict tables in the body, item 3 above). A live e2e run
+> is still the only instrument for routing-table rows the unit suite does
+> not yet cover.
 
 ### If you're asked to…
 
@@ -676,10 +675,9 @@ tests in the unit corpus — but know what they pin. **A negative test pins
 *triggering*: "utterance U must land on skill B, not skill A."** It says nothing
 about the routing table, which runs *after* `/research` has already been
 selected. And `check_negative_reciprocity.py` skips any edge whose target has no
-`eval/tests/unit/<target>/` directory, so — `research` having no suite —
-**routing *into* `research` is now pinnable** — #1494 added
-`eval/tests/unit/research/`, so `check_negative_reciprocity.py` can see edges
-into it.
+`eval/tests/unit/<target>/` directory, so routing *into* a skill is pinnable
+only once it has a suite. `research` gained one in #1494, so edges into it
+are now visible to the reciprocity lint.
 
 **Fix a skill that isn't triggering.** First work out **which binding missed** —
 they have different fixes, and only one of them is a description problem.
@@ -1428,16 +1426,13 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and negative routing tests across 26 skill suites. Committed test definitions
-  (`make eval-inventory`) — one JSON file per test under `eval/tests/unit/` — and
-  across the 25 live suites the latest run log per suite totals **403 rows, 362
-  passing (90%)**. Those two numbers count different things and can diverge in
-  either direction: a test defined after its suite's last run has no row, and a
-  row survives for a test since deleted. Today they differ by one, in the first
-  direction: `ut_timeline_010` was added to `timeline` after that suite's last
-  run, so it has no row; no row survives for a deleted test. Both numbers are
-  facts about the snapshots — taken between 2026-07-27 and 2026-08-24 — not an
-  identity, so re-derive rather than quoting them.
+  run logs, and negative routing tests across 26 skill suites. **421** committed
+  test definitions (`make eval-inventory`) — one JSON file per test under
+  `eval/tests/unit/` — and across the 25 live suites the latest run log per suite
+  totals **403 rows, 362 passing (90%)**. Those two numbers count different things
+  and can diverge in either direction: a test defined after its suite's last run
+  has no row, and a row survives for a test since deleted. Both numbers are facts
+  about the snapshots — not an identity, so re-derive rather than quoting them.
 - **E2e** (`eval/tests/e2e/<fixture>/`) — live FamilySearch, 106 fixtures
   (`make eval-inventory`; directories carrying a `fixture.json`; `eval/tests/e2e/` holds one more
   directory that is not one), blind
@@ -1532,7 +1527,7 @@ lives. A test is not just its definition: it usually needs a matching
 `eval/fixtures/mcp/` response, a dimension in that skill's `rubric.md`, and a
 check in `eval/harness/validators/`. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
-1 by policy. 87 of the 404 definitions are **negative** tests that exist to prove
+1 by policy. 92 of the 421 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is

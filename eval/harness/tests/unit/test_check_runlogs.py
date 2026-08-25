@@ -256,7 +256,7 @@ def _patch_diffs(monkeypatch, paths: list[str], *, deleted: list[str] | None = N
     )
 
 
-def test_exempt_orchestrator_skill_passes(monkeypatch, capsys):
+def test_formerly_exempt_skill_now_gated(monkeypatch, capsys):
     """research gained a trigger corpus (#1494) and was removed from
     RUNLOG_GATE_EXEMPT_SKILLS. Touching its SKILL.md now fails the gate
     like any non-exempt skill without committed run logs."""

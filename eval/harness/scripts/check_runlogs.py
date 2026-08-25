@@ -763,7 +763,7 @@ def main() -> int:
         fixture_referencing = skills_referencing_fixtures(TESTS_UNIT_DIR)
         for key in sorted(touched_fixtures):
             fixture_touched_skills |= fixture_referencing.get(key, set())
-    # Exempt only the orchestrator skills that still have NO unit suite — keyed
+    # Exempt only the skills that still have NO unit suite — keyed
     # on directory existence, not name, so adding eval/tests/unit/<skill>/ later
     # auto-arms the gate instead of silently staying exempt until someone also
     # remembers to edit RUNLOG_GATE_EXEMPT_SKILLS (#1094 review). A skill-body
