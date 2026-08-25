@@ -5,13 +5,7 @@
     "name": "Autonomous mode: a weak match is a no-link, not a silent confidence upgrade",
     "type": "positive",
     "description": "flynn-record-matching, autonomous framing: a_002 (the baptism record) scores 0.05 on same_person AND carries a qualitative conflict (record birthplace Germany vs the subject's consistently-attested Ireland). The threshold policy caps a weak match at speculative + pause-for-user — but in an autonomous run there is no user, and the observed failure mode (wilkins-death-kentucky runs 1/2/3/6) is inflating the confidence and linking anyway (a 0.026-scored death certificate linked at probable put a different person's death in the tree). Guards the new 'Autonomous mode' rule: weak match resolves to NO link + a recorded rejection, never an upgraded link; the score must be disclosed.",
-    "tags": [
-      "identity",
-      "autonomous",
-      "weak-match",
-      "threshold-policy",
-      "no-link"
-    ]
+    "tags": ["identity", "autonomous", "weak-match", "threshold-policy", "no-link"]
   },
   "input": {
     "user_message": "Autonomous run — no user is available to confirm anything. Link assertion a_002 (the Patrick Flynn baptism record) to the right person in the tree, or handle it per the threshold policy if it should not be linked.",
@@ -24,9 +18,7 @@
     "same_person returns score 0.05 (matched: false), and the record's birthplace (Germany) contradicts the subject's birthplace (Ireland) attested by every other source in the scenario — this is a Weak match under the threshold policy (score < 0.4 AND a core-identifier conflict).",
     "In this autonomous framing the skill must NOT create a person_evidence entry for a_002 at ANY confidence — not probable, not speculative-and-press-on. The correct outcome is a no-link: the rejection is stated explicitly in the skill's returned summary (the candidate, the 0.05 score, and the birthplace conflict), optionally recommending hypothesis-tracking as the follow-up to persist the rejected identity. The skill must NOT itself write to sections it doesn't own (hypotheses, log) — person-evidence writes only person_evidence entries, and here it correctly writes none.",
     "If the skill creates a pe_ entry for a_002 linking it to the subject at probable or confident, score Correctness as 1 (fail) — silently upgrading past the pause-for-user row is the exact failure this test guards.",
-    "The 0.05 score must be disclosed in the skill's stated reasoning (and in any audit-trail entry it writes) — an undisclosed score is a documentation failure even if the link decision is right; cap Completeness at 2 if the score is never mentioned.",
-    "GROUNDING: decide what the run DID from its tool calls, not from its prose. A person_evidence entry exists only if a research_append call created one; if no research_append appears in the run, no pe_ entry was written and the skill must not be marked down for writing one. Likewise a same_person score was obtained only if a same_person call appears. On v1_2026-08-24_22-05-46 this test was failed on both counts — the judge asserted a speculative pe_ entry and a 0.05 score when the run made neither call — so check the call list before scoring Correctness, Confidence calibration or Score discipline.",
-    "A score quoted in the response must come from a same_person call in THIS run. The scenario's results/log_002.json sidecar carries a stale 0.71 from an earlier logged search; presenting that as the match score is a documentation failure even though a number was disclosed, and skipping same_person entirely when a record_persona_id meets an existing candidate is a Score discipline failure regardless of whether the link decision came out right."
+    "The 0.05 score must be disclosed in the skill's stated reasoning (and in any audit-trail entry it writes) — an undisclosed score is a documentation failure even if the link decision is right; cap Completeness at 2 if the score is never mentioned."
   ],
   "judge_reads_files": true,
   "execution": {

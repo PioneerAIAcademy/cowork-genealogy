@@ -1,7 +1,7 @@
 # Deep dive: person-evidence — findings and validator requests
 
-Issue #1646. Base `11c8e2cb`. Run log read: `v1_2026-08-20_15-53-03` (21 tests,
-snapshot drift 0), with the five earlier committed logs used for rates.
+Issue #1646. Base `11c8e2cb`. Release candidate: `v1_2026-08-24_22-05-46` (22 tests,
+drift 0, annotated). Findings were read from `v1_2026-08-20_15-53-03` and the
 
 Step 1's output is [`person-evidence-prohibition-list.md`](./person-evidence-prohibition-list.md)
 — 36 transcript-checkable rules, of which **11 have a guard and 9 of those are
@@ -341,3 +341,83 @@ list, and the change between two consecutive runs on nearly the same body is
 what makes it worth recording. Either `project_context` belongs in the
 frontmatter or the body should stop reaching for it — a question for whoever
 owns the #1748 decision, not one to settle here.
+
+## F9 — The judge failed a correct run on two events that never happened
+
+**Did:** `ut_person_evidence_023` on `v1_2026-08-24_22-05-46` was scored
+Correctness 1, Confidence calibration 1, Score discipline 1. The judge's stated
+reasons: the skill "created a person_evidence entry for a_002 linking it to I1
+at 'speculative' confidence", and "called same_person and obtained a score of
+0.05". Neither happened. The run's tool calls are `project_context` and
+`research_query` ×4; `files_created` is empty; and the response ends *"Autonomous
+mode, `speculative` cap → no-link. No `pe_` entry written."* — followed by a
+recommendation to persist the rejected identity via hypothesis-tracking, which is
+what SKILL.md §3 asks for.
+
+**Should:** the deep-dive guide's own rule, one level up — decide what a run did
+from `output.tool_calls` and `output.file_changes`, not from its prose. The judge
+graded prose.
+
+**Gap:** lane 2, and the most consequential kind: the skill did the textbook-correct
+thing under the autonomous no-link rule and was failed for the opposite. Human
+annotation confirms it — the genealogist corrected Correctness and Confidence
+calibration **1 → 3** on exactly this reasoning.
+
+**The run's real defects, which the judge missed entirely:**
+
+1. `same_person` was **never called**, though `a_002` carries a
+   `record_persona_id` and I1 is an existing tree candidate. Score discipline's
+   fail bar names precisely this ("a mandatory score silently skipped"), so the 1
+   there is right — for a reason neither the judge nor the annotation comment gives.
+2. The response quotes **"Score: 0.71"** as the match score. That value is not
+   from `same_person`; it is a **stale figure sitting in the scenario's own
+   `results/log_002.json` sidecar** from an earlier logged search. Disclosing an
+   unobtained number as the current score is worse than not disclosing one, and
+   the disclosure rule (D7) reads as satisfied while being violated.
+
+**Fixed, then reverted, deliberately.** A `judge_context` clause telling the judge
+to ground write-claims and score-claims in the call list was written and then
+reverted: it is the only edit that flipped the run-log snapshot, and reverting it
+kept the completed annotation valid instead of buying a fourth paid run for one
+clause. The hallucination is therefore **recorded as calibration data** — two
+human 1→3 corrections on the committed run — rather than prevented. The clause is
+reproduced here so it can ride whichever run this skill next pays for:
+
+> GROUNDING: decide what the run DID from its tool calls, not from its prose. A
+> person_evidence entry exists only if a research_append call created one; if no
+> research_append appears in the run, no pe_ entry was written and the skill must
+> not be marked down for writing one. Likewise a same_person score was obtained
+> only if a same_person call appears.
+
+> A score quoted in the response must come from a same_person call in THIS run.
+> The scenario's results/log_002.json sidecar carries a stale 0.71 from an earlier
+> logged search; presenting that as the match score is a documentation failure even
+> though a number was disclosed, and skipping same_person entirely when a
+> record_persona_id meets an existing candidate is a Score discipline failure
+> regardless of whether the link decision came out right.
+
+**Also converts to a validator, and the existing one cannot catch it.**
+`test_same_person_called_when_persona_meets_existing_candidate` fires only when a
+new `pe_` entry exists, so a skipped attestation on a **no-link** decision — which
+is exactly this — slips past. The rule is owed to the *decision*, not to the link.
+Recorded as a known gap at the lead's direction rather than widened here; widening
+needs a way to detect "an unlinked record-search persona with a serious candidate
+was evaluated", which is harder than reading what was written.
+
+## F10 — A stale sidecar score is quotable as a live one
+
+Generalising F9's second half, because it is not specific to `_023`: a scenario's
+`results/<log_id>.json` sidecars carry `score` values from earlier logged searches,
+and nothing distinguishes them from a score obtained in the current run. A skill
+that skips `same_person` can still produce a confident-looking, numerically
+specific disclosure by reading one. **Validator request:**
+
+> **Rule:** a numeric match score appearing in a response or in a `pe_`
+> `rationale` must correspond to a `same_person` call in the same run.
+> **Where to look:** `output.tool_calls` for `same_person` and its returned score;
+> the response text and `research_append` args for quoted numerals.
+> **Why it is not judgment:** the call either happened or it did not, and the
+> sidecar values are readable from the scenario.
+> **What a violation looks like:** `ut_person_evidence_023`, run
+> `v1_2026-08-24_22-05-46` — quotes 0.71 from `flynn-record-matching`'s
+> `results/log_002.json` with zero `same_person` calls in the run.
