@@ -250,6 +250,17 @@ Two qualifications, both from the source:
   It also exempts plugin agents, which get fresh context per invocation and
   cannot decay this way.
 
+`make e2e-compaction` is the corpus-scale follow-up to this single-session
+measurement — it splits every committed e2e run at its compaction boundaries
+and checks a narrower, already-partly-anchored case: whether `record_search`'s
+`subjectId` argument (`search-records/SKILL.md` prose, feeding a fold in
+`record-search.ts` — see ADR-0003) keeps being supplied late in a session.
+Raw supply is lower late in a session and the shipped nudge shows no lift
+there — but most of that gap is not decay: the tool's own schema permits
+omitting `subjectId` for a person not yet in the tree, and that is what most
+late-segment omissions turn out to be on manual review. See ADR-0003's
+Consequences for the caveat and the worked example.
+
 A rule is **structurally anchored** if any of these holds:
 
 1. **The tool rejects the violation.** (`research_append` refuses the write.)
