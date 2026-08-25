@@ -72,9 +72,9 @@ checklist (~6,665 searchable collections; ~10% transcription error
 rate). **Default to "less is more"** — no fuzzy matching means every
 extra required term risks missing transcription variants:
 
-- **Uncommon surname** → `+Surname` only, filter after
-- **Common surname** → `+Surname +Associate` or `+Surname +Keyword`
-- **Very common surname** → multiple required terms or phrase search
+- **Uncommon surname or given name** → `+Surname` only, filter after
+- **Common surname or given name** → `+Surname +Associate` or `+Surname +Keyword`
+- **Very common surname or given name** → multiple required terms or phrase search
 
 ### 3. Determine the search strategy
 

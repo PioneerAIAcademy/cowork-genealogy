@@ -15,17 +15,19 @@ compensate.
 | `rn` | m, in, iii, w, ui, iu, nr | Turnpike → Tumpike | `Tu*pike` |
 | `u` | n, v | Mountain → Monntain | `Mo?ntain` |
 | `m` | rn, in, iii, w, ui, iu, nr | William → Williain | `Willia*` |
-| `c` | e, o, a, d (a/d mainly after a flourish or before `l`) | uncle → unele | `un?le` |
-| `e` | c, o, a, d (a/d mainly after a flourish or before `l`) | angel → angcl | `ang?l` |
+| `c` | e, o, a, d (a/d mainly followed by a flourish or an `l`) | uncle → unele | `un?le` |
+| `e` | c, o, a, d (a/d mainly followed by a flourish or an `l`) | angel → angcl | `ang?l` |
 | `l` | I, 1, t, d, b, i (d/b vary with neighboring letters) | Alice → Atice | `A?ice` |
 | ornate capital S | F | Scott → Fcott | search both |
 | double-l | tt, H | Powell → Powett | `Powe*` |
 | `&` ligature | et, &c | & → et | search both |
-| superscript abbrev | dropped | Mrs → Mes | `M?s` |
+| superscript abbrev | dropped | Mrs → Mes | search both |
 
-Confusable letters compound within a word: `Mountain` could also surface
-as `Moiiiitain`, `Momitain`, or `Morritan` when several of the above
-collide — a single `?`/`*` reaches one substitution, not a stacked run.
+Confusable letters compound within a word. `?` reaches exactly one
+character, so a stacked run needs `*`, and `*` only helps with three or
+more literal characters before the run (`Willia*`, `Powe*`). `Mountain`
+offers only two ("Mo"), so search the variants directly instead of
+trying to wildcard them.
 
 ## Faithful representation symbols
 
