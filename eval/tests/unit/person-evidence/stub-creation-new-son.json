@@ -5,7 +5,13 @@
     "name": "Create a stub person when the will names a son with no tree match",
     "type": "positive",
     "description": "The full-text will of Thomas Flynn names two sons. Patrick is already in the tree (I1); the will also names 'my son James Flynn' (assertion a_005, role heir_2). There is NO James Flynn in tree.gedcomx.json (only Patrick I1, Thomas I2, Mary I3), so the persona matches no existing person. Per SKILL.md Step 5 and research-schema-spec.md §8 (line 656 — 'Person stubs may be created by person-evidence when a newly discovered person doesn't yet exist'), person-evidence must mint a new person for James — via materialize_facts create-or-enrich, so he arrives carrying the will's SOURCED name fact (a_005, ref resolved to tree S-entry S4) rather than a name-only shell — and link a_005 to the new person. (This test isolates the fact-carrying mint + link; edge-writing is graded by the 'Person minting and connecting edges' dimension, exercised by the household-skeleton fixture.) This is the headline gap: stub creation is instructed and spec-authorized but was never exercised (the harness TREE_OWNERSHIP_TABLE omitted person-evidence from the persons AND relationships writers, so a correct fact-carrying-mint + edge run failed the universal ownership validator until this PR's fix, which grants person-evidence both).",
-    "tags": ["person-evidence", "stub-creation", "new-person", "a_005"]
+    "tags": [
+      "person-evidence",
+      "stub-creation",
+      "new-person",
+      "a_005",
+      "check-warnings-required"
+    ]
   },
   "input": {
     "user_message": "Link assertion a_005 — the will of Thomas Flynn naming 'my son James Flynn' — to the correct person in the tree.",
