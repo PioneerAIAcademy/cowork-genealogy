@@ -112,8 +112,17 @@ anything (§6).
 ### 4.1 `doubleDatedYear`
 Given `year` and `doubleYear`, the New-Style year is the **later** of the two:
 the value formed by taking `year`'s leading digits and `doubleYear`'s trailing
-digits, choosing the later year (`SKILL.md:107–110, 202`). E.g. `1750` + `1` →
+digits, choosing the later year. E.g. `1750` + `1` →
 `1751`; `1699` + `700` → `1700`. Sets `converted.year`; no day/month change.
+
+**Precondition — the Jan 1 – Mar 24 window.** Double dating exists
+only in that window. Where `month` is supplied and the date is provably outside
+it (`month > 3`, or March with `day > 24`), the correction is an **input error**
+rather than a bump: on 25 March the Old-Style year increments, so from that date
+the two styles agree and there is nothing to resolve — bumping anyway moves the
+event a year. `month` is optional on this correction, so a year-only input cannot
+be tested and keeps the historical behaviour; a March date with no `day` is
+noted, not refused.
 
 ### 4.2 `osNsYear`
 If the (calendar) `month`/`day` falls on or after **January 1** and on or before
@@ -166,8 +175,13 @@ Output is the Gregorian `year/month/day`.
 The `corrections` object is how the spec's "answer only the calendar question that
 was asked" rule (`SKILL.md:220–229`) becomes structural: the caller passes exactly
 the corrections the user asked for, and the tool applies exactly those. Asking for
-the New-Style **year** of "25 March 1750/1" → `{ doubleDatedYear: true }` (or
+the New-Style **year** of "15 February 1750/1" → `{ doubleDatedYear: true }` (or
 `{ osNsYear: true }`) and nothing else; the day offset is not applied unprompted.
+
+The date matters here: this example previously read "25 March 1750/1", which §4.1's
+window precondition now makes an input error under `doubleDatedYear` while §4.2
+leaves it unchanged — the two corrections disagreed by a year on the one date used
+to illustrate that they agree.
 
 ---
 
@@ -199,6 +213,7 @@ the New-Style **year** of "25 March 1750/1" → `{ doubleDatedYear: true }` (or
 | `julianToGregorianDay` on a Julian date before 1582-10-15 | **input error** — the Gregorian calendar did not exist before its introduction, so there is no meaningful day offset to apply (the other corrections, if requested, are unaffected) |
 | `quakerMonth.era` not exactly `pre_1752` / `post_1752` | input error (the shift is era-dependent; the exported function is called outside the MCP enum guard) |
 | `doubleYear` given but inconsistent with `year + 1` | input error (a real double date always spans consecutive years) |
+| `doubleDatedYear` on a date provably outside Jan 1 – Mar 24 (`month > 3`, or March with `day > 24`) | **input error** — under the **English Lady Day convention** (England, Wales, Ireland and the colonies; also Florence and Pisa) the legal year began 25 March, so from that date the Old-Style and New-Style years agree and a slash has nothing to disambiguate. **Scope note:** other year-start conventions existed — Venice 1 March, the Byzantine and pre-1700 Russian 1 September, the French *mos gallicanus* Easter start — under which a slashed year outside Jan–Mar can be legitimate. Nothing in the corpus exercises those, so the guard is deliberately scoped to the Lady Day convention; widening it is a scope decision, not a bug fix |
 
 ---
 
@@ -210,7 +225,8 @@ the New-Style **year** of "25 March 1750/1" → `{ doubleDatedYear: true }` (or
 - **Quaker pre-1752** — `{month:1}` (1st) `pre_1752` → March; `{month:11}` → January of `year+1`.
 - **Quaker post-1752** — `{month:1}` `post_1752` → January.
 - **Day offset by era** — a 1690 Julian date → +10; 1750 → +11; 1850 → +12; 1950 → +13; check month/year rollover at e.g. `1752-09-02` Julian → `1752-09-13`.
-- **Single-correction discipline** — requesting only `doubleDatedYear` on `25 Mar 1750/1` does NOT change the day or apply the offset.
+- **Single-correction discipline** — requesting only `doubleDatedYear` on `15 Feb 1750/1` does NOT change the day or apply the offset.
+- **Double-date window** — `25 Mar 1750/1` + `doubleDatedYear` is an input error; `24 Mar` is bumped; `month > 3` is refused; a March date with no `day` is noted and still bumped; a year-only `{1750, doubleYear:1}` still resolves.
 - **Combined** — OS/NS year then day offset on one call, applied in order, both reflected in `applied`.
 - **Missing day** — `julianToGregorianDay` with no `day` skips the offset and notes it; other requested corrections still apply.
 - **Purity / idempotence** — same input → same output; input object not mutated.

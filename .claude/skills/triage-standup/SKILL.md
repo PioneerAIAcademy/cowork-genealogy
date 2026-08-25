@@ -32,7 +32,7 @@ is the constraint, not the tool list.
 
 **If the names are Wilson, Nnanna or Praise, stop — this is the wrong skill.**
 That is the book-to-tree team; its standup is triaged from
-`/Users/dallan/pioneeradademy/book-to-tree`, which carries its own
+`~/pioneeracademy/book-to-tree`, which carries its own
 `triage-standup` with a different output shape and files nothing. Say so and stop
 rather than producing this team's four lists for them.
 
@@ -387,9 +387,14 @@ session with none of today's conversation.
 ## 6. Write the day's summary file
 
 Every run, after the lists are delivered, to
-`/Users/dallan/pioneeradademy/cowork-status-updates/YYYY-MM-DD.md`. This builds
+`~/pioneeracademy/cowork-status-updates/YYYY-MM-DD.md`. This builds
 the institutional memory the lead reviews periodically to spot recurring
 problems, regressions, and improvements — so it is not optional and not a nicety.
+
+`~` is **whoever is running this**, not a fixed machine — resolve it to a real
+absolute path first (`$HOME`, or `%USERPROFILE%` on Windows). Never hand a
+literal `~` to a file-writing tool: it silently creates a directory *named* `~`
+in the working directory, and next run's "read yesterday" finds nothing.
 
 **Read `references/daily-summary-format.md` for the template and field rules, and
 read the most recent existing file in that directory before writing.** That prior
