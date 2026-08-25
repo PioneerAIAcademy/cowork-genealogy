@@ -1,0 +1,12 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search for a fictional, sparsely-documented hamlet with no wiki coverage — used to test the no-results handling path for historical-context",
+  "args": { "query": "~Hollow Creek" },
+  "response": {
+    "query": "Hollow Creek Settlement history records",
+    "total_chunks_searched": 1240565,
+    "results": [],
+    "query_time_ms": 388.2,
+    "timing": { "embed_ms": 61.0, "search_ms": 265.9, "rerank_ms": 61.3 }
+  }
+}
