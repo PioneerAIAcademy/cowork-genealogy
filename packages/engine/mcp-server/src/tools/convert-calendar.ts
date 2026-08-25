@@ -116,8 +116,11 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
   const applied: AppliedCorrection[] = [];
   const notes: string[] = [];
 
-  // 1. Double-dated year → the later (New Style) year. The slash already signals
-  //    the Jan 1–Mar 24 boundary, so the New-Style year is always +1.
+  // 1. Double-dated year → the later (New Style) year. Inside the Jan 1–Mar 24
+  //    window the New-Style year is always +1; outside it there is nothing to
+  //    resolve, so the guard below refuses rather than bumping. (This comment
+  //    used to assert the slash *proved* the window, which is what let the
+  //    unguarded bump ship — see issue #1654.)
   if (c.doubleDatedYear) {
     // A legitimate double date spans consecutive years, so the New-Style year is
     // always year + 1; the recorded "/N" must be consistent with that.
@@ -126,6 +129,30 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
         ok: false,
         errors: [`doubleYear ${date.doubleYear} is not consistent with the New-Style year ${year + 1}`],
       };
+    }
+    // Double dating only exists inside the Jan 1–Mar 24 window. On March 25 the
+    // Old-Style year increments, so from that date the two styles agree and there
+    // is nothing to resolve — bumping anyway would move the event a year. Only
+    // refuse when the date PROVES it is outside the window; `month` is optional
+    // on this correction, so a year-only input keeps the historical behaviour.
+    if (month !== undefined) {
+      const provablyOutside = month > 3 || (month === 3 && day !== undefined && day > 24);
+      if (provablyOutside) {
+        return {
+          ok: false,
+          errors: [
+            `doubleDatedYear does not apply to ${month}/${day ?? "??"}: double dating covers Jan 1–Mar 24 only. ` +
+              `On March 25 the Old-Style year increments, so the Old-Style and New-Style years agree from that date onward. ` +
+              `A slash written outside the window is anomalous — check where the year turns over in the surrounding register entries rather than resolving it.`,
+          ],
+        };
+      }
+      if (month === 3 && day === undefined) {
+        notes.push(
+          "doubleDatedYear: a March date without a day cannot be tested against the March 24 boundary; " +
+            "if the record reads March 25 or later the slash is anomalous and the year should not be resolved",
+        );
+      }
     }
     year += 1;
     applied.push({

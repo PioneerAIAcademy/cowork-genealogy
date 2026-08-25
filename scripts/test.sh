@@ -67,6 +67,7 @@ fi
 # --- suites ------------------------------------------------------------------
 # typecheck first: turbo.json defines `test` and `typecheck` as separate tasks,
 # so no test suite ever runs tsc. It costs seconds.
+run_suite "ESLint"                       make -C "$ROOT" lint
 run_suite "Typecheck (turbo)"            make -C "$ROOT" typecheck
 run_suite "JS workspace tests (turbo)"   make -C "$ROOT" test-js
 run_suite "Control-plane tests (pytest)" make -C "$ROOT" server-test
