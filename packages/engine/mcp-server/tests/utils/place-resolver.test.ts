@@ -468,3 +468,30 @@ describe("countryConsistency — diacritics and endonyms", () => {
     expect(countryConsistency("Sheffield, Staffordshire", "Sheffield, Staffordshire, England")).toBe("unverifiable");
   });
 });
+
+describe("resolveStandardPlace — FamilySearch year bounds", () => {
+  // FamilySearch accepts +date: 1000..9999 and 400s outside it. A 400 throws
+  // inside searchPlace, burns all three withRetry attempts, and returns null
+  // UNCACHED, so every later call for that place burns them again. The
+  // empty-result fallback does not catch a throw, so the year is dropped before
+  // it is ever sent. Reachable through earliestYear's own fudge offsets.
+  it.each([
+    ["abt 1000", "a year below the floor (1000 - 1 for `abt`)"],
+    ["44 BC", "a negative year"],
+    ["est 1005", "an estimate that lands below the floor (-10)"],
+  ])("drops %s — %s", async (date) => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "x", fullName: "Rome, Lazio, Italy", score: 90 }),
+    ]);
+    await resolveStandardPlace("Rome, Italy", { date });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rome, Italy", { date: undefined });
+  });
+
+  it("still sends a year inside the accepted range", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "x", fullName: "Rome, Lazio, Italy", score: 90 }),
+    ]);
+    await resolveStandardPlace("Rome, Italy", { date: "1010" });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rome, Italy", { date: 1010 });
+  });
+});

@@ -101,10 +101,33 @@ function normalizeKey(s: string): string {
  * Reuses the existing date pipeline (`stdDate` -> `earliestYear`) rather than
  * re-parsing; returns undefined for anything it cannot read, which makes the
  * query fall back to the undated form.
+ *
+ * `earliestYear` takes the EARLIEST bound of an imprecise date, which is a
+ * deliberate choice for a point query and not an obvious one: "before 1900"
+ * queries +date:+1890 and "between 1850 and 1870" queries +date:+1850. The
+ * function was written for range sorting. Erring early is the safer direction
+ * here, because a jurisdiction named at the earlier bound is the older one and
+ * the qualifier exists to stop us returning the modern rendering.
+ *
+ * FamilySearch accepts 1000..9999 and returns HTTP 400 outside it — verified:
+ * +date:+999 and +date:+10000 and +date:+-44 all 400, +date:+1000 returns 204,
+ * +date:+9999 returns 200. That range is reachable through the same fudge
+ * offsets `earliestYear` applies ("abt 1000" -> 999, "44 BC" -> -44), and a 400
+ * would throw inside searchPlace, burn all three withRetry attempts, and leave
+ * the place blank and uncached so the next call burns them again. The
+ * empty-result fallback in getSearchEntries does not cover a throw. Out-of-range
+ * years therefore degrade to an undated query rather than being sent.
  */
+const FS_DATE_MIN_YEAR = 1000;
+const FS_DATE_MAX_YEAR = 9999;
+
 function yearHint(date: string | undefined): number | undefined {
   if (!date || !date.trim()) return undefined;
-  return earliestYear(stdDate(date)) ?? undefined;
+  const year = earliestYear(stdDate(date));
+  if (year === null || year < FS_DATE_MIN_YEAR || year > FS_DATE_MAX_YEAR) {
+    return undefined;
+  }
+  return year;
 }
 
 function sleep(ms: number): Promise<void> {
