@@ -357,7 +357,8 @@ for each fact in anchor.facts:
 ### How `hasEventAfterDeath1` actually decides
 
 This is the shipped behaviour, and it lives nowhere else in prose — only
-in the docstring at `src/tools/person-warnings.ts:298-307`. Recorded here
+in the docstring on `hasEventAfterDeath` in `src/tools/person-warnings.ts`.
+Recorded here
 because three separate pieces of skill doctrine were written against a
 mental model this contradicts.
 
@@ -367,11 +368,11 @@ mental model this contradicts.
 latest(every fact) - latest(death-like fact) > 365 days
 ```
 
-(`hasEventAfterDeath` at `src/tools/person-warnings.ts:309`; the predicate
-`factDaysDiffLatestLatest` at `src/utils/fact-helpers.ts:422`.)
+(`hasEventAfterDeath` in `src/tools/person-warnings.ts`, via the predicate
+`factDaysDiffLatestLatest` in `src/utils/fact-helpers.ts`.)
 
-**"Death-like" is a family of nine fact types** (`DEATHLIKE_FACT_TYPES`,
-`src/utils/mob.ts:45-55`):
+**"Death-like" is a family of nine fact types** (`DEATHLIKE_FACT_TYPES` in
+`src/utils/mob.ts`):
 
 `Death`, `Burial`, `Cremation`, `Funeral`, `Obituary`, `Probate`, `Will`,
 `DeathRegistration`, `BurialRegistration`
