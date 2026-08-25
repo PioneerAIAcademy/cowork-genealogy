@@ -7,8 +7,8 @@ when handling nil results.
 
 | Situation | Approach |
 |---|---|
-| Uncommon surname, uncertain spelling/dates, new locality | **"Less is more"** — surname only, filter after |
-| Extremely common surname (Smith, Johnson), high confidence in details | **"Kitchen sink"** — multiple required terms |
+| Uncommon surname or given name, uncertain spelling/dates, new locality | **"Less is more"** — that name only, filter after |
+| Extremely common surname or given name (Smith, Johnson, John, Mary), high confidence in details | **"Kitchen sink"** — multiple required terms |
 | FTS specifically (no fuzzy matching, no abbreviation expansion) | **Default to "less is more"** — every extra term risks missing variant transcriptions |
 
 Start broad, check hit count, narrow iteratively with filters.
@@ -33,7 +33,11 @@ Before searching, answer these:
 Work through in order before declaring a search negative:
 
 1. Is the query too restrictive? Drop terms, use filter instead.
-2. Spelling/abbreviation variants? (Wm, Jno, Jas, Thos)
+2. Spelling/abbreviation variants? (Wm, Jno, Jas, Thos) Then
+   nicknames, especially non-derivative ones (Peggy/Margaret,
+   Polly/Mary, Dick/Richard — full list in
+   `references/search-strategies.md`), if the person may appear under
+   a familiar-use name.
 3. Transcription errors hiding it? Use wildcards on confused letters.
 4. Wrong field? Try Keywords vs. Name (different behavior).
 5. Does the collection exist in FTS? Verify coverage.
