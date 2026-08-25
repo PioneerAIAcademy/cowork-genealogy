@@ -21,6 +21,7 @@ The violating states are drawn from the #1646 deep dive:
     and for a household (§7.3).
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -85,17 +86,34 @@ def test_scored_fires_on_the_n7v_state():
             _state(_N7V_AFTER, _tree("I1", "I2")),
             [_call("research_append")],
         )
-    assert "same_person was never called" in str(exc.value)
+    assert "no same_person call scored that pairing" in str(exc.value)
     assert "pe_010" in str(exc.value)
+    assert "pe_011" in str(exc.value)
 
 
-def test_scored_passes_when_same_person_was_called():
+def test_scored_passes_when_every_persona_was_scored():
+    """Both scored personas need their own call. The single-call version of this
+    test used to pass, which was the per-run hole item 1 of the #1882 review
+    caught: `_N7V_AFTER` links F1 and M1, so one call attests only half."""
     check_scored(
         _state(_N7V_BEFORE, _tree("I1", "I2")),
         _state(_N7V_AFTER, _tree("I1", "I2")),
         [_call("same_person", primaryId1="F1", primaryId2="I2"),
+         _call("same_person", primaryId1="M1", primaryId2="I2"),
          _call("research_append")],
     )
+
+
+def test_scored_fires_when_only_one_of_two_personas_was_scored():
+    """The half-attested shape, pinned as a failure."""
+    with pytest.raises(AssertionError) as exc:
+        check_scored(
+            _state(_N7V_BEFORE, _tree("I1", "I2")),
+            _state(_N7V_AFTER, _tree("I1", "I2")),
+            [_call("same_person", primaryId1="F1", primaryId2="I2")],
+        )
+    assert "pe_011" in str(exc.value)
+    assert "pe_010" not in str(exc.value)
 
 
 def test_scored_stands_down_when_persona_is_null():
@@ -316,4 +334,165 @@ def test_check_warnings_stands_down_without_the_tag():
             _state(_LINKED_AFTER, _tree("I1", "I2")),
             ["person-evidence"],
             {"tags": []},
+        )
+
+
+# --- Pinning tests (review of #1882, item 3) ----------------------------
+#
+# The failing-input cases above prove each assertion fires. These pin the
+# load-bearing CONSTANTS and the per-persona matching, so an edit that guts a
+# validator goes red instead of staying green. Three mutations were confirmed
+# to survive the original 17: adding "death" to _UNMATERIALIZABLE, dropping
+# "age" from it, and broadening validator 1 to accept a `record_search` call as
+# the attestation (which makes it a no-op, since every record-search test calls
+# record_search).
+
+
+def test_scored_fires_per_persona_not_per_run():
+    """Pins the per-persona match. One `same_person` call on a household of
+    several scored personas leaves the rest unattested — the §7.3 path. Goes red
+    if the assertion is weakened back to "a same_person call exists anywhere"."""
+    after = {
+        "assertions": [
+            {"id": "a_1", "record_persona_id": "P1", "fact_type": "name"},
+            {"id": "a_2", "record_persona_id": "P2", "fact_type": "name"},
+        ],
+        "person_evidence": [
+            {"id": "pe_1", "assertion_id": "a_1", "person_id": "I1"},
+            {"id": "pe_2", "assertion_id": "a_2", "person_id": "I2"},
+        ],
+    }
+    before = {"assertions": after["assertions"], "person_evidence": []}
+    with pytest.raises(AssertionError) as exc:
+        check_scored(
+            _state(before, _tree("I1", "I2")),
+            _state(after, _tree("I1", "I2")),
+            [_call("same_person", primaryId1="P1", primaryId2="I1")],
+        )
+    assert "a_2/P2 -> I2" in str(exc.value)
+    assert "pe_1" not in str(exc.value)
+
+
+def test_scored_fires_when_the_only_call_scored_an_unrelated_pairing():
+    """A `same_person` call for a different persona/candidate is not an
+    attestation for this one."""
+    after = {
+        "assertions": [{"id": "a_1", "record_persona_id": "P1", "fact_type": "name"}],
+        "person_evidence": [{"id": "pe_1", "assertion_id": "a_1", "person_id": "I1"}],
+    }
+    before = {"assertions": after["assertions"], "person_evidence": []}
+    with pytest.raises(AssertionError):
+        check_scored(
+            _state(before, _tree("I1", "I9")),
+            _state(after, _tree("I1", "I9")),
+            [_call("same_person", primaryId1="P9", primaryId2="I9")],
+        )
+
+
+def test_scored_accepts_a_transposed_call():
+    """primaryId1/primaryId2 the other way round still scored the pairing."""
+    after = {
+        "assertions": [{"id": "a_1", "record_persona_id": "P1", "fact_type": "name"}],
+        "person_evidence": [{"id": "pe_1", "assertion_id": "a_1", "person_id": "I1"}],
+    }
+    before = {"assertions": after["assertions"], "person_evidence": []}
+    check_scored(
+        _state(before, _tree("I1")),
+        _state(after, _tree("I1")),
+        [_call("same_person", primaryId1="I1", primaryId2="P1")],
+    )
+
+
+def test_scored_is_not_satisfied_by_another_matching_tool():
+    """Pins that the attestation is `same_person` specifically, not any matching
+    tool. The call here carries the exact primaryId pair, so broadening the tool
+    match — e.g. to anything containing "match" or "search" — WOULD satisfy the
+    check and this test goes red. An earlier version passed a `record_search`
+    call with no primaryIds, which no widening could have satisfied, so it
+    pinned nothing."""
+    after = {
+        "assertions": [{"id": "a_1", "record_persona_id": "P1", "fact_type": "name"}],
+        "person_evidence": [{"id": "pe_1", "assertion_id": "a_1", "person_id": "I1"}],
+    }
+    before = {"assertions": after["assertions"], "person_evidence": []}
+    with pytest.raises(AssertionError):
+        check_scored(
+            _state(before, _tree("I1")),
+            _state(after, _tree("I1")),
+            [_call("person_person_matches", primaryId1="P1", primaryId2="I1"),
+             _call("research_append")],
+        )
+
+
+def test_materialized_survives_a_stringified_ops_payload():
+    """`materialize_facts` recovers a JSON-string `ops` via coerceJsonArg and the
+    mock records the raw model args, so the validator must too. Iterating the
+    string used to raise AttributeError, which validator_runner turns into a
+    FAILED validator — a false gate that also deletes the judge scores."""
+    check_materialized(
+        _state(_DEATH_BEFORE, _tree("I1")),
+        _state(_DEATH_AFTER, _tree("I1")),
+        [_call("materialize_facts", ops=json.dumps(
+            [{"personId": "I1", "recordId": "ark:/61903/1:1:MDEF",
+              "recordRole": "deceased"}])),
+         _call("research_append")],
+        _TAGGED,
+    )
+
+
+def test_materialized_still_fires_on_an_unparseable_ops_string():
+    """A malformed `ops` string must not silently satisfy the check."""
+    with pytest.raises(AssertionError):
+        check_materialized(
+            _state(_DEATH_BEFORE, _tree("I1")),
+            _state(_DEATH_AFTER, _tree("I1")),
+            [_call("materialize_facts", ops="{not json")],
+            _TAGGED,
+        )
+
+
+def test_unmaterializable_pins_death_as_owed():
+    """Pins `death` OUT of _UNMATERIALIZABLE: a death-only persona linked to an
+    existing person is owed a materialize. Goes red if `death` is added to the
+    set (a mutation the original 17 survived)."""
+    after = {
+        "assertions": [{"id": "a_11", "record_persona_id": None, "fact_type": "death"}],
+        "person_evidence": [{"id": "pe_7", "assertion_id": "a_11", "person_id": "I1"}],
+    }
+    before = {"assertions": after["assertions"], "person_evidence": []}
+    # A skip here is the mutation surviving, not a pass: adding "death" to the
+    # set makes the check stand down, and pytest reports that as skipped rather
+    # than failed. Convert it to a failure explicitly.
+    try:
+        check_materialized(
+            _state(before, _tree("I1")),
+            _state(after, _tree("I1")),
+            [_call("research_append")],
+            _TAGGED,
+        )
+    except pytest.skip.Exception:
+        pytest.fail(
+            "a death-only persona linked to an existing person was treated as "
+            "owing nothing — 'death' must NOT be in _UNMATERIALIZABLE"
+        )
+    except AssertionError as exc:
+        assert "I1" in str(exc)
+    else:
+        pytest.fail("expected the materialize check to fire and it did not")
+
+
+def test_unmaterializable_pins_age_as_not_owed():
+    """Pins `age` IN _UNMATERIALIZABLE: the tool skips that fact_type, so
+    nothing is owed. Goes red if `age` is dropped from the set."""
+    after = {
+        "assertions": [{"id": "a_9", "record_persona_id": None, "fact_type": "age"}],
+        "person_evidence": [{"id": "pe_9", "assertion_id": "a_9", "person_id": "I1"}],
+    }
+    before = {"assertions": after["assertions"], "person_evidence": []}
+    with pytest.raises(pytest.skip.Exception):
+        check_materialized(
+            _state(before, _tree("I1")),
+            _state(after, _tree("I1")),
+            [],
+            _TAGGED,
         )

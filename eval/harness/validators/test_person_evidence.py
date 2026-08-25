@@ -17,6 +17,8 @@ rules + tag-gated regression checks.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from validators_lib import (
@@ -415,6 +417,46 @@ def _assertions_by_id(state: dict) -> dict:
     return {a.get("id"): a for a in (state.get("assertions") or [])}
 
 
+def _same_person_pairs(tool_calls: list[dict]) -> set[tuple]:
+    """Every (id, id) pair a `same_person` call actually scored, both orderings.
+
+    SKILL.md §2 sends the record persona as `primaryId1` and the tree candidate
+    as `primaryId2`; both orderings are stored so a transposed call still counts
+    as having scored that pairing.
+    """
+    pairs: set[tuple] = set()
+    for tc in tool_calls:
+        if "same_person" not in tc.get("tool", ""):
+            continue
+        args = tc.get("args") or {}
+        p1, p2 = args.get("primaryId1"), args.get("primaryId2")
+        if p1 and p2:
+            pairs.add((p1, p2))
+            pairs.add((p2, p1))
+    return pairs
+
+
+def _materialize_ops(args: dict) -> list[dict]:
+    """The op dicts a `materialize_facts` call carries, tolerating a stringified
+    `ops`.
+
+    The tool itself recovers that shape via `coerceJsonArg`, and the mock records
+    the raw model args, so `ops` reaching a validator as a JSON string is real,
+    not hypothetical. Iterating a string yields characters and `.get` on one
+    raises AttributeError, which `validator_runner` converts into a FAILED
+    validator — gating the test and deleting its judge scores.
+    """
+    ops = args.get("ops")
+    if isinstance(ops, str):
+        try:
+            ops = json.loads(ops)
+        except ValueError:
+            ops = None
+    if not isinstance(ops, list):
+        ops = [args]
+    return [op for op in ops if isinstance(op, dict)]
+
+
 def _tree_person_ids(tree: dict | None) -> set:
     if not tree:
         return set()
@@ -429,9 +471,12 @@ def test_same_person_called_when_persona_meets_existing_candidate(
     `same_person` when the assertion is `record_search`-sourced").
 
     Skipping the call is the failure the `Score discipline` rubric dimension
-    nominally grades and had never once reported: across the five committed
-    run logs before this one the dimension took the value 3 on all 73
-    gradings. `ut_person_evidence_n7v` on `flynn-marriage-parent-match` is
+    nominally grades reports only rarely: across the five committed run logs it
+    takes the value 3 on 69 of 71 numeric gradings, dropping to 1 exactly twice
+    (n7v in `v1_2026-08-20_15-53-03`, `_023` in `v1_2026-08-24_22-05-46`) — about
+    2 in 71. An earlier draft of this docstring said "3 on all 73 gradings";
+    that was measured against a corpus retention has since pruned and was never
+    recomputed. Re-derive it, do not reword it. `ut_person_evidence_n7v` on `flynn-marriage-parent-match` is
     what it looks like when missed — 9 of 9 assertions carry a
     `record_persona_id`, no `same_person` call is made, and eleven `pe_`
     entries land including three at `confident` with a null `match_score`.
@@ -464,20 +509,29 @@ def test_same_person_called_when_persona_meets_existing_candidate(
             "tree person — nothing to score"
         )
 
-    called = [tc for tc in tool_calls if "same_person" in tc.get("tool", "")]
+    pairs = _same_person_pairs(tool_calls)
     offenders = sorted(
-        f"{e.get('id')} ({e.get('assertion_id')} -> {e.get('person_id')})"
+        f"{e.get('id')} ({e.get('assertion_id')}/"
+        f"{(assertions.get(e.get('assertion_id')) or {}).get('record_persona_id')}"
+        f" -> {e.get('person_id')})"
         for e in scored
+        if (
+            (assertions.get(e.get("assertion_id")) or {}).get("record_persona_id"),
+            e.get("person_id"),
+        )
+        not in pairs
     )
-    assert called, (
+    assert not offenders, (
         "person_evidence entries link a record-search persona (non-null "
-        "record_persona_id) to a tree person that already existed, but "
-        "same_person was never called: "
+        "record_persona_id) to a tree person that already existed, and no "
+        "same_person call scored that pairing: "
         + ", ".join(offenders)
-        + ". SKILL.md §2 makes the score mandatory for a record_search-sourced "
+        + f". Pairings actually scored: {sorted(pairs) or 'none'}. "
+        "SKILL.md §2 makes the score mandatory for a record_search-sourced "
         "assertion meeting a serious candidate; §3 then treats it as an input, "
-        "never a substitute. A link written without it has no attestation "
-        "behind its match_score."
+        "never a substitute. Matched per persona, not per run: one call on a "
+        "household of several scored personas leaves the rest unattested, which "
+        "is the §7.3 path where scoring most often goes wrong."
     )
 
 
@@ -538,7 +592,7 @@ def test_matched_persona_is_materialized_onto_its_person(
     ]
     named = set()
     for args in materialize_args:
-        for op in args.get("ops") or [args]:
+        for op in _materialize_ops(args):
             if op.get("personId"):
                 named.add(op["personId"])
 
@@ -563,9 +617,10 @@ def test_check_warnings_runs_after_a_write(before_state, after_state, skills_inv
     runs, which is why it belongs to a program rather than a dimension: in
     `v1_2026-08-20_15-53-03` it was `ut_person_evidence_025` and
     `ut_person_evidence_014` (2 of 12 write-runs); in
-    `v1_2026-08-24_18-17-08` it was `ut_person_evidence_011`, `_002` and
-    `_022` (3 of 13) — five different tests across two runs, every one of
-    them scoring 3 on all eight dimensions in the run where it skipped.
+    `v1_2026-08-24_18-17-08` it was `_002`, `_011` and `_022` (3 of 13); in
+    `v1_2026-08-24_22-05-46` it was `_002`, `_010`, `_013`, `_019` and `_022`
+    (5 of 14). Ten skips across eight distinct tests over those three logs,
+    every one scoring 3 on all eight dimensions in the run where it skipped.
 
     `_014` is the case that matters most: it mints a brand-new stub person
     and skips the guard that would catch that stub carrying an impossible
@@ -589,8 +644,9 @@ def test_check_warnings_runs_after_a_write(before_state, after_state, skills_inv
     **The ungated rate is a measured, unenforced gap**, recorded here so
     narrowing it is not silent: `check-warnings` was skipped on 2 of 12
     write-runs (`v1_2026-08-20_15-53-03`), 3 of 13 (`v1_2026-08-24_18-17-08`)
-    and 4 of 13 (`v1_2026-08-24_22-05-46`) — nine skips across five distinct
-    tests, none scoring below 3 on any dimension in the run where it skipped.
+    and 5 of 14 (`v1_2026-08-24_22-05-46`) — 10 skips across 8 distinct tests
+    over those three logs (17 across 9 over all five committed logs), none
+    scoring below 3 on any dimension in the run where it skipped.
     Not run truncation: the skipping runs are consistently the SHORTEST and
     lowest-turn of the write-runs in both logs (127s/10.3 turns vs 221s/18.6;
     148s/13.2 vs 209s/19.1), so they finished early without the step rather

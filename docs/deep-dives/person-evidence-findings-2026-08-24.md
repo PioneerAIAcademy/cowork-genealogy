@@ -19,7 +19,7 @@ drift 0, annotated). Findings were read from `v1_2026-08-20_15-53-03` and the
 >    since made `judge_context` binding on scores.
 > 3. **Ungating `test_check_warnings_runs_after_a_write`** — drop the
 >    `check-warnings-required` tag gate once the corpus complies consistently.
->    Measured skip rate when this was written: 2 of 12, 3 of 13, 4 of 13.
+>    Measured skip rate when this was written: 2 of 12, 3 of 13, 5 of 14.
 >
 > A fourth reason to run: the release candidate was graded under a judge prompt
 > that no longer ships (`judge_prompt_hash` mismatches after a `main` merge;
@@ -107,7 +107,7 @@ assertion is `record_search`-sourced — i.e. it has a non-null
 
 **Gap:** the rule is in the body and was ignored, so per the deep-dive guide
 restating it is not the fix. Across the five committed run logs before this one
-`rubric/Score discipline` took the value **3 on all 73 gradings**; benter-070
+`rubric/Score discipline` takes **3 on 69 of 71 numeric gradings**, dropping to 1 exactly twice (n7v in `v1_2026-08-20_15-53-03`, `_023` in `v1_2026-08-24_22-05-46`) — about **2 in 71**; benter-070
 measured the underlying skip at roughly **1 in 3 on this one test** (#1646
 comment 4). An intermittent compliance failure is what a judge dimension is
 worst at catching.
@@ -125,16 +125,17 @@ it derives its own precondition (a new `pe_` entry linking a persona with a
 non-null `record_persona_id` to a person that was already in the tree) and
 stands down otherwise.
 
-## F4 — `check-warnings` is skipped on ~20% of write-runs, on a different test each time
+## F4 — `check-warnings` is skipped on 10 of 39 write-runs, on a different test each time
 
-**Did:** across two consecutive runs, **five different tests** finished a write
+**Did:** across three consecutive runs, **eight different tests** finished a write
 without invoking `check-warnings`, every one of them scoring 3 on all eight
 dimensions in the run where it skipped:
 
 | Run | Skipped it | Of |
 |---|---|---|
 | `v1_2026-08-20_15-53-03` | `_025`, `_014` | 12 write-runs |
-| `v1_2026-08-24_18-17-08` | `_011`, `_002`, `_022` | 13 write-runs |
+| `v1_2026-08-24_18-17-08` | `_002`, `_011`, `_022` | 13 write-runs |
+| `v1_2026-08-24_22-05-46` | `_002`, `_010`, `_013`, `_019`, `_022` | 14 write-runs |
 
 **Should:** SKILL.md §8 — "After creating links and any stub persons, **invoke
 `check-warnings`** on the affected persons to catch genealogical
@@ -491,3 +492,29 @@ reviewer rather than this dive.
 **Three things now ride the next paid run**, and they should go together: this
 sentence, F9's `_023` grounding clause, and — if the corpus has caught up — the
 ungating of `test_check_warnings_runs_after_a_write`.
+
+
+## Correction — two figures did not re-derive (review of #1882, item 4)
+
+@clack391 flagged both; I re-derived both and both were wrong. Recorded rather
+than quietly edited, because the mechanism matters more than the digits.
+
+| Claim as first written | Re-derived |
+|---|---|
+| `v1_2026-08-24_22-05-46` skipped `check-warnings` on **4 of 13** write-runs | **5 of 14** — `_002`, `_010`, `_013`, `_019`, `_022` |
+| "nine skips across five distinct tests" | **10 skips across 8** over the three logs cited; 17 across 9 over all five committed logs |
+| `rubric/Score discipline` "took the value 3 on all 73 gradings" | **69 of 71** numeric gradings; it takes 1 twice — n7v in `v1_2026-08-20_15-53-03`, `_023` in `v1_2026-08-24_22-05-46` |
+
+The Score discipline figure is the instructive one. It was measured against a
+five-log corpus that **retention has since pruned** — this PR's own runs aged
+out `07-29`, `08-03` and `08-05` — and it was never recomputed after the corpus
+moved underneath it. The two 1s it now misses are both findings *from this dive*.
+So the sentence justifying the validator had become false by the time the
+validator shipped, in the direction that flatters it.
+
+The validator is still justified: at about 2 in 71, the dimension catches this
+roughly 3% of the time, which is why a program should decide it. But
+`CLAUDE.md`'s rule is that a measurement disagreeing with belief gets
+re-measured, not reworded — and a figure whose corpus has changed is the same
+case. **Any figure in this document that cites a run-log corpus should be
+re-derived before it is repeated**, not copied forward.
