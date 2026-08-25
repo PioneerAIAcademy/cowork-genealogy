@@ -21,13 +21,13 @@ compensate.
 | ornate capital S | F | Scott → Fcott | search both |
 | double-l | tt, H | Powell → Powett | `Powe*` |
 | `&` ligature | et, &c | & → et | search both |
-| superscript abbrev | dropped | Mrs → Mes | search both |
+| superscript abbrev | e | Mrs → Mes | `M?s` |
 
 Confusable letters compound within a word. `?` reaches exactly one
-character, so a stacked run needs `*`, and `*` only helps with three or
-more literal characters before the run (`Willia*`, `Powe*`). `Mountain`
-offers only two ("Mo"), so search the variants directly instead of
-trying to wildcard them.
+character, so a run of several needs `*`, which absorbs any number
+(`Willia*`, `Powe*`, `Mo*ntain`). Two constraints still bind: a wildcard
+may never open a term, and keep three or more literal characters in the
+term overall (`references/query-syntax.md`'s wildcard rules).
 
 ## Faithful representation symbols
 
