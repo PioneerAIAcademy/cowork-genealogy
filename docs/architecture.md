@@ -395,7 +395,7 @@ agents.**
 |---|---|---|
 | **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `image-reader-opus` → `claude-opus-4-8`; `record-extractor`, `image-reader`, `proof-conclusion` + `research-exhaustiveness` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
-| **Agent `effort:`** | hosted + both harnesses; **Cowork unverified** | no agent pins one |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
 | **Session effort** | `.claude/settings.json` `effortLevel`; never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted inherits |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
@@ -408,9 +408,14 @@ agents.**
 > **Agent `effort:` takes `low|medium|high|xhigh|max` or an integer**, and is a
 > property of the agent *definition* — the `Agent` tool's call site accepts only
 > `model`. It binds wherever `.claude/agents/*.md` is parsed, which is the hosted
-> control plane (`stage_plugin_agents` + `setting_sources=["project"]`) and both
-> harnesses. **Whether Cowork honours it has not been checked on a live session**,
-> the way the `model:` pins were; check before relying on it there.
+> control plane (`stage_plugin_agents` + `setting_sources=["project"]`), both
+> harnesses, **and Cowork — verified live on 2026-08-25**, the way the `model:` pins
+> were. A probe plugin pinned `record-extractor` to `effort: low` and a `PreToolUse`
+> hook read the payload back: four subagent tool calls in a macOS Cowork session, every
+> one `{"level": "low"}` against the session's `high`. The same hook in Claude Code
+> showed `{"level": "low"}` for a pinned agent beside `{"level": "xhigh"}` on the main
+> thread, one session. **The payload spells it as an object, not a string** — a grep
+> for `"effort": "low"` finds nothing.
 >
 > **And know the ceiling before you plan around it.** Because agents are the only
 > surface, the share of work that *can* be routed to another model is the share
