@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-08-18_10-46-59.json",
-  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "run_log": "v1_2026-08-25_11-41-40.json",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_historical_context_001",
+      "test_id": "ut_search_full_text_011",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_001",
+      "test_id": "ut_search_full_text_011",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_001",
+      "test_id": "ut_search_full_text_011",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,31 +27,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_001",
+      "test_id": "ut_search_full_text_011",
       "dimension_source": "rubric",
-      "dimension_name": "Relevance to research",
+      "dimension_name": "Query construction",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_001",
+      "test_id": "ut_search_full_text_011",
       "dimension_source": "rubric",
-      "dimension_name": "Source quality",
+      "dimension_name": "FAN awareness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_001",
+      "test_id": "ut_search_full_text_011",
       "dimension_source": "rubric",
-      "dimension_name": "Genealogical implications",
+      "dimension_name": "Negative result handling",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_002",
+      "test_id": "ut_search_full_text_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -59,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_002",
+      "test_id": "ut_search_full_text_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -67,7 +67,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_002",
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -75,95 +83,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_002",
+      "test_id": "ut_search_full_text_007",
       "dimension_source": "rubric",
-      "dimension_name": "Relevance to research",
+      "dimension_name": "FAN awareness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_002",
+      "test_id": "ut_search_full_text_007",
       "dimension_source": "rubric",
-      "dimension_name": "Source quality",
+      "dimension_name": "Negative result handling",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Genealogical implications",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_003",
+      "test_id": "ut_search_full_text_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 1,
+      "comment": "Did not correctly route to record-extraction"
     },
     {
-      "test_id": "ut_historical_context_003",
+      "test_id": "ut_search_full_text_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 1,
+      "comment": "Did not correctly route to record-extraction"
     },
     {
-      "test_id": "ut_historical_context_003",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Relevance to research",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Source quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Genealogical implications",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_008",
+      "test_id": "ut_search_full_text_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -171,31 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Relevance to research",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Source quality",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Agree — verified against the raw transcript. The FamilySearch-wiki-derived claims do carry real, correct URLs (confirmed the #1315 citation fix is working here), but one specific claim (a Pennsylvania civil-registration date) is asserted without wiki backing. Separately: the overall run outcome shows fail despite no dimension scoring 1 — reran standalone and got a clean pass; this is the harness's documented Agent-SDK skill-discovery false-fail (activated=False despite the skill genuinely running), not a #1315 regression."
-    },
-    {
-      "test_id": "ut_historical_context_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Genealogical implications",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_010",
+      "test_id": "ut_search_full_text_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -203,7 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_010",
+      "test_id": "ut_search_full_text_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -211,11 +139,83 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_010",
+      "test_id": "ut_search_full_text_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     }
   ]

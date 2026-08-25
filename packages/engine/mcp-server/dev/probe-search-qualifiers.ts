@@ -293,11 +293,13 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
+import { fetchWithTimeout } from "../src/utils/http.js";
 import {
   yearOf,
   yearOfDate,
   datedFromGedcomx,
   givenOf,
+  type Gedcomx,
 } from "./payload-extract.js";
 
 const SEARCH_URL =
@@ -852,6 +854,79 @@ async function searchOnce(query: string, attempt: number): Promise<Hit | typeof 
 async function search(query: string): Promise<Hit> {
   for (let attempt = 0; ; attempt++) {
     const r = await searchOnce(query, attempt);
+    if (r !== RETRY) return r;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Tree endpoint (person_search). A separate primitive, not a parameter on
+// searchOnce, because three things differ from the records endpoint and each
+// cost a wrong finding before it was pinned (see the explore-tree-* scripts):
+//   - base URL and `Accept: application/x-gedcomx-atom+json`;
+//   - a zero-result query answers HTTP 204 with an EMPTY BODY, where records
+//     answers 200 with `entries: []`. So the 204 branch below is load-bearing
+//     here and is exactly the branch searchOnce does NOT have — without it the
+//     empty body falls into the JSON parse and a meaningful zero reads as an
+//     error, which the pager then treats as "the pool ended here";
+//   - the payload shape: `entries[].content.gedcomx` per matched person.
+// The retry discipline is shared with searchOnce on purpose: same throttle(),
+// RETRYABLE_STATUS, MAX_RETRIES, backoff() and RETRY sentinel, so a run's retry
+// tally covers both endpoints. `fetchWithTimeout`, not the bare `fetch`
+// searchOnce uses: the tree endpoint throttles hardest of all and a stalled
+// connection would hang the whole run (CLAUDE.md: volume_search hung 236 min).
+const TREE_URL = "https://api.familysearch.org/platform/tree/search";
+
+interface TreeHit {
+  total: number | null;
+  /** Matched tree persons on this page: id plus the record gedcomx (for payload dates). */
+  persons: Array<{ id: string; gx: Gedcomx }>;
+  error: string | null;
+}
+
+async function treeSearchOnce(
+  query: string,
+  attempt: number
+): Promise<TreeHit | typeof RETRY> {
+  await throttle();
+  const res = await fetchWithTimeout(
+    `${TREE_URL}?${query}`,
+    { headers: { Authorization: `Bearer ${token}`, Accept: "application/x-gedcomx-atom+json" } },
+    60_000
+  );
+  // Status first, before the body — a 429/502 often carries an HTML or JSON
+  // envelope the parse below would turn into a terminal error, hiding the retry.
+  if (RETRYABLE_STATUS.has(res.status) && attempt < MAX_RETRIES) {
+    await backoff(res, attempt, query);
+    return RETRY;
+  }
+  // 204 = zero results, a MEANINGFUL ZERO. `res.ok` is true for 204 and the body
+  // is empty; this is the branch searchOnce does not need and this endpoint does.
+  if (res.status === 204) return { total: 0, persons: [], error: null };
+  const body = await res.text();
+  if (!res.ok) return { total: null, persons: [], error: `HTTP ${res.status}` };
+  // An empty 200 body is a transient the tree endpoint also emits; surface it as
+  // an error so the pager refuses rather than reading it as end-of-pool.
+  if (!body.trim()) return { total: null, persons: [], error: "empty body (HTTP 200)" };
+  let parsed: { results?: number; entries?: Array<{ id?: string; content?: { gedcomx?: Gedcomx & { persons?: Array<{ id?: string }> } } }> };
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return { total: null, persons: [], error: `HTTP ${res.status}: unparseable` };
+  }
+  const persons = (parsed.entries ?? []).map((e) => ({
+    id: e?.content?.gedcomx?.persons?.[0]?.id ?? e?.id ?? "?",
+    gx: (e?.content?.gedcomx ?? {}) as Gedcomx,
+  }));
+  return {
+    total: typeof parsed.results === "number" ? parsed.results : null,
+    persons,
+    error: null,
+  };
+}
+
+async function treeSearch(query: string): Promise<TreeHit> {
+  for (let attempt = 0; ; attempt++) {
+    const r = await treeSearchOnce(query, attempt);
     if (r !== RETRY) return r;
   }
 }
@@ -2157,760 +2232,77 @@ async function sectionG(): Promise<void> {
  * was measured" on the strength of this section alone.
  */
 async function sectionH(): Promise<void> {
-  console.log("  [RULE 0] H's sampled rows are RULE 0 non-compliant; the .exact/year-silent question is re-done enumerably in section N.");
-  console.log(
-    "\n=== H. <event>Year: does a range fuzz, does .exact harden it, and what about records with no year? ==="
-  );
-  const FROM = 1850;
-  const TO = 1850;
-
-  // TWO populations, because one query cannot answer all three questions.
-  // Questions 1-2 need records that HAVE indexed birth years (otherwise there
-  // is nothing to be in or out of range); question 3 needs records that DON'T
-  // (otherwise a zero is unreadable — it could mean the range dropped them, or
-  // that there were none to drop).
-  //
-  // The second row is a RESIDENCE-anchored population — census-shaped records,
-  // where the person is indexed by where they lived and often carries no birth
-  // fact at all. Measured 2026-08-08: 86/100 hold no birth-like year anywhere.
-  // An England surname sweep was tried first and rejected: it looks year-less
-  // if you read `display.birthDate` (84/100 blank) but every one of those
-  // personas carries a dated Birth/Christening fact, so it answers nothing.
-  const POPULATIONS: Array<{ id: string; base: string }> = [
-    { id: "US Martin/John", base: "q.surname=Martin&q.givenName=John&q.recordCountry=United%20States" },
-    { id: "US Martin residence-1880", base: "q.surname=Martin&q.residenceDate.from=1880&q.residenceDate.to=1880" },
-  ];
-
-  interface YearRow {
-    total: number | null;
-    sampled: number;
-    inRange: number;
-    /** Genuinely outside: no birth-like fact of ANY kind falls in the range. */
-    outYears: number[];
-    /** Personas with NO birth-like fact at all whose display year is out of
-     *  range. A record with an in-range christening or baptism is already
-     *  counted `inRange` by the branch above, so this bucket is NOT that case
-     *  — the JSDoc used to say it was. These are excluded from `outYears`,
-     *  which makes the "outside" figure a LOWER BOUND: any genuine fuzz hiding
-     *  in a persona with no facts is invisible to it. Do not quote the outside
-     *  count as exhaustive. */
-    explained: number;
-    /** Of `outYears`, how many carried only approximate ("about 1848") dates. */
-    approximate: number;
-    noYear: number;
-  }
-  const BASELINE = "baseline (no date filter)";
-  const RANGE = `birth ${FROM}-${TO}, unqualified`;
-  const EXACT = `birth ${FROM}-${TO} + .exact=on`;
-
-  const byPopulation = new Map<string, Map<string, YearRow>>();
-  for (const pop of POPULATIONS) {
-    const range = `&q.birthLikeDate.from=${FROM}&q.birthLikeDate.to=${TO}`;
-    const variants: Array<[string, string]> = [
-      [BASELINE, ""],
-      [RANGE, range],
-      [EXACT, `${range}&q.birthLikeDate.exact=on`],
-    ];
-    const rows = new Map<string, YearRow>();
-    console.log(`\n  -- ${pop.id}`);
-    for (const [label, extra] of variants) {
-      let total: number | null = null;
-      let sampled = 0;
-      let inRange = 0;
-      let noYear = 0;
-      let rowFailed = false;
-      let explained = 0;
-      let approximate = 0;
-      const outYears: number[] = [];
-      for (const offset of [0, 100, 200]) {
-        const r = await search(`${pop.base}${extra}&count=100&offset=${offset}&${REQUIRE_SWITCH}`);
-        // Last pager in the file without a guard. A truncated sample here would
-        // empty outYears and print ".exact hardens it CONFIRMED" from nothing.
-        if (errored(r)) { rowFailed = true; break; }
-        if (total === null) total = r.total;
-        sampled += r.personas.length;
-        for (const p of r.personas) {
-          // Score on the whole birth-like family, falling back to the display
-          // field only when the persona carries no birth-like fact at all.
-          const years = p.birthLike
-            .map((f) => f.year)
-            .filter((y): y is number => y !== null);
-          const displayYear = yearOf(p.matchedBirthDate);
-          if (!years.length && displayYear === null) {
-            noYear++;
-          } else if (years.some((y) => y >= FROM && y <= TO)) {
-            inRange++;
-          } else if (displayYear !== null && displayYear >= FROM && displayYear <= TO) {
-            inRange++;
-          } else if (years.length) {
-            // Out on every birth-like fact it has -> genuinely outside.
-            const y = years[0] as number;
-            outYears.push(y);
-            if (p.birthLike.every((f) => f.approximate)) approximate++;
-          } else if (displayYear !== null) {
-            // No facts at all, display year out of range: report as explained-
-            // unknown rather than claiming fuzz on a field we know is partial.
-            explained++;
-          }
-        }
-      }
-      if (rowFailed) {
-        console.log(`     ${label.padEnd(30)} NOT MEASURED — an API error truncated this row`);
-        continue;
-      }
-      rows.set(label, { total, sampled, inRange, outYears, explained, approximate, noYear });
-      console.log(
-        `     ${label.padEnd(30)} total=${fmt(total)}  sampled=${String(sampled).padStart(3)}` +
-          `  in-range=${String(inRange).padStart(3)}  outside=${String(outYears.length).padStart(3)}` +
-          `  (approx ${String(approximate).padStart(3)})  display-only=${String(explained).padStart(2)}` +
-          `  no-year=${String(noYear).padStart(3)}  ${tally(outYears.map(String))}`
-      );
-    }
-    byPopulation.set(pop.id, rows);
-  }
-
-  // --- Verdict, derived from the rows above --------------------------------
-  // Each question is answered by whichever population can answer it, and the
-  // verdict line names that population so the number is traceable to its row.
-  const scored = [...byPopulation.entries()].map(([id, rows]) => ({
-    id,
-    rows,
-    withYear: (rows.get(BASELINE)?.sampled ?? 0) - (rows.get(BASELINE)?.noYear ?? 0),
-    noYear: rows.get(BASELINE)?.noYear ?? 0,
-  }));
-  const rich = [...scored].sort((a, b) => b.withYear - a.withYear)[0];
-  const poor = [...scored].sort((a, b) => b.noYear - a.noYear)[0];
-
-  const un = rich?.rows.get(RANGE);
-  const ex = rich?.rows.get(EXACT);
-  const usable = un !== undefined && ex !== undefined && un.sampled > 0 && ex.sampled > 0;
-
-  console.log("");
-  if (!usable || rich === undefined) {
-    console.log(
-      "  NOT MEASURED — the year-bearing population sampled 0 records (auth, rate limit, or an" +
-        " empty result set). Verdicts are withheld rather than computed from nothing."
-    );
+  console.log("\n=== H. record_search birth year: bands, .exact, and the payload-dated control ===");
+  // #1771 steps 1+4. H's old instrument tried to SIZE a population — "records with
+  // no indexed year" — that was enumerated at ZERO. That population does not exist:
+  // a persona with no year of its own carries an estimated RANGE (from the dated
+  // facts of others on the record), and an unqualified range matches it by overlap.
+  // The partition algebra, the smallest-bucket ceiling and silentEstimatesAgree all
+  // solved for the size of that non-existent population, so they had no subject and
+  // are deleted. H now derives its verdicts from the disjoint-band membership
+  // instrument (runRecordsFamily) on its own parish BIRTH pool — the same instrument
+  // section Q runs for the other families and the non-parish census control. The
+  // population is the parish pool `q.surname=Pocklington&q.givenName=Thomae&
+  // q.recordCountry=England&f.recordType=0`; it REPLACES H's old
+  // `q.surname=Martin&q.residenceDate=1880` population, which at ~11.4M rows never
+  // enumerated (step 3 corroborates on a non-parish US census pool).
+  const r = await runRecordsFamily(RECORDS_BIRTH_FAM, { section: "H" });
+  if (r === null) {
+    // runRecordsFamily has already recorded H.bands:records-birth with the refusal
+    // reason and logged it. Withhold every verdict (RULE 0): a withheld verdict
+    // conflicts with nothing, and a guessed one is worse than none.
+    console.log("  [RULE 0] band instrument refused — H records no verdict this run.");
     return;
   }
 
-  record("H", "population", rich.id);
-  record("H", "unqualifiedOutOfRange", un.outYears.length);
-  record("H", "unqualifiedSampled", un.sampled);
-  record("H", "unqualifiedApproximate", un.approximate);
-  record("H", "exactOutOfRange", ex.outYears.length);
-  record("H", "exactSampled", ex.sampled);
-  record("H", "unqualifiedTotal", un.total);
-  record("H", "exactTotal", ex.total);
-  const fuzzes = un.outYears.length > 0;
-  const hardens = un.outYears.length > 0 && ex.outYears.length === 0;
-  const narrows = usableTotal(un.total) && measuredTotal(ex.total) && ex.total < un.total;
-  // RECORDED because shipped prose cites them. `place-date-mechanics.md` states
-  // "The fuzz is real" from `fuzzes`, and nothing in the artifact pinned it —
-  // the guard could not check a sentence whose evidence lived only in stdout.
-  // Both are SAMPLED (300 rows of a multi-hundred-thousand pool), so they are
-  // labelled as such; section N re-does the same questions by enumeration.
+  // index-silent personas exist? (renamed from "silence tolerated", which read OPEN
+  // for months because its estimator had no subject.) A persona in EVERY band is one
+  // the index cannot place in time at all — genuinely year-silent. The rule that
+  // guards H's wording is repointed here with activeWhen /^NO/, so it stays active on
+  // this measured negative and forbids the old "tolerates year-silent records" story.
   record(
     "H",
-    "verdict:an unqualified range fuzzes past its bounds",
-    `${fuzzes ? "CONFIRMED" : "NOT CONFIRMED"} (SAMPLED — ${un.outYears.length}/${un.sampled} rows of a ${fmt(un.total).trim()}-record pool; section N enumerates this and records WEAK)`
+    "verdict:index-silent personas exist",
+    r.indexSilent > 0
+      ? `YES — ${r.indexSilent} persona(s) match all ${r.bands} bands, so the index places them nowhere in time`
+      : `NO — no persona matches all ${r.bands} bands; every persona is placed in time by the index, so none is year-silent`
   );
+
+  // an unqualified range admits estimate overlaps? (renamed from "year-silent".) A
+  // persona matching MORE THAN ONE disjoint band carries an estimated range, and an
+  // unqualified range matches it by overlapping that estimate.
   record(
     "H",
-    "verdict:.exact hardens the range",
-    `${hardens ? "CONFIRMED" : "NOT CONFIRMED"} (SAMPLED — an ABSENCE inside ${ex.sampled} rows of a ${fmt(ex.total).trim()}-record pool, which RULE 0 does not accept as evidence; section N enumerates and finds an out-of-range row SURVIVING .exact)`
-  );
-  console.log(
-    `  range fuzzes         ${fuzzes ? "CONFIRMED" : "NOT CONFIRMED"} [${rich.id}] — unqualified ` +
-      `${FROM}-${TO} returned ${un.outYears.length}/${un.sampled} sampled records dated outside it` +
-      `${un.outYears.length ? ` (${tally(un.outYears.map(String))})` : ""}`
-  );
-  console.log(
-    `  .exact hardens it    ${hardens ? "CONFIRMED" : "NOT CONFIRMED"} [${rich.id}] — with .exact=on ` +
-      `the out-of-range population is ${ex.outYears.length}/${ex.sampled}` +
-      `${ex.outYears.length ? ` (${tally(ex.outYears.map(String))})` : ""}`
-  );
-  console.log(
-    `  .exact narrows count ${narrows ? "CONFIRMED" : "NOT CONFIRMED"} [${rich.id}] — ${fmt(un.total)} -> ${fmt(ex.total)}`
+    "verdict:an unqualified range admits estimate overlaps",
+    r.multiBand > 0
+      ? `YES — ${r.multiBand} persona(s) match more than one disjoint band, so an unqualified range admits estimate-overlap matches, not only records dated inside it`
+      : `NO — every persona matched at most one band, so no estimate overlap was observed on this pool`
   );
 
-  // --- WHAT does `.exact` actually drop? ------------------------------------
-  //
-  // The 99.1% -> 24.2% retention gap below shows `.exact` removes most of a
-  // population, and the docs attributed that to year-SILENT records. That was
-  // an inference, not a measurement, and it is not safe: a 300-row sample of an
-  // unqualified 1850-1850 range held one record dated "about 1850" — in range —
-  // and the same range with `.exact=on` held none, so `.exact` also drops
-  // APPROXIMATE date forms whose year is in range. At least two populations are
-  // inside that gap and this block says which, by membership rather than
-  // arithmetic: page an exact result set small enough to read in full, then ask
-  // whether specific records of each class are in it.
-  const attribution = async (): Promise<void> => {
-    console.log("\n  what .exact drops — membership, not inference:");
-    const CANDIDATES = [
-      "q.surname=Martin&q.givenName=John&q.birthLikePlace=Gloucestershire,%20England",
-      "q.surname=Purnell&q.birthLikePlace=Wiltshire,%20England",
-      "q.surname=Smith&q.birthLikePlace=Trowbridge,%20Wiltshire,%20England",
-      "q.surname=Martin&q.givenName=John&q.birthLikePlace=Kent,%20England",
-    ];
-    const RANGE = `&q.birthLikeDate.from=${FROM}&q.birthLikeDate.to=${TO}`;
-    const PAGEABLE = 300;
-    let chosen: string | null = null;
-    let exactTotal: number | null = null;
-    for (const c of CANDIDATES) {
-      const t = (await search(`${c}${RANGE}&q.birthLikeDate.exact=on&count=1&${REQUIRE_SWITCH}`)).total;
-      if (t !== null && t > 0 && t <= PAGEABLE) { chosen = c; exactTotal = t; break; }
-    }
-    if (chosen === null) {
-      console.log(
-        `    NOT MEASURABLE — no candidate population had an exact result set of 1..${PAGEABLE},` +
-          ` so none could be read in full. Without that the question needs a sample, and a sample` +
-          ` cannot tell "dropped" from "ranked below where I looked".`
-      );
-      return;
-    }
-    // Read the ENTIRE exact set, so absence from it is absence, not depth.
-    const exactIds = new Set<string>();
-    for (let off = 0; off < PAGEABLE; off += 100) {
-      const pg = await search(`${chosen}${RANGE}&q.birthLikeDate.exact=on&count=100&offset=${off}&${REQUIRE_SWITCH}`);
-      if (errored(pg)) {
-        console.log(
-          "    NOT MEASURED — an API error interrupted the read of the exact set. Membership answers below" +
-            " would report 'DROPPED' for records we simply never read."
-        );
-        return;
-      }
-      pg.personas.forEach((x) => exactIds.add(x.id));
-      if (pg.personas.length < 100) break;
-    }
-    // Classify the unqualified set and pick one representative of each class.
-    const rep: Record<string, { id: string; why: string } | null> = {
-      "year-silent": null, "in-range approximate": null, "in-range precise": null,
-    };
-    for (const off of [0, 100, 200]) {
-      const pg = await search(`${chosen}${RANGE}&count=100&offset=${off}&${REQUIRE_SWITCH}`);
-      if (errored(pg)) break; // fewer representatives, but no false answer
-      for (const x of pg.personas) {
-        const years = x.birthLike.map((f) => f.year).filter((y): y is number => y !== null);
-        const display = yearOf(x.matchedBirthDate);
-        if (!years.length && display === null) {
-          rep["year-silent"] ??= { id: x.id, why: "no birth-like fact and no display year" };
-        } else if (years.some((y) => y >= FROM && y <= TO)) {
-          const approx = x.birthLike.some((f) => f.approximate && f.year !== null && f.year >= FROM && f.year <= TO);
-          const key = approx ? "in-range approximate" : "in-range precise";
-          rep[key] ??= { id: x.id, why: x.birthLike.map((f) => f.original).filter(Boolean).join(" | ") || "(no original)" };
-        }
-      }
-      if (pg.personas.length < 100) break;
-    }
-    console.log(`    population: exact set = ${fmt(exactTotal)} record(s), read in full`);
-    let anyUnknown = false;
-    for (const [cls, r] of Object.entries(rep)) {
-      if (!r) {
-        console.log(`      ${cls.padEnd(21)} no representative found in the unqualified set — not tested`);
-        anyUnknown = true;
-        // Recorded as NOT MEASURED rather than omitted: a doc claim about this
-        // class must not be able to pass merely because the artifact is silent.
-        record("H", `verdict:${cls}`, "NOT MEASURED");
-        continue;
-      }
-      const kept = exactIds.has(r.id);
-      record("H", `verdict:${cls}`, kept ? "KEPT" : "DROPPED");
-      console.log(`      ${cls.padEnd(21)} ${kept ? "KEPT" : "DROPPED"} by .exact  (${r.id}: ${r.why.slice(0, 60)})`);
-    }
-    console.log(
-      `    -> the retention gap below therefore cannot be attributed to year-silence alone` +
-        `${anyUnknown ? "; and at least one class had no representative, so this is a partial answer" : ""}.`
-    );
-
-    // The question this block used to chase — whether a payload-silent record is
-    // genuinely index-silent — is NOT answerable by paging, and two attempts at it
-    // here were wasted effort. On the disjoint-range query the pool never reaches a
-    // short page: it re-serves records, returning thousands of rows for a few
-    // hundred distinct personas, so neither the reported total nor a page count
-    // bounds the set. It is answered instead by the IMPOSSIBLE-RANGE test below,
-    // which needs one query and no paging at all.
-  };
-  await attribution();
-
-  // Question 3 CANNOT be answered from the sampled columns, and the first three
-  // drafts of this section got it wrong by trying. Adding a year range reranks:
-  // records carrying a matching year are promoted, so the year-SILENT ones fall
-  // below a 300-record window and the sample reads 0 — which looks exactly like
-  // exclusion and is not. Measured 2026-08-08 on the residence-1880 population:
-  // sampled no-year went 261/300 -> 0/300 while the TOTAL only fell 11.39M ->
-  // 5.13M, i.e. tens of millions of silent records were plainly still in the
-  // result set. Answer it from totals instead, with a range so wide that every
-  // indexed year matches it: what remains is a pure "must this field exist?"
-  // question, and no sampling window can distort it.
-  //
-  // METHOD TRAP: the API rejects a range of 500 years or more outright —
-  // `Query date range for key (birthLikeDate) cannot be 500 years or longer!`
-  // 1700-1950 is wide enough to cover any plausible birth year and legal.
-  const WIDE_FROM = 1700;
-  const WIDE_TO = 1950;
-  const poorPop = POPULATIONS.find((x) => x.id === poor?.id)?.base ?? "";
-  const poorBase = poor?.rows.get(BASELINE)?.total ?? null;
-  const wideQ = `&q.birthLikeDate.from=${WIDE_FROM}&q.birthLikeDate.to=${WIDE_TO}`;
-  const wide = poor === undefined ? null : (await search(`${poorPop}${wideQ}&count=1&${REQUIRE_SWITCH}`)).total;
-  // The `.exact` control is the half this section shipped without, and its
-  // absence made the verdict assert the untested case. A wide range answers
-  // "does an UNQUALIFIED range require the field to exist"; only the same range
-  // WITH `.exact=on` answers it for the qualified form, and the two differ.
-  const wideExact =
-    poor === undefined
-      ? null
-      : (await search(`${poorPop}${wideQ}&q.birthLikeDate.exact=on&count=1&${REQUIRE_SWITCH}`)).total;
-
-  const haveYearless = poor !== undefined && (poor.rows.get(BASELINE)?.noYear ?? 0) > 0;
-  if (poor === undefined || poorBase === null || wide === null || wideExact === null) {
-    console.log(
-      "  silence vs conflict  NOT MEASURED — a control query returned no total, so whether a year range " +
-        "requires the field to exist is left unanswered rather than guessed from a sample."
-    );
-    return;
-  }
-  if (!haveYearless) {
-    console.log(
-      `  silence vs conflict  NOT MEASURABLE — the chosen population sampled ` +
-        `${poor.rows.get(BASELINE)?.noYear ?? 0}/${poor.rows.get(BASELINE)?.sampled ?? 0} records with no indexed ` +
-        `birth year, so there were none available for a range to drop. Retention figures below would be ` +
-        `about something else entirely. Re-run against a population known to hold year-less records.`
-    );
-    return;
-  }
-
-  if (!usableTotal(wide) || !usableTotal(wideExact) || !usableTotal(poorBase)) {
-    console.log(
-      "  wide-range control   NOT MEASURED — a total was null, zero, or the Int32 saturation" +
-        " sentinel (2147483647), so a retention ratio built from it would not be a measurement."
-    );
-    return;
-  }
-  const keptUnqualified = wide / poorBase;
-  const keptExact = wideExact / poorBase;
-  record("H", "widePopulation", poor.id);
-  record("H", "wideBaseline", poorBase);
-  record("H", "wideUnqualified", wide);
-  record("H", "wideUnqualifiedPct", +(keptUnqualified * 100).toFixed(1));
-  record("H", "wideExact", wideExact);
-  record("H", "wideExactPct", +(keptExact * 100).toFixed(1));
-  console.log(
-    `  wide-range control   [${poor.id}] baseline ${fmt(poorBase)} -> ${WIDE_FROM}-${WIDE_TO} ${fmt(wide)} ` +
-      `(${(keptUnqualified * 100).toFixed(1)}%) -> same range +.exact=on ${fmt(wideExact)} ` +
-      `(${(keptExact * 100).toFixed(1)}%)`
-  );
-  console.log(
-    `  .exact drops silence ${keptExact < keptUnqualified * 0.9 ? "CONFIRMED" : "NOT CONFIRMED"} — a range every ` +
-      `indexed year satisfies still loses ${(100 - keptExact * 100).toFixed(1)}% of the population once ` +
-      `\`.exact=on\` is added, and the membership block above shows a year-silent record DROPPED while an ` +
-      `in-range precise one is KEPT. What the gap does NOT establish is that year-silence is the whole of ` +
-      `it — the in-range APPROXIMATE class is reported by the membership block above, and where that reads ` +
-      `NOT MEASURED nothing here licenses a claim about it either way. Say ".exact drops year-silent ` +
-      `records"; do not say that is all it drops.`
-  );
-  // MUST come from `poor`, not `rich`. Dividing rich's RANGE total by poor's
-  // BASELINE total mixes two different queries and prints a meaningless
-  // percentage — the same cross-population slip this section already had once.
-  const poorRange = poor.rows.get(RANGE)?.total ?? null;
-  const narrowKept = poorRange !== null && poorBase ? poorRange / poorBase : null;
-
-  // --- THE PARTITION TEST — what finally settles "silence tolerated" --------
-  //
-  // The paradox this section shipped with: a WIDE range retains ~99% of a
-  // population whose sampled baseline is ~87% year-less, which reads as "an
-  // unqualified range keeps year-silent records"; yet a NARROW range on the same
-  // population retains far less than that silent share, which the same model
-  // cannot produce. Two figures, no single explanation, so the verdict was left
-  // OPEN — and was twice written up as settled anyway.
-  //
-  // Totals alone can decide it, without membership in an 11M-record pool. Cut
-  // the wide range into DISJOINT buckets. A record carrying one indexed year
-  // falls in exactly one bucket, so if silence is not tolerated the buckets sum
-  // to about the wide total. If silence IS tolerated, every silent record
-  // matches EVERY bucket, so k buckets count it k times and the sum overshoots
-  // by (k-1)·S — which also measures S, the silent population, directly.
-  //
-  //   not tolerated : sum ~= wide
-  //   tolerated     : sum ~= wide + (k-1)*S,  S = (sum - wide) / (k - 1)
-  const BUCKETS: Array<[number, number]> = [
-    [1700, 1749],
-    [1750, 1799],
-    [1800, 1849],
-    [1850, 1899],
-    [1900, 1950],
-  ];
-  let bucketSum = 0;
-  const bucketTotals: number[] = [];
-  let bucketsMeasured = true;
-  for (const [f, t] of BUCKETS) {
-    const r = await search(
-      `${poorPop}&q.birthLikeDate.from=${f}&q.birthLikeDate.to=${t}&count=1&${REQUIRE_SWITCH}`
-    );
-    if (!measuredTotal(r.total)) {
-      bucketsMeasured = false;
-      break;
-    }
-    bucketTotals.push(r.total);
-    bucketSum += r.total;
-  }
-  if (!bucketsMeasured) {
-    record("H", "verdict:silence tolerated", "NOT MEASURED");
-    console.log(
-      "  silence tolerated    NOT MEASURED — a partition bucket returned no usable total."
-    );
-    return;
-  }
-  // --- Is the range matching a DIFFERENT person on the record? -------------
-  //
-  // The partition ratio is the clue: if each record carried one year it would be
-  // ~1x, and if every record matched every bucket it would be ~5x. A value in
-  // between says records span several buckets — which is what a census household
-  // looks like when the filter is record-level rather than persona-level.
-  //
-  // Test it directly: sample the year-poor baseline and ask, of the personas
-  // that carry no birth year of their own, how many sit on a record where some
-  // OTHER person does. Those are exactly the records that earlier drafts counted
-  // as "year-silent records kept by an unqualified range".
-  let silentPersona = 0;
-  let silentPersonaRecordHasYear = 0;
-  let silentPersonaRecordAlsoSilent = 0;
-  for (const offset of [0, 100, 200]) {
-    const r = await search(`${poorPop}&count=100&offset=${offset}&${REQUIRE_SWITCH}`);
-    if (errored(r)) break;
-    for (const p of r.personas) {
-      const ownYears = p.birthLike.map((f) => f.year).filter((y): y is number => y !== null);
-      const ownDisplay = yearOf(p.matchedBirthDate);
-      if (ownYears.length || ownDisplay !== null) continue;
-      silentPersona++;
-      if (p.recordBirthYears.length > 0) silentPersonaRecordHasYear++;
-      else silentPersonaRecordAlsoSilent++;
-    }
-    if (r.personas.length < 100) break;
-  }
-  record("H", "silentPersonaSampled", silentPersona);
-  record("H", "silentPersonaRecordHasYear", silentPersonaRecordHasYear);
-  record("H", "silentPersonaRecordAlsoSilent", silentPersonaRecordAlsoSilent);
-  const recordLevel =
-    silentPersona > 0 ? silentPersonaRecordHasYear / silentPersona : null;
-  // Recorded even though it came back refuted: the hypothesis that these records
-  // match on some OTHER person's year is the obvious explanation for the
-  // partition ratio, and the next reader should not have to re-test it.
+  // .exact requires the indexed date inside the range? (renamed from ".exact hardens
+  // the range".) .exact keeps FEWER band matches than the unqualified range: it drops
+  // the estimate-overlap matches and keeps records whose indexed date is in the band.
   record(
     "H",
-    "verdict:year-less personas sit on records carrying another person's year",
-    recordLevel === null
-      ? "NOT MEASURED"
-      : recordLevel >= 0.8
-        ? "YES"
-        : recordLevel <= 0.2
-          ? "NO — those records carry no birth year on any person"
-          : "MIXED"
-  );
-  console.log(
-    `\n  persona-silence vs record-silence [${poor.id}], sampled ${silentPersona} year-less personas:\n` +
-      `                       record carries someone else's birth year : ${silentPersonaRecordHasYear}\n` +
-      `                       record carries no birth year at all      : ${silentPersonaRecordAlsoSilent}`
+    "verdict:.exact requires the indexed date inside the range",
+    r.exactRowsRead < r.bandRowsRead
+      ? `YES — .exact keeps ${r.exactRowsRead} of ${r.bandRowsRead} band matches, dropping the estimate-overlap matches an unqualified range admits`
+      : `NO — .exact kept as many band matches as the unqualified range, so no hardening was observed on this pool`
   );
 
-  // --- THE IMPOSSIBLE-RANGE TEST — S in one query, no paging ---------------
-  //
-  // Ask for a birth range nothing in this population can legitimately occupy.
-  // Nobody in an 1880 US residence set was born in 1500. So every record that
-  // still comes back is one the range did not bind on — which is the silent
-  // population, counted directly rather than inferred, solved for, or paged to.
-  //
-  // This replaces two failed attempts at the same question by enumeration. The
-  // pool could not be read in full: deep paging re-serves records, returning
-  // thousands of rows for a few hundred distinct personas and never reaching a
-  // short page, so neither the reported total nor a page count bounds it. A
-  // count needs none of that.
-  //
-  // Two impossible ranges, not one: if silence is tolerated they must return
-  // about the SAME number, because the same silent set matches both. Two
-  // centuries apart agreeing is much harder to explain any other way.
-  const IMPOSSIBLE: Array<[number, number]> = [
-    [1500, 1501],
-    [1600, 1601],
-  ];
-  const impossible: number[] = [];
-  for (const [f, t] of IMPOSSIBLE) {
-    const r = await search(
-      `${poorPop}&q.birthLikeDate.from=${f}&q.birthLikeDate.to=${t}&count=1&${REQUIRE_SWITCH}`
-    );
-    if (measuredTotal(r.total)) impossible.push(r.total);
-    console.log(`  impossible range ${f}-${t}: ${fmt(r.total)}`);
-  }
-  record("H", "impossibleRangeTotals", impossible);
-
-  // And WHO comes back. If the tolerated set is the payload-silent set, one page
-  // of an impossible range should be overwhelmingly records with no year in the
-  // payload — which is what makes "payload-silent" and "index-silent" the same
-  // population rather than two different ones.
-  let impSampled = 0;
-  let impSilent = 0;
-  const impFirst = IMPOSSIBLE[0];
-  if (impFirst) {
-    const r = await search(
-      `${poorPop}&q.birthLikeDate.from=${impFirst[0]}&q.birthLikeDate.to=${impFirst[1]}` +
-        `&count=100&${REQUIRE_SWITCH}`
-    );
-    if (!errored(r)) {
-      impSampled = r.personas.length;
-      for (const p of r.personas) {
-        const own = p.birthLike.map((f) => f.year).filter((y): y is number => y !== null);
-        if (!own.length && yearOf(p.matchedBirthDate) === null) impSilent++;
-      }
-    }
-  }
-  const impSilentPct = impSampled > 0 ? (impSilent / impSampled) * 100 : null;
-  record("H", "impossibleRangeSampled", impSampled);
-  record("H", "impossibleRangePayloadSilent", impSilent);
+  // the payload predicts the indexed date? (renamed from "payload-silent is the
+  // tolerated population".) Every persona whose payload exposes a birth year lands in
+  // the band that year names — so a payload date predicts the band the index sorts it
+  // into. This is the payload-dated control, restated as a finding. Only two
+  // outcomes are reachable: `runRecordsFamily` returns null when the control FAILS
+  // (H then records no verdict), so a non-null `r` here always has controlHolds OR
+  // controlVacuous — never a held=false, vacuous=false "NO".
   record(
     "H",
-    "verdict:payload-silent is the tolerated population",
-    impSilentPct === null
-      ? "NOT MEASURED"
-      : impSilentPct >= 90
-        ? "YES — a range nothing can legitimately match returns payload-year-less records almost exclusively, so the tolerated set and the payload-silent set are the same population"
-        : `NO — only ${impSilentPct.toFixed(0)}% of an impossible range's results are payload-year-less, so something else is also being kept`
-  );
-  console.log(
-    `  of one page of the impossible range, ${impSilent}/${impSampled} carry no year in the payload` +
-      `${impSilentPct === null ? "" : ` (${impSilentPct.toFixed(0)}%)`}`
-  );
-
-  // --- Is the "87% year-less" figure a RANKING artifact? -------------------
-  //
-  // It is a sample of the first 300 rows of a relevance-ranked 11M-record pool,
-  // and it is being compared against a population TOTAL (the 99.1% retention).
-  // Those are not comparable quantities. This file already documents the same
-  // trap one section over: section F's sampled father-bearing rate swings
-  // 80/92/90/14/0/80/80 across offsets 0..5000, with the standing instruction to
-  // derive rates from totals. Sweep the offset and find out.
-  const SWEEP = [0, 1000, 2000, 3000, 4000];
-  const sweep: Array<{ offset: number; sampled: number; noYear: number }> = [];
-  for (const offset of SWEEP) {
-    const r = await search(`${poorPop}&count=100&offset=${offset}&${REQUIRE_SWITCH}`);
-    if (errored(r)) continue;
-    let n = 0;
-    for (const p of r.personas) {
-      const own = p.birthLike.map((f) => f.year).filter((y): y is number => y !== null);
-      if (!own.length && yearOf(p.matchedBirthDate) === null) n++;
-    }
-    sweep.push({ offset, sampled: r.personas.length, noYear: n });
-  }
-  record("H", "yearlessByOffset", sweep);
-  const pcts = sweep.filter((s) => s.sampled > 0).map((s) => (s.noYear / s.sampled) * 100);
-  const spread = pcts.length ? Math.max(...pcts) - Math.min(...pcts) : null;
-  record("H", "yearlessSpreadPct", spread === null ? null : +spread.toFixed(1));
-  // Worded off what was actually seen. The sweep is 86/1/86/86/86 — four offsets
-  // agree and one does not, which is an 85-point spread but NOT a smooth swing,
-  // and calling it one would be the same overstatement this section exists to
-  // remove. The load-bearing objection to the sample is coverage, not variance:
-  // 5 x 100 rows out of ~11.4M is 0.004% of the pool, so it cannot describe the
-  // population however stable it looks.
-  const sweepCoveragePct = poorBase ? (sweep.length * 100 * 100) / poorBase : null;
-  record("H", "sweepCoveragePctOfPool", sweepCoveragePct === null ? null : +sweepCoveragePct.toFixed(4));
-  record(
-    "H",
-    "verdict:the sampled year-less share describes the population",
-    spread === null
-      ? "NOT MEASURED"
-      : "NO — the sampled window is a vanishing fraction of the pool" +
-        (spread >= 30 ? ", and it is not even stable across offsets" : "")
-  );
-  console.log(
-    `  year-less share by offset [${poor.id}]: ` +
-      sweep.map((s) => `${s.offset}:${((s.noYear / s.sampled) * 100).toFixed(0)}%`).join("  ") +
-      `   (spread ${spread === null ? "?" : spread.toFixed(0)} points)`
-  );
-
-  const k = BUCKETS.length;
-  const ratio = bucketSum / wide;
-
-  // --- Does multi-year-per-record explain the partition ratio? -------------
-  //
-  // A record matches a bucket for EVERY birth year it carries, so a household
-  // spanning two generations is counted twice across disjoint buckets. If the
-  // average number of distinct buckets a record spans is ~= the partition ratio,
-  // the overshoot is fully explained by that and needs no "silence" hypothesis.
-  const bucketOf = (y: number): number =>
-    BUCKETS.findIndex(([f, t]) => y >= f && y <= t);
-  let spanRecords = 0;
-  let spanSum = 0;
-  for (const offset of [0, 100, 200]) {
-    const r = await search(`${poorPop}${wideQ}&count=100&offset=${offset}&${REQUIRE_SWITCH}`);
-    if (errored(r)) break;
-    for (const p of r.personas) {
-      const buckets = new Set(
-        p.recordBirthYears.map(bucketOf).filter((b) => b >= 0)
-      );
-      if (buckets.size === 0) continue; // carries no year in the partitioned span
-      spanRecords++;
-      spanSum += buckets.size;
-    }
-    if (r.personas.length < 100) break;
-  }
-  const meanSpan = spanRecords > 0 ? spanSum / spanRecords : null;
-  record("H", "meanBucketsSpannedPerRecord", meanSpan === null ? null : +meanSpan.toFixed(2));
-  record("H", "partitionRecordsSampled", spanRecords);
-  console.log(
-    `  mean distinct buckets spanned per record (wide-range sample): ` +
-      `${meanSpan === null ? "NOT MEASURED" : meanSpan.toFixed(2)}` +
-      ` over ${spanRecords} records`
-  );
-  const impliedSilent = Math.round((bucketSum - wide) / (k - 1));
-  record("H", "partitionBuckets", bucketTotals);
-  record("H", "partitionSum", bucketSum);
-  record("H", "partitionRatioToWide", +ratio.toFixed(3));
-  record("H", "partitionImpliedSilent", impliedSilent);
-  record("H", "narrowKeptPct", narrowKept === null ? null : +(narrowKept * 100).toFixed(1));
-  // The verdict weighs three independent signals, not the ratio alone. The
-  // ratio by itself is ambiguous (1.94x is neither ~1x nor ~5x), and reading it
-  // alone is what left this OPEN before:
-  //
-  //   (a) the partition overshoot is explained by records spanning several
-  //       buckets — if `meanSpan` ~= `ratio`, no silent population is needed;
-  //   (b) if silence were tolerated, EVERY bucket would be at least S, so the
-  //       smallest bucket is a hard ceiling on how many silent records exist;
-  //   (c) the sampled year-less share is only usable if it is stable by offset.
-  const minBucket = Math.min(...bucketTotals);
-  // A silent record appears in EVERY bucket, so the smallest bucket is a ceiling
-  // on how many there can be. This is one of two independent estimates of S.
-  const silentCeilingPct = (minBucket / wide) * 100;
-  record("H", "smallestBucket", minBucket);
-  record("H", "silentCeilingPctOfWide", +silentCeilingPct.toFixed(1));
-
-  // Solve for S rather than eyeballing the ratio. With W = Y + S and
-  // sum = m*Y + k*S (a year-bearing record spans m buckets, a silent one all k):
-  //
-  //     S = (sum - m*W) / (k - m)
-  //
-  // The first draft of this verdict compared `ratio` to ~1x and ~5x and, finding
-  // 1.94x, concluded NOT TOLERATED — which is wrong twice over: with m = 1.78 the
-  // no-silence prediction is 1.78x, not 1x, and the gap between 1.78 and 1.94 is
-  // exactly what S accounts for. `meanSpan` is measured over year-bearing records
-  // only (records spanning zero buckets are skipped), which is what this needs.
-  const silentEstimate =
-    meanSpan !== null && k > meanSpan ? (bucketSum - meanSpan * wide) / (k - meanSpan) : null;
-  const silentPct = silentEstimate === null ? null : (silentEstimate / wide) * 100;
-  record("H", "silentEstimate", silentEstimate === null ? null : Math.round(silentEstimate));
-  record("H", "silentEstimatePctOfWide", silentPct === null ? null : +silentPct.toFixed(1));
-  // THREE independent estimates of the same quantity, and agreement between
-  // them is the check that the model holds at all:
-  //   1. the partition algebra, S = (sum - m*W)/(k - m)
-  //   2. the smallest bucket, a ceiling on any match-every-range population
-  //   3. the impossible-range count, S measured directly in one query
-  // Each is derived a different way; two agreeing could be luck, three is not.
-  const impossibleMean =
-    impossible.length > 0 ? impossible.reduce((a, b) => a + b, 0) / impossible.length : null;
-  record("H", "impossibleRangeMean", impossibleMean === null ? null : Math.round(impossibleMean));
-  const spreadOf = (xs: number[]): number =>
-    xs.length < 2 ? 0 : (Math.max(...xs) - Math.min(...xs)) / Math.max(...xs);
-  const allEstimates = [silentEstimate, minBucket, impossibleMean].filter(
-    (n): n is number => n !== null
-  );
-  const estimatesAgree = allEstimates.length >= 2 && spreadOf(allEstimates) <= 0.25;
-  record("H", "silentEstimatesAgree", estimatesAgree);
-  record("H", "silentEstimateCount", allEstimates.length);
-  console.log(
-    `  three estimates of the silent population: partition ${fmt(silentEstimate === null ? null : Math.round(silentEstimate)).trim()},` +
-      ` smallest bucket ${fmt(minBucket).trim()},` +
-      ` impossible range ${fmt(impossibleMean === null ? null : Math.round(impossibleMean)).trim()}` +
-      ` — spread ${(spreadOf(allEstimates) * 100).toFixed(1)}%, ${estimatesAgree ? "AGREE" : "DISAGREE"}`
-  );
-  // The verdict is GATED on the three estimates agreeing, and that gate is the
-  // whole point. Without it this printed TOLERATED off the partition algebra
-  // alone — and the impossible-range test then refuted the model that algebra
-  // assumes. A number derived from a model nobody checked is not a measurement.
-  //
-  // What refutes it, concretely: if one fixed silent set matched EVERY range,
-  // two impossible ranges a century apart would return the same count, and their
-  // results would be the year-less records. Neither holds — the counts differ
-  // materially, and a sampled page of an impossible range contains essentially
-  // no payload-year-less records at all. Ordinary records with real indexed
-  // years are being returned by a range they cannot occupy, and nothing here
-  // explains why.
-  const tolerated =
-    silentPct === null || !estimatesAgree ? null : silentPct > 1 ? true : false;
-  record(
-    "H",
-    "verdict:silence tolerated",
-    tolerated === null
-      ? "OPEN — the three independent estimates of the silent population disagree, and the impossible-range test refutes the match-every-range model they assume. Do not quote a share, and do not say an unqualified range keeps year-silent records."
-      : tolerated
-        ? "TOLERATED — but by a small minority of the population, not the sampled share"
-        : "NOT TOLERATED"
-  );
-  console.log(
-    `  smallest bucket is ${fmt(minBucket)} = ${silentCeilingPct.toFixed(1)}% of the wide range` +
-      ` — a ceiling on any population matching EVERY range.\n` +
-      `  solving the partition: S = (sum - m*W)/(k - m) = ${silentEstimate === null ? "?" : fmt(Math.round(silentEstimate))}` +
-      ` (${silentPct === null ? "?" : silentPct.toFixed(1)}% of the wide range)` +
-      ` — the two estimates ${estimatesAgree ? "AGREE" : "DISAGREE"}.`
-  );
-  console.log(
-    `\n  partition test       [${poor.id}] ${k} disjoint buckets covering ${WIDE_FROM}-${WIDE_TO}:\n` +
-      `                       ${bucketTotals.map((n) => fmt(n).trim()).join(" + ")}\n` +
-      `                       = ${fmt(bucketSum)} vs the single wide range ${fmt(wide)}  (ratio ${ratio.toFixed(2)}x)`
-  );
-  if (tolerated === true) {
-    console.log(
-      `  silence tolerated    TOLERATED, but by a SMALL MINORITY — and both halves matter:\n` +
-        `                       * an unqualified range DOES keep records with no indexed year:\n` +
-        `                         ~${silentPct === null ? "?" : silentPct.toFixed(0)}% of this population matches every disjoint bucket,\n` +
-        `                         including a 1700-1749 birth range in an 1880 residence set, which\n` +
-        `                         is not a real 18th-century birth cohort;\n` +
-        `                       * but it is NOWHERE NEAR the ${poor.rows.get(BASELINE)?.noYear ?? "?"}/${poor.rows.get(BASELINE)?.sampled ?? "?"} the offset-0 sample shows.\n` +
-        `                         That sample covers ${sweepCoveragePct === null ? "?" : sweepCoveragePct.toFixed(3)}% of the pool and is not stable\n` +
-        `                         across offsets (spread ${spread === null ? "?" : spread.toFixed(0)} points), so it never described the\n` +
-        `                         population. Quote the ~${silentPct === null ? "?" : silentPct.toFixed(0)}%, never the sampled share.\n` +
-        `                       Derived, not eyeballed: S = (sum - m*W)/(k - m) with m = ${meanSpan === null ? "?" : meanSpan.toFixed(2)},\n` +
-        `                       cross-checked against the smallest bucket (${estimatesAgree ? "agrees" : "DISAGREES"}).`
-    );
-  } else if (tolerated === false) {
-    console.log(
-      `  silence tolerated    NOT TOLERATED — solving the partition puts the every-bucket population\n` +
-        `                       at ${silentPct === null ? "?" : silentPct.toFixed(1)}% of the wide range, i.e. effectively none.`
-    );
-  } else {
-    console.log(
-      `  silence tolerated    OPEN — and NOT because the ratio is ambiguous. The partition\n` +
-        `                       algebra gives a clean answer; the model behind it does not hold:\n` +
-        `                       * two impossible ranges a century apart should return the SAME\n` +
-        `                         count if one fixed silent set matched every range. They differ\n` +
-        `                         materially (${impossible.map((n) => fmt(n).trim()).join(" vs ")}).\n` +
-        `                       * a sampled page of an impossible range contains essentially no\n` +
-        `                         payload-year-less records (${impSilent}/${impSampled}) — the records it returns\n` +
-        `                         carry real indexed years and cannot occupy that range.\n` +
-        `                       * the three independent estimates spread ${(spreadOf(allEstimates) * 100).toFixed(0)}%.\n` +
-        `                       Something other than year-silence is being kept, and this run does\n` +
-        `                       not identify it. Do not quote a share; do not say an unqualified\n` +
-        `                       range keeps year-silent records.`
-    );
-  }
-  // Consistency check on the narrow range, stated as arithmetic rather than as
-  // an assertion about which verdict it favours — an earlier version of this
-  // line said it was "consistent only if NOT TOLERATED", which stopped being
-  // true the moment the verdict was derived properly.
-  const narrowTotal = poor.rows.get(RANGE)?.total ?? null;
-  const yearBearingInNarrow =
-    narrowTotal !== null && silentEstimate !== null
-      ? Math.round(narrowTotal - silentEstimate)
-      : null;
-  // Only meaningful if the silent estimate survived the agreement check. It used
-  // to print "the figures reconcile" unconditionally, which read as corroboration
-  // for a number the impossible-range test had just refuted.
-  console.log(
-    tolerated === null
-      ? `                       (narrow ${FROM}-${TO} retained ${narrowKept === null ? "?" : (narrowKept * 100).toFixed(1)}% of baseline = ${fmt(narrowTotal).trim()}.\n` +
-          `                       No silent-population figure is subtracted here, because none survived\n` +
-          `                       the checks above.)`
-      : `                       (narrow ${FROM}-${TO} retained ${narrowKept === null ? "?" : (narrowKept * 100).toFixed(1)}% of baseline = ${fmt(narrowTotal)};` +
-          ` subtracting the ~${fmt(silentEstimate === null ? null : Math.round(silentEstimate))} silent\n` +
-          `                       leaves ~${fmt(yearBearingInNarrow)} records actually carrying a ${FROM} year, which is a\n` +
-          `                       plausible cohort for this population — the figures reconcile.)`
+    "verdict:the payload predicts the indexed date",
+    r.controlHolds
+      ? `YES — all ${r.datedInAxis} payload-dated personas land in the band their own payload year names`
+      : `NOT MEASURED — no persona on this pool exposes a payload birth year to check`
   );
 }
 
@@ -3594,207 +2986,64 @@ async function sectionN(): Promise<void> {
     console.log("\n  F-redo: NOT MEASURED — a set could not be enumerated");
   }
 
-  // ---- H re-done: does an unqualified single-year range FUZZ? ----
-  // Pocklington MARRIAGE records carry no birth years at all (156 rows, all
-  // year-silent), so a fuzz measurement there measures nothing. This uses an
-  // Ollerenshaw BIRTH population instead, where ~100% of sampled rows carry an
-  // indexed birth year — the property the question requires.
-  // Ollerenshaw births (1,891) does NOT enumerate — paging re-serves records and
-  // never reaches a short page. Pocklington BIRTHS at 715 does, and carries
-  // indexed years, which is the pair of properties this question needs. Size is
-  // what decides enumerability on date-range queries, not the query shape:
-  // Pocklington's 156-row and 715-row date-range pools both terminated.
-  const YPOP = "q.surname=Pocklington&q.recordCountry=England&f.recordType=0";
-  const yFuzzy = await mustEnumerate(`${YPOP}&q.birthLikeDate.from=1850&q.birthLikeDate.to=1850`);
-  const yExact = await mustEnumerate(
-    `${YPOP}&q.birthLikeDate.from=1850&q.birthLikeDate.to=1850&q.birthLikeDate.exact=on`
-  );
-  /**
-   * PERSONA scope — reverted 2026-08-11, and deliberately not "fixed".
-   *
-   * This briefly read every person on the record instead, on the reasoning that
-   * `q.birthLikeDate` is a record-level filter. That reasoning was inferred from
-   * the payload's shape and never tested, and a test refutes it. NPBV-WBQ has a
-   * date-less `persons[0]` and a child christened 1565:
-   *
-   *     range 1565-1565  (the child's own year)  -> record ABSENT
-   *     range 1560-1570                          -> record ABSENT
-   *     range 1850-1850                          -> record ABSENT
-   *     range 1500-1501  (impossible)            -> record PRESENT
-   *
-   * So the child's 1565 is NOT what the filter matched on, and record-level
-   * scoring had no basis. Note it also refutes the persona-level reading this
-   * code returns to: a genuinely year-LESS record would answer every range, and
-   * this one answers only the impossible window. Neither scope explains the
-   * behaviour, which is why the verdicts below are withheld rather than
-   * recomputed. Do not "correct" this again without a test that says what the
-   * index actually matches on.
-   *
-   * The one thing kept from the record-level attempt is the `birthLike.length`
-   * guard: `[].every(...)` is true, so a persona with no birth facts but a
-   * display year used to be counted as approximate.
-   */
-  const outOf = (ps: Persona[]): { out: number; approx: number; noYear: number } => {
-    let out = 0, approx = 0, noYear = 0;
-    for (const p of ps) {
-      const years = p.birthLike.map((f) => f.year).filter((y): y is number => y !== null);
-      const disp = yearOf(p.matchedBirthDate);
-      if (!years.length && disp === null) { noYear++; continue; }
-      const inRange = years.some((y) => y === 1850) || disp === 1850;
-      if (!inRange) {
-        out++;
-        if (p.birthLike.length > 0 && p.birthLike.every((f) => f.approximate)) approx++;
+  // ---- H re-done, now DEFERRED to section H's band instrument ----
+  //
+  // The records BIRTH year question is settled by the disjoint-band membership
+  // instrument in section H. N used to attempt it with a payload classifier
+  // (`outOf`) over a single 1850 window plus an impossible-range control, and
+  // correctly WITHHELD every direction: the payload does not predict which ranges
+  // return a record (a record whose only indexed year is 1565 is ABSENT from a
+  // 1565 range and PRESENT in an impossible 1500-1501 range). The band instrument
+  // decides it by membership instead, so N now reads H's recorded result and
+  // records the two shared verdicts plus payload-silent-means-index-silent from
+  // it. When section H did not run this invocation the data is absent and N
+  // withholds (RULE 0); H runs before N in a full run.
+  //
+  // `verdict:an unqualified year range fuzzes past its bounds` is DELETED with the
+  // classifier it rested on. The date-range-pools-re-serve property that made H's
+  // old ~11.4M population unenumerable is recorded where it now matters, in
+  // section H / Q's step-3 pool notes.
+  const hBands = getFig("H", "bands:records-birth") as
+    | {
+        indexSilent?: number;
+        bandRowsRead?: number;
+        exactRowsRead?: number;
+        membership?: Record<string, number>;
+        controlHolds?: boolean;
       }
-    }
-    return { out, approx, noYear };
-  };
-  // THE control for H's long-open question. Those year-silent rows are only
-  // evidence of tolerated silence if they come back for a range they cannot
-  // possibly satisfy. Same population, an impossible range, read to the end.
-  const yImposs = await mustEnumerate(
-    `${YPOP}&q.birthLikeDate.from=1500&q.birthLikeDate.to=1501`
-  );
-  if (yFuzzy.personas && yExact.personas) {
-    const f = outOf(yFuzzy.personas);
-    const e = outOf(yExact.personas);
-    const impossRows = yImposs.personas?.length ?? null;
-    const impossSilent = yImposs.personas ? outOf(yImposs.personas).noYear : null;
-    record("N", "yearImpossibleRange", { rows: impossRows, yearSilent: impossSilent });
+    | undefined;
+  if (hBands && typeof hBands.indexSilent === "number" && hBands.controlHolds) {
+    const multiBand = Object.entries(hBands.membership ?? {})
+      .filter(([k]) => Number(k) > 1)
+      .reduce((s, [, n]) => s + (n as number), 0);
     record(
       "N",
-      "verdict:an unqualified range tolerates year-silent records",
-      impossRows === null || impossSilent === null
-        ? "NOT MEASURED — the impossible-range set could not be enumerated"
-        : impossSilent > 0 && f.noYear > 0
-          ? `HOLDS — a range nothing can satisfy (1500-1501) still returns ${impossSilent} year-silent record(s) out of ${impossRows}, read to the end, so an unqualified range does not require an indexed year`
-          : `DOES NOT HOLD — the impossible range returned ${impossRows} rows, ${impossSilent} of them year-silent`
+      "verdict:an unqualified range admits estimate overlaps",
+      multiBand > 0
+        ? `HOLDS — ${multiBand} persona(s) match more than one disjoint band in H's instrument, so an unqualified range admits estimate-overlap matches, not only records dated inside it`
+        : `DOES NOT HOLD — no persona matched more than one band, so no estimate overlap was observed`
     );
-    console.log(
-      `\n  H-redo impossible range 1500-1501: ${impossRows ?? "NOT MEASURED"} rows` +
-        `${impossSilent === null ? "" : `, ${impossSilent} year-silent`}`
-    );
-    // THE question that had been open since this section was written, and the
-    // comparison that answers it.
-    //
-    // If a record showing no year in the payload were genuinely year-LESS, it
-    // could not prefer one range over another — it would come back for 1500 as
-    // readily as for 1850. Measured here: the 1850 range returns 693 such rows
-    // and the impossible range returns 11. They are therefore NOT year-less;
-    // the index holds a year for them that the response does not expose, and
-    // they answer to the range that year falls in. Payload-silence is not
-    // index-silence, and every earlier attempt to read one as the other — the
-    // "87% year-less" figure, the partition estimate, the two wrong
-    // "silence tolerated" verdicts — was reading a rendering artifact as a fact
-    // about the index. The residue that DOES match any range is small: 11 of
-    // 715 here, ~1.5%, the same order as the ~5% the partition test estimated
-    // on a different population.
-    if (impossRows !== null && f.noYear > 0) {
-      record(
-        "N",
-        "verdict:payload-silent means index-silent",
-        impossRows < f.noYear / 2
-          ? `NO — the 1850 range returns ${f.noYear} payload-silent rows but an impossible range returns only ${impossRows}. Those rows are index-dated and merely unexposed; only the ${impossRows} that answer any range are genuinely year-less.`
-          : `YES — the impossible range returns ${impossRows} of the ${f.noYear} payload-silent rows, so they do not prefer a range`
-      );
-    }
-    // WITHHELD, overriding whatever the classifier above computed.
-    //
-    // These three verdicts all reduce to "is this row year-silent?", and the
-    // scope test in `outOf`'s docblock shows no payload-based classifier can
-    // answer it: the dates the payload exposes do not predict which ranges
-    // return the record. Persona scope says these rows are silent; record scope
-    // says none is; the API says neither, because a silent row would answer
-    // every range and these answer one.
-    //
-    // Section H has said `OPEN — do not say an unqualified range keeps
-    // year-silent records` all along, and it was right. Recording a direction
-    // here — in EITHER direction — is what put an unfounded claim into six
-    // shipped documents. The raw counts stay in `yearFuzz` and
-    // `yearImpossibleRange` so a later instrument can be compared against them.
-    const WITHHELD =
-      "NOT MEASURED — no payload-based classifier can decide year-silence here." +
-      " Scope test: a record whose only indexed year is 1565 is ABSENT from a" +
-      " 1565 range and PRESENT in an impossible 1500-1501 range, so neither the" +
-      " matched persona's dates nor the record's predict what the index matched" +
-      " on. A genuinely year-less record would answer every range; these answer one.";
-    record("N", "verdict:an unqualified range tolerates year-silent records", WITHHELD);
-    record("N", "verdict:.exact drops year-silent records", WITHHELD);
-    record("N", "verdict:payload-silent means index-silent", WITHHELD);
-    record("N", "yearFuzz", {
-      fuzzyRows: yFuzzy.personas.length, ...f,
-      exactRows: yExact.personas.length, exactOut: e.out, exactNoYear: e.noYear,
-    });
-    // Denominator stated, because it is 22, not 715: 693 of the rows carry no
-    // year in the payload and cannot be classified at all. One out-of-range row
-    // out of 22 is a thin basis for HOLDS, and that row ALSO survives `.exact`
-    // (exactOut 1), which is not what fuzz looks like. The classifier is also
-    // weaker than section H's: it reads only the matched persona's own dates,
-    // while `q.birthLikeDate` is a RECORD-level filter, so a sibling's or
-    // parent's in-range year makes a persona-out-of-range row legitimately
-    // in-range. `Persona.recordBirthYears` exists precisely for that and is not
-    // consulted here.
-    const classifiable = (yFuzzy.personas?.length ?? 0) - f.noYear;
-    const recordLevelInRange = (yFuzzy.personas ?? []).filter(
-      (p) => p.recordBirthYears.includes(1850)
-    ).length;
-    record("N", "yearFuzzClassifiable", classifiable);
-    record("N", "yearFuzzRecordLevelInRange", recordLevelInRange);
     record(
       "N",
-      "verdict:an unqualified year range fuzzes past its bounds",
-      f.out === 0
-        ? "NOT SEEN — no record outside the range in a set read in full"
-        : `WEAK — ${f.out} of ${classifiable} classifiable rows (of ${yFuzzy.personas?.length ?? 0} returned; the rest carry no year in the payload). ${
-            e.out > 0
-              ? `${e.out} out-of-range row(s) ALSO survive .exact, which is not the shape of fuzz`
-              : ".exact removes the out-of-range rows, which is the shape fuzz would have"
-          }. Scored on the matched persona only; the record-level check is not applied.`
+      "verdict:.exact drops estimate-overlap matches",
+      (hBands.exactRowsRead ?? 0) < (hBands.bandRowsRead ?? 0)
+        ? `HOLDS — .exact keeps ${hBands.exactRowsRead} of ${hBands.bandRowsRead} band matches in H's instrument, dropping the estimate-overlap matches`
+        : `DOES NOT HOLD — .exact kept as many band matches as the unqualified range`
     );
-    // Withheld for the same reason as the other two, and re-asserted HERE
-    // because this site runs AFTER the block above and silently overwrote it —
-    // `record()` is last-write-wins, so a withheld verdict is only withheld if
-    // nothing downstream recomputes the key. That is exactly how this verdict
-    // came back as HOLDS on the first attempt to withdraw it.
-    //
-    // The computation it replaced read `f.noYear > 0 && e.noYear === 0`, i.e.
-    // "rows the payload shows no year for are gone from the exact set". Whether
-    // those rows are year-silent is the question no payload-based classifier can
-    // answer here (see `outOf`), so this could only ever have restated its own
-    // premise.
-    record("N", "verdict:.exact drops year-silent records", WITHHELD);
-    console.log(
-      `\n  H-redo year range: unqualified ${yFuzzy.personas.length} rows` +
-        ` (${f.out} outside the range, ${f.approx} of those approximate, ${f.noYear} year-silent)`
+    record(
+      "N",
+      "verdict:payload-silent means index-silent",
+      hBands.indexSilent === 0
+        ? `NO — H's instrument finds no persona in every band, so no record is index-silent; the payload-silent ones carry an estimated range and answer the band it overlaps`
+        : `YES — H's instrument finds ${hBands.indexSilent} index-silent persona(s), so payload silence coincides with index silence`
     );
-    console.log(
-      `                     + .exact  ${yExact.personas.length} rows` +
-        ` (${e.out} outside, ${e.noYear} year-silent)`
-    );
+    console.log(`\n  H-redo (deferred to section H's band instrument): multiBand ${multiBand}, index-silent ${hBands.indexSilent}`);
   } else {
-    // WHY it could not be enumerated, because the reason is itself a finding and
-    // it is not "the pool is too big".
-    //
-    // Measured on this exact query: reported total 1,891, yet paging fetched
-    // 4,900 rows yielding only 1,100 DISTINCT personas and never reached a short
-    // page. The same pathology appeared on the disjoint-range query in section H.
-    // Both are `q.birthLikeDate` RANGE queries, and on those the reported total
-    // does not bound the pageable set — deep paging re-serves records instead of
-    // terminating. So a date-range pool cannot be read to the end by paging
-    // however small its total looks, and any question about one needs a totals
-    // argument (the partition and impossible-range tests in section H) rather
-    // than enumeration.
-    record("N", "verdict:an unqualified year range fuzzes past its bounds", "NOT MEASURED");
-    record(
-      "N",
-      "verdict:date-range pools can be enumerated by paging",
-      "NO — reported total 1,891 but 4,900 rows fetched for 1,100 distinct personas, never reaching a short page. Same behaviour on the section H disjoint-range query. Date-range questions need totals arguments, not enumeration."
-    );
-    console.log(
-      "\n  H-redo: NOT MEASURED — the date-range pool does not enumerate:" +
-        " paging re-serves records and never reaches a short page (reported 1,891," +
-        " 4,900 rows fetched, 1,100 distinct). This is a property of date-range" +
-        " queries, not of the pool's size."
-    );
+    const NM = "NOT MEASURED — section H's band instrument did not run this invocation (run H).";
+    record("N", "verdict:an unqualified range admits estimate overlaps", NM);
+    record("N", "verdict:.exact drops estimate-overlap matches", NM);
+    record("N", "verdict:payload-silent means index-silent", NM);
+    console.log("\n  H-redo: NOT MEASURED — section H (band instrument) not run this invocation.");
   }
 
   // ---- E and I re-done: BIND-THEN-NARROW ----
@@ -5586,25 +4835,32 @@ async function sectionY(): Promise<void> {
         `That is range fuzz, not silence tolerance, and it says nothing about either half of the claim${caveat}`;
     } else if (totalSilent < MIN_SILENT_PRIMARY) {
       verdict =
-        `NOT MEASURED — only ${totalSilent} genuinely year-silent row(s) across ${classified.length} pool(s) ` +
+        `NOT MEASURED — only ${totalSilent} payload-undated row(s) retained by the impossible range across ${classified.length} pool(s) ` +
         `(floor ${MIN_SILENT_PRIMARY}); ${totalSilentKept} survived .exact. Too few to be a rate${caveat}`;
     } else if (totalSilentKept === 0) {
+      // NOT "silence": the band instrument (sections H/Q) measures index-silent
+      // personas at ZERO for every family. A row with no payload date that an
+      // impossible 1500-1505 range still retains carries an indexed estimate RANGE
+      // reaching that window — it is an estimate overlap, not a year-silent record.
       verdict =
-        `TOLERATES SILENCE, AND .exact REMOVES IT — ${measurableSilent} genuinely year-silent row(s) ` +
-        `across ${withSilentMeasured.length} pool(s), all removed by .exact (plus ${totalFuzz} fuzz row(s), ` +
-        `dated outside the range, which are not silence)${caveat}`;
+        `RETAINS ESTIMATE OVERLAPS, .exact REMOVES THEM — ${measurableSilent} row(s) with no payload ` +
+        `${fam.family} date, retained by an impossible ${IMP_FROM}-${IMP_TO} range because their indexed ` +
+        `range overlaps it, all removed by .exact (plus ${totalFuzz} fuzz row(s), dated outside the range)${caveat}`;
     } else {
       verdict =
-        `TOLERATES SILENCE, .exact DOES NOT REMOVE IT — .exact kept ${totalSilentKept} of ` +
-        `${measurableSilent} genuinely year-silent row(s) across ${withSilentMeasured.length} pool(s)${caveat}`;
+        `RETAINS ESTIMATE OVERLAPS, .exact DOES NOT REMOVE THEM — .exact kept ${totalSilentKept} of ` +
+        `${measurableSilent} such row(s) across ${withSilentMeasured.length} pool(s)${caveat}`;
     }
     // `removalPct` is deliberately GONE. It was survived/tolerated over rows
     // that were mostly fuzz, so it answered no question anyone asked, and the
     // two shipped doc sentences quoting it ("about 96% for death, 98% for
     // marriage") were both artifacts of the two parser bugs fixed above.
     record("Y", `silence:${fam.family}`, {
-      genuinelySilent: totalSilent,
-      silentKeptByExact: withSilentMeasured.length ? totalSilentKept : null,
+      // "estimate overlap" not "silence": these are payload-undated rows an
+      // impossible range retained via an indexed estimate range (band instrument
+      // measures index-silent = 0 for every family).
+      estimateOverlapRows: totalSilent,
+      estimateOverlapKeptByExact: withSilentMeasured.length ? totalSilentKept : null,
       fuzzRows: totalFuzz,
       poolsClassified: classified.length,
       poolsExcludedTooDeep: excluded,
@@ -5615,275 +4871,629 @@ async function sectionY(): Promise<void> {
     impRows.push({ family: fam.family, window: [IMP_FROM, IMP_TO], pools: perPool, verdict });
   }
   record("Y", "impossibleRows", impRows);
-  // "Generalises" means: behaves as BIRTH does — tolerates silence AND `.exact`
-  // removes it. Both halves matter, so a family that requires a year outright
-  // does NOT generalise even though nothing survived `.exact` there.
-  const BIRTH_BEHAVIOUR = /^TOLERATES SILENCE, AND \.exact REMOVES IT/;
-  const birthRow = impRows.find((r) => r.family === "birth");
-  const calibrated = BIRTH_BEHAVIOUR.test(String(birthRow?.verdict ?? ""));
-  const impDirectional = impRows.filter((r) => !/^NOT MEASURED/.test(String(r.verdict)));
-  const impNonBirth = impDirectional.filter((r) => r.family !== "birth");
-  const impHolds = impNonBirth.filter((r) => BIRTH_BEHAVIOUR.test(String(r.verdict)));
-  const impOverall = !calibrated
-    ? `NOT MEASURED — the instrument did not reproduce the known BIRTH behaviour (birth: ${birthRow?.verdict ?? "absent"}), so nothing can be read off it for the other families`
-    : impNonBirth.length === 0
-      ? "NOT MEASURED — no non-birth family reached a directional result"
-      : impHolds.length === impNonBirth.length
-        ? `GENERALISES — all ${impNonBirth.length} non-birth family/families behave as birth does (${impNonBirth.map((r) => r.family).join(", ")})`
-        : `DOES NOT GENERALISE — birth's behaviour reproduces, but only ${impHolds.length} of ${impNonBirth.length} non-birth family/families share it: ${impNonBirth.map((r) => `${r.family}=${String(r.verdict).split(" — ")[0]}`).join("; ")}`;
-  console.log(`  overall (impossible-range): ${impOverall}`);
+  // #1771 step 4. The generalisation question — does the year mechanism hold
+  // beyond birth? — is now answered directly by the disjoint-band instrument
+  // (section H for birth, section Q for death/marriage/residence), which measures
+  // all four families rather than inferring from an impossible-range residue. The
+  // old calibration demanded the literal "TOLERATES SILENCE, AND .exact REMOVES
+  // IT" from birth; under the range finding a correct instrument records NO
+  // SILENCE (the retained rows are estimate overlaps, not silence), so that
+  // calibration could never fire and this verdict was pinned at NOT MEASURED,
+  // leaving its wording rule active and the year prose unwritable. Y now reads the
+  // four band results: the mechanism generalises when every family shows the same
+  // shape — no index-silent persona, and .exact drops the estimate-overlap matches
+  // an unqualified range admits — with its payload-dated control holding. The
+  // impossible-range per-family rows above stay as independent corroboration. The
+  // key name is kept for its FORBIDDEN_WHEN guard.
+  // The two US census controls (`bands:records-uscensus-birth`,
+  // `bands:records-uscensus-residence`) are recorded to the artifact but are
+  // deliberately NOT read here. This verdict answers one question — does the
+  // estimate-overlap mechanism from birth generalise to the OTHER families? —
+  // and `bands:records-{death,marriage,residence}` are the per-family reads for
+  // that. The census pools are a same-family cross-collection control, not a
+  // fifth family, and reading them would conflate two questions. Their reading
+  // is not discarded: `residence` is collection-dependent (the parish pool here
+  // shows `.exact` a no-op; `bands:records-uscensus-residence` shows it dropping
+  // a meaningful fraction), and the prose and spec state exactly that, cited to
+  // both pools. So this verdict reads the parish residence pool by design; do not
+  // silently swap in the census pool to flip it — the "every wording rule is
+  // active" guard (measured-figures.test.ts) is what catches a verdict flip that
+  // would strand a wording rule.
+  const YEAR_BAND_SECTIONS: Array<[string, string]> = [
+    ["H", "bands:records-birth"],
+    ["Q", "bands:records-death"],
+    ["Q", "bands:records-marriage"],
+    ["Q", "bands:records-residence"],
+  ];
+  type BandFig = { indexSilent?: number; bandRowsRead?: number; exactRowsRead?: number; controlHolds?: boolean };
+  const bandFams = YEAR_BAND_SECTIONS.map(([sec, key]) => getFig(sec, key) as BandFig | undefined);
+  const measuredFams = bandFams.filter(
+    (b): b is BandFig => !!b && typeof b.indexSilent === "number" && b.controlHolds === true
+  );
+  const showsMechanism = (b: BandFig): boolean =>
+    b.indexSilent === 0 && (b.exactRowsRead ?? 0) < (b.bandRowsRead ?? 0);
+  const impOverall =
+    measuredFams.length < YEAR_BAND_SECTIONS.length
+      ? `NOT MEASURED — only ${measuredFams.length} of ${YEAR_BAND_SECTIONS.length} family band instruments ran and controlled this invocation (run H and Q)`
+      : measuredFams.every(showsMechanism)
+        ? `GENERALISES — all 4 families (birth, death, marriage, residence) show the same shape in the band instrument: no index-silent persona, and .exact drops the estimate-overlap matches an unqualified range admits`
+        : `DOES NOT GENERALISE — a family's band instrument does not show birth's shape (an index-silent persona, or .exact dropping nothing)`;
+  console.log(`  overall (generalises past birth): ${impOverall}`);
   record("Y", "verdict:generalises past birth (impossible-range)", impOverall);
 
-  // ---- SECONDARY: the payload test --------------------------------------
-  console.log("\n  --- secondary: payload year-silence (blind for families whose date is not in the payload) ---");
-  const rows: Array<Record<string, unknown>> = [];
+}
 
-  for (const fam of YEAR_FAMILIES) {
-    const anchor = `&f.recordType=${fam.recordType}`;
+// ---------------------------------------------------------------------------
+// P. person_search (tree endpoint): year-range band instrument, all four
+// year families.
+//
+// #1771 step 0. The records endpoint's year behaviour (sections H/N/Y) rests on
+// a probe recorded to the artifact; the tree endpoint's did not — every tree
+// figure came from throwaway session scripts that no longer exist. This section
+// gives person_search the same trail, so the YEAR clause can be stated about it
+// at all. (The NAME rule needs no probe here — the lead's 2026-08-17 ruling
+// states it as search-engine internals with no figure; person_search stays out
+// of EVIDENCE_SURFACES. This is only for the year axis.)
+//
+// The design is the records band instrument (`explore-year-bands-records.ts`),
+// with the guard the tree explorer lacked: the payload-dated CONTROL. Closure
+// alone is weak — it survives a silently dropped `m.queryRequireDefault=on` or
+// date param (every band returns the whole pool; both sums rise together). Only
+// the control sees that: a payload-dated persona must land in the band holding
+// its own year, and must NOT span every band.
+//
+// One anchor pool, `q.surname=<rare>&q.givenName=<rare>`, run once per family on
+// the family's own `q.*Date` param. All four params filter on the tree endpoint
+// (measured: baseline 272 -> 46/87/76/105 for 1800-1849, 0 for 1400-1449). The
+// payload year lives in different places per family: birth/death/residence are
+// facts on the matched person (`persons[0]`); MARRIAGE is a Couple-relationship
+// fact, so its control attributes the marriage year through the relationship the
+// matched person participates in, not through `persons[0].facts`.
+const TREE_POOL = "q.surname=Pocklington&q.givenName=Thomae";
 
-    // Pick the first candidate/window whose UNQUALIFIED range set reads to the
-    // end. The unqualified set is the wider of the two, so if it enumerates the
-    // exact one will too.
-    let chosen: string | null = null;
-    let range = "";
-    let window: [number, number] | null = null;
-    let fuzzy: Persona[] | null = null;
-    let fuzzyTotal: number | null = null;
-    const rejected: string[] = [];
-    outer: for (const cand of YEAR_CANDIDATES) {
-      for (const [from, to] of YEAR_WINDOWS) {
-        const r = `&${fam.param}.from=${from}&${fam.param}.to=${to}`;
-        const base = `${cand}${anchor}`;
-        const probe = await search(`${base}${r}&count=1&${REQUIRE_SWITCH}`);
-        if (errored(probe)) { rejected.push(`${cand} ${from}-${to}:error`); continue; }
-        if (probe.total === null || probe.total === 0 || probe.total > YEAR_ENUMERABLE) {
-          rejected.push(`${cand.replace(/q\.surname=|q\.recordCountry=/g, "").replace("&", "/")} ${from}-${to}:${fmt(probe.total)}`);
-          continue;
-        }
-        const full = await mustEnumerate(`${base}${r}`, YEAR_ENUMERABLE + 100);
-        if (full.personas === null) { rejected.push(`${cand} ${from}-${to}:${full.why}`); continue; }
-        chosen = base;
-        range = r;
-        window = [from, to];
-        fuzzy = full.personas;
-        fuzzyTotal = full.total;
-        break outer;
-      }
+/** Years of a family carried as facts on the matched person (`persons[0]`). */
+function treePersonYears(gx: Gedcomx, kind: RegExp): number[] {
+  return datedFromGedcomx(gx)
+    .filter((d) => d.personIdx === 0 && kind.test(d.kind) && d.year !== null)
+    .map((d) => d.year as number);
+}
+
+/**
+ * The matched person's marriage years, from the Couple relationships it is a
+ * partner in. Marriage is not a `persons[0]` fact on the tree endpoint — it sits
+ * on the relationship — so `treePersonYears` would find nothing and every
+ * marriage persona would read as silent.
+ */
+function treeMarriageYears(gx: Gedcomx): number[] {
+  const self = gx.persons?.[0]?.id;
+  if (!self) return [];
+  const years: number[] = [];
+  for (const r of gx.relationships ?? []) {
+    if (!/Couple$/.test(r.type ?? "")) continue;
+    if (r.person1?.resourceId !== self && r.person2?.resourceId !== self) continue;
+    for (const f of r.facts ?? []) {
+      if (!/Marriage$/.test(f.type ?? "")) continue;
+      const y = yearOfDate(f.date);
+      if (y !== null) years.push(y);
     }
-
-    if (chosen === null || fuzzy === null) {
-      console.log(
-        `  ${fam.family.padEnd(10)} NOT MEASURABLE — no candidate population enumerated` +
-          ` (${rejected.join(", ")}).`
-      );
-      record("Y", `verdict:${fam.family}`, "NOT MEASURABLE — no enumerable population");
-      rows.push({ family: fam.family, population: null, why: "no enumerable population" });
-      continue;
-    }
-
-    const exact = await mustEnumerate(
-      `${chosen}${range}&${fam.param}.exact=on`,
-      YEAR_ENUMERABLE + 100
-    );
-    if (exact.personas === null) {
-      console.log(
-        `  ${fam.family.padEnd(10)} NOT MEASURED — the .exact set did not enumerate (${exact.why}).` +
-          ` Every row would read as "dropped" when it may only be unread.`
-      );
-      record("Y", `verdict:${fam.family}`, `NOT MEASURED — .exact set ${exact.why}`);
-      rows.push({ family: fam.family, population: chosen, why: `exact:${exact.why}` });
-      continue;
-    }
-
-    // VALIDATE THE CLASSIFIER BEFORE USING IT. The first run of this section
-    // called 454 of 469 MARRIAGE records "year-silent" — implausible for a set
-    // filtered to f.recordType=1, and a signal that `fam.kind` was missing
-    // where the date actually lives rather than a finding about `.exact`. This
-    // tally is what distinguishes those two, so it is printed every run.
-    const kindCounts = new Map<string, number>();
-    for (const p of fuzzy) {
-      for (const d of p.allDated) {
-        if (d.year === null) continue;
-        kindCounts.set(d.kind, (kindCounts.get(d.kind) ?? 0) + 1);
-      }
-    }
-    const kindTally = [...kindCounts.entries()].sort((a, b) => b[1] - a[1]);
-    const matchedKinds = kindTally.filter(([k]) => fam.kind.test(k));
-    console.log(
-      `  ${fam.family.padEnd(10)} dated kinds present: ` +
-        (kindTally.length
-          ? kindTally.slice(0, 8).map(([k, n]) => `${k}=${n}`).join(" ")
-          : "(none)")
-    );
-    console.log(
-      `             of which this family's regex matches: ` +
-        (matchedKinds.length ? matchedKinds.map(([k, n]) => `${k}=${n}`).join(" ") : "NONE")
-    );
-    record("Y", `kinds:${fam.family}`, Object.fromEntries(kindTally));
-    if (!matchedKinds.length && kindTally.length) {
-      // Refuse rather than report. With no kind matching, EVERY row classifies
-      // as silent and the section would "measure" a drop rate for a class it
-      // never actually identified.
-      const why =
-        `NOT MEASURED — the classifier matched no date kind in this payload` +
-        ` (present: ${kindTally.slice(0, 8).map(([k]) => k).join(", ")}), so every row would` +
-        ` count as year-silent regardless of the truth`;
-      console.log(`             => ${why}`);
-      record("Y", `verdict:${fam.family}`, why);
-      rows.push({ family: fam.family, population: chosen, window, why: "classifier matched nothing" });
-      continue;
-    }
-
-    const hasYear = (p: Persona): boolean =>
-      p.allDated.some((d) => fam.kind.test(d.kind) && d.year !== null);
-    const silent = fuzzy.filter((p) => !hasYear(p));
-    const exactIds = new Set(exact.personas.map((p) => p.id));
-    const silentKept = silent.filter((p) => exactIds.has(p.id));
-    // The complement, as a control: if .exact dropped year-silent AND dated
-    // rows alike it is not selecting on year-silence at all, and the whole
-    // reading is wrong.
-    //
-    // THREE-WAY, and the split is load-bearing. "Dated" is not one class:
-    //
-    //   in-range  — the row a researcher expects to KEEP
-    //   fuzz      — dated outside the range; removing it is what `.exact` is FOR
-    //
-    // Lumping them made removal of correctly-excluded fuzz register as damage.
-    // Measured live 2026-08-11 over complete sets, intersecting by record id:
-    //
-    //   Pocklington/England deaths 1850-59   in-range 181 -> kept 176   fuzz 36 -> kept 0
-    //   Bochenek/Brazil marriages  1900-19   in-range  32 -> kept  32   fuzz  4 -> kept 4
-    //   Bochenek/Brazil births     1850-54   in-range   0 -> kept   0   fuzz 196 -> kept 0
-    //
-    // That last row is the one this section scored `collateralPct: 100` and
-    // called catastrophic. It has NO in-range rows at all — `.exact` removed 196
-    // out-of-range ones, exactly as documented. The metric was measuring the
-    // qualifier doing its job.
-    // `window` is THIS family's range, set when the population was chosen. An
-    // earlier version of this line read `FROM`/`TO` — section H's 1850 window,
-    // which is not in scope here and would have thrown at runtime. It went
-    // unnoticed because `dev/` is outside tsconfig's `include: ["src/**/*"]`,
-    // so `tsc --noEmit -p tsconfig.json` never opens this file and exits 0
-    // however broken it is. Typecheck it directly, or not at all.
-    const [winFrom, winTo] = window ?? [0, 0];
-    const inWindow = (p: Persona): boolean =>
-      p.allDated.some(
-        (d) => fam.kind.test(d.kind) && d.year !== null && d.year >= winFrom && d.year <= winTo
-      );
-    const dated = fuzzy.filter(hasYear);
-    const datedKept = dated.filter((p) => exactIds.has(p.id));
-    const inRange = fuzzy.filter(inWindow);
-    const inRangeKept = inRange.filter((p) => exactIds.has(p.id));
-    const fuzzRows = dated.filter((p) => !inWindow(p));
-    const fuzzKept = fuzzRows.filter((p) => exactIds.has(p.id));
-
-    // THREE DISQUALIFIERS, each of which produced a wrong verdict on an earlier
-    // run of this section before it was added.
-    //
-    //  - PROXY COVERAGE. "Year-silent" here means the payload carries no date
-    //    of this family, and section H already established that payload-silence
-    //    is NOT index-silence (693 payload-silent rows vs 11 index-silent). When
-    //    the family's date is mostly absent from the payload the proxy measures
-    //    its own blind spot: the marriage run classified 454 of 469 rows silent
-    //    while only 15 carried a Marriage date at all, and called the result
-    //    "DOES NOT GENERALISE".
-    //  - SAMPLE FLOOR. Death offered exactly ONE silent record. A 1-of-1 drop
-    //    is not a rate.
-    //  - COLLATERAL. `.exact` dropped 41 of 143 DATED death rows too. Something
-    //    that removes a third of the rows it supposedly keeps is not selecting
-    //    on year-silence, so "it dropped the silent ones" says nothing.
-    const MIN_SILENT = YEAR_MIN_SILENT;
-    const MIN_COVERAGE = 0.5;
-    const MAX_COLLATERAL = 0.1;
-    const coverage = fuzzy.length ? dated.length / fuzzy.length : 0;
-    // Collateral = IN-RANGE rows lost. Removing fuzz is the qualifier working,
-    // not damage, and counting it as damage is what made this metric fire on
-    // correct behaviour.
-    const collateral = inRange.length ? 1 - inRangeKept.length / inRange.length : 0;
-
-    let verdict: string;
-    if (coverage < MIN_COVERAGE) {
-      verdict =
-        `NOT MEASURED — only ${dated.length}/${fuzzy.length} rows carry a ${fam.family} date in the` +
-        ` payload, so "year-silent" cannot be told from "date not in the payload".` +
-        ` Section H: payload-silence is not index-silence`;
-    } else if (silent.length === 0) {
-      verdict =
-        "NOT MEASURED — the unqualified set contains no year-silent record, so" +
-        " dropping and keeping predict the same result here";
-    } else if (silent.length < MIN_SILENT) {
-      verdict =
-        `NOT MEASURED — only ${silent.length} year-silent record(s) in the set (floor ${MIN_SILENT});` +
-        ` ${silentKept.length} kept. Too few to be a rate either way`;
-    } else if (collateral > MAX_COLLATERAL) {
-      verdict =
-        `INCONCLUSIVE — .exact also dropped ${dated.length - datedKept.length}/${dated.length}` +
-        ` DATED record(s), so it is not selecting on year-silence and the silent-row result` +
-        ` cannot be attributed to the year qualifier`;
-    } else if (silentKept.length === 0) {
-      verdict = `GENERALISES — .exact dropped all ${silent.length} year-silent record(s) while keeping ${datedKept.length}/${dated.length} dated one(s)`;
-    } else {
-      verdict = `DOES NOT GENERALISE — .exact kept ${silentKept.length} of ${silent.length} year-silent record(s)`;
-    }
-
-    console.log(
-      `  ${fam.family.padEnd(10)} ${chosen.replace(/q\.surname=|q\.recordCountry=|&f\.recordType=\d/g, "").replace("&", "/")} ` +
-        `${window?.[0]}-${window?.[1]}  ` +
-        `${fmt(fuzzyTotal)} -> ${fmt(exact.total)}   ` +
-        `silent ${silent.length} (kept ${silentKept.length})   ` +
-        `dated ${dated.length} (kept ${datedKept.length})`
-    );
-    console.log(`             => ${verdict}`);
-
-    record("Y", `verdict:${fam.family}`, verdict);
-    rows.push({
-      family: fam.family,
-      population: chosen,
-      window,
-      fuzzyTotal,
-      fuzzyRows: fuzzy.length,
-      exactTotal: exact.total,
-      silent: silent.length,
-      silentKept: silentKept.length,
-      dated: dated.length,
-      datedKept: datedKept.length,
-      coveragePct: Math.round(coverage * 1000) / 10,
-      collateralPct: Math.round(collateral * 1000) / 10,
-      inRange: inRange.length,
-      inRangeKept: inRangeKept.length,
-      fuzzRows: fuzzRows.length,
-      fuzzKept: fuzzKept.length,
-      verdict,
-    });
   }
+  return years;
+}
 
-  record("Y", "rows", rows);
+interface TreeFamily {
+  family: string;
+  /** The `q.*Date` parameter on the tree endpoint. */
+  param: string;
+  /** The matched person's payload years for this family. */
+  yearsOf: (gx: Gedcomx) => number[];
+}
 
-  // The generalisation claim is about the OTHER families, so birth is excluded
-  // from its own confirmation — otherwise the section that already held for
-  // birth would help carry the verdict for everything else.
-  const nonBirth = rows.filter((r) => r.family !== "birth");
-  // Only rows that reached a DIRECTIONAL verdict count. Deriving this from
-  // `silent > 0` (as the first version did) re-admits every row the coverage,
-  // sample-floor and collateral gates just refused, which is how this section
-  // first reported "PARTIAL — holds in 1 of 2" off one n=1 row and one row whose
-  // classifier was blind.
-  const measured = nonBirth.filter((r) => /^(GENERALISES|DOES NOT GENERALISE)/.test(String(r.verdict ?? "")));
-  const generalises = measured.filter((r) => /^GENERALISES/.test(String(r.verdict)));
-  const overall =
-    measured.length === 0
-      ? "NOT MEASURED — no non-birth family produced a testable population"
-      : generalises.length === measured.length
-        ? `GENERALISES — holds in all ${measured.length} non-birth family/families measured (${measured.map((r) => r.family).join(", ")})`
-        : `PARTIAL — holds in ${generalises.length} of ${measured.length} non-birth family/families measured`;
-  console.log(`\n  overall: ${overall}`);
-  if (measured.length < nonBirth.length) {
+const TREE_YEAR_FAMILIES: TreeFamily[] = [
+  { family: "birth", param: "q.birthLikeDate", yearsOf: (gx) => treePersonYears(gx, /^(Birth|Christening|Baptism|birthDate)$/i) },
+  { family: "death", param: "q.deathLikeDate", yearsOf: (gx) => treePersonYears(gx, /^(Death|Burial|Cremation|deathDate)$/i) },
+  { family: "marriage", param: "q.marriageLikeDate", yearsOf: treeMarriageYears },
+  { family: "residence", param: "q.residenceDate", yearsOf: (gx) => treePersonYears(gx, /^(Residence|Census|residenceDate)$/i) },
+];
+
+/**
+ * Enumerate a tree query to the end. `null` = did not enumerate (a page errored,
+ * or the cap was hit with a full last page) — never a partial handed back as
+ * complete, which RULE 0 forbids. The pool is 272 unranged, so the cap is roomy.
+ */
+async function treeReadAll(
+  extra: string,
+  yearsOf: (gx: Gedcomx) => number[],
+  cap = 2000
+): Promise<{ total: number | null; rows: Array<{ id: string; years: number[] }> } | null> {
+  const rows: Array<{ id: string; years: number[] }> = [];
+  let total: number | null = null;
+  for (let offset = 0; offset < cap; offset += 100) {
+    const h = await treeSearch(`${TREE_POOL}${extra}&count=100&offset=${offset}&${REQUIRE_SWITCH}`);
+    if (h.error !== null) return null; // an errored page is not an exhausted one
+    total ??= h.total;
+    for (const p of h.persons) rows.push({ id: p.id, years: yearsOf(p.gx) });
+    if (h.persons.length < 100) return { total, rows }; // short page (incl. a 204) = complete
+  }
+  return null; // cap hit with a full page: partial
+}
+
+/** One family: enumerate, band, control, record `P.bands:tree-<family>`. */
+async function runTreeFamily(fam: TreeFamily): Promise<void> {
+  console.log(`\n  --- ${fam.family} (${fam.param}) ---`);
+  const u = await treeReadAll("", fam.yearsOf);
+  if (!u) {
+    console.log(`  [RULE 0] unranged ${fam.family} pool did not enumerate — REFUSING`);
+    record("P", `bands:tree-${fam.family}`, { pool: TREE_POOL, param: fam.param, status: "refused: unranged did not enumerate" });
+    return;
+  }
+  const distinct = new Set(u.rows.map((r) => r.id));
+  const dated = u.rows.filter((r) => r.years.length > 0);
+  console.log(
+    `  unranged: total ${u.total}, read ${u.rows.length}, distinct ${distinct.size}; ` +
+      `payload-dated ${dated.length}, silent ${u.rows.length - dated.length}`
+  );
+
+  const BANDS: Array<[number, number]> = [];
+  for (let y = 1400; y < 2000; y += 50) BANDS.push([y, y + 49]);
+
+  // Membership counts DISTINCT bands per persona (a Set per band), not row
+  // occurrences: a persona that paginates twice inside one band must not read as
+  // spanning two.
+  const membership = new Map<string, number>();
+  const exactMembership = new Map<string, number>();
+  const bandMembers = new Map<string, Set<string>>();
+  let bandRowsRead = 0;
+  let exactRowsRead = 0;
+  let unenumerable = 0;
+  let exactFailed = 0;
+  console.log("  band         rows | .exact");
+  console.log("  " + "-".repeat(24));
+  for (const [from, to] of BANDS) {
+    const range = `&${fam.param}.from=${from}&${fam.param}.to=${to}`;
+    const set = await treeReadAll(range, fam.yearsOf);
+    const ex = await treeReadAll(`${range}&${fam.param}.exact=on`, fam.yearsOf);
+    if (!set) {
+      unenumerable++;
+      console.log(`  ${from}-${to}   DID NOT ENUMERATE`);
+      continue;
+    }
+    const ids = new Set(set.rows.map((r) => r.id));
+    bandMembers.set(`${from}-${to}`, ids);
+    bandRowsRead += ids.size;
+    for (const id of ids) membership.set(id, (membership.get(id) ?? 0) + 1);
+    if (!ex) exactFailed++;
+    else {
+      const exIds = new Set(ex.rows.map((r) => r.id));
+      exactRowsRead += exIds.size;
+      for (const id of exIds) exactMembership.set(id, (exactMembership.get(id) ?? 0) + 1);
+    }
     console.log(
-      `  NOTE: ${nonBirth.length - measured.length} non-birth family/families were not testable;` +
-        ` the docs must keep saying so rather than generalising over them.`
+      `  ${from}-${to}  ${String(ids.size).padStart(4)} | ` +
+        `${ex ? String(new Set(ex.rows.map((r) => r.id)).size).padStart(4) : " err"}`
     );
   }
-  record("Y", "verdict:generalises past birth", overall);
+  const N = BANDS.length - unenumerable;
+
+  // Closure (WEAK): every band id is an unranged id, and the per-id band count
+  // summed over unranged ids equals the distinct band rows read.
+  let accountedFor = 0;
+  for (const id of distinct) accountedFor += membership.get(id) ?? 0;
+  const strays = [...membership.keys()].filter((id) => !distinct.has(id));
+  const closureHolds = bandRowsRead === accountedFor && strays.length === 0;
+  console.log(
+    `  CLOSURE: band rows ${bandRowsRead} = accounted ${accountedFor}, strays ${strays.length} -> ${closureHolds}`
+  );
+
+  if (unenumerable > 0 || exactFailed > 0 || !closureHolds) {
+    const reason = unenumerable > 0
+      ? `${unenumerable} band(s) did not enumerate`
+      : exactFailed > 0
+        ? `${exactFailed} .exact read(s) failed`
+        : "closure failed (a band returned an id absent from the unranged read)";
+    console.log(`  [RULE 0] REFUSING a verdict: ${reason}.`);
+    record("P", `bands:tree-${fam.family}`, { pool: TREE_POOL, param: fam.param, poolTotal: u.total, status: `refused: ${reason}` });
+    return;
+  }
+
+  // Payload-dated CONTROL (STRONG) — the guard the tree explorer lacked, in the
+  // form the year-range finding forces. Two invariants, and NOT the "exactly one
+  // band" the records explorer asserts (that contradicts the finding — an
+  // unqualified range matches by OVERLAP, so a dated persona can reach an
+  // adjacent band):
+  //   - RIGHT BAND: for EACH in-axis payload year the persona carries, the band
+  //     holding that year contains the persona. Catches mis-sorting.
+  //   - NOT AXIS-SPANNING: no payload-dated persona is in ALL N bands — the
+  //     degenerate shape a dropped require switch / ignored date param produces
+  //     (every band returns the whole pool). Proven to fire: without the switch
+  //     both 1400-1449 and 1900-1949 return the full 3,952-row surname pool.
+  const bandOf = (y: number): number => Math.floor((y - 1400) / 50);
+  const inAxis = (y: number): boolean => bandOf(y) >= 0 && bandOf(y) < BANDS.length;
+  const datedInAxis = dated.filter((r) => r.years.some(inAxis));
+  const wrongBand = datedInAxis.filter((r) =>
+    r.years.filter(inAxis).some((y) => {
+      const [from, to] = BANDS[bandOf(y)]!;
+      return !(bandMembers.get(`${from}-${to}`)?.has(r.id) ?? false);
+    })
+  );
+  const axisSpanning = datedInAxis.filter((r) => (membership.get(r.id) ?? 0) === N);
+  const overlapping = datedInAxis.filter((r) => (membership.get(r.id) ?? 0) > 1).length;
+  // A control with no payload-dated subjects is VACUOUS, not passing — a census
+  // collection that indexes birth from age exposes no birth fact, so the birth
+  // axis there has nothing to check. Record it as vacuous rather than a spurious
+  // `true`; the switch-integrity guarantee then rests on the residence axis of
+  // the same pool (which does expose dates) and on closure.
+  const controlVacuous = datedInAxis.length === 0;
+  const controlHolds = controlVacuous ? false : wrongBand.length === 0 && axisSpanning.length === 0;
+  // SCOPE — controlHolds validates PLACEMENT only for payload-dated personas whose
+  // year lands IN the axis (`datedInAxis`). A dated persona whose year is outside
+  // 1400-1999 is absent from `datedInAxis`, so controlHolds says nothing about it;
+  // `payloadDatedOutOfAxis` (recorded above) counts that set. It is provably
+  // non-empty wherever `payloadDated` exceeds the in-band capacity
+  // (`distinct - inNoBand`) — e.g. records-uscensus-residence, where those out-of-
+  // axis dated personas must exist because controlHolds forbids an in-axis dated
+  // persona from landing in no band. Read controlHolds there as holding over the
+  // in-axis dated population: a coverage bound, not a refutation, since the
+  // mechanism verdicts concern in-axis behaviour.
+  console.log(
+    `  CONTROL: payload-dated-in-axis ${datedInAxis.length}; in every own-year band: ` +
+      `${datedInAxis.length - wrongBand.length}; spanning all ${N} bands: ${axisSpanning.length}; ` +
+      `in >1 band (range overlap): ${overlapping} -> ${controlVacuous ? "VACUOUS (no payload-dated subjects)" : controlHolds}`
+  );
+  if (!controlVacuous && !controlHolds) {
+    const why = wrongBand.length
+      ? `${wrongBand.length} dated persona(s) absent from a band holding one of their own years`
+      : `${axisSpanning.length} dated persona(s) span all ${N} bands (dropped require switch or ignored date param)`;
+    console.log(`  [RULE 0] REFUSING a verdict: the payload-dated control failed — ${why}, which closure cannot see.`);
+    record("P", `bands:tree-${fam.family}`, { pool: TREE_POOL, param: fam.param, poolTotal: u.total, status: `refused: control failed (${why})` });
+    return;
+  }
+
+  const hist = new Map<number, number>();
+  for (const id of distinct) {
+    const c = membership.get(id) ?? 0;
+    hist.set(c, (hist.get(c) ?? 0) + 1);
+  }
+  const indexSilent = [...distinct].filter((id) => (membership.get(id) ?? 0) === N && N > 0);
+  const indexSilentKept = indexSilent.filter((id) => (exactMembership.get(id) ?? 0) > 0).length;
+  const noBand = [...distinct].filter((id) => (membership.get(id) ?? 0) === 0);
+  console.log(`  ${N} bands enumerated. membership over ${distinct.size} distinct personas:`);
+  for (const [c, n] of [...hist].sort((a, b) => a[0] - b[0])) {
+    const tag = c === 0 ? "  <- in NO band"
+      : c === N ? "  <- in EVERY band (index-silent)"
+      : c === 1 ? "  <- one index date" : "  <- estimated SPAN";
+    console.log(`     ${String(c).padStart(2)} band(s): ${String(n).padStart(4)}${tag}`);
+  }
+  console.log(`  index-silent (in every band): ${indexSilent.length}; of those kept by .exact in >=1 band: ${indexSilentKept}`);
+
+  // Data only. Verdict keys + FORBIDDEN_WHEN rules are #1771 step 4.
+  record("P", `bands:tree-${fam.family}`, {
+    pool: TREE_POOL,
+    param: fam.param,
+    poolTotal: u.total,
+    read: u.rows.length,
+    distinct: distinct.size,
+    payloadDated: dated.length,
+    payloadDatedInMultipleBands: overlapping,
+    payloadDatedInAxis: datedInAxis.length,
+    payloadDatedOutOfAxis: dated.length - datedInAxis.length,
+    bandsEnumerated: N,
+    membership: Object.fromEntries([...hist].sort((a, b) => a[0] - b[0])),
+    indexSilent: indexSilent.length,
+    indexSilentKeptByExact: indexSilentKept,
+    inNoBand: noBand.length,
+    closureHolds,
+    controlHolds,
+    controlVacuous,
+    bandRowsRead,
+    exactRowsRead,
+  });
+}
+
+async function sectionP(): Promise<void> {
+  console.log("\n=== P. person_search (tree): year-range bands + payload-dated control, all families ===");
+  for (const fam of TREE_YEAR_FAMILIES) await runTreeFamily(fam);
+}
+
+// ---------------------------------------------------------------------------
+// Q. record_search (records endpoint): year-range band instrument, all four
+// year families.
+//
+// #1771 steps 1-2. The records companion to section P. Section N already
+// re-derives the year question enumerably, but with a SINGLE window (1850-1850)
+// plus one impossible-range control; this builds the full disjoint-band
+// membership instrument — every band and its `.exact` counterpart read to the
+// end, personas classified by how many bands contain them — so "there are no
+// year-silent records" is measured by membership rather than inferred from one
+// window.
+//
+// One anchor, `q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England`,
+// run once per family on the family's own `f.recordType` and `q.*Date` param.
+// All four unranged pools enumerate (birth 583, death 194, marriage 269,
+// residence 198). The given name is load-bearing: the dateless surname-only pool
+// is too deep to read to the end (`mustEnumerate` returns too-deep), which is
+// exactly what step 3's non-parish census pool exists to complement.
+//
+// This section records DATA only. The H/N verdict-key renames and the deletion
+// of H's dead estimator (partition algebra, smallest-bucket, silentEstimatesAgree)
+// are step 4, which must land atomically with the FORBIDDEN_WHEN rewire — a
+// deleted key otherwise dangles its rule and the guard-resolves test fails.
+//
+// The payload-dated control is the reformed one from section P, NOT the "exactly
+// one band" the records explorer asserts: an unqualified range matches by
+// OVERLAP, so a dated persona can reach an adjacent band. On the records birth
+// pool overlap is 0 (so "exactly one band" would have passed here), but it is
+// unsound as a law — the tree pool shows real overlap — so both endpoints use
+// RIGHT BAND (present in the band of each own year) + NOT AXIS-SPANNING.
+const RECORDS_ANCHOR = "q.surname=Pocklington&q.givenName=Thomae&q.recordCountry=England";
+
+const RECORDS_DEATH_KIND = /^(Death|Burial|Cremation|deathDate)$/i;
+const RECORDS_MARRIAGE_KIND = /^(Marriage|marriageDate)$/i;
+const RECORDS_RESIDENCE_KIND = /^(Residence|Census|residenceDate)$/i;
+
+/** The matched persona's payload birth years (birthLike facts + display fallback). */
+function recordsBirthYears(p: Persona): number[] {
+  const ys = p.birthLike.map((f) => f.year).filter((y): y is number => y !== null);
+  if (ys.length) return ys;
+  const disp = yearOf(p.matchedBirthDate);
+  return disp === null ? [] : [disp];
+}
+
+/** Matched-persona facts of a family (`personIdx === 0`). */
+function recordsPersonYears(p: Persona, kind: RegExp): number[] {
+  return p.allDated
+    .filter((d) => d.personIdx === 0 && kind.test(d.kind) && d.year !== null)
+    .map((d) => d.year as number);
+}
+
+/** Record-level family years (any person, incl. relationship facts at -1). Marriage
+ *  is a Couple-relationship fact, not a `persons[0]` fact, so it is read here. */
+function recordsRecordYears(p: Persona, kind: RegExp): number[] {
+  return p.allDated
+    .filter((d) => kind.test(d.kind) && d.year !== null)
+    .map((d) => d.year as number);
+}
+
+interface RecordsFamily {
+  family: string;
+  recordType: number;
+  param: string;
+  yearsOf: (p: Persona) => number[];
+}
+
+// Birth is split out: section H owns the records BIRTH year question (it derives
+// its verdicts from this family's bands), so Q's main loop runs the other three
+// and H runs birth under section "H". The census control (step 3) references both.
+const RECORDS_BIRTH_FAM: RecordsFamily = {
+  family: "birth", recordType: 0, param: "q.birthLikeDate", yearsOf: recordsBirthYears,
+};
+const RECORDS_RESIDENCE_FAM: RecordsFamily = {
+  family: "residence", recordType: 3, param: "q.residenceDate", yearsOf: (p) => recordsPersonYears(p, RECORDS_RESIDENCE_KIND),
+};
+const RECORDS_YEAR_FAMILIES: RecordsFamily[] = [
+  { family: "death", recordType: 2, param: "q.deathLikeDate", yearsOf: (p) => recordsPersonYears(p, RECORDS_DEATH_KIND) },
+  { family: "marriage", recordType: 1, param: "q.marriageLikeDate", yearsOf: (p) => recordsRecordYears(p, RECORDS_MARRIAGE_KIND) },
+  RECORDS_RESIDENCE_FAM,
+];
+
+/** The measured shape a band run hands back, so a caller (section H) can derive
+ *  verdicts from it. `null` is returned instead whenever the run refused. */
+interface BandResult {
+  bands: number;
+  poolTotal: number | null;
+  distinct: number;
+  payloadDated: number;
+  datedInAxis: number;
+  overlapping: number;
+  /** Distinct personas matching MORE THAN ONE disjoint band — the estimate-range
+   *  cohort (mostly payload-silent), which is what an unqualified range admits. */
+  multiBand: number;
+  indexSilent: number;
+  bandRowsRead: number;
+  exactRowsRead: number;
+  closureHolds: boolean;
+  controlHolds: boolean;
+  controlVacuous: boolean;
+}
+
+/** One family: enumerate, band, control, record `<section>.bands:...-<family>`, and
+ *  return the measured shape (or `null` if the run refused under RULE 0). */
+async function runRecordsFamily(
+  fam: RecordsFamily,
+  opts: { pool?: string; keyPrefix?: string; section?: string } = {}
+): Promise<BandResult | null> {
+  const section = opts.section ?? "Q";
+  const pool = opts.pool ?? `${RECORDS_ANCHOR}&f.recordType=${fam.recordType}`;
+  const key = `${opts.keyPrefix ?? "bands:records"}-${fam.family}`;
+  console.log(`\n  --- ${fam.family} (${fam.param}) on ${pool} ---`);
+  const u = await mustEnumerate(pool);
+  if (u.why !== null) {
+    console.log(`  [RULE 0] unranged ${fam.family} pool did not enumerate (${u.why}) — REFUSING`);
+    record(section, key, { pool, param: fam.param, status: `refused: unranged ${u.why}` });
+    return null;
+  }
+  const rows = u.personas.map((p) => ({ id: p.id, years: fam.yearsOf(p) }));
+  const distinct = new Set(rows.map((r) => r.id));
+  const dated = rows.filter((r) => r.years.length > 0);
+  console.log(
+    `  unranged: total ${u.total}, read ${rows.length}, distinct ${distinct.size}; ` +
+      `payload-dated ${dated.length}, silent ${rows.length - dated.length}`
+  );
+
+  const BANDS: Array<[number, number]> = [];
+  for (let y = 1400; y < 2000; y += 50) BANDS.push([y, y + 49]);
+
+  const membership = new Map<string, number>();
+  const exactMembership = new Map<string, number>();
+  const bandMembers = new Map<string, Set<string>>();
+  let bandRowsRead = 0;
+  let exactRowsRead = 0;
+  let unenumerable = 0;
+  let exactFailed = 0;
+  console.log("  band         rows | .exact");
+  console.log("  " + "-".repeat(24));
+  for (const [from, to] of BANDS) {
+    const range = `&${fam.param}.from=${from}&${fam.param}.to=${to}`;
+    const set = await mustEnumerate(`${pool}${range}`);
+    const ex = await mustEnumerate(`${pool}${range}&${fam.param}.exact=on`);
+    if (set.why !== null) {
+      unenumerable++;
+      console.log(`  ${from}-${to}   DID NOT ENUMERATE (${set.why})`);
+      continue;
+    }
+    const ids = new Set(set.personas.map((p) => p.id));
+    bandMembers.set(`${from}-${to}`, ids);
+    bandRowsRead += ids.size;
+    for (const id of ids) membership.set(id, (membership.get(id) ?? 0) + 1);
+    if (ex.why !== null) exactFailed++;
+    else {
+      const exIds = new Set(ex.personas.map((p) => p.id));
+      exactRowsRead += exIds.size;
+      for (const id of exIds) exactMembership.set(id, (exactMembership.get(id) ?? 0) + 1);
+    }
+    console.log(
+      `  ${from}-${to}  ${String(ids.size).padStart(4)} | ` +
+        `${ex.why === null ? String(new Set(ex.personas.map((p) => p.id)).size).padStart(4) : " err"}`
+    );
+  }
+  const N = BANDS.length - unenumerable;
+
+  let accountedFor = 0;
+  for (const id of distinct) accountedFor += membership.get(id) ?? 0;
+  const strays = [...membership.keys()].filter((id) => !distinct.has(id));
+  const closureHolds = bandRowsRead === accountedFor && strays.length === 0;
+  console.log(
+    `  CLOSURE: band rows ${bandRowsRead} = accounted ${accountedFor}, strays ${strays.length} -> ${closureHolds}`
+  );
+
+  if (unenumerable > 0 || exactFailed > 0 || !closureHolds) {
+    const reason = unenumerable > 0
+      ? `${unenumerable} band(s) did not enumerate`
+      : exactFailed > 0
+        ? `${exactFailed} .exact read(s) failed`
+        : "closure failed (a band returned an id absent from the unranged read)";
+    console.log(`  [RULE 0] REFUSING a verdict: ${reason}.`);
+    record(section, key, { pool, param: fam.param, poolTotal: u.total, status: `refused: ${reason}` });
+    return null;
+  }
+
+  const bandOf = (y: number): number => Math.floor((y - 1400) / 50);
+  const inAxis = (y: number): boolean => bandOf(y) >= 0 && bandOf(y) < BANDS.length;
+  const datedInAxis = dated.filter((r) => r.years.some(inAxis));
+  const wrongBand = datedInAxis.filter((r) =>
+    r.years.filter(inAxis).some((y) => {
+      const [from, to] = BANDS[bandOf(y)]!;
+      return !(bandMembers.get(`${from}-${to}`)?.has(r.id) ?? false);
+    })
+  );
+  const axisSpanning = datedInAxis.filter((r) => (membership.get(r.id) ?? 0) === N);
+  const overlapping = datedInAxis.filter((r) => (membership.get(r.id) ?? 0) > 1).length;
+  // A control with no payload-dated subjects is VACUOUS, not passing — a census
+  // collection that indexes birth from age exposes no birth fact, so the birth
+  // axis there has nothing to check. Record it as vacuous rather than a spurious
+  // `true`; the switch-integrity guarantee then rests on the residence axis of
+  // the same pool (which does expose dates) and on closure.
+  const controlVacuous = datedInAxis.length === 0;
+  const controlHolds = controlVacuous ? false : wrongBand.length === 0 && axisSpanning.length === 0;
+  // SCOPE — controlHolds validates PLACEMENT only for payload-dated personas whose
+  // year lands IN the axis (`datedInAxis`). A dated persona whose year is outside
+  // 1400-1999 is absent from `datedInAxis`, so controlHolds says nothing about it;
+  // `payloadDatedOutOfAxis` (recorded above) counts that set. It is provably
+  // non-empty wherever `payloadDated` exceeds the in-band capacity
+  // (`distinct - inNoBand`) — e.g. records-uscensus-residence, where those out-of-
+  // axis dated personas must exist because controlHolds forbids an in-axis dated
+  // persona from landing in no band. Read controlHolds there as holding over the
+  // in-axis dated population: a coverage bound, not a refutation, since the
+  // mechanism verdicts concern in-axis behaviour.
+  console.log(
+    `  CONTROL: payload-dated-in-axis ${datedInAxis.length}; in every own-year band: ` +
+      `${datedInAxis.length - wrongBand.length}; spanning all ${N} bands: ${axisSpanning.length}; ` +
+      `in >1 band (range overlap): ${overlapping} -> ${controlVacuous ? "VACUOUS (no payload-dated subjects)" : controlHolds}`
+  );
+  if (!controlVacuous && !controlHolds) {
+    const why = wrongBand.length
+      ? `${wrongBand.length} dated persona(s) absent from a band holding one of their own years`
+      : `${axisSpanning.length} dated persona(s) span all ${N} bands (dropped require switch or ignored date param)`;
+    console.log(`  [RULE 0] REFUSING a verdict: the payload-dated control failed — ${why}, which closure cannot see.`);
+    record(section, key, { pool, param: fam.param, poolTotal: u.total, status: `refused: control failed (${why})` });
+    return null;
+  }
+
+  const hist = new Map<number, number>();
+  for (const id of distinct) {
+    const c = membership.get(id) ?? 0;
+    hist.set(c, (hist.get(c) ?? 0) + 1);
+  }
+  const indexSilent = [...distinct].filter((id) => (membership.get(id) ?? 0) === N && N > 0);
+  const indexSilentKept = indexSilent.filter((id) => (exactMembership.get(id) ?? 0) > 0).length;
+  const noBand = [...distinct].filter((id) => (membership.get(id) ?? 0) === 0);
+  console.log(`  ${N} bands enumerated. membership over ${distinct.size} distinct personas:`);
+  for (const [c, n] of [...hist].sort((a, b) => a[0] - b[0])) {
+    const tag = c === 0 ? "  <- in NO band"
+      : c === N ? "  <- in EVERY band (index-silent)"
+      : c === 1 ? "  <- one index date" : "  <- estimated SPAN";
+    console.log(`     ${String(c).padStart(2)} band(s): ${String(n).padStart(4)}${tag}`);
+  }
+  console.log(`  index-silent (in every band): ${indexSilent.length}; of those kept by .exact in >=1 band: ${indexSilentKept}`);
+
+  record(section, key, {
+    pool,
+    param: fam.param,
+    poolTotal: u.total,
+    read: rows.length,
+    distinct: distinct.size,
+    payloadDated: dated.length,
+    payloadDatedInMultipleBands: overlapping,
+    payloadDatedInAxis: datedInAxis.length,
+    payloadDatedOutOfAxis: dated.length - datedInAxis.length,
+    bandsEnumerated: N,
+    membership: Object.fromEntries([...hist].sort((a, b) => a[0] - b[0])),
+    indexSilent: indexSilent.length,
+    indexSilentKeptByExact: indexSilentKept,
+    inNoBand: noBand.length,
+    closureHolds,
+    controlHolds,
+    controlVacuous,
+    bandRowsRead,
+    exactRowsRead,
+  });
+  return {
+    bands: N,
+    poolTotal: u.total,
+    distinct: distinct.size,
+    payloadDated: dated.length,
+    datedInAxis: datedInAxis.length,
+    overlapping,
+    multiBand: [...distinct].filter((id) => (membership.get(id) ?? 0) > 1).length,
+    indexSilent: indexSilent.length,
+    bandRowsRead,
+    exactRowsRead,
+    closureHolds,
+    controlHolds,
+    controlVacuous,
+  };
+}
+
+// #1771 step 3. The main pool above is one Yorkshire parish collection
+// (Pocklington/England). A non-parish US CENSUS pool must show the same
+// estimated-range mechanism, or the year prose rests on a single collection —
+// and this also replaces H's unenumerable ~11.4M `q.surname=Martin&q.residenceDate`
+// population. The pool is recordType=3 (census) throughout; the BIRTH axis is run
+// inside it (`q.birthLikeDate` bands census records by their index birth year),
+// not only the residence axis, because birth is the family every verdict follows
+// from. Pethick/John enumerates clean at 560 with both axes payload-exposed
+// (405 birth, 459 residence), so both controls are real here — unlike a
+// residence-only census indexing (e.g. Steptoe/John, 0 birth exposed), where the
+// birth control would be vacuous.
+const US_CENSUS_CONTROL = "q.recordCountry=United%20States&q.surname=Pethick&q.givenName=John&f.recordType=3";
+
+async function sectionQ(): Promise<void> {
+  console.log("\n=== Q. record_search (records): year-range bands + payload-dated control (death/marriage/residence + census) ===");
+  console.log("  (records BIRTH is section H, which derives its verdicts from the same instrument)");
+  for (const fam of RECORDS_YEAR_FAMILIES) await runRecordsFamily(fam);
+
+  console.log("\n  === step-3 non-parish control: US census (Pethick/John, recordType=3) ===");
+  await runRecordsFamily(RECORDS_BIRTH_FAM, { pool: US_CENSUS_CONTROL, keyPrefix: "bands:records-uscensus" });
+  await runRecordsFamily(RECORDS_RESIDENCE_FAM, { pool: US_CENSUS_CONTROL, keyPrefix: "bands:records-uscensus" });
 }
 
 const SECTIONS: Record<string, () => Promise<void>> = {
@@ -5897,6 +5507,8 @@ const SECTIONS: Record<string, () => Promise<void>> = {
   H: sectionH,
   I: sectionI,
   N: sectionN,
+  P: sectionP,
+  Q: sectionQ,
   R: sectionR,
   S: sectionS,
   T: sectionT,
