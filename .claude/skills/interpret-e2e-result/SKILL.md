@@ -135,19 +135,21 @@ from records). Each entry is a denied attempt.
   autonomous run. Repeated attempts may indicate the skill is leaning on
   tree-reading instead of records, which is worth a look at the `/research` primer.
 
-Then check `blocked_context_calls` — the write-side twin, denied by a different
-guard. Each entry is a main-thread `extraction_append` the harness blocked
-(`blocked_by: "context"`): the `record-extraction` router doing the
-record-extractor subagent's write itself because that subagent failed to spawn
-(#942). Same shape as above (`{tool, args, blocked_by}`), and the denied attempt
-also shows up in `narration[]` with `kind: "blocked"`.
+Then check `blocked_context_calls` — the twin denied by a different guard. Each
+entry is a main-thread call to a subagent-only tool the harness blocked
+(`blocked_by: "context"`): the router doing a subagent's own work because that
+subagent failed to spawn. Two tools land here — an `extraction_append` (the
+record-extractor's write, #942) or an `image_read` (the image reader's read,
+which would overflow the transport). Read the entry's `tool` to see which. Same
+shape as above (`{tool, args, blocked_by}`), and the denied attempt also shows
+up in `narration[]` with `kind: "blocked"`.
 
 - **Empty** — normal; say nothing.
 - **Non-empty** — the router tried to substitute for a failed spawn and was
-  blocked, so no extracted assertions were written on the main thread. Flag it:
-  it points at a `record-extractor` spawn failure, not a records gap, and any
-  findings the router would have produced this way are correctly absent. Read
-  the matching `narration[]` turn to see where the spawn failed.
+  blocked, so the subagent's work was not done on the main thread. Flag it: it
+  points at a spawn failure for the tool's owning subagent (`record-extractor`
+  for `extraction_append`, `image-reader-opus` for `image_read`), not a records gap.
+  Read the matching `narration[]` turn to see where the spawn failed.
 
 ### Step 2d — Note any GPS guardrail bypasses
 

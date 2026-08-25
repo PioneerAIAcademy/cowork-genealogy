@@ -39,6 +39,7 @@ from e2e.runlog_selection import (
 from harness.context_policy import bare_tool_name
 from harness.skill_invocation import (
     DEDICATED_AGENT_NAMES,
+    _iter_ops,
     find_effects_without_invocation,
     find_protected_writes_by_unnamed_delegate,
     owning_skills,
@@ -65,8 +66,11 @@ def _lane_check_old(tool_calls: list[dict[str, Any]]) -> list[str]:
     """Pre-fix replica: the live detector minus ONLY the #1569 fix, i.e. it still
     skips any entry with `is_error: true`. Kept local rather than imported (the real
     function no longer has that bug), but it shares the namespace strip via
-    `strip_agent_namespace` so the old-vs-new diff stays isolated to `is_error`
-    rather than also firing on a namespaced agent_type (#1856)."""
+    `strip_agent_namespace` and mirrors EVERY other arm of the live detector — the
+    extraction_append arm, the #1273 research_append->sources/assertions arm, and
+    the owning_skills arm — so the old-vs-new diff stays isolated to `is_error`
+    rather than also firing on a namespaced agent_type (#1856) or on the #1273 arm
+    the live detector gained after this replica first shipped."""
     violations: list[str] = []
     for i, entry in enumerate(tool_calls):
         if entry.get("is_error") is True:
@@ -85,6 +89,20 @@ def _lane_check_old(tool_calls: list[dict[str, Any]]) -> list[str]:
                 continue
             violations.append(f"tool_calls[{i}] extraction_append by {agent_type!r}")
             continue
+
+        # Mirror the live detector's #1273 Item 4 arm (research_append to
+        # sources/assertions by a non-record-extractor delegate), one per CALL and no
+        # `continue` — else this replica trails the arm the live detector gained and
+        # the old-vs-new diff blames those hits on the #1569 is_error fix.
+        if bare_tool_name(tool) == "research_append":
+            if agent_id is not None and bare_agent_type != "record-extractor":
+                if any(
+                    op.get("section") in ("sources", "assertions")
+                    for op in _iter_ops(args)
+                ):
+                    violations.append(
+                        f"tool_calls[{i}] research_append sources/assertions by {agent_type!r}"
+                    )
 
         owners = owning_skills(tool, args)
         if not owners or agent_id is None or bare_agent_type in DEDICATED_AGENT_NAMES:

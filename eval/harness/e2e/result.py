@@ -196,13 +196,14 @@ class E2eResult:
     # `is_error: true` entry is a policy denial, not an upstream failure.
     blocked_tree_reads: list[dict[str, Any]] = field(default_factory=list)
 
-    # Main-thread `extraction_append` calls the PreToolUse hook denied — the
-    # router substituting for a failed record-extractor spawn and doing the
-    # extraction itself (#942). Each entry is {tool, args, blocked_by:"context"}.
-    # Kept separate from `blocked_tree_reads` because this is a WRITE, not a
-    # read, and a different guard (the per-context subagent-only policy, not the
-    # tree block) denied it. Same reading rule as the list above: the attempt is
-    # in `tool_calls`; this list is the record that it did not run.
+    # Main-thread calls to a `SUBAGENT_ONLY_TOOLS` tool the PreToolUse hook denied —
+    # the router substituting for a failed subagent spawn and doing the subagent's
+    # own work: an `extraction_append` (the record-extractor's write, #942) or, since
+    # #1273 Item 1, an `image_read` (the image reader's read, whose base64 would
+    # overflow the transport). Each entry is {tool, args, blocked_by:"context"}. Kept
+    # separate from `blocked_tree_reads` because a different guard (the per-context
+    # subagent-only policy, not the tree block) denied it. Same reading rule as the
+    # list above: the attempt is in `tool_calls`; this list is the record it did not run.
     blocked_context_calls: list[dict[str, Any]] = field(default_factory=list)
 
     # The agent's prose between tool calls, plus the two harness-side events
