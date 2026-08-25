@@ -277,7 +277,9 @@ table and contextual factors checklist.
 - Include the FAN cluster (relatives, neighbors, associates) **when their
   records may contain evidence about the question's subject** — purpose is the
   test, not the relative's presence in the tree. An item whose deliverable is a
-  relative's *own* missing facts serves a different objective.
+  relative's *own* missing facts serves a different objective. **On a parentage,
+  identity or undated-event question at least one FAN item is required** — see
+  Step 4, item 6.
 - Consider occupation-specific, institutional, and organizational
   records when relevant to the subject's life.
 - Cover both FamilySearch and external/paid repositories (Ancestry,
@@ -298,10 +300,12 @@ Order items for efficient discovery (BCG Standard 15):
 4. **Narrow before broad** — specific county before adjacent counties
 5. **Include contingencies** — use `fallback_for` to link alternate
    sources when a primary may fail
-6. **Include FAN items where they earn their place** — relatives, neighbors,
-   or associates whose records would bear on the subject. Not a quota: if none
-   could speak to this question, don't manufacture one. State in the item's
-   `rationale` what it reveals *about the subject*
+6. **Required for a parentage, identity or undated-event question; elsewhere
+   where they earn their place** — relatives, neighbors, or associates whose
+   records would bear on the subject. State in the item's `rationale` what it
+   reveals *about the subject*. On those three question types at least one FAN
+   item is mandatory. Everywhere else it is not a quota — if no associate could
+   speak to this question, don't manufacture one
 
 **Plan size guidance:** A typical plan has 4-10 items: fewer than 3
 usually isn't exhaustive enough; more than 12 suggests the question is
