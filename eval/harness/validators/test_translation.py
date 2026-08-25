@@ -78,21 +78,34 @@ def test_next_step_offers(text_response: str, test: dict) -> None:
     9 of 10 positive tests in v1_2026-07-27 omit the person-evidence offer,
     substituting open-ended genealogical research suggestions instead.
 
-    Single-term lookups are exempt. SKILL.md Step 5 carves out a response
-    that is a bare word-definition or date conversion with no extracted
-    record, and ut_translation_008's own judge_context agrees ("offering
-    record-extraction as an optional next step is fine"). Without the
-    exemption this validator fails that test for obeying SKILL.md, which
-    is a defect in the check rather than in the skill. Gated on the
-    `single-term` tag, which only that test carries; the other nine
-    positive tests are full record translations and still enforce both
-    offers.
+    SKILL.md Step 5 carves out one case: a response that is a bare
+    word-definition or date conversion *with no extracted record*. That is
+    the condition to gate on, and `single-term` is not a proxy for it.
+    The tag describes what a test probes — one vocabulary term the user is
+    stuck on — not whether a record is present. ut_translation_008 is the
+    only test carrying it and it embeds a full Latin burial entry
+    ("Die 3 Aprilis 1748 sepulta est Maria, relicta Joannis Hofer"), so the
+    tag exempted the one test the rule most clearly applies to. Its own
+    judge_context does not say otherwise: "offering record-extraction as an
+    optional next step is fine" permits an offer, it does not excuse the
+    absence of one, and the heavyweight workflow it warns against is a
+    multi-phase extraction, not a one-line closing.
+
+    Gated on `no-record-lookup` instead — a tag naming the carve-out itself.
+    No test carries it today, so every positive test is checked; a genuine
+    bare-term or date-conversion test can opt out by tagging.
+
+    Left deliberately in the validator rather than fixed by retagging
+    ut_translation_008: `single-term` is an accurate description of what
+    that test probes, and `eval/tests/unit/**` is in the run-log snapshot,
+    so editing it would invalidate the active run log and force a paid
+    re-run plus re-annotation. Validators are not in the snapshot.
     """
     if test.get("type") != "positive":
         pytest.skip("negative tests are graded by routing, not response content")
-    if "single-term" in (test.get("tags") or []):
+    if "no-record-lookup" in (test.get("tags") or []):
         pytest.skip(
-            "single-term lookups are exempt per SKILL.md Step 5 — a bare "
+            "no-record lookups are exempt per SKILL.md Step 5 — a bare "
             "definition or date conversion needs no workflow hand-off offer"
         )
     has_extract = bool(re.search(r"Extract assertions from this record", text_response, re.IGNORECASE))
