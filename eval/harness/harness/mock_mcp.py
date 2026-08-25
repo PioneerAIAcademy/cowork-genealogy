@@ -104,6 +104,17 @@ LIVE_TOOLS: set[str] = {
     # uncovered call here aborts the test outright (Type 1), wasting the whole
     # paid run.
     "project_create",
+    # Pure arithmetic, and the one case where a fixture would be dishonest in the
+    # opposite direction from the rest of this list: it depends on no workspace
+    # state at all, but a canned response would supply the computed answer the
+    # test exists to measure. convert-dates declares it as its ONLY tool and its
+    # body forbids hand arithmetic ("Do not fall back to hand arithmetic"), yet
+    # across four committed run logs / 56 runs it was never called once - it was
+    # registered nowhere, so it never appeared in the model's tool list and every
+    # conversion was done by hand and graded a pass. Tool Arguments is N/A
+    # whenever tool_calls is empty, so the defect switched off the dimension that
+    # covers it. conflict-resolution declares it too. Issue #1654 (deep dive).
+    "convert_calendar",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
@@ -118,8 +129,8 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 # read as an error in production and a SUCCESS in every unit eval run.
 #
 # This is `OK_FALSE_IS_FAILURE` from `src/tool-result.ts` intersected with
-# LIVE_TOOLS — the three that are not live here (`merge_tree_persons`,
-# `tree_forget`, `convert_calendar`) have no handler to mirror. The drift lint in
+# LIVE_TOOLS — the two that are not live here (`merge_tree_persons`,
+# `tree_forget`) have no handler to mirror. The drift lint in
 # tests/unit/test_mock_mcp.py pins that intersection, so a twelfth tool added on
 # the TypeScript side fails here rather than silently going unmirrored.
 #
@@ -136,6 +147,11 @@ OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     "project_context",
     "research_query",
     "project_create",
+    # Its `ok: false` means the requested correction could not be applied (an
+    # impossible date, a doubleYear inconsistent with the year, a quakerMonth
+    # ordinal out of range, or julianToGregorianDay before 1582-10-15) - a real
+    # failure the agent must see as one, not a verdict like merge_warnings' dry run.
+    "convert_calendar",
 }
 
 
@@ -571,6 +587,12 @@ def _make_live_handler(
     if tool_name == "project_create":
         return _make_compiled_tool_handler(
             "project_create", "project-create.js", "projectCreate", workspace, call_log
+        )
+    if tool_name == "convert_calendar":
+        # Takes no projectPath; the generic handler injects one and convertCalendar
+        # reads only `date` and `corrections`, so the extra key is inert.
+        return _make_compiled_tool_handler(
+            "convert_calendar", "convert-calendar.js", "convertCalendar", workspace, call_log
         )
     raise ValueError(f"No live handler defined for {tool_name!r}")
 

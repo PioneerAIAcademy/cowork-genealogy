@@ -11,17 +11,23 @@ compensate.
 
 | Pattern | Substitution | Example | Wildcard |
 |---|---|---|---|
-| long-s `ʃ` | f, l, t | Massachusetts → Mafsachusetts | `Ma?sachusetts` |
-| `rn` | m, in, iii | Turnpike → Tumpike | `Tu*pike` |
-| `u` | n, ii | Mountain → Mountan | `Mo?ntain` |
-| `m` | rn, in, iii | William → Williain | `Willi*m` |
-| `c` | e, o | Cole → Cele | `C?le` |
-| `e` | c, o | execute → cxccute | `*xecute` |
-| `l` | I, 1, t | Alice → Atice | `A?ice` |
-| ornate capital S | F | Scott → Fcott | `?cott` |
-| double-l | tt, H | Allen → Atten | `A??en` |
+| long-s `ʃ` | f, l, t, p | Massachusetts → Mafsachusetts | `Ma?sachusetts` |
+| `rn` | m, in, iii, w, ui, iu, nr | Turnpike → Tumpike | `Tu*pike` |
+| `u` | n, v | Mountain → Monntain | `Mo?ntain` |
+| `m` | rn, in, iii, w, ui, iu, nr | William → Williain | `Willia*` |
+| `c` | e, o, a, d (a/d mainly followed by a flourish or an `l`) | uncle → unele | `un?le` |
+| `e` | c, o, a, d (a/d mainly followed by a flourish or an `l`) | angel → angcl | `ang?l` |
+| `l` | I, 1, t, d, b, i (d/b vary with neighboring letters) | Alice → Atice | `A?ice` |
+| ornate capital S | F | Scott → Fcott | search both |
+| double-l | tt, H | Powell → Powett | `Powe*` |
 | `&` ligature | et, &c | & → et | search both |
-| superscript abbrev | dropped | Mrs → Mes | `M?s` |
+| superscript abbrev | dropped, or a letter swap | Mrs → Ms, Mes | search both |
+
+Confusable letters compound within a word. `?` reaches exactly one
+character, so a run of several needs `*`, which absorbs any number
+(`Willia*`, `Powe*`, `Mo*ntain`). Two constraints still bind: a wildcard
+may never open a term, and keep three or more literal characters in the
+term overall (`references/query-syntax.md`'s wildcard rules).
 
 ## Faithful representation symbols
 
