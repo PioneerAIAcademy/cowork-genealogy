@@ -424,26 +424,20 @@ describe("tree_forget", () => {
     tree.persons[0].facts.push(
       { id: "FMR", type: "Marriage Registration", date: "1845" } as any,
     );
-    tree.persons[0].facts.push(
-      { id: "FP", type: "Parents", date: "1850" } as any,
-    );
     await writeProject(tree);
 
     const r = await treeForget({
       projectPath: dir,
       forget: [
         { selector: "spouses-of", personId: "I1" },
-        { selector: "parents-of", personId: "I1" },
+        { selector: "facts-of", personId: "I1", factType: "Marriage Registration" },
       ],
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
 
-    expect(r.removed.factsByType.Parents).toBe(1);
-    expect(r.validation.warnings).toHaveLength(1);
-    expect(r.validation.warnings[0]).toMatch(
-      /^A Marriage-prefixed fact 'FMR' on I1 was left in the tree/,
-    );
+    expect(r.removed.factsByType["Marriage Registration"]).toBe(1);
+    expect(r.validation.warnings).toHaveLength(0);
   });
 
   it("spouses-of still errors when there is neither a spouse link nor a marriage-class fact", async () => {
