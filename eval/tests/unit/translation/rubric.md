@@ -28,8 +28,8 @@ Did the skill identify and explain genealogically significant terms (relationshi
 
 ## Date formatting
 
-Where the response includes specific dates in a structured assertions section, are those dates expressed in ISO 8601 format (YYYY-MM-DD) alongside the prose form?
+Wherever a specific date appears in the response — prose narration, a structured assertions section, a translated passage, anywhere — is it expressed in ISO 8601 format alongside the prose form?
 
-- **pass:** Every date assertion includes both the human-readable prose form and the ISO 8601 parenthetical — e.g., "15 March 1845 (1845-03-15)".
-- **partial:** At least one date assertion includes ISO format but one or more do not.
-- **fail:** No date assertions include ISO 8601 format; dates appear in prose form only.
+- **pass:** Every date in the response carries both the human-readable prose form and the ISO 8601 parenthetical — e.g., "15 March 1845 (1845-03-15)". A date the record states only partially is given only as far as the record states it (1845-03, or 1845).
+- **partial:** At least one date carries the ISO form but one or more do not.
+- **fail:** No date carries the ISO form; dates appear in prose form only.

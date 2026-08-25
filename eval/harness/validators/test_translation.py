@@ -108,8 +108,8 @@ def test_next_step_offers(text_response: str, test: dict) -> None:
             "no-record lookups are exempt per SKILL.md Step 5 — a bare "
             "definition or date conversion needs no workflow hand-off offer"
         )
-    has_extract = bool(re.search(r"Extract assertions from this record", text_response, re.IGNORECASE))
-    has_link = bool(re.search(r"Link .{1,40} to the tree", text_response, re.IGNORECASE))
+    has_extract = bool(re.search(r"Extract assertions from this record\?", text_response, re.IGNORECASE))
+    has_link = bool(re.search(r"Link .{1,40} to the tree\?", text_response, re.IGNORECASE))
     assert has_extract, (
         "translation response missing required next-step offer: "
         "'Extract assertions from this record?' (record-extraction)"
@@ -131,6 +131,14 @@ def test_iso_date_formatting(text_response: str, test: dict) -> None:
     carries prose dates and *no* ISO date at all. rubric.md's "Date
     formatting" dimension grades the rest — whether every date carries its
     ISO form, the partial case this check cannot see.
+
+    A partial ISO date counts. SKILL.md tells the skill to give only what
+    the record states when the day or month is unknown (1789-03, or 1789),
+    so YYYY-MM satisfies this check as fully as YYYY-MM-DD; failing a
+    response for obeying that rule would be a defect in the check. A bare
+    YYYY is not recognised — it cannot be told apart from the year in the
+    prose date beside it — so a record stating only a year is left to the
+    rubric dimension.
     """
     if test.get("type") != "positive":
         pytest.skip("negative tests are graded by routing, not response content")
@@ -141,7 +149,7 @@ def test_iso_date_formatting(text_response: str, test: dict) -> None:
     prose_dates = re.findall(rf"\d{{1,2}}\s+(?:{MONTH})\s+\d{{4}}", text_response)
     if not prose_dates:
         pytest.skip("no English prose dates in response; ISO check not applicable")
-    iso_dates = re.findall(r"\b\d{4}-\d{2}-\d{2}\b", text_response)
+    iso_dates = re.findall(r"\b\d{4}-\d{2}(?:-\d{2})?\b", text_response)
     assert iso_dates, (
         f"response contains {len(prose_dates)} prose date(s) "
         f"({prose_dates[:2]}) but no ISO 8601 dates (YYYY-MM-DD). "
