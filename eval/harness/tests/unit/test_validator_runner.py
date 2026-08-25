@@ -4,6 +4,7 @@ Runs against the actual seed validators in eval/harness/validators/ to verify
 the runner can drive them with realistic inputs.
 """
 
+import json
 from pathlib import Path
 
 import pytest
@@ -1483,3 +1484,64 @@ def test_validator_crash_is_not_reported_as_missing_build():
     result = validate_parsed(research, crash_tree)
     assert result is not None, "a crash must not be reported as missing-build (None)"
     assert result, "a crash must surface a non-empty error"
+
+
+# --- text_response plumbing (#1662) ------------------------------------
+#
+# A validator that reads the reply is inert if the harness stops supplying it.
+# Because the natural guard inside such a validator is "no reply -> skip",
+# that breakage reads as a pass, so these pin the wiring itself rather than
+# any one validator's behaviour.
+
+def test_text_response_reaches_a_validator(tmp_path):
+    """`text_response` is injected by name, verbatim."""
+    seen = {}
+    module = tmp_path / "test_probe_skill.py"
+    module.write_text(
+        "def test_capture(text_response):\n"
+        "    import json, pathlib\n"
+        "    pathlib.Path(__file__).with_name('seen.json').write_text(\n"
+        "        json.dumps({'reply': text_response}), encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="probe-skill",
+        validators_dir=tmp_path,
+        before_state=_empty_research_state(),
+        after_state=_empty_research_state(),
+        tool_calls=[],
+        text_response="Saved the Wikipedia summary to `x.md`.",
+    )
+    assert [r.name for r in results] == ["test_capture"], results
+    assert results[0].passed, results[0].error
+    seen = json.loads((tmp_path / "seen.json").read_text(encoding="utf-8"))
+    assert seen["reply"] == "Saved the Wikipedia summary to `x.md`."
+
+
+def test_text_response_defaults_to_empty_string_not_none(tmp_path):
+    """Omitting it yields "" — so a validator can treat it as a string
+    without a None guard, and an inert-because-unwired validator sees the
+    same value it would see for a genuinely silent run."""
+    module = tmp_path / "test_probe_skill.py"
+    module.write_text(
+        "def test_is_str(text_response):\n"
+        "    assert isinstance(text_response, str)\n"
+        "    assert text_response == ''\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="probe-skill",
+        validators_dir=tmp_path,
+        before_state=_empty_research_state(),
+        after_state=_empty_research_state(),
+        tool_calls=[],
+    )
+    assert results[0].passed, results[0].error
+
+
+# The orchestrator end of this wiring is pinned behaviourally in
+# test_orchestrator.py::test_orchestrator_passes_text_response_to_validators.
+# A source grep was tried here first and is NOT sufficient: the string
+# `text_response=result.text_response` appears three times in orchestrator.py
+# (derive_activated, run_validators, grade), so asserting its presence stays
+# green when the run_validators one specifically is removed.

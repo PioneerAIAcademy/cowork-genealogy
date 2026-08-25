@@ -7,6 +7,7 @@ import {
   assertInsideProject,
   atomicWriteJson,
   atomicWriteBoth,
+  withProjectLock,
 } from "../../src/utils/project-io.js";
 
 describe("project-io write layer", () => {
@@ -135,6 +136,50 @@ describe("project-io write layer", () => {
       // First file committed (new), second still old — the documented residual window.
       expect(JSON.parse(await readFile(treePath, "utf-8"))).toEqual({ tree: "new" });
       expect(JSON.parse(await readFile(researchPath, "utf-8"))).toEqual({ research: "old" });
+    });
+  });
+
+  describe("withProjectLock reentrancy guard", () => {
+    // These would HANG on a non-guarded mutex; vitest's per-test timeout is the
+    // backstop that makes "throws instead of deadlocks" a falsifiable assertion.
+    it("rejects a same-project re-acquire instead of deadlocking, naming the key", async () => {
+      await expect(
+        withProjectLock(dir, async () => {
+          // Re-acquiring the SAME project's lock from inside the critical section.
+          return withProjectLock(dir, async () => "unreachable");
+        }),
+      ).rejects.toThrow(/re-entered for '.*': a locked writer called another/);
+    });
+
+    it("catches re-entry reached through a non-lock await chain", async () => {
+      const inner = async () => withProjectLock(dir, async () => "unreachable");
+      await expect(
+        withProjectLock(dir, async () => {
+          await Promise.resolve();
+          return inner();
+        }),
+      ).rejects.toThrow(/re-entered/);
+    });
+
+    it("allows nested locks on DIFFERENT projects (only same-key re-entry deadlocks)", async () => {
+      const other = await mkdtemp(join(tmpdir(), "project-io-test-b-"));
+      try {
+        const result = await withProjectLock(dir, async () =>
+          withProjectLock(other, async () => "inner"),
+        );
+        expect(result).toBe("inner");
+      } finally {
+        await rm(other, { recursive: true, force: true });
+      }
+    });
+
+    it("does not poison the lock: a sequential re-acquire after the body settles succeeds", async () => {
+      const first = await withProjectLock(dir, async () => "first");
+      expect(first).toBe("first");
+      // Not nested — the previous critical section has fully settled, so this is
+      // a fresh acquire, not a re-entry.
+      const second = await withProjectLock(dir, async () => "second");
+      expect(second).toBe("second");
     });
   });
 });
