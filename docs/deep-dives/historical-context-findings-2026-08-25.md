@@ -12,13 +12,14 @@ started — it said 12 tests and "1 of 6 dimensions never discriminate." Two tes
 one rubric dimension (Citation completeness) were added by the separate issue #1315
 citation fix before this dive began. Current reality, after this PR's own new test:
 **15 tests, 7 dimensions.** Recomputed directly from the active run log rather than
-repeating either the issue's old count or a reviewer's restated one: three rubric
-dimensions (Relevance to research, Citation completeness, Genealogical implications)
-show only the value 3 across the whole corpus, and the base Tool Arguments dimension
-shows only 3 or null, never 1 or 2. Not chased as its own fix here — no counter-example
-was found showing any of these should fail on an existing scenario, so this reads as
-corpus coverage rather than a lenient rubric; worth revisiting if a future dive finds
-one.
+repeating either the issue's old count or a reviewer's restated one: two rubric
+dimensions (Citation completeness, Genealogical implications) show only the value 3
+across the whole corpus, and the base Tool Arguments dimension shows only 3 or null,
+never 1 or 2. Relevance to research is NOT flat — `ut_historical_context_014` scores
+it 2, the same partial F3 describes below. Not chased as its own fix here — no
+counter-example was found showing either remaining flat dimension should fail on an
+existing scenario, so this reads as corpus coverage rather than a lenient rubric;
+worth revisiting if a future dive finds one.
 
 `judge_context` grep for score-branch spoilers: 0 hits, confirmed.
 
@@ -52,9 +53,9 @@ cross-skill impact — all 10 are used only by historical-context's own tests.
 genealogical judgment involved): reshaped all 10 to `{ title, extract, url }`, keeping
 the single most on-topic result where a fixture had two and dropping the other.
 
-**Converts** — see the class-closer validator request at the bottom of this doc
-(filed as its own issue per Step 6 and clack391's review, rather than duplicated per
-finding).
+**Converts** — see the class-closer validator request at the bottom of this doc, filed
+as issue #1891 (merged in from the standalone #1894, which is closed) per Step 6 and
+clack391's review, rather than duplicated per finding.
 
 ---
 
@@ -94,7 +95,7 @@ by 25 of `locality-guide`'s own tests — essentially its whole suite — so fix
 means a full `locality-guide` re-run outside this PR's scope. Filed as issue #1891
 with the exact blast radius and the small fix each of the 3 actually needs.
 
-**Converts** — same class-closer validator as F1.
+**Converts** — same class-closer validator as F1, issue #1891.
 
 ---
 
@@ -177,13 +178,14 @@ rather than a silent patch.
 
 | # | Finding | Lane | Converts |
 |---|---|---|---|
-| F1 | 10 `wikipedia_search` fixtures shaped as a multi-result array; impossible for the real API | fixture defect (not a skill-behavior lane) | V1 (class-closer, filed separately) |
-| F2 | Same class in `wiki_search` (4 fixtures) and `wiki_place_page` (9 of 9 fixtures) | fixture defect | V1 |
+| F1 | 10 `wikipedia_search` fixtures shaped as a multi-result array; impossible for the real API | fixture defect (not a skill-behavior lane) | V1 (class-closer, issue #1891) |
+| F2 | Same class in `wiki_search` (4 fixtures) and `wiki_place_page` (9 of 9 fixtures) | fixture defect | V1 (#1891) |
 | F3 | No empty/error wiki fixture existed; prohibition line 11 untested | 2 (coverage gap, mine) | — (new test added) |
-| F4 | Fabricated "system hiccup" to justify skipping research | 4 (core doctrine) | V2 |
+| F4 | Fabricated "system hiccup" to justify skipping research | 4 (core doctrine) | V2 (issue #1892) |
 
-**1 findings-specific validator request (V2) plus 1 class-closer validator request
-(V1, filed as its own issue per Step 6 and the "group by lane" rule) from 4 findings.**
+**1 findings-specific validator request (V2, issue #1892) plus 1 class-closer
+validator request (V1, issue #1891 — merged in from the standalone #1894, now closed
+— per Step 6 and the "group by lane" rule) from 4 findings.**
 F1/F2's fixture-shape defect does not fit any of the guide's four skill-behavior lanes
 — it is a test-corpus defect, not a claim about what the skill did wrong — but it is
 exactly the kind of finding Step 6 asks to convert, since a program can check it
@@ -194,7 +196,7 @@ mechanically against each tool's TypeScript return type.
 ## What to hand back
 
 - The prohibition list (`historical-context-prohibition-list.md`, 20 items) and the
-  corrected test/dimension counts (15 tests, 7 dimensions, 4 flat cells) — for the
+  corrected test/dimension counts (15 tests, 7 dimensions, 3 flat cells) — for the
   next auditor.
 - 4 findings, Did/Should/Gap, each placed in a lane (or noted as outside the four
   lanes, for F1/F2).
@@ -207,6 +209,7 @@ mechanically against each tool's TypeScript return type.
   (a second skill's full suite) or the doctrine change (a new SKILL.md rule) needs
   review this PR's scope and lane don't cover.
 - V1, the class-closer validator for the fixture-shape defect underlying F1 and F2:
-  filed as its own issue (not per-finding, per the guide's "group by lane" rule),
-  since it is one mechanical rule that closes the whole defect class across
-  `wikipedia_search`, `wiki_search`, and `wiki_place_page` at once.
+  filed as its own issue, #1891 (merged in from the standalone #1894, now closed as
+  folded in), not per-finding, per the guide's "group by lane" rule — one mechanical
+  rule that closes the whole defect class across `wikipedia_search`, `wiki_search`,
+  and `wiki_place_page` at once.
