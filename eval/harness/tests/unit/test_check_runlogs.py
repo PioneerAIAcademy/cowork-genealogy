@@ -257,13 +257,14 @@ def _patch_diffs(monkeypatch, paths: list[str], *, deleted: list[str] | None = N
 
 
 def test_exempt_orchestrator_skill_passes(monkeypatch, capsys):
-    """Touching an exempt skill's body (no unit suite by design) must not
-    fail with 'no run logs' — the per-skill rules are skipped for it."""
-    assert "research" in check_runlogs.RUNLOG_GATE_EXEMPT_SKILLS
+    """research gained a trigger corpus (#1494) and was removed from
+    RUNLOG_GATE_EXEMPT_SKILLS. Touching its SKILL.md now fails the gate
+    like any non-exempt skill without committed run logs."""
+    assert "research" not in check_runlogs.RUNLOG_GATE_EXEMPT_SKILLS
     _patch_diffs(monkeypatch, ["packages/engine/plugin/skills/research/SKILL.md"])
     rc = check_runlogs.main()
-    assert rc == 0
-    assert "research" not in capsys.readouterr().out
+    assert rc == 1
+    assert "research" in capsys.readouterr().out
 
 
 def _make_present_skill(tmp_path, monkeypatch, name: str = "present-skill"):

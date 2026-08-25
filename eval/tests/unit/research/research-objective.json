@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_research_001",
+    "skill": "research",
+    "name": "Full research objective hands off the workflow",
+    "type": "positive",
+    "description": "The user gives a research objective and expects the orchestrator to drive the full GPS workflow — question selection through proof conclusion. This is research's core trigger: a broad objective the user wants handed off rather than driven step by step.",
+    "tags": ["core-trigger", "orchestrator"]
+  },
+  "input": {
+    "user_message": "Research the parents of Patrick Flynn, born about 1845 in Ireland. I want to identify both his father and mother from primary records.",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "Should invoke sub-skills (question-selection, research-plan, search-records, etc.) rather than doing GPS work inline",
+    "Should read research.json state to determine the current routing step"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

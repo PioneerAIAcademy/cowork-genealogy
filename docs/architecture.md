@@ -562,8 +562,9 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 > eval-ui`); hand-writing them is forbidden. A behavior-neutral edit can instead
 > take the `eval-cosmetic-skip` label from a senior, which relaxes **the snapshot
 > rule only** — the annotation rule still runs against the prior run log — and
-> expires on every new push. **`research` and `forget-and-rederive` are exempt**
-> (`RUNLOG_GATE_EXEMPT_SKILLS`), because neither has a unit suite. Full rules:
+> expires on every new push. **`forget-and-rederive` is exempt**
+> (`RUNLOG_GATE_EXEMPT_SKILLS`), because it has no unit suite. `research` was
+> formerly exempt but gained a trigger corpus (#1494) and is now gated. Full rules:
 > `eval/CLAUDE.md` → "GitHub Action rules".
 
 Remember the unit suite grades a *single invocation in fresh context* — it will
@@ -660,13 +661,14 @@ record), and it never writes identity links or eliminations inline
 `## Direct user requests name a destination, not a shortcut` section contradicts
 your change.** That section is a second routing
 surface: it takes a user asking for a named downstream skill and sends the router
-back through the table anyway. There is **no unit suite** to catch you; the only
-instrument is a live e2e run. Name the fixture you ran in the PR, or say you ran
-none.
+back through the table anyway. The trigger corpus (#1494) catches routing
+*into* `research` from the description, but not the internal routing table; a
+live e2e run is still the only instrument for table changes. Name the fixture
+you ran in the PR, or say you ran none.
 
-The runlog CI gate does **not** apply here: `research` and `forget-and-rederive`
-are in `RUNLOG_GATE_EXEMPT_SKILLS` (`eval/harness/scripts/check_runlogs.py`),
-precisely because neither has a unit suite. The frontmatter lint still runs.
+The runlog CI gate now applies to `research` (#1494 armed it by adding
+`eval/tests/unit/research/`). `forget-and-rederive` remains exempt
+(`RUNLOG_GATE_EXEMPT_SKILLS`) because it still has no unit suite.
 
 **Add a sub-skill to the loop.** It needs a routing row *and* a `description`
 that doesn't collide with an existing skill's (§3.2). Check the negative routing
@@ -675,8 +677,9 @@ tests in the unit corpus — but know what they pin. **A negative test pins
 about the routing table, which runs *after* `/research` has already been
 selected. And `check_negative_reciprocity.py` skips any edge whose target has no
 `eval/tests/unit/<target>/` directory, so — `research` having no suite —
-**routing *into* `research` is unpinnable by construction**, not merely
-unpinned.
+**routing *into* `research` is now pinnable** — #1494 added
+`eval/tests/unit/research/`, so `check_negative_reciprocity.py` can see edges
+into it.
 
 **Fix a skill that isn't triggering.** First work out **which binding missed** —
 they have different fixes, and only one of them is a description problem.
@@ -685,8 +688,9 @@ they have different fixes, and only one of them is a description problem.
    first** (`| If research.json has... | Invoke |`) — check whether any row's
    state condition matches, whether an earlier row shadows it, and whether
    `## Direct user requests name a destination, not a shortcut` re-routed a
-   direct request. No unit suite covers this; a
-   live `make e2e-run` is the only instrument. The sub-skill's `description` is
+   direct request. The trigger corpus (#1494) covers routing *into*
+   `research`, but not the internal routing table; a live `make e2e-run`
+   is the only instrument for table changes. The sub-skill's `description` is
    still in play as the *tiebreaker*: the table explicitly says to "defer to each
    sub-skill's own 'Use when' guidance when state is ambiguous," and that text
    lives in the description frontmatter.
@@ -1424,7 +1428,7 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and 87 negative routing tests. **404** committed test definitions
+  run logs, and negative routing tests across 26 skill suites. Committed test definitions
   (`make eval-inventory`) — one JSON file per test under `eval/tests/unit/` — and
   across the 25 live suites the latest run log per suite totals **403 rows, 362
   passing (90%)**. Those two numbers count different things and can diverge in

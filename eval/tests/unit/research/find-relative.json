@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_research_003",
+    "skill": "research",
+    "name": "Find [relative] triggers research",
+    "type": "positive",
+    "description": "'Find [relative]' is an explicit trigger in the skill description. The user wants to locate a family member through the full GPS workflow, not just search one record collection.",
+    "tags": ["core-trigger"]
+  },
+  "input": {
+    "user_message": "Find the wife of Patrick Flynn. He was born around 1845 in Ireland and lived in New York by 1870.",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "'Find [relative]' is a listed trigger for the research orchestrator",
+    "Should not be confused with a single record search — the user wants identification through the full workflow"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}
