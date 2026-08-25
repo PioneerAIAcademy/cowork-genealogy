@@ -2,20 +2,21 @@
   "test": {
     "id": "ut_convert_dates_004",
     "skill": "convert-dates",
-    "name": "Catholic Europe Julian-to-Gregorian 1582 (10-day shift)",
+    "name": "Pre-adoption Catholic Europe date — no Gregorian equivalent existed yet",
     "type": "positive",
-    "description": "Convert a Spanish parish-record date from September 1582 — before Spain's adoption of the Gregorian calendar in October 1582. The shift is 10 days for this jurisdiction-and-year (NOT 11 days, which only applies to England in 1752). Tests jurisdiction-specific awareness at the very first Gregorian-adoption window.",
-    "tags": ["julian-gregorian", "1582", "spain", "catholic-europe", "10-day-shift"]
+    "description": "User asks to convert a Madrid parish date of '14 September 1582' to Gregorian. Spain's switch was Julian 4 October 1582 -> Gregorian 15 October 1582, so this date PRECEDES the Gregorian calendar's existence: there is no contemporaneous Gregorian equivalent, only a proleptic one. The skill should say so and record the date as written rather than asserting a converted day as fact. convert_calendar is specified to reject julianToGregorianDay before 1582-10-15 as an input error (convert-calendar-tool-spec.md section 7), so a bare '24 September 1582' is an answer the tool will not produce. The 10-day offset band itself is exercised by ut_convert_dates_009 (Wuerttemberg 1699).",
+    "tags": ["julian-gregorian", "1582", "spain", "catholic-europe", "pre-adoption", "no-gregorian-equivalent", "proleptic"]
   },
   "input": {
     "user_message": "Convert this Spanish parish-record date to the modern Gregorian calendar: '14 September 1582, Madrid'.",
     "scenario": null
   },
   "judge_context": [
-    "Should recognize that Spain adopted the Gregorian calendar in October 1582, so a 14 September 1582 date in Madrid is still Julian",
-    "Should apply the correct 10-day offset for Catholic Europe in 1582 — NOT 11 days (which is the England 1752 offset)",
-    "Should present the conversion in step-by-step form: '14 September 1582 (Julian) +10 days = 24 September 1582 (Gregorian)'",
-    "Should preserve the original Julian date in the output, presenting both forms",
-    "Should briefly note that offsets vary by country and time period (e.g., 11 days for England 1752, 13 days for Russia 1918)"
+    "Should recognize that Spain adopted the Gregorian calendar in October 1582 — Julian 4 October was followed directly by Gregorian 15 October — so a 14 September 1582 Madrid date is Julian and sits BEFORE the switch",
+    "Should explain that because the date precedes the Gregorian calendar's introduction, there is no contemporaneous Gregorian equivalent to convert to. The calendars had not yet diverged into two parallel systems; before 15 October 1582 there was only the Julian calendar",
+    "Should recommend recording the date as written — '14 September 1582' — with the calendar noted (Julian / Old Style), which is what another researcher will be able to match against the register",
+    "May state the proleptic Gregorian alignment (24 September 1582) for timeline comparison, but ONLY labelled as proleptic or hypothetical. Presenting '24 September 1582' flatly as the Gregorian date, with no indication that the Gregorian calendar did not exist on that day, is the failure this test looks for",
+    "Should NOT present a 'Gregorian date' or 'modern Gregorian' field for this date at all — not even holding the original date unchanged. A row reading 'Modern Gregorian date: 14 September 1582 — unchanged' is a failure, not a notation quibble: it asserts a Gregorian reading of a day on which the Gregorian calendar did not exist, which is the exact distinction this test grades. The correct presentation gives the date once, as recorded, labelled Julian / Old Style",
+    "If the skill calls convert_calendar with julianToGregorianDay and receives an input error, surfacing that error and explaining it is correct behaviour, not a failure — the tool rejects this correction before 1582-10-15 by design"
   ]
 }

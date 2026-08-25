@@ -154,7 +154,7 @@ tool**: `surnameExact`, `givenNameExact`, `birthPlaceExact`,
 | `surnameExact` | **Usually wrong** — fuzzy is what bridges an index misspelling, so this can drop the target outright |
 | `givenNameExact` | Excludes the variants fuzzy reaches. One real use: an initials search |
 | `<event>PlaceExact` | Cuts the count hard; not a finding lever |
-| `<event>YearExact` | Only with a firm date — what it does to undated records is not established |
+| `<event>YearExact` | Keeps only records whose indexed date is inside the range; unqualified, a range also admits ones dated into it by estimate |
 | relative `*Exact` | Requires that relative to be indexed, so it drops the silent records the unqualified term keeps |
 | `recordCountry`, `recordSubdivision` | Already strict — no qualifier exists and none is needed |
 
@@ -210,19 +210,19 @@ be defensible, not to find a record.
 
 ### `<event>YearExact`
 
-Fuzz around the range bounds is **weakly** evidenced: the few records seen
-outside an unqualified range carried *approximate* dates, and on a pool read to
-the end the single out-of-range row survived `.exact` too.
+An unqualified range matches by estimate overlap. A record with no year of its
+own is not year-silent — the index carries an *estimated* date range for it, from
+the dated facts of others on the record, and an unqualified range returns it
+whenever that estimate overlaps the range. Measured on the record index for birth, death and marriage; record-index residence is collection-dependent — `.exact` changes nothing where every row is already dated, but drops a real share where records are dated only through others, behaving like the rest there. Reproduced for all four
+families on the tree endpoint; the `any` family was never tested.
 
-Whether an unqualified range requires an indexed year is **not established** — no
-direction was measured, so do not assume a range either keeps or excludes undated
-records, and do not quote a share. The `any` family was never tested at all.
-
-Setting it is *meant* to exclude records whose indexed year sits just outside the
-range — where seen, that was the age-reported population — but an out-of-range
-row was observed surviving it, so the exclusion is not reliably complete. Whether
-it also drops records carrying no year, or in-range *approximate* dates, is
-**not established**. Use only with a firm date.
+`<event>YearExact` keeps only records whose indexed date falls inside the range,
+dropping the estimate-overlap matches — so `.exact` reliably *excludes* records
+that only estimate into the range, and an unqualified range reliably *includes*
+them. Still unmeasured: whether `.exact` also drops *in-range approximate* dates.
+A cohort that is not always small carries no indexed date in the swept span at
+all and no bounded range reaches it, so to gather every year-less record read the
+results rather than relying on a range. Use `<event>YearExact` with a firm date.
 
 ### relative `*Exact` (`fatherGivenNameExact`, `spouseSurnameExact`, …)
 

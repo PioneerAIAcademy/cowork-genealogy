@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_person_evidence_027",
+    "skill": "person-evidence",
+    "name": "A single-person record matched to an existing tree person materializes its facts onto that person, not just a pe_ link",
+    "type": "positive",
+    "description": "Guards the gap the lead recorded on #1646 on 2026-08-22. docs/specs/tree-materialization-spec.md assigns person-evidence 'write the linked persona's assertions as sourced facts/names onto the tree person' for EVERY linked persona, but SKILL.md only covered it in step 5 (persona matches no existing person) and step 7.3 (multi-person household record). The commonest case — a single-person record matched to a person already in the tree — had no covering step, so it got a pe_ link and no facts. That matters beyond bookkeeping: search-records sources its next query's name and date parameters off the tree person, so facts that never land are the ones that would have sharpened the next search. src_004 is the 1908 Pennsylvania death certificate (ARK ark:/61903/1:1:MDEF, record_role 'deceased'). Its assertions a_011 (death, 12 March 1908, Schuylkill County) and a_012 (birth, 1845, Pennsylvania) are unlinked — only a_013, the relationship assertion, carries a pe_ entry (pe_005). Correct behavior: pe_ links for a_011 and a_012 to Patrick (I1), AND a materialize_facts call carrying personId I1 with this record and role so the assertions land on I1 as sourced facts.",
+    "tags": [
+      "person-evidence",
+      "materialize",
+      "single-person-record",
+      "matched-persona",
+      "a_011",
+      "a_012",
+      "check-warnings-required"
+    ]
+  },
+  "input": {
+    "user_message": "The 1908 death certificate (src_004) hasn't been linked yet — its death and birth assertions are still sitting unlinked. Link them to Patrick Flynn.",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "The persona is the 'deceased' role on src_004 (ARK ark:/61903/1:1:MDEF). It matches Patrick Flynn (I1), who is already in the tree: the certificate's death date and place agree with I1's recorded death, and the tree already links this same record's relationship assertion a_013 to I1 via pe_005. Identity here is settled, not the thing under test.",
+    "What is under test is whether the linked persona's assertions reach the TREE PERSON and not only research.json. person-evidence is assigned 'write the linked persona's assertions as sourced facts/names onto the tree person' for every linked persona (docs/specs/tree-materialization-spec.md), which for a matched persona means a materialize_facts call carrying personId I1 together with this record and its 'deceased' role. A run that writes the pe_ entries and stops has done half the step.",
+    "a_011 and a_012 each need a pe_ entry against I1. a_013 is already linked by pe_005 and must not be duplicated or modified.",
+    "record_persona_id is null on both assertions (this record did not come from a record_search), so no same_person score is available and match_score must be null on the new entries. Correlation stands alone. Do not treat the missing score as a shortfall on ANY dimension — not Correctness, not Confidence calibration, not Rationale quality. SKILL.md requires disclosing a same_person score only when one was actually computed, so a rationale that does not explain the null match_score is complying with the body, not falling short of it. The writer tool emits a warning when a confident link carries a null match_score; that warning is expected here and a run that addresses it, anywhere in its response, has answered it.",
+    "a_012 carries a birthplace of Pennsylvania while I1's existing Birth fact says Ireland, sourced to the 1850 census. Surfacing that as a coexisting conflict for conflict-resolution is correct; silently declining to materialize a_012 because I1 already holds a Birth fact is not. Adjudicating which birthplace is right is NOT this skill's job and a run that stops to adjudicate it should not be credited for doing so.",
+    "Tool Arguments: judge the arguments actually passed — whether the materialize call names I1 and this record's 'deceased' role, and whether the pe_ entries name the right assertions and person. This note fixes no score."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600
+  }
+}

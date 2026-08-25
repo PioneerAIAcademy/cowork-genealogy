@@ -642,7 +642,10 @@ stay too: the protected-file write lockdown mirrors the shipped plugin hook, and
 ### Python file I/O: always pass `encoding="utf-8"`
 
 Every Python `read_text()` / `write_text()` / `open()` on a text file
-**must** pass `encoding="utf-8"`. A bare call uses the platform default —
+**must** pass `encoding="utf-8"` — and so must every `subprocess.run` /
+`check_output` / `Popen` / `call` / `check_call` that runs in text mode
+(`text=`, `universal_newlines=` or `errors=`), which decodes the child
+process's output with the same platform default. A bare call uses the platform default —
 cp1252 on Windows — and crashes with `UnicodeDecodeError` on the em-dashes
 and smart quotes that SKILL.md, the test JSON, and `research.json`
 routinely contain. It works on macOS/Linux (utf-8 default) but breaks for

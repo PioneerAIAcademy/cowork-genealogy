@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_historical_context_014",
+    "skill": "historical-context",
+    "name": "Wiki/Wikipedia return no coverage for an obscure place",
+    "type": "positive",
+    "description": "Tests SKILL.md's 'when a tool call returns no results or an error, do not continue elaborating that topic as if the search succeeded' rule. Both wiki_search (empty results) and wikipedia_search (404 error) return nothing for a fictional, sparsely-documented hamlet. Guards against the skill inventing specific-sounding place history when its tools found nothing. Deep-dive finding, issue #1663 — no existing test in this suite exercised the empty/error path before this one.",
+    "tags": ["no-results", "error-handling", "citation", "issue-1663"]
+  },
+  "input": {
+    "user_message": "My ancestor supposedly lived in a place called Hollow Creek Settlement. I can't find anything about its history anywhere. What historical context might explain why records are so sparse there?",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "wiki-search-hollow-creek-empty",
+    "wikipedia-search-hollow-creek-error",
+    "wiki-search-any",
+    "wikipedia-search-any"
+  ],
+  "judge_context": [
+    "No wiki/Wikipedia tool call returns anything specific to 'Hollow Creek Settlement' itself — direct-name lookups return empty results or a 404-style error; the model may reasonably also search broader background topics (frontier settlement naming, courthouse fires, etc.), which the fixtures let succeed with real, general, non-place-specific content. Grade what the response does with this mix, not a single expected tool-call pattern",
+    "The skill must NOT present any claim SPECIFIC to Hollow Creek Settlement itself (a founding date, a named church, a specific population figure, a specific record-loss event, or that a specific general reason IS what happened there) as an established fact — nothing returned by any tool call is actually about this place, so nothing traces to a place-specific finding",
+    "Should flag plainly, early, and not just in a closing caveat, that neither tool found anything about this specific place — e.g. near the top of the response, not only in a one-line note at the end",
+    "General background about why small/obscure rural hamlets in general have sparse records (informal naming, pre-civil-registration gaps, courthouse fires, jurisdictional layering, etc.) is fine and expected — but must be framed throughout as general possibilities ('one common reason is...', 'this could be why...'), not as a confident, itemized list of established explanations for this specific case",
+    "If the response cites a 'Sources consulted' entry, the cited page must be a real one an actual tool call returned (a generic genealogy-guidance page is fine to cite if it was genuinely returned) — it must NOT be presented as if it specifically covered Hollow Creek Settlement, and no entry should exist for a call that returned empty/error",
+    "Should still be useful: suggest concrete next steps (check whether the name is a colloquial/unofficial name for part of a real, findable jurisdiction; search the county the family is otherwise associated with; check historical gazetteers) rather than just declining"
+  ]
+}
