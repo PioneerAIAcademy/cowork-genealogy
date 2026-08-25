@@ -1145,6 +1145,26 @@ def flag_routing_negative_judge_fail(
     return dimensions
 
 
+# Deterministic execution-cap aborts that a validator FAILURE dominates in the
+# recorded outcome (issue #1866 V7). A run that wrote a section it doesn't own
+# and then hit its wall-clock cap is a skill defect, not a timeout — recording
+# it `aborted` tells every reader (eval/CLAUDE.md "Reading an `aborted` row")
+# that it "says nothing about the skill", which is how ut_research_plan_016's
+# two failed validators stayed invisible.
+#
+# Only these three are dominated. `unmatched_tool_call` is a test-corpus problem
+# (exit 2) and the two transient reasons (`error`, `sdk_stream_silence`) drive
+# the exit-code split and the suite breaker (`_TRANSIENT_ABORT_REASONS`,
+# run_tests.py) — demoting either would report an environment failure as a skill
+# regression. `not_runnable` never reaches this function (`_aborted_entry`).
+# `max_input_tokens_per_turn` is a fourth deterministic cap of the same class,
+# left out only because #1866 enumerates three; revisit if it starts masking
+# validator failures.
+_VALIDATOR_DOMINATED_ABORTS = frozenset(
+    {"max_wall_clock_seconds", "max_turns", "max_tool_calls"}
+)
+
+
 def _compute_outcome(
     *,
     spec: TestSpec,
@@ -1166,8 +1186,17 @@ def _compute_outcome(
     determined (see the negative branch), so a skipped judge doesn't gate
     them; out-of-scope negatives (`correct_skill: []`) have no routing
     signal and are judge-gated, so a skipped judge fails them too.
+
+    A validator failure dominates a deterministic execution-cap abort
+    (issue #1866 V7): `aborted` normally short-circuits, but a run that
+    failed a validator AND hit one of `_VALIDATOR_DOMINATED_ABORTS` is
+    recorded `fail`, so a real defect isn't filed under a timeout. The
+    `aborted_reason` field stays populated on the SingleRun either way —
+    only `outcome` changes.
     """
     if aborted_reason:
+        if not validators_passed and aborted_reason in _VALIDATOR_DOMINATED_ABORTS:
+            return "fail"
         return "aborted"
     if not validators_passed:
         return "fail"

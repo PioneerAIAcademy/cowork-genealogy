@@ -1073,6 +1073,51 @@ def test_error_aborted_reason_treated_as_aborted():
     ) == "aborted"
 
 
+# --- V7 (#1866): a validator failure dominates a deterministic-cap abort ----
+# Proof-of-failure: without the demotion in `_compute_outcome`, the first three
+# assertions all read "aborted" and a real defect (a failed validator) hides
+# behind a timeout — exactly ut_research_plan_016. The last three pin the scope
+# so the demotion cannot over-fire onto a transient/corpus abort or a clean cap
+# abort. Nothing in CI mutates a run to red a gating check (CLAUDE.md, "a new
+# lint must be proven to fail"), so these assertions are that proof.
+
+
+@pytest.mark.parametrize("cap", ["max_wall_clock_seconds", "max_turns", "max_tool_calls"])
+def test_validator_failure_demotes_deterministic_cap_abort_to_fail(cap):
+    spec = _positive_spec()
+    assert _compute_outcome(
+        spec=spec, validators_passed=False, judge_dimensions=[],
+        aborted_reason=cap, activated=True,
+        skills_invoked=["search-wikipedia"],
+    ) == "fail"
+
+
+@pytest.mark.parametrize("cap", ["max_wall_clock_seconds", "max_turns", "max_tool_calls"])
+def test_clean_deterministic_cap_abort_stays_aborted(cap):
+    """The demotion must not over-fire: a cap abort with validators PASSING is
+    still a genuine no-gradeable-result abort."""
+    spec = _positive_spec()
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=[],
+        aborted_reason=cap, activated=True,
+        skills_invoked=["search-wikipedia"],
+    ) == "aborted"
+
+
+@pytest.mark.parametrize("reason", ["error", "sdk_stream_silence", "unmatched_tool_call"])
+def test_validator_failure_does_not_demote_non_cap_abort(reason):
+    """Only the three deterministic caps are dominated. `error` and
+    `sdk_stream_silence` feed the suite breaker and exit-code split;
+    `unmatched_tool_call` is a test-corpus (exit 2) problem. Demoting any of
+    them would report an environment/corpus failure as a skill regression."""
+    spec = _positive_spec()
+    assert _compute_outcome(
+        spec=spec, validators_passed=False, judge_dimensions=[],
+        aborted_reason=reason, activated=True,
+        skills_invoked=["search-wikipedia"],
+    ) == "aborted"
+
+
 # --- Phase 2: unmatched tool calls (Type 1 vs Type 2) ----------------------
 
 
