@@ -106,6 +106,7 @@ def git_added_e2e_runlogs() -> list[Path] | None:
     out = subprocess.check_output(
         ["git", "diff", "--name-only", "--diff-filter=A", base, head],
         text=True,
+        encoding="utf-8",
         cwd=REPO_ROOT,
     )
     added: list[Path] = []

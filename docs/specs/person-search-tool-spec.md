@@ -136,13 +136,17 @@ start. It *is* scanned for contradicted wording (`WORDING_ONLY_SURFACES`).
   or retries on emptiness turns a meaningful zero into an error. `personSearchTool`
   handles this correctly (its 204 branch returns `emptyResponse`); copy it.
 
-**Years and places are both outside the rule, and neither has been measured
-here.** The year finding — that the population the old wording was phrased around
-(objects with no indexed year) is empty, and the index carries estimated date
-*ranges* matched by overlap — is the lead's account, and the session probe behind
-it left no artifact, on either endpoint. The artifact still reads
-`H.verdict:silence tolerated` = OPEN.
-Places are a different mechanism altogether — upward expansion, not fuzz — also
+**Places are outside the rule; years are now measured.** The year finding — that
+the population the old wording was phrased around (objects with no indexed year) is
+empty, and the index carries estimated date *ranges* matched by overlap — is now
+recorded, on both endpoints: `H.verdict:index-silent personas exist` reads **NO**
+and `H.verdict:an unqualified range admits estimate overlaps` reads **YES** on the
+record index, and the tree endpoint reproduces the same shape (section P of
+`dev/probe-search-qualifiers.ts`, all four year families). So `birthYearExact`
+behaves like the other `*Exact` toggles: without it a range admits
+estimate-overlap matches, and with it only objects whose indexed date is inside the
+range survive.
+Places are a different mechanism altogether — upward expansion, not fuzz —
 measured on the record index, with the descent half recorded by no verdict at all.
 Both toggles' descriptions say as much.
 

@@ -126,6 +126,7 @@ def git_diff_changes() -> list[tuple[str, str | None]]:
     out = subprocess.check_output(
         ["git", "diff", "--name-status", "--diff-filter=AR", base, head],
         text=True,
+        encoding="utf-8",
     )
     rows: list[tuple[str, str | None]] = []
     for line in out.splitlines():
@@ -149,6 +150,7 @@ def git_diff_deleted_paths() -> list[str]:
     out = subprocess.check_output(
         ["git", "diff", "--name-only", "--diff-filter=D", f"{base}...{head}"],
         text=True,
+        encoding="utf-8",
     )
     return [line for line in out.splitlines() if line]
 
@@ -177,6 +179,7 @@ def git_diff_touched_paths() -> list[str]:
     out = subprocess.check_output(
         ["git", "diff", "--name-status", f"{base}...{head}"],
         text=True,
+        encoding="utf-8",
     )
     paths: list[str] = []
     for line in out.splitlines():

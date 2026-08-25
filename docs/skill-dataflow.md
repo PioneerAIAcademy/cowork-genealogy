@@ -227,10 +227,11 @@ touch either side.
    `record-extraction` as a permitted writer of a section it has no tool to write.
    — issue #1821, ruled: the `record-extraction` router gains `research_append` and the
    terminal write
-6. **Who invokes `locality-guide`.** Its own persist step gives "`locality-guide` was
-   invoked by `research-plan`" as the example case. `research-plan` forbids exactly that:
-   "you read it, you do not invoke `locality-guide`" — it stops and returns to the
-   orchestrator instead. — issue #1862
+6. **Who invokes `locality-guide`** — **RESOLVED in PR #1893 (#1664, closing #1862):** the
+   persist-step example and the frontmatter description are corrected to name the
+   **orchestrator** as the caller, matching `research-plan` ("you read it, you do not
+   invoke `locality-guide`" — it stops and returns to the orchestrator instead).
+   — issue #1862 (closed)
 7. **What follows extraction.** `record-extraction` hands off to `check-warnings` and then
    `person-evidence`. The orchestrator says the extractor's output "ALWAYS flows through
    `person-evidence` next", with no `check-warnings` step. The extractor is assertion-only,
