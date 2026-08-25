@@ -9,7 +9,9 @@ families need opposite treatments:
 **Aggregating readers filter** (`e2e-corpus`, `e2e-guardrail-shadow`,
 `e2e-latency`, `e2e-skill-episodes`). They tally many runs into one number, so
 mixing eras corrupts it and the window genuinely changes the sample. Default:
-`DEFAULT_SINCE_DAYS`.
+`DEFAULT_SINCE_DAYS`. One exception: `e2e-guardrail-shadow FEEDBACK_DIR=` reads
+hosted feedback bundles rather than run logs and is NOT windowed — that corpus
+is small and hand-collected, so a window would discard it, not refresh it.
 
 **One-row-per-subject readers flag** (`eval-timings`, `skill-latency`). They
 already take only the newest 1-2 run logs per skill, so there is no sample to
