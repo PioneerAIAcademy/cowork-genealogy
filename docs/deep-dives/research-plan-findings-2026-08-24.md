@@ -694,6 +694,18 @@ restored signal. The five rubric dimensions remain the open question #1404 and
 #1668 own, and this dive's contribution to them is the measurement below, not
 the rewrite.
 
+**All three runs were scored under the previous judge prompt, so read these as a
+baseline rather than a current reading.** Their `judge_prompt_hash` is
+`0d186137147c`; #1766 has since replaced it with `c39d70034788`, and that commit
+is now inside this branch, so the runlogs gate warns on this head. The new prompt
+makes `judge_context` notes binding on the scores rather than background, and
+says an unmet requirement is a deduction in whichever dimension covers it — the
+mechanism this retraction and F9 both describe as absent. That cuts in the
+rewrite's favour, not against it: a clause such as "whether a plan item targets
+the parents' marriage is what Record type selection turns on for this test" now
+binds where it was previously read as context. So the retraction may be
+pessimistic. **Re-measure under `c39d70034788` before deleting a dimension.**
+
 ## F8 — `test_ownership_table` attributes a delegated skill's writes to the caller
 
 **Did.** `ut_research_plan_q7m` fails `test_ownership_table` in both
