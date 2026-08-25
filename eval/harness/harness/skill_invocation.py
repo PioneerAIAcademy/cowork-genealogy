@@ -1142,6 +1142,147 @@ def find_citation_nulling_in_conclusions(
     return violations
 
 
+# Marks a #1358 tree-side citation-nulling shadow entry in the shared
+# `guardrail_shadow_violations` list. Distinct from CITATION_NULLING_KIND so the
+# report counts the two arms separately: the research-side arm reads
+# `research.json` (where the citation is AUTHORED) and the tree-side arm reads
+# `tree.gedcomx.json` (where `proof-conclusion` COPIES it at upload). They fire
+# on opposite sides of the same seam and their rates differ by two orders of
+# magnitude, so folding them into one bucket would hide that.
+TREE_CITATION_NULLING_KIND = "tree_citation_nulling"
+
+
+def find_citation_nulling_in_tree_sources(
+    research: dict[str, Any] | None,
+    tree: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Shadow-mode post-hoc detector (issue #1358): a tree ``sources[]`` entry
+    that an UPLOADED conclusion rests on carries a null or empty ``citation``.
+
+    The tree-side half of the #1133 citation-nulling class. Its sibling
+    ``find_citation_nulling_in_conclusions`` reads ``research.json``, where the
+    citation is authored, and measures **zero** across the committed corpus —
+    1,884 concluded sources over 141 runs, all cited. That zero is a real
+    invariant worth pinning, but it is not this class: the failure the class was
+    built for lives on the other side of the seam, where ``proof-conclusion``
+    copies the string onto the tree S-entry.
+
+    THE OBLIGATION, quoted from the site that states it. Not
+    ``proof-conclusion/SKILL.md`` — that body moved to the delegated agent when
+    the skill became a skill-agent pair — but
+    ``packages/engine/plugin/agents/proof-conclusion.md`` step 3, "Source entries
+    (upload-time citation + conclusion-gated upload)":
+
+        copy the finalized ``research.json`` ``sources[].citation`` string into
+        the **``citation``** field … **Upload is conclusion-gated:** the working
+        tree carries *all* sourced evidence facts (materialized at link time by
+        person-evidence), but **only ``primary``/proof-backed facts upload to
+        FamilySearch** — un-concluded evidence stays out.
+
+    THE GATE IS THAT SENTENCE, both clauses. A tree source is held to a citation
+    only when (1) the run wrote a ``proof_summaries`` entry, and (2) the source is
+    referenced by a ``primary`` fact or by a relationship — i.e. by content that
+    actually uploads. Without clause (2) this would flag every evidence fact
+    person-evidence materialized during honest research, which the same sentence
+    says is *supposed* to be citation-less until a conclusion promotes it. That
+    is why this ships in shadow with a gate rather than as a fail:
+    ``docs/specs/simplified-gedcomx-spec.md`` makes the tree citation
+    upload-populated by design, so some fraction of any count here is
+    legitimately-not-yet-uploaded and only a human can price it.
+
+    SHADOW MODE ONLY, and this card deliberately does not graduate it. The
+    research-side arm's zero is *not* a licence to graduate — per
+    ``docs/specs/guardrail-enforcement-spec.md``, "zero is not 'low enough', it
+    is nobody has seen this detector fire." Detect before teaching: a skill edit
+    costs a paid eval run and there is no baseline to measure it against until
+    this arm has been in the corpus for a few runs.
+    """
+    research = research or {}
+    tree = tree or {}
+
+    proof_summaries = (
+        research.get("proof_summaries")
+        if isinstance(research.get("proof_summaries"), list)
+        else []
+    )
+    if not proof_summaries:
+        return []  # clause 1: no written conclusion, so nothing has uploaded
+
+    sources = tree.get("sources") if isinstance(tree.get("sources"), list) else []
+    sources_by_id = {s.get("id"): s for s in sources if isinstance(s, dict)}
+    if not sources_by_id:
+        return []
+
+    def _refs(container: Any) -> list[Any]:
+        """Source ids named by one fact/relationship.
+
+        Two spellings live in the committed corpus: ``sources: [{"ref": "S3"}]``
+        (the common one) and a bare ``source_ids: ["S3"]``. Reading only the
+        first silently under-counts, which on a detector whose whole job is a
+        rate would look like the problem being smaller than it is.
+        """
+        if not isinstance(container, dict):
+            return []
+        out: list[Any] = []
+        for entry in container.get("sources") or []:
+            if isinstance(entry, dict) and entry.get("ref"):
+                out.append(entry["ref"])
+            elif isinstance(entry, str):
+                out.append(entry)
+        for sid in container.get("source_ids") or []:
+            if isinstance(sid, str):
+                out.append(sid)
+        return out
+
+    # clause 2: only content that UPLOADS holds a source to a citation.
+    uploading: list[tuple[str, Any, list[Any]]] = []
+    for person in tree.get("persons") or []:
+        if not isinstance(person, dict):
+            continue
+        for fact in person.get("facts") or []:
+            if not isinstance(fact, dict) or not fact.get("primary"):
+                continue
+            uploading.append(("primary fact", fact.get("id"), _refs(fact)))
+    for rel in tree.get("relationships") or []:
+        if not isinstance(rel, dict):
+            continue
+        uploading.append(("relationship", rel.get("id"), _refs(rel)))
+        for fact in rel.get("facts") or []:
+            if isinstance(fact, dict) and fact.get("primary"):
+                uploading.append(("relationship fact", fact.get("id"), _refs(fact)))
+
+    def _citation_is_empty(src: dict[str, Any]) -> bool:
+        c = src.get("citation")
+        return c is None or (isinstance(c, str) and c.strip() == "")
+
+    violations: list[dict[str, Any]] = []
+    seen: set[Any] = set()  # one entry per source, however many facts cite it
+    for what, holder_id, refs in uploading:
+        for sid in refs:
+            if sid in seen:
+                continue
+            src = sources_by_id.get(sid)
+            if not isinstance(src, dict):
+                continue  # dangling ref — a schema concern, not this detector's
+            if not _citation_is_empty(src):
+                continue
+            seen.add(sid)
+            violations.append(
+                {
+                    "index": -1,  # post-hoc final-state read; no tool-call index
+                    "tool": "tree.gedcomx.json",
+                    "required_skill": "proof-conclusion",
+                    "question_id": None,
+                    "kind": TREE_CITATION_NULLING_KIND,
+                    "detail": (
+                        f"uploaded tree source {sid} (referenced by {what} "
+                        f"{holder_id}) has a null/empty citation string"
+                    ),
+                }
+            )
+    return violations
+
+
 # Marks a conflict-not-persisted shadow entry in the shared
 # `guardrail_shadow_violations` list, told apart from the citation-nulling and
 # #963 person_evidence buckets by this `kind` in `guardrail_shadow_report.py`.

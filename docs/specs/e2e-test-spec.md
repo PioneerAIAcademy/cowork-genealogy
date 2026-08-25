@@ -1337,9 +1337,32 @@ time, so a run that legitimately stops before upload has empty citations by
 design — scoping to sources of an actual written conclusion is what keeps a
 future hard version from false-positiving on honest partial runs. Its entries
 carry `kind: "citation_nulling"` so `guardrail_shadow_report` counts them in
-their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
-fourth check is gated on reading that shadow fire rate across the corpus first**
-— not decided here.
+their own bucket (`make e2e-guardrail-shadow`).
+
+**That fire rate has now been read, and the answer is zero: it does not
+graduate.** Across 159 committed runs the research-side arm flags nothing, and a
+replay over every committed `final-research.json` reaches 1,884 concluded
+sources with a citation on all of them. Zero is not a licence — per
+`guardrail-enforcement-spec.md`, "zero is not 'low enough', it is nobody has seen
+this detector fire." The arm stays in shadow as a **regression pin**: the zero
+is a real invariant — a conclusion's citations are populated whenever a
+conclusion exists — and this is what would catch it breaking.
+
+**The failure class it was built for lives on the other side of the seam, and a
+sixth check measures it there.** `find_citation_nulling_in_tree_sources` reads
+the final `tree.gedcomx.json` and flags a `sources[]` entry with a null or empty
+`citation` that an *uploaded* conclusion rests on. Its gate is both clauses of
+one sentence in `packages/engine/plugin/agents/proof-conclusion.md` step 3 — the
+run wrote a `proof_summaries` entry, **and** the source is referenced by a
+`primary` fact or a relationship, i.e. by content that actually uploads. The
+second clause is load-bearing: the working tree carries every sourced evidence
+fact `person-evidence` materialized at link time, and those are citation-less by
+design until a conclusion promotes them. Entries carry
+`kind: "tree_citation_nulling"` for their own bucket, kept separate from the
+research-side arm because the pair is the finding — **0 there against 111 of 171
+referenced sources here, across 50 of the same 159 runs**. This one is shadow
+too, and deliberately not graduated: part of that 111 is
+legitimately-not-yet-uploaded evidence only a genealogist can price.
 
 **A fifth check runs in shadow mode only: a conclusion relies on a resolved
 conflict that was never persisted.** `find_unpersisted_conflict_resolutions` (in
