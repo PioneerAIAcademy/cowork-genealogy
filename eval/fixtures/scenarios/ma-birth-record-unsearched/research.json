@@ -1,0 +1,422 @@
+{
+  "project": {
+    "id": "rp_ma_birth_record_unsearched",
+    "objective": "Who were the parents of Ida F. Braman, born about 1875 in Taunton, Bristol County, Massachusetts?",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-08-21",
+    "updated": "2026-08-21"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Ida F. Braman (b. ~1875, Taunton, Bristol County, Massachusetts)?",
+      "rationale": "Primary research objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-08-21",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-08-21",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Taunton, Bristol, Massachusetts, United States",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "The 1880 census should show Ida as a child in her parents' household.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Taunton, Bristol, Massachusetts, United States",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 census names each person's relationship to the head, corroborating the 1880 co-residence.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital",
+          "jurisdiction": "Taunton, Bristol, Massachusetts, United States",
+          "date_range": "1946",
+          "repository": "Massachusetts State Archives",
+          "rationale": "Massachusetts death records name the decedent's parents, including the mother's maiden surname.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Taunton, Bristol, Massachusetts, United States",
+          "date_range": "1875-1880",
+          "repository": "FamilySearch",
+          "rationale": "A baptism would name the parents independently of the civil record.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "probate",
+          "jurisdiction": "Bristol County, Massachusetts, United States",
+          "date_range": "1900-1930",
+          "repository": "FamilySearch",
+          "rationale": "A probate for the candidate father would enumerate his children.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-21T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Braman",
+        "given": "Ida",
+        "birth_year": 1875,
+        "collection": "1880 Census"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "notes": "1880 U.S. Census, Taunton, Bristol County, Massachusetts — household of Charles W. Braman, with Ida F., age 5.",
+      "external_site": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-08-21T10:30:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Braman",
+        "given": "Ida",
+        "collection": "1900 Census"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "notes": "1900 U.S. Census, Taunton, Bristol County, Massachusetts — Ida F. Braman, age 25, listed as daughter of Charles W. Braman.",
+      "external_site": null
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-08-21T11:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Braman",
+        "given": "Ida",
+        "death_year": 1946,
+        "collection": "Massachusetts Deaths"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "Massachusetts death record, Ida F. Braman, 1946, Taunton — names father Charles W. Braman and mother Ellen Sullivan. Informant was the decedent's daughter, seventy-one years after the birth.",
+      "external_site": null
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-08-21T11:30:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Braman",
+        "place": "Taunton, Bristol, Massachusetts, United States",
+        "collection": "Massachusetts Church Records"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "No baptism located. The relevant Taunton parish register for 1875 does not survive in any consulted collection.",
+      "external_site": null
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-08-21T12:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Braman",
+        "given": "Charles",
+        "collection": "Massachusetts Probate"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "No probate file for Charles W. Braman in Bristol County. He appears to have died intestate with no estate administered.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1880 U.S. Census, Taunton, Bristol County, Massachusetts, Charles W. Braman household; digital image, FamilySearch.org, accessed 2026-08-21.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1880 U.S. Federal Census, population schedule",
+        "when_created": "1880",
+        "when_accessed": "2026-08-21",
+        "where": "FamilySearch.org",
+        "where_within": "Taunton, Bristol County, Massachusetts, Charles W. Braman household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-21",
+      "url": null,
+      "url_archived": null,
+      "notes": "Ida F. listed in the household, age 5.",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "1900 U.S. Census, Taunton, Bristol County, Massachusetts, Charles W. Braman household; digital image, FamilySearch.org, accessed 2026-08-21.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1900 U.S. Federal Census, population schedule",
+        "when_created": "1900",
+        "when_accessed": "2026-08-21",
+        "where": "FamilySearch.org",
+        "where_within": "Taunton, Bristol County, Massachusetts, Charles W. Braman household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-08-21",
+      "url": null,
+      "url_archived": null,
+      "notes": "Ida F. Braman, age 25, enumerated as daughter.",
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S3",
+      "citation": "Massachusetts Vital Records, Deaths, Ida F. Braman, 1946, Taunton, Bristol County; Massachusetts State Archives, accessed 2026-08-21.",
+      "citation_detail": {
+        "who": "Commonwealth of Massachusetts, Registry of Vital Records",
+        "what": "Death registration",
+        "when_created": "1946",
+        "when_accessed": "2026-08-21",
+        "where": "Massachusetts State Archives",
+        "where_within": "Taunton, Bristol County, 1946 deaths"
+      },
+      "source_classification": "original",
+      "repository": "Massachusetts State Archives",
+      "access_date": "2026-08-21",
+      "url": null,
+      "url_archived": null,
+      "notes": "Names both parents. Informant was the decedent's daughter, reporting a birth she did not witness.",
+      "log_entry_id": "log_003"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_003",
+      "record_id": "ma-vitals:deaths:1946-taunton-braman-ida",
+      "record_role": "principal",
+      "fact_type": "name",
+      "value": "Ida F. Braman",
+      "structured_value": {
+        "given": "Ida F.",
+        "surname": "Braman"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "primary",
+      "informant": "Death registration — decedent named by the registrar.",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ma-census:1880:taunton-braman-charles",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "about 1875, Taunton, Bristol County, Massachusetts",
+      "structured_value": {
+        "year": 1875
+      },
+      "date": "1875",
+      "date_certainty": "estimated",
+      "place": "Taunton, Bristol, Massachusetts, United States",
+      "information_quality": "secondary",
+      "informant": "1880 census — age 5 reported by a household member.",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Census ages are routinely off by a year or two.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_003",
+      "record_id": "ma-vitals:deaths:1946-taunton-braman-ida",
+      "record_role": "principal",
+      "fact_type": "relationship",
+      "value": "Father: Charles W. Braman",
+      "structured_value": {
+        "relation": "father",
+        "name": "Charles W. Braman"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "secondary",
+      "informant": "Death registration informant — the decedent's daughter, reporting her mother's parentage seventy-one years after the birth she is describing.",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "A survivor's recollection, not a witness to the birth.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_003",
+      "record_id": "ma-vitals:deaths:1946-taunton-braman-ida",
+      "record_role": "principal",
+      "fact_type": "relationship",
+      "value": "Mother: Ellen Sullivan",
+      "structured_value": {
+        "relation": "mother",
+        "name": "Ellen Sullivan"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "secondary",
+      "informant": "Death registration informant — the decedent's daughter, giving the maternal grandmother's maiden surname.",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Maiden surnames reported at a death are a known weak point.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_002",
+      "record_id": "ma-census:1900:taunton-braman-charles",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "Daughter of the head of household, Charles W. Braman",
+      "structured_value": {
+        "relation": "father",
+        "name": "Charles W. Braman"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": "Taunton, Bristol, Massachusetts, United States",
+      "information_quality": "secondary",
+      "informant": "1900 census — relationship-to-head column, reported by a household member.",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": null,
+      "evidence_type": "indirect",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "The 1946 decedent is the research subject, Ida F. Braman.",
+      "match_score": null,
+      "created": "2026-08-21",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "The child aged 5 in the 1880 Braman household is the subject.",
+      "match_score": null,
+      "created": "2026-08-21",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "The father named on the death record matches the 1880 and 1900 household head.",
+      "match_score": null,
+      "created": "2026-08-21",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "The mother named on the death record; no independent record of her maiden surname has been located.",
+      "match_score": null,
+      "created": "2026-08-21",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "The 1900 head of household is the candidate father.",
+      "match_score": null,
+      "created": "2026-08-21",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

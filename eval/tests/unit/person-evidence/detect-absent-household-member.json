@@ -5,7 +5,14 @@
     "name": "Detect and flag a household member expected from the tree but absent from the record — unprompted",
     "type": "positive",
     "description": "Guards the DERIVATION half of the absent-member rule (SKILL.md Step 1: 'a person expected in the household — a known spouse or child from the tree — absent from the record' must be flagged as an identity question). The 1860 census household of George Ackerman is extracted in research.json (assertions a_001-a_007: head + two children Henry and Margaret). George's wife Catherine (I2) is in the tree via a Couple relationship (R1) with no death fact, so she would be expected in an 1860 household George heads — but she is NOT among the record's personas. Crucially, the absence is stated NOWHERE: not in the user message, not in the log notes, not in any assertion. So the skill must DERIVE it by comparing George's tree family against the record roster, not echo a hint. This is the gap ut_021 leaves open: ut_021 hands the absent member in its prompt ('his son Patrick ... does not appear in this census'), so a run passes by repeating it. person-evidence must build the household (link head, mint Henry + Margaret with sourced facts, write the parent-child edges) AND, on its own, surface Catherine's unexplained absence as an identity question — never renaming/overwriting Catherine or fabricating a persona for her.",
-    "tags": ["person-evidence", "household-skeleton", "absent-member", "detection", "multi-person"]
+    "tags": [
+      "person-evidence",
+      "household-skeleton",
+      "absent-member",
+      "detection",
+      "multi-person",
+      "check-warnings-required"
+    ]
   },
   "input": {
     "user_message": "person-evidence: I've extracted George Ackerman's 1860 census household into research.json (assertions a_001-a_007). George is already in the tree (I1). Link these assertions to persons and build out this household skeleton in the tree.",
