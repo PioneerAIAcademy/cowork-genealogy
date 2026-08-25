@@ -357,6 +357,59 @@ discriminates rather than being bolted onto this batch. Flagged for `/fill-ready
 
 ---
 
+## F7 and F8 — found by the genealogist annotation, not by this dive
+
+The `.ann.json` for `v1_2026-08-25_13-34-10` records **zero judge-vs-human
+disagreements** across 41 corrections on the review sample (005, 006, 007, 011, 018) —
+the judge's scores all stood. But two of its four written comments are **findings my sweep
+missed**, and both are the kind a phrase-matching scan cannot see. Credit where it is due:
+these are the annotator's.
+
+### F7 — a citation gap weighed as an evidentiary gap, setting the tier
+
+**Did:** `ut_proof_conclusion_018` wrote, correctly, that "the 1870 federal census entry is
+represented in this project only as **a tree fact carrying no sourced assertion**" — very
+nearly the agent body's own prescribed wording. It then listed "**the unsourced lower
+bound**" among the reasons that "together prevent a `probable` tier rating", and tiered the
+conclusion `possible`.
+
+**Should:** the agent body §4 — "A tree fact is evidence that was consulted… It is **not**
+the same as the record being unsearched… because the two point at different next steps —
+**one needs a citation, the other needs a search.**"
+
+**Gap: doctrine, and my own sweep's blind spot.** The agent got the *phrasing* right and
+then made precisely the *reasoning* error the rule exists to prevent: F2 was consulted and
+does establish the lower bound, so its missing citation is bookkeeping, not weak evidence,
+and it should not sit in the list of things holding the tier down. The genuine Component 1
+gap — the unsearched 1880 census, which would halve the bracket — the narrative names
+prominently and correctly, twice. So this is not a missed gap; it is a *spurious* one
+added beside it, and the spurious one is doing tier work.
+
+**This does not convert to a validator, and I want to be explicit rather than quiet about
+it.** Deciding it requires knowing that F2 was consulted, that its citation is absent, and
+that the narrative is treating the absence as evidentiary weight — the third is a judgement
+about reasoning quality, which the guide's "what does not convert" section puts squarely
+with the judge. **My scan missed it because I searched for the forbidden *phrase* and the
+agent used the permitted one.** A prohibition list built from phrasings will keep missing
+this class; item 25 in the list now carries a pointer here.
+
+### F8 — `research_append` retried until accepted, rather than fixed
+
+**Did:** `ut_proof_conclusion_007` made **four** `research_append` calls (none using
+`ops[]` — the bare `{section, op, entry, verdict}` form). The annotator's comment: "it was
+rejected twice because of invalid/missing fields before succeeding on the third attempt.
+Since the retry policy allows only one clean recovery for full credit, partial is
+appropriate." Scored `Tool Arguments` **2**, and the human agreed.
+
+**Should:** agent body §5 — "The tool validates the whole project and writes nothing on
+failure. **Surface `{ ok: false, errors }` and fix before retrying.**"
+
+**Gap: lane 2 — nothing mechanical counts rejections.** The judge caught this one, which is
+to its credit, but it caught it on a sampled test in one run; nothing makes it hold. Note
+this is the *same* dimension (`base/Tool Arguments`) that F3 and F4 show failing in the
+other direction — it is carrying real signal here and missing real defects there, which is
+an argument for moving the countable parts out of it. **Converts — V6.**
+
 ## The three `judge_context` grep hits, adjudicated
 
 | file | verdict |
@@ -516,6 +569,24 @@ the guard existed, the test that violated the rule did not carry the tag.
 > because a run that both foreclosed and named nothing is the failure the rule was
 > written for. **Not tag-gated** — the modals appear at `probable` (`n9f`) and `possible`
 > (`018`) as well as `not_proved`, i.e. on tests no such tag would ever carry.
+
+### V6 — a writer-tool rejection must be fixed, not retried
+
+> **Rule:** across a run, at most **one** `research_append` (or `tree_edit` / `tree_correct`)
+> call may return `ok: false`. A second rejection of the same section means the agent is
+> retrying until accepted rather than reading the errors and correcting the payload.
+> **Where to look:** `output.tool_calls[]` — `tool` matched by substring, and the recorded
+> result/`is_error` per call.
+> **Why it is not judgment:** a count of failed calls. The agent body states the rule
+> imperatively ("surface `{ ok: false, errors }` and fix before retrying"), and the tool
+> writes nothing on failure, so a rejection is unambiguous.
+> **What a violation looks like:** `ut_proof_conclusion_007`, run
+> `v1_2026-08-25_13-34-10` — four `research_append` calls, rejected twice on
+> invalid/missing fields before the third succeeded. Caught by the judge on this run
+> (`Tool Arguments` 2, human agreed) but only because 007 was in the review sample; nothing
+> makes it hold on an unsampled test or a later run. **Do not tag-gate.**
+> **Credit:** surfaced by the genealogist annotation of `v1_2026-08-25_13-34-10`, not by
+> this dive's sweep.
 
 ---
 

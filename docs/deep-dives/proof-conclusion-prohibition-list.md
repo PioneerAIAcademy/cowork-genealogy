@@ -92,7 +92,10 @@ rebuilding it.**
     A source-description ARK or citation URL is not proof of an image.
 25. A tree fact with no `sources[]` entry must be described as **"a tree fact carrying
     no source entry in this project"** — **not** as a record that "was not formally
-    searched." The two point at different next steps.
+    searched." The two point at different next steps. **Checking the phrasing is not
+    enough:** the rule is also violated by getting the wording right and then weighing the
+    missing citation as evidentiary weakness that sets the tier. See F7 in the findings —
+    a phrase-matching scan misses that shape entirely.
 26. Organize by **significance**, not research chronology.
 27. State source classifications (original/derivative/authored,
     primary/secondary/undetermined, direct/indirect/negative) explicitly.
