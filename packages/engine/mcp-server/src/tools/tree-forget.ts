@@ -39,6 +39,7 @@ import {
   readProjectJson,
   fileExists,
   formatIssues,
+  withProjectLock,
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
@@ -910,6 +911,10 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
   // before any shape check, so a correct-but-stringified payload isn't rejected.
   const forget = coerceJsonArg(input.forget) as ForgetSelector[] | undefined;
 
+  // Serialize the read-modify-write against every other writer on this project
+  // (issue #1715). A dryRun only reads, but holding the lock briefly for it is
+  // harmless and keeps the entry shape uniform with the other writers.
+  return withProjectLock(projectPath, async () => {
   try {
     if (!Array.isArray(forget) || forget.length === 0) {
       return { ok: false, errors: ["`forget` must be a non-empty array of selectors"] };
@@ -978,6 +983,7 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     if (e instanceof TreeForgetError) return { ok: false, errors: [e.message] };
     throw e;
   }
+  });
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────

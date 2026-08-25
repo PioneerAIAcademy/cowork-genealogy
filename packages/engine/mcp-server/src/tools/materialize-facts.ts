@@ -47,6 +47,7 @@ import {
   backupIfExists,
   readProjectJson,
   formatIssues,
+  withProjectLock,
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
@@ -453,6 +454,10 @@ export async function materializeFacts(
   // pushes a model toward stringifying it.
   input.ops = coerceJsonArg(input.ops) as MaterializeFactsOp[] | undefined;
 
+  // Serialize the read-modify-write against every other writer on this project
+  // (issue #1715) — this one writes tree.gedcomx.json, which research_append's
+  // composite path also writes, so the same per-project lock covers both.
+  return withProjectLock(projectPath, async () => {
   try {
     // Heal legacy tree shapes in memory, then read research.json (assertions
     // live there). Single-file write path — research.json is read, never written.
@@ -528,6 +533,7 @@ export async function materializeFacts(
     if (e instanceof MaterializeFactsError) return { ok: false, errors: [e.message] };
     throw e;
   }
+  });
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────

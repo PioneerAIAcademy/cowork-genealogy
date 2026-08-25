@@ -33,6 +33,7 @@ import {
   backupIfExists,
   readProjectJson,
   formatIssues,
+  withProjectLock,
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
@@ -631,6 +632,9 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
   input.relationship = coerceJsonArg(input.relationship) as SimplifiedRelationship | undefined;
   input.source = coerceJsonArg(input.source) as SimplifiedSourceDescription | undefined;
 
+  // Serialize the read-modify-write against every other writer on this project
+  // (issue #1715). Wraps tree_correct too, which routes here via executeTreeOps.
+  return withProjectLock(projectPath, async () => {
   try {
     // Heal legacy shapes before anything touches the document: the closed
     // shapes below would otherwise refuse every write on a pre-tightening
@@ -722,6 +726,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
     if (e instanceof TreeEditError) return { ok: false, errors: [e.message] };
     throw e;
   }
+  });
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
