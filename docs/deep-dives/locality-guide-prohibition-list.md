@@ -23,7 +23,7 @@ naming a score branch: 0 files.
 ## Jurisdiction
 6. When boundaries changed across the target period, call `place_search_all` (not just `place_search`).
 7. When a boundary/name change splits records across two jurisdictions, connect them explicitly as one continuous research trail, not as unrelated record sets.
-8. A **geographic** split (parent divided into successors covering different areas) must be written "search both successors," not resolved to one successor as if it were a temporal split; do not resolve the ambiguity from a wiki summary unless it pins the specific place.
+8. A **geographic** split (parent divided into successors covering different areas) must be written "search both successors," not resolved to one successor as if it were a temporal split; do not resolve the ambiguity from a FamilySearch Wiki summary unless it pins the specific place.
 
 ## Survey (Step 3)
 9. Issue the Step-3 survey calls in a SINGLE turn as PARALLEL calls (`place_population`, `collections_search`, `volume_search`, `external_links_search`, `wiki_search`, all four `wiki_place_page` sections); drop none.
@@ -46,6 +46,6 @@ naming a score branch: 0 files.
 20. Never state a registration/records-begin date without naming its jurisdictional level (town/parish, county, statewide); cite the FamilySearch Wiki page that states it.
 21. Match record classes to the target window — flag pre-/post-period classes as background context, not prime sources; do not dismiss a class as out-of-period and then also list it as available.
 22. Flag browse-only, non-English, and physical-only records prominently (0% name-indexed + not full-text → browse image-by-image with no search; non-English → note original-language reading; physical-only → state explicitly).
-23. Cite the FamilySearch Wiki page URL, not just its title, for any records/dates/registration claim from the wiki; a claim you cannot attach a returned URL to is not a finding — say the wiki does not cover it rather than asserting it from memory.
+23. Cite the FamilySearch Wiki page URL, not just its title, for any records/dates/registration claim from the FamilySearch Wiki; a claim you cannot attach a returned URL to is not a finding — say the FamilySearch Wiki does not cover it rather than asserting it from memory.
 24. Cross-border: name adjoining counties **and** towns across the line, not just the bordering states; cross-border advice goes in `quirks[]`.
 25. Cover topical breadth (checklist in `references/locality-broad-context.md`).
