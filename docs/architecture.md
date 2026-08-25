@@ -267,11 +267,13 @@ how to word it:
 | for one delegated agent | **that agent's `tools:` / `disallowedTools:`**, or a narrowed tool (§5.3) | `extraction_append` |
 | within a single skill invocation | **skill prose** — this is what prose is *for* | "consult the stop criteria before draining the plan" |
 
-> **Direction.** Two gates are still prose that this same law
-> says will decay — the **tree-encoding gate** and the **mentor gate** (§4). Both
-> are computable from files `research_append` already loads and are being moved
-> into the tool. **If you are adding a new cross-turn invariant, do not add it as
-> prose.** If it cannot be anchored, say so in the PR and explain why.
+> **Direction.** The **tree-encoding gate** is still prose that this same law
+> says will decay (§4); the **mentor gate** that stood beside it moved into the
+> tool in PR #1685. The tree-encoding gate stays prose pending a baseline of the
+> project's opening tree to diff against (issue #1490), since `research_append`
+> loads only the current tree. **If you are adding a new cross-turn invariant, do
+> not add it as prose.** If it cannot be anchored, say so in the PR and explain
+> why.
 
 ### 3.2 How a session enters a skill: `description` is product surface
 

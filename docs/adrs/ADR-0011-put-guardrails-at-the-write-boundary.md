@@ -312,9 +312,10 @@ them carry `needs-decision`.
 constant that denies correct work at $7–25 a run — the failure ADR-0009's sixth
 constraint exists to prevent, and the one issue #1463 caught before it shipped.
 In the other direction, nothing mechanical flags a "must hold" rule that is still
-a sentence: two gates identified as needing anchors, the tree-encoding gate and
-the mentor gate, are still prose today even though both are computable from files
-`research_append` already loads.
+a sentence: the tree-encoding gate is still prose today. The mentor gate that was
+identified alongside it shipped in PR #1685; the tree-encoding gate stays prose
+pending a baseline of the project's opening tree to diff against (issue #1490),
+since `research_append` loads only the current tree.
 
 ## Enforcement
 

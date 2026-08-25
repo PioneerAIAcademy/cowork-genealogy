@@ -125,10 +125,11 @@ the system, has never been audited.
 ## Enforcement
 
 **None — convention only.** No lint detects a cross-turn invariant written as
-prose. The check is review, and the honest signal is this: two gates identified
-as needing anchors — the **tree-encoding gate** and the **mentor gate** — are
-still prose today, and both are computable from files `research_append` already
-loads.
+prose. The check is review, and the honest signal is this: the **tree-encoding
+gate** identified as needing an anchor is still prose today. The **mentor gate**
+that stood beside it shipped in PR #1685; the tree-encoding gate stays prose
+pending a baseline of the project's opening tree to diff against (issue #1490),
+since `research_append` loads only the current tree.
 
 The one instrument that measures the *effect* is the post-run compliance
 detector, and it cannot yet give a rate at all. It is uncalibrated (#999,
