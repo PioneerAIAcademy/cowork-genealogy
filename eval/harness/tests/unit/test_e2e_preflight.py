@@ -461,6 +461,28 @@ def test_read_mcp_stderr_lines_truncates_long_lines_to_200_chars(monkeypatch, tm
     assert len(lines[0]) == 200
 
 
+def test_read_mcp_stderr_lines_splits_one_row_with_embedded_newlines(monkeypatch, tmp_path):
+    """One JSONL row is one *write*, not one line -- a Node crash arrives as a
+    single row carrying its whole stack trace (chesworthrm's review of PR
+    #1747). Reverting the split back to a single rstrip+append left every
+    other test in this file green, since none of them fed a multi-newline
+    row -- this closes that gap."""
+    _use_linux_cache_root(monkeypatch, tmp_path)
+    cwd = Path("/some/cwd")
+    log_dir = _stderr_log_dir(tmp_path, cwd, "genealogy")
+    log_dir.mkdir(parents=True)
+    trace = "TypeError: boom\\n    at foo (file.js:1:1)\\n    at bar (file.js:2:2)\\n"
+    (log_dir / "x.jsonl").write_text(
+        f'{{"error": "Server stderr: {trace}"}}\n', encoding="utf-8"
+    )
+    lines, _ = pf.read_mcp_stderr_lines(cwd=cwd, server_name="genealogy", since=0)
+    assert lines == [
+        "TypeError: boom",
+        "    at foo (file.js:1:1)",
+        "    at bar (file.js:2:2)",
+    ]
+
+
 def test_read_mcp_stderr_lines_skips_one_malformed_json_line_among_valid_ones(monkeypatch, tmp_path):
     _use_linux_cache_root(monkeypatch, tmp_path)
     cwd = Path("/some/cwd")
