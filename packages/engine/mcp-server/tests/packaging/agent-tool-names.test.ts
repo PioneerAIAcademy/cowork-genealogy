@@ -589,9 +589,22 @@ function isAllowedBuiltinHit(h: BuiltinHit): boolean {
 }
 
 describe("plugin agent bodies name no built-in tool the agent cannot call", () => {
-  it("scans every agent body", () => {
-    // A lint that silently scanned nothing reads as coverage.
-    expect(agentFiles.length).toBeGreaterThan(0);
+  it("scans a non-empty body in every agent", () => {
+    // The anti-silent-zero guard, and it must NOT be `agentFiles.length > 0`:
+    // that only repeats "finds the plugin agents" above and proves nothing about
+    // the body scanner. A frontmatter-boundary bug that made agentBodyStart
+    // return past end-of-file would scan zero lines, every offenders check would
+    // pass vacuously, and CI would stay green — the exact failure mode this lint
+    // exists to catch, reproduced in the lint itself. Assert real body lines were
+    // available to scan, independent of the allow-list canary below (which is
+    // temporary — it leaves when #1666 deletes record-extractor's ToolSearch line).
+    for (const file of agentFiles) {
+      const lines = readFileSync(join(agentsDir, file), "utf8").split(/\r?\n/);
+      expect(
+        lines.length - agentBodyStart(lines),
+        `${file}: no body below the frontmatter for the built-in lint to scan`,
+      ).toBeGreaterThan(0);
+    }
   });
 
   it("names no built-in tool absent from the agent's tools:/disallowedTools:", () => {
