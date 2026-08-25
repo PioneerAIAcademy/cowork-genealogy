@@ -61,6 +61,15 @@ it. Length alone is not the test: a Summary modestly over ~500 words that still 
 as a Summary is a pass, while a 500-word "Statement" is not, because the form's
 defining property is that no explanation was needed.
 
+**Do not attempt a precise word count** — you will misjudge it, and an exact count is a
+validator's job, not yours. Use the budgets as order-of-magnitude anchors and score on
+**shape**: does this read as a few cited sentences (Statement), a correlation across
+sources (Summary), or a reasoning chain the reader must follow (Argument)? A narrative
+with section headings, a per-source walk-through and a tier-rationale section is not a
+Statement whatever its length. Reserve the mismatch score for a form that is plainly
+wrong for the artifact, and if you find yourself writing a number, write "well over" or
+"far short of" instead.
+
 - **pass:** (write) The form of the proof conclusion matches the evidence complexity — e.g. an Argument for two undistinguished candidate fathers or a refutation that turns on a reasoning chain; a Summary when multiple sources correlate cleanly; a Statement only when direct evidence settles it outright. The narrative's structure actually follows the chosen form. OR (review, `no-new-proof-expected`) The review correctly identifies which form the existing `ps_NNN` was written in AND states whether that form still fits the evidence shape (e.g., "Summary was defensible at the time; if newer sources surface a competing candidate, the next conclusion may need to be an Argument"). The skill is not expected to choose a new form here — the review just judges fit.
 - **partial:** In write-mode, the form is defensible but under- or over-built — e.g. a Summary used where competing candidates really warrant an Argument, or an Argument's heavy machinery applied to an open-and-shut Statement case — or the declared form doesn't match the narrative's actual structure. In review-mode, the assessment doesn't explicitly judge whether the existing form still fits.
 - **fail:** In write-mode, the form is clearly wrong for the evidence — e.g. a bare Statement for a contested, indirect-evidence case, leaving the reader unable to evaluate the reasoning — or no recognizable proof-conclusion structure at all. In review-mode, the assessment doesn't identify or judge the existing form at all.

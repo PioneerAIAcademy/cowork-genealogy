@@ -80,6 +80,25 @@ would rather read the 523-word document than a 150-word one. What is wrong is th
 A `vehicle` that does not describe the artifact is a lie in a structured field, and
 `vehicle` is what a downstream reader filters on. **Converts — V1.**
 
+**Measured, on a scratch run of `ut_proof_conclusion_016` against the edited rubric**
+(`scratch_2026-08-25_13-29-08.json`, $0.41): the criterion fires — the judge now reasons
+about the budgets unprompted — but it cannot do the arithmetic. Its rationale reads
+"approximately 800 words (**within** Summary range of ~300-500 words)" for a narrative
+that is **643** words. Wrong estimate, and 800 is not within 300–500 either way. The
+verdict (3) is nonetheless right: at ×1.29 this is the modest-overrun case the criterion
+explicitly passes.
+
+So the rubric edit was refined once more before the paid run — it now tells the judge
+**not** to attempt a count, to use the budgets as order-of-magnitude anchors, and to score
+on shape (headings, per-source walk-through, tier-rationale section) instead. That is a
+fix to a demonstrated failure mode, not tuning toward a score.
+
+**The real lesson is that this belongs in V1.** A judge asked to count will guess, and it
+guessed 25% high on a document in front of it. The rubric edit gets the dimension
+*looking*; only the validator gets it *counting*. Read F1's fresh scores as evidence about
+the 12 `statement`-declared narratives at 2.6–4.0×, which are the discriminating cases —
+016 declared `summary` on this run and never sat on the violating branch at all.
+
 ---
 
 ## F2 — A conclusion can be written and its question left open, and the run passes
