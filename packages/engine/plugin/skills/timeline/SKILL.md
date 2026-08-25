@@ -239,10 +239,11 @@ Do **not** detect or record those contradictions here.
   (`references/timeline-analysis-guide.md`) to judge whether one person could
   have been at both; for a household appearing twice in one census year,
   measure from the enumeration dates written on the pages rather than the
-  census year, and treat an identical family composition as a legitimate
-  double enumeration rather than two people. Report an infeasible pair **in
-  your reply** as a coherence signal (this identity-coherence finding has no
-  persisted field).
+  census year, and treat it as a legitimate double enumeration rather than
+  two people only when the family composition is identical and the dated
+  pages leave time to travel. Report an infeasible pair **in your reply** as
+  a coherence signal (this identity-coherence finding has no persisted
+  field).
 
 Identity uncertainty ("which Patrick Flynn is this?"), source disagreement
 ("informant said X, another said Y"), and any other non-chronological dispute
