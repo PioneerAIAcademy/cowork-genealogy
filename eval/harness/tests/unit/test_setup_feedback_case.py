@@ -150,7 +150,7 @@ def test_initial_git_commit_titled_imported(tmp_path, monkeypatch):
     assert (dest / ".git").is_dir()
     log = subprocess.run(
         ["git", "-C", str(dest), "log", "--oneline"],
-        capture_output=True, text=True, check=True,
+        capture_output=True, text=True, encoding="utf-8", check=True,
     )
     # One commit, message "imported".
     assert log.stdout.count("\n") == 1

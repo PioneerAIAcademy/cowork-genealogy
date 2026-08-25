@@ -89,6 +89,17 @@ author.
 - **Ernest** commits as `ernestjacob789@gmail.com` while his GitHub account is
   `aghadiayeamayanvboernest`. Any roll call derived from git activity rather than
   from this roster will count him twice, as two different people.
+- **Promise has two GitHub accounts.** `promise-emmanuel` — the one in the table
+  above — is on `senior-developers` and is what opens the PRs. The commits inside
+  them are authored by **`promise-emmanuel-20`**, which is on no team, under two
+  emails (`Promiseemmanuel2019@gmail.com`, `promiseemmanuel@byui.edu`). 177
+  commits on `main` carry the second account. Attribution by commit author will
+  therefore split one person in two, and miss that they are senior.
+  **A senior approval submitted from `promise-emmanuel-20` would not satisfy
+  CODEOWNERS, and nothing would say why** — GitHub would simply keep asking for a
+  senior review that has already been given. They have never reviewed from that
+  account, so this has not bitten yet; check the account on the review, not the
+  name, if a senior-looking approval fails to clear a PR.
 - **Richard** (`chesworthrm`) works 1–2 hours a day and covers for the lead when
   he is away. He attends standup and usually posts, so report him missing on days
   he does not — but read a short update as expected, not as a red flag.
@@ -108,6 +119,6 @@ author.
 
 ## Daily summary
 
-Written to `/Users/dallan/pioneeradademy/cowork-status-updates/YYYY-MM-DD.md`
+Written to `~/pioneeracademy/cowork-status-updates/YYYY-MM-DD.md`
 every run — format and field rules in `daily-summary-format.md`. Include the
 `missing:` field; the roll call is the one output unique to this team.

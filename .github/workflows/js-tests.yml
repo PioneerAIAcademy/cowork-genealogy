@@ -69,7 +69,7 @@ jobs:
           # packages/schema/ mirror skips this job and reports success — the
           # lint dark in exactly the case it exists to catch. engine-tests.yml
           # lists the same path for the same reason.
-          PATTERNS: '^apps/web/|^apps/electron/|^packages/schema/|^packages/viewer-ui/|^docs/specs/schemas/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^turbo\.json$|^tsconfig\.base\.json$|^\.github/workflows/js-tests\.yml$'
+          PATTERNS: '^apps/web/|^apps/electron/|^packages/schema/|^packages/viewer-ui/|^docs/specs/schemas/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^turbo\.json$|^tsconfig\.base\.json$|^\.github/workflows/js-tests\.yml$|^\.github/workflows/electron-release\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -99,6 +99,10 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         run: pnpm install --frozen-lockfile
 
+      - name: ESLint
+        if: steps.scope.outputs.relevant == 'true'
+        run: pnpm --filter @genealogy/electron lint
+
       - name: Run workspace tests
         if: steps.scope.outputs.relevant == 'true'
         run: pnpm turbo run test
@@ -120,7 +124,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PATTERNS: '^eval/app/|^\.github/workflows/js-tests\.yml$'
+          # `^docs/specs/schemas/` (issue #1776): eval/app/scripts/gen-zod.ts
+          # generates the Zod schemas this job's tests import, from
+          # docs/specs/schemas/*.schema.json. Without it a schema-only diff
+          # reported success without regenerating or checking them.
+          PATTERNS: '^eval/app/|^docs/specs/schemas/|^\.github/workflows/js-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -148,6 +156,11 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         working-directory: eval/app
         run: npm ci
+
+      - name: ESLint
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: eval/app
+        run: npm run lint
 
       - name: Run tests
         if: steps.scope.outputs.relevant == 'true'

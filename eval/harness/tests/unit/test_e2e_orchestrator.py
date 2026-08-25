@@ -1055,3 +1055,5 @@ def test_mcp_unavailable_error_carries_the_operator_message():
     text = str(McpUnavailableError(unavailable_message(None)))
     assert "RE-RUN" in text
     assert "re-research" in text
+
+
