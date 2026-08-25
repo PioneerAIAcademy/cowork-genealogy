@@ -213,16 +213,16 @@ be defensible, not to find a record.
 An unqualified range matches by estimate overlap. A record with no year of its
 own is not year-silent — the index carries an *estimated* date range for it, from
 the dated facts of others on the record, and an unqualified range returns it
-whenever that estimate overlaps the range. Measured on the record index for birth, death and marriage; record-index residence dates are usually precise, so a range usually finds no overlaps — but undated residence records occur and behave like the rest. Reproduced for all four
+whenever that estimate overlaps the range. Measured on the record index for birth, death and marriage; record-index residence is collection-dependent — `.exact` changes nothing where every row is already dated, but drops a real share where records are dated only through others, behaving like the rest there. Reproduced for all four
 families on the tree endpoint; the `any` family was never tested.
 
 `<event>YearExact` keeps only records whose indexed date falls inside the range,
 dropping the estimate-overlap matches — so `.exact` reliably *excludes* records
 that only estimate into the range, and an unqualified range reliably *includes*
 them. Still unmeasured: whether `.exact` also drops *in-range approximate* dates.
-A small cohort carries no indexed date in the swept span at all and no bounded
-range reaches it, so to gather every year-less record read the results rather
-than relying on a range. Use `<event>YearExact` with a firm date.
+A cohort that is not always small carries no indexed date in the swept span at
+all and no bounded range reaches it, so to gather every year-less record read the
+results rather than relying on a range. Use `<event>YearExact` with a firm date.
 
 ### relative `*Exact` (`fatherGivenNameExact`, `spouseSurnameExact`, …)
 

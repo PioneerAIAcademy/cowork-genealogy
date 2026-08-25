@@ -17,8 +17,10 @@
  * VERIFIED LIVE 2026-08-22 (pool drifts; direction and ratios reproduce):
  *   A require-switch  surname-only 5910 -> +givenName 583 (collapses; the switch is load-bearing).
  *   B unranged        583 read, 583 distinct, 172 payload-dated / 411 silent.
- *   C band 1750-1799  unqualified 364 -> .exact 29; the 29 .exact survivors are exactly the 29
- *                     payload-dated-in-band personas -> .exact = 'indexed date inside the range'.
+ *   C band 1750-1799  unqualified 364 -> .exact 29; the .exact COUNT equals the 29
+ *                     payload-dated-in-band personas, all of which are in the unqualified read
+ *                     (cardinality + subset — Check C does not compare the .exact set id-for-id),
+ *                     consistent with .exact = 'indexed date inside the range'.
  *   D silent JMDT-LQD present in 1700-1749 and 1750-1799 ONLY -> a bounded indexed RANGE, not
  *                     silence (would hit every band) and not a single date (would hit one).
  *   Matches explore-year-bands-records.ts (364->29) and the range-sweep sibling number-for-number.

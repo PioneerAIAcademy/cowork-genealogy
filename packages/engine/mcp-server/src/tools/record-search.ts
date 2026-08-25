@@ -1313,7 +1313,7 @@ export const recordSearchToolSchema = {
 
       birthYearFrom: { type: "number", description: "Lower bound of the birth-year range. 4-digit year (e.g., 1850). Must be paired with `birthYearTo`." },
       birthYearTo: { type: "number", description: "Upper bound of the birth-year range. 4-digit year (e.g., 1859). Must be paired with `birthYearFrom`." },
-      birthYearExact: { type: "boolean", description: "With `true`, only records whose indexed date is inside the range survive. Unqualified, a range also admits records whose estimated date range merely overlaps it, including ones carrying no year of their own." },
+      birthYearExact: { type: "boolean", description: "With `true`, only records whose indexed date is inside the range survive. Unqualified, a range also admits records whose estimated date range overlaps it. Records with no indexed date at all are reached by neither." },
       birthPlace: { type: "string", description: "Birth place name (e.g., `'Kentucky'`, `'Hardin, Kentucky, United States'`). For ambiguous place names, call the `place_search` tool first to disambiguate." },
       birthPlaceExact: { type: "boolean", description: "Stop upward expansion to parent jurisdictions. A different mechanism from the rule above — expansion, not fuzz. Large effect on the count; set it when the count must mean something. Ordering effect measured on one target only." },
 
@@ -1331,7 +1331,7 @@ export const recordSearchToolSchema = {
 
       residenceYearFrom: { type: "number", description: "Lower bound of the residence-year range (typically census-style anchor). 4-digit year (e.g., 1860). Must be paired with `residenceYearTo`." },
       residenceYearTo: { type: "number", description: "Upper bound of the residence-year range. 4-digit year (e.g., 1870). Must be paired with `residenceYearFrom`." },
-      residenceYearExact: { type: "boolean", description: "For the residence-year range. Record-index residence dates are usually precise, so a range rarely finds estimate overlaps and `.exact` usually changes nothing — undated ones behave like `birthYearExact`." },
+      residenceYearExact: { type: "boolean", description: "For the residence-year range. Behaves like `birthYearExact`. How much `.exact` narrows depends on the collection — nothing where every row is already dated, a meaningful share where many are dated only through others." },
       residencePlace: { type: "string", description: "Residence place name. For ambiguous place names, call the `place_search` tool first to disambiguate." },
       residencePlaceExact: { type: "boolean", description: "As `birthPlaceExact`, for the residence place." },
 

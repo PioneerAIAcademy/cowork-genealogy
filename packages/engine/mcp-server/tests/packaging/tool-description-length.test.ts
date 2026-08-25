@@ -11,12 +11,12 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * of the 43 toggles have EVER appeared in a call.
  *
  * **The justification is clarity; the token saving is small.** Measured after the
- * #1409 rewrite and #1771's year-clause edit: `record_search` 15,509 -> 14,022 and
- * `person_search` 3,745 -> 4,996 (its toggles were stubs that were also wrong, so
- * correctness cost tokens there), for a combined 19,254 -> 19,018 — a net saving of
- * about 236 characters, under 2%. This figure has been an increase and a saving at
+ * #1409 rewrite and #1771's year-clause edit: `record_search` 15,509 -> 14,043 and
+ * `person_search` 3,745 -> 5,003 (its toggles were stubs that were also wrong, so
+ * correctness cost tokens there), for a combined 19,254 -> 19,046 — a net saving of
+ * about 208 characters, under 2%. This figure has been an increase and a saving at
  * different points in the same branch, which is the point: it is a side effect, not
- * the argument. #1771 brought `record_search.birthYearExact` from 475 down to 207
+ * the argument. #1771 brought `record_search.birthYearExact` from 475 down to 214
  * (the year behaviour is now measured, so its paragraph collapses to a one-liner)
  * and deleted its exemption. What this lint buys is that the shared rule is stated
  * once and cannot silently be re-expanded into 43 paragraphs.
@@ -34,7 +34,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * three longest descriptions are `record_search.givenNameExact` at
  * **238**, `record_search.surnameExact` at **237**, and
  * `record_search.birthPlaceExact` at **226**. Both `birthYearExact` toggles now
- * sit just below them at **207** (tied), so neither makes the top three, and since
+ * sit just below them at **214** (tied), so neither makes the top three, and since
  * #1771 there is no exemption. Before #1409 six toggles exceeded the old ceiling:
  * 475, 402, 375, 341, 269, 255.
  *
@@ -42,7 +42,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * `birthPlaceExact` third from a measurement whose filter had excluded BOTH tools'
  * `birthYearExact` when only one is exempt — right answer, wrong method. The "fix"
  * then over-corrected, promoting `person_search.birthYearExact` into third at a
- * quoted 209; re-measured it is 207 (after #1771's year-clause edit), still below `birthPlaceExact`'s 226, so
+ * quoted 209; re-measured it is 214 (after #1771's year-clause edit), still below `birthPlaceExact`'s 226, so
  * `birthPlaceExact` is third after all. `DOCUMENTED_LONGEST` below has carried the
  * right list throughout — the assertion binds those executable figures, not this
  * prose, which is how the prose could drift here while the test stayed green.
@@ -123,15 +123,15 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14022],
-  ["person_search", 4996],
+  ["record_search", 14043],
+  ["person_search", 5003],
 ];
 
 /**
  * Empty since #1771. The sole former entry, `record_search.birthYearExact`, was
  * exempt while the year behaviour was under measurement; #1771 measured it (the
  * "records with no indexed year" population is empty — the index carries estimated
- * date RANGES matched by overlap), rewrote the paragraph to a 207-char one-liner,
+ * date RANGES matched by overlap), rewrote the paragraph to a 214-char one-liner,
  * and deleted this entry. Do not add an entry without an issue number and a
  * removal condition — an exemption is for a description whose behaviour is under
  * active measurement, never a way to keep a paragraph.

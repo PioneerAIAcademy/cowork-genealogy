@@ -4885,6 +4885,20 @@ async function sectionY(): Promise<void> {
   // an unqualified range admits — with its payload-dated control holding. The
   // impossible-range per-family rows above stay as independent corroboration. The
   // key name is kept for its FORBIDDEN_WHEN guard.
+  // The two US census controls (`bands:records-uscensus-birth`,
+  // `bands:records-uscensus-residence`) are recorded to the artifact but are
+  // deliberately NOT read here. This verdict answers one question — does the
+  // estimate-overlap mechanism from birth generalise to the OTHER families? —
+  // and `bands:records-{death,marriage,residence}` are the per-family reads for
+  // that. The census pools are a same-family cross-collection control, not a
+  // fifth family, and reading them would conflate two questions. Their reading
+  // is not discarded: `residence` is collection-dependent (the parish pool here
+  // shows `.exact` a no-op; `bands:records-uscensus-residence` shows it dropping
+  // a meaningful fraction), and the prose and spec state exactly that, cited to
+  // both pools. So this verdict reads the parish residence pool by design; do not
+  // silently swap in the census pool to flip it — the "every wording rule is
+  // active" guard (measured-figures.test.ts) is what catches a verdict flip that
+  // would strand a wording rule.
   const YEAR_BAND_SECTIONS: Array<[string, string]> = [
     ["H", "bands:records-birth"],
     ["Q", "bands:records-death"],
@@ -5110,6 +5124,16 @@ async function runTreeFamily(fam: TreeFamily): Promise<void> {
   // the same pool (which does expose dates) and on closure.
   const controlVacuous = datedInAxis.length === 0;
   const controlHolds = controlVacuous ? false : wrongBand.length === 0 && axisSpanning.length === 0;
+  // SCOPE — controlHolds validates PLACEMENT only for payload-dated personas whose
+  // year lands IN the axis (`datedInAxis`). A dated persona whose year is outside
+  // 1400-1999 is absent from `datedInAxis`, so controlHolds says nothing about it;
+  // `payloadDatedOutOfAxis` (recorded above) counts that set. It is provably
+  // non-empty wherever `payloadDated` exceeds the in-band capacity
+  // (`distinct - inNoBand`) — e.g. records-uscensus-residence, where those out-of-
+  // axis dated personas must exist because controlHolds forbids an in-axis dated
+  // persona from landing in no band. Read controlHolds there as holding over the
+  // in-axis dated population: a coverage bound, not a refutation, since the
+  // mechanism verdicts concern in-axis behaviour.
   console.log(
     `  CONTROL: payload-dated-in-axis ${datedInAxis.length}; in every own-year band: ` +
       `${datedInAxis.length - wrongBand.length}; spanning all ${N} bands: ${axisSpanning.length}; ` +
@@ -5150,6 +5174,8 @@ async function runTreeFamily(fam: TreeFamily): Promise<void> {
     distinct: distinct.size,
     payloadDated: dated.length,
     payloadDatedInMultipleBands: overlapping,
+    payloadDatedInAxis: datedInAxis.length,
+    payloadDatedOutOfAxis: dated.length - datedInAxis.length,
     bandsEnumerated: N,
     membership: Object.fromEntries([...hist].sort((a, b) => a[0] - b[0])),
     indexSilent: indexSilent.length,
@@ -5368,6 +5394,16 @@ async function runRecordsFamily(
   // the same pool (which does expose dates) and on closure.
   const controlVacuous = datedInAxis.length === 0;
   const controlHolds = controlVacuous ? false : wrongBand.length === 0 && axisSpanning.length === 0;
+  // SCOPE — controlHolds validates PLACEMENT only for payload-dated personas whose
+  // year lands IN the axis (`datedInAxis`). A dated persona whose year is outside
+  // 1400-1999 is absent from `datedInAxis`, so controlHolds says nothing about it;
+  // `payloadDatedOutOfAxis` (recorded above) counts that set. It is provably
+  // non-empty wherever `payloadDated` exceeds the in-band capacity
+  // (`distinct - inNoBand`) — e.g. records-uscensus-residence, where those out-of-
+  // axis dated personas must exist because controlHolds forbids an in-axis dated
+  // persona from landing in no band. Read controlHolds there as holding over the
+  // in-axis dated population: a coverage bound, not a refutation, since the
+  // mechanism verdicts concern in-axis behaviour.
   console.log(
     `  CONTROL: payload-dated-in-axis ${datedInAxis.length}; in every own-year band: ` +
       `${datedInAxis.length - wrongBand.length}; spanning all ${N} bands: ${axisSpanning.length}; ` +
@@ -5407,6 +5443,8 @@ async function runRecordsFamily(
     distinct: distinct.size,
     payloadDated: dated.length,
     payloadDatedInMultipleBands: overlapping,
+    payloadDatedInAxis: datedInAxis.length,
+    payloadDatedOutOfAxis: dated.length - datedInAxis.length,
     bandsEnumerated: N,
     membership: Object.fromEntries([...hist].sort((a, b) => a[0] - b[0])),
     indexSilent: indexSilent.length,

@@ -640,6 +640,37 @@ describe("measured figures stay traceable to the probe artifact", () => {
   });
 
   /**
+   * Every wording rule must be ACTIVE on the recorded verdict — not merely present.
+   *
+   * The dangling-key test above catches a rule whose key is MISSING. This catches
+   * the other fail-open the same investigation exposed: a key that EXISTS but whose
+   * value no longer matches `activeWhen`, so the rule returns early at
+   * `if (!rule.activeWhen.test(recorded)) return;` and guards nothing while the
+   * prose it forbids sits in the tree.
+   *
+   * Concrete for section Y. `showsMechanism` (probe:4899) reads one residence pool,
+   * `bands:records-residence` — a parish pool where every row is dated, so `.exact`
+   * drops nothing and Y reads DOES NOT GENERALISE. One undated row in that pool on
+   * the next re-run, or a repoint to `bands:records-uscensus-residence` (where
+   * `.exact` drops ~1 in 9), flips the verdict off the `activeWhen` set. The
+   * four-family record-index rule then goes inert with the whole suite green — the
+   * exact silent flip demonstrated in review.
+   */
+  it("every wording rule is active on the recorded verdicts", () => {
+    const inert = FORBIDDEN_WHEN
+      .filter((r) => !r.activeWhen.test(String(get(fig, r.verdict) ?? "")))
+      .map((r) => r.verdict);
+    expect(
+      inert,
+      `a wording rule is INERT: its verdict no longer matches activeWhen, so it\n` +
+        `  guards nothing while the prose it forbids stays in the tree. Either the\n` +
+        `  measurement changed (rewrite the prose too, then repoint activeWhen at the\n` +
+        `  verdict that now carries the claim) or the rule needs repointing. Do NOT\n` +
+        `  widen activeWhen just to re-match — that reinstates the guard in name only.`
+    ).toEqual([]);
+  });
+
+  /**
    * Prose that NAMES a verdict key must name one that exists.
    *
    * The dangling-key test above covers the other direction — a `FORBIDDEN_WHEN`

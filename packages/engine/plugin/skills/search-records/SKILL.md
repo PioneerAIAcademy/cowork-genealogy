@@ -199,7 +199,7 @@ spouse families; other fields follow the same pattern.
   year of its own carries an estimated range (from others on the record), so there
   are no year-silent records a range keeps regardless. `.exact` drops those
   estimate-overlap matches, so a range reliably includes them and `.exact` reliably
-  excludes them — for birth, death and marriage. Record-index residence dates are usually precise, so a range usually finds no overlaps and `.exact` usually changes nothing — but undated residence records occur and behave like the rest, kept by overlap and dropped by `.exact`. A small cohort with no indexed date at all is reached by no range.
+  excludes them — for birth, death and marriage. Record-index residence is collection-dependent: `.exact` changes nothing where every row is already dated, but drops a real share where records are dated only through others, so it behaves like the rest there. A cohort that is not always small carries no indexed date at all and is reached by no range — read the results back rather than trust a range to gather them.
   Whether `.exact` also drops in-range approximate dates is unmeasured. Use it only
   with a firm date from a vital record.
 - **Wildcards survive exactness; variant spellings do not.** `Sm?th` plus

@@ -145,9 +145,9 @@ With `.exact=on` on a date parameter (`<event>YearExact` on the tool),
 the range is matched hard instead of with the usual fuzz around its
 bounds. Like the place qualifier this narrows the count; its effect on the
 order of what it keeps was not measured. Measured by the disjoint-band instrument on the record index for the birth, death and marriage families — record-index
-**residence** dates are usually precise (a range usually finds no overlaps there
-and `.exact` changes nothing), though undated residence records occur and behave
-like the rest — and reproduced for all four families on the
+**residence** is collection-dependent (`.exact` changes nothing where every row
+is already dated, but drops a real share where records are dated only through
+others, behaving like the rest there) — and reproduced for all four families on the
 tree endpoint (qualifier probe, sections H, Q and P — host-side; the `any` family
 was never tested):
 
@@ -164,8 +164,8 @@ was never tested):
   `.exact` reliably *excludes* records that merely estimate into the range, and an
   unqualified range reliably *includes* them.
 - **Two things stay unmeasured:** whether `.exact` also drops *in-range
-  approximate* dates, and the `any*Year` family (never tested). And a small cohort
-  carries no indexed date in the swept span at all, so no bounded range reaches it
+  approximate* dates, and the `any*Year` family (never tested). And a cohort that
+  is not always small carries no indexed date in the swept span at all, so no bounded range reaches it
   — if you need every year-less record, read the results back rather than trusting
   a range to gather them.
 
