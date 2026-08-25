@@ -279,6 +279,45 @@ def test_backstop_message_explains_the_streak_rather_than_a_status():
 
 
 # --------------------------------------------------------------------------
+# server_stderr threading (issue #1301) — mcp_health.py stays pure; these
+# tests only exercise string formatting, never touch a filesystem.
+# --------------------------------------------------------------------------
+
+
+def test_cause_appends_captured_stderr_when_present():
+    entry = {"name": GENEALOGY_SERVER_NAME, "status": "failed", "error": "spawn node ENOENT"}
+    cause = unavailable_cause(entry, server_stderr=["STUB-MARKER: refused to start"])
+    assert "STUB-MARKER: refused to start" in cause
+    # The pre-#1301 cause text is still there, unchanged.
+    assert "spawn node ENOENT" in cause
+
+
+def test_cause_unchanged_when_server_stderr_is_none_or_empty():
+    entry = {"name": GENEALOGY_SERVER_NAME, "status": "failed", "error": "spawn node ENOENT"}
+    baseline = unavailable_cause(entry)
+    assert unavailable_cause(entry, server_stderr=None) == baseline
+    assert unavailable_cause(entry, server_stderr=[]) == baseline
+
+
+def test_message_appends_captured_stderr_and_drops_the_preflight_pointer():
+    entry = {"name": GENEALOGY_SERVER_NAME, "status": "failed", "error": "spawn node ENOENT"}
+    text = unavailable_message(entry, server_stderr=["STUB-MARKER: refused to start"])
+    assert "STUB-MARKER: refused to start" in text
+    # The reader already has the server's own text right above this line —
+    # repeating "go run a separate command for it" would be wrong, not just
+    # redundant.
+    assert "make e2e-preflight" not in text
+
+
+def test_message_keeps_the_preflight_pointer_when_no_stderr_was_captured():
+    entry = {"name": GENEALOGY_SERVER_NAME, "status": "failed", "error": "spawn node ENOENT"}
+    text = unavailable_message(entry, server_stderr=None)
+    assert "make e2e-preflight" in text
+    text_empty = unavailable_message(entry, server_stderr=[])
+    assert "make e2e-preflight" in text_empty
+
+
+# --------------------------------------------------------------------------
 # Corpus replay — the actual incident (issue #941)
 # --------------------------------------------------------------------------
 
