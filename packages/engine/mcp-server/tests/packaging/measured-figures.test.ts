@@ -59,7 +59,8 @@ const EVIDENCE_SURFACES = [
   // `person_search` file that actually holds numbers.
   //
   // The 2026-08-17 ruling forbids adding `person-search.ts` — the TOOL file, whose
-  // text the model pays for and whose endpoint has no probe. It says nothing about
+  // text the model pays for and which the 2026-08-17 ruling keeps figure-free (its
+  // tree endpoint IS now probed -- section P -- but its surfaces quote no figure). It says nothing about
   // the spec, which is an evidence trail read by humans. The three figures below
   // predate `measured-figures.json` and are exempted by name; any NEW figure in that
   // spec must now trace.
@@ -75,8 +76,8 @@ const EVIDENCE_SURFACES = [
 const AGENT_SURFACES = [
   // `person-search.ts` is a MODEL-READ surface, so it belongs here even though it
   // is deliberately not an EVIDENCE surface: this list forbids absolute totals,
-  // which is exactly what should never appear in a description whose endpoint has
-  // no probe. Without it a stale comma-grouped total could be pasted into the
+  // which is exactly what should never appear in a description the ruling keeps
+  // figure-free (the endpoint is probed in section P; the surfaces still quote nothing). Without it a stale comma-grouped total could be pasted into the
   // shipped `person_search` description with the whole suite green — the same hole
   // this file closes elsewhere, left open one file over.
   "packages/engine/mcp-server/src/tools/person-search.ts",
@@ -92,7 +93,8 @@ const AGENT_SURFACES = [
  *
  * Note the one overlap, deliberate: `person-search.ts` is ALSO in `AGENT_SURFACES`,
  * which forbids absolute totals — a model-read surface should carry no comma-grouped
- * figure, and its endpoint has no probe to source one from. What neither list does is
+ * figure, and its surfaces quote none by the 2026-08-17 ruling (its tree endpoint is
+ * now probed in section P). What neither list does is
  * make it an EVIDENCE surface, which would invite the figures the 2026-08-17 ruling
  * forbids. So "wording only" describes the SPEC in this list, not both entries.
  *
@@ -426,6 +428,14 @@ describe("measured figures stay traceable to the probe artifact", () => {
       a: "R.verdict:retention equals the silent share",
       b: "S.verdict:retention tracks the indexed share",
     },
+    {
+      // #1771 step 4. After the year rename H and N record the same question, from
+      // the same band instrument — H owns the birth pool, N reads H's result — so
+      // they must agree.
+      question: "does an unqualified range match records by estimate overlap, beyond those dated inside it?",
+      a: "H.verdict:an unqualified range admits estimate overlaps",
+      b: "N.verdict:an unqualified range admits estimate overlaps",
+    },
   ];
 
   /** Which way a verdict points, or null when it declines to answer. */
@@ -498,19 +508,38 @@ describe("measured figures stay traceable to the probe artifact", () => {
       // two reversals.
       verdict: "Y.verdict:generalises past birth (impossible-range)",
       activeWhen: /^(?:NOT MEASURED|PARTIAL|DOES NOT GENERALISE)/,
+      // Also catches the #1771-round overclaim: the four-family year mechanism
+      // asserted as holding on the RECORD index (which Y denies — the residence
+      // band pool was all-dated, so `.exact` dropped nothing there; residence dates
+      // are not intrinsically precise — undated residence records behave like the
+      // rest, per the impossible-range residence block). Scoped to "record
+      // index"/"record_search" near the four-family conjunction, so it does NOT
+      // catch the true tree-endpoint statement ("reproduced for all four families on
+      // the tree endpoint") — the `[^.]` bound keeps each alternative inside one
+      // sentence. Both orders, since the prose wrote it either way.
       mustNotSay:
-        /measured on the (?:birth, )?death, marriage and residence families|the year toggle's behaviour,? not birth's alone|treat it as how the year toggle works/i,
-      why: "section Y withholds the generalisation; these phrasings assert it as measured",
+        /measured on the (?:birth, )?death, marriage and residence families|the year toggle's behaviour,? not birth's alone|treat it as how the year toggle works|(?:record index|record_search)[^.]{0,140}(?:all four (?:record-index )?families|birth,? *death,? *marriage,? *and *residence)|(?:all four (?:record-index )?families|birth,? *death,? *marriage,? *and *residence)[^.]{0,140}(?:record index|record_search)/i,
+      why: "section Y withholds the generalisation; these phrasings assert it as measured across families on the record index",
     },
     {
-      // Section H states its own prohibition in the verdict string. Honour it
-      // literally: while H declines to answer, no surface may claim the thing it
-      // names. Six documents said this while H read OPEN.
-      verdict: "H.verdict:silence tolerated",
-      activeWhen: /^(?:OPEN|STILL OPEN|NOT MEASURED)/,
+      // #1771 step 4. Repointed from the retired `H.verdict:silence tolerated`.
+      // The band instrument measures index-silent personas at ZERO, so this reads
+      // NO. The rule FAILS CLOSED: `/^NO/` matches the measured "NO —" and also
+      // "NOT MEASURED", so it stays active whenever the measurement is absent
+      // rather than implying it tracks a measured negative. `mustNotSay` is the OLD
+      // vocabulary, so the rule now guards against reintroducing the disproven
+      // "year-silent records" story from stale memory or an old doc.
+      verdict: "H.verdict:index-silent personas exist",
+      activeWhen: /^NO/,
+      // Two families of forbidden wording: (a) the disproven "silence" story, and
+      // (b) the pre-#1771 "not established / no direction measured" story, which now
+      // contradicts a measured verdict just as much as an outright reversal does.
+      // (b) is scoped to the YEAR-RANGE / undated-record claim so it does not catch
+      // the legitimately-unmeasured sub-points (in-range approximate dates, the
+      // `any` family) that the refreshed surfaces still, correctly, flag.
       mustNotSay:
-        /an unqualified range (?:does \*\*not\*\*|does not) require an indexed year|still returned year-silent records|tolerates year-silent records/i,
-      why: "H's verdict explicitly says: do not say an unqualified range keeps year-silent records",
+        /tolerates year-silent records|keeps (?:year-silent|undated) records|tolerates silence|no direction was measured|not a reliable way to include or exclude undated|what it does to undated records is not established|(?:year range|unqualified range|indexed year)[^.\n]{0,80}\bnot established\b/i,
+      why: "the index places every persona in time; do not say an unqualified range keeps year-silent/undated records, nor that its treatment of undated records is unmeasured",
     },
   ];
 
@@ -524,8 +553,20 @@ describe("measured figures stay traceable to the probe artifact", () => {
       // twice and any offending line is reported twice in the failure message.
       for (const rel of new Set([...EVIDENCE_SURFACES, ...AGENT_SURFACES, ...WORDING_ONLY_SURFACES])) {
         const text = readFileSync(join(projectRoot, rel), "utf8");
-        for (const line of text.split("\n")) {
-          if (rule.mustNotSay.test(line)) offenders.push(`${rel}: ${line.trim().slice(0, 110)}`);
+        // Test per line AND against a whitespace-collapsed whole-file copy. A claim
+        // reflowed across two markdown lines ("birth, death, marriage and\nresidence
+        // … on the record index") slips a per-line pattern entirely — which is how a
+        // four-family record-index overclaim shipped past this guard once. Patterns
+        // here are `[^.]`-bounded, so collapsing whitespace (periods untouched) still
+        // stops at sentence boundaries and cannot manufacture a cross-sentence match.
+        const collapsed = text.replace(/\s+/g, " ");
+        if (rule.mustNotSay.test(collapsed)) {
+          const perLine = text.split("\n").filter((l) => rule.mustNotSay.test(l));
+          offenders.push(
+            ...(perLine.length
+              ? perLine.map((l) => `${rel}: ${l.trim().slice(0, 110)}`)
+              : [`${rel}: (wrapped) ${(collapsed.match(rule.mustNotSay)?.[0] ?? "").slice(0, 110)}`])
+          );
         }
       }
       expect(
@@ -599,6 +640,37 @@ describe("measured figures stay traceable to the probe artifact", () => {
   });
 
   /**
+   * Every wording rule must be ACTIVE on the recorded verdict — not merely present.
+   *
+   * The dangling-key test above catches a rule whose key is MISSING. This catches
+   * the other fail-open the same investigation exposed: a key that EXISTS but whose
+   * value no longer matches `activeWhen`, so the rule returns early at
+   * `if (!rule.activeWhen.test(recorded)) return;` and guards nothing while the
+   * prose it forbids sits in the tree.
+   *
+   * Concrete for section Y. `showsMechanism` (probe:4899) reads one residence pool,
+   * `bands:records-residence` — a parish pool where every row is dated, so `.exact`
+   * drops nothing and Y reads DOES NOT GENERALISE. One undated row in that pool on
+   * the next re-run, or a repoint to `bands:records-uscensus-residence` (where
+   * `.exact` drops ~1 in 9), flips the verdict off the `activeWhen` set. The
+   * four-family record-index rule then goes inert with the whole suite green — the
+   * exact silent flip demonstrated in review.
+   */
+  it("every wording rule is active on the recorded verdicts", () => {
+    const inert = FORBIDDEN_WHEN
+      .filter((r) => !r.activeWhen.test(String(get(fig, r.verdict) ?? "")))
+      .map((r) => r.verdict);
+    expect(
+      inert,
+      `a wording rule is INERT: its verdict no longer matches activeWhen, so it\n` +
+        `  guards nothing while the prose it forbids stays in the tree. Either the\n` +
+        `  measurement changed (rewrite the prose too, then repoint activeWhen at the\n` +
+        `  verdict that now carries the claim) or the rule needs repointing. Do NOT\n` +
+        `  widen activeWhen just to re-match — that reinstates the guard in name only.`
+    ).toEqual([]);
+  });
+
+  /**
    * Prose that NAMES a verdict key must name one that exists.
    *
    * The dangling-key test above covers the other direction — a `FORBIDDEN_WHEN`
@@ -609,7 +681,8 @@ describe("measured figures stay traceable to the probe artifact", () => {
    *
    * This is not speculative. Issue #1771 rewrites the year sections around indexed
    * date RANGES and renames several keys by name, including
-   * `H.verdict:silence tolerated`, which two specs currently cite. Nothing else
+   * `H.verdict:silence tolerated` -> `H.verdict:index-silent personas exist`, which
+   * two specs cited (updated to the new key in the same PR). Nothing else
    * here would notice: the traceability check reads FIGURES, the wording rules read
    * sentences, and the producibility check reads the artifact against the probe —
    * none of them reads a citation.
@@ -853,16 +926,13 @@ describe("recorded verdicts are still producible by the probe", () => {
      * blinding the check to the rot it exists for. Two entries, both verified by
      * reading the record() call; anything added here needs the same.
      */
-    const HEAD_EXEMPT = new Map<string, string>([
-      [
-        "H.verdict:an unqualified range fuzzes past its bounds",
-        'template opens with `${fuzzes ? "CONFIRMED" : "NOT CONFIRMED"}` (probe ~line 2208)',
-      ],
-      [
-        "H.verdict:.exact hardens the range",
-        'template opens with `${hardens ? "CONFIRMED" : "NOT CONFIRMED"}` (probe ~line 2213)',
-      ],
-    ]);
+    // Empty since #1771 step 4: both former entries were section-H year verdicts
+    // whose templates opened with a `${cond ? "..." : "..."}` head. Section H was
+    // rebuilt around the band instrument and its verdicts now open with a LITERAL
+    // directional word ("YES — ", "NO — "), so none needs a head exemption. A new
+    // entry here needs the same justification the old ones had — read the record()
+    // call and confirm the template opens with a substitution.
+    const HEAD_EXEMPT = new Map<string, string>([]);
 
     const HEAD = 28;
     const orphans: string[] = [];

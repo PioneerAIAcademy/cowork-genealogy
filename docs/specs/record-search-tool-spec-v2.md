@@ -132,8 +132,7 @@ MEASURED — the per-field verdicts are withheld under RULE 0"* — so it was me
 directly on 2026-08-20 with the unmatchable-token method R and S validated, via
 `dev/explore-name-empty-field-leg-records.ts`:
 
-- **`givenName` keeps them.** Three unmatchable tokens each retain ~251 of a 6,038
-  pool (spread under 2%, which is S's control separating silence from fuzzy reach);
+- **`givenName` keeps them.** Three unmatchable tokens each retain ~251 of a pool of about six thousand (spread under 2%, which is S's control separating silence from fuzzy reach);
   58 of 60 sampled retained rows are given-name-empty, on the typed parts AND on the
   `fullText` cross-check the surname leg below uses — the two agree exactly, so no
   row had a given name misfiled under another part type; `.exact` takes it to 0.
@@ -150,8 +149,9 @@ ones among them.
 
 The retention counts and the 1,100-row Brazil pool are not in
 `dev/measured-figures.json`; the script is the trail until a probe section records
-them. The 6,038 pool total *is* already recorded, as
-`Y.impossiblePools:birth[0].poolTotal` — it is the same Pocklington pool.
+them. The exact value lives in the artifact, as
+`Y.impossiblePools:birth[0].poolTotal`, which re-measures each run — so it is not
+pinned here — for the same Pocklington pool.
 
 The lead states the rule as the search engine's rather than this endpoint's, from
 FamilySearch internals. See `docs/specs/person-search-tool-spec.md` → *Person fields* → *The
@@ -163,14 +163,21 @@ cross-referenced from one.
 **Two carve-outs.** *Places* are a different mechanism — `*PlaceExact` stops
 upward expansion to parent jurisdictions, which is neither fuzz, initials, nor an
 empty field. (Whether it still descends to child localities is stated in the
-original spec prose but is recorded by no verdict; treat it as unverified.) *Years* are the exception, and the artifact is
-the authority on why. `H.verdict:silence tolerated` reads **OPEN** and
-`N.verdict:payload-silent means index-silent` reads **NOT MEASURED**: nothing here
-establishes what a year range does to a record carrying no indexed year, in either
-direction. The lead's account is that no such record exists — the index carries an
-estimated date *range* matched by overlap — and a session probe on 2026-08-19 found no such record in an enumerated Pocklington pool, but that probe left **no artifact** and no probe in `dev/` reproduces it, so it is not
-citable here. Until an instrument records it, `birthYearExact`'s text is unchanged
-and is **not** part of this rule.
+original spec prose but is recorded by no verdict; treat it as unverified.) *Years* are the exception, and the artifact now measures why.
+`H.verdict:index-silent personas exist` reads **NO** and
+`H.verdict:an unqualified range admits estimate overlaps` reads **YES**: there is
+no record carrying "no indexed year". A persona with no year of its own carries an
+estimated date *range*, derived from the dated facts of others on the record, and
+an unqualified range matches it by overlapping that estimate, while
+`.exact` (`H.verdict:.exact requires the indexed date inside the range`) keeps only
+records whose indexed date falls inside the range.
+`N.verdict:payload-silent means index-silent` reads **NO** for the same reason —
+the payload not exposing a year does not mean the index holds none. Measured by a
+disjoint-band membership instrument (`dev/probe-search-qualifiers.ts` sections H
+and Q) on enumerated pools across four record families plus a non-parish US census
+control; the tree endpoint reproduces it (section P). So a year range behaves like
+the other qualifiers after all: without `birthYearExact` a range admits
+estimate-overlap matches; with it, only records dated inside the range survive.
 
 Setting `surnameAlt` or `givenNameAlt` performs a UNION — the result
 set includes records that match the primary name AND records that
@@ -219,20 +226,7 @@ day even if supplied.
 **The `*Exact` toggles in this table change the result count.** A place toggle
 stops upward expansion to parent jurisdictions
 (and is generally said to still descend to child localities, though no verdict
-records that half — see the carve-outs above); a year toggle removes the fuzz
-around the range bounds, excluding records whose indexed year falls just
-outside it — though that fuzz is only weakly evidenced: 3 of 300 sampled
-records fell outside an unqualified single-year range on 2026-08-08 and every
-one carried an *approximate* date ("about 1848"), while on a pool small enough
-to read to the end just 1 of 22 classifiable rows fell outside, and that row
-survived `.exact` too, which is not the shape of fuzz. How a year range
-treats records carrying **no indexed year** is **not established**, in
-either direction: neither that an unqualified range keeps them, nor that
-`.exact` drops them. The instrument that produced both readings could not
-tell a record with no indexed year from one whose year the result payload
-merely does not expose, so both were withdrawn rather than reversed. The
-practical consequence is that a year range — set or unset — cannot be
-relied on to include or exclude undated records. Neither toggle was measured surfacing a
+records that half — see the carve-outs above); a year toggle hardens the range. What an unqualified range actually matches is broader than records dated inside it: a record with no year of its own carries an *estimated* date range (derived from the dated facts of others on the record) and is returned whenever that estimate overlaps the range, so there is no year-silent record a range keeps regardless of where it sits — `H.verdict:index-silent personas exist` reads NO and `H.verdict:an unqualified range admits estimate overlaps` reads YES. `.exact` keeps only records whose indexed date is inside the range (`H.verdict:.exact requires the indexed date inside the range`), dropping the estimate-overlap matches. So a year range IS a reliable include/exclude lever for those records — unqualified admits them, `.exact` drops them — measured on the record index for the birth, death and marriage families. Record-index **residence** is collection-dependent, not uniformly precise. In one disjoint-band pool every row carried its own date (`Q.bands:records-residence`, 198/198), so a range found no estimate overlaps and `.exact` dropped nothing — and that is the *single* residence pool `Y.verdict:generalises past birth (impossible-range)` reads (`YEAR_BAND_SECTIONS` in the probe), which is why it records DOES NOT GENERALISE. The non-parish control reads the other way: in `Q.bands:records-uscensus-residence` an unqualified range admits estimate overlaps and `.exact` drops a meaningful fraction of the band matches, and the impossible-range residence block (`Q`/Geach pool) shows undated residence records kept by overlap and dropped by `.exact`. So residence behaves like the other families wherever records are dated only through others; only where every row already carries its own date is `.exact` a no-op. The tree endpoint (`person_search`) reproduces the estimate-overlap mechanism for all four families. Two caveats remain: a cohort that is not always small — up to roughly a quarter of a pool in the census sweeps — carries no indexed date in the swept span at all, so no bounded range reaches it and the results must be read back rather than trusted to a range to gather them; and whether `.exact` also drops *in-range approximate* dates is unmeasured. Neither toggle was measured surfacing a
 record a fuzzy search buried, and for the `surname` family — the only one
 diffed over complete sets — it cannot: the exact result there is a strict
 subset of the fuzzy one. What `.exact` *does* do to the records it keeps is
@@ -424,7 +418,9 @@ search "looked like" it was about a tree person. That test is a heuristic, and
 gating the signal on an unvalidated heuristic would bias the very coverage
 measurement the signal exists to produce. A caller running a legitimate broad
 survey gets one extra short field; whether a given omission was legitimate is
-answered at analysis time from the args already in the run log.
+answered at analysis time from the args already in the run log. `make
+e2e-compaction` is the corpus-scale version of that analysis, split by
+compaction segment.
 
 Falsiness, not `=== undefined`, is the test on `subjectId`, because the ranking
 gate is itself `input.subjectId &&`. Matching it exactly is what stops the field
@@ -1349,7 +1345,7 @@ general statement about place ranking.
 | `givenName` | Filters, and expands. It bridges standardized abbreviations (an unqualified `fatherGivenName=William` returned `Wm:52 Wm.:31` in a 300-result survey, re-measured 2026-08-08 after a father-detection fix in the probe). It also reaches period diminutives: membership tests on 2026-08-08 (probe section E) returned the diminutive's own record from the fuzzy search for the formal name 8 times out of 8, across Elizabeth→Betty, Margaret→Peggy and Mary→Polly. **The limit is rank, not coverage** — each record was ranked only within its own pool — the best at rank 347 in a pool of 1,019 (2 of the 8 fell inside the 500-deep scan), the other six unseen within that scan in pools of 55,514, 90,037 and 219,494, so a top-N sample cannot establish what the expansion reaches (an earlier revision of this row concluded "no `Betty`" from exactly such a sample). Narrowing works: with the query narrowed on the surname to a 227-row set read in full, the bound `Betty` record was present, at rank 103. Nothing widens the expansion — qualifiers only subtract — so to surface a diminutive, narrow the query until the pool is scannable or search it as its own `givenName` value. **Initials, in the one direction that is measured:** an initials *value* reaches its transposition — `I.verdict:.exact pins the initials ORDER` is CONFIRMED (ENUMERATED), the transposed record present in the fuzzy set and absent from the `.exact` set, both read to the end. Whether a **spelled-out** query reaches records indexed as initials only is unmeasured, and `I.verdict:fuzzy swallows initials into spelled-out names` reads NO for the converse direction, so do not state it. The sampled `J W:66 W J:29` forms breakdown is a 100-row sample of a 1,025,885-row pool and is indicative only | Excludes every variant, including the nicknames the default *does* reach; the abbreviation figures in the middle column are a 300-row sample of a pool too large to enumerate, so treat the size of that loss as indicative |
 | relative names (`father*`, `mother*`, `spouse*`, `parent*`, `other*`) | **Keep-matching / keep-silent / drop-contradicting** — see below. Enumerated for `father*`, `spouse*`, `mother*` and `parent*`, on marriage records in two countries (Brazil, England) — see the exact-match rule above for which verdict covers which family. `other*` is excluded by decision, not untried: `R.verdict:other names behave like the four kinship families` reads NOT MEASURED | Drops the silent records *and* variant forms the unqualified search did reach: on a pool read in full, `João Baptista` and `Thiago J` are present unqualified and absent from the `.exact` set. Whether it drops indexed **abbreviations** specifically is NOT MEASURED — that enumerated unqualified set contained no abbreviated form to drop, and the `Wm:52 Wm.:31` of 300 that stood here is a sample of a pool too large to enumerate |
 | `<event>Place` | Expands upward far enough that a county scope barely discriminates — from the same query, the **wrong** Arkansas county returned the same total as the right one to within 0.1% (about 35,500 each). Two *different* English counties measured counts 0.001% apart (`dev/explore-wildcard-scope.ts`), so treat an unqualified county scope as no scope at all | It makes the count meaningful. Its effect on ordering was not measured beyond one target, which ranked first either way. Useful mainly where a total has to mean something (an exhaustiveness claim) |
-| `<event>Year` | Fuzz around the range bounds — weakly evidenced (see above). Whether an unqualified range requires an indexed year is **not established**: the instrument that addressed it could not tell a record with no indexed year from one whose year the result payload merely does not expose, so no direction is recorded. Do not quote a share of tolerated silence, and do not rely on an unqualified range to include undated records. `any` was never tested at all | Meant to exclude records whose indexed year falls just outside the range, though the enumerated check found one out-of-range row SURVIVING it, so do not rely on the exclusion being complete. Whether it also drops records carrying no indexed year, or in-range *approximate* dates, is **not established** — so it cannot be relied on to exclude undated records either. Use only with a firm date |
+| `<event>Year` | An unqualified range matches by **estimate overlap**: a record with no year of its own carries an estimated date range (from the dated facts of others on it) and is returned whenever it overlaps — so no record is kept regardless of the range (`H.verdict:index-silent personas exist` = NO), and an unqualified range reliably *includes* estimate-dated records — for the birth, death and marriage families; record-index **residence** is collection-dependent (`Q.bands:records-residence` = every row dated, `.exact` changes nothing, so `Y.verdict:generalises past birth (impossible-range)` = DOES NOT GENERALISE reads that one pool; `Q.bands:records-uscensus-residence` = `.exact` drops a meaningful fraction), behaving like the rest wherever records are dated only through others. `any` was never tested | `.exact` keeps only records whose indexed date is inside the range, dropping the estimate-overlap matches — a reliable *exclude* (`H.verdict:.exact requires the indexed date inside the range`). A cohort that is not always small — up to roughly a quarter of a census pool — has no indexed date in the swept span and is reached by no bounded range, so read the results back rather than trust a range to gather them; whether `.exact` also drops in-range *approximate* dates is unmeasured. Use only with a firm date |
 | `recordCountry` | **Already strict** — `q.recordCountry=Narnia` returns 0 rather than being ignored | No flag exists and none is needed |
 | `recordSubdivision` | **Already strict**, measured the same way as `recordCountry`: a nonexistent subdivision returns 0 rather than being ignored, and a real one (`Alabama`) cut a 14,035,394 country total to 342,439. Note the scope — this establishes only that the value is *honoured*, not how a place scope EXPANDS. Whether dropping to a state-level scope rescues a search that nils at county level is a separate, unfinished place investigation and is not answered here | No flag exists and, on this evidence, none is needed |
 
