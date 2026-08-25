@@ -137,7 +137,7 @@ Three parts, every time:
 Example:
 
 > **Did:** "Would you like me to run record-extraction on this record" —
-> `ut_search_records_013`, run `v1_2026-08-13_17-42-37`.
+> `ut_search_records_013`, run `v1_2026-08-21_00-13-34`.
 > **Should:** the skill body prohibits offering extraction as a next step,
 > "not even as a question".
 > **Gap:** lane 2. The test's `judge_context` tells the judge the age gap is
