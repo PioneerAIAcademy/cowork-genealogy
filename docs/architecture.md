@@ -1401,7 +1401,7 @@ tools — what happens after you grant one), and `check_negative_reciprocity.py`
 (a negative routing edge `A → B` with no `B → A` test backing it — what happens
 after you widen a description).
 
-**Three more live outside `tests/packaging/`, and the inventory above will not
+**These live outside `tests/packaging/`, and the inventory above will not
 lead you to them:**
 
 - `packages/engine/mcp-server/tests/validation/tree-shape-drift.test.ts` —
@@ -1410,6 +1410,11 @@ lead you to them:**
 - `eval/harness/tests/unit/test_schema_mirrors.py` — the two schema trees stay
   byte-identical. `eval/harness/tests/unit/test_write_lockdown_parity.py` — the
   three write-lockdown copies agree. Both run under `make harness-test`.
+- `eval/harness/tests/unit/test_unit_test_corpus.py` — every committed file
+  under `eval/tests/unit/` validates against `unit-test.schema.json`, by calling
+  `loader.load_test` rather than re-implementing it. Catches a schema violation
+  and unparseable JSON alike; both were previously invisible until the next paid
+  eval run. Runs under `make harness-test`.
 - `eval/harness/scripts/check_e2e_fixtures.py` — **blocking**, from its own
   workflow (`.github/workflows/check-e2e-fixtures.yml`), on any change under
   `eval/tests/e2e/` or `eval/runlogs/e2e/`. It is not part of `make test-all`,
@@ -1419,15 +1424,16 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and 82 negative routing tests. **396** committed test definitions
+  run logs, and 87 negative routing tests. **404** committed test definitions
   (`make eval-inventory`) — one JSON file per test under `eval/tests/unit/` — and
-  across the 25 live suites the latest run log per suite totals **396 rows, 364
-  passing (92%)**. Those two numbers count different things and can diverge in
+  across the 25 live suites the latest run log per suite totals **403 rows, 362
+  passing (90%)**. Those two numbers count different things and can diverge in
   either direction: a test defined after its suite's last run has no row, and a
-  row survives for a test since deleted. They coincide exactly today — the latest
-  logs are snapshots taken between 2026-07-21 and 2026-08-20, and every defined
-  test appears in its suite's log — which is a fact about the snapshots, not an
-  identity.
+  row survives for a test since deleted. Today they differ by one, in the first
+  direction: `ut_timeline_010` was added to `timeline` after that suite's last
+  run, so it has no row; no row survives for a deleted test. Both numbers are
+  facts about the snapshots — taken between 2026-07-27 and 2026-08-24 — not an
+  identity, so re-derive rather than quoting them.
 - **E2e** (`eval/tests/e2e/<fixture>/`) — live FamilySearch, 106 fixtures
   (`make eval-inventory`; directories carrying a `fixture.json`; `eval/tests/e2e/` holds one more
   directory that is not one), blind
@@ -1522,7 +1528,7 @@ lives. A test is not just its definition: it usually needs a matching
 `eval/fixtures/mcp/` response, a dimension in that skill's `rubric.md`, and a
 check in `eval/harness/validators/`. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
-1 by policy. 82 of the 396 definitions are **negative** tests that exist to prove
+1 by policy. 87 of the 404 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is

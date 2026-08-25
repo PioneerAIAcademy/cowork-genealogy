@@ -5,13 +5,65 @@ describe("convert_calendar", () => {
   describe("doubleDatedYear", () => {
     it("resolves '1750/1' to the later New-Style year", () => {
       const r = convertCalendar({
-        date: { year: 1750, month: 3, day: 25, doubleYear: 1 },
+        date: { year: 1750, month: 2, day: 15, doubleYear: 1 },
         corrections: { doubleDatedYear: true },
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.converted).toEqual({ year: 1751, month: 3, day: 25 });
+      expect(r.converted).toEqual({ year: 1751, month: 2, day: 15 });
       expect(r.applied.map((a) => a.correction)).toEqual(["doubleDatedYear"]);
+    });
+
+    // March 25 is where the Old-Style year INCREMENTS, so from that date the two
+    // styles agree and a slash has nothing to disambiguate. Resolving it anyway
+    // moves the event a year. This case previously asserted 1751 — the error was
+    // in the tool, this test, convert-dates/SKILL.md and ut_convert_dates_007
+    // simultaneously (issue #1654).
+    it("refuses the year-start boundary day (Mar 25) instead of bumping", () => {
+      const r = convertCalendar({
+        date: { year: 1750, month: 3, day: 25, doubleYear: 1 },
+        corrections: { doubleDatedYear: true },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/Jan 1–Mar 24 only/);
+    });
+
+    it("bumps on Mar 24 but refuses Mar 25", () => {
+      const before = convertCalendar({
+        date: { year: 1750, month: 3, day: 24, doubleYear: 1 },
+        corrections: { doubleDatedYear: true },
+      });
+      const after = convertCalendar({
+        date: { year: 1750, month: 3, day: 25, doubleYear: 1 },
+        corrections: { doubleDatedYear: true },
+      });
+      expect(before.ok && before.converted.year).toBe(1751);
+      expect(after.ok).toBe(false);
+    });
+
+    it("refuses a month outside the window entirely", () => {
+      const r = convertCalendar({
+        date: { year: 1750, month: 9, day: 14, doubleYear: 1 },
+        corrections: { doubleDatedYear: true },
+      });
+      expect(r.ok).toBe(false);
+    });
+
+    it("notes, rather than refuses, a March date with no day", () => {
+      const r = convertCalendar({
+        date: { year: 1750, month: 3, doubleYear: 1 },
+        corrections: { doubleDatedYear: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted.year).toBe(1751);
+      expect(r.notes.join(" ")).toMatch(/cannot be tested against the March 24 boundary/);
+    });
+
+    it("still accepts a year-only double date (month is optional)", () => {
+      const r = convertCalendar({ date: { year: 1750, doubleYear: 1 }, corrections: { doubleDatedYear: true } });
+      expect(r.ok && r.converted.year).toBe(1751);
     });
   });
 
@@ -86,13 +138,15 @@ describe("convert_calendar", () => {
   describe("composition + discipline", () => {
     it("applies only the requested correction (no unprompted day shift)", () => {
       const r = convertCalendar({
-        date: { year: 1750, month: 3, day: 25, doubleYear: 1 },
+        // In-window date: this case is about correction DISCIPLINE, not the
+        // Mar 24/25 boundary, which is covered in the doubleDatedYear block.
+        date: { year: 1750, month: 2, day: 15, doubleYear: 1 },
         corrections: { doubleDatedYear: true },
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       // year resolved, but day/month untouched and no offset applied.
-      expect(r.converted).toEqual({ year: 1751, month: 3, day: 25 });
+      expect(r.converted).toEqual({ year: 1751, month: 2, day: 15 });
       expect(r.applied.some((a) => a.correction === "julianToGregorianDay")).toBe(false);
     });
     it("applies year then day offset in order", () => {
