@@ -352,3 +352,84 @@ describe("mapWithConcurrency", () => {
     expect(await mapWithConcurrency([], 8, async (x) => x)).toEqual([]);
   });
 });
+
+// The three guards around the `+date:` qualifier. Each fails on main, and each
+// fails if its own guard is removed while the rest of the change stays — the
+// suite was previously green with place-resolver.ts reverted wholesale.
+describe("resolveStandardPlace date qualifier and its guards", () => {
+  const rochdale = (score: number, fullName: string) =>
+    entry({ placeRepId: "r", fullName, score });
+
+  it("passes the fact's year to searchPlace as a date option", async () => {
+    mockSearchPlace.mockResolvedValue([
+      rochdale(95, "Rochdale, Lancashire, England, United Kingdom"),
+    ]);
+    await resolveStandardPlace("Rochdale, England", { date: "12 May 1880" });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rochdale, England", { date: 1880 });
+  });
+
+  it("sends no date when the caller supplies none", async () => {
+    mockSearchPlace.mockResolvedValue([rochdale(95, "Rochdale, Greater Manchester, England, United Kingdom")]);
+    await resolveStandardPlace("Rochdale, England");
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rochdale, England", { date: undefined });
+  });
+
+  it("does not date-qualify a single-segment input", async () => {
+    // "Germany" at 1827 resolves to a village in the Russian Empire when the
+    // year is applied: with no parent segment there is nothing to anchor it.
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "g", fullName: "Germany", score: 99 })]);
+    await resolveStandardPlace("Germany", { date: "about 1827" });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Germany", { date: undefined });
+  });
+
+  it("ignores a date it cannot parse instead of guessing", async () => {
+    mockSearchPlace.mockResolvedValue([rochdale(95, "Rochdale, Lancashire, England, United Kingdom")]);
+    await resolveStandardPlace("Rochdale, England", { date: "sometime in the war" });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rochdale, England", { date: undefined });
+  });
+
+  it("falls back to an undated query when the dated one returns nothing", async () => {
+    // `+date:` is a hard filter: where no representation records coverage for
+    // the year FamilySearch returns nothing at all, and 13/150 corpus places
+    // went blank before this guard existed.
+    mockSearchPlace
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([entry({ placeRepId: "m", fullName: "Manger, Hordaland, Norway", score: 90 })]);
+    expect(await resolveStandardPlace("Manger, Hordaland, Norge", { date: "1801" }))
+      .toBe("Manger, Hordaland, Norway");
+    expect(mockSearchPlace).toHaveBeenNthCalledWith(1, "Manger, Hordaland, Norge", { date: 1801 });
+    expect(mockSearchPlace).toHaveBeenNthCalledWith(2, "Manger, Hordaland, Norge");
+  });
+
+  it("falls back to the undated answer when the dated one contradicts the recorded country", async () => {
+    // A dated answer can legitimately name a different sovereign, but
+    // research_append turns a countryConsistency contradiction into a hard
+    // error that rejects the whole append. Prefer the writable answer.
+    mockSearchPlace
+      .mockResolvedValueOnce([entry({ placeRepId: "b1", fullName: "Bavaria", score: 99 })])
+      .mockResolvedValueOnce([entry({ placeRepId: "b2", fullName: "Bavaria, Germany", score: 95 })]);
+    expect(await resolveStandardPlace("Bavaria, Germany", { date: "1843" }))
+      .toBe("Bavaria, Germany");
+    expect(mockSearchPlace).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps a dated answer the guard does not object to", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "f", fullName: "Forfarshire, Scotland, United Kingdom", score: 97 }),
+    ]);
+    expect(await resolveStandardPlace("Forfarshire, Scotland", { date: "1865" }))
+      .toBe("Forfarshire, Scotland, United Kingdom");
+    expect(mockSearchPlace).toHaveBeenCalledTimes(1);
+  });
+
+  it("keys the cache by year, so two dates on one place do not collide", async () => {
+    mockSearchPlace
+      .mockResolvedValueOnce([entry({ placeRepId: "1", fullName: "Rochdale, Lancashire, England, United Kingdom", score: 95 })])
+      .mockResolvedValueOnce([entry({ placeRepId: "2", fullName: "Rochdale, Greater Manchester, England, United Kingdom", score: 95 })]);
+    expect(await resolveStandardPlace("Rochdale, England", { date: "1880" }))
+      .toBe("Rochdale, Lancashire, England, United Kingdom");
+    expect(await resolveStandardPlace("Rochdale, England", { date: "1990" }))
+      .toBe("Rochdale, Greater Manchester, England, United Kingdom");
+    expect(mockSearchPlace).toHaveBeenCalledTimes(2);
+  });
+});

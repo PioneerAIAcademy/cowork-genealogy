@@ -17,6 +17,18 @@
  * whether an explicit leaf-drop retry would return anything different.
  *
  *   npx tsx dev/probe-place-leaf-coarsening.ts [limit]
+ *
+ * WHAT THIS PROBE ESTABLISHES. It counts how often a leaf-drop retry returns
+ * something DIFFERENT (`leafDropHelps`). It does NOT judge whether the
+ * difference is better or worse — the "leaf-drop was worse in every case where
+ * it differed" conclusion that killed that idea was a hand read of the lists
+ * printed below, not an output of this file.
+ *
+ * Its verdict classifier is also imperfect in a known direction: `segMatch` is
+ * token containment, so a correct resolution under a different formal name
+ * reads as "divergent". Measured examples: Ruzomberok -> Rozsahegy (the
+ * Hungarian name), kirkegard -> Kyrkjegard, "Cosumnes Township" -> "Cosumnes
+ * Judicial Township". All three are right. Treat the "matched" rate as a floor.
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";

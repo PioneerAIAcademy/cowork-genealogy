@@ -64,38 +64,67 @@ export function extractPrimaryId(
   return last || undefined;
 }
 
-// FamilySearch's place search parses Lucene operator characters even inside a
-// phrase-quoted `name:"..."` value, so a recorded place carrying one silently
-// matches somewhere else. Measured live, each isolated to the single character
+// A recorded place is not a query, but FamilySearch parses it as one.
+//
+// `?` and `*` are documented single- and multi-character wildcards on this
+// endpoint, and `~` is a documented fuzzy suffix
+// (developers.familysearch.org/main/reference/readplaces). A place transcribed
+// off a census page or a headstone carries those characters as artifacts —
+// illegible letters, plot numbers, district ranges — never as syntax the caller
+// meant. Sent through, they silently match somewhere else.
+//
+// `&` and `#` are NOT wildcards. They still change the answer, because the
+// index treats the conjunction as the word "and" and normalises `#`, so a bare
+// `&` deletes a token from the phrase rather than matching one.
+//
+// Measured live, each isolated to the single character
 // (dev/probe-place-special-chars.ts):
 //
-//   "…7 & 9 Ogden city Ward 2, Weber, Utah"  -> Election District S, Denver, COLORADO
+//   "…7 & 9 Ogden city Ward 2, Weber, Utah"   -> Election District S, Denver, COLORADO
 //   "Great & Little Singleton, …, Lancashire" -> Great and Little Elm, SOMERSET
-//   "??Gren"                                  -> Angren, Tashkent, UZBEKISTAN
 //   "Marshall Sal*, Missouri"                 -> Saline County Poor Farm CEMETERY
 //   "Alverson Cemetery #1, …, Indiana"        -> Alverson Cemetery, NORTH CAROLINA
 //
-// None of these are query syntax the caller meant — they are transcription
-// artifacts of census districts, cemetery plots and illegible text.
+// `&` maps to the word, the rest are dropped. Mapping rather than dropping is
+// load-bearing and was measured over every `&` string in the corpus: dropping
+// it breaks a place FamilySearch already standardises correctly —
+// "Manila American Cemetery & Memorial, …, Philippines" returns the cemetery at
+// 64 as-is and at 88 with the word, but only the CITY of Manila at 72 when the
+// `&` is dropped. Mapping wins or ties on all four, and on Ogden it recovers
+// the city rather than only the county.
 //
-// Backslash-escaping instead of stripping was measured and does NOT work:
-// `\&` and `\#` behave exactly as the bare character (same wrong place, same
-// score), and `\?` / `\*` make FamilySearch return HTTP 400. The endpoint does
-// not honour Lucene escaping, so stripping is the only option that recovers
-// the right place.
+// Dropping is right for `#`: the index normalises it, so "Alverson Cemetery #1"
+// still matches FamilySearch's own place of that exact name at 95. Do not
+// generalise that to the other characters — it is a fact about `#`.
 //
-// Stripping costs nothing even when the character is genuinely part of a place
-// name: the last case above then matches FamilySearch's own "Alverson Cemetery
-// #1" at 95, because their index normalises the character the same way. It is
-// legitimate in their DATA and merely unusable in the QUERY.
+// Backslash-escaping is documented but does not work here. `\?` and `\*` return
+// HTTP 400 (quoted or not), and `\&` / `\#` behave exactly as the bare character
+// because those were never wildcards to escape.
 //
-// Deliberately NOT stripped: `:` `(` `)` `[` `]` `/` `-` and doubled commas all
-// measured harmless (same top hit, lower score), and hyphens are load-bearing
-// in real names like "Hauts-de-France".
-const LUCENE_OPERATORS = /[&?*#!^~|]/g;
+// `~` is stripped even though it is a capability rather than a hazard: a `~` in
+// RECORDED TEXT would silently enable fuzzy matching nobody asked for. Using
+// fuzzy deliberately belongs in an explicit option applied AFTER sanitising,
+// the way `date` is — not in leaving caller text unsanitised. Its corpus
+// incidence as a place character is zero.
+//
+// Only characters with measured evidence are listed. `!`, `^` and `|` were in
+// an earlier draft on the assumption that they were operators too; no probe
+// covers them, they are not documented as operators, and corpus incidence is
+// zero, so they are out rather than asserted.
+//
+// Not sanitised: `:` `(` `)` `[` `]` `/` `-` and doubled commas. Spot checks
+// showed the same top hit, but no committed probe covers them, so this is a
+// deliberate non-intervention rather than a measured result. Hyphens are
+// load-bearing in real names like "Hauts-de-France".
+const AMPERSAND = /&/g;
+const QUERY_OPERATORS = /[?*#~]/g;
 
 function sanitizeForNameQuery(name: string): string {
-  return name.replace(LUCENE_OPERATORS, " ").replace(/\s+/g, " ").trim();
+  return name
+    .replace(AMPERSAND, " and ")
+    .replace(QUERY_OPERATORS, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export async function searchPlace(
@@ -111,8 +140,10 @@ export async function searchPlace(
   // `+date:+YYYY` restricts scoring to the place representations that existed in
   // that year. Jurisdictions move: "Rochdale, England" resolves to Greater
   // Manchester undated (a county created in 1974) and to Lancashire at
-  // +date:+1880. Omitting the option leaves the URL byte-identical to the
-  // undated form. https://developers.familysearch.org/main/docs/search-for-places
+  // +date:+1880. Omitting the option adds nothing to the query string; the URL
+  // is not otherwise unchanged, since sanitizeForNameQuery collapses runs of
+  // whitespace and trims on every input (six corpus place strings carry doubled
+  // spaces). https://developers.familysearch.org/main/docs/search-for-places
   const dateQualifier =
     opts.date === undefined ? "" : encodeURIComponent(` +date:+${opts.date}`);
   const safeName = sanitizeForNameQuery(name);
@@ -180,6 +211,15 @@ export async function getPlaceByPrimaryId(primaryId: string): Promise<GetPlaceRe
   const response = await fetchWithTimeout(url, {
     headers: {
       Accept: "application/json",
+      // Same reason as searchPlace: pins the language the answer is RENDERED
+      // in. This endpoint is language-sensitive and it is the one that matters
+      // most — place_search / place_search_all build every returned
+      // standardPlace from getPlaceById, not from the search, so THIS is the
+      // name that reaches the model and gets copied into research.json.
+      // Verified: rep 3041323 is "Fylde, Lancashire, England, United Kingdom"
+      // with no header and "Fylde, Lancashire, Engeland, Verenigd Koninkrijk"
+      // under Accept-Language: nl.
+      "Accept-Language": "en",
     },
   });
 
@@ -222,6 +262,15 @@ export async function getPlaceById(id: string): Promise<GetPlaceResult | null> {
   const response = await fetchWithTimeout(url, {
     headers: {
       Accept: "application/json",
+      // Same reason as searchPlace: pins the language the answer is RENDERED
+      // in. This endpoint is language-sensitive and it is the one that matters
+      // most — place_search / place_search_all build every returned
+      // standardPlace from getPlaceById, not from the search, so THIS is the
+      // name that reaches the model and gets copied into research.json.
+      // Verified: rep 3041323 is "Fylde, Lancashire, England, United Kingdom"
+      // with no header and "Fylde, Lancashire, Engeland, Verenigd Koninkrijk"
+      // under Accept-Language: nl.
+      "Accept-Language": "en",
     },
   });
 
@@ -280,6 +329,12 @@ export async function getPlaceWikipediaUrl(repId: string): Promise<string | null
     const response = await fetchWithTimeout(url, {
       headers: {
         Accept: "application/json",
+        // Sent for consistency with the other place fetchers. Checked that it
+        // does NOT change the curated link, which is per-place rather than per
+        // locale: rep 442102 (Paris, France) returns fr.wikipedia.org/wiki/Paris
+        // with and without the header, and rep 3988097 (Paris, Idaho) returns
+        // the en link either way. The spec's link table is unaffected.
+        "Accept-Language": "en",
         "User-Agent": BROWSER_USER_AGENT,
         "FS-User-Agent-Chain": "zion-user",
       },
@@ -305,7 +360,9 @@ type PrimaryIdResponse = {
 
 async function fetchPrimaryIdResponse(primaryId: string): Promise<PrimaryIdResponse> {
   const url = `${FS_API_BASE}/${primaryId}`;
-  const response = await fetchWithTimeout(url, { headers: { Accept: "application/json" } });
+  const response = await fetchWithTimeout(url, {
+    headers: { Accept: "application/json", "Accept-Language": "en" },
+  });
   if (!response.ok) {
     if (response.status === 404) return {};
     throw new Error(`FamilySearch API error: ${response.status} ${response.statusText}`);
@@ -353,7 +410,9 @@ export async function getPlaceCandidateNames(primaryId: string): Promise<string[
 export async function getPlaceRepIds(pid: string): Promise<string[]> {
   const url = `${FS_API_BASE}/${encodeURIComponent(pid)}`;
 
-  const response = await fetchWithTimeout(url, { headers: { Accept: "application/json" } });
+  const response = await fetchWithTimeout(url, {
+    headers: { Accept: "application/json", "Accept-Language": "en" },
+  });
   if (!response.ok) {
     if (response.status === 404) return [];
     throw new Error(

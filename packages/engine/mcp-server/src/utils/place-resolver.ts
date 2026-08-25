@@ -63,9 +63,11 @@ export interface ResolveOpts {
 // standardPlace strings in research.json / tree.gedcomx.json are the real
 // cross-session cache.
 
-/** originalText (normalized) -> standardPlace | null. Caches DEFINITIVE
- *  0-candidate negatives only; transient (retry-exhausted) failures are never
- *  cached, so a network blip doesn't poison the cache. */
+/** `${originalText}|${year ?? ""}` (normalized) -> standardPlace | null. The
+ *  year is part of the key because the same place resolves differently at
+ *  different dates. Caches DEFINITIVE 0-candidate negatives only; transient
+ *  (retry-exhausted) failures are never cached, so a network blip doesn't
+ *  poison the cache. */
 const standardizeCache = new Map<string, string | null>();
 /** standardPlace name (normalized) -> placeRepId | null. */
 const nameToRepIdCache = new Map<string, string | null>();
@@ -74,7 +76,9 @@ const repInfoCache = new Map<string, RepInfo | null>();
 /** placeId -> all placeRepIds for that spot over time. */
 const placeIdRepsCache = new Map<string, string[]>();
 /** Internal memo of raw search results, so the resolver fns above don't
- *  re-issue the same search. Key: `${name}|${contextName}` (normalized). */
+ *  re-issue the same search. Key: `${name}|${contextName}|${year ?? ""}`
+ *  (normalized) — a dated and an undated search of one place are different
+ *  queries and must not share an entry. */
 const searchEntriesCache = new Map<string, SearchEntry[]>();
 
 /** Test-only: clear every cache so cases don't bleed into each other. */
@@ -380,9 +384,12 @@ export async function resolveStandardPlace(
   // whichever obscure same-named place happens to have coverage for it
   // (measured: "Germany" 1827 -> "Germany, Pruzhany, Grodno, Russian Empire", a
   // village; "Mohol" 1938 -> "Mol, Ada, Serbia"). `countryConsistency` does NOT
-  // catch these — it reads the standard place's leading segment as the country
-  // and returns "ok". Same threshold `deriveContextName` uses for the same
-  // reason: below two segments there is no context to disambiguate with.
+  // catch these. It reads the INPUT's TRAILING segment and scans every segment
+  // of the standard place, so "Germany" matches the village's own leading
+  // "Germany" and returns "ok", while single-token "Mohol" names no recognised
+  // country at all and returns "unverifiable". Same threshold
+  // `deriveContextName` uses for the same reason: below two segments there is
+  // no context to disambiguate with.
   const year =
     placeSegments(originalText).length >= 2 ? yearHint(opts.date) : undefined;
   const key = `${normalizeKey(originalText)}|${year ?? ""}`;
