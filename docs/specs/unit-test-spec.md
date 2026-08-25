@@ -435,7 +435,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "grade_on_invariant": {
           "type": "boolean",
           "default": false,
-          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe. REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. The runnability gate enforces this: it aborts the test unless one of its tags gates a validator in that file."
+          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe. REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. The runnability gate enforces this: it aborts the test unless one of its tags gates a validator in that file. It does NOT enforce reachability, which is also required: every tool the gated validator asserts about must be registered for THIS test — in its own mcp_fixtures, or in mock_mcp.LIVE_TOOLS — because the mock advertises only those. An assertion that tool X was not called, on a test that registers X nowhere, is offered to no model and can never fire. Declare the fixture even when it is expected to go unused."
         }
       },
       "additionalProperties": false
@@ -599,6 +599,7 @@ Only present when `test.type` is `"negative"`.
 |-------|------|----------|-------------|
 | `correct_skill` | string[] | yes | Skills that should handle this request instead. Each entry must be a valid skill directory name. `[]` = no skill should fire (out-of-scope user message). `["x"]` = exactly skill x is expected. `["x", "y"]` = any one of these is acceptable |
 | `explanation` | string | yes | Why the tested skill should not activate. Documents the boundary between the two skills so reviewers (and the description optimizer) understand the discrimination |
+| `grade_on_invariant` | boolean | no | `false` (default). When `true`, this negative test is graded **solely** on its deterministic invariant validator(s) in `eval/harness/validators/test_<skill>.py`, gated on one of the test's tags — routing and activation are NOT gated. Use it for a routing-flaky negative where every plausible route is state-safe. Requires a tag-gated validator that actually runs; the runnability gate enforces that much. **It does not enforce enough:** every tool the gated validator asserts about must also be **reachable in this test** — present in the test's own `mcp_fixtures`, or in `mock_mcp.LIVE_TOOLS`. The mock server advertises only those (`mock_mcp.create_mock_server`, `for tool_name, bucket in manifest.items()`), so a "tool X was not called" assertion against a tool this test registers nowhere is offered to no model and can never fire — the test passes green forever while asserting nothing about X. Declare the fixture even when you expect it to go unused, and say so in the test `description` so it is not later removed as dead weight |
 
 ### 5.6 `runs_per_test`
 
@@ -1154,6 +1155,7 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
 - `skills_invoked` (list) — skills invoked via the SDK `Skill` tool, captured by the PreToolUse hook.
 - `blocked_context_calls` (list) — main-thread calls to subagent-only tools that the PreToolUse hook denied.
 - `blocked_protected_writes` (list) — raw Write/Edit calls to a protected project file that the hook denied.
+- `text_response` (str) — every assistant text block concatenated, no separator: narration and closing reply in one string, not the final reply alone (`"".join(text_chunks)` in `skill_runner.run_skill`). Empty when the run produced no assistant text. Use it for a **literal** property of the text — a phrase that must never appear, an identifier that must be named — and **not** to re-grade prose quality, which is a rubric dimension's job. A validator that tries to score how well the reply reads becomes a dimension nobody can tune. The case it exists for: a reply-shape rule a skill body states outright ("One sentence only", "do not restate the article content") is graded unevenly by a judge — on `search-wikipedia`'s run `v1_2026-08-22_10-20-08` the `Reply economy` dimension caught a narrating reply on one test and scored a byte-identical shape 3 on another, quoting a reply it had not been given.
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.
 
