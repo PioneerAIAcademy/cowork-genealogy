@@ -209,8 +209,35 @@ def test_no_bare_text_mode_file_io():
         )
 
     assert not offenders, (
-        'bare text-mode file I/O found -- CLAUDE.md requires encoding="utf-8" on every '
-        "read_text/write_text/open:\n  " + "\n  ".join(sorted(offenders))
+        'bare text-mode I/O found -- CLAUDE.md requires encoding="utf-8" on every '
+        "read_text/write_text/open and every text-mode subprocess call:\n  "
+        + "\n  ".join(sorted(offenders))
+    )
+
+
+def test_no_aliased_subprocess_import():
+    """`subprocess.<name>(...)` is the only form `_is_subprocess_call` matches, so an
+    alias or a direct import hides a real offender while the lint still goes green.
+    Nothing else detects that: widen `_is_subprocess_call`, do not skip this."""
+    offenders: list[str] = []
+    for path in _iter_python_files(REPO_ROOT):
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except (SyntaxError, ValueError, UnicodeDecodeError):
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                offenders += [
+                    f"{rel}:{node.lineno}: import subprocess as {a.asname}"
+                    for a in node.names
+                    if a.name == "subprocess" and a.asname
+                ]
+            elif isinstance(node, ast.ImportFrom) and node.module == "subprocess":
+                offenders.append(f"{rel}:{node.lineno}: from subprocess import ...")
+    assert not offenders, (
+        "the encoding lint only matches subprocess.<name>(...) -- widen "
+        "_is_subprocess_call before introducing:\n  " + "\n  ".join(sorted(offenders))
     )
 
 
