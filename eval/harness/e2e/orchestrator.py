@@ -1331,11 +1331,15 @@ async def _run_agent(
                     "blocked_by": "context",
                 }
             )
-            # Name the owning subagent per tool (issue #1273 Item 1 asks for
-            # per-tool guidance) rather than deferring to "the deny reason", which
-            # `blocked_context_calls` does not store, so a runlog reader can act on
-            # this line alone. The fallback covers a future third guarded tool.
-            owner = {
+            # Per-tool recovery target (issue #1273 Item 1 asks for per-tool
+            # guidance), mirroring each `_DENIAL_REASONS` entry, which
+            # `blocked_context_calls` does not store — so a runlog reader can act on
+            # this line alone. NOTE: for image_read this is the transcription plugin
+            # @plugin:image-reader (the deny doctrine's recovery), deliberately NOT
+            # the tool's owner image-reader-opus — the interpret-e2e-result skill
+            # names the owner for the separate "whose spawn failed" diagnostic.
+            # The fallback covers a future third guarded tool.
+            recovery = {
                 "extraction_append": "@plugin:record-extractor",
                 "image_read": "@plugin:image-reader",
             }.get(bare, "the owning subagent")
@@ -1345,7 +1349,7 @@ async def _run_agent(
                     "kind": "blocked",
                     "text": (
                         f"`{bare}` denied on the main thread — it is a subagent-only "
-                        f"tool; delegate to {owner} rather than doing the work here."
+                        f"tool; delegate to {recovery} rather than doing the work here."
                     ),
                 }
             )
