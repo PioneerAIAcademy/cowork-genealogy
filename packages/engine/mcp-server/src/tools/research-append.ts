@@ -29,6 +29,7 @@ import {
   isInsideProject,
   readProjectJson,
   formatIssues,
+  withProjectLock,
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
@@ -2091,6 +2092,9 @@ export async function researchAppend(
     return opsReceived !== undefined ? { ok: false, errors: all, opsReceived } : { ok: false, errors: all };
   };
 
+  // Serialize the whole read-modify-write against every other writer on this
+  // project (issue #1715). Wraps extraction_append too, which routes here.
+  return withProjectLock(projectPath, async () => {
   try {
     const research = await readJson(projectPath, "research.json");
     // Snapshot BEFORE any op in this call/batch applies — see
@@ -2328,6 +2332,7 @@ export async function researchAppend(
     }
     throw e;
   }
+  });
 }
 
 /** Best-effort mapping of whole-document validation errors back to the batch op
