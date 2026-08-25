@@ -410,6 +410,57 @@ this is the *same* dimension (`base/Tool Arguments`) that F3 and F4 show failing
 other direction — it is carrying real signal here and missing real defects there, which is
 an argument for moving the countable parts out of it. **Converts — V6.**
 
+## F9 — `rubric/Evidence completeness` grades the prose and never the structured evidence fields
+
+**This is the third flat dimension the issue assigned me, and my first pass missed it
+entirely.** The issue said of the four, "You own three" — `Proof-conclusion fit` (F1),
+`Tree encoding` (F6) and `Evidence completeness`. I wrote up the first two and left this
+one at a mention in the numbers table. Closing it here.
+
+**Did:** on `v1_2026-08-25_13-34-10`, every test whose fixture carries a resolved conflict
+wrote the field empty:
+
+| test | resolved conflicts in fixture | `resolved_conflict_ids` written | Evidence completeness |
+|---|---|---|---|
+| `ut_proof_conclusion_001` | `["c_001"]` | `[]` | **3** |
+| `ut_proof_conclusion_002` | `["c_001"]` | `[]` | **3** |
+| `ut_proof_conclusion_020` | `["c_001"]` | `[]` | **3** |
+
+In all three the narrative *does* discuss the birthplace conflict — so the prose is right
+and the field contradicts it. The same shape appears in `supporting_assertion_ids`: on
+`ut_proof_conclusion_002`, the **`proved`-tier** test, 9 assertions are linked to `q_001`
+via `extracted_for_question_ids` and only 5 are cited (`a_005`, `a_008`, `a_009`, `a_012`
+omitted, and none of those ids appears in the narrative either). Also incomplete on 019
+(16 linked, 13 cited) and 015 (3 linked, 2 cited). All scored 3.
+
+**Should:** the dimension asks "Does the proof cite all relevant assertions and address all
+resolved conflicts?" Agent body §7: "`resolution_assertion_ids` are the `a_` ids the
+conclusion rests on — **the same ones in the summary's `supporting_assertion_ids`**."
+`research-schema-spec.md` maps `resolved_conflict_ids ──► conflicts[].id` as the audit
+trail, and 001's own `judge_context` says resolved conflicts "are part of the audit trail".
+
+**Gap: lane 2 — the dimension's pass criterion says "cited in the NEW narrative", so the
+judge reads prose and is never pointed at the two fields.** This is exactly the case the
+guide's Step 2 flags — `file_changes` is "where you catch a skill that *said* the right
+thing and *wrote* something else." The narrative governs on disagreement per the schema
+spec, so this is a metadata defect rather than a GPS one; but `resolution_assertion_ids`
+mirrors `supporting_assertion_ids` onto the question, and that mirror is what a later skill
+reads to learn what grounded the answer.
+
+**One root cause is spec wording, not the agent.** `resolved_conflict_ids` is specified as
+"`c_` references to conflicts **resolved in this proof** (may be empty)". proof-conclusion
+is forbidden to resolve conflicts, so `[]` is a defensible literal reading — while the
+canonical example in the same spec shows `["c_001"]` and the audit-trail language says the
+opposite. **Settle the wording before writing the validator**, or V7 will enforce a reading
+the spec does not clearly license.
+
+**Deliberately NOT fixed by a rubric edit, on F1's measured evidence.** A set comparison
+between two fields in the same file is mechanical, and F1 is this dive's own demonstration
+that putting a mechanical rule in rubric prose makes the judge *cite* the rule and then
+score 3 anyway. Editing `rubric.md` again would also flip the snapshot inactive and owe
+another ~$6.6 run plus a genealogist annotation — real cost for a change I have just
+measured to be ineffective in this exact shape. **V7 is the fix.** **Converts — V7.**
+
 ## The three `judge_context` grep hits, adjudicated
 
 | file | verdict |
@@ -587,6 +638,27 @@ the guard existed, the test that violated the rule did not carry the tag.
 > makes it hold on an unsampled test or a later run. **Do not tag-gate.**
 > **Credit:** surfaced by the genealogist annotation of `v1_2026-08-25_13-34-10`, not by
 > this dive's sweep.
+
+### V7 — the structured evidence fields must match what the conclusion used
+
+> **Rule:** for a new `proof_summaries` entry answering `q_NNN`: (a) every conflict whose
+> `blocks_question_ids` includes `q_NNN`, or whose `competing_assertion_ids` intersect the
+> entry's cited assertions, and whose `status` is `resolved`, must appear in
+> `resolved_conflict_ids`; and (b) `resolution_assertion_ids` on the question must equal
+> `supporting_assertion_ids` on the summary.
+> **Where to look:** after-state `proof_summaries[]`, `questions[]`, `conflicts[]`,
+> `assertions[]`.
+> **Why it is not judgment:** set membership over closed id references and one closed
+> enum (`status`). Whether the narrative *reasons* about the conflict well stays with the
+> judge; this only checks the machine-readable claim matches.
+> **Settle first:** `resolved_conflict_ids` is specified as conflicts "resolved in this
+> proof", which proof-conclusion may not do — so part (a) needs the spec wording fixed
+> before it can be enforced. Part (b) is unambiguous today and can ship alone.
+> **What a violation looks like:** part (a) — `ut_proof_conclusion_001`, `002` and `020` on
+> `v1_2026-08-25_13-34-10`, all three writing `[]` while `c_001` is `resolved` and
+> discussed in the narrative, all three scoring Evidence completeness 3. Part (b) —
+> `ut_proof_conclusion_002` on the same run: 9 assertions linked to `q_001`, 5 cited.
+> **Do not tag-gate.**
 
 ---
 
