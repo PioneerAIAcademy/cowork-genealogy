@@ -1,7 +1,7 @@
 # Daily summary format
 
 One file per day, written after the lists are delivered, to
-`/Users/dallan/pioneeradademy/cowork-status-updates/YYYY-MM-DD.md`.
+`~/pioneeracademy/cowork-status-updates/YYYY-MM-DD.md`.
 
 The date is the date of the standup being triaged, not today's date if you are
 catching up.
