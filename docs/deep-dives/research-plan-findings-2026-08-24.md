@@ -694,17 +694,35 @@ restored signal. The five rubric dimensions remain the open question #1404 and
 #1668 own, and this dive's contribution to them is the measurement below, not
 the rewrite.
 
-**All three runs were scored under the previous judge prompt, so read these as a
-baseline rather than a current reading.** Their `judge_prompt_hash` is
-`0d186137147c`; #1766 has since replaced it with `c39d70034788`, and that commit
-is now inside this branch, so the runlogs gate warns on this head. The new prompt
-makes `judge_context` notes binding on the scores rather than background, and
-says an unmet requirement is a deduction in whichever dimension covers it — the
-mechanism this retraction and F9 both describe as absent. That cuts in the
-rewrite's favour, not against it: a clause such as "whether a plan item targets
-the parents' marriage is what Record type selection turns on for this test" now
-binds where it was previously read as context. So the retraction may be
-pessimistic. **Re-measure under `c39d70034788` before deleting a dimension.**
+**Those three runs were scored under the previous judge prompt, and a fourth run
+has now re-measured under the current one. The dimensions are flat under both.**
+Runs 1 to 3 carry `judge_prompt_hash` `0d186137147c`. #1766 replaced the prompt
+with `c39d70034788`, which makes `judge_context` notes binding on the scores
+rather than background and says an unmet requirement is a deduction in whichever
+dimension covers it — the mechanism this retraction and F9 both describe as
+absent. That is the one condition under which the flatness might have been an
+artifact of grading rather than a property of the dimensions, so it was worth
+measuring rather than assuming.
+
+`v1_2026-08-25_21-02-48` is that measurement: 21 tests, 19 pass, scored under
+`c39d70034788`. Every one of the five rubric dimensions is **3 across all 15
+gradings**, exactly as under the old prompt:
+
+| dimension | scores under `c39d70034788` |
+|---|---|
+| Record type selection | 3 × 15 |
+| Objective scope containment | 3 × 15 |
+| Sequencing logic | 3 × 15 |
+| Jurisdiction accuracy | 3 × 15 |
+| Plan mode and lifecycle | 3 × 15 |
+
+So the retraction was not pessimistic, and the flatness is not a grading
+artifact. Binding the per-test clauses to the scores moved nothing. That
+strengthens #1404's case rather than weakening it: the dimensions stayed flat in
+the conditions most favourable to their discriminating. Only base `Tool
+Arguments` moved at all, one 2 on `ut_research_plan_wzk`, from a `place_search`
+for Georgia that found no fixture — a corpus gap, corrected to 3 in the
+annotation.
 
 ## F8 — `test_ownership_table` attributes a delegated skill's writes to the caller
 
