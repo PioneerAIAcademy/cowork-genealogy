@@ -16,7 +16,9 @@ description: Refines source citations to Evidence Explained standards. Updates c
   creates source entries — only refines entries created by
   record-extraction.
 allowed-tools:
-  - research_append
+  - mcp__genealogy__research_append
+  - mcp__remote-devices__Genealogy_Research__research_append
+  - mcp__Genealogy_Research__research_append
   - validate_research_schema
 ---
 
