@@ -234,7 +234,11 @@ def test_no_aliased_subprocess_import():
                     if a.name == "subprocess" and a.asname
                 ]
             elif isinstance(node, ast.ImportFrom) and node.module == "subprocess":
-                offenders.append(f"{rel}:{node.lineno}: from subprocess import ...")
+                offenders += [
+                    f"{rel}:{node.lineno}: from subprocess import {a.name}"
+                    for a in node.names
+                    if a.name in SUBPROCESS_METHODS or a.name == "*"
+                ]
     assert not offenders, (
         "the encoding lint only matches subprocess.<name>(...) -- widen "
         "_is_subprocess_call before introducing:\n  " + "\n  ".join(sorted(offenders))
