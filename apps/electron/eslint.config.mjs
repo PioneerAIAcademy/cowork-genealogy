@@ -18,6 +18,22 @@ export default defineConfig(
     }
   },
   {
+    // Plain-JS build scripts. The TS recommended set is applied unscoped above,
+    // so `explicit-function-return-type` fires on every function in a .mjs file,
+    // where there is no syntax to satisfy it. Nothing else here needs relaxing:
+    // `no-unused-vars` already applies to these files and reports correctly
+    // (verified by removing this block and re-running).
+    //
+    // An unused import did ship in `check-packaged-deps.mjs`, but not because a
+    // rule was missing — at the time nothing ran eslint. There is still no
+    // `lint` task in turbo.json, but `make lint`, `scripts/test.sh` and both
+    // `js-tests.yml` jobs now run it, added here. (#1070 review)
+    files: ['**/*.{js,mjs,cjs}'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off'
+    }
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     plugins: {
       'react-hooks': eslintPluginReactHooks,
