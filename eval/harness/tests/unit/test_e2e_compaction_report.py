@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from e2e.compaction_report import (
+    CAVEAT,
     EARLY_MAX_SEGMENT,
     RecordSearchCall,
     format_report,
@@ -264,6 +265,30 @@ def test_format_report_paired_figure_covers_early_only_late_only_and_both():
         "Paired (runs with both early- and late-segment calls, 1 of 3): "
         "EARLY 1/1 (100.0%), LATE 0/1 (0.0%)"
     ) in out
+
+
+def test_format_report_per_run_late_segment_rows_are_worst_first():
+    """Guards the sort key in the per-run table (T-FEH's review of PR #1812):
+    reversing it leaves every other test in this file green, since none of
+    them asserts row order — only that each row's own numbers are correct."""
+    calls = [
+        RecordSearchCall("fixture/high-supply", 3, True),
+        RecordSearchCall("fixture/high-supply", 3, True),
+        RecordSearchCall("fixture/low-supply", 3, False),
+        RecordSearchCall("fixture/low-supply", 3, False),
+    ]
+    out = format_report(calls, n_runs=2, excluded={})
+    low_idx = out.index("fixture/low-supply")
+    high_idx = out.index("fixture/high-supply")
+    assert low_idx < high_idx, "0% supply must be listed before 100% — worst first"
+
+
+def test_format_report_prints_the_caveat_on_every_non_empty_report():
+    """Guards `lines.append(CAVEAT)` (T-FEH's review of PR #1812): deleting
+    that line leaves every other test in this file green, since none of them
+    asserts the caveat text is present."""
+    out = format_report([RecordSearchCall("fixture/run", 0, True)], n_runs=1, excluded={})
+    assert CAVEAT in out
 
 
 def test_format_report_with_no_calls_is_a_real_result_not_an_empty_one():

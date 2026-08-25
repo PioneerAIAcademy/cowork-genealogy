@@ -114,10 +114,12 @@ found early-segment (0–2) supply higher than late-segment (3+) in aggregate
 — but not segment by segment, and not by a wide margin before the nudge
 shipped. Per segment, post-nudge (`make e2e-compaction` prints this row
 unconditionally): 64.0% / 43.8% / 69.4% / 48.1% / 0.0% for segments 0–4.
-Segment 1 (43.8%) sits *below* segment 3 (48.1%); the entire early>late gap
-rests on segment 2 alone — the single highest of the five — landing inside
-"early" under the issue's own 0–2/3+ split, so review this per-segment row
-rather than the two-bucket aggregate before drawing a conclusion from it.
+Segment 1 (43.8%) sits *below* segment 3 (48.1%), so supply is not monotone
+across segments, and segment 2 (69.4%) is the single highest of the five. The
+aggregate gap does not rest on segment 2 alone, though: dropping it leaves
+early at 53.0% (87/164) against the same late 44.8% — an 8.2-point gap where
+the full one is 13.2. Review this per-segment row rather than the two-bucket
+aggregate before drawing a conclusion from it.
 Both `--since` windows are cumulative — a later cutoff is a subset of an
 earlier one, not a disjoint slice — so the pre-nudge-only row below is not
 one command's output; it is `--since 2026-07-27` minus `--since 2026-08-04`,
