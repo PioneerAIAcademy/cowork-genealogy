@@ -47,6 +47,20 @@ Does the proof cite all relevant assertions and address all resolved conflicts? 
 
 Does the chosen proof conclusion — written as a Statement, Summary, or Argument — match the shape of the evidence? A proof statement suits a few cited sentences with no contradictions; a proof summary suits multiple correlated sources weighing clearly one way; a proof argument is required for competing candidates, only indirect evidence, significant conflicts, or any case where a competent researcher would disagree without seeing the full reasoning.
 
+**Check the declared `vehicle` against the artifact, not only against the evidence.**
+The agent body sizes each form: a Statement is "a few cited sentences, no explanation
+needed" at ~150 words or fewer; a Summary is "~300-500 words"; an Argument is up to
+~800. So the declared `vehicle` is a claim about the narrative as well as about the
+evidence, and this dimension grades both halves. Read `proof_summaries[].vehicle`,
+then read what was actually written: a narrative several times its declared form's
+budget, or one carrying section headings and a multi-source correlation pass under
+`vehicle: "statement"`, is a declared-form mismatch even when the reasoning is sound
+and even when the *evidence* would have justified that form. Score the mismatch, and
+say in the rationale which of the two halves failed — the form choice or the label on
+it. Length alone is not the test: a Summary modestly over ~500 words that still reads
+as a Summary is a pass, while a 500-word "Statement" is not, because the form's
+defining property is that no explanation was needed.
+
 - **pass:** (write) The form of the proof conclusion matches the evidence complexity — e.g. an Argument for two undistinguished candidate fathers or a refutation that turns on a reasoning chain; a Summary when multiple sources correlate cleanly; a Statement only when direct evidence settles it outright. The narrative's structure actually follows the chosen form. OR (review, `no-new-proof-expected`) The review correctly identifies which form the existing `ps_NNN` was written in AND states whether that form still fits the evidence shape (e.g., "Summary was defensible at the time; if newer sources surface a competing candidate, the next conclusion may need to be an Argument"). The skill is not expected to choose a new form here — the review just judges fit.
 - **partial:** In write-mode, the form is defensible but under- or over-built — e.g. a Summary used where competing candidates really warrant an Argument, or an Argument's heavy machinery applied to an open-and-shut Statement case — or the declared form doesn't match the narrative's actual structure. In review-mode, the assessment doesn't explicitly judge whether the existing form still fits.
 - **fail:** In write-mode, the form is clearly wrong for the evidence — e.g. a bare Statement for a contested, indirect-evidence case, leaving the reader unable to evaluate the reasoning — or no recognizable proof-conclusion structure at all. In review-mode, the assessment doesn't identify or judge the existing form at all.
@@ -76,7 +90,7 @@ reach the tree. Observed 2026-08-21, the mirror of the misgrade above: a
 re-invocation test was scored on this dimension after the tag had been read as
 "skip". One tag, three situations; the tier is what separates them.
 
-At tier `probable` or higher, does the skill actually *encode the conclusion in `tree.gedcomx.json`* — marking the concluded value as `primary` (facts) / `preferred` (names) on the right person, not merely narrating it in the proof summary? Evidence facts already sit on the tree — materialized continuously at identity-link time by person-evidence, un-`primary` and carrying their source-refs — so proof-conclusion's tree act is to declare which value is the *conclusion*, not to first populate the tree. A conclusion that lives only in `narrative_markdown` while the tree carries no `primary`/concluded value is a **found-but-lost** result (proof-conclusion SKILL.md §6).
+At tier `probable` or higher, does the skill actually *encode the conclusion in `tree.gedcomx.json`* — marking the concluded value as `primary` (facts) / `preferred` (names) on the right person, not merely narrating it in the proof summary? Evidence facts already sit on the tree — materialized continuously at identity-link time by person-evidence, un-`primary` and carrying their source-refs — so proof-conclusion's tree act is to declare which value is the *conclusion*, not to first populate the tree. A conclusion that lives only in `narrative_markdown` while the tree carries no `primary`/concluded value is a **found-but-lost** result (proof-conclusion agent body §6).
 
 **Two write paths (spec §7.1) — grade whichever the evidence shape calls for:**
 - **Common case — value matches an existing evidence fact.** The concluded value equals a fact already materialized from a record (e.g. the 1908 death-cert father-name, the 1786 marriage date). Set `primary` on that fact via `tree_correct` `update_fact` — **no new fact is added.**
