@@ -273,6 +273,18 @@ electron: $(JS_DEPS) ## Run the Electron viewer (consumes the shared viewer-ui)
 typecheck: $(JS_DEPS) ## Typecheck the whole JS workspace (turbo)
 	pnpm typecheck
 
+.PHONY: lint
+lint: $(JS_DEPS) $(EVAL_APP_DEPS) ## ESLint — the two workspaces that have a config (apps/electron, eval/app)
+	# Not `pnpm -r lint`: only these two declare a lint script, and `-r` would
+	# report success for every workspace that simply has none. Named explicitly
+	# so adding a third config is a visible edit here rather than a silent
+	# no-op.
+	pnpm --filter @genealogy/electron lint
+	# eval/app is NOT a pnpm workspace member (same carve-out as the engine), so
+	# it is reached with npm from its own directory — exactly as eval-ui-test
+	# does. `pnpm --filter` matches no project here and exits non-zero.
+	cd eval/app && npm run lint
+
 .PHONY: test-all
 test-all: ## Run EVERY check before a PR: typecheck + JS + server + engine + CRUD UI + eval harness. Alias for scripts/test.sh
 	# One command, one contract. scripts/test.sh owns the implementation
