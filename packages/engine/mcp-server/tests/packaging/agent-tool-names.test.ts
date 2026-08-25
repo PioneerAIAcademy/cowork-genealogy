@@ -490,3 +490,136 @@ describe("plugin agent permission surface", () => {
     });
   }
 });
+
+// A built-in (non-MCP) tool named in an agent BODY must be a tool that agent can
+// actually call — i.e. it appears in the agent's `tools:` or `disallowedTools:`
+// frontmatter (issue #1635).
+//
+// `check_rubric_tool_drift.py` already does the MCP-name side of this for agent
+// bodies and is CI-wired, but its vocabulary is the .mcpb manifest's MCP tool
+// names, so a BUILT-IN named in a body — `ToolSearch`, `Glob`, `Bash` — is
+// checked by nothing, and the closest check is warn-only. The defect that proved
+// the gap: record-extractor.md instructed the agent to recover a deferred
+// persistence tool "via ToolSearch", a built-in it does not hold and its
+// MCP-only `tools:` list cannot carry — billed on every invocation of the
+// most-invoked agent, never executable, and green in CI.
+//
+// Vocabulary is built-in names that are NOT ordinary English, so a bare mention
+// is a real tool reference. `Read` / `Write` / `Edit` / `Task` are EXCLUDED —
+// they are verbs in these bodies ("Read exactly ONE image per invocation",
+// "Write the narrative markdown") — mirroring COMMON_WORD_EXEMPTIONS in
+// check_rubric_tool_drift.py. Bare occurrences are matched, not only backticked
+// ones: the motivating defect carries no backticks. No "imperative context"
+// classifier — measured at 7a30786b this vocabulary matched exactly one line
+// across all six bodies, so a plain mention rule is already precise and a
+// classifier would only ever fit the one defect it was written against.
+//
+// Scope is agent bodies only. `skills/*/SKILL.md` is out: `allowed-tools` is a
+// grant not a restriction, the main thread holds every tool, and the two skill
+// bodies naming ToolSearch are correct.
+const BUILTIN_TOOL_VOCAB = [
+  "ToolSearch",
+  "Glob",
+  "Grep",
+  "Bash",
+  "WebFetch",
+  "WebSearch",
+  "NotebookEdit",
+  "TodoWrite",
+  "SlashCommand",
+  "AskUserQuestion",
+  "MultiEdit",
+] as const;
+
+/** 1-based line where frontmatter closes, or 0 if none. Scan the BODY only —
+ *  a granted built-in legitimately appears in the `tools:` block above. */
+function agentBodyStart(lines: string[]): number {
+  if (lines[0]?.trim() !== "---") return 0;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === "---") return i + 1;
+  }
+  return 0; // unterminated — treat the whole file as body rather than skip it
+}
+
+// Built-in body mentions that existed when this lint landed, keyed on
+// (agent file, trimmed line text) — never a line number; these files move by
+// dozens of lines a week (the reasoning is spelled out in no-issue-refs.test.ts).
+// This is not an escape hatch for an inconvenient lint: a new mention gets the
+// tool granted or the line removed, not a row here.
+const BUILTIN_BODY_ALLOWLIST: { file: string; text: string; reason: string }[] = [
+  {
+    file: "record-extractor.md",
+    text: "net. If a persistence tool shows as deferred, load it via ToolSearch",
+    reason:
+      "ruled 2026-08-23, folded into #1666 (deep dive: record-extraction), which pays that " +
+      "directory's eval run; the row leaves in that PR when it deletes the passage. Editing " +
+      "record-extractor.md here would flip its run log inactive and force a paid re-run.",
+  },
+];
+
+interface BuiltinHit {
+  file: string;
+  lineNo: number;
+  word: string;
+  text: string;
+}
+
+function builtinHitsInAgent(file: string): BuiltinHit[] {
+  const text = readFileSync(join(agentsDir, file), "utf8");
+  const held = new Set(
+    [...extractList(text, "tools"), ...extractList(text, "disallowedTools")].map(bareOrBuiltin),
+  );
+  const lines = text.split(/\r?\n/);
+  const hits: BuiltinHit[] = [];
+  for (let i = agentBodyStart(lines); i < lines.length; i++) {
+    for (const word of BUILTIN_TOOL_VOCAB) {
+      if (held.has(word)) continue; // the agent holds it — a body mention is fine
+      if (new RegExp(`\\b${word}\\b`).test(lines[i])) {
+        hits.push({ file, lineNo: i + 1, word, text: lines[i].trim() });
+      }
+    }
+  }
+  return hits;
+}
+
+const allBuiltinHits = agentFiles.flatMap(builtinHitsInAgent);
+
+function isAllowedBuiltinHit(h: BuiltinHit): boolean {
+  return BUILTIN_BODY_ALLOWLIST.some((a) => a.file === h.file && a.text === h.text);
+}
+
+describe("plugin agent bodies name no built-in tool the agent cannot call", () => {
+  it("scans every agent body", () => {
+    // A lint that silently scanned nothing reads as coverage.
+    expect(agentFiles.length).toBeGreaterThan(0);
+  });
+
+  it("names no built-in tool absent from the agent's tools:/disallowedTools:", () => {
+    const offenders = allBuiltinHits
+      .filter((h) => !isAllowedBuiltinHit(h))
+      .map(
+        (h) =>
+          `${h.file}:${h.lineNo} names built-in ${h.word}, which is in neither its tools: ` +
+          `nor disallowedTools: — ${h.text}`,
+      );
+    expect(
+      offenders,
+      "an agent body instructs the agent to use a built-in tool its frontmatter grants " +
+        "nowhere. It is billed on every invocation and can never execute. Grant the tool " +
+        "in tools:, remove the mention, or add a reasoned allow-list entry if pre-existing.",
+    ).toEqual([]);
+  });
+
+  describe("allow-list entries are still needed", () => {
+    for (const { file, text, reason } of BUILTIN_BODY_ALLOWLIST) {
+      it(`${file} still contains its allowed line (${reason})`, () => {
+        const stillMatches = allBuiltinHits.some((h) => h.file === file && h.text === text);
+        expect(
+          stillMatches,
+          `allow-list entry for ${file} no longer matches any body line — the prose was ` +
+            "removed or reworded (or the tool was granted), so delete the stale entry",
+        ).toBe(true);
+      });
+    }
+  });
+});
