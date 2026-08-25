@@ -1,8 +1,13 @@
 """Invoke deterministic validators per unit-test-spec.md §8.
 
 The harness imports test_universal.py + test_<skill>.py if present, finds all
-top-level test_* functions, and calls each with the args from its signature
-(a subset of {before_state, after_state, tool_calls, skill_frontmatter}).
+top-level test_* and report_* functions, and calls each with the args from its
+signature (a subset of the available_args dict).
+
+- test_* (tier 1, gating): failure blocks the test and is sent to the judge as
+  a validator failure name.
+- report_* (tier 2, reporting): failure is an observation fed to the judge as
+  anonymous text, never gates the test outcome. (Issue #1749.)
 
 This matches the spec's "Validators that don't need an argument simply ignore
 it" while remaining compatible with the seed validators' pytest-style fixtures.
@@ -28,6 +33,7 @@ class ValidatorRunResult:
     name: str
     passed: bool
     error: str | None
+    reporting_only: bool = False  # tier-2 report_* functions (issue #1749)
 
 
 def run_validators(
@@ -44,6 +50,10 @@ def run_validators(
     attempted_mcp_calls: list[dict[str, Any]] | None = None,
     skills_invoked: list[str] | None = None,
     text_response: str | None = None,
+    activated: bool | None = None,
+    num_turns: int | None = None,
+    output_tokens: int | None = None,
+    aborted_reason: str | None = None,
 ) -> list[ValidatorRunResult]:
     """Run universal validators + the per-skill validator file if present."""
     results: list[ValidatorRunResult] = []
@@ -105,6 +115,16 @@ def run_validators(
         # it to re-grade prose quality — that is the judge's job, and a
         # validator that tries becomes a rubric dimension nobody can tune.
         "text_response": text_response or "",
+        # Whether the skill activated (derived by derive_activated in
+        # orchestrator). None = unknown (e.g. abort before derivation).
+        "activated": activated,
+        # SDK-reported turn count and output token count, extracted from
+        # result.usage. Defaults to 0 when absent or on early abort.
+        "num_turns": num_turns or 0,
+        "output_tokens": output_tokens or 0,
+        # Abort reason if the run was aborted (e.g. "max_wall_clock_seconds",
+        # "sdk_stream_silence", "error"). None when the run completed normally.
+        "aborted_reason": aborted_reason,
     }
 
     universal = validators_dir / "test_universal.py"
@@ -154,7 +174,9 @@ def _import_validator_module(path: Path, name: str):
 def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResult]:
     out: list[ValidatorRunResult] = []
     for attr_name in dir(module):
-        if not attr_name.startswith("test_"):
+        is_test = attr_name.startswith("test_")
+        is_report = attr_name.startswith("report_")
+        if not (is_test or is_report):
             continue
         fn = getattr(module, attr_name)
         if not callable(fn):
@@ -180,15 +202,21 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
                             f"{sorted(missing)}. Valid harness-supplied "
                             f"args are: {valid}"
                         ),
+                        reporting_only=is_report,
                     )
                 )
                 continue
             fn(**kwargs)
-            out.append(ValidatorRunResult(name=attr_name, passed=True, error=None))
+            out.append(ValidatorRunResult(
+                name=attr_name, passed=True, error=None,
+                reporting_only=is_report,
+            ))
         except AssertionError as e:
             out.append(
                 ValidatorRunResult(
-                    name=attr_name, passed=False, error=str(e) or "assertion failed"
+                    name=attr_name, passed=False,
+                    error=str(e) or "assertion failed",
+                    reporting_only=is_report,
                 )
             )
         except Skipped as e:
@@ -199,6 +227,7 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
                     name=attr_name,
                     passed=True,
                     error=f"skipped: {e}",
+                    reporting_only=is_report,
                 )
             )
         except Exception as e:  # noqa: BLE001 — validator bug, surface verbatim
@@ -207,6 +236,7 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
                     name=attr_name,
                     passed=False,
                     error=f"{type(e).__name__}: {e}",
+                    reporting_only=is_report,
                 )
             )
     return out
@@ -218,5 +248,7 @@ def all_passed(results: list[ValidatorRunResult]) -> bool:
 
 def as_dicts(results: list[ValidatorRunResult]) -> list[dict[str, Any]]:
     return [
-        {"name": r.name, "passed": r.passed, "error": r.error} for r in results
+        {"name": r.name, "passed": r.passed, "error": r.error}
+        for r in results
+        if not r.reporting_only
     ]
