@@ -305,6 +305,16 @@ child's data is what typically needs correction), with the father as
 
 ### W3: `EVENT_AFTER_DEATH`
 
+> **SUPERSEDED — this section describes a design that was never
+> shipped.** The tool emits `hasEventAfterDeath1`, not
+> `EVENT_AFTER_DEATH`, and it uses a death-like *family* rather than the
+> exclusion list below. See "How `hasEventAfterDeath1` actually decides"
+> immediately after this section for the shipped behaviour. The
+> placeholder note at the top of this file anticipated the move to
+> FamilySearch tags; that migration happened and these definitions were
+> not updated with it. Kept here as the record of the original design,
+> not as a description of current behaviour.
+
 **Severity:** `contradiction`
 
 **Condition:** The anchor has a Death fact with a parseable year, and
@@ -341,6 +351,56 @@ for each fact in anchor.facts:
 **factIds:** `[deathFact.id, fact.id]`
 
 **relatedPersonId:** omitted
+
+---
+
+### How `hasEventAfterDeath1` actually decides
+
+This is the shipped behaviour, and it lives nowhere else in prose — only
+in the docstring at `src/tools/person-warnings.ts:298-307`. Recorded here
+because three separate pieces of skill doctrine were written against a
+mental model this contradicts.
+
+**There is no exclusion list.** The tag fires on
+
+```
+latest(every fact) - latest(death-like fact) > 365 days
+```
+
+(`hasEventAfterDeath` at `src/tools/person-warnings.ts:309`; the predicate
+`factDaysDiffLatestLatest` at `src/utils/fact-helpers.ts:422`.)
+
+**"Death-like" is a family of nine fact types** (`DEATHLIKE_FACT_TYPES`,
+`src/utils/mob.ts:45-55`):
+
+`Death`, `Burial`, `Cremation`, `Funeral`, `Obituary`, `Probate`, `Will`,
+`DeathRegistration`, `BurialRegistration`
+
+Family membership *is* the mechanism. A fact of any of those nine types
+raises the death-side anchor, so it can never fire the tag on its own —
+however long after the death it is dated. That is why no exclusion list is
+needed, and why adding one would be a behaviour change rather than a
+tidy-up.
+
+Three consequences a reader has to hold:
+
+1. **A probate twenty years after death is silent.** It moves the anchor
+   forward instead of tripping the check.
+2. **The fact type is the trigger, not the date.** The same estate file is
+   silent attached as a `Probate` fact and fires attached as a
+   `Residence` fact. A posthumous record raises the tag only when it was
+   typed outside the death-like family.
+3. **A wrong date does damage in both directions.** A transcription or
+   digitization date recorded as the event date, on a death-like fact,
+   pushes the anchor *forward* and hides genuine post-death events (and
+   inflates `hasAgeRangeGreaterThan120`). The same wrong date on any other
+   fact type manufactures a post-death event that never happened.
+
+Note the divergences from the superseded W3 above, since a reader
+checking implementation against spec will hit them: the shipped code
+requires no `Death` fact specifically, compares at 365-day tolerance
+rather than year granularity, and has no `Estate` type anywhere in the
+tool.
 
 ---
 
