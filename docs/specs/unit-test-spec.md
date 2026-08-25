@@ -1149,7 +1149,7 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
 
 - `before_state` (dict) — `{"research_json": {...}, "tree_gedcomx_json": {...}, "files": {<path>: <content>}, "skill_frontmatter": {...}}`. Files present in the temp dir before the skill ran. `research_json` and `tree_gedcomx_json` are convenience aliases for the parsed contents of those files; absent if the test is stateless. `skill_frontmatter` is the parsed YAML frontmatter of the skill under test's SKILL.md.
 - `after_state` (dict) — same shape as `before_state`, snapshotting state after the skill ran. Files created during the run appear here with no `before` counterpart.
-- `tool_calls` (list) — every MCP tool call made by the skill, with the shape `{"tool": "mcp__genealogy__record_search", "args": {...}, "matched": {...}, "response_fixture": "..."}` (Section 10).
+- `tool_calls` (list) — every MCP tool call made by the skill, with the shape `{"tool": "mcp__genealogy__record_search", "args": {...}, "matched": {...}, "response_fixture": "...", "response": {...}}` (Section 10). `response` is present only for `live` and unmatched (`none`) calls — see Section 10.
 - `text_response` (str) — every assistant text block concatenated, no separator: narration and closing reply in one string, not the final reply alone (`"".join(text_chunks)` in `skill_runner.run_skill`). Empty when the run produced no assistant text. Use it for a **literal** property of the text — a phrase that must never appear, an identifier that must be named — and **not** to re-grade prose quality, which is a rubric dimension's job. A validator that tries to score how well the reply reads becomes a dimension nobody can tune. The case it exists for: a reply-shape rule a skill body states outright ("One sentence only", "do not restate the article content") is graded unevenly by a judge — on `search-wikipedia`'s run `v1_2026-08-22_10-20-08` the `Reply economy` dimension caught a narrating reply on one test and scored a byte-identical shape 3 on another, quoting a reply it had not been given.
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.
@@ -1259,6 +1259,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
   "outcome": "string (pass | partial | fail | aborted | xfail | xpass)",
   "flaky": "boolean (true when per-run outcomes are not unanimous)",
+  "grading_mode": "string (dimensions | invariant | routing) — what decided this outcome; OPTIONAL, absent on run logs written before this field existed",
+  "dimensions_gate_outcome": "boolean — whether the judge dimensions could change this outcome; false on `invariant` and `routing` tests, where they are diagnostic only. OPTIONAL, same reason",
   "outcome_summary": {
     "per_run_outcomes": ["string (one entry per run: pass | partial | fail | aborted)"],
     "aggregated_dimensions": [
@@ -1329,10 +1331,11 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
             "args": "object (arguments Claude actually passed)",
             "expected_args": "object or null (canonical expected args from the matched fixture's `args` block; null when no fixture matched)",
             "matched": {
-              "kind": "string (predicate | none)",
+              "kind": "string (predicate | live | none)",
               "index": "number or null"
             },
-            "response_fixture": "string or null (fixture file name that provided the response, null when kind is `none`)"
+            "response_fixture": "string or null (fixture file name that provided the response, null when kind is `none` or `live`)",
+            "response": "the tool's response — PRESENT ONLY when kind is `live` or `none`; absent for a `predicate` match, whose response is recoverable from `response_fixture` + `matched.index` at that commit"
           }
         ],
         "builtin_tool_calls": [
@@ -1396,6 +1399,29 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
   statistic.
 - **`totals.cached_input_tokens`** — input tokens served from the prompt cache. **`input_tokens` and `cached_input_tokens` are disjoint: `input_tokens` counts only the tokens NOT served from cache**, so the two are added to get the prompt total and never subtracted from one another. Read the cache hit rate as a share of that total — `cached_input_tokens / (cached_input_tokens + input_tokens)` — which should be 50%+ for a batched skill suite (all tests for one skill run consecutively) even at N=1, because the skill prompt is identical across tests within the batch. With N=3 batched, expect 70%+. Lower numbers indicate caching isn't firing and costs will be higher than estimated in Section 11. Stating it against `input_tokens` alone is unstateable rather than merely imprecise: on a warm cache the cached count routinely exceeds the fresh one, so the ratio runs into the thousands of percent.
 - **`outcome_summary.aggregated_dimensions`** — modal dimension scores across runs (ties resolve toward the lower score). Used by dashboards; per-run dimension scores remain in `runs[].judge.dimensions` for human review.
+- **`grading_mode` / `dimensions_gate_outcome`** — what decided the outcome, and
+  whether the judge dimensions had any part in it. `invariant` (a
+  `grade_on_invariant` negative, decided by its tag-gated validator alone) and
+  `routing` (a negative with a non-empty `correct_skill`, decided by which skill
+  fired) both grade the dimensions **diagnostically**: a dimension scored 1
+  beside `outcome: "pass"` is designed, not a defect. `dimensions` covers
+  positive tests and out-of-scope negatives (`correct_skill: []`), where a 1
+  does force a fail.
+
+  Without these two fields the run log renders all four cases identically, and a
+  reader has to know `grade_on_invariant` exists, find the test JSON, then read
+  `_compute_outcome` to tell a designed contradiction from a broken one. That
+  ambiguity produced a confident, incorrect correctness claim inside a PR
+  approval. Both are optional: a run log written before they existed omits them,
+  and absent means "this predates the field", which is what a reader needs —
+  hence omitted rather than written as `null`.
+- **`tool_calls[].response`** — what the mock returned. Recorded for `live` and
+  unmatched (`none`) calls, whose content exists nowhere else on disk, and
+  **omitted for a `predicate` match**, which is exactly recoverable from
+  `response_fixture` plus `matched.index` at that commit. Storing those again
+  would re-add bytes git already holds — measured at ~16% of the largest run log
+  — against a schema version introduced to make run logs smaller. Analysis that
+  needs a fixture-matched response reads the fixture.
 
   **Stratified scoring.** Each dimension carries `source: base | rubric`. The base dimensions are a fixed set (3, though Tool Arguments may be N/A), but the number of `rubric` dimensions varies per skill, so suite-level pass rates are only apples-to-apples within a single `source` bucket. Dashboards should compute and track `base_pass_rate` and `rubric_pass_rate` separately for each skill — combining them into a single rate makes the denominator drift as rubric counts change across skills. (`judge_context` is not scored, so it produces no dimensions and no pass-rate bucket.)
 

@@ -294,6 +294,7 @@ async def _run_one_test_async(
                 flush=True,
             )
 
+    mode, gates = grading_mode_for(spec)
     return assemble_test_entry(
         test_id=spec.id,
         test_type=spec.type,
@@ -302,6 +303,8 @@ async def _run_one_test_async(
         mcp_fixtures=spec.mcp_fixtures,
         runs=runs,
         timestamp_for_run_id=timestamp,
+        grading_mode=mode,
+        dimensions_gate_outcome=gates,
     )
 
 
@@ -671,16 +674,7 @@ async def _execute_single_run(
             "text_response": result.text_response,
             "activated": activated,
             "skills_invoked": result.skills_invoked,
-            "tool_calls": [
-                {
-                    "tool": c["tool"],
-                    "args": c["args"],
-                    "expected_args": c.get("expected_args"),
-                    "matched": c["matched"],
-                    "response_fixture": c.get("response_fixture"),
-                }
-                for c in result.tool_calls
-            ],
+            "tool_calls": [_tool_call_entry(c) for c in result.tool_calls],
             "files_created": files_created,
             # Omitted when empty so a run that called no built-in tool writes
             # the same run_output it always has — this field appearing is
@@ -1143,6 +1137,77 @@ def flag_routing_negative_judge_fail(
                     "rationale": dd.get("rationale") or "",
                 })
     return dimensions
+
+
+def _tool_call_entry(c: dict[str, Any]) -> dict[str, Any]:
+    """One `output.tool_calls` entry, keeping the response the mock already captured.
+
+    The mock has always recorded it — `mock_mcp.py`'s call-log docstring lists
+    `"response"` as a key and all six `call_log.append` sites set it — and this
+    projection dropped it on the way into the run log. So no post-hoc analysis
+    of a committed run log could answer "what did the skill actually see?", and
+    the warn-only `person_evidence` guardrail (#1550) could not be calibrated
+    from the unit tier at all. Measured 2026-08-24: 2,812 tool calls across the
+    August-2x run logs, zero carrying a response.
+
+    **Kept only where the content exists nowhere else** (lead, 2026-08-24): a
+    `predicate` match is exactly recoverable from `response_fixture` plus
+    `matched.index` at that commit, so re-storing those bytes would add ~16% to
+    the largest run log (147 KB against 913 KB) to duplicate what git already
+    holds — and shrinking run logs is why `schema_version` 3 exists. `live` and
+    `none` calls have no such source, and `live` is the case the named use
+    (`research_append`) needs.
+    """
+    entry = {
+        "tool": c["tool"],
+        "args": c["args"],
+        "expected_args": c.get("expected_args"),
+        "matched": c["matched"],
+        "response_fixture": c.get("response_fixture"),
+    }
+    kind = (c.get("matched") or {}).get("kind")
+    if kind in ("live", "none"):
+        entry["response"] = c.get("response")
+    return entry
+
+
+def grading_mode_for(spec: TestSpec) -> tuple[str, bool]:
+    """What decides this test's outcome, and whether the judge dimensions do.
+
+    Returns `(grading_mode, dimensions_gate_outcome)` for the run log, so a
+    reader of the raw JSON can tell a designed contradiction from a broken one.
+
+    This is the defect issue #1000 was filed on: `ut_search_records_005`
+    reported `outcome: "pass"` beside `Correctness = 1` with a rationale
+    describing an outright routing failure, and a reviewer concluded from the
+    run log that the harness miscomputes negative outcomes — a confident,
+    incorrect correctness claim inside a PR approval. The outcome was right; the
+    run log simply never said the dimensions were diagnostic. It renders them
+    identically to a positive test's, where a 1 genuinely does force a fail.
+
+    The three modes mirror `_compute_outcome`'s branches exactly, and must keep
+    mirroring them — `test_grading_mode_matches_what_compute_outcome_does`
+    drives the real function with a dimension scored 1 and asserts the outcome
+    flips iff `dimensions_gate_outcome` is True, so this cannot drift into a
+    comfortable lie without a test going red:
+
+    - `"invariant"` — `negative.grade_on_invariant`. `_compute_outcome` returns
+      `pass` on the tag-gated validator alone. Dimensions never gate.
+    - `"routing"` — a negative with a non-empty `correct_skill`. The verdict is
+      the routing decision; the judge runs base-only and diagnostically.
+    - `"dimensions"` — positive tests, and out-of-scope negatives
+      (`correct_skill: []`), where "no skill fired" holds whether the model
+      cleanly declined or answered the request itself, so the base dimensions
+      are the only thing telling those apart and they DO gate.
+    """
+    if spec.type == "positive":
+        return "dimensions", True
+    negative = spec.negative or {}
+    if negative.get("grade_on_invariant"):
+        return "invariant", False
+    if negative.get("correct_skill", []) == []:
+        return "dimensions", True
+    return "routing", False
 
 
 def _compute_outcome(
