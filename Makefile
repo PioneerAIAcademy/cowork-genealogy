@@ -680,6 +680,21 @@ e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latenc
 	# older runs report "no skill-phase data" rather than crashing.
 	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-compaction
+e2e-compaction: ## record_search subjectId supply by compaction segment, over committed e2e runs (issue #1155): make e2e-compaction | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs' usage.timeline +
+	# tool_calls. A run is segmentable only from a run committed after
+	# 2026-07-26 (#895, timeline tool-name tagging) -- older runs are excluded
+	# and the count is reported, not silently dropped. Segments 0-2 are
+	# "early", 3+ is "late" (issue #1155's split). The bare command's 14-day
+	# SINCE default is too narrow for this report's own question: both windows
+	# issue #1155 asks to compare are already past it as of writing --
+	# SINCE=2026-07-27 (the ranking fold) and SINCE=2026-08-04 (the
+	# rankingSkipped note) are the two invocations that answer it.
+	cd eval/harness && uv run python -m e2e.compaction_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: provenance-report
 provenance-report: ## Identifiers a skill persisted that no input supplied: make provenance-report [SKILL=<name>]
 	# Offline, no API calls. Seven skill bodies carry a don't-fabricate rule in
