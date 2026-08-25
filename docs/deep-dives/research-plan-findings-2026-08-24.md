@@ -306,7 +306,7 @@ suite is spelled `score <Dimension> as 1 (fail)`, which the pattern misses
 because a dimension name sits between "score" and the digit:
 
 ```sh
-grep -lniE 'score [A-Za-z][A-Za-z ]+ (as [123]|low|high)' eval/tests/unit/research-plan/*.json
+grep -lE 'score [A-Za-z][A-Za-z ]+ as [123]' eval/tests/unit/research-plan/*.json
 ```
 
 — returns **7 files**:
