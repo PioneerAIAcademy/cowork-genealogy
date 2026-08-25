@@ -298,8 +298,13 @@ evidenced by that number.
 **Addresses F0 — the 58% no other change reaches.**
 
 Drop the orchestrator below `high`; reserve high-effort work for
-`proof-conclusion` / `conflict-resolution`. Effort is session-wide and reaches
-every skill *and* subagent, so the e2e suite is the gate.
+`proof-conclusion` / `conflict-resolution`. **Corrected 2026-08-25:** agent
+`effort:` binds (verified live in Cowork and Claude Code), so reserving high effort
+for a named step *is* possible — but only for steps that are plugin **agents**.
+`proof-conclusion` and `research-exhaustiveness` became agents on 2026-08-19 and
+2026-08-23; `conflict-resolution` is still a skill and still runs at the session
+effort. Session effort reaches every skill *and* subagent that does not pin its own,
+so the e2e suite is still the gate.
 
 **Prerequisite:** the unit suite cannot serve even as a screen until it pins
 effort. `eval/harness/harness/` writes no `effortLevel`, so unit runs inherit the
