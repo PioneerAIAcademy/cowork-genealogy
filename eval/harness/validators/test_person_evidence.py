@@ -403,6 +403,14 @@ def test_research_query_called_for_coverage(tool_calls, test):
 # packages/engine/mcp-server/src/tools/materialize-facts.ts.
 _UNMATERIALIZABLE = frozenset({"relationship", "marriage", "age"})
 
+# Fact types that bear on a SECOND party rather than asserting the persona's own
+# identity. A `relationship` assertion on the groom persona ("child of Thomas")
+# links to the FATHER's tree person, so the persona and the linked person are
+# deliberately different people and `same_person(groom, father)` is a comparison
+# SKILL.md never asks for. Excluding them costs no coverage: the same persona's
+# `name`/`sex` assertions are still in scope and still carry the demand.
+_NON_IDENTITY_FACT_TYPES = frozenset({"relationship", "marriage"})
+
 
 def _new_person_evidence(before: dict, after: dict) -> list[dict]:
     before_ids = {e.get("id") for e in (before.get("person_evidence") or [])}
@@ -415,6 +423,22 @@ def _new_person_evidence(before: dict, after: dict) -> list[dict]:
 
 def _assertions_by_id(state: dict) -> dict:
     return {a.get("id"): a for a in (state.get("assertions") or [])}
+
+
+def _results_ref_missing(research: dict, assertion: dict) -> bool:
+    """True when the assertion's log entry has no results sidecar.
+
+    SKILL.md §2: a search predating result retention has `results_ref: null`, so
+    the `gedcomx1` side of `same_person` cannot be built and correlation stands
+    alone. Demanding a score there fails a run for a fixture property.
+    """
+    log_id = assertion.get("log_entry_id")
+    if not log_id:
+        return False
+    for entry in research.get("log") or []:
+        if entry.get("id") == log_id:
+            return entry.get("results_ref") is None
+    return False
 
 
 def _same_person_pairs(tool_calls: list[dict]) -> set[tuple]:
@@ -483,9 +507,26 @@ def test_same_person_called_when_persona_meets_existing_candidate(
     Observed at roughly 1 in 3 on that one test (#1646 comment 4), which is
     exactly the intermittency a judge dimension is worst at catching.
 
-    Self-gating: skips unless some NEW `pe_` entry links an assertion with a
-    non-null `record_persona_id` to a person that was already in the tree.
-    A newly minted person is not an identity match and does not qualify.
+    Self-gating, and deliberately narrow — it must only fire where this tier can
+    actually verify the pairing. Three cases SKILL.md endorses were false-failed
+    by an earlier, broader version (caught in review of #1882):
+
+    1. **A relationship-type assertion.** In `flynn-marriage-parent-match`,
+       `a_004`/`a_005` are `fact_type: relationship` on the GROOM persona `G1`
+       ("child of Thomas", "child of Bridget") and link to the parents `I1`/`I2`.
+       The identity matches run through the parent personas — `F1->I1`, `M1->I2`,
+       which the passing runs do call — so demanding `same_person(G1, I1)` asks
+       the groom to be compared to his father. Replaying the broader version
+       against the PASSING `v1_2026-08-12_17-18-54` n7v run fires on exactly
+       those two entries, i.e. it would have flipped a passing test to fail.
+    2. **A household paired with `matchRelatives: true`** (§2.4): the relative
+       scores come back in the response's `matches` array, never as separate
+       call args, and this tier records no tool responses (F4). Unverifiable
+       here, so the check stands down rather than guessing.
+    3. **`results_ref: null`** (§2): no sidecar means `gedcomx1` cannot be built
+       and correlation stands alone.
+
+    A newly minted person is not an identity match and does not qualify either.
     """
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -497,16 +538,32 @@ def test_same_person_called_when_persona_meets_existing_candidate(
         before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
     )
 
+    if any(
+        (tc.get("args") or {}).get("matchRelatives")
+        for tc in tool_calls
+        if "same_person" in tc.get("tool", "")
+    ):
+        pytest.skip(
+            "a same_person call used matchRelatives=true — SKILL.md §2.4 pairs a "
+            "household's relatives in that one call and returns their scores in "
+            "the RESPONSE's `matches` array, which this tier does not record. "
+            "The pairings cannot be read from args, so demanding one call per "
+            "relative would fail the compliant path."
+        )
+
     scored = [
         e
         for e in _new_person_evidence(before, after)
         if (assertions.get(e.get("assertion_id")) or {}).get("record_persona_id")
         and e.get("person_id") in existing_persons
+        and (assertions.get(e.get("assertion_id")) or {}).get("fact_type")
+        not in _NON_IDENTITY_FACT_TYPES
+        and not _results_ref_missing(after, assertions.get(e.get("assertion_id")) or {})
     ]
     if not scored:
         pytest.skip(
-            "no new pe_ entry links a record-search persona to a pre-existing "
-            "tree person — nothing to score"
+            "no new pe_ entry makes an identity claim this tier can verify — "
+            "nothing to score"
         )
 
     pairs = _same_person_pairs(tool_calls)

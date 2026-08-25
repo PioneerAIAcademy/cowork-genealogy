@@ -349,9 +349,17 @@ def test_check_warnings_stands_down_without_the_tag():
 
 
 def test_scored_fires_per_persona_not_per_run():
-    """Pins the per-persona match. One `same_person` call on a household of
-    several scored personas leaves the rest unattested — the §7.3 path. Goes red
-    if the assertion is weakened back to "a same_person call exists anywhere"."""
+    """Pins the per-persona match on two INDEPENDENT identity claims — two
+    `name` personas, no `matchRelatives` call. Goes red if the assertion is
+    weakened back to "a same_person call exists anywhere".
+
+    Deliberately not a household: SKILL.md §2.4 pairs a household in ONE
+    `matchRelatives: true` call whose relative scores live in the response, so
+    demanding a call per relative would fail the compliant path. An earlier
+    version of this test described itself as the household case and so pinned
+    that false-fail as correct (caught in review of #1882);
+    `test_scored_stands_down_on_a_matchRelatives_household` now pins the
+    opposite."""
     after = {
         "assertions": [
             {"id": "a_1", "record_persona_id": "P1", "fact_type": "name"},
@@ -496,3 +504,114 @@ def test_unmaterializable_pins_age_as_not_owed():
             [],
             _TAGGED,
         )
+
+
+# --- Re-scope pins (second review of #1882) ----------------------------
+#
+# The per-persona match is right for an identity claim, but the precondition it
+# ran under was too broad and fired on compliant runs. Each test below pins one
+# exclusion; without them the validator false-fails a PASSING run.
+
+
+def test_scored_ignores_a_relationship_assertion():
+    """The n7v shape, and the one that was actually breaking. `a_004` is
+    `fact_type: relationship` on the GROOM persona G1 ("child of Thomas") and
+    links to the FATHER I1. The identity match runs through the parent persona
+    (F1->I1), which the passing runs call; demanding same_person(G1, I1) would
+    compare the groom to his father. Replaying the pre-fix validator against the
+    passing v1_2026-08-12_17-18-54 n7v run fired on exactly this."""
+    after = {
+        "assertions": [
+            {"id": "a_004", "record_persona_id": "G1", "fact_type": "relationship"},
+            {"id": "a_006", "record_persona_id": "F1", "fact_type": "name"},
+        ],
+        "person_evidence": [
+            {"id": "pe_4", "assertion_id": "a_004", "person_id": "I1"},
+            {"id": "pe_6", "assertion_id": "a_006", "person_id": "I1"},
+        ],
+    }
+    before = {"assertions": after["assertions"], "person_evidence": []}
+    # F1->I1 is scored; the relationship link to the same person is not owed one.
+    check_scored(
+        _state(before, _tree("I1", "I2")),
+        _state(after, _tree("I1", "I2")),
+        [_call("same_person", primaryId1="F1", primaryId2="I1")],
+    )
+
+
+def test_scored_still_fires_on_a_name_assertion_beside_a_relationship_one():
+    """Excluding relationship types must not blunt the check: the persona's own
+    `name` assertion still carries the demand."""
+    after = {
+        "assertions": [
+            {"id": "a_004", "record_persona_id": "G1", "fact_type": "relationship"},
+            {"id": "a_006", "record_persona_id": "F1", "fact_type": "name"},
+        ],
+        "person_evidence": [
+            {"id": "pe_4", "assertion_id": "a_004", "person_id": "I1"},
+            {"id": "pe_6", "assertion_id": "a_006", "person_id": "I1"},
+        ],
+    }
+    before = {"assertions": after["assertions"], "person_evidence": []}
+    with pytest.raises(AssertionError) as exc:
+        check_scored(
+            _state(before, _tree("I1", "I2")),
+            _state(after, _tree("I1", "I2")),
+            [_call("research_append")],
+        )
+    assert "a_006/F1 -> I1" in str(exc.value)
+    assert "a_004" not in str(exc.value)
+
+
+def test_scored_stands_down_on_a_matchRelatives_household():
+    """SKILL.md §2.4 pairs a household in one `matchRelatives: true` call and
+    returns the relative scores in the RESPONSE's `matches` array, which this
+    tier does not record (F4). The pairings are unreadable from args, so the
+    check must stand down rather than demand a call per relative."""
+    after = {
+        "assertions": [
+            {"id": "a_1", "record_persona_id": "P1", "fact_type": "name"},
+            {"id": "a_2", "record_persona_id": "P2", "fact_type": "name"},
+        ],
+        "person_evidence": [
+            {"id": "pe_1", "assertion_id": "a_1", "person_id": "I1"},
+            {"id": "pe_2", "assertion_id": "a_2", "person_id": "I2"},
+        ],
+    }
+    before = {"assertions": after["assertions"], "person_evidence": []}
+    with pytest.raises(pytest.skip.Exception):
+        check_scored(
+            _state(before, _tree("I1", "I2")),
+            _state(after, _tree("I1", "I2")),
+            [_call("same_person", primaryId1="P1", primaryId2="I1",
+                   matchRelatives=True)],
+        )
+
+
+def test_scored_stands_down_when_the_log_entry_has_no_results_ref():
+    """SKILL.md §2: a search predating result retention has `results_ref: null`,
+    so `gedcomx1` cannot be built and correlation stands alone."""
+    after = {
+        "assertions": [{"id": "a_1", "record_persona_id": "P1",
+                        "fact_type": "name", "log_entry_id": "log_009"}],
+        "person_evidence": [{"id": "pe_1", "assertion_id": "a_1", "person_id": "I1"}],
+        "log": [{"id": "log_009", "results_ref": None}],
+    }
+    before = {"assertions": after["assertions"], "person_evidence": [],
+              "log": after["log"]}
+    with pytest.raises(pytest.skip.Exception):
+        check_scored(_state(before, _tree("I1")), _state(after, _tree("I1")), [])
+
+
+def test_scored_still_fires_when_the_log_entry_has_a_results_ref():
+    """The mirror of the above — a sidecar exists, so the score is owed."""
+    after = {
+        "assertions": [{"id": "a_1", "record_persona_id": "P1",
+                        "fact_type": "name", "log_entry_id": "log_001"}],
+        "person_evidence": [{"id": "pe_1", "assertion_id": "a_1", "person_id": "I1"}],
+        "log": [{"id": "log_001", "results_ref": "results/log_001.json"}],
+    }
+    before = {"assertions": after["assertions"], "person_evidence": [],
+              "log": after["log"]}
+    with pytest.raises(AssertionError):
+        check_scored(_state(before, _tree("I1")), _state(after, _tree("I1")), [])
