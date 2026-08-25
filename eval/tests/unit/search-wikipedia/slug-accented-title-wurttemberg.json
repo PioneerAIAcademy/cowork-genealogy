@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_search_wikipedia_w8m",
+    "skill": "search-wikipedia",
+    "name": "Accented title transliterates rather than collapsing — Württemberg",
+    "type": "positive",
+    "description": "Wikipedia lookup whose returned title carries an umlaut. SKILL.md step 4 says an accented letter becomes its ASCII equivalent and never a hyphen, so the file must be wurttemberg.md and not w-rttemberg.md. Before the #1662 deep dive the slug rule said only 'replace every run of non-alphanumeric characters with a single hyphen', which left an accented title undefined and no test in the suite could distinguish the readings — every title in the corpus was ASCII. Accented titles are the normal case for the German, Polish and Scandinavian research this skill gets used for, and ut_search_wikipedia_009 already covered a German topic whose title happens not to carry one. The extract also contains ü, ö and ß, so the verbatim-copy check has something to lose.",
+    "tags": [
+      "wikipedia",
+      "slug",
+      "slug-transliteration",
+      "non-english",
+      "unicode-extract",
+      "german",
+      "slug-wurttemberg"
+    ]
+  },
+  "input": {
+    "user_message": "Look up Württemberg on Wikipedia — I'm tracing a family that left there in the 1840s",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wikipedia-search-wurttemberg"],
+  "judge_context": [
+    "Slug should be 'wurttemberg' — the u-umlaut in the returned title 'Württemberg' becomes a plain 'u'. A filename of 'w-rttemberg.md' means the umlaut was treated as a non-alphanumeric character and collapsed to a hyphen, which SKILL.md step 4 rules out. Both readings are checked deterministically by test_slug_wurttemberg and test_slug_matches_returned_title; do not re-derive the slug yourself.",
+    "The extract contains ü, ö and ß (Württemberg, Kirchenbücher, Familienregister, Auswanderungsakten) and long compound German nouns, all of which must be preserved byte-for-byte in the saved file. That is checked by test_saved_file_matches_template, not by you.",
+    "The user mentions tracing a family that left in the 1840s. That is context for why they want the article, not a second request: the skill should save the encyclopedia summary and stop. Do not expect or reward emigration research, a records list, or a plan — those belong to historical-context, locality-guide and research-plan. A one-sentence confirmation naming the file is the complete response."
+  ]
+}
