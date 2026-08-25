@@ -426,11 +426,30 @@ Grading only — `judge_context` and `rubric.md`, per the issue. The agent body 
 | `.../bounded-death-encoded-not-collapsed.json` | Stale `SKILL.md §2/§6` pointer → agent body. |
 | `.../research-query-gather-evidence.json` | Stale `SKILL.md §1` pointer → agent body. |
 
-These edits flip the run-log snapshot inactive; `check_runlogs.py` will block the PR until
-a fresh `make eval-skill SKILL=proof-conclusion` lands. **The run was already owed before
-this branch** — PR #1832 edited the agent body on 2026-08-23 and the newest log is
-inactive on `main` today. Last full run: `$5.64`, ~41 min
+**Only two of those four edits force the re-run.**
+`harness/snapshot.py` strips `_COSMETIC_TEST_FIELDS = ("name", "description", "tags")`
+before hashing a test file, so a `description`-only repoint is cosmetic by design. Run
+against this branch, `check_runlogs.py` names exactly three drifted snapshot files:
+
+    eval/tests/unit/proof-conclusion/no-image-claim-without-tool-confirmation.json
+    eval/tests/unit/proof-conclusion/rubric.md
+    packages/engine/plugin/agents/proof-conclusion.md
+
+**The third is not mine.** It is PR #1832's 2026-08-23 agent-body edit — hard confirmation
+that the snapshot was already inactive on `main` before this branch, and that these
+findings ride a run that was owed regardless. Last full run: `$5.64`, ~41 min
 (`v1_2026-08-21_19-34-21.json`, `totals`).
+
+**The judge prompt has also changed since that run** — `check_runlogs` warns that the log
+was scored under hash `a7c9bd99…` while the current prompt hashes `c39d7003…`. This does
+not touch F1–F5, which are read from `file_changes`, `tool_calls` and
+`builtin_tool_calls` rather than from scores: the narratives really are over budget, the
+question really was left open, the raw `Grep` really happened. It does qualify two
+*score-derived* claims. "4 of 8 flat" and "scored 3 on all 65" are statements about a
+judge prompt that no longer exists, so the fresh run is also the first honest measurement
+of whether `Proof-conclusion fit` and `Tool Arguments` are still flat under the current
+prompt — read the new judge-report before concluding that F1's rubric edit is what moved
+the dimension.
 
 ## Handed back, not fixed here
 
