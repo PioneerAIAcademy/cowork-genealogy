@@ -99,10 +99,69 @@ default and the ranking fold, both now in `record-search.ts`, and both pinned by
 requests the deep pool and returns `ranked`; without one, `count` stays at 20).
 The committed e2e corpus agrees: 21 of the 22 searches eligible to be ranked — a
 `subjectId` given *and* at least one match — came back with a `ranked` block.
-Every invariant moved
-into `research_append` holds regardless of context
+Every invariant moved into `research_append` holds regardless of context
 state, model, or how long the session has run — and holds identically in Cowork,
 the hosted path, and both harnesses, which prose never does.
+
+**The fold's remaining prose-only step shows a raw supply gap, mostly not
+decay — and smaller and less uniform than an aggregate read suggests.**
+Supplying `subjectId` itself, from `search-records/SKILL.md`, was left
+unmeasured under compaction. A compaction-segment audit of `search-records`
+via a different signal (`subjectId` supply rather than ranking-call rate;
+`make e2e-compaction`, issue #1155 — **not** the "second skill body" audit
+the "Revisit when" clause below names, since this re-checks the same skill)
+found early-segment (0–2) supply higher than late-segment (3+) in aggregate
+— but not segment by segment, and not by a wide margin before the nudge
+shipped. Per segment, post-nudge (`make e2e-compaction` prints this row
+unconditionally): 64.0% / 43.8% / 69.4% / 48.1% / 0.0% for segments 0–4.
+Segment 1 (43.8%) sits *below* segment 3 (48.1%), so supply is not monotone
+across segments, and segment 2 (69.4%) is the single highest of the five. The
+aggregate gap does not rest on segment 2 alone, though: dropping it leaves
+early at 53.0% (87/164) against the same late 44.8% — an 8.2-point gap where
+the full one is 13.2. Review this per-segment row rather than the two-bucket
+aggregate before drawing a conclusion from it.
+Both `--since` windows are cumulative — a later cutoff is a subset of an
+earlier one, not a disjoint slice — so the pre-nudge-only row below is not
+one command's output; it is `--since 2026-07-27` minus `--since 2026-08-04`,
+call by call: 45.8% vs. 43.6% before `rankingSkipped` shipped
+(2026-07-27..08-03, 312 early-segment calls / 101 late-segment calls, 34
+segmentable runs) — a 2.2-point gap, not a marked one — against 58.1% vs.
+44.8% after (`--since 2026-08-04` itself, 2026-08-04+, 16 runs / 29
+late-segment calls, as measured 2026-08-24). The "after" count moves as the
+corpus grows — a later run of the exact same command printing a different
+number is the corpus growing, not a contradiction to chase down; reproduce
+both with the commands in `docs/e2e-testing-guide.md`. The post-nudge late
+figure is also sensitive to a single run: `victoriano-macatangay-parents`
+contributes 13 of those 29 late-segment calls, all at 0%; excluding it,
+late-segment supply is 81.2% (13/16) — see the per-run table
+`make e2e-compaction` prints. Comparing the two **disjoint** windows:
+early-segment supply rose about 12 points after `rankingSkipped`
+(45.8% → 58.1%) while late-segment supply moved barely at all
+(43.6% → 44.8%).
+
+The published 58.1%/44.8% comparison is also between-run, and diluted by
+runs that never compact at all: of the 15 post-nudge runs with any
+`record_search` call, only 5 have both an early- and a late-segment call.
+Restricted to those 5 — the **paired**, within-run comparison
+`make e2e-compaction` also prints — EARLY is 79/94 = 84.0% against the same
+LATE 13/29 = 44.8% (every late-segment call in this window comes from a
+paired run, so LATE is unchanged; EARLY rises once the 10 non-compacting
+runs are excluded). The within-run gap is larger, not smaller, than the
+published headline — the direction holds and strengthens, but 58.1% is not
+the decay effect size.
+
+That raw gap is not, on inspection, mostly the decay it looks like. The
+tool's own schema permits omitting `subjectId` when the search "is not about
+a specific tree person yet," and a call-by-call read of the two runs
+carrying most of the post-nudge late-segment sample found that is what most
+of those omissions are — searches for a not-yet-tree child or an unconfirmed
+parent, the exact population a research session accumulates more of as it
+progresses. Only a couple of the late-segment omissions in those runs were
+the agent's already-established subject searched without its known
+`subjectId` — the narrower case the nudge actually targets, and the one this
+measurement does not yet isolate. `compaction_report.py` prints this caveat
+with every non-empty report; treat the raw percentages as a starting point
+for call-by-call reading, not a decay verdict on their own.
 
 **Costs, knowingly accepted.**
 
