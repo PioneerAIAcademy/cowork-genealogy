@@ -5,7 +5,7 @@
     "name": "Schema validity question should route to validate-schema",
     "type": "negative",
     "description": "User asks whether a date string is structurally valid as a research.json field value. That's a schema-validation question, not a calendar-conversion question. Routes to validate-schema (or to a direct answer about freeform-date-string handling), not convert-dates.",
-    "tags": ["near-miss", "convert-dates-vs-validate-schema", "boundary"]
+    "tags": ["near-miss", "convert-dates-vs-validate-schema", "boundary", "no-spurious-conversion"]
   },
   "input": {
     "user_message": "Is '15 Feb 1749/50' a valid value for a date field in research.json? Will the validator accept it?",

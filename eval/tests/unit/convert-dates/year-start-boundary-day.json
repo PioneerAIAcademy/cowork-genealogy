@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_convert_dates_016",
+    "skill": "convert-dates",
+    "name": "Double date on the year-start boundary day — 25 March",
+    "type": "positive",
+    "description": "User supplies '25 March 1750/1'. 25 March is the day the Old-Style year increments (24 March 1750 is followed by 25 March 1751), so it sits outside the 1 January - 24 March window where double-dating applies, and on that date the Old-Style and New-Style year numbers agree. A slash written there is anomalous, not routine: the entry may be 1751 (the register had rolled over) or 1750 (the scribe was still recording the outgoing year). The skill must flag the ambiguity and give both readings with a way to settle it, rather than resolving to the later year as if the date were inside the window. Exercises Ambiguity handling on a genuinely ambiguous input.",
+    "tags": ["dual-dating", "old-style-new-style", "england", "slash-notation", "year-start-boundary", "ambiguous-input"]
+  },
+  "input": {
+    "user_message": "What does '25 March 1750/1' mean on this English marriage record? Which year do I use in my research notes?",
+    "scenario": null
+  },
+  "judge_context": [
+    "Should explain dual-dating notation: pre-1752 England began the legal year on 25 March, so dates from 1 January to 24 March were written with both the Old Style and New Style years",
+    "Should recognize that 25 March falls OUTSIDE that window. It is the day the Old-Style year number increments — 24 March 1750 is followed by 25 March 1751 — so on 25 March the Old-Style and New-Style years agree and there is nothing for a double date to disambiguate. A slash written on that date is anomalous, not routine",
+    "Should give the genealogist both readings rather than one answer: the entry is 1751 if the register had already rolled the year over on that day, or 1750 if the scribe was still recording the outgoing year. Both are defensible from the notation alone",
+    "Should say how to settle it — read where the year number changes in the surrounding register entries, since that reveals the convention this particular scribe was using",
+    "Should NOT resolve it to 1751 as though the date were inside the 1 January - 24 March window, and should NOT tell the researcher that 1750 would be the wrong year. Foreclosing either reading is the failure this test looks for",
+    "Should NOT state or compute a Gregorian equivalent of the day — the user asked which year to use, not for a calendar conversion",
+    "Should preserve the original notation '1750/1' for the source citation"
+  ]
+}
