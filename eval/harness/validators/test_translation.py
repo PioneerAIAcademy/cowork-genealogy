@@ -5,23 +5,29 @@ text and explains genealogically significant terms. Narrative quality
 (accuracy, notation of uncertainty, cultural context, date formatting)
 lives in the rubric — graded by the LLM judge.
 
-Two mechanical checks: the skill doesn't call MCP tools (it has none in
-its allowed-tools frontmatter and shouldn't need any), and every full
-translation ends with both workflow hand-off offers.
+Three mechanical checks: the skill doesn't call MCP tools (it has none
+in its allowed-tools frontmatter and shouldn't need any), every full
+translation ends with both workflow hand-off offers, and a response
+carrying prose dates carries at least one ISO 8601 date.
 
-The split between the two instruments is deliberate and has been got
-wrong in both directions. A check belongs here only when the rubric has
-no dimension for it: `test_iso_date_formatting` was removed in 0300f881
-because rubric.md's "Date formatting" dimension grades the same thing,
-and a failing validator suppresses the judge wholesale
-(harness/orchestrator.py:495 gates the judge call on `validators_passed`),
-so the blunter copy pre-empted the finer one on exactly the runs it
-existed to grade. `test_next_step_offers` was removed in the same commit
-for that reason, but the reason did not hold: rubric.md's "Next-step
-offers" dimension had already been deleted in 56b9f3e *because this
-validator covered it*, so the removal left the offers graded by nothing.
-Before deleting either check, confirm the rubric dimension it duplicates
-actually exists.
+The split between the two instruments has been got wrong in both
+directions, so state the cost plainly. A failing validator suppresses
+the judge wholesale — orchestrator.py gates the judge call on
+`validators_passed` and `_compute_outcome` returns "fail" without it —
+so a check here costs the whole dimension breakdown on every run it
+fails. `test_next_step_offers` was removed in 0300f881 on that reasoning
+and the reasoning did not hold: rubric.md's "Next-step offers" dimension
+had already been deleted in 56b9f3e *because this validator covered it*,
+so the removal left the offers graded by nothing.
+
+`test_iso_date_formatting` is the case where the cost is real and
+accepted. rubric.md's "Date formatting" dimension does grade the same
+rule, so the two overlap; the validator is deliberately the weaker of
+the pair, firing only on a total absence of ISO dates, and the dimension
+grades the partial case it cannot see. When it fires, the run loses its
+dimension scores and reads as a bare fail — read the validator error,
+not the missing grades. Before deleting either check, confirm the rubric
+dimension it duplicates actually exists.
 
 See test_universal.py module docstring for the validator function-
 signature contract. The `test` argument is the parsed test JSON dict
@@ -99,4 +105,32 @@ def test_next_step_offers(text_response: str, test: dict) -> None:
         "translation response missing required next-step offer: "
         "'Link [person] to the tree?' (person-evidence) -- "
         "found only open-ended research suggestions instead"
+    )
+
+
+def test_iso_date_formatting(text_response: str, test: dict) -> None:
+    """SKILL.md requires ISO 8601 dates (YYYY-MM-DD) alongside prose dates in
+    assertions sections.  5 of 10 positive tests in v1_2026-07-27 write dates
+    like '14 March 1843' with no ISO parenthetical; correct form is
+    '14 March 1843 (1843-03-14)'.
+
+    This is a floor, not the full rule: it fires only when the response
+    carries prose dates and *no* ISO date at all. rubric.md's "Date
+    formatting" dimension grades the rest — whether every date carries its
+    ISO form, the partial case this check cannot see.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("negative tests are graded by routing, not response content")
+    MONTH = (
+        r"January|February|March|April|May|June|"
+        r"July|August|September|October|November|December"
+    )
+    prose_dates = re.findall(rf"\d{{1,2}}\s+(?:{MONTH})\s+\d{{4}}", text_response)
+    if not prose_dates:
+        pytest.skip("no English prose dates in response; ISO check not applicable")
+    iso_dates = re.findall(r"\b\d{4}-\d{2}-\d{2}\b", text_response)
+    assert iso_dates, (
+        f"response contains {len(prose_dates)} prose date(s) "
+        f"({prose_dates[:2]}) but no ISO 8601 dates (YYYY-MM-DD). "
+        "SKILL.md requires the ISO form alongside every prose date."
     )
