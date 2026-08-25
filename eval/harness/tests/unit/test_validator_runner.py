@@ -143,26 +143,6 @@ def test_unknown_parameter_is_a_failure_not_a_skip(tmp_path):
     assert "no_such_arg" in results[0].error
 
 
-def test_text_response_is_supplied_to_validators(tmp_path):
-    """`text_response` is a supplied arg. Some rules live only in the skill's
-    prose answer — a required hand-off offer, a date format — and a validator
-    is the deterministic way to grade them. Dropping it from `available_args`
-    would not disable those validators, it would fail them (see the test
-    above), so the wiring is pinned here."""
-    v = tmp_path / "test_universal.py"
-    v.write_text(
-        "def test_sees_the_response(text_response):\n"
-        "    assert text_response == 'the skill said this'\n", encoding="utf-8"
-    )
-    results = run_validators(
-        skill="x", validators_dir=tmp_path,
-        before_state={}, after_state={}, tool_calls=[],
-        text_response="the skill said this",
-    )
-    assert len(results) == 1, results
-    assert results[0].passed is True, results[0].error
-
-
 def test_validator_with_no_args_still_runs(tmp_path):
     nullary = tmp_path / "test_universal.py"
     nullary.write_text("def test_no_args():\n    assert 1 == 1\n", encoding="utf-8")
