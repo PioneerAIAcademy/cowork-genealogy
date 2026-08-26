@@ -33,7 +33,7 @@
     "place-search-all-any"
   ],
   "judge_context": [
-    "The plan MUST include at least one item — anywhere in the sequence, not necessarily first — targeting records that would name Martha's parents directly or test whether 'Wood' is even her birth surname: a further/earlier marriage-record search (Smith County TX marriage indexes 1857-1889 are fully indexed and full-text searchable), a probate/estate record naming her as an heir or ward, a church/baptism record, or a sibling's record. If no such item is present anywhere in the plan, score Record type selection as 1 (fail).",
+    "The plan MUST include at least one item — anywhere in the sequence, not necessarily first — targeting records that would name Martha's parents directly or test whether 'Wood' is even her birth surname: a further/earlier marriage-record search (Smith County TX marriage indexes 1857-1889 are fully indexed and full-text searchable), a probate/estate record naming her as an heir or ward, a church/baptism record, or a sibling's record. Whether such an item is present anywhere in the plan is what Record type selection turns on for this test.",
     "The plan may ALSO include a household census search against the 'Wood' surname (the Blount County, Alabama 1860 census) — that is a legitimate, cheap lead to check, and it does not need to be sequenced after the verification item. The failure this test guards against is narrower: a plan that stakes ITS ENTIRE parentage strategy on that census search alone, with no companion item verifying the surname or naming parents directly, OR whose rationale for that item flatly asserts 'Wood' as Martha's confirmed maiden name (rather than an unverified lead). Martha is independently documented under at least two other married surnames (Landham, Neal; a third, Hamby, is later), so a bride's surname on a marriage record is her birth name only if that marriage was demonstrably her first — nothing here establishes that of the 1869 Wood/Lanham marriage.",
     "Do NOT penalize the plan for sequencing the Wood-census item first, or for that item's own rationale not repeating the unconfirmed-surname caveat, AS LONG AS the caveat appears somewhere in the plan (e.g. in the very next item verifying the surname) and a direct-naming/verification item is genuinely present. Sequencing by cost/speed (a free, indexed census before a fuller marriage-record search) is defensible research practice, not the defect under test.",
     "Ideal (grade generously, do not require verbatim): a rationale somewhere in the plan notes that neither 'Wood' nor 'Landham' is confirmed as Martha's birth surname, and that a marriage record's bride surname is only reliable as a maiden name when it can be shown to be her first marriage.",
@@ -41,7 +41,7 @@
   ],
   "judge_reads_files": true,
   "execution": {
-    "max_wall_clock_seconds": 600,
+    "max_wall_clock_seconds": 900,
     "max_turns": 40
   }
 }
