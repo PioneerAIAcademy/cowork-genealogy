@@ -12,9 +12,9 @@
  * Setup:
  *   1. Create a Google Drive folder for feedback storage
  *   2. Set FOLDER_ID below to that folder's ID
- *   3. Optionally set NOTIFICATION_EMAIL to receive alerts
- *   4. Set the GITHUB_TOKEN and GITHUB_REPO Script Properties (see README)
- *   5. Deploy as web app (Execute as: me, Access: anyone)
+ *   3. Set the NOTIFICATION_EMAILS, GITHUB_TOKEN and GITHUB_REPO Script
+ *      Properties (see README)
+ *   4. Deploy as web app (Execute as: me, Access: anyone)
  */
 
 // ── Configuration ──────────────────────────────────────────────────
@@ -22,13 +22,10 @@
 // Find this in the folder's URL: drive.google.com/drive/folders/<THIS_ID>
 var FOLDER_ID = 'YOUR_FOLDER_ID_HERE';
 
-// Optional: email address to notify on new feedback. Leave empty to disable.
-var NOTIFICATION_EMAIL = '';
-
 // Bump this when you paste a new Code.gs into the console. doGet() returns it,
 // so `curl <exec-url>` says which version is actually deployed — otherwise an
 // unpublished edit is indistinguishable from a working one.
-var SCRIPT_VERSION = '2026-08-06';
+var SCRIPT_VERSION = '2026-08-26';
 
 // Labels applied to every feedback issue, in the same POST that creates it.
 // `genealogist` puts it in that pool and counts it; `feedback` is what
@@ -65,15 +62,24 @@ function doPost(e) {
 
     createFeedbackIssue(payload.filename, file.getUrl(), zipBlob);
 
-    if (NOTIFICATION_EMAIL) {
-      MailApp.sendEmail({
-        to: NOTIFICATION_EMAIL,
-        subject: 'Research Viewer feedback from ' + email + ' (' + zipKB + ' KB)',
-        body: feedbackMd
-            + '\n\n---\n'
-            + 'Zip: ' + file.getUrl() + '\n'
-            + 'Size: ' + zipKB + ' KB\n'
-      });
+    // Same rule as the GitHub call above: the zip is already saved, so a
+    // notification failure must not tell the user their submission failed.
+    // One malformed address in NOTIFICATION_EMAILS throws for the whole send,
+    // which would otherwise fail every submission until someone noticed.
+    try {
+      var recipients = notificationRecipients();
+      if (recipients) {
+        MailApp.sendEmail({
+          to: recipients,
+          subject: 'Research Viewer feedback from ' + email + ' (' + zipKB + ' KB)',
+          body: feedbackMd
+              + '\n\n---\n'
+              + 'Zip: ' + file.getUrl() + '\n'
+              + 'Size: ' + zipKB + ' KB\n'
+        });
+      }
+    } catch (mailErr) {
+      Logger.log('Failed to send notification for ' + payload.filename + ': ' + mailErr.message);
     }
 
     Logger.log('Saved feedback: ' + payload.filename + ' (' + zipKB + ' KB) from ' + email);
@@ -88,6 +94,36 @@ function doPost(e) {
       .createTextOutput(JSON.stringify({ ok: false, error: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+/**
+ * The addresses to notify, as the comma-separated string MailApp.sendEmail
+ * wants in `to`. Returns '' when nothing is configured, which disables the
+ * notification without touching the submission.
+ *
+ * Lives in a Script Property rather than a constant here because this file is
+ * committed to a public repo, and because adding a reviewer should not require
+ * republishing a deployment.
+ *
+ * One send, not one per address: MailApp's daily quota counts recipients, and
+ * a partial failure part-way through a loop would leave some reviewers
+ * notified and no way to tell which.
+ */
+function notificationRecipients() {
+  var raw = PropertiesService.getScriptProperties().getProperty('NOTIFICATION_EMAILS');
+  if (!raw) {
+    Logger.log('No NOTIFICATION_EMAILS Script Property — skipping notification email.');
+    return '';
+  }
+
+  var cleaned = [];
+  var parts = raw.split(',');
+  for (var i = 0; i < parts.length; i++) {
+    var address = parts[i].trim();
+    if (address) cleaned.push(address);
+  }
+
+  return cleaned.join(',');
 }
 
 function extractFeedbackMarkdown(zipBlob) {
@@ -228,7 +264,8 @@ function doGet() {
   return ContentService
     .createTextOutput(JSON.stringify({
       status: 'Feedback endpoint is running',
-      version: SCRIPT_VERSION
+      version: SCRIPT_VERSION,
+      notifyCount: notificationRecipients().split(',').filter(String).length
     }))
     .setMimeType(ContentService.MimeType.JSON);
 }
