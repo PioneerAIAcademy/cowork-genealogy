@@ -322,16 +322,18 @@ far the heavier filter, and the ratio is collection-specific, so treat
 the direction as the finding rather than any percentage. An earlier
 figure circulated for this parameter came from a probe that sent
 `q.isPrincipal=on`; the tool sends `true`/`false`, so that probe never
-exercised the `false` branch at all. Precise totals belong in the probe
-artifact, not here.
+exercised the `false` branch at all.
 
 Why `false` is the load-bearing half, and why relative-name anchors do
 not replace it: `fatherGivenName`/`spouseGivenName` search the *target*
-with a relative named, so they need the target's name. `false` searches
-the *known* relative and reads the unknown person off the principals of
-the results. When the target has no name yet — "did this couple have
-another daughter?" — the anchors cannot express the question and `false`
-is the only route. That is the `manoel-oliveira-daughter` shape.
+with a relative named, so they need the target's name. `false` matches on the *known* person's own persona;
+`record_read` on a hit then gives the record's persons and
+relationships. Which route is better when the target has no name yet is
+not measured — `search-strategy-levers.md` prescribes clearing the
+principal name and filling the parent fields for exactly that case — so
+name the difference rather than calling either the only route. The
+`manoel-oliveira-daughter` fixture takes the `false` route and then
+reads the record.
 
 ### Pagination
 
