@@ -1359,7 +1359,7 @@ is a real invariant — a conclusion's citations are populated whenever a
 conclusion exists — and this is what would catch it breaking.
 
 **The failure class it was built for lives on the other side of the seam, and a
-sixth check measures it there.** `find_citation_nulling_in_tree_sources` reads
+companion check measures it there.** `find_citation_nulling_in_tree_sources` reads
 the final `tree.gedcomx.json` and flags a `sources[]` entry with a null or empty
 `citation` that an *uploaded* conclusion rests on. Its gate is both clauses of
 one sentence in `packages/engine/plugin/agents/proof-conclusion.md` step 3 — the
