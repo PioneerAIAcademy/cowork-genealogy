@@ -673,7 +673,7 @@ describe("plugin agent bodies name no built-in tool the agent cannot call", () =
     }
   });
 
-  it("names no built-in tool absent from the agent's tools:/disallowedTools:", () => {
+  it("names no built-in tool the agent's tools: does not grant", () => {
     const offenders = allBuiltinHits
       .filter((h) => !isAllowedBuiltinHit(h))
       .map(
