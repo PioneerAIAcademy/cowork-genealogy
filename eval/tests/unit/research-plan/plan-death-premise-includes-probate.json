@@ -25,7 +25,7 @@
   ],
   "judge_context": [
     "The plan MUST include at least one plan item targeting probate/estate records (record_type 'probate' — administrator bonds, estate settlements, probate registers at the Muhlenberg County court), alongside any death-certificate/register items. The collections-search fixture surfaces 'Kentucky Probate Records, 1727-1990', the wiki fixtures state probate is the primary death evidence for pre-1911 Kentucky deaths, and volume_search surfaces the browse-only Muhlenberg probate volumes.",
-    "Searching the presupposed certificate/register collections (Kentucky Deaths 1911-1967, Deaths and Burials 1843-1970) is fine and expected — the failure this test guards is a plan limited to them. If NO plan item targets probate/estate records, score Record type selection as 1 (fail).",
+    "Searching the presupposed certificate/register collections (Kentucky Deaths 1911-1967, Deaths and Burials 1843-1970) is expected and is not itself a defect. Whether the plan reaches beyond them to probate/estate records is what Record type selection turns on for this test.",
     "Ideal (grade generously, do not require verbatim): a rationale somewhere in the plan notes the era/coverage mismatch — statewide certificates begin 1911 while the subject was last documented alive in 1870, so the presupposed record type likely cannot cover the death and alternatives are needed.",
     "Additional breadth items (church burials, cemetery/Find a Grave, censuses/tax lists to bracket the disappearance, an Ancestry fallback) strengthen the plan but are not individually required."
   ],

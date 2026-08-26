@@ -37,7 +37,7 @@
   "judge_context": [
     "The plan MUST include at least one plan item that searches for the PARENTS' marriage record (e.g., the marriage of Thomas Flynn, the hypothesized father) — an item distinct from records about Patrick himself. Pennsylvania marriage collections are available in the collections-search-pennsylvania fixture (Pennsylvania County Marriages 1885-1950, Civil Marriages 1677-1950, Compiled Marriages 1700-1900).",
     "The marriage item's rationale should note its parentage value — at minimum that it supplies the mother's maiden name (which census and death records usually omit) and/or that its date relative to Patrick's ~1845 birth bears on paternity. Grade on the presence of a purposeful rationale that gestures at these purposes; an adequate rationale passes and need not enumerate every reason verbatim.",
-    "If NO plan item targets the parents' marriage record, score Record type selection as 1 (fail): omitting the marriage record is the specific gap this test guards. A present marriage item with an adequate parentage rationale is a pass (3).",
+    "Whether a plan item targets the parents' marriage to each other, and whether its rationale states what that record contributes to the parentage question, is what Record type selection turns on for this test.",
     "The plan should also target the standard parentage record types (post-1850 censuses to track Patrick with his household, probate, church/vital records) — the marriage item is an addition to these, not a replacement."
   ],
   "judge_reads_files": true,

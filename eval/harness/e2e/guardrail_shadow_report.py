@@ -243,8 +243,12 @@ class UnnamedDelegateScan:
     Both a STORED read and a REPLAY, like every other family here — the module's
     own docstring warns not to conclude a check never fires from the stored count
     alone. The stored strings are frozen at capture time, so only the replay
-    reflects a later detector change (e.g. the namespaced-`agent_type` tolerance).
-    They agree on today's corpus.
+    reflects a later detector change. They therefore DIVERGE by exactly the
+    detector changes made since a run was captured: the namespaced-`agent_type`
+    tolerance, and the #1273 `research_append`->`sources`/`assertions` arm, which
+    the replay finds on any run captured before it (antonio-lucas-spouse, for one:
+    stored 15, replayed 18 — the three research_append batches at tool_calls[197],
+    [203] and [209]). Read the replay for what the detector flags today.
 
     `runs_attributed` is the denominator that makes the count readable: a run can
     only flag if its ledger carries caller attribution at all, i.e. at least one
