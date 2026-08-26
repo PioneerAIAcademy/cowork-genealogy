@@ -109,7 +109,7 @@ Each entry in `forget` is `{ selector, … }`:
 |---|---|---|
 | `parents-of` | `personId` | the person's parents, the links to them, and the person's own `Parents` documentary facts |
 | `children-of` | `personId` | the person's children, and the links to them |
-| `spouses-of` | `personId` | the person's spouses, the couple relationships, and the person's own `Marriage`/`Divorce`/`Annulment` facts |
+| `spouses-of` | `personId` | the person's spouses, the couple relationships, and the person's own couple-event facts (`Marriage`, `Divorce`, `Annulment`, `Engagement`, `MarriageBanns`, `Separation`) |
 | `birth-of` | `personId` | that person's birth facts |
 | `death-of` | `personId` | that person's death facts |
 | `facts-of` | `personId`, `factType` | that person's facts of one type (e.g. `Marriage`) |

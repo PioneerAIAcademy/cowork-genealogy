@@ -46,6 +46,7 @@ import {
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "../utils/date-helpers.js";
+import { COUPLE_EVENT_TYPES } from "./materialize-facts.js";
 
 /** The pre-removal snapshot. Dot-prefixed on purpose — it still holds the
  *  answer, and both the agent's file browsing and the feedback bundler skip
@@ -91,7 +92,6 @@ const SELECTOR_KINDS: ReadonlySet<string> = new Set<ForgetSelectorKind>([
 // `COUPLE_EVENT_TYPES` in `materialize-facts.ts`, per the lead's 2026-08-24
 // ruling: sweep all couple events. `SWEPT_PARENT_FACT_TYPES` remains a
 // narrower, evidence-confirmed set (#1314).
-import { COUPLE_EVENT_TYPES } from "./materialize-facts.js";
 export const SWEPT_SPOUSE_FACT_TYPES: readonly string[] = [...COUPLE_EVENT_TYPES];
 export const SWEPT_PARENT_FACT_TYPES = ["Parents"] as const;
 
@@ -264,20 +264,26 @@ function leftBehindCoupleFactWarnings(
   tree: SimplifiedGedcomX,
   checks: LeftBehindCheck[],
 ): string[] {
+  const seen = new Set<string>();
   const warnings: string[] = [];
   for (const { personId, kind } of checks) {
     const sweptTypes = kind === "parents-of" ? SWEPT_PARENT_FACT_TYPES : SWEPT_SPOUSE_FACT_TYPES;
     const sweptLower = new Set(sweptTypes.map((t: string) => t.toLowerCase()));
+    const canonByLower = new Map(sweptTypes.map((t: string) => [t.toLowerCase(), t]));
     const person = persons(tree).find((p) => p.id === personId);
     for (const f of person?.facts ?? []) {
       if (!f.id || !f.type) continue;
       if (sweptLower.has(f.type.toLowerCase())) continue;
-      if (!sweptLower.has(leadingToken(f.type).toLowerCase())) continue;
-      warnings.push(
-        `A ${leadingToken(f.type)}-prefixed fact '${f.id}' on ${personId} was left in the tree — its type is not ` +
-          `an exact match for the ${kind} sweep, so it was not removed. Confirm it does not ` +
-          `duplicate the forgotten conclusion.`,
-      );
+      const token = leadingToken(f.type).toLowerCase();
+      if (!sweptLower.has(token)) continue;
+      const canonical = canonByLower.get(token) ?? leadingToken(f.type);
+      const msg =
+        `A ${canonical}-prefixed fact '${f.id}' on ${personId} was left in the tree — its type is not ` +
+        `an exact match for the ${kind} sweep, so it was not removed. Confirm it does not ` +
+        `duplicate the forgotten conclusion.`;
+      if (seen.has(msg)) continue;
+      seen.add(msg);
+      warnings.push(msg);
     }
   }
   return warnings;
@@ -645,8 +651,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
         rels.forEach((r) => t.relationships.add(r));
         redundantFactIds.forEach((f) => t.facts.add(factKey("person", pid, f)));
         // Same heads-up as birth-of/death-of/facts-of (#1574): a swept
-        // Parents/Marriage/Divorce/Annulment fact id is not guaranteed
-        // unique to this person either.
+        // couple-event fact id is not guaranteed unique to this person either.
         const redundantLabel = kind === "parents-of" ? "Parents" : "couple-event";
         t.pendingFactNotices.push(...pendingFactNoticesForIds(pid, redundantFactIds, redundantLabel));
         if (kind === "parents-of" || kind === "spouses-of") {
@@ -1077,7 +1082,8 @@ export const treeForgetSchema = {
                 "parents-of/children-of/spouses-of: the person's relatives AND the links to " +
                 "them (cascades). parents-of ALSO removes the person's own `Parents` " +
                 "documentary facts, and spouses-of ALSO removes the person's own " +
-                "`Marriage`/`Divorce`/`Annulment` facts, so the forgotten conclusion does not " +
+                "couple-event facts (`Marriage`, `Divorce`, `Annulment`, `Engagement`, " +
+                "`MarriageBanns`, `Separation`), so the forgotten conclusion does not " +
                 "survive as a fact on the subject. birth-of/death-of: that person's Birth/Death " +
                 "facts. facts-of: that person's facts of one type (needs factType). " +
                 "facts-before/facts-after: that person's facts confidently before/after a " +

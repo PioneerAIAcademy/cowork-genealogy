@@ -383,6 +383,30 @@ describe("tree_forget", () => {
     expect(i1.facts.map((f: any) => f.type)).not.toContain("Annulment");
   });
 
+  it("spouses-of also sweeps person-level `Engagement`, `MarriageBanns`, and `Separation` facts (2026-08-24 ruling)", async () => {
+    const tree: any = family();
+    tree.persons[0].facts.push(
+      { id: "FE", type: "Engagement", date: "1844" } as any,
+      { id: "FB", type: "MarriageBanns", date: "1845" } as any,
+      { id: "FS", type: "Separation", date: "1895" } as any,
+    );
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "spouses-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Engagement: 1, MarriageBanns: 1, Separation: 1 });
+
+    const i1 = (await readTree()).persons.find((p: any) => p.id === "I1");
+    const types = i1.facts.map((f: any) => f.type);
+    expect(types).not.toContain("Engagement");
+    expect(types).not.toContain("MarriageBanns");
+    expect(types).not.toContain("Separation");
+  });
+
   it("spouses-of warns about left-behind facts sharing a leading word with a swept type but not an exact match (#1549)", async () => {
     // Real FS-observed custom types from committed run logs (issue #1549's
     // measurement), not invented: "Marriage Registration" (space-separated)
@@ -444,7 +468,7 @@ describe("tree_forget", () => {
     await writeProject(family());
     const r = await treeForget({
       projectPath: dir,
-      // I4 is a sibling only: no couple relationship, no Marriage/Divorce/Annulment fact.
+      // I4 is a sibling only: no couple relationship, no couple-event fact.
       forget: [{ selector: "spouses-of", personId: "I4" }],
     });
     expect(r.ok).toBe(false);
