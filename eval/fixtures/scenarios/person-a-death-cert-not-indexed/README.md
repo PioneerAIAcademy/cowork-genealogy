@@ -24,7 +24,7 @@ in 1935 in Gregory County, and (3) **where the certificate could be found**. The
 conclusion is tiered at the level the available (indirect) evidence supports — not
 collapsed to not_proved, and not presented as "cannot prove or disprove."
 
-This guards the proof-conclusion SKILL.md gap identified in alpha feedback case
+This guards the proof-conclusion agent-body gap identified in alpha feedback case
 feedback-2026-08-06T22-05-43-863344Z (issue #1474): the agent did not offer "cannot be
 found" / "record not indexed" as a conclusion type, instead saying it could not prove or
 disprove the search.
