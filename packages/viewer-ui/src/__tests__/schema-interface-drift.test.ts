@@ -92,6 +92,7 @@ function interfaceFields(path: string): {
   fields: Map<string, Set<string>>
   optional: Map<string, Set<string>>
   inheriting: string[]
+  duplicated: string[]
 } {
   const sourceFile = ts.createSourceFile(
     path,
@@ -102,9 +103,15 @@ function interfaceFields(path: string): {
   const out = new Map<string, Set<string>>()
   const optionalOut = new Map<string, Set<string>>()
   const inheriting: string[] = []
+  const duplicated: string[] = []
   sourceFile.forEachChild((node) => {
     if (!ts.isInterfaceDeclaration(node)) return
     if (node.heritageClauses?.length) inheriting.push(node.name.text)
+    // TypeScript MERGES two declarations of one interface, but this Map is
+    // last-wins, so a drifted declaration placed BEFORE the real one is simply
+    // overwritten and never compared. Collect the collision instead of letting
+    // position decide whether the lint looks.
+    if (out.has(node.name.text)) duplicated.push(node.name.text)
     const fields = new Set<string>()
     const optional = new Set<string>()
     for (const member of node.members) {
@@ -120,10 +127,15 @@ function interfaceFields(path: string): {
     out.set(node.name.text, fields)
     optionalOut.set(node.name.text, optional)
   })
-  return { fields: out, optional: optionalOut, inheriting }
+  return { fields: out, optional: optionalOut, inheriting, duplicated }
 }
 
-const { fields: parsed, optional: parsedOptional, inheriting } = interfaceFields(sourcePath)
+const {
+  fields: parsed,
+  optional: parsedOptional,
+  inheriting,
+  duplicated,
+} = interfaceFields(sourcePath)
 
 /**
  * Which interfaces each helper actually compared — recorded only once the helper's
@@ -203,6 +215,20 @@ describe('@genealogy/schema interfaces mirror research.schema.json', () => {
   it('parsed a plausible number of interfaces', () => {
     // A parser that silently returns nothing reads exactly like a clean run.
     expect(parsed.size, 'interfaces parsed out of packages/schema/src/index.ts').toBeGreaterThan(25)
+  })
+
+  it('no interface is declared twice', () => {
+    // Declaration merging is silent and this parser is last-wins, so a second
+    // declaration of the same interface hides whichever copy loses. Which one
+    // loses depends only on source order, so one ordering is compared and the
+    // other is not; fail here naming the interface rather than comparing a
+    // merged type the file only half-describes.
+    expect(
+      duplicated,
+      'declared more than once in packages/schema/src/index.ts — TypeScript merges ' +
+        'them into one type, but only the last declaration is compared, so the other ' +
+        "half's fields are never checked against the schema",
+    ).toEqual([])
   })
 
   it('no interface inherits its fields', () => {
