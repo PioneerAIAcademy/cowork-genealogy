@@ -126,7 +126,7 @@
         },
         "dimensions_gate_outcome": {
           "type": "boolean",
-          "description": "Whether the judge dimensions could change this outcome. False on \"invariant\" and \"routing\" tests, where they are diagnostic only — so a dimension scored 1 beside outcome \"pass\" is designed, not a defect. Optional — absent on run logs written before this field existed."
+          "description": "Whether the judge dimensions could change this outcome for a test that RAN TO COMPLETION. It describes the test's grading design, so on an \"aborted\" entry it says how the test would have been graded, not what decided it — an abort carries zero dimensions, and the abort is what decided the outcome. False on \"invariant\" and \"routing\" tests, where they are diagnostic only — so a dimension scored 1 beside outcome \"pass\" is designed, not a defect. Optional — absent on run logs written before this field existed."
         },
         "outcome_summary": {
           "type": "object",

@@ -1158,7 +1158,7 @@ def _tool_call_entry(c: dict[str, Any]) -> dict[str, Any]:
     """One `output.tool_calls` entry, keeping the response the mock already captured.
 
     The mock has always recorded it — `mock_mcp.py`'s call-log docstring lists
-    `"response"` as a key and all six `call_log.append` sites set it — and this
+    `"response"` as a key and all five `call_log.append` sites set it — and this
     projection dropped it on the way into the run log. So no post-hoc analysis
     of a committed run log could answer "what did the skill actually see?", and
     the warn-only `person_evidence` guardrail (#1550) could not be calibrated

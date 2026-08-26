@@ -1439,8 +1439,11 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
     one reads the fixture.
 
   **The size trade, both halves.** Omitting plain predicate matches is the
-  saving; retaining `live` is the cost, and `live` is the majority — 4,309 of
-  7,718 recorded calls against 3,393 predicate. There is no per-field cap here,
+  saving; retaining `live` is the cost, and `live` is the majority — as of
+  2026-08-26, 4,399 of 7,796 recorded calls against 3,381 predicate. **Re-measure
+  before requoting:** retention keeps only the newest 5 candidates per skill, so
+  the corpus churns under these numbers — this same count read 7,718 on 08-24 and
+  7,773 earlier on 08-26. There is no per-field cap here,
   unlike `builtin_tool_calls`' 200-char argument cut or the e2e capture strip.
   What bounds growth instead is unit retention: the newest 5 candidates per skill
   (`prune_old_candidates`), which caps the corpus regardless of per-log size.
