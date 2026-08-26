@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 
 from e2e.image_transcribe_report import (
+    Call,
     SUCCESS,
     TIMEOUT,
     UNCLASSIFIED,
@@ -326,3 +327,65 @@ def test_an_operator_who_never_reached_the_service_is_not_a_concurrent_success(t
     assert "CANNOT SEPARATE" in verdict, (
         "bob never reached OpenRouter, so his day is no evidence about alice's failure"
     )
+
+
+def test_a_non_list_tool_calls_costs_only_its_own_run(tmp_path: Path):
+    """The neighbouring shape of the previous review's finding. A truthy non-list
+    `tool_calls` (42, True, 3.14) reached `for tc in ...` and threw TypeError
+    outside the guard, taking the whole scan down.
+
+    Two reviews each named one shape and each fix closed only that one, so the
+    guard is now structural: the whole per-run body is inside the try, and the
+    failure domain is the RUN rather than a list of shapes someone thought of.
+    """
+    good = _run(tmp_path / "fx", "run-2026-08-20_00-00-00.json", ["ok"])
+    bads = []
+    for i, value in enumerate((42, True, 3.14, {"not": "a list"})):
+        b = tmp_path / "fx" / f"run-2026-08-2{i + 1}_00-00-00.json"
+        b.write_text(json.dumps({"tool_calls": value}), encoding="utf-8")
+        bads.append(b)
+
+    r = scan([good, *bads], author_of=_authors({}))
+    assert r.measurable == 1, "the readable run was still inspected"
+    assert r.unreadable >= 3, "each malformed run is counted, not fatal"
+
+
+def test_a_transcription_that_quotes_the_word_error_is_still_a_success():
+    """The reverse of the escaped-envelope fix. Unescaping is what made a bare
+    `"error"` substring dangerous: a genuine transcription quoting the word
+    unescapes to contain it and was filed as `upstream_error`, quietly dropping a
+    real success from the reached count the verdict depends on."""
+    clerk = '[{"type":"text","text":"the clerk wrote \\"error\\" in the margin"}]'
+    assert classify(clerk) == SUCCESS
+    # The real envelope still matches, by key adjacency.
+    assert classify('{"error":"OpenRouter OCR failed: 502"}') == UPSTREAM_ERROR
+
+
+def test_the_word_none_is_not_treated_as_an_absent_summary():
+    """`scan` never calls `str()`, so no infrastructure path produces the summary
+    "none" — the only thing that arm could ever match is a genuine transcription
+    of the word, filed as unclassified instead of success."""
+    assert classify("None") == SUCCESS
+    assert classify("null") == UNCLASSIFIED  # this one IS json.dumps(None)
+
+
+def test_one_operator_who_both_failed_and_reached_does_not_separate():
+    """The neighbouring shape again. "Did anyone fail" and "did anyone reach" as
+    two independent questions are both satisfied by ONE operator who did both,
+    so a day where alice failed once, alice succeeded once, and bob only threw
+    `unrecognized_ark` printed "points at the machine" though no second operator
+    ever reached OpenRouter."""
+    calls = [
+        Call("r1", UNREACHABLE, "2026-08-20", "alice", "x"),
+        Call("r1", SUCCESS, "2026-08-20", "alice", "x"),
+        Call("r2", UNRECOGNIZED_ARK, "2026-08-20", "bob", "x"),
+    ]
+    verdict, _ = interleaving_verdict(calls)
+    assert "CANNOT SEPARATE" in verdict, "bob never reached, so alice's own success proves nothing"
+
+    # And a genuinely distinct pair still separates, so the guard is not a constant.
+    distinct = [
+        Call("r1", UNREACHABLE, "2026-08-20", "alice", "x"),
+        Call("r2", SUCCESS, "2026-08-20", "bob", "x"),
+    ]
+    assert "SEPARATES" in interleaving_verdict(distinct)[0]

@@ -115,7 +115,10 @@ def classify(response_summary: str) -> str:
     # moves; but "an unknown shape never lands in success" is the one guarantee
     # this classifier exists for, and it was holding for only 70% of the corpus.
     s = (response_summary or "").lower().replace('\\"', '"')
-    # `"null"` is what `json.dumps(None)` produces, and the orchestrator creates
+    # `"null"` is what `json.dumps(None)` produces. `"none"` is deliberately
+    # NOT here: `scan` never calls `str()`, so no infrastructure path produces
+    # it, and the only thing it could match is a genuine transcription of the
+    # word — filing a real success as unclassified., and the orchestrator creates
     # every tool-call entry with `response_summary: None`, filling it when the
     # result streams back. A run cut off by its wall-clock or tool cap mid-call
     # therefore commits a null summary — likeliest on this tool, the slowest one
@@ -124,7 +127,7 @@ def classify(response_summary: str) -> str:
     # hole in the guarantee, not a live miscount.) The sibling
     # `wiki_failure_report.py` defaults to `unclassified` here; this one
     # defaulted to `success`, so the guard was the only protection.
-    if s.strip() in ("", "null", "none"):
+    if s.strip() in ("", "null"):
         # Never `success`. An absent summary means we cannot see the outcome, and
         # folding it into success is the exact under-reporting this file exists
         # to stop. Stripped runs are excluded upstream, before reaching here.
@@ -135,7 +138,13 @@ def classify(response_summary: str) -> str:
         return TIMEOUT
     if "unrecognized ark" in s:
         return UNRECOGNIZED_ARK
-    if '"error"' in s or "error:" in s:
+    # The envelope shape (`"error":`), not a bare `"error"` substring.
+    # Unescaping above is what makes the loose form dangerous: a genuine
+    # transcription that QUOTES the word — `the clerk wrote "error" in the
+    # margin` — unescapes to contain `"error"` and was filed as a failure,
+    # dropping a real success from the reached count. That is the reverse of
+    # the direction unescaping was added for; key-adjacency avoids both.
+    if '"error":' in s:
         return UPSTREAM_ERROR
     return SUCCESS
 
@@ -183,44 +192,55 @@ def scan(
     unreadable = stripped_calls = stripped_runs = 0
     for p in paths:
         run = f"{p.parent.name}/{p.stem}"
+        # THE WHOLE PER-RUN BODY IS THE PROTECTED REGION, not the parse alone.
+        #
+        # Two reviews running found a malformed shape that escaped this guard:
+        # first a run log that was valid JSON but not an object, then a truthy
+        # non-list `tool_calls` (42, True) reaching `for tc in ...`. Same cause
+        # both times — the guard enumerated the shapes someone had thought of, so
+        # each fix closed one and left its neighbour. A run log is written by
+        # another process; the honest failure domain is the RUN, not a list of
+        # shapes. Anything malformed anywhere in one run now costs that run only.
+        #
+        # Nothing is counted until the run parses cleanly, so a run that throws
+        # half way cannot leave its first few calls in the tally.
+        run_calls: list[Call] = []
+        run_stripped = 0
         try:
             doc = json.loads(p.read_text(encoding="utf-8"))
             if not isinstance(doc, dict):
-                # Valid JSON that is not an object — a top-level [], a bare
-                # string, a number — reached `doc.get(...)` and raised
-                # AttributeError, which nothing caught, so ONE such file took the
-                # whole report down. The old robustness test only fed invalid
-                # UTF-8, so it passed while the case the guard exists for
-                # crashed.
                 raise ValueError("run log is not a JSON object")
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError):
-            # UnicodeDecodeError is a ValueError, NOT a JSONDecodeError — an
-            # interrupted write leaves exactly that, and omitting it here takes
-            # the whole report down on one bad file (#1485 review).
+            stripped = bool(doc.get("captures_stripped"))
+            d = run_date(p)
+            day = d.isoformat() if d else "undated"
+            author = author_of(p)
+            for tc in doc.get("tool_calls") or []:
+                if not isinstance(tc, dict):
+                    continue
+                if not str(tc.get("tool") or "").endswith(TOOL_SUFFIX):
+                    continue
+                if stripped:
+                    run_stripped += 1
+                    continue
+                rs = tc.get("response_summary")
+                rs = rs if isinstance(rs, str) else json.dumps(rs)
+                run_calls.append(
+                    Call(run, classify(rs), day, author, rs[:160].replace("\n", " "))
+                )
+        except (
+            OSError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+            ValueError,
+            TypeError,
+            AttributeError,
+        ):
             unreadable += 1
             continue
-        stripped = bool(doc.get("captures_stripped"))
-        d = run_date(p)
-        day = d.isoformat() if d else "undated"
-        author = author_of(p)
-        hits = 0
-        for tc in doc.get("tool_calls") or []:
-            # `tc or {}` rescues a falsy entry but not a truthy non-dict, which
-            # crashes the same way the envelope did.
-            if not isinstance(tc, dict):
-                continue
-            if not str(tc.get("tool") or "").endswith(TOOL_SUFFIX):
-                continue
-            if stripped:
-                stripped_calls += 1
-                hits += 1
-                continue
-            rs = tc.get("response_summary")
-            rs = rs if isinstance(rs, str) else json.dumps(rs)
-            calls.append(
-                Call(run, classify(rs), day, author, rs[:160].replace("\n", " "))
-            )
-        if hits:
+
+        calls.extend(run_calls)
+        stripped_calls += run_stripped
+        if run_stripped:
             stripped_runs += 1
     return ScanResult(calls, unreadable, stripped_calls, stripped_runs)
 
@@ -268,12 +288,25 @@ def interleaving_verdict(calls: list[Call]) -> tuple[str, list[str]]:
             "operator, so no failure is ever observed against a concurrent success.",
             rows,
         )
+    def _separates(cells: dict[str, list[int]]) -> bool:
+        """A DISTINCT operator must have reached, not merely someone.
+
+        Asking "did anyone fail" and "did anyone reach" as two independent
+        questions is satisfied by ONE operator who did both — and a day where
+        alice failed once, alice succeeded once, and bob only threw
+        `unrecognized_ark` printed "another succeeded, which points at the
+        machine" though no second operator ever reached OpenRouter. The claim
+        needs two different people: someone who failed, and someone else who
+        demonstrably got through.
+        """
+        failed = {a for a, (e, _n, _r) in cells.items() if e}
+        reached = {a for a, (_e, _n, r) in cells.items() if r}
+        return bool(failed) and bool(reached - failed)
+
     mixed = [
         day
         for day in by_day
-        if len(by_day[day]) >= 2
-        and any(e for e, _n, _r in by_day[day].values())
-        and any(reached > 0 for _e, _n, reached in by_day[day].values())
+        if len(by_day[day]) >= 2 and _separates(by_day[day])
     ]
     if mixed:
         return (
