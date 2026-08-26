@@ -74,10 +74,16 @@ default to it.
 answers this for every candidate at once — this is the whole standing-pool query:
 
 ```sh
+# BOTH pools. A bare run covers `developer` and `genealogist` — the paragraph
+# above is why. `--developer-only` is what narrows this back to one lane; do not
+# bake that filter in here, which silently reverted the both-pools change once.
+# `feedback` items are never in scope: they carry `genealogist`, so they enter
+# the pool without the exclusion and cost ~110k tokens each to learn nothing.
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 | jq -r '
   .items[]
   | select(.status == "Ready" and (.assignees | length) == 0
-           and (.labels | index("developer"))
+           and ((.labels | index("developer")) or (.labels | index("genealogist")))
+           and ((.labels | index("feedback")) | not)
            and ((.labels | index("reviewed")) | not))
   | .content.number'
 ```
