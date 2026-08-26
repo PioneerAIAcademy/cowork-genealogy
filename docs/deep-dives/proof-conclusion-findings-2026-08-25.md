@@ -14,9 +14,10 @@ score, per Step 2. Most of the time went on the quiet passes, per Step 3.
 (`harness/versioning.py`), so the re-run this PR forces writes a sixth log and prunes the
 oldest — `v1_2026-08-21_04-34-52.json`, which is cited by name below. Those citations
 will point at a file no longer in the tree; they were true when read, and the counts they
-support (64 of 65 narratives, 15 forbidden-modal sentences, 13 unpaired) are over all five
-logs including the pruned one. Recompute against what survives rather than assuming the
-totals shifted.
+support are over all five logs including the pruned one. **Recomputed 2026-08-26 over the
+five surviving logs** (the pruned one out, the new run in): 64 of 65 narratives over budget
+(unchanged), and **14** forbidden-modal sentences of which **13** are unpaired (the total
+moved by one, the unpaired count did not). F3 got *stronger* on the recompute — see below.
 
 ## Numbers, re-derived 2026-08-25
 
@@ -200,15 +201,18 @@ the fixture (`bride-surname-illegible-cert-declared`) carries
 
 ## F3 — A raw `Grep`/`Read` of `research.json` passes, in the suite whose validator docstring names that exact defect
 
-**Did:** `ut_proof_conclusion_002` reached `research.json` directly in **3 of its 5 runs**:
+**Did:** `ut_proof_conclusion_002` reached `research.json` directly in **4 of its 5 runs** —
+including the newest, so this is a live recurring defect and not an artefact of the older
+logs:
 
 | run | call |
 |---|---|
 | `v1_2026-08-21_18-43-53` | `Grep {pattern: "\"q_00[12]\"", path: …/research.json}` |
 | `v1_2026-08-21_19-20-04` | `Read {file_path: …/research.json, limit: 60}` |
 | `v1_2026-08-21_19-34-21` | `Grep {pattern: "\"q_00[12]\"", path: …/research.json}` |
+| `v1_2026-08-25_13-34-10` | `Grep {pattern: "\"q_00[12]\"", path: …/research.json}` |
 
-All three `pass`. `base/Tool Arguments` scored **3** on all three; its rationale
+All four `pass`. `base/Tool Arguments` scored **3** on all of them; its rationale
 enumerates the MCP calls and never mentions the builtin ones — it cannot, because it is
 looking at `tool_calls` and these live in `builtin_tool_calls`.
 
@@ -268,7 +272,7 @@ cheap and exact. **Converts — V4.**
 
 ## F5 — The unresolvability rule is written per-sentence and graded per-narrative, so the per-sentence half is enforced nowhere
 
-**Did:** across the five logs, **15** sentences in persisted narratives use one of the
+**Did:** across the five logs, **14** sentences in persisted narratives use one of the
 modals the body forbids ("cannot be established", "cannot be determined", …).
 **13 of the 15 name no unsearched record type in that sentence.** Examples, all in
 `pass` runs:
