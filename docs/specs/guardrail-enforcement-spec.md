@@ -450,7 +450,7 @@ to understand before reading either:
   fixture PRs merged, or it is biased at the moment it is used. Every corpus
   reader now states this itself, every time it runs — `describe_window()`
   (`harness/since_window.py`) appends a fixed caveat naming the branch-scope
-  limitation to its own printed line (issue #1444).
+  limitation to its own printed line.
 - **The remedy is a caveat plus an on-demand crawl, not an exact count.**
   Considered and rejected: crawling remote branches inside every reader
   (real engineering cost for speculative value — measured 2026-08-25 at 23
