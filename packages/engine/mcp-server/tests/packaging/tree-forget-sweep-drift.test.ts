@@ -1,7 +1,19 @@
 import { describe, it, expect } from "vitest";
 import { SWEPT_SPOUSE_FACT_TYPES, SWEPT_PARENT_FACT_TYPES } from "../../src/tools/tree-forget.js";
 import { EVENT_TREE_TYPES, COUPLE_EVENT_TYPES } from "../../src/tools/materialize-facts.js";
-import { MARRIAGELIKE_FACT_TYPES, DIVORCELIKE_FACT_TYPES } from "../../src/utils/mob.js";
+
+/**
+ * GedcomX couple-event types — the events, not the documentary-record types
+ * (MarriageRegistration, MarriageLicense, MarriageNotice, etc.) that the
+ * 2026-08-20 ruling excludes from sweeping. Owned locally so the guard
+ * catches CommonLawMarriage / DomesticPartnership entering EVENT_TREE_TYPES.
+ */
+const GEDCOMX_COUPLE_EVENTS: ReadonlySet<string> = new Set([
+  "Marriage", "Divorce", "Annulment",
+  "Engagement", "MarriageBanns", "Separation",
+  "CommonLawMarriage", "DomesticPartnership",
+  "DivorceFiling",
+]);
 
 /**
  * issue #1549: every couple-event type in COUPLE_EVENT_TYPES must appear in
@@ -9,11 +21,8 @@ import { MARRIAGELIKE_FACT_TYPES, DIVORCELIKE_FACT_TYPES } from "../../src/utils
  * SWEPT_SPOUSE_FACT_TYPES must cover every couple-event type (per the
  * 2026-08-24 ruling: sweep all couple events).
  *
- * The confirmed couple-event vocabulary lives in `mob.ts`
- * (MARRIAGELIKE_FACT_TYPES + DIVORCELIKE_FACT_TYPES). Any type from that
- * vocabulary that enters EVENT_TREE_TYPES must also enter COUPLE_EVENT_TYPES,
- * otherwise the sweep silently misses it. This is the gap the original guard
- * could not see.
+ * Any type from GEDCOMX_COUPLE_EVENTS that enters EVENT_TREE_TYPES must also
+ * enter COUPLE_EVENT_TYPES, otherwise the sweep silently misses it.
  */
 describe("tree_forget sweep drift guard (#1549)", () => {
   it("COUPLE_EVENT_TYPES stays a subset of EVENT_TREE_TYPES (catches un-spreading the derivation)", () => {
@@ -34,16 +43,16 @@ describe("tree_forget sweep drift guard (#1549)", () => {
     ).toEqual([]);
   });
 
-  it("every confirmed couple-event type in EVENT_TREE_TYPES is in COUPLE_EVENT_TYPES", () => {
-    const confirmedCouple = new Set([...MARRIAGELIKE_FACT_TYPES, ...DIVORCELIKE_FACT_TYPES]);
+  it("every GedcomX couple-event type in EVENT_TREE_TYPES is in COUPLE_EVENT_TYPES", () => {
     const inTreeButNotCouple = [...EVENT_TREE_TYPES]
-      .filter((t) => confirmedCouple.has(t))
+      .filter((t) => GEDCOMX_COUPLE_EVENTS.has(t))
       .filter((t) => !COUPLE_EVENT_TYPES.has(t));
     expect(
       inTreeButNotCouple,
-      `Confirmed couple-event type(s) present in EVENT_TREE_TYPES but missing from ` +
-        `COUPLE_EVENT_TYPES (and therefore not swept by spouses-of): ` +
-        `${inTreeButNotCouple.join(", ")}. Add to COUPLE_EVENT_TYPES or justify the omission.`,
+      `GedcomX couple-event type(s) in EVENT_TREE_TYPES but not in ` +
+        `COUPLE_EVENT_TYPES: ${inTreeButNotCouple.join(", ")}. ` +
+        `Decide whether spouses-of should sweep this type (add to COUPLE_EVENT_TYPES) ` +
+        `or confirm it is a documentary-record type that must not be swept.`,
     ).toEqual([]);
   });
 
