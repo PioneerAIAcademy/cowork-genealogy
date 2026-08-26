@@ -279,9 +279,9 @@ how to word it:
 | within a single skill invocation | **skill prose** — this is what prose is *for* | "consult the stop criteria before draining the plan" |
 
 > **Direction.** The **tree-encoding gate** is still prose that this same law
-> says will decay (§4); the **mentor gate** that stood beside it moved into the
-> tool in PR #1685. The tree-encoding gate stays prose pending a baseline of the
-> project's opening tree to diff against (issue #1490), since `research_append`
+> says will decay (§4); the **mentor gate** that stood beside it has moved into
+> the tool. The tree-encoding gate stays prose pending a baseline of the
+> project's opening tree to diff against, since `research_append`
 > loads only the current tree. **If you are adding a new cross-turn invariant, do
 > not add it as prose.** If it cannot be anchored, say so in the PR and explain
 > why.

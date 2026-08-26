@@ -708,8 +708,8 @@ tool against the write-once `starting-tree.gedcomx.json` baseline.
 
 - **Why a baseline file.** `research_append` loads only the *current* tree, so it
   cannot tell a conclusion this session encoded from a fact already seeded. The
-  baseline is the opening tree, copied write-once at project creation (issue
-  #1490); the diff against it is what isolates this session's work.
+  baseline is the opening tree, copied write-once at project creation; the diff
+  against it is what isolates this session's work.
 - **A shape match, not a foreign key — so warn, not deny.** A proof summary
   carries no machine-readable tree reference. The subject is approximated as the
   union of persons the summary's `supporting_assertion_ids` have `person_evidence`

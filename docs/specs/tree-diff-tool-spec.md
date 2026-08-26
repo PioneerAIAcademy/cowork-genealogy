@@ -7,7 +7,7 @@ changed relative to the first — persons, per-person facts, and relationships.
 
 Two callers need this and neither can get it from the data alone:
 
-- **The tree-encoding completion gate** (issue #1490) diffs the final
+- **The tree-encoding completion gate** diffs the final
   `tree.gedcomx.json` against the write-once `starting-tree.gedcomx.json` baseline
   to tell a conclusion this session encoded from a fact that was already seeded.
   `research_append` loads only the *current* tree, so without the baseline it has
