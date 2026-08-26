@@ -286,14 +286,28 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     # Monkey-patch the skill runner to return a successful stub (no SDK
     # call). Also write the expected output file so the search-wikipedia
     # validators (test_wrote_one_markdown_file +
-    # test_slug_schuylkill_county_pennsylvania) pass — otherwise this
-    # test would exercise the validator-failed branch instead of the
-    # judge-error branch it is meant to cover.
+    # test_slug_schuylkill_county_pennsylvania +
+    # test_saved_file_matches_template) pass — otherwise this test would
+    # exercise the validator-failed branch instead of the judge-error
+    # branch it is meant to cover.
+    #
+    # The stubbed file and the stubbed tool response have to agree: the
+    # saved-file validator compares one against the other byte-for-byte,
+    # so a response of {"title": "X"} beside a Schuylkill County file
+    # fails the run before the judge is ever reached.
+    stub_response = {
+        "title": "Schuylkill County, Pennsylvania",
+        "extract": "stub extract",
+        "url": "https://en.wikipedia.org/wiki/Schuylkill_County,_Pennsylvania",
+    }
+
     async def fake_run_skill(**kwargs):
         from harness.skill_runner import SkillRunResult
         workspace = kwargs["workspace"]
         (workspace / "schuylkill-county-pennsylvania.md").write_text(
-            "# Schuylkill County, Pennsylvania\n\nstub extract\n\nhttps://example/\n", encoding="utf-8"
+            f"# {stub_response['title']}\n\n{stub_response['extract']}\n\n"
+            f"---\n[Source]({stub_response['url']})\n",
+            encoding="utf-8",
         )
         return SkillRunResult(
             text_response="I saved the file.",
@@ -301,7 +315,7 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
             tool_calls=[
                 {"tool": "mcp__genealogy__wikipedia_search", "args": {"query": "X"},
                  "matched": {"kind": "predicate", "index": None},
-                 "response_fixture": None, "response": {"title": "X"}}
+                 "response_fixture": None, "response": stub_response}
             ],
             duration_ms=10.0,
             usage={"total_cost_usd": 0.01, "usage": {"input_tokens": 100,
@@ -1382,3 +1396,54 @@ def test_before_state_path_is_unchanged_by_the_artifact_fix():
     from harness.judge import _summarize_response
 
     assert _summarize_response(sources)["_summary_truncated"] is True
+
+
+def test_orchestrator_passes_text_response_to_validators(tmp_path, monkeypatch):
+    """The reply reaches run_validators (#1662).
+
+    Pinned behaviourally, not by grepping orchestrator source: the string
+    `text_response=result.text_response` appears three times in that module
+    (derive_activated, run_validators, grade), so a source assertion stays
+    green when the run_validators one specifically is dropped. And the
+    breakage is otherwise invisible — a validator that reads the reply
+    guards with "no reply, nothing to check", so losing the argument turns it
+    into a silent pass rather than an error.
+    """
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    reply = "Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`."
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response=reply,
+            skills_invoked=["search-wikipedia"],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    captured = {}
+
+    def fake_run_validators(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", fake_run_validators)
+    monkeypatch.setattr(orchestrator, "grade", lambda **kw: (_ for _ in ()).throw(
+        JudgeError("not under test")
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-08-22_00-00-00",
+    ))
+
+    assert "text_response" in captured, (
+        "orchestrator did not pass text_response into run_validators; every "
+        "validator that reads the reply is now inert"
+    )
+    assert captured["text_response"] == reply

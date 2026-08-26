@@ -5,7 +5,7 @@
     "name": "Convert Quaker numbered-month date",
     "type": "positive",
     "description": "Convert a Quaker-style date with numbered months to standard calendar format. Two subtleties: Quakers numbered months to avoid pagan names, but the numbering changed in 1752 when England adopted the Gregorian calendar (before 1752, the year started in March; after, in January). The date is 1845, post-1752, so 2nd month = February. The skill should explain the convention, apply the post-1752 numbering, and present both forms.",
-    "tags": ["quaker", "numbered-months", "pennsylvania", "calendar-convention"]
+    "tags": ["quaker", "numbered-months", "pennsylvania", "calendar-convention", "requires-tool-conversion"]
   },
   "input": {
     "user_message": "Convert this Quaker date: '3rd day of 2nd month 1845'. What date is this in the standard calendar?",

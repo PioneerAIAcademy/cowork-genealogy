@@ -26,10 +26,9 @@
     "place-search-all-any"
   ],
   "judge_context": [
-    "The plan MUST include at least one probate/estate plan item targeting Caroline's father. Its `date_range` must extend to approximately the father's plausible lifespan — roughly Caroline's birth year (1839) through birth+55 to birth+65 (circa 1894-1904) — not stop at or shortly after Caroline's own circa-1858 marriage or any other subject-centric bound well short of that.",
-    "If the probate item's date_range ends by the 1860s or earlier (i.e., capped near Caroline's own marriage rather than her father's plausible death), score Record type selection as 1 (fail) — the item excludes most of the range where the record could actually sit.",
+    "The plan MUST include at least one probate/estate plan item targeting Caroline's father. Its `date_range` must extend to approximately the father's plausible lifespan — roughly Caroline's birth year (1839) through birth+55 to birth+65 (circa 1894-1904) — not stop at or shortly after Caroline's own circa-1858 marriage or any other subject-centric bound well short of that. How that window is sized is what Record type selection turns on for this test: assess whose plausible lifespan bounds it, the record's creator or the research subject.",
     "The item's rationale should say whose lifespan set the window's bounds (the father's, not Caroline's) — ideal but grade generously if the reasoning is present even without using that exact phrase.",
-    "Additional breadth items (marriage records for Caroline's own parents, land records, cemetery records) strengthen the plan but are not individually required."
+    "Additional breadth items (marriage records for Caroline's own parents, land records, cemetery records) strengthen the plan but are not individually required. Note that q_001 here is a parentage question, and SKILL.md Step 4 now requires at least one FAN item on parentage, identity and undated-event questions. Until a validator enforces that, treat a missing FAN item as a Record type selection concern rather than reading this sentence as excusing it."
   ],
   "judge_reads_files": true,
   "execution": {

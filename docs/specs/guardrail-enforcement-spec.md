@@ -1242,6 +1242,52 @@ this section before reopening one.
   shipped provenance check flagged 63, with an empty set difference: it detects
   nothing the existing check misses, and is evadable via `moot` status or a
   `probable` tier.
+- **Running the tree-reading §8 arms over a hosted feedback bundle** — cannot be
+  done, so the hosted feedback bundle corpus is measured with the transcript-only
+  and `research.json`-only detectors instead. A feedback bundle carries no
+  `starting_tree` baseline, and its `tree.gedcomx.json` is redacted before it
+  leaves the sandbox (`_redact_person`, `apps/server/app/feedback.py`), so the
+  arms that diff the final tree against a seed — `find_effects_without_invocation`
+  and `check_guardrail_compliance` — would read every seeded relationship as a
+  violation (the same no-baseline defect that killed per-turn scoping, above).
+  Only `find_unguarded_protected_writes` (transcript-only) and
+  `find_missing_mentor_verdicts` (reads `research.json` alone) are valid over a
+  bundle; the adapter and report live in `eval/harness/e2e/`
+  (`feedback_transcript_adapter.py`, `guardrail_shadow_report.py`).
+  **Three of `find_unguarded_protected_writes`' owner arms are blind over a
+  bundle, two of them completely — but only for bundles submitted after each
+  arm's split date, and the report decides that per bundle rather than
+  globally.** A bundle carries only the main session's `{sid}.jsonl`, never the
+  `subagents/agent-*.jsonl` beside it: `feedback.py` reads `{sid}.jsonl` and its
+  fallback loop skips anything `is_dir`, and `readSessionLog` does a
+  non-recursive `readdir`. Two arms have since moved their write inside an
+  agent — `proof_summaries` into `proof-conclusion` on 2026-08-21 (`73b3d98e`) and
+  `questions.exhaustive_declaration` into `research-exhaustiveness` on
+  2026-08-23 (`c78efb0b`), enforced by `OWNED_SECTIONS` and
+  `OWNED_DECLARATIONS` in `plugin/hooks/guard_project_files.py`.
+
+  **The date cuts both ways, and getting this wrong in either direction
+  falsifies the counts this scan reports.** For a bundle submitted BEFORE an
+  arm's split, that write came from the MAIN thread, was un-denied, and is in
+  the transcript — the count is a real measurement, and every bundle collected so
+  far (2026-08-05 onward; the newest is 2026-08-20) is on that side of both
+  dates. For a bundle submitted on or after, the write may
+  have happened inside the agent (invisible) and a main-thread attempt would be
+  denied and recorded as `is_error: true`, which the detector skips — so a 0
+  there is not evidence. "May", not "was": a deploy does not ship the sandbox
+  image (`docs/architecture.md` §9.4 point 2), so a post-split bundle can still
+  have run a pre-split plugin. The label is therefore **"plugin era unknown"**,
+  never a clean cutoff, and an undated bundle takes the same label rather than
+  being assumed live.
+
+  The `tree_edit`/`tree_correct` arms are blind only to the agent route
+  regardless of date: the hook covers `research_append` alone, so a main-thread
+  `primary: true` or `ParentChild`/`Couple` write still fires. Recovering the
+  agent route means bundling the subagent transcripts, a change to
+  `apps/server/app/feedback.py`. Until that lands, two arms return 0
+  unconditionally for a post-split bundle, so no report can distinguish "no
+  bypasses" from "cannot see bypasses" — a gap carried in the `nothing-checks`
+  register rather than here.
 
 ## 10. Residual risks
 
@@ -1319,6 +1365,20 @@ itself worth flagging.
 
 Anything else — most importantly a `general-purpose` subagent the model spawned
 itself — is a bypass.
+
+`research_append` to `sources` or `assertions` is the **same protected write by
+another door.** Those two sections carry the extracted evidence
+`extraction_append` writes, and `owning_skills` does not attribute them — they
+belong to record-extraction, which creates them, and to citation, which refines
+`sources`. So a delegate denied `extraction_append` could still write them
+through the broad `research_append`. The detector flags such a write by the same
+tight test the sibling `extraction_append` arm uses — anyone but the main thread
+(citation refines `sources` there) or the `record-extractor` agent. A *different*
+dedicated agent (gps-mentor, proof-conclusion, research-exhaustiveness) writing
+these sections is out of lane, exactly as it is for `extraction_append`, so it is
+not exempt here. This half is shadow only, logged and never denied, and covers the
+delegate route only; a main-thread router doing the same substitution is a
+separate, deny-side gap that nothing owns today.
 
 ### The decision, and what it beat
 
