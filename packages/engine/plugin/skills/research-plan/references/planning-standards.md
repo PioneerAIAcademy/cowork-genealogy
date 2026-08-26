@@ -105,8 +105,16 @@ laws, migration, military activity, occupations, social customs,
 religions, or other aspects of the research question.
 
 **Implementation:**
-- Every plan should include at least one FAN-directed item (a search
-  targeting records of associates, not just the subject)
+- A plan for a **parentage, identity, or undated-event** question must
+  include at least one FAN-directed item (a search targeting records of
+  associates, not just the subject). For other question types, include one
+  where it earns its place rather than as a quota — BCG's wording above is
+  that plans *often* include such sources, and a manufactured FAN item on a
+  question no associate could speak to is filler, not breadth.
+  What "earns its place" looks like in practice: a marriage bondsman or
+  surety (frequently the bride's father or brother), a sibling's baptism or
+  marriage naming the same parents, the adjoining landowners named in a
+  deed's boundary recital, the purchasers at an estate sale
 - Consider contextual sources: local histories, church minute books,
   community directories, organizational records, employer records
 - Do not stop at the "genealogy databases" — court records, tax
