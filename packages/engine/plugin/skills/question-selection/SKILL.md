@@ -51,9 +51,20 @@ Either way, identify:
   `references/pedigree-analysis.md`).
 - **Timeline gaps**, **unresolved conflicts** (especially those blocking
   downstream questions), **active hypotheses**, **log coverage**, and the
-  current **assertion** landscape.
+  current **assertion** landscape — each requires its own `research_query`
+  call (`section: "timelines"`, "conflicts", "hypotheses", "log"):
+  `project_context` returns none of them. Concluding there is no gap, no
+  conflict, or no hypothesis without having queried that section is
+  fabrication, not absence of evidence.
 
 ### 1a. Finish what's already open before selecting a new question
+
+To check this, call `research_query(section: "plans", questionId: <id>)`
+**without** a `status` filter and inspect each returned plan's
+`items[].status` yourself — the section's own `status` filter matches the
+*plan's* status (e.g. `active`/`completed`), never an individual item's, so
+passing `status: "in_progress"` here will never surface an in-progress
+item even when one exists.
 
 If any open question has plan items with `status: "in_progress"`, **do NOT
 create a new question** (one exception below) — adding questions mid-flight
@@ -79,25 +90,33 @@ the conflict re-enables that plan's progress.
 ### 1b. Stop when the objective is already answered at a defensible tier
 
 Gate new-question creation on **answered**, not **proved.** Once every
-*independent* part of the objective is `resolved` with a `proof_summary` at a
-defensible tier (`probable` or better), the objective is answered — that is
-the autonomous stop point. Do **NOT** spawn a new question to **corroborate**
-or upgrade the tier of a part already concluded (a second source to move
-`probable` → `proved`): that is optional corroboration, not required for
-autonomous completion, and chasing it after the answer is already in the tree
-is what runs an autonomous session out of its budget. Return the "no further
-questions — objective answered" signal so `/research` writes
-`project.status = "completed"` and stops.
+*independent* part of the objective has a question whose `status` is
+`resolved` — not merely `in_progress` with a `proof_summary` already
+written at a defensible tier (`probable` or better); a proof_summary can
+exist, and sit at a defensible tier, before the mandatory GPS-mentor
+critique moves `status` to `resolved` — the objective is answered. That is
+the autonomous stop point. Do **NOT** spawn a new question to
+**corroborate** or upgrade the tier of a part on a question already
+`resolved` (a second source to move `probable` → `proved`): that is optional
+corroboration, not required for autonomous completion, and chasing it after
+the answer is already in the tree is what runs an autonomous session out of
+its budget. Return the "no further questions — objective answered" signal
+so `/research` writes `project.status = "completed"` and stops.
 
-This applies **only** to corroboration of a fact **already concluded** at a
-defensible tier. It does **not** suppress any of: a **genuinely independent,
+This applies **only** to corroboration of a fact on a question **already
+`resolved`**. It does **not** suppress any of: a **genuinely independent,
 still-open** part of the objective (a death *and* a burial are two independent
-facts — answer both); a **Priority 1** unresolved conflict; or a **Priority 6
-FAN pivot** when a question's direct evidence is exhausted *without* a
-defensible answer — that question is unresolved, so FAN is the legitimate next
-step, not tier-chasing. The line: any *unanswered* objective fact → select the
-appropriate question (decompose, or FAN-pivot when direct evidence is spent);
-another source for a fact *already concluded* at a defensible tier → stop.
+facts — answer both); a **Priority 1** unresolved conflict; a **Priority 3**
+high-severity timeline gap on a question that is not yet `resolved` — a
+defensible-tier proof_summary while the question still sits `in_progress`
+does not excuse an unsearched high-severity gap; or a **Priority 6 FAN
+pivot** firing on its own condition (Step 2: `exhaustive_declaration.declared`
+is `true`) regardless of tier — a defensible-tier proof_summary is not proof
+exhaustion, and a question that is not yet `resolved` is not "answered"
+merely because its tier is defensible. The line: any question not yet
+`resolved` → the priority ladder still applies in full (decompose,
+timeline-gap, or FAN-pivot, whichever signal fires); a question already
+`resolved` at a defensible tier → no further corroboration.
 
 ### 1c. Scope the question to the objective
 
@@ -168,11 +187,14 @@ phrasing like "correct parents", "the right X", "not correct" — the current
 tree assignment is the premise *under doubt*, not a starting fact. **In
 interactive mode, before formulating, ask the user two things: (1) what
 evidence led them to doubt the current assignment, and (2) the birth date and
-place they are working from.** Then frame the first question as a **test of the
-disputed assignment** — e.g. "Do independent records confirm or refute that X
-and Y are the parents of Z?" — never treating the questioned tree as evidence
-for its own conclusion (issue #1471). Under `--autonomous` (no user to answer),
-skip the ask and go straight to the verification-framed question.
+place they are working from — unless the user's own message already states
+both, however briefly, in which case treat both as answered and do not ask
+again or demand elaboration or provenance beyond what was given.** Then frame
+the first question as a **test of the disputed assignment** — e.g. "Do
+independent records confirm or refute that X and Y are the parents of Z?" —
+never treating the questioned tree as evidence for its own conclusion (issue
+#1471). Under `--autonomous` (no user to answer), skip the ask and go
+straight to the verification-framed question.
 
 ## 4. Write the question
 
