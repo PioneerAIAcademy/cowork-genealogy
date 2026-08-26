@@ -49,6 +49,7 @@ from harness.context_policy import (
     owned_section_denial,
     owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
     subagent_only_denial,
+    SUBAGENT_ONLY_TOOLS,
 )
 from harness.judge import _summarize_response
 from harness.skill_invocation import (
@@ -198,30 +199,29 @@ def is_blocked_tree_tool(tool_name: str) -> bool:
     return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
 
 
-def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
-    """Whether this is `extraction_append` on the main thread — the #942 bug.
+def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
+    """Whether this is a main-thread call to a `SUBAGENT_ONLY_TOOLS` member.
 
-    `extraction_append` is the record-extractor subagent's private writer: it is
-    declared by NO skill's `allowed-tools` and lives only on
-    `agents/record-extractor.md`. So the only legitimate caller is the
-    Task-spawned subagent, whose PreToolUse firing carries `agent_id`; a call on
-    the main thread (no `agent_id`) is the router substituting for a failed
-    spawn and doing the extraction itself.
+    Both members are a Task-spawned subagent's private tool, declared by NO
+    skill's `allowed-tools`: `extraction_append` lives only on
+    `agents/record-extractor.md` (the #942 case), and `image_read` only on
+    `agents/image-reader-opus.md` since `search-images` moved to
+    `@plugin:image-reader` (2026-07-17). So the only legitimate caller of either
+    is the subagent, whose PreToolUse firing carries `agent_id`; a call on the
+    main thread (no `agent_id`) is the router substituting for a failed spawn and
+    doing the work itself.
 
-    The policy binds in e2e for this tool because `agent_id` presence alone is a
+    The policy binds in e2e for both because `agent_id` presence alone is a
     sufficient discriminator — which is all e2e can see, since its sub-skills run
     in the same session via the `Skill` tool with no `agent_id` to attribute them
     (see `harness.context_policy` docstring). We deny the bare tool directly
-    rather than routing through `subagent_only_violation`, which guards the whole
-    set and takes a `declared_tools` argument e2e cannot supply; keeping the check
-    tool-specific also means a future skill that legitimately declares a guarded
-    tool is not denied here.
-
-    `image_read`, the set's other member, satisfies the same condition today — no
-    skill has declared it since `search-images` moved to `@plugin:image-reader`
-    (2026-07-17), and it lives only on `agents/image-reader-opus.md` — so it is
-    equally enforceable here and simply is not yet: that is outside #942's blast
-    radius, tracked as issue #1273.
+    rather than routing through `subagent_only_violation`, which takes a
+    `declared_tools` argument e2e cannot supply. The consequence is that e2e has no
+    declared-tools exemption at all: a future skill that legitimately declares a
+    guarded tool WOULD be denied here, and closing that needs this predicate
+    widened by hand. Membership in `SUBAGENT_ONLY_TOOLS` is what
+    generalizes it: a third guarded tool is covered here the moment it joins that
+    set (pinned by a per-member test).
     """
     # `or ""` rather than a get() default: a present-but-None `tool_name` would
     # raise AttributeError here, and a raising hook fails a call the agent was
@@ -229,7 +229,7 @@ def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
     if not (input_data.get("tool_name") or "").startswith("mcp__"):
         return False
     return (
-        _bare_tool_name(input_data["tool_name"]) == "extraction_append"
+        _bare_tool_name(input_data["tool_name"]) in SUBAGENT_ONLY_TOOLS
         and not is_subagent_call(input_data)
     )
 
@@ -1323,19 +1323,15 @@ async def _run_agent(
         if not tool_name.startswith("mcp__"):
             return {}
 
-        # NOTE: the per-context tool policy (harness/context_policy.py) is only
-        # PARTIALLY enforced here — see that module's docstring.
-        #   - `extraction_append` IS enforced (below). No skill declares it, so
-        #     its only legitimate caller is the Task-spawned record-extractor,
-        #     which carries `agent_id`; a main-thread call is the #942 router
-        #     substitution. `agent_id` presence alone discriminates, which is all
-        #     e2e can see — sub-skills run in this same session via the Skill
-        #     tool with no `agent_id` to attribute them, so the full per-skill
-        #     check (`subagent_only_violation`) has no `declared_tools` to take.
-        #   - `image_read`, the set's other member, is NOT enforced here yet. It
-        #     meets the same condition today (no skill declares it; it lives only
-        #     on agents/image-reader-opus.md) — issue #1273.
-        if is_main_thread_extraction_append(input_data):
+        # The per-context tool policy (harness/context_policy.py): a main-thread
+        # call to any SUBAGENT_ONLY_TOOLS member is the router substituting for a
+        # failed subagent spawn. Both members are enforced here — `extraction_append`
+        # (#942) and `image_read` — since neither is declared by any skill and
+        # `agent_id` presence alone discriminates, which is all e2e can see (its
+        # sub-skills run in this same session via the Skill tool with no `agent_id`).
+        # We deny the bare tool directly rather than through `subagent_only_violation`,
+        # which takes a `declared_tools` argument e2e cannot supply.
+        if is_main_thread_subagent_only_tool(input_data):
             bare = _bare_tool_name(tool_name)
             blocked_context_calls.append(
                 {
@@ -1344,18 +1340,29 @@ async def _run_agent(
                     "blocked_by": "context",
                 }
             )
+            # Per-tool recovery target (issue #1273 Item 1 asks for per-tool
+            # guidance), mirroring each `_DENIAL_REASONS` entry, which
+            # `blocked_context_calls` does not store — so a runlog reader can act on
+            # this line alone. NOTE: for image_read this is the transcription plugin
+            # @plugin:image-reader (the deny doctrine's recovery), deliberately NOT
+            # the tool's owner image-reader-opus — the interpret-e2e-result skill
+            # names the owner for the separate "whose spawn failed" diagnostic.
+            # The fallback covers a future third guarded tool.
+            recovery = {
+                "extraction_append": "@plugin:record-extractor",
+                "image_read": "@plugin:image-reader",
+            }.get(bare, "the owning subagent")
             narration.append(
                 {
                     "tool_calls_before": len(tool_calls),
                     "kind": "blocked",
                     "text": (
-                        f"`{bare}` denied on the main thread — writing extracted "
-                        "assertions is the record-extractor subagent's job. If it "
-                        "failed to spawn, report the failure and stop (#942)."
+                        f"`{bare}` denied on the main thread — it is a subagent-only "
+                        f"tool; delegate to {recovery} rather than doing the work here."
                     ),
                 }
             )
-            _emit(f"[blocked context call] {bare} (main-thread extraction_append)")
+            _emit(f"[blocked context call] {bare} (main-thread subagent-only tool)")
             return subagent_only_denial(bare)
 
         # An owned SECTION, not an owned tool — a separate arm on purpose. The

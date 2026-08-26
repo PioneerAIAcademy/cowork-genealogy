@@ -1386,6 +1386,20 @@ itself worth flagging.
 Anything else — most importantly a `general-purpose` subagent the model spawned
 itself — is a bypass.
 
+`research_append` to `sources` or `assertions` is the **same protected write by
+another door.** Those two sections carry the extracted evidence
+`extraction_append` writes, and `owning_skills` does not attribute them — they
+belong to record-extraction, which creates them, and to citation, which refines
+`sources`. So a delegate denied `extraction_append` could still write them
+through the broad `research_append`. The detector flags such a write by the same
+tight test the sibling `extraction_append` arm uses — anyone but the main thread
+(citation refines `sources` there) or the `record-extractor` agent. A *different*
+dedicated agent (gps-mentor, proof-conclusion, research-exhaustiveness) writing
+these sections is out of lane, exactly as it is for `extraction_append`, so it is
+not exempt here. This half is shadow only, logged and never denied, and covers the
+delegate route only; a main-thread router doing the same substitution is a
+separate, deny-side gap that nothing owns today.
+
 ### The decision, and what it beat
 
 **Caller identity decides. Doctrine presence does not.** Settled by the lead
