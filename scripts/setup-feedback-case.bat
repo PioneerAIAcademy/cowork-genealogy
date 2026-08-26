@@ -52,7 +52,7 @@ for /f "delims=" %%i in ('git rev-parse --show-toplevel 2^>nul') do set "REPO_RO
 popd >nul
 if "!REPO_ROOT!"=="" (
     echo Error: could not determine repo root from %SCRIPT_DIR% 1>&2
-    echo Run this script from inside the cowork-genealogy repo. 1>&2
+    echo This script must live inside the repo checkout; the cwd is irrelevant. 1>&2
     exit /b 1
 )
 REM git rev-parse on Windows returns forward slashes; normalize.
@@ -84,7 +84,7 @@ if not exist "!DEST_DIR!" mkdir "!DEST_DIR!"
 REM -ErrorAction Stop + exit 1: without them powershell.exe returns 0 even
 REM when Expand-Archive errors, so the errorlevel check below never fired
 REM and a corrupt zip printed "Imported to ..." and exited 0 (issue #1876).
-powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Expand-Archive -LiteralPath '!ZIP_PATH!' -DestinationPath '!DEST_DIR!' -Force -ErrorAction Stop } catch { exit 1 }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Expand-Archive -LiteralPath '!ZIP_PATH!' -DestinationPath '!DEST_DIR!' -Force -ErrorAction Stop } catch { Write-Error $_; exit 1 }"
 if errorlevel 1 (
     echo Error: failed to unzip !ZIP_PATH! 1>&2
     exit /b 1
@@ -156,7 +156,9 @@ exit /b 0
 
 :git_baseline_failed
 echo Error: could not create the git baseline in !DEST_DIR!. 1>&2
-echo The case was unpacked, but `make feedback-reset` needs this commit. 1>&2
+echo The case was unpacked, but it has no baseline to reset to. 1>&2
+echo Re-import with: scripts\reset-feedback-case.bat, then retry. 1>&2
+echo A partial import leaves files behind, so the retry needs --force. 1>&2
 echo If git reported an unknown author, set user.name and user.email. 1>&2
 exit /b 1
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
@@ -214,33 +214,66 @@ describe("Windows wrapper drift", () => {
   });
 
   /**
-   * The two `scripts/`-root `.bat` files are exempt from the stray check above,
-   * which meant nothing read them at all -- and they are the Windows entry
-   * point for the whole alpha-feedback loop. In cmd, `shift` moves `%1` into
-   * `%0`, so a `%~dp0` read AFTER an argument-parsing loop yields the first
-   * argument's directory, not the script's. `setup-feedback-case.bat` resolved
-   * the repo root that way and could not unpack any case (issue #1876); the
-   * `.sh` counterpart is unaffected because it reads SCRIPT_DIR before parsing.
+   * cmd's `shift` moves `%1` into `%0`, so ANY `%0` / `%~dp0` / `%~f0` read
+   * after a `shift` yields the caller's first argument rather than the script.
+   * `setup-feedback-case.bat` resolved the repo root that way and could not
+   * unpack a single feedback case (issue #1876) -- and because that line sat
+   * above everything else, nothing below it in the file had ever run.
+   *
+   * This is cmd-only. The `.sh` twin resolves SCRIPT_DIR after its parse loop
+   * too and is fine, because bash's `shift` never touches `$0`. Do not carry
+   * "resolve before parsing" away as a cross-shell rule.
+   *
+   * Scans EVERY `.bat` in the repo, not just `scripts/windows/`: the file that
+   * had the bug is in `scripts/`, which the helpers above never read. REM/`::`
+   * comment bodies are stripped first -- an explanatory comment naming `%~dp0`
+   * sits directly above the assignment it explains, and matching the comment
+   * instead of the code made the FIRST version of this guard pass on the very
+   * bug it was written for (Ikennaya1's review of PR #1905).
    */
-  it("every scripts/-root .bat reads %~dp0 before it shifts", () => {
-    const late = [...SCRIPTS_ROOT_BAT]
-      .filter((f) => existsSync(join(projectRoot, "scripts", f)))
-      .flatMap((f) => {
-        const body = read(join(projectRoot, "scripts", f));
-        const dp0 = body.search(/%~dp0/);
-        const shift = body.search(/^\s*shift\b/m);
-        if (dp0 === -1 || shift === -1) return [];
-        return dp0 > shift ? [`${f}: %~dp0 read after shift`] : [];
-      });
-    expect(late).toEqual([]);
+  const batFiles = (function walk(dir: string): string[] {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+      if (e.name === "node_modules" || e.name === ".venv" || e.name === ".git") return [];
+      const full = join(dir, e.name);
+      if (e.isDirectory()) return walk(full);
+      return e.name.toLowerCase().endsWith(".bat") ? [full] : [];
+    });
+  })(projectRoot);
+
+  /** Body with REM / `::` comment lines blanked, so a comment cannot match. */
+  const code = (f: string) =>
+    read(f)
+      .split("\n")
+      .map((l) => (/^\s*(?:rem\b|::)/i.test(l) ? "" : l))
+      .join("\n");
+
+  const ZERO = /%~?[dpfnx]*0\b/;
+  const SHIFT = /^\s*shift\b/m;
+  const rel = (f: string) => relative(projectRoot, f).split(sep).join("/");
+
+  it("found .bat files to check (guards the reader itself)", () => {
+    expect(batFiles.length).toBeGreaterThan(10);
   });
 
-  it("a scripts/-root .bat actually uses %~dp0 (guards the reader itself)", () => {
-    const using = [...SCRIPTS_ROOT_BAT].filter(
-      (f) =>
-        existsSync(join(projectRoot, "scripts", f)) &&
-        /%~dp0/.test(read(join(projectRoot, "scripts", f))),
-    );
-    expect(using.length).toBeGreaterThan(0);
+  it("a .bat still uses shift (guards the reader itself)", () => {
+    const shifting = batFiles.filter((f) => SHIFT.test(code(f)));
+    expect(shifting.map(rel).length).toBeGreaterThan(0);
+  });
+
+  it("a .bat still reads %0 (guards the reader itself)", () => {
+    const reading = batFiles.filter((f) => ZERO.test(code(f)));
+    expect(reading.map(rel).length).toBeGreaterThan(0);
+  });
+
+  it("no .bat reads %0 after it shifts", () => {
+    const late = batFiles.flatMap((f) => {
+      const body = code(f);
+      const shift = body.search(SHIFT);
+      if (shift === -1) return [];
+      return [...body.matchAll(new RegExp(ZERO.source, "g"))]
+        .filter((m) => (m.index ?? 0) > shift)
+        .map((m) => `${rel(f)}: ${m[0]} read after shift`);
+    });
+    expect(late).toEqual([]);
   });
 });
