@@ -1149,7 +1149,7 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
 
 - `before_state` (dict) — `{"research_json": {...}, "tree_gedcomx_json": {...}, "files": {<path>: <content>}, "skill_frontmatter": {...}}`. Files present in the temp dir before the skill ran. `research_json` and `tree_gedcomx_json` are convenience aliases for the parsed contents of those files; absent if the test is stateless. `skill_frontmatter` is the parsed YAML frontmatter of the skill under test's SKILL.md.
 - `after_state` (dict) — same shape as `before_state`, snapshotting state after the skill ran. Files created during the run appear here with no `before` counterpart.
-- `tool_calls` (list) — every MCP tool call made by the skill, with the shape `{"tool": "mcp__genealogy__record_search", "args": {...}, "matched": {...}, "response_fixture": "...", "response": {...}}` (Section 10). `response` is present only for `live` and unmatched (`none`) calls — see Section 10.
+- `tool_calls` (list) — every MCP tool call made by the skill, with the shape `{"tool": "mcp__genealogy__record_search", "args": {...}, "matched": {...}, "response_fixture": "...", "response": {...}}` (Section 10). `response` is present for `live` and unmatched (`none`) calls, and for a fixture-matched response the mock enriched — see Section 10.
 - `skill_frontmatter` (dict) — the parsed YAML frontmatter of the skill under test's SKILL.md (also available inside `before_state`/`after_state`).
 - `test` (dict) — the parsed test JSON dict, including `test.type`, `test.tags`, and any validator-facing blocks the orchestrator threads in.
 - `skills_invoked` (list) — skills invoked via the SDK `Skill` tool, captured by the PreToolUse hook.
@@ -1429,8 +1429,9 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
   - **A fixture-matched response the mock ENRICHED** — recorded. The mock rewrites
     a matched response after selecting it and before logging it (`staged`,
     `ranked`, `rankingSkipped`), so what the skill saw is not the stored fixture;
-    `staged.resultsRef` comes from `randomUUID()` and exists in no commit. 587
-    committed calls are in this state. The rule keys on those marker keys rather
+    `staged.resultsRef` comes from `randomUUID()` and exists in no commit. Up to
+    420 committed calls are in this state — the ones passing a `projectPath`,
+    which all three enrichment paths require. The rule keys on those marker keys rather
     than on the three tools that have them today, so a fourth tool gaining
     staging is covered without a code change.
   - **A plain `predicate` match** — omitted, and recoverable from

@@ -85,10 +85,13 @@ def test_an_unmatched_call_keeps_the_response():
 
 
 def test_a_fixture_matched_call_omits_the_response():
-    """The retention rule (lead, 2026-08-24). A `predicate` match is exactly
-    recoverable from `response_fixture` + `matched.index` at that commit, so
-    storing it again re-adds bytes git already holds — ~16% on the largest run
-    log, against a schema version introduced to make run logs smaller.
+    """The retention rule (lead, 2026-08-24). A PLAIN `predicate` match — one the
+    mock did not enrich — is recoverable from `response_fixture` +
+    `matched.index` at that commit, so storing it again re-adds bytes git already
+    holds. (The "exactly recoverable" and "~16%" claims this docstring once
+    carried were both wrong and are retracted; the enriched case is the test
+    twelve lines below, and the size trade is stated in full in
+    `unit-test-spec.md` §10.)
 
     Absent, not null: null would assert "this call returned nothing".
     """
@@ -117,8 +120,9 @@ def test_an_enriched_fixture_response_is_kept_even_though_it_matched():
     ~506). `staged.resultsRef` is worse than un-stored — `results-staging.ts`
     builds it from `randomUUID()`, so no commit anywhere holds that value.
 
-    587 committed predicate calls are in this state, on the harness's three
-    busiest search tools. Dropping them would have been irreversible.
+    Up to 420 committed predicate calls are in this state — the ones passing a
+    `projectPath`, which all three enrichment paths require. Dropping them would
+    have been irreversible.
     """
     for marker in ("staged", "ranked", "rankingSkipped"):
         entry = _tool_call_entry({

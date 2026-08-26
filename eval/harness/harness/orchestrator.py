@@ -1178,9 +1178,13 @@ def _tool_call_entry(c: dict[str, Any]) -> dict[str, Any]:
     ~477, `rankingSkipped` ~501, all above `entry["response"] = response` at
     ~506). An enriched response is therefore NOT the stored fixture, and
     `staged.resultsRef` is not reconstructable at all — `results-staging.ts`
-    builds it from `randomUUID()`, so no commit holds that value. 587 committed
-    predicate calls are in this state (`record_search`, `external_links_search`,
-    `fulltext_search`).
+    builds it from `randomUUID()`, so no commit holds that value. Up to 420 committed
+    predicate calls are in this state — the ones passing a `projectPath`, which
+    all three enrichment paths require (`staged` gates on it directly,
+    `rankingSkipped` on its presence, `ranked` on `staged`). Eligibility, not
+    confirmed enrichment, so it is a tight upper bound; the other 167
+    `external_links_search` calls pass none and are the plain-predicate case the
+    rule correctly omits.
 
     So the rule keys on the RESPONSE, not on `matched.kind` alone: an enriched
     response is kept whatever its kind. Keyed on the enrichment markers rather
