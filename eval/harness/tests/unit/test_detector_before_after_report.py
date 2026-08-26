@@ -10,7 +10,10 @@ empty-input path of the formatter.
 
 from __future__ import annotations
 
+import json
+
 from e2e.detector_before_after_report import (
+    REPO_ROOT,
     _lane_check_eligible,
     _lane_check_new,
     _lane_check_old,
@@ -108,6 +111,59 @@ def test_lane_check_old_mirrors_the_namespace_strip_no_divergence_on_a_namespace
         }
     ]
     assert _lane_check_old(extraction) == _lane_check_new(extraction) == []
+
+
+def test_lane_check_old_mirrors_the_1273_item4_arm_no_divergence():
+    """The replica must carry the #1273 research_append->sources/assertions arm the
+    live detector gained after it first shipped, or the old-vs-new diff blames those
+    hits on the #1569 is_error fix (same replica-drift class as #1856, found in
+    review). A non-errored general-purpose sources write is flagged by BOTH, so old
+    and new must agree at 1. Dropping the arm from _lane_check_old makes new exceed
+    old -> a spurious #1569 divergence."""
+    calls = [
+        {
+            "tool": "mcp__genealogy__research_append",
+            "args": {"section": "sources", "op": "append", "entry": {}},
+            "agent_id": "a1",
+            "agent_type": "general-purpose",
+        }
+    ]
+    assert len(_lane_check_old(calls)) == len(_lane_check_new(calls)) == 1
+    # a namespaced record-extractor is exempt under both arms -> agree at zero
+    exempt = [
+        {
+            "tool": "mcp__genealogy__research_append",
+            "args": {"section": "assertions", "op": "append", "entry": {}},
+            "agent_id": "a1",
+            "agent_type": "genealogy-research:record-extractor",
+        }
+    ]
+    assert _lane_check_old(exempt) == _lane_check_new(exempt) == []
+
+
+def test_lane_check_replica_never_drifts_from_live_across_the_corpus():
+    """With is_error entries stripped (the ONE thing the replica is meant to differ
+    on), _lane_check_old must equal _lane_check_new on EVERY committed e2e runlog.
+
+    This retires the replica-drift class: _lane_check_old fell behind the live
+    detector twice -- the #1856 namespace strip and the #1273 Item 4 arm -- each
+    caught by hand and closed with a bespoke test above. This general check goes red
+    the moment the replica drops any arm, on whichever committed run exercises it,
+    with nobody needing to remember (red at antonio-lucas-spouse old=15 new=18 when
+    the Item 4 arm is dropped from the replica). Suggested by promise-emmanuel."""
+    runlogs = sorted((REPO_ROOT / "eval" / "runlogs" / "e2e").glob("*/run-*.json"))
+    assert runlogs, "no committed e2e runlogs to check the replica against"
+    for path in runlogs:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        stripped = [
+            tc for tc in (data.get("tool_calls") or []) if tc.get("is_error") is not True
+        ]
+        old, new = _lane_check_old(stripped), _lane_check_new(stripped)
+        assert len(old) == len(new), (
+            f"lane-check replica drift on {path.parent.name}/{path.name}: "
+            f"_lane_check_old={len(old)} != _lane_check_new={len(new)} -- with "
+            "is_error stripped they must agree; the replica dropped a live arm"
+        )
 
 
 def test_format_divergences_on_an_empty_list():
