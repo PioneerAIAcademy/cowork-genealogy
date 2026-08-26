@@ -121,6 +121,30 @@ def test_assertion_error_captured_as_failure(tmp_path):
     assert "intentional" in results[0].error
 
 
+def test_unknown_parameter_is_a_failure_not_a_skip(tmp_path):
+    """A validator asking for an arg the runner cannot supply is recorded
+    FAILED — for every test it runs against, not once.
+
+    The code comment beside this branch says "skip it gracefully", which reads
+    as dormancy and is how PR #1764 shipped two validators declaring an
+    unsupplied `text_response`: they did not lie idle, they failed every
+    translation test. Pinned so the next reader learns it from a test rather
+    than from a red suite.
+    """
+    v = tmp_path / "test_universal.py"
+    v.write_text(
+        "def test_wants_the_impossible(before_state, no_such_arg):\n"
+        "    assert True\n", encoding="utf-8"
+    )
+    results = run_validators(
+        skill="x", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+    )
+    assert len(results) == 1
+    assert results[0].passed is False
+    assert "no_such_arg" in results[0].error
+
+
 def test_validator_with_no_args_still_runs(tmp_path):
     nullary = tmp_path / "test_universal.py"
     nullary.write_text("def test_no_args():\n    assert 1 == 1\n", encoding="utf-8")
