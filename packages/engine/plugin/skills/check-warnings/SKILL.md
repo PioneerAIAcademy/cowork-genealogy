@@ -127,9 +127,8 @@ WARNINGS FOR: Patrick Flynn (I1)
     action depends on what you find.
 
 [!]  Contradiction -- Long lifespan  [hasAgeRangeGreaterThan120]
-    [Fundamental: the tool emits this tag at severity
-    "contradiction"; render the icon and category from the
-    severity the tool returned, not from how the message reads.]
+    [Fundamental: a recorded lifespan cannot exceed plausible
+    biological limits (~120 years).]
     This person's lifespan is greater than 120 years, which is
     implausible.
     Next: verify the birth and death dates against their sources.
