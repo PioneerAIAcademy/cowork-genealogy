@@ -14,6 +14,7 @@ vi.mock('../../../contexts/ResearchDataContext', async () => {
 
 import { useResearchData } from '../../../contexts/ResearchDataContext'
 import { buildMockContext } from '../../../contexts/__tests__/mockContext'
+import { expandFirstCard } from './expandCard'
 
 function mockResearch(overrides: Partial<ResearchData> = {}): void {
   vi.mocked(useResearchData).mockReturnValue(
@@ -48,17 +49,6 @@ function withMatchScore(value: number | null | undefined): Partial<ResearchData>
 describe('PersonEvidenceSection — match_score presence', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  /**
-   * The Match row lives in the Card body, and Card starts collapsed
-   * (`shared/Card.tsx`: `useState(false)`, body rendered only when expanded).
-   * Target the card by its id rather than by rendered text, which the person-name
-   * lookup can split across elements.
-   */
-  async function expandFirstCard(): Promise<void> {
-    const card = document.getElementById('pe_001')
-    expect(card, 'no card rendered for pe_001').not.toBeNull()
-    await userEvent.click(card!.firstElementChild as HTMLElement)
-  }
 
   it('omits the Match row when the key is absent, without rendering NaN', async () => {
     mockResearch(withMatchScore(undefined))
@@ -73,6 +63,19 @@ describe('PersonEvidenceSection — match_score presence', () => {
     render(<PersonEvidenceSection />)
     await expandFirstCard()
     expect(screen.queryByText('Match:')).not.toBeInTheDocument()
+  })
+
+  it('renders a legitimate zero score rather than hiding the row', async () => {
+    // `minimum: 0` in the schema, so 0 is the bottom of the valid range, not a
+    // sentinel. It is the one value where `!= null` and truthiness disagree, and
+    // truthiness is the tempting "simplification" here: `{pe.match_score && ...}`
+    // compiles, passes every other case, and silently drops the row for a real
+    // 0% match. Without this case that mutation is green.
+    mockResearch(withMatchScore(0))
+    render(<PersonEvidenceSection />)
+    await expandFirstCard()
+    expect(screen.getByText('Match:')).toBeInTheDocument()
+    expect(screen.getByText(/0%/)).toBeInTheDocument()
   })
 
   it('renders the rounded percentage when a score is present', async () => {

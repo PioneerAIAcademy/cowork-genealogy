@@ -419,10 +419,12 @@ change, with different (and easy-to-undercount) site lists:
   table in `docs/specs/research-schema-spec.md`, the validator
   (`packages/engine/mcp-server/src/validation/validator.ts`), **and** the web
   mirror (`packages/schema/schemas/research.schema.json` + the matching `interface`
-  in `packages/schema/src/index.ts`, where a field the schema does not list in
-  `required` must be written `foo?: T | null` — optional, not present-but-null,
-  and a required one takes no `?`; a drift test asserts both directions with no
-  exemptions, so either mistake fails CI). A *required* field additionally breaks
+  in `packages/schema/src/index.ts`, where optionality follows `required` and
+  nullability follows the schema's own type: a field absent from `required` takes
+  a `?`, a required one does not, and `| null` is added only where the schema's
+  type actually has a null branch. A drift test asserts the `?` in both
+  directions, so either mistake there fails CI; the `| null` half is unchecked,
+  which is why it is stated here). A *required* field additionally breaks
   `eval/fixtures/scenarios/*/research.json` and the eval Python stubs, which fail
   validation until backfilled. A new **section** (a top-level property, or a new
   entry in `research_append`'s `section` enum) additionally needs a row in

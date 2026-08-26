@@ -1,10 +1,12 @@
 // TypeScript types mirroring docs/specs/research-schema-spec.md and docs/specs/simplified-gedcomx-spec.md
 //
-// This file is hand-written on purpose (for its doc comments), so one rule binds
-// every field you add: a key the schema does not list in `required` is
-// `foo?: T | null` — optional, not present-but-null. The reverse holds too, a
-// required key takes no `?`. schema-interface-drift.test.ts asserts both
-// directions with no exemptions, so either mistake is a red build. ADR-0008.
+// This file is hand-written on purpose (for its doc comments), so two independent
+// rules bind every field you add. OPTIONALITY follows `required`: a key the schema
+// does not list there takes a `?`, a key it does list does not.
+// schema-interface-drift.test.ts asserts that both ways, so either mistake is a red
+// build. NULLABILITY is separate and unchecked: add `| null` only where the schema's
+// own type has a null branch. Most optional fields here correctly have no `| null`.
+// ADR-0008.
 
 // ============================================================
 // research.json enums

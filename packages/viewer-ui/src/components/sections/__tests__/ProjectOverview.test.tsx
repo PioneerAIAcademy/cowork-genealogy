@@ -86,11 +86,21 @@ describe('ProjectOverview — researcher profile', () => {
  *
  * tsc guards the narrowing itself (reverting `== null` to `=== null` here is TS18048),
  * but it cannot see WHAT the component does once someone satisfies the compiler a
- * different way: `!` is forbidden by the ruling, and `?? 0` would render "0 persons"
- * instead of the not-identified message. This pins the behaviour, not the compile.
+ * different way. `!` is forbidden by the ruling; `?? []` compiles clean and takes
+ * the same branch, so only a rendering assertion distinguishes a real fix from one
+ * that merely silences the compiler. This pins the behaviour, not the compile.
  */
 describe('ProjectOverview — a flipped key that is absent, not null', () => {
   beforeEach(() => vi.clearAllMocks())
+
+  it('still renders the subject when there IS one', () => {
+    // Without this, `{true ? (` -- always the not-identified branch, never a
+    // subject -- leaves the entire viewer-ui suite green. The absent-key case
+    // below cannot tell a correct guard from one that always takes its branch.
+    mockResearch()
+    render(<ProjectOverview />)
+    expect(screen.queryByText('Subject not yet identified')).not.toBeInTheDocument()
+  })
 
   it('renders the not-identified message instead of throwing on undefined.length', () => {
     const project = { ...patrickFlynnResearch.project }

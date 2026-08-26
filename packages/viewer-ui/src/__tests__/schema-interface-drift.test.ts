@@ -126,14 +126,12 @@ function interfaceFields(path: string): {
 const { fields: parsed, optional: parsedOptional, inheriting } = interfaceFields(sourcePath)
 
 /**
- * Comparisons actually performed, summed across both helpers. The parser-level
- * non-vacuity test below proves `questionToken` is read correctly; it cannot see
- * whether either helper compared anything. Neutering the shared-field filter in
- * `expectOptionality` takes the optionality comparisons to zero with every test
- * still green, and `expectMirrors` has the same hole — so the count is asserted
- * rather than assumed. One counter, not two, because it is one failure class.
+ * Which interfaces each helper actually compared. Asserted as an exact SET, not a
+ * count: a floor is defeatable one interface at a time (`if (tsName.startsWith(
+ * 'Gedcomx')) return` cleared a floor of 150 while hiding a real regression), and
+ * a count cannot tell a skipped interface from a smaller one.
  */
-const compared = { names: 0, optionality: 0 }
+const seen = { names: new Set<string>(), optionality: new Set<string>() }
 
 /** One interface against one subschema's `properties`, by field name. */
 function expectMirrors(tsName: string, def: any, help: string) {
@@ -141,10 +139,10 @@ function expectMirrors(tsName: string, def: any, help: string) {
   expect(fields, help).toBeDefined()
 
   const schemaKeys = Object.keys(def.properties).sort()
-  compared.names += schemaKeys.length
   const missing = schemaKeys.filter((k) => !fields!.has(k))
   const extra = [...fields!].sort().filter((k) => !(k in def.properties))
 
+  seen.names.add(tsName)
   expect(
     { missing, extra },
     `${tsName} drifted — missing: the schema has it, the type doesn't; ` +
@@ -158,10 +156,10 @@ function expectMirrors(tsName: string, def: any, help: string) {
  * a key absent from `required` is `foo?: T | null`, and a key in `required` has
  * no `?`. Schema-optional means TypeScript-optional. An exemption list here
  * would re-admit exactly the "present but null" encoding that ruling rejected.
- * (Non-vacuity is enforced globally, not per-interface: the "not vacuous" test
- * proves the questionToken read, and "actually compared fields" proves these
- * helpers compared something. An empty intersection here means name drift,
- * which expectMirrors already fails on.)
+ * (Non-vacuity: the "not vacuous" test proves the questionToken read, and the
+ * planted-drift self-test at the end of this file proves these helpers actually
+ * compare. An empty intersection here means name drift, which expectMirrors
+ * already fails on.)
  */
 function expectOptionality(tsName: string, def: any, help: string): void {
   const fields = parsed.get(tsName)
@@ -174,13 +172,13 @@ function expectOptionality(tsName: string, def: any, help: string): void {
   // Only fields present in BOTH the schema and the type; name drift is the
   // separate expectMirrors check above.
   const shared = Object.keys(def.properties).filter((k) => fields!.has(k))
-  compared.optionality += shared.length
   const missingQuestion = shared
     .filter((k) => !required.has(k) && !optional!.has(k))
     .sort()
   const spuriousQuestion = shared
     .filter((k) => required.has(k) && optional!.has(k))
     .sort()
+  seen.optionality.add(tsName)
   expect(
     { missingQuestion, spuriousQuestion },
     `${tsName} optionality drift — missingQuestion: absent from the schema's ` +
@@ -307,16 +305,74 @@ describe('@genealogy/schema interfaces mirror tree-gedcomx.schema.json', () => {
 })
 
 /**
- * Runs last, after both `describe`s above have executed, so the counters are
- * final. Guards the shape the parser-level "not vacuous" test cannot see: a
- * helper that compares NOTHING is green. Neutering the shared-field filter in
- * `expectOptionality` takes its comparisons to zero with all other tests still
- * passing; `expectMirrors` has the same hole. Floors, not exact counts, so
- * adding a `$def` or a field does not fail this.
+ * Self-test: prove each helper's comparison actually runs, by handing it a
+ * deliberately drifted schema and requiring it to throw.
+ *
+ * This replaces a comparison COUNTER, which was the wrong instrument. It summed
+ * the keys each helper ENUMERATED, so replacing every filter body with `[]` left
+ * it reading its full 251 while both halves of the lint were inert and a planted
+ * real drift stayed green. A floor is defeatable one interface at a time, too:
+ * `if (tsName.startsWith('Gedcomx')) return` cleared 150 while hiding a genuine
+ * regression. Planting the drift exercises the assertion itself, so there is no
+ * floor to clear and no ordering to depend on.
  */
-describe('the drift checks actually compared fields', () => {
-  it('expectMirrors and expectOptionality each compared a real population', () => {
-    expect(compared.names, 'expectMirrors compared no fields').toBeGreaterThan(150)
-    expect(compared.optionality, 'expectOptionality compared no fields').toBeGreaterThan(150)
+describe('the drift helpers actually compare', () => {
+  const def = schema.$defs.assertion
+  const req: string[] = def.required ?? []
+  const optionalField = Object.keys(def.properties).find((k) => !req.includes(k))!
+  const requiredField = req[0]
+
+  it('expectMirrors rejects a schema key the interface lacks', () => {
+    const planted = { ...def, properties: { ...def.properties, not_a_real_field: {} } }
+    expect(() => expectMirrors('Assertion', planted, 'planted')).toThrow()
+  })
+
+  it('expectMirrors rejects an interface field the schema lacks', () => {
+    const properties = { ...def.properties }
+    delete (properties as Record<string, unknown>)[optionalField]
+    expect(() => expectMirrors('Assertion', { ...def, properties }, 'planted')).toThrow()
+  })
+
+  it('expectOptionality rejects a schema-required field wearing a `?`', () => {
+    const planted = { ...def, required: [...req, optionalField] }
+    expect(() => expectOptionality('Assertion', planted, 'planted')).toThrow()
+  })
+
+  it('expectOptionality rejects a schema-optional field with no `?`', () => {
+    const planted = { ...def, required: req.filter((k) => k !== requiredField) }
+    expect(() => expectOptionality('Assertion', planted, 'planted')).toThrow()
+  })
+})
+
+/**
+ * Every interface the loops above intended to check was actually reached by both
+ * helpers. This is what a comparison COUNT could not do: an exemption keyed on one
+ * interface family clears any floor, and the planted-drift self-test below only
+ * proves the helper works for the interface it plants against.
+ */
+describe('every intended interface was actually compared', () => {
+  // Derived from the SCHEMA, deliberately NOT from NO_INTERFACE: an expectation
+  // computed from the exemption list can never notice the list growing.
+  const expected = new Set<string>(['ResearchData', 'GedcomxData'])
+  for (const [defName] of Object.entries<any>(schema.$defs).filter(
+    ([, d]) => d.type === 'object' && d.properties,
+  )) {
+    expected.add(RENAMED[defName] ?? pascal(defName))
+  }
+  for (const tsName of Object.values(TREE_INTERFACES)) expected.add(tsName)
+
+  it('NO_INTERFACE is still empty', () => {
+    // The ruling on #1165 is "no exemption list". This is one, and the failure
+    // message in the loop above recommends it by name, so it is pinned here:
+    // growing it must be a deliberate edit to this assertion, not a quiet append.
+    expect(NO_INTERFACE).toEqual([])
+  })
+
+  it('expectMirrors reached every one', () => {
+    expect([...expected].filter((n) => !seen.names.has(n)).sort()).toEqual([])
+  })
+
+  it('expectOptionality reached every one', () => {
+    expect([...expected].filter((n) => !seen.optionality.has(n)).sort()).toEqual([])
   })
 })
