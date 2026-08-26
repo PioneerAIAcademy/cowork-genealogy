@@ -476,10 +476,23 @@ def test_research_plan_rationale_identifiers_traceable(
     before_state, after_state, tool_calls
 ):
     """A collection or volume identifier written into a new plan item's
-    rationale must appear in a tool response this run received — otherwise
-    search-records reads the persisted rationale and chases a collection the
-    skill was never shown. Issue #1866 V1, e.g. ut_research_plan_006 pli_007
-    cites collection 1401638, which no fixture that run served.
+    rationale must appear in a tool response this run received OR in the
+    research.json the run started from — otherwise search-records reads the
+    persisted rationale and chases a collection the skill was never shown.
+    Issue #1866 V1, e.g. ut_research_plan_006 pli_007 cites collection
+    1401638, which no fixture that run served and which is not in that
+    scenario's before-state.
+
+    The grounded set is the UNION of two sources (issue #1866, EdmondOware's
+    correction): every traceable-tool response the run received, and the
+    starting research.json. SKILL.md Step 2 tells the skill to read the
+    `localities` entries and carry their facts — including collection and
+    volume ids — into the plan rationales, and those ids never appear in a
+    tool response for that run. Grounding against served ids alone
+    false-positives on exactly that correct behaviour (e.g.
+    ut_research_plan_wzk cites loc_001's volume ids from the
+    martha-remarriage-surname-plan scenario). An id in NEITHER source is a
+    fabrication.
 
     Scoped to ARKs and 5+ digit numbers (candidate_identifiers, shared with
     make provenance-report), so four-digit years never enter the check."""
@@ -491,17 +504,23 @@ def test_research_plan_rationale_identifiers_traceable(
     if not new_plans:
         pytest.skip("run added no new plan")
 
-    served = _served_identifiers(tool_calls)
+    # Grounded = served responses ∪ the run's starting research.json. The
+    # before-state arm is scanned whole (not just `localities`): an id the
+    # skill carried from any prior-state field it legitimately read is not a
+    # fabrication, and candidate_identifiers already excludes years.
+    grounded = _served_identifiers(tool_calls) | candidate_identifiers(
+        json.dumps(before)
+    )
     errors: list[str] = []
     for plan in new_plans:
         for item in plan.get("items") or []:
             rationale = item.get("rationale") or ""
             for ident in sorted(candidate_identifiers(rationale)):
-                if ident not in served:
+                if ident not in grounded:
                     errors.append(
                         f"{plan.get('id')} item {item.get('id')} rationale "
                         f"cites {ident!r}, which appears in no tool response "
-                        f"this run received"
+                        f"this run received and not in the starting research.json"
                     )
     assert not errors, (
         "untraceable identifier in a plan rationale:\n  - " + "\n  - ".join(errors)

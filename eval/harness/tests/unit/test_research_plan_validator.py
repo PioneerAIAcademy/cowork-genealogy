@@ -149,6 +149,51 @@ def test_v1_ignores_four_digit_years():
     check_v1(before, after, _SERVED)
 
 
+def test_v1_passes_on_identifier_from_before_state_localities():
+    """Issue #1866, EdmondOware's correction: an id carried from the starting
+    research.json — e.g. a volume id in a `localities` entry the skill read at
+    Step 2 — is grounded even though no tool response this run served it.
+    Grounding against served ids alone would false-positive on this correct
+    behaviour (ut_research_plan_wzk's loc_001 volume ids)."""
+    before = {
+        "research_json": {
+            "plans": [
+                {"id": "pl_001", "status": "completed", "items": [_item("pli_001")]}
+            ],
+            "localities": [
+                {
+                    "id": "loc_001",
+                    "place": "Schuylkill County, Pennsylvania",
+                    # No trailing period: NUM_RE's lookahead rejects a digit run
+                    # followed by `.` — the same normalisation the rationale side
+                    # uses, so grounding stays symmetric.
+                    "notes": "Probate on FHL film 007255720, per the county survey",
+                }
+            ],
+        }
+    }
+    after = {
+        "research_json": {
+            "plans": [
+                *before["research_json"]["plans"],
+                {
+                    "id": "pl_002",
+                    "status": "active",
+                    "items": [
+                        _item(
+                            "pli_010",
+                            rationale="Order FHL film 007255720 (loc_001) for the probate.",
+                        )
+                    ],
+                },
+            ],
+            "localities": before["research_json"]["localities"],
+        }
+    }
+    # No tool calls at all: the id is grounded solely by the before-state.
+    check_v1(before, after, [])
+
+
 # --- V5 -------------------------------------------------------------------
 
 def test_v5_fires_on_indexed_claim_against_zero_count():
