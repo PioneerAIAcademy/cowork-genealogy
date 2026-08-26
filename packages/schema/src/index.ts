@@ -1,4 +1,12 @@
 // TypeScript types mirroring docs/specs/research-schema-spec.md and docs/specs/simplified-gedcomx-spec.md
+//
+// This file is hand-written on purpose (for its doc comments), so two independent
+// rules bind every field you add. OPTIONALITY follows `required`: a key the schema
+// does not list there takes a `?`, a key it does list does not.
+// schema-interface-drift.test.ts asserts that both ways, so either mistake is a red
+// build. NULLABILITY is separate and unchecked: add `| null` only where the schema's
+// own type has a null branch. Most optional fields here correctly have no `| null`.
+// ADR-0008.
 
 // ============================================================
 // research.json enums
@@ -27,7 +35,7 @@ import type {
 export interface Project {
   id: string
   objective: string
-  subject_person_ids: string[] | null
+  subject_person_ids?: string[] | null
   status: ProjectStatus
   created: string
   updated: string
@@ -58,7 +66,7 @@ export interface StopCriteria {
 
 export interface ExhaustiveDeclaration {
   declared: boolean
-  justification: string | null
+  justification?: string | null
   log_entry_ids: string[]
   stop_criteria: StopCriteria | null
 }
@@ -102,7 +110,7 @@ export interface ExternalSiteDetail {
   site: ExternalSite
   url_generated: string
   capture_received: boolean
-  capture_filename: string | null
+  capture_filename?: string | null
 }
 
 export interface LogEntry {
@@ -115,7 +123,7 @@ export interface LogEntry {
   results_examined: number
   results_ref?: string | null
   results_available?: number | null
-  notes: string | null
+  notes?: string | null
   external_site: ExternalSiteDetail | null
 }
 
@@ -136,9 +144,9 @@ export interface Source {
   source_classification: SourceClassification
   repository: string
   access_date: string
-  url: string | null
-  url_archived: string | null
-  notes: string | null
+  url?: string | null
+  url_archived?: string | null
+  notes?: string | null
   log_entry_id?: string | null
   transcription?: string | null
   /** Project-relative path of the saved page scan (images/<key>.jpg), when the
@@ -153,18 +161,18 @@ export interface Assertion {
   record_role: string
   fact_type: string
   value: string
-  structured_value: Record<string, unknown> | null
-  date: string | null
-  date_certainty: DateCertainty | null
-  place: string | null
+  structured_value?: Record<string, unknown> | null
+  date?: string | null
+  date_certainty?: DateCertainty | null
+  place?: string | null
   /** Standardized place-name sidecar of `place`, resolved via place_search. */
   standard_place?: string | null
   information_quality: InformationQuality
   informant: string
   informant_proximity: InformantProximity
-  informant_bias_notes: string | null
+  informant_bias_notes?: string | null
   evidence_type: EvidenceType
-  log_entry_id: string | null
+  log_entry_id?: string | null
   record_persona_id?: string | null
   extracted_for_question_ids: string[]
 }
@@ -175,22 +183,22 @@ export interface PersonEvidence {
   person_id: string
   confidence: PersonEvidenceConfidence
   rationale: string
-  match_score: number | null
+  match_score?: number | null
   created: string
-  superseded_by: string | null
+  superseded_by?: string | null
 }
 
 export interface Conflict {
   id: string
   conflict_type: ConflictType
   description: string
-  disputed_attribute: string | null
-  identity_question: string | null
+  disputed_attribute?: string | null
+  identity_question?: string | null
   competing_assertion_ids: string[]
-  independence_analysis: string | null
-  weighing_analysis: string | null
-  preferred_assertion_id: string | null
-  resolution_rationale: string | null
+  independence_analysis?: string | null
+  weighing_analysis?: string | null
+  preferred_assertion_id?: string | null
+  resolution_rationale?: string | null
   status: ConflictStatus
   blocks_question_ids: string[]
 }
@@ -202,8 +210,8 @@ export interface Hypothesis {
   supporting_assertion_ids: string[]
   contradicting_assertion_ids: string[]
   ruled_out: boolean
-  ruled_out_reason: string | null
-  notes: string | null
+  ruled_out_reason?: string | null
+  notes?: string | null
   related_question_ids: string[]
 }
 
@@ -211,7 +219,7 @@ export interface TimelineEvent {
   date: string
   date_certainty: DateCertaintyTimeline
   event_type: string
-  place: string | null
+  place?: string | null
   /** Standardized place-name sidecar of `place`, resolved via place_search. */
   standard_place?: string | null
   description: string
@@ -232,7 +240,7 @@ export interface TimelineGap {
 export interface Timeline {
   id: string
   label: string
-  hypothesis_id: string | null
+  hypothesis_id?: string | null
   person_ids: string[]
   generated: string
   events: TimelineEvent[]
