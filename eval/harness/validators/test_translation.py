@@ -139,6 +139,17 @@ def test_iso_date_formatting(text_response: str, test: dict) -> None:
     YYYY is not recognised — it cannot be told apart from the year in the
     prose date beside it — so a record stating only a year is left to the
     rubric dimension.
+
+    SKILL.md's pre-Gregorian carve-out is an exemption, not a violation to
+    catch: where the jurisdiction had not adopted the Gregorian calendar at
+    that date, or the record names no province and the calendar cannot be
+    determined, the skill is *required* to withhold the ISO form and say so
+    instead. Absence of ISO is the correct behaviour there, so this floor
+    must not fire — ut_translation_011 (Dutch Reformed, 1698, no province
+    named) is the case that forced it. Exempting the whole response is
+    coarser than the rule: a response carve-outing one date escapes the
+    check on its others too. Accepted for the same reason this is a floor at
+    all — the rubric dimension grades each date individually and this cannot.
     """
     if test.get("type") != "positive":
         pytest.skip("negative tests are graded by routing, not response content")
@@ -150,6 +161,29 @@ def test_iso_date_formatting(text_response: str, test: dict) -> None:
     if not prose_dates:
         pytest.skip("no English prose dates in response; ISO check not applicable")
     iso_dates = re.findall(r"\b\d{4}-\d{2}(?:-\d{2})?\b", text_response)
+    # Order matters: only a response that actually withheld the ISO form can
+    # be claiming the carve-out, so this is gated on `not iso_dates`. Checked
+    # ahead of that gate it exempts compliant responses — ut_translation_006
+    # confirms "1812-03-03" and adds "no Old Style conversion is needed",
+    # which silently skipped a check it passes.
+    #
+    # The pattern is narrow in two further ways. A bare mention of "Gregorian"
+    # must NOT exempt: ut_translation_007 says "Gregorian calendar was in use
+    # throughout Catholic Italy ... ISO 8601 dates apply". And bare
+    # "indeterminate" must not either — it is ordinary uncertainty vocabulary
+    # in a paleography skill, so it counts only next to "calendar".
+    if not iso_dates and re.search(
+        r"(?<!no )\bOld Style\b"
+        r"|calendar[^.\n]{0,40}indeterminate"
+        r"|indeterminate[^.\n]{0,40}calendar",
+        text_response,
+        re.I,
+    ):
+        pytest.skip(
+            "response invokes SKILL.md's pre-Gregorian carve-out (Old Style / "
+            "indeterminate calendar); withholding the ISO form is required "
+            "there, so the ISO floor does not apply"
+        )
     assert iso_dates, (
         f"response contains {len(prose_dates)} prose date(s) "
         f"({prose_dates[:2]}) but no ISO 8601 dates (YYYY-MM-DD). "

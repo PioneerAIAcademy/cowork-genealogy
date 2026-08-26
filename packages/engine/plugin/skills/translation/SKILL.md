@@ -178,7 +178,16 @@ These conventions govern how the translation is written up:
   vary — German: day.month.year; French: day month year; Latin:
   varies — so read the original convention before converting. When
   the day or month is unknown, give only what the record states
-  (1789-03, or 1789); never invent the missing part.
+  (1789-03, or 1789); never invent the missing part. When the
+  record's jurisdiction had not yet adopted the Gregorian calendar at
+  that date — Protestant German states before 1700, Britain and
+  colonies before 1752, Sweden before 1753, Russia before 1918,
+  Gelderland, Utrecht and Overijssel before 1700, Friesland,
+  Groningen and Drenthe before 1701 (but Holland and Zeeland from
+  1582) — do not write an ISO form: say the date is Old Style and
+  route to convert-dates. A Dutch record between 1582 and 1701 that
+  names no province is indeterminate: say so and route to
+  convert-dates rather than assuming.
 - **Genitive names aren't errors.** "Johannis" is genitive of
   "Johannes" — normalize to nominative form.
 - **Foreign text in English narrative.** Italicize foreign words
