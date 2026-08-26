@@ -6,11 +6,11 @@ spawn and doing the extraction itself (observed in production). The e2e
 orchestrator denies it there, mirroring the tree-read block, while leaving the
 subagent's own call (which carries `agent_id`) untouched.
 
-This is the one member of `context_policy.SUBAGENT_ONLY_TOOLS` e2e enforces
-today. `image_read`, the other member, is equally enforceable here — no skill
-has declared it since `search-images` moved to `@plugin:image-reader`
-(2026-07-17) — and is simply outside #942's scope, tracked as issue #1273. See
-`e2e-test-spec.md` §6.1.1.
+Both members of `context_policy.SUBAGENT_ONLY_TOOLS` are enforced in e2e:
+`extraction_append` (the #942 case) and `image_read` (#1273) — neither is
+declared by any skill (`image_read` since `search-images` moved to
+`@plugin:image-reader`, 2026-07-17), so `agent_id` presence alone discriminates.
+See `e2e-test-spec.md` §6.1.1.
 """
 
 from __future__ import annotations
@@ -26,10 +26,11 @@ from claude_agent_sdk import ResultMessage, SystemMessage
 from e2e import orchestrator
 from e2e.orchestrator import (
     _run_agent,
-    is_main_thread_extraction_append,
+    is_main_thread_subagent_only_tool,
     main_thread_owned_section,
     load_fixture,
 )
+from harness.context_policy import SUBAGENT_ONLY_TOOLS
 
 
 def _main(tool_name: str) -> dict:
@@ -44,7 +45,7 @@ def _sub(tool_name: str) -> dict:
 
 def test_main_thread_extraction_append_is_blocked():
     assert (
-        is_main_thread_extraction_append(_main("mcp__genealogy__extraction_append"))
+        is_main_thread_subagent_only_tool(_main("mcp__genealogy__extraction_append"))
         is True
     )
 
@@ -52,7 +53,7 @@ def test_main_thread_extraction_append_is_blocked():
 def test_subagent_extraction_append_is_not_blocked():
     """The record-extractor's own call carries `agent_id` — the legitimate path."""
     assert (
-        is_main_thread_extraction_append(_sub("mcp__genealogy__extraction_append"))
+        is_main_thread_subagent_only_tool(_sub("mcp__genealogy__extraction_append"))
         is False
     )
 
@@ -60,7 +61,7 @@ def test_subagent_extraction_append_is_not_blocked():
 def test_remote_devices_spelling_is_also_blocked_on_main():
     """Discriminate on the bare name, so the bridge spelling is caught too."""
     assert (
-        is_main_thread_extraction_append(
+        is_main_thread_subagent_only_tool(
             _main("mcp__remote-devices__Genealogy_Research__extraction_append")
         )
         is True
@@ -68,15 +69,24 @@ def test_remote_devices_spelling_is_also_blocked_on_main():
 
 
 def test_other_mcp_tools_on_main_are_not_blocked():
-    """Only extraction_append is guarded here — image_read stays unit-only, and
-    ordinary research tools must pass through untouched."""
+    """Ordinary research tools must pass through untouched. image_read and
+    extraction_append are the guarded set — see the per-member test below."""
     for name in (
-        "mcp__genealogy__image_read",
         "mcp__genealogy__record_read",
         "mcp__genealogy__research_append",
         "mcp__genealogy__record_search",
     ):
-        assert is_main_thread_extraction_append(_main(name)) is False
+        assert is_main_thread_subagent_only_tool(_main(name)) is False
+
+
+@pytest.mark.parametrize("tool", sorted(SUBAGENT_ONLY_TOOLS))
+def test_every_subagent_only_tool_is_blocked_on_main(tool):
+    """Every member of SUBAGENT_ONLY_TOOLS is enforced on the main thread, not just
+    extraction_append. This is Asimi's acceptance addition (#1295, folded into
+    #1273): a future third guarded tool cannot ship unenforced in e2e, because the
+    check keys on set membership and this exercises each member. Break-test:
+    hardcode the check to only "extraction_append" and the image_read param reddens."""
+    assert is_main_thread_subagent_only_tool(_main(f"mcp__genealogy__{tool}")) is True
 
 
 def test_non_mcp_tools_are_never_blocked():
@@ -85,7 +95,7 @@ def test_non_mcp_tools_are_never_blocked():
     means a name without a server prefix is never matched — only the genuine
     `mcp__…__extraction_append` call the router would actually emit is blocked."""
     for name in ("Read", "Skill", "Task", "extraction_append"):
-        assert is_main_thread_extraction_append(_main(name)) is False
+        assert is_main_thread_subagent_only_tool(_main(name)) is False
 
 
 @pytest.mark.parametrize("malformed", [{}, {"tool_name": None}, {"tool_name": ""}])
@@ -97,7 +107,7 @@ def test_malformed_tool_name_does_not_raise(malformed):
     would raise on None. A raising PreToolUse hook fails a call the agent was
     entitled to make.
     """
-    assert is_main_thread_extraction_append(malformed) is False
+    assert is_main_thread_subagent_only_tool(malformed) is False
 
 
 # --- integration: the recording path through the real hook closure ----------
