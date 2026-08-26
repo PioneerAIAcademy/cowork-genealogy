@@ -52,7 +52,7 @@ function makeSource(overrides: Partial<Source> = {}): Source {
   }
 }
 
-// Cards are collapsed by default; click the header (parent of the title)
+// Cards are collapsed by default; expandFirstCard clicks the chevron's header
 // to expand the body and footer.
 
 describe('SourcesSection — B2 transcription', () => {

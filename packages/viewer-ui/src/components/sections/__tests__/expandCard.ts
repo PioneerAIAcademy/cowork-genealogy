@@ -6,10 +6,12 @@ import userEvent from '@testing-library/user-event'
  * starts `expanded` false and renders `children` only when true), so any test
  * asserting on a card's body must expand it first.
  *
- * Consolidated from five copies across the section tests, which had drifted into
- * four different mechanisms: three chevron-based, one title-based, and one that
- * reached for `document.getElementById(...).firstElementChild`. They all click the
- * same element. CLAUDE.md: two near-duplicates is the signal to consolidate.
+ * Consolidated from five call sites in two mechanisms: four named local helpers
+ * (chevron-based in EvaluationsSection, SourcesSection and TimelinesSection;
+ * title-based in AssertionsSection) plus an inline title-based click in
+ * ConflictsSection. They all click the same element, and the shared chevron
+ * helper keeps the length guard EvaluationsSection's copy lacked.
+ * CLAUDE.md: two near-duplicates is the signal to consolidate.
  */
 export async function expandFirstCard(): Promise<void> {
   const chevrons = screen.getAllByText(/^[▾▸]$/)

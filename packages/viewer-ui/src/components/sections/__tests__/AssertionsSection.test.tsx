@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import AssertionsSection from '../AssertionsSection'
 import type { ResearchData } from '../../../lib/schema'
 import { patrickFlynnResearch } from '../../../lib/__fixtures__/patrick-flynn'
@@ -30,8 +29,8 @@ function mockResearch(overrides: Partial<ResearchData> = {}): void {
   )
 }
 
-// Helper: cards collapse by default. Find the card with the given title
-// and click its header to expand the body where the Persona row lives.
+// Cards collapse by default, so the body holding the Persona row needs an
+// expand first; expandCardByTitle picks the card out by its title.
 
 describe('AssertionsSection — B1 persona row', () => {
   beforeEach(() => {
