@@ -5,14 +5,29 @@ GitHub issue #1444. `all_result_jsons()` (and every reader built on it) reads
 on an unmerged branch is not skipped, it is never seen, and no reader can say
 so. Every reader now prints a caveat saying that (`branch_scope_note()` in
 `harness/since_window.py`); this is the on-demand remedy a human runs when
-that caveat actually matters, not something embedded in every reader — a
-34-line prototype measured 2026-08-25 found 23 result JSONs across 16 stale
-refs against zero runs behind an open PR, so a reader-embedded version would
-add that noise to every single invocation for no live gain.
+that caveat actually matters, not something embedded in every reader.
+
+A 34-line prototype measured 2026-08-25 found 23 result JSONs across 16 stale
+refs against zero runs behind an open PR that day, which is the reason a
+reader-embedded crawl was rejected (see `guardrail-enforcement-spec.md` §4).
+**That population count is a snapshot, not a standing property**: T-FEH's
+review of this PR found a genuinely in-flight graded run (`elena-asmundsdotter-origin`,
+behind open PR #1921) within about a day of the 2026-08-25 measurement — and
+this script, run at review time, did not find it, for a structural reason and
+not a bug: `_refs()` only sees LOCAL and REMOTE-TRACKING refs this checkout
+already knows about, so a branch nobody has fetched here is invisible to it
+regardless of how in-flight its work is. The Makefile target runs
+`git fetch --prune origin` first for exactly this reason (still no query
+against GitHub's PR state — a network-visible ref is not the same claim as
+"behind an open PR", just a precondition for seeing it at all). The
+23-across-16 figure stays a dated historical anchor, not a claim this script
+reproduces on every checkout — the population is fetch-state-dependent by
+construction.
 
 Local refs only: diffs `git ls-tree` between HEAD and every LOCAL and
-REMOTE-TRACKING ref already known to this checkout. No `git fetch`, no
-network call — whatever `git fetch origin` last synced is what this sees.
+REMOTE-TRACKING ref already known to this checkout. The module itself makes
+no network call — whatever the caller last fetched is what this sees (the
+Makefile target fetches first; calling the module directly does not).
 Does not attempt to tell in-flight work from abandoned; the human triages,
 which is why this is a script and not a warning baked into a reader.
 
@@ -43,16 +58,33 @@ def _git(*args: str) -> str:
 
 
 def _refs() -> list[tuple[str, str]]:
-    """[(refname, tip date)] for every local branch and remote-tracking ref.
+    """[(refname, tip date)] for every local branch and remote-tracking ref
+    NOT already merged into HEAD.
+
+    `--no-merged HEAD` drops a ref whose tip is a full ancestor of HEAD —
+    that ref cannot be carrying a run "HEAD is missing", since every commit
+    on it (including whichever one added the run) is already in HEAD's
+    history. Without this, a ref merged long ago whose run log was later
+    *deliberately deleted* from HEAD (`make prune-runlogs`, or a fixture
+    rewrite like #627) is misreported as "present there, absent from HEAD" —
+    a run committed-then-removed on purpose, not one this checkout has never
+    seen (T-FEH's review of this PR; live example: `pauline-shaver-death-burial`
+    and `scotland-thomson-grandparents`, deleted from HEAD by 13b36e6b/#627,
+    still on the long-merged `senior-shaunese-applegarth-family-1878`).
 
     `refs/remotes/<remote>/HEAD` is a symbolic ref to another ref already in
     this list (excluded below), not a distinct branch — including it would
     double-report whatever it currently points at. Scoped to `refs/remotes/`
     specifically, not any ref ending in `/HEAD`: a real branch could be named
-    e.g. `team/HEAD`, and that must still be checked.
+    e.g. `team/HEAD`. That said, this is not a fully precise symbolic-ref
+    test — a remote-tracking branch literally named `<remote>/team/HEAD`
+    would also be (wrongly) treated as symbolic and skipped; narrowing
+    further would need `git symbolic-ref` per candidate, not justified for
+    an edge case this rare in a discovery aid.
     """
     out = _git(
-        "for-each-ref", "--format=%(refname)\t%(committerdate:short)",
+        "for-each-ref", "--no-merged", "HEAD",
+        "--format=%(refname)\t%(committerdate:short)",
         "refs/heads", "refs/remotes",
     )
     rows: list[tuple[str, str]] = []
@@ -104,7 +136,11 @@ def branch_only() -> dict[str, RefEntry]:
 def format_report(found: dict[str, RefEntry]) -> str:
     if not found:
         return "No graded run logs found on another ref that HEAD is missing."
-    lines = [f"{sum(len(e.paths) for e in found.values())} run(s) across {len(found)} ref(s):"]
+    # A path can sit on more than one ref (a local branch and its remote
+    # twin, most often) -- de-dupe before counting, or the header
+    # double-counts that run (T-FEH's review of this PR).
+    unique_runs = {p for e in found.values() for p in e.paths}
+    lines = [f"{len(unique_runs)} run(s) across {len(found)} ref(s):"]
     for ref, entry in sorted(found.items(), key=lambda kv: kv[1].tip_date, reverse=True):
         lines.append(f"\n{ref} (tip {entry.tip_date}):")
         lines.extend(f"  {p}" for p in entry.paths)

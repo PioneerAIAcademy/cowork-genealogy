@@ -467,10 +467,14 @@ to understand before reading either:
 - Both counts are **branch-scoped** — they read `eval/runlogs/e2e/` in the
   current checkout, so a graded run committed on an unmerged branch is not
   skipped, it is never seen. Read a count off an up-to-date `main` with in-flight
-  fixture PRs merged, or it is biased at the moment it is used. Every corpus
-  reader now states this itself, every time it runs — `describe_window()`
+  fixture PRs merged, or it is biased at the moment it is used. Every **e2e**
+  corpus reader now states this itself, every time it runs — `describe_window()`
   (`harness/since_window.py`) appends a fixed caveat naming the branch-scope
-  limitation to its own printed line.
+  limitation to its own printed line. The three **unit**-corpus readers
+  (`eval-timings`, `judge-report`, `skill-latency`) share the same function
+  but only print its line — caveat included — under an explicit `SINCE=`;
+  bare, they show every skill unfiltered and print no window line at all, so
+  there is nothing for the caveat to attach to by default.
 - **The remedy is a caveat plus an on-demand crawl, not an exact count.**
   Considered and rejected: crawling remote branches inside every reader
   (real engineering cost for speculative value — measured 2026-08-25 at 23
@@ -480,9 +484,22 @@ to understand before reading either:
   `eval/runlogs/e2e/` (needs network access in a module deliberately kept
   pure-analysis). What shipped instead: `make e2e-branch-only`
   (`eval/harness/scripts/branch_only_runlogs.py`) diffs `git ls-tree` between
-  HEAD and every local/remote-tracking ref already known to the checkout —
-  no `git fetch`, no network — and a human runs it and triages the result
-  only when a decision is actually about to be taken off one of these counts.
+  HEAD and every local/remote-tracking ref already known to the checkout, and
+  excludes any ref already merged into HEAD — a merged-then-deliberately-deleted
+  run is not a run HEAD is missing, only a run HEAD chose to drop; without the
+  exclusion, a prior fixture-authoring cleanup that removed two runs from
+  `main` on purpose still reported them as branch-only on the long-merged
+  ref they were authored on.
+
+  The module itself makes no network call; the Makefile target fetches
+  (`--prune`) first, since a branch nobody has locally fetched is invisible
+  to it regardless of how in-flight its work is. That is not a theoretical
+  gap: the "0 runs behind an open PR" figure below was contradicted by a
+  genuinely in-flight graded run within about a day of being measured, and a
+  crawl run without fetching first missed it for exactly that reason — the
+  tool is weakest precisely where this issue is strongest. A human runs the
+  target and triages the result only when a decision is actually about to be
+  taken off one of these counts.
 - The **replayed** counts read the whole corpus. `same_person` provenance: **120
   of the 147 runs that link a person have ≥1 gap (788 links, 79 fixtures)**, with
   one run skipped and named for having no committed seed tree. It is a **lower

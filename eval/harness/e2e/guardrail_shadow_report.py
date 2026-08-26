@@ -673,10 +673,6 @@ def replay_provenance(
     doesn't. Read any rate off an up-to-date `main` with in-flight fixture PRs
     merged, or it is biased at exactly the moment it is used.
 
-    `heinrich-dewus-children-death` (now on `main`) was the first run ever to
-    store live entries for this check — worth knowing when the earliest
-    counts here look thin.
-
     A run whose fixture has no committed `starting-tree.gedcomx.json` is NAMED in
     `skipped` and excluded from both counts, never silently dropped — with no
     baseline every person reads as new, which would manufacture exactly the

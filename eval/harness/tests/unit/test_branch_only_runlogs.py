@@ -69,6 +69,30 @@ def test_a_ref_with_nothing_branch_only_is_not_reported(monkeypatch):
     assert branch_only_runlogs.branch_only() == {}
 
 
+def test_for_each_ref_excludes_refs_already_merged_into_head(monkeypatch):
+    """A ref fully merged into HEAD cannot be carrying a run "HEAD is
+    missing" -- every commit on it, including whichever one added the run,
+    is already in HEAD's history. Without `--no-merged HEAD`, a run
+    deliberately deleted from HEAD after the ref merged (e.g. #627's fixture
+    cleanup) is misreported as branch-only, when it was removed on purpose
+    (T-FEH's review of this PR; live example: `pauline-shaver-death-burial`
+    on the long-merged `senior-shaunese-applegarth-family-1878`). The
+    filtering itself is git's job (`--no-merged`), so what this test pins is
+    that the flag is actually passed."""
+    captured_cmd: list[str] = []
+
+    def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
+        if cmd[1] == "for-each-ref":
+            captured_cmd.extend(cmd)
+            return ""
+        return ""
+
+    monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
+    branch_only_runlogs.branch_only()
+    assert "--no-merged" in captured_cmd
+    assert captured_cmd[captured_cmd.index("--no-merged") + 1] == "HEAD"
+
+
 def test_symbolic_head_ref_is_never_queried(monkeypatch):
     """`refs/remotes/origin/HEAD` is a symbolic ref to another ref already in
     the list, not a distinct branch -- querying it would double-report."""
@@ -145,8 +169,47 @@ def test_a_ref_whose_ls_tree_fails_is_skipped_not_fatal(monkeypatch):
     assert list(found.keys()) == ["refs/heads/live-branch"]
 
 
+def test_format_report_does_not_double_count_a_path_on_two_refs(monkeypatch):
+    """A local branch and its remote-tracking twin (routine, not an edge
+    case) can carry the identical path -- the header must count unique runs,
+    not (ref, path) pairs, or a run present on 2 refs reads as 2 runs
+    (T-FEH's review of this PR)."""
+    found = {
+        "refs/heads/some-branch": branch_only_runlogs.RefEntry(
+            "2026-08-01", ["eval/runlogs/e2e/fixture/run-2026-08-01_00-00-00.json"]
+        ),
+        "refs/remotes/origin/some-branch": branch_only_runlogs.RefEntry(
+            "2026-08-01", ["eval/runlogs/e2e/fixture/run-2026-08-01_00-00-00.json"]
+        ),
+    }
+    out = branch_only_runlogs.format_report(found)
+    assert "1 run(s) across 2 ref(s):" in out
+
+
 def test_format_report_states_a_clean_result_as_a_real_result(monkeypatch):
     assert "No graded run logs found" in branch_only_runlogs.format_report({})
+
+
+def test_main_fails_clearly_when_only_head_read_fails(monkeypatch, capsys):
+    """Pins the HEAD-read prerequisite on its own, not just the
+    both-raise case above: `for-each-ref` succeeds, only the `ls-tree HEAD`
+    call fails. Making just this one call lenient (e.g. swallowing its
+    CalledProcessError like the per-ref case does) must not leave the suite
+    green -- T-FEH's review of this PR found neither prerequisite was pinned
+    individually, only their combined failure."""
+
+    def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
+        if cmd[1] == "for-each-ref":
+            return "refs/heads/some-branch\t2026-08-01\n"
+        assert cmd[1] == "ls-tree"
+        assert cmd[4] == "HEAD"
+        raise subprocess.CalledProcessError(128, cmd)
+
+    monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
+    rc = branch_only_runlogs.main()
+    err = capsys.readouterr().err
+    assert rc == 1
+    assert "Could not list refs" in err
 
 
 def test_main_fails_clearly_when_head_itself_cannot_be_read(monkeypatch, capsys):
