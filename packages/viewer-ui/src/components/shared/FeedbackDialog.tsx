@@ -20,6 +20,37 @@ const EMAIL_STORAGE_KEY = 'feedback.email'
 // Must match MAX_FIELD_CHARS in src/main/feedback.ts (the canonical validator).
 const MAX_FIELD_CHARS = 10_000
 
+// One reason a send can't go through, tied to the control it is about. Every
+// blocker gets the same treatment — an inline message under its own field — so
+// no refusal is silent for any of them.
+type Blocker = { id: string; message: string }
+
+// The blockable controls, in the order they render. `blockers` is built by
+// walking this, so a refused Send always points at the FIRST thing wrong rather
+// than an arbitrary one. Keep it in sync with the JSX below.
+const FIELD_ORDER = [
+  'feedback-email',
+  'feedback-prompt',
+  'feedback-did',
+  'feedback-worked-yes',
+  'feedback-should',
+  'feedback-answer',
+  'feedback-notes'
+] as const
+
+const overLimitMessage = (label: string): string =>
+  `"${label}" exceeds the ${MAX_FIELD_CHARS.toLocaleString()}-character limit. ` +
+  'Trim it or attach the long text separately.'
+
+function FieldError({ id, message }: { id: string; message?: string }): React.JSX.Element | null {
+  if (!message) return null
+  return (
+    <div className={styles.fieldError} id={`${id}-error`} role="alert">
+      {message}
+    </div>
+  )
+}
+
 interface FeedbackDialogProps {
   onClose: () => void
 }
@@ -64,6 +95,9 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
 
   const [sendState, setSendState] = useState<SendState>('idle')
   const [errorMsg, setErrorMsg] = useState('')
+  // False until a Send is actually refused. The form should not go red before
+  // the reporter has tried anything.
+  const [showErrors, setShowErrors] = useState(false)
 
   useEffect(() => {
     if (!getFeedbackContext) return
@@ -95,28 +129,80 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
     return { selectedFiles: selected, selectedBytes: sb, mediaCount: mc, mediaBytes: mb }
   }, [files, includeMedia])
 
-  const emailValid = EMAIL_RE.test(email.trim())
+  const emailTrimmed = email.trim()
+  const emailValid = EMAIL_RE.test(emailTrimmed)
   const overLimitFields = useMemo(() => {
-    const fields: Array<[string, string]> = [
-      ['What you asked', userPrompt],
-      ['What the agent did', agentDid],
-      ['What it should have done', agentShouldHave],
-      ['The correct answer', correctAnswer],
-      ['Notes', notes]
+    const fields: Array<[string, string, string]> = [
+      ['feedback-prompt', 'What you asked', userPrompt],
+      ['feedback-did', 'What the agent did', agentDid],
+      ['feedback-should', 'What it should have done', agentShouldHave],
+      ['feedback-answer', 'The correct answer', correctAnswer],
+      ['feedback-notes', 'Notes', notes]
     ]
     return fields
-      .filter(([, value]) => value.trim().length > MAX_FIELD_CHARS)
-      .map(([label]) => label)
+      .filter(([, , value]) => value.trim().length > MAX_FIELD_CHARS)
+      .map(([id, label]) => ({ id, label }))
   }, [userPrompt, agentDid, agentShouldHave, correctAnswer, notes])
-  const canSend =
-    emailValid &&
-    userPrompt.trim().length > 0 &&
-    agentDid.trim().length > 0 &&
-    workedAsExpected !== null &&
-    overLimitFields.length === 0
+
+  // Everything that stops a send. Send is never disabled for any of it (#1919):
+  // a greyed-out button with no explanation is indistinguishable from a broken
+  // app, and the report is lost. These surface as named messages on the attempt.
+  // Only the Yes/No answer is required content — email, "What you asked" and
+  // "What the agent did" may all be blank. A bundle that carries the session log
+  // has the prompt and the transcript anyway, and one that does not is still
+  // worth more than the report a dead Send button loses.
+  const blockers = useMemo<Blocker[]>(() => {
+    const byId = new Map<string, Blocker>()
+    if (emailTrimmed.length > 0 && !emailValid) {
+      byId.set('feedback-email', {
+        id: 'feedback-email',
+        message:
+          'That does not look like an email address. Fix it, or clear it to send anonymously.'
+      })
+    }
+    for (const f of overLimitFields) {
+      byId.set(f.id, { id: f.id, message: overLimitMessage(f.label) })
+    }
+    if (workedAsExpected === null) {
+      byId.set('feedback-worked-yes', {
+        id: 'feedback-worked-yes',
+        message: 'Choose Yes or No so we know whether this is a bug report.'
+      })
+    }
+    return FIELD_ORDER.flatMap((id) => {
+      const b = byId.get(id)
+      return b ? [b] : []
+    })
+  }, [emailTrimmed, emailValid, overLimitFields, workedAsExpected])
+
+  // Inline messages appear only once a Send has actually been refused.
+  const shownBlockers = showErrors ? blockers : []
+  const blockerFor = (id: string): string | undefined =>
+    shownBlockers.find((b) => b.id === id)?.message
+
+  // Marks the control itself for assistive tech; the visible text is FieldError.
+  const errorProps = (
+    id: string
+  ): { 'aria-invalid'?: true; 'aria-describedby'?: string } =>
+    blockerFor(id) ? { 'aria-invalid': true, 'aria-describedby': `${id}-error` } : {}
 
   const handleSend = useCallback(async () => {
-    if (workedAsExpected === null) return
+    // `blockers` already carries the radio when it is unanswered, so testing it
+    // again here is what narrows `boolean | null` to `boolean` for the payload,
+    // not a second gate — both halves land in the branch that says what is wrong.
+    // An unexplained early return here was the original defect (#1919).
+    const worked = workedAsExpected
+    if (blockers.length > 0 || worked === null) {
+      setShowErrors(true)
+      const target = blockers[0]?.id
+      if (target) {
+        const el = document.getElementById(target)
+        el?.scrollIntoView({ block: 'center' })
+        el?.focus()
+      }
+      return
+    }
+    setShowErrors(false)
     setSendState('sending')
     setErrorMsg('')
     try {
@@ -132,7 +218,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
         email: trimmedEmail,
         userPrompt: userPrompt.trim(),
         agentDid: agentDid.trim(),
-        workedAsExpected,
+        workedAsExpected: worked,
         agentShouldHave: agentShouldHave.trim(),
         correctAnswer: correctAnswer.trim() || undefined,
         notes: notes.trim() || undefined
@@ -144,6 +230,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
       setErrorMsg(err instanceof Error ? err.message : 'Failed to send feedback')
     }
   }, [
+    blockers,
     includeMedia,
     includeSessionLog,
     email,
@@ -185,7 +272,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
         <div className={styles.body}>
           <div className={styles.field}>
             <label className={styles.fieldLabel} htmlFor="feedback-email">
-              Your email
+              Your email <span className={styles.optional}>(optional)</span>
             </label>
             <input
               id="feedback-email"
@@ -196,42 +283,67 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
               onChange={(e) => setEmail(e.target.value)}
               disabled={sendState === 'sending'}
               autoComplete="email"
+              aria-invalid={blockerFor('feedback-email') ? true : undefined}
+              aria-describedby={
+                blockerFor('feedback-email') ? 'feedback-email-error' : 'feedback-email-hint'
+              }
             />
+            {blockerFor('feedback-email') ? (
+              <FieldError id="feedback-email" message={blockerFor('feedback-email')} />
+            ) : (
+              <div className={styles.fieldHint} id="feedback-email-hint">
+                Only used to follow up on this report. Leave it blank to submit anonymously.
+              </div>
+            )}
           </div>
 
           <div className={styles.field}>
             <label className={styles.fieldLabel} htmlFor="feedback-prompt">
-              What you asked the agent to do
+              What you asked the agent to do <span className={styles.optional}>(optional)</span>
             </label>
             <textarea
               id="feedback-prompt"
+              {...errorProps('feedback-prompt')}
               className={styles.textarea}
               placeholder="Paste or describe the prompt you gave..."
               value={userPrompt}
               onChange={(e) => setUserPrompt(e.target.value)}
               disabled={sendState === 'sending'}
             />
+            <FieldError id="feedback-prompt" message={blockerFor('feedback-prompt')} />
           </div>
 
           <div className={styles.field}>
             <label className={styles.fieldLabel} htmlFor="feedback-did">
-              What the agent did
+              What the agent did <span className={styles.optional}>(optional)</span>
             </label>
             <textarea
               id="feedback-did"
+              {...errorProps('feedback-did')}
               className={styles.textarea}
               placeholder="What actually happened..."
               value={agentDid}
               onChange={(e) => setAgentDid(e.target.value)}
               disabled={sendState === 'sending'}
             />
+            <FieldError id="feedback-did" message={blockerFor('feedback-did')} />
           </div>
 
           <div className={styles.field}>
-            <span className={styles.fieldLabel}>Did it work as expected?</span>
-            <div className={styles.radioGroup}>
+            <span className={styles.fieldLabel} id="feedback-worked-label">
+              Did it work as expected? <span className={styles.required}>(required)</span>
+            </span>
+            <div
+              className={styles.radioGroup}
+              role="radiogroup"
+              aria-labelledby="feedback-worked-label"
+              aria-describedby={
+                blockerFor('feedback-worked-yes') ? 'feedback-worked-yes-error' : undefined
+              }
+            >
               <label className={styles.radioLabel}>
                 <input
+                  id="feedback-worked-yes"
                   type="radio"
                   name="worked-as-expected"
                   checked={workedAsExpected === true}
@@ -251,6 +363,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
                 <span>No</span>
               </label>
             </div>
+            <FieldError id="feedback-worked-yes" message={blockerFor('feedback-worked-yes')} />
           </div>
 
           {workedAsExpected === false && (
@@ -261,12 +374,14 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
                 </label>
                 <textarea
                   id="feedback-should"
+                  {...errorProps('feedback-should')}
                   className={styles.textarea}
                   placeholder="What you expected instead — leave blank if you're not sure..."
                   value={agentShouldHave}
                   onChange={(e) => setAgentShouldHave(e.target.value)}
                   disabled={sendState === 'sending'}
                 />
+                <FieldError id="feedback-should" message={blockerFor('feedback-should')} />
               </div>
 
               <div className={styles.field}>
@@ -276,12 +391,14 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
                 </label>
                 <textarea
                   id="feedback-answer"
+                  {...errorProps('feedback-answer')}
                   className={styles.textarea}
                   placeholder="e.g. His father was Robert Smith (b. ~1820, Augusta Co., VA) — 1850 census, Robert's household, and the 1872 probate naming John as heir."
                   value={correctAnswer}
                   onChange={(e) => setCorrectAnswer(e.target.value)}
                   disabled={sendState === 'sending'}
                 />
+                <FieldError id="feedback-answer" message={blockerFor('feedback-answer')} />
                 <div className={styles.fieldHint}>
                   Skip this if the problem was how the agent worked rather than the answer it
                   reached. When you do fill it in, we can turn this case into a regression test
@@ -297,12 +414,14 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
             </label>
             <textarea
               id="feedback-notes"
+              {...errorProps('feedback-notes')}
               className={styles.textarea}
               placeholder="Anything else worth knowing..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               disabled={sendState === 'sending'}
             />
+            <FieldError id="feedback-notes" message={blockerFor('feedback-notes')} />
           </div>
 
           <div className={styles.summary}>
@@ -389,11 +508,22 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
           </div>
         </div>
 
-        {overLimitFields.length > 0 && sendState !== 'success' && (
+        {/* Live while typing, before any Send has been refused. Once it has, the
+            per-field messages carry the same text, so this would say it twice. */}
+        {overLimitFields.length > 0 && shownBlockers.length === 0 && sendState !== 'success' && (
           <div className={`${styles.toast} ${styles.toastError}`}>
             {overLimitFields.length === 1
-              ? `"${overLimitFields[0]}" exceeds the ${MAX_FIELD_CHARS.toLocaleString()}-character limit. Trim it or attach the long text separately.`
-              : `${overLimitFields.length} fields exceed the ${MAX_FIELD_CHARS.toLocaleString()}-character limit: ${overLimitFields.map((f) => `"${f}"`).join(', ')}.`}
+              ? overLimitMessage(overLimitFields[0].label)
+              : `${overLimitFields.length} fields exceed the ${MAX_FIELD_CHARS.toLocaleString()}-character limit: ${overLimitFields.map((f) => `"${f.label}"`).join(', ')}.`}
+          </div>
+        )}
+        {/* Says the click did nothing and why to look up. The detail is inline,
+            next to the field, so this does not repeat it. */}
+        {shownBlockers.length > 0 && sendState !== 'success' && (
+          <div className={`${styles.toast} ${styles.toastError}`} role="alert">
+            {shownBlockers.length === 1
+              ? 'Not sent. Fix the highlighted field above.'
+              : `Not sent. Fix the ${shownBlockers.length} highlighted fields above.`}
           </div>
         )}
         {sendState === 'success' && (
@@ -410,7 +540,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
           <button
             className={styles.sendBtn}
             onClick={handleSend}
-            disabled={!canSend || sendState === 'sending' || sendState === 'success'}
+            disabled={sendState === 'sending' || sendState === 'success'}
           >
             {sendButtonLabel}
           </button>

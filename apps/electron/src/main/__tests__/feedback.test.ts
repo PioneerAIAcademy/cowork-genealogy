@@ -9,6 +9,7 @@ import {
   capSessionLog,
   FEEDBACK_SCHEMA_VERSION,
   MAX_FIELD_CHARS,
+  NOT_PROVIDED,
   type FeedbackOptions
 } from '../feedback'
 
@@ -374,6 +375,55 @@ describe('buildFeedbackZip — living-person redaction', () => {
 // The "## Session log" section must always render and say why the transcript
 // is or isn't there — so a Cowork bundle's missing log reads as expected, not
 // missing (issue #1481).
+describe('buildFeedbackZip — FEEDBACK.md on a blank prompt or did', () => {
+  let folder: string
+
+  beforeEach(async () => {
+    folder = await mkdtemp(join(tmpdir(), 'feedback-test-'))
+    await writeFile(join(folder, 'research.json'), '{}', 'utf8')
+  })
+
+  afterEach(async () => {
+    await rm(folder, { recursive: true, force: true })
+  })
+
+  async function markdownFor(overrides: Partial<FeedbackOptions['report']>): Promise<string> {
+    const result = await buildFeedbackZip(makeOptions(folder, overrides))
+    const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
+    return zip.file('FEEDBACK.md')!.async('string')
+  }
+
+  // Both are optional at the dialog (#1919). A heading with nothing under it
+  // reads like the bundler dropped the field; say it was left blank instead.
+  // The literal must match NOT_PROVIDED in apps/server/app/feedback.py, so a
+  // triager reading either producer's bundle sees the same thing.
+  it('says the field was left blank rather than printing an empty section', async () => {
+    const md = await markdownFor({ userPrompt: '', agentDid: '   ' })
+    expect(md).toContain(`## What I asked\n\n${NOT_PROVIDED}`)
+    expect(md).toContain(`## What the agent did\n\n${NOT_PROVIDED}`)
+  })
+
+  // Asserted as a LITERAL, not via the imported constant: the point of the
+  // comment above is cross-producer agreement, and a test that reads the same
+  // constant it is checking moves with it and can never catch the drift.
+  it('spells the placeholder exactly as apps/server/app/feedback.py does', () => {
+    expect(NOT_PROVIDED).toBe('_(not provided)_')
+  })
+
+  it('says so for a blank email too, not just the two text sections', async () => {
+    const md = await markdownFor({ email: '' })
+    expect(md).toContain(`- **From:** ${NOT_PROVIDED}`)
+    expect(md).not.toContain('- **From:** \n')
+  })
+
+  it('leaves a supplied prompt and did untouched', async () => {
+    const md = await markdownFor({ userPrompt: 'Find John Smith.', agentDid: 'It stopped.' })
+    expect(md).not.toContain(NOT_PROVIDED)
+    expect(md).toContain('## What I asked\n\nFind John Smith.')
+    expect(md).toContain('## What the agent did\n\nIt stopped.')
+  })
+})
+
 describe('buildFeedbackZip — FEEDBACK.md always states the session-log status', () => {
   let folder: string
 

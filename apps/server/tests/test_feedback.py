@@ -85,6 +85,57 @@ def test_feedback_context_and_drive_upload(monkeypatch):
         client.delete(f"/api/sessions/{sid}")
 
 
+def test_blank_submission_is_accepted_end_to_end(monkeypatch):
+    """The whole point of issue #1919: a report with every text box empty must go
+    through. The other tests here call _feedback_markdown directly, which sits
+    downstream of request validation, so only this one covers the real entry point.
+    """
+    captured: dict = {}
+
+    class _FakeClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def post(self, url, json):
+            captured["envelope"] = json
+            return _FakeResp()
+
+    monkeypatch.setattr(fb.httpx, "AsyncClient", _FakeClient)
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = client.post("/api/sessions", json={"sample": True}).json()["id"]
+
+        # Only the Yes/No answer. No email, no prompt, no description.
+        r = client.post(
+            "/api/feedback",
+            json={"sessionId": sid, "workedAsExpected": False},
+        )
+        assert r.status_code == 200 and r.json()["ok"] is True
+
+        env = captured["envelope"]
+        assert env["email"] == ""
+        zf = zipfile.ZipFile(io.BytesIO(base64.b64decode(env["zipBase64"])))
+        meta = json.loads(zf.read("_feedback/feedback.json"))
+        assert meta["email"] == ""
+        assert meta["user_prompt"] == ""
+        assert meta["agent_did"] == ""
+        # The flag triage reads is still there, which is what keeps a clean report
+        # distinguishable from a problem report.
+        assert meta["worked_as_expected"] is False
+
+        md = zf.read("FEEDBACK.md").decode("utf-8")
+        assert md.count(fb.NOT_PROVIDED) == 3  # From, What I asked, What the agent did
+
+        client.delete(f"/api/sessions/{sid}")
+
+
 class _FakeSandbox:
     """Minimal Sandbox stub backed by an in-memory {path: bytes} map."""
 
@@ -268,6 +319,46 @@ def test_unparseable_tree_passes_through_rather_than_failing_the_send():
 
 
 # --- endpoint rejection / non-JSON response -----------------------------------
+
+def _markdown_for(user_prompt: str, agent_did: str, email: str = "t@example.com") -> str:
+    return fb._feedback_markdown(
+        {
+            "email": email,
+            "userPrompt": user_prompt,
+            "agentDid": agent_did,
+            "agentShouldHave": "",
+            "correctAnswer": "",
+            "notes": "",
+        },
+        "2026-08-26T00:00:00Z",
+        "A project",
+        False,
+        "web 2026-08-26 (abc123)",
+        True,
+    )
+
+
+def test_blank_prompt_and_did_render_as_not_provided():
+    # Both are optional at the dialog (#1919). A heading with nothing under it
+    # reads like the bundler dropped the field; say it was left blank instead.
+    md = _markdown_for("", "   ")
+    assert md.count(fb.NOT_PROVIDED) == 2
+    assert "## What I asked\n\n_(not provided)_" in md
+    assert "## What the agent did\n\n_(not provided)_" in md
+
+
+def test_blank_email_renders_as_not_provided():
+    # Email went optional in the same change, so the From bullet can be empty too.
+    md = _markdown_for("q", "d", email="")
+    assert f"- **From:** {fb.NOT_PROVIDED}" in md
+
+
+def test_supplied_prompt_and_did_are_untouched():
+    md = _markdown_for("Find John Smith.", "It searched 1860 and stopped.")
+    assert fb.NOT_PROVIDED not in md
+    assert "## What I asked\n\nFind John Smith." in md
+    assert "## What the agent did\n\nIt searched 1860 and stopped." in md
+
 
 def test_rejected_upload_surfaces_as_502(monkeypatch):
     """An {ok:false} 200 from Apps Script must become a 502, not a silent success."""

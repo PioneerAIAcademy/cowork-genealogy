@@ -48,23 +48,35 @@ Verify:
 
 - The file exists and parses as JSON.
 - `schema_version` is `1`.
-- `user_prompt` is a non-empty string.
-- For `--against=what-went-wrong`: `agent_did` is present and non-empty.
+- `user_prompt` is a string. It may legitimately be **empty**: the submission
+  dialog requires only the Yes/No answer, so a reporter can leave every text box
+  blank. Read `_feedback/session-log.jsonl` for the prompt when the bundle has
+  one — it is optional, and a Cowork submission never has one.
+- For `--against=what-went-wrong`: `agent_did` is present and a string. It may
+  legitimately be **empty**, for the same reason.
 - For `--against=desired`: `agent_should_have` is present and a string. It may
   legitimately be **empty** — `worked_as_expected: true` means the agent did
   nothing wrong, and even on a bug the reporter may not have known the ideal
   behavior. An empty value is NOT a malformed fixture.
 
-If any of the above fails — missing/unparseable file, wrong `schema_version`,
-empty `user_prompt`, empty `agent_did` for `what-went-wrong`, or a
+If any of the above fails — missing/unparseable file, wrong `schema_version`, or a
 missing/non-string target field — abort with a message that names the specific
 field and points the user at `apps/electron/docs/feedback-json-spec.md` §3. Do not
 proceed to the LLM comparison — surfacing a bad case fixture here is much better
 than a downstream judgment producing nonsense.
 
-**Exception, not an abort:** for `--against=desired` when `agent_should_have` is
-empty, stop with a plain result — there is no desired-state description to compare
-against. This is the "nothing to report" case the format distinguishes from a
+**Exception, not an abort:** an empty target field is a plain result, never an
+abort and never a request to resubmit.
+
+For `--against=what-went-wrong` when `agent_did` is empty, stop with a plain
+result — there is no prose describing what went wrong to compare the state
+against. Say so, quote the submission's Notes verbatim if it has any, and point
+the reader at `_feedback/session-log.jsonl` when the bundle has one; say plainly
+that there is no transcript either when it does not.
+
+For `--against=desired` when `agent_should_have` is empty, stop with a plain
+result — there is no desired-state description to compare against. This is the
+"nothing to report" case the format distinguishes from a
 substantive answer. When `worked_as_expected` is true, say so and add that the
 flag covers the agent's behavior only: quote the submission's Notes verbatim if
 it has any, since a tester can report correct behavior and still have hit a wall.
@@ -109,7 +121,8 @@ sources, which proof summaries, which plan items, which sidecars in
 Print to the Claude Code session, in this order and shape:
 
 ```
-**User prompt:** <verbatim contents of user_prompt from feedback.json>
+**User prompt:** <verbatim contents of user_prompt from feedback.json, or a
+line saying the reporter left it blank — see step 1>
 
 **Verdict:** matches | partial | does-not-match
 
@@ -153,7 +166,7 @@ beyond Read / Bash / Glob for file inspection. Use Claude Sonnet 4.6
 | Situation | Action |
 |---|---|
 | `_feedback/feedback.json` is missing | Abort with "Not a feedback-case directory. Run `scripts/setup-feedback-case.sh <zip>` first; see docs/specs/feedback-case-spec.md §3." |
-| `_feedback/feedback.json` exists but the target field is empty | Abort with "feedback.json has empty `<field>`. Per `apps/electron/docs/feedback-json-spec.md` §3, this field is required and must be non-empty. Have the submitter resubmit." |
+| `_feedback/feedback.json` exists but the target field is empty | Not an abort, and never a resubmit request — the submission dialog requires only the Yes/No answer, so blank is legitimate. Stop with a plain result naming the empty field, quote the submission's Notes verbatim if it has any, and point the reader at `_feedback/session-log.jsonl` when the bundle has one (it is optional, and a Cowork submission has none). |
 | `--against` flag missing or invalid | Print usage (`--against=what-went-wrong` or `--against=desired`) and abort. |
 | The case directory has no git baseline (no `.git/`) | Warn but continue — the user may be running this outside the standard setup. State-diff falls back to reading the canonical files only. |
 | The user invokes this from a directory that is NOT a feedback case (no `_feedback/`) | Abort with the message in row 1 above. |
