@@ -25,8 +25,11 @@ import ts from 'typescript'
  * already has a vitest runner and a workspace dep on the schema package, and
  * js-tests.yml reaches both. packages/schema has no test script.
  *
- * Field NAMES only. Types — optionality, `| null`, and `date_certainty: string`
- * where the union exists — need the TypeScript compiler API and stay with #1165.
+ * Field names AND optionality (schema `required` vs the TS `?`, both directions,
+ * ADR-0008 / #1165), for the `$defs` and the two document roots. Still
+ * uncovered: value types — `| null` nullability, and a closed enum typed as
+ * `string` where a union exists — and objects defined inline as an array's
+ * `items` rather than as a `$def`, which neither loop below reaches.
  */
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -87,6 +90,7 @@ const pascal = (s: string) => s.split('_').map((p) => p[0].toUpperCase() + p.sli
  */
 function interfaceFields(path: string): {
   fields: Map<string, Set<string>>
+  optional: Map<string, Set<string>>
   inheriting: string[]
 } {
   const sourceFile = ts.createSourceFile(
@@ -96,25 +100,40 @@ function interfaceFields(path: string): {
     /* setParentNodes */ true,
   )
   const out = new Map<string, Set<string>>()
+  const optionalOut = new Map<string, Set<string>>()
   const inheriting: string[] = []
   sourceFile.forEachChild((node) => {
     if (!ts.isInterfaceDeclaration(node)) return
     if (node.heritageClauses?.length) inheriting.push(node.name.text)
     const fields = new Set<string>()
+    const optional = new Set<string>()
     for (const member of node.members) {
       // Index signatures and computed names have no plain identifier; no schema
       // object here uses one, and skipping is right if one ever appears.
       if (!ts.isPropertySignature(member) || !member.name) continue
       if (ts.isIdentifier(member.name) || ts.isStringLiteral(member.name)) {
         fields.add(member.name.text)
+        // `member.questionToken` is the `?` — present iff the field is optional.
+        if (member.questionToken) optional.add(member.name.text)
       }
     }
     out.set(node.name.text, fields)
+    optionalOut.set(node.name.text, optional)
   })
-  return { fields: out, inheriting }
+  return { fields: out, optional: optionalOut, inheriting }
 }
 
-const { fields: parsed, inheriting } = interfaceFields(sourcePath)
+const { fields: parsed, optional: parsedOptional, inheriting } = interfaceFields(sourcePath)
+
+/**
+ * Which interfaces each helper actually compared — recorded only once the helper's
+ * own expect has PASSED, so that neither a throw nor an early return registers a
+ * name. Asserted as an exact SET, not a count: a floor is defeatable one interface
+ * at a time (`if (tsName.startsWith('Gedcomx')) return` cleared a floor of 150 while
+ * hiding a real regression), and a count cannot tell a skipped interface from a
+ * smaller one.
+ */
+const seen = { names: new Set<string>(), optionality: new Set<string>() }
 
 /** One interface against one subschema's `properties`, by field name. */
 function expectMirrors(tsName: string, def: any, help: string) {
@@ -130,6 +149,49 @@ function expectMirrors(tsName: string, def: any, help: string) {
     `${tsName} drifted — missing: the schema has it, the type doesn't; ` +
       `extra: the type advertises a field the schema rejects (additionalProperties: false)`,
   ).toEqual({ missing: [], extra: [] })
+  // AFTER the expect, never before: a throw must NOT record the name. The
+  // planted-drift block below calls this helper with 'Assertion' and expects a
+  // throw; recording first let that count as coverage, and deleting the real
+  // Assertion comparison then left this whole file green.
+  seen.names.add(tsName)
+}
+
+/**
+ * One interface's optionality against one subschema's `required` list, BOTH
+ * directions, no exemption list. The lead ruled 2026-08-21 (#1165, ADR-0008):
+ * a key absent from `required` is `foo?: T | null`, and a key in `required` has
+ * no `?`. Schema-optional means TypeScript-optional. An exemption list here
+ * would re-admit exactly the "present but null" encoding that ruling rejected.
+ * (Non-vacuity: the "not vacuous" test proves the questionToken read, and the
+ * planted-drift self-test at the end of this file proves these helpers actually
+ * compare. An empty intersection here means name drift, which expectMirrors
+ * already fails on.)
+ */
+function expectOptionality(tsName: string, def: any, help: string): void {
+  const fields = parsed.get(tsName)
+  const optional = parsedOptional.get(tsName)
+  expect(optional, help).toBeDefined()
+  // `?? []` is load-bearing for exactly one $def: `researcher_profile` declares no
+  // `required` key at all, which JSON Schema reads as every field optional and its
+  // own description confirms. That is deliberate, not an omission.
+  const required = new Set<string>(def.required ?? [])
+  // Only fields present in BOTH the schema and the type; name drift is the
+  // separate expectMirrors check above.
+  const shared = Object.keys(def.properties).filter((k) => fields!.has(k))
+  const missingQuestion = shared
+    .filter((k) => !required.has(k) && !optional!.has(k))
+    .sort()
+  const spuriousQuestion = shared
+    .filter((k) => required.has(k) && optional!.has(k))
+    .sort()
+  expect(
+    { missingQuestion, spuriousQuestion },
+    `${tsName} optionality drift — missingQuestion: absent from the schema's ` +
+      `required list but the type has no \`?\`; spuriousQuestion: in required but ` +
+      `the type marks \`?\`. Schema-optional MUST be TypeScript-optional ` +
+      `(ADR-0008, #1165); no exemptions.`,
+  ).toEqual({ missingQuestion: [], spuriousQuestion: [] })
+  seen.optionality.add(tsName)
 }
 
 describe('@genealogy/schema interfaces mirror research.schema.json', () => {
@@ -159,6 +221,34 @@ describe('@genealogy/schema interfaces mirror research.schema.json', () => {
     expect(objectDefs.length).toBeGreaterThan(15)
   })
 
+  it('the optionality check is not vacuous', () => {
+    // Two ways the optionality checks below could silently pass: a `questionToken`
+    // read that is always undefined makes every field look required, and one that
+    // is always truthy makes every field look optional. Either would make one
+    // direction of every per-interface check below vacuous. Prove the parser sees
+    // a real MIX across the file, so a broken read fails HERE, loudly.
+    const optionalCount = [...parsedOptional.values()].reduce((n, s) => n + s.size, 0)
+    const requiredCount = [...parsed.entries()].reduce(
+      (n, [name, fs]) => n + [...fs].filter((f) => !parsedOptional.get(name)?.has(f)).length,
+      0,
+    )
+    expect(optionalCount, 'no `?` fields parsed — questionToken read looks broken').toBeGreaterThan(20)
+    expect(requiredCount, 'no required fields parsed — questionToken read looks broken').toBeGreaterThan(20)
+  })
+
+
+  it('ResearchData ↔ the research document root', () => {
+    // The root is a closed object like every `$def`, but it is not IN `$defs`,
+    // so the loop below never reaches it — the same shape the tree block guards
+    // with its GedcomxData root checks.
+    expect(schema.additionalProperties, 'the root must be closed').toBe(false)
+    expectMirrors('ResearchData', schema, 'no `export interface ResearchData`')
+  })
+
+  it('ResearchData optionality ↔ the research document root.required', () => {
+    expectOptionality('ResearchData', schema, 'no `export interface ResearchData`')
+  })
+
   for (const [defName, def] of objectDefs) {
     if (NO_INTERFACE.includes(defName)) continue
     const tsName = RENAMED[defName] ?? pascal(defName)
@@ -169,6 +259,14 @@ describe('@genealogy/schema interfaces mirror research.schema.json', () => {
         def,
         `no \`export interface ${tsName}\` in packages/schema/src/index.ts — ` +
           `add it, add a RENAMED entry, or list ${defName} in NO_INTERFACE`,
+      )
+    })
+
+    it(`${tsName} optionality ↔ $defs.${defName}.required`, () => {
+      expectOptionality(
+        tsName,
+        def,
+        `no \`export interface ${tsName}\` in packages/schema/src/index.ts`,
       )
     })
   }
@@ -193,11 +291,104 @@ describe('@genealogy/schema interfaces mirror tree-gedcomx.schema.json', () => {
     expectMirrors('GedcomxData', treeSchema, 'no `export interface GedcomxData`')
   })
 
+  it('GedcomxData optionality ↔ the tree document root.required', () => {
+    expectOptionality('GedcomxData', treeSchema, 'no `export interface GedcomxData`')
+  })
+
   for (const [defName, tsName] of Object.entries(TREE_INTERFACES)) {
     it(`${tsName} ↔ $defs.${defName}`, () => {
       const def = treeSchema.$defs[defName]
       expect(def, `no $defs.${defName} in tree-gedcomx.schema.json`).toBeDefined()
       expectMirrors(tsName, def, `no \`export interface ${tsName}\``)
     })
+
+    it(`${tsName} optionality ↔ $defs.${defName}.required`, () => {
+      const def = treeSchema.$defs[defName]
+      expect(def, `no $defs.${defName} in tree-gedcomx.schema.json`).toBeDefined()
+      expectOptionality(tsName, def, `no \`export interface ${tsName}\``)
+    })
   }
+})
+
+/**
+ * Self-test: prove each helper's comparison actually runs, by handing it a
+ * deliberately drifted schema and requiring it to throw.
+ *
+ * This replaces a comparison COUNTER, which was the wrong instrument. It summed
+ * the keys each helper ENUMERATED, so replacing every filter body with `[]` left
+ * it reading its full 251 while both halves of the lint were inert and a planted
+ * real drift stayed green. A floor is defeatable one interface at a time, too:
+ * `if (tsName.startsWith('Gedcomx')) return` cleared 150 while hiding a genuine
+ * regression. Planting the drift exercises the assertion itself, so there is no
+ * floor to clear and no ordering to depend on.
+ */
+describe('the drift helpers actually compare', () => {
+  const def = schema.$defs.assertion
+  const req: string[] = def.required ?? []
+  const optionalField = Object.keys(def.properties).find((k) => !req.includes(k))!
+  const requiredField = req[0]
+
+  it('expectMirrors rejects a schema key the interface lacks', () => {
+    const planted = { ...def, properties: { ...def.properties, not_a_real_field: {} } }
+    expect(() => expectMirrors('Assertion', planted, 'planted')).toThrow()
+  })
+
+  it('expectMirrors rejects an interface field the schema lacks', () => {
+    const properties = { ...def.properties }
+    delete (properties as Record<string, unknown>)[optionalField]
+    expect(() => expectMirrors('Assertion', { ...def, properties }, 'planted')).toThrow()
+  })
+
+  it('expectOptionality rejects a schema-required field wearing a `?`', () => {
+    const planted = { ...def, required: [...req, optionalField] }
+    expect(() => expectOptionality('Assertion', planted, 'planted')).toThrow()
+  })
+
+  it('expectOptionality rejects a schema-optional field with no `?`', () => {
+    const planted = { ...def, required: req.filter((k) => k !== requiredField) }
+    expect(() => expectOptionality('Assertion', planted, 'planted')).toThrow()
+  })
+})
+
+/**
+ * Every interface the loops above intended to check was actually reached by both
+ * helpers. This is what a comparison COUNT could not do: an exemption keyed on one
+ * interface family clears any floor, and the planted-drift self-test below only
+ * proves the helper works for the interface it plants against.
+ */
+describe('every intended interface was actually compared', () => {
+  // Derived from the SCHEMA, deliberately NOT from NO_INTERFACE: an expectation
+  // computed from the exemption list can never notice the list growing.
+  const expected = new Set<string>(['ResearchData', 'GedcomxData'])
+  for (const [defName] of Object.entries<any>(schema.$defs).filter(
+    ([, d]) => d.type === 'object' && d.properties,
+  )) {
+    expected.add(RENAMED[defName] ?? pascal(defName))
+  }
+  for (const tsName of Object.values(TREE_INTERFACES)) expected.add(tsName)
+
+  it('NO_INTERFACE is still empty', () => {
+    // The ruling on #1165 is "no exemption list". This is one, and the failure
+    // message in the loop above recommends it by name, so it is pinned here:
+    // growing it must be a deliberate edit to this assertion, not a quiet append.
+    expect(NO_INTERFACE).toEqual([])
+  })
+
+  it('expectMirrors reached every one', () => {
+    expect(
+      [...expected].filter((n) => !seen.names.has(n)).sort(),
+      'requires a FULL unfiltered run: these names are recorded as each comparison passes, ' +
+        'so a `-t` filter or a shuffled order lists interfaces whose tests never executed, ' +
+        'which is this check being unverifiable — not schema drift',
+    ).toEqual([])
+  })
+
+  it('expectOptionality reached every one', () => {
+    expect(
+      [...expected].filter((n) => !seen.optionality.has(n)).sort(),
+      'requires a FULL unfiltered run: these names are recorded as each comparison passes, ' +
+        'so a `-t` filter or a shuffled order lists interfaces whose tests never executed, ' +
+        'which is this check being unverifiable — not schema drift',
+    ).toEqual([])
+  })
 })
