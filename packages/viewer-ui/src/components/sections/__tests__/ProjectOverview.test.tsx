@@ -78,3 +78,39 @@ describe('ProjectOverview — researcher profile', () => {
     expect(screen.getByText(/submission to NGSQ/)).toBeTruthy()
   })
 })
+
+/**
+ * The shape the optionality flip exists to admit: the key ABSENT, not present-and-null.
+ * 18 of the 25 flipped keys are absent from committed documents tens of thousands of
+ * times, and nothing normalizes the wire payload before it is cast to ResearchData.
+ *
+ * tsc guards the narrowing itself (reverting `== null` to `=== null` here is TS18048),
+ * but it cannot see WHAT the component does once someone satisfies the compiler a
+ * different way. `!` is forbidden by the ruling. `?? []` is NOT the danger: it
+ * compiles clean AND takes the same branch, so it is a harmless equivalent and
+ * passes these tests, as it should. The mutation that matters is a guard that
+ * always takes one branch -- `{true ? (` left the whole viewer-ui suite green
+ * until the positive case above existed. So the pair is the point: the absent-key
+ * case pins the guard's true branch, the positive case pins that it has another.
+ */
+describe('ProjectOverview — a flipped key that is absent, not null', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('still renders the subject when there IS one', () => {
+    // Without this, `{true ? (` -- always the not-identified branch, never a
+    // subject -- leaves the entire viewer-ui suite green. The absent-key case
+    // below cannot tell a correct guard from one that always takes its branch.
+    mockResearch()
+    render(<ProjectOverview />)
+    expect(screen.queryByText('Subject not yet identified')).not.toBeInTheDocument()
+  })
+
+  it('renders the not-identified message instead of throwing on undefined.length', () => {
+    const project = { ...patrickFlynnResearch.project }
+    delete (project as Record<string, unknown>).subject_person_ids
+    mockResearch({ project } as Partial<ResearchData>)
+
+    expect(() => render(<ProjectOverview />)).not.toThrow()
+    expect(screen.getByText('Subject not yet identified')).toBeInTheDocument()
+  })
+})

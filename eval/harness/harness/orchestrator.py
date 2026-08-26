@@ -510,6 +510,7 @@ async def _execute_single_run(
     validator_results = run_validators(
         skill=spec.skill,
         validators_dir=paths.validators_dir,
+        text_response=result.text_response or "",
         before_state={
             "research_json": before_snapshot["research_json"],
             "tree_gedcomx_json": before_snapshot["tree_gedcomx_json"],
@@ -530,7 +531,6 @@ async def _execute_single_run(
         attempted_mcp_calls=result.attempted_mcp_calls,
         skill_frontmatter=skill_frontmatter,
         skills_invoked=result.skills_invoked,
-        text_response=result.text_response,
         test={
             **spec.raw.get("test", {}),
             # Top-level validator-facing block threaded in alongside the
