@@ -4,7 +4,7 @@
     "skill": "search-images",
     "name": "Planning which volumes to browse should not trigger search-images",
     "type": "negative",
-    "description": "User asks which unindexed volumes to browse next and to help plan — that's research-plan. search-images executes a browse of a specific volume; it does not decide research strategy.",
+    "description": "User asks which unindexed volumes to browse next and to help plan — that's research-plan. search-images executes a browse of a specific volume; it does not decide research strategy. The volume-search-any / image-search-any mcp_fixtures are declared deliberately and must NOT be removed as unused (#1788).",
     "tags": ["near-miss", "browse-vs-plan", "boundary", "no-browse-no-write"]
   },
   "input": {
