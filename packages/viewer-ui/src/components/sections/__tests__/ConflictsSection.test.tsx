@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import ConflictsSection from '../ConflictsSection'
 import type { Conflict, ResearchData } from '../../../lib/schema'
 import { patrickFlynnResearch } from '../../../lib/__fixtures__/patrick-flynn'
+import { expandCardByTitle } from './expandCard'
 
 vi.mock('../../../contexts/ResearchDataContext', async () => {
   const actual = await vi.importActual<typeof import('../../../contexts/ResearchDataContext')>(
@@ -36,12 +36,11 @@ describe('ConflictsSection', () => {
   it('renders a recorded conflict with its resolution rationale', async () => {
     mockResearch()
     render(<ConflictsSection />)
-    const title = screen.getByText(
+    const cardTitle =
       "Patrick Flynn's birthplace: Ireland (censuses) vs. Pennsylvania (death certificate)"
-    )
-    expect(title).toBeInTheDocument()
+    expect(screen.getByText(cardTitle)).toBeInTheDocument()
     // Body (with the resolution) is collapsed until the card header is clicked.
-    await userEvent.click(title.parentElement as HTMLElement)
+    await expandCardByTitle(cardTitle)
     expect(screen.getByText('Resolution Rationale')).toBeInTheDocument()
     expect(screen.getByText(/Ireland is accepted/)).toBeInTheDocument()
   })

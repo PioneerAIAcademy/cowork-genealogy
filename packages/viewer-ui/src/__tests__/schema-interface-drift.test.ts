@@ -133,7 +133,11 @@ const { fields: parsed, optional: parsedOptional, inheriting } = interfaceFields
  * hiding a real regression), and a count cannot tell a skipped interface from a
  * smaller one.
  */
-const seen = { names: new Set<string>(), optionality: new Set<string>() }
+const seen = {
+  names: new Set<string>(),
+  optionality: new Set<string>(),
+  optionalityFields: new Set<string>(),
+}
 
 /** One interface against one subschema's `properties`, by field name. */
 function expectMirrors(tsName: string, def: any, help: string) {
@@ -191,6 +195,7 @@ function expectOptionality(tsName: string, def: any, help: string): void {
       `the type marks \`?\`. Schema-optional MUST be TypeScript-optional ` +
       `(ADR-0008, #1165); no exemptions.`,
   ).toEqual({ missingQuestion: [], spuriousQuestion: [] })
+  for (const k of shared) seen.optionalityFields.add(`${tsName}.${k}`)
   seen.optionality.add(tsName)
 }
 
@@ -366,6 +371,36 @@ describe('every intended interface was actually compared', () => {
     expected.add(RENAMED[defName] ?? pascal(defName))
   }
   for (const tsName of Object.values(TREE_INTERFACES)) expected.add(tsName)
+
+  it('expectOptionality compared every schema property, field by field', () => {
+    // Interface-level coverage cannot see a single FIELD dropped inside the helper's
+    // own filter, and an expectation co-derived from the loop's `type` predicate
+    // cannot see a $def leave that predicate. This expectation comes from an
+    // INDEPENDENT key -- `additionalProperties: false`, the anchor the tree half
+    // already uses -- so neither edit can shrink the expectation along with the
+    // thing it is meant to catch. expectMirrors proves the TS field set equals the
+    // schema key set, so every schema property must have been compared.
+    const want: string[] = []
+    for (const [defName, def] of Object.entries<any>(schema.$defs).filter(
+      ([, d]) => d.additionalProperties === false,
+    )) {
+      const tsName = RENAMED[defName] ?? pascal(defName)
+      for (const k of Object.keys(def.properties)) want.push(`${tsName}.${k}`)
+    }
+    expect(
+      want.filter((n) => !seen.optionalityFields.has(n)).sort(),
+      'these schema properties were never optionality-compared',
+    ).toEqual([])
+  })
+
+  it('RENAMED leaves no unchecked PascalCase sibling', () => {
+    // RENAMED redirects a $def's comparison to a differently-named interface, and
+    // the `expected` set is derived THROUGH it, so an appended entry can point at a
+    // clean clone while the real interface drifts unchecked -- the same escape
+    // NO_INTERFACE is pinned against below, one line cheaper.
+    const orphans = Object.keys(RENAMED).filter((d) => parsed.has(pascal(d)))
+    expect(orphans, 'a RENAMED $def still has a same-named interface that nothing compares').toEqual([])
+  })
 
   it('NO_INTERFACE is still empty', () => {
     // The ruling on #1165 is "no exemption list". This is one, and the failure

@@ -81,8 +81,13 @@ describe('ProjectOverview — researcher profile', () => {
 
 /**
  * The shape the optionality flip exists to admit: the key ABSENT, not present-and-null.
- * 18 of the 25 flipped keys are absent from committed documents tens of thousands of
- * times, and nothing normalizes the wire payload before it is cast to ResearchData.
+ * The reason THIS key needs the guard is not the corpus: `subject_person_ids` is present
+ * in every committed document that carries a project object. It is that nothing
+ * normalizes the wire payload before it is cast to ResearchData
+ * (`apps/web/src/transport/WsResearchTransport.ts:29,39`), so an absent key is reachable
+ * whatever the committed files happen to contain. For how often the 25 keys are actually
+ * absent, run the script issue #1165 carries instead of quoting a figure: it moves as run
+ * logs land, and it depends on which files you count as the corpus (ADR-0008).
  *
  * tsc guards the narrowing itself (reverting `== null` to `=== null` here is TS18048),
  * but it cannot see WHAT the component does once someone satisfies the compiler a
