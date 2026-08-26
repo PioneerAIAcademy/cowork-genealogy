@@ -1,4 +1,10 @@
 // TypeScript types mirroring docs/specs/research-schema-spec.md and docs/specs/simplified-gedcomx-spec.md
+//
+// This file is hand-written on purpose (for its doc comments), so one rule binds
+// every field you add: a key the schema does not list in `required` is
+// `foo?: T | null` — optional, not present-but-null. The reverse holds too, a
+// required key takes no `?`. schema-interface-drift.test.ts asserts both
+// directions with no exemptions, so either mistake is a red build. ADR-0008.
 
 // ============================================================
 // research.json enums

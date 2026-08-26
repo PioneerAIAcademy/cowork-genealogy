@@ -26,8 +26,10 @@ import ts from 'typescript'
  * js-tests.yml reaches both. packages/schema has no test script.
  *
  * Field names AND optionality (schema `required` vs the TS `?`, both directions,
- * ADR-0008 / #1165). Still uncovered: value types — `| null` nullability, and a
- * closed enum typed as `string` where a union exists.
+ * ADR-0008 / #1165), for the `$defs` and the two document roots. Still
+ * uncovered: value types — `| null` nullability, and a closed enum typed as
+ * `string` where a union exists — and objects defined inline as an array's
+ * `items` rather than as a `$def`, which neither loop below reaches.
  */
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -123,12 +125,23 @@ function interfaceFields(path: string): {
 
 const { fields: parsed, optional: parsedOptional, inheriting } = interfaceFields(sourcePath)
 
+/**
+ * Comparisons actually performed, summed across both helpers. The parser-level
+ * non-vacuity test below proves `questionToken` is read correctly; it cannot see
+ * whether either helper compared anything. Neutering the shared-field filter in
+ * `expectOptionality` takes the optionality comparisons to zero with every test
+ * still green, and `expectMirrors` has the same hole — so the count is asserted
+ * rather than assumed. One counter, not two, because it is one failure class.
+ */
+const compared = { names: 0, optionality: 0 }
+
 /** One interface against one subschema's `properties`, by field name. */
 function expectMirrors(tsName: string, def: any, help: string) {
   const fields = parsed.get(tsName)
   expect(fields, help).toBeDefined()
 
   const schemaKeys = Object.keys(def.properties).sort()
+  compared.names += schemaKeys.length
   const missing = schemaKeys.filter((k) => !fields!.has(k))
   const extra = [...fields!].sort().filter((k) => !(k in def.properties))
 
@@ -145,18 +158,23 @@ function expectMirrors(tsName: string, def: any, help: string) {
  * a key absent from `required` is `foo?: T | null`, and a key in `required` has
  * no `?`. Schema-optional means TypeScript-optional. An exemption list here
  * would re-admit exactly the "present but null" encoding that ruling rejected.
- * (Non-vacuity is enforced globally by the "optionality check is not vacuous"
- * test, not per-interface, since an empty intersection here means name drift,
+ * (Non-vacuity is enforced globally, not per-interface: the "not vacuous" test
+ * proves the questionToken read, and "actually compared fields" proves these
+ * helpers compared something. An empty intersection here means name drift,
  * which expectMirrors already fails on.)
  */
 function expectOptionality(tsName: string, def: any, help: string): void {
   const fields = parsed.get(tsName)
   const optional = parsedOptional.get(tsName)
   expect(optional, help).toBeDefined()
+  // `?? []` is load-bearing for exactly one $def: `researcher_profile` declares no
+  // `required` key at all, which JSON Schema reads as every field optional and its
+  // own description confirms. That is deliberate, not an omission.
   const required = new Set<string>(def.required ?? [])
   // Only fields present in BOTH the schema and the type; name drift is the
   // separate expectMirrors check above.
   const shared = Object.keys(def.properties).filter((k) => fields!.has(k))
+  compared.optionality += shared.length
   const missingQuestion = shared
     .filter((k) => !required.has(k) && !optional!.has(k))
     .sort()
@@ -213,6 +231,7 @@ describe('@genealogy/schema interfaces mirror research.schema.json', () => {
     expect(optionalCount, 'no `?` fields parsed — questionToken read looks broken').toBeGreaterThan(20)
     expect(requiredCount, 'no required fields parsed — questionToken read looks broken').toBeGreaterThan(20)
   })
+
 
   it('ResearchData ↔ the research document root', () => {
     // The root is a closed object like every `$def`, but it is not IN `$defs`,
@@ -285,4 +304,19 @@ describe('@genealogy/schema interfaces mirror tree-gedcomx.schema.json', () => {
       expectOptionality(tsName, def, `no \`export interface ${tsName}\``)
     })
   }
+})
+
+/**
+ * Runs last, after both `describe`s above have executed, so the counters are
+ * final. Guards the shape the parser-level "not vacuous" test cannot see: a
+ * helper that compares NOTHING is green. Neutering the shared-field filter in
+ * `expectOptionality` takes its comparisons to zero with all other tests still
+ * passing; `expectMirrors` has the same hole. Floors, not exact counts, so
+ * adding a `$def` or a field does not fail this.
+ */
+describe('the drift checks actually compared fields', () => {
+  it('expectMirrors and expectOptionality each compared a real population', () => {
+    expect(compared.names, 'expectMirrors compared no fields').toBeGreaterThan(150)
+    expect(compared.optionality, 'expectOptionality compared no fields').toBeGreaterThan(150)
+  })
 })
