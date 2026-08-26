@@ -350,6 +350,33 @@ def test_a_non_list_tool_calls_costs_only_its_own_run(tmp_path: Path):
     assert r.unreadable >= 3, "each malformed run is counted, not fatal"
 
 
+def test_one_malformed_entry_costs_its_entry_not_its_whole_run(tmp_path: Path):
+    """The per-entry guard is NOT redundant with the per-run one — it decides how
+    much a malformed entry costs, and nothing recorded which behaviour was meant.
+
+    Without it the entry raises, the run-level guard catches, and the run's other
+    calls leave the tally: 2 measurable becomes 0 and a real reachability failure
+    disappears from the headline. Both behaviours are defensible; this pins the
+    one that is intended. It was the only mutation of eleven that did not fire.
+    """
+    p = tmp_path / "fx" / "run-2026-08-20_00-00-00.json"
+    p.parent.mkdir(parents=True)
+    p.write_text(
+        json.dumps({"tool_calls": [
+            {"tool": "mcp__genealogy__image_transcribe", "response_summary": "ok"},
+            42,
+            {"tool": "mcp__genealogy__image_transcribe",
+             "response_summary": "Could not reach OpenRouter. (fetch failed)"},
+        ]}),
+        encoding="utf-8",
+    )
+
+    r = scan([p], author_of=_authors({}))
+    assert r.measurable == 2, "the entry is skipped; its neighbours still count"
+    assert r.unreadable == 0, "one bad entry does not condemn the run"
+    assert r.reachability_failures == 1
+
+
 def test_a_transcription_that_quotes_the_word_error_is_still_a_success():
     """The reverse of the escaped-envelope fix. Unescaping is what made a bare
     `"error"` substring dangerous: a genuine transcription quoting the word

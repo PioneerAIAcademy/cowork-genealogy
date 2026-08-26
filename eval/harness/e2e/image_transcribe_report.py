@@ -100,12 +100,15 @@ REACHABILITY_BUCKETS = (UNREACHABLE, TIMEOUT)
 def classify(response_summary: str) -> str:
     """Which bucket one call's response text falls in.
 
-    Bare substrings, not quoted-key matches: `response_summary` has two shapes
-    depending on size — under ~4000 chars the MCP envelope is passed through with
-    the document as an escaped string, over it the document is unwrapped and its
-    keys are real JSON keys (`orchestrator.py::_summarize_tool_response`). A
-    quoted-key matcher silently misses the escaped form. `wiki_failure_report.py`
-    learned this the expensive way: 42 real responses fell into `unclassified`.
+    Unescape first, then match: `response_summary` has two shapes depending on
+    size — under ~4000 chars the MCP envelope is passed through with the document
+    as an escaped string, over it the document is unwrapped and its keys are real
+    JSON keys (`orchestrator.py::_summarize_tool_response`). A quoted-key matcher
+    run against the RAW text silently misses the escaped form;
+    `wiki_failure_report.py` learned this the expensive way, with 42 real
+    responses falling into `unclassified`. Unescaping below is what makes the
+    `"error":` key match safe on both shapes — and the key match is in turn what
+    keeps a transcription that merely quotes the word from reading as a failure.
     """
     # Unescaped before matching. `response_summary` has two shapes, and in the
     # escaped one the document's own keys read `\"error\"` — which contains
@@ -118,7 +121,9 @@ def classify(response_summary: str) -> str:
     # `"null"` is what `json.dumps(None)` produces. `"none"` is deliberately
     # NOT here: `scan` never calls `str()`, so no infrastructure path produces
     # it, and the only thing it could match is a genuine transcription of the
-    # word — filing a real success as unclassified., and the orchestrator creates
+    # word — filing a real success as unclassified.
+    #
+    # The orchestrator creates
     # every tool-call entry with `response_summary: None`, filling it when the
     # result streams back. A run cut off by its wall-clock or tool cap mid-call
     # therefore commits a null summary — likeliest on this tool, the slowest one
@@ -298,6 +303,17 @@ def interleaving_verdict(calls: list[Call]) -> tuple[str, list[str]]:
         machine" though no second operator ever reached OpenRouter. The claim
         needs two different people: someone who failed, and someone else who
         demonstrably got through.
+
+        The eligible reacher must have had NO failure of their own
+        (`reached - failed`), which is stricter than "someone else succeeded",
+        and the corpus is why. On 2026-08-13 Gennecis failed 11 and reached 31,
+        and mercyokum failed 2 and reached 2 — both failed AND both got through.
+        That pattern is intermittency affecting everyone who ran, which is
+        evidence AGAINST a machine-specific cause, so counting one of them as the
+        other's "concurrent success" would print "points at the machine" on data
+        that argues the opposite. Requiring a clean operator is what isolates the
+        difference to the operator. Under-claiming is the safe direction for the
+        one function whose job is to not over-claim.
         """
         failed = {a for a, (e, _n, _r) in cells.items() if e}
         reached = {a for a, (_e, _n, r) in cells.items() if r}
