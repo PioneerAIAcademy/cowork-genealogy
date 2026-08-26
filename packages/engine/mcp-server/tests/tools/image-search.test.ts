@@ -188,3 +188,84 @@ it("sends correct headers on children/names call", async () => {
   expect(hdrs["User-Agent"]).toBe(BROWSER_USER_AGENT);
   expect(hdrs["FS-User-Agent-Chain"]).toBe("chesworth");
 });
+
+// ---------------------------------------------------------------------------
+// Defective children/names responses.
+//
+// Observed live 2026-08-25 on group M9SW-1CG (Barsebäck, 004514823_003): the
+// endpoint returned its full 164 keys but sent `null` as the VALUE of one of
+// them, for image 004514823_00672. `Record<string, string>` is asserted, not
+// checked, so the null reached `imageIds` — and the real image vanished from
+// the list, making that page unreachable for the rest of the run. Nine other
+// calls to the same group were clean, so this is upstream flakiness the tool
+// has to absorb rather than trust away.
+// ---------------------------------------------------------------------------
+
+const DEFECTIVE_CHILDREN = {
+  "TH-A": "004514823_00671",
+  "TH-B": null,
+  "TH-C": "004514823_00673",
+} as unknown as Record<string, string>;
+
+const REPAIRED_CHILDREN: Record<string, string> = {
+  "TH-A": "004514823_00671",
+  "TH-B": "004514823_00672",
+  "TH-C": "004514823_00673",
+};
+
+// Test 12 — a null value never reaches the caller
+it("drops non-string values instead of emitting them as image IDs", async () => {
+  mockFetch
+    .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN))
+    .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN));
+
+  const result = await imageSearchTool({
+    imageGroupNumber: "004514823_003_M9SW-1CG",
+  });
+
+  expect(result.imageIds).not.toContain(null);
+  expect(result.imageIds.every((id) => typeof id === "string")).toBe(true);
+});
+
+// Test 13 — a defective response is re-requested once, recovering the lost image
+it("re-requests once on a defective response and recovers the dropped image", async () => {
+  mockFetch
+    .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN))
+    .mockResolvedValueOnce(okChildren(REPAIRED_CHILDREN));
+
+  const result = await imageSearchTool({
+    imageGroupNumber: "004514823_003_M9SW-1CG",
+  });
+
+  expect(mockFetch).toHaveBeenCalledTimes(2);
+  expect(result.imageIds).toEqual([
+    "004514823_00671",
+    "004514823_00672",
+    "004514823_00673",
+  ]);
+});
+
+// Test 14 — a clean response is never re-requested
+it("does not re-request when the first response is clean", async () => {
+  mockFetch.mockResolvedValueOnce(okChildren(REPAIRED_CHILDREN));
+
+  await imageSearchTool({ imageGroupNumber: "004514823_003_M9SW-1CG" });
+
+  expect(mockFetch).toHaveBeenCalledTimes(1);
+});
+
+// Test 15 — still defective on retry: return what is there, do not throw
+it("returns the surviving IDs when the retry is also defective", async () => {
+  mockFetch
+    .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN))
+    .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN));
+
+  const result = await imageSearchTool({
+    imageGroupNumber: "004514823_003_M9SW-1CG",
+  });
+
+  expect(result.imageIds).toEqual([
+    "004514823_00671",
+    "004514823_00673",
+  ]);
+});

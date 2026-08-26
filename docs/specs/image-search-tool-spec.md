@@ -118,6 +118,36 @@ The tool keeps the **values** (the image IDs), discards the apid keys,
 and sorts the values ascending (the trailing 5-digit sequence yields
 page order).
 
+### Defective responses
+
+The shape above is **asserted, not guaranteed**. Observed live 2026-08-25 on
+group `M9SW-1CG` (Barsebäck, `004514823_003`): the endpoint returned its full
+164 keys but sent `null` as the **value** of one of them, for image
+`004514823_00672`. Nine other calls to the same group in the same session were
+clean, and one returned only 163 keys — the flaky child missing outright — so
+this is intermittent upstream behaviour, not a stable contract change.
+
+Unfiltered, that null did two kinds of harm: it reached the caller as though it
+were an image ID, and the real image dropped off the list, making that page
+unbrowsable for the rest of the run.
+
+The tool therefore:
+
+1. keeps only values that are non-empty strings, so a defective value can never
+   be returned as an image ID; and
+2. re-requests the group **once** when it sees a defective value, taking the
+   retry when it is better (fewer dropped, or more IDs). A retry is what
+   recovers the lost image; filtering alone would serve a list one page short
+   with no signal. If the retry is also defective, the surviving IDs are
+   returned rather than raising — a mostly-complete browse list is more useful
+   to the caller than an error.
+
+**This covers only the defect shape the tool can detect.** A response that omits
+a child entirely — the 163-key case — is 163 valid strings and is
+indistinguishable from a genuinely shorter volume from inside this tool. Noticing
+that would require cross-checking `imageIds.length` against `volume_search`'s
+`imageCount` for the same group, which this tool does not receive.
+
 > **Verify during implementation:** the observed responses are a single
 > flat object with no pagination cursor, so the tool treats one call as
 > returning **all** images. Confirm this holds for a **large** volume
