@@ -696,6 +696,43 @@ that did nothing.
   compel extraction (`guardrail-enforcement-spec.md` §2). It is the proportionate
   first lever, not the last word.
 
+### 5.2 Tree-encoding completion advisory (warning, not a precondition)
+
+A **warning** — never a rejection — emitted on the successful write that sets
+`project.status: "completed"`, when the completed project holds a
+tier-≥-`probable` proof summary but **none** of the tree persons its evidence
+touches gained any new fact or relationship since the project's opening tree. It
+rides `validation.warnings` and never touches `ok`. Implemented as
+`treeEncodingCompletionWarnings` in `research-append.ts`, using the `tree_diff`
+tool against the write-once `starting-tree.gedcomx.json` baseline.
+
+- **Why a baseline file.** `research_append` loads only the *current* tree, so it
+  cannot tell a conclusion this session encoded from a fact already seeded. The
+  baseline is the opening tree, copied write-once at project creation (issue
+  #1490); the diff against it is what isolates this session's work.
+- **A shape match, not a foreign key — so warn, not deny.** A proof summary
+  carries no machine-readable tree reference. The subject is approximated as the
+  union of persons the summary's `supporting_assertion_ids` have `person_evidence`
+  for (`person_evidence` is the only link table). That approximation is why this
+  is advisory: it cannot certify *which* conclusion a given tree edit encodes,
+  only that *some* structure appeared for *some* evidence person. Deliberately
+  broad — it warns only when NONE of those persons gained ANY structure.
+- **Why warn and not refuse (lead ruling, 2026-08-24).** Gates ship with no
+  override mechanism until one is observed refusing correct work in the field. A
+  wrong refusal then hard-blocks a researcher from finishing correct work with no
+  route out — worse on the hosted path, where the sandbox has no text-editor
+  escape. A shape-match gate cannot clear that bar, so it ships warn-only.
+- **The fire rate, measured before shipping.** Over the committed e2e corpus
+  (`make e2e-guardrail-shadow REPLAY=1 SINCE=all`, the §11.5 shadow family), 4 of
+  143 tier-≥-probable conclusions in 127 completed projects added no new tree
+  structure — a subject-person-only variant reads 13. This re-measurement
+  corrected a first-pass 32/22% that had mis-classified parentage questions naming
+  a birth date as birth questions.
+- **Fails open on a missing baseline.** A project created before the baseline
+  shipped has no `starting-tree.gedcomx.json`; the check returns no warning rather
+  than treating every fact as new. Fires only on the call that *sets* `completed`,
+  so it never re-warns on a later write to an already-completed project.
+
 ---
 
 ## 6. Decisions recorded
