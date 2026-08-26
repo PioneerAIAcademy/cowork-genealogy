@@ -514,7 +514,7 @@ nothing.
 
 ## Validator requests
 
-All five are new; none duplicates one of the 13 in
+All seven are new; none duplicates one of the 13 in
 `eval/harness/validators/test_proof_conclusion.py`. Each names the committed run it must
 fire on, per issue #1788 — a validator that never runs still records `passed: true`, and
 most of the 13 existing ones `skip` on any given test: in `v1_2026-08-21_19-34-21`, 9 of
@@ -522,8 +522,12 @@ most of the 13 existing ones `skip` on any given test: in `v1_2026-08-21_19-34-2
 two running checks (`test_positive_test_creates_a_proof_summary` and
 `test_new_proof_summary_has_narrative`) — neither of which can see F1 or F2.
 
-Two of the five are deliberately **not** tag-gated. Tag-gating is what let F3 through:
-the guard existed, the test that violated the rule did not carry the tag.
+**None of the seven should be tag-gated, and each says so in its own spec text.** Tag-gating
+is what let F3 through: the guard existed, and the test that violated the rule did not carry
+the tag. Read the instruction in each V-section rather than trusting this line — an earlier
+draft of it said "two of the five", wrong twice over, and building the validator PR off a
+summary line instead of the per-validator text is precisely how F3's failure mode
+reproduces.
 
 ### V1 — declared `vehicle` must describe the narrative
 
@@ -596,6 +600,8 @@ the guard existed, the test that violated the rule did not carry the tag.
 > `ut_proof_conclusion_019`, run `v1_2026-08-21_19-20-04` — two `tree_correct` calls, the
 > first with no `ops[]` at all. Both `pass`; `base/Tool Arguments` scored 3 and its
 > rationale describes 002's two calls as one.
+> **Do not tag-gate** — neither 002 nor 019 carries a tag that would select for this, and
+> the defect is a property of any run that writes the tree.
 
 ### V5 — an unresolvability claim must be paired with a named unsearched record type
 
@@ -705,6 +711,11 @@ the dimension.
   declaration is not credible" (F2). Senior lane, #1851.
 - **The unresolvability rule should say per-narrative or justify per-sentence** (F5).
   Senior lane, #1851.
+- **F7 — a citation gap weighed as evidentiary weight, setting the tier.** Doctrine; does
+  not convert to a validator (deciding it needs a judgement about whether the narrative is
+  treating the absence as evidence). Senior lane, #1851, alongside F2 and F5. The agent got
+  the prescribed *phrasing* right and made the *reasoning* error the rule exists to prevent,
+  so a body edit here has to target the weighing, not the wording.
 - **`base/Tool Arguments` grades `tool_calls` only** and is structurally blind to a
   builtin reached for in place of an MCP tool (F3). Base rubric — lead's call, proposed
   wording above.

@@ -2,6 +2,14 @@
 
 Built from **`packages/engine/plugin/agents/proof-conclusion.md`** (644 lines), which is
 where the doctrine lives after the 2026-08-21 skill-agent pair conversion (PR #1819).
+
+**Pinned to `94292657d`** — 2026-08-23, PR #1832, the agent body's latest revision at the
+time of this dive and the text every rule below was read from. Note that is *after* the
+#1819 conversion, so the 2026-08-21 date above says when the doctrine moved, not what this
+list was built against. Before relying on a rule, run
+`git diff 94292657d -- packages/engine/plugin/agents/proof-conclusion.md`; if it returns
+anything, re-read the affected sections, because a rule quoted here may no longer be in the
+body.
 `packages/engine/plugin/skills/proof-conclusion/SKILL.md` is a 63-line routing stub and
 contributes only section R below. Drafted from the two bodies **before** reading any
 transcript, per Step 2 of the guide.
