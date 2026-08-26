@@ -2,6 +2,7 @@
 name: make-decisions
 description: Use when the architect wants to answer the questions the board has queued for him — "make decisions", "what needs my ruling", "drain the decision queue", "answer the needs-decision items", or a bare "/make-decisions". Reads every open `needs-decision` issue, presents each as a question with its options and a recommendation, records the ruling on the issue, and removes the label so the next `/fill-ready` can rank and promote it. Run it daily; it is cheap by design. Do NOT use to choose what the team works on or to move anything on the board — that is `/fill-ready`, which promotes the items this skill unblocks. Do NOT use to hunt for structural bets — that is `/find-big-wins`. Never promotes, never starts the work.
 allowed-tools:
+  - Agent
   - Read
   - Bash
   - Glob
@@ -54,18 +55,20 @@ gh issue list --repo $R --state open --limit 200 \
                    | test("(?m)^#{1,4} +(Ruling|Decision)\\b|\\*\\*(Ruling|Decision)\\b")] | any)
       | "#\(.number)  \(.title)"'
 
-# (b) LABELLED, but no question was ever written. The label went on and the
-# `## Decision needed` block did not, so there is nothing to present. Fix it in
-# whichever skill dropped it.
+# (b) LABELLED, no question written. Run this AFTER (a) and exclude (a)'s hits:
+# an item with a recorded ruling is a half-applied close-out, not a missing
+# question. Most of what remains is ordinary unprepared input from
+# /triage-standup — prepare it in §2. It is a DEFECT only when the body says
+# "Prepared by review-ready", because then the block was written and lost.
 gh issue list --repo $R --state open --limit 200 \
   --label needs-decision --json number,title,body \
   -q '.[] | select(.body | test("(?m)^#{1,4} +Decision needed\\b") | not)
       | "#\(.number)  \(.title)"'
 ```
 
-Report each count as one line. Close out everything in (a) this run. For (b),
-prepare the question yourself and name the skill that dropped it — that one is a
-defect, because the label went on and the question did not.
+Report each count as one line. Close out everything in (a) this run. Prepare (b)
+in §2, and flag separately any whose body claims `review-ready` prepared it —
+that block was written and then lost.
 
 ## 1. Read the queue
 
@@ -93,6 +96,18 @@ did not. Do not restate an option in your own words.
 
 - **A — <label>** — <consequence that decides it>  *(recommended)*
 - **B — <label>** — <consequence>
+
+<details><summary>Body text if A</summary>
+
+<the issue-body text option A produces>
+
+</details>
+
+<details><summary>Body text if B</summary>
+
+<the issue-body text option B produces>
+
+</details>
 
 *Prepared by review-ready YYYY-MM-DD.*
 ```
@@ -128,8 +143,11 @@ item. An answer heard and not applied is worse than one never asked for.
 gh issue comment <N> --repo $R \
   --body "**Ruling:** <his answer> — <the one-line reason, if he gave one>"
 
-# 2. splice it into the body, replacing the `## Decision needed` block, so the
-#    next reader gets the decision and not the open fork.
+# 2. splice the chosen option's pre-written body text in, replacing the whole
+#    `## Decision needed` block, so the next reader gets the decision and not the
+#    open fork. Copy it — do not compose your own; you did not do the reading.
+#    Edit body.md with `python3 - <<'PY'` (the body carries backticks and
+#    markdown that a shell heredoc will mangle):
 #    gh issue view <N> --json body -q .body > body.md, edit, then:
 gh issue edit <N> --repo $R --body-file body.md
 
@@ -151,6 +169,12 @@ reader — a junior picking the issue up, `/audit-board`, a later run of this sk
 
 - **"Neither — the real question is X."** Rewrite the `## Decision needed` block
   with the corrected question and **leave the label on**. It comes back next run.
+- **He picked against the recommendation, on an option the block flags as
+  changing the blast radius.** Do not splice — re-run one `task-reviewer` on that
+  issue alone, telling it the decision, and use what comes back. The site list was
+  computed under a different assumption.
+- **He answered something no option covered.** Same: re-run one agent with his
+  answer rather than guessing at the body text.
 - **"This is hard either way."** Swap `needs-decision` for `senior`. Never both.
 - **"Don't do this."** Close it: `gh issue close <N> --repo $R --reason
   "not planned" --comment "<why>"`. The label goes with the issue.

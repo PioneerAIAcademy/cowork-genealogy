@@ -337,12 +337,11 @@ gh issue create --label developer|genealogist [--label icebox] \
 
 **A `Lead`-tagged row files with `--label needs-decision` and no `--assignee`.**
 
-**And if he answers one in the room, close it out before you move on — do not
-just record it.** Standup is where rulings get spoken and lost. Post the answer
-as a comment opening `**Ruling:**`, splice it into the body, and remove
-`needs-decision`. All three, in that turn. Recording without removing the label
-leaves the issue reading as blocked, so he sees it on the waiting list again
-next run and the work sits unblocked with nobody knowing.
+**And if he answers one in the room, record it before you move on.** Standup is
+where rulings get spoken and lost. Post the answer as a comment opening
+`**Ruling:**` — and stop there. **Leave the label on and do not touch the body.**
+`/make-decisions` sweeps for exactly this shape on its next run and applies it
+with the pre-written option text in hand, which you do not have.
 
 ```sh
 gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \

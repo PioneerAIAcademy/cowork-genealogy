@@ -234,7 +234,9 @@ and read the report's concentration block before quoting any total.
   three gaps that change how a correct change is made — read those too, then the
   register for the rest.
 - `gh issue list --state open --label needs-decision` — the open questions.
-  `/make-decisions` answers them daily; read them here only for repeats.
+  `/make-decisions` answers them daily; read them here only for repeats. Two more
+  sit in `docs/architecture.md` under "Open questions" and carry no label — read
+  those too.
 - `docs/adrs/` — every decision, with what it costs. §3 below is how to read
   these for *expiry* rather than for compliance.
 - `docs/specs/guardrail-enforcement-spec.md` § "Options set aside" — a second

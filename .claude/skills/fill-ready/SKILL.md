@@ -90,10 +90,11 @@ touches Python, and its description still reads "Touches Python — needs a
 developer's review." That is fine on PRs and slightly wrong on issues. Don't
 re-litigate it; just know the label is doing two jobs.
 
-**Label only. Never set an assignee — on anyone, including the lead.** People
-self-serve from Ready and the lead hands work out at standup. This skill adds no
-assignee at all; the only pre-assigned items on the board are `cross-cutting`
-ones, and `/find-big-wins` assigns those at filing time (§1).
+**Label only. This skill never sets an assignee — on anyone, including the
+lead.** People self-serve from Ready and work is handed out at standup. Two kinds
+of item do arrive pre-assigned, from elsewhere: `cross-cutting` ones, assigned by
+`/find-big-wins` at filing time (§1), and `senior` ones, assigned by
+`/review-ready` when it applies the label.
 
 **And never remove one either — a role/label mismatch is not a mis-route.** The
 lead is deliberately teaching the developers to be simple genealogists and the
@@ -873,6 +874,10 @@ Report each separately — they have different remedies:
   with every senior busy is a capacity problem. Say which.
 - **The oldest three in each, with idle days.** Neither queue has an owner to
   chase, so age is the only signal it emits.
+- **Ruled but still in Backlog** — a `**Ruling:**` comment, no `needs-decision`
+  label, not promoted, with days since the ruling. Nothing else in the loop can
+  see an answer that bought nothing, because the item leaves every decision-queue
+  query the moment the label comes off.
 - **Which of either gate a milestone**, and how long they have sat.
 
 You do not rank these queues and you do not assign from them.

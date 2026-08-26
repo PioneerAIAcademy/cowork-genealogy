@@ -169,8 +169,28 @@ Write each surviving question into the issue **body**, above the reviewed marker
 - **A — <label>** — <consequence that decides it>  *(recommended)*
 - **B — <label>** — <consequence>
 
+<details><summary>Body text if A</summary>
+
+<the issue-body text option A produces>
+
+</details>
+
+<details><summary>Body text if B</summary>
+
+<the issue-body text option B produces>
+
+</details>
+
 *Prepared by review-ready YYYY-MM-DD.*
 ```
+
+**Carry every option's pre-written body text, not just the recommended one.** The
+agent wrote one block per option precisely so that applying the answer is a
+mechanical splice by someone who did not do the reading. Drop them and the
+splice becomes a rewrite, and `/fill-ready` skips its gate on text nobody vetted.
+
+**Apply `needs-decision` in the same write.** A block without the label is
+invisible to every query in the loop.
 
 **This write is not gated on approval** — recording a question is not a decision,
 and a question nobody wrote down is a question nobody answers. Body, not a
@@ -192,7 +212,8 @@ gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file body.md
 # senior — hard regardless of any open question. Assign it to a senior in the
 # matching lane. Keep the developer/genealogist label on it — that is what picks
 # the lane, and CODEOWNERS routes the review the same way.
-gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label senior
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label senior \
+  --add-assignee <login>   # a senior in that lane, per triage-standup/references/roster.md
 
 # needs-a-decision — NOT senior. One answer unblocks it, and the work behind it
 # is frequently junior. Labelling this `senior` is the common mistake: it sends a
@@ -217,20 +238,6 @@ One-time, if the label does not exist yet:
 gh label create reviewed --repo PioneerAIAcademy/cowork-genealogy \
   --description "Vetted by task-reviewer before junior handoff" --color 0E8A16
 ```
-
-**For a `needs-a-decision` issue, splice in the chosen option's pre-written body
-text.** The agent wrote one block per option precisely so this step is mechanical.
-Do not compose your own version of the decision — you did not do the reading, and
-a vague paragraph here is what makes Claude Code guess.
-
-Two cases where it is not a splice:
-
-- **He picked against the recommendation, and the agent flagged that option as
-  changing the blast radius.** Re-run one `task-reviewer` on that issue alone,
-  telling it the decision, and use what comes back. The site list it wrote was
-  computed under a different assumption.
-- **He answered something no option covered.** Same — re-run one agent with his
-  answer, rather than guessing at the body text.
 
 Rules on the writes:
 
