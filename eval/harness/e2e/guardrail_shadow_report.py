@@ -39,6 +39,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -57,12 +58,14 @@ from harness.skill_invocation import (
     CONFLICT_UNPERSISTED_KIND,
     did_not_land,
     find_citation_nulling_in_conclusions,
+    find_conclusions_without_tree_encoding,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
     find_unpersisted_conflict_resolutions,
     PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
+    TREE_ENCODING_KIND,
     unguarded_new_person_evidence_links,
     WARNINGS_UNCHECKED_KIND,
 )
@@ -222,6 +225,16 @@ def scan_warnings_unchecked(paths: list[Path]) -> list[dict[str, Any]]:
     return _scan_stored(paths, lambda v: v.get("kind") == WARNINGS_UNCHECKED_KIND)
 
 
+def scan_tree_encoding(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#1490 tree-encoding shadow entries STORED in each run's
+    `guardrail_shadow_violations` (a tier->=-probable conclusion whose evidence
+    persons gained no new tree structure). Identified by
+    `kind == TREE_ENCODING_KIND`. Reads 0 over every run made before this check
+    shipped — the whole corpus today — so REPLAY is where the signal lives.
+    """
+    return _scan_stored(paths, lambda v: v.get("kind") == TREE_ENCODING_KIND)
+
+
 @dataclass
 class UnnamedDelegateScan:
     """The §11 unnamed-delegate detector's output across a corpus.
@@ -350,6 +363,25 @@ class RunInputs:
         ]
         return ", ".join(absent) or None
 
+    def missing_for_tree_encoding(self) -> str | None:
+        """Why `find_conclusions_without_tree_encoding` cannot read this run, or
+        None. It needs the final research (proof_summaries, evidence, questions),
+        the final tree, and the seed tree — the seed is required for the same
+        reason warnings needs it: without it every fact reads as new and a
+        conclusion never looks un-encoded, hiding the very thing being measured.
+        It does NOT read the run log's tool_calls, so an unreadable log alone does
+        not skip it."""
+        absent = [
+            name
+            for name, value in (
+                ("no readable final-research.json sidecar", self.final_research),
+                ("no readable final-tree.gedcomx.json sidecar", self.final_tree),
+                ("no readable starting-tree.gedcomx.json", self.seed_tree),
+            )
+            if value is None
+        ]
+        return ", ".join(absent) or None
+
 
 def _load_json(path: Path) -> dict[str, Any] | None:
     """Parse one JSON file, or None if it cannot be read as a JSON OBJECT.
@@ -447,6 +479,7 @@ class PostHocReplay:
     citation: CheckReplay = field(default_factory=CheckReplay)
     conflict: CheckReplay = field(default_factory=CheckReplay)
     warnings: CheckReplay = field(default_factory=CheckReplay)
+    tree_encoding: CheckReplay = field(default_factory=CheckReplay)
 
 
 def _record(
@@ -541,6 +574,18 @@ def replay_post_hoc(
                 out.warnings,
                 find_relationship_writes_without_warnings_check(
                     inputs.tool_calls, inputs.final_tree, starting_tree=inputs.seed_tree
+                ),
+                inputs,
+            )
+
+        tree_encoding_skip = inputs.missing_for_tree_encoding()
+        if tree_encoding_skip:
+            out.tree_encoding.skipped.append(f"{where}: {tree_encoding_skip}")
+        else:
+            _record(
+                out.tree_encoding,
+                find_conclusions_without_tree_encoding(
+                    inputs.final_research, inputs.final_tree, starting_tree=inputs.seed_tree
                 ),
                 inputs,
             )
@@ -735,6 +780,7 @@ def format_post_hoc_replay(replay: PostHocReplay) -> str:
         ("citation-nulling", "concluded source(s) with a null/empty citation string", False, replay.citation),
         ("conflict-unpersisted", "concluded question(s) relying on an unpersisted conflict resolution", False, replay.conflict),
         ("warnings-unchecked", "run(s) that wrote a new ParentChild/Couple relationship without calling person_warnings", True, replay.warnings),
+        ("tree-encoding", "tier->=-probable conclusion(s) that added no new tree structure — a gate would refuse/warn", False, replay.tree_encoding),
     ):
         affected = len({v["file"] for v in check.violations})
         headline = affected if per_run else len(check.violations)
@@ -799,6 +845,28 @@ def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
         "\n§7 warnings-unchecked check (issue #1193, shadow): "
         f"{len(violations)} run(s) wrote a new ParentChild/Couple relationship "
         f"without calling person_warnings, across {affected} run(s)."
+    )
+
+
+def format_tree_encoding(violations: list[dict[str, Any]]) -> str:
+    """The §11.5 tree-encoding count with its per-type breakdown (issue #1490,
+    shadow — reported, never a gate per the 2026-08-24 no-override ruling).
+
+    The count IS the refusal count: each violation is one tier->=-probable
+    conclusion a shipped gate would refuse or warn on, so this line doubles as the
+    calibration signal the ruling asks a shipped gate to produce — how often it
+    would fire, and on which question types, before a researcher has to tell us it
+    is wrong. Per-type because the fire rate is not uniform (parentage dominated
+    the 2026-08-20 measurement), and a rate that looks acceptable in aggregate can
+    hide a type that is mostly false flags."""
+    affected = len({v["file"] for v in violations})
+    by_type: Counter[str] = Counter(v.get("question_type") or "unclassified" for v in violations)
+    breakdown = ", ".join(f"{t}: {n}" for t, n in sorted(by_type.items())) or "none"
+    return (
+        "\n§11.5 tree-encoding check (issue #1490, shadow): "
+        f"{len(violations)} tier->=-probable conclusion(s) that added no new tree "
+        f"structure for any evidence person — what a completion gate would refuse "
+        f"or warn on — across {affected} run(s). By question type: {breakdown}."
     )
 
 
@@ -887,6 +955,9 @@ def main(argv: list[str] | None = None) -> int:
     warnings_unchecked = scan_warnings_unchecked(paths)
     print(format_warnings_unchecked(warnings_unchecked))
 
+    tree_encoding = scan_tree_encoding(paths)
+    print(format_tree_encoding(tree_encoding))
+
     unnamed_delegate = scan_unnamed_delegate(paths, replay=args.replay)
     print(format_unnamed_delegate(unnamed_delegate, replay=args.replay))
 
@@ -919,6 +990,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {v['fixture']:<35} {v['detail']}")
         print(f"\nWarnings unchecked (issue #1193), {len(warnings_unchecked)}:")
         for v in warnings_unchecked:
+            print(f"  {v['fixture']:<35} {v['detail']}")
+        print(f"\nTree encoding (issue #1490), {len(tree_encoding)}:")
+        for v in tree_encoding:
             print(f"  {v['fixture']:<35} {v['detail']}")
         print(f"\nUnnamed delegate (issue #980), {len(unnamed_delegate.stored)}:")
         for v in unnamed_delegate.stored:

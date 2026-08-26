@@ -1433,3 +1433,169 @@ def find_relationship_writes_without_warnings_check(
             ),
         }
     ]
+
+
+# ─── §11.5 tree-encoding shadow measurement (issue #1490) ────────────────────
+
+# Shares the guardrail_shadow_violations bucket, keyed on this kind.
+TREE_ENCODING_KIND = "tree_encoding_missing"
+
+# Tiers a conclusion is expected to encode into the tree. possible / not_proved /
+# disproved warrant no tree write, so they are never flagged.
+_ENCODABLE_TIERS = ("proved", "probable")
+
+# Question-type classifier. Deliberately INCLUDES PLURALS and baptism/christening:
+# a first pass used `\b(parent|father|...)\b`, which does not match "parents"
+# (there is no word boundary between `t` and `s`), so a parentage question reading
+# "the parents of X, born <date>" fell through to the birth branch and was graded
+# against a seeded Birth fact — the exact miscount that produced a bogus "70% pass"
+# (issue #1490). Order matters: parentage/marriage/death are tested BEFORE birth,
+# because a parentage question routinely names a birth date to identify its subject
+# and must not be read as a birth question.
+_QUESTION_TYPE_PATTERNS: list[tuple[str, "re.Pattern[str]"]] = [
+    ("parentage", re.compile(r"\b(parents?|father|fathers|mother|mothers|parentage)\b", re.IGNORECASE)),
+    ("marriage", re.compile(r"\b(marriages?|married|marry|spouses?|wife|wives|husbands?|wedding)\b", re.IGNORECASE)),
+    ("death", re.compile(r"\b(deaths?|died|die|burials?|buried|obituar)\b", re.IGNORECASE)),
+    ("birth", re.compile(r"\b(births?|born|baptism|baptis(?:ed|m|ms)|christen(?:ed|ing|ings)?)\b", re.IGNORECASE)),
+]
+
+
+def classify_question_type(text: str | None) -> str | None:
+    """Coarse type for a research question, from its prose. Returns
+    parentage / marriage / death / birth, or None when nothing matches.
+
+    See `_QUESTION_TYPE_PATTERNS` for the plural inclusion and the ordering — both
+    are the corrections the lead flagged (issue #1490)."""
+    if not isinstance(text, str):
+        return None
+    for label, pattern in _QUESTION_TYPE_PATTERNS:
+        if pattern.search(text):
+            return label
+    return None
+
+
+def _person_ids_for_conclusion(
+    proof_summary: dict[str, Any],
+    person_evidence: list[dict[str, Any]],
+) -> set[str]:
+    """The tree persons a conclusion's evidence touches, joined through the only
+    path that exists: a proof_summary carries no tree foreign key, so go
+    `supporting_assertion_ids` → `person_evidence[].assertion_id` →
+    `person_evidence[].person_id`. person_evidence is the link table."""
+    supporting = set(proof_summary.get("supporting_assertion_ids") or [])
+    return {
+        e.get("person_id")
+        for e in person_evidence
+        if isinstance(e, dict)
+        and e.get("assertion_id") in supporting
+        and isinstance(e.get("person_id"), str)
+    }
+
+
+def _person_gained_structure(
+    person_id: str,
+    final_tree: dict[str, Any],
+    starting_tree: dict[str, Any] | None,
+) -> bool:
+    """Whether `person_id` gained any new fact or any new relationship endpoint
+    between the starting tree and the final tree. Facts diff on their normalized
+    signature (`_fact_signatures`); relationships on the endpoint tuple
+    (`_relationship_key`), never on `id`, so a re-pointed PID-TODO placeholder
+    counts as new. When no starting tree is given, treats everything as new
+    (best-effort), matching the other post-hoc detectors."""
+    final_persons = {
+        p.get("id"): p for p in (final_tree.get("persons") or []) if isinstance(p, dict)
+    }
+    start_persons = {
+        p.get("id"): p
+        for p in ((starting_tree or {}).get("persons") or [])
+        if isinstance(p, dict)
+    }
+    fp = final_persons.get(person_id)
+    if fp is None:
+        return False
+    new_facts = _fact_signatures(fp) - _fact_signatures(start_persons.get(person_id) or {})
+    if new_facts:
+        return True
+
+    start_rel_keys = {
+        _relationship_key(r)
+        for r in ((starting_tree or {}).get("relationships") or [])
+        if isinstance(r, dict)
+    }
+    for r in final_tree.get("relationships") or []:
+        if not isinstance(r, dict):
+            continue
+        if person_id not in (r.get("parent"), r.get("child"), r.get("person1"), r.get("person2")):
+            continue
+        if starting_tree is None or _relationship_key(r) not in start_rel_keys:
+            return True
+    return False
+
+
+def find_conclusions_without_tree_encoding(
+    final_research: dict[str, Any] | None,
+    final_tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Shadow-mode post-hoc detector (issue #1490): a completed project holds a
+    tier->=-probable conclusion, but none of the tree persons its evidence touches
+    gained any new fact or relationship this run — the conclusion was reached and
+    left un-encoded in the tree.
+
+    A SHAPE match, not a foreign key. A proof_summary carries no tree reference, so
+    "the conclusion's person" is approximated by the union of persons its supporting
+    assertions have evidence for (`_person_ids_for_conclusion`). This is deliberately
+    broad — it flags only when NONE of those persons gained ANY structure — because a
+    wrong flag on a shipped gate hard-blocks correct work with no override (the 2026
+    ruling): prefer a false allow over a false deny.
+
+    Fires only on `project.status == "completed"`; an in-progress project has not
+    reached the completion gate this measures. Returns violation records shaped like
+    the other shadow sources (int `index`, string `tool`, `kind == TREE_ENCODING_KIND`),
+    carrying the classified `question_type` for the per-type breakdown. Never fails a
+    run."""
+    research = final_research or {}
+    project = research.get("project")
+    status = project.get("status") if isinstance(project, dict) else None
+    if status != "completed":
+        return []
+
+    tree = final_tree or {}
+    person_evidence = [e for e in (research.get("person_evidence") or []) if isinstance(e, dict)]
+    questions_by_id = {
+        q.get("id"): q for q in (research.get("questions") or []) if isinstance(q, dict)
+    }
+
+    out: list[dict[str, Any]] = []
+    for ps in research.get("proof_summaries") or []:
+        if not isinstance(ps, dict) or ps.get("tier") not in _ENCODABLE_TIERS:
+            continue
+        person_ids = _person_ids_for_conclusion(ps, person_evidence)
+        if not person_ids:
+            # No evidence-linked person to check against — unclassifiable, not a
+            # violation. Counted in the denominator by the scan, never flagged.
+            continue
+        if any(_person_gained_structure(pid, tree, starting_tree) for pid in person_ids):
+            continue
+        q = questions_by_id.get(ps.get("question_id")) or {}
+        question_type = classify_question_type(q.get("question"))
+        out.append(
+            {
+                "index": -1,
+                "tool": "tree.gedcomx.json",
+                "required_skill": "proof-conclusion",
+                "question_id": ps.get("question_id"),
+                "kind": TREE_ENCODING_KIND,
+                "question_type": question_type,
+                "proof_summary_id": ps.get("id"),
+                "tier": ps.get("tier"),
+                "detail": (
+                    f"proof summary {ps.get('id')} (tier {ps.get('tier')}, "
+                    f"{question_type or 'unclassified'}) added no new tree structure "
+                    f"for any of its evidence persons"
+                ),
+            }
+        )
+    return out

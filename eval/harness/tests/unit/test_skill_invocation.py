@@ -30,6 +30,8 @@ from harness.skill_invocation import (
     same_person_scored_ids,
     skill_name_if_skill_call,
     unguarded_new_person_evidence_links,
+    classify_question_type,
+    find_conclusions_without_tree_encoding,
 )
 
 # Sentinel distinguishing "key absent entirely" (the historical tool_calls
@@ -1681,3 +1683,64 @@ def test_dedicated_agent_names_matches_the_shipped_agent_files():
         "makes read as an unnamed-delegate bypass — the detector fires hardest "
         "on exactly the runs that did the right thing."
     )
+
+
+# --- classify_question_type: the plural bug the lead flagged (issue #1490) ----
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        # The two exact cases from the issue body: a parentage question that also
+        # names a birth date must NOT be graded as a birth question. This is the
+        # plural bug: `\b(parent)\b` never matches "parents".
+        ("Who are the parents of William Henry Bottemiller, born 29 December 1862", "parentage"),
+        ("...identify as the parents of Adrian Zuñiga Rojas, born 8 September 1889?", "parentage"),
+        ("Who were the fathers of these children?", "parentage"),
+        ("Who did Mary Jones marry?", "marriage"),
+        ("Who was the spouse recorded?", "marriage"),
+        ("When and where did John Smith die?", "death"),
+        ("Where was he buried?", "death"),
+        # baptism / christening route to birth (the lead's explicit inclusion).
+        ("Where was the baptism recorded?", "birth"),
+        ("What was the christening date?", "birth"),
+        ("When was she born?", "birth"),
+        ("Something with no relation words at all", None),
+        (None, None),
+    ],
+)
+def test_classify_question_type_includes_plurals_and_orders_parentage_before_birth(text, expected):
+    assert classify_question_type(text) == expected
+
+
+def test_classify_question_type_plural_parents_is_not_singular_only():
+    # Direct guard on the exact defect: the singular matches, and so must the
+    # plural. A regression to `\b(parent)\b` fails the plural assertion here.
+    assert classify_question_type("the parent of X") == "parentage"
+    assert classify_question_type("the parents of X") == "parentage"
+
+
+def test_find_conclusions_without_tree_encoding_fires_and_is_silent_when_encoded():
+    research_base = {
+        "project": {"status": "completed", "subject_person_ids": ["I1"]},
+        "proof_summaries": [
+            {"id": "ps_001", "question_id": "q_001", "tier": "probable", "supporting_assertion_ids": ["a_001"]}
+        ],
+        "person_evidence": [{"assertion_id": "a_001", "person_id": "I1"}],
+        "questions": [{"id": "q_001", "question": "Who are the parents of I1?"}],
+    }
+    seed = {"persons": [{"id": "I1", "facts": []}], "relationships": []}
+
+    # Nothing new for I1 -> one violation, classified parentage.
+    unchanged = {"persons": [{"id": "I1", "facts": []}], "relationships": []}
+    hits = find_conclusions_without_tree_encoding(research_base, unchanged, starting_tree=seed)
+    assert len(hits) == 1
+    assert hits[0]["kind"] == "tree_encoding_missing"
+    assert hits[0]["question_type"] == "parentage"
+
+    # A new ParentChild edge touching I1 -> silent.
+    encoded = {
+        "persons": [{"id": "I1", "facts": []}, {"id": "I2", "facts": []}],
+        "relationships": [{"id": "R1", "type": "ParentChild", "parent": "I2", "child": "I1"}],
+    }
+    assert find_conclusions_without_tree_encoding(research_base, encoded, starting_tree=seed) == []
