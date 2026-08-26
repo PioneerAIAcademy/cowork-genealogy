@@ -7,7 +7,7 @@ description: >-
   "research guide for [jurisdiction]", "what can I find in
   [county/state/country]?", "where are the records for [place]?", "what records
   help trace families affected by a disaster in [place]?", or "what records
-  survive for [place] after [an event]?", or when research-plan needs
+  survive for [place] after [an event]?", or when the orchestrator needs
   jurisdiction context. Do NOT use when the user wants to search records or
   execute a specific search plan (use search-records or search-external-sites),
   or asks a generic "how do I find/research [record type]" how-to question (use
@@ -37,7 +37,7 @@ allowed-tools:
 
 Produces a structured survey of what records exist for a specific place and time period, where they are held, and how to access them — the prerequisite step before sound research planning.
 
-**Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When `collections_search` or `volume_search` returns zero or truncated results, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it, never present a truncated `recordCount` as the verified total, and never extrapolate a tool's number into a claim it did not make (a `volume_search` percentage is not a statement about FamilySearch's interface). If a wiki page returns only generic content, do not cite specifics it does not contain.
+**Ground every claim in tool output.** Name only the collections, volumes, record counts, IDs, dates, and repositories that actually appear in a tool result. When `collections_search` or `volume_search` returns zero or truncated results, report it as a digitization/coverage gap — never invent a collection, count, or volume to fill it, never present a truncated `recordCount` as the verified total, and never extrapolate a tool's number into a claim it did not make (a `volume_search` percentage is not a statement about FamilySearch's interface). If a FamilySearch Wiki page returns only generic content, do not cite specifics it does not contain.
 
 ## Reference documents
 
@@ -74,7 +74,7 @@ record depends on exactly where within the original territory the event
 occurred, and that is often not known at survey time. Write the quirk to say
 so plainly — "records could be under either East or West Feliciana Parish;
 search both" — rather than picking one successor as if the split were
-temporal. Do not resolve the ambiguity yourself from a wiki summary unless it
+temporal. Do not resolve the ambiguity yourself from a FamilySearch Wiki summary unless it
 actually pins the specific place to one side.
 
 ### 3. Survey available records and repositories
@@ -94,14 +94,14 @@ collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 # then, once wiki_search returns a page URL:
-wiki_read({ url: "<relevant wiki page URL>" })
+wiki_read({ url: "<relevant FamilySearch Wiki page URL>" })
 ```
 
 `collections_search` derives the jurisdiction itself from the full `standardPlace` — no need to hand it the enclosing state separately. To widen, drop the leading component and call again (the comma-strip pattern).
 
 `volume_search` finds digitized volumes that may not appear in `collections_search`, which only surfaces indexed collections. For each volume, read `recordSearchablePercent` (name-indexed, reachable via `record_search`) and `fulltextSearchable` (reachable via `fulltext_search`). Low/false on both = browse-only. Results paginate; one page is usually enough for a survey. When it returns volumes for the same locality filed under different place names across a boundary change (e.g., a territorial-era volume and a later county volume), connect them explicitly as one continuous research trail — tell the researcher to work both together despite the differing place names, not as unrelated sources.
 
-`external_links_search` returns a flat list of FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives, wiki pages) filtered to the requested time window. The list is not deduplicated — collapse duplicate URLs before listing repositories. **Compare `totalForPlace` and `results.length`:** if `totalForPlace > 0` but `results` is empty, FS has resources for this place outside your time window — note the gap rather than reporting "no online resources." If `totalForPlace === 0`, FS has no curated external links for this place at all.
+`external_links_search` returns a flat list of FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives, FamilySearch Wiki pages) filtered to the requested time window. The list is not deduplicated — collapse duplicate URLs before listing repositories. **Compare `totalForPlace` and `results.length`:** if `totalForPlace > 0` but `results` is empty, FS has resources for this place outside your time window — note the gap rather than reporting "no online resources." If `totalForPlace === 0`, FS has no curated external links for this place at all.
 
 ### 4. Classify access levels
 
@@ -109,7 +109,7 @@ For each record type, assign a digitization level using the table in `references
 - High `recordSearchablePercent` → **indexed + images**
 - Present but low/null `recordSearchablePercent` with `fulltextSearchable: true` → **full-text searchable, not name-indexed** (flag explicitly; do not collapse into "indexed" or "browse-only")
 - Low/null `recordSearchablePercent` and false/absent `fulltextSearchable` → **browse-only images**
-- No match in `volume_search` → likely **microfilm or physical only** — cross-check wiki before classifying
+- No match in `volume_search` → likely **microfilm or physical only** — cross-check the FamilySearch Wiki before classifying
 
 **Never fabricate tool data** (see "Ground every claim in tool output" above). A zero `volume_search`/`collections_search` result is a coverage gap to report plainly — not licence to invent a volume, collection, or count.
 
@@ -120,7 +120,7 @@ Use the template in `references/output-format.md`. Fill every section with data 
 ### 6. Persist the locality (only inside a research project)
 
 **When running inside a research project** — a `research.json` exists at the project
-path (e.g. `locality-guide` was invoked by `research-plan`) — write one `localities`
+path (e.g. `locality-guide` was invoked by the orchestrator) — write one `localities`
 entry so the knowledge survives for `research-plan` (and the Research Viewer) instead
 of being discarded. This is the whole point of the survey — an un-persisted guide
 helps only the current turn. **If there is no project** (standalone locality Q&A with
@@ -138,7 +138,7 @@ research_append({
     jurisdictions: [ /* from place_search_all — EACH entry is exactly { name, date_range }, no other keys */ ],
     collections: [ /* from collections_search: { id, title, date_range } */ ],
     quirks: [
-      // short, actionable gotchas a searcher must know — distilled from the wiki
+      // short, actionable gotchas a searcher must know — distilled from the FamilySearch Wiki
       // research-tips / online-records pages. This is ALSO where any border/name
       // succession advice goes — a sentence, not a jurisdiction field, e.g.:
       "Parish records indexed only at the county level — search the county, not the exact parish.",
@@ -188,12 +188,12 @@ field on a jurisdiction or collection.
 
 - **Be specific about availability.** Name counts and record types concretely — not "records may exist" but "FamilySearch has 3 digitized but unindexed image volumes of Schuylkill County probate records, browsable image by image."
 - **Note gaps honestly.** If records were destroyed or don't exist for this period, say so clearly.
-- **Never state a registration date without naming its level.** Registration began at different levels in different years, and a bare "X didn't require vital registration until <year>" is wrong whichever year you pick. Massachusetts is the worked case: town clerks were ordered by the General Court to record births, marriages, and deaths in **1639**, while **statewide** registration began in **1841** — "Massachusetts didn't require vital registration until 1841" is false, and so is the mirror error of citing 1639 as though no later requirement ever followed. Say which level (town/parish, county, statewide) a date applies to, and cite the wiki page that states it. New England in particular has a deep body of pre-statewide town records: treat an early-colonial jurisdiction as *having* vital records at the town level unless a wiki page says otherwise.
+- **Never state a registration date without naming its level.** Registration began at different levels in different years, and a bare "X didn't require vital registration until <year>" is wrong whichever year you pick. Massachusetts is the worked case: town clerks were ordered by the General Court to record births, marriages, and deaths in **1639**, while **statewide** registration began in **1841** — "Massachusetts didn't require vital registration until 1841" is false, and so is the mirror error of citing 1639 as though no later requirement ever followed. Say which level (town/parish, county, statewide) a date applies to, and cite the FamilySearch Wiki page that states it. New England in particular has a deep body of pre-statewide town records: treat an early-colonial jurisdiction as *having* vital records at the town level unless a FamilySearch Wiki page says otherwise.
 - **Match records to the target window.** Flag record classes that predate the period (e.g., colonial/Mission-era) or postdate it (e.g., later civil registration) as background context, not prime sources for the years asked, and note where civil infrastructure was sparse or absent in those years. Conversely, if a collection's date range overlaps the target period, include it — don't dismiss a record class as out-of-period and then list it as available.
 - **Flag browse-only, non-English, and physical-only records prominently.** When a volume is 0% name-indexed and not full-text searchable, state plainly it must be browsed image-by-image with no search; if it is non-English (Dutch, German, Spanish sacramental registers, etc.), note the researcher must read the original language. Explicitly state when records exist only in physical repositories — online absence does not mean nonexistence.
 - **Include access information.** For each record type, note where it's held and how to access it.
 - **Cover topical breadth.** Don't stop at vital records and census — use the checklist in `references/locality-broad-context.md`.
-- **Cite the wiki page, not just its title.** Every wiki tool result carries its page URL — `source_url` on each `wiki_search` result, `url` from `wiki_read` and `wiki_place_page`. When a claim about what records exist, when they begin, or when registration was required comes from the wiki, give that URL alongside the article title so the researcher can check it. A date or availability claim you cannot attach a returned URL to is not a finding: say the wiki does not cover it rather than asserting it from memory. The same URLs go in `pages_read[].url` when you persist.
+- **Cite the FamilySearch Wiki page, not just its title.** Every FamilySearch Wiki tool result carries its page URL — `source_url` on each `wiki_search` result, `url` from `wiki_read` and `wiki_place_page`. When a claim about what records exist, when they begin, or when registration was required comes from the FamilySearch Wiki, give that URL alongside the article title so the researcher can check it. A date or availability claim you cannot attach a returned URL to is not a finding: say the FamilySearch Wiki does not cover it rather than asserting it from memory. The same URLs go in `pages_read[].url` when you persist.
 - **Search adjoining jurisdictions across a state line.** A family near a border likely generated records on both sides, and the level that holds them differs by state — Massachusetts and parts of New York created records at **both** town and county level, so a county-only survey misses the town series. Name the adjoining counties *and* towns across the border, not just the bordering states. Because a `jurisdictions[]` entry is locked to `{ name, date_range }`, the cross-border advice itself goes in `quirks[]` (e.g. "Town lies 4 miles from the NY line — check adjoining Rensselaer County NY town clerks as well as the MA county series").
 
 ## Re-invocation behavior
