@@ -1,0 +1,254 @@
+{
+  "run_log": "v1_2026-08-26_11-53-31.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked each asserted fact against the fixture tree: I1's F1 is Birth \"~1845\"/\"Ireland\",\nF2 is Death \"1908-03-12\"/\"Schuylkill County, Pennsylvania\". Exact. Nothing false, so 3.\n\nTwo notes: the death date and county are in no tool response and not the README, so the\njudge could not verify them (I did). And its rationale credits \"age 5 in 1850, age 15 in\n1860\" and the censuses  none appear in the output.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Bullets [2] and [3] met. [0] and [1] not — one tool call, no assertion named, no census\nmentioned.\n\nAgreeing at 3 because [0] cannot be met: it wants \"via person_evidence\", which is not a\ntool check-warnings holds and not an MCP tool at all (absent from tool-schemas.ts) — it's\na sibling skill. Deducting would punish the skill for a forbidden call. Eval defect, same\nshape as same_person/tree-edit. detect-cluster.json and detect-event-after-death.json\ncarry the same bullet; check_rubric_tool_drift.py misses all three because the name isn't\na real tool.\n\nThe rationale also claims it examined a_001-a_005 etc. It examined none.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One call, person_warnings, projectPath + personId \"I1\", well-formed. No person_quality —\ncorrect for a synthetic id. Fixture returns {\"warningCount\": 0, \"warnings\": []}.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Tool returned zero warnings; skill reported zero and invented none. Nothing in I1's two\nfacts is impossible.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Correct per the rubric's N/A clause: no warnings, nothing to action. Reported \"No\ngenealogical warnings found\" rather than manufacturing one.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Everything stated traces to the tool response: 1 contradiction, hasEventAfterDeath1,\nmessage verbatim, factIds F1/F2/F3, severity contradiction. It correctly did NOT name\nrecord types — the tool returned factIds only, and SKILL.md forbids reading the tree to\nhunt for them.\n\nThe rationale is false on two counts. \"Identified F3 as a Residence dated 1925 from source\nS5 (the obituary)\" — the response says only \"Facts involved: F1, F2, F3\". Residence, 1925\nand S5 appear in the fixture description and scenario README, not in anything the skill\nsaw. And \"surfaced posthumous mention as the most likely cause\": the response gives (a),\n(b), (c) with no ranking. The judge praised a ranking that isn't there — and one the\ncorrected doctrine forbids.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All required elements present: correct personId, the single warning, factIds, three\ncauses, next step. Nothing missing.\n\nThe rationale says it noted the synthetic ID \"silently without adding noise\". The response\ncarries a bold-headed \"Note on FamilySearch quality:\" paragraph. Both cannot be true.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "person_warnings with projectPath + personId \"I1\" — correct, matches the fixture's\nexpected args. No person_quality on a synthetic id, right.\n\nOne note: it also called project_context, which is not in check-warnings' allowed-tools.\nAdvisory only (session grants all tools, issue #1748) and not a scoring defect, but it is\nan unnecessary call.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One real contradiction in the fixture, reported; nothing invented, nothing missed.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill wrote \"[!] Contradiction\" with a \"(Fundamental: ...)\" gloss — correct per\nSKILL.md:77's mapping from the tool's severity field.\n\nRecording the rationale's wording: \"classified as Critical/Fundamental severity\". Critical\nis the tier name PR #1545 retired on 2026-08-18. The skill did not write it — the judge\ndid. Same retired vocabulary as 009's judge_context[5], now in the judge's own reasoning.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Named every fact the tool gave (F1-F3), gave three causes each with a distinguishing test,\nand closed with \"Don't make any data changes until you've seen the source itself\" — which\nis what SKILL.md:88 requires, since the skill cannot determine record type.\n\nRationale again cites S5 and the obituary, which the response never mentions.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The skill did precisely what it's told to do. SKILL.md says a source conflict is not this\nskill's job, to hand off silently, and — in its own words — \"Write no reply of your own:\nno preamble, no explanation, no summary.\" The run shows an empty response, no tool calls,\nand both check-warnings and conflict-resolution invoked. That's the rule followed exactly.\n\nThe judge failed it for the opposite reason: \"A proper decline/route requires the skill to\narticulate the decision to the user.\" Articulating it is what the skill is forbidden to do.\nMarking it down for obeying is backwards.\n\nAll three per-test bullets are met too: no person_warnings call, routed to\nconflict-resolution, no checks run.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Same reason. Nothing is missing, because nothing was supposed to be there. The judge asks\nfor evidence of a spoken handoff; the handoff is meant to be invisible and shows up where\nit should — in the skills that were invoked.\n\nThe rule it quotes penalises \"substantive output when it should have declined or stayed\nsilent\". There was no output at all, so that rule doesn't apply.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP calls were made, which is correct here and is exactly when this dimension should be\nnull.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked every figure against the quality fixture: overall score 0.9704 (reported as 0.97,\nfair rounding), 7 issues, and the sentences word for word — \"The burial date is missing.\",\n\"A marriage place is missing a city.\", \"A residence has no tagged sources.\" five times.\nWarnings fixture returns zero warnings and it reported zero. Nothing invented.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Everything required is there: both checks run on the right person, the clean warnings\nresult, a separate quality section with the overall score and every issue, all framed as\noptional. Nothing left out.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "person_warnings got projectPath and personId \"KD96-TV2\". person_quality got personId only\nwhich is right; SKILL.md specifies person_quality({ personId }) with no projectPath. Both\ncorrect.\n\nThe judge says \"projectPath is implicit in the working directory\", which is muddled  it\nwas passed explicitly to the one tool that needs it. Right score, confused reasoning.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool found nothing and the skill reported nothing. No invented warnings, and it didn't\nturn the quality gaps into warnings — which is the mistake this dimension exists to catch.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Correct per the rubric: no warnings, so nothing to make actionable. The quality suggestions\nare separate and aren't what this dimension measures.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_014",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Called correctly for a real FamilySearch ID, kept in its own section, sentences verbatim,\nframed as optional improvements, no urgency, no invented quality band, and the clean\nwarnings result came through intact.\n\nTwo small things, neither worth a deduction. It renamed the tool's \"VERIFIABILITY\"\ncategory to \"Source tagging\" — though it did show the original in brackets. And the line\n\"Completeness 2 · Source tagging 5 · Consistency 0 · Coherence 0\" lists issue counts, which\na reader could easily take for scores; \"Consistency 0\" reads like a zero score when the\nactual score is 1, i.e. perfect.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The substance is accurate: zero warnings reported, matching the fixture, and the statement\nthat no quality score applies is true — I1 is synthetic. Nothing false or invented.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Everything required is covered: right person, right tool, result reported.\n\nThe reasoning is false, though — it says the skill \"correctly omitted any mention of\nFamilySearch quality\". The first sentence of the response mentions it.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "person_warnings with the right projectPath and personId \"I1\". No person_quality call,\nwhich is correct for a synthetic ID.\n\nIt also called project_context, which isn't on this skill's list. Harmless, unnecessary.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The tool found nothing, the skill reported nothing, invented nothing.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Correct — nothing fired, so there's nothing to classify.\n\n\n"
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Correct per the rubric — no warnings, nothing to act on.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The response's first sentence reads: \"a synthetic ID, so I'll run the offline warnings\ncheck only (no FamilySearch quality score applies).\" That is a mention, so the rule is\nbroken. Skipping the call was right; staying quiet about it wasn't. The rubric makes that\na partial.\n\nWhat matters here is the judge's reasoning. It says \"The response contains no mention of\nFamilySearch quality whatsoever — the skip was silent as required by SKILL.md\", and then\nquotes this test's own instruction: \"Should NOT mention FamilySearch quality at all.\" It\nread the rule, quoted it, and declared the response met it, when the opening sentence\ndoesn't.\n\nLast run this was the one test in the whole corpus that caught this breach. Same test,\nsame instruction, unchanged — and now it passes on a false statement about its own\ntranscript.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Response says: \"Patrick's ID (I1) is a local synthetic identifier, so there is no\nFamilySearch live profile to score -- the quality check doesn't apply here.\" SKILL.md:64\n\"skip this call silently ... do not mention FamilySearch quality at all\"; :153 \"Say\nnothing ... do not add a 'not available' note.\" rubric.md:42 makes this a partial. Call\ndiscipline right, silence wrong.\n\nThe rationale contradicts itself: \"The silence on quality is correct and the note is\nappropriately brief.\" Same failure as 007/008 last run.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The response ends with \"> **Note on FamilySearch quality:** Patrick Flynn's ID (I1) is a\nlocal synthetic ID -- he has no FamilySearch live profile to score...\" — a bold-headed\nparagraph, the most explicit breach of the three sampled tests. SKILL.md:64 and :153\nrequire silence; rubric.md:42 makes it a partial. Call discipline right, silence wrong.\n\nThe rationale calls it \"a brief parenthetical note ... noted silently\". It is neither\nparenthetical nor silent.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing fired, so there is no severity to classify. The rationale says as much and then\nscores 3, which inflates the mean and reads as evidence for a capability untested here.\nGenuine N/A, not a null hiding a fail — zero warnings is the correct result.\nRecording rather than correcting: the picker offers no N/A here because the judge scored 3,\nand the UI only offers N/A when the judge chose null. 3 is not what I'd record if I could.\n"
+    },
+    {
+      "test_id": "ut_check_warnings_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "\nNo warnings fired, so there is nothing to classify. The judge's own words: \"No severity\nclassification was required.\" Then it scored 3. In this same run, 018 scored the identical\nsituation N/A — so the run grades one circumstance three different ways.\n\nRecording rather than correcting: the picker offers no N/A because the judge scored 3, and\nthe UI only offers it when the judge chose null. 3 is not what I'd record if I could.\n"
+    }
+  ]
+}
