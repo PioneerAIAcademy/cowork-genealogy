@@ -62,7 +62,7 @@ Every verdict has a write; a verdict you cannot act on does nothing.
 | `ready` | `reviewed` label only |
 | `ready-after-edit` | Prepend the agent's text, then `reviewed` |
 | `needs-a-decision` | `needs-decision` label — **not** `senior`. One answer unblocks it and the work behind it is often junior |
-| `senior` | `senior` label; assign a senior in that lane. Keep the `developer`/`genealogist` label: it picks the lane, and CODEOWNERS routes the review by it |
+| `senior` | `senior` label, no assignee. Keep the `developer`/`genealogist` label: it picks the lane, and CODEOWNERS routes the review by it |
 | `stale-rewrite` | Replace the ask, keeping the original under an `## Original issue` heading |
 | `close` | `gh issue close --reason "not planned"` with the reason |
 

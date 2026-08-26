@@ -68,14 +68,15 @@ instead of a decision.
 
 ## Before Richard runs a skill alone
 
-Every board skill ends by waiting for the lead to approve. Three edits first:
+Every board skill ends by waiting for the lead to approve. Run by Richard they
+produce a report and change nothing.
 
-1. Replace the terminal approval gate in the six skills Richard touches — apply
-   the reversible things now, queue the rest.
-2. Give `review-ready` the same edit, or `fill-ready` still halts on every
-   promotion.
-3. Three skills treat an already-answered decision as a defect. Asynchronously it
-   is normal work.
+**Done:** `review-ready` writes its questions into the issues instead of asking
+them, `/make-decisions` answers them daily, and nothing treats an
+already-answered decision as a defect any more.
+
+**Still open:** the terminal approval gate in `fill-ready`, `audit-board` and
+`merge-recent-issues` — apply the reversible things now, queue the rest.
 
 Then: give Richard a position in `fill-ready`'s routing, move roster maintenance
 to whoever runs the skill, send replies in Richard's own name, and record the

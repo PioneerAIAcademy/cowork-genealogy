@@ -77,8 +77,9 @@ answers this for every candidate at once — this is the whole standing-pool que
 # BOTH pools. A bare run covers `developer` and `genealogist` — the paragraph
 # above is why. `--developer-only` is what narrows this back to one lane; do not
 # bake that filter in here, which silently reverted the both-pools change once.
-# `feedback` items are never in scope: they carry `genealogist`, so they enter
-# the pool without the exclusion and cost ~110k tokens each to learn nothing.
+# `feedback` items are never in scope, in either lane — most carry `genealogist`
+# and are raw bundles whose body is a Drive link, and reviewing one costs ~110k
+# tokens to learn nothing. A triaged one should lose the label, not be gated here.
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 | jq -r '
   .items[]
   | select(.status == "Ready" and (.assignees | length) == 0
@@ -196,7 +197,8 @@ mechanical splice by someone who did not do the reading. Drop them and the
 splice becomes a rewrite, and `/fill-ready` skips its gate on text nobody vetted.
 
 **Apply `needs-decision` in the same write.** A block without the label is
-invisible to every query in the loop.
+invisible to every query in the loop. `reviewed` goes on after, once the block
+has landed.
 
 **This write is not gated on approval** — recording a question is not a decision,
 and a question nobody wrote down is a question nobody answers. Body, not a
@@ -205,8 +207,10 @@ comment: a finding in a comment thread is a finding that evaporates.
 ## 5. Write the verdicts
 
 **Every verdict has a write** — a verdict you cannot act on silently does
-nothing. The `## Decision needed` block and the `needs-decision` and `reviewed`
-labels go in on your own authority. Every other write waits for approval:
+nothing. The `## Decision needed` block and the `needs-decision` label go in on
+your own authority. Every other write waits for approval — and `reviewed` goes on
+only after every write that verdict needs has landed, so a `ready-after-edit` or
+`stale-rewrite` item is not labelled until its approved body edit is in.
 
 ```sh
 # needs-a-decision — the fixed-format `## Decision needed` block, ungated.
@@ -215,11 +219,10 @@ gh issue view <N> --repo PioneerAIAcademy/cowork-genealogy --json body -q .body 
 # edit body.md, then:
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file body.md
 
-# senior — hard regardless of any open question. Assign it to a senior in the
-# matching lane. Keep the developer/genealogist label on it — that is what picks
-# the lane, and CODEOWNERS routes the review the same way.
-gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label senior \
-  --add-assignee <login>   # a senior in that lane, per triage-standup/references/roster.md
+# senior — hard regardless of any open question. Label only, no assignee: work
+# is handed out at standup, not here. Keep the developer/genealogist label on it
+# — that is what picks the lane, and CODEOWNERS routes the review the same way.
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label senior
 
 # needs-a-decision — NOT senior. One answer unblocks it, and the work behind it
 # is frequently junior. Labelling this `senior` is the common mistake: it sends a

@@ -34,8 +34,6 @@ remover, or the two disagree about what is still open.
 ## 0. Two sweeps, first
 
 ```sh
-R=PioneerAIAcademy/cowork-genealogy
-
 # (a) ANSWERED — a ruling exists and the label is still on. This is your input,
 # not a defect: rulings arrive at standup and in bare comments, through channels
 # with no apply step. Close each one out in §3; the answer already exists, so it
@@ -49,7 +47,7 @@ R=PioneerAIAcademy/cowork-genealogy
 # occur. A `**Ruling`-only test missed two real rulings on 2026-08-13 (issues
 # #1331, #1394). Here a miss is silent, because the query reports emptiness as
 # health.
-gh issue list --repo $R --state open --limit 200 \
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
   --label needs-decision --json number,title,comments \
   -q '.[] | select([.comments[].body
                    | test("(?m)^#{1,4} +(Ruling|Decision)\\b|\\*\\*(Ruling|Decision)\\b")] | any)
@@ -60,7 +58,7 @@ gh issue list --repo $R --state open --limit 200 \
 # question. Most of what remains is ordinary unprepared input from
 # /triage-standup — prepare it in §2. It is a DEFECT only when the body says
 # "Prepared by review-ready", because then the block was written and lost.
-gh issue list --repo $R --state open --limit 200 \
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
   --label needs-decision --json number,title,body \
   -q '.[] | select(.body | test("(?m)^#{1,4} +Decision needed\\b") | not)
       | "#\(.number)  \(.title)"'
@@ -73,7 +71,7 @@ that block was written and then lost.
 ## 1. Read the queue
 
 ```sh
-gh issue list --repo $R --state open --limit 200 \
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
   --label needs-decision --json number,title,updatedAt,labels \
   -q '.[] | "\(.updatedAt[0:10])\t#\(.number)\t\(.title)"' | sort
 ```
@@ -140,16 +138,19 @@ item. An answer heard and not applied is worse than one never asked for.
 
 ```sh
 # 1. the durable record — his answer, in his words, on the issue
-gh issue comment <N> --repo $R \
+gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \
   --body "**Ruling:** <his answer> — <the one-line reason, if he gave one>"
 
 # 2. splice the chosen option's pre-written body text in, replacing the whole
 #    `## Decision needed` block, so the next reader gets the decision and not the
 #    open fork. Copy it — do not compose your own; you did not do the reading.
+#    An item you prepared yourself in §2 has no pre-written option text and no
+#    block to replace: write the decision and the alternative it beat into the
+#    body directly. You did the reading this run, so you are the one who can.
 #    Edit body.md with `python3 - <<'PY'` (the body carries backticks and
 #    markdown that a shell heredoc will mangle):
 #    gh issue view <N> --json body -q .body > body.md, edit, then:
-gh issue edit <N> --repo $R --body-file body.md
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file body.md
 
 # 3. if the body carries a reviewed marker, refresh its clause in the same edit:
 #    > **Reviewed <date> before junior handoff.** Decision recorded below; ...
@@ -158,7 +159,7 @@ gh issue edit <N> --repo $R --body-file body.md
 #    that was never reviewed: that forges a review and wins a permanent skip.
 
 # 4. the label comes off, and the item ranks in a junior pool like anything else
-gh issue edit <N> --repo $R --remove-label needs-decision
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --remove-label needs-decision
 ```
 
 The `**Ruling:**` comment is the record, not a queue. It exists so the next
@@ -176,7 +177,7 @@ reader — a junior picking the issue up, `/audit-board`, a later run of this sk
 - **He answered something no option covered.** Same: re-run one agent with his
   answer rather than guessing at the body text.
 - **"This is hard either way."** Swap `needs-decision` for `senior`. Never both.
-- **"Don't do this."** Close it: `gh issue close <N> --repo $R --reason
+- **"Don't do this."** Close it: `gh issue close <N> --repo PioneerAIAcademy/cowork-genealogy --reason
   "not planned" --comment "<why>"`. The label goes with the issue.
 
 ## 5. Report

@@ -90,11 +90,10 @@ touches Python, and its description still reads "Touches Python — needs a
 developer's review." That is fine on PRs and slightly wrong on issues. Don't
 re-litigate it; just know the label is doing two jobs.
 
-**Label only. This skill never sets an assignee — on anyone, including the
-lead.** People self-serve from Ready and work is handed out at standup. Two kinds
-of item do arrive pre-assigned, from elsewhere: `cross-cutting` ones, assigned by
-`/find-big-wins` at filing time (§1), and `senior` ones, assigned by
-`/review-ready` when it applies the label.
+**Label only. Never set an assignee — on anyone, including the lead.** People
+self-serve from Ready and the lead hands work out at standup. This skill adds no
+assignee at all; the only pre-assigned items on the board are `cross-cutting`
+ones, and `/find-big-wins` assigns those at filing time (§1).
 
 **And never remove one either — a role/label mismatch is not a mis-route.** The
 lead is deliberately teaching the developers to be simple genealogists and the
