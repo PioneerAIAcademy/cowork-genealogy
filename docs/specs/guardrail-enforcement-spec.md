@@ -322,6 +322,7 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | §7 caller-attributed recency | 823 (window 40), 130 runs | n/a — windowed replay, see the table above | **retired permanently**, not queued |
 | §8 live `same_person` provenance | 12, across 7 runs | 120 of 147 runs that link a person | the graduation candidate with the largest sample |
 | §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
+| §7.5 citation-nulling, TREE side (`find_citation_nulling_in_tree_sources`) | **0**, 0 runs — arm added 2026-08-25, no run has carried it yet | **111 source(s), across 50 runs**, of 159 scanned | shadow, reported; **deliberately not graduated** — see below |
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 159 scanned | behaviour confirmed; live store path never exercised |
 | §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | behaviour confirmed; live store path exercised |
 | §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | **15**, across 1 run (of 20 that carry any attribution, 159 scanned) | **15**, 1 run | shadow, reported, no graduation count — revisit only if a **second** attributed run flags |
@@ -331,6 +332,25 @@ Reading the two columns: **stored** is what a run recorded when it ran;
 state. A stored count therefore measures the corpus's age, not the behaviour —
 why that is, and what each number is worth, is under "Re-measure; do not read a
 count out of this page" below, stated once.
+
+**§7.5 citation-nulling: the two arms are one reading, and the pair is the
+finding.** The research-side arm reads `research.json`, where the
+citation is authored; the tree-side arm reads `tree.gedcomx.json`, where
+`proof-conclusion` copies it at upload. Over the same 159 runs they measure
+**0** and **111 of 171** referenced sources, across 50 runs. That answers the
+question a lone zero could not: *"nothing distinguishes the two readings of a
+zero"* — the research-side zero is a real invariant (a conclusion's citations are
+populated whenever one exists) and worth keeping as a regression pin, and the
+failure class the check was built for lives entirely at the upload copy.
+
+**Neither arm graduates on that number, and the tree-side arm least of all.**
+A rate is not a decision. `simplified-gedcomx-spec.md` makes the tree citation
+upload-populated *by design*, so some fraction of the 111 is
+legitimately-not-yet-uploaded evidence that only a genealogist can price — and
+the gate that would tell those apart is the thing being measured, not an input to
+it. Detect before teaching: a skill edit costs a paid eval run, and until this arm
+has been in the corpus for a few live runs there is no baseline such an edit could
+be measured against. A follow-on card owns the fix.
 
 **§11 unnamed-delegate stays in shadow — reported, not a gate (lead ruling,
 2026-08-21).** One flagged run in 159, and the runs that do not flag mostly carry
