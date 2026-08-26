@@ -256,12 +256,13 @@ def _patch_diffs(monkeypatch, paths: list[str], *, deleted: list[str] | None = N
     )
 
 
-def test_formerly_exempt_skill_now_gated(monkeypatch, capsys):
+def test_formerly_exempt_skill_now_gated(tmp_path, monkeypatch, capsys):
     """research gained a trigger corpus (#1494) and was removed from
     RUNLOG_GATE_EXEMPT_SKILLS. Touching its SKILL.md now fails the gate
     like any non-exempt skill without committed run logs."""
     assert "research" not in check_runlogs.RUNLOG_GATE_EXEMPT_SKILLS
     _patch_diffs(monkeypatch, ["packages/engine/plugin/skills/research/SKILL.md"])
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path)
     rc = check_runlogs.main()
     assert rc == 1
     assert "research" in capsys.readouterr().out
