@@ -46,7 +46,7 @@ that shape record creation and survival.
   (land records, mine employment rolls, factory records, port records).
 - **Land distribution systems** — State-land states vs. federal-land
   states (US); manorial systems, enclosure acts (Europe); homestead
-  laws, land grants, and patents each create different record sets.
+  laws, land grants, land bounties, and patents each create different record sets.
 - **Economic disruptions** — Depressions, crop failures, and industry
   collapses drove migration and appear in court records, tax
   delinquency lists, and poor relief records.
