@@ -290,6 +290,33 @@ def test_depends_on_nonempty(before_state, after_state, test):
     )
 
 
+# --- Tag-gated: new question's unblocks is non-empty ------------------
+
+def test_unblocks_nonempty(before_state, after_state, test):
+    """Tag-gated: the new question must set a non-empty unblocks array.
+    Used for scenarios where the new question is a gatekeeper -- its
+    resolution is what would let an existing, already-blocked question
+    advance (2026-08-26 review: unblocks correctness had no mechanical
+    check at all; depends_on-nonempty covered only half of that gap)."""
+    if "unblocks-nonempty" not in test.get("tags", []):
+        pytest.skip("not an unblocks-nonempty scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    assert new, "expected a new question; none was added"
+    bad = [
+        (q.get("id"), q.get("unblocks"))
+        for q in new
+        if not q.get("unblocks")
+    ]
+    assert not bad, (
+        f"new questions with empty unblocks: {bad}; "
+        f"expected at least one downstream question ID in unblocks"
+    )
+
+
 # --- Tag-gated: first-question depends_on is empty --------------------
 
 def test_first_question_depends_on_empty(before_state, after_state, test):
@@ -365,9 +392,16 @@ def test_new_question_exhaustive_declaration_unstarted(before_state, after_state
 # it must NOT pass. A correctly framed "confirm or refute against independent
 # records" question still matches on "refute"/"independent".
 _VERIFY_SIGNALS = (
-    "refute", "independent", "whether",
-    "test ", "re-examine", "reexamine", "disprove", "rule out",
+    r"\brefute\b", r"\bindependent\b", r"\btest\b",
+    r"\bre-?examine\b", r"\bdisprove\b", r"\brule\s+out\b",
 )
+# "whether" was dropped (2026-08-26 review): "Identify whether Anton Vogt's
+# parents are Johann and Maria Vogt" is the exact confirm-the-tree failure
+# mode this list exists to catch, and it matched on "whether" alone. Every
+# question this list needs to accept already contains "confirm or refute" or
+# "independent records", which "refute"/"independent" already cover -- see
+# the two functions below, both re-checked against every disputed-parents
+# question observed in this dive's paid runs after this change.
 
 
 def test_first_question_tests_disputed_parents(before_state, after_state, test):
@@ -382,7 +416,7 @@ def test_first_question_tests_disputed_parents(before_state, after_state, test):
     new = _new_questions(before, after)
     assert new, "expected a new question testing the disputed assignment; none was added"
     text = " ".join((q.get("question") or "") for q in new).lower()
-    assert any(sig in text for sig in _VERIFY_SIGNALS), (
+    assert any(re.search(sig, text) for sig in _VERIFY_SIGNALS), (
         "the first question does not frame the disputed parent assignment as "
         "something to TEST. When the objective disputes the existing parents, "
         "the question must confirm-or-refute the assignment against independent "
@@ -402,11 +436,11 @@ def test_first_question_tests_disputed_parents(before_state, after_state, test):
 # catches only that extreme case -- whether a question that avoids these
 # shapes is otherwise well-formed stays the judge's call.
 _VAGUE_QUESTION_PATTERNS = (
-    r"^\s*who\s+is\s+\S",
+    r"^\s*who\s+is\s+[A-Za-z][\w'\-]*(?:\s+[A-Za-z][\w'\-]*){0,4}\s*\??\s*$",
     r"^\s*tell\s+me\s+about\b",
     r"\blearn\s+(?:more\s+)?about\b",
     r"\bfind\s+out\s+(?:more\s+)?about\b",
-    r"^\s*research\s+the\s+\S+\s+family\b",
+    r"^\s*research\s+the\s+\S+(?:\s+\S+){0,2}\s+family\b",
 )
 
 
@@ -437,21 +471,36 @@ def test_new_question_not_vague(before_state, after_state):
 def test_timelines_queried_before_deciding(before_state, tool_calls, test):
     """Tag-gated: on a scenario carrying a real timeline-gap signal, the
     skill must have actually called research_query(section='timelines')
-    before deciding whether to create a timeline_gap question or decline.
-    project_context does not return timeline data -- concluding 'no gap'
-    without this call is fabrication, not absence of evidence."""
+    before writing (or declining to write) the question -- not merely at
+    some point in the run. project_context does not return timeline data
+    -- concluding 'no gap' without this call, or querying it only after
+    the decision is already made, is fabrication, not informed absence
+    of evidence."""
     if "selection-basis-timeline-gap" not in test.get("tags", []):
         pytest.skip("not a selection-basis-timeline-gap scenario")
-    queried = any(
-        call.get("tool", "").endswith("research_query")
+    query_idxs = [
+        i
+        for i, call in enumerate(tool_calls)
+        if call.get("tool", "").endswith("research_query")
         and call.get("args", {}).get("section") == "timelines"
-        for call in tool_calls
-    )
-    assert queried, (
+    ]
+    assert query_idxs, (
         "the skill decided without ever calling "
         "research_query(section='timelines'); project_context does not "
         "return timeline data, so a high-severity gap cannot have been seen"
     )
+    append_idxs = [
+        i
+        for i, call in enumerate(tool_calls)
+        if call.get("tool", "").endswith("research_append")
+    ]
+    if append_idxs:
+        assert min(query_idxs) < min(append_idxs), (
+            "the skill wrote its question before ever calling "
+            "research_query(section='timelines') -- the query must inform "
+            "the decision, not just appear somewhere in the transcript "
+            "after it was already made"
+        )
 
 
 # --- Tag-gated: missing-info disputed assignment accepts either honest branch (V4) ---
@@ -484,7 +533,7 @@ def test_disputed_parents_missing_info_handled(before_state, after_state, test, 
     new = _new_questions(before, after)
     if new:
         text = " ".join((q.get("question") or "") for q in new).lower()
-        assert any(sig in text for sig in _VERIFY_SIGNALS), (
+        assert any(re.search(sig, text) for sig in _VERIFY_SIGNALS), (
             "a question was written despite missing inputs, but it does not "
             "frame the disputed assignment as something to TEST. "
             f"Question(s) written: {[q.get('question') for q in new]!r}"

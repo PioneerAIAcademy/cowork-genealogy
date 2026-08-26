@@ -5,7 +5,7 @@
     "name": "Unsound-premise guard: verify online tree claim before building on it",
     "type": "positive",
     "description": "The flynn-unsourced-tree scenario has a hypothesis that Thomas Flynn was Patrick Flynn's father — but the ONLY basis is an unsourced Ancestry Member Tree with no original records attached. The skill must apply the unsound-premise guard and propose a question that verifies the claim rather than assumes it.",
-    "tags": ["question-selection", "unsound-premise", "online-tree", "verify-before-building", "compiled-source", "new-question-exhaustive-declaration-unstarted"]
+    "tags": ["question-selection", "unsound-premise", "online-tree", "verify-before-building", "compiled-source", "new-question-exhaustive-declaration-unstarted", "unblocks-nonempty"]
   },
   "input": {
     "user_message": "What should I research next?",
