@@ -55,6 +55,7 @@ from harness.judge import _summarize_response
 from harness.skill_invocation import (
     check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
     find_citation_nulling_in_conclusions,
+    find_citation_nulling_in_tree_sources,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
@@ -2481,6 +2482,27 @@ async def run_e2e_test(
         if warnings_unchecked_shadow:
             guardrail_shadow_violations = (
                 guardrail_shadow_violations + warnings_unchecked_shadow
+            )
+
+        # The TREE-side citation-nulling arm (issue #1358). Wired here, not beside
+        # the research-side call above, because that site has no tree in scope —
+        # this one has `final_research`, `final_tree` and `starting_tree`
+        # together, which is what the gate needs.
+        #
+        # Shadow only, and deliberately not graduated by this card. Its sibling
+        # measures ZERO across the corpus (1,884 concluded sources, all cited),
+        # and a zero is not a licence to graduate — per the shadow-to-graduate
+        # rules it means nobody has seen the detector fire. This arm is where the
+        # class actually lives: 111 of 171 uploaded sources carry no citation,
+        # across 50 of 159 concluded runs. Some fraction of that is
+        # legitimately-not-yet-uploaded, which only a human can price, so it
+        # detects and reports rather than failing anything.
+        tree_citation_shadow = find_citation_nulling_in_tree_sources(
+            final_research, final_tree
+        )
+        if tree_citation_shadow:
+            guardrail_shadow_violations = (
+                guardrail_shadow_violations + tree_citation_shadow
             )
 
         # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it

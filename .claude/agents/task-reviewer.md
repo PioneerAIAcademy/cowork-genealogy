@@ -184,10 +184,11 @@ a command and its output. Include the checks that came back clean.
 
 ### The "For the lead" contract
 
-Write each decision so it can be put to him **verbatim**, with no reformatting:
+Write each decision so it can be written into the issue **verbatim**, with no
+reformatting. The caller serializes it as a `## Decision needed` block:
 
-- **Header** — ≤12 characters, e.g. `#1031 API`, `Lint policy`. It is the chip he
-  scans.
+- **Header** — ≤12 characters, e.g. `#1031 API`, `Lint policy`. It becomes the
+  block's title, and it is what gets scanned first.
 - **Question** — one sentence ending in `?`, naming what in the repo left it open
   (a spec line, an architecture-guide open question, silence where you expected a
   rule).
@@ -198,8 +199,9 @@ Write each decision so it can be put to him **verbatim**, with no reformatting:
 - **For every option, the issue-body text that option produces**, in a fenced
   block. **Not only the recommended one.**
 
-That last item is the point of the section: he answers "B", and applying it is a
-splice by someone who did not do the reading, because by then you are gone.
+That last item is the point of the section: the answer comes back "B", and
+applying it is a splice by someone who did not do the reading — because by then
+you are gone, and so is the caller.
 
 Each option's body text records **the decision and the alternative it beat**, in
 one clause — this repo keeps three "do not re-derive" ledgers because settled
