@@ -48,9 +48,10 @@ command or file name relayed without checking reads like an established thing to
 whoever picks the issue up. Say what you rejected and why, alongside what you
 accepted.
 
-If the agent returns a **For the lead** block, put it to the lead with
-`AskUserQuestion`, passing each option through **verbatim** — the agent read the
-spec, the ADRs and the code, and you did not.
+If the agent returns a **For the lead** block, write it into the issue body as a
+`## Decision needed` block, passing each option through **verbatim** — the agent
+read the spec, the ADRs and the code, and you did not. Do not ask it: whoever
+runs this is not necessarily who answers. `/make-decisions` presents it.
 
 ## Step 4 — Apply what is approved
 
@@ -61,7 +62,7 @@ Every verdict has a write; a verdict you cannot act on does nothing.
 | `ready` | `reviewed` label only |
 | `ready-after-edit` | Prepend the agent's text, then `reviewed` |
 | `needs-a-decision` | `needs-decision` label — **not** `senior`. One answer unblocks it and the work behind it is often junior |
-| `senior` | `senior` label, no assignee. Keep the `developer`/`genealogist` label: it picks the lane, and CODEOWNERS routes the review by it |
+| `senior` | `senior` label; assign a senior in that lane. Keep the `developer`/`genealogist` label: it picks the lane, and CODEOWNERS routes the review by it |
 | `stale-rewrite` | Replace the ask, keeping the original under an `## Original issue` heading |
 | `close` | `gh issue close --reason "not planned"` with the reason |
 
@@ -75,8 +76,8 @@ Four rules on the writes:
 
   ```
   > **Reviewed <YYYY-MM-DD> before junior handoff.** <one clause: decision
-  > settled / no decision needed / premise was false>; the original body follows
-  > under "Original issue".
+  > recorded below / no decision needed / premise was false>; the original body
+  > follows under "Original issue".
   ```
 
 - **`reviewed` goes on last**, after the body write lands. Labelling first and
@@ -86,10 +87,9 @@ Four rules on the writes:
 with different remedies — one wants a person, the other wants an answer — and an
 issue carrying both tells the board neither.
 
-**If the lead answers a fork while you have him**, that issue never gets
-`needs-decision`. Comment the answer opening `**Ruling:**`, splice in the chosen
-option's pre-written body text, and apply `reviewed`. Handing him an answered
-item on tomorrow's waiting list is the failure this avoids.
+**Never answer a fork yourself.** Every open fork gets its `## Decision needed`
+block and the `needs-decision` label. `/make-decisions` is the only place a
+ruling is taken and applied.
 
 ## Step 5 — Do not move the board
 

@@ -41,8 +41,8 @@ a verdict the caller cannot act on is a verdict that silently does nothing.
 |---|---|---|
 | `ready` | A junior can land it today | The `reviewed` label. Nothing else. |
 | `ready-after-edit` | Ready once the body carries the agent's text | Prepend the text; `reviewed`. |
-| `needs-a-decision` | An open fork only the lead can settle | Label `needs-decision` and `reviewed`; **no assignee**, and never alongside `senior`. Splice the chosen option's pre-written body text once he answers. The work behind the fork is frequently junior, so this is a request for one answer, not for a scarce person. |
-| `senior` | Any trigger in the agent's `senior` list — green-and-wrong risk, cross-subsystem, inverts a mechanism, commits money or doctrine, or touches schema / credentials / a plugin-agent binding / an MCP tool contract / an ADR / anything hard to undo — **and still hard once every open question is answered** | Label `senior` and `reviewed`, keeping the `developer`/`genealogist` label that picks the lane; **no assignee** — the lead takes no issues and assigns seniors himself. Report to `fill-ready` for the swap out of the junior pool. |
+| `needs-a-decision` | An open fork only the lead can settle | Label `needs-decision` and `reviewed`; **no assignee**, and never alongside `senior`. Write the `## Decision needed` block into the body; `/make-decisions` splices the chosen option's pre-written text once it is answered. The work behind the fork is frequently junior, so this is a request for one answer, not for a scarce person. |
+| `senior` | Any trigger in the agent's `senior` list — green-and-wrong risk, cross-subsystem, inverts a mechanism, commits money or doctrine, or touches schema / credentials / a plugin-agent binding / an MCP tool contract / an ADR / anything hard to undo — **and still hard once every open question is answered** | Label `senior` and `reviewed`, keeping the `developer`/`genealogist` label that picks the lane; assign a senior in that lane. Report to `fill-ready` for the swap out of the junior pool. |
 | `stale-rewrite` | The premise moved; the issue asks for the wrong thing | **Replace** the ask with the agent's rewrite, keeping the original under `## Original issue`; `reviewed`. |
 | `close` | No longer needed, already done, or refuted | `gh issue close --reason "not planned"` with the evidence. No label. |
 
@@ -96,7 +96,13 @@ from `close` because the need survives even though the ask does not.
 
 ## 4. Why an agent plus a skill
 
-**A subagent cannot ask a question.** Everything else follows from that.
+**A subagent cannot ask a question, and neither can the caller.** Everything
+else follows from that.
+
+The agent runs in fresh context and is gone before anyone answers. The caller is
+whoever runs `/fill-ready` — the development manager, not the person who settles
+architecture and doctrine. So the question has to survive both of them, in
+writing, on the issue.
 
 The reviewer must read one issue in fresh context — a second issue's reasoning
 contaminating the first is the whole reason for one agent per issue rather than
@@ -105,16 +111,18 @@ turned on a fork only the lead could settle. An agent-only design would have
 guessed at those, confidently, which is the same failure the gate exists to
 prevent, moved one level up.
 
-So the agent surfaces the fork already shaped for `AskUserQuestion` — header,
-question, options with the consequence that decides each, recommendation first —
-**and pre-writes the resulting issue-body text for every option, not only the
-recommended one.** By the time the lead answers, the agent is gone; applying the
-answer must be a splice, not a rewrite by someone who did not do the reading.
+So the agent surfaces the fork already shaped — header, question, options with
+the consequence that decides each, recommendation first — **and pre-writes the
+resulting issue-body text for every option, not only the recommended one.** By
+the time the answer arrives the agent is long gone and the caller may be someone
+else entirely; applying the answer must be a splice, not a rewrite by someone who
+did not do the reading.
 
-The caller then does the three things one agent cannot: merge identical forks
-across issues into a single policy question, rank the questions across the batch
-(`AskUserQuestion` takes four), and drop the ones whose answer would change
-nothing.
+The caller then does the three things one agent cannot — merge identical forks
+across issues into a single policy question, rank them, and drop the ones whose
+answer would change nothing — and writes each survivor into its issue as a
+`## Decision needed` block. `/make-decisions` presents them and records the
+ruling.
 
 ## 5. The reviewed marker is a label, not body text
 

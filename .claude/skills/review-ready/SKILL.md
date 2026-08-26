@@ -1,9 +1,8 @@
 ---
 name: review-ready
-description: Use when the lead wants tasks vetted before juniors start them — "vet these before I hand them out", "are these tasks still a good idea", "is this safe for a junior", "review the fill-ready shortlist", "check the junior queue", or a bare "/review-ready". The gate between fill-ready (which ranks and promotes) and standup (which hands work out); covers both unassigned pools, developer and genealogist, with `--developer-only` to narrow it. Fans out one read-only task-reviewer agent per candidate issue, in parallel, each in fresh context — every agent reads the issue's cited code, the matching docs/architecture.md "If you're asked to…" block, the board's what-nothing-checks issues, and the relevant ADRs, then returns a verdict, the exact body text to add, and any decision only the lead can make. Collates the verdicts, puts the strategic questions to the lead, and applies only what he approves. Do NOT use to choose what the team works on, to rank the Backlog, or to move anything on the board — that is fill-ready, which calls this skill on its shortlist. Never starts the work.
+description: Use when the lead wants tasks vetted before juniors start them — "vet these before I hand them out", "are these tasks still a good idea", "is this safe for a junior", "review the fill-ready shortlist", "check the junior queue", or a bare "/review-ready". The gate between fill-ready (which ranks and promotes) and standup (which hands work out); covers both unassigned pools, developer and genealogist, with `--developer-only` to narrow it. Fans out one read-only task-reviewer agent per candidate issue, in parallel, each in fresh context — every agent reads the issue's cited code, the matching docs/architecture.md "If you're asked to…" block, the board's what-nothing-checks issues, and the relevant ADRs, then returns a verdict, the exact body text to add, and any decision only the lead can make. Collates the verdicts and writes each open question into its issue for `/make-decisions` to answer; applies the rest only when approved. Do NOT use to choose what the team works on, to rank the Backlog, or to move anything on the board — that is fill-ready, which calls this skill on its shortlist. Never starts the work.
 allowed-tools:
   - Agent
-  - AskUserQuestion
   - Bash
   - Read
   - Grep
@@ -20,10 +19,12 @@ Rationale, contracts, measurements and rejected alternatives:
 `docs/specs/task-review-spec.md`. Read it before changing this skill or the
 agent; do not re-derive what it settles.
 
-**You propose, then apply what is approved.** No branches, no PRs, no code
-edits, no eval runs, and no board moves — promotion and demotion belong to
-`fill-ready`. What you apply is issue-body text, the `reviewed` label, and when
-approved an assignee.
+**You propose, then apply what is approved — with one exception.** A
+`## Decision needed` block and its `needs-decision` and `reviewed` labels go in on
+your own authority; recording a question is not a decision, and a question nobody
+wrote down is one nobody answers. Everything else waits. No branches, no PRs, no
+code edits, no eval runs, and no board moves — promotion and demotion belong to
+`fill-ready`.
 
 ## 0. Board facts
 
@@ -132,45 +133,71 @@ Read every report. Then, in your own voice:
   pool that is mostly `needs-a-decision` is cheap to unblock and is the strongest
   thing you can put in front of the lead.
 
-## 4. Put the decisions to the lead
+## 4. Write the decisions down
 
-Each agent returns its decisions already shaped for `AskUserQuestion` — header,
-question, options with the consequence that decides each, recommended first.
-**Pass them through verbatim.** Do not rewrite an option's description into your
-own words: the agent read the spec, the ADRs and the code, and you did not.
+**Never ask them.** Whoever runs this skill is not necessarily the person who
+answers, and the answer arrives on its own schedule. `/make-decisions` presents
+these and records the ruling.
 
-Then do the three things it could not, because it saw one issue:
+Each agent returns its decisions already shaped — header, question, options with
+the consequence that decides each, recommended first. **Pass them through
+verbatim.** Do not rewrite an option's description into your own words: the agent
+read the spec, the ADRs and the code, and you did not.
 
-- **Merge identical forks.** When two issues ask the same question, ask it once
-  as policy — one question, two issues unblocked.
-- **Rank across issues**, not within one. `AskUserQuestion` takes four at a time;
-  the fifth onward goes in the report as a numbered list to answer in prose.
+Then do the three things it could not, because it saw one issue. **All three
+happen before any body write** — a fork shared by two issues written twice is a
+question answered twice:
+
+- **Merge identical forks.** When two issues ask the same question, write it once
+  as policy and have the second point at the first — one answer, two issues
+  unblocked.
+- **Rank across issues**, not within one. It sets the order they are met in.
 - **Drop what the answer would not change.** A choice with a conventional default
   is not a question — state the default you are assuming and move on.
 
-Settle the smaller forks yourself and list them as assumptions with "say if any
-is wrong."
+Settle the smaller forks yourself and write each one into its issue body as a
+stated assumption. An assumption that lives only in your report is invisible to
+the junior who picks the issue up.
 
-## 5. Apply what he approves
+Write each surviving question into the issue **body**, above the reviewed marker:
 
-Per-verdict, and only after he says so. **Every verdict has a write** — a verdict
-you cannot act on silently does nothing:
+```
+## Decision needed — <header>
+
+<question, one sentence>
+
+- **A — <label>** — <consequence that decides it>  *(recommended)*
+- **B — <label>** — <consequence>
+
+*Prepared by review-ready YYYY-MM-DD.*
+```
+
+**This write is not gated on approval** — recording a question is not a decision,
+and a question nobody wrote down is a question nobody answers. Body, not a
+comment: a finding in a comment thread is a finding that evaporates.
+
+## 5. Write the verdicts
+
+**Every verdict has a write** — a verdict you cannot act on silently does
+nothing. The `## Decision needed` block and the `needs-decision` and `reviewed`
+labels go in on your own authority. Every other write waits for approval:
 
 ```sh
-# ready-after-edit / needs-a-decision / stale-rewrite — put the agent's text in
+# needs-a-decision — the fixed-format `## Decision needed` block, ungated.
+# ready-after-edit / stale-rewrite — the agent's replacement text, once approved.
 gh issue view <N> --repo PioneerAIAcademy/cowork-genealogy --json body -q .body > body.md
 # edit body.md, then:
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file body.md
 
-# senior — hard regardless of any open question. Label only, no assignee: the
-# lead takes no issues (fill-ready §6), and he assigns seniors in their lane
-# himself. Keep the developer/genealogist label on it — that is what picks the
-# lane, and CODEOWNERS routes the review the same way.
+# senior — hard regardless of any open question. Assign it to a senior in the
+# matching lane. Keep the developer/genealogist label on it — that is what picks
+# the lane, and CODEOWNERS routes the review the same way.
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label senior
 
-# needs-a-decision — NOT senior. One answer from the lead unblocks it, and the
-# work behind it is frequently junior. Labelling this `senior` is the common
-# mistake: it sends a sentence looking for a scarce person.
+# needs-a-decision — NOT senior. One answer unblocks it, and the work behind it
+# is frequently junior. Labelling this `senior` is the common mistake: it sends a
+# sentence looking for a scarce person. The `## Decision needed` block must
+# already be in the body — `/make-decisions` has nothing to present without it.
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label needs-decision
 
 # close
@@ -205,7 +232,7 @@ Two cases where it is not a splice:
 - **He answered something no option covered.** Same — re-run one agent with his
   answer, rather than guessing at the body text.
 
-Five rules on the writes:
+Rules on the writes:
 
 - **Edit the body, not a comment.** The junior reads the body. A finding in a
   comment thread is a finding that evaporates.
@@ -217,12 +244,13 @@ Five rules on the writes:
 
   ```
   > **Reviewed <YYYY-MM-DD> before junior handoff.** <one clause: decision
-  > settled / no decision needed / premise was false>; the original body follows
-  > under "Original issue".
+  > recorded below / no decision needed / premise was false>; the original body
+  > follows under "Original issue".
   ```
 
-  This is prose for a reader, not state. What §1 skips on is the `reviewed`
-  label, so a later edit that displaces this line breaks nothing.
+  This is prose for a reader, not state. The `reviewed` **label** is the state,
+  here and in `/fill-ready`. `/make-decisions` refreshes the clause when it
+  records a ruling.
 - **Carry the rationale to the destination the agent named** — a spec section, a
   comment at the constraining site. It is part of the task, not a nicety;
   `CLAUDE.md` keeps settled tradeoffs out of issue bodies for a reason.
@@ -230,13 +258,9 @@ Five rules on the writes:
   `needs-a-decision` verdict comes back before promotion, so there is nothing to
   move — you label it and it stays in Backlog, out of the junior pool. On a
   standing-pool run the item is already in Ready; report it for the swap.
-- **If he answers a fork while you have him, that item never gets the label.**
-  You put these questions to him via `AskUserQuestion`, so you are the most
-  likely place an answer is spoken and then dropped. When he answers: post it as
-  a comment opening `**Ruling:**`, splice the chosen option's pre-written body
-  text in, and apply `reviewed` — **not** `needs-decision`. That label is for
-  forks he has *not* answered. Handing him an answered item on tomorrow's
-  waiting list is the failure.
+- **Never answer a fork yourself, and never record one as answered.** Every
+  surviving question gets written down and labelled `needs-decision`.
+  `/make-decisions` is the only place a ruling is taken and applied.
 - **Never apply both `senior` and `needs-decision`.** They are different states
   with different remedies (`fill-ready` §6): one wants a person, the other wants
   an answer. An item carrying both tells the board neither.
@@ -251,13 +275,14 @@ a delete under a general approval.
 2. **Not-pickable** — the `senior` and `needs-a-decision` items, each with the
    one-line reason and where it should go instead.
 3. **Wrong on the board** — `close` and `stale-rewrite`, with the evidence.
-4. **Body edits proposed** — a table: issue, verdict, the one-clause reason, and
+4. **Body edits** — a table: issue, verdict, whether it landed or awaits approval, the one-clause reason, and
    what the edit adds (missing sites / the instrument / the hidden cost / the
    inoculating sentence). Full text below the table, not in it.
 5. **Clean** — the `ready` items, one line each including the one thing each
    agent would still improve.
 6. **Cross-issue** — collisions the individual agents could not see, and any open
    PR touching the same files.
-7. **Questions** — via `AskUserQuestion`, then the overflow as a numbered list.
+7. **Questions written down** — one line each, with the issue they landed on.
 
-Then stop. Apply only what he approves.
+Then stop. The `## Decision needed` writes and their labels go in regardless;
+everything else waits for approval.
