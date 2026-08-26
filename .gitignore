@@ -110,3 +110,10 @@ apps/server/sandbox/.last-image-build
 warnings.java
 # Working scratch document, never a checked-in artifact
 PROBES.md
+
+# Confidential security-audit material (issue #1018 — do NOT commit).
+# THIS REPOSITORY IS PUBLIC. The audit files are shared person-to-person and are
+# deliberately absent from the board and the repo; committing one would publish
+# the exact thing withholding them protects. Anything under this directory is
+# ignored so a routine `git add -A` cannot pick it up.
+.security-audit/
