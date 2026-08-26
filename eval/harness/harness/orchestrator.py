@@ -1139,6 +1139,21 @@ def flag_routing_negative_judge_fail(
     return dimensions
 
 
+#: Keys the mock adds to a fixture's response AFTER matching and BEFORE logging
+#: (`mock_mcp.py` ~461/477/501). Their presence means the logged response is not
+#: the stored fixture, so `response_fixture` + `matched.index` cannot rebuild it
+#: — `staged.resultsRef` in particular comes from `randomUUID()` and exists in no
+#: commit.
+_MOCK_ENRICHED_KEYS = ("staged", "ranked", "rankingSkipped")
+
+
+def _is_mock_enriched(response: Any) -> bool:
+    """Whether the mock rewrote this response after choosing its fixture."""
+    return isinstance(response, dict) and any(
+        k in response for k in _MOCK_ENRICHED_KEYS
+    )
+
+
 def _tool_call_entry(c: dict[str, Any]) -> dict[str, Any]:
     """One `output.tool_calls` entry, keeping the response the mock already captured.
 
@@ -1150,13 +1165,28 @@ def _tool_call_entry(c: dict[str, Any]) -> dict[str, Any]:
     from the unit tier at all. Measured 2026-08-24: 2,812 tool calls across the
     August-2x run logs, zero carrying a response.
 
-    **Kept only where the content exists nowhere else** (lead, 2026-08-24): a
-    `predicate` match is exactly recoverable from `response_fixture` plus
-    `matched.index` at that commit, so re-storing those bytes would add ~16% to
-    the largest run log (147 KB against 913 KB) to duplicate what git already
-    holds — and shrinking run logs is why `schema_version` 3 exists. `live` and
-    `none` calls have no such source, and `live` is the case the named use
-    (`research_append`) needs.
+    **Kept where the content exists nowhere else** (lead, 2026-08-24): most
+    `predicate` matches are recoverable from `response_fixture` plus
+    `matched.index` at that commit, so re-storing those bytes duplicates what git
+    already holds — and shrinking run logs is why `schema_version` 3 exists.
+    `live` and `none` calls have no such source, and `live` is the case the named
+    use (`research_append`) needs.
+
+    **But "recoverable" is not true of every predicate match, so it is tested
+    rather than assumed.** The mock ENRICHES a matched fixture response after
+    selecting it and before logging it (`mock_mcp.py`: `staged` ~461, `ranked`
+    ~477, `rankingSkipped` ~501, all above `entry["response"] = response` at
+    ~506). An enriched response is therefore NOT the stored fixture, and
+    `staged.resultsRef` is not reconstructable at all — `results-staging.ts`
+    builds it from `randomUUID()`, so no commit holds that value. 587 committed
+    predicate calls are in this state (`record_search`, `external_links_search`,
+    `fulltext_search`).
+
+    So the rule keys on the RESPONSE, not on `matched.kind` alone: an enriched
+    response is kept whatever its kind. Keyed on the enrichment markers rather
+    than on a list of the three tools that have them today, so a fourth tool
+    gaining staging is covered without editing this function — a tool list would
+    silently drop it.
     """
     entry = {
         "tool": c["tool"],
@@ -1165,9 +1195,10 @@ def _tool_call_entry(c: dict[str, Any]) -> dict[str, Any]:
         "matched": c["matched"],
         "response_fixture": c.get("response_fixture"),
     }
+    response = c.get("response")
     kind = (c.get("matched") or {}).get("kind")
-    if kind in ("live", "none"):
-        entry["response"] = c.get("response")
+    if kind in ("live", "none") or _is_mock_enriched(response):
+        entry["response"] = response
     return entry
 
 
@@ -1701,6 +1732,12 @@ def _aborted_entry(
         validators=ValidatorResult(passed=None, results=[]),
         judge=JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0),
     )
+    # The aborted path carries the two grading fields too. `spec` is in hand, and
+    # by this PR's own semantics an ABSENT `grading_mode` means "this run log
+    # predates the field" — so omitting it here would make a fresh run log
+    # misrepresent its aborted tests as old ones. 11 aborted entries across 6
+    # committed logs, so the path is live, not theoretical.
+    mode, gates = grading_mode_for(spec)
     return assemble_test_entry(
         test_id=spec.id,
         test_type=spec.type,
@@ -1709,4 +1746,6 @@ def _aborted_entry(
         mcp_fixtures=spec.mcp_fixtures,
         runs=[single_run],
         timestamp_for_run_id=timestamp,
+        grading_mode=mode,
+        dimensions_gate_outcome=gates,
     )

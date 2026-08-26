@@ -1339,8 +1339,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
               "kind": "string (predicate | live | none)",
               "index": "number or null"
             },
-            "response_fixture": "string or null (fixture file name that provided the response, null when kind is `none` or `live`)",
-            "response": "the tool's response — PRESENT ONLY when kind is `live` or `none`; absent for a `predicate` match, whose response is recoverable from `response_fixture` + `matched.index` at that commit"
+            "response_fixture": "string or null (fixture file name that provided the response; null when kind is `none`, and `live:<tool>` when the call ran against a real tool)",
+            "response": "the tool's response — present when kind is `live` or `none`, AND for a fixture-matched response the mock enriched after selecting it (a `staged`/`ranked`/`rankingSkipped` key); absent for a plain `predicate` match, whose response is recoverable from `response_fixture` + `matched.index` at that commit"
           }
         ],
         "builtin_tool_calls": [
@@ -1420,13 +1420,31 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
   approval. Both are optional: a run log written before they existed omits them,
   and absent means "this predates the field", which is what a reader needs —
   hence omitted rather than written as `null`.
-- **`tool_calls[].response`** — what the mock returned. Recorded for `live` and
-  unmatched (`none`) calls, whose content exists nowhere else on disk, and
-  **omitted for a `predicate` match**, which is exactly recoverable from
-  `response_fixture` plus `matched.index` at that commit. Storing those again
-  would re-add bytes git already holds — measured at ~16% of the largest run log
-  — against a schema version introduced to make run logs smaller. Analysis that
-  needs a fixture-matched response reads the fixture.
+- **`tool_calls[].response`** — what the mock returned. Recorded wherever the
+  content exists nowhere else on disk, and omitted where git already holds it:
+
+  - **`live` and unmatched (`none`) calls** — recorded. Nothing else on disk has
+    them, and `live` is the case the `person_evidence` guardrail calibration
+    needs.
+  - **A fixture-matched response the mock ENRICHED** — recorded. The mock rewrites
+    a matched response after selecting it and before logging it (`staged`,
+    `ranked`, `rankingSkipped`), so what the skill saw is not the stored fixture;
+    `staged.resultsRef` comes from `randomUUID()` and exists in no commit. 587
+    committed calls are in this state. The rule keys on those marker keys rather
+    than on the three tools that have them today, so a fourth tool gaining
+    staging is covered without a code change.
+  - **A plain `predicate` match** — omitted, and recoverable from
+    `response_fixture` plus `matched.index` at that commit. Analysis that needs
+    one reads the fixture.
+
+  **The size trade, both halves.** Omitting plain predicate matches is the
+  saving; retaining `live` is the cost, and `live` is the majority — 4,309 of
+  7,718 recorded calls against 3,393 predicate. There is no per-field cap here,
+  unlike `builtin_tool_calls`' 200-char argument cut or the e2e capture strip.
+  What bounds growth instead is unit retention: the newest 5 candidates per skill
+  (`prune_old_candidates`), which caps the corpus regardless of per-log size.
+  State that when quoting a size figure — the largest committed run log is
+  1.8 MB, and this field grows it.
 
   **Stratified scoring.** Each dimension carries `source: base | rubric`. The base dimensions are a fixed set (3, though Tool Arguments may be N/A), but the number of `rubric` dimensions varies per skill, so suite-level pass rates are only apples-to-apples within a single `source` bucket. Dashboards should compute and track `base_pass_rate` and `rubric_pass_rate` separately for each skill — combining them into a single rate makes the denominator drift as rubric counts change across skills. (`judge_context` is not scored, so it produces no dimensions and no pass-rate bucket.)
 

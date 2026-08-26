@@ -25,18 +25,11 @@
       "const": 3,
       "description": "Bumped when the envelope changes shape. 3 = snapshot values are sha256 digests, not file content."
     },
-    "skill": {
-      "type": "string"
-    },
+    "skill": { "type": "string" },
     "version": {
       "anyOf": [
-        {
-          "type": "integer",
-          "minimum": 1
-        },
-        {
-          "type": "null"
-        }
+        { "type": "integer", "minimum": 1 },
+        { "type": "null" }
       ],
       "description": "Monotonic version number assigned to releasable candidate runs. Null for scratch runs."
     },
@@ -49,11 +42,7 @@
       "description": "True iff the invocation was a full --skill run with no --tag or --test filter."
     },
     "invocation": {
-      "enum": [
-        "skill",
-        "test",
-        "tag"
-      ],
+      "enum": ["skill", "test", "tag"],
       "description": "The CLI selection mode that produced this run log."
     },
     "timestamp": {
@@ -61,12 +50,8 @@
       "pattern": "^\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}$",
       "description": "UTC timestamp YYYY-MM-DD_HH-MM-SS (underscore between date and time for readability)."
     },
-    "harness_version": {
-      "type": "string"
-    },
-    "model": {
-      "type": "string"
-    },
+    "harness_version": { "type": "string" },
+    "model": { "type": "string" },
     "judge_prompt_hash": {
       "type": "string",
       "pattern": "^([a-f0-9]{64})?$",
@@ -74,32 +59,22 @@
     },
     "snapshot": {
       "type": "object",
-      "additionalProperties": {
-        "type": "string"
-      },
+      "additionalProperties": { "type": "string" },
       "description": "{repo-relative-path: sha256-of-normalized-content} of all skill-side files needed to reproduce this run. Values are digests, not content — git holds the bytes; the snapshot only answers whether the run still matches the working tree. Includes packages/engine/plugin/skills/<skill>/**, eval/tests/unit/<skill>/**, and referenced scenarios + fixtures."
     },
     "review_sample": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "tests",
-        "cursor",
-        "seed"
-      ],
+      "required": ["tests", "cursor", "seed"],
       "properties": {
         "tests": {
           "type": "array",
-          "items": {
-            "type": "string"
-          },
+          "items": { "type": "string" },
           "description": "test_ids whose every dimension needs a correction entry in the .ann.json."
         },
         "cursor": {
           "type": "array",
-          "items": {
-            "type": "string"
-          },
+          "items": { "type": "string" },
           "description": "test_ids already sampled by any slot since the rotation sweep last wrapped. Carried here rather than derived from annotation history, which candidate pruning caps at roughly 15 tests."
         },
         "seed": {
@@ -111,13 +86,9 @@
     },
     "tests": {
       "type": "array",
-      "items": {
-        "$ref": "#/$defs/test_entry"
-      }
+      "items": { "$ref": "#/$defs/test_entry" }
     },
-    "totals": {
-      "$ref": "#/$defs/totals"
-    }
+    "totals": { "$ref": "#/$defs/totals" }
   },
   "$defs": {
     "test_entry": {
@@ -136,96 +107,47 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "test_id": {
-          "type": "string",
-          "pattern": "^ut_"
-        },
-        "test_type": {
-          "enum": [
-            "positive",
-            "negative"
-          ]
-        },
-        "expected_outcome": {
-          "enum": [
-            "pass",
-            "xfail"
-          ]
-        },
-        "scenario": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "test_id": { "type": "string", "pattern": "^ut_" },
+        "test_type": { "enum": ["positive", "negative"] },
+        "expected_outcome": { "enum": ["pass", "xfail"] },
+        "scenario": { "type": ["string", "null"] },
         "mcp_fixtures": {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string" }
         },
         "outcome": {
-          "enum": [
-            "pass",
-            "partial",
-            "fail",
-            "aborted",
-            "xfail",
-            "xpass"
-          ]
+          "enum": ["pass", "partial", "fail", "aborted", "xfail", "xpass"]
         },
-        "flaky": {
-          "type": "boolean"
+        "flaky": { "type": "boolean" },
+        "grading_mode": {
+          "type": "string",
+          "enum": ["dimensions", "invariant", "routing"],
+          "description": "What decided this test's outcome. \"invariant\": a grade_on_invariant negative, passed on its tag-gated validator alone. \"routing\": a negative with a non-empty correct_skill, decided by which skill fired. \"dimensions\": a positive test, or an out-of-scope negative (correct_skill: []), where the judge dimensions gate. Optional — absent on run logs written before this field existed."
+        },
+        "dimensions_gate_outcome": {
+          "type": "boolean",
+          "description": "Whether the judge dimensions could change this outcome. False on \"invariant\" and \"routing\" tests, where they are diagnostic only — so a dimension scored 1 beside outcome \"pass\" is designed, not a defect. Optional — absent on run logs written before this field existed."
         },
         "outcome_summary": {
           "type": "object",
-          "required": [
-            "per_run_outcomes",
-            "aggregated_dimensions"
-          ],
+          "required": ["per_run_outcomes", "aggregated_dimensions"],
           "additionalProperties": false,
           "properties": {
             "per_run_outcomes": {
               "type": "array",
-              "items": {
-                "enum": [
-                  "pass",
-                  "partial",
-                  "fail",
-                  "aborted"
-                ]
-              }
+              "items": { "enum": ["pass", "partial", "fail", "aborted"] }
             },
             "aggregated_dimensions": {
               "type": "array",
-              "items": {
-                "$ref": "#/$defs/judge_dimension"
-              }
+              "items": { "$ref": "#/$defs/judge_dimension" }
             }
           }
         },
-        "totals": {
-          "$ref": "#/$defs/test_totals"
-        },
+        "totals": { "$ref": "#/$defs/test_totals" },
         "runs": {
           "type": "array",
           "minItems": 1,
-          "items": {
-            "$ref": "#/$defs/run"
-          }
-        },
-        "grading_mode": {
-          "type": "string",
-          "enum": [
-            "dimensions",
-            "invariant",
-            "routing"
-          ],
-          "description": "What decided this test's outcome. \"invariant\": a grade_on_invariant negative, passed on its tag-gated validator alone. \"routing\": a negative with a non-empty correct_skill, decided by which skill fired. \"dimensions\": a positive test, or an out-of-scope negative (correct_skill: []), where the judge dimensions gate. Optional — absent on run logs written before #1000."
-        },
-        "dimensions_gate_outcome": {
-          "type": "boolean",
-          "description": "Whether the judge dimensions could change this outcome. False on \"invariant\" and \"routing\" tests, where they are diagnostic only — so a dimension scored 1 beside outcome \"pass\" is designed, not a defect. Optional — absent on run logs written before #1000."
+          "items": { "$ref": "#/$defs/run" }
         }
       }
     },
@@ -245,71 +167,21 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "duration_ms": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Sum of per-run skill durations."
-        },
-        "duration_api_ms": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Sum of per-run SDK API/network time. Optional."
-        },
-        "judge_duration_ms": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Sum of per-run judge LLM call wall-clock. Optional."
-        },
-        "num_turns": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Sum of per-run SDK turn counts. Optional."
-        },
-        "wall_clock_ms": {
-          "type": "number",
-          "minimum": 0,
-          "description": "True elapsed span max(ended_at)-min(started_at) — over this test's runs (test_totals) or all runs in the envelope (totals). Reflects real makespan under concurrency, unlike the summed duration_ms. Optional."
-        },
-        "input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "cached_input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "cache_creation_input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "output_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "judge_input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "judge_cached_input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "judge_output_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "skill_cost_usd": {
-          "type": "number",
-          "minimum": 0
-        },
-        "judge_cost_usd": {
-          "type": "number",
-          "minimum": 0
-        },
-        "total_cost_usd": {
-          "type": "number",
-          "minimum": 0
-        }
+        "duration_ms": { "type": "number", "minimum": 0, "description": "Sum of per-run skill durations." },
+        "duration_api_ms": { "type": "number", "minimum": 0, "description": "Sum of per-run SDK API/network time. Optional." },
+        "judge_duration_ms": { "type": "number", "minimum": 0, "description": "Sum of per-run judge LLM call wall-clock. Optional." },
+        "num_turns": { "type": "integer", "minimum": 0, "description": "Sum of per-run SDK turn counts. Optional." },
+        "wall_clock_ms": { "type": "number", "minimum": 0, "description": "True elapsed span max(ended_at)-min(started_at) — over this test's runs (test_totals) or all runs in the envelope (totals). Reflects real makespan under concurrency, unlike the summed duration_ms. Optional." },
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "cache_creation_input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "judge_input_tokens": { "type": "integer", "minimum": 0 },
+        "judge_cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "judge_output_tokens": { "type": "integer", "minimum": 0 },
+        "skill_cost_usd": { "type": "number", "minimum": 0 },
+        "judge_cost_usd": { "type": "number", "minimum": 0 },
+        "total_cost_usd": { "type": "number", "minimum": 0 }
       }
     },
     "test_totals": {
@@ -328,71 +200,21 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "duration_ms": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Sum of per-run skill durations."
-        },
-        "duration_api_ms": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Sum of per-run SDK API/network time. Optional."
-        },
-        "judge_duration_ms": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Sum of per-run judge LLM call wall-clock. Optional."
-        },
-        "num_turns": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Sum of per-run SDK turn counts. Optional."
-        },
-        "wall_clock_ms": {
-          "type": "number",
-          "minimum": 0,
-          "description": "True elapsed span max(ended_at)-min(started_at) — over this test's runs (test_totals) or all runs in the envelope (totals). Reflects real makespan under concurrency, unlike the summed duration_ms. Optional."
-        },
-        "input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "cached_input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "cache_creation_input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "output_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "judge_input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "judge_cached_input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "judge_output_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "skill_cost_usd": {
-          "type": "number",
-          "minimum": 0
-        },
-        "judge_cost_usd": {
-          "type": "number",
-          "minimum": 0
-        },
-        "total_cost_usd": {
-          "type": "number",
-          "minimum": 0
-        }
+        "duration_ms": { "type": "number", "minimum": 0, "description": "Sum of per-run skill durations." },
+        "duration_api_ms": { "type": "number", "minimum": 0, "description": "Sum of per-run SDK API/network time. Optional." },
+        "judge_duration_ms": { "type": "number", "minimum": 0, "description": "Sum of per-run judge LLM call wall-clock. Optional." },
+        "num_turns": { "type": "integer", "minimum": 0, "description": "Sum of per-run SDK turn counts. Optional." },
+        "wall_clock_ms": { "type": "number", "minimum": 0, "description": "True elapsed span max(ended_at)-min(started_at) — over this test's runs (test_totals) or all runs in the envelope (totals). Reflects real makespan under concurrency, unlike the summed duration_ms. Optional." },
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "cache_creation_input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "judge_input_tokens": { "type": "integer", "minimum": 0 },
+        "judge_cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "judge_output_tokens": { "type": "integer", "minimum": 0 },
+        "skill_cost_usd": { "type": "number", "minimum": 0 },
+        "judge_cost_usd": { "type": "number", "minimum": 0 },
+        "total_cost_usd": { "type": "number", "minimum": 0 }
       }
     },
     "run": {
@@ -413,21 +235,9 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "run_index": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "run_id": {
-          "type": "string"
-        },
-        "outcome": {
-          "enum": [
-            "pass",
-            "partial",
-            "fail",
-            "aborted"
-          ]
-        },
+        "run_index": { "type": "integer", "minimum": 0 },
+        "run_id": { "type": "string" },
+        "outcome": { "enum": ["pass", "partial", "fail", "aborted"] },
         "aborted_reason": {
           "anyOf": [
             {
@@ -442,77 +252,28 @@
                 "error"
               ]
             },
-            {
-              "type": "null"
-            }
+            { "type": "null" }
           ]
         },
-        "duration_ms": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Harness wall-clock around the SDK message-consume loop (skill execution only)."
-        },
-        "duration_api_ms": {
-          "type": "number",
-          "minimum": 0,
-          "description": "SDK-reported API/network time (ResultMessage.duration_api_ms). duration_ms - duration_api_ms approximates local overhead; small here with large duration_ms signals an upstream stall. 0 on aborts without a ResultMessage. Optional (absent in pre-instrumentation run logs)."
-        },
-        "num_turns": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "SDK-reported turn count (ResultMessage.num_turns). 0 on aborts without a ResultMessage. Optional."
-        },
-        "skill_attempts": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "Skill-execution attempts (1 = clean first try; >1 = transient stall/error retries in _execute_skill_with_retry). Per-run stall-tax signal. Optional (defaults to 1 in pre-instrumentation logs)."
-        },
-        "started_at": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Epoch seconds at run start (skill+validators+judge). Omitted for runs that never executed (e.g. runnability-gate aborts). Optional."
-        },
-        "ended_at": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Epoch seconds at run end. Omitted for runs that never executed. Optional."
-        },
-        "input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "cached_input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "cache_creation_input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "output_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
+        "duration_ms": { "type": "number", "minimum": 0, "description": "Harness wall-clock around the SDK message-consume loop (skill execution only)." },
+        "duration_api_ms": { "type": "number", "minimum": 0, "description": "SDK-reported API/network time (ResultMessage.duration_api_ms). duration_ms - duration_api_ms approximates local overhead; small here with large duration_ms signals an upstream stall. 0 on aborts without a ResultMessage. Optional (absent in pre-instrumentation run logs)." },
+        "num_turns": { "type": "integer", "minimum": 0, "description": "SDK-reported turn count (ResultMessage.num_turns). 0 on aborts without a ResultMessage. Optional." },
+        "skill_attempts": { "type": "integer", "minimum": 1, "description": "Skill-execution attempts (1 = clean first try; >1 = transient stall/error retries in _execute_skill_with_retry). Per-run stall-tax signal. Optional (defaults to 1 in pre-instrumentation logs)." },
+        "started_at": { "type": "number", "minimum": 0, "description": "Epoch seconds at run start (skill+validators+judge). Omitted for runs that never executed (e.g. runnability-gate aborts). Optional." },
+        "ended_at": { "type": "number", "minimum": 0, "description": "Epoch seconds at run end. Omitted for runs that never executed. Optional." },
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "cache_creation_input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
         "model_usage": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
+          "additionalProperties": { "type": "object" },
           "description": "The SDK's per-model token ledger for this run, keyed by model id, verbatim (inputTokens / outputTokens / cacheReadInputTokens / cacheCreationInputTokens per entry). The run's own token fields are its column sums. More than one key means the run delegated to a plugin agent on its own model: pin — the only record of what that pin cost. Optional: absent on the abort path and in logs written before it was captured."
         },
-        "skill_cost_usd": {
-          "type": "number",
-          "minimum": 0
-        },
-        "output": {
-          "$ref": "#/$defs/run_output"
-        },
-        "validators": {
-          "$ref": "#/$defs/validator_results"
-        },
-        "judge": {
-          "$ref": "#/$defs/judge_results"
-        }
+        "skill_cost_usd": { "type": "number", "minimum": 0 },
+        "output": { "$ref": "#/$defs/run_output" },
+        "validators": { "$ref": "#/$defs/validator_results" },
+        "judge": { "$ref": "#/$defs/judge_results" }
       }
     },
     "run_output": {
@@ -526,301 +287,161 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "activated": {
-          "type": "boolean"
-        },
+        "activated": { "type": "boolean" },
         "text_response": {
           "anyOf": [
-            {
-              "type": "string"
-            },
+            { "type": "string" },
             {
               "type": "object",
-              "required": [
-                "ref"
-              ],
+              "required": ["ref"],
               "additionalProperties": false,
-              "properties": {
-                "ref": {
-                  "type": "string"
-                }
-              }
+              "properties": { "ref": { "type": "string" } }
             }
           ]
         },
         "skills_invoked": {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string" }
         },
         "file_changes": {
-          "type": [
-            "object",
-            "null"
-          ],
-          "additionalProperties": {
-            "$ref": "#/$defs/file_diff"
-          }
+          "type": ["object", "null"],
+          "additionalProperties": { "$ref": "#/$defs/file_diff" }
         },
         "tool_calls": {
           "type": "array",
-          "items": {
-            "$ref": "#/$defs/tool_call"
-          }
+          "items": { "$ref": "#/$defs/tool_call" }
         },
         "builtin_tool_calls": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": [
-              "tool",
-              "args"
-            ],
+            "required": ["tool", "args"],
             "additionalProperties": false,
             "properties": {
-              "tool": {
-                "type": "string"
-              },
-              "args": {
-                "type": "object"
-              },
-              "agent_id": {
-                "type": "string"
-              }
+              "tool": { "type": "string" },
+              "args": { "type": "object" },
+              "agent_id": { "type": "string" }
             }
           }
         },
         "files_created": {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string" }
         },
         "warnings": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": [
-              "kind"
-            ],
+            "required": ["kind"],
             "additionalProperties": true,
-            "properties": {
-              "kind": {
-                "type": "string"
-              }
-            }
+            "properties": { "kind": { "type": "string" } }
           }
         }
       }
     },
     "file_diff": {
       "type": "object",
-      "required": [
-        "sections_modified",
-        "diff"
-      ],
+      "required": ["sections_modified", "diff"],
       "additionalProperties": false,
       "properties": {
         "sections_modified": {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string" }
         },
         "diff": {
           "type": "object",
-          "additionalProperties": {
-            "$ref": "#/$defs/section_diff"
-          }
+          "additionalProperties": { "$ref": "#/$defs/section_diff" }
         }
       }
     },
     "section_diff": {
       "type": "object",
-      "required": [
-        "added",
-        "modified",
-        "deleted"
-      ],
+      "required": ["added", "modified", "deleted"],
       "additionalProperties": false,
       "properties": {
-        "added": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          }
-        },
+        "added": { "type": "array", "items": { "type": "object" } },
         "modified": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": [
-              "id",
-              "changed_fields"
-            ],
+            "required": ["id", "changed_fields"],
             "additionalProperties": false,
             "properties": {
-              "id": {
-                "type": "string"
-              },
+              "id": { "type": "string" },
               "changed_fields": {
                 "type": "object",
                 "additionalProperties": {
                   "type": "object",
-                  "required": [
-                    "before",
-                    "after"
-                  ],
+                  "required": ["before", "after"],
                   "additionalProperties": false,
-                  "properties": {
-                    "before": {},
-                    "after": {}
-                  }
+                  "properties": { "before": {}, "after": {} }
                 }
               }
             }
           }
         },
-        "deleted": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          }
-        }
+        "deleted": { "type": "array", "items": { "type": "object" } }
       }
     },
     "tool_call": {
       "type": "object",
-      "required": [
-        "tool",
-        "args",
-        "expected_args",
-        "matched",
-        "response_fixture"
-      ],
+      "required": ["tool", "args", "expected_args", "matched", "response_fixture"],
       "additionalProperties": false,
       "properties": {
-        "tool": {
-          "type": "string"
-        },
-        "args": {
-          "type": "object"
-        },
+        "tool": { "type": "string" },
+        "args": { "type": "object" },
         "expected_args": {
-          "anyOf": [
-            {
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "anyOf": [{ "type": "object" }, { "type": "null" }],
           "description": "The `args` block from the matched fixture (canonical expected args). Null when no fixture matched (e.g., fixture_not_found)."
         },
         "matched": {
           "type": "object",
-          "required": [
-            "kind"
-          ],
+          "required": ["kind"],
           "additionalProperties": false,
           "properties": {
-            "kind": {
-              "enum": [
-                "predicate",
-                "none",
-                "live"
-              ]
-            },
-            "index": {
-              "type": [
-                "integer",
-                "null"
-              ],
-              "minimum": 0
-            }
+            "kind": { "enum": ["predicate", "none", "live"] },
+            "index": { "type": ["integer", "null"], "minimum": 0 }
           }
         },
-        "response_fixture": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
+        "response_fixture": { "type": ["string", "null"] },
         "response": {
-          "description": "What the mock returned for this call. Present only when matched.kind is \"live\" or \"none\" — a \"predicate\" match is exactly recoverable from response_fixture plus matched.index at that commit, so storing it again would re-add bytes git already holds (#1000). Optional: run logs written before this field existed carry no responses at all."
+          "description": "What the mock returned. Present when the content exists nowhere else: matched.kind of \"live\" or \"none\", OR a fixture-matched response the mock enriched after selecting it (a `staged`/`ranked`/`rankingSkipped` key — mock_mcp.py rewrites the response before logging it, and staged.resultsRef comes from randomUUID(), so no commit can rebuild it). Omitted for a plain predicate match, recoverable from response_fixture + matched.index at that commit. Optional: absent on run logs written before this field existed."
         }
       },
       "allOf": [
         {
           "description": "Invariant: matched.kind == 'predicate' ↔ expected_args is an object and response_fixture is a string.",
           "if": {
-            "properties": {
-              "matched": {
-                "properties": {
-                  "kind": {
-                    "const": "predicate"
-                  }
-                }
-              }
-            }
+            "properties": { "matched": { "properties": { "kind": { "const": "predicate" } } } }
           },
           "then": {
             "properties": {
-              "expected_args": {
-                "type": "object"
-              },
-              "response_fixture": {
-                "type": "string"
-              }
+              "expected_args": { "type": "object" },
+              "response_fixture": { "type": "string" }
             }
           }
         },
         {
           "description": "Invariant: matched.kind == 'none' ↔ expected_args is null and response_fixture is null.",
           "if": {
-            "properties": {
-              "matched": {
-                "properties": {
-                  "kind": {
-                    "const": "none"
-                  }
-                }
-              }
-            }
+            "properties": { "matched": { "properties": { "kind": { "const": "none" } } } }
           },
           "then": {
             "properties": {
-              "expected_args": {
-                "type": "null"
-              },
-              "response_fixture": {
-                "type": "null"
-              }
+              "expected_args": { "type": "null" },
+              "response_fixture": { "type": "null" }
             }
           }
         },
         {
           "description": "Invariant: matched.kind == 'live' ↔ expected_args is null and response_fixture is a string (live handler name).",
           "if": {
-            "properties": {
-              "matched": {
-                "properties": {
-                  "kind": {
-                    "const": "live"
-                  }
-                }
-              }
-            }
+            "properties": { "matched": { "properties": { "kind": { "const": "live" } } } }
           },
           "then": {
             "properties": {
-              "expected_args": {
-                "type": "null"
-              },
-              "response_fixture": {
-                "type": "string"
-              }
+              "expected_args": { "type": "null" },
+              "response_fixture": { "type": "string" }
             }
           }
         }
@@ -828,44 +449,22 @@
     },
     "validator_results": {
       "type": "object",
-      "required": [
-        "passed",
-        "results"
-      ],
+      "required": ["passed", "results"],
       "additionalProperties": false,
       "properties": {
         "passed": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "anyOf": [{ "type": "boolean" }, { "type": "null" }]
         },
         "results": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": [
-              "name",
-              "passed"
-            ],
+            "required": ["name", "passed"],
             "additionalProperties": false,
             "properties": {
-              "name": {
-                "type": "string"
-              },
-              "passed": {
-                "type": "boolean"
-              },
-              "error": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
+              "name": { "type": "string" },
+              "passed": { "type": "boolean" },
+              "error": { "type": ["string", "null"] }
             }
           }
         }
@@ -873,88 +472,37 @@
     },
     "judge_results": {
       "type": "object",
-      "required": [
-        "skipped",
-        "dimensions",
-        "judge_cost_usd"
-      ],
+      "required": ["skipped", "dimensions", "judge_cost_usd"],
       "additionalProperties": false,
       "properties": {
-        "skipped": {
-          "type": "boolean"
-        },
+        "skipped": { "type": "boolean" },
         "dimensions": {
           "type": "array",
-          "items": {
-            "$ref": "#/$defs/judge_dimension"
-          }
+          "items": { "$ref": "#/$defs/judge_dimension" }
         },
-        "judge_cost_usd": {
-          "type": "number",
-          "minimum": 0
-        },
-        "duration_ms": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Wall-clock of the judge LLM call (perf_counter around _run_judge). 0 when the judge was skipped. Optional (absent in pre-instrumentation run logs)."
-        },
-        "input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "cached_input_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "output_tokens": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "error": {
-          "type": [
-            "string",
-            "null"
-          ]
-        }
+        "judge_cost_usd": { "type": "number", "minimum": 0 },
+        "duration_ms": { "type": "number", "minimum": 0, "description": "Wall-clock of the judge LLM call (perf_counter around _run_judge). 0 when the judge was skipped. Optional (absent in pre-instrumentation run logs)." },
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "error": { "type": ["string", "null"] }
       }
     },
     "judge_dimension": {
       "type": "object",
-      "required": [
-        "source",
-        "name",
-        "score",
-        "rationale"
-      ],
+      "required": ["source", "name", "score", "rationale"],
       "additionalProperties": false,
       "properties": {
-        "source": {
-          "enum": [
-            "base",
-            "rubric"
-          ]
-        },
-        "name": {
-          "type": "string"
-        },
+        "source": { "enum": ["base", "rubric"] },
+        "name": { "type": "string" },
         "score": {
           "anyOf": [
-            {
-              "enum": [
-                1,
-                2,
-                3
-              ]
-            },
-            {
-              "type": "null"
-            }
+            { "enum": [1, 2, 3] },
+            { "type": "null" }
           ],
           "description": "1=fail, 2=partial, 3=pass. Null = N/A, currently allowed only on the Tool Arguments base dimension when a test makes zero MCP tool calls."
         },
-        "rationale": {
-          "type": "string"
-        }
+        "rationale": { "type": "string" }
       }
     }
   }

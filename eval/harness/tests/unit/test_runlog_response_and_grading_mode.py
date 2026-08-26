@@ -8,7 +8,13 @@ run log inactive.
 from __future__ import annotations
 
 from harness.loader import TestSpec
-from harness.orchestrator import _compute_outcome, _tool_call_entry, grading_mode_for
+from harness.orchestrator import (
+    _compute_outcome,
+    _aborted_entry,
+    _is_mock_enriched,
+    _tool_call_entry,
+    grading_mode_for,
+)
 from harness.runlog import assemble_test_entry
 
 from tests.unit.test_partial_runlog import _entry  # reuse the SingleRun builder
@@ -98,6 +104,41 @@ def test_a_fixture_matched_call_omits_the_response():
     # The recovery path the spec names is still fully present.
     assert entry["response_fixture"] == "wikipedia-search-albert-einstein"
     assert entry["matched"]["index"] == 0
+
+
+def test_an_enriched_fixture_response_is_kept_even_though_it_matched():
+    """The retention rule's exception, and the reason it keys on the response
+    rather than on `matched.kind` alone.
+
+    "A predicate match is recoverable from `response_fixture` + `matched.index`"
+    is FALSE when the mock enriched it: `mock_mcp.py` rewrites a matched response
+    after selecting the fixture and before logging it (`staged` ~461, `ranked`
+    ~477, `rankingSkipped` ~501, all above `entry["response"] = response` at
+    ~506). `staged.resultsRef` is worse than un-stored — `results-staging.ts`
+    builds it from `randomUUID()`, so no commit anywhere holds that value.
+
+    587 committed predicate calls are in this state, on the harness's three
+    busiest search tools. Dropping them would have been irreversible.
+    """
+    for marker in ("staged", "ranked", "rankingSkipped"):
+        entry = _tool_call_entry({
+            "tool": "mcp__genealogy__record_search",
+            "args": {"surname": "Smith"},
+            "expected_args": {"surname": "Smith"},
+            "matched": {"kind": "predicate", "index": 0},
+            "response_fixture": "record-search-smith",
+            "response": {"results": [], marker: {"resultsRef": "results/9f3c.json"}},
+        })
+        assert "response" in entry, f"an enriched ({marker}) response is not recoverable"
+
+
+def test_enrichment_is_detected_by_marker_not_by_tool_name():
+    """Keyed on the data so a fourth tool gaining staging is covered with no code
+    change — a hardcoded list of today's three would drop it silently."""
+    assert _is_mock_enriched({"results": [], "staged": {}}) is True
+    assert _is_mock_enriched({"results": []}) is False
+    assert _is_mock_enriched(None) is False
+    assert _is_mock_enriched("not a dict") is False
 
 
 # --- half 2: whether the judge dimensions gate the outcome -------------------
@@ -217,3 +258,26 @@ def _RUNS():
             ),
         )
     ]
+
+
+def test_an_aborted_test_still_records_how_it_would_have_been_graded():
+    """The aborted path builds its entry separately, and originally omitted both
+    fields although `spec` was in hand.
+
+    That is not cosmetic under this PR's own semantics: ABSENT means "this run
+    log predates the field", so a fresh run log would have described its aborted
+    tests as old ones — the precise misreading the fields exist to prevent. 11
+    aborted entries across 6 committed logs, so the path is live.
+
+    An abort says nothing about grading mode: the mode is a property of the TEST,
+    not of whether it got to run.
+    """
+    entry = _aborted_entry(
+        spec=_spec(type="negative", negative={"grade_on_invariant": True}),
+        reason="not_runnable",
+        detail="no tag-gated validator",
+        timestamp="2026-08-26_10-00-00",
+    )
+    assert entry["outcome"] == "aborted"
+    assert entry["grading_mode"] == "invariant"
+    assert entry["dimensions_gate_outcome"] is False
