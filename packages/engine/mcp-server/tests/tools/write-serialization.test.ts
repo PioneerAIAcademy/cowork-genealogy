@@ -197,13 +197,29 @@ describe("write serialization under concurrency (issue #1715)", () => {
   });
 
   it("one project reached by two names shares one lock", async () => {
-    const link = join(await mkdtemp(join(tmpdir(), "ws-link-")), "alias");
-    await symlink(dir, link);
-    let active = 0;
-    let overlapped = false;
     // Trailing slash, a `..` hop, and a symlink all name the same project. On
     // macOS this is not exotic: /tmp itself is a symlink to /private/tmp.
-    await Promise.all([dir, `${dir}/`, join(dir, "x", ".."), link].map((p) =>
+    const spellings = [dir, `${dir}/`, join(dir, "x", "..")];
+
+    // Windows refuses symlink() without Developer Mode or elevation, and the
+    // genealogist team is on Windows. An uncaught EPERM there failed the whole
+    // test, taking the three spellings that DO work with it. Catch is scoped to
+    // the creation call and to permission codes only, so a genuine lock bug
+    // still fails instead of reading as an unsupported platform.
+    const link = join(await mkdtemp(join(tmpdir(), "ws-link-")), "alias");
+    let symlinked = true;
+    try {
+      await symlink(dir, link);
+    } catch (e) {
+      const code = (e as NodeJS.ErrnoException).code;
+      if (code !== "EPERM" && code !== "EACCES" && code !== "UNKNOWN") throw e;
+      symlinked = false;
+    }
+    if (symlinked) spellings.push(link);
+
+    let active = 0;
+    let overlapped = false;
+    await Promise.all(spellings.map((p) =>
       withProjectLock(p, async () => {
         active++;
         if (active > 1) overlapped = true;
@@ -211,5 +227,12 @@ describe("write serialization under concurrency (issue #1715)", () => {
         active--;
       })));
     expect(overlapped).toBe(false);
+
+    // CI is ubuntu-latest, so the symlink spelling is never skipped where it
+    // counts. Without this the degraded path could silently become the only
+    // path everywhere and the test would still look green.
+    if (process.platform !== "win32") {
+      expect(symlinked, "symlink() failed on a platform that supports it").toBe(true);
+    }
   });
 });
