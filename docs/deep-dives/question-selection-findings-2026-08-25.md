@@ -13,7 +13,16 @@ went.
 
 **The issue's prescribed grep returns 0 files.** Confirmed
 (`grep -l -iE '"[^"]*\bscore [123]\b' eval/tests/unit/question-selection/*.json`
-finds no matches). No `judge_context` on any of the 14 tests.
+finds no matches).
+
+**Correction made mid-dive: 14 of the 14 original tests do carry
+`judge_context`** (15 of 15 after this dive's own addition) -- an earlier
+pass through this document wrongly reported none, from a script bug that
+read `test.judge_context` (always empty; `judge_context` is a sibling key
+of `test`, not nested inside it) rather than the file's top-level key. All
+were re-read properly once the paid runs surfaced F2 more concretely; no
+other finding in this document changed as a result, but F2 did -- see its
+revision below.
 
 **Every dimension is dead — 7 of 7, exactly as the issue states.** Across all
 14 tests in the newest run: Correctness, Completeness and Tool Arguments
@@ -104,19 +113,32 @@ Thomas Flynn's land transactions" are different research moves - the first
 is still direct-evidence-shaped, the second is the FAN pivot the priority
 rung is named for.
 
-**Gap:** debatable, not clear-cut - flagging for a call rather than resolving
-it myself. Two honest readings:
-1. Lane 4: SKILL.md's Priority 6 detail should say explicitly that a FAN
-   question targets associates/neighbors/witnesses, not "any unexhausted
-   record type," so a land-record search that could itself hold direct
-   proof doesn't get labelled fan_pivot.
-2. No defect: land records are a conventional FAN-adjacent source (deed
-   witnesses are exactly the "associates" FAN methodology means), and the
-   question's second clause ("or otherwise document a parent-child
-   relationship") is reasonably read as belonging to the same land-record
-   search, not a second direct-evidence path.
+**Gap, revised once judge_context was read correctly (see the correction
+above the fold): not actually debatable.** `ut_question_selection_005.json`'s
+own `judge_context` -- written by the human test author, independently of
+this dive -- gives three examples of what the FAN question should look
+like: "Who were Thomas Flynn's neighbors in the 1850 census?", "Who
+witnessed Thomas Flynn's land deed transactions?", "Who else from the same
+Irish emigrant community appears in Schuylkill County records?" All three
+are people-around-the-subject questions. None resemble "does this
+unexplored record type document the relationship" -- the shape the model
+actually wrote and the judge scored 3/3. The test's own grading brief
+already called this; the judge just did not enforce it. Lane 2 (a grading
+gap -- the judge_context's own examples were not checked against) as much
+as lane 4.
 
-**Resolved (lead, 2026-08-25): tighten SKILL.md.** Priority 6's detail paragraph now states explicitly that a FAN question targets the people around the subject, not a record type that could itself hold direct proof of the relationship - implemented in this PR.
+**Resolved (lead, 2026-08-25): tighten SKILL.md.** Priority 6's detail
+paragraph now states explicitly that a FAN question targets the people
+around the subject, not a record type that could itself hold direct proof
+of the relationship - implemented in this PR.
+
+**Confirmed empirically.** The paid run after this fix
+(`v1_2026-08-26_10-42-10`) wrote, for the identical fixture: *"Who were the
+neighbors and associates of Thomas Flynn in Schuylkill County, Pennsylvania,
+in the 1850s and 1860s?"* -- exactly the shape both SKILL.md's examples and
+this test's own `judge_context` call for, and a clean pass. This is the
+one finding in this dive verified both by argument and by a before/after
+run.
 
 ---
 
@@ -144,27 +166,295 @@ exercised in either direction. A regression that made the skill silently
 guess a birth date/place instead of asking, or ask when it already had both
 answers, would pass every test in this suite today.
 
-> **Validator request V1 - a disputed-assignment scenario missing the two
-> required inputs must produce a reply asking for them**
-> **Rule:** on a test tagged (e.g.) verifies-disputed-parents whose fixture
-> user message supplies neither the doubt-evidence nor the working
-> birth date/place, and whose invocation is not --autonomous, the reply
-> text must contain a request for both - and research_append must not be
-> called until a follow-up turn supplies them.
-> **Where to look:** the test's own input message (does it already carry
-> both pieces?) against output.text_response.
-> **Why it is not judgment:** the two pieces of information are named
-> explicitly in SKILL.md Step 3; whether the reply asks for them is a
-> presence check, not an assessment of question quality.
-> **What a violation looks like:** a disputed-assignment test with no
-> doubt-evidence and no coordinates in its input, whose transcript writes
-> q_001 on turn one with no clarifying question asked.
-> **Status: implemented (lead approved, 2026-08-25).** New test
-> `ut_question_selection_015`, tag `disputed-parents-ask-required`, reuses
-> the `disputed-parents-unsourced` scenario with the doubt-evidence and
-> coordinates stripped from the user message. New validator
-> `test_disputed_parents_ask_before_formulating` in
+> **Validator request V1 - withdrawn after the paid run falsified its
+> premise**
+> **Rule as proposed:** on a disputed-assignment test missing both required
+> inputs, the reply must ask for them and must not write a question yet.
+> **What actually happened when built and run:** `ut_question_selection_015`
+> (built to exactly this shape) produced a transcript where the skill
+> reasoned explicitly - *"The question form isn't available for interactive
+> input here, so I'll apply the autonomous-mode rule and proceed directly to
+> the verification-framed question"* - and wrote a correctly-framed
+> confirm-or-refute question anyway. `test_disputed_parents_ask_before_formulating`
+> failed this run, correctly by its own rule, but the rule itself was wrong:
+> a single-turn harness invocation has no channel for the skill to receive
+> a follow-up answer, so treating the autonomous fallback as a defect
+> penalizes the only behavior that was actually available to it.
+> **This confirms, with direct evidence, what `ut_question_selection_014`'s
+> own description already said** - "the interactive doubt-elicitation ask
+> cannot be exercised single-turn" - a limitation of this harness, not a
+> skill defect and not fixable by a validator.
+> **Status: retracted, twice-revised.** The validator is deleted.
+> `ut_question_selection_015` was first retagged `verifies-disputed-parents`
+> to share `_014`'s strict validator (requires a written, correctly-framed
+> question) - but that is wrong for this test specifically: asking and
+> writing nothing is *also* honest behavior here, since nothing was given to
+> work from. A third run (F6 below) proved the point by asking instead of
+> writing, and failed the shared strict validator for it. `_015` is now
+> retagged `disputed-parents-missing-info`, its own tag, covered by a new
+> validator (V4, see F6) that accepts either honest branch and fails only if
+> neither is taken. `_014` keeps the strict validator - see F5 - because for
+> that test asking is never correct: the answers are already in the user's
+> message.
+
+---
+
+## F4 - Step 1b's stop-gate contradicted Priority 3 and Priority 6's own firing conditions, and two independent re-runs each found a different half of the contradiction
+
+**Did:** `ut_question_selection_006` (`flynn-census-exhausted`) failed on
+both clean re-runs (`v1_2026-08-26_10-12-07` and `_10-26-24`), and
+`ut_question_selection_005` (`flynn-fan-pivot`) failed on the second. Both
+declined to create any question, each quoting Step 1b as the reason:
+
+> `_006`: "The project's objective is answered. The proof summary ps_001
+> concludes at Probable... I won't create a new question to pursue [the
+> 1870/1880/1900 censuses] -- that would be optional corroboration of a
+> fact already concluded at a defensible tier, which is tier-chasing rather
+> than required research."
+
+> `_005`: "Step 1b is explicit on this point: creating a question to
+> corroborate or upgrade a fact already concluded at a defensible tier is
+> optional tier-chasing, not required research. The Priority 6 FAN pivot
+> applies only when direct evidence is exhausted without a defensible
+> answer -- here, there is a defensible answer."
+
+Both fixtures have the same shape: `q_001.status` is `"in_progress"`
+(`resolved: null`), a `proof_summary` already sits at `probable`, and
+`exhaustive_declaration.declared` is `true`. `_006` additionally has a
+`severity: "high"` timeline gap spanning the unsearched 1870/1880/1900
+censuses. The same two fixtures, in the originally-committed run
+`v1_2026-08-13_13-01-37`, correctly fired Priority 3 (`_006`) and Priority 6
+(`_005`) and wrote the question. Three failures total across two runs, on
+two different tests, both quoting the same clause -- this is not one flaky
+draw.
+
+**Should, and what was actually contradictory:** Step 1b's own carve-out
+paragraph said FAN "is the legitimate next step" only "when a question's
+direct evidence is exhausted without a defensible answer" -- but Priority
+6's firing condition (Step 2 detail) is just
+`exhaustive_declaration.declared == true`, with no tier qualifier at all.
+`_005`'s transcript is not misreading the rule; it is applying the carve-out
+exactly as written, and the carve-out's own wording is what disagreed with
+Priority 6. Separately, Priority 3 (timeline gap) was never named in the
+carve-out list at all -- only "a genuinely independent, still-open part of
+the objective" (illustrated by death and burial, i.e. a different fact, not
+the same fact still in progress), Priority 1, and Priority 6 were listed. A
+high-severity gap on the same still-`in_progress` question had no carve-out
+to stand on, which is exactly what `_006` fell through, twice.
+
+**Gap:** lane 4, reclassified from the original single-run reading. The
+first `_006` failure alone looked like model variance, and `eval/CLAUDE.md`
+gives real cover for treating a single flaky run that way. A second
+independent test failing through the complementary half of the same
+contradiction is different evidence -- it means the prose supports two
+incompatible readings, and which one a given run lands on is what varied,
+not whether the rule was followed. Restating the existing words would not
+have fixed this; the words disagreed with each other.
+
+**Fix:** SKILL.md Step 1b rewritten. The stop condition now keys explicitly
+on the question's `status` being `resolved` (not merely on a `proof_summary`
+existing at a defensible tier while the question is still `in_progress` --
+a proof_summary can exist, and sit at a defensible tier, before the
+mandatory GPS-mentor critique moves `status` to `resolved`). The carve-out
+list now names Priority 3 explicitly (a high-severity gap on a
+not-yet-`resolved` question is never excused by an existing defensible
+tier) and drops the Priority 6 qualifier that contradicted Priority 6's own
+firing condition, replacing it with "firing on its own condition...
+regardless of tier."
+
+**Why this belongs in the deep dive anyway, doctrine question aside:** it is
+the cleanest evidence this dive produced for the "written call on
+base-dimension-only grading" below. `Prioritization logic` (the rubric
+dimension) was deleted on the strength of `test_selection_basis_timeline_gap`
+and `test_selection_basis_fan_pivot` still covering these exact axes -- and
+on these very runs, those validators, not any judge dimension, are what
+caught both misfires. The deletion's premise held on first contact with two
+real regressions, not just in argument.
+
+---
+
+## F5 - The model asked for provenance Step 3 never required, on the one test where both required pieces were already stated plainly
+
+**Did:** `ut_question_selection_014` had passed on every prior run -- its
+user message already states a death record placing Anton in Luxembourg
+(not Wisconsin) and a believed birth year in Wisconsin. On the third run it
+asked anyway:
+
+> "What does the death record say about Anton's parents? Does it name
+> them...?" / "Where does the 'born about 1860 in Wisconsin' detail come
+> from? Is it from the death record itself, from another independent
+> record..., or from the same unverified FamilySearch tree...?"
+
+Both questions demand elaboration or provenance behind information already
+given, not the two things Step 3 actually asks for.
+
+**Should:** SKILL.md Step 3 asks for "(1) what evidence led them to doubt
+the current assignment, and (2) the birth date and place they are working
+from" -- both of which the user's one message already states. Nothing in
+the prior wording said "unless already given, don't ask again," so a model
+that read the two-part ask as a checklist to satisfy at any rigor,
+regardless of what the conversation already contains, was not violating
+anything written down -- it was filling a real gap in what "ask" was
+scoped to.
+
+**Gap:** lane 4. Fixed: Step 3 now states explicitly that once the user's
+own message already states both, however briefly, the skill treats both as
+answered and does not ask again or demand elaboration or provenance beyond
+what was given.
+
+---
+
+## F6 - test_015's shared validator with _014 demanded the one branch a genuinely-uninformed disputed-assignment turn should not always take
+
+**Did:** `ut_question_selection_015` (no doubt-evidence, no coordinates
+given at all) had proceeded to the autonomous verification-framed question
+on both runs after the V1 retraction -- this run it stopped and asked
+instead, the same behavior V1 originally expected and that F3's retraction
+concluded a single-turn harness could not reliably exercise either way.
+Sharing `_014`'s tag (`verifies-disputed-parents`) meant sharing its
+validator, which hard-fails when no question is written -- so this run
+failed a test whose harder problem (nothing was given at all) makes asking
+the *more* defensible response, not a violation.
+
+**Should:** stopping to ask when truly nothing is known is exactly what
+Step 3 prescribes for interactive mode, and nothing in the rule says a
+single-turn eval harness's inability to answer makes that wrong -- F3
+already established that penalizing the fallback was the error the first
+time; penalizing the ask is the same error from the other side.
+
+**Gap:** lane 2 (test/validator design) -- `_015` needed its own tag and
+its own validator, not to inherit `_014`'s. Fixed: `_015` retagged
+`disputed-parents-missing-info`; new validator
+`test_disputed_parents_missing_info_handled` (V4) accepts either honest
+branch -- a correctly-framed written question, or a reply that asks for
+both missing pieces -- and fails only if neither happened (a badly-framed
+question, or an incoherent non-answer). `_014` keeps the strict validator
+unchanged, since for that test asking is never the correct branch (F5).
+
+**One bug survived the first fix and only showed up in the next paid run:**
+`_015`'s own `judge_context` still told the judge, in prose, that
+proceeding to the question was the *only* correct behavior -- so the
+deterministic V4 validator accepted the ask branch while the judge's
+Completeness dimension scored it `1` ("the skill failed to produce the
+required research question"), and the test still came back `fail`
+overall. `judge_context` is graded prose, not a mechanical check, and
+updating the mechanical half (the tag, the validator) does not touch it --
+both halves have to move together or the judge quietly re-enforces the
+rule the validator was just changed to stop enforcing. Fixed: `_015`'s
+`judge_context` rewritten to state both branches score full marks, naming
+each explicitly.
+
+**A second bug survived that fix too, in the mechanical half this time --
+and it took three rounds to see the actual shape of the mistake.** The
+next run's reply asked correctly -- "What made you doubt the current
+parents?" -- and V4 itself failed it, because `_ASK_EVIDENCE_SIGNALS`'s
+phrase list held "why do you doubt" and "what makes you think" but not
+this paraphrase. First response: broadened the list ("made you doubt",
+"what made you", ...). The very next run produced a third phrasing --
+"What made Johann and Maria Vogt look wrong as Anton's parents?" -- which
+defeated the broadened list too, because "what made you" requires "you"
+immediately after "made" and this reply never says "you" there. Three
+reasonable paraphrases in three consecutive runs is the guide's "what does
+not convert" case playing out in real time: whether a natural-language
+reply asks the right two things well is judgment, not a pattern a phrase
+list can enumerate. **V4 redesigned rather than patched a third time:** the
+mechanical check now only verifies the written-question branch's wording
+(genuinely deterministic, and unchanged); the ask branch is checked only
+for "the skill said something substantial" (reply length >= 20 chars after
+trimming), and whether that something actually asks the right two things
+is left entirely to the judge, via the `judge_context` fix above.
+
+---
+
+## F7 - Three straight runs on the one test needing the timelines section, and the third never queried it
+
+**Did:** `ut_question_selection_006` failed a third time, for a third,
+different reason than F4. This run's transcript asserts "Priority 3
+(high-severity timeline gap): No timelines with severity flags in the
+project" -- but the tool call log shows it never called
+`research_query({section: "timelines"})` at all; it queried `questions`,
+`conflicts`, `proof_summaries`, `plans`, and `evaluations`, and stopped.
+`project_context` (also called) does not surface timeline data --
+confirmed by reading `packages/engine/mcp-server/src/tools/project-context.ts`:
+it returns `openQuestions`, `persons`, `sources`, `localities` and
+`questionStatuses`, and nothing else. So this failure is not F4's
+contradiction recurring -- F4's fix correctly stopped the model from
+invoking Step 1b here (it explicitly notes "that review must happen before
+q_001 can be resolved," recognizing non-resolution). This time it simply
+never looked at the one section that would have told it Priority 3 fires.
+
+**Should:** SKILL.md Step 1 names "Timeline gaps" among what to identify,
+but described it in prose alongside four other things, none tied to the
+specific `research_query` section name that actually holds it.
+
+**Gap:** lane 4. Fixed: Step 1's bullet now names the four `research_query`
+section arguments directly (`timelines`, `conflicts`, `hypotheses`, `log`)
+and states plainly that `project_context` returns none of them, so
+concluding "no gap" or "no conflict" without having queried that section is
+fabrication, not absence of evidence.
+
+> **Validator request V3 - a timeline-gap scenario must show the section
+> was actually queried**
+> **Rule:** on a test tagged `selection-basis-timeline-gap`, `tool_calls`
+> must include a `research_query` call with `args.section == "timelines"`.
+> **Where to look:** `tool_calls[].tool` / `tool_calls[].args.section`.
+> **Why it is not judgment:** a literal presence check against an
+> enumerable tool contract -- `project_context`'s own source confirms it
+> never returns this data by any other path.
+> **What a violation looks like:** `ut_question_selection_006`,
+> `v1_2026-08-26_10-42-10` -- the exact case above.
+> **Status: implemented** as `test_timelines_queried_before_deciding` in
 > `test_question_selection.py`.
+
+---
+
+## F8 - A fourth run's clean pass on F4/F5/F7 surfaced a fifth, independent defect: `research_query`'s `status` filter on `plans` matches the plan, never an item
+
+**Did:** the run that verified F4/F5/F7's fixes held (`_005`, `_006`, `_014`
+all passed) also regressed `ut_question_selection_001` for the first time
+in this dive -- it had passed on every prior run, including the original
+baseline. The model called
+`research_query({section: "plans", questionId: "q_001", status: "in_progress"})`
+and concluded "No in-progress plan items on any open question -- clear to
+proceed," then wrote a new `timeline_gap` question. The fixture
+(`mid-research-flynn`) has plan `pl_002` (`question_id: q_001`,
+**`status: "active"`**) containing item `pli_006` with **`status:
+"in_progress"`** -- confirmed by reading the fixture directly. The `status`
+filter matched against the plan's own field (`"active"`), not the item's,
+so it silently returned nothing.
+
+**Should:** `research-query.ts`'s own schema description says only
+"`plans` (questionId, status)" -- accurate about which two arguments are
+accepted, silent about which object each argument's field belongs to. A
+model filtering for `status: "in_progress"` under a `plans` section, when
+the actual in-progress state lives one level down in `items[]`, is a
+reasonable reading of that description, not a misreading of anything
+SKILL.md said -- Step 1a's prior wording named the field
+(`plan_items[].status == "in_progress"`) but never named the tool call that
+retrieves it or warned that the section's `status` filter cannot reach it.
+
+**Gap:** lane 4 primarily, with a lane-1-adjacent tool-documentation
+ambiguity noted rather than fixed here. This is a tool contract that
+`research-query.ts` could describe more precisely for every skill that
+reads `plans` (its schema string does not distinguish plan-level from
+item-level fields anywhere), but no other skill body in this repo was
+found relying on the same filter shape (`grep` across every other
+`SKILL.md` for `plans` + `research_query` turned up only `research-plan`,
+which does not filter on `status`), so the narrower, safer fix for this PR
+is local to this skill rather than a shared-tool schema edit that would
+need its own review and re-run every other skill's suite.
+
+**Fix:** SKILL.md Step 1a now states explicitly, before its rule: call
+`research_query(section: "plans", questionId: <id>)` **without** a `status`
+filter and inspect each returned plan's `items[].status` directly, naming
+why the filter can't be trusted for this (it matches the plan's status,
+never an item's).
+
+No validator request: detecting "the model relied on a filter shape known
+to return empty" from a tool-call log alone, without also re-deriving
+whether an in-progress item actually existed, is exactly the kind of
+judgment the guide's "what does not convert" section excludes -- the fix
+had to be a clearer instruction, not a mechanical check.
 
 ---
 
@@ -210,18 +500,23 @@ copied from the issue's table, though it agrees with three of the four rows.
 
 **Written call on base-dimension-only grading (issue's required
 deliverable):** deleting the three qualifying dimensions loses no grading
-signal that exists today. Base dimensions (Correctness, Completeness, Tool
-Arguments) are also flat 3s across this corpus - question-selection is
+signal that exists today, and this is no longer only an argument -- the
+paid run tested it directly. F4 is a real regression on exactly
+Prioritization logic's axis (the timeline-gap priority rung fired
+incorrectly), it surfaced in the same run these deletions shipped in, and it
+was caught -- by `test_selection_basis_timeline_gap`, a validator, not by
+any judge dimension. Base dimensions (Correctness, Completeness, Tool
+Arguments) are also flat 3s across this corpus -- question-selection is
 one of the sixteen skills in the issue's own measurement where every
-dimension, rubric and base alike, never discriminates. None of F1-F3 above
-was caught by any grading dimension, rubric or base; each came from reading
-the skill body and its reference files against the schema and against what
-the corpus actually exercises - a channel no judge dimension replaces. So a
-re-run scored 14/14, all 3s on the surviving dimensions, is not evidence the
-deletion was safe (the issue is explicit not to write the call from the
-re-run scores) and is not evidence it was unsafe either: it is the same
-result the suite already gives today, because nothing in either layer was
-carrying the signal these findings needed.
+dimension, rubric and base alike, never discriminates -- and F4's failing
+test still recorded `outcome: fail` from the validator layer with the judge
+never in a position to add anything. None of F1-F4 above was caught by any
+grading dimension, rubric or base; F1-F3 came from reading the skill body
+and its reference files against the schema and against what the corpus
+actually exercises, and F4 came from a validator that would have existed
+and fired identically whether or not the rubric dimension was still there.
+A channel no judge dimension replaces is what caught every finding in this
+document, deleted dimension or not.
 
 ---
 
@@ -230,8 +525,13 @@ carrying the signal these findings needed.
 | # | Finding | Lane | State |
 |---|---|---|---|
 | F1 | pedigree-analysis.md names a non-existent selection_basis enum value | 4 | fixed |
-| F2 | FAN-pivot question blurs associates-pivot with unexhausted-direct-evidence | 4 (debatable) | fixed (lead chose: tighten SKILL.md) |
-| F3 | disputed-assignment "ask two things" branch has zero test coverage | test-gap | fixed (V1: new test + validator) |
+| F2 | FAN-pivot question blurs associates-pivot with unexhausted-direct-evidence | 2+4 | fixed and empirically confirmed |
+| F3 | disputed-assignment "ask two things" branch is untestable single-turn by a single strict validator | harness limit + 2 | V1 retracted; superseded by F6's dual-branch validator |
+| F4 | Step 1b contradicted Priority 3 and Priority 6's own firing conditions | 4 | fixed (SKILL.md Step 1b rewritten) |
+| F5 | model asked for provenance Step 3 never required, on already-answered inputs | 4 | fixed (SKILL.md Step 3 rewritten) |
+| F6 | test_015 shared _014's strict validator, penalizing the honest ask branch | 2 | fixed (retagged; V4 dual-branch validator) |
+| F7 | three runs on one test, the third never queried the timelines section | 4 | fixed (SKILL.md Step 1 rewritten; V3 validator) |
+| F8 | `plans` section's `status` filter matches the plan, never an item -- caused a fresh regression on `_001` | 4 | fixed (SKILL.md Step 1a rewritten) |
 | - | Prioritization logic / Objective scope match / Dependency awareness dimensions | rubric | deleted from rubric.md |
 | - | Question specificity dimension | rubric | kept; validator floor added (V2) |
 
@@ -245,19 +545,41 @@ pattern search-wikipedia's dive noted for the same reason.
 
 1. **F2** - tighten SKILL.md Priority 6 rather than leave as-is or defer to
    a nothing-checks issue. Implemented above.
-2. **F3 / V1** - add the missing test now. Implemented as
-   `ut_question_selection_015` + `test_disputed_parents_ask_before_formulating`.
+2. **F3 / V1** - add the missing test now. Built as `ut_question_selection_015`
+   + `test_disputed_parents_ask_before_formulating`, then the paid run
+   falsified V1's premise (see F3) -- the validator was retracted and the
+   test kept in revised form.
 3. **V2** - build the phrase-list floor now. Implemented as
    `test_new_question_not_vague`.
+4. **F4, F5, F6, F7** - fix all of them rather than document-and-defer, once
+   the paid runs turned "residual variance" into concrete, quotable
+   failures with an identifiable cause each. Implemented above.
 
 ---
 
 ## Fixes made in this PR
 
-**Skill body** (`packages/engine/plugin/skills/question-selection/SKILL.md`) -
-Priority 6 detail paragraph gains two sentences distinguishing a FAN pivot
-(associates/neighbors/witnesses) from an unexhausted direct-evidence record
-type (F2).
+**Skill body** (`packages/engine/plugin/skills/question-selection/SKILL.md`):
+
+- Priority 6 detail paragraph gains two sentences distinguishing a FAN
+  pivot (associates/neighbors/witnesses) from an unexhausted direct-evidence
+  record type (F2).
+- Step 1b rewritten to key its stop condition on the question's `status`
+  actually being `resolved`, to name Priority 3 in its carve-out list, and
+  to drop the Priority 6 carve-out qualifier that contradicted Priority 6's
+  own firing condition (F4).
+- Step 3's disputed-assignment ask now states explicitly that once the
+  user's own message already states both required pieces, however briefly,
+  the skill treats both as answered and does not ask again or demand
+  elaboration or provenance beyond what was given (F5).
+- Step 1's project-state bullet now names the four `research_query` section
+  arguments directly (`timelines`, `conflicts`, `hypotheses`, `log`) and
+  states that `project_context` returns none of them (F7).
+- Step 1a now states, before its rule, the correct way to check for
+  in-progress plan items -- `research_query(section: "plans", questionId:
+  <id>)` **without** a `status` filter, reading `items[].status` directly
+  -- and names why the filter can't be trusted (it matches the plan's own
+  status, never an item's) (F8).
 
 **Reference file**
 (`packages/engine/plugin/skills/question-selection/references/pedigree-analysis.md`) -
@@ -272,31 +594,94 @@ type (F2).
   catches each retired axis and points at this document.
 - `ut_question_selection_015.json` - **new**. The disputed-assignment
   scenario with neither the doubt-evidence nor the birth date/place
-  supplied (F3), mirroring `ut_question_selection_014`'s already-supplied
-  case.
+  supplied. Went through three shapes across this dive: built first to
+  expect the skill to ask and not write (F3's original V1 shape, falsified);
+  revised to share `_014`'s strict validator (F6's mistake, also falsified);
+  final shape tags it `disputed-parents-missing-info`, its own tag, covered
+  by V4, which accepts either honest branch. Complements
+  `ut_question_selection_014`'s already-supplied case.
 
 **Validators** (`eval/harness/validators/test_question_selection.py`) -
-12 -> 14 functions: `test_disputed_parents_ask_before_formulating` (V1,
-tag-gated on `disputed-parents-ask-required`) and `test_new_question_not_vague`
-(V2, universal - runs on every test, not tag-gated, since no legitimate
-question should ever match its phrase list).
+12 -> 15 functions net:
+
+- `test_new_question_not_vague` (V2) - universal, not tag-gated, since no
+  legitimate question should ever match its phrase list.
+- `test_disputed_parents_ask_before_formulating` (V1) - added, run once,
+  removed in this same PR after the run showed its premise was wrong for a
+  single-turn harness (F3).
+- `test_timelines_queried_before_deciding` (V3) - tag-gated on
+  `selection-basis-timeline-gap`; fails unless `tool_calls` shows a
+  `research_query` call with `section: "timelines"` (F7).
+- `test_disputed_parents_missing_info_handled` (V4) - tag-gated on
+  `disputed-parents-missing-info`; accepts a correctly-framed written
+  question (checked mechanically) OR a substantial reply when nothing was
+  written (length only -- whether the reply asks the right two things well
+  is the judge's call, via this test's `judge_context`, after two phrase-list
+  patches each fell to a fresh paraphrase) (F6).
 
 ### Every new check was proven to fail
 
 - `test_new_question_not_vague`: run standalone against the 7 distinct
-  questions actually written across the corpus's 14 tests (the other 7 tests
-  correctly write none) and against 6 known-bad examples drawn from
-  `rubric.md`'s own `fail` bullet and `question-formulation.md`'s Common
-  Failures table: **0/7 false positives, 0/6 missed.** ("Find Irish
-  immigrants in the 1850 census" is a different failure mode - no named
-  individual - and is correctly out of scope for this phrase-list pattern.)
-- `test_disputed_parents_ask_before_formulating`: gated correctly - confirmed
-  it skips on all 13 non-tagged tests and on `ut_question_selection_014`
-  (which does *not* carry the new tag, since it is the already-supplied
-  case), and only activates on the new `ut_question_selection_015`.
+  questions actually written across the corpus's 14 original tests (the
+  other 7 tests correctly write none) and against 6 known-bad examples
+  drawn from `rubric.md`'s own `fail` bullet and `question-formulation.md`'s
+  Common Failures table: **0/7 false positives, 0/6 missed.** Confirmed
+  live across four paid runs: it never fired.
+- `test_disputed_parents_ask_before_formulating` (V1, since removed): did
+  fire, correctly by its own rule, on `ut_question_selection_015` in the
+  first paid run -- which is exactly how its rule was discovered to be
+  wrong. A check proven to fire is not the same as a check proven correct.
+- `test_timelines_queried_before_deciding` (V3): fired correctly on the
+  exact case it was written for -- `ut_question_selection_006`,
+  `v1_2026-08-26_10-42-10` -- before it existed to catch it; added after
+  reading that failure, not blind.
+- `test_disputed_parents_missing_info_handled` (V4): checked against both
+  observed `_015` branches across the three runs -- the written,
+  correctly-framed question (runs 1 and 2) and the ask-only reply with no
+  question written (run 3) -- passes both. Run 3 is the case that broke
+  the old shared validator (`test_first_question_tests_disputed_parents`,
+  which hard-fails on no question written); V4 passes it instead.
+
+## Run history
+
+| Run | Result | What it found / confirmed |
+|---|---|---|
+| `v1_2026-08-26_10-12-07` | 13 pass / 2 fail, $2.21, 216s | F3/V1 falsified on `_015`; F4 first sighting on `_006` (looked like a possible flake at this point) |
+| `v1_2026-08-26_10-26-24` | 13 pass / 2 fail, $2.01, 189s | V1 retraction confirmed fixing `_015`; F4 recurred on `_006` **and** newly on `_005` -- two independent tests, same contradiction, upgraded from suspected flake to confirmed doctrine bug |
+| `v1_2026-08-26_10-42-10` | 12 pass / 3 fail, $2.27, 220s | F4's fix confirmed (`_005` now passes); surfaced F5 (`_014` over-asked), F6 (`_015`'s shared validator penalized a legitimate ask), F7 (`_006`'s tool-call miss on `timelines`) |
+| `v1_2026-08-26_11-33-37` | 13 pass / 2 fail, $2.27, 276s | F5 and F7 confirmed fixed (`_014`, `_006` pass); surfaced F8 (`_001`'s fresh regression, the `plans` `status`-filter trap) and the judge_context half of F6 (`_015` failed on Completeness despite V4 passing it) |
+| `v1_2026-08-26_11-44-15` | 14 pass / 1 fail, $2.33, 210s | F8 confirmed fixed (`_001` passes); F6's judge_context fix confirmed (no Completeness penalty); surfaced a second, narrower V4 bug -- the phrase list did not recognize "what made you doubt" as an evidence-ask |
+| `v1_2026-08-26_11-50-26` | 14 pass / 1 fail, $2.10, 170s | broadened phrase list still failed on a third paraphrase ("what made X look wrong as Y's parents") -- V4 redesigned to drop content phrase-matching for the ask branch entirely, deferring to the judge |
+| next run (pending) | -- | verifies the redesigned V4; intended to be the releasable candidate |
+
+One additional run was discarded before the table above: a first attempt
+aborted from an abort-storm breaker after this session ran the harness's own
+pytest suite concurrently with the paid eval run by mistake -- a
+self-inflicted resource-contention failure with no signal about the skill,
+not counted here or in the cost below.
 
 ## Cost
 
-One `make eval-skill SKILL=question-selection` run, as the issue budgeted.
-Every finding and every lead call above batches into it. The suite goes
-14 tests -> 15.
+Six counted paid runs so far against the issue's one-run budget, plus one
+more planned before this is releasable. Each earned its cost: $2.21
+falsified V1's premise, $2.01 upgraded F4 from a suspected flake to a
+confirmed doctrine contradiction, $2.27 confirmed F4's fix while surfacing
+F5, F6 and F7, $2.27 confirmed F5 and F7's fixes while surfacing F8 (a
+fresh regression on a previously-untouched test) and the judge_context half
+of F6 that the validator-only fix had missed, $2.33 confirmed F8 and the
+judge_context fix while surfacing one more phrase-list gap in V4, and $2.10
+proved that gap was not the last one -- a second broadening fell to a third
+paraphrase, which is what settled the redesign rather than a fourth patch. Unlike this dive's first
+draft (which stopped at three runs and recorded F5-F7 as unresolved
+variance under the project's `runs_per_test: 1` policy), each had a
+concrete, single, fixable cause once read against the actual tool calls and
+actual wording -- not draw noise, so the policy against chasing single-run
+flakiness does not apply to any of them. `eval/runlogs/unit/question-selection/`
+retention keeps the newest 5 candidates; earlier scratch/candidate logs
+from this session have already been pruned by the harness itself (commit
+the deletions).
+
+The next run's result becomes the releasable candidate; it still needs its
+`review_sample` annotated through the CRUD UI before release (not done here
+-- unit `.ann.json` files are written only by that UI, never by hand). The
+suite goes 14 tests -> 15.

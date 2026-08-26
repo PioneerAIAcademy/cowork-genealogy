@@ -394,50 +394,6 @@ def test_first_question_tests_disputed_parents(before_state, after_state, test):
     )
 
 
-# --- Tag-gated: disputed-assignment ask, not assumed (#1471, V1) ------
-
-def test_disputed_parents_ask_before_formulating(before_state, after_state, test, text_response):
-    """Tag-gated: when the objective disputes an existing parent
-    assignment and the user's message supplies neither the evidence
-    behind their doubt nor a birth date/place of their own, the skill
-    must ask for both (SKILL.md Step 3) rather than write a question on
-    this turn. Mirrors ut_question_selection_014, where both were already
-    supplied and the skill correctly proceeded straight to writing."""
-    if "disputed-parents-ask-required" not in test.get("tags", []):
-        pytest.skip("not a disputed-parents-ask-required scenario")
-    before = before_state.get("research_json")
-    after = after_state.get("research_json")
-    if before is None or after is None:
-        pytest.skip("missing research.json for diff")
-    new = _new_questions(before, after)
-    assert not new, (
-        f"question-selection wrote a question ({[q.get('id') for q in new]}) "
-        f"on a turn where the user gave neither doubt-evidence nor a "
-        f"birth date/place for a disputed parent assignment -- SKILL.md "
-        f"Step 3 requires asking for both before formulating"
-    )
-    reply = (text_response or "").lower()
-    asks_for_evidence = any(
-        phrase in reply
-        for phrase in (
-            "what evidence", "why do you doubt", "why do you believe",
-            "led you to doubt", "led you to believe", "what makes you think",
-            "what led you", "your evidence", "evidence led",
-        )
-    )
-    asks_for_coordinates = any(
-        phrase in reply
-        for phrase in (
-            "birth date", "birth year", "born", "date and place",
-            "where he was born", "where she was born", "working from",
-        )
-    )
-    assert asks_for_evidence and asks_for_coordinates, (
-        "the reply does not ask for both required pieces (evidence behind "
-        "the doubt, and the birth date/place the user is working from) "
-        f"before formulating a disputed-assignment question. Reply: {reply!r}"
-    )
-
 
 # --- Universal: a newly written question must not be a textbook-vague one (V2) ---
 
@@ -473,4 +429,69 @@ def test_new_question_not_vague(before_state, after_state):
     assert not offenders, (
         "question(s) too vague to drive a search -- naming no specific "
         "fact, date, or event: " + ", ".join(offenders)
+    )
+
+
+# --- Tag-gated: the timelines section must actually be queried (V3) ---
+
+def test_timelines_queried_before_deciding(before_state, tool_calls, test):
+    """Tag-gated: on a scenario carrying a real timeline-gap signal, the
+    skill must have actually called research_query(section='timelines')
+    before deciding whether to create a timeline_gap question or decline.
+    project_context does not return timeline data -- concluding 'no gap'
+    without this call is fabrication, not absence of evidence."""
+    if "selection-basis-timeline-gap" not in test.get("tags", []):
+        pytest.skip("not a selection-basis-timeline-gap scenario")
+    queried = any(
+        call.get("tool", "").endswith("research_query")
+        and call.get("args", {}).get("section") == "timelines"
+        for call in tool_calls
+    )
+    assert queried, (
+        "the skill decided without ever calling "
+        "research_query(section='timelines'); project_context does not "
+        "return timeline data, so a high-severity gap cannot have been seen"
+    )
+
+
+# --- Tag-gated: missing-info disputed assignment accepts either honest branch (V4) ---
+
+# A single-turn harness cannot exercise a real ask-and-wait: the skill either
+# proceeds straight to the verification-framed question (the --autonomous
+# fallback SKILL.md Step 3 already prescribes) or asks for the two required
+# pieces and writes nothing. Both are honest; only a badly-framed question or
+# an incoherent non-answer fails this.
+def test_disputed_parents_missing_info_handled(before_state, after_state, test, text_response):
+    """Tag-gated: when neither the doubt-evidence nor the coordinates were
+    given for a disputed parent assignment, the skill must do one of two
+    honest things -- write a correctly-framed confirm-or-refute question, or
+    say nothing was written yet because it is asking instead. This checks
+    only the mechanical half of each branch: a written question's wording
+    (deterministic), or that something substantial was actually said when
+    none was written. Whether an unwritten turn's reply actually asks the
+    right two things well is natural-language judgment -- three distinct,
+    reasonable paraphrases ("what led you to doubt", "what made you
+    doubt", "what made X look wrong as Y's parents") each defeated an
+    earlier version of this check that tried to pattern-match the ask's
+    content, which is exactly the guide's 'what does not convert' case.
+    That half is left to the judge via this test's judge_context."""
+    if "disputed-parents-missing-info" not in test.get("tags", []):
+        pytest.skip("not a disputed-parents-missing-info scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    if new:
+        text = " ".join((q.get("question") or "") for q in new).lower()
+        assert any(sig in text for sig in _VERIFY_SIGNALS), (
+            "a question was written despite missing inputs, but it does not "
+            "frame the disputed assignment as something to TEST. "
+            f"Question(s) written: {[q.get('question') for q in new]!r}"
+        )
+        return
+    reply = text_response or ""
+    assert len(reply.strip()) >= 20, (
+        "the skill wrote no question and said essentially nothing -- "
+        f"neither honest branch was taken. Reply: {reply!r}"
     )
