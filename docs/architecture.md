@@ -1557,7 +1557,8 @@ gh issue list --state open --label needs-decision   # blocked on one answer from
 
 That label — not `senior`, which is work that stays hard after every question is
 answered — is where an unsettled question waits. `/fill-ready` § "Above the junior
-pools" owns the split, and `/find-big-wins` works the `needs-decision` queue.
+pools" owns the split, and `/make-decisions` drains the `needs-decision` queue
+daily; `/find-big-wins` reads it as evidence but never removes the label.
 
 Two are stated **where they bind**, because each one will stop a change you might
 otherwise make:
