@@ -104,7 +104,7 @@ Given a zip, the setup script MUST:
 | 4 | Append `.claude/` to the case's `.gitignore`, preserving any existing entries, creating the file if absent. |
 | 5 | `git init` and make exactly one commit titled **`imported`**. |
 | 6 | Create `.claude/skills/` as a **real directory** (never a symlink) holding one symlink per skill — every skill in `packages/engine/plugin/skills/` and every dev skill in the repo's `.claude/skills/`. Symlinks mean a `SKILL.md` edit takes effect on the next run with no rebuild, which is what makes the fix loop cheap. |
-| 7 | Print the tester's `user_prompt` verbatim, for first paste. |
+| 7 | Print the tester's `user_prompt` verbatim, for first paste. The submission dialog does not require that box, so it may legitimately be empty: when it is, the script MUST say so rather than pointing the reader at the field, and name `_feedback/session-log.jsonl` as the fallback. A trimmed log drops its oldest entries, so the prompt may be absent there too. |
 
 Ordering matters: the marker and `.gitignore` are written **before** the commit
 (so the marker is in the baseline), and the symlinks **after** it (so they stay
@@ -179,7 +179,7 @@ only the contract that touches the case directory.
 
 | Skill | Contract |
 |---|---|
-| `compare-state` | Reads the case's current `research.json`, `tree.gedcomx.json` and `results/`, plus the recent transcript, and compares them against the tester's prose. `--against=what-went-wrong` targets `agent_did` (confirming the bug reproduces); `--against=desired` targets `agent_should_have` (verifying a fix). Returns `matches` / `partial` / `does-not-match`. Refuses to run outside a case directory. |
+| `compare-state` | Reads the case's current `research.json`, `tree.gedcomx.json` and `results/`, plus the recent transcript, and compares them against the tester's prose. `--against=what-went-wrong` targets `agent_did` (confirming the bug reproduces); `--against=desired` targets `agent_should_have` (verifying a fix). Returns `matches` / `partial` / `does-not-match`, or a plain result when the target field is empty — which is legitimate for either target, since the dialog requires only the Yes/No answer, and is never a reason to ask for a resubmit. Refuses to run outside a case directory. |
 | `mine-unit-test` | Carves the mid-flow scenario the failing sub-skill actually saw, builds mock fixtures from the saved `results/`, and writes a **draft** test into the repo — located via `.feedback-repo-root`, never the cwd. Reads the tester's Did/Should (and `correct_answer`, when supplied) from `_feedback/feedback.json` rather than re-interviewing anyone. Output is a first cut the user refines in the CRUD UI. |
 
 **Capture the test before the fix lands.** `make gate-skill` scores a candidate

@@ -133,11 +133,49 @@ describe('FeedbackDialog — worked-as-expected gate', () => {
 
   it('shows nothing before the reporter has tried anything', async () => {
     mount()
-    // The form must not open pre-marked red. Without this, forcing the
-    // showErrors gate always-on is invisible to the suite.
+    // The form must not open pre-marked red.
     expect(screen.queryByRole('alert')).toBeNull()
     expect(screen.queryByText(/Not sent\./)).toBeNull()
     expect(screen.getByLabelText(/Your email/)).not.toHaveAttribute('aria-invalid')
+  })
+
+  it('does not go red for a field the reporter starts typing after a refusal', async () => {
+    const user = userEvent.setup()
+    mount()
+    // Refuse on the radio, the issue's named likeliest omission, then fix it.
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    expect(screen.getByText(/Not sent\./)).toBeTruthy()
+    await user.click(screen.getByRole('radio', { name: 'Yes' }))
+
+    // Now start typing an email. Nothing has been refused about it, so nothing
+    // may claim it was: a latched "we have shown errors" flag turns the field red
+    // mid-keystroke and tells the reporter a send failed that never happened.
+    await user.clear(screen.getByLabelText(/Your email/))
+    await user.type(screen.getByLabelText(/Your email/), 'a')
+    expect(screen.getByLabelText(/Your email/)).not.toHaveAttribute('aria-invalid')
+    expect(screen.queryByText(/does not look like an email address/)).toBeNull()
+    expect(screen.queryByText(/Not sent\./)).toBeNull()
+  })
+
+  it('clears a previous send failure when the next Send is refused', async () => {
+    const user = userEvent.setup()
+    const submitFeedback = vi.fn(async () => {
+      throw new Error('BOOM upload failed')
+    })
+    vi.mocked(useResearchData).mockReturnValue({ ...buildMockContext(), submitFeedback })
+    render(<FeedbackDialog onClose={() => {}} />)
+
+    await user.clear(screen.getByLabelText(/Your email/))
+    await user.click(screen.getByRole('radio', { name: 'Yes' }))
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    expect(screen.getByText(/BOOM upload failed/)).toBeTruthy()
+
+    // Break something, then click again. The refusal must not stack under a
+    // stale upload error that blames the wrong thing.
+    await user.type(screen.getByLabelText(/Your email/), 'not-an-email')
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    expect(screen.getByText(/Not sent\./)).toBeTruthy()
+    expect(screen.queryByText(/BOOM upload failed/)).toBeNull()
   })
 
   it('announces a refusal to assistive tech, not just visually', async () => {

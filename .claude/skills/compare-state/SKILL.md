@@ -51,7 +51,9 @@ Verify:
 - `user_prompt` is a string. It may legitimately be **empty**: the submission
   dialog requires only the Yes/No answer, so a reporter can leave every text box
   blank. Read `_feedback/session-log.jsonl` for the prompt when the bundle has
-  one — it is optional, and a Cowork submission never has one.
+  one — it is optional, a Cowork submission never has one, and a log trimmed for
+  size (a `_truncation_note` at its head) drops the oldest entries first, which
+  is where the opening prompt lives.
 - For `--against=what-went-wrong`: `agent_did` is present and a string. It may
   legitimately be **empty**, for the same reason.
 - For `--against=desired`: `agent_should_have` is present and a string. It may
@@ -166,7 +168,7 @@ beyond Read / Bash / Glob for file inspection. Use Claude Sonnet 4.6
 | Situation | Action |
 |---|---|
 | `_feedback/feedback.json` is missing | Abort with "Not a feedback-case directory. Run `scripts/setup-feedback-case.sh <zip>` first; see docs/specs/feedback-case-spec.md §3." |
-| `_feedback/feedback.json` exists but the target field is empty | Not an abort, and never a resubmit request — the submission dialog requires only the Yes/No answer, so blank is legitimate. Stop with a plain result naming the empty field, quote the submission's Notes verbatim if it has any, and point the reader at `_feedback/session-log.jsonl` when the bundle has one (it is optional, and a Cowork submission has none). |
+| `_feedback/feedback.json` exists but the target field is empty | Not an abort, and never a resubmit request — the submission dialog requires only the Yes/No answer, so blank is legitimate. Stop with a plain result naming the empty field, quote the submission's Notes verbatim if it has any, and point the reader at `_feedback/session-log.jsonl` when the bundle has one (it is optional, a Cowork submission has none, and a trimmed log drops its oldest entries, so a `_truncation_note` at the head means the prompt may be gone too). |
 | `--against` flag missing or invalid | Print usage (`--against=what-went-wrong` or `--against=desired`) and abort. |
 | The case directory has no git baseline (no `.git/`) | Warn but continue — the user may be running this outside the standard setup. State-diff falls back to reading the canonical files only. |
 | The user invokes this from a directory that is NOT a feedback case (no `_feedback/`) | Abort with the message in row 1 above. |

@@ -25,9 +25,10 @@ const MAX_FIELD_CHARS = 10_000
 // no refusal is silent for any of them.
 type Blocker = { id: string; message: string }
 
-// The blockable controls, in the order they render. `blockers` is built by
-// walking this, so a refused Send always points at the FIRST thing wrong rather
-// than an arbitrary one. Keep it in sync with the JSX below.
+// The blockable controls, in the order they render, so a refused Send points at
+// the FIRST thing wrong rather than an arbitrary one. Ordering only: an id
+// missing here sorts last, it is never dropped, so a desync with the JSX below
+// costs message order and cannot let an invalid send through.
 const FIELD_ORDER = [
   'feedback-email',
   'feedback-prompt',
@@ -95,9 +96,12 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
 
   const [sendState, setSendState] = useState<SendState>('idle')
   const [errorMsg, setErrorMsg] = useState('')
-  // False until a Send is actually refused. The form should not go red before
-  // the reporter has tried anything.
-  const [showErrors, setShowErrors] = useState(false)
+  // The blocker ids the LAST refused Send actually reported. A plain "have we
+  // shown errors yet" flag latches: once set it never clears while the dialog is
+  // open, so a field the reporter starts typing later goes red and the footer
+  // claims a refusal that never happened. Keying on the refused ids means a
+  // message appears only for something a Send genuinely rejected.
+  const [refusedIds, setRefusedIds] = useState<ReadonlySet<string>>(() => new Set())
 
   useEffect(() => {
     if (!getFeedbackContext) return
@@ -148,9 +152,10 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
   // a greyed-out button with no explanation is indistinguishable from a broken
   // app, and the report is lost. These surface as named messages on the attempt.
   // Only the Yes/No answer is required content — email, "What you asked" and
-  // "What the agent did" may all be blank. A bundle that carries the session log
-  // has the prompt and the transcript anyway, and one that does not is still
-  // worth more than the report a dead Send button loses.
+  // "What the agent did" may all be blank. A bundle carrying the session log
+  // usually has the prompt and the transcript anyway (not always: an oversized
+  // log is trimmed oldest-first, and the prompt is the oldest entry), and a
+  // thinner report still beats the one a dead Send button loses.
   const blockers = useMemo<Blocker[]>(() => {
     const byId = new Map<string, Blocker>()
     if (emailTrimmed.length > 0 && !emailValid) {
@@ -169,14 +174,21 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
         message: 'Choose Yes or No so we know whether this is a bug report.'
       })
     }
-    return FIELD_ORDER.flatMap((id) => {
-      const b = byId.get(id)
-      return b ? [b] : []
-    })
+    // Unknown ids sort last rather than vanishing: a FIELD_ORDER/JSX desync must
+    // cost message ORDER, never a dropped blocker that lets an invalid send through.
+    const rank = (id: string): number => {
+      const i = (FIELD_ORDER as readonly string[]).indexOf(id)
+      return i === -1 ? FIELD_ORDER.length : i
+    }
+    return [...byId.values()].sort((a, b) => rank(a.id) - rank(b.id))
   }, [emailTrimmed, emailValid, overLimitFields, workedAsExpected])
 
-  // Inline messages appear only once a Send has actually been refused.
-  const shownBlockers = showErrors ? blockers : []
+  // Still-unfixed blockers from the last refusal. A blocker created after that
+  // refusal is not here, so it stays quiet until the reporter tries again.
+  const shownBlockers = blockers.filter((b) => refusedIds.has(b.id))
+  // Over-limit fields whose message is NOT already inline: those keep the live
+  // toast, so a box that goes over after a refusal still says so immediately.
+  const untoldOverLimit = overLimitFields.filter((f) => !refusedIds.has(f.id))
   const blockerFor = (id: string): string | undefined =>
     shownBlockers.find((b) => b.id === id)?.message
 
@@ -193,7 +205,11 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
     // An unexplained early return here was the original defect (#1919).
     const worked = workedAsExpected
     if (blockers.length > 0 || worked === null) {
-      setShowErrors(true)
+      setRefusedIds(new Set(blockers.map((b) => b.id)))
+      // A refusal is a fresh attempt: drop any error left by an earlier send, or
+      // its toast stacks under this one and blames the wrong thing.
+      setSendState('idle')
+      setErrorMsg('')
       const target = blockers[0]?.id
       if (target) {
         const el = document.getElementById(target)
@@ -202,7 +218,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
       }
       return
     }
-    setShowErrors(false)
+    setRefusedIds(new Set())
     setSendState('sending')
     setErrorMsg('')
     try {
@@ -508,13 +524,13 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
           </div>
         </div>
 
-        {/* Live while typing, before any Send has been refused. Once it has, the
-            per-field messages carry the same text, so this would say it twice. */}
-        {overLimitFields.length > 0 && shownBlockers.length === 0 && sendState !== 'success' && (
+        {/* Live while typing, for any over-limit field whose message is not already
+            inline under the field itself, which would otherwise say it twice. */}
+        {untoldOverLimit.length > 0 && sendState !== 'success' && (
           <div className={`${styles.toast} ${styles.toastError}`}>
-            {overLimitFields.length === 1
-              ? overLimitMessage(overLimitFields[0].label)
-              : `${overLimitFields.length} fields exceed the ${MAX_FIELD_CHARS.toLocaleString()}-character limit: ${overLimitFields.map((f) => `"${f.label}"`).join(', ')}.`}
+            {untoldOverLimit.length === 1
+              ? overLimitMessage(untoldOverLimit[0].label)
+              : `${untoldOverLimit.length} fields exceed the ${MAX_FIELD_CHARS.toLocaleString()}-character limit: ${untoldOverLimit.map((f) => `"${f.label}"`).join(', ')}.`}
           </div>
         )}
         {/* Says the click did nothing and why to look up. The detail is inline,

@@ -221,9 +221,10 @@ The script:
   again on every retry. Re-asking the question in your own words is the easiest
   way to fail to reproduce a bug. The form does not require that box, so some
   submissions have nothing to print: take the prompt from
-  `_feedback/session-log.jsonl` when the bundle has one, and otherwise
-  reconstruct the question from the project state and the Notes box, and say on
-  the issue that you did.
+  `_feedback/session-log.jsonl` when the bundle has one -- check its head for a
+  `_truncation_note`, since an oversized log is trimmed oldest-first and the
+  opening prompt is the oldest entry -- and otherwise reconstruct the question
+  from the project state and the Notes box, and say on the issue that you did.
 
 > **Why the snapshot matters — it's the retry mechanism.** The case folder is a
 > *capture*: unlike an e2e fixture, there is no `make e2e-project` to re-seed it
@@ -551,7 +552,7 @@ Drive folder as the immutable record, so re-importing later is always possible.
 |---|---|---|
 | 0 Notice | research; spot it; write Did/Should | 🌐 Workbench |
 | 1 Claim + branch | assign the `[feedback]` issue to yourself; download the zip; `git checkout -b <short-task-name>` | 🌐 GitHub → ⌨️ Terminal (repo) |
-| 2 Unpack | `make feedback-case ZIP=<zip>`; copy the prompt it prints, or recover it from the session log when the box was left blank | ⌨️ Terminal (repo) |
+| 2 Unpack | `make feedback-case ZIP=<zip>`; copy the prompt it prints, or recover it from the session log when the box was left blank (check for a `_truncation_note`) | ⌨️ Terminal (repo) |
 | 3 Reproduce | paste the user's prompt; viewer open; `/compare-state --against=what-went-wrong` | 🤖 Claude Code (case dir) + Viewer |
 | 4 Classify | skill, tool, or grading fault? | 🤖 Claude Code (case dir) |
 | 5 Capture | `/mine-unit-test --project <case-dir>`; scrub PII | 🤖 Claude Code (case dir) |
@@ -599,7 +600,8 @@ script first, then `cd` into the resulting directory.
 An empty field is not a broken submission. The dialog requires only the Yes/No
 answer, so `user_prompt` and `agent_did` may both legitimately be blank. When the
 bundle carries `_feedback/session-log.jsonl`, read that instead — it has the
-prompt and the whole transcript verbatim. That file is optional (§6 of the
+prompt and the whole transcript verbatim, unless a `_truncation_note` at its head
+says the log was trimmed, which drops the oldest entries and so the prompt first. That file is optional (§6 of the
 submission format) and a **Cowork** submission never has one, so when it is
 absent you are working from the project state and the Notes box; say so on the
 issue rather than asking for a resubmit. An empty **`agent_should_have`** is

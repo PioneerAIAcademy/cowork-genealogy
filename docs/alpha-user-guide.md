@@ -141,8 +141,10 @@ Click **Send Feedback** in the viewer header. It bundles the project state and
 your notes and sends them to us privately.
 
 1. **What you asked the agent to do.** Optional when the session log goes with
-   the bundle, since that carries your prompt verbatim. Fill it in if you untick
-   that box, or if the form says no log was found.
+   the bundle, since that usually carries your prompt verbatim. Fill it in if you
+   untick that box, if the form says no log was found, or if it was a long
+   session: an oversized log is trimmed oldest-first, and your opening prompt is
+   the oldest thing in it.
 2. **What the agent did.** What actually happened. Also optional. Fill it in when
    you can: it is the fastest pointer to the moment that went wrong.
 3. **Did it work as expected? Yes or No.** The one required answer. Answer
