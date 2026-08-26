@@ -492,8 +492,15 @@ describe("plugin agent permission surface", () => {
 });
 
 // A built-in (non-MCP) tool named in an agent BODY must be a tool that agent can
-// actually call — i.e. it appears in the agent's `tools:` or `disallowedTools:`
-// frontmatter (issue #1635).
+// actually call — i.e. it is GRANTED in the agent's `tools:` frontmatter
+// (issue #1635).
+//
+// `disallowedTools:` is NOT a second source of permission. A deny binds even
+// under `bypassPermissions` (CLAUDE.md § "Dual-spelled tool names"), so a body
+// naming a denied built-in is the same defect as naming an ungranted one —
+// billed on every invocation, never executable. No agent denies a built-in
+// today, so this flags nothing in the current corpus; the synthetic case below
+// is what holds the rule, since a corpus with no instance cannot.
 //
 // `check_rubric_tool_drift.py` already does the MCP-name side of this for agent
 // bodies and is CI-wired, but its vocabulary is the .mcpb manifest's MCP tool
@@ -546,9 +553,10 @@ function agentBodyStart(lines: string[]): number {
 // dozens of lines a week (the reasoning is spelled out in no-issue-refs.test.ts).
 // This is not an escape hatch for an inconvenient lint: a new mention gets the
 // tool granted or the line removed, not a row here.
-const BUILTIN_BODY_ALLOWLIST: { file: string; text: string; reason: string }[] = [
+const BUILTIN_BODY_ALLOWLIST: { file: string; word: string; text: string; reason: string }[] = [
   {
     file: "record-extractor.md",
+    word: "ToolSearch",
     text: "net. If a persistence tool shows as deferred, load it via ToolSearch",
     reason:
       "ruled 2026-08-23, folded into #1666 (deep dive: record-extraction), which pays that " +
@@ -564,11 +572,14 @@ interface BuiltinHit {
   text: string;
 }
 
-function builtinHitsInAgent(file: string): BuiltinHit[] {
-  const text = readFileSync(join(agentsDir, file), "utf8");
-  const held = new Set(
-    [...extractList(text, "tools"), ...extractList(text, "disallowedTools")].map(bareOrBuiltin),
-  );
+/** Split from the disk read so the non-vacuity guard below can drive the real
+ *  scanner over a synthetic body. Testing the vocabulary in isolation would not
+ *  cover `agentBodyStart`, the held-set, or the match wiring. */
+function builtinHitsInText(file: string, text: string): BuiltinHit[] {
+  // `tools:` ONLY. A deny is not a grant — it binds even under
+  // `bypassPermissions` — so a body naming a DENIED built-in is the same defect
+  // as naming an ungranted one, and must flag too.
+  const held = new Set(extractList(text, "tools").map(bareOrBuiltin));
   const lines = text.split(/\r?\n/);
   const hits: BuiltinHit[] = [];
   for (let i = agentBodyStart(lines); i < lines.length; i++) {
@@ -582,13 +593,68 @@ function builtinHitsInAgent(file: string): BuiltinHit[] {
   return hits;
 }
 
+function builtinHitsInAgent(file: string): BuiltinHit[] {
+  return builtinHitsInText(file, readFileSync(join(agentsDir, file), "utf8"));
+}
+
 const allBuiltinHits = agentFiles.flatMap(builtinHitsInAgent);
 
 function isAllowedBuiltinHit(h: BuiltinHit): boolean {
-  return BUILTIN_BODY_ALLOWLIST.some((a) => a.file === h.file && a.text === h.text);
+  // Keyed on `word` as well as file+text: one line can name two built-ins, and
+  // without this a row excusing the first silently excuses the second too.
+  return BUILTIN_BODY_ALLOWLIST.some(
+    (a) => a.file === h.file && a.text === h.text && a.word === h.word,
+  );
 }
 
 describe("plugin agent bodies name no built-in tool the agent cannot call", () => {
+  it("the scanner still detects a built-in mention", () => {
+    // The anti-silent-zero guard that OUTLIVES the allow-list. The canary below
+    // proves the scanner fires — but only while a row exists, and that row leaves
+    // with #1666. Measured before this guard: with the row removed AND
+    // BUILTIN_TOOL_VOCAB emptied, the whole file passed 75/75 — green, zero
+    // coverage. Drives the REAL scanner over a synthetic body, so it covers the
+    // vocabulary, the word-boundary regex, `agentBodyStart` and the held-set
+    // together; asserting on the vocabulary alone would miss the wiring.
+    // Corpus-independent on purpose, so no agent-body edit can retire it.
+    const probe = [
+      "---",
+      "name: probe",
+      "tools:",
+      "  - mcp__genealogy__record_read",
+      "---",
+      "",
+      "If a persistence tool shows as deferred, load it via ToolSearch.",
+    ].join("\n");
+    expect(
+      builtinHitsInText("probe.md", probe).map((h) => h.word),
+      "the built-in scanner no longer detects an ungranted body mention — every " +
+        "offenders check below would pass vacuously",
+    ).toContain("ToolSearch");
+
+    // The other direction: a GRANTED built-in must not be flagged, or the lint
+    // would fire on every legitimate mention and get muted.
+    const granted = probe.replace(
+      "  - mcp__genealogy__record_read",
+      "  - mcp__genealogy__record_read\n  - ToolSearch",
+    );
+    expect(builtinHitsInText("probe.md", granted).map((h) => h.word)).not.toContain("ToolSearch");
+
+    // A DENIED built-in must flag: a deny binds even under `bypassPermissions`,
+    // so the agent cannot call it and the prose is unexecutable either way. No
+    // agent denies a built-in today, so nothing in the corpus exercises this —
+    // which is exactly why it is pinned synthetically rather than left to a
+    // future body edit to discover.
+    const denied = probe.replace(
+      "---\n\nIf a persistence tool",
+      "disallowedTools:\n  - ToolSearch\n---\n\nIf a persistence tool",
+    );
+    expect(
+      builtinHitsInText("probe.md", denied).map((h) => h.word),
+      "a body naming a DENIED built-in is no longer flagged — a deny is not a grant",
+    ).toContain("ToolSearch");
+  });
+
   it("scans a non-empty body in every agent", () => {
     // The anti-silent-zero guard, and it must NOT be `agentFiles.length > 0`:
     // that only repeats "finds the plugin agents" above and proves nothing about
@@ -612,21 +678,24 @@ describe("plugin agent bodies name no built-in tool the agent cannot call", () =
       .filter((h) => !isAllowedBuiltinHit(h))
       .map(
         (h) =>
-          `${h.file}:${h.lineNo} names built-in ${h.word}, which is in neither its tools: ` +
-          `nor disallowedTools: — ${h.text}`,
+          `${h.file}:${h.lineNo} names built-in ${h.word}, which its tools: does not ` +
+          `grant (a deny is not a grant) — ${h.text}`,
       );
     expect(
       offenders,
-      "an agent body instructs the agent to use a built-in tool its frontmatter grants " +
-        "nowhere. It is billed on every invocation and can never execute. Grant the tool " +
-        "in tools:, remove the mention, or add a reasoned allow-list entry if pre-existing.",
+      "an agent body instructs the agent to use a built-in tool its tools: does not grant " +
+        "(a deny is not a grant — it binds even under bypassPermissions). It is billed on " +
+        "every invocation and can never execute. Grant the tool in tools:, remove the " +
+        "mention, or add a reasoned allow-list entry if pre-existing.",
     ).toEqual([]);
   });
 
   describe("allow-list entries are still needed", () => {
-    for (const { file, text, reason } of BUILTIN_BODY_ALLOWLIST) {
+    for (const { file, word, text, reason } of BUILTIN_BODY_ALLOWLIST) {
       it(`${file} still contains its allowed line (${reason})`, () => {
-        const stillMatches = allBuiltinHits.some((h) => h.file === file && h.text === text);
+        const stillMatches = allBuiltinHits.some(
+          (h) => h.file === file && h.text === text && h.word === word,
+        );
         expect(
           stillMatches,
           `allow-list entry for ${file} no longer matches any body line — the prose was ` +
