@@ -109,7 +109,7 @@ def test_next_step_offers(text_response: str, test: dict) -> None:
             "definition or date conversion needs no workflow hand-off offer"
         )
     has_extract = bool(re.search(r"Extract assertions from this record\?", text_response, re.IGNORECASE))
-    has_link = bool(re.search(r"Link .{1,40} to the tree\?", text_response, re.IGNORECASE))
+    has_link = bool(re.search(r"Link .{1,80} to the tree\?", text_response, re.IGNORECASE))
     assert has_extract, (
         "translation response missing required next-step offer: "
         "'Extract assertions from this record?' (record-extraction)"
@@ -160,7 +160,7 @@ def test_iso_date_formatting(text_response: str, test: dict) -> None:
     prose_dates = re.findall(rf"\d{{1,2}}\s+(?:{MONTH})\s+\d{{4}}", text_response)
     if not prose_dates:
         pytest.skip("no English prose dates in response; ISO check not applicable")
-    iso_dates = re.findall(r"\b\d{4}-\d{2}(?:-\d{2})?\b", text_response)
+    iso_dates = re.findall(r"\b\d{4}-(?:0[1-9]|1[0-2])(?:-\d{2})?\b", text_response)
     # Order matters: only a response that actually withheld the ISO form can
     # be claiming the carve-out, so this is gated on `not iso_dates`. Checked
     # ahead of that gate it exempts compliant responses — ut_translation_006

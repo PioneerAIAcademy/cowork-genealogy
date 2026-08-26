@@ -156,7 +156,7 @@ class Hub:
                 [sys.executable, "-m", "app.agent.runner"],
                 cwd=str(PROJECT_DIR), env=os.environ.copy(),
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=log,
-                text=True, bufsize=1,
+                text=True, encoding="utf-8", bufsize=1,
             )
         except Exception as exc:
             # This `message` is rendered by ChatPane as `Chat unavailable: …`,
@@ -208,7 +208,15 @@ class Hub:
                     detail = str(ev.get("text", ""))[:200]
                 else:
                     detail = ""
-                print(f"{_ts()} [agent] {kind} {detail}".rstrip(), flush=True)
+                # A log line must never kill the pump: this coroutine relays
+                # every agent message, and an exception here stops the
+                # broadcast() below, hanging the client on a message that never
+                # arrives. LocalProvider sets PYTHONUTF8=1, but callers that
+                # build their own env (tests/test_sandbox_server.py) do not.
+                try:
+                    print(f"{_ts()} [agent] {kind} {detail}".rstrip(), flush=True)
+                except UnicodeEncodeError:
+                    pass
             if kind == "turn_done":
                 self._turn_active = False
             await self.broadcast(msg)

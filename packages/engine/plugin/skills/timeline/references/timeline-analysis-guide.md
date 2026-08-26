@@ -60,11 +60,13 @@ evidence" — it is evidence of absence, which carries analytical weight.
 
 Examples:
 - A family appears in the 1850 census for a county but is absent
-  from the 1860 census for the same county. This is evidence they
-  likely moved away or died in the intervening decade.
+  from the 1860 census for the same county. Migration and death are
+  the first two explanations to test, not the only ones — classify
+  the gap against *Interpreting Gaps* below before concluding.
 - A death search in England for a specific period returns no results.
   This is evidence the person probably did not die in England during
-  that period.
+  that period — but only so far as the series searched is complete;
+  a destroyed or unindexed register produces the same silence.
 - A marriage record is expected (because children exist) but cannot
   be found in the jurisdiction where both parents lived. This may
   suggest the marriage occurred elsewhere, or the couple was not
@@ -148,6 +150,20 @@ significant — but note the boundary with **check-warnings**:
   - 1830-1870: ~200 miles/day by rail, ~150 miles/day by steamship
   - 1870-1920: ~400 miles/day by rail, ~300 miles/day by steamship
   - Post-1920: Long-distance air travel becomes possible
+
+  Those figures are **maxima** — the threshold above which a pair is
+  infeasible — not typical speeds, and the rail and steamship rows are
+  what was available in the era rather than what a given family used.
+  Overland travel remained the common mode long after rail reached a
+  region, and the mode itself sets the pace:
+  - Walking: ~15-20 miles/day
+  - Wagon train: ~10-15 miles/day
+  - Buggy or carriage: ~20-30 miles/day
+  - Horseback: ~25-35 miles/day
+
+  A pair inside the era maximum but far outside these rates is
+  **doubtful, not impossible** — raise it as a question in your reply
+  and do not call it an infeasibility.
 
 ### Valid Assumptions
 
@@ -239,7 +255,14 @@ Signs that records have been incorrectly combined:
   by remarriage after a documented death)
 - Different birthplaces that cannot be explained by jurisdiction
   changes (e.g., "Ireland" vs. "Germany")
-- Same census year, two different locations
+- Same census year, two different locations — test this one before
+  splitting. Families were legitimately enumerated twice. Check that
+  the family composition is identical, and measure the distance from
+  the enumeration dates written on the pages rather than from the
+  census year: enumerators worked an area over weeks or months, so
+  two entries can be far enough apart in time to be entirely
+  feasible. Split only when the composition differs or the dated
+  pages leave no time to travel.
 
 When you detect these patterns, the timeline should be split and
 separate candidate timelines built for each potential individual.
