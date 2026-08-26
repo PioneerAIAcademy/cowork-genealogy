@@ -118,13 +118,14 @@ citations should support the claim **without requiring further explanation**." `
 already carries the matching criterion: partial when "the declared form doesn't match the
 narrative's actual structure."
 
-**Gap: lane 2 — grading defect, fixed in this PR.** The criterion existed; the judge had
-no anchor to measure against and read the declared label back as a finding. `rubric.md`'s
-`Proof-conclusion fit` now states the three budgets, says the `vehicle` field is a claim
-about the narrative as well as the evidence, and asks the rationale to name which half
-failed. It also fences the obvious over-correction — a Summary modestly over ~500 words
-that still reads as a Summary is a pass, because the form's defining property is that no
-explanation was needed, not its length.
+**Gap: lane 2 — and the fix is a validator, not this rubric.** The criterion already
+existed in `rubric.md` ("the declared form doesn't match the narrative's actual
+structure"); the judge had no anchor and read the declared label back as a finding. I
+tried supplying the anchor in rubric prose, measured it, and **it changed nothing** — see
+the re-run section above. That block has been **removed again** rather than shipped: the
+dimension scored flat at always-3 across the five logs *without* it (n=17) and flat at
+always-3 in the run *with* it (n=17), which is an A/B showing the prose is inert. What is
+left in `rubric.md` is what was always there. **V1 is the fix.**
 
 Not a doctrine finding: the substance of these narratives is fine, and a genealogist
 would rather read the 523-word document than a 150-word one. What is wrong is the label.
@@ -675,23 +676,33 @@ Grading only — `judge_context` and `rubric.md`, per the issue. The agent body 
 
 | file | change |
 |---|---|
-| `eval/tests/unit/proof-conclusion/rubric.md` | `Proof-conclusion fit`: added the declared-form-vs-artifact criterion with the three budgets and a fence against over-correcting on length (F1). Stale `SKILL.md §6` → agent body §6. |
-| `.../no-image-claim-without-tool-confirmation.json` | `judge_context[1]` rewritten to name the dimension without the finding or the phrase list; `description` pointer → agent body. Clause 3's false-fail guard left intact. |
+| `eval/tests/unit/proof-conclusion/rubric.md` | **No net change.** A declared-form-vs-artifact criterion was added, measured inert (F1), and reverted. The file is back to its `main` state, so the misleading block does not ship — which is a stronger answer to it than trimming would have been. |
+| `.../no-image-claim-without-tool-confirmation.json` | `judge_context[1]` rewritten to name the dimension without the finding or the phrase list; `description` pointer → agent body. Clause 3's false-fail guard left intact. An explicit `score 1` anchor was added in review and then **withdrawn**: it is intended to move a grade, so calling it cosmetic would be a misuse of the waiver, and it is unreachable on this corpus (zero affirmative overclaims in five 016 runs) so it buys nothing measurable. Deferred to the next run that touches this snapshot. |
 | `.../bounded-death-encoded-not-collapsed.json` | Stale `SKILL.md §2/§6` pointer → agent body. |
 | `.../research-query-gather-evidence.json` | Stale `SKILL.md §1` pointer → agent body. |
 
-**Only two of those four edits force the re-run.**
+**What still drifts from the snapshot, after review.**
 `harness/snapshot.py` strips `_COSMETIC_TEST_FIELDS = ("name", "description", "tags")`
-before hashing a test file, so a `description`-only repoint is cosmetic by design. Run
-against this branch, `check_runlogs.py` names exactly three drifted snapshot files:
+before hashing a test file, so a `description`-only repoint is cosmetic by design. It does
+**not** strip anything else, and the snapshot covers `eval/fixtures/scenarios/**` as well
+as `eval/tests/unit/<skill>/**`. Both matter: a fixture `README.md` is not staged to the
+agent (`workspace.py` copies only `research.json`, `tree.gedcomx.json` and `results/`) but
+it **is** interpolated into the judge prompt at `judge/prompt.md:216` under "Scenario
+summary", via `orchestrator.py`'s `_load_scenario_readme`. So a README edit is
+judge-visible, and reasoning about it as "documentation" is wrong.
 
-    eval/tests/unit/proof-conclusion/no-image-claim-without-tool-confirmation.json
+After the review reverts, `check_runlogs.py` names exactly three drifted files:
+
+    eval/fixtures/scenarios/person-a-death-cert-not-indexed/README.md
+    eval/fixtures/scenarios/wilkins-bounded-death/README.md
     eval/tests/unit/proof-conclusion/rubric.md
-    packages/engine/plugin/agents/proof-conclusion.md
 
-**The third is not mine.** It is PR #1832's 2026-08-23 agent-body edit — hard confirmation
-that the snapshot was already inactive on `main` before this branch, and that these
-findings ride a run that was owed regardless. Last full run: `$5.64`, ~41 min
+All three are pointer/prose changes with no semantic effect on grading — the rubric one is
+the removal of a block measured inert on both sides of an A/B (see F1). That is the case
+for `eval-cosmetic-skip` rather than a second paid run; the judge-visible caveat above is
+stated so the waiver is granted on accurate grounds.
+
+Last full run: `$5.64`, ~41 min
 (`v1_2026-08-21_19-34-21.json`, `totals`).
 
 **The judge prompt has also changed since that run** — `check_runlogs` warns that the log
