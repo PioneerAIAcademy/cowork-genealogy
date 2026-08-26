@@ -57,6 +57,7 @@ Apps Script console → **Project Settings → Script Properties**:
 |---|---|
 | `GITHUB_TOKEN` | the PAT from step 3 |
 | `GITHUB_REPO` | `PioneerAIAcademy/cowork-genealogy` |
+| `NOTIFICATION_EMAILS` | comma-separated addresses to email on each submission — `dallan@gmail.com,chesworthrm@familysearch.org` |
 
 ### 5. Deploy the script
 
@@ -80,10 +81,11 @@ orphans every installed Electron build.
 
 ```sh
 curl -sL <exec-url>
-# {"status":"Feedback endpoint is running","version":"2026-08-04"}
+# {"status":"Feedback endpoint is running","version":"2026-08-26","notifyCount":2}
 ```
 
-An older `version` means the paste or the publish did not take.
+An older `version` means the paste or the publish did not take. A `notifyCount`
+below the number of addresses you set means step 4 did not take.
 
 ### 6. Re-share the Drive folder
 
@@ -109,9 +111,10 @@ The full version, including the failure-path checks, is in
 `apps/electron/server/feedback-endpoint/README.md` § Smoke test. Run it now and
 after **every** future console edit — CI cannot reach any of this.
 
-Four checks: version matches; a submission creates a labelled issue in Ready;
-the body leaks no user text; and with `GITHUB_TOKEN` deleted, the user still
-gets a success response.
+Five checks: version and `notifyCount` match; a submission creates a labelled
+issue in Ready; everyone in `NOTIFICATION_EMAILS` gets the email; the body leaks
+no user text; and with `GITHUB_TOKEN` deleted, the user still gets a success
+response.
 
 ---
 
