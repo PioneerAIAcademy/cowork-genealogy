@@ -697,10 +697,19 @@ After the review reverts, `check_runlogs.py` names exactly three drifted files:
     eval/fixtures/scenarios/wilkins-bounded-death/README.md
     eval/tests/unit/proof-conclusion/rubric.md
 
-All three are pointer/prose changes with no semantic effect on grading — the rubric one is
-the removal of a block measured inert on both sides of an A/B (see F1). That is the case
-for `eval-cosmetic-skip` rather than a second paid run; the judge-visible caveat above is
-stated so the waiver is granted on accurate grounds.
+**This owes a real re-run, not a waiver.** An earlier draft of this section argued the
+three files fitted `eval-cosmetic-skip`. That was wrong, and the reasoning is worth keeping
+because it is a trap the next auditor will walk into. The label is documented for
+"rewording, typos, comments, formatting" (`eval/CLAUDE.md`). Removing a 23-line rubric
+block is none of those, even though an A/B measured it inert (F1) — and the gate compares
+against the *snapshot*, so the deletion is what a waiver would have to cover, not the
+one-line pointer rename the diff against `main` shows. `eval/CLAUDE.md` names the failure
+mode directly, in the passage explaining why the fixture rule is warn-only: "A gate too
+expensive to satisfy trains people to bypass it on exactly the edits that are *not*
+neutral, which is worse than no gate." Reaching for the label because a run is expensive is
+that failure mode, not an exception to it. Two mechanics also make it unsound: the bypass
+**expires on every new push** (decided from the `synchronize` event, not the label), and it
+relaxes rule 2 only — the annotation rule still runs.
 
 Last full run: `$5.64`, ~41 min
 (`v1_2026-08-21_19-34-21.json`, `totals`).
