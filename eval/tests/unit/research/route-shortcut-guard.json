@@ -12,7 +12,7 @@
     ]
   },
   "input": {
-    "user_message": "Write the conclusion for this research project.",
+    "user_message": "/research write the conclusion for this research project.",
     "scenario": "empty-project-just-created"
   },
   "execution": {

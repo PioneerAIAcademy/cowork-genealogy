@@ -11,7 +11,7 @@
     ]
   },
   "input": {
-    "user_message": "Continue the research.",
+    "user_message": "/research continue — drive the next step for this project.",
     "scenario": "empty-project-just-created"
   },
   "execution": {

@@ -16,6 +16,12 @@
     "Should not be confused with a single record search — the user wants identification through the full workflow"
   ],
   "execution": {
-    "max_wall_clock_seconds": 300
+    "max_turns": 8,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      "question-selection", "locality-guide", "research-plan",
+      "search-records", "record-extraction", "person-evidence",
+      "research-exhaustiveness", "proof-conclusion"
+    ]
   }
 }

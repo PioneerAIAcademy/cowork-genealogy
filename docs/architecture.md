@@ -564,7 +564,7 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 > rule only** — the annotation rule still runs against the prior run log — and
 > expires on every new push. **`forget-and-rederive` is exempt**
 > (`RUNLOG_GATE_EXEMPT_SKILLS`), because it has no unit suite. `research` was
-> formerly exempt but gained a trigger corpus (#1494) and is now gated. Full rules:
+> formerly exempt but gained a trigger corpus and is now gated. Full rules:
 > `eval/CLAUDE.md` → "GitHub Action rules".
 
 Remember the unit suite grades a *single invocation in fresh context* — it will
@@ -645,7 +645,7 @@ record), and it never writes identity links or eliminations inline
 > [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md)** — it was the rev. 1
 > headline and was demoted after measurement.
 
-> **Direction.** `eval/tests/unit/research/` now exists (#1494): trigger
+> **Direction.** `eval/tests/unit/research/` now exists: trigger
 > corpus (10 tests) plus stubbed routing tests covering rows 1–4 and the
 > shortcut guard. Rows 14 (post-verdict `address_first` handler) and 16
 > (`project.status = "completed"`) remain blocked on #1492 (the two
@@ -660,12 +660,12 @@ record), and it never writes identity links or eliminations inline
 `## Direct user requests name a destination, not a shortcut` section contradicts
 your change.** That section is a second routing
 surface: it takes a user asking for a named downstream skill and sends the router
-back through the table anyway. The trigger corpus (#1494) catches routing
+back through the table anyway. The trigger corpus catches routing
 *into* `research` from the description, but not the internal routing table; a
 live e2e run is still the only instrument for table changes. Name the fixture
 you ran in the PR, or say you ran none.
 
-The runlog CI gate now applies to `research` (#1494 armed it by adding
+The runlog CI gate now applies to `research` (armed by adding
 `eval/tests/unit/research/`). `forget-and-rederive` remains exempt
 (`RUNLOG_GATE_EXEMPT_SKILLS`) because it still has no unit suite.
 
@@ -676,7 +676,7 @@ tests in the unit corpus — but know what they pin. **A negative test pins
 about the routing table, which runs *after* `/research` has already been
 selected. And `check_negative_reciprocity.py` skips any edge whose target has no
 `eval/tests/unit/<target>/` directory, so routing *into* a skill is pinnable
-only once it has a suite. `research` gained one in #1494, so edges into it
+only once it has a suite. `research` now has one, so edges into it
 are now visible to the reciprocity lint.
 
 **Fix a skill that isn't triggering.** First work out **which binding missed** —
@@ -686,7 +686,7 @@ they have different fixes, and only one of them is a description problem.
    first** (`| If research.json has... | Invoke |`) — check whether any row's
    state condition matches, whether an earlier row shadows it, and whether
    `## Direct user requests name a destination, not a shortcut` re-routed a
-   direct request. The trigger corpus (#1494) covers routing *into*
+   direct request. The trigger corpus covers routing *into*
    `research`, but not the internal routing table; a live `make e2e-run`
    is the only instrument for table changes. The sub-skill's `description` is
    still in play as the *tiebreaker*: the table explicitly says to "defer to each
@@ -1426,10 +1426,10 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and negative routing tests across 26 skill suites. **421** committed
+  run logs, and negative routing tests across 26 skill suites. **424** committed
   test definitions (`make eval-inventory`) — one JSON file per test under
-  `eval/tests/unit/` — and across the 25 live suites the latest run log per suite
-  totals **403 rows, 362 passing (90%)**. Those two numbers count different things
+  `eval/tests/unit/` — and across the 26 live suites the latest run log per suite
+  totals **423 rows, 364 passing (86%)**. Those two numbers count different things
   and can diverge in either direction: a test defined after its suite's last run
   has no row, and a row survives for a test since deleted. Both numbers are facts
   about the snapshots — not an identity, so re-derive rather than quoting them.
@@ -1527,7 +1527,7 @@ lives. A test is not just its definition: it usually needs a matching
 `eval/fixtures/mcp/` response, a dimension in that skill's `rubric.md`, and a
 check in `eval/harness/validators/`. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
-1 by policy. 92 of the 421 definitions are **negative** tests that exist to prove
+1 by policy. 92 of the 424 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is
