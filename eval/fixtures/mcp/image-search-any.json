@@ -1,0 +1,8 @@
+{
+  "tool": "image_search",
+  "description": "image_search catch-all — matches ANY imageGroupNumber (predicate '~' = empty-substring match) so an image_search call not covered by a more specific fixture degrades gracefully to an empty result instead of erroring with fixture_not_found. MUST be ordered LAST among the image-search fixtures in a test's mcp_fixtures so the specific-group fixtures win first. Used by negative grade_on_invariant tests (e.g. ut_search_images_009) so the tool is advertised and a forbidden browse lands in tool_calls where the no-browse invariant can catch it. Mirrors the volume-search-any catch-all.",
+  "args": { "imageGroupNumber": "~" },
+  "response": {
+    "imageIds": []
+  }
+}
