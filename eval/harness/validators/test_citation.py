@@ -300,6 +300,11 @@ def test_no_invented_locators_persisted(before_state, after_state, test):
     if before_rj is None or after_rj is None:
         pytest.skip("missing research.json")
     on_file = _extract_on_file_numerals(before_rj, tree)
+    # Also add numerals from the user's message (test input) — mirrors the
+    # response half (report_no_invented_locators_response).
+    user_msg = (test.get("input", {}) or {}).get("user_message", "") or ""
+    for m in re.finditer(r'\b(\d+)\b', user_msg):
+        on_file.add(m.group(1))
     before_sources = {s["id"]: s for s in before_rj.get("sources", [])}
     violations = []
     for src in after_rj.get("sources", []):
@@ -483,11 +488,13 @@ def report_skill_example_values_in_response(before_state, text_response, test, s
 
 
 def _harvest_skill_examples():
-    """Extract example values from the citation SKILL.md body.
+    """Extract example locator values from the citation SKILL.md body.
 
-    Looks in fenced Example blocks and parenthetical counter-examples
-    for concrete locator-shaped values (Will Book 7, p. 214, etc.)
-    and other illustrative strings.
+    Every locator-shaped literal in the skill body is illustrative. The
+    templates carry theirs outside quotes and outside an "Example:"
+    prefix (Will Book 9, p. 113; Deed Book 41, pp. 88-90), which the
+    three narrower scans missed. On-file values are subtracted by the
+    caller, so a wider harvest costs nothing.
     """
     from pathlib import Path
     skill_md = (
@@ -498,24 +505,7 @@ def _harvest_skill_examples():
     if not skill_md.exists():
         return set()
     text = skill_md.read_text(encoding="utf-8")
-    examples = set()
-    # Extract from fenced example blocks
-    for block in re.finditer(r'(?:Example|e\.g\.|example)[:\s]*["\']?([^"\'\n]+)', text, re.IGNORECASE):
-        content = block.group(1).strip()
-        # Extract locator-shaped values from the example text
-        for m in _LOCATOR_RE.finditer(content):
-            examples.add(m.group(0).strip())
-    # Extract from explicit parenthetical examples: (e.g. "Will Book 7, p. 214")
-    for paren in re.finditer(r'\((?:e\.g\.|for example|such as)\s*["\']([^"\']+)["\']', text, re.IGNORECASE):
-        content = paren.group(1)
-        for m in _LOCATOR_RE.finditer(content):
-            examples.add(m.group(0).strip())
-    # Also grab quoted illustrative values
-    for quoted in re.finditer(r'"([^"]{5,50})"', text):
-        content = quoted.group(1)
-        for m in _LOCATOR_RE.finditer(content):
-            examples.add(m.group(0).strip())
-    return examples
+    return {m.group(0).strip() for m in _LOCATOR_RE.finditer(text)}
 
 
 # --- V11: Negative-search citation quotes log verbatim ------------------

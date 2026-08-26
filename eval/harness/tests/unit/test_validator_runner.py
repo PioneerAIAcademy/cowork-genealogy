@@ -14,6 +14,7 @@ from harness.validator_runner import (
     all_passed,
     as_dicts,
     run_validators,
+    split_observations,
 )
 
 
@@ -1930,6 +1931,7 @@ def test_v8_fires_on_dead_activated_run():
         output_tokens=0,
         text_response="Short.",
         aborted_reason=None,
+        skills_invoked=[],
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None, "test_activated_run_produces_response did not run"
@@ -1971,6 +1973,7 @@ def test_v8_passes_on_long_response_despite_missing_telemetry():
         output_tokens=0,
         text_response="A" * 200,
         aborted_reason=None,
+        skills_invoked=[],
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None
@@ -1995,6 +1998,54 @@ def test_v8_skips_when_not_activated():
     assert result is not None
     assert result.passed is True  # skipped = passed
     assert "skipped" in (result.error or "").lower()
+
+
+def test_v8_passes_when_skills_invoked():
+    """V8: a run that invoked a sub-skill is not a dead run, even with zero
+    telemetry — skills_invoked is the direct signal."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        activated=True,
+        num_turns=0,
+        output_tokens=0,
+        text_response="Short routing announcement.",
+        aborted_reason=None,
+        skills_invoked=["citation"],
+    )
+    result = _named(results, "test_activated_run_produces_response")
+    assert result is not None
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+# --- Anti-bias constraint (issue #1749) -----------------------------------
+
+def test_judge_observations_carry_text_not_validator_names():
+    """Anti-bias constraint (#1749): the judge sees the observation text,
+    never the function name — a name is a verdict. And only fired findings
+    appear — a passing report_* must not reach the judge."""
+    results = [
+        ValidatorRunResult(
+            name="report_x", passed=False,
+            error="the response names a volume", reporting_only=True,
+        ),
+        ValidatorRunResult(
+            name="report_ok", passed=True,
+            error=None, reporting_only=True,
+        ),
+        ValidatorRunResult(
+            name="report_skipped", passed=True,
+            error="skipped: not applicable", reporting_only=True,
+        ),
+    ]
+    obs = split_observations(results)
+    assert obs == ["the response names a volume"]
+    # The function name must never leak into observation text
+    assert not any("report_" in o for o in obs)
 
 
 # --- V7: In-body decline tests -------------------------------------------

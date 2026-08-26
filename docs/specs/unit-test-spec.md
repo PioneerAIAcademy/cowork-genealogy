@@ -1117,7 +1117,7 @@ One file per skill in `eval/harness/validators/`, following pytest naming (`test
 
 ### Three tiers
 
-Validators are split into three tiers (issue #1749):
+Validators are split into three tiers:
 
 - **Tier 1 (gating):** `test_*` prefix. Failure = test fail, judge is skipped. The validator's function name appears in the judge prompt under "Deterministic validators that FAILED".
 - **Tier 2 (reporting):** `report_*` prefix. Failure is an observation fed to the judge as anonymous text under "Harness observations on the response text", never gates the test outcome. The function name goes only to the run log (`output.warnings[]` with `kind: "prose_observation"`) for traceability. Use this tier when the harness can detect a pattern but cannot decide whether it is wrong — that decision belongs to the judge.

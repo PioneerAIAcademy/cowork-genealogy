@@ -799,19 +799,24 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
 
 def test_activated_run_produces_response(
     activated, aborted_reason, num_turns, output_tokens, text_response, test,
+    skills_invoked,
 ):
     """An activated run that produced no output is a dead run — fail it.
 
-    Gate on five conditions: activated is True, not aborted, num_turns == 0,
-    output_tokens == 0, AND text_response shorter than 200 characters.
-    The length floor is a field measurement (not a prose match) so this
-    stays in tier 1. The 200-char floor avoids flagging telemetry-only
-    dropouts where a real response exists (issue #1749, V8 caveat).
+    Gate on six conditions: activated is True, not aborted, no skills
+    invoked, num_turns == 0, output_tokens == 0, AND text_response shorter
+    than 200 characters. The skills_invoked check is the strongest signal —
+    a run that invoked a skill did real work even when telemetry reports zero
+    (343 of 1945 committed runs report zero telemetry normally). The 200-char
+    floor avoids flagging telemetry-only dropouts where a real response
+    exists.
     """
     if activated is not True:
         pytest.skip("skill did not activate")
     if aborted_reason is not None:
         pytest.skip("run was aborted — already flagged separately")
+    if skills_invoked:
+        return  # a run that invoked a skill is not a dead run
     if num_turns != 0 or output_tokens != 0:
         return  # telemetry shows work happened
     if len(text_response or "") >= 200:

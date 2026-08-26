@@ -50,7 +50,7 @@ from harness.skill_runner import (
     SkillRunResult,
     run_skill,
 )
-from harness.validator_runner import as_dicts, run_validators
+from harness.validator_runner import as_dicts, run_validators, split_observations
 from harness.workspace import build_workspace, cleanup_session_store, snapshot_files
 
 
@@ -572,10 +572,7 @@ async def _execute_single_run(
     # Reporting observations (tier 2, report_*): pass r.error (the
     # observation text), NOT r.name (which is a verdict). The function name
     # goes only to the run log for traceability, never the judge.
-    harness_observations = [
-        r.error for r in validator_results
-        if r.reporting_only and not r.passed and r.error
-    ]
+    harness_observations = split_observations(validator_results)
     # For _build_warnings: (name, observation) tuples so the run log records
     # which report_* function fired.
     _harness_observation_pairs = [

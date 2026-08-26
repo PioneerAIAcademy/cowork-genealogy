@@ -252,3 +252,18 @@ def as_dicts(results: list[ValidatorRunResult]) -> list[dict[str, Any]]:
         for r in results
         if not r.reporting_only
     ]
+
+
+def split_observations(results: list[ValidatorRunResult]) -> list[str]:
+    """Extract anonymous observation texts from tier-2 report_* results.
+
+    Returns r.error (the observation text) for every reporting-only result
+    that failed and has an error message. Passing report_* results are
+    excluded (only fired findings appear). r.name (the function name) is
+    never included — it is a verdict, not an observation, and handing it
+    to the judge would anchor the grade.
+    """
+    return [
+        r.error for r in results
+        if r.reporting_only and not r.passed and r.error
+    ]
