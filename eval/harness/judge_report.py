@@ -486,7 +486,7 @@ def main(argv: list[str] | None = None) -> int:
     # say which and how many. Without this the report silently shrinks and still
     # reads like a whole-corpus measurement.
     if args.since is not None:
-        print(describe_window(args.since, n_runs=len(reports), n_total=n_total))
+        print(describe_window(args.since, n_runs=len(reports), n_total=n_total, corpus="unit"))
         print()
     if unmeasured:
         print(

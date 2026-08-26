@@ -695,6 +695,16 @@ e2e-compaction: ## record_search subjectId supply by compaction segment, over co
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-branch-only
+e2e-branch-only: ## Graded e2e runs that exist on another ref but not HEAD (issue #1444): make e2e-branch-only
+	# On-demand crawl, not embedded in any reader (measured 2026-08-25: 23
+	# stale-branch hits against 0 in-flight runs -- a reader-embedded version
+	# would add that noise to every invocation). Local refs only: no git
+	# fetch, no network -- whatever `git fetch origin` last synced is what
+	# this sees. Does not distinguish in-flight work from abandoned; triage
+	# by hand.
+	cd eval/harness && uv run python -m scripts.branch_only_runlogs
+
 .PHONY: provenance-report
 provenance-report: ## Identifiers a skill persisted that no input supplied: make provenance-report [SKILL=<name>]
 	# Offline, no API calls. Seven skill bodies carry a don't-fabricate rule in

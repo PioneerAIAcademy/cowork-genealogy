@@ -617,12 +617,11 @@ def replay_provenance(
 
     **The corpus is branch-scoped.** This reads `eval/runlogs/e2e/` as it exists
     in the CURRENT checkout, so a graded run committed on an unmerged branch is
-    invisible — it is not skipped, it is never seen, and nothing here can say so.
-    Two are known: `katalin-horak-son` and `heinrich-dewus-children-death`, both
-    on `land-heinrich-dewus-children-fixture`, and the latter is the first run
-    ever to store live entries for this check. Read any rate off an up-to-date
-    `main` with in-flight fixture PRs merged, or it is biased at exactly the
-    moment it is used.
+    invisible — it is not skipped, it is never seen (issue #1444).
+    `describe_window()`'s printed line says so on every run of this report;
+    `make e2e-branch-only` names what another ref carries that this one
+    doesn't. Read any rate off an up-to-date `main` with in-flight fixture PRs
+    merged, or it is biased at exactly the moment it is used.
 
     A run whose fixture has no committed `starting-tree.gedcomx.json` is NAMED in
     `skipped` and excluded from both counts, never silently dropped — with no

@@ -447,7 +447,22 @@ to understand before reading either:
 - Both counts are **branch-scoped** — they read `eval/runlogs/e2e/` in the
   current checkout, so a graded run committed on an unmerged branch is not
   skipped, it is never seen. Read a count off an up-to-date `main` with in-flight
-  fixture PRs merged, or it is biased at the moment it is used.
+  fixture PRs merged, or it is biased at the moment it is used. Every corpus
+  reader now states this itself, every time it runs — `describe_window()`
+  (`harness/since_window.py`) appends a fixed caveat naming the branch-scope
+  limitation to its own printed line (issue #1444).
+- **The remedy is a caveat plus an on-demand crawl, not an exact count.**
+  Considered and rejected: crawling remote branches inside every reader
+  (real engineering cost for speculative value — measured 2026-08-25 at 23
+  stale-branch result JSONs against 0 runs behind an open PR, so an
+  embedded crawl would add that cost and noise to every invocation for no
+  live gain that day), and warning when an open PR touches
+  `eval/runlogs/e2e/` (needs network access in a module deliberately kept
+  pure-analysis). What shipped instead: `make e2e-branch-only`
+  (`eval/harness/scripts/branch_only_runlogs.py`) diffs `git ls-tree` between
+  HEAD and every local/remote-tracking ref already known to the checkout —
+  no `git fetch`, no network — and a human runs it and triages the result
+  only when a decision is actually about to be taken off one of these counts.
 - The **replayed** counts read the whole corpus. `same_person` provenance: **120
   of the 147 runs that link a person have ≥1 gap (788 links, 79 fixtures)**, with
   one run skipped and named for having no committed seed tree. It is a **lower
