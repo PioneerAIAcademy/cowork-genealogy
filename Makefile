@@ -604,8 +604,10 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
-e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc + §11 unnamed-delegate shadow families over committed runs, stored and recomputed: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1
+e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc + §11 unnamed-delegate shadow families over committed runs, stored and recomputed: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1 | FEEDBACK_DIR=~/feedback PLATFORMS=<dir>=web,<dir>=darwin
 	# Also pure analysis, no API. Windowed to 14 days like every other reader;
+	# FEEDBACK_DIR= is the exception -- it scans hosted feedback bundles outside
+	# the repo, is NOT windowed, and ignores TEST/WINDOWS/SINCE/REPLAY (#1558).
 	# SINCE=all for a maximum-sample replay.
 	# NOT a calibration tool: §7 is shadow-only permanently (its success gate
 	# cannot see skill completion — see guardrail-enforcement-spec.md §7 and
@@ -625,7 +627,7 @@ e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc +
 	# measured the corpus's age, not the behaviour. Replaying turns two of the
 	# three into real counts. Counts, never rates: this is behaviour presence over
 	# the corpus, not a per-run compliance score.
-	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),) $(if $(REPLAY),--replay,)
+	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(FEEDBACK_DIR),--feedback-dir $(FEEDBACK_DIR),) $(if $(PLATFORMS),--platforms $(PLATFORMS),) $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),) $(if $(REPLAY),--replay,)
 
 .PHONY: e2e-skill-episodes
 e2e-skill-episodes: ## Per-skill episode fingerprint over committed runs (issue #1463): make e2e-skill-episodes | TEST=<slug> | ALL_SKILLS=1 | SINCE=all|N|YYYY-MM-DD
@@ -645,6 +647,20 @@ e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #
 	# transcript in #1238, so today it covers 2 of 145 runs while the transcripts
 	# hold 20 of the 23 events. Reading only one silently reports a fraction.
 	cd eval/harness && uv run python -m e2e.nudge_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-transcribe-failures
+e2e-transcribe-failures: ## How often image_transcribe fails to REACH OpenRouter, over committed e2e runs (issue #1594): make e2e-transcribe-failures | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. Replaces the shell snippet
+	# in issue #1594, which counted stripped calls in its denominator and could
+	# never match them in its numerator — so re-running it made a 9.7% rate print
+	# as 7.6% and read as the problem receding. Every rate here carries the
+	# denominator it was taken over, the stripped tally is a first-class line, and
+	# the by-author split states in words whether the corpus can actually separate
+	# a bad machine from a bad service (today it cannot). Same 14-day horizon as
+	# e2e-wiki-failures and for the same reason: it reads response_summary.
+	cd eval/harness && uv run python -m e2e.image_transcribe_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
@@ -677,6 +693,21 @@ e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latenc
 	# BY_SKILL needs a run committed after 2026-07-26 (timeline tool-name tagging);
 	# older runs report "no skill-phase data" rather than crashing.
 	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-compaction
+e2e-compaction: ## record_search subjectId supply by compaction segment, over committed e2e runs (issue #1155): make e2e-compaction | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs' usage.timeline +
+	# tool_calls. A run is segmentable only from a run committed after
+	# 2026-07-26 (#895, timeline tool-name tagging) -- older runs are excluded
+	# and the count is reported, not silently dropped. Segments 0-2 are
+	# "early", 3+ is "late" (issue #1155's split). The bare command's 14-day
+	# SINCE default is too narrow for this report's own question: both windows
+	# issue #1155 asks to compare are already past it as of writing --
+	# SINCE=2026-07-27 (the ranking fold) and SINCE=2026-08-04 (the
+	# rankingSkipped note) are the two invocations that answer it.
+	cd eval/harness && uv run python -m e2e.compaction_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: provenance-report
 provenance-report: ## Identifiers a skill persisted that no input supplied: make provenance-report [SKILL=<name>]

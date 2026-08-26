@@ -26,6 +26,7 @@ record categories:
 - Court records
 - Tax records
 - Cemetery and burial records
+- Published county and town histories (as clue sources)
 
 A project that relies on only one or two record types is almost
 certainly not exhaustive, regardless of how many searches were
@@ -38,6 +39,9 @@ databases are a starting point, not the finish line. Consider:
 
 - Major online platforms (FamilySearch, Ancestry, FindMyPast, etc.)
 - State and local archives
+- Genealogical libraries (Family History Library, Allen County Public
+  Library)
+- University and special collections
 - County courthouses and clerk offices
 - Religious institution archives
 - Specialized repositories (military archives, immigrant societies)

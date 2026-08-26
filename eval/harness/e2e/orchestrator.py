@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import shutil
 import sys
@@ -38,6 +39,7 @@ from claude_agent_sdk import (
     query,
 )
 
+from e2e.mcp_stderr import read_mcp_stderr_lines
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
@@ -47,11 +49,13 @@ from harness.context_policy import (
     owned_section_denial,
     owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
     subagent_only_denial,
+    SUBAGENT_ONLY_TOOLS,
 )
 from harness.judge import _summarize_response
 from harness.skill_invocation import (
     check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
     find_citation_nulling_in_conclusions,
+    find_citation_nulling_in_tree_sources,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
@@ -65,6 +69,7 @@ from e2e import pricing
 from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
+    GENEALOGY_SERVER_NAME,
     backstop_fired,
     classify_server_status,
     find_server_entry,
@@ -105,7 +110,6 @@ DEFAULT_RUNLOG_ROOT = REPO_ROOT / "eval" / "runlogs" / "e2e"
 DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
 DEFAULT_PLUGIN_SKILLS = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 DEFAULT_PLUGIN_AGENTS = REPO_ROOT / "packages" / "engine" / "plugin" / "agents"
-
 
 # Tools always allowed alongside MCP tools. See e2e-test-spec.md §6.
 # "Task" lets the /research orchestrator delegate to the gps-mentor
@@ -195,30 +199,29 @@ def is_blocked_tree_tool(tool_name: str) -> bool:
     return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
 
 
-def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
-    """Whether this is `extraction_append` on the main thread — the #942 bug.
+def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
+    """Whether this is a main-thread call to a `SUBAGENT_ONLY_TOOLS` member.
 
-    `extraction_append` is the record-extractor subagent's private writer: it is
-    declared by NO skill's `allowed-tools` and lives only on
-    `agents/record-extractor.md`. So the only legitimate caller is the
-    Task-spawned subagent, whose PreToolUse firing carries `agent_id`; a call on
-    the main thread (no `agent_id`) is the router substituting for a failed
-    spawn and doing the extraction itself.
+    Both members are a Task-spawned subagent's private tool, declared by NO
+    skill's `allowed-tools`: `extraction_append` lives only on
+    `agents/record-extractor.md` (the #942 case), and `image_read` only on
+    `agents/image-reader-opus.md` since `search-images` moved to
+    `@plugin:image-reader` (2026-07-17). So the only legitimate caller of either
+    is the subagent, whose PreToolUse firing carries `agent_id`; a call on the
+    main thread (no `agent_id`) is the router substituting for a failed spawn and
+    doing the work itself.
 
-    The policy binds in e2e for this tool because `agent_id` presence alone is a
+    The policy binds in e2e for both because `agent_id` presence alone is a
     sufficient discriminator — which is all e2e can see, since its sub-skills run
     in the same session via the `Skill` tool with no `agent_id` to attribute them
     (see `harness.context_policy` docstring). We deny the bare tool directly
-    rather than routing through `subagent_only_violation`, which guards the whole
-    set and takes a `declared_tools` argument e2e cannot supply; keeping the check
-    tool-specific also means a future skill that legitimately declares a guarded
-    tool is not denied here.
-
-    `image_read`, the set's other member, satisfies the same condition today — no
-    skill has declared it since `search-images` moved to `@plugin:image-reader`
-    (2026-07-17), and it lives only on `agents/image-reader-opus.md` — so it is
-    equally enforceable here and simply is not yet: that is outside #942's blast
-    radius, tracked as issue #1273.
+    rather than routing through `subagent_only_violation`, which takes a
+    `declared_tools` argument e2e cannot supply. The consequence is that e2e has no
+    declared-tools exemption at all: a future skill that legitimately declares a
+    guarded tool WOULD be denied here, and closing that needs this predicate
+    widened by hand. Membership in `SUBAGENT_ONLY_TOOLS` is what
+    generalizes it: a third guarded tool is covered here the moment it joins that
+    set (pinned by a per-member test).
     """
     # `or ""` rather than a get() default: a present-but-None `tool_name` would
     # raise AttributeError here, and a raising hook fails a call the agent was
@@ -226,7 +229,7 @@ def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
     if not (input_data.get("tool_name") or "").startswith("mcp__"):
         return False
     return (
-        _bare_tool_name(input_data["tool_name"]) == "extraction_append"
+        _bare_tool_name(input_data["tool_name"]) in SUBAGENT_ONLY_TOOLS
         and not is_subagent_call(input_data)
     )
 
@@ -800,7 +803,9 @@ def build_workspace(
     # route is kept because it is the one that provably reaches subagents; the
     # SDK option's subagent propagation is unverified. Do not restate this as
     # "the only lever" — that claim shaped a spend decision before it was
-    # checked. Session-wide (parent + every subagent). Left unset, the
+    # checked. Session-wide (parent + every subagent that does not pin its own
+    # `effort:` — agent frontmatter overrides this, verified live in Cowork and
+    # Claude Code on 2026-08-25; no agent pins one today). Left unset, the
     # run uses the CLI's bare default, which for sonnet-5 resolves to 'high' —
     # deep enough that the record-extractor subagent can spend its whole output
     # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
@@ -1223,6 +1228,10 @@ async def _run_agent(
     mcp_state: dict[str, Any] = {"unavailable": False, "misses": 0, "queries": []}
 
     run_started = time.monotonic()
+    # Wall-clock companion to the monotonic clock above (issue #1301) —
+    # time.monotonic() has no relationship to file mtimes, so a "since this
+    # check started" log-file filter needs its own real-clock timestamp.
+    run_started_wall = time.time()
 
     # Per-message timeline for forensics: [elapsed_seconds, kind, tool_names].
     # Lets a later analysis split a run into structural vs stall time, pinpoint
@@ -1314,19 +1323,15 @@ async def _run_agent(
         if not tool_name.startswith("mcp__"):
             return {}
 
-        # NOTE: the per-context tool policy (harness/context_policy.py) is only
-        # PARTIALLY enforced here — see that module's docstring.
-        #   - `extraction_append` IS enforced (below). No skill declares it, so
-        #     its only legitimate caller is the Task-spawned record-extractor,
-        #     which carries `agent_id`; a main-thread call is the #942 router
-        #     substitution. `agent_id` presence alone discriminates, which is all
-        #     e2e can see — sub-skills run in this same session via the Skill
-        #     tool with no `agent_id` to attribute them, so the full per-skill
-        #     check (`subagent_only_violation`) has no `declared_tools` to take.
-        #   - `image_read`, the set's other member, is NOT enforced here yet. It
-        #     meets the same condition today (no skill declares it; it lives only
-        #     on agents/image-reader-opus.md) — issue #1273.
-        if is_main_thread_extraction_append(input_data):
+        # The per-context tool policy (harness/context_policy.py): a main-thread
+        # call to any SUBAGENT_ONLY_TOOLS member is the router substituting for a
+        # failed subagent spawn. Both members are enforced here — `extraction_append`
+        # (#942) and `image_read` — since neither is declared by any skill and
+        # `agent_id` presence alone discriminates, which is all e2e can see (its
+        # sub-skills run in this same session via the Skill tool with no `agent_id`).
+        # We deny the bare tool directly rather than through `subagent_only_violation`,
+        # which takes a `declared_tools` argument e2e cannot supply.
+        if is_main_thread_subagent_only_tool(input_data):
             bare = _bare_tool_name(tool_name)
             blocked_context_calls.append(
                 {
@@ -1335,18 +1340,29 @@ async def _run_agent(
                     "blocked_by": "context",
                 }
             )
+            # Per-tool recovery target (issue #1273 Item 1 asks for per-tool
+            # guidance), mirroring each `_DENIAL_REASONS` entry, which
+            # `blocked_context_calls` does not store — so a runlog reader can act on
+            # this line alone. NOTE: for image_read this is the transcription plugin
+            # @plugin:image-reader (the deny doctrine's recovery), deliberately NOT
+            # the tool's owner image-reader-opus — the interpret-e2e-result skill
+            # names the owner for the separate "whose spawn failed" diagnostic.
+            # The fallback covers a future third guarded tool.
+            recovery = {
+                "extraction_append": "@plugin:record-extractor",
+                "image_read": "@plugin:image-reader",
+            }.get(bare, "the owning subagent")
             narration.append(
                 {
                     "tool_calls_before": len(tool_calls),
                     "kind": "blocked",
                     "text": (
-                        f"`{bare}` denied on the main thread — writing extracted "
-                        "assertions is the record-extractor subagent's job. If it "
-                        "failed to spawn, report the failure and stop (#942)."
+                        f"`{bare}` denied on the main thread — it is a subagent-only "
+                        f"tool; delegate to {recovery} rather than doing the work here."
                     ),
                 }
             )
-            _emit(f"[blocked context call] {bare} (main-thread extraction_append)")
+            _emit(f"[blocked context call] {bare} (main-thread subagent-only tool)")
             return subagent_only_denial(bare)
 
         # An owned SECTION, not an owned tool — a separate arm on purpose. The
@@ -1741,7 +1757,28 @@ async def _run_agent(
             nonlocal aborted_reason, error
             mcp_state["unavailable"] = True
             aborted_reason = "mcp_unavailable"
-            error = unavailable_message(entry, backstop=backstop, queries=queries)
+            # Best-effort stderr capture (issue #1301) — this fires on an abort
+            # path that must never itself crash, so a failure here degrades to
+            # no lines rather than propagating.
+            try:
+                server_stderr, looked_in = read_mcp_stderr_lines(
+                    cwd=workspace, server_name=GENEALOGY_SERVER_NAME,
+                    since=run_started_wall,
+                )
+            except Exception:  # noqa: BLE001 — see comment above
+                server_stderr, looked_in = [], "(unresolved)"
+            error = unavailable_message(
+                entry, backstop=backstop, queries=queries,
+                server_stderr=server_stderr or None,
+            )
+            if not server_stderr:
+                # Rule 2 (issue #1301): an empty capture must never read as
+                # "the server said nothing" -- without this, the message here
+                # is byte-identical to the pre-#1301 text, so a genealogist
+                # has no hint a capture was even attempted, let alone where it
+                # looked (this silence is exactly what hid the macOS cwd-slug
+                # bug from a live run, chesworthrm's review).
+                error += f"\n(No server stderr captured; looked in {looked_in}.)"
             # Recorded like every other harness-side event even though THIS path
             # never persists it (the run writes no files at all — see
             # run_e2e_test). Kept so the in-memory trace is complete and so a
@@ -2364,9 +2401,28 @@ async def run_e2e_test(
         # reached, so no run-log files exist and no E2eResult is ever built.
         # "This run never happened" — print the error, exit non-zero.
         if stop_reason == "mcp_unavailable":
-            raise McpUnavailableError(
-                error or unavailable_message(None)
-            )
+            if error:
+                fallback_message = error
+            else:
+                # Rare defensive arm: aborted_reason latched but `error` is
+                # somehow falsy. Best-effort capture, same as the primary abort
+                # path (issue #1301) — must not itself crash this raise.
+                try:
+                    fallback_stderr, fallback_looked_in = read_mcp_stderr_lines(
+                        cwd=workspace, server_name=GENEALOGY_SERVER_NAME,
+                        since=started_at,
+                    )
+                except Exception:  # noqa: BLE001 — see comment above
+                    fallback_stderr, fallback_looked_in = [], "(unresolved)"
+                fallback_message = unavailable_message(
+                    None, server_stderr=fallback_stderr or None
+                )
+                if not fallback_stderr:
+                    # Same rule-2 guard as the primary abort path above.
+                    fallback_message += (
+                        f"\n(No server stderr captured; looked in {fallback_looked_in}.)"
+                    )
+            raise McpUnavailableError(fallback_message)
 
         judge_seconds = 0.0
         if skip_judge or final_tree is None:
@@ -2426,6 +2482,27 @@ async def run_e2e_test(
         if warnings_unchecked_shadow:
             guardrail_shadow_violations = (
                 guardrail_shadow_violations + warnings_unchecked_shadow
+            )
+
+        # The TREE-side citation-nulling arm (issue #1358). Wired here, not beside
+        # the research-side call above, because that site has no tree in scope —
+        # this one has `final_research`, `final_tree` and `starting_tree`
+        # together, which is what the gate needs.
+        #
+        # Shadow only, and deliberately not graduated by this card. Its sibling
+        # measures ZERO across the corpus (1,884 concluded sources, all cited),
+        # and a zero is not a licence to graduate — per the shadow-to-graduate
+        # rules it means nobody has seen the detector fire. This arm is where the
+        # class actually lives: 111 of 171 uploaded sources carry no citation,
+        # across 50 of 159 concluded runs. Some fraction of that is
+        # legitimately-not-yet-uploaded, which only a human can price, so it
+        # detects and reports rather than failing anything.
+        tree_citation_shadow = find_citation_nulling_in_tree_sources(
+            final_research, final_tree
+        )
+        if tree_citation_shadow:
+            guardrail_shadow_violations = (
+                guardrail_shadow_violations + tree_citation_shadow
             )
 
         # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it

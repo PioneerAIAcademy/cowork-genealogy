@@ -119,6 +119,6 @@ author.
 
 ## Daily summary
 
-Written to `/Users/dallan/pioneeradademy/cowork-status-updates/YYYY-MM-DD.md`
+Written to `~/pioneeracademy/cowork-status-updates/YYYY-MM-DD.md`
 every run — format and field rules in `daily-summary-format.md`. Include the
 `missing:` field; the roll call is the one output unique to this team.

@@ -17,6 +17,7 @@ from e2e.guardrail_shadow_report import (
     _is_result_json,
     all_result_jsons,
     format_citation_nulling,
+    format_tree_citation_nulling,
     format_conflict_unpersisted,
     format_detail,
     format_post_hoc_replay,
@@ -26,6 +27,7 @@ from e2e.guardrail_shadow_report import (
     replay_post_hoc,
     replay_provenance,
     scan_citation_nulling,
+    scan_tree_citation_nulling,
     scan_conflict_unpersisted,
     scan_corpus,
     scan_provenance,
@@ -36,6 +38,7 @@ from e2e.guardrail_shadow_report import (
 )
 from harness.skill_invocation import (
     CITATION_NULLING_KIND,
+    TREE_CITATION_NULLING_KIND,
     CONFLICT_UNPERSISTED_KIND,
     PERSON_EVIDENCE_DENY_KIND,
     WARNINGS_UNCHECKED_KIND,
@@ -977,3 +980,65 @@ def test_format_unnamed_delegate_always_prints_the_attribution_denominator():
     plain = format_unnamed_delegate(scan, replay=False)
     assert "replayed over tool_calls" not in plain
     assert "of 20 run(s) that carry any caller attribution at all" in plain
+
+
+# --- scan/format tree citation-nulling (issue #1358) --------------------------
+# The tree-side arm shares `guardrail_shadow_violations` with four other classes
+# and is told apart only by its `kind`. The bucket it must NOT be folded into is
+# its own research-side sibling: those two read opposite sides of one seam and
+# measure 0 and 111 over the same 159 runs, so one bucket would hide the finding.
+
+
+def _tree_citation_entry(sid="S1"):
+    return {
+        "index": -1,
+        "tool": "tree.gedcomx.json",
+        "required_skill": "proof-conclusion",
+        "question_id": None,
+        "kind": TREE_CITATION_NULLING_KIND,
+        "detail": f"uploaded tree source {sid} (referenced by primary fact F1) has a null/empty citation string",
+    }
+
+
+def test_scan_tree_citation_nulling_picks_up_only_its_own_kind(tmp_path):
+    p = _write_result(
+        tmp_path / "fx",
+        "run-1.json",
+        [_provenance_entry(), _citation_entry(), _tree_citation_entry()],
+    )
+    out = scan_tree_citation_nulling([p])
+    assert len(out) == 1, "must not absorb the research-side or provenance entries"
+    assert out[0]["kind"] == TREE_CITATION_NULLING_KIND
+    assert out[0]["fixture"] == "fx"
+
+
+def test_the_two_citation_arms_never_absorb_each_other(tmp_path):
+    """The pair IS the finding — 0 research-side beside 111 tree-side is what
+    says the class lives at the upload copy rather than at authoring. Either
+    scanner counting the other's entries would erase that."""
+    p = _write_result(
+        tmp_path / "fx", "run-1.json", [_citation_entry(), _tree_citation_entry()]
+    )
+    assert len(scan_citation_nulling([p])) == 1
+    assert len(scan_tree_citation_nulling([p])) == 1
+
+
+def test_the_provenance_scan_excludes_the_tree_arm(tmp_path):
+    """`scan_provenance` is the catch-all for entries carrying `detail`; a new kind
+    that forgets to exclude itself is double-counted there and in its own
+    bucket, inflating the very rate the graduation decision reads."""
+    p = _write_result(tmp_path / "fx", "run-1.json", [_tree_citation_entry()])
+    assert scan_provenance([p]) == []
+
+
+def test_format_tree_citation_nulling_reports_sources_and_runs():
+    out = format_tree_citation_nulling(
+        [
+            {**_tree_citation_entry("S1"), "file": "a.json"},
+            {**_tree_citation_entry("S2"), "file": "a.json"},
+            {**_tree_citation_entry("S3"), "file": "b.json"},
+        ]
+    )
+    assert "3 uploaded tree source(s)" in out
+    assert "across 2 run(s)" in out
+    assert "#1358" in out
