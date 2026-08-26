@@ -143,7 +143,13 @@ nil — pivot only when all planned direct searches are complete and
 unresolved. If the primary question's `exhaustive_declaration.declared` is
 `true`, the researcher has declared direct evidence exhausted: take that as
 the FAN signal and do NOT propose additional direct-evidence paths. A FAN
-question's answer must be evidence about the objective's subject. Examples:
+question's answer must be evidence about the objective's subject, and it
+must target the people *around* the subject — associates, neighbors,
+witnesses, co-signers — not a record type that could itself hold direct
+proof of the relationship. If a record type (a deed, a will) could still
+directly name the relationship, searching it is unexhausted direct
+evidence, not a FAN pivot, whatever `exhaustive_declaration.declared` says.
+Examples:
 "Who witnessed Thomas Flynn's land transactions in Schuylkill County?" / "Who
 were Thomas Flynn's neighbors in Schuylkill County in 1850?"
 

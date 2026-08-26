@@ -1,0 +1,18 @@
+{
+  "test": {
+    "id": "ut_question_selection_015",
+    "skill": "question-selection",
+    "name": "Disputed parent assignment with no doubt-evidence or coordinates given must be asked for, not assumed",
+    "type": "positive",
+    "description": "Regression for #1471, the branch ut_question_selection_014 could not exercise single-turn. The objective disputes the parents currently attached to Anton Vogt (same scenario as _014), but this time the user's message supplies neither (1) the evidence behind their doubt nor (2) the birth date/place they are working from, and the only birth data in the tree is itself sourced to the same disputed FamilySearch tree (quality 1). Per SKILL.md Step 3, in interactive mode the skill must ask the user for both before formulating a question, not fall back to the tree's own tainted birth fact or write anything on this turn. Synthetic scenario -- no PII.",
+    "tags": ["question-selection", "from-objective", "first-question", "regression", "disputed-parents-ask-required"]
+  },
+  "input": {
+    "user_message": "The parents currently attached to Anton Vogt (I1) look wrong to me. What should I research next?",
+    "scenario": "disputed-parents-unsourced"
+  },
+  "judge_context": [
+    "The objective disputes the parents attached to Anton Vogt, but the user's message gives no evidence for the doubt and no birth date/place of their own -- the only birth data on file (~1860, Wisconsin) is sourced solely to the same disputed FamilySearch tree (quality 1). Per SKILL.md Step 3, the skill must ask the user (1) what evidence led them to doubt the assignment and (2) the birth date and place they are working from, before formulating any question. It must not write a question yet, and it must not silently adopt the tree's own tainted birth fact as the 'coordinates' instead of asking.",
+    "Writing a question on this turn -- even a correctly-framed confirm-or-refute one -- is wrong here, because it skips the ask Step 3 requires when the two inputs are missing. This is the mirror case of ut_question_selection_014, where the user had already supplied both."
+  ]
+}
