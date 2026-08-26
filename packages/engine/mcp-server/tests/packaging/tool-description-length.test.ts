@@ -14,7 +14,12 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * #1409 rewrite and #1771's year-clause edit: `record_search` 15,509 -> 14,043 and
  * `person_search` 3,745 -> 5,003 (its toggles were stubs that were also wrong, so
  * correctness cost tokens there), for a combined 19,254 -> 19,046 — a net saving of
- * about 208 characters, under 2%. This figure has been an increase and a saving at
+ * about 208 characters, under 2%. #1323 then spent 384 of that back on
+ * `isPrincipal` (14,043 -> 14,427): the ruling there was to name both roles and
+ * when each applies instead of recommending omission, and naming the
+ * relative-discovery pivot is what the guidance exists to do. The combined figure
+ * is now 19,430, i.e. above where the family started — which is the honest
+ * accounting, and the reason this docstring reports a direction rather than a win. This figure has been an increase and a saving at
  * different points in the same branch, which is the point: it is a side effect, not
  * the argument. #1771 brought `record_search.birthYearExact` from 475 down to 214
  * (the year behaviour is now measured, so its paragraph collapses to a one-liner)
@@ -123,7 +128,7 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14043],
+  ["record_search", 14427],
   ["person_search", 5003],
 ];
 
