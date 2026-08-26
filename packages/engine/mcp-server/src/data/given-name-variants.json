@@ -4,8 +4,9 @@
     "issue": "https://github.com/PioneerAIAcademy/cowork-genealogy/issues/1868",
     "shape": "per language -> per formal name -> { period, region, source, variants: [ { form, attested, source? } ] }. `attested` is per-VARIANT (not per formal name) so the measured/untested split is preserved exactly: only a variant with committed measured evidence is `attested: true`.",
     "attested_note": "Exactly three variant->formal pairs carry measured evidence: Betty->Elizabeth, Peggy->Margaret, Polly->Mary (membership test 8/8 over three name families, 2026-08-08). Every other variant is untested (attested: false) — present because it appears in the cited in-repo prose table, not because its reach was measured.",
+    "period_region_note": "`period` (\"1600-1900\") and `region` (\"England and Anglophone North America\") are FILE-WIDE SCOPE DEFAULTS stamped identically on every formal-name entry — they describe the collection's intended coverage window, not a per-name or per-variant measurement, and no entry's tag was individually dated or localized. Period-appropriateness is a separate axis from `attested` (measured search-reach): a variant can be in-window but untested, or attested but modern. Some seeded variants are modern-only forms that fall OUTSIDE the 1600-1900 window despite inheriting the default tag — Liam (William), Lisa (Elizabeth), Chuck and Carl (Charles), Hank (Henry), Rick (Richard) — kept because they appear in the cited seed table; treat the entry-level period as an upper-bound scope statement, not a claim that every listed variant was in use across the whole window.",
     "sourcing": "Every entry traces to an in-repo file:line. No source is invented.",
-    "out_of_scope": "Cross-language name forms — the inline cognates in the seed tables (Hans/Honza for John, Diego for James, Paco/Pepe for Francis/Joseph) and the Latin/Spanish/German block at search-strategies.md:76-83 (Joannes<->John, Iacobus<->James, Catalina<->Catherine, Wilhelm<->William, etc.) — are deliberately excluded. They are a different substitution mechanism (cross-language cognate / ecclesiastical register-form equivalence, formal<->formal across languages), not within-language diminutive expansion, and #1868 was scoped English-only on 2026-08-24 over one combined name-form table to keep issue #607's expansion contract to a single kind of substitution. Not tracked by a separate issue yet.",
+    "out_of_scope": "Cross-language name forms — the inline cognates in the seed tables (Hans/Honza for John, Diego for James, Paco/Pepe for Francis/Joseph) and the Latin/Spanish/German block at search-strategies.md:76-83 (Joannes<->John, Iacobus<->James, Catalina<->Catherine, Wilhelm<->William, etc.) — are deliberately excluded. They are a different substitution mechanism (cross-language cognate / ecclesiastical register-form equivalence, formal<->formal across languages), not within-language diminutive expansion, and #1868 was scoped English-only on 2026-08-24 over one combined name-form table to keep issue #607's expansion contract to a single kind of substitution. Not tracked by a separate issue yet. Note on Pepe: the seed table tags \"(Spanish)\" on Pepe only on the Joseph row (name-search-mechanics.md:218), not on the Francis row (:217), where Pepe also appears untagged; Pepe is nonetheless excluded from BOTH Francis and Joseph as a cross-language form. Applying the source's row-local tagging mechanically would wrongly retain the untagged Pepe on Francis — the exclusion here rests on the form being Spanish (established one row down), not on a tag present on the Francis row.",
     "seed_tables": [
       "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:202-219 (Formal -> nicknames seen in records)",
       "packages/engine/plugin/skills/search-full-text/references/search-strategies.md:56-71 (Formal -> scribal abbreviations)"
@@ -18,7 +19,7 @@
       "region": "England and Anglophone North America",
       "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:206; packages/engine/plugin/skills/search-full-text/references/search-strategies.md:71",
       "variants": [
-        { "form": "Betty", "attested": true, "source": "packages/engine/mcp-server/dev/probe-search-qualifiers.ts (Section E membership test, 8/8, 2026-08-08); packages/engine/mcp-server/dev/measured-figures.json (membershipTested; verdict:diminutiveReach)" },
+        { "form": "Betty", "attested": true, "source": "measured — see _meta.measured_evidence" },
         { "form": "Betsy", "attested": false },
         { "form": "Beth", "attested": false },
         { "form": "Liz", "attested": false },
@@ -36,7 +37,7 @@
       "region": "England and Anglophone North America",
       "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:204; packages/engine/plugin/skills/search-full-text/references/search-strategies.md:70",
       "variants": [
-        { "form": "Peggy", "attested": true, "source": "packages/engine/mcp-server/dev/probe-search-qualifiers.ts (Section E membership test, 8/8, 2026-08-08); packages/engine/mcp-server/dev/measured-figures.json (membershipTested; verdict:diminutiveReach)" },
+        { "form": "Peggy", "attested": true, "source": "measured — see _meta.measured_evidence" },
         { "form": "Peg", "attested": false },
         { "form": "Maggie", "attested": false },
         { "form": "Meg", "attested": false },
@@ -53,7 +54,7 @@
       "region": "England and Anglophone North America",
       "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:205",
       "variants": [
-        { "form": "Polly", "attested": true, "source": "packages/engine/mcp-server/dev/probe-search-qualifiers.ts (Section E membership test, 8/8, 2026-08-08); packages/engine/mcp-server/dev/measured-figures.json (membershipTested; verdict:diminutiveReach)" },
+        { "form": "Polly", "attested": true, "source": "measured — see _meta.measured_evidence" },
         { "form": "Molly", "attested": false },
         { "form": "Mamie", "attested": false },
         { "form": "May", "attested": false },
@@ -71,6 +72,18 @@
       ]
     },
     "Catherine": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:208",
+      "variants": [
+        { "form": "Kate", "attested": false },
+        { "form": "Kitty", "attested": false },
+        { "form": "Cathy", "attested": false },
+        { "form": "Katy", "attested": false },
+        { "form": "Trina", "attested": false }
+      ]
+    },
+    "Katherine": {
       "period": "1600-1900",
       "region": "England and Anglophone North America",
       "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:208",
