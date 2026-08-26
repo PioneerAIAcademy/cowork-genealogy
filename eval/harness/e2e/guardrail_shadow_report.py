@@ -62,9 +62,11 @@ from e2e.runlog_selection import (
 from e2e.feedback_transcript_adapter import adapt_bundle_transcript
 from harness.skill_invocation import (
     CITATION_NULLING_KIND,
+    TREE_CITATION_NULLING_KIND,
     CONFLICT_UNPERSISTED_KIND,
     did_not_land,
     find_citation_nulling_in_conclusions,
+    find_citation_nulling_in_tree_sources,
     find_missing_mentor_verdicts,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
@@ -199,6 +201,7 @@ def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
         and v.get("kind")
         not in (
             CITATION_NULLING_KIND,
+            TREE_CITATION_NULLING_KIND,
             CONFLICT_UNPERSISTED_KIND,
             PERSON_EVIDENCE_DENY_KIND,
             WARNINGS_UNCHECKED_KIND,
@@ -212,6 +215,20 @@ def scan_citation_nulling(paths: list[Path]) -> list[dict[str, Any]]:
     ESM citation string is empty). Identified by `kind == CITATION_NULLING_KIND`.
     """
     return _scan_stored(paths, lambda v: v.get("kind") == CITATION_NULLING_KIND)
+
+
+def scan_tree_citation_nulling(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#1358 TREE-side citation-nulling shadow entries STORED in each
+    run's `guardrail_shadow_violations` (a tree `sources[]` entry an uploaded
+    conclusion rests on, whose `citation` is empty). Identified by
+    `kind == TREE_CITATION_NULLING_KIND`.
+
+    Counted separately from `scan_citation_nulling` on purpose: the two arms read
+    opposite sides of the same seam — research.json, where the citation is
+    authored, and the tree, where proof-conclusion copies it at upload — and
+    their rates differ by two orders of magnitude. One bucket would hide that.
+    """
+    return _scan_stored(paths, lambda v: v.get("kind") == TREE_CITATION_NULLING_KIND)
 
 
 def scan_conflict_unpersisted(paths: list[Path]) -> list[dict[str, Any]]:
@@ -347,6 +364,25 @@ class RunInputs:
             return "no readable final-research.json sidecar"
         return None
 
+    def missing_for_tree_citation(self) -> str | None:
+        """Why `find_citation_nulling_in_tree_sources` cannot read this run.
+
+        Its own combination, and deliberately not either of its neighbours':
+        it needs the final research (for the conclusion gate) AND the final tree
+        (for the sources), but NOT the seed tree — unlike warnings-unchecked,
+        which compares against the seed to tell a new relationship from a
+        carried-in one. Reusing `missing_for_warnings` here would discard every
+        run with no fixture directory for a seed this check never reads, and
+        under-report the rate it exists to measure.
+        """
+        if self.run_log is None:
+            return "unreadable run log"
+        if self.final_research is None:
+            return "no readable final-research.json sidecar"
+        if self.final_tree is None:
+            return "no readable final-tree.gedcomx.json sidecar"
+        return None
+
     def missing_for_warnings(self) -> str | None:
         """Why `find_relationship_writes_without_warnings_check` cannot read this
         run, or None. The seed tree is required, not optional: without it the
@@ -461,6 +497,7 @@ class PostHocReplay:
     citation: CheckReplay = field(default_factory=CheckReplay)
     conflict: CheckReplay = field(default_factory=CheckReplay)
     warnings: CheckReplay = field(default_factory=CheckReplay)
+    tree_citation: CheckReplay = field(default_factory=CheckReplay)
 
 
 def _record(
@@ -544,6 +581,19 @@ def replay_post_hoc(
             _record(
                 out.conflict,
                 find_unpersisted_conflict_resolutions(inputs.final_research),
+                inputs,
+            )
+
+        # The tree-side citation arm (#1358): research + tree, no seed.
+        tree_citation_skip = inputs.missing_for_tree_citation()
+        if tree_citation_skip:
+            out.tree_citation.skipped.append(f"{where}: {tree_citation_skip}")
+        else:
+            _record(
+                out.tree_citation,
+                find_citation_nulling_in_tree_sources(
+                    inputs.final_research, inputs.final_tree
+                ),
                 inputs,
             )
 
@@ -747,6 +797,7 @@ def format_post_hoc_replay(replay: PostHocReplay) -> str:
     # which is what the other two already do per source and per question.
     for label, unit, per_run, check in (
         ("citation-nulling", "concluded source(s) with a null/empty citation string", False, replay.citation),
+        ("tree citation-nulling", "uploaded tree source(s) with a null/empty citation string", False, replay.tree_citation),
         ("conflict-unpersisted", "concluded question(s) relying on an unpersisted conflict resolution", False, replay.conflict),
         ("warnings-unchecked", "run(s) that wrote a new ParentChild/Couple relationship without calling person_warnings", True, replay.warnings),
     ):
@@ -787,6 +838,24 @@ def format_citation_nulling(violations: list[dict[str, Any]]) -> str:
     return (
         "\n§7.5 citation-nulling check (issue #1133, shadow): "
         f"{len(violations)} concluded source(s) with a null/empty citation "
+        f"string, across {affected} run(s)."
+    )
+
+
+def format_tree_citation_nulling(violations: list[dict[str, Any]]) -> str:
+    """One flat count, like its siblings — a fact about the final tree, not a
+    windowed recency scan.
+
+    Reported beside the research-side line rather than merged into it, because
+    the pair is the finding: a zero on one side and a large number on the other
+    is what tells a reader the class lives at the upload copy, not at authoring.
+    This card does NOT graduate either arm — a rate is not yet a decision, and
+    part of this count is legitimately-not-yet-uploaded evidence that only a
+    human can price."""
+    affected = len({v["file"] for v in violations})
+    return (
+        "\n§7.5 tree citation-nulling check (issue #1358, shadow): "
+        f"{len(violations)} uploaded tree source(s) with a null/empty citation "
         f"string, across {affected} run(s)."
     )
 
@@ -1337,6 +1406,13 @@ def main(argv: list[str] | None = None) -> int:
     citation_nulling = scan_citation_nulling(paths)
     print(format_citation_nulling(citation_nulling))
 
+    # Printed directly beneath its research-side sibling: the PAIR is the
+    # finding. A zero above and a large number here is what says the class lives
+    # at the upload copy rather than at authoring, which is the reading the
+    # graduation decision for either arm depends on.
+    tree_citation_nulling = scan_tree_citation_nulling(paths)
+    print(format_tree_citation_nulling(tree_citation_nulling))
+
     conflict_unpersisted = scan_conflict_unpersisted(paths)
     print(format_conflict_unpersisted(conflict_unpersisted))
 
@@ -1369,6 +1445,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {v['fixture']:<35} idx={v['index']:<4} {v['detail']}")
         print(f"\nCitation nulling (issue #1133), {len(citation_nulling)}:")
         for v in citation_nulling:
+            print(f"  {v['fixture']:<35} {v['detail']}")
+        print(
+            f"\nTree citation nulling (issue #1358), {len(tree_citation_nulling)}:"
+        )
+        for v in tree_citation_nulling:
             print(f"  {v['fixture']:<35} {v['detail']}")
         print(f"\nConflict unpersisted (issue #1317), {len(conflict_unpersisted)}:")
         for v in conflict_unpersisted:
