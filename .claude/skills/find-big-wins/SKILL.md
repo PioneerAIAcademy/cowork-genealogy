@@ -1,6 +1,6 @@
 ---
 name: find-big-wins
-description: Use when the lead wants structural bets rather than the next increment — "find the big ideas", "what would change the shape of this system", "we keep hill-climbing", "what should we stop doing", "propose something structural", or a bare "/find-big-wins". Run it after /audit-board and consume that pass rather than repeating it. Reads three layers — the board as a symptom of recurring cost, the repo's own measured evidence (the e2e corpus, run logs, annotations, judge audits, feedback, the `nothing-checks` register, the ADRs), and deliberately OUTSIDE the repo, because internal evidence shows where the walls are and can never show the next hill. Also works the `needs-decision` queue — items blocked on one answer from the lead, which this skill converts into issues a junior can take. Hunts subtractions as hard as additions: retiring a mechanism, dropping a guarantee, deleting a lane. Every proposal names the constraint it removes or the class of work it eliminates, what we would observe if it worked, and the cheapest probe that could kill it in a day. No target count — two or twelve or zero, ranked, with its own confidence stated. Proposes; the lead decides each idea one at a time, and the result of a deep dive is a well-scoped `cross-cutting` issue he assigns. Never starts the work and never writes the plan.
+description: Use when the lead wants structural bets rather than the next increment — "find the big ideas", "what would change the shape of this system", "we keep hill-climbing", "what should we stop doing", "propose something structural", or a bare "/find-big-wins". Run it after /audit-board and consume that pass rather than repeating it. Reads three layers — the board as a symptom of recurring cost, the repo's own measured evidence (the e2e corpus, run logs, annotations, judge audits, feedback, the `nothing-checks` register, the ADRs), and deliberately OUTSIDE the repo, because internal evidence shows where the walls are and can never show the next hill. Reads the `needs-decision` queue as evidence of missing doctrine, but never drains it — `/make-decisions` does that daily. Hunts subtractions as hard as additions: retiring a mechanism, dropping a guarantee, deleting a lane. Every proposal names the constraint it removes or the class of work it eliminates, what we would observe if it worked, and the cheapest probe that could kill it in a day. No target count — two or twelve or zero, ranked, with its own confidence stated. Proposes; the lead decides each idea one at a time, and the result of a deep dive is a well-scoped `cross-cutting` issue he assigns. Never starts the work and never writes the plan.
 allowed-tools:
   - Read
   - Edit
@@ -27,12 +27,6 @@ the team is *permitted* to do are all in scope.
 
 **Subtractions count, and are usually cheaper than additions.** Retiring a
 mechanism, dropping a guarantee, deleting a lane. Hunt them (§4).
-
-**You also clear the decision queue.** The lead assigns himself no issues — his
-job is coaching juniors into seniors — so items blocked on one answer from him
-pile up under the `needs-decision` label with no assignee. Working them into a
-question, options and a recommendation is this skill's other job, and on most
-weeks it is the larger half (§1, "The decision queue is your input queue").
 
 **You propose, then apply what is approved.** No branches, no PRs, no code
 changes, no eval runs, and **never the plan** — the person assigned the issue
@@ -80,22 +74,12 @@ therefore unavailable.
 
 ## How this run is scoped
 
-Two invocations, because the two jobs have different cadences and should not bid
-against each other for the lead's attention.
+One invocation, weekly, after `/audit-board`: §0, all three evidence layers, the
+subtraction hunt, the proposals. It is the expensive pass and is meant to be.
 
-| Invocation | Does | When |
-|---|---|---|
-| `/find-big-wins` | Everything: §0, all three evidence layers, the subtraction hunt, the proposals | Weekly, after `/audit-board` |
-| `/find-big-wins decisions` | **§0 and the decision queue only** (§1's last section). No evidence layers, no subtraction hunt, no proposals | Midweek, or any time the queue has grown |
-
-The `decisions` run is the cheap one and should stay cheap — it prepares
-questions and closes out answered ones. If you find yourself sweeping the corpus
-or reading ADRs on a `decisions` run, you have drifted into the full pass.
-
-**Producers outnumber the consumer four to one.** `triage-standup`,
-`fill-ready` and `review-ready` all apply `needs-decision`, and they run daily;
-this skill is the only thing that removes it. A queue that only drains weekly
-grows by construction, which is what the `decisions` invocation exists to fix.
+**Answering the queue is `/make-decisions`, which runs daily and stays cheap.**
+Three skills apply `needs-decision` every day, so a consumer that ran only weekly
+would let it grow by construction. Do not do that job here.
 
 ## 0. Carry forward before you look at anything new
 
@@ -132,9 +116,9 @@ visible; an intention is not.
 **Do not mine the board for ideas.** It is the output of the hill-climb, so
 every idea already on it is by construction inside the current basin. Reading it
 for proposals is how a run produces twelve incremental suggestions with the word
-"structural" in front of them. The one exception is the decision queue at the end
-of this section, which is not an idea source either — it is a work queue that was
-handed to you.
+"structural" in front of them. The `needs-decision` queue is the one thing here
+you read as a *stream* rather than as items — a question re-asked three times is
+unwritten doctrine, which is a recurring cost like the four below.
 
 Read it for one thing: **recurring cost**. Four shapes, all cheap:
 
@@ -193,113 +177,28 @@ source, and the three levers that skill names — raise throughput, cut mileston
 scope, stop the stream — are all *within* the design. The fourth lever, changing
 what generates the stream, is this skill's.
 
-### The decision queue is your input queue
+### The decision queue is evidence, not your work
 
-This part is not a symptom read — it is work handed to you, and it is the one
-place you legitimately take items *from* the board.
+`/make-decisions` drains it daily. **Never remove the label here**, and never
+take a ruling — one remover, or the two disagree about what is still open.
 
-**The lead assigns himself no issues.** His job is coaching juniors into seniors,
-so his personal pool is 0. What used to land there now sits in Backlog in one of
-two labelled states, and **only one of them is yours** (`/fill-ready` § "Above the
-junior pools" owns the split):
+Read it for **repeats**, not for items. A question that has been asked three
+times is doctrine nobody has written down, and writing it once is a subtraction:
+it removes a recurring interruption instead of answering one more instance of it.
 
 ```sh
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
-  --label needs-decision --json number,title,updatedAt,labels \
-  -q '.[] | "\(.updatedAt[0:10])\t#\(.number)\t\(.title)"' | sort
+  --label needs-decision --json number,title,labels \
+  -q '.[] | "#\(.number)\t\(.title)"'
 ```
 
-**`needs-decision` is the queue you work.** Each item is blocked on one answer
-from the lead, and the work behind it is frequently junior. The question is
-**not** "should we do this" — `/fill-ready` already ranked it. It is: **what
-exactly is the question, what are the options, and which do you recommend?**
-Usually one of four shapes:
+If the queue is growing while `/make-decisions` runs daily, questions are being
+generated faster than doctrine is being written. That is a proposal — file it
+with the others, ranked on its own merits.
 
-- a doctrine call, after which the rest is mechanical;
-- a spec that has to exist before the code does;
-- a design fork left open in the body, closable by a cheap probe;
-- a blast radius nobody has written down — the trigger that most often
-  disappears once it is written down.
-
-Work these the same way you work a proposal: bring the evidence, the options, the
-recommendation and the counter-argument, so he can answer in a sitting.
-
-### You asked, he answered — close it out in the same turn
-
-**The moment he decides, apply it. Do not carry it to a later run, a later
-section of your report, or a "to write up" list.** Three writes, in this order,
-before you move to the next item:
-
-```sh
-# 1. the durable record — his answer, in his words, on the issue
-gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \
-  --body "**Ruling:** <his answer> — <the one-line reason, if he gave one>"
-
-# 2. splice it into the body, so the next reader gets the decision and not the
-#    open fork. gh issue view --json body -q .body > body.md, edit, then:
-gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file body.md
-
-# 3. the label comes off, and the item ranks in a junior pool like anything else
-gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \
-  --remove-label needs-decision
-```
-
-An answer you heard and did not apply is worse than one you never asked for: the
-issue still reads as blocked, he sees it on the waiting list next run, and the
-work sits unblocked with nobody knowing. **This is the same failure as leaving a
-commit unpushed** — the thinking is done and the value is held hostage to a step
-nobody can see.
-
-**The `**Ruling:**` comment is the record, not a queue.** It exists so the next
-reader — a junior picking the issue up, a later run of this skill, `/audit-board`
-— sees the decision and its reasoning. It is not a signal for someone else to
-finish your job.
-
-### The residual: an answer given where nothing could act on it
-
-It still happens — he rules at standup, or in a session with no tools, or types
-a comment without the marker. Those are the only items that should ever need
-finding, and finding them is the *first* thing a `decisions` run does:
-
-```sh
-# answered, never closed out. Should be EMPTY. Anything here is a session that
-# heard an answer and walked away — fix it now, before preparing new questions.
-#
-# `test` and not `startswith`: a real ruling comment carries a heading above the
-# marker and a number after it, so an exact-prefix match reports zero forever.
-#
-# BOTH WORDS, BOTH MARKUPS. This reads what the LEAD wrote, not what we were
-# told to write. We write `**Ruling:**`; he writes `## Decision:` and
-# `**Decision (lead, <date>)`. A `**Ruling`-only test missed two real rulings on
-# 2026-08-13 (issues #1331, #1394) — and here a miss is silent, because this
-# query reports emptiness as health.
-gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
-  --label needs-decision --json number,title,comments \
-  -q '.[] | select([.comments[].body
-                   | test("(?m)^#{1,4} +(Ruling|Decision)\\b|\\*\\*(Ruling|Decision)\\b")] | any)
-      | "#\(.number)  \(.title)"'
-```
-
-**A non-zero result is a defect, not a workload.** Report the count as one — "N
-items were answered and left labelled" — because the fix is upstream in whichever
-skill dropped it, not in draining the list faster.
-
-Everything else under `needs-decision` is genuinely waiting on him, and is what
-you prepare.
-
-An item whose answer turns out to be "this is genuinely hard either way" moves to
-`senior` instead — swap the labels, never carry both.
-
-**`senior` is not your queue.** Those are hard regardless of any open question,
-and the lead assigns them to a senior in the matching lane. You touch one only
-when a *structural* proposal would eliminate it — which is a proposal, not a
-conversion.
-
-**Two numbers to report every run**, because nothing else tracks them: how many
-`needs-decision` items are open, and how many were answered since the last run.
-If that queue is growing, the conversion rate is the finding and it outranks the
-proposals — a decision backlog nobody clears is the same failure as the old
-two-slot pool, just without the slots to make it visible.
+`senior` is a different queue and not yours either. Those are hard regardless of
+any open question, and you touch one only when a structural proposal would
+eliminate the whole class.
 
 ## 2. Layer 2 — internal evidence
 
@@ -334,8 +233,10 @@ and read the report's concentration block before quoting any total.
   form" are one bet, not four issues. `docs/architecture.md` §9.4 keeps only the
   three gaps that change how a correct change is made — read those too, then the
   register for the rest.
-- `gh issue list --state open --label needs-decision` — the open questions, which
-  §10 also points at. §10 itself keeps two, stated where they bind.
+- `gh issue list --state open --label needs-decision` — the open questions.
+  `/make-decisions` answers them daily; read them here only for repeats. Two more
+  sit in `docs/architecture.md` under "Open questions" and carry no label — read
+  those too.
 - `docs/adrs/` — every decision, with what it costs. §3 below is how to read
   these for *expiry* rather than for compliance.
 - `docs/specs/guardrail-enforcement-spec.md` § "Options set aside" — a second
@@ -718,11 +619,6 @@ Four rules:
 5. **Outside evidence** — what §3's sweep turned up, each with a dated primary
    source. If a platform constraint was checked and still holds, say so: that is
    a real result and it stops the next run re-checking it.
-6. **The decision queue** — how many `needs-decision` items are open, how many
-   were answered since the last run, and the two or three you worked into a
-   question this run (§1). If the queue grew, that line moves to the top of the
-   report. Note separately any item you would move from `needs-decision` to
-   `senior` because the answer turned out to be "hard either way".
 
 Then stop and wait. He decides one idea at a time; you write a ledger row for
 each decision, including `deferred` for everything he did not reach. Do not begin
