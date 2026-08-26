@@ -292,7 +292,6 @@ describe("doc and .claude/ tooling links", () => {
  */
 const GRANDFATHERED_LINE_CITES: Record<string, string[]> = {
   "docs/adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md": [
-    "packages/schema/src/index.ts:269",
     "scripts/build-mcpb.mjs:26-27",
   ],
   "docs/realtime-architecture.md": [
