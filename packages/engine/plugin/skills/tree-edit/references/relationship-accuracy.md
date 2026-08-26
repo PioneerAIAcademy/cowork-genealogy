@@ -22,9 +22,49 @@ evidence supports it, the tree should distinguish among:
 
 When the specific relationship type is unknown, record the
 relationship without asserting a type rather than defaulting to
-"biological." A household listing in a census may show a child
-living with adults without clarifying whether the connection is
-genetic, adoptive, or something else.
+"biological." A census household listing is the usual occasion for
+this, and what the schedule states splits at 1880:
+
+- **Pre-1880 (1850/1860/1870)** — the schedule has **no relationship
+  column**, so the record states no relationship at all, only that
+  these people shared a dwelling. Any parent-child reading is an
+  inference from headship and co-residence, not something the record
+  says (see "When to create relationships" below for what that means
+  for the edge).
+- **1880 onward** — the schedule adds a relationship-to-head column,
+  so a relationship **is** stated and must be read as stated ("son",
+  "wife"). What it still does not state is the **type**: a stated
+  "son" may be biological, step, or adopted.
+
+The dividing line is whether the record states the relationship, not
+how confident you are about it.
+
+### Guardianship shortly after a remarriage
+
+A man appointed guardian of children who bear a **different surname**,
+shortly after marrying a woman connected to that surname, is most
+likely their **stepfather** — the children are hers by a prior
+marriage. The differing surname is the expected pattern here, not a
+conflict, and it is not grounds to posit an extra generation to
+explain the guardian's role.
+
+**What to record.** The inference tells you *who* the parties are to
+each other; it does not license a **type**. Write the parent-child
+edge with **no subtype at all**. The bond plus the marriage is a
+hypothesis about the type, not evidence of it, and a `Step` subtype
+written on that pair alone fails the threshold above. Do not
+compensate by asserting the **mother's** edge as Genetic either — her
+maternity rests on the same surname correspondence and gets the same
+treatment. State the stepfather hypothesis in your reply; leave the
+subtype field empty until a source settles it.
+
+**Research implication:** Treat the step-relationship as the leading
+hypothesis, not as a settled type. Look for the mother's earlier
+marriage and for the children's births under the earlier surname, and
+check whether an estate or inheritance drove the appointment — a
+guardianship was routinely granted over a minor's property, including
+to the minor's own parent, so the appointment by itself establishes
+neither orphanhood nor a step-relation.
 
 ## Couple-event facts belong on the relationship
 
