@@ -2,8 +2,8 @@
 
 Tag-gated on ``routing`` (the AST-recognized gate tag) and
 ``routes-to:<skill-name>`` (the data tag naming the expected callee).
-Asserts the router's first delegation -- ``skills_invoked`` with the skill
-under test's own activation filtered out -- matches the expected sub-skill.
+Asserts the router's first delegation in ``skills_invoked`` matches the
+expected sub-skill.
 
 ``routes-to:stop`` is the special case where the router should finish
 without invoking any sub-skill (e.g., project already completed).
@@ -34,9 +34,10 @@ def _expected_skill(test: dict) -> str | None:
 def test_routes_to_expected_skill(skills_invoked, test):
     """The router's first sub-skill delegation must match the ``routes-to:`` tag.
 
-    ``skills_invoked`` starts with the skill under test's own activation
-    (``"research"``) only when the model reached it through an explicit
-    ``Skill`` call; the guard below rejects the runs where it did not.
+    ``skills_invoked`` records nested ``Skill`` calls made during the run,
+    not the entry-point activation.  For routing tests the skill under test
+    is the entry point, so it does not appear in the list — only its
+    delegated sub-skills do.
 
     Graded deterministically rather than by the LLM judge because
     ``skills_invoked`` is ground truth: the PreToolUse hook fires on the
@@ -49,11 +50,6 @@ def test_routes_to_expected_skill(skills_invoked, test):
     if expected is None:
         pytest.skip("routing tag present but no routes-to: data tag")
     skill_under_test = test.get("skill", "")
-    assert skill_under_test in skills_invoked, (
-        f"'{skill_under_test}' never activated — skills_invoked="
-        f"{skills_invoked}. This is a triggering failure, not a "
-        f"routing failure; the routing table was never consulted."
-    )
     delegations = [s for s in skills_invoked if s != skill_under_test]
     if expected == "stop":
         assert not delegations, (

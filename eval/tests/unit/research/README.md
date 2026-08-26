@@ -18,8 +18,7 @@ decay.
 
 Routing tests carry a `routes-to:<skill-name>` tag. The deterministic
 validator (`eval/harness/validators/test_research.py`) parses this tag and
-asserts the router's first delegation matches -- its own activation is
-filtered out first. `routes-to:stop` means the router
+asserts the router's first delegation matches. `routes-to:stop` means the router
 should finish without invoking any sub-skill.
 
 ## What is NOT covered (and why)
