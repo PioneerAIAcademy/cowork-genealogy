@@ -78,3 +78,26 @@ describe('ProjectOverview — researcher profile', () => {
     expect(screen.getByText(/submission to NGSQ/)).toBeTruthy()
   })
 })
+
+/**
+ * The shape the optionality flip exists to admit: the key ABSENT, not present-and-null.
+ * 18 of the 25 flipped keys are absent from committed documents tens of thousands of
+ * times, and nothing normalizes the wire payload before it is cast to ResearchData.
+ *
+ * tsc guards the narrowing itself (reverting `== null` to `=== null` here is TS18048),
+ * but it cannot see WHAT the component does once someone satisfies the compiler a
+ * different way: `!` is forbidden by the ruling, and `?? 0` would render "0 persons"
+ * instead of the not-identified message. This pins the behaviour, not the compile.
+ */
+describe('ProjectOverview — a flipped key that is absent, not null', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('renders the not-identified message instead of throwing on undefined.length', () => {
+    const project = { ...patrickFlynnResearch.project }
+    delete (project as Record<string, unknown>).subject_person_ids
+    mockResearch({ project } as Partial<ResearchData>)
+
+    expect(() => render(<ProjectOverview />)).not.toThrow()
+    expect(screen.getByText('Subject not yet identified')).toBeInTheDocument()
+  })
+})
