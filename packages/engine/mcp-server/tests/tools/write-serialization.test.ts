@@ -198,7 +198,11 @@ describe("write serialization under concurrency (issue #1715)", () => {
 
   it("one project reached by two names shares one lock", async () => {
     const link = join(await mkdtemp(join(tmpdir(), "ws-link-")), "alias");
-    await symlink(dir, link);
+    // "junction" on Windows, where a directory symlink is privileged (EPERM
+    // without elevation or Developer Mode) and this test could never run. A
+    // junction is the unprivileged equivalent and realpath() canonicalizes it
+    // to the same target, which is the aliasing this test is about.
+    await symlink(dir, link, process.platform === "win32" ? "junction" : undefined);
     let active = 0;
     let overlapped = false;
     // Trailing slash, a `..` hop, and a symlink all name the same project. On

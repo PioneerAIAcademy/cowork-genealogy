@@ -110,7 +110,11 @@ point to:
   the death certificate and census records")
 - A specific next action in plain language ("settle the research question
   for the 1860-1908 gap, then work out which records to search for it").
-  Name what will happen, never the skill that does it.
+  Name what will happen, never the skill that does it: internal skill
+  names mean nothing to a first-time researcher, and "use
+  question-selection to…" is not something a user can act on. The rule
+  constrains the wording shown to the user, not which skill the work is
+  handed to.
 
 Vague recommendations like "continue researching" provide no value
 to the user and violate the GPS principle that research should be
