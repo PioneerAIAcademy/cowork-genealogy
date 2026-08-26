@@ -408,7 +408,7 @@ re-graded) / `skipped` (the judge never ran).
 | `tool_cap` / `max_turns` | It may be looping — look for repeated tool calls near the end |
 | `cost_cap` | Hit the per-run cost limit |
 | `error` | SDK or harness exception; check `result.error` |
-| `mcp_unavailable` | **The genealogy tools were not in the session — an environment failure, not your fixture. Re-run; do not re-research the case.** You will not find a run log for it: this one writes no files. Run `make e2e-preflight` for the server's own error text |
+| `mcp_unavailable` | **The genealogy tools were not in the session — an environment failure, not your fixture. Re-run; do not re-research the case.** You will not find a run log for it: this one writes no files. The abort message itself now prints the server's own captured stderr when the harness found it — if it didn't, run `make e2e-preflight`, which reads the same log and shows the directory it looked in |
 
 Full field reference: spec §8.
 
@@ -497,11 +497,46 @@ judgment call you should be able to defend in review.
 
 ---
 
+## Analyzing the committed corpus: a report target, not a script
+
+Steps 0–9 are about authoring one fixture. A different kind of task reads
+*every* committed run at once — `eval/harness/e2e/corpus_report.py`,
+`nudge_report.py`, `latency_report.py`, `wiki_failure_report.py`,
+`compaction_report.py`, and their `make e2e-*` targets are all pure analysis
+over `eval/runlogs/e2e/**`: no live run, no API spend.
+
+**Why this lands as a permanent module + Makefile target, not a one-off
+script**, using `compaction_report.py`/`make e2e-compaction` (issue #1155,
+splitting each run's `record_search` calls by compaction segment) as the
+example: the same timeline-segmentation method is needed again — issue #1144
+wants it applied to four guardrail skills' on-demand reference reads, and
+ADR-0003's "Revisit when" clause asks for a compaction-segment audit of a
+second skill body. A throwaway script gets rebuilt from scratch for each of
+those; a module next to its siblings gets imported.
+
+**Mechanics.** `make e2e-compaction TEST=<slug> SINCE=all|N|YYYY-MM-DD`. Like
+the other aggregating reports, `SINCE` defaults to the last 14 days — too
+narrow for most compaction questions, since heavy compaction only shows up in
+long runs and the corpus turns over quickly. Pass an explicit `SINCE=<date>`
+or `SINCE=all`. The two windows issue #1155 was asked to compare:
+`SINCE=2026-07-27` (the day the ranking fold shipped) and `SINCE=2026-08-04`
+(the day `rankingSkipped` landed, meant to counteract exactly this decay).
+Both are cumulative — the first *includes* the second, so the pre-nudge-only
+row in ADR-0003 is the first window's counts minus the second's, not a window
+this target can print. A run committed before 2026-07-26 (#895) carries no
+per-message tool names and can't be segmented; it's excluded from the report
+and the exclusion is counted, never silently dropped.
+
+---
+
 ## Windows equivalents
 
-Every `make` target above has a batch file in `eval\`. Double-click it or run
-it from that folder; each prompts for what it needs instead of taking
-`TEST=`-style arguments, and builds the MCP server first where that matters.
+Every `make` target in the fixture-authoring steps above has a batch file in
+`eval\`. The corpus reports (`make e2e-corpus`, `e2e-nudges`, `e2e-latency`,
+`e2e-wiki-failures`, `e2e-compaction`) do not — run those from Git Bash or
+WSL. Double-click a batch file or run it from that folder; each prompts for
+what it needs instead of taking `TEST=`-style arguments, and builds the MCP
+server first where that matters.
 
 | Instead of | Double-click |
 |---|---|

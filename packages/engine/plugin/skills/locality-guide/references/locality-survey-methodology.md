@@ -79,6 +79,10 @@ period, determine which of these categories may apply:
 - **Tax records** — property tax, poll tax, personal property.
 - **School records** — enrollment, attendance, yearbooks.
 - **Institutional records** — hospital, asylum, orphanage, prison.
+- **Town and county histories** — published local histories (often
+  19th- to early-20th-century) that reprint early records, list founding
+  families, and carry biographical sketches; frequently the only
+  surviving transcription of records since lost.
 
 ### 3. Locate repositories holding those records
 
@@ -118,6 +122,12 @@ yet accessible), identify alternatives:
 - Probate records reveal family relationships when vital records are absent
 - Newspaper notices capture events not recorded elsewhere
 - DNA evidence supplements documentary gaps
+- City directories place a person at a specific address in the years
+  between censuses — for the cities that have them
+- State census records place a person in the off-years between federal
+  censuses — for the states that took them; both a city directory and a
+  state census earn their place when the person cannot be found in the
+  federal census at all
 
 ## Common pitfalls
 
