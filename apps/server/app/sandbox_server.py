@@ -156,7 +156,7 @@ class Hub:
                 [sys.executable, "-m", "app.agent.runner"],
                 cwd=str(PROJECT_DIR), env=os.environ.copy(),
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=log,
-                text=True, bufsize=1,
+                text=True, encoding="utf-8", bufsize=1,
             )
         except Exception as exc:
             # This `message` is rendered by ChatPane as `Chat unavailable: …`,

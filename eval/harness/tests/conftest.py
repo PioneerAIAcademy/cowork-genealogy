@@ -31,8 +31,6 @@ is a skip; a missing tool is a regression.
 
 from __future__ import annotations
 
-from functools import lru_cache
-
 import pytest
 
 _ENGINE_BUILD_SKIP_REASON = "engine build absent; run make engine-build"
@@ -44,21 +42,35 @@ _ENGINE_BUILD_SKIP_REASON = "engine build absent; run make engine-build"
 # count would need a worker-to-controller channel.
 _engine_build_skips: list[str] = []
 
+_engine_build_available_cache: bool | None = None
 
-@lru_cache(maxsize=1)
+
 def _engine_build_available() -> bool:
     """True iff the compiled engine build is usable this session.
 
-    Behavioral and computed once (``node`` is spawned at most twice per session, and
-    not at all past the first call). Short-circuits: an empty catalog means the build
-    is gone, so the validator is not probed in that case.
+    Cached like ``mock_mcp._load_build_tool_catalog`` -- only a successful
+    (``True``) result is remembered, so ``node`` is spawned at most twice past
+    the first success. An unconditional ``lru_cache`` here would re-introduce
+    the exact split-brain that loader's own truthy-only cache exists to avoid:
+    a transient failure on the first call (e.g. the load timing out) would get
+    locked in here as a permanent ``False`` for the rest of the session --
+    skipping all six ``requires_engine_build`` tests -- even though the
+    loader's own cache would have recovered on the very next call. Short-
+    circuits: an empty catalog means the build is gone, so the validator is
+    not probed in that case.
     """
+    global _engine_build_available_cache
+    if _engine_build_available_cache:
+        return True
     from harness.mock_mcp import _load_build_tool_catalog
     from harness.ts_validator import validate_parsed
 
     if not _load_build_tool_catalog():
         return False
-    return validate_parsed({}, {}) is not None
+    available = validate_parsed({}, {}) is not None
+    if available:
+        _engine_build_available_cache = True
+    return available
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:

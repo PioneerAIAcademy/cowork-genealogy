@@ -32,6 +32,7 @@ def test_calibrate_judge_does_not_import_agent_sdk():
         ],
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert proc.returncode == 0, proc.stderr
     assert proc.stdout.strip() == "False", (
