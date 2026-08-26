@@ -35,8 +35,8 @@
   "judge_context": [
     "GENERAL RULE UNDER TEST: when the invoking message already carries an execute/continue-authorization phrase in the same turn as the plan request, research-plan must hand off toward execution without an additional round-trip. This is not specific to Bridget Halloran or this question -- the same rule applies to any first-plan request phrased as a compound 'plan AND execute/continue' instruction.",
     "The user's message here is functionally equivalent to a user who, after being shown a plan, replies 'yes, start' -- it just arrived pre-emptively, in the same message as the plan request.",
-    "Skill('search-records') is stubbed (execution.stub_skills) to return a canned confirmation that execution proceeded -- this stands in for search-records' own suite, which already covers its own correctness. Do not grade the content of that canned confirmation.",
-    "COMPLIANT: the skill writes the plan, then invokes Skill('search-records') (which returns the canned confirmation) -- or otherwise explicitly states it is proceeding to execute -- rather than posing execution as an open question.",
+    "Skill('search-records') AND Skill('search-external-sites') are both stubbed (execution.stub_skills) to return canned confirmations that execution proceeded -- each stands in for that skill's own suite, which already covers its own correctness. Do not grade the content of either canned confirmation. Which of the two the skill hands off to depends on the plan it writes, so either is compliant.",
+    "COMPLIANT: the skill writes the plan, then invokes Skill('search-records') or Skill('search-external-sites') (which return the canned confirmations) -- or otherwise explicitly states it is proceeding to execute -- rather than posing execution as an open question.",
     "NON-COMPLIANT (the specific failure this test guards against): the skill writes the plan and ends its turn with an open question like 'Would you like me to start executing this plan?' -- re-asking something the invoking message already answered. Score Correctness low ONLY for this pattern.",
     "This judges the CONTROL FLOW after the plan is written, not the plan's record-type content -- do not fail this dimension solely because the plan's breadth or record-type selection is imperfect (that is Record type selection's job); judge only whether the skill stopped to ask despite already having authorization, versus proceeding.",
     "If the skill asks a genuinely different clarifying question (e.g., which of two ambiguous candidate jurisdictions to search first) that is not a re-ask of the already-answered 'should I start executing' question, that is acceptable and should not be penalized under this dimension."
@@ -44,10 +44,15 @@
   "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600,
+    "max_turns": 30,
     "stub_skills": [
       {
         "skill": "search-records",
         "response": "Executing pl_001 now, in sequence. pli_001 (1860 census, Schuylkill County, PA): searched FamilySearch, one candidate found and logged as log_001; plan item updated to in_progress. Continuing to pli_002 without stopping to check in, per your instruction -- each subsequent planned item will be searched and logged the same way in turn. No further confirmation needed from you for this batch."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Executing the plan's external-repository items now, without stopping to check in, per your instruction. For each one I generated targeted search URLs (Ancestry and FindAGrave, Schuylkill County, Pennsylvania, surname Doyle) and logged each as an external_site entry with outcome 'partial' -- the URL is generated but no capture has been received yet. No MyHeritage or FindMyPast links: researcher_profile lists no subscription to either. Those items stay in_progress until the researcher opens the URLs in their own authenticated browser and uploads the PDF captures. Every remaining external item in the plan is handled the same way in turn."
       }
     ]
   }
