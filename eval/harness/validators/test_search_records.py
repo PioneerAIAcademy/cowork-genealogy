@@ -109,6 +109,33 @@ _ROLE_ASSERTIONS = (
     r"(?:head|wife|husband|son|daughter|father|mother)\b",
 )
 
+# Possessive kinship claims about a specific named person found in the
+# record — "Amos's children", "Doss's son" — a second phrasing of the same
+# claim _ROLE_ASSERTIONS's "as ROLE" form catches, which "as" alone misses.
+# Scoped to a capitalized name's possessive for the same reason
+# _ROLE_ASSERTIONS avoids bare role words above: a bare pronoun ("his son")
+# is common in a legitimate tree-side reference this rule must not trip on.
+_POSSESSIVE_KINSHIP_ASSERTIONS = (
+    r"\b[A-Z][a-zA-Z]*'s\s+(?:son|daughter|child|children|wife|husband)\b",
+)
+
+# A plural kinship noun immediately introducing named individuals — "plus
+# sons Thos T McElwee and Stephen McElwee" — the exact phrasing behind
+# issue #1912's production report. Scoped to the PLURAL forms only (never
+# bare "son"/"daughter"/"wife"/"husband"): a search routinely names a single
+# already-known tree-side relative this way ("anchored on his wife
+# Catherine"), which is not a claim about the record; introducing multiple
+# same-role people by a plural noun is not that pattern.
+_PLURAL_KINSHIP_INTRODUCING_NAME = (
+    r"\b(?:sons|daughters|children)\s+[A-Z]",
+)
+
+_CLAIM_PATTERNS = (
+    _ROLE_ASSERTIONS
+    + _POSSESSIVE_KINSHIP_ASSERTIONS
+    + _PLURAL_KINSHIP_INTRODUCING_NAME
+)
+
 # Any of these in the note satisfies the rule. The skill does not have to use
 # SKILL.md's exact sentence — it has to say, in some form, that the structure
 # is an inference rather than something the record stated.
@@ -140,22 +167,36 @@ def test_pre1880_census_structure_marked_inferred(
     wife Margaret + daughter Hannah".
 
     Deterministic rather than judged because compliance is genuinely
-    inconsistent, not because the judge misreads it. Across the four
-    committed run logs the marker appeared on 17 of 32 pre-1880 census runs
-    and all 32 passed: ut_search_records_012 carried it once in four runs,
-    _013 twice, and _015 and _027 never — while _015 wrote "William Mullen
-    ... as father and Margaret Mullen ... as mother — directly corroborates
-    tree stubs I4 and I5" off an 1860 census. An LLM dimension graded
-    against behaviour that is itself a coin flip flakes with it; this does
-    not. See issue #1284.
+    inconsistent, not because the judge misreads it. See issue #1284.
 
-    Scoped to the authored `notes` field, which is where the household
-    write-up lands and the one place a validator can see it — the harness
-    hands validators state and tool calls, not the response text. The
-    requirement fires only when `notes` actually describes the household
-    (`_HOUSEHOLD_MENTIONS`) or asserts a record-side role
-    (`_ROLE_ASSERTIONS`), so a note that reports the focus person alone, and
-    a nil entry that has no household to describe, both pass untouched.
+    Two independent checks, both against the authored `notes` field (where
+    the household write-up lands and the one place a validator can see it):
+
+    1. **Note-wide.** If `notes` describes a household at all
+       (`_HOUSEHOLD_MENTIONS`) or makes a claim (`_CLAIM_PATTERNS`), an
+       inference marker must appear *somewhere* in the note. This is the
+       original #1284 rule, unchanged — it is what catches a bare listing
+       with no hedge anywhere ("...in household of Thomas Flynn and Mary
+       Flynn.", no marker at all).
+    2. **Per-sentence, added for issue #1912.** A marker elsewhere in the
+       note does not retroactively qualify a *specific* claim it was never
+       written next to. `ut_search_records_h4k` reproduces exactly this:
+       "...likely Amos's children. Pre-1880 census — no relationship
+       column; family structure inferred..." carries a marker, so check 1
+       passes it, but the marker sits in a trailing sentence that never
+       qualifies "likely Amos's children" two sentences earlier. So: split
+       `notes` on sentence-ending punctuation only (a semicolon-joined
+       clause — SKILL.md's own prescribed shape, "...in one dwelling;
+       family structure inferred ... not stated." — stays one sentence),
+       and require any sentence carrying a claim to carry its own marker.
+
+    Check 1 alone under-catches (misses a claim "cured" from a distance);
+    check 2 alone under-catches the opposite (a bare listing makes no
+    explicit claim at all, so it never trips check 2). Together they cover
+    both — confirmed against every `pre-1880-census-household` note in
+    every committed `search-records` run log to date, and against this
+    file's own pinned unit tests (`tests/unit/test_search_records_pre1880_validator.py`),
+    neither of which check 2 alone can satisfy.
     """
     if "pre-1880-census-household" not in test.get("tags", []):
         pytest.skip("not a pre-1880 census household scenario")
@@ -167,25 +208,39 @@ def test_pre1880_census_structure_marked_inferred(
         if e.get("outcome") not in ("positive", "partial"):
             continue  # a nil found no household to describe
         notes = e.get("notes") or ""
+
         describes_household = any(
             m in notes.lower() for m in _HOUSEHOLD_MENTIONS
-        ) or any(
-            re.search(p, notes, re.IGNORECASE) for p in _ROLE_ASSERTIONS
+        ) or any(re.search(p, notes, re.IGNORECASE) for p in _CLAIM_PATTERNS)
+        marker_anywhere = any(
+            re.search(p, notes, re.IGNORECASE) for p in _INFERENCE_MARKERS
         )
-        if not describes_household:
+
+        if describes_household and not marker_anywhere:
+            offenders.append((e.get("id"), notes))
             continue
-        if any(re.search(p, notes, re.IGNORECASE) for p in _INFERENCE_MARKERS):
-            continue
-        offenders.append((e.get("id"), notes))
+
+        for sentence in re.split(r"(?<=[.!?])\s+", notes):
+            if not any(
+                re.search(p, sentence, re.IGNORECASE) for p in _CLAIM_PATTERNS
+            ):
+                continue
+            if any(
+                re.search(p, sentence, re.IGNORECASE) for p in _INFERENCE_MARKERS
+            ):
+                continue
+            offenders.append((e.get("id"), notes))
+            break
 
     assert not offenders, (
         "a pre-1880 US census has no relationship column, so a log note that "
         "describes the household must say the family structure is inferred "
-        "rather than stated (SKILL.md Step 4). These entries describe the "
-        "household and assert its structure flat: "
+        "rather than stated (SKILL.md Step 4), and a specific relationship "
+        "claim must carry that qualifier in its own sentence rather than "
+        "relying on one elsewhere in the note. These entries assert "
+        "structure flat: "
         + "; ".join(f"{eid}: {notes!r}" for eid, notes in offenders)
     )
-
 
 # --- Result sidecar retention ----------------------------------------
 
