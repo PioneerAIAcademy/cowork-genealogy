@@ -98,10 +98,12 @@ matching `corrections` key.
 | France | Dec 1582 | 10 days | |
 | Catholic German states | 1583–1585 | 10 days | Varied by state |
 | Protestant German states | 1700 | 10→11 days | Feb 18 → Mar 1 |
-| Holland, Zeeland, Brabant | Dec 1582 | 10 days | Dec 4 → Dec 15 |
-| Gelderland | Jul 1700 | 11 days | Jun 30 → Jul 12 |
-| Utrecht, Overijssel | Dec 1700 | 11 days | Nov 30 → Dec 12 |
-| Friesland, Groningen, Drenthe | Jan 1701 | 11 days | Dec 31 1700 → Jan 12 1701. Groningen used Gregorian 1583–1594, then reverted to Julian |
+| Zeeland, Brabant | Dec 1582 | 10 days | Dec 14 → Dec 25 |
+| Holland | Jan 1583 | 10 days | Adopted at the turn of the year, after Zeeland and Brabant |
+| Gelderland | Jul 1700 | 11 days | Jun 30 → Jul 12. A 1700 date up to Jun 30 is still Old Style |
+| Utrecht, Overijssel | Dec 1700 | 11 days | Nov 30 → Dec 12. A 1700 date up to Nov 30 is still Old Style |
+| Friesland, Groningen | Dec 1700 | 11 days | Dec 31 1700 → Jan 12 1701. Groningen used Gregorian 1583–1594, then reverted to Julian |
+| Drenthe | Apr 1701 | 11 days | Apr 30 → May 12 1701. A 1701 date up to Apr 30 is still Old Style |
 | Denmark/Norway | 1700 | 10→11 days | |
 | Great Britain & colonies | Sep 1752 | 11 days | Sep 2 → Sep 14 |
 | Sweden | 1753 | 11 days (post-1753); 1700–1753 used a unique "Swedish calendar" 1 day ahead of Julian / 10 days behind Gregorian | Failed gradual transition; Feb 30, 1712 is a real Swedish date (added to revert to Julian). Swedish 30 Feb 1712 = Julian 29 Feb 1712 = Gregorian 11 Mar 1712 |

@@ -182,12 +182,12 @@ These conventions govern how the translation is written up:
   record's jurisdiction had not yet adopted the Gregorian calendar at
   that date — Protestant German states before 1700, Britain and
   colonies before 1752, Sweden before 1753, Russia before 1918,
-  Gelderland, Utrecht and Overijssel before 1700, Friesland,
-  Groningen and Drenthe before 1701 (but Holland and Zeeland from
-  1582) — do not write an ISO form: say the date is Old Style and
-  route to convert-dates. A Dutch record between 1582 and 1701 that
-  names no province is indeterminate: say so and route to
-  convert-dates rather than assuming.
+  Gelderland, Utrecht and Overijssel in or before 1700, Friesland
+  and Groningen before 1701, Drenthe in or before 1701 (but Zeeland
+  from 1582 and Holland from 1583) — do not write an ISO form: say
+  the date is Old Style and route to convert-dates. A Dutch record
+  between 1582 and 1701 that names no province is indeterminate: say
+  so and route to convert-dates rather than assuming.
 - **Genitive names aren't errors.** "Johannis" is genitive of
   "Johannes" — normalize to nominative form.
 - **Foreign text in English narrative.** Italicize foreign words
