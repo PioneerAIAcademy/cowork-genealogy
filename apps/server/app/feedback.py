@@ -93,6 +93,13 @@ async def _walk_project(sandbox) -> list[tuple[str, bytes]]:
 
 
 TREE_FILENAME = "tree.gedcomx.json"
+STARTING_TREE_FILENAME = "starting-tree.gedcomx.json"
+# Both tree-shaped files a project folder can hold. starting-tree.gedcomx.json is
+# the write-once completion-gate baseline (issue #1490); it carries the same
+# living persons as tree.gedcomx.json and is bundled by the same non-media walk,
+# so it must be redacted too or a feedback bundle would ship living details
+# FamilySearch's terms forbid sharing.
+_REDACTED_TREE_FILENAMES = frozenset({TREE_FILENAME, STARTING_TREE_FILENAME})
 LIVING_GIVEN = "Living"
 LIVING_SURNAME_FALLBACK = "Unknown"
 
@@ -149,7 +156,7 @@ def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, byte
     out: list[tuple[str, bytes]] = []
     redacted = 0
     for rel, data in files:
-        if rel != TREE_FILENAME:
+        if rel not in _REDACTED_TREE_FILENAMES:
             out.append((rel, data))
             continue
         try:
@@ -174,7 +181,11 @@ def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, byte
                     relationship["facts"] = []
             data = json.dumps(tree, indent=2).encode("utf-8")
         except Exception:  # noqa: BLE001 — never block a submission on this
-            redacted = 0
+            # Pass this file through untouched; do NOT zero the running total,
+            # which now spans both tree files. A parse failure here fails before
+            # any person is counted (json.loads / the persons-array check), so the
+            # accumulator is already correct for this file.
+            pass
         out.append((rel, data))
     return out, redacted
 
@@ -375,7 +386,9 @@ def _feedback_markdown(
             "",
             "## Living people redacted",
             "",
-            f"{redacted_living} person(s) in `tree.gedcomx.json` are living or not "
+            f"{redacted_living} living-person record(s) across the project's tree "
+            "files (`tree.gedcomx.json` and, when present, `starting-tree.gedcomx.json`) "
+            "were living or not "
             "marked deceased, so their given names, dates and places were replaced "
             f"with `{LIVING_GIVEN} <Surname>` before this bundle was created. Their "
             "ids and relationships are intact, so the case still reproduces. This is "
