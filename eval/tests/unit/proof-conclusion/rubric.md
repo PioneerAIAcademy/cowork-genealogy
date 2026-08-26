@@ -47,28 +47,17 @@ Does the proof cite all relevant assertions and address all resolved conflicts? 
 
 Does the chosen proof conclusion — written as a Statement, Summary, or Argument — match the shape of the evidence? A proof statement suits a few cited sentences with no contradictions; a proof summary suits multiple correlated sources weighing clearly one way; a proof argument is required for competing candidates, only indirect evidence, significant conflicts, or any case where a competent researcher would disagree without seeing the full reasoning.
 
-**Check the declared `vehicle` against the artifact, not only against the evidence.**
-The agent body sizes each form: a Statement is "a few cited sentences, no explanation
-needed" at ~150 words or fewer; a Summary is "~300-500 words"; an Argument is up to
-~800. So the declared `vehicle` is a claim about the narrative as well as about the
-evidence, and this dimension grades both halves. Read `proof_summaries[].vehicle`,
-then read what was actually written: a narrative several times its declared form's
-budget, or one carrying section headings and a multi-source correlation pass under
-`vehicle: "statement"`, is a declared-form mismatch even when the reasoning is sound
-and even when the *evidence* would have justified that form. Score the mismatch, and
-say in the rationale which of the two halves failed — the form choice or the label on
-it. Length alone is not the test: a Summary modestly over ~500 words that still reads
-as a Summary is a pass, while a 500-word "Statement" is not, because the form's
-defining property is that no explanation was needed.
+**The declared `vehicle` is a claim about the narrative, not only about the evidence.**
+Read `proof_summaries[].vehicle`, then read what was written: section headings and a
+per-source walk-through under `vehicle: "statement"` is a declared-form mismatch even when
+the reasoning is sound. Judge the shape, not a word count.
 
-**Do not attempt a precise word count** — you will misjudge it, and an exact count is a
-validator's job, not yours. Use the budgets as order-of-magnitude anchors and score on
-**shape**: does this read as a few cited sentences (Statement), a correlation across
-sources (Summary), or a reasoning chain the reader must follow (Argument)? A narrative
-with section headings, a per-source walk-through and a tier-rationale section is not a
-Statement whatever its length. Reserve the mismatch score for a form that is plainly
-wrong for the artifact, and if you find yourself writing a number, write "well over" or
-"far short of" instead.
+**Known ineffective as prose — do not read the paragraph above as a working check.** A
+longer version of it was measured over 17 gradings on `v1_2026-08-25_13-34-10`: every
+rationale cited the budgets and the dimension stayed flat at 3 while 13 of 13 narratives
+exceeded their declared form's budget. A word count against a closed enum is mechanical,
+so enforcement is owed to validator **V1** in
+`docs/deep-dives/proof-conclusion-findings-2026-08-25.md`, not to this rubric.
 
 - **pass:** (write) The form of the proof conclusion matches the evidence complexity — e.g. an Argument for two undistinguished candidate fathers or a refutation that turns on a reasoning chain; a Summary when multiple sources correlate cleanly; a Statement only when direct evidence settles it outright. The narrative's structure actually follows the chosen form. OR (review, `no-new-proof-expected`) The review correctly identifies which form the existing `ps_NNN` was written in AND states whether that form still fits the evidence shape (e.g., "Summary was defensible at the time; if newer sources surface a competing candidate, the next conclusion may need to be an Argument"). The skill is not expected to choose a new form here — the review just judges fit.
 - **partial:** In write-mode, the form is defensible but under- or over-built — e.g. a Summary used where competing candidates really warrant an Argument, or an Argument's heavy machinery applied to an open-and-shut Statement case — or the declared form doesn't match the narrative's actual structure. In review-mode, the assessment doesn't explicitly judge whether the existing form still fits.
