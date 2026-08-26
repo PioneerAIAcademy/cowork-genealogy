@@ -86,9 +86,12 @@ describe('ProjectOverview — researcher profile', () => {
  *
  * tsc guards the narrowing itself (reverting `== null` to `=== null` here is TS18048),
  * but it cannot see WHAT the component does once someone satisfies the compiler a
- * different way. `!` is forbidden by the ruling; `?? []` compiles clean and takes
- * the same branch, so only a rendering assertion distinguishes a real fix from one
- * that merely silences the compiler. This pins the behaviour, not the compile.
+ * different way. `!` is forbidden by the ruling. `?? []` is NOT the danger: it
+ * compiles clean AND takes the same branch, so it is a harmless equivalent and
+ * passes these tests, as it should. The mutation that matters is a guard that
+ * always takes one branch -- `{true ? (` left the whole viewer-ui suite green
+ * until the positive case above existed. So the pair is the point: the absent-key
+ * case pins the guard's true branch, the positive case pins that it has another.
  */
 describe('ProjectOverview — a flipped key that is absent, not null', () => {
   beforeEach(() => vi.clearAllMocks())
