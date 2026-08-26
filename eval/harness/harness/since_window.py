@@ -37,6 +37,7 @@ import argparse
 import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from typing import Literal
 
 #: Runs newer than this are "current" for reporting purposes.
 DEFAULT_SINCE_DAYS = 14
@@ -150,7 +151,7 @@ def add_since_arg(
     )
 
 
-def branch_scope_note(*, corpus: str = "e2e") -> str:
+def branch_scope_note(*, corpus: Literal["e2e", "unit"] = "e2e") -> str:
     """One always-true sentence: this corpus read is scoped to the current
     checkout, so a run committed only on another branch is not visible here
     (GitHub issue #1444).
@@ -158,7 +159,11 @@ def branch_scope_note(*, corpus: str = "e2e") -> str:
     `git` is never called from a reader to make this exact — the readers say
     they *may* be missing something, they do not try to prove it. `corpus`
     picks the remedy named: `make e2e-branch-only` only crawls
-    `eval/runlogs/e2e/`, so naming it from a unit-corpus caller would be false.
+    `eval/runlogs/e2e/`, so naming it from a unit-corpus caller would be false
+    — an unrecognized value raises rather than silently dropping that remedy
+    line or, the other direction, wrongly claiming it for the unit corpus.
+    There is no CI type-checking over this tree, so the `Literal` hint alone
+    would not be enforced; the raise is what actually catches a typo.
     """
     base = (
         "Scoped to this checkout — a run committed only on another branch "
@@ -166,11 +171,14 @@ def branch_scope_note(*, corpus: str = "e2e") -> str:
     )
     if corpus == "e2e":
         return base + " Run `make e2e-branch-only` to list what other refs carry."
-    return base
+    if corpus == "unit":
+        return base
+    raise ValueError(f"corpus must be 'e2e' or 'unit', got {corpus!r}")
 
 
 def describe_window(
-    cutoff: date | None, *, n_runs: int, n_total: int, corpus: str = "e2e"
+    cutoff: date | None, *, n_runs: int, n_total: int,
+    corpus: Literal["e2e", "unit"] = "e2e",
 ) -> str:
     """One line naming the window and the sample, for a report's own output.
 

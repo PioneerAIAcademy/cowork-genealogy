@@ -89,6 +89,23 @@ def test_symbolic_head_ref_is_never_queried(monkeypatch):
     assert "refs/remotes/origin/main" in queried
 
 
+def test_a_real_branch_literally_named_head_is_not_excluded(monkeypatch):
+    """The symbolic-ref skip is scoped to refs/remotes/*/HEAD specifically --
+    a real local branch that happens to end in /HEAD (e.g. team/HEAD) must
+    still be checked."""
+    queried: list[str] = []
+
+    def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
+        if cmd[1] == "for-each-ref":
+            return "refs/heads/team/HEAD\t2026-08-01\n"
+        queried.append(cmd[4])
+        return ""
+
+    monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
+    branch_only_runlogs.branch_only()
+    assert "refs/heads/team/HEAD" in queried
+
+
 def test_ann_and_final_siblings_are_not_reported_as_branch_only(monkeypatch):
     """Only is_result_json paths count -- a .ann.json or .final-* sibling
     present on a ref but absent from HEAD must not be reported."""
@@ -130,3 +147,19 @@ def test_a_ref_whose_ls_tree_fails_is_skipped_not_fatal(monkeypatch):
 
 def test_format_report_states_a_clean_result_as_a_real_result(monkeypatch):
     assert "No graded run logs found" in branch_only_runlogs.format_report({})
+
+
+def test_main_fails_clearly_when_head_itself_cannot_be_read(monkeypatch, capsys):
+    """Unlike a per-ref ls-tree failure (skipped, not fatal), a failure
+    listing refs or reading HEAD's own tree is a hard prerequisite -- main()
+    must report it distinctly from "nothing found", not crash raw or print a
+    false-clean result."""
+
+    def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
+        raise subprocess.CalledProcessError(128, cmd)
+
+    monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
+    rc = branch_only_runlogs.main()
+    err = capsys.readouterr().err
+    assert rc == 1
+    assert "Could not list refs" in err
