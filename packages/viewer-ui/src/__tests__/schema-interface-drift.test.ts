@@ -126,10 +126,12 @@ function interfaceFields(path: string): {
 const { fields: parsed, optional: parsedOptional, inheriting } = interfaceFields(sourcePath)
 
 /**
- * Which interfaces each helper actually compared. Asserted as an exact SET, not a
- * count: a floor is defeatable one interface at a time (`if (tsName.startsWith(
- * 'Gedcomx')) return` cleared a floor of 150 while hiding a real regression), and
- * a count cannot tell a skipped interface from a smaller one.
+ * Which interfaces each helper actually compared — recorded only once the helper's
+ * own expect has PASSED, so that neither a throw nor an early return registers a
+ * name. Asserted as an exact SET, not a count: a floor is defeatable one interface
+ * at a time (`if (tsName.startsWith('Gedcomx')) return` cleared a floor of 150 while
+ * hiding a real regression), and a count cannot tell a skipped interface from a
+ * smaller one.
  */
 const seen = { names: new Set<string>(), optionality: new Set<string>() }
 
@@ -142,12 +144,16 @@ function expectMirrors(tsName: string, def: any, help: string) {
   const missing = schemaKeys.filter((k) => !fields!.has(k))
   const extra = [...fields!].sort().filter((k) => !(k in def.properties))
 
-  seen.names.add(tsName)
   expect(
     { missing, extra },
     `${tsName} drifted — missing: the schema has it, the type doesn't; ` +
       `extra: the type advertises a field the schema rejects (additionalProperties: false)`,
   ).toEqual({ missing: [], extra: [] })
+  // AFTER the expect, never before: a throw must NOT record the name. The
+  // planted-drift block below calls this helper with 'Assertion' and expects a
+  // throw; recording first let that count as coverage, and deleting the real
+  // Assertion comparison then left this whole file green.
+  seen.names.add(tsName)
 }
 
 /**
@@ -178,7 +184,6 @@ function expectOptionality(tsName: string, def: any, help: string): void {
   const spuriousQuestion = shared
     .filter((k) => required.has(k) && optional!.has(k))
     .sort()
-  seen.optionality.add(tsName)
   expect(
     { missingQuestion, spuriousQuestion },
     `${tsName} optionality drift — missingQuestion: absent from the schema's ` +
@@ -186,6 +191,7 @@ function expectOptionality(tsName: string, def: any, help: string): void {
       `the type marks \`?\`. Schema-optional MUST be TypeScript-optional ` +
       `(ADR-0008, #1165); no exemptions.`,
   ).toEqual({ missingQuestion: [], spuriousQuestion: [] })
+  seen.optionality.add(tsName)
 }
 
 describe('@genealogy/schema interfaces mirror research.schema.json', () => {
@@ -369,10 +375,20 @@ describe('every intended interface was actually compared', () => {
   })
 
   it('expectMirrors reached every one', () => {
-    expect([...expected].filter((n) => !seen.names.has(n)).sort()).toEqual([])
+    expect(
+      [...expected].filter((n) => !seen.names.has(n)).sort(),
+      'requires a FULL unfiltered run: these names are recorded as each comparison passes, ' +
+        'so a `-t` filter or a shuffled order lists interfaces whose tests never executed, ' +
+        'which is this check being unverifiable — not schema drift',
+    ).toEqual([])
   })
 
   it('expectOptionality reached every one', () => {
-    expect([...expected].filter((n) => !seen.optionality.has(n)).sort()).toEqual([])
+    expect(
+      [...expected].filter((n) => !seen.optionality.has(n)).sort(),
+      'requires a FULL unfiltered run: these names are recorded as each comparison passes, ' +
+        'so a `-t` filter or a shuffled order lists interfaces whose tests never executed, ' +
+        'which is this check being unverifiable — not schema drift',
+    ).toEqual([])
   })
 })
