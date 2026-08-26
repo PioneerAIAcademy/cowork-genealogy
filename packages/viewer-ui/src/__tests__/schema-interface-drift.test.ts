@@ -25,8 +25,9 @@ import ts from 'typescript'
  * already has a vitest runner and a workspace dep on the schema package, and
  * js-tests.yml reaches both. packages/schema has no test script.
  *
- * Field NAMES only. Types — optionality, `| null`, and `date_certainty: string`
- * where the union exists — need the TypeScript compiler API and stay with #1165.
+ * Field names AND optionality (schema `required` vs the TS `?`, both directions,
+ * ADR-0008 / #1165). Still uncovered: value types — `| null` nullability, and a
+ * closed enum typed as `string` where a union exists.
  */
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -87,6 +88,7 @@ const pascal = (s: string) => s.split('_').map((p) => p[0].toUpperCase() + p.sli
  */
 function interfaceFields(path: string): {
   fields: Map<string, Set<string>>
+  optional: Map<string, Set<string>>
   inheriting: string[]
 } {
   const sourceFile = ts.createSourceFile(
@@ -96,25 +98,30 @@ function interfaceFields(path: string): {
     /* setParentNodes */ true,
   )
   const out = new Map<string, Set<string>>()
+  const optionalOut = new Map<string, Set<string>>()
   const inheriting: string[] = []
   sourceFile.forEachChild((node) => {
     if (!ts.isInterfaceDeclaration(node)) return
     if (node.heritageClauses?.length) inheriting.push(node.name.text)
     const fields = new Set<string>()
+    const optional = new Set<string>()
     for (const member of node.members) {
       // Index signatures and computed names have no plain identifier; no schema
       // object here uses one, and skipping is right if one ever appears.
       if (!ts.isPropertySignature(member) || !member.name) continue
       if (ts.isIdentifier(member.name) || ts.isStringLiteral(member.name)) {
         fields.add(member.name.text)
+        // `member.questionToken` is the `?` — present iff the field is optional.
+        if (member.questionToken) optional.add(member.name.text)
       }
     }
     out.set(node.name.text, fields)
+    optionalOut.set(node.name.text, optional)
   })
-  return { fields: out, inheriting }
+  return { fields: out, optional: optionalOut, inheriting }
 }
 
-const { fields: parsed, inheriting } = interfaceFields(sourcePath)
+const { fields: parsed, optional: parsedOptional, inheriting } = interfaceFields(sourcePath)
 
 /** One interface against one subschema's `properties`, by field name. */
 function expectMirrors(tsName: string, def: any, help: string) {
@@ -130,6 +137,39 @@ function expectMirrors(tsName: string, def: any, help: string) {
     `${tsName} drifted — missing: the schema has it, the type doesn't; ` +
       `extra: the type advertises a field the schema rejects (additionalProperties: false)`,
   ).toEqual({ missing: [], extra: [] })
+}
+
+/**
+ * One interface's optionality against one subschema's `required` list, BOTH
+ * directions, no exemption list. The lead ruled 2026-08-21 (#1165, ADR-0008):
+ * a key absent from `required` is `foo?: T | null`, and a key in `required` has
+ * no `?`. Schema-optional means TypeScript-optional. An exemption list here
+ * would re-admit exactly the "present but null" encoding that ruling rejected.
+ * (Non-vacuity is enforced globally by the "optionality check is not vacuous"
+ * test, not per-interface, since an empty intersection here means name drift,
+ * which expectMirrors already fails on.)
+ */
+function expectOptionality(tsName: string, def: any, help: string): void {
+  const fields = parsed.get(tsName)
+  const optional = parsedOptional.get(tsName)
+  expect(optional, help).toBeDefined()
+  const required = new Set<string>(def.required ?? [])
+  // Only fields present in BOTH the schema and the type; name drift is the
+  // separate expectMirrors check above.
+  const shared = Object.keys(def.properties).filter((k) => fields!.has(k))
+  const missingQuestion = shared
+    .filter((k) => !required.has(k) && !optional!.has(k))
+    .sort()
+  const spuriousQuestion = shared
+    .filter((k) => required.has(k) && optional!.has(k))
+    .sort()
+  expect(
+    { missingQuestion, spuriousQuestion },
+    `${tsName} optionality drift — missingQuestion: absent from the schema's ` +
+      `required list but the type has no \`?\`; spuriousQuestion: in required but ` +
+      `the type marks \`?\`. Schema-optional MUST be TypeScript-optional ` +
+      `(ADR-0008, #1165); no exemptions.`,
+  ).toEqual({ missingQuestion: [], spuriousQuestion: [] })
 }
 
 describe('@genealogy/schema interfaces mirror research.schema.json', () => {
@@ -159,6 +199,33 @@ describe('@genealogy/schema interfaces mirror research.schema.json', () => {
     expect(objectDefs.length).toBeGreaterThan(15)
   })
 
+  it('the optionality check is not vacuous', () => {
+    // Two ways the optionality checks below could silently pass: a `questionToken`
+    // read that is always undefined makes every field look required, and one that
+    // is always truthy makes every field look optional. Either would make one
+    // direction of every per-interface check below vacuous. Prove the parser sees
+    // a real MIX across the file, so a broken read fails HERE, loudly.
+    const optionalCount = [...parsedOptional.values()].reduce((n, s) => n + s.size, 0)
+    const requiredCount = [...parsed.entries()].reduce(
+      (n, [name, fs]) => n + [...fs].filter((f) => !parsedOptional.get(name)?.has(f)).length,
+      0,
+    )
+    expect(optionalCount, 'no `?` fields parsed — questionToken read looks broken').toBeGreaterThan(20)
+    expect(requiredCount, 'no required fields parsed — questionToken read looks broken').toBeGreaterThan(20)
+  })
+
+  it('ResearchData ↔ the research document root', () => {
+    // The root is a closed object like every `$def`, but it is not IN `$defs`,
+    // so the loop below never reaches it — the same shape the tree block guards
+    // with its GedcomxData root checks.
+    expect(schema.additionalProperties, 'the root must be closed').toBe(false)
+    expectMirrors('ResearchData', schema, 'no `export interface ResearchData`')
+  })
+
+  it('ResearchData optionality ↔ the research document root.required', () => {
+    expectOptionality('ResearchData', schema, 'no `export interface ResearchData`')
+  })
+
   for (const [defName, def] of objectDefs) {
     if (NO_INTERFACE.includes(defName)) continue
     const tsName = RENAMED[defName] ?? pascal(defName)
@@ -169,6 +236,14 @@ describe('@genealogy/schema interfaces mirror research.schema.json', () => {
         def,
         `no \`export interface ${tsName}\` in packages/schema/src/index.ts — ` +
           `add it, add a RENAMED entry, or list ${defName} in NO_INTERFACE`,
+      )
+    })
+
+    it(`${tsName} optionality ↔ $defs.${defName}.required`, () => {
+      expectOptionality(
+        tsName,
+        def,
+        `no \`export interface ${tsName}\` in packages/schema/src/index.ts`,
       )
     })
   }
@@ -193,11 +268,21 @@ describe('@genealogy/schema interfaces mirror tree-gedcomx.schema.json', () => {
     expectMirrors('GedcomxData', treeSchema, 'no `export interface GedcomxData`')
   })
 
+  it('GedcomxData optionality ↔ the tree document root.required', () => {
+    expectOptionality('GedcomxData', treeSchema, 'no `export interface GedcomxData`')
+  })
+
   for (const [defName, tsName] of Object.entries(TREE_INTERFACES)) {
     it(`${tsName} ↔ $defs.${defName}`, () => {
       const def = treeSchema.$defs[defName]
       expect(def, `no $defs.${defName} in tree-gedcomx.schema.json`).toBeDefined()
       expectMirrors(tsName, def, `no \`export interface ${tsName}\``)
+    })
+
+    it(`${tsName} optionality ↔ $defs.${defName}.required`, () => {
+      const def = treeSchema.$defs[defName]
+      expect(def, `no $defs.${defName} in tree-gedcomx.schema.json`).toBeDefined()
+      expectOptionality(tsName, def, `no \`export interface ${tsName}\``)
     })
   }
 })
