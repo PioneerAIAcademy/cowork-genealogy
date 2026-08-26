@@ -72,7 +72,8 @@
     { "name": "materialize_facts" },
     { "name": "extraction_append" },
     { "name": "research_query" },
-    { "name": "project_create" }
+    { "name": "project_create" },
+    { "name": "tree_diff" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],

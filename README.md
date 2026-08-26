@@ -105,6 +105,7 @@ way project state changes.
 | `extraction_append` | Record-level assertion extraction — held by the `record-extractor` agent, not the main thread | None |
 | `materialize_facts` | Project extracted assertions onto tree persons | None |
 | `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
+| `tree_diff` | Diff two simplified-GedcomX trees — persons, facts and relationships added, removed and changed | None |
 | `tree_correct` | Correct an existing tree assertion in place | None |
 | `tree_forget` | Strip a slice of the local tree to stage a practice run | None |
 | `merge_tree_persons` | Merge two local tree persons | None |
