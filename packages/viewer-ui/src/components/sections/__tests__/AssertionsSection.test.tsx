@@ -19,6 +19,7 @@ vi.mock('../../../contexts/ResearchDataContext', async () => {
 
 import { useResearchData } from '../../../contexts/ResearchDataContext'
 import { buildMockContext } from '../../../contexts/__tests__/mockContext'
+import { expandCardByTitle } from './expandCard'
 
 function mockResearch(overrides: Partial<ResearchData> = {}): void {
   vi.mocked(useResearchData).mockReturnValue(
@@ -31,13 +32,6 @@ function mockResearch(overrides: Partial<ResearchData> = {}): void {
 
 // Helper: cards collapse by default. Find the card with the given title
 // and click its header to expand the body where the Persona row lives.
-async function expandCardByTitle(title: string): Promise<void> {
-  const titleEl = screen.getAllByText(title)[0]
-  // The header is the parent of the title element
-  const header = titleEl.parentElement
-  if (!header) throw new Error(`No header found for title "${title}"`)
-  await userEvent.click(header)
-}
 
 describe('AssertionsSection — B1 persona row', () => {
   beforeEach(() => {
