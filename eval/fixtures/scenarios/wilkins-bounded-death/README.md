@@ -12,4 +12,4 @@ unrecoverable but a **bounded / documented-negative** conclusion is well-support
 The correct conclusion is a **bounded death** — 'after 1870, before 1885, Muhlenberg
 County; no KY certificate exists' — tiered at the level its evidence supports (probable)
 and ENCODED as a Death fact on `I1`. Collapsing to not_proved and leaving the tree silent
-on death is the failure this scenario guards (proof-conclusion SKILL.md §2/§6, issue #657).
+on death is the failure this scenario guards (proof-conclusion agent body §2/§6, issue #657).
