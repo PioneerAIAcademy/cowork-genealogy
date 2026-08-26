@@ -105,12 +105,14 @@ A run is **releasable** iff invoked as `--skill <name>` with no `--tag`. Anythin
 two reader families handle it differently (`harness/since_window.py`):
 
 - **Aggregating reports FILTER** — `make e2e-corpus`, `make e2e-guardrail-shadow`,
-  `make e2e-latency`, `make e2e-skill-episodes`, `make e2e-wiki-failures` tally many runs into one number, so mixing eras corrupts
+  `make e2e-latency`, `make e2e-skill-episodes`, `make e2e-wiki-failures`, `make e2e-transcribe-failures` tally many runs into one number, so mixing eras corrupts
   it. They window to 14 days and print the window plus how many runs they
   excluded. `SINCE=all` opts back in. (`make e2e-wiki-failures`'s useful horizon
   IS the 14-day default: it classifies calls from `response_summary`, and the e2e
   capture strip below drops that field past 14 days — so `SINCE=all` there mostly
-  reports how many older calls are stripped-and-unclassifiable, not more causes.)
+  reports how many older calls are stripped-and-unclassifiable, not more causes.
+  `make e2e-transcribe-failures` reads the same field and has the same horizon,
+  which is why it prints the stripped tally as a first-class line.)
   **One exception inside that list:** `make e2e-guardrail-shadow FEEDBACK_DIR=…`
   reads hosted feedback bundles from outside the repo rather than run logs, so it
   is NOT windowed and prints no window — that corpus is small and hand-collected,
