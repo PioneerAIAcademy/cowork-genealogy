@@ -100,7 +100,7 @@ found information may be pursuing outdated leads.
 | Metric | How to compute |
 |--------|---------------|
 | Questions: open / in_progress / exhaustive / resolved | Count by status |
-| Plans: active items remaining | Count plan items with status "planned" in active plans |
+| Plans: active items remaining | Count plan items with status "planned" or "in_progress" in active plans |
 | Searches performed | Count log entries |
 | Positive / negative / partial outcomes | Count by log outcome |
 | Record types searched | Distinct record types across all log entries |
@@ -139,11 +139,14 @@ Apply this decision tree:
    → "Resolve conflict c_001 — it blocks questions q_003 and q_004."
    (conflict-resolution)
 
-2. **Active plan with items status "planned"?**
+2. **Active plan with items status "planned" or "in_progress"?**
    → If the plan is stale (see step 2 integrity check), recommend
    revising it first: "The plan predates recent findings. Review
    whether new evidence changes the approach." (research-plan)
-   → Otherwise: "Continue executing the research plan — 3 of 5
+   → Otherwise, finish in-flight work before starting new: if any item
+   is `in_progress`, name it — "Complete the in-progress probate search
+   per pli_006 — 3 of 5 items remaining." Only when none is
+   `in_progress`: "Continue executing the research plan — 3 of 5
    items remaining." (search-records or search-external-sites)
 
 3. **Unlinked assertions exist?**
