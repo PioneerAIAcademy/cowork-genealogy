@@ -816,32 +816,39 @@ recoverable *from records alone*. A real validity run (§14) proves
 this — a run can only pass with these tools blocked, so an
 answer reachable only via the tree will fail and the fixture won't validate.
 
-### 6.1.1 Main-thread `extraction_append` block (subagent-only guard)
+### 6.1.1 Main-thread subagent-only tool block
 
-The same `PreToolUse` hook enforces one per-context rule in e2e:
-`extraction_append` may not be called on the main thread. Writing extracted
-assertions and sources is the Task-spawned `record-extractor` subagent's job; a
-main-thread call is the router substituting for a *failed* spawn and doing the
-extraction itself — a shape observed in production.
+The same `PreToolUse` hook enforces the per-context tool policy in e2e: neither
+member of `SUBAGENT_ONLY_TOOLS` (`extraction_append`, `image_read`) may be called
+on the main thread. Each is a Task-spawned subagent's private tool (writing
+extracted assertions and sources for `record-extractor`; returning a page scan
+for the image reader); a main-thread call is the router substituting for a
+*failed* spawn and doing the work itself — a shape observed in production.
 
 The discriminator is `agent_id` alone: **no skill declares `extraction_append`**
 in its `allowed-tools` — it lives only on `agents/record-extractor.md` — so the
 subagent is its only legitimate caller and every legitimate call carries
 `agent_id`. The unit harness's third clause (the skill declared the tool itself)
-can never fire for it. The block is therefore a tool-specific check
-(`is_main_thread_extraction_append`), not the whole `SUBAGENT_ONLY_TOOLS` policy,
-so that a future skill legitimately declaring a guarded tool is not denied here.
+can never fire for it. The block keys on `SUBAGENT_ONLY_TOOLS` membership
+(`is_main_thread_subagent_only_tool`) rather than the full per-skill
+`subagent_only_violation`, which takes a `declared_tools` argument e2e cannot
+supply. So e2e carries no declared-tools exemption: a future skill that
+legitimately declares a guarded tool would be denied here too, and closing
+that needs the predicate widened by hand.
 
-`image_read`, the set's other member, satisfies the same condition today — no
-skill has declared it since `search-images` moved to `@plugin:image-reader`
-(2026-07-17), and it now lives only on `agents/image-reader-opus.md` — so it is
-equally enforceable in e2e and is not enforced there yet. Generalizing the
-check to the whole set is tracked in `context_policy.py`'s own docstring.
+Both members are enforced. Neither `extraction_append` nor `image_read` is
+declared by any skill — `image_read` lives only on `agents/image-reader-opus.md`
+since `search-images` moved to `@plugin:image-reader` (2026-07-17) — so `agent_id`
+presence alone discriminates for each, and a third tool added to the set is
+covered here automatically.
 
 Semantics match the tree block — the denied call doesn't run, doesn't count
-toward the cap, and doesn't stop the run — but the denial reason tells the router
-to **report the spawn failure and stop**, not to retry another way (a deny that
-leaves the goal in place just relocates the substitution). Denied attempts are
+toward the cap, and doesn't stop the run. Here, continuing is the **intended**
+response: the denial reason names a reachable recovery — delegate the record to
+`@plugin:record-extractor`, and if that spawn fails again on the same record, skip
+it and note it in the run summary — not an unreachable "stop" the Stop hook would
+override anyway. The router must never extract the record itself or retry another
+way (a deny that leaves the goal in place just relocates the substitution). Denied attempts are
 recorded in a separate `blocked_context_calls` array
 (`{tool, args, blocked_by: "context"}`), kept apart from `blocked_tree_reads`
 because this is a write denied by a different guard.
@@ -873,6 +880,9 @@ run: the main-thread half is **denied**, the delegate half is only **logged**.
 `E2eResult.__post_init__`, so it never moves the compliance axis until its
 false-positive rate is calibrated. A non-`record-extractor` delegate's
 `extraction_append` therefore still succeeds today; it is recorded, not blocked.
+The same detector now also records such a delegate's `research_append` to
+`sources` or `assertions` — the same protected write by another door
+(guardrail-enforcement-spec §11) — likewise logged, never denied.
 Beyond the detector itself, `make e2e-guardrail-shadow` reports this family across
 the committed corpus, stored plus a `REPLAY=1` recompute, with the
 attribution denominator; it stays a reported signal, not a graduation count.
@@ -1337,9 +1347,32 @@ time, so a run that legitimately stops before upload has empty citations by
 design — scoping to sources of an actual written conclusion is what keeps a
 future hard version from false-positiving on honest partial runs. Its entries
 carry `kind: "citation_nulling"` so `guardrail_shadow_report` counts them in
-their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
-fourth check is gated on reading that shadow fire rate across the corpus first**
-— not decided here.
+their own bucket (`make e2e-guardrail-shadow`).
+
+**That fire rate has now been read, and the answer is zero: it does not
+graduate.** Across 159 committed runs the research-side arm flags nothing, and a
+replay over every committed `final-research.json` reaches 1,884 concluded
+sources with a citation on all of them. Zero is not a licence — per
+`guardrail-enforcement-spec.md`, "zero is not 'low enough', it is nobody has seen
+this detector fire." The arm stays in shadow as a **regression pin**: the zero
+is a real invariant — a conclusion's citations are populated whenever a
+conclusion exists — and this is what would catch it breaking.
+
+**The failure class it was built for lives on the other side of the seam, and a
+companion check measures it there.** `find_citation_nulling_in_tree_sources` reads
+the final `tree.gedcomx.json` and flags a `sources[]` entry with a null or empty
+`citation` that an *uploaded* conclusion rests on. Its gate is both clauses of
+one sentence in `packages/engine/plugin/agents/proof-conclusion.md` step 3 — the
+run wrote a `proof_summaries` entry, **and** the source is referenced by a
+`primary` fact or a relationship, i.e. by content that actually uploads. The
+second clause is load-bearing: the working tree carries every sourced evidence
+fact `person-evidence` materialized at link time, and those are citation-less by
+design until a conclusion promotes them. Entries carry
+`kind: "tree_citation_nulling"` for their own bucket, kept separate from the
+research-side arm because the pair is the finding — **0 there against 111 of 171
+referenced sources here, across 50 of the same 159 runs**. This one is shadow
+too, and deliberately not graduated: part of that 111 is
+legitimately-not-yet-uploaded evidence only a genealogist can price.
 
 **A fifth check runs in shadow mode only: a conclusion relies on a resolved
 conflict that was never persisted.** `find_unpersisted_conflict_resolutions` (in
@@ -1494,7 +1527,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
 | `tool_calls[]` | Every tool call attempted, in order — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, is_error, agent_id, agent_type }`. See 8.1.1. |
 | `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
-| `blocked_context_calls[]` | Denied main-thread `extraction_append` — the router substituting for a failed record-extractor spawn. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is a write denied by a different guard. §6.1.1. |
+| `blocked_context_calls[]` | Denied main-thread calls to a `SUBAGENT_ONLY_TOOLS` tool (`extraction_append`, `image_read`) — the router substituting for a failed subagent spawn. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
 | `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |

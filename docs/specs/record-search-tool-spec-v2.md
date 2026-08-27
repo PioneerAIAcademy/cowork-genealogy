@@ -309,8 +309,32 @@ non-principals. `isPrincipal` then filters that match set:
   children, his spouse, etc.
 - Omitted → both. The broadest set, ranked by match quality.
 
-For most natural-language searches, omit the parameter — only set it
-when the caller's intent specifically requires one role or the other.
+Pick by intent rather than defaulting to omission. Records **about** a
+person take `true`; finding a relative **through** a person takes
+`false`. Omission is the right choice only when the caller genuinely
+wants both roles — it is the broadest set, not the safest default, and
+recommending it is what kept the `false` pivot invisible.
+
+Both branches were verified live against collection 2177294 to partition
+the same match set: the `true` and `false` totals sum exactly to the
+omitted total, so neither role is being ignored upstream. `true` is by
+far the heavier filter, and the ratio is collection-specific, so treat
+the direction as the finding rather than any percentage. An earlier
+figure circulated for this parameter came from a probe that sent
+`q.isPrincipal=on`; the tool sends `true`/`false`, so that probe never
+exercised the `false` branch at all.
+
+How `false` differs from the relative-name anchors:
+`fatherGivenName`/`spouseGivenName` match on the target's indexed
+relative fields, so a record that leaves those blank is not narrowed
+by them. `false` matches on the *known* person's own persona;
+`record_read` on a hit then gives the record's persons and
+relationships. Which route is better when the target has no name yet is
+not measured — `search-strategy-levers.md` prescribes clearing the
+principal name and filling the parent fields for exactly that case — so
+name the difference rather than calling either the only route. The
+`manoel-oliveira-daughter` fixture takes the `false` route and then
+reads the record.
 
 ### Pagination
 
