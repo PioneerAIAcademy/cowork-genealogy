@@ -5,7 +5,6 @@ import {
   ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
 import { wikipediaSearch, type WikipediaSearchInput } from "./tools/wikipedia.js";
-import { treeDiff, type TreeDiffInput } from "./tools/tree-diff.js";
 import {
   placeSearchTool,
   placeSearchAllTool,
@@ -134,21 +133,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as WikipediaSearchInput;
       const result = await wikipediaSearch(args);
-      return {
-        content: [{ type: "text", text: JSON.stringify(result) }]
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      return {
-        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
-        isError: true
-      };
-    }
-  }
-  if (request.params.name === "tree_diff") {
-    try {
-      const args = request.params.arguments as unknown as TreeDiffInput;
-      const result = treeDiff(args);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };

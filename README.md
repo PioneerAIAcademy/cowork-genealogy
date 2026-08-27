@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 49 tools.
+The MCP server exposes 48 tools.
 
 ### FamilySearch records and places
 
@@ -105,7 +105,6 @@ way project state changes.
 | `extraction_append` | Record-level assertion extraction — held by the `record-extractor` agent, not the main thread | None |
 | `materialize_facts` | Project extracted assertions onto tree persons | None |
 | `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
-| `tree_diff` | Diff two simplified-GedcomX trees — persons, facts and relationships added, removed and changed | None |
 | `tree_correct` | Correct an existing tree assertion in place | None |
 | `tree_forget` | Strip a slice of the local tree to stage a practice run | None |
 | `merge_tree_persons` | Merge two local tree persons | None |
@@ -498,7 +497,7 @@ then narrows the search.
 
 What's shipped:
 
-- **49 MCP tools.** See the tables above for the full catalog, by category:
+- **48 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
 - **27 shipped skills.** Full GPS research cycle from `init-project`

@@ -56,7 +56,6 @@ import { materializeFactsSchema } from "./tools/materialize-facts.js";
 import { extractionAppendSchema } from "./tools/extraction-append.js";
 import { researchQuerySchema } from "./tools/research-query.js";
 import { projectCreateSchema } from "./tools/project-create.js";
-import { treeDiffSchema } from "./tools/tree-diff.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -107,5 +106,4 @@ export const allToolSchemas = [
   extractionAppendSchema,
   researchQuerySchema,
   projectCreateSchema,
-  treeDiffSchema,
 ];

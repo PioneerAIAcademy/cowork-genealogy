@@ -256,8 +256,10 @@ def scan_tree_encoding(paths: list[Path]) -> list[dict[str, Any]]:
     """The issue-#1490 tree-encoding shadow entries STORED in each run's
     `guardrail_shadow_violations` (a tier->=-probable conclusion whose evidence
     persons gained no new tree structure). Identified by
-    `kind == TREE_ENCODING_KIND`. Reads 0 over every run made before this check
-    shipped — the whole corpus today — so REPLAY is where the signal lives.
+    `kind == TREE_ENCODING_KIND`. Reads 0 over every run captured before the
+    detector was wired into the live orchestrator; runs made after it store the
+    check live, so this line accumulates the fire rate. REPLAY still covers the
+    older runs.
     """
     return _scan_stored(paths, lambda v: v.get("kind") == TREE_ENCODING_KIND)
 

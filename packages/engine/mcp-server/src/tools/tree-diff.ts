@@ -1,14 +1,19 @@
-// tree_diff — what a second simplified-GedcomX tree added, removed, and changed
+// treeDiff — what a second simplified-GedcomX tree added, removed, and changed
 // relative to a first.
 //
-// WHY THIS TOOL EXISTS. Two callers want the same question answered — "what did
-// this session actually change in the tree?" — and neither can get it from the
-// data alone. The tree-encoding completion gate (issue #1490) diffs the final
-// tree against the write-once `starting-tree.gedcomx.json` baseline to tell a
-// conclusion this session encoded from a fact that was already seeded; the
-// viewer and `project_status` want the same session delta for display. Rather
-// than each re-deriving a diff — and getting the relationship landmines wrong —
-// they call this.
+// INTERNAL helper, not an advertised MCP tool. It is not in `allToolSchemas`
+// and takes no `projectPath`: an LLM caller would have to inline two whole
+// trees into a tool call, which is a footgun with no use case the tools below
+// don't already serve. Callers pass in-memory trees they already hold.
+//
+// WHY THIS EXISTS. Two callers want the same question answered — "what did this
+// session actually change in the tree?" — and neither can get it from the data
+// alone. The tree-encoding completion gate (issue #1490) diffs the final tree
+// against the write-once `starting-tree.gedcomx.json` baseline to tell a
+// conclusion this session encoded from a fact that was already seeded (see
+// `research-append.ts`); the viewer and `project_status` want the same session
+// delta for display. Rather than each re-deriving a diff — and getting the
+// relationship landmines wrong — they call this.
 //
 // IDENTITY, and the landmines it steps around:
 //   - Persons key on `id`.
@@ -199,41 +204,3 @@ export function treeDiff(input: TreeDiffInput): TreeDiffResult {
     personsWithNewStructure: [...withNewStructure],
   };
 }
-
-export const treeDiffSchema = {
-  name: "tree_diff",
-  description:
-    "Diff two SIMPLIFIED GedcomX trees (snake_case) and report what the second added, " +
-    "removed, and changed relative to the first: persons added/removed, per-person facts " +
-    "gained/lost, and relationships added/removed. Relationships are matched on their " +
-    "endpoints (a ParentChild's `parent`/`child`, a Couple's `person1`/`person2`), never " +
-    "on their `id`, so a relationship re-pointed from a placeholder to a real person reads " +
-    "as changed structure, not as unchanged. A Marriage fact on a Couple relationship is " +
-    "diffed as part of that relationship. `personsWithNewStructure` is the union of persons " +
-    "who gained a fact or a relationship endpoint — the set to ask about when checking " +
-    "whether a conclusion was encoded into the tree. Read-only; computes no I/O.",
-  inputSchema: {
-    type: "object" as const,
-    properties: {
-      before: {
-        type: "object",
-        description: "The earlier tree (e.g. the starting-tree.gedcomx.json baseline).",
-        properties: {
-          persons: { type: "array", items: { type: "object" } },
-          relationships: { type: "array", items: { type: "object" } },
-          sources: { type: "array", items: { type: "object" } },
-        },
-      },
-      after: {
-        type: "object",
-        description: "The later tree (e.g. the current tree.gedcomx.json).",
-        properties: {
-          persons: { type: "array", items: { type: "object" } },
-          relationships: { type: "array", items: { type: "object" } },
-          sources: { type: "array", items: { type: "object" } },
-        },
-      },
-    },
-    required: ["before", "after"],
-  },
-};

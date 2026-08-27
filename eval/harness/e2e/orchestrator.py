@@ -56,6 +56,7 @@ from harness.skill_invocation import (
     check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
     find_citation_nulling_in_conclusions,
     find_citation_nulling_in_tree_sources,
+    find_conclusions_without_tree_encoding,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
@@ -2507,6 +2508,20 @@ async def run_e2e_test(
         if tree_citation_shadow:
             guardrail_shadow_violations = (
                 guardrail_shadow_violations + tree_citation_shadow
+            )
+
+        # The tree-encoding arm (issue #1490): a completed project reached a
+        # >=-probable conclusion but left it un-encoded in the tree. Wired here
+        # for the same reason as the citation arm above — this is the site that
+        # holds `final_research`, `final_tree` and `starting_tree` together.
+        # Shadow only; this live write is what makes the STORED fire rate in
+        # `scan_tree_encoding` accumulate rather than needing REPLAY.
+        tree_encoding_shadow = find_conclusions_without_tree_encoding(
+            final_research, final_tree, starting_tree=starting_tree
+        )
+        if tree_encoding_shadow:
+            guardrail_shadow_violations = (
+                guardrail_shadow_violations + tree_encoding_shadow
             )
 
         # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it

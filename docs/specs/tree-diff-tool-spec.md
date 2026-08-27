@@ -1,4 +1,12 @@
-# `tree_diff` tool spec
+# `treeDiff` internal-helper spec
+
+**Not an advertised MCP tool.** `treeDiff` is an in-process function
+(`src/tools/tree-diff.ts`), not in `allToolSchemas` or `manifest.json`. It was
+briefly registered as a `tree_diff` tool and un-registered before shipping: an
+LLM caller would have had to inline two whole trees into a tool call — a footgun
+with no use case the other tools don't already serve. Callers pass in-memory
+trees they already hold, so this spec describes a function contract, not a tool
+surface (no `projectPath`, no I/O). "the tool" below reads "the helper".
 
 ## Purpose
 
