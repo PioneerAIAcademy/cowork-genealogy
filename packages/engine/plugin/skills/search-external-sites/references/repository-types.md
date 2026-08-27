@@ -33,10 +33,15 @@ Examples: county courthouses, state archives, the National Archives,
 church archives, historical societies, university special
 collections, the Family History Library.
 
-**Key distinctions:**
-- Libraries collect published materials (books, periodicals)
-- Archives collect unpublished records (court records, government
-  documents, personal papers, organizational records)
+**Key distinctions — tendencies, not a clean split:**
+- Libraries *mostly* collect published materials (books, periodicals);
+  many research libraries also hold manuscript and archival collections
+- Archives *mostly* collect unpublished records (court records,
+  government documents, personal papers, organizational records); many
+  also hold published works
+- So never rule a repository out on its name. A library can hold the
+  unpublished record you need, and an archive can hold the published
+  transcription volume
 - Not all materials held by a physical repository have been
   microfilmed or digitized
 - Some records are accessible only by visiting in person or
