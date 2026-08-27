@@ -108,28 +108,35 @@ OFFENDER_BARE_LISTING = (
 # production text: a plural kinship noun bare-introduces two newly-found
 # co-residents with no hedge anywhere in the note. Neither "as ROLE" nor a
 # possessive claim -- this is the shape that motivated
-# _PLURAL_KINSHIP_INTRODUCING_NAME.
+# _PLURAL_KINSHIP_INTRODUCING_NAME, and the shape this rule actually needs
+# to catch (contrast with COMPLIANT_POSSESSIVE_KINSHIP_HEDGED below).
 OFFENDER_PLURAL_KINSHIP_BARE_NOUN = (
     "James M McElwee (b. 1817 Louisiana) plus sons Thos T McElwee (b. 1839 "
     "Louisiana) and Stephen McElwee (b. 1842 Louisiana) in the 1850 US "
     "Census household of Amelia Jackson, Amite County MS."
 )
 
-# ut_search_records_h4k (issue #1912's mined regression test). A marker IS
-# present in the note -- but in a trailing sentence that never qualifies the
-# possessive claim two sentences earlier. This is the case check 1 alone
-# (marker-anywhere-cures) misses; check 2 (per-sentence) catches it.
-OFFENDER_POSSESSIVE_KINSHIP_TRAILING_MARKER = (
+# ut_search_records_h4k's mined-test output (issue #1912's regression test).
+# A possessive kinship claim ("likely Amos's children") followed, two
+# sentences later, by the SKILL.md-prescribed hedge. PR #1946 review: a
+# per-sentence check was tried to require the hedge sit with the claim, and
+# was withdrawn -- see the "PR #1946 review" paragraph on
+# `test_pre1880_census_structure_marked_inferred` for why (the identical
+# shape appears in ut_search_records_015's own committed, correctly-hedged
+# output, and no mechanical signal tells the two apart). Pinned here as
+# compliant: the note-wide rule this validator can actually make reliable
+# only asks for the hedge somewhere in the note, which this has.
+COMPLIANT_POSSESSIVE_KINSHIP_HEDGED = (
     "Found Amos Whitfield (b. 1817, Georgia) enumerated in Pike, Kentucky in "
     "the 1850 US Federal Census, in the household of Nancy Doss. Also "
     "enumerated in the household: Ezra Whitfield (b. 1839, Georgia) and Noah "
     "Whitfield (b. 1842, Georgia), likely Amos's children. Pre-1880 census "
-    "— no relationship column; family structure inferred from surname, "
+    "-- no relationship column; family structure inferred from surname, "
     "ages, and listing order."
 )
 
-# The same possessive claim, hedged in its own sentence rather than a
-# trailing one -- proves the new possessive-kinship pattern does not
+# The same possessive claim, hedged in the same sentence rather than a
+# following one -- proves the new possessive-kinship pattern does not
 # over-trigger once the claim itself carries the marker.
 COMPLIANT_POSSESSIVE_KINSHIP_LOCAL_MARKER = (
     "Found Amos Whitfield (b. 1817, Georgia) in the household of Nancy Doss, "
@@ -139,7 +146,6 @@ COMPLIANT_POSSESSIVE_KINSHIP_LOCAL_MARKER = (
 )
 
 
-
 @pytest.mark.parametrize(
     "notes",
     [
@@ -147,12 +153,14 @@ COMPLIANT_POSSESSIVE_KINSHIP_LOCAL_MARKER = (
         COMPLIANT_INFERRED,
         COMPLIANT_QUOTED_ROLE,
         COMPLIANT_POSSESSIVE_KINSHIP_LOCAL_MARKER,
+        COMPLIANT_POSSESSIVE_KINSHIP_HEDGED,
     ],
     ids=[
         "inferences-not-stated",
         "inferred-no-column",
         "quoted-role",
         "possessive-kinship-local-marker",
+        "possessive-kinship-hedged-later-sentence",
     ],
 )
 def test_a_hedged_household_passes(notes):
@@ -182,19 +190,6 @@ def test_an_unqualified_household_fails(notes):
     assert "log_005" in str(e.value)
 
 
-def test_a_trailing_marker_does_not_cure_an_earlier_unqualified_claim():
-    """Issue #1912's production report and its mined regression test
-    (ut_search_records_h4k). A note can carry an inference marker -- so the
-    original note-wide check (any marker anywhere clears the whole note)
-    passes it -- while a specific claim two sentences earlier is never
-    actually qualified. The marker has to sit with the claim it excuses."""
-    with pytest.raises(AssertionError) as e:
-        check(
-            EMPTY_BEFORE,
-            after(entry(OFFENDER_POSSESSIVE_KINSHIP_TRAILING_MARKER)),
-            TAGGED,
-        )
-    assert "log_005" in str(e.value)
 
 
 def test_the_untagged_rest_of_the_suite_is_untouched():
