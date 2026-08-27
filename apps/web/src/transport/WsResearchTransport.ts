@@ -23,12 +23,16 @@ export class WsResearchTransport implements ResearchTransport {
 
   async getProjectState(): Promise<ProjectStateSnapshot> {
     const res = await fetch(`/api/sessions/${this.sessionId}/state`, { credentials: 'include' })
-    if (!res.ok) return { research: null, gedcomx: null, label: null }
+    if (!res.ok) return { research: null, gedcomx: null, label: null, notice: null }
     const s = await res.json()
     return {
       research: (s.research as ResearchData | null) ?? null,
       gedcomx: (s.gedcomx as GedcomxData | null) ?? null,
-      label: s.label ?? null
+      label: s.label ?? null,
+      // Always null: the hosted path pins the project to `/project`, so no
+      // folder notice is ever fired and the control plane has none to serve
+      // (issue #1899, and the onNotice comment below).
+      notice: null
     }
   }
 
