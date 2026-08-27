@@ -208,7 +208,15 @@ class Hub:
                     detail = str(ev.get("text", ""))[:200]
                 else:
                     detail = ""
-                print(f"{_ts()} [agent] {kind} {detail}".rstrip(), flush=True)
+                # A log line must never kill the pump: this coroutine relays
+                # every agent message, and an exception here stops the
+                # broadcast() below, hanging the client on a message that never
+                # arrives. LocalProvider sets PYTHONUTF8=1, but callers that
+                # build their own env (tests/test_sandbox_server.py) do not.
+                try:
+                    print(f"{_ts()} [agent] {kind} {detail}".rstrip(), flush=True)
+                except UnicodeEncodeError:
+                    pass
             if kind == "turn_done":
                 self._turn_active = False
             await self.broadcast(msg)

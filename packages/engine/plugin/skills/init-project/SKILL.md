@@ -177,6 +177,8 @@ Build the simplified-GedcomX document in memory — you pass it to `project_crea
 { "id": "F1", "type": "Birth", "date": "~1845", "standard_date": "Abt 1845", "place": "Ireland", "standard_place": "Ireland", "sources": [{ "ref": "S1", "quality": 1 }] }
 ```
 
+The top-level `sources[]` array you already surveyed above is not the same thing as this per-fact `sources` ref — a fact with no ref yet just means you haven't attached one, not that no sources exist at all. If `person_read`'s result is too large to `Read` directly, count `len(sources)` on the top-level array before drawing any conclusion about how many sources are attached.
+
 `person_read` facts arrive with two standardized sidecars — `standard_place` and `standard_date`. **Carry both through exactly as returned; never re-derive either from the raw `place`/`date`.** Hand-entered places, and any returned fact with a `place` but no `standard_place`: resolve with `place_search` and use `standardPlace` from the first result. Never copy `place` into `standard_place`.
 
 Do NOT call data "unsourced" — it IS sourced to the FamilySearch tree. `quality: 1` signals it's unverified.
@@ -232,7 +234,7 @@ Analyze imported data before presenting results:
 
 **Gap detection:** missing ancestors (no parents)? Missing key life events? Only vague information?
 
-**Obvious error detection:** birth after death; parent-child age gaps outside 15-50 years; children born in locations inconsistent with parents; dates referencing non-existent jurisdictions; sibling births <9 months apart.
+**Obvious error detection:** birth after death; parent-child age gaps outside 15-50 years; children born in locations inconsistent with parents; dates referencing non-existent jurisdictions; sibling births <9 months apart. **This is the complete list — do not flag anything else as an error**, no matter how odd it looks (a missing relationship subtype, an absent Couple relationship, two people sharing a name, a thin source count, or anything else you notice). Such a pattern belongs in **Gap detection** above if it's a missing-ancestor/event/vague-information gap, or is simply not mentioned — never presented as a defect. A deeper data-integrity pass is check-warnings' (`person_warnings`/`person_quality`) job, not this step's.
 
 **Historical context signals** — per person, what the era and place imply about where the records will be. Were they of military age during a conflict that reached where they lived, so service, draft or pension files exist? Did a famine, emigration wave or internal migration move this population, leaving the records in the origin jurisdiction rather than the residence? Had civil registration begun there by the recorded date — before it, church registers are the only vitals? And did the named jurisdiction exist at that date, or does the record belong to the parent county or parish it was later split from?
 

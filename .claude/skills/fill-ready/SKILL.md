@@ -125,7 +125,8 @@ them.
 
 **There is no third pool for the lead.** He takes no issues — his job is coaching
 juniors into seniors — so nothing is ever assigned to `DallanQ` and no target
-covers him. What used to go there now goes to `/find-big-wins` (§6).
+covers him. Structural bets go to `/find-big-wins`; decisions get
+`needs-decision`, which `/make-decisions` drains daily (§6).
 
 **`cross-cutting` items are outside both targets** — see "Cross-cutting items are
 the lead's direct assignments" below. Subtract them before you compute a pool.
@@ -757,11 +758,21 @@ is the escape.
 **"Every" means every one you move, including a `senior`-labeled item.** A senior
 item's body is stale in exactly the ways a junior item's is, and it is the more
 expensive one to hand out wrong. The only issue that skips the gate is one that
-already carries the `reviewed` label from a previous pass **and** has not been
-edited since — check `updatedAt` against the reviewed marker's date. Re-running
-the gate on an unchanged issue pays for the same deep read twice
-(`docs/specs/task-review-spec.md` §2); skipping it on a changed one is how a
-refuted premise reaches a junior.
+already carries the `reviewed` label from a previous pass **and** has had no
+substantive body edit since.
+
+**A recorded ruling is not a substantive edit.** What `/make-decisions` splices
+in is `review-ready`'s own pre-written option text, vetted by the review that
+asked the question, so a `**Ruling:**` comment and its splice leave `reviewed`
+intact — and an item whose only change is the answer it was waiting for must not
+buy a second ~110k-token read. Do not test `updatedAt` against the marker date
+for this: a ruling makes three writes, and any later comment by anyone pushes
+`updatedAt` past the marker again. An item carrying no `reviewed` label gates
+normally, ruled or not.
+
+Re-running the gate on an unchanged issue pays for the same deep read twice
+(`docs/specs/task-review-spec.md` §2); skipping it on a genuinely changed one is
+how a refuted premise reaches a junior.
 
 Promote what comes back `ready` or `ready-after-edit`. A `senior` or
 `needs-a-decision` verdict on an item you had ranked junior is a §1 miss caught
@@ -845,21 +856,27 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 
 
 Report each separately — they have different remedies:
 
-- **`needs-decision`, split `WAITING` / `ANSWERED`.** A growing **`WAITING`**
-  count means the lead is the bottleneck and no amount of assigning helps — that
-  line goes at the top of the report.
+- **`needs-decision`, split `WAITING` / `ANSWERED`.** Report each item's time in
+  queue from when the label went on, not from when the issue was filed; the two
+  are unrelated. `WAITING` items older than a couple of drains mean
+  `/make-decisions` is not keeping up with what the board queues, and no amount of
+  assigning helps — that line goes at the top of the report.
 
-  **`ANSWERED` should always be zero.** Whichever session puts a decision to him
-  closes it out in the same turn — comment, splice, drop the label. So a
-  non-zero count is not a workload, it is **a defect**: a session heard an answer
-  and walked away, and the work has been sitting unblocked with nobody knowing.
-  Name the issues, and say plainly that they were dropped rather than queued —
-  the fix is upstream in whichever skill let go of them, not in draining a list.
+  **`ANSWERED` is normally non-zero, and it is not yours.** It is
+  `/make-decisions`' input queue: a ruling arrived through a channel with no apply
+  step — standup, a bare comment — and waits for the next drain. List them with the
+  ruling's date and hand them over. It is a **defect** only for an item still
+  `ANSWERED` after a `/make-decisions` run has been through, because that one
+  survived the drain.
 - **`senior` size, trend, and how many are unassigned.** This queue is worked. A
   growing `senior` queue with seniors idle is a routing problem; a growing one
   with every senior busy is a capacity problem. Say which.
 - **The oldest three in each, with idle days.** Neither queue has an owner to
   chase, so age is the only signal it emits.
+- **Ruled but still in Backlog** — a `**Ruling:**` comment, no `needs-decision`
+  label, not promoted, with days since the ruling. Nothing else in the loop can
+  see an answer that bought nothing, because the item leaves every decision-queue
+  query the moment the label comes off.
 - **Which of either gate a milestone**, and how long they have sat.
 
 You do not rank these queues and you do not assign from them.
