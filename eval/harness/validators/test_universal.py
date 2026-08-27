@@ -900,7 +900,7 @@ def report_decline_no_first_person_commitment(activated, text_response, test):
     sentences = _re.split(r'(?<=[.!?])\s+', response)
     commitment_re = _re.compile(
         r"(?:I'?ll|I will|let me|I can)\s+"
-        r".*?(?:add|create|extract|format)"
+        r"(?:(?!\bnot\b|\bnever\b|\bcannot\b|n't).)*?(?:add|create|extract|format)"
         r".*?(?:source|record)",
         _re.IGNORECASE,
     )

@@ -410,11 +410,12 @@ def test_no_skill_example_values_persisted(before_state, after_state, test, skil
     if not deny_list:
         pytest.skip("could not extract example values from SKILL.md")
     # Subtract values present in the before-state
-    on_file = _extract_on_file_numerals(before_rj, before_state.get("tree_gedcomx_json"))
     before_text = ""
     for src in before_rj.get("sources", []):
         for _, t in _citation_text_fields(src):
             before_text += " " + t
+    for entry in before_rj.get("log", []):
+        before_text += " " + (entry.get("notes") or "")
     deny_list = {
         v for v in deny_list
         if v.lower() not in before_text.lower()
@@ -430,7 +431,8 @@ def test_no_skill_example_values_persisted(before_state, after_state, test, skil
         for field_path, text in _citation_text_fields(src):
             text_lower = text.lower()
             for example_val in deny_list:
-                if example_val.lower() in text_lower:
+                if re.search(re.escape(example_val) + r'(?!\d)',
+                             text_lower, re.IGNORECASE):
                     violations.append(
                         f"{sid}.{field_path}: contains skill example "
                         f"value {example_val!r}"
@@ -477,7 +479,8 @@ def report_skill_example_values_in_response(before_state, text_response, test, s
     stripped = re.sub(r'```[\s\S]*?```', '', response)
     matches = []
     for example_val in deny_list:
-        if example_val.lower() in stripped.lower():
+        if re.search(re.escape(example_val) + r'(?!\d)',
+                     stripped, re.IGNORECASE):
             matches.append(example_val)
     if matches:
         raise AssertionError(
@@ -616,7 +619,7 @@ def report_no_framework_walkthrough(text_response, test):
     heading_re = re.compile(
         r'(?:^|\n)\s*(?:\*\*|#{1,3}\s*|[-*]\s+|\d+\.\s+)('
         + "|".join(re.escape(l) for l in field_labels_with_alias)
-        + r')(?:\*\*|:|\s)',
+        + r')(?:\*\*|:)',
         re.IGNORECASE,
     )
     found_labels = set()

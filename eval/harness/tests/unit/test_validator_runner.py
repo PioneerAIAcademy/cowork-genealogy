@@ -2465,6 +2465,114 @@ def test_v3_response_fires_on_invented_locator():
     assert result.passed is False
 
 
+# --- V4: Skill example values in persisted / response ---------------------
+
+
+def test_v4_persisted_does_not_fire_on_digit_superstring():
+    r"""V4 persisted: `pp. 88` in the deny list must not match `pp. 880-884`.
+
+    The digit-boundary bug: a plain `in` check sees `88` inside `880`, so any
+    harvested value fires on its next-digit sibling. The fix adds a negative
+    lookahead `(?!\d)` after the escaped value."""
+    before = _empty_research_state()
+    after = _empty_research_state()
+    # The source must exist in before so V4 checks it.
+    before["research_json"]["sources"] = [{
+        "id": "src_001", "citation": "", "citation_detail": {}, "notes": "",
+    }]
+    # The after-state persists a citation with `pp. 880-884`, which is NOT the
+    # example value `pp. 88` — it just happens to contain the substring.
+    after["research_json"]["sources"] = [{
+        "id": "src_001",
+        "citation": "Some County, Will Book 41, pp. 880-884",
+        "citation_detail": {"who": "", "where": "", "where_within": "pp. 880-884"},
+        "notes": "",
+    }]
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "test_no_skill_example_values_persisted")
+    if result is None:
+        pytest.skip("V4 validator did not run (SKILL.md may be absent)")
+    assert result.passed is True, (
+        f"V4 false-flagged a digit superstring: {result.error}"
+    )
+
+
+def test_v4_persisted_fires_on_exact_example_value():
+    """V4 persisted: an exact example value from SKILL.md → fail."""
+    before = _empty_research_state()
+    after = _empty_research_state()
+    # The source must exist in before (empty fields) so V4 checks its after
+    # fields — it only inspects sources that already existed, not new ones.
+    before["research_json"]["sources"] = [{
+        "id": "src_001", "citation": "", "citation_detail": {}, "notes": "",
+    }]
+    # `Will Book 9` and `p. 113` are both in the harvested deny list.
+    after["research_json"]["sources"] = [{
+        "id": "src_001",
+        "citation": "Some County, Will Book 9, p. 113",
+        "citation_detail": {"who": "", "where": "", "where_within": "p. 113"},
+        "notes": "",
+    }]
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "test_no_skill_example_values_persisted")
+    if result is None:
+        pytest.skip("V4 validator did not run (SKILL.md may be absent)")
+    assert result.passed is False
+    assert "example values from SKILL.md" in (result.error or "")
+
+
+def test_v4_persisted_passes_when_example_value_on_file_in_log():
+    """V4 persisted: a deny-list value present in a before-state log entry's
+    notes is subtracted and does not fire — the log entry is on-file data."""
+    before = _empty_research_state()
+    after = _empty_research_state()
+    # The source must exist in before so V4 checks it.
+    before["research_json"]["sources"] = [{
+        "id": "src_001", "citation": "", "citation_detail": {}, "notes": "",
+    }]
+    # Put the example value in the before-state log notes so it is on file.
+    before["research_json"]["log"] = [
+        {"notes": "Searched Will Book 9, p. 113 in the county office."}
+    ]
+    after["research_json"]["sources"] = [{
+        "id": "src_001",
+        "citation": "Some County, Will Book 9, p. 113",
+        "citation_detail": {"who": "", "where": "", "where_within": "p. 113"},
+        "notes": "",
+    }]
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "test_no_skill_example_values_persisted")
+    if result is None:
+        pytest.skip("V4 validator did not run (SKILL.md may be absent)")
+    assert result.passed is True, (
+        f"V4 fired despite the value being on file in log notes: {result.error}"
+    )
+
+
 # --- V12: No framework walkthrough (citation-specific) --------------------
 
 def test_v12_fires_on_field_label_headings():
