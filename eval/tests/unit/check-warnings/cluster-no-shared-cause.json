@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_check_warnings_019",
+    "skill": "check-warnings",
+    "name": "A cluster no single fact explains reads as a merged profile",
+    "type": "positive",
+    "description": "The counterpart to ut_check_warnings_009. The tool returns two contradictions on Patrick whose factIds are disjoint by construction: hasChristeningBeforeBirth cites the Christening and Birth facts (F5, F1), hasBurialBeforeDeath cites the Burial and Death facts (F6, F2). Because no one fact is implicated in both, the shared-cause reading SKILL.md asks the skill to test first is unavailable, and the merged-profile reading is the stronger one -- the branch SKILL.md gates on exactly this case. Before this test nothing in the suite exercised it: person-warnings-cluster.json is the only other multi-contradiction fixture and all of its warnings on Patrick share F2, so a regression on the disjoint branch would have passed the whole suite (Mercy Okum's review of #1896, finding 7). hasEventAfterDeath1 is deliberately absent: it cites every fact the person has, so it can never establish disjointness.",
+    "tags": [
+      "positive",
+      "detection",
+      "cluster",
+      "identity-confusion",
+      "escalation",
+      "actionability"
+    ]
+  },
+  "input": {
+    "user_message": "Run a thorough warnings check on Patrick Flynn.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "person-warnings-cluster-disjoint"
+  ],
+  "judge_context": [
+    "Should call person_warnings with personId 'I1' and report both contradictions the tool returned.",
+    "Should recognize the two contradictions as a cluster on one person rather than two independent items, and should test the shared-cause reading first as SKILL.md requires.",
+    "Should conclude that NO single wrong fact explains this cluster, and should reach that from the factIds: hasChristeningBeforeBirth cites F5 and F1, hasBurialBeforeDeath cites F6 and F2, which are disjoint. Crediting the conclusion is what matters; naming the factIds explicitly is a plus, not a requirement. Do NOT credit or require any claim that a particular direction of date error fires particular tags -- no such claim is correct.",
+    "Should treat the merged-profile reading as the stronger one here, and say so. This is the one branch where asserting that reading is correct -- unlike ut_check_warnings_009, hedging toward 'these may share a single cause' is wrong, because the factIds rule it out.",
+    "Should recommend the chronological timeline rebuild and split-point search, which SKILL.md gates on precisely this case. Phrase it as a research action the user can take: naming an internal skill in user-facing text is itself a defect under the skill's phrasing rule.",
+    "Should classify both warnings as Contradiction, the tier the tool returned (severity: \"contradiction\"), and pair them with the Fundamental assumption category -- assumption-categories.md maps Fundamental to severity \"contradiction\". Labelling a \"contradiction\" as the Valid category is a Severity classification defect. The tier names \"Critical\" and \"Note\" were retired by PR #1545 -- do not require them.",
+    "Patrick's id 'I1' is synthetic, not a FamilySearch ID, so person_quality must NOT be called and the response must not mention FamilySearch quality at all -- not as a note and not as routing narration. A mention is a FamilySearch quality reporting partial (rubric.md), even in one clause of an opening sentence."
+  ]
+}
