@@ -14,4 +14,4 @@ if "%ANTHROPIC_API_KEY%"=="" (
 cd apps\server
 set AGENT_TOOL_BIND=1
 set LIVE_ANTHROPIC_API_KEY=%ANTHROPIC_API_KEY%
-uv run pytest tests\test_agent_tool_binding.py -q -rs
+uv run pytest tests\test_agent_tool_binding.py -q -rs -s

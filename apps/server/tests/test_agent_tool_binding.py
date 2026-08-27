@@ -23,9 +23,12 @@ Opt-in exactly like `agent-smoke`: skipped under an ordinary suite run, and FAIL
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import shutil
+import subprocess
+import sys
 import tempfile
 import uuid
 from pathlib import Path
@@ -110,8 +113,13 @@ def _subagent_tool_calls(project_dir: Path, agent_type: str) -> list[str] | None
         if d.is_dir() and d.name.endswith(leaf):
             jsonls.extend(d.rglob("agent-*.jsonl"))
 
-    # Pick this agent's transcript by its meta `agentType`. With a single delegated
-    # subagent, a missing meta falls back to the sole transcript.
+    # Pick this agent's transcript by its meta `agentType`. No fallback: a transcript
+    # whose meta names a DIFFERENT agent must not be read as this one, or a
+    # general-purpose stand-in (issue #939) passes the probe — that stand-in is not
+    # bound by gps-mentor's `tools:`, so it CAN call wiki_search, and a spawn failure
+    # would report as a bound grant. Measured across 665 committed subagent summaries:
+    # `agentType` is non-null in every one, so the missing-meta case a fallback would
+    # cover has never occurred, while 19 general-purpose stand-ins have.
     chosen: Path | None = None
     for jsonl in jsonls:
         meta = jsonl.parent / (jsonl.stem + ".meta.json")
@@ -127,8 +135,6 @@ def _subagent_tool_calls(project_dir: Path, agent_type: str) -> list[str] | None
             if isinstance(at, str) and at.split(":")[-1] == agent_type:
                 chosen = jsonl
                 break
-    if chosen is None and len(jsonls) == 1:
-        chosen = jsonls[0]
     if chosen is None:
         return None
 
@@ -150,9 +156,13 @@ def _subagent_tool_calls(project_dir: Path, agent_type: str) -> list[str] | None
     return calls
 
 
+# Gated on the OPT-IN FLAG, never on a missing prerequisite. Keying the skip on
+# `_missing_prerequisites()` meant anyone holding a live key with a built engine
+# spent a model turn on a plain `make server-test` or `make test-all` without
+# asking. This is the only check in the repo that bills, so the flag is the gate.
 @pytest.mark.skipif(
-    bool(_missing_prerequisites()) and not _INVOKED_AS_PROBE,
-    reason="live probe — run `make agent-tool-bind`: " + "; ".join(_missing_prerequisites()),
+    not _INVOKED_AS_PROBE,
+    reason="live probe that SPENDS A MODEL TURN — run `make agent-tool-bind`",
 )
 async def test_gps_mentor_wiki_search_grant_binds(monkeypatch):
     """Spawn gps-mentor for real, force one wiki_search call, and assert it appears
@@ -187,7 +197,9 @@ async def test_gps_mentor_wiki_search_grant_binds(monkeypatch):
         )
         await client.connect()
         cost: float | None = None
-        try:
+
+        async def _drain() -> None:
+            nonlocal cost
             await client.query(_PROMPT)
             async for message in client.receive_response():
                 # The final ResultMessage carries the turn's billed cost — captured
@@ -195,6 +207,17 @@ async def test_gps_mentor_wiki_search_grant_binds(monkeypatch):
                 c = getattr(message, "total_cost_usd", None)
                 if isinstance(c, (int, float)):
                     cost = c
+
+        try:
+            # A check that bills must have a ceiling. `build_options` sets no
+            # max_turns and the receive loop has no time limit, so the FAILING case
+            # is the expensive one: the grant does not bind, gps-mentor cannot finish
+            # the instruction, and the main agent retries past the ~$0.35 the target
+            # promises. Wall clock rather than max_turns because a gps-mentor subagent
+            # reaches 66 assistant turns in the corpus and whether those count against
+            # the parent's budget is unconfirmed. Cf. the e2e orchestrator, which caps
+            # wall clock, inactivity, max_turns and max_cost_usd for the same reason.
+            await asyncio.wait_for(_drain(), timeout=300)
         finally:
             await client.disconnect()
         if cost is not None:
@@ -213,3 +236,126 @@ async def test_gps_mentor_wiki_search_grant_binds(monkeypatch):
         )
     finally:
         shutil.rmtree(project_dir, ignore_errors=True)
+
+
+# ── Offline guards. These bill NOTHING and are deliberately not gated behind
+# `_INVOKED_AS_PROBE`: they hold the two properties that decide whether the live
+# probe means anything, and both were reverted-green before they existed.
+
+
+def _write_subagent(root: Path, leaf: str, agent_type: str | None, tool: str) -> None:
+    """One fake subagent transcript under a fake ~/.claude/projects."""
+    d = root / ".claude" / "projects" / f"-tmp-{leaf}"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "agent-x.jsonl").write_text(
+        json.dumps({"message": {"content": [{"type": "tool_use", "name": tool, "input": {}}]}})
+        + "\n",
+        encoding="utf-8",
+    )
+    if agent_type is not None:
+        (d / "agent-x.meta.json").write_text(
+            json.dumps({"agentType": agent_type}), encoding="utf-8"
+        )
+
+
+def test_a_different_agents_transcript_is_never_read_as_this_ones(monkeypatch, tmp_path):
+    """The #939 failure: Task delegation falls back to a general-purpose stand-in,
+    whose transcript is then the ONLY one on disk. A stand-in is not bound by
+    gps-mentor's `tools:`, so it CAN call wiki_search — and a sole-transcript
+    fallback would read that as proof the grant bound, turning a spawn failure into
+    a green probe. Measured before this guard: the fallback returned
+    `['wiki_search']` and both live assertions passed."""
+    leaf = "agent-tool-bind-deadbeef"
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    _write_subagent(tmp_path, leaf, "general-purpose", "mcp__genealogy__wiki_search")
+
+    assert _subagent_tool_calls(Path("/tmp") / leaf, "gps-mentor") is None, (
+        "a transcript whose meta names a DIFFERENT agent was read as this agent's — "
+        "a general-purpose stand-in (#939) would pass the live probe"
+    )
+
+
+def test_this_agents_own_transcript_is_still_found(monkeypatch, tmp_path):
+    """The positive control, so the guard above cannot pass by matching nothing."""
+    leaf = "agent-tool-bind-cafebabe"
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    _write_subagent(tmp_path, leaf, "gps-mentor", "mcp__genealogy__wiki_search")
+
+    assert _subagent_tool_calls(Path("/tmp") / leaf, "gps-mentor") == ["wiki_search"]
+
+
+def test_namespaced_agent_type_still_matches(monkeypatch, tmp_path):
+    """The SDK may namespace it; the bare form is what was observed."""
+    leaf = "agent-tool-bind-feedface"
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    _write_subagent(tmp_path, leaf, "genealogy-research:gps-mentor", "mcp__genealogy__wiki_search")
+
+    assert _subagent_tool_calls(Path("/tmp") / leaf, "gps-mentor") == ["wiki_search"]
+
+
+_GATE_PROBE = """
+import importlib.util, sys
+sys.path.insert(0, {server!r})
+spec = importlib.util.spec_from_file_location("probe", {test!r})
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+mark = [k for k in m.test_gps_mentor_wiki_search_grant_binds.pytestmark
+        if k.name == "skipif"]
+print("NOMARK" if len(mark) != 1 else ("SKIP" if mark[0].args[0] else "RUNS"))
+"""
+
+
+def _gate_verdict(*, key: bool, flag: bool) -> str:
+    """Import the module in a CHILD process under one key/flag combination and report
+    what its skipif actually evaluates to. A child is required: the marker condition
+    is evaluated once at import time, so the value in THIS process only reflects the
+    environment pytest itself was started in."""
+    env = dict(os.environ)
+    env.pop("LIVE_ANTHROPIC_API_KEY", None)
+    env.pop("AGENT_TOOL_BIND", None)
+    if key:
+        env["LIVE_ANTHROPIC_API_KEY"] = "sk-not-a-real-key"
+    if flag:
+        env["AGENT_TOOL_BIND"] = "1"
+    out = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            _GATE_PROBE.format(server=str(Path(__file__).parents[1]), test=str(Path(__file__))),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=env,
+    )
+    return out.stdout.strip()
+
+
+def test_the_billing_probe_is_gated_on_opt_in_not_on_prerequisites():
+    """This is the only check in the repo that spends a model turn, so the gate must be
+    the OPT-IN FLAG alone. Keyed on `_missing_prerequisites()` as well, anyone holding a
+    live key with a built engine billed a turn on a plain `make server-test` or
+    `make test-all` without asking.
+
+    The hazard cell is key present + engine built + node on PATH + flag absent, and a
+    test cannot conjure the middle two: `_ENGINE_BUILD` is a fixed repo path. So the
+    property is pinned on the gate's SOURCE, the way the #1741 window guard reads the
+    orchestrator's. Evaluating the marker instead does not work — with any
+    prerequisite missing the old and new conditions agree, so a value comparison
+    passes against the very bug it exists to catch (measured, twice)."""
+    src = Path(__file__).read_text(encoding="utf-8")
+    gate = src.split("@pytest.mark.skipif(", 1)[1].split("\n)", 1)[0]
+    assert "_INVOKED_AS_PROBE" in gate, "the billing probe's gate no longer reads the opt-in flag"
+    assert "_missing_prerequisites" not in gate, (
+        "the billing probe's skip is keyed on a missing prerequisite again — a developer "
+        "with a live key, a built engine and node on PATH is then charged a model turn by "
+        "a plain `make server-test` or `make test-all`, without asking. Gate on "
+        "AGENT_TOOL_BIND alone; `_missing_prerequisites()` belongs in the pytest.fail "
+        "remedy list inside the body, which is reached only under the flag."
+    )
+
+    # The two cells that ARE reachable without a built engine, evaluated for real.
+    assert _gate_verdict(key=False, flag=False) == "SKIP"
+    # Opt-in runs the body: with no key it reaches the pytest.fail remedy list rather
+    # than skipping silently, which is what makes `make agent-tool-bind` loud.
+    assert _gate_verdict(key=False, flag=True) == "RUNS"

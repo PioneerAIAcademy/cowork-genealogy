@@ -357,7 +357,7 @@ agent-tool-bind: $(ENGINE_BUILD) ## Live probe that gps-mentor's wiki_search gra
 	cd apps/server && \
 	  AGENT_TOOL_BIND=1 \
 	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
-	  uv run pytest tests/test_agent_tool_binding.py -q -rs
+	  uv run pytest tests/test_agent_tool_binding.py -q -rs -s
 
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
