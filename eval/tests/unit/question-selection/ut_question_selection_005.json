@@ -5,7 +5,7 @@
     "name": "FAN pivot when all direct evidence searches are complete and unresolved",
     "type": "positive",
     "description": "The flynn-fan-pivot scenario has q_001 in_progress with all plans completed (1850, 1860 censuses, death cert, and 1870/1880/1900 censuses — all negative). Direct evidence exhausted. The skill should recognize that the FAN pivot threshold is met and propose an associates/neighbors question.",
-    "tags": ["question-selection", "fan-pivot", "direct-evidence-exhausted", "selection-basis-fan-pivot", "depends-on-nonempty", "new-question-exhaustive-declaration-unstarted"]
+    "tags": ["question-selection", "fan-pivot", "direct-evidence-exhausted", "selection-basis-fan-pivot", "depends-on-nonempty", "new-question-exhaustive-declaration-unstarted", "unblocks-nonempty"]
   },
   "input": {
     "user_message": "What should I research next?",
