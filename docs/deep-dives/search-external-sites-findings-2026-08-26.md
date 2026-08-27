@@ -46,16 +46,26 @@ first version of this section said "7 of 24". Both halves were wrong: the
 numerator conflated *non-Ireland* (7, which includes one `Massachusetts` URL
 belonging to a different scenario and subject) with *the rejected value* (6),
 and the denominator pooled two run logs that retention has since pruned along
-with post-fix runs. Re-measured over exactly the run logs this branch commits,
-counting only `mid-research-flynn` URLs:
+with post-fix runs. Re-measured counting only `mid-research-flynn` URLs the
+skill itself emitted — its text response and the arguments it sent, never a
+URL echoed back to it in a fixture's `research_query` response, which is a
+`log[]` entry the scenario already carried and not something the skill wrote:
 
 | | Flynn URLs encoding a birthplace | encoded the rejected value | |
 |---|---|---|---|
 | **Pre-fix** (`v1_2026-08-20_21-55-13`, `v1_2026-08-20_22-45-06`, `v1_2026-08-24_09-59-31`) | 15 | **5** | **33%** |
-| **Post-fix** (`v1_2026-08-26_23-13-30`, `v1_2026-08-27_00-08-56`) | 9 | **1** | **11%** |
+| **Post-fix** (`v1_2026-08-26_23-13-30`, `v1_2026-08-27_00-08-56`, `v1_2026-08-27_12-50-50`) | 13 | **2** | **15%** |
 
 The five pre-fix misses are `_002` three times, `_009` once and `_007` once.
-The single post-fix miss is `_002` on `v1_2026-08-27_00-08-56`.
+Both post-fix misses are `_002`, on `v1_2026-08-27_00-08-56` and on
+`v1_2026-08-27_12-50-50`.
+
+**Provenance of the pre-fix row, since it names a file that is gone.** The
+`v1_2026-08-27_12-50-50` run pruned `v1_2026-08-20_21-55-13` under
+`DEFAULT_KEEP_CANDIDATES = 5`, so the pre-fix row is no longer reproducible
+from the committed corpus alone; recover the file from git history to re-derive
+it. The rate is unaffected either way — over the two surviving pre-fix logs it
+is 3 of 9, still 33%.
 
 **What counts as the rejected value, if the table is ever quoted.** Two of the
 five pre-fix hits encode `birthplace=Schuylkill+County%2C+Pennsylvania` rather
@@ -63,7 +73,9 @@ than a bare `Pennsylvania` — wrong field granularity *and* the rejected value.
 They are counted here because a county-qualified Pennsylvania asserts the same
 rejected birthplace and produces the same false filter, which is what F4 is
 about. On a strict bare-value reading the pre-fix figure is 3 of 15 (20%) and
-the movement is 20% → 11% rather than 33% → 11%. Raised by the reviewer of
+the movement is 20% → 15% rather than 33% → 15%; both post-fix misses are a
+bare `Pennsylvania`, so the two readings converge after the fix. Raised by the
+reviewer of
 #1954; the counting above is the one this finding rests on, but the distinction
 belongs beside the number rather than behind it.
 
@@ -71,11 +83,22 @@ belongs beside the number rather than behind it.
 `ma-state-census-external`, which carries no `conflicts[]`, so their
 `Massachusetts` value is an ordinary parameter and correct.
 
-**Read this as directional, not settled.** Nine post-fix observations is a
-small sample, and the one miss is on the test most prone to it. The honest
-claim is that the rate moved from about a third to about a tenth, not that the
-defect is closed. What would settle it is V1 in issue #1950, which decides the
-question deterministically instead of by rate.
+**Read this as directional, not settled, and weaker than it first looked.**
+Thirteen post-fix observations is a small sample, and both misses are on the
+test most prone to it. The honest claim is that the rate moved from about a
+third to about a seventh, not that the defect is closed. **The third post-fix
+run moved the figure the wrong way** — 1 of 9 became 2 of 13 — which is what a
+small sample does and is the reason this row is quoted with its denominator
+rather than as a headline percentage. What would settle it is V1 in issue
+#1950, which decides the question deterministically instead of by rate.
+
+**The recurrence is on file, graded.** `_002` on `v1_2026-08-27_12-50-50`
+scored **1** on both base/Correctness and rubric/URL generation, and the
+annotation confirms both at 1. That is the first time this dive's own headline
+defect has been caught by the graded corpus rather than by a human reading
+URLs, and it happened only because the same run restored the conflict state to
+that test's `judge_context` (F12). The prose rule in `SKILL.md` was in force
+for all three post-fix runs and did not prevent it.
 
 **Why it is harmful, not cosmetic.** These sites *filter* on birthplace.
 A search for a man born in Ireland, run with `birthplace=Pennsylvania`,
@@ -588,11 +611,16 @@ already present in run 1, where `_004` scored 3 with the rationale "No conflicts
 exist in the project for birthplace": right answer, reasoning that contradicts
 the fixture.
 
-**What this means for F4's claim.** The lane-2 half of the F4 fix does not bind.
-The behavioural half does (the rate moved 33% to 11%), but the rubric cannot
-independently catch a violation, and the one live test of that says so. Do not
-read this skill's 15-of-15 and 14-of-15 runs as evidence the rubric fails
-violations. It has been exercised once and did not fire.
+**What this means for F4's claim.** Written before the
+`v1_2026-08-27_12-50-50` run and superseded by it; kept because the reasoning
+is what the fix was chosen against. At the time, the lane-2 half of the F4 fix
+did not bind: the behavioural half moved the rate (33% to 15% over the three
+post-fix runs), but the rubric could not independently catch a violation, and
+the one live test of that said so. Do not read this skill's 15-of-15 and
+14-of-15 runs as evidence the rubric fails violations — on those runs it had
+been exercised once and did not fire. The state-form `judge_context` above
+changed that: on `v1_2026-08-27_12-50-50` the rubric rule fired at 1, on its
+own terms, quoted in the judge's rationale.
 
 **The baseline moved down, it did not stay flat.** Traced by Gennecis in review
 of PR #1954 and confirmed by snapshot hash. Before this branch,
@@ -601,22 +629,49 @@ of PR #1954 and confirmed by snapshot hash. Before this branch,
 a_009, is correct" — and that per-test note was the only thing that ever caught
 an F4 violation:
 
-| run | `judge_context` | encoded | URL generation |
-|---|---|---|---|
-| `08-20_21-55-13` | old | Schuylkill County, Pennsylvania | 3 |
-| `08-20_22-45-06` | old | Schuylkill County, Pennsylvania | **2 — caught** |
-| `08-24_09-59-31` | old | Pennsylvania | **2 — caught** |
-| `08-27_00-08-56` | **new** | Pennsylvania | 3 — missed |
+| run | `judge_context` | `judge_prompt_hash` | encoded | URL generation |
+|---|---|---|---|---|
+| `08-20_21-55-13` | answer key | `0d186137147c` | Schuylkill County, Pennsylvania | 3 |
+| `08-20_22-45-06` | answer key | `0d186137147c` | Schuylkill County, Pennsylvania | **2 — caught** |
+| `08-24_09-59-31` | answer key | `0d186137147c` | Pennsylvania | **2 — caught** |
+| `08-27_00-08-56` | rubric pointer | `c39d70034788` | Pennsylvania | 3 — missed |
+| `08-27_12-50-50` | **state** | `c39d70034788` | Pennsylvania | **1 — caught** |
+
+**Read the hash column before drawing the comparison.** The three answer-key
+runs all predate #1766's judge prompt, so "2 of 3 with the note, 0 of 1
+without" spans two judge prompts and is not a controlled pair. The pair that
+*is* controlled is the last two rows: same `judge_prompt_hash`, same fixture,
+same rubric, same encoded value, differing only in what `judge_context` says.
+That pair is what the conclusion below rests on, and it is the stronger
+evidence anyway — 3 to 1 on a single variable.
 
 This branch replaced that note with a pointer to the rubric rule, on the
 reasoning that a per-test answer key is not fixture-agnostic. That reasoning
-still holds, but the consequence has to be stated plainly: the replacement
-hands the decision to a rule the judge cannot execute, so a check that was
-firing 2 of 3 times now fires 0 of 1. Small sample, but the mechanism is proven
-and the direction is one way. **This axis is not merely unproven, it is weaker
-than it was before this branch.** Restoring the per-test note is snapshot-
-tracked and so costs a paid run; it should ride whichever run next covers this
-skill, alongside the #1956 fix below.
+still holds, but the pointer alone hands the decision to a rule the judge
+cannot execute: a check that was firing 2 of 3 times fired 0 of 1.
+
+**Fixed on this branch, in a third form.** The note now supplies the *state*
+rather than the answer: `c_001` on `birthplace`, `status: "resolved"`,
+`preferred_assertion_id: a_002` resolved to the value Ireland, competing value
+Pennsylvania rejected, and an instruction to grade the encoded `birth_place`
+against the rubric rule using that state. On `v1_2026-08-27_12-50-50` this
+caught the violation at **1**, harder than the answer-key form's 2, and the
+judge's rationale quotes `rubric.md` rather than the note:
+
+> "Per the URL generation rubric, encoding a value that a resolved conflict
+> rejected is a fail."
+
+That distinction is the whole point. Under the old note the rubric rule was
+decoration and the note did the work; under this one the rule is what decides,
+and the note only supplies the fact the rendered before-state omits. The
+fixture-agnostic objection is met in substance: no test file states a verdict.
+
+**This doubles as a pilot of #1902's design**, which proposes exactly this
+shape for `_summarize_before_state` — hand over the conflict state, resolve
+`preferred_assertion_id` to a value rather than an id, and let the rubric
+decide. It works. When #1902 lands, the before-state carries this for every
+test and the per-test note becomes redundant and should be deleted; until then
+it covers one test out of fifteen.
 
 **Where it goes.** Issue #1956 (harness lane, filed by the reviewer) adds a
 `conflicts[]` block to `_summarize_before_state`. That file is outside the
