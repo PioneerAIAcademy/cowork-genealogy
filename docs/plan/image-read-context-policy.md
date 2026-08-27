@@ -363,11 +363,12 @@ and shape lanes.
 5. **OPEN** — answer §5 by live Cowork observation; file whatever it turns up as its
    own issue. This is the part that can crash a real user's run.
 
-**DoD:** a router-side `image_read` call is denied and recorded **in the unit harness**,
-with no judge involvement (**met**, verified live per §4); a subagent-side call and a
-declaring skill's direct call are unaffected (**met**, §4.1); §5 answered and filed
-(**open**). The original DoD said "both harnesses" — §4.1 retires the e2e half as
-unattributable rather than leaving it silently unmet.
+**DoD:** a router-side `image_read` call is denied and recorded in **both harnesses** —
+the unit harness with no judge involvement (**met**, verified live per §4), and e2e
+since #1273 Item 1 (**met**, `is_main_thread_subagent_only_tool`); a subagent-side
+call is unaffected in both (**met**); a declaring skill's direct call is unaffected
+in the unit harness only, because e2e carries no declared-tools exemption
+(`docs/specs/e2e-test-spec.md` §6.1.1); §5 answered and filed (**open**).
 
 ## 8. Risks
 
