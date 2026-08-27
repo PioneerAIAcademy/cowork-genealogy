@@ -183,6 +183,16 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
     return [...byId.values()].sort((a, b) => rank(a.id) - rank(b.id))
   }, [emailTrimmed, emailValid, overLimitFields, workedAsExpected])
 
+  // A blocker the reporter has since FIXED leaves the refused set for good: if
+  // its id stayed, re-breaking that same field would go red and claim "Not sent"
+  // again with no Send in between. Only a fresh refusal may re-add it.
+  useEffect(() => {
+    setRefusedIds((prev) => {
+      const next = new Set([...prev].filter((id) => blockers.some((b) => b.id === id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [blockers])
+
   // Still-unfixed blockers from the last refusal. A blocker created after that
   // refusal is not here, so it stays quiet until the reporter tries again.
   const shownBlockers = blockers.filter((b) => refusedIds.has(b.id))

@@ -157,6 +157,54 @@ describe('FeedbackDialog — worked-as-expected gate', () => {
     expect(screen.queryByText(/Not sent\./)).toBeNull()
   })
 
+  it('does not go red again for a field that was refused, then fixed, then re-broken', async () => {
+    const user = userEvent.setup()
+    mount()
+    await user.click(screen.getByRole('radio', { name: 'Yes' }))
+    const email = (): HTMLElement => screen.getByLabelText(/Your email/)
+    await user.clear(email())
+    await user.type(email(), 'nope')
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    // The refusal names the email, so it is marked. This also pins the email's
+    // aria-invalid, which nothing else asserts the presence of.
+    expect(email()).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText(/Not sent\./)).toBeTruthy()
+
+    // Fix it. Blank is a legitimate address, so the refusal clears.
+    await user.clear(email())
+    expect(email()).not.toHaveAttribute('aria-invalid')
+    expect(screen.queryByText(/Not sent\./)).toBeNull()
+
+    // Re-break the SAME field with no Send in between. A refused id that is
+    // never released turns the field red again and claims a refusal that did
+    // not happen — the defect 9c284aaf fixed for a *new* field, still live for
+    // one already refused once. 'a', 'a@', 'a@b' and 'a@b.' are all invalid, so
+    // this is the whole way through an ordinary retype.
+    await user.type(email(), 'a')
+    expect(email()).not.toHaveAttribute('aria-invalid')
+    expect(screen.queryByText(/Not sent\./)).toBeNull()
+  })
+
+  it('keeps showing a refusal the reporter has not fixed while they type elsewhere', async () => {
+    const user = userEvent.setup()
+    mount()
+    // Refused on the radio, and never answered.
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    expect(screen.getAllByText(/Choose Yes or No/).length).toBeGreaterThan(0)
+
+    // Typing in an unrelated box must not release a blocker that is still live.
+    // Releasing the whole refused set on any edit, rather than only the ids that
+    // are now fixed, silently drops the message the reporter still needs.
+    await user.type(screen.getByLabelText(/Notes/), 'something else')
+    expect(screen.getAllByText(/Choose Yes or No/).length).toBeGreaterThan(0)
+    expect(screen.getByText(/Not sent\./)).toBeTruthy()
+
+    // And it still clears the moment it is genuinely fixed.
+    await user.click(screen.getByRole('radio', { name: 'Yes' }))
+    expect(screen.queryByText(/Choose Yes or No/)).toBeNull()
+    expect(screen.queryByText(/Not sent\./)).toBeNull()
+  })
+
   it('clears a previous send failure when the next Send is refused', async () => {
     const user = userEvent.setup()
     const submitFeedback = vi.fn(async () => {
