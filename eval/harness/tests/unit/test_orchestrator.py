@@ -313,9 +313,14 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
             text_response="I saved the file.",
             skills_invoked=["search-wikipedia"],
             tool_calls=[
+                # LIVE, so this test also covers the production wiring of
+                # #1000's two new fields — the retention rule keeps a live
+                # response, and reverting either call site in
+                # `_run_one_test_async` must fail something.
                 {"tool": "mcp__genealogy__wikipedia_search", "args": {"query": "X"},
-                 "matched": {"kind": "predicate", "index": None},
-                 "response_fixture": None, "response": stub_response}
+                 "matched": {"kind": "live", "index": None},
+                 "response_fixture": "live:wikipedia_search",
+                 "response": stub_response},
             ],
             duration_ms=10.0,
             usage={"total_cost_usd": 0.01, "usage": {"input_tokens": 100,
@@ -347,6 +352,24 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     # v1.7 fix: outcome must be "fail" — empty judge_dimensions can't
     # silently satisfy "every dimension scored pass" (spec §7).
     assert entry["outcome"] == "fail"
+
+    # --- #1000: the PRODUCTION WIRING, not the helpers -----------------------
+    #
+    # Every other test for these fields drives a helper directly, so reverting
+    # either call site in `_run_one_test_async` — the path that wrote all 1,945
+    # committed entries — left the whole suite green. Only the aborted path (11
+    # entries) was pinned. These four assertions close that, and they belong in
+    # this test because it is the one that already drives the real function end
+    # to end.
+    #
+    # It matters here specifically because ABSENT means "predates #1000": a
+    # refactor dropping either line yields fresh run logs that misrepresent
+    # themselves as old ones, with CI green.
+    assert entry["grading_mode"] == "dimensions"
+    assert entry["dimensions_gate_outcome"] is True
+    live = entry["runs"][0]["output"]["tool_calls"][0]
+    assert live["matched"]["kind"] == "live"
+    assert live["response"] == stub_response, "a live response survives the projection"
 
 
 def test_uncovered_tool_call_continues_to_judge(tmp_path, monkeypatch):
