@@ -5,14 +5,26 @@
     "name": "FindAGrave memorial search with compiled-source caution",
     "type": "positive",
     "description": "FindAGrave is free (always generated, no subscription gate) but user-contributed — the skill must pair the URL with a compiled-source caution (memorials can be wrong; distinguish photographed evidence from contributor-entered text). The curated-links fixture returns only Ancestry URLs, so the FindAGrave URL comes from the site-wide template.",
-    "tags": ["findagrave", "external-site", "compiled-source", "url-generation", "log-site-findagrave"],
+    "tags": [
+      "findagrave",
+      "external-site",
+      "compiled-source",
+      "url-generation",
+      "log-site-findagrave"
+    ],
     "holdout": true
   },
   "input": {
     "user_message": "Look for Patrick Flynn's grave on FindAGrave — he died in Pennsylvania sometime after 1880.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["place-search-pennsylvania", "place-search-pennsylvania-by-name", "place-search-pennsylvania-by-place", "external-links-search-schuylkill"],
+  "mcp_fixtures": [
+    "place-search-pennsylvania",
+    "place-search-pennsylvania-by-name",
+    "place-search-pennsylvania-by-place",
+    "external-links-search-schuylkill",
+    "collections-search-pennsylvania"
+  ],
   "judge_context": [
     "Generated URL should target findagrave.com/memorial/search with name and location parameters (first name Patrick, last name Flynn, location Pennsylvania). NOTE: Patrick's death year (1908) is KNOWN from the research state (project objective: died 1908 in Schuylkill County). Using death year 1908 is therefore correct — it is the known fact and satisfies 'after 1880'; do NOT penalize it as a fabricated exact year or as over-narrowing. An open 'after 1880' bound is also acceptable. The user's vague 'sometime after 1880' does not override the known 1908.",
     "Must include a compiled-source caution: FindAGrave memorials are user-contributed; photographed headstone evidence carries more weight than contributor-entered dates/family links; findings are leads needing verification against original records",
