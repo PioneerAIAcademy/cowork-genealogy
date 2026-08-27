@@ -10,19 +10,25 @@ that caveat actually matters, not something embedded in every reader.
 A 34-line prototype measured 2026-08-25 found 23 result JSONs across 16 stale
 refs against zero runs behind an open PR that day, which is the reason a
 reader-embedded crawl was rejected (see `guardrail-enforcement-spec.md` §4).
-**That population count is a snapshot, not a standing property**: T-FEH's
-review of this PR found a genuinely in-flight graded run (`elena-asmundsdotter-origin`,
-behind open PR #1921) within about a day of the 2026-08-25 measurement — and
-this script, run at review time, did not find it, for a structural reason and
-not a bug: `_refs()` only sees LOCAL and REMOTE-TRACKING refs this checkout
-already knows about, so a branch nobody has fetched here is invisible to it
-regardless of how in-flight its work is. The Makefile target runs
-`git fetch --prune origin` first for exactly this reason (still no query
-against GitHub's PR state — a network-visible ref is not the same claim as
-"behind an open PR", just a precondition for seeing it at all). The
-23-across-16 figure stays a dated historical anchor, not a claim this script
-reproduces on every checkout — the population is fetch-state-dependent by
-construction.
+**That population count is a snapshot, not a standing property, and was
+re-measured rather than just reworded once it was found wrong**: within about
+a day of the 2026-08-25 measurement, a genuinely in-flight graded run
+(`elena-asmundsdotter-origin`) existed behind an open PR, and this script,
+run before fetching, did not find it — a structural gap, not a bug: `_refs()`
+only sees LOCAL and REMOTE-TRACKING refs this checkout already knows about,
+so a branch nobody has fetched here is invisible to it regardless of how
+in-flight its work is. Fixed by having the Makefile target run
+`git fetch --prune origin` first. Re-measured 2026-08-27 with that fix in
+place, then cross-referenced by hand against `gh pr list --state open`: 21
+result JSONs across 16 refs, of which exactly 1 ref
+(`572-elena-reading-probe-and-rerun`) is behind a currently-open PR — nonzero,
+as the counterexample predicted, and still a small minority of the crawl's
+output, which is why the crawl script does not itself query GitHub's PR
+state (a network-visible ref is not the same claim as "behind an open PR",
+just a precondition for seeing it at all) and instead leaves that
+cross-reference to the human triaging the result. Both figures are dated
+historical anchors, not a claim this script reproduces on every checkout —
+the population is fetch-state- and time-dependent by construction.
 
 Local refs only: diffs `git ls-tree` between HEAD and every LOCAL and
 REMOTE-TRACKING ref already known to this checkout. The module itself makes
@@ -112,8 +118,11 @@ def branch_only() -> dict[str, RefEntry]:
 
     A ref whose listing is a subset of HEAD's is omitted entirely — nothing
     to report, not an empty group. A ref whose `git ls-tree` call fails (a
-    stale/gone remote-tracking ref) is skipped: this is a discovery aid, not
-    a gate, and one broken ref must not hide every other one's results.
+    stale/gone remote-tracking ref) OR whose output isn't valid UTF-8 (a
+    ref name or path with non-UTF-8 bytes -- `_git` decodes with
+    `encoding="utf-8"`, so that raises `UnicodeDecodeError`, not
+    `CalledProcessError`) is skipped: this is a discovery aid, not a gate,
+    and one broken ref must not hide every other one's results.
 
     Listing every ref (`_refs()`) and reading HEAD's own listing are NOT
     given that same per-ref leniency — both are hard prerequisites (there is
@@ -125,7 +134,7 @@ def branch_only() -> dict[str, RefEntry]:
     for ref, tip_date in _refs():
         try:
             ref_paths = _result_json_paths(ref)
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, UnicodeDecodeError):
             continue
         only = sorted(ref_paths - head_paths)
         if only:
@@ -150,7 +159,7 @@ def format_report(found: dict[str, RefEntry]) -> str:
 def main() -> int:
     try:
         found = branch_only()
-    except subprocess.CalledProcessError as e:
+    except (subprocess.CalledProcessError, UnicodeDecodeError) as e:
         print(f"Could not list refs or read HEAD's own tree: {e}", file=sys.stderr)
         return 1
     print(format_report(found))

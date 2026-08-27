@@ -494,12 +494,17 @@ to understand before reading either:
   The module itself makes no network call; the Makefile target fetches
   (`--prune`) first, since a branch nobody has locally fetched is invisible
   to it regardless of how in-flight its work is. That is not a theoretical
-  gap: the "0 runs behind an open PR" figure below was contradicted by a
+  gap: the "0 runs behind an open PR" figure above was contradicted by a
   genuinely in-flight graded run within about a day of being measured, and a
   crawl run without fetching first missed it for exactly that reason — the
-  tool is weakest precisely where this issue is strongest. A human runs the
-  target and triages the result only when a decision is actually about to be
-  taken off one of these counts.
+  tool is weakest precisely where this issue is strongest. Re-measured
+  2026-08-27 with the fetch-first fix in place, then cross-checked by hand
+  against `gh pr list --state open`: 21 result JSONs across 16 refs, of which
+  1 ref is behind a currently-open PR — nonzero, confirming the fix closes
+  the gap the counterexample found, and still a small minority, which is why
+  the crawl leaves the GitHub-side cross-reference to the human rather than
+  querying it itself. A human runs the target and triages the result only
+  when a decision is actually about to be taken off one of these counts.
 - The **replayed** counts read the whole corpus. `same_person` provenance: **120
   of the 147 runs that link a person have ≥1 gap (788 links, 79 fixtures)**, with
   one run skipped and named for having no committed seed tree. It is a **lower

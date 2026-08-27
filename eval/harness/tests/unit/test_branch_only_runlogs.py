@@ -169,6 +169,32 @@ def test_a_ref_whose_ls_tree_fails_is_skipped_not_fatal(monkeypatch):
     assert list(found.keys()) == ["refs/heads/live-branch"]
 
 
+def test_a_ref_whose_ls_tree_output_is_not_valid_utf8_is_skipped_not_fatal(monkeypatch):
+    """`_git` decodes with `encoding=\"utf-8\"`, so a ref name or path with
+    non-UTF-8 bytes raises `UnicodeDecodeError`, not `CalledProcessError` --
+    a different exception type than the "gone ref" case above. Must degrade
+    the same way (skipped, not fatal), or a stray non-UTF-8 ref crashes the
+    whole crawl instead of being one skipped result among many (cross-file
+    review of this PR)."""
+    calls: list[str] = []
+
+    def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
+        if cmd[1] == "for-each-ref":
+            return "refs/heads/bad-ref\t2026-08-01\nrefs/heads/live-branch\t2026-08-01\n"
+        ref = cmd[4]
+        calls.append(ref)
+        if ref == "HEAD":
+            return ""
+        if ref == "refs/heads/bad-ref":
+            raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
+        return "eval/runlogs/e2e/fixture/run-2026-08-01_00-00-00.json\n"
+
+    monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
+    found = branch_only_runlogs.branch_only()
+    assert list(found.keys()) == ["refs/heads/live-branch"]
+    assert "refs/heads/bad-ref" in calls  # confirms the bad ref was actually attempted
+
+
 def test_format_report_does_not_double_count_a_path_on_two_refs(monkeypatch):
     """A local branch and its remote-tracking twin (routine, not an edge
     case) can carry the identical path -- the header must count unique runs,
@@ -190,19 +216,24 @@ def test_format_report_states_a_clean_result_as_a_real_result(monkeypatch):
     assert "No graded run logs found" in branch_only_runlogs.format_report({})
 
 
-def test_main_fails_clearly_when_only_head_read_fails(monkeypatch, capsys):
-    """Pins the HEAD-read prerequisite on its own, not just the
-    both-raise case above: `for-each-ref` succeeds, only the `ls-tree HEAD`
-    call fails. Making just this one call lenient (e.g. swallowing its
-    CalledProcessError like the per-ref case does) must not leave the suite
-    green -- T-FEH's review of this PR found neither prerequisite was pinned
-    individually, only their combined failure."""
+def test_main_fails_clearly_when_only_for_each_ref_fails(monkeypatch, capsys):
+    """Pins the ref-listing prerequisite on its own, not just the
+    both-raise case below: `branch_only()` reads HEAD's own tree FIRST
+    (before `_refs()`/`for-each-ref` ever runs -- see the call order in
+    `branch_only()`), so a test that only makes the HEAD read fail can never
+    tell "only HEAD fails" apart from "everything fails": `for-each-ref` is
+    never reached either way. The prerequisite that genuinely needs its own
+    test is the other one -- HEAD read succeeds, `for-each-ref` fails.
+    Making just this call lenient must not leave the suite green (an earlier
+    version of this test claimed to pin the HEAD-alone case but never
+    actually exercised its own `for-each-ref` branch -- caught by a
+    line-by-line review of this PR)."""
 
     def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
-        if cmd[1] == "for-each-ref":
-            return "refs/heads/some-branch\t2026-08-01\n"
-        assert cmd[1] == "ls-tree"
-        assert cmd[4] == "HEAD"
+        if cmd[1] == "ls-tree":
+            assert cmd[4] == "HEAD"
+            return ""
+        assert cmd[1] == "for-each-ref"
         raise subprocess.CalledProcessError(128, cmd)
 
     monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
