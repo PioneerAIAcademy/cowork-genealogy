@@ -68,8 +68,8 @@ nominally responsible for catching most of them are the two that have never move
 > sixth run (see "What the eval run showed") moved three negative tests from 1 to 3 with
 > no behaviour change, which shifts the whole-corpus count. Re-derive with
 > `make judge-report` rather than quoting these figures. What did *not* shift: `Evidence
-> weighing` and `Resolution completeness` are still 3 on every positive run, now 6 logs
-> deep.
+> weighing` and `Resolution completeness` are still 3 on every positive run — 42 of 42
+> across every run ever measured for this skill.
 
 ---
 
@@ -811,7 +811,7 @@ rationale closes by citing the new `Resolution completeness` wording verbatim.
 
 ### What the fixes did not achieve — and this is the part to carry forward
 
-**`Evidence weighing` and `Resolution completeness` are still 3 in 6 of 6 positive runs.**
+**`Evidence weighing` and `Resolution completeness` are still 3 in 7 of 7 positive runs.**
 The dive changed *outcomes* — three partials where the corpus had at most one — without
 un-flattening either dimension it wrote a new fail branch into. Both new rules fired; the
 judge attributed both to a **neighbouring dimension**:
@@ -835,8 +835,10 @@ the next paid run to settle.
 ### Calibration note
 
 **The two new rubric fail branches did not move the dimensions they were written into.**
-`Evidence weighing` and `Resolution completeness` each scored **3 in 6 of 6 positive
-runs** — unchanged from the five committed logs, and unchanged by this PR's edits.
+`Evidence weighing` and `Resolution completeness` each scored **3 in 7 of 7 positive
+runs** — unchanged from the five committed logs, and unchanged by this PR's edits. Across
+every run ever measured for this skill that is **42 of 42** for each dimension: 35 before
+this PR, 7 after.
 
 `ut_conflict_resolution_008` is the sharpest case, because it scored **3 on both** while
 exhibiting the behaviour each branch names:
