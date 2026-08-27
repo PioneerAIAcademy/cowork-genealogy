@@ -534,8 +534,21 @@ re-measuring; the counts below are from the 2026-08-27 board.
 | Guard | Why | Without it |
 |---|---|---|
 | A concrete file never implies its directory | Two files in `src/tools/` are not a collision | Every `src/tools/` item paired with every other — 14 pairs on one issue |
-| A directory holding more than 10 tracked files is not pairable (snapshot dirs exempt) | Naming `src/tools/` (47 files) means "I add a file here", not "I edit all 47" | 3 of 8 pairs false, all from one issue's `src/tools/` entry |
+| A bare directory pairs only if it is a snapshot path or a **unit dir** — never an ordinary container | Naming `src/tools/` means "I add a file here", not "I edit all 47". A skill dir, a scenario, an e2e fixture *is* the unit, so naming it does mean all of it | 3 of 8 pairs false from one `src/tools/` entry; and see the row below |
 | A file named by more than 3 candidates is a hub, reported once | `docs/architecture.md` is the repo's map; everyone edits it, in different sections | 26 of 79 shared-path hits were that one file |
+
+**Do not swap the unit/container test back for a size threshold.** It was one
+(`<= 10 tracked files`) until 2026-08-27, and size is a proxy that misses in both
+directions: `apps/server/app/sandbox` is 5 files and a container,
+`eval/runlogs/unit/<skill>` is 11 and a unit. The threshold paired issue #1959 —
+whose entry reads `apps/server/app/sandbox/ (LocalProvider WS path)`, i.e.
+`local.py` — against #1729 and #1489, which name `e2b.py`. Two notes nearly went
+onto three issues telling people to coordinate on work that does not overlap.
+
+**A parenthetical that narrows a directory is still not read.** `(LocalProvider WS
+path)` names the file, and the extractor drops it as punctuation. That is why the
+"too broad to pair" list exists and why it says *read these by hand* — it is the
+honest bucket, not a failure.
 
 The verdict it prints is advisory: a shared **snapshot** path means Gate 4 and is
 hard, anything else is Gate 3 and only needs the notes below. Read the pairs, do
