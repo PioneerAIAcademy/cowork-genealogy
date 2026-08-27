@@ -1108,7 +1108,7 @@ outside this list and outside every check.)*
 | 2 | the prose table in `docs/specs/research-schema-spec.md` | **nothing** |
 | 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema) | `make engine-test` |
 | 4 | `packages/schema/schemas/research.schema.json` | **`make harness-test`** only |
-| 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names** only, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); the *types* — optionality, `\| null`, a closed enum typed as `string` — are still unchecked |
+| 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches |
 | 6 | `src/tools/research-append-examples.ts` — the worked-example registry | round-trip validity only |
 | 7 | `packages/viewer-ui/src/components/sections/<X>Section.tsx` (+ `.module.css`) | `make engine-test` (`field-render-drift.test.ts`) — but only as a **sibling outlier**: if the object renders nothing at all, nothing fires |
 | 8 | the `SKILL.md` of whichever skill must populate it | **nothing** |
@@ -1560,7 +1560,8 @@ gh issue list --state open --label needs-decision   # blocked on one answer from
 
 That label — not `senior`, which is work that stays hard after every question is
 answered — is where an unsettled question waits. `/fill-ready` § "Above the junior
-pools" owns the split, and `/find-big-wins` works the `needs-decision` queue.
+pools" owns the split, and `/make-decisions` drains the `needs-decision` queue
+daily; `/find-big-wins` reads it as evidence but never removes the label.
 
 Two are stated **where they bind**, because each one will stop a change you might
 otherwise make:

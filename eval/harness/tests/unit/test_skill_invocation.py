@@ -18,6 +18,8 @@ from harness.skill_invocation import (
     GUARDRAIL_SKILLS,
     WARNINGS_UNCHECKED_KIND,
     find_citation_nulling_in_conclusions,
+    find_citation_nulling_in_tree_sources,
+    TREE_CITATION_NULLING_KIND,
     find_effects_without_invocation,
     find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
@@ -1874,3 +1876,126 @@ def test_a_marriage_dated_onto_a_seeded_couple_is_not_flagged():
     assert find_conclusions_without_tree_encoding(research, final, starting_tree=seed) == []
     # And the control: no marriage encoded at all -> it still fires.
     assert len(find_conclusions_without_tree_encoding(research, seed, starting_tree=seed)) == 1
+
+
+# --- find_citation_nulling_in_tree_sources (issue #1358, shadow) --------------
+#
+# The tree-side arm. Its research-side sibling above measures ZERO across the
+# committed corpus — every one of 1,884 concluded sources carries a citation —
+# so these tests are the only thing standing behind a detector whose whole
+# purpose is a rate. The gate is two clauses of one sentence in
+# `packages/engine/plugin/agents/proof-conclusion.md` step 3, and each clause
+# gets a test that fails without it.
+
+
+def _tree(citation=None, primary=True, with_relationship=False):
+    """A tree whose single source is referenced by proof-backed content."""
+    tree = {
+        "persons": [
+            {
+                "id": "P1",
+                "facts": [
+                    {
+                        "id": "F1",
+                        "type": "Birth",
+                        "primary": primary,
+                        "sources": [{"ref": "S1", "quality": 3}],
+                    }
+                ],
+            }
+        ],
+        "relationships": [],
+        "sources": [{"id": "S1", "title": "Birth register", "citation": citation}],
+    }
+    if with_relationship:
+        tree["relationships"] = [
+            {"id": "R1", "type": "ParentChild", "person1": "P1", "person2": "P2",
+             "sources": [{"ref": "S1"}]}
+        ]
+    return tree
+
+
+_CONCLUDED = {"proof_summaries": [{"id": "ps_001", "question_id": "q_001"}]}
+
+
+def test_tree_citation_nulling_fires_on_an_uploaded_source_with_no_citation():
+    out = find_citation_nulling_in_tree_sources(_CONCLUDED, _tree(citation=None))
+    assert len(out) == 1
+    assert out[0]["kind"] == TREE_CITATION_NULLING_KIND
+    assert out[0]["tool"] == "tree.gedcomx.json"
+    assert "S1" in out[0]["detail"]
+    # Shares the shadow list, so the formatters must never meet a None spec.
+    assert isinstance(out[0]["index"], int)
+    assert isinstance(out[0]["tool"], str)
+
+
+def test_tree_citation_nulling_is_silent_when_the_citation_is_present():
+    assert find_citation_nulling_in_tree_sources(
+        _CONCLUDED, _tree(citation="Sweden, Västra Karaby parish register, 1762, p. 4.")
+    ) == []
+    # Whitespace is not a citation.
+    assert len(find_citation_nulling_in_tree_sources(_CONCLUDED, _tree(citation="   "))) == 1
+
+
+def test_tree_citation_nulling_is_silent_on_a_concluded_but_not_yet_uploaded_run():
+    """Gate clause 2, and the negative control the issue asks for. The working
+    tree carries ALL sourced evidence facts, materialized at link time by
+    person-evidence; only `primary`/proof-backed facts upload. A non-primary
+    fact's source is therefore citation-less BY DESIGN until a conclusion
+    promotes it, and flagging it would make the detector fire on honest
+    mid-research state — the exact false positive that would make the rate
+    unreadable."""
+    assert find_citation_nulling_in_tree_sources(_CONCLUDED, _tree(primary=False)) == []
+
+
+def test_tree_citation_nulling_is_silent_without_a_written_conclusion():
+    """Gate clause 1: no `proof_summaries` entry means nothing has uploaded, so
+    no tree source is yet held to a citation."""
+    assert find_citation_nulling_in_tree_sources({}, _tree(citation=None)) == []
+    assert find_citation_nulling_in_tree_sources({"proof_summaries": []}, _tree()) == []
+
+
+def test_a_relationship_holds_its_source_to_a_citation():
+    """A relationship is a conclusion by nature — it has no `primary` flag of its
+    own, so keying only on primary facts would miss every concluded parentage,
+    which is the single most common thing a proof establishes."""
+    tree = _tree(citation=None, primary=False, with_relationship=True)
+    out = find_citation_nulling_in_tree_sources(_CONCLUDED, tree)
+    assert len(out) == 1, "the relationship's source is uploaded even with no primary fact"
+    assert "relationship" in out[0]["detail"]
+
+
+def test_both_source_ref_spellings_are_read():
+    """`sources: [{"ref": "S1"}]` is the common shape and a bare
+    `source_ids: ["S1"]` also occurs in the committed corpus. Reading one
+    silently under-counts, which on a rate-measuring detector looks like the
+    problem being smaller than it is."""
+    tree = _tree(citation=None)
+    tree["persons"][0]["facts"][0] = {
+        "id": "F1", "type": "Birth", "primary": True, "source_ids": ["S1"]
+    }
+    assert len(find_citation_nulling_in_tree_sources(_CONCLUDED, tree)) == 1
+
+
+def test_one_entry_per_source_however_many_facts_cite_it():
+    tree = _tree(citation=None)
+    tree["persons"][0]["facts"].append(
+        {"id": "F2", "type": "Death", "primary": True, "sources": [{"ref": "S1"}]}
+    )
+    assert len(find_citation_nulling_in_tree_sources(_CONCLUDED, tree)) == 1
+
+
+def test_a_dangling_source_ref_is_not_this_detectors_business():
+    tree = _tree(citation=None)
+    tree["persons"][0]["facts"][0]["sources"] = [{"ref": "S_missing"}]
+    assert find_citation_nulling_in_tree_sources(_CONCLUDED, tree) == []
+
+
+def test_malformed_tree_input_does_not_raise():
+    """Reads committed sidecars written by another process, so a detector that
+    raises on odd input takes down the report it was meant to feed."""
+    assert find_citation_nulling_in_tree_sources(None, None) == []
+    assert find_citation_nulling_in_tree_sources(_CONCLUDED, {}) == []
+    assert find_citation_nulling_in_tree_sources(
+        _CONCLUDED, {"persons": ["not a dict"], "sources": [{"id": "S1", "citation": None}]}
+    ) == []

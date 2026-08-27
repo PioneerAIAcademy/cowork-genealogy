@@ -17,6 +17,7 @@ vi.mock('../../../contexts/ResearchDataContext', async () => {
 
 import { useResearchData } from '../../../contexts/ResearchDataContext'
 import { buildMockContext } from '../../../contexts/__tests__/mockContext'
+import { expandFirstCard } from './expandCard'
 
 function mockResearch(overrides: Partial<ResearchData> = {}): void {
   vi.mocked(useResearchData).mockReturnValue(
@@ -41,12 +42,6 @@ const proofCritique: EvaluationEntry = {
 
 // Card defaults to collapsed: badges render in the header, everything else
 // needs an expand. StatusBadge also humanizes `_` to a space.
-async function expandFirstCard(): Promise<void> {
-  const chevrons = screen.getAllByText(/^[▾▸]$/)
-  const header = chevrons[0].closest('div')?.parentElement
-  if (!header) throw new Error('No card header found')
-  await userEvent.click(header)
-}
 
 beforeEach(() => {
   vi.clearAllMocks()
