@@ -1,0 +1,272 @@
+{
+  "_meta": {
+    "description": "Period- and region-scoped historical given-name variants (diminutives, familiar forms, and scribal abbreviations) mapped to their formal forms. Serves fulltext_search and image_transcribe, which do not auto-expand names (record_search and external sites already expand — see issue #1868). English only in this file; the Latin/cognate cross-language need is deliberately OUT OF SCOPE for #1868 (see `out_of_scope` below).",
+    "issue": "https://github.com/PioneerAIAcademy/cowork-genealogy/issues/1868",
+    "shape": "per language -> per formal name -> { period, region, source, variants: [ { form, attested, source? } ] }. `attested` is per-VARIANT (not per formal name) so the measured/untested split is preserved exactly: only a variant with committed measured evidence is `attested: true`.",
+    "attested_note": "Exactly three variant->formal pairs carry measured evidence: Betty->Elizabeth, Peggy->Margaret, Polly->Mary (membership test 8/8 over three name families, 2026-08-08). Every other variant is untested (attested: false) — present because it appears in the cited in-repo prose table, not because its reach was measured.",
+    "period_region_note": "`period` (\"1600-1900\") and `region` (\"England and Anglophone North America\") are FILE-WIDE SCOPE DEFAULTS stamped identically on every formal-name entry — they describe the collection's intended coverage window, not a per-name or per-variant measurement, and no entry's tag was individually dated or localized. Period-appropriateness is a separate axis from `attested` (measured search-reach): a variant can be in-window but untested, or attested but modern. Some seeded variants are modern-only forms that fall OUTSIDE the 1600-1900 window despite inheriting the default tag — Liam (William), Lisa (Elizabeth), Chuck and Carl (Charles), Hank (Henry), Rick (Richard) — kept because they appear in the cited seed table; treat the entry-level period as an upper-bound scope statement, not a claim that every listed variant was in use across the whole window.",
+    "coverage_note": "Coverage is uneven by source, not by omission. Four entries — Thomas, Samuel, Benjamin, George — come ONLY from the scribal-abbreviation seed table (search-strategies.md:56-71) and do not appear in the nicknames table (name-search-mechanics.md:202-219). They therefore ship only their sourced abbreviations (Thomas: Thos/Thos./Tho.; Samuel: Saml/Saml./Sam.; Benjamin: Benj/Benj./Benjm.; George: Geo/Geo.) and NO bare diminutives. The common diminutives for these names — Tom/Tommy (Thomas), Sam/Sammy (Samuel), Ben/Benny (Benjamin), Georgie (George) — were deliberately NOT added: they appear in neither seed table, and adding them would invent a source, which the `sourcing` rule forbids. Samuel is the sharpest case: `Sam.` (with the trailing period) is the sourced scribal abbreviation from search-strategies.md:65, while the bare given name `Sam` is intentionally NOT promoted because no seed row attests it. A consumer should read these four as abbreviation-only until a nicknames source is available for them.",
+    "sourcing": "Every entry traces to an in-repo file:line. No source is invented.",
+    "out_of_scope": "Cross-language name forms — the inline cognates in the seed tables (Hans/Honza for John, Diego for James, Paco/Pepe for Francis/Joseph) and the Latin/Spanish/German block at search-strategies.md:76-83 (Joannes<->John, Iacobus<->James, Catalina<->Catherine, Wilhelm<->William, etc.) — are deliberately excluded. They are a different substitution mechanism (cross-language cognate / ecclesiastical register-form equivalence, formal<->formal across languages), not within-language diminutive expansion, and #1868 was scoped English-only on 2026-08-24 over one combined name-form table to keep issue #607's expansion contract to a single kind of substitution. Not tracked by a separate issue yet. Note on Pepe: the seed table tags \"(Spanish)\" on Pepe only on the Joseph row (name-search-mechanics.md:218), not on the Francis row (:217), where Pepe also appears untagged; Pepe is nonetheless excluded from BOTH Francis and Joseph as a cross-language form. Applying the source's row-local tagging mechanically would wrongly retain the untagged Pepe on Francis — the exclusion here rests on the form being Spanish (established one row down), not on a tag present on the Francis row.",
+    "seed_inclusion_note": "Source inclusion and mechanism classification are SEPARATE axes, and inclusion is decided first. A form ships if and only if it is present verbatim in an English seed table; its linguistic classification does not gate that inclusion. As a result, a few retained forms would, by the mechanism described in `out_of_scope`, otherwise read as out-of-scope: Greta and Rita (Margaret) and Trina (Catherine) are cross-language/cognate forms, and Carl (Charles) is a distinct Germanic name rather than an English diminutive of Charles. They are kept because they appear UNTAGGED in the English nicknames seed rows (name-search-mechanics.md), not because they pass the within-language diminutive test — removing them would edit the seed, which this file does not do (see `Didn't change` in the PR). The `out_of_scope` exclusion is therefore narrow: it removes only the forms the seed itself tags as foreign (Hans/Honza/Diego/Paco/Pepe) and the separate cross-language block at search-strategies.md:76-83; it does NOT retroactively strip untagged forms already present in the English seed. So the exclusion rule reads: exclude source-tagged foreign forms and the cross-language block; retain everything else the English seed lists verbatim, classification notwithstanding.",
+    "seed_tables": [
+      "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:202-219 (Formal -> nicknames seen in records)",
+      "packages/engine/plugin/skills/search-full-text/references/search-strategies.md:56-71 (Formal -> scribal abbreviations)"
+    ],
+    "measured_evidence": "packages/engine/mcp-server/dev/probe-search-qualifiers.ts (Section E: membership test 8/8 over Elizabeth<-Betty, Margaret<-Peggy, Mary<-Polly, 2026-08-08); packages/engine/mcp-server/dev/measured-figures.json (membershipTested; verdict:diminutiveReach)"
+  },
+  "en": {
+    "Elizabeth": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:206; packages/engine/plugin/skills/search-full-text/references/search-strategies.md:71",
+      "variants": [
+        { "form": "Betty", "attested": true, "source": "measured — see _meta.measured_evidence" },
+        { "form": "Betsy", "attested": false },
+        { "form": "Beth", "attested": false },
+        { "form": "Liz", "attested": false },
+        { "form": "Lizzy", "attested": false },
+        { "form": "Eliza", "attested": false },
+        { "form": "Lisa", "attested": false },
+        { "form": "Bess", "attested": false },
+        { "form": "Eliz", "attested": false },
+        { "form": "Eliz.", "attested": false },
+        { "form": "Elizth.", "attested": false }
+      ]
+    },
+    "Margaret": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:204; packages/engine/plugin/skills/search-full-text/references/search-strategies.md:70",
+      "variants": [
+        { "form": "Peggy", "attested": true, "source": "measured — see _meta.measured_evidence" },
+        { "form": "Peg", "attested": false },
+        { "form": "Maggie", "attested": false },
+        { "form": "Meg", "attested": false },
+        { "form": "Madge", "attested": false },
+        { "form": "Greta", "attested": false },
+        { "form": "Rita", "attested": false },
+        { "form": "Margt", "attested": false },
+        { "form": "Margt.", "attested": false },
+        { "form": "Marg.", "attested": false }
+      ]
+    },
+    "Mary": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:205",
+      "variants": [
+        { "form": "Polly", "attested": true, "source": "measured — see _meta.measured_evidence" },
+        { "form": "Molly", "attested": false },
+        { "form": "Mamie", "attested": false },
+        { "form": "May", "attested": false },
+        { "form": "Mim", "attested": false },
+        { "form": "Minnie", "attested": false }
+      ]
+    },
+    "Sarah": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:207; packages/engine/plugin/skills/search-full-text/references/search-strategies.md:73",
+      "variants": [
+        { "form": "Sally", "attested": false },
+        { "form": "Sadie", "attested": false }
+      ]
+    },
+    "Catherine": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:208",
+      "variants": [
+        { "form": "Kate", "attested": false },
+        { "form": "Kitty", "attested": false },
+        { "form": "Cathy", "attested": false },
+        { "form": "Katy", "attested": false },
+        { "form": "Trina", "attested": false }
+      ]
+    },
+    "Katherine": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:208",
+      "variants": [
+        { "form": "Kate", "attested": false },
+        { "form": "Kitty", "attested": false },
+        { "form": "Cathy", "attested": false },
+        { "form": "Katy", "attested": false },
+        { "form": "Trina", "attested": false }
+      ]
+    },
+    "Charles": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:209; packages/engine/plugin/skills/search-full-text/references/search-strategies.md:62",
+      "variants": [
+        { "form": "Chuck", "attested": false },
+        { "form": "Charlie", "attested": false },
+        { "form": "Carl", "attested": false },
+        { "form": "Chas", "attested": false },
+        { "form": "Chas.", "attested": false },
+        { "form": "Cha.", "attested": false }
+      ]
+    },
+    "William": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:210; packages/engine/plugin/skills/search-full-text/references/search-strategies.md:58",
+      "variants": [
+        { "form": "Will", "attested": false },
+        { "form": "Bill", "attested": false },
+        { "form": "Billy", "attested": false },
+        { "form": "Liam", "attested": false },
+        { "form": "Wm", "attested": false },
+        { "form": "Wm.", "attested": false },
+        { "form": "Will.", "attested": false }
+      ]
+    },
+    "Richard": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:211; packages/engine/plugin/skills/search-full-text/references/search-strategies.md:64",
+      "variants": [
+        { "form": "Rick", "attested": false },
+        { "form": "Dick", "attested": false },
+        { "form": "Richie", "attested": false },
+        { "form": "Dickon", "attested": false },
+        { "form": "Richd", "attested": false },
+        { "form": "Richd.", "attested": false },
+        { "form": "Rich.", "attested": false }
+      ]
+    },
+    "Robert": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:212; packages/engine/plugin/skills/search-full-text/references/search-strategies.md:63",
+      "variants": [
+        { "form": "Rob", "attested": false },
+        { "form": "Bob", "attested": false },
+        { "form": "Robbie", "attested": false },
+        { "form": "Dob", "attested": false },
+        { "form": "Robt", "attested": false },
+        { "form": "Robt.", "attested": false },
+        { "form": "Rob.", "attested": false }
+      ]
+    },
+    "John": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:213; packages/engine/plugin/skills/search-full-text/references/search-strategies.md:59",
+      "variants": [
+        { "form": "Jack", "attested": false },
+        { "form": "Johnny", "attested": false },
+        { "form": "Jno", "attested": false },
+        { "form": "Jno.", "attested": false },
+        { "form": "Jn°", "attested": false }
+      ]
+    },
+    "James": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:214; packages/engine/plugin/skills/search-full-text/references/search-strategies.md:60",
+      "variants": [
+        { "form": "Jim", "attested": false },
+        { "form": "Jimmy", "attested": false },
+        { "form": "Jamie", "attested": false },
+        { "form": "Jas", "attested": false },
+        { "form": "Jas.", "attested": false },
+        { "form": "Js", "attested": false }
+      ]
+    },
+    "Henry": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:215; packages/engine/plugin/skills/search-full-text/references/search-strategies.md:68",
+      "variants": [
+        { "form": "Hank", "attested": false },
+        { "form": "Harry", "attested": false },
+        { "form": "Hal", "attested": false },
+        { "form": "Hy", "attested": false },
+        { "form": "Hy.", "attested": false }
+      ]
+    },
+    "Edward": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:216",
+      "variants": [
+        { "form": "Ed", "attested": false },
+        { "form": "Ted", "attested": false },
+        { "form": "Ned", "attested": false },
+        { "form": "Eddie", "attested": false }
+      ]
+    },
+    "Francis": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:217",
+      "variants": [
+        { "form": "Frank", "attested": false },
+        { "form": "Frankie", "attested": false }
+      ]
+    },
+    "Joseph": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:218; packages/engine/plugin/skills/search-full-text/references/search-strategies.md:66",
+      "variants": [
+        { "form": "Joe", "attested": false },
+        { "form": "Jos", "attested": false },
+        { "form": "Jos.", "attested": false }
+      ]
+    },
+    "Alexander": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md:219",
+      "variants": [
+        { "form": "Alex", "attested": false },
+        { "form": "Sandy", "attested": false },
+        { "form": "Alec", "attested": false }
+      ]
+    },
+    "Thomas": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-full-text/references/search-strategies.md:61",
+      "variants": [
+        { "form": "Thos", "attested": false },
+        { "form": "Thos.", "attested": false },
+        { "form": "Tho.", "attested": false }
+      ]
+    },
+    "Samuel": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-full-text/references/search-strategies.md:65",
+      "variants": [
+        { "form": "Saml", "attested": false },
+        { "form": "Saml.", "attested": false },
+        { "form": "Sam.", "attested": false }
+      ]
+    },
+    "Benjamin": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-full-text/references/search-strategies.md:67",
+      "variants": [
+        { "form": "Benj", "attested": false },
+        { "form": "Benj.", "attested": false },
+        { "form": "Benjm.", "attested": false }
+      ]
+    },
+    "George": {
+      "period": "1600-1900",
+      "region": "England and Anglophone North America",
+      "source": "packages/engine/plugin/skills/search-full-text/references/search-strategies.md:69",
+      "variants": [
+        { "form": "Geo", "attested": false },
+        { "form": "Geo.", "attested": false }
+      ]
+    }
+  }
+}
