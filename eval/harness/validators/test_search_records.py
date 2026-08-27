@@ -114,20 +114,26 @@ _ROLE_ASSERTIONS = (
 # claim _ROLE_ASSERTIONS's "as ROLE" form catches, which "as" alone misses.
 # Scoped to a capitalized name's possessive for the same reason
 # _ROLE_ASSERTIONS avoids bare role words above: a bare pronoun ("his son")
-# is common in a legitimate tree-side reference this rule must not trip on.
+# is common in a legitimate tree-side reference. This does not exclude every
+# tree-side mention -- "George's wife Catherine" matches -- which is accepted:
+# a pre-1880 note naming a kinship relation with no hedge anywhere is worth
+# flagging either way.
 _POSSESSIVE_KINSHIP_ASSERTIONS = (
     r"\b(?-i:[A-Z])[a-zA-Z]*'s\s+(?:son|daughter|child|children|wife|husband)\b",
 )
 
-# A plural kinship noun immediately introducing named individuals — "plus
-# sons Thos T McElwee and Stephen McElwee" — the exact phrasing behind
-# issue #1912's production report. Scoped to the PLURAL forms only (never
-# bare "son"/"daughter"/"wife"/"husband"): a search routinely names a single
+# A plural kinship noun immediately followed by a capitalised word, which in
+# a census note is nearly always a name being introduced — "plus sons Thos
+# T McElwee and Stephen McElwee" — the exact phrasing behind issue #1912's
+# production report. Scoped to the PLURAL forms only (never bare
+# "son"/"daughter"/"wife"/"husband"): a search routinely names a single
 # already-known tree-side relative this way ("anchored on his wife
 # Catherine"), which is not a claim about the record; introducing multiple
-# same-role people by a plural noun is not that pattern.
+# same-role people by a plural noun is not that pattern. Punctuation
+# (comma, colon, dash) between the noun and the name is treated as
+# adjacent; a sentence boundary is not.
 _PLURAL_KINSHIP_INTRODUCING_NAME = (
-    r"\b(?:sons|daughters|children)\s+(?-i:[A-Z])",
+    r"\b(?:sons|daughters|children)\b[\s,:;\u2013\u2014-]+(?-i:[A-Z])",
 )
 
 _CLAIM_PATTERNS = (
@@ -172,14 +178,17 @@ def test_pre1880_census_structure_marked_inferred(
     Re-measured for PR #1946 (superseding this docstring's earlier figure —
     "17 of 32 ... and all 32 passed" — which the review caught silently
     dropped rather than updated): across the 5 committed run logs as of this
-    PR, the 9 `pre-1880-census-household`-tagged tests produced 43 logged
-    searches. The marker appears in 25 of 43; outcome is 22 pass / 21 fail.
+    PR, the 9 `pre-1880-census-household`-tagged tests produced 44 logged
+    searches. The marker appears in 26 of 44; outcome is 23 pass / 21 fail.
     Unlike the earlier figure, marker presence and pass no longer coincide —
-    3 of the 25 marker-present runs still failed (`ut_search_records_014`
+    3 of the 26 marker-present runs still failed (`ut_search_records_014`
     once, `ut_search_records_h4k` twice), because this validator's own gate
     is now live and the judge separately reads whether a marker actually
     qualifies its claim. Re-derive by scanning `research_log_append` notes in
-    `eval/runlogs/unit/search-records/v1_*.json` for the tagged test ids.
+    `eval/runlogs/unit/search-records/v1_*.json` for the tagged test ids --
+    a call there is sometimes a single entry, sometimes a batched `ops`
+    array of several; count each op with `outcome` in (positive, partial)
+    as one logged search, matching `_new_log_entries`'s own unit of work.
 
     Requirement: if `notes` describes a household at all (`_HOUSEHOLD_MENTIONS`)
     or makes a relationship/kinship claim (`_CLAIM_PATTERNS`), an inference

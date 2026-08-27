@@ -121,6 +121,15 @@ OFFENDER_PLURAL_KINSHIP_BARE_NOUN = (
     "return filed under Amelia Jackson, Amite County MS."
 )
 
+# PR #1946 round 2, second pass: the same shape with a comma between the
+# noun and the name -- "\s+" alone required literal whitespace there, so
+# this slipped past the gate entirely before the [\s,:;--]+ fix.
+OFFENDER_PLURAL_KINSHIP_COMMA_SEPARATED = (
+    "James M McElwee (b. 1817 Louisiana) plus sons, Thos T McElwee (b. 1839 "
+    "Louisiana) and Stephen McElwee (b. 1842 Louisiana), 1850 US Census "
+    "return filed under Amelia Jackson, Amite County MS."
+)
+
 # Same shape as above but for the possessive-kinship pattern specifically --
 # no prior fixture isolated it from the household fallback either. No
 # "household", no hedge anywhere: caught only by
@@ -214,6 +223,7 @@ def test_a_hedged_household_passes(notes):
         OFFENDER_HOUSEHOLD_HEAD,
         OFFENDER_BARE_LISTING,
         OFFENDER_PLURAL_KINSHIP_BARE_NOUN,
+        OFFENDER_PLURAL_KINSHIP_COMMA_SEPARATED,
         OFFENDER_POSSESSIVE_KINSHIP_NO_HEDGE,
     ],
     ids=[
@@ -221,6 +231,7 @@ def test_a_hedged_household_passes(notes):
         "household-head",
         "bare-listing",
         "plural-kinship-bare-noun",
+        "plural-kinship-comma-separated",
         "possessive-kinship-no-hedge",
     ],
 )
