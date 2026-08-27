@@ -25,9 +25,10 @@ Matching rules:
     concrete ``Path`` does -- but the allow-list entry is defensive: it prevents a
     false negative if someone writes it, since the call would fail at runtime anyway.)
     Only inline ``Path()``/``PurePath()`` constructor calls and
-    ``io``/``builtins`` module names are matched; a bare variable's ``.open()``
-    (``p.open("w")`` where ``p`` came from somewhere else) is statically undecidable
-    and stays uncaught. ``Path(...).open()`` takes mode as the 1st positional (no file
+    ``io``/``builtins`` module names are matched. Two forms stay uncaught: a bare
+    variable's ``.open()`` (``p.open("w")``), which is statically undecidable, and
+    the module-qualified constructor ``pathlib.Path(...).open()``, whose receiver
+    is an ``ast.Attribute`` rather than an ``ast.Name``. Neither occurs today. ``Path(...).open()`` takes mode as the 1st positional (no file
     arg), so binary-mode detection uses index 0 there and index 1 elsewhere.
   - ``subprocess.run(...)`` / ``.check_output(...)`` / ``.Popen(...)`` / ``.call(...)`` /
     ``.check_call(...)`` -- the same failure class, one call shape over: CPython's own
@@ -208,7 +209,7 @@ def _offenders_in(source: str) -> list[tuple[int, str]]:
         elif (dotted_name := _is_dotted_text_open(node)) is not None:
             mode_idx = 0 if dotted_name.endswith(").open") else 1
             if not _is_binary_open(node, mode_idx) and not _has_encoding(node):
-                offenders.append((node.lineno, f"{dotted_name}()"))
+                offenders.append((node.lineno, dotted_name))
         elif (
             (subprocess_method := _is_subprocess_call(node))
             and _is_text_mode(node)
@@ -287,10 +288,10 @@ def test_no_aliased_subprocess_import():
 
 
 def test_dotted_text_open_without_encoding_is_flagged():
-    assert _offenders_in("Path(tmp).open('w')") == [(1, "Path(...).open()")]
-    assert _offenders_in("PurePath(tmp).open('r')") == [(1, "PurePath(...).open()")]
-    assert _offenders_in("io.open(p)") == [(1, "io.open()")]
-    assert _offenders_in("builtins.open(p)") == [(1, "builtins.open()")]
+    assert _offenders_in("Path(tmp).open('w')") == [(1, "Path(...).open")]
+    assert _offenders_in("PurePath(tmp).open('r')") == [(1, "PurePath(...).open")]
+    assert _offenders_in("io.open(p)") == [(1, "io.open")]
+    assert _offenders_in("builtins.open(p)") == [(1, "builtins.open")]
     # encoding= present -- passes.
     assert _offenders_in("Path(tmp).open('w', encoding='utf-8')") == []
     assert _offenders_in("PurePath(tmp).open('w', encoding='utf-8')") == []
@@ -298,9 +299,9 @@ def test_dotted_text_open_without_encoding_is_flagged():
     assert _offenders_in("builtins.open(p, encoding='utf-8')") == []
     # encoding=None is the platform default -- still flagged.
     assert _offenders_in("Path(tmp).open('w', encoding=None)") == [
-        (1, "Path(...).open()")
+        (1, "Path(...).open")
     ]
-    assert _offenders_in("io.open(p, encoding=None)") == [(1, "io.open()")]
+    assert _offenders_in("io.open(p, encoding=None)") == [(1, "io.open")]
     # Binary mode -- out of scope, not an offender.
     assert _offenders_in("Path(tmp).open('rb')") == []
     assert _offenders_in("PurePath(tmp).open('rb')") == []

@@ -152,7 +152,7 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Run runlog discipline checks
         if: steps.scope.outputs.relevant == 'true'
