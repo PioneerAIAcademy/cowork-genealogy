@@ -1478,21 +1478,22 @@ changes how a correct change is made:
    *resolved*, not what bound, and only in the mode it runs in. So a green CI run
    says nothing about whether an agent can call what you granted it; only a live
    session in the run mode you care about does (§5.2, §8).
-   `make agent-tool-bind` (issue #1084) is the one behavioral probe against this:
-   it spawns gps-mentor, forces a `wiki_search` call, and asserts on the recorded
-   tool_use — not the narration — proving that one grant binds. It ships as a
-   **durable, opt-in target** beside `make agent-smoke` rather than a one-shot
-   diagnostic: the one-shot answers issue #1344 for a single turn and leaves this
-   gap with no instrument, so the next regression is again found by reading a
-   runlog by hand. Two things it costs, both deliberate. It is the **first check
-   in the repo that spends a model turn** (~$0.35/run) — `make agent-smoke` bills
+   `make agent-tool-bind` is the one behavioral probe against this: it spawns
+   gps-mentor, forces a `wiki_search` call, and asserts on the recorded tool_use
+   — not the narration — proving that one grant binds. It ships as a **durable,
+   opt-in target** beside `make agent-smoke` rather than a one-shot diagnostic:
+   the one-shot answers a single blocked case for one turn and leaves this gap
+   with no instrument, so the next regression is again found by reading a runlog
+   by hand. Two things it costs, both deliberate. It is the **first check in the
+   repo that spends a model turn** (~$0.35/run) — `make agent-smoke` bills
    nothing; `make eval-skill` and `make e2e-run` bill but are eval *runs*, not
    checks — and it is the most model-dependent thing in the check tier, so **if it
    proves flaky, delete it; do not loosen the assertion into something that passes
    on narration** (lead ruling 2026-08-27). And a green probe covers the
    `mcp__genealogy__` spelling only — the two Cowork spellings and every other
-   agent × tool are still unverified — so **this does not close the gap**: #1084
-   stays on the register, and the sibling skill-grant measurement is issue #1789.
+   agent × tool are still unverified — so **this does not close the gap**: the
+   tool-binding gap stays on the `nothing-checks` register (with its sibling, the
+   skill allowed-tools grant measurement).
 2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
    not rebuild the `genealogy-agent` E2B image production runs the agent on, and
    both guards over it are advisory. Production can run weeks-old skills, agents,
