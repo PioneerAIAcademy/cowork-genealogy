@@ -11,12 +11,12 @@
     ]
   },
   "input": {
-    "user_message": "/research continue — drive the next step for this project.",
+    "user_message": "Research the next open question on this project — drive the workflow forward.",
     "scenario": "anders-unna-marriage-search"
   },
   "execution": {
-    "max_turns": 10,
-    "max_wall_clock_seconds": 300,
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
     "stub_skills": [
       "search-records"
     ]

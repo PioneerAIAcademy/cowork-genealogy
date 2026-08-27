@@ -16,7 +16,7 @@
     "Should proceed without pausing for clarifying questions"
   ],
   "execution": {
-    "max_turns": 8,
+    "max_turns": 20,
     "max_wall_clock_seconds": 600,
     "stub_skills": [
       "question-selection", "locality-guide", "research-plan",

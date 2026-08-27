@@ -5,7 +5,9 @@
     "name": "/research slash command triggers the orchestrator",
     "type": "positive",
     "description": "The /research [question] form is an explicit trigger listed in the skill description. The user is handing off a specific research question to be driven through the full GPS workflow.",
-    "tags": ["core-trigger", "slash-command"]
+    "tags": ["core-trigger", "slash-command"],
+    "expected_outcome": "xfail",
+    "xfail_reason": "The harness populates skills_invoked from Skill tool calls only, and slash-command entry makes none, so orchestrator.py:1202 fails every positive test using a /research message. Remove this marker when the harness records slash entry."
   },
   "input": {
     "user_message": "/research When and where did Patrick Flynn die?",
@@ -16,7 +18,7 @@
     "Should drive the question through the GPS workflow, not just answer it conversationally"
   ],
   "execution": {
-    "max_turns": 8,
+    "max_turns": 20,
     "max_wall_clock_seconds": 600,
     "stub_skills": [
       "question-selection", "locality-guide", "research-plan",

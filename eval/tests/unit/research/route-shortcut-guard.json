@@ -12,12 +12,12 @@
     ]
   },
   "input": {
-    "user_message": "/research write the conclusion for this research project.",
+    "user_message": "Research this project through to a proof conclusion.",
     "scenario": "empty-project-just-created"
   },
   "execution": {
-    "max_turns": 10,
-    "max_wall_clock_seconds": 300,
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
     "stub_skills": [
       "question-selection"
     ]

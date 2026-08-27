@@ -34,10 +34,11 @@ def _expected_skill(test: dict) -> str | None:
 def test_routes_to_expected_skill(skills_invoked, test):
     """The router's first sub-skill delegation must match the ``routes-to:`` tag.
 
-    ``skills_invoked`` records nested ``Skill`` calls made during the run,
-    not the entry-point activation.  For routing tests the skill under test
-    is the entry point, so it does not appear in the list — only its
-    delegated sub-skills do.
+    ``skills_invoked`` is populated from ``Skill`` tool calls only, so the
+    skill under test appears in it when the model reached it through such a
+    call and not when it was entered as a slash command.  Both shapes are
+    filtered the same way below.  Whether the skill under test ran at all is
+    gated by the harness (``orchestrator.py``), not here.
 
     Graded deterministically rather than by the LLM judge because
     ``skills_invoked`` is ground truth: the PreToolUse hook fires on the
