@@ -1531,11 +1531,14 @@ def _person_gained_structure(
     final_tree: dict[str, Any],
     starting_tree: dict[str, Any] | None,
 ) -> bool:
-    """Whether `person_id` gained any new fact or any new relationship endpoint
-    between the starting tree and the final tree. Facts diff on their normalized
+    """Whether `person_id` gained any new fact or relationship structure between
+    the starting tree and the final tree. Person facts diff on their normalized
     signature (`_fact_signatures`); relationships on the endpoint tuple
     (`_relationship_key`), never on `id`, so a re-pointed PID-TODO placeholder
-    counts as new. When no starting tree is given, treats everything as new
+    counts as new. A relationship present in BOTH trees still counts if it gained
+    a fact — a Marriage dated onto an already-seeded Couple is new structure for
+    both spouses, and reading only added/removed edges would miss it and warn on
+    correct work. When no starting tree is given, treats everything as new
     (best-effort), matching the other post-hoc detectors."""
     final_persons = {
         p.get("id"): p for p in (final_tree.get("persons") or []) if isinstance(p, dict)
@@ -1552,8 +1555,8 @@ def _person_gained_structure(
     if new_facts:
         return True
 
-    start_rel_keys = {
-        _relationship_key(r)
+    start_rels_by_key = {
+        _relationship_key(r): r
         for r in ((starting_tree or {}).get("relationships") or [])
         if isinstance(r, dict)
     }
@@ -1562,7 +1565,14 @@ def _person_gained_structure(
             continue
         if person_id not in (r.get("parent"), r.get("child"), r.get("person1"), r.get("person2")):
             continue
-        if starting_tree is None or _relationship_key(r) not in start_rel_keys:
+        if starting_tree is None:
+            return True
+        start_rel = start_rels_by_key.get(_relationship_key(r))
+        if start_rel is None:
+            return True  # a new relationship edge touching this person
+        # Present in both — a fact gained on it (e.g. a Marriage date) is new
+        # structure. _fact_signatures reads `.facts`, so it works on a relationship.
+        if _fact_signatures(r) - _fact_signatures(start_rel):
             return True
     return False
 

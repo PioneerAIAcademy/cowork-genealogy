@@ -18,7 +18,8 @@
 //     re-points during the run, so an `id` key would read a genuinely re-pointed
 //     relationship as unchanged. Shared with the merge tool via `relationshipKey`.
 //   - A `Marriage`/`Divorce` fact lives on the Couple relationship's `facts[]`,
-//     not on a person, so relationship facts are diffed too.
+//     not on a person, so relationship facts are diffed on both added and
+//     already-present relationships.
 //   - Facts key on a content signature (type + date + place + value), with a
 //     missing field treated as absent — `primary`/`preferred` are omit-when-false.
 //
@@ -51,16 +52,33 @@ export interface RelationshipDelta {
   relationship: SimplifiedRelationship;
 }
 
+/** A relationship present in BOTH trees whose `facts[]` changed — e.g. a
+ *  Marriage fact dated onto a Couple that was already seeded. This is a distinct
+ *  case from add/remove: the relationship endpoints are unchanged, only its
+ *  facts moved. */
+export interface RelationshipFactDelta {
+  key: string;
+  type?: string;
+  relationship: SimplifiedRelationship;
+  addedFacts: SimplifiedFact[];
+  removedFacts: SimplifiedFact[];
+}
+
 export interface TreeDiffResult {
   personsAdded: string[];
   personsRemoved: string[];
   personsChanged: PersonDelta[];
   relationshipsAdded: RelationshipDelta[];
   relationshipsRemoved: RelationshipDelta[];
+  /** Relationships in both trees that gained or lost facts (a Marriage/Divorce
+   *  fact encoded onto an already-present Couple). */
+  relationshipsChanged: RelationshipFactDelta[];
   /** Persons that gained at least one fact OR a relationship endpoint — the set
    *  a tree-encoding gate asks about ("did this conclusion's person gain tree
-   *  structure?"). A convenience union of personsAdded and the ids that appear
-   *  in personsChanged.addedFacts or in relationshipsAdded. */
+   *  structure?"). The union of personsAdded, the ids in personsChanged with
+   *  added facts, the endpoints of relationshipsAdded, and the endpoints of
+   *  relationshipsChanged that gained a fact — the last so a marriage dated onto
+   *  a seeded couple counts as structure for both spouses. */
   personsWithNewStructure: string[];
 }
 
@@ -142,11 +160,27 @@ export function treeDiff(input: TreeDiffInput): TreeDiffResult {
   const afterRels = relationshipMap(after);
   const relationshipsAdded: RelationshipDelta[] = [];
   const relationshipsRemoved: RelationshipDelta[] = [];
+  const relationshipsChanged: RelationshipFactDelta[] = [];
 
   for (const [key, r] of afterRels) {
-    if (!beforeRels.has(key)) {
+    const br = beforeRels.get(key);
+    if (!br) {
       relationshipsAdded.push({ key, type: r.type, relationship: r });
       for (const e of relationshipEndpoints(r)) withNewStructure.add(e);
+      continue;
+    }
+    // The relationship is in both trees — its endpoints are unchanged, but its
+    // facts may not be. A Marriage/Divorce fact lives on the Couple here, so a
+    // marriage dated onto a seeded couple shows up ONLY as a fact change, never
+    // as an add. Diff the facts, and count a gained fact as new structure for
+    // both endpoints (without it the tree-encoding gate warns on correct work).
+    const addedFacts = factsNotIn(r.facts ?? [], br.facts ?? []);
+    const removedFacts = factsNotIn(br.facts ?? [], r.facts ?? []);
+    if (addedFacts.length || removedFacts.length) {
+      relationshipsChanged.push({ key, type: r.type, relationship: r, addedFacts, removedFacts });
+      if (addedFacts.length) {
+        for (const e of relationshipEndpoints(r)) withNewStructure.add(e);
+      }
     }
   }
   for (const [key, r] of beforeRels) {
@@ -161,6 +195,7 @@ export function treeDiff(input: TreeDiffInput): TreeDiffResult {
     personsChanged,
     relationshipsAdded,
     relationshipsRemoved,
+    relationshipsChanged,
     personsWithNewStructure: [...withNewStructure],
   };
 }

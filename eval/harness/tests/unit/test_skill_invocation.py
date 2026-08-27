@@ -1849,3 +1849,28 @@ def test_find_conclusions_without_tree_encoding_fires_and_is_silent_when_encoded
         "relationships": [{"id": "R1", "type": "ParentChild", "parent": "I2", "child": "I1"}],
     }
     assert find_conclusions_without_tree_encoding(research_base, encoded, starting_tree=seed) == []
+
+
+def test_a_marriage_dated_onto_a_seeded_couple_is_not_flagged():
+    """The false-positive class the review caught: the couple is already in the
+    seed, so no relationship is added or removed — the session only dates the
+    Marriage fact onto it. Reading added/removed edges alone missed it and warned
+    on a proved marriage. _person_gained_structure must see the gained fact on a
+    relationship present in both trees."""
+    research = {
+        "project": {"status": "completed", "subject_person_ids": ["I1"]},
+        "proof_summaries": [
+            {"id": "ps_001", "question_id": "q_001", "tier": "proved", "supporting_assertion_ids": ["a_001"]}
+        ],
+        "person_evidence": [{"assertion_id": "a_001", "person_id": "I1"}],
+        "questions": [{"id": "q_001", "question": "Who did I1 marry?"}],
+    }
+    couple = lambda facts: {"id": "R1", "type": "Couple", "person1": "I1", "person2": "I2", "facts": facts}
+    seed = {"persons": [{"id": "I1"}, {"id": "I2"}], "relationships": [couple([])]}
+    final = {
+        "persons": [{"id": "I1"}, {"id": "I2"}],
+        "relationships": [couple([{"id": "mf", "type": "Marriage", "standard_date": "+1899"}])],
+    }
+    assert find_conclusions_without_tree_encoding(research, final, starting_tree=seed) == []
+    # And the control: no marriage encoded at all -> it still fires.
+    assert len(find_conclusions_without_tree_encoding(research, seed, starting_tree=seed)) == 1

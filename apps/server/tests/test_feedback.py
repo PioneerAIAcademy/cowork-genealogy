@@ -293,6 +293,29 @@ def test_both_tree_files_redacted_and_counted_together():
         assert "Jane Marie" not in dict(out)[name].decode("utf-8")
 
 
+def test_a_file_that_fails_partway_ships_untouched_and_counts_zero():
+    """The count must describe the bytes written, not the persons visited. A
+    living first person is redacted in the loop, then a malformed `names` entry
+    on a later person raises inside _redact_person — the whole file must ship
+    untouched (the living details still in the clear) and contribute 0, so
+    FEEDBACK.md never claims a record was protected that was not."""
+    tree = {
+        "persons": [
+            {"id": "P1", "gender": "Female", "living": True,
+             "names": [{"id": "N1", "given": "Jane Marie", "surname": "Doe"}],
+             "facts": [{"id": "F1", "type": "Birth", "date": "3 March 1985"}]},
+            {"id": "P2", "gender": "Male", "living": True, "names": ["Bob Smith"]},
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    raw = json.dumps(tree).encode("utf-8")
+    out, count = fb._redact_living([("tree.gedcomx.json", raw)])
+    assert count == 0, "a file that failed partway must contribute nothing to the count"
+    # The file ships byte-for-byte as it came in — nothing half-redacted.
+    assert dict(out)["tree.gedcomx.json"] == raw
+
+
 # --- endpoint rejection / non-JSON response -----------------------------------
 
 def test_rejected_upload_surfaces_as_502(monkeypatch):

@@ -278,13 +278,14 @@ how to word it:
 | for one delegated agent | **that agent's `tools:` / `disallowedTools:`**, or a narrowed tool (§5.3) | `extraction_append` |
 | within a single skill invocation | **skill prose** — this is what prose is *for* | "consult the stop criteria before draining the plan" |
 
-> **Direction.** The **tree-encoding gate** is still prose that this same law
-> says will decay (§4); the **mentor gate** that stood beside it has moved into
-> the tool. The tree-encoding gate stays prose pending a baseline of the
-> project's opening tree to diff against, since `research_append`
-> loads only the current tree. **If you are adding a new cross-turn invariant, do
-> not add it as prose.** If it cannot be anchored, say so in the PR and explain
-> why.
+> **Direction.** Both gates the §4 law named have moved into the tool: the
+> **mentor gate** as a refusal, and the **tree-encoding gate** as a warning on
+> `opWarnings` — it diffs the final tree against a write-once
+> `starting-tree.gedcomx.json` baseline, and ships warn-only rather than as a
+> refusal per the 2026-08-24 no-override ruling (a shape-match gate cannot
+> hard-block correct work when a wrong refusal has no override). **If you are
+> adding a new cross-turn invariant, do not add it as prose.** If it cannot be
+> anchored, say so in the PR and explain why.
 
 ### 3.2 How a session enters a skill: `description` is product surface
 

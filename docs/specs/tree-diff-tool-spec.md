@@ -38,6 +38,7 @@ not what any caller asks for).
   personsChanged:          PersonDelta[]     // same id, facts gained or lost
   relationshipsAdded:      RelationshipDelta[]
   relationshipsRemoved:    RelationshipDelta[]
+  relationshipsChanged:    RelationshipFactDelta[]  // in both trees, facts gained/lost
   personsWithNewStructure: string[]          // union: added persons + persons who
                                              //   gained a fact or a relationship endpoint
 }
@@ -47,6 +48,10 @@ not what any caller asks for).
   by content in the other.
 - `RelationshipDelta = { key, type, relationship }` — `key` is the endpoint
   identity, `relationship` the full object from the tree it is unique to.
+- `RelationshipFactDelta = { key, type, relationship, addedFacts, removedFacts }` —
+  a relationship present in both trees whose `facts[]` changed, e.g. a Marriage
+  fact dated onto an already-seeded Couple. Its endpoints join
+  `personsWithNewStructure` when it gained a fact.
 
 `personsWithNewStructure` is the set a tree-encoding gate asks about: "did this
 conclusion's person gain any tree structure this session?"
@@ -68,9 +73,6 @@ conclusion's person gain any tree structure this session?"
 
 ## What it deliberately does not do
 
-- It does not diff relationship *facts* beyond the relationship's add/remove — a
-  Marriage date corrected on an already-present Couple is not reported as a change.
-  No caller needs that today; add it when one does.
 - It does not diff `sources[]`, names, gender, or `ark`.
 - It is a **shape** diff, not a semantic one: it reports that a person gained a
   Birth fact, not whether that Birth fact is the one a given conclusion asserts.

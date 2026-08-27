@@ -74,6 +74,32 @@ describe("tree_diff", () => {
     expect(d.personsChanged).toEqual([]);
   });
 
+  it("reports a Marriage fact added to a Couple present in both trees", () => {
+    // The couple is already seeded; the session dates the marriage onto it. The
+    // relationship is in both trees, so it is neither added nor removed — the
+    // only signal is a fact change. Missing this warned the tree-encoding gate on
+    // correct work (a proved marriage on a pre-existing couple).
+    const couple = (facts: object[]) => ({
+      id: "R1",
+      type: "Couple",
+      person1: "I1",
+      person2: "I2",
+      facts,
+    });
+    const before = { persons: [person("I1"), person("I2")], relationships: [couple([])] };
+    const after = {
+      persons: [person("I1"), person("I2")],
+      relationships: [couple([{ id: "mf", type: "Marriage", date: "1899" }])],
+    };
+    const d = treeDiff({ before, after });
+    expect(d.relationshipsAdded).toEqual([]);
+    expect(d.relationshipsRemoved).toEqual([]);
+    expect(d.relationshipsChanged).toHaveLength(1);
+    expect(d.relationshipsChanged[0].addedFacts).toHaveLength(1);
+    // Both spouses count as having gained structure.
+    expect(d.personsWithNewStructure).toEqual(expect.arrayContaining(["I1", "I2"]));
+  });
+
   it("reports an added ParentChild relationship", () => {
     const before = { persons: [person("I1"), person("I2")], relationships: [] };
     const after = {

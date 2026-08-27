@@ -159,6 +159,13 @@ def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, byte
         if rel not in _REDACTED_TREE_FILENAMES:
             out.append((rel, data))
             continue
+        # Count into a per-file tally and fold it into the total only once the
+        # file's rewrite has fully succeeded. _redact_person can raise partway
+        # through the person loop (a malformed `names` entry), and this file then
+        # ships UNTOUCHED via the except below — so a running counter would report
+        # living records protected in a file that leaked them. The count must
+        # describe the bytes actually written, not the persons visited.
+        file_redacted = 0
         try:
             tree = json.loads(data.decode("utf-8"))
             persons = tree.get("persons")
@@ -170,7 +177,7 @@ def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, byte
                 if isinstance(person, dict) and _is_living(person):
                     living_ids.add(person.get("id"))
                     new_persons.append(_redact_person(person))
-                    redacted += 1
+                    file_redacted += 1
                 else:
                     new_persons.append(person)
             tree["persons"] = new_persons
@@ -180,11 +187,11 @@ def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, byte
                 if {relationship.get("person1"), relationship.get("person2")} & living_ids:
                     relationship["facts"] = []
             data = json.dumps(tree, indent=2).encode("utf-8")
+            redacted += file_redacted  # only the fully-rewritten file counts
         except Exception:  # noqa: BLE001 — never block a submission on this
-            # Pass this file through untouched; do NOT zero the running total,
-            # which now spans both tree files. A parse failure here fails before
-            # any person is counted (json.loads / the persons-array check), so the
-            # accumulator is already correct for this file.
+            # Pass this file through untouched, and contribute nothing to the
+            # count — file_redacted is discarded, so a file that failed partway
+            # never reports the persons it visited before raising.
             pass
         out.append((rel, data))
     return out, redacted

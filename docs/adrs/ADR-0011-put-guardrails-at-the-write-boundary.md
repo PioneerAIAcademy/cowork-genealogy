@@ -312,10 +312,11 @@ them carry `needs-decision`.
 constant that denies correct work at $7–25 a run — the failure ADR-0009's sixth
 constraint exists to prevent, and the one issue #1463 caught before it shipped.
 In the other direction, nothing mechanical flags a "must hold" rule that is still
-a sentence: the tree-encoding gate is still prose today. The mentor gate that was
-identified alongside it shipped in PR #1685; the tree-encoding gate stays prose
-pending a baseline of the project's opening tree to diff against (issue #1490),
-since `research_append` loads only the current tree.
+a sentence — though the two that were prose here have since moved into the tool:
+the mentor gate as a refusal (PR #1685), and the tree-encoding gate as a warning
+that diffs the final tree against a write-once opening-tree baseline (issue
+#1490). The tree-encoding half ships warn-only, not as a refusal, per the
+2026-08-24 no-override ruling.
 
 ## Enforcement
 
