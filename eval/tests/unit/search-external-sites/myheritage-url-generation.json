@@ -5,16 +5,29 @@
     "name": "Generate MyHeritage search URL — different site from seed test",
     "type": "positive",
     "description": "Different external site from the seed test (which covered Ancestry). Tests whether the skill produces site-specific URL formats — MyHeritage's URL parameter names and structure differ from Ancestry's. Single-turn decomposition: URL generation only.",
-    "tags": ["myheritage", "external-site", "census", "url-generation", "site-variety", "log-site-myheritage"]
+    "tags": [
+      "myheritage",
+      "external-site",
+      "census",
+      "url-generation",
+      "site-variety",
+      "log-site-myheritage"
+    ]
   },
   "input": {
     "user_message": "Generate a MyHeritage search URL to look for Patrick Flynn in the 1860 census for Schuylkill County.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "external-links-search-schuylkill"],
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-schuylkill-by-name",
+    "place-search-schuylkill-by-place",
+    "external-links-search-schuylkill",
+    "collections-search-schuylkill"
+  ],
   "judge_context": [
     "Generated URL should target MyHeritage (myheritage.com or appropriate locale) — not silently substitute Ancestry's URL structure",
-    "URL should include Patrick Flynn's search parameters (name, birth year ~1845) using MyHeritage's parameter naming conventions. MyHeritage's URL template only exposes `birth_place` for location encoding (no separate residence/jurisdiction field), so encoding the subject's actual birthplace — Ireland, per assertions a_002 and a_009 — is correct. Do not penalize the absence of a county-level location parameter; the template does not support it.",
+    "URL should include Patrick Flynn's search parameters (name, birth year ~1845) using MyHeritage's parameter naming conventions. MyHeritage's URL template only exposes `birth_place` for location encoding (no separate residence/jurisdiction field), so a residence or county value does not belong in this URL at all. Scenario state for grading the birthplace value, which the rendered before-state does not carry: research.json holds conflict c_001 on `birthplace`, `status: \"resolved\"`, `preferred_assertion_id: a_002` whose value is Ireland (corroborated by a_009); the competing value Pennsylvania was rejected. Grade the encoded `birth_place` against the rubric's conflicts[] rule using that state. Do not penalize the absence of a county-level location parameter — the template does not support it.",
     "Should not fabricate captured records or pre-populate sources — the URL-generation step is single-turn; results come back via the multi-turn capture phase which is out of v1 scope"
   ]
 }

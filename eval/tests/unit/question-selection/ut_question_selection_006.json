@@ -5,7 +5,7 @@
     "name": "Timeline gap outranks pending objective decomposition",
     "type": "positive",
     "description": "The flynn-census-exhausted scenario has a high-severity timeline gap from 1860 to 1908 (missing 1870, 1880, 1900 census coverage) AND room for further objective decomposition. Priority 3 (timeline_gap) must outrank Priority 4 (objective_decomposition). Tests that the skill applies the priority ladder correctly when multiple signals are present.",
-    "tags": ["question-selection", "timeline-gap", "priority-ladder", "selection-basis-timeline-gap", "new-question-exhaustive-declaration-unstarted"]
+    "tags": ["question-selection", "timeline-gap", "priority-ladder", "selection-basis-timeline-gap", "new-question-exhaustive-declaration-unstarted", "unblocks-nonempty"]
   },
   "input": {
     "user_message": "What should we work on next?",
