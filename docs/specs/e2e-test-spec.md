@@ -1297,9 +1297,14 @@ checks over the final project state and the run's tool-call log
    `proof_summaries` entry has no matching `proof-critique` entry in
    `evaluations[]`, i.e. the mandatory `gps-mentor` gate never fired.
 3. **`find_person_evidence_missing_same_person`** — a brand-new tree person
-   received a `person_evidence` link without a single `same_person` call for
-   it. Narrower than check 1 on purpose: a run can invoke `person-evidence`
-   somewhere and still skip identity scoring for the person that matters.
+   received a **scoreable** `person_evidence` link without a single
+   `same_person` call for it. Narrower than check 1 on purpose: a run can
+   invoke `person-evidence` somewhere and still skip identity scoring for the
+   person that matters. "Scoreable" means a record persona is reachable — a
+   non-null `record_persona_id`, a `record_read`-sourced assertion, or a search
+   whose sidecar was retained; links that provably cannot be scored are skipped
+   and counted separately (`guardrail-enforcement-spec.md` §4). A null
+   `record_persona_id` alone does **not** exempt a link.
 
 Any violation sets `compliance: fail`, which forces `outcome: fail`. The
 checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
@@ -1429,6 +1434,14 @@ worth trusting**, and `not_checked` is the honest label rather than a placeholde
 for work in progress: a replay only means something if the checks are pinned to
 the version each run actually executed, and nothing records that version per run.
 Recording it is the prerequisite for any corpus-wide compliance number.
+
+**Check 3 got LOOSER when the persona-reachability narrowing landed.** A run's
+stored violation count can therefore exceed what today's detector recomputes
+from the same trace — the opposite direction from the `is_error` join below, and
+the correct reading rather than a bug. `make e2e-corpus RECOMPUTE=1` names every
+such run in its `regressed` list. No `harness_schema_version` bump: the runlog
+payload shape did not change, and the counter exists for a field whose *meaning*
+shifts while its name does not.
 
 **`compliance` and `outcome` are not comparable across the `is_error` join.**
 Before it, `tool_calls[]` carried no `is_error` key, so the

@@ -232,14 +232,98 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
   ];
 }
 
-/** Warn — NOT reject — a `confident` person_evidence link that records no numeric
- *  `match_score` (#1006). `same_person` returns a 0–1 float and `match_score` is
- *  the field meant to carry it, yet 94% of historical person_evidence writes leave
- *  it unset: identity is asserted, never scored. This ships WARN-ONLY — the fault
+/** Whether a record persona `same_person` could score against is reachable for
+ *  this assertion — decidable from the project documents alone, which is what
+ *  makes it a tool-side question rather than a prose one.
+ *
+ *  `same_person` takes two GedcomX documents plus a focus id inside each. It
+ *  never reads `record_persona_id`; that field points into a retained search
+ *  sidecar, so a null value proves only that no sidecar was kept. What decides
+ *  reachability is the tool that produced the assertion:
+ *
+ *   - non-null `record_persona_id` — verified against the record's
+ *     `gedcomx.persons[]` at write time (§3.5), so the persona exists;
+ *   - `record_read` — returns a SimplifiedGedcomX with a persons array, so the
+ *     record can be re-opened from its `record_id`;
+ *   - `record_search` with a retained `results_ref` — the sidecar result carries
+ *     the record's `gedcomx`.
+ *
+ *  Everything else cannot: image-, external-site- and PDF-sourced assertions, a
+ *  search whose sidecar was not retained, and every `fulltext_search` hit (an FTS
+ *  result carries transcript text, names and places but no GedcomX, and its ARK
+ *  is a `3:1:`/`3:2:` image entry `record_read` cannot open). Unresolvable
+ *  provenance counts as reachable, so an assertion written with no `log_entry_id`
+ *  cannot shed the requirement by omission.
+ *
+ *  Kept in step with `_persona_reachable` in `eval/harness/harness/
+ *  skill_invocation.py`, which is the same predicate on the eval side. */
+function personaReachable(entry: any, research: any): boolean {
+  const assertions: any[] = research.assertions ?? [];
+  const assertion = assertions.find((a: any) => a?.id === entry.assertion_id);
+  if (!assertion) return true; // unresolvable — provenance unknown, not proof
+  if (assertion.record_persona_id) return true;
+  const log: any[] = research.log ?? [];
+  const logEntry = log.find((l: any) => l?.id === assertion.log_entry_id);
+  if (!logEntry) return true; // no log entry — provenance unknown
+  if (logEntry.tool === "record_read") return true;
+  if (logEntry.tool === "record_search" && logEntry.results_ref) return true;
+  return false;
+}
+
+/** The retrieval route for a reachable persona, named so the warning tells the
+ *  agent what to DO rather than only what is missing. */
+function personaRoute(entry: any, research: any): string {
+  const assertions: any[] = research.assertions ?? [];
+  const assertion = assertions.find((a: any) => a?.id === entry.assertion_id);
+  if (assertion?.record_persona_id) {
+    return (
+      `assertion '${entry.assertion_id}' carries record_persona_id ` +
+      `'${assertion.record_persona_id}' — use it as primaryId1 with that record's gedcomx`
+    );
+  }
+  const log: any[] = research.log ?? [];
+  const logEntry = log.find((l: any) => l?.id === assertion?.log_entry_id);
+  if (logEntry?.tool === "record_read") {
+    return (
+      `assertion '${entry.assertion_id}' came from record_read — call ` +
+      `record_read({ recordId: '${assertion?.record_id}' }) again; it returns simplified ` +
+      `GedcomX, and primaryId1 is the persons[].id for the party this link is about`
+    );
+  }
+  if (logEntry?.results_ref) {
+    return (
+      `log entry '${logEntry.id}' retained a sidecar — take the persona from ` +
+      `'${logEntry.results_ref}'; primaryId1 is the persons[].id for the party this link ` +
+      `is about, not the result's top-level primaryId`
+    );
+  }
+  return `resolve the persona for assertion '${entry.assertion_id}' before linking`;
+}
+
+/** Warn — NOT reject — a person_evidence link that records no numeric
+ *  `match_score` when a record persona was REACHABLE for it (#1006, re-pointed
+ *  by #1429). `same_person` returns a 0–1 float and `match_score` is the field
+ *  meant to carry it, yet 94% of historical person_evidence writes leave it
+ *  unset: identity is asserted, never scored. This ships WARN-ONLY — the fault
  *  text rides the response's `validation.warnings` and the write still succeeds —
  *  because a hard reject on day one would break ~94% of runs and the hosted path
  *  at once. Graduating it to a rejection is a separate decision (needs @DallanQ),
- *  the same shadow-then-graduate discipline as guardrail-enforcement-spec.md §7.
+ *  the same shadow-then-graduate discipline as guardrail-enforcement-spec.md §7,
+ *  and it has to answer ADR-0009 constraint 2: `match_score` is caller-fabricable,
+ *  so a rejection buys a number rather than a call unless something persists the
+ *  `same_person` result.
+ *
+ *  **Two things #1429 changed, both measured.** It used to gate on
+ *  `confidence === "confident"` and to know nothing about provenance, so it
+ *  (a) said nothing at all about a `probable` link and (b) fired on image- and
+ *  full-text-sourced links nothing could ever score. Worse, its escape read "if
+ *  no comparable FamilySearch persona exists to score against, leave match_score
+ *  null" — and a null `record_persona_id` is not that case. Observed in
+ *  `v1_2026-08-27_11-28-52`: on both `ut_person_evidence_022` and `_024` the
+ *  agent wrote a confident link with a null score and said "no indexed GedcomX
+ *  persona", taking an escape the tool had offered it for a record it could have
+ *  re-opened. So the gate is now reachability, at any confidence, and the text
+ *  names the retrieval route instead of excusing the omission.
  *
  *  Gated on `confidence === "confident"`, mirroring `personEvidenceInvariants`:
  *  `research_append` is a stateless write that cannot see the tree or the session,
@@ -256,18 +340,36 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
  *  itself takes — but only a real 0–1 score clears the warning: a number outside the
  *  range does not, since the runtime validator (`validator.ts`, which does not load
  *  the JSON Schema) leaves the schema's 0–1 bound unenforced at the write. */
-function personEvidenceScoreWarnings(entry: any): string[] {
-  if (entry.confidence !== "confident") return [];
+function personEvidenceScoreWarnings(entry: any, research: any): string[] {
   const score = entry.match_score;
+  // A real 0–1 score clears it. A number outside the range does not: the runtime
+  // validator does not load the JSON Schema, so the schema's 0–1 bound is
+  // unenforced at the write.
   if (typeof score === "number" && score >= 0 && score <= 1) return [];
+  // Gated on REACHABILITY, not on confidence. Silent where nothing could be
+  // scored, so the warning means something when it does fire.
+  if (!personaReachable(entry, research)) return [];
   return [
     `person_evidence link for person '${entry.person_id}' (assertion '${entry.assertion_id}') ` +
-      `claims confidence 'confident' but records no usable match_score (got ` +
-      `${JSON.stringify(entry.match_score)} — expected a number 0–1). A confident identity should ` +
-      `carry the same_person score behind it (a number 0–1). Call same_person on this pairing ` +
-      `and record its score. If no comparable FamilySearch persona exists to score against, ` +
-      `leave match_score null and keep the confidence your correlation analysis supports — do ` +
-      `not lower it to silence this. The link was still written — this is a warning, not a rejection.`,
+      `records no usable match_score (got ${JSON.stringify(entry.match_score)} — expected a ` +
+      `number 0–1), but a record persona IS reachable for it: ${personaRoute(entry, research)}. ` +
+      `Score the pairing with same_person and record its score. A null record_persona_id is ` +
+      `NOT a reason to skip — same_person takes two gedcomx documents plus a focus id inside ` +
+      `each and never reads that field; a null value means only that no search sidecar was ` +
+      `retained. A locally-minted tree id is not a reason either: it scores on document ` +
+      // The one legitimate null this warning must NOT badger the agent out of.
+      // Scoring a persona against a person minted FROM that persona is circular
+      // — it can only confirm itself. The tool cannot detect the case: by the
+      // time the link is written the stub already exists in the tree and looks
+      // no different from one that has been there for months. So it is named
+      // here as a sanctioned exception rather than suppressed. Observed live:
+      // in v1_2026-08-27_12-36-32 this warning drove ut_person_evidence_n7v to
+      // score the groom persona G1 against the John Flynn stub it had just
+      // minted from G1, a third call that matched no fixture and cost the test
+      // its Tool Arguments score.
+      `content. If the tree person was minted from the very persona you would be ` +
+      `scoring, the comparison IS circular — leave match_score null and say so in the ` +
+      `rationale. The link was still written — this is a warning, not a rejection.`,
   ];
 }
 
@@ -1405,9 +1507,10 @@ function applyOne(
   // to "confident"; the helper no-ops for every other confidence value.
   if (section === "person_evidence") {
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
-    // Warn-only: a confident link that records no match_score (#1006). Rides the
-    // response warnings; does not block the write.
-    opWarnings.push(...personEvidenceScoreWarnings(resultEntry));
+    // Warn-only: a link that records no match_score where a persona was
+    // reachable (#1006, re-pointed by #1429). Rides the response warnings; does
+    // not block the write.
+    opWarnings.push(...personEvidenceScoreWarnings(resultEntry, research));
   }
   // Only when THIS op is the one setting/changing tier — append always sets it;
   // update only when `fields` names it. An unrelated update to an entry already

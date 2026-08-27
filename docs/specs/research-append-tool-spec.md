@@ -971,9 +971,11 @@ why its message names no write tool.
 
 `match_score` also remains fabricable by `person-evidence` itself. It is not
 derivable at the tool boundary: `same_person`'s tree side is a hand-curated
-"record-sized" slice, and a local stub returns a degenerate near-zero score the
-skill must interpret as *no score*. The *value* therefore cannot be validated
-here; what can be is its **presence**, which is the warn-only advisory
+"record-sized" slice, and a *thin* subject — a stub carrying little more than a
+name — scores near zero against everything, since the match engine scores on
+document content. (That is a content signal, not an id artifact: an ARK-less or
+locally-minted person is scorable, measured at `0.9999484` against a `0.999967`
+control.) The *value* therefore cannot be validated here; what can be is its **presence**, which is the warn-only advisory
 `personEvidenceScoreWarnings` (alongside `personEvidenceInvariants`) decided in
 issue #1006 (2026-08-01). That decision
 supersedes an earlier reading of this paragraph as "the lever is eval/rubric,
