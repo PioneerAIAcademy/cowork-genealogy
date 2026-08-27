@@ -1,0 +1,198 @@
+{
+  "run_log": "v1_2026-08-24_17-40-15.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "**`ut_record_extraction_028`** — `base` / `Correctness`\nLLM: 2 → Junior: 1\n\n> The extraction is mostly correct but contains a critical classification error: birth year assertions (a_005 for Edward, a_018 for Ella May) are marked `evidence_type: indirect` with `information_quality: secondary`, and the rationale states 'A person cannot provide primary information about their own birth.' This inverts the doctrine. The record STATES 'about 1887' and 'about 1890' in its fields—these are stated facts, not inferred. The approximate year is `direct` evidence (stated in the record), and `information_quality: secondary` correctly captures that the informant (the party themselves) lacks firsthand knowledge of their birth. The `evidence_type` should be `direct`, not `indirect`. This is the #1 recurring judge error flagged in the rubric. All other assertions are factually correct: names, dates, places, relationships, and the negative evidence for prior marriages are properly extracted and classified.\n\nJunior: (Fail. The extraction is factually correct overall, but the mislabeling of birth year evidence type is a significant correctness error. Once corrected to direct evidence, the record would be fully compliant with genealogical extraction standards.\nIt can only pass once the evidence type classification for the birth year assertions is corrected. Right now, the extraction marks Edward’s “about 1887” and Ella May’s “about 1890” as indirect evidence, but that’s the doctrinal error.\nHere’s what needs to change for a passing grade:\n•\tEvidence type: Switch from indirect to direct. The record explicitly states “about 1887” and “about 1890,” so those are direct evidence entries.\n•\tInformation quality: Keep as secondary, because individuals cannot provide primary knowledge of their own birth.\n•\tRationale: Update the notes to reflect that the approximate year is stated in the record (direct) but is secondary information due to informant limitations.)"
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "**`ut_record_extraction_028`** — `rubric` / `Evidence type accuracy`\nLLM: 2 → Junior: 1\n\n> Most evidence types are correct, but two assertions are mis-classified. Edward's birth year (a_005, value 'about 1887', date '~1887') and Ella May's birth year (a_018, value 'about 1890', date '~1890') are marked `evidence_type: indirect`. Per the rubric's #1 recurring error callout, a STATED fact in a record is `direct` evidence, not `indirect`. The record explicitly states 'about 1887' and 'about 1890' in its fields. The approximate year is stated, not inferred. The `information_quality: secondary` is correct (the informant lacks firsthand knowledge of their own birth), but that is a separate layer from evidence_type. All other assertions—names, places, marital status, relationships, marriage date/place, and negative evidence—are correctly classified as `direct` or `negative` as appropriate.\n\nJunior: (Fail. The extraction fails correctness because of the recurring rubric error: mislabeling approximate birth years as indirect. Once those two assertions are corrected to direct evidence, the record will be fully compliant with genealogical standards. All other classifications are accurate.)"
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_record_extraction_011`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> This is a negative test requiring the skill to decline and route to record-extraction. The skill produced an empty response with no text output and made zero MCP tool calls. While the routing decision itself was correct (the skill should not perform its own task), the skill failed to explicitly communicate the decline or route the user to record-extraction. The user received no guidance, explanation, or confirmation that their request was being handled by the appropriate skill. Correctness fails because the skill did not fulfill the negative test requirement to clearly decline and route.\n\nJunior: (Fail. Correct routing was implied (no extraction performed), but the skill did not fulfill the requirement to explicitly decline and direct the user to record‑extraction. Therefore, correctness fails. For a pass in Correctness \n•\tDecline inline reclassification: The skill must not attempt to re label evidence types directly in chat.\n•\tRoute properly: It must explicitly state that re examining and updating evidence_type classifications is handled by the record extraction skill, not by inline conversation.\n•\tCommunicate the decision: Instead of silence, the skill should tell the user something like: “This request is handled by record extraction, which owns classification refinement. I’ll route your reclassification request there.”\n•\tThis way, the user knows the request is being handled correctly and not ignored.)"
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_record_extraction_011`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> The skill produced no output whatsoever — no text response, no explanation, no routing message, and no tool invocations. On a negative test, the correct behavior is to decline clearly and route the user to record-extraction. The skill's complete silence fails to address what was required: communicating to the user that their reclassification request should be handled by record-extraction, which owns assertion-classification refinement. The user received no guidance on what would happen next.\n\nJunior: (Fail. Completeness fails because the skill did not provide the required decline and routing message. The absence of any output left the user without direction on how their request would be handled.  For a pass in Completeness\n•\tProvide guidance: Completeness is about whether the user gets a full, clear response. The skill must explain why it isn’t doing the reclassification itself and confirm that the request is being routed.\n•\tNo omissions: Silence fails completeness. A passing response must include a decline message and routing confirmation.\n•\tExpected output: Even though no assertions are reclassified inline, the skill’s output should still fulfill the negative test requirement by communicating the routing action.)"
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_record_extraction_006`** — `base` / `Tool Arguments`\nLLM: 2 → Junior: 2\n\n> The first extraction_append call failed validation (ok: false) because record_persona_id was omitted from all 12 assertions. The skill immediately corrected this in a second call, adding record_persona_id (P1, P2, P3) to each assertion. This is a single clean recovery: one validation rejection with clear error messaging, immediately corrected, and the retry succeeded with correct args. The recovery policy scores this as partial (2) rather than full credit because the initial call showed the skill did not anticipate the multi-persona requirement despite the test context noting it explicitly. However, the correction was competent and complete.\n\nJunior: (Rating: Partial Pass (2/3). •\tInitial failure: The first extraction_append call omitted record_persona_id for all 12 assertions. This violated the multi persona requirement explicitly noted in the test context. Validation correctly returned ok: false.\n•\tRecovery: The skill immediately corrected the error in a second call, adding record_persona_id (P1, P2, P3) to each assertion. The retry succeeded with proper arguments, and all assertions were persisted correctly.\n•\tError handling: The recovery was clean and competent — one validation rejection with clear error messaging, followed by a complete correction.\n•\tScoring impact: Because the skill did not anticipate the persona requirement upfront (despite the context highlighting it), the recovery policy scores this as partial credit rather than full. )The arguments ultimately ended up correct and complete, but the initial omission of record_persona_id prevents full marks. The recovery earns a Partial Pass.\nTo earn a full pass on Tool Arguments the extractor would need to avoid the initial validation failure altogether. In other words:\n•\tAnticipate the multi persona requirement upfront: Every assertion should have included the correct record_persona_id (P1, P2, P3) in the very first extraction_append call.\n•\tNo retries needed: The arguments should have been valid and complete on the first attempt, so the tool call would succeed immediately with ok: true.\n•\tConsistent alignment with context: The test context explicitly noted the need for persona IDs. A full pass response would demonstrate that the skill read and applied that requirement correctly without omission.\n•\tError free execution: With no validation rejection, the process would show that the skill fully understood the schema and requirements, producing a clean, single successful call.)\n"
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

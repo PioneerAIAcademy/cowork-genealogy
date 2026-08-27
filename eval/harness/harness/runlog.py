@@ -307,6 +307,8 @@ def assemble_test_entry(
     mcp_fixtures: list[str],
     runs: list[SingleRun],
     timestamp_for_run_id: str,
+    grading_mode: str | None = None,
+    dimensions_gate_outcome: bool | None = None,
 ) -> dict[str, Any]:
     """Build a per-test entry for the multi-test run log envelope.
 
@@ -314,6 +316,18 @@ def assemble_test_entry(
     each run's `run_id` for traceability. Does not include any envelope
     metadata (skill, model, harness_version, etc.) — those go on the
     envelope, not duplicated per test.
+
+    `grading_mode` / `dimensions_gate_outcome` come from
+    `orchestrator.grading_mode_for` and say what decided this outcome. Both are
+    optional and omitted when None, so every run log committed before #1000 —
+    and every caller that does not supply them — still validates; they are not
+    in the schema's `required` list for the same reason.
+
+    Without them a reader cannot tell a designed contradiction from a broken
+    one: a `grade_on_invariant` negative renders `outcome: "pass"` beside a
+    dimension scored 1 exactly as a positive test would, where that 1 forces a
+    fail. That ambiguity produced an incorrect correctness claim inside a PR
+    approval (#1000).
     """
     if not runs:
         raise RunlogAssemblyError("at least one run required")
@@ -394,7 +408,7 @@ def assemble_test_entry(
             run_entry["ended_at"] = r.ended_at
         runs_block.append(run_entry)
 
-    return {
+    entry: dict[str, Any] = {
         "test_id": test_id,
         "test_type": test_type,
         "expected_outcome": expected_outcome,
@@ -409,6 +423,14 @@ def assemble_test_entry(
         "totals": totals,
         "runs": runs_block,
     }
+    # Omitted rather than written as null: `null` would assert "this test has no
+    # grading mode", which is false for every test. Absent means "this run log
+    # predates #1000", which is what a reader needs to know.
+    if grading_mode is not None:
+        entry["grading_mode"] = grading_mode
+    if dimensions_gate_outcome is not None:
+        entry["dimensions_gate_outcome"] = dimensions_gate_outcome
+    return entry
 
 
 # ---- Run-log envelope -----------------------------------------------------
