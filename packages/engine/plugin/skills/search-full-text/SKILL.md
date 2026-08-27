@@ -172,11 +172,22 @@ Read `references/transcription-quirks.md` for HTR error patterns.
 
 ### 6. Triage results
 
-For each result, evaluate match quality:
-- Does the target name appear in the textDocument?
-- Is the name in the right context (witness, will clause, deed party)
-  or a false positive (cross-column alignment, place name matching)?
-- Is the place and approximate date consistent?
+Each staged result carries only flat stub fields — the full transcript
+(`textDocument`) is dropped once results are staged and cannot be re-read via a
+tool. Triage from the stubs, then confirm against the image:
+- **Did your terms hit?** `highlightTerms` lists the matched terms and phrases
+  as bare strings (e.g. `["Patrick", "Flynn", "Flynn Patrick"]`) — they confirm
+  which query terms appear in the transcript, not where or in what role.
+- **Who and what?** `names` lists the persons the transcript mentions (the FAN
+  net — witnesses, neighbors, heirs); `title` and `recordType` give the
+  document kind.
+- **Where and when?** Check `recordPlace`/`places` and `recordDate`/`dates` —
+  is the place and approximate date consistent with your person?
+- **Right context, or a false positive?** Whether the name is a genuine mention
+  (witness, will clause, deed party) versus a false positive (cross-column
+  alignment, a place name matching a surname) **cannot be judged from a staged
+  result** — the terms are bare and the transcript is not returned. Open the
+  record and read the image to settle it (see the verification note above).
 
 **Attachment check:** After narrowing to promising results, call
 `source_attachments({ uris: [ark1, ark2, ...] })` to check whether
