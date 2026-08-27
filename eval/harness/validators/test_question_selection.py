@@ -436,10 +436,10 @@ def test_first_question_tests_disputed_parents(before_state, after_state, test):
 # catches only that extreme case -- whether a question that avoids these
 # shapes is otherwise well-formed stays the judge's call.
 _VAGUE_QUESTION_PATTERNS = (
-    r"^\s*who\s+is\s+[A-Za-z][\w'\-]*(?:\s+[A-Za-z][\w'\-]*){0,4}\s*\??\s*$",
+    r"^\s*who\s+is\s+[A-Z][\w'\-]*(?:\s+[A-Z][\w'\-]*){0,3}\s*\??\s*$",
     r"^\s*tell\s+me\s+about\b",
-    r"\blearn\s+(?:more\s+)?about\b",
-    r"\bfind\s+out\s+(?:more\s+)?about\b",
+    r"^\s*learn\s+(?:more\s+)?about\b",
+    r"^\s*find\s+out\s+(?:more\s+)?about\b",
     r"^\s*research\s+the\s+\S+(?:\s+\S+){0,2}\s+family\b",
 )
 
