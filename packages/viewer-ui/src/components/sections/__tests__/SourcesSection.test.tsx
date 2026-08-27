@@ -18,6 +18,7 @@ vi.mock('../../../contexts/ResearchDataContext', async () => {
 
 import { useResearchData } from '../../../contexts/ResearchDataContext'
 import { buildMockContext } from '../../../contexts/__tests__/mockContext'
+import { expandFirstCard } from './expandCard'
 
 function mockResearch(overrides: Partial<ResearchData> = {}): void {
   vi.mocked(useResearchData).mockReturnValue(
@@ -53,14 +54,6 @@ function makeSource(overrides: Partial<Source> = {}): Source {
 
 // Cards are collapsed by default; click the header (parent of the title)
 // to expand the body and footer.
-async function expandFirstCard(): Promise<void> {
-  // Pick the first card's chevron span and click its parent (header).
-  const chevrons = screen.getAllByText(/^[▾▸]$/)
-  if (chevrons.length === 0) throw new Error('No card chevrons found')
-  const header = chevrons[0].closest('div')?.parentElement
-  if (!header) throw new Error('No header element found')
-  await userEvent.click(header)
-}
 
 describe('SourcesSection — B2 transcription', () => {
   beforeEach(() => {
