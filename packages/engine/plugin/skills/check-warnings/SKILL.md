@@ -81,7 +81,7 @@ For each warning, report:
 - **The facts involved — only when the tool named them.** If the warning includes a `factIds` field, name those facts. If it doesn't, **do not read `tree.gedcomx.json` to hunt for them** — report the `message` as-is and don't invent fact ids, dates, or sources the tool didn't return. (Most warnings are about a single constrained event — Birth, Death, Burial — so the `message` alone already makes clear which fact is meant.)
 - A concrete next step, phrased from the tool's `message` (e.g. "verify the recorded death date against the original death record"). Don't cite a specific fact/source id unless the tool provided it.
 
-**Before listing individual warnings, count.** If 2 or more `severity: "contradiction"` warnings fire on the same person, open the report with a cluster verdict: "2 contradictions plus N implausible warnings on this one person is a strong signal that records from two different individuals have been merged into one profile." Then recommend: "I'd recommend rebuilding a chronological timeline of every recorded event for this person and going through each one to identify where one person's records end and another's begin -- once we find the split point, we can reassign the records that belong to the other individual." List individual warnings *under* that verdict, not above it.
+**Before listing individual warnings, count -- then ask whether one error explains them all.** If 2 or more `severity: "contradiction"` warnings fire on the same person, open the report with a cluster note before the individual warnings. First check whether a single wrong fact would produce every contradiction in the cluster: one death date recorded decades too early fires both `hasEventAfterDeath1` and `hasAgeRangeGreaterThan120`, so two contradictions there are two symptoms, not two people. **When one error would explain the cluster, say so and do not assert a merge:** "2 contradictions plus N implausible warnings on this one person. These may share a single cause -- a wrong [date] would produce all of them -- or they may be records from two different individuals merged into one profile. Verifying [the shared fact] against its original source distinguishes the two." **Only when the contradictions cannot share one cause** is the merge reading the stronger one: "2 contradictions that no single wrong fact explains is a strong signal that records from two different individuals have been merged into one profile." Either way, recommend: "I'd recommend rebuilding a chronological timeline of every recorded event for this person and going through each one to identify where one person's records end and another's begin -- once we find the split point, we can reassign the records that belong to the other individual." List individual warnings *under* that note, not above it.
 
 **Special case -- `missingFactsAndRelatives`:** Report with Implausible severity and add: "Note: this person has limited data, so most warning checks need dates and relatives to fire. Adding more research may surface additional issues currently hidden."
 
@@ -91,7 +91,7 @@ The three causes, with cues and recommended actions:
 
 - **Identity confusion** -- the late-dated record actually describes a same-name individual who outlived the deceased. Cue: the source describes events apparently performed BY the deceased (e.g. a later census listing them as head of household, a later marriage record). Recommended action: "Let's rebuild a full chronological timeline of every recorded event for [person] and go through each record one by one to check whether it actually belongs to this person or to a same-name individual who outlived them."
 - **Wrong death date** -- the recorded death date is too early. Cue: a single late-dated record is inconsistent with one earlier death record but consistent with everything else. Recommended action: "Verify the recorded death date for [person] against the original death record (the certificate or burial register) -- one of the two dates is likely wrong."
-- **Posthumous mention** -- the late-dated record was created after the deceased's death and merely references them. Cue: the source is an obituary, a descendant's death certificate, an estate or probate document where the deceased is named as a parent or prior owner but is not performing an action. Recommended action: "Look at the late-dated record itself -- if it's a record about someone else that just mentions [person] as a parent or relative, it shouldn't be attached to [person]'s profile as one of their own events. Unlink it and treat it as a reference instead."
+- **Posthumous mention** -- the late-dated record was created after the deceased's death and merely references them. Cue: the source is an obituary, a death notice (a distinct record from an obituary), a descendant's death certificate, a city directory, or an estate or probate document where the deceased is named as a parent or prior owner but is not performing an action -- probate and estate administration routinely run years after death, and an heir petition can reopen a will later still. What decides whether such a record raises the warning is the fact type it was attached as, not its date. Recommended action: "Look at the late-dated record itself -- if it's a record about someone else that just mentions [person] as a parent or relative, it shouldn't be attached to [person]'s profile as one of their own events. Unlink it and treat it as a reference instead."
 
 When the cause is ambiguous (the most common case), report the warning, list the three candidate causes, and recommend inspecting the source next. Do not recommend a specific corrective action before the source type is known -- recommending an identity split when the record is actually a posthumous mention would damage the data.
 
@@ -99,6 +99,13 @@ When the cause is ambiguous (the most common case), report the warning, list the
 
 ```
 WARNINGS FOR: Patrick Flynn (I1)
+
+    2 contradictions plus 0 implausible warnings on this one
+    person. These may share a single cause -- a death date
+    recorded decades too early would produce both of them -- or
+    they may be records from two different individuals merged
+    into one profile. Verifying the recorded death date against
+    the original death record distinguishes the two.
 
 [!]  Contradiction -- Event after death  [hasEventAfterDeath1]
     [Fundamental: people cannot act after their death -- but a
@@ -110,15 +117,18 @@ WARNINGS FOR: Patrick Flynn (I1)
     date is wrong, (b) the late-dated record actually belongs to
     a same-name individual whose records were merged in, OR (c)
     the late-dated record is a posthumous mention (an obituary,
-    a descendant's death certificate, an estate, probate, or
-    guardianship record that names the deceased without
-    describing actions by them).
+    a death notice, a city directory, a descendant's death
+    certificate, or an estate, probate, or guardianship record --
+    probate often runs years after death, and an heir petition
+    can reopen a will later still -- that names the deceased
+    without describing actions by them).
     Next step: take a closer look at the late-dated record
     itself -- what kind of document is it? The right corrective
     action depends on what you find.
 
-[!]  Implausible -- Long lifespan  [hasAgeRangeGreaterThan120]
-    [Valid: people rarely live past 120.]
+[!]  Contradiction -- Long lifespan  [hasAgeRangeGreaterThan120]
+    [Fundamental: a recorded lifespan cannot exceed plausible
+    biological limits (~120 years).]
     This person's lifespan is greater than 120 years, which is
     implausible.
     Next: verify the birth and death dates against their sources.
