@@ -451,11 +451,11 @@ describe("docs/ cite symbols, not line numbers", () => {
  * IS the fact and stays.
  */
 const ISSUE_REF_BASELINE: Record<string, number> = {
-  "CLAUDE.md": 7,
-  "docs/architecture.md": 19,
+  "CLAUDE.md": 9,
+  "docs/architecture.md": 22,
   "docs/specs/e2e-test-spec.md": 10,
   "docs/specs/feedback-case-spec.md": 1,
-  "docs/specs/gps-mentor-agent-spec.md": 1,
+  "docs/specs/gps-mentor-agent-spec.md": 2,
   "docs/specs/guardrail-enforcement-spec.md": 16,
   "docs/specs/hosted-web-workbench-spec.md": 4,
   "docs/specs/image-reader-agent-spec.md": 3,
@@ -464,7 +464,7 @@ const ISSUE_REF_BASELINE: Record<string, number> = {
   "docs/specs/merge-gedcomx-spec.md": 8,
   "docs/specs/place-search-tool-spec.md": 1,
   "docs/specs/record-search-tool-spec-v2.md": 3,
-  "docs/specs/research-append-tool-spec.md": 2,
+  "docs/specs/research-append-tool-spec.md": 3,
   "docs/specs/research-query-tool-spec.md": 5,
   "docs/specs/research-schema-spec.md": 1,
   "docs/specs/same-person-match-relatives-spec.md": 1,

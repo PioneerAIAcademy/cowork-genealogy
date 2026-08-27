@@ -100,7 +100,8 @@ enforced in code, nothing new needed.
 - `model: claude-opus-4-8` — the whole point of this agent is that its *own*
   model does the reading.
 - `tools: [image_read]` — all three server spellings, per the repo convention
-  (ADR-0004): the harness key, plus cloud and on-computer Cowork.
+  (ADR-0004): the harness key, plus Cowork's bridged and bare `display_name`
+  spellings (the one a session exposes has been observed to move — ADR-0004).
   No other tools: this agent does not write `research.json` / tree, create
   assertions/sources, or search indexes.
 - `description:` worded **narrowly** — an explicit re-read request, not a

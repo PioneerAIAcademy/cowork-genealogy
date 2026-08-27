@@ -16,12 +16,16 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 //   - Cowork IN THE CLOUD reaches the host-installed .mcpb through a
 //     remote-device bridge, which namespaces the manifest's display_name
 //                                    → mcp__remote-devices__Genealogy_Research__<tool>
-//   - Cowork ON THE USER'S OWN COMPUTER reaches the same .mcpb directly, so the
-//     display_name segment appears with no bridge in front of it
-//                                    → mcp__Genealogy_Research__<tool>
+//   - Cowork can instead expose the bare display_name with no bridge in front
+//     of it                          → mcp__Genealogy_Research__<tool>
 //
-// Run mode is a per-task setting nothing in the plugin can see, so both Cowork
-// spellings are required. Missing the on-computer one is issue #1341:
+// Which of the two Cowork spellings a session exposes has been observed to MOVE:
+// two censuses on 2026-08-15 (macOS, and Windows via #1732) found only the
+// bridged spelling, with the bare one absent — yet #1341 recorded the bare
+// spelling live on 2026-08-04/05, refusing record-extractor with the bridged
+// spelling among its unrecognized entries. Run mode is a per-task setting nothing
+// in the plugin can see, and the exposed spelling is not stable over time, so
+// both Cowork spellings are required. Missing the bare one was issue #1341:
 // record-extractor was refused there, naming all 16 of its declared entries as
 // unrecognized, and this test stayed green because it derived its expected
 // prefixes from the two registrars we knew about.
@@ -131,12 +135,13 @@ function sanitizeServerSegment(name: string): string {
 
 const HARNESS_PREFIX = "mcp__genealogy__";
 const BRIDGE_PREFIX = `mcp__remote-devices__${sanitizeServerSegment(manifest.display_name)}__`;
-// Cowork running ON THE USER'S COMPUTER reaches the .mcpb directly, with no bridge,
-// so the display_name segment appears with no `remote-devices` in front of it. Both
-// live Cowork spellings derive from display_name; only the bridged one is namespaced.
-// Missing this third registrar is issue #1341: record-extractor was refused there,
-// with all 16 of its declared entries named unrecognized. gps-mentor is the
-// exception — its bare `Read` always resolves, so it would spawn holding that alone.
+// Cowork can instead expose the bare display_name with no `remote-devices` bridge
+// in front of it. Both live Cowork spellings derive from display_name; only the
+// bridged one is namespaced. Which one a session exposes has been observed to move
+// (bare live in #1341, absent in the 2026-08-15 censuses / #1732). Missing this
+// third registrar was issue #1341: record-extractor was refused there, with all 16
+// of its declared entries named unrecognized. gps-mentor is the exception — its
+// bare `Read` always resolves, so it would spawn holding that alone.
 const LOCAL_PREFIX = `mcp__${sanitizeServerSegment(manifest.display_name)}__`;
 
 // Longest-first so that a prefix which is itself the prefix of another can never
@@ -195,7 +200,7 @@ describe("plugin agent tool names", () => {
 
   it("derives the on-computer prefix from manifest.display_name", () => {
     // Same pin for the un-bridged spelling: display_name with no bridge segment,
-    // which is what an on-computer Cowork task exposes (#1341).
+    // which is what Cowork exposed live in #1341.
     expect(LOCAL_PREFIX).toBe("mcp__Genealogy_Research__");
   });
 

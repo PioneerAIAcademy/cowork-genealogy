@@ -9,7 +9,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-18 (#742, repairing #650/#698)
-- **Last updated:** 2026-08-09 (a critique §9 citation repointed at ADR-0009)
+- **Last updated:** 2026-08-27 (#1639 — rationale corrected: the observed registrar moves; all three spellings kept as insurance, not redundancy)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -19,20 +19,29 @@
 ## Context
 
 An MCP server's name is chosen by **whoever registers it**, not by the server.
-The plugin ships into the VM and cannot control that choice. In practice the same
-47 tools appear under three different prefixes:
+The plugin ships into the VM and cannot control that choice. In practice every
+tool in `allToolSchemas` appears under three different prefixes:
 
 | Registrar | Prefix |
 |---|---|
 | `.mcp.json`, both eval harnesses, the hosted control plane | `mcp__genealogy__<tool>` |
-| Cowork **in the cloud**, reaching the host `.mcpb` through its remote-device bridge | `mcp__remote-devices__Genealogy_Research__<tool>` |
-| Cowork **on the user's own computer**, reaching the same `.mcpb` directly | `mcp__Genealogy_Research__<tool>` |
+| Cowork reaching the host `.mcpb` through its remote-device bridge | `mcp__remote-devices__Genealogy_Research__<tool>` |
+| Cowork exposing the bare `display_name` (observed live in #1341; see the census note below) | `mcp__Genealogy_Research__<tool>` |
 
 Both Cowork forms derive the segment from `manifest.json`'s `display_name`
 ("Genealogy Research" → `Genealogy_Research`), which is a *product* string —
-chosen for the install dialog, not for us. Only the cloud form is namespaced,
-because only it has a bridge to traverse. **Run mode is a per-task setting**, so
-which of the two is live is not a property of the install.
+chosen for the install dialog, not for us. Only the bridged form is namespaced,
+because only it has a bridge to traverse. **Which spelling a Cowork session
+exposes has been observed to move.** Two censuses on 2026-08-15 (macOS desktop,
+and Windows via issue #1732, reported 2026-08-19) found every genealogy tool
+under the bridged `mcp__remote-devices__Genealogy_Research__` spelling ("via
+your device"), with the bare `mcp__Genealogy_Research__` spelling absent; issue
+#1341 recorded the opposite live on 2026-08-04/05, refusing `record-extractor`
+with the bridged spelling among its *unrecognized* entries (see the reversal
+table below). The registrar moved between those dates — or the two
+configurations differ in a way nobody has identified; either reading lands in
+the same place. Run mode is a per-task setting the install cannot see, and the
+exposed spelling is not stable over time.
 
 Agent frontmatter entries are matched **exactly**: no prefix fallback, no
 inherit-on-miss. And the failure when every entry misses is not a degraded agent
@@ -74,14 +83,14 @@ three times, once under each live server spelling:**
 
 ```yaml
 - mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
-- mcp__remote-devices__Genealogy_Research__record_read   # Cowork in the cloud (bridged)
-- mcp__Genealogy_Research__record_read                   # Cowork on the user's own computer
+- mcp__remote-devices__Genealogy_Research__record_read   # Cowork via the remote-device bridge
+- mcp__Genealogy_Research__record_read                   # Cowork, bare display_name spelling
 ```
 
 The last two both derive from `manifest.json`'s `display_name`; only the bridged
-one is namespaced under `remote-devices`. **Which one is live depends on where the
-Cowork task runs**, which is a per-task setting the plugin cannot see, so an agent
-needs all three.
+one is namespaced under `remote-devices`. **Which one a Cowork session exposes has
+moved between censuses** (see Context), so an agent needs all three regardless of
+run mode.
 
 This is safe because unrecognized entries are ignored so long as at least one
 resolves.
@@ -142,7 +151,11 @@ reason.)
    the omission and stayed green. A fourth would do the same. `bareName()` now
    throws on an unrecognized prefix instead of slicing it against another prefix's
    length, which turns the next instance from a wrong bare name into a named
-   failure.
+   failure. And the set does not only *grow*: the spelling a Cowork session
+   exposes has been observed to **move** between dates — the bare form live in
+   #1341 (2026-08-04/05), absent in the 2026-08-15 censuses (macOS and Windows/#1732)
+   that found only the bridged form. So the third spelling is insurance against a
+   moving target, not dead weight to be cleaned up on the strength of one census.
 
 **Risks.** The lint verifies *spelling*, not *binding*. An agent can be perfectly
 declared under every name, pass every check, and still not hold the tool at

@@ -259,20 +259,28 @@ every MCP tool **must** be listed **three times**, once under each server
 spelling:
 
     - mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
-    - mcp__remote-devices__Genealogy_Research__record_read   # Cowork in the cloud
-    - mcp__Genealogy_Research__record_read                   # Cowork on the user's own computer
+    - mcp__remote-devices__Genealogy_Research__record_read   # Cowork via the remote-device bridge
+    - mcp__Genealogy_Research__record_read                   # Cowork, bare display_name spelling
 
 Bare names do not work (they leave the subagent toolless in the
 unit-harness SDK path), but neither does a single qualified name. The MCP
 server's name is chosen by whoever registers it, and the plugin — which
 ships into the VM — cannot control that choice. `.mcp.json`, both
 harnesses, and the hosted web control plane register it under the key
-`genealogy`. Cowork uses `manifest.json`'s `display_name` both times, but
-namespaces it under `remote-devices` only when the task runs **in the
-cloud** and reaches the host through the device bridge; a task running **on
-the user's own computer** reaches the `.mcpb` directly and gets the bare
-`display_name` segment. **Run mode is a per-task setting nothing in the
-plugin can see.** No single spelling resolves everywhere.
+`genealogy`. Both Cowork spellings derive from `manifest.json`'s
+`display_name`; only the bridged form is namespaced under `remote-devices`.
+Which spelling a Cowork session exposes has been **observed to move**: two
+censuses on 2026-08-15 (macOS desktop, and Windows via issue #1732, reported
+2026-08-19) found every genealogy tool under
+`mcp__remote-devices__Genealogy_Research__…` ("via your device"), with the
+bare `mcp__Genealogy_Research__…` spelling absent — yet issue #1341 recorded
+the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the
+bridged spelling among its *unrecognized* entries. The registrar moved
+between those dates (or the configurations differ in a way nobody has
+identified — same conclusion). **Run mode is a per-task setting nothing in
+the plugin can see, and the spelling exposed is not stable over time.** No
+single spelling resolves everywhere; listing all three is insurance against a
+moving target, not defensive redundancy.
 
 Entries are matched **exactly** — no prefix fallback, no inherit-on-miss.
 When every `tools:` entry misses, the runtime refuses to spawn the agent at
