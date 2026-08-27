@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_research_plan_bpx",
+    "skill": "research-plan",
+    "name": "First plan must survey what's already attached to FAN-cluster persons before planning new searches",
+    "type": "positive",
+    "description": "q_001 asks why/when Michael Sheahan moved to Schuylkill County. His brother Patrick already has a sourced tree fact -- a 1875 land purchase in Schuylkill County, seven years before Michael's earliest confirmed presence there -- sitting unused. A sound first plan should surface and build on this already-attached FAN-cluster evidence (a sibling arriving years earlier is a classic chain-migration signal), not proceed as if it doesn't exist. Mined from a live alpha-feedback report (issue #1948): the tester asked why plan item 1 didn't check sources already attached to tree people, and the agent's own answer named the gap -- the skill's 'verify the starting point' step checks assumptions, not what's already attached.",
+    "tags": ["planning", "fan-cluster", "already-attached", "migration", "first-plan-fan-already-sourced", "issue-1948"]
+  },
+  "input": {
+    "user_message": "Create the first research plan for q_001 -- why did Michael Sheahan move to Schuylkill County around 1882?",
+    "scenario": "first-plan-fan-already-sourced"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "place-search-all-schuylkill",
+    "place-population-schuylkill",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "volume-search-schuylkill"
+  ],
+  "judge_context": [
+    "GENERAL RULE UNDER TEST: before planning new searches, the skill must survey what's already attached to every in-scope FAN-cluster person, not just the subject -- research-plan's own stated inputs include tree.gedcomx.json, which already holds this. Skipping straight to new-record planning without this survey is the specific failure this test guards against.",
+    "The tree gives Patrick Sheahan (I2, Michael's brother, linked via I3) a sourced 1875 Residence fact -- a land purchase in Schuylkill County, cited to S1 -- seven years before Michael's earliest confirmed Schuylkill presence (1882, log_002). The response should surface this: note that a sibling was already established in the destination county years before Michael's own move, since that's directly relevant to a 'why did Michael move' question (chain/pull migration via family already there).",
+    "This does not have to be a numbered plan item -- a clear statement in the plan's rationale or the response narration that acknowledges Patrick's already-documented 1875 arrival satisfies this. What fails it is the response proceeding as if only Michael's own two log entries exist, with no mention of Patrick's tree fact anywhere.",
+    "The plan should still include new record-type items for Michael's own movement and its cause (census, land/deed, tax, church, per the localities entry) -- surfacing Patrick's fact is additive, not a replacement for planning new searches about Michael himself.",
+    "Should NOT plan a new search to (re)discover Patrick's 1875 land purchase or residence in Schuylkill County -- that fact is already sourced and attached; planning a fresh search for it would show the skill found it by re-searching rather than by surveying the tree it already had.",
+    "Grade on whether the already-attached fact reached the response's reasoning at all, not on how elegantly it was woven in -- a blunt one-sentence acknowledgment is enough to pass; total silence about Patrick's tree fact is the failure."
+  ]
+}
