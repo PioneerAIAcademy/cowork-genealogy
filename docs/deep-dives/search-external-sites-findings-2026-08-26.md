@@ -504,7 +504,8 @@ two.
 {skills_invoked} {text_response} {file_changes_summary} {tool_calls}
 {validator_failures}`, and of those:
 
-- `_summarize_before_state` (`orchestrator.py:1494`) renders **only `sources`**,
+- `_summarize_before_state` in `eval/harness/harness/orchestrator.py` renders
+  **only `sources`**,
   from research.json and tree.gedcomx.json. Its docstring is explicit that it
   exists for citation-fabrication checks. No `conflicts`.
 - `_summarize_changes` renders added/modified/deleted entries; this skill never
