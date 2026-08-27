@@ -14,7 +14,7 @@ import { buildMockContext } from '../contexts/__tests__/mockContext'
 import App from '../App'
 
 const stubTransport = {
-  getProjectState: async () => ({ research: null, gedcomx: null, label: null }),
+  getProjectState: async () => ({ research: null, gedcomx: null, label: null, notice: null }),
   subscribe: () => () => {},
   readSidecar: async () => null,
   submitFeedback: async () => ({ ok: true }),

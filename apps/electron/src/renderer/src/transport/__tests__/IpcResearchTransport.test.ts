@@ -9,7 +9,7 @@ let folderNoticeCb: ((m: string) => void) | null = null
 function installApiStub(): void {
   folderNoticeCb = null
   ;(window as unknown as { api: unknown }).api = {
-    getState: async () => ({ folderPath: null, research: null, gedcomx: null }),
+    getState: async () => ({ folderPath: null, research: null, gedcomx: null, notice: null }),
     onResearchUpdated: () => {},
     onGedcomxUpdated: () => {},
     onWatchError: () => {},

@@ -10,7 +10,7 @@ import type { ResearchTransport } from '../../transport'
 // ============================================================
 
 // Capture the context value so each test can inspect / drive it.
-function makeHarness(): {
+function makeHarness(transport?: ResearchTransport): {
   ctx: () => ResearchDataState
   render: () => void
 } {
@@ -26,7 +26,7 @@ function makeHarness(): {
     },
     render: () => {
       render(
-        <ResearchDataProvider transport={makeMockTransport()}>
+        <ResearchDataProvider transport={transport ?? makeMockTransport()}>
           <Probe />
         </ResearchDataProvider>
       )
@@ -51,7 +51,7 @@ function installApiMock(readSidecar: ReturnType<typeof vi.fn>): void {
 // readSidecar delegates to whatever the test installed.
 function makeMockTransport(): ResearchTransport {
   return {
-    getProjectState: async () => ({ research: null, gedcomx: null, label: null }),
+    getProjectState: async () => ({ research: null, gedcomx: null, label: null, notice: null }),
     subscribe: (handlers) => {
       sidecarUpdatedHandler = handlers.onSidecar
       noticeHandler = handlers.onNotice
@@ -396,6 +396,16 @@ const emptyResearch = {
   evaluations: []
 }
 
+// A transport whose hydration snapshot already carries a notice and which never
+// fires `onNotice`. That is the reload shape: the send happened before this
+// renderer existed, so the only route left is the snapshot (issue #1899).
+function makeHydratingTransport(notice: string | null): ResearchTransport {
+  return {
+    ...makeMockTransport(),
+    getProjectState: async () => ({ research: null, gedcomx: null, label: '/p', notice })
+  }
+}
+
 describe('ResearchDataProvider — folder notice', () => {
   beforeEach(() => vi.clearAllMocks())
 
@@ -415,6 +425,35 @@ describe('ResearchDataProvider — folder notice', () => {
 
     // Only an explicit dismiss clears it.
     act(() => h.ctx().clearNotice())
+    expect(h.ctx().notice).toBeNull()
+  })
+
+  // #1899: the notice is push-delivered, and `--project-dir` sends it before the
+  // renderer mounts. Every later reload has the same shape. Replaying it from
+  // the hydration snapshot is the only thing that can reach such a renderer, so
+  // this asserts it arrives with NO onNotice event fired at all.
+  it('replays a notice from the hydration snapshot with no onNotice fired', async () => {
+    installApiMock(vi.fn())
+    noticeHandler = null
+    const h = makeHarness(makeHydratingTransport('research.json is in a subfolder — reloaded'))
+    h.render()
+
+    await waitFor(() =>
+      expect(h.ctx().notice).toBe('research.json is in a subfolder — reloaded')
+    )
+
+    // Nothing pushed it — it came from the snapshot. Deleting the hydrate line
+    // in ResearchDataProvider fails this and nothing else.
+    expect(noticeHandler).not.toBeNull()
+    act(() => h.ctx().clearNotice())
+    expect(h.ctx().notice).toBeNull()
+  })
+
+  it('leaves the notice null when the hydration snapshot carries none', async () => {
+    installApiMock(vi.fn())
+    const h = makeHarness(makeHydratingTransport(null))
+    h.render()
+    await waitFor(() => expect(h.ctx().research).toBeNull())
     expect(h.ctx().notice).toBeNull()
   })
 })
