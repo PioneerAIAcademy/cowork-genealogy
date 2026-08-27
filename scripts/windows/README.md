@@ -38,6 +38,7 @@ there.
 | `make harness-test` | `scripts\windows\harness-test.bat` | Eval harness tests (pytest) |
 | `make harness-lint` | `scripts\windows\harness-lint.bat` | Harness ruff check |
 | `make agent-smoke` | `scripts\windows\agent-smoke.bat` | Plugin agent registration smoke test |
+| `make agent-tool-bind` | `scripts\windows\agent-tool-bind.bat` | Live probe that gps-mentor's wiki_search grant binds — spends one model turn |
 | `make deploy-status` | `scripts\windows\deploy-status.bat` | Health-check the deployed control plane |
 
 Pass parameters as environment variables, the same names the make targets use:

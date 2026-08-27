@@ -337,6 +337,28 @@ agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the pl
 	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run pytest tests/test_plugin_agents.py -q -rs
 
+.PHONY: agent-tool-bind
+agent-tool-bind: $(ENGINE_BUILD) ## Live probe that gps-mentor's wiki_search grant BINDS at runtime (issue #1084). SPENDS ONE MODEL TURN (~$0.35/run) — the only check that bills; opt-in behind a live key. Covers the mcp__genealogy__ spelling only; does not close the nothing-checks gap.
+	# The residue no static check reaches: everything spelled right and STILL not
+	# bound. agent-tool-names.test.ts proves the tools: entries are well-formed;
+	# this proves the agent can actually CALL one. It is behavioral by necessity —
+	# the SDK handshake exposes no tool list (issue #1084) — so it forces gps-mentor
+	# to call wiki_search and asserts on the recorded tool_use, never the narration.
+	#
+	# This is the FIRST check in the repo that spends a model turn (agent-smoke
+	# bills nothing; eval-skill/e2e-run bill but are eval runs, not checks) and the
+	# most model-dependent thing in the check tier. Lead ruling 2026-08-27: if it
+	# proves flaky, DELETE it — do not loosen the assertion into something that
+	# passes on narration. One agent, one tool, one turn — not a matrix.
+	#
+	# Key + opt-in flag mirror agent-smoke: LIVE_ANTHROPIC_API_KEY because
+	# conftest.py blanks ANTHROPIC_API_KEY, and AGENT_TOOL_BIND=1 so a missing
+	# prerequisite FAILS here (a silent skip would read as a check that ran).
+	cd apps/server && \
+	  AGENT_TOOL_BIND=1 \
+	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run pytest tests/test_agent_tool_binding.py -q -rs
+
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test
