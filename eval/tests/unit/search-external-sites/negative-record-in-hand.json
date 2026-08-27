@@ -5,17 +5,30 @@
     "name": "Single record already in hand should route to record-extraction, not start a search",
     "type": "negative",
     "description": "The user has already captured an individual record page and wants its contents extracted into the research files. That is record-extraction's job — search-external-sites' capture-analysis step is the triage of a results LIST, and even that hands selected records to record-extraction. The skill's description carves this out ('Do NOT use when the user wants to analyze a single record already in context').",
-    "tags": ["near-miss", "external-vs-record-extraction", "boundary", "record-in-hand"]
+    "tags": [
+      "near-miss",
+      "external-vs-record-extraction",
+      "boundary",
+      "record-in-hand",
+      "no-search-no-write",
+      "route-away-writes-own-log"
+    ]
   },
   "input": {
     "user_message": "I've saved the individual record page for Patrick Flynn from the Ancestry search as a PDF — extract the names, dates, and places from it into the research files.",
     "scenario": "mid-research-flynn"
   },
   "negative": {
-    "correct_skill": ["record-extraction"],
-    "explanation": "A single captured record page going into the research files is assertion extraction — record-extraction's purpose. search-external-sites generates search URLs and triages results lists; its own workflow explicitly passes individual selected records to record-extraction. Re-firing search-external-sites here would either re-search (wrong) or duplicate record-extraction's extraction logic (also wrong)."
+    "correct_skill": [
+      "record-extraction"
+    ],
+    "explanation": "A single captured record page going into the research files is assertion extraction — record-extraction's purpose. search-external-sites generates search URLs and triages results lists; its own workflow explicitly passes individual selected records to record-extraction. Re-firing search-external-sites here would either re-search (wrong) or duplicate record-extraction's extraction logic (also wrong).",
+    "grade_on_invariant": true
   },
   "judge_context": [
-    "Should route to record-extraction for assertion extraction rather than generating a new search URL or re-triaging"
+    "This is a grade_on_invariant negative test: PASS/FAIL is decided solely by the deterministic no-search-no-write validator (no external_links_search call, no new external_site log entry). Routing and activation are NOT gated. The judge runs base-only and diagnostically here — its scores do not decide the outcome.",
+    "Ideal behavior is to hand the already-captured single record to record-extraction (via a Skill('record-extraction') call or a one-line hand-off) rather than generating a new search URL or re-triaging the record itself. Note in your rationale whether the skill routed cleanly.",
+    "Known model prior (why this was previously flaky, issue #1519): the model's decline is correct nearly every run, but its phrasing varies — a decline that engages with the request (\"upload the PDF and I'll hand it to record-extraction\") was read by the activation heuristic as substantive output and failed the test, while a terser hand-off passed. Every deterministic input was identical across the passing and failing runs. Under grade_on_invariant the decline phrasing no longer decides the outcome; only executing or logging an external-site search does.",
+    "record-extraction holds research_log_append and may legitimately write a non-external_site log entry for the record it was handed. That is the correct skill doing its own job, not harm, and the validator is scoped to external_site entries for exactly that reason."
   ]
 }
