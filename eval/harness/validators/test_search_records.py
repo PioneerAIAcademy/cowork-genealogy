@@ -116,7 +116,7 @@ _ROLE_ASSERTIONS = (
 # _ROLE_ASSERTIONS avoids bare role words above: a bare pronoun ("his son")
 # is common in a legitimate tree-side reference this rule must not trip on.
 _POSSESSIVE_KINSHIP_ASSERTIONS = (
-    r"\b[A-Z][a-zA-Z]*'s\s+(?:son|daughter|child|children|wife|husband)\b",
+    r"\b(?-i:[A-Z])[a-zA-Z]*'s\s+(?:son|daughter|child|children|wife|husband)\b",
 )
 
 # A plural kinship noun immediately introducing named individuals — "plus
@@ -127,7 +127,7 @@ _POSSESSIVE_KINSHIP_ASSERTIONS = (
 # Catherine"), which is not a claim about the record; introducing multiple
 # same-role people by a plural noun is not that pattern.
 _PLURAL_KINSHIP_INTRODUCING_NAME = (
-    r"\b(?:sons|daughters|children)\s+[A-Z]",
+    r"\b(?:sons|daughters|children)\s+(?-i:[A-Z])",
 )
 
 _CLAIM_PATTERNS = (

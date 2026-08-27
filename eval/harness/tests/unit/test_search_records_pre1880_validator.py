@@ -104,16 +104,31 @@ OFFENDER_BARE_LISTING = (
     "and Mary Flynn."
 )
 
-# From the alpha-feedback report behind issue #1912, scrubbed. Real
-# production text: a plural kinship noun bare-introduces two newly-found
-# co-residents with no hedge anywhere in the note. Neither "as ROLE" nor a
-# possessive claim -- this is the shape that motivated
-# _PLURAL_KINSHIP_INTRODUCING_NAME, and the shape this rule actually needs
-# to catch (contrast with COMPLIANT_POSSESSIVE_KINSHIP_HEDGED below).
+# From the alpha-feedback report behind issue #1912, scrubbed, with
+# "household" replaced by "return ... filed under" so this case depends
+# solely on _PLURAL_KINSHIP_INTRODUCING_NAME rather than falling back to
+# _HOUSEHOLD_MENTIONS -- PR #1946 round 2 review: the original wording
+# still said "household", so deleting the new claim patterns entirely left
+# every pinned test green. Real production text: a plural kinship noun
+# bare-introduces two newly-found co-residents with no hedge anywhere in
+# the note. Neither "as ROLE" nor a possessive claim -- this is the shape
+# that motivated _PLURAL_KINSHIP_INTRODUCING_NAME, and the shape this rule
+# actually needs to catch (contrast with COMPLIANT_POSSESSIVE_KINSHIP_HEDGED
+# below).
 OFFENDER_PLURAL_KINSHIP_BARE_NOUN = (
     "James M McElwee (b. 1817 Louisiana) plus sons Thos T McElwee (b. 1839 "
-    "Louisiana) and Stephen McElwee (b. 1842 Louisiana) in the 1850 US "
-    "Census household of Amelia Jackson, Amite County MS."
+    "Louisiana) and Stephen McElwee (b. 1842 Louisiana), 1850 US Census "
+    "return filed under Amelia Jackson, Amite County MS."
+)
+
+# Same shape as above but for the possessive-kinship pattern specifically --
+# no prior fixture isolated it from the household fallback either. No
+# "household", no hedge anywhere: caught only by
+# _POSSESSIVE_KINSHIP_ASSERTIONS.
+OFFENDER_POSSESSIVE_KINSHIP_NO_HEDGE = (
+    "Amos Whitfield (b. 1817, Georgia), 1850 census entry filed under Nancy "
+    "Doss, Pike County, Kentucky. Ezra and Noah Whitfield, also in that "
+    "entry, are Amos's children."
 )
 
 # ut_search_records_h4k's mined-test output (issue #1912's regression test).
@@ -128,21 +143,40 @@ OFFENDER_PLURAL_KINSHIP_BARE_NOUN = (
 # only asks for the hedge somewhere in the note, which this has.
 COMPLIANT_POSSESSIVE_KINSHIP_HEDGED = (
     "Found Amos Whitfield (b. 1817, Georgia) enumerated in Pike, Kentucky in "
-    "the 1850 US Federal Census, in the household of Nancy Doss. Also "
-    "enumerated in the household: Ezra Whitfield (b. 1839, Georgia) and Noah "
-    "Whitfield (b. 1842, Georgia), likely Amos's children. Pre-1880 census "
-    "-- no relationship column; family structure inferred from surname, "
-    "ages, and listing order."
+    "the 1850 US Federal Census, entry filed under Nancy Doss. Also present "
+    "in that entry: Ezra Whitfield (b. 1839, Georgia) and Noah Whitfield "
+    "(b. 1842, Georgia), likely Amos's children. Pre-1880 census -- no "
+    "relationship column; family structure inferred from surname, ages, "
+    "and listing order."
 )
 
 # The same possessive claim, hedged in the same sentence rather than a
 # following one -- proves the new possessive-kinship pattern does not
 # over-trigger once the claim itself carries the marker.
 COMPLIANT_POSSESSIVE_KINSHIP_LOCAL_MARKER = (
-    "Found Amos Whitfield (b. 1817, Georgia) in the household of Nancy Doss, "
-    "Pike County, Kentucky, 1850 census. Ezra and Noah Whitfield, also in "
-    "the household, are likely Amos's children, but this is an inference "
-    "from surname and age -- the record states no relationship."
+    "Found Amos Whitfield (b. 1817, Georgia), 1850 census entry filed under "
+    "Nancy Doss, Pike County, Kentucky. Ezra and Noah Whitfield, also in "
+    "that entry, are likely Amos's children, but this is an inference from "
+    "surname and age -- the record states no relationship."
+)
+
+# PR #1946 round 2 review: [A-Z] under re.IGNORECASE matches any letter, so
+# the "must be a capitalized proper noun" scoping both new patterns' own
+# comments promise was not actually implemented. Fixed with (?-i:[A-Z]);
+# these three constructed probes (not from a real run) pin that fix.
+COMPLIANT_LOWERCASE_POSSESSIVE_IS_NOT_A_CLAIM = (
+    "1850 census entry, Amite County, Mississippi. Two more names appear "
+    "beside the subject in this entry; the family's children are not "
+    "otherwise identified in the record."
+)
+COMPLIANT_PLURAL_LOWERCASE_FOLLOWER_IS_NOT_A_CLAIM = (
+    "1850 census return, Pike County. The index lists several daughters in "
+    "the index under this surname, unrelated to the subject's search."
+)
+COMPLIANT_PLURAL_REJECTING_A_CLAIM_IS_NOT_A_CLAIM = (
+    "1850 census entry for the subject's surname. Multiple minors appear in "
+    "the same entry; children cannot be distinguished from boarders on this "
+    "record alone."
 )
 
 
@@ -154,6 +188,9 @@ COMPLIANT_POSSESSIVE_KINSHIP_LOCAL_MARKER = (
         COMPLIANT_QUOTED_ROLE,
         COMPLIANT_POSSESSIVE_KINSHIP_LOCAL_MARKER,
         COMPLIANT_POSSESSIVE_KINSHIP_HEDGED,
+        COMPLIANT_LOWERCASE_POSSESSIVE_IS_NOT_A_CLAIM,
+        COMPLIANT_PLURAL_LOWERCASE_FOLLOWER_IS_NOT_A_CLAIM,
+        COMPLIANT_PLURAL_REJECTING_A_CLAIM_IS_NOT_A_CLAIM,
     ],
     ids=[
         "inferences-not-stated",
@@ -161,6 +198,9 @@ COMPLIANT_POSSESSIVE_KINSHIP_LOCAL_MARKER = (
         "quoted-role",
         "possessive-kinship-local-marker",
         "possessive-kinship-hedged-later-sentence",
+        "lowercase-possessive-not-a-claim",
+        "plural-lowercase-follower-not-a-claim",
+        "plural-rejecting-a-claim-not-a-claim",
     ],
 )
 def test_a_hedged_household_passes(notes):
@@ -174,12 +214,14 @@ def test_a_hedged_household_passes(notes):
         OFFENDER_HOUSEHOLD_HEAD,
         OFFENDER_BARE_LISTING,
         OFFENDER_PLURAL_KINSHIP_BARE_NOUN,
+        OFFENDER_POSSESSIVE_KINSHIP_NO_HEDGE,
     ],
     ids=[
         "as-father-as-mother",
         "household-head",
         "bare-listing",
         "plural-kinship-bare-noun",
+        "possessive-kinship-no-hedge",
     ],
 )
 def test_an_unqualified_household_fails(notes):
