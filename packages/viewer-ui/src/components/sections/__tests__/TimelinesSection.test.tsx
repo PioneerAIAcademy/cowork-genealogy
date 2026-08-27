@@ -17,6 +17,7 @@ vi.mock('../../../contexts/ResearchDataContext', async () => {
 
 import { useResearchData } from '../../../contexts/ResearchDataContext'
 import { buildMockContext } from '../../../contexts/__tests__/mockContext'
+import { expandFirstCard } from './expandCard'
 
 function mockResearch(overrides: Partial<ResearchData> = {}): void {
   vi.mocked(useResearchData).mockReturnValue(
@@ -30,13 +31,6 @@ function mockResearch(overrides: Partial<ResearchData> = {}): void {
 
 // The TimelinesSection wraps each timeline in a Card that defaults to
 // collapsed. Click the chevron's header to expand the body.
-async function expandFirstCard(): Promise<void> {
-  const chevrons = screen.getAllByText(/^[▾▸]$/)
-  if (chevrons.length === 0) throw new Error('No card chevrons found')
-  const header = chevrons[0].closest('div')?.parentElement
-  if (!header) throw new Error('No header element found')
-  await userEvent.click(header)
-}
 
 describe('TimelinesSection — B5 conflict chip', () => {
   beforeEach(() => {

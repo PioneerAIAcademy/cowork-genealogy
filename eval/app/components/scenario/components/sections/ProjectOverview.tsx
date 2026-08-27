@@ -134,7 +134,7 @@ export default function ProjectOverview(): React.JSX.Element {
       )}
 
       <h3 className={styles.subHeading}>Subject Persons</h3>
-      {project.subject_person_ids === null || project.subject_person_ids.length === 0 ? (
+      {project.subject_person_ids == null || project.subject_person_ids.length === 0 ? (
         <p className={styles.notIdentified}>Subject not yet identified</p>
       ) : (
         <div className={styles.personsGrid}>
