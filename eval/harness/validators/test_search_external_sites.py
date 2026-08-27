@@ -110,13 +110,15 @@ def test_no_external_search_or_log_on_routeaway_negative(
       - appended a new **`external_site`** `log` entry (this skill records
         every external-site search it runs).
 
-    **Scoped to `external_site` entries deliberately (issue #1519).** The
-    accepted route for 011 is research-plan, which never writes `log` at all —
-    but the accepted route for 012 is record-extraction, which holds
+    **The log check narrows only for 012, via `route-away-writes-own-log`.**
+    011's accepted route is research-plan, which never writes `log` at all, so
+    ANY new entry there means a search skill ran and the strict form is the
+    real gate. 012's accepted route is record-extraction, which holds
     `research_log_append` and may legitimately write a non-`external_site`
-    entry for the record it was handed. That is the correct skill doing its own
-    job, not harm, so flagging any new log entry would fail 012 for routing
-    correctly.
+    entry for the record it was handed — flagging that would fail 012 for
+    routing correctly. Narrowing both would have silently dropped 011's gate
+    (issue #1519, and caught in review of #1954), so the loosening is carried
+    by a tag on 012 alone rather than by the shared `no-search-no-write` gate.
 
     Deliberately does NOT flag other research.json writes: routing to
     research-plan legitimately writes `plans`/`questions`, and record-extraction
@@ -136,14 +138,19 @@ def test_no_external_search_or_log_on_routeaway_negative(
         f"{[c.get('args') for c in searched]}"
     )
 
-    # 2. No new external_site log entry. Scoped to `external_site` because
-    #    record-extraction — the accepted route for 012 — holds
-    #    research_log_append and may write an entry of its own kind.
+    # 2. No new search log entry. Which entries count depends on what the
+    #    accepted route is allowed to write, so the narrowing is opt-in per
+    #    test rather than applied to both.
     new_entries = _new_log_entries(before_state, after_state)
-    external = [e for e in new_entries if e.get("tool") == "external_site"]
-    assert not external, (
-        "a route-away request must not append an external_site search log "
-        f"entry; new external_site log ids: {[e.get('id') for e in external]}"
+    if "route-away-writes-own-log" in test.get("tags", []):
+        offending = [e for e in new_entries if e.get("tool") == "external_site"]
+        detail = "external_site search log entry"
+    else:
+        offending = new_entries
+        detail = "search log entry"
+    assert not offending, (
+        f"a route-away request must not append a {detail}; new log ids: "
+        f"{[e.get('id') for e in offending]}"
     )
 
 

@@ -57,6 +57,16 @@ counting only `mid-research-flynn` URLs:
 The five pre-fix misses are `_002` three times, `_009` once and `_007` once.
 The single post-fix miss is `_002` on `v1_2026-08-27_00-08-56`.
 
+**What counts as the rejected value, if the table is ever quoted.** Two of the
+five pre-fix hits encode `birthplace=Schuylkill+County%2C+Pennsylvania` rather
+than a bare `Pennsylvania` — wrong field granularity *and* the rejected value.
+They are counted here because a county-qualified Pennsylvania asserts the same
+rejected birthplace and produces the same false filter, which is what F4 is
+about. On a strict bare-value reading the pre-fix figure is 3 of 15 (20%) and
+the movement is 20% → 11% rather than 33% → 11%. Raised by the reviewer of
+#1954; the counting above is the one this finding rests on, but the distinction
+belongs beside the number rather than behind it.
+
 `_fhk` and `_pic` are excluded from both rows: they run on
 `ma-state-census-external`, which carries no `conflicts[]`, so their
 `Massachusetts` value is an ordinary parameter and correct.

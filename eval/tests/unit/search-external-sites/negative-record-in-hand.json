@@ -10,7 +10,8 @@
       "external-vs-record-extraction",
       "boundary",
       "record-in-hand",
-      "no-search-no-write"
+      "no-search-no-write",
+      "route-away-writes-own-log"
     ]
   },
   "input": {
