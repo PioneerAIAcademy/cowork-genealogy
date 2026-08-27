@@ -13,13 +13,15 @@ import { useResearchData } from '../contexts/ResearchDataContext'
 import { buildMockContext } from '../contexts/__tests__/mockContext'
 import App from '../App'
 
-const stubTransport = {
+// Annotated (not cast) so typecheck reports TS2322 if the transport shape drifts
+// — e.g. `notice` going missing from getProjectState (#1899 review).
+const stubTransport: ResearchTransport = {
   getProjectState: async () => ({ research: null, gedcomx: null, label: null, notice: null }),
   subscribe: () => () => {},
   readSidecar: async () => null,
   submitFeedback: async () => ({ ok: true }),
   openExternal: () => {}
-} as unknown as ResearchTransport
+}
 
 // Pins that App MOUNTS the banner, in both AppContent branches. FolderNotice.test.tsx
 // renders the component directly, so it passes even if App never renders it.

@@ -52,6 +52,22 @@ describe('IpcResearchTransport', () => {
     expect(onNotice).toHaveBeenCalledWith('research.json is in a subfolder')
   })
 
+  // The hydration wire. The contract test above only checks `string | null`,
+  // which a hardcoded `null` satisfies, so without this the notice can be dead
+  // end-to-end on the only platform that has it with the whole suite green
+  // (#1899 review — the same argument as the onNotice test above, other
+  // direction).
+  it('maps a stored notice through from getState', async () => {
+    ;(window as unknown as { api: { getState: unknown } }).api.getState = async () => ({
+      folderPath: '/p',
+      research: null,
+      gedcomx: null,
+      notice: 'research.json is in a subfolder'
+    })
+    const state = await new IpcResearchTransport().getProjectState()
+    expect(state.notice).toBe('research.json is in a subfolder')
+  })
+
   // The provider puts err.message straight into the error bar, so the Electron
   // IPC wrapper has to come off here or the user reads boilerplate naming a
   // channel instead of the one sentence that helps them (#1722 round-8).

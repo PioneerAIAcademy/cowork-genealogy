@@ -438,13 +438,13 @@ describe('ResearchDataProvider — folder notice', () => {
     const h = makeHarness(makeHydratingTransport('research.json is in a subfolder — reloaded'))
     h.render()
 
+    // The notice's only source here is the hydration snapshot (getProjectState);
+    // the test never fires onNotice. So this waitFor IS the guard — deleting the
+    // hydrate line in ResearchDataProvider fails it and nothing else.
     await waitFor(() =>
       expect(h.ctx().notice).toBe('research.json is in a subfolder — reloaded')
     )
 
-    // Nothing pushed it — it came from the snapshot. Deleting the hydrate line
-    // in ResearchDataProvider fails this and nothing else.
-    expect(noticeHandler).not.toBeNull()
     act(() => h.ctx().clearNotice())
     expect(h.ctx().notice).toBeNull()
   })
