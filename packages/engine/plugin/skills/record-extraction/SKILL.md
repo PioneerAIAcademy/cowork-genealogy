@@ -215,9 +215,8 @@ examined" or tentative-name flag), next step. Do not re-print
 per-assertion detail; it is already persisted.
 
 Then **keep going in the same turn**: if more records are queued,
-delegate the next one now; if this was the last record, hand off to the
-next skill in the workflow (check-warnings for new tree persons, then
-person-evidence) or return to the orchestrator that invoked you.
+delegate the next one now; if this was the last record, hand off to
+person-evidence or return to the orchestrator that invoked you.
 Presenting a summary and yielding with records still unextracted is a
 failure — the summary is a progress marker, not a stopping point.
 
