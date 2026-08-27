@@ -2072,6 +2072,103 @@ def test_judge_observations_carry_text_not_validator_names():
     assert not any("report_" in o for o in obs)
 
 
+def _broken_validator_results(tmp_path, body: str):
+    """Run one deliberately broken report_* through the real runner."""
+    (tmp_path / "test_universal.py").write_text(
+        "def test_ok():\n    pass\n", encoding="utf-8"
+    )
+    (tmp_path / "test_citation.py").write_text(body, encoding="utf-8")
+    return run_validators(
+        skill="citation",
+        validators_dir=tmp_path,
+        before_state={},
+        after_state={},
+        tool_calls=[],
+        text_response="a normal answer",
+    )
+
+
+def test_report_with_bad_signature_gates_and_is_not_an_observation(tmp_path):
+    """A report_* that declares an argument the harness does not supply is a
+    validator bug, not a finding about the run.
+
+    Left as reporting_only it would be invisible three ways over: it would not
+    gate, as_dicts would drop it from the run log, and split_observations would
+    hand the harness's own error text — the full arg roster included — to the
+    judge under "Harness observations on the response text", which tells the
+    judge to weigh it against the response. Standalone pytest cannot catch it
+    either unless python_functions collects report_*.
+    """
+    from harness.orchestrator import compute_validators_passed
+
+    results = _broken_validator_results(
+        tmp_path,
+        "def report_typo(text_response, skil_frontmatter):\n    pass\n",
+    )
+    broken = [r for r in results if r.name == "report_typo"]
+    assert broken, f"report_typo did not run: {[r.name for r in results]}"
+    assert broken[0].passed is False
+    assert broken[0].reporting_only is False
+    # It gates, it is recorded, and the judge is told nothing about it.
+    assert compute_validators_passed(results, intentionally_invalid=False) is False
+    assert "report_typo" in {d["name"] for d in as_dicts(results)}
+    assert split_observations(results) == []
+
+
+def test_report_that_crashes_gates_and_is_not_an_observation(tmp_path):
+    """Same rule for a runtime crash: a TypeError is a validator bug, so it
+    gates whatever the prefix, and its traceback text never reaches the judge.
+    """
+    from harness.orchestrator import compute_validators_passed
+
+    results = _broken_validator_results(
+        tmp_path,
+        "def report_crashes(text_response):\n    return text_response['nope']\n",
+    )
+    broken = [r for r in results if r.name == "report_crashes"]
+    assert broken, f"report_crashes did not run: {[r.name for r in results]}"
+    assert broken[0].passed is False
+    assert broken[0].reporting_only is False
+    assert "TypeError" in (broken[0].error or "")
+    assert compute_validators_passed(results, intentionally_invalid=False) is False
+    assert split_observations(results) == []
+
+
+def test_a_genuine_report_finding_still_reports(tmp_path):
+    """The guard above must not swallow the tier-2 mechanism itself: an
+    AssertionError from a report_* is a finding, so it still does not gate and
+    still reaches the judge as anonymous text."""
+    from harness.orchestrator import compute_validators_passed
+
+    results = _broken_validator_results(
+        tmp_path,
+        "def report_real_finding(text_response):\n"
+        "    raise AssertionError('the response names a volume')\n",
+    )
+    fired = [r for r in results if r.name == "report_real_finding"]
+    assert fired and fired[0].reporting_only is True
+    assert compute_validators_passed(results, intentionally_invalid=False) is True
+    assert split_observations(results) == ["the response names a volume"]
+    assert "report_real_finding" not in {d["name"] for d in as_dicts(results)}
+
+
+def test_standalone_pytest_collects_report_validators():
+    """python_functions must collect report_* or `pytest validators/ -v` — the
+    debugging path unit-test-spec.md points developers at — silently runs none
+    of the tier-2 validators."""
+    import tomllib
+    from pathlib import Path
+
+    pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
+    cfg = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    patterns = cfg["tool"]["pytest"]["ini_options"]["python_functions"]
+    assert "report_*" in patterns, (
+        "pytest collects only "
+        f"{patterns} — every report_* validator is invisible to "
+        "`pytest eval/harness/validators/ -v`"
+    )
+
+
 # --- V7: In-body decline tests -------------------------------------------
 
 def test_v7a_decline_nonempty_fires_on_empty_response():

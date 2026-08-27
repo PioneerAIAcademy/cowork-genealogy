@@ -1120,7 +1120,8 @@ One file per skill in `eval/harness/validators/`, following pytest naming (`test
 Validators are split into three tiers:
 
 - **Tier 1 (gating):** `test_*` prefix. Failure = test fail, judge is skipped. The validator's function name appears in the judge prompt under "Deterministic validators that FAILED".
-- **Tier 2 (reporting):** `report_*` prefix. Failure is an observation fed to the judge as anonymous text under "Harness observations on the response text", never gates the test outcome. The function name goes only to the run log (`output.warnings[]` with `kind: "prose_observation"`) for traceability. Use this tier when the harness can detect a pattern but cannot decide whether it is wrong — that decision belongs to the judge.
+- **Tier 2 (reporting):** `report_*` prefix. An `AssertionError` is a finding: it is fed to the judge as anonymous text under "Harness observations on the response text" and never gates the test outcome. The function name goes only to the run log (`output.warnings[]` with `kind: "prose_observation"`) for traceability. Use this tier when the harness can detect a pattern but cannot decide whether it is wrong — that decision belongs to the judge.
+  - **A broken tier-2 validator gates like tier 1.** A validator that declares an argument the harness does not supply, or raises anything other than `AssertionError`, is a bug in the validator rather than a finding about the run, so it fails the test and is recorded in the run log like any tier-1 failure. Its error text never reaches the judge — a harness diagnostic is not an observation about the response, and the judge is instructed to weigh whatever appears in that section.
 - **Advisory:** Existing `warnings.warn()` pattern inside `test_*` functions (e.g. `test_tool_allowlist`). Not surfaced to the judge.
 
 ### Conventions
@@ -1129,7 +1130,7 @@ Validators are split into three tiers:
 - Skill-specific validators live in `eval/harness/validators/test_<skill>.py`, one file per skill
 - Tier-1 validators are plain Python functions with the `test_` prefix; tier-2 validators use the `report_` prefix. Both raise `AssertionError` to signal a finding and take arguments from the same pool.
 - The harness calls validators as direct function calls (not via pytest subprocess) for speed and reliability
-- Developers can also run validators standalone with `pytest eval/harness/validators/ -v` for debugging — pytest invokes them with fixtures the harness provides; see `eval/harness/validators/conftest.py`
+- Developers can also run validators standalone with `pytest eval/harness/validators/ -v` for debugging — pytest invokes them with fixtures the harness provides; see `eval/harness/validators/conftest.py`. Both tiers are collected: `python_functions` in `eval/harness/pyproject.toml` lists `report_*` alongside `test_*`, without which every tier-2 validator is silently skipped by that command.
 
 ### Validator signature
 

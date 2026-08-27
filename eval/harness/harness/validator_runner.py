@@ -193,6 +193,12 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
             if len(kwargs) != len(sig.parameters):
                 missing = set(sig.parameters) - set(kwargs)
                 valid = sorted(available_args.keys())
+                # Deliberately NOT reporting_only, even for a report_* function:
+                # a bad signature is a bug in the validator, not an observation
+                # about the run. Marking it tier 2 would hide it from the run log
+                # (as_dicts drops tier 2) and feed this message — harness
+                # internals, including the whole arg roster — to the judge as an
+                # observation it is told to weigh.
                 out.append(
                     ValidatorRunResult(
                         name=attr_name,
@@ -202,7 +208,6 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
                             f"{sorted(missing)}. Valid harness-supplied "
                             f"args are: {valid}"
                         ),
-                        reporting_only=is_report,
                     )
                 )
                 continue
@@ -231,12 +236,14 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
                 )
             )
         except Exception as e:  # noqa: BLE001 — validator bug, surface verbatim
+            # Same as the unknown-parameter branch above: a crash is a validator
+            # bug, so it gates whatever the prefix. Only the pass / assert / skip
+            # paths carry reporting_only — those are real findings about the run.
             out.append(
                 ValidatorRunResult(
                     name=attr_name,
                     passed=False,
                     error=f"{type(e).__name__}: {e}",
-                    reporting_only=is_report,
                 )
             )
     return out
