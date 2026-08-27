@@ -9,7 +9,7 @@ let folderNoticeCb: ((m: string) => void) | null = null
 function installApiStub(): void {
   folderNoticeCb = null
   ;(window as unknown as { api: unknown }).api = {
-    getState: async () => ({ folderPath: null, research: null, gedcomx: null }),
+    getState: async () => ({ folderPath: null, research: null, gedcomx: null, notice: null }),
     onResearchUpdated: () => {},
     onGedcomxUpdated: () => {},
     onWatchError: () => {},
@@ -50,6 +50,22 @@ describe('IpcResearchTransport', () => {
     })
     folderNoticeCb!('research.json is in a subfolder')
     expect(onNotice).toHaveBeenCalledWith('research.json is in a subfolder')
+  })
+
+  // The hydration wire. The contract test above only checks `string | null`,
+  // which a hardcoded `null` satisfies, so without this the notice can be dead
+  // end-to-end on the only platform that has it with the whole suite green
+  // (#1899 review — the same argument as the onNotice test above, other
+  // direction).
+  it('maps a stored notice through from getState', async () => {
+    ;(window as unknown as { api: { getState: unknown } }).api.getState = async () => ({
+      folderPath: '/p',
+      research: null,
+      gedcomx: null,
+      notice: 'research.json is in a subfolder'
+    })
+    const state = await new IpcResearchTransport().getProjectState()
+    expect(state.notice).toBe('research.json is in a subfolder')
   })
 
   // The provider puts err.message straight into the error bar, so the Electron

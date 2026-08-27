@@ -82,10 +82,40 @@ and go to a senior in the matching lane. Never carry both labels; `/fill-ready`
 
 ## 2. Present each question
 
-A pre-prepared item carries its own block; pass it through **verbatim** into
-`AskUserQuestion` — header, question, options, recommended first. The
-`task-reviewer` agent that wrote it read the spec, the ADRs and the code, and you
-did not. Do not restate an option in your own words.
+A pre-prepared item carries its own block; pass its **options** through
+**verbatim** — header, question, options, recommended first. The `task-reviewer`
+agent that wrote it read the spec, the ADRs and the code, and you did not. Do not
+restate an option in your own words.
+
+**But the block is the fork, not the briefing. Writing the briefing is your job,
+and it is the job.** A prepared block opens mid-argument: it names options for a
+problem it assumes you already understand, because the agent that wrote it had
+just read the issue. He has not. Handing him labels and consequences with no setup
+asks him to rule on a question he cannot see, and it is the single way this skill
+most often wastes his turn — corrected five separate times.
+
+**Before the fork, in your own message, write what he needs to decide it.** Not a
+summary of the issue — the four things below, and stop:
+
+1. **What the thing is, in plain words.** Assume he has not read the issue, the
+   spec, or the code. Name what the file/skill/check actually does before naming
+   what is wrong with it.
+2. **What happens today, and how it was observed.** The measurement, the live case,
+   the count — with the number, not "several".
+3. **What is genuinely in dispute**, narrowed to the real fork. Often it is
+   narrower than the issue's own framing: the useful question turned out to be
+   "which of these two documents is wrong", not "what should the rule be".
+4. **What each side costs and gives up** — the counter-argument rule below.
+
+`AskUserQuestion`'s `description` field is far too short to carry any of this. It
+goes in the prose of the message that makes the tool call, above it.
+
+**Verify the block's load-bearing claims before you pass them on.** The prepared
+options carry costs and blockers as fact, and a wrong one silently decides the
+question. Check the ones the fork turns on — read the return type, run the count,
+open the rubric. On 2026-08-27 this changed two of four asks: an option priced as
+needing live API captures needed none, and a dimension's real dispute turned out to
+be narrower than the issue stated.
 
 ```
 ## Decision needed — <header>
@@ -122,14 +152,47 @@ it labelled and name it in the report — nobody else prepares it for you. One
 expensive item must not turn the daily run into the weekly one. An item you have
 deferred twice is not a question that needs preparing; relabel it `senior`.
 
-**Bring the counter-argument with the recommendation.** A recommendation with
-nothing said against it is not a decision he can make; it is one he can only
-ratify.
+**Give every alternative a pros AND cons, not just the recommended one.** A
+recommendation with nothing said against it is not a decision he can make; it is
+one he can only ratify — and an option listed with only its cost is not a real
+alternative, it is a strawman. He has asked for this explicitly, twice in one
+run, after being given option text that carried a consequence but no case in
+favour.
+
+Put them in a **table** — that is the shape that settled it both times. For two
+options, a column each reads best:
+
+```
+| | **A — <label>** | **B — <label>** |
+|---|---|---|
+| **For** | <the strongest honest case FOR A> | <the strongest honest case FOR B> |
+| **Against** | <what A costs or gives up> | <what B costs or gives up> |
+```
+
+For three or more, flip it — one row per option, `For` and `Against` as the two
+columns — or the cells get too narrow to read.
+
+Three rules for filling it in:
+
+- **The "Against" cell for your recommended option must be real.** If you cannot
+  write one, you have not understood the fork — go back and find it. On 2026-08-27
+  the honest argument against the recommended option ("some criteria are premature
+  by construction on this path") is the one that changed his answer.
+- **The "For" cell for an option you are arguing against must be its strongest
+  form**, not the version that is easy to dismiss.
+- **State cost parity when it exists.** "Both options buy one paid eval run, so
+  cost is not a tiebreaker" removes a whole axis he would otherwise weigh.
+
+**Do not restate the same fact in both columns.** A table where every "Against"
+is the mirror of the neighbouring "For" carries no information the option labels
+did not already carry.
 
 **Merge identical forks.** Two issues asking the same question get asked once as
 policy — one question, two items unblocked.
 
-`AskUserQuestion` takes four at a time; the rest go in prose.
+`AskUserQuestion` takes four at a time; the rest go in prose. **Prefer fewer,
+fully briefed, over four thin ones** — a batch he has to answer blind is worth
+nothing, and he will send it back. Two properly set up beats four passed through.
 
 ## 3. Close it out in the same turn
 
@@ -176,6 +239,16 @@ reader — a junior picking the issue up, `/audit-board`, a later run of this sk
   computed under a different assumption.
 - **He answered something no option covered.** Same: re-run one agent with his
   answer rather than guessing at the body text.
+- **He answered with a question rather than a choice.** Answer it, then re-ask.
+  This is the most common non-choice and it is not a stall — it means a fact the
+  options asserted is one he does not believe, or one they left out. **Go and
+  check it in the repo; do not answer from the issue body.** On 2026-08-27 five
+  answers in one run were questions, and checking each changed the outcome: the
+  MCP server turned out to be one process per session (which made a whole option
+  unnecessary), a tool assumed to be an API passthrough turned out to compute its
+  own results (which reframed the card), and a proposed logging destination turned
+  out not to exist. Twice the honest answer was "you are right, and here is the
+  part that does not work" — say both halves.
 - **"This is hard either way."** Swap `needs-decision` for `senior`. Never both.
 - **"Don't do this."** Close it: `gh issue close <N> --repo PioneerAIAcademy/cowork-genealogy --reason
   "not planned" --comment "<why>"`. The label goes with the issue.
