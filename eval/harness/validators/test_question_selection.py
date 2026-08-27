@@ -415,16 +415,22 @@ def test_first_question_tests_disputed_parents(before_state, after_state, test):
         pytest.skip("missing research.json for diff")
     new = _new_questions(before, after)
     assert new, "expected a new question testing the disputed assignment; none was added"
-    text = " ".join((q.get("question") or "") for q in new).lower()
-    assert any(re.search(sig, text) for sig in _VERIFY_SIGNALS), (
-        "the first question does not frame the disputed parent assignment as "
-        "something to TEST. When the objective disputes the existing parents, "
-        "the question must confirm-or-refute the assignment against independent "
-        "records (e.g. 'Do independent records confirm or refute that X and Y "
-        "are the parents of Z?'), not merely ask to identify the parents while "
-        "accepting the attached ones, and not confirm the tree under "
-        f"investigation (issue #1471). Question(s) written: "
-        f"{[q.get('question') for q in new]!r}"
+    unframed = [
+        q.get("question")
+        for q in new
+        if not any(
+            re.search(sig, (q.get("question") or "").lower()) for sig in _VERIFY_SIGNALS
+        )
+    ]
+    assert not unframed, (
+        "at least one written question does not frame the disputed parent "
+        "assignment as something to TEST. When the objective disputes the "
+        "existing parents, every new question must confirm-or-refute the "
+        "assignment against independent records (e.g. 'Do independent "
+        "records confirm or refute that X and Y are the parents of Z?'), not "
+        "merely ask to identify the parents while accepting the attached "
+        "ones, and not confirm the tree under investigation (issue #1471). "
+        f"Unframed question(s): {unframed!r}"
     )
 
 
@@ -436,7 +442,7 @@ def test_first_question_tests_disputed_parents(before_state, after_state, test):
 # catches only that extreme case -- whether a question that avoids these
 # shapes is otherwise well-formed stays the judge's call.
 _VAGUE_QUESTION_PATTERNS = (
-    r"^\s*who\s+is\s+[A-Z][\w'\-]*(?:\s+[A-Z][\w'\-]*){0,3}\s*\??\s*$",
+    r"^\s*who\s+is\s+(?-i:[A-Z][\w'\-]*(?:\s+[A-Z][\w'\-]*){0,3})\s*\??\s*$",
     r"^\s*tell\s+me\s+about\b",
     r"^\s*learn\s+(?:more\s+)?about\b",
     r"^\s*find\s+out\s+(?:more\s+)?about\b",
@@ -532,11 +538,18 @@ def test_disputed_parents_missing_info_handled(before_state, after_state, test, 
         pytest.skip("missing research.json for diff")
     new = _new_questions(before, after)
     if new:
-        text = " ".join((q.get("question") or "") for q in new).lower()
-        assert any(re.search(sig, text) for sig in _VERIFY_SIGNALS), (
-            "a question was written despite missing inputs, but it does not "
-            "frame the disputed assignment as something to TEST. "
-            f"Question(s) written: {[q.get('question') for q in new]!r}"
+        unframed = [
+            q.get("question")
+            for q in new
+            if not any(
+                re.search(sig, (q.get("question") or "").lower())
+                for sig in _VERIFY_SIGNALS
+            )
+        ]
+        assert not unframed, (
+            "at least one written question was written despite missing "
+            "inputs, but does not frame the disputed assignment as "
+            f"something to TEST. Unframed question(s): {unframed!r}"
         )
         return
     reply = text_response or ""
