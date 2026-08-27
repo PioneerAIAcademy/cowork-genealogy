@@ -4,7 +4,7 @@
     "skill": "historical-context",
     "name": "Guardian of differently-surnamed minors is likely their stepfather",
     "type": "positive",
-    "description": "Tests whether the skill infers that a man appointed guardian of minor children bearing a different surname, shortly after marrying a widow connected to that surname, is most likely their stepfather and the children are hers by a prior marriage — so the differing surname is the expected pattern, not evidence they are unrelated or that a generation is missing. Complements the natural-parent case (ut_historical_context_hbt / issue #1618): the two are told apart by whose children they are and when the marriage happened (issue #1710).",
+    "description": "Tests whether the skill infers that a man appointed guardian of minor children bearing a different surname, shortly after marrying a widow connected to that surname, is most likely their stepfather and the children are hers by a prior marriage — so the differing surname is the expected pattern, not evidence they are unrelated or that a generation is missing. Complements the natural-parent case (ut_historical_context_hbt / issue #1618): the two are told apart by whether the scenario contains a remarriage at all — hbt has none (a father appointed guardian of his own child after the mother's death), while this test turns on a marriage shortly before the appointment (issue #1710).",
     "tags": ["guardianship", "step-relation", "prior-marriage", "legal-terms", "issue-1710"]
   },
   "input": {
@@ -21,6 +21,6 @@
     "Must NOT invent an extra generation, or treat the surname difference as a conflict requiring some unrelated-kinship explanation; the remarriage accounts for it directly.",
     "Should suggest confirming the reading with the records that would establish it — the mother's prior marriage, the wards' deceased father's death or estate/probate file, and the marriage record linking Sarah Barlow to Josiah Meacham.",
     "Should give a direct, confident explanation of the stepfather pattern rather than burying it as one of several unweighted possibilities, while stopping short of asserting it as proven before the corroborating records are checked.",
-    "Consistent with the complementary rule that a guardianship appointment alone is not evidence of orphanhood or non-relation: here the recent marriage makes the relationship a step-relationship, so the guardian is related to the wards through that marriage, not unrelated."
+    "Consistent with the complementary rule that a guardianship appointment alone is not evidence of orphanhood or non-relation: here the recent marriage makes a step-relationship the leading reading, under which the guardian would be related to the wards through that marriage rather than unrelated — framed as the likely inference, not asserted as settled before the corroborating records are checked."
   ]
 }

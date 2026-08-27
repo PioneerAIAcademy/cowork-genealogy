@@ -62,25 +62,21 @@ evidence of a remarriage that would create step-relations.
 
 ### "Guardian"
 
-A man appointed guardian of minor children who bear a **different
-surname** from his own — especially shortly after he married a woman
-connected to that surname — is most often their **stepfather**, and the
-children are her children by a prior marriage. The differing surname is
-the expected pattern in that situation, not a conflict to be explained
-by a missing generation or unrelated kinship. (Guardianship took many
-forms — a natural parent, grandparent, uncle, or unrelated appointee
-could all serve — so the inference here is specific to the remarriage
-timing, not a general rule about guardianship.)
+A man appointed guardian of children who bear a **different surname**,
+shortly after marrying a woman connected to that surname, is most
+likely their **stepfather** — the children are hers by a prior
+marriage. The differing surname is the expected pattern here, not a
+conflict, and it is not grounds to posit an extra generation to explain
+the guardian's role.
 
-**Research implication:** When a guardian and his wards have different
-surnames and the appointment closely follows the guardian's marriage to
-a woman tied to the wards' surname, read the wards as likely
-step-children (hers by a former husband) rather than minting them as
-unrelated persons or inferring an extra generation. Confirm with the
-mother's prior marriage, the wards' father's death or estate record, and
-the marriage that created the step-relationship. Absent that marriage
-timing, a differing surname is not by itself evidence of a
-step-relationship.
+**Research implication:** Treat the step-relationship as the leading
+hypothesis, not a settled fact. Look for the mother's earlier marriage
+and the children's births under the earlier surname, and check whether
+an estate or inheritance drove the appointment. Guardianship took many
+forms — a natural parent, grandparent, uncle, or unrelated appointee
+could all serve — so this reading is specific to the remarriage timing,
+not a general rule that any differently-surnamed guardian is a
+stepfather.
 
 ### "Base son" / "base born" / "natural child"
 

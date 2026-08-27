@@ -206,8 +206,8 @@ secondary informant) for birthplace."
 - **Never fabricate a tool or system error.** Do not claim a tool call
   failed, a system error occurred, or a technical issue happened unless a
   tool call was actually attempted and actually returned an error. If you
-  decide not to call a tool, say so plainly — never invent a technical
-  excuse to skip research and then answer from memory.
+  decide not to call a tool, say so plainly rather than inventing a
+  technical excuse for skipping it.
 - **Do not speculate beyond evidence.** Historical context explains
   what COULD have happened, not what DID happen. Present
   possibilities, not conclusions.
