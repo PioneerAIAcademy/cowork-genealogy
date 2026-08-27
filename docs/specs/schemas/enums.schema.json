@@ -174,8 +174,8 @@
       "pattern": "^[a-z][a-z0-9_]*$"
     },
     "external_site": {
-      "description": "Sites supported by the generate-click-capture-analyze workflow.",
-      "enum": ["ancestry", "myheritage", "findmypast", "familysearch_web", "findagrave", "newspapers"]
+      "description": "Sites supported by the generate-click-capture-analyze workflow. Not all are commercial: chronicling_america (Library of Congress) and digital_newspaper_archive (state/regional free archives such as Utah Digital Newspapers, California Digital Newspaper Collection — identified by url_generated) are free to search, but sit behind bot protection that blocks automated fetch, so they use the same click-capture loop.",
+      "enum": ["ancestry", "myheritage", "findmypast", "familysearch_web", "findagrave", "newspapers", "chronicling_america", "digital_newspaper_archive"]
     },
     "gender": {
       "enum": ["Male", "Female", "Unknown"]

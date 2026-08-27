@@ -79,8 +79,19 @@ if [[ -e "$DEST_DIR" ]] && [[ -n "$(ls -A "$DEST_DIR" 2>/dev/null || true)" ]]; 
 fi
 
 # --- Unzip ---
+# unzip exits 1 for warnings that still extracted everything, and a zip
+# submitted from Windows stores backslash path separators — exactly such a
+# warning ("appears to use backslashes as path separators"). Under `set -e`
+# that aborted here on every win32 submission, after extraction but before the
+# marker file, the git baseline and the skill symlinks, and with no output at
+# all. Fail only on a real error (>= 2).
 mkdir -p "$DEST_DIR"
-unzip -q "$ZIP_PATH" -d "$DEST_DIR"
+UNZIP_STATUS=0
+unzip -q "$ZIP_PATH" -d "$DEST_DIR" || UNZIP_STATUS=$?
+if [[ "$UNZIP_STATUS" -ge 2 ]]; then
+  echo "Error: unzip failed (exit $UNZIP_STATUS): $ZIP_PATH" >&2
+  exit 1
+fi
 
 # --- Write .feedback-repo-root ---
 echo "$REPO_ROOT" > "$DEST_DIR/.feedback-repo-root"

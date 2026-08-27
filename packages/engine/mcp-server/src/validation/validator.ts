@@ -92,6 +92,10 @@ const DATE_CERTAINTY_TIMELINE = new Set([
 const EXTERNAL_SITE_VALUES = new Set([
   "ancestry", "myheritage", "findmypast", "familysearch_web",
   "findagrave", "newspapers",
+  // Free to search, but bot-protected against automated fetch, so they run the
+  // same click-capture loop as the paid sites. `digital_newspaper_archive` is
+  // the bucket for state/regional archives; which one is in `url_generated`.
+  "chronicling_america", "digital_newspaper_archive",
 ]);
 
 /**

@@ -300,3 +300,81 @@ def test_nonexistent_zip_returns_error(tmp_path, monkeypatch):
     result = _run_script(str(tmp_path / "does-not-exist.zip"))
     assert result.returncode != 0
     assert "not found" in result.stderr.lower()
+
+
+def _build_windows_separator_zip(zip_path: Path, slug: str) -> None:
+    r"""A feedback zip as the Windows viewer actually writes it.
+
+    The submitted bundle from a `win32` viewer stores member names with
+    **backslash** separators (`results\log_006.json`), not the forward
+    slashes the zip format specifies. `unzip` extracts such an archive
+    correctly but exits 1 with "appears to use backslashes as path
+    separators" — a warning, not a failure.
+    """
+    feedback = {
+        "schema_version": 1,
+        "submitted_at": "2026-08-26T21:23:06.618Z",
+        "viewer_version": "1.0.0-dev",
+        "platform": "win32",
+        "email": "user@example.com",
+        "project_folder_path": r"C:\dev\Alpha testing\Checketts",
+        "user_prompt": "Look for newspaper articles pertaining to Joseph Checketts.",
+        "agent_did": "The automatic fetch was blocked.",
+        "agent_should_have": "It should have searched the free archives.",
+        "notes": "",
+    }
+    research = {"project": {"id": "rp_test", "researcher_profile": {}}}
+    tree = {"persons": [], "relationships": [], "sources": []}
+
+    with zipfile.ZipFile(zip_path, "w") as z:
+        z.writestr("research.json", json.dumps(research, indent=2))
+        z.writestr("tree.gedcomx.json", json.dumps(tree, indent=2))
+        z.writestr("FEEDBACK.md", "# Feedback\n\nstub.\n")
+        # The member that carries a separator — backslash, on purpose.
+        # Backslash members must be written through a ZipInfo whose filename is
+        # overridden *after* construction: ZipInfo.__init__ replaces os.sep with
+        # "/", so on Windows a plain writestr("results\\x") silently stores
+        # "results/x" and the test would assert nothing on the very platform the
+        # bug comes from.
+        back = zipfile.ZipInfo("placeholder")
+        back.filename = "results\\log_006.json"
+        z.writestr(back, json.dumps({"hits": []}))
+        img = zipfile.ZipInfo("placeholder")
+        img.filename = "images\\ark_61903_3_1_S3HY-6SHQ-BFK.jpg"
+        z.writestr(img, "not-a-real-jpeg")
+        # Mirrors the real bundle exactly: the viewer emits a mix — a forward
+        # slash for the `_feedback/` directory entry, backslashes elsewhere.
+        z.writestr("_feedback/", "")
+        z.writestr("_feedback/feedback.json", json.dumps(feedback, indent=2))
+
+
+def test_windows_backslash_zip_completes_setup(tmp_path, monkeypatch):
+    """A win32-submitted zip must import fully, not abort mid-setup.
+
+    Regression: `unzip` exits 1 on the backslash-separator warning, and
+    `set -e` killed the script *after* extraction but *before* the
+    `.feedback-repo-root` marker, the git baseline and the skill symlinks —
+    with no output at all, so it looked like the script had done nothing.
+    Every Windows submission hit this.
+    """
+    slug = "feedback-2026-08-26T21-23-06-618Z"
+    zip_path = tmp_path / f"{slug}.zip"
+    _build_windows_separator_zip(zip_path, slug)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+
+    result = _run_script(str(zip_path))
+
+    assert result.returncode == 0, result.stderr
+    dest = home / "feedback" / slug
+    # Extraction landed, and the backslash names became real directories.
+    assert (dest / "research.json").is_file()
+    assert (dest / "results" / "log_006.json").is_file()
+    assert (dest / "images" / "ark_61903_3_1_S3HY-6SHQ-BFK.jpg").is_file()
+    assert (dest / "_feedback" / "feedback.json").is_file()
+    # The steps *after* unzip ran — this is what the bug skipped.
+    assert (dest / ".feedback-repo-root").is_file()
+    assert (dest / ".git").is_dir()
+    assert (dest / ".claude" / "skills").is_dir()
+    # And the user's prompt was parsed out of the backslash-named member.
+    assert "Look for newspaper articles" in result.stdout

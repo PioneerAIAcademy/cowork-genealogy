@@ -1,14 +1,15 @@
 ---
 name: search-external-sites
 description: Generates search URLs for external genealogy sites (Ancestry,
-  MyHeritage, FindMyPast, FindAGrave, Newspapers.com) and walks the user
+  MyHeritage, FindMyPast, FindAGrave, Newspapers.com) and free newspaper
+  archives (Chronicling America, Utah Digital Newspapers), and walks the user
   through the click-capture-analyze workflow. Logs each search to research.json (including nil results) and
   triages results from captured PDFs before passing records to record-extraction. GPS Step 1 — Reasonably
   Exhaustive Research (external site execution). Use when the user says
-  "search Ancestry", "search MyHeritage", "search FindMyPast", "search
-  FindAGrave", "search Newspapers.com", when a plan item targets a
-  non-FamilySearch repository, or when the user uploads a PDF capture from
-  an external genealogy site. Do NOT use when the target is
+  "search Ancestry"/"MyHeritage"/"FindMyPast"/"FindAGrave"/"Newspapers.com"/"Chronicling
+  America", "find newspaper articles", when a plan item targets a
+  non-FamilySearch repository, or when the user uploads a PDF capture.
+  Do NOT use when the target is
   FamilySearch (use search-records); when the user is still choosing what or
   where to search — e.g. "what should I search next?" — which is planning,
   not execution (use research-plan); or when the user wants to analyze a
@@ -27,12 +28,20 @@ allowed-tools:
 
 **Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
-Ancestry, MyHeritage, FindMyPast, FindAGrave, and Newspapers.com have no
-public APIs and prohibit automated access. So this skill never loads a
-page itself — it builds a pre-filled search URL, the user clicks it in
-their own authenticated browser, captures the page as a PDF, and uploads
-it back. The agent supplies the genealogical expertise; the user's
+This skill never loads a page itself — it builds a pre-filled search URL,
+the user clicks it in their own browser, captures the page as a PDF, and
+uploads it back. The agent supplies the genealogical expertise; the user's
 browser supplies the access.
+
+Two different reasons a site is handled this way, and they are not
+interchangeable:
+- **Paywalled** (Ancestry, MyHeritage, FindMyPast, Newspapers.com) — no public
+  API, automated access prohibited, and the user needs a subscription.
+- **Free but bot-protected** (Chronicling America, Utah Digital Newspapers and
+  other state/regional archives) — free to search, no subscription needed, but
+  behind bot protection that blocks automated fetch. Never tell the user these
+  are unavailable or need a subscription: generate the URL, and they can open
+  it. A blocked fetch is not a negative result — it is a capture-required one.
 
 Getting the search **parameters** right is the core of the task: a URL
 with the wrong name encoding, a missing date window, or the wrong
@@ -98,6 +107,13 @@ the same search would be captured normally.
 
 ## Before you search
 
+**Newspapers: try the free archive first.** For any `record_type: newspaper`
+item, generate the free-archive URL (Chronicling America, and the state/regional
+archive for the place) *before or alongside* a Newspapers.com URL — never
+instead of it if the user named Newspapers.com. A user without a subscription
+otherwise gets a link they cannot use. `locality-guide` output for the place
+often already names the right regional archive; read it before guessing.
+
 **Check access.** Read `researcher_profile.subscriptions` in
 `research.json` — the researcher's access, whether by paid subscription,
 FamilySearch-partnership access, or a library/family-history-centre
@@ -110,6 +126,8 @@ account. Use it as a tie-breaker, never as a gate.
 | FindMyPast.com | `FindMyPast` |
 | FindAGrave.com | free to search; `FindAGrave-Plus` adds features |
 | Newspapers.com | `Newspapers.com` |
+| Chronicling America | free — no subscription, never gate on one |
+| Utah Digital Newspapers and other state/regional archives | free — no subscription, never gate on one |
 
 - If a plan item is repository-agnostic, prefer a site the researcher
   has access to — that search is immediately actionable.
@@ -136,6 +154,8 @@ titles mislead about scope and completeness.
 | FindMyPast.com | `findmypast.com/search/results?params` | Strong UK/Ireland coverage. Paid subscription |
 | FindAGrave.com | `findagrave.com/memorial/search?params` | Cemetery records. Free. User-contributed — treat as compiled source |
 | Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription |
+| Chronicling America | `chroniclingamerica.loc.gov/search/pages/results/?params` | US newspapers 1690–1963, Library of Congress. **Free.** Bot-protected — capture required |
+| State/regional digital newspaper archives | varies — see below | e.g. Utah Digital Newspapers, California Digital Newspaper Collection. **Free.** Bot-protected — capture required |
 
 ## Steps
 
@@ -267,6 +287,26 @@ https://www.findagrave.com/memorial/search?firstname={first}&lastname={last}&bir
 https://www.newspapers.com/search/?query={first}+{last}&dr_year={year}&dr_place={place}
 ```
 
+#### Chronicling America (free)
+```
+https://chroniclingamerica.loc.gov/search/pages/results/?andtext={first}+{last}&date1={yyyy}&date2={yyyy}&dateFilterType=yearRange&state={State}&rows=20&searchType=basic
+```
+- `state` — full state name, capitalized (`Utah`, `New York`), not the abbreviation
+- `date1`/`date2` — four-digit years; both required when `dateFilterType=yearRange`
+- Coverage is 1690–1963 and title-by-title, not complete for any state — a nil
+  result here never means no newspaper covered the event
+
+#### State/regional digital newspaper archives (free)
+Utah Digital Newspapers:
+```
+https://newspapers.lib.utah.edu/search?q={first}+{last}
+```
+Use the archive's plain keyword search and put the discriminating terms in `q`.
+**Do not invent facet or date parameters for these archives** — an unrecognized
+parameter is silently ignored or errors the page, and the user lands on a dead
+end believing the search was scoped. Narrow with terms, then say in one line
+which date range they should set in the site's own UI.
+
 **Parameter strategy** (full guidance in
 `references/search-strategy-external.md`):
 - **Match the parameters to the plan item's event.** A marriage search needs
@@ -324,7 +364,7 @@ research_log_append({
   resultsExamined: 0,
   notes: "URL generated; awaiting user capture.",
   externalSite: {
-    site: "<ancestry|myheritage|findmypast|findagrave|newspapers>",
+    site: "<ancestry|myheritage|findmypast|findagrave|newspapers|chronicling_america|digital_newspaper_archive>",
     urlGenerated: "<the exact URL you present below>",
     captureReceived: false,
     captureFilename: null

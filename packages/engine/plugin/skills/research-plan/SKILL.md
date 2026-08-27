@@ -397,7 +397,9 @@ research_append({
 - `jurisdiction`: Human-readable place description
 - `date_range`: Target period (e.g., "1875-1890", "1850")
 - `repository`: FamilySearch, Ancestry, MyHeritage, FindMyPast,
-  NARA, state_archives, county_courthouse, other
+  NARA, state_archives, county_courthouse, other. Open list — name the
+  actual repository (e.g. `Chronicling America`, `Utah Digital Newspapers`)
+  rather than forcing it to `other`.
 - `rationale`: Why this record set for this question — what it could
   reveal and why it's worth searching. "Because it exists" is insufficient.
 - `fallback_for`: `pli_` ID of the plan item this falls back from,
@@ -405,6 +407,16 @@ research_append({
 - `status`: the item's progress — exactly one of `planned`,
   `in_progress`, `completed`, or `skipped`. New items are `planned`.
   Never use any other value (e.g. not `not_started`, not `pending`).
+
+**A `newspaper` item names a free archive before a paid one.** Chronicling
+America (US, 1690–1963) and the state/regional archive for the place — Utah
+Digital Newspapers, California Digital Newspaper Collection, and their
+equivalents — are free to search and need no subscription. Plan those first,
+with Newspapers.com or GenealogyBank as the `fallback_for` item, not the
+primary. Routing every newspaper item to a subscription site strands any
+researcher who lacks one, and strands the ones who have it too when the paper
+they need was never digitized there. Check the place's `locality-guide` output
+first: it usually already names the right regional archive.
 
 **Field-value rules (strict).** Use only schema-defined fields and
 values. A plan's `status` is one of `active`, `superseded`,
