@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_014",
+    "skill": "search-external-sites",
+    "name": "Newspaper request naming no site routes to the free archive, not only the paid one",
+    "type": "positive",
+    "description": "Mined from alpha feedback 2026-08-26T21:23Z (issue #1949): the user asked for newspaper articles, the agent routed every newspaper avenue to Newspapers.com, and delivered nothing. Here the user names no site and researcher_profile.subscriptions lists only Ancestry, so the free archive is the actionable route. Chronicling America is free to search but sits behind bot protection that blocks automated fetch, which is a capture-required result rather than a negative one — the agent must generate the URL and hand it over, never report the archive as unavailable or as needing a subscription. Newspapers.com may be offered alongside, but must not be the only route.",
+    "tags": [
+      "newspapers",
+      "external-site",
+      "free-before-paid",
+      "chronicling-america",
+      "url-generation",
+      "log-site-chronicling-america",
+      "feedback-1949"
+    ]
+  },
+  "input": {
+    "user_message": "Look for newspaper articles about Patrick Flynn's death in Schuylkill County, around 1908.",
+    "scenario": "mid-research-flynn-ancestry-sub"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-schuylkill-by-name",
+    "place-search-schuylkill-by-place",
+    "external-links-search-schuylkill"
+  ],
+  "judge_context": [
+    "A free digitized-newspaper archive URL must be generated — Chronicling America (chroniclingamerica.loc.gov/search/pages/results/) with the name as the search text, a date window covering 1908, and the state expressed as the full capitalized name (Pennsylvania), not a two-letter abbreviation",
+    "The free archive must NOT be described as unavailable, blocked, inaccessible, or requiring a subscription. Being unable to fetch it directly is a capture-required result, not a negative one — the response must hand the user a URL to open, not report a failure",
+    "Newspapers.com may be offered as well, but must not be the only route presented: the researcher profile lists Ancestry only, so a Newspapers.com-only answer leaves the user with a link they cannot use",
+    "A research-log entry must be written in the same turn the URL is generated: site chronicling_america, outcome partial, capture_received false, query capturing the name, the death window and the place",
+    "Should not claim which specific newspaper titles the archive holds for Schuylkill County — coverage is title-by-title and was not looked up"
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
