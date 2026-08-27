@@ -419,7 +419,12 @@ change, with different (and easy-to-undercount) site lists:
   table in `docs/specs/research-schema-spec.md`, the validator
   (`packages/engine/mcp-server/src/validation/validator.ts`), **and** the web
   mirror (`packages/schema/schemas/research.schema.json` + the matching `interface`
-  in `packages/schema/src/index.ts`). A *required* field additionally breaks
+  in `packages/schema/src/index.ts`, where optionality follows `required` and
+  nullability follows the schema's own type: a field absent from `required` takes
+  a `?`, a required one does not, and `| null` is added only where the schema's
+  type actually has a null branch. A drift test asserts the `?` in both
+  directions, so either mistake there fails CI; the `| null` half is unchecked,
+  which is why it is stated here). A *required* field additionally breaks
   `eval/fixtures/scenarios/*/research.json` and the eval Python stubs, which fail
   validation until backfilled. A new **section** (a top-level property, or a new
   entry in `research_append`'s `section` enum) additionally needs a row in
@@ -642,7 +647,10 @@ stay too: the protected-file write lockdown mirrors the shipped plugin hook, and
 ### Python file I/O: always pass `encoding="utf-8"`
 
 Every Python `read_text()` / `write_text()` / `open()` on a text file
-**must** pass `encoding="utf-8"`. A bare call uses the platform default —
+**must** pass `encoding="utf-8"` — and so must every `subprocess.run` /
+`check_output` / `Popen` / `call` / `check_call` that runs in text mode
+(`text=`, `universal_newlines=` or `errors=`), which decodes the child
+process's output with the same platform default. A bare call uses the platform default —
 cp1252 on Windows — and crashes with `UnicodeDecodeError` on the em-dashes
 and smart quotes that SKILL.md, the test JSON, and `research.json`
 routinely contain. It works on macOS/Linux (utf-8 default) but breaks for

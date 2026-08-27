@@ -238,18 +238,21 @@ def test_extraction_append_denied_even_with_declared_tools():
     )
 
 
-def test_extraction_append_denial_tells_the_router_to_stop():
+def test_extraction_append_denial_names_the_recovery():
     reason = subagent_only_denial("extraction_append")["hookSpecificOutput"][
         "permissionDecisionReason"
     ]
-    # The fix for a spawn failure is to surface it and stop — NOT to delegate
-    # differently or retry. The reason text is the model's only feedback.
-    assert "record-extractor" in reason
-    assert "stop" in reason.lower()
+    # The deny now names a REACHABLE recovery — delegate to record-extractor —
+    # rather than an unreachable "stop" the e2e Stop hook would veto (#1273 Item
+    # 2). The reason text is the model's only feedback.
+    assert "@plugin:record-extractor" in reason
+    assert "delegate" in reason.lower()
+    # Bounded fallback: skip the record after a repeat spawn failure, don't loop.
+    assert "skip" in reason.lower()
     assert "extraction_append" in reason
-    # Must tell it NOT to keep trying — an inverted reason that encouraged a
-    # retry ("retry another way") would relocate the substitution. Assert the
-    # negation, not the bare phrase, so such an inversion fails here.
+    # Keep the prohibition: an inverted reason that encouraged a retry ("retry
+    # another way") would relocate the substitution. Assert the negation, not the
+    # bare phrase, so such an inversion fails here.
     assert "do not retry another way" in reason.lower()
     assert "retry another way" not in reason.lower().replace(
         "do not retry another way", ""
