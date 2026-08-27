@@ -159,9 +159,9 @@ def test_pre1880_census_structure_marked_inferred(
     pre-1880 US census household must mark the family structure inferred.
 
     SKILL.md's Step 4 rule: 1850/1860/1870 carry no "relationship to head"
-    column, so every "head"/"wife"/"son" read off such a household -- and the
+    column, so every "head"/"wife"/"son" read off such a household — and the
     record's own `ParentChild`/`Couple` edges, which are the indexer's
-    inference from the same signals -- is an inference. The body prescribes
+    inference from the same signals — is an inference. The body prescribes
     the output: "Daniel, Margaret, Hannah in one dwelling; family structure
     inferred from surname, ages and order, not stated", *not* "head Daniel +
     wife Margaret + daughter Hannah".
@@ -169,10 +169,22 @@ def test_pre1880_census_structure_marked_inferred(
     Deterministic rather than judged because compliance is genuinely
     inconsistent, not because the judge misreads it. See issue #1284.
 
+    Re-measured for PR #1946 (superseding this docstring's earlier figure —
+    "17 of 32 ... and all 32 passed" — which the review caught silently
+    dropped rather than updated): across the 5 committed run logs as of this
+    PR, the 9 `pre-1880-census-household`-tagged tests produced 43 logged
+    searches. The marker appears in 25 of 43; outcome is 22 pass / 21 fail.
+    Unlike the earlier figure, marker presence and pass no longer coincide —
+    3 of the 25 marker-present runs still failed (`ut_search_records_014`
+    once, `ut_search_records_h4k` twice), because this validator's own gate
+    is now live and the judge separately reads whether a marker actually
+    qualifies its claim. Re-derive by scanning `research_log_append` notes in
+    `eval/runlogs/unit/search-records/v1_*.json` for the tagged test ids.
+
     Requirement: if `notes` describes a household at all (`_HOUSEHOLD_MENTIONS`)
     or makes a relationship/kinship claim (`_CLAIM_PATTERNS`), an inference
     marker (`_INFERENCE_MARKERS`) must appear somewhere in the note. This is
-    the original #1284 rule -- what catches a bare listing with no hedge
+    the original #1284 rule — what catches a bare listing with no hedge
     anywhere ("...in household of Thomas Flynn and Mary Flynn.", no marker
     at all) or a flat, unhedged claim ("plus sons Thos T McElwee and Stephen
     McElwee", issue #1912's actual production text, no marker anywhere in
@@ -187,13 +199,13 @@ def test_pre1880_census_structure_marked_inferred(
     PR #1946 review (issue #1912): a per-sentence variant of this check was
     tried, to catch a marker present elsewhere in the note that never
     actually qualifies a specific claim (e.g. "...likely Amos's children.
-    Pre-1880 census -- no relationship column; family structure inferred
+    Pre-1880 census — no relationship column; family structure inferred
     ..."). Withdrawn: `ut_search_records_015`'s own committed, correctly-
     hedged output ("...household headed by William Mullen ... Indexer-
-    inferred ParentChild/Couple relationships -- 1860 census carries no
-    relationship column ...") has the identical two-sentence shape --
+    inferred ParentChild/Couple relationships — 1860 census carries no
+    relationship column ...") has the identical two-sentence shape —
     claim, then the SKILL.md-prescribed hedge as its own following sentence
-    -- and no reliable mechanical signal separates the two. Note-wide is the
+    — and no reliable mechanical signal separates the two. Note-wide is the
     right precision for what a validator (rather than the judge, who reads
     the whole note as a person would) can safely automate; confirmed against
     every note in every committed `search-records` run log to date (168
