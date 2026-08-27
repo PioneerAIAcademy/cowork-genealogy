@@ -5,7 +5,7 @@
     "name": "New question correctly sets depends_on when built on a resolved prior question",
     "type": "positive",
     "description": "The flynn-parentage-found scenario has q_001 (Who was Patrick Flynn's father?) resolved — Thomas Flynn confirmed. The mother is still unknown, making the project still active. The skill must add a question about the mother and correctly set depends_on to reflect that identifying the mother is most efficiently done through the Thomas Flynn household identified in q_001.",
-    "tags": ["question-selection", "dependency-links", "depends-on", "depends-on-nonempty", "unblocks", "mother-identification", "new-question-exhaustive-declaration-unstarted"]
+    "tags": ["question-selection", "dependency-links", "depends-on", "depends-on-nonempty", "mother-identification", "new-question-exhaustive-declaration-unstarted"]
   },
   "input": {
     "user_message": "The father is confirmed. What research question should we add next?",
