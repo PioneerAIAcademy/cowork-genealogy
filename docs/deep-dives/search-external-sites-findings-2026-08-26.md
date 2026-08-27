@@ -39,19 +39,33 @@ A full GPS conflict resolution: independence analysis, weighing analysis,
 a preferred assertion, a written rationale, `status: resolved`. Pennsylvania
 is not an alternative view — it is a value this project examined and rejected.
 
-### The skill encodes the rejected value roughly a third of the time
+### The skill encodes the rejected value about a third of the time
 
-Across the 24 URLs the corpus generated that carry a birthplace parameter:
+**Figures corrected 2026-08-27** after PR #1954 review (florencemashipei). The
+first version of this section said "7 of 24". Both halves were wrong: the
+numerator conflated *non-Ireland* (7, which includes one `Massachusetts` URL
+belonging to a different scenario and subject) with *the rejected value* (6),
+and the denominator pooled two run logs that retention has since pruned along
+with post-fix runs. Re-measured over exactly the run logs this branch commits,
+counting only `mid-research-flynn` URLs:
 
-| Value encoded | Count |
-|---|---|
-| `Ireland` (the resolved answer) | 17 |
-| `Pennsylvania` / `Pennsylvania, United States` | 4 |
-| `Schuylkill County, Pennsylvania` (+ `, United States`) | 2 |
-| `Massachusetts` (a different subject) | 1 |
+| | Flynn URLs encoding a birthplace | encoded the rejected value | |
+|---|---|---|---|
+| **Pre-fix** (`v1_2026-08-20_21-55-13`, `v1_2026-08-20_22-45-06`, `v1_2026-08-24_09-59-31`) | 15 | **5** | **33%** |
+| **Post-fix** (`v1_2026-08-26_23-13-30`, `v1_2026-08-27_00-08-56`) | 9 | **1** | **11%** |
 
-And the trend runs the wrong way. 2026-08-10 was 4 of 4 Ireland. 2026-08-24
-was 3 Ireland to 2 Pennsylvania.
+The five pre-fix misses are `_002` three times, `_009` once and `_007` once.
+The single post-fix miss is `_002` on `v1_2026-08-27_00-08-56`.
+
+`_fhk` and `_pic` are excluded from both rows: they run on
+`ma-state-census-external`, which carries no `conflicts[]`, so their
+`Massachusetts` value is an ordinary parameter and correct.
+
+**Read this as directional, not settled.** Nine post-fix observations is a
+small sample, and the one miss is on the test most prone to it. The honest
+claim is that the rate moved from about a third to about a tenth, not that the
+defect is closed. What would settle it is V1 in issue #1950, which decides the
+question deterministically instead of by rate.
 
 **Why it is harmful, not cosmetic.** These sites *filter* on birthplace.
 A search for a man born in Ireland, run with `birthplace=Pennsylvania`,
@@ -477,6 +491,92 @@ not a corrected parameter. Recorded as an open question, not a finding.
 The `SKILL.md` template row is **not yet corrected** — that edit is inside the
 run-log snapshot and would invalidate `v1_2026-08-26_23-13-30`, which is already
 run and annotated. See "Cost and state".
+
+## F12 — the rubric rule is addressed to a judge that cannot read it
+
+Found in review of PR #1954 by florencemashipei, verified here. **This is F10's
+defect turned on this dive's own fix**, and it is the more instructive of the
+two.
+
+`rubric.md` now tells the judge to "check `conflicts[]` in the scenario's
+`research.json`". The judge never sees that file. Its prompt slots are
+`{rubric} {judge_context} {before_state} {scenario_readme} {user_message}
+{skills_invoked} {text_response} {file_changes_summary} {tool_calls}
+{validator_failures}`, and of those:
+
+- `_summarize_before_state` (`orchestrator.py:1494`) renders **only `sources`**,
+  from research.json and tree.gedcomx.json. Its docstring is explicit that it
+  exists for citation-fabrication checks. No `conflicts`.
+- `_summarize_changes` renders added/modified/deleted entries; this skill never
+  writes `conflicts`, so none appear.
+- `builtin_tool_calls` — the model's own `Read` of research.json — is written to
+  the run log but not passed to the judge.
+- The scenario README names both candidate values and never the winner.
+
+So the judge's only route to `preferred_assertion_id` is **the skill's own
+output**. The rule is graded on the defendant's testimony.
+
+The evidence is in the two runs this branch commits:
+
+| Run | `_002` encoded | Skill said | URL generation |
+|---|---|---|---|
+| `v1_2026-08-26_23-13-30` | `Ireland` | "Ireland per resolved conflict c_001" | 3 |
+| `v1_2026-08-27_00-08-56` | `Pennsylvania` | "No conflicts are on file for Patrick's birth year or place" | **3** |
+
+Both scored 3. The judge adopted whichever the skill asserted, including the
+false one — `c_001` is on file, resolved, Ireland preferred. The tell was
+already present in run 1, where `_004` scored 3 with the rationale "No conflicts
+exist in the project for birthplace": right answer, reasoning that contradicts
+the fixture.
+
+**What this means for F4's claim.** The lane-2 half of the F4 fix does not bind.
+The behavioural half does (the rate moved 33% to 11%), but the rubric cannot
+independently catch a violation, and the one live test of that says so. Do not
+read this skill's 15-of-15 and 14-of-15 runs as evidence the rubric fails
+violations. It has been exercised once and did not fire.
+
+**Where it goes.** Issue #1956 (harness lane, filed by the reviewer) adds a
+`conflicts[]` block to `_summarize_before_state`. That file is outside the
+run-log snapshot and `judge_prompt_hash` covers only `judge/prompt.md`, so the
+fix costs no paid run. Until it lands, V1 in issue #1950 is the only mechanism
+that decides this axis, and it decides it deterministically rather than by
+persuasion.
+
+## Four rubric-wording gaps the reviewer found, all latent
+
+Recorded here so the next run of this skill can fold them in; none is fixed on
+this branch, because the prose is frozen by two paid runs and fixing them later
+costs the same single run.
+
+- **`moot` is misclassified.** `conflict_status` is `unresolved | resolved |
+  moot`. Both `SKILL.md` and `rubric.md` say "any other status → still
+  contested → omit". Per `conflict-resolution/SKILL.md`, `moot` means later
+  evidence made the conflict irrelevant, usually because the disputed person
+  was someone else. Under a moot conflict the skill would drop the place
+  forever and the rubric would mark a correct URL partial. No fixture carries
+  one today. Two-word fix.
+- **Identity conflicts fall through.** The rule keys on `disputed_attribute`,
+  which the schema requires only for `conflict_type: "fact"`; identity
+  conflicts carry `null` and put the dispute in `identity_question` free text.
+  `flynn-identity-geographic` (c_002, c_003), `flynn-identity-geographic-thin`
+  and `flynn-multi-conflict` (c_002) all have them today, and the first is an
+  identity conflict *about geography* — exactly the place-parameter risk.
+  Either scope the rule to `conflict_type: "fact"` deliberately, or extend it.
+- **Two entries can name the same attribute.** `eval/tests/e2e/ferber-grandparents`'s
+  reference project has c_001 and c_002 both on `birthplace`. Precedence is
+  undefined if their statuses differ. Suggested: any non-resolved entry naming
+  the field wins.
+- **The `partial` bullet was not updated with the `fail` bullet.** Where an open
+  conflict makes omission correct, the old bullet still reads "missing a search
+  parameter the plan item specified → partial", contradicting the new block on
+  the same page.
+
+A fifth, on the validator rather than the rubric: scoping
+`test_no_external_search_or_log_on_routeaway_negative` to `external_site`
+entries is right for `_012` but quietly loosened `_011`, which previously
+asserted no new log entry of any kind — a real gate, since `research-plan`
+never writes `log`. Both share the `no-search-no-write` tag. A second tag on
+`_012` would restore it.
 
 ## Cost and state
 
