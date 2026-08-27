@@ -1,0 +1,286 @@
+{
+  "run_log": "v1_2026-08-26_12-26-04.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_013`** — `base` / `Correctness`\nLLM: 2 → Junior: 1\n\n> The skill correctly generated a pre-filled Ancestry search URL with appropriate parameters (name, birth year, birthplace, residence, father) and correctly deferred the search with outcome 'negative' and capture_received false. However, the skill created a new plan item (pli_007) when the per-test context explicitly states 'no plan-item status may be written here, and creating a new plan item to have something to mark is a defect: research-plan owns item structure, and an executing skill may only update the status of an item that already exists.' This is a concrete incorrect action—the skill should have logged the deferred search without creating a plan item, then marked pli_007 as skipped afterward. The creation of pli_007 and its subsequent status update to 'skipped' violates the stated constraint that only existing plan items may have their status updated by this skill.\n\nJunior: ( The tool response shows both strengths and a critical error:\nCorrect actions:\nGenerated a valid pre filled Ancestry search URL with all appropriate parameters (Patrick Flynn, birth ~1845, birthplace Ireland, residence 1880 Schuylkill County, father Thomas Flynn).\nLogged the search as deferred with outcome: negative, captureReceived: false, and resultsExamined: 0.\nNotes correctly explained that autonomous mode prevents capture and that the search is deferred until an interactive session.\nIncorrect action:\nThe skill created a new plan item (pli_007) and then updated its status to skipped.\nPer the judge context, this is explicitly prohibited: autonomous runs must not create new plan items. Only existing plan items may be updated, and in this scenario none existed for the 1880 census.\nCreating pli_007 and marking it skipped violates the constraint that research plan owns item structure, not the executing skill.\nVerdict: While the URL generation and deferred logging were correct, the creation and status update of a new plan item is a concrete defect. Correctness = Fail.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_search_external_sites_013`** — `base` / `Tool Arguments`\nLLM: 2 → Junior: 2\n\n> Most tool calls used correct arguments. place_search correctly resolved 'Schuylkill County, Pennsylvania' to 'Schuylkill, Pennsylvania, United States'. external_links_search correctly used the standardPlace returned by place_search with appropriate year range (1880-1880) and host (ancestry.com). research_log_append correctly logged both the external_links_search outcome and the deferred external_site search. However, the first research_append call to create pli_007 used status 'not_started' which is invalid (the tool rejected it with validation error), requiring a retry with 'planned'. While the retry succeeded, this represents a non-clean recovery—the skill had to correct an invalid status value, which is a meaningful mismatch on a non-critical arg that should score partial rather than full credit.\n\nJunior: ( The tool arguments were mostly correct, but there was one notable mismatch:\n•\tCorrect arguments:\nplace_search: Properly resolved Schuylkill County, Pennsylvania to Schuylkill, Pennsylvania, United States.\nexternal_links_search: Correctly used the returned standardPlace with the year range (1880–1880) and host (ancestry.com).\nresearch_log_append: Logged both the curated links outcome and the deferred external_site search with accurate queries, notes, and metadata.\nMismatch:\nThe first research_append call attempted to create pli_007 with status not_started, which is invalid.\nThis caused a validation error and required a retry with status planned. While the retry succeeded, the need for correction indicates a non clean recovery.\nVerdict: Tool arguments were largely correct, but the invalid status value (not_started) represents a meaningful mismatch. Tool Arguments = Partial Pass.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_013`** — `rubric` / `Log entry`\nLLM: 2 → Junior: 1\n\n> The skill wrote two log entries (log_006 for external_links_search and log_007 for the deferred external_site search) with appropriate outcome ('negative'), capture_received (false), and notes explaining the deferral. However, the skill also created a new plan item (pli_007) and marked it 'skipped', which violates the per-test context constraint: 'This scenario has NO open external-site plan item...so no plan-item status may be written here, and creating a new plan item to have something to mark is a defect.' The log entries themselves are correct, but the plan-item creation and status update represent a structural violation of the skill's authority—only existing plan items may have their status updated by this skill.\n\nJunior: ( The logging behavior shows both correct execution and a structural violation:\n•\tCorrect log entries:\nlog_006 recorded the external_links_search with outcome negative, results examined, and notes explaining why no curated 1880 census link existed.\nlog_007 recorded the deferred external_site search with outcome negative, captureReceived=false, and notes explaining autonomous deferral.\nBoth entries included the correct query details, URL generated, and explanatory notes.\n•\tViolation:\nThe skill created a new plan item (pli_007) and then marked it skipped.\nPer the per test context, this is explicitly prohibited: “This scenario has NO open external-site plan item… so no plan-item status may be written here, and creating a new plan item to have something to mark is a defect.”\nOnly existing plan items may have their status updated. Creating a new one and marking it skipped is outside the skill’s authority and violates the rubric.\nVerdict: While the log entries themselves were correct, the improper creation and status update of a new plan item is a structural error. Log Entry = Fail.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_fhk",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    }
+  ]
+}
