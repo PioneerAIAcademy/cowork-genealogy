@@ -600,8 +600,10 @@ script first, then `cd` into the resulting directory.
 An empty field is not a broken submission. The dialog requires only the Yes/No
 answer, so `user_prompt` and `agent_did` may both legitimately be blank. When the
 bundle carries `_feedback/session-log.jsonl`, read that instead — it has the
-prompt and the whole transcript verbatim, unless a `_truncation_note` at its head
-says the log was trimmed, which drops the oldest entries and so the prompt first. That file is optional (§6 of the
+prompt and the conversation verbatim. Two limits: it is filtered to the `user`
+and `assistant` turns and scoped to that project's folder, so it is not the whole
+session; and a `_truncation_note` at its head means the log was trimmed, which
+drops the oldest entries and so the prompt first. That file is optional (§6 of the
 submission format) and a **Cowork** submission never has one, so when it is
 absent you are working from the project state and the Notes box; say so on the
 issue rather than asking for a resubmit. An empty **`agent_should_have`** is

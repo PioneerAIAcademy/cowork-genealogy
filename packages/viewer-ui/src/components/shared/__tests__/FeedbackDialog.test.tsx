@@ -76,7 +76,8 @@ describe('FeedbackDialog — worked-as-expected gate', () => {
     mount()
     // Two blockers at once: a malformed email (renders first) and the unanswered
     // radio. The refused Send must land on the email, not on whichever check ran
-    // last — that ordering is what FIELD_ORDER exists for.
+    // last. NOTE: this pair alone does NOT exercise the sort — it is ordered the
+    // same way by plain Map insertion order. The case below is the one that does.
     await user.clear(screen.getByLabelText(/Your email/))
     await user.type(screen.getByLabelText(/Your email/), 'nope')
     await user.click(screen.getByRole('button', { name: 'Send' }))
@@ -88,6 +89,46 @@ describe('FeedbackDialog — worked-as-expected gate', () => {
     expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Yes' }))
     // Focusing a radio must not answer it for the reporter.
     expect(screen.getByRole('radio', { name: 'Yes' })).not.toBeChecked()
+  })
+
+  it('sorts the cursor by render order, not by the order blockers were found', async () => {
+    const user = userEvent.setup()
+    mount()
+    // Notes is inserted into the blocker map BEFORE the radio, but renders
+    // AFTER it. Insertion order would land the cursor on Notes; render order
+    // must land it on the radio. This is the only pair that tells the two
+    // apart, which is why deleting the sort used to leave the suite green.
+    fireEvent.change(screen.getByLabelText(/Notes/), { target: { value: 'x'.repeat(10_001) } })
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Yes' }))
+  })
+
+  it('scrolls the offending field into view on a refused Send', async () => {
+    const user = userEvent.setup()
+    mount()
+    // #1919's recommendation 3 is "on Send, scroll to it and say it is the one
+    // thing still needed". jsdom cannot scroll, but vitest.setup.ts stubs the
+    // method, so the call itself is assertable.
+    const scrollIntoView = vi.mocked(window.HTMLElement.prototype.scrollIntoView)
+    scrollIntoView.mockClear()
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    expect(scrollIntoView).toHaveBeenCalled()
+  })
+
+  it('says an over-limit field once, not inline and in the live toast too', async () => {
+    const user = userEvent.setup()
+    mount()
+    const notes = screen.getByLabelText(/Notes/)
+    fireEvent.change(notes, { target: { value: 'x'.repeat(10_001) } })
+    // Before any refusal the live toast is the only channel.
+    expect(screen.getAllByText(/exceeds the 10,000-character limit/)).toHaveLength(1)
+
+    await user.click(screen.getByRole('radio', { name: 'Yes' }))
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    // After it, the message moves inline. Exactly one copy either way: dropping
+    // the suppression renders it twice and a >0 assertion cannot see that.
+    expect(screen.getAllByText(/exceeds the 10,000-character limit/)).toHaveLength(1)
+    expect(notes).toHaveAttribute('aria-describedby', 'feedback-notes-error')
   })
 
   it('marks the radio required and the three relaxed fields optional', async () => {
@@ -216,7 +257,9 @@ describe('FeedbackDialog — worked-as-expected gate', () => {
     await user.clear(screen.getByLabelText(/Your email/))
     await user.click(screen.getByRole('radio', { name: 'Yes' }))
     await user.click(screen.getByRole('button', { name: 'Send' }))
-    expect(screen.getByText(/BOOM upload failed/)).toBeTruthy()
+    // The upload failure is the case that LOSES the report, so it has to be
+    // announced at least as loudly as a refusal, which is recoverable.
+    expect(screen.getByRole('alert')).toHaveTextContent(/BOOM upload failed/)
 
     // Break something, then click again. The refusal must not stack under a
     // stale upload error that blames the wrong thing.

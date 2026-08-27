@@ -87,8 +87,9 @@ def test_feedback_context_and_drive_upload(monkeypatch):
 
 def test_blank_submission_is_accepted_end_to_end(monkeypatch):
     """The whole point of issue #1919: a report with every text box empty must go
-    through. The other tests here call _feedback_markdown directly, which sits
-    downstream of request validation, so only this one covers the real entry point.
+    through. Three other tests here POST to /api/feedback, but all of them send
+    populated fields; this is the only one that puts a blank submission through
+    request validation, which is where a non-empty requirement would bite.
     """
     captured: dict = {}
 

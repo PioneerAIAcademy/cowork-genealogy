@@ -105,11 +105,17 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
 
   useEffect(() => {
     if (!getFeedbackContext) return
-    void getFeedbackContext().then((ctx) => {
-      setFiles(ctx.files)
-      setHasSessionLog(ctx.hasSessionLog)
-      setSessionLogSize(ctx.sessionLogSize)
-    })
+    void getFeedbackContext()
+      .then((ctx) => {
+        setFiles(ctx.files)
+        setHasSessionLog(ctx.hasSessionLog)
+        setSessionLogSize(ctx.sessionLogSize)
+      })
+      .catch(() => {
+        // Leave the counts at zero. The submission still works; only the
+        // "what gets sent" summary is unavailable. An unhandled rejection here
+        // used to escape and fail the whole render in tests.
+      })
   }, [getFeedbackContext])
 
   const { selectedFiles, selectedBytes, mediaCount, mediaBytes } = useMemo(() => {
@@ -537,7 +543,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
         {/* Live while typing, for any over-limit field whose message is not already
             inline under the field itself, which would otherwise say it twice. */}
         {untoldOverLimit.length > 0 && sendState !== 'success' && (
-          <div className={`${styles.toast} ${styles.toastError}`}>
+          <div className={`${styles.toast} ${styles.toastError}`} role="alert">
             {untoldOverLimit.length === 1
               ? overLimitMessage(untoldOverLimit[0].label)
               : `${untoldOverLimit.length} fields exceed the ${MAX_FIELD_CHARS.toLocaleString()}-character limit: ${untoldOverLimit.map((f) => `"${f.label}"`).join(', ')}.`}
@@ -556,7 +562,9 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
           <div className={`${styles.toast} ${styles.toastSuccess}`}>Feedback sent — thank you!</div>
         )}
         {sendState === 'error' && (
-          <div className={`${styles.toast} ${styles.toastError}`}>{errorMsg}</div>
+          <div className={`${styles.toast} ${styles.toastError}`} role="alert">
+            {errorMsg}
+          </div>
         )}
 
         <div className={styles.footer}>
