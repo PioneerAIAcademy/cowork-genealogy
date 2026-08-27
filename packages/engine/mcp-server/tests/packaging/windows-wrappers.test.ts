@@ -247,7 +247,7 @@ describe("Windows wrapper drift", () => {
       .map((l) => (/^\s*(?:rem\b|::)/i.test(l) ? "" : l))
       .join("\n");
 
-  const ZERO = /%~?[dpfnx]*0\b/;
+  const ZERO = /%~?[dpfnxsatz]*0\b/;
   const SHIFT = /^\s*shift\b/m;
   const rel = (f: string) => relative(projectRoot, f).split(sep).join("/");
 
