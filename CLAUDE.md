@@ -233,8 +233,8 @@ subagents (`.claude/agents/`). Each plugin agent has YAML frontmatter
 system prompt. The `description` field determines when the Cowork
 orchestrator auto-delegates to the agent. Agents run in fresh context
 (no main-session state bleeds in) and are read-only by convention unless
-explicitly specced otherwise. The first such agent is `gps-mentor`
-(spec: `docs/specs/gps-mentor-agent-spec.md`).
+explicitly specced otherwise. Per-agent contracts live in
+`docs/specs/<agent>-agent-spec.md`.
 
 **How each environment loads them, and why the hosted path is the odd one.**
 Both eval harnesses stage `agents/*.md` into the workspace's `.claude/agents/`
@@ -462,11 +462,9 @@ The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`packages/engine/mcp-server/src/auth/`)
 
-All authenticated tools (`collections_search`, `collection_read`, `record_search`,
-`record_read`, `person_search`, `person_read`, `person_ancestors`, `fulltext_search`,
-`image_search`, `image_read`, `volume_search`, `same_person`, `person_record_matches`,
-`record_person_matches`, `person_person_matches`, `record_record_matches`, and
-`source_attachments`) must go through this module — do not re-implement token plumbing.
+Every tool that calls a FamilySearch endpoint must get its token through this
+module — do not re-implement token plumbing. To see which tools those are today,
+`grep -rl getValidToken src/tools/ src/utils/`.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
   config store at `~/.familysearch-mcp/config.json` (`loadConfig` /
@@ -516,8 +514,6 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
 | `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey()` in `src/auth/config.ts` (config-only — never `process.env`). Written by the `configure_openrouter` tool. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent so Claude can prompt the user. |
 | `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel()` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`qwen/qwen3-vl-235b-a22b-instruct`) when absent. |
-| `learningCenterDir` | (future) | Optional | Path to the pre-crawled learning center markdown files. Read by `getLearningCenterDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
-| `libraryDir` | (future) | Optional | Path to the pre-crawled library markdown files. Read by `getLibraryDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
 
 Each `get*` helper throws an LLM-instruction error when its required
 field is missing — the error message tells Claude what to put in the
@@ -635,7 +631,9 @@ advertises — the hosted control plane runs `bypassPermissions` with no allowli
 Cowork loads the plugin whole. A skill's `allowed-tools` is a **grant, not a
 restriction**: the field that removes a tool from the pool is `disallowed-tools`, which
 no skill here declares, so a deny list derived as the complement of a grant inverts the
-field's meaning. The unit harness still derives one; retiring it is open work.
+field's meaning. The unit harness grants every registered MCP tool to every skill, and
+`compute_allowed_tools` survives only to feed an advisory validator — do not rebuild a
+narrowing on top of it.
 
 The boundary, so this is not over-applied: emulate production's *permission model*,
 construct the test's *inputs* freely. A deny that hides the answer from the agent — the
