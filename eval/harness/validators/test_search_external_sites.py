@@ -117,7 +117,7 @@ def test_no_external_search_or_log_on_routeaway_negative(
     `research_log_append` and may legitimately write a non-`external_site`
     entry for the record it was handed — flagging that would fail 012 for
     routing correctly. Narrowing both would have silently dropped 011's gate
-    (issue #1519, and caught in review of #1954), so the loosening is carried
+    (issue #1519), so the loosening is carried
     by a tag on 012 alone rather than by the shared `no-search-no-write` gate.
 
     Deliberately does NOT flag other research.json writes: routing to

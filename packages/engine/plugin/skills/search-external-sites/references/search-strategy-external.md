@@ -25,15 +25,7 @@ and relative names — to filter out false matches immediately.
 
 ## Choosing a strategy per search
 
-**Check the per-site row first — it overrides the selector below.**
-
-| Site | First contact | Why |
-|------|---------------|-----|
-| Ancestry.com | **narrow start** | Its engine weights relatives heavily and degrades gracefully: extra parameters rank results rather than filtering them to zero, so a full-detail search costs nothing and sorts the best match to the top |
-| MyHeritage, FindMyPast, FindAGrave, Newspapers.com | broad start | No row asserting otherwise — use the selector below |
-
-For any site without a row above, choose on the name's uniqueness and
-your confidence in the details:
+Consider the name's uniqueness and your confidence in the details:
 - Rare name + uncertain details → broad start
 - Common name + strong details → narrow start
 - Any name + first time on this site → broad start to assess what

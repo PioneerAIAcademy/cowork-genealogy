@@ -502,6 +502,54 @@ The `SKILL.md` template row is **not yet corrected** — that edit is inside the
 run-log snapshot and would invalidate `v1_2026-08-26_23-13-30`, which is already
 run and annotated. See "Cost and state".
 
+## F11 — an Ancestry ranking claim I could not support, tested and withdrawn
+
+Raised in review of PR #1954 by Gennecis, tested against the live site, and
+resolved by deleting the prose rather than defending it.
+
+An earlier revision of this branch added a per-site override to
+`references/search-strategy-external.md`, telling the skill to open on Ancestry
+with a **narrow** search where the existing rule says every site gets a broad
+first contact. Its stated reason:
+
+> Its engine weights relatives heavily and degrades gracefully: extra
+> parameters rank results rather than filtering them to zero, so a full-detail
+> search costs nothing and sorts the best match to the top.
+
+Two claims, and only one of them was mine. **"Weights relatives heavily" is
+pre-existing doctrine** — `SKILL.md` already carries "Add relative names when
+you have them (Ancestry weights them heavily)" and this dive did not touch it.
+**"Extra parameters rank rather than filter, so a full-detail search costs
+nothing" was new here, and nothing in the repo supported it.** It was also the
+load-bearing half: it is the only reason given for overriding the broad-start
+rule, on the busiest site in the table.
+
+**Tested on ancestry.com against `mid-research-flynn`'s own subject.** A search
+for `Patrick Flynn` alone, then the same search with birth year 1845, birth
+place Ireland, and father Thomas Flynn. **The result count reduced.** Pure
+ranking returns the same set reordered; a smaller set means the parameters
+filter.
+
+That refutes the operative clause. If adding `1845` removes results, then a
+record indexing him as 1847, or giving the birthplace as Pennsylvania because
+the enumerator wrote where the family lived, is gone from the list — which is
+the loss the broad-start rule exists to prevent. "Costs nothing" is exactly
+what the test contradicts.
+
+**Gap — lane 4, withdrawn rather than reworded.** The row is deleted and the
+section is byte-identical to `main` again. Rewording would mean asserting a
+more careful claim about Ancestry's matching that I have not measured; the
+per-field **Exact** toggle almost certainly makes the real behaviour
+conditional, and a conditional rule stated without measurement is the same
+defect one revision later. If a narrow-start override for Ancestry is worth
+having, it needs the F10 treatment: run it, read the result, and quote what the
+site did.
+
+This one is recorded because the failure is worth keeping, not the fix. The
+claim read as mechanism and was reasoning — and it took a reviewer asking "how
+do you know that?" to surface it, on a dive whose own headline finding (F10) is
+a parameter the skill invented for the same reason.
+
 ## F12 — the rubric rule is addressed to a judge that cannot read it
 
 Found in review of PR #1954 by florencemashipei, verified here. **This is F10's
@@ -546,12 +594,92 @@ independently catch a violation, and the one live test of that says so. Do not
 read this skill's 15-of-15 and 14-of-15 runs as evidence the rubric fails
 violations. It has been exercised once and did not fire.
 
+**The baseline moved down, it did not stay flat.** Traced by Gennecis in review
+of PR #1954 and confirmed by snapshot hash. Before this branch,
+`myheritage-url-generation.json`'s `judge_context` named the answer outright —
+"encoding the subject's actual birthplace, Ireland, per assertions a_002 and
+a_009, is correct" — and that per-test note was the only thing that ever caught
+an F4 violation:
+
+| run | `judge_context` | encoded | URL generation |
+|---|---|---|---|
+| `08-20_21-55-13` | old | Schuylkill County, Pennsylvania | 3 |
+| `08-20_22-45-06` | old | Schuylkill County, Pennsylvania | **2 — caught** |
+| `08-24_09-59-31` | old | Pennsylvania | **2 — caught** |
+| `08-27_00-08-56` | **new** | Pennsylvania | 3 — missed |
+
+This branch replaced that note with a pointer to the rubric rule, on the
+reasoning that a per-test answer key is not fixture-agnostic. That reasoning
+still holds, but the consequence has to be stated plainly: the replacement
+hands the decision to a rule the judge cannot execute, so a check that was
+firing 2 of 3 times now fires 0 of 1. Small sample, but the mechanism is proven
+and the direction is one way. **This axis is not merely unproven, it is weaker
+than it was before this branch.** Restoring the per-test note is snapshot-
+tracked and so costs a paid run; it should ride whichever run next covers this
+skill, alongside the #1956 fix below.
+
 **Where it goes.** Issue #1956 (harness lane, filed by the reviewer) adds a
 `conflicts[]` block to `_summarize_before_state`. That file is outside the
 run-log snapshot and `judge_prompt_hash` covers only `judge/prompt.md`, so the
 fix costs no paid run. Until it lands, V1 in issue #1950 is the only mechanism
 that decides this axis, and it decides it deterministically rather than by
 persuasion.
+
+## F13 — the surname-drop ladder step, added without a finding and untested
+
+Raised in review of PR #1954 by Gennecis. Recorded rather than removed, with
+its coverage stated.
+
+This branch adds a step to the too-few-results ladder in
+`references/search-strategy-external.md`: drop the surname and search on given
+name, place and date, guarded by "only worth running when the given name is
+distinctive".
+
+**The craft is sound and is why it stays.** A married surname on a woman, an
+anglicised or misindexed surname, and patronymic naming where the surname does
+not carry across records are three real recovery classes, and the ladder had no
+step that reached any of them — every other rung loosens a date or a place and
+holds the surname fixed. The distinctiveness guard is the right constraint:
+given-name-only on John or Mary returns noise, on Bartholomew or Aoife it is
+often decisive.
+
+**What it does not have is evidence.** No finding in this dive produced it; it
+came from reading the ladder and noticing the gap. **No test reaches it
+either** — no test in this suite carries a retry or zero-results tag, so
+nothing in the corpus exercises any rung of the ladder, this one included.
+
+**Gap — lane 4, shipped untested and knowingly.** Acceptable here because the
+step is *additive and guarded*: it fires only after a search has already
+returned too few results, and only when the given name is distinctive, so the
+worst case is one extra search that returns noise. It cannot suppress a result
+the current ladder would have found. That is a different risk class from F11,
+which overrode an existing rule on an unsupported mechanism claim, and it is
+why one was withdrawn and this one was not. If the ladder ever gets test
+coverage, this rung should be first in line.
+
+## F14 — libraries and archives were described as a clean split
+
+Raised in review of PR #1954 by Gennecis. A correction with no finding behind
+it, recorded for completeness.
+
+`references/repository-types.md` framed libraries and archives as distinct
+categories — published works on one side, unpublished manuscripts and personal
+papers on the other. That is a teaching simplification rather than how the
+institutions actually divide.
+
+**Genealogically the split does not hold**, which is the whole reason the
+correction was made: research libraries routinely hold manuscript and archival
+collections, and an archive will hold the published transcription volume for
+the records it keeps. A researcher told to look for unpublished material only
+in archives will miss manuscript collections sitting in a library, and the
+reverse.
+
+**Gap — lane 4, no measurement and none needed.** The edit changes a heading to
+"tendencies, not a clean split" and adds the two overlaps. There is no
+behavioural claim to test: it removes a false dichotomy rather than asserting a
+new mechanism. Recorded here so the change has a number, per the review, and
+because a future auditor comparing the reference against this dive should not
+find an unexplained edit.
 
 ## Four rubric-wording gaps the reviewer found, all latent
 
