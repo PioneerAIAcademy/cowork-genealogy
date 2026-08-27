@@ -1,0 +1,128 @@
+{
+  "tool": "person_read",
+  "description": "FamilySearch tree person read for Jean Baptiste Moreau WITH relatives and source descriptions. Regression fixture for issue #1901: the top-level `sources` array carries 6 attached source descriptions, but NOT ONE fact on ANY person carries a fact-level `sources` ref — mirroring the real-world FamilySearch pattern of sources attached at the person level without being linked to a specific claim. This is the exact shape that caused a live agent to report 'zero sources' for a person who had 52 attached: it conflated the (correctly empty) fact-level sources with the top-level array.",
+  "args": { "personId": "MRQ1-JBM", "relatives": true, "sourceDescriptions": true },
+  "response": {
+    "persons": [
+      {
+        "id": "MRQ1-JBM",
+        "gender": "Male",
+        "living": false,
+        "names": [
+          { "given": "Jean Baptiste", "surname": "Moreau" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "12 March 1821",
+            "standard_date": "12 Mar 1821",
+            "place": "Bastogne, Luxembourg",
+            "standard_place": "Bastogne, Luxembourg"
+          },
+          {
+            "type": "Death",
+            "date": "3 October 1889",
+            "standard_date": "3 Oct 1889",
+            "place": "Bastogne, Luxembourg",
+            "standard_place": "Bastogne, Luxembourg"
+          }
+        ]
+      },
+      {
+        "id": "MRQ1-K2N",
+        "gender": "Female",
+        "living": false,
+        "names": [
+          { "given": "Marie", "surname": "Dubois" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1825",
+            "standard_date": "1825",
+            "place": "Bastogne, Luxembourg",
+            "standard_place": "Bastogne, Luxembourg"
+          }
+        ]
+      },
+      {
+        "id": "MRQ1-P8R",
+        "gender": "Male",
+        "living": false,
+        "names": [
+          { "given": "Henri", "surname": "Moreau" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1848",
+            "standard_date": "1848",
+            "place": "Bastogne, Luxembourg",
+            "standard_place": "Bastogne, Luxembourg"
+          }
+        ]
+      },
+      {
+        "id": "MRQ1-T4W",
+        "gender": "Female",
+        "living": false,
+        "names": [
+          { "given": "Josephine", "surname": "Moreau" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1851",
+            "standard_date": "1851",
+            "place": "Bastogne, Luxembourg",
+            "standard_place": "Bastogne, Luxembourg"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      { "type": "ParentChild", "parent": "MRQ1-JBM", "child": "MRQ1-P8R", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MRQ1-K2N", "child": "MRQ1-P8R", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MRQ1-JBM", "child": "MRQ1-T4W" },
+      { "type": "ParentChild", "parent": "MRQ1-K2N", "child": "MRQ1-T4W" }
+    ],
+    "sources": [
+      {
+        "id": "SD01-AAA",
+        "title": "Jean Baptiste Moreau, \"Belgium, Luxembourg Province, Civil Registration, 1796-1910\"",
+        "citation": "\"Belgium, Luxembourg Province, Civil Registration, 1796-1910\", database, FamilySearch, entry for Jean Baptiste Moreau, birth, 1821.",
+        "url": "https://familysearch.org/ark:/61903/1:1:AAAA-001"
+      },
+      {
+        "id": "SD01-BBB",
+        "title": "Jean Baptiste Moreau, \"Belgium, Luxembourg Province, Church Records, 1601-1948\"",
+        "citation": "\"Belgium, Luxembourg Province, Church Records, 1601-1948\", database, FamilySearch, baptism entry.",
+        "url": "https://familysearch.org/ark:/61903/1:1:AAAA-002"
+      },
+      {
+        "id": "SD01-CCC",
+        "title": "Jean Baptiste Moreau, \"Belgium, Census Records, 1846-1900\"",
+        "citation": "\"Belgium, Census Records, 1846-1900\", database, FamilySearch, household entry, 1866.",
+        "url": "https://familysearch.org/ark:/61903/1:1:AAAA-003"
+      },
+      {
+        "id": "SD01-DDD",
+        "title": "Marie Dubois, \"Belgium, Luxembourg Province, Civil Registration, 1796-1910\"",
+        "citation": "\"Belgium, Luxembourg Province, Civil Registration, 1796-1910\", database, FamilySearch, entry for Marie Dubois, birth, 1825.",
+        "url": "https://familysearch.org/ark:/61903/1:1:AAAA-004"
+      },
+      {
+        "id": "SD01-EEE",
+        "title": "Henri Moreau, \"Belgium, Luxembourg Province, Civil Registration, 1796-1910\"",
+        "citation": "\"Belgium, Luxembourg Province, Civil Registration, 1796-1910\", database, FamilySearch, entry for Henri Moreau, birth, 1848.",
+        "url": "https://familysearch.org/ark:/61903/1:1:AAAA-005"
+      },
+      {
+        "id": "SD01-FFF",
+        "title": "Josephine Moreau, \"Belgium, Luxembourg Province, Civil Registration, 1796-1910\"",
+        "citation": "\"Belgium, Luxembourg Province, Civil Registration, 1796-1910\", database, FamilySearch, entry for Josephine Moreau, birth, 1851.",
+        "url": "https://familysearch.org/ark:/61903/1:1:AAAA-006"
+      }
+    ]
+  }
+}
