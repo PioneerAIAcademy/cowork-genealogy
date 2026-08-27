@@ -1,4 +1,4 @@
-# Translation Rubric
+# Translation
 
 Grading dimensions for translation unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
@@ -25,3 +25,11 @@ Did the skill identify and explain genealogically significant terms (relationshi
 - **pass:** Genealogically significant terms are explained when their translation would lose context — e.g., "Pate" (godfather) is translated and the relationship's research significance is noted.
 - **partial:** Significant terms are translated but their genealogical implications (kinship structure, legal status, sacrament-tied dating) aren't flagged.
 - **fail:** Translation is purely literal; the genealogist would have to research the cultural/legal context themselves.
+
+## Date formatting
+
+Wherever a specific date appears in the response — prose narration, a structured assertions section, a translated passage, anywhere — is it expressed in ISO 8601 format alongside the prose form, except where the pre-Gregorian carve-out requires it to be withheld?
+
+- **pass:** Every date in the response carries both the human-readable prose form and the ISO 8601 parenthetical — e.g., "15 March 1845 (1845-03-15)". A date the record states only partially is given only as far as the record states it (1845-03, or 1845). A date whose jurisdiction had not yet adopted the Gregorian calendar at that date — or whose jurisdiction the record leaves undetermined, such as a Dutch record between 1582 and 1701 that names no province — correctly carries **no** ISO form, and is instead flagged Old Style (or indeterminate) and handed to convert-dates. That is a pass, not a miss: withholding the ISO form is what the skill requires there.
+- **partial:** At least one date carries the ISO form but one or more do not, and no carve-out reason is given for the omission.
+- **fail:** No date carries the ISO form, dates appear in prose form only, and no carve-out applies.
