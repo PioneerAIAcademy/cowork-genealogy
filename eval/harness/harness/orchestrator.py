@@ -294,6 +294,7 @@ async def _run_one_test_async(
                 flush=True,
             )
 
+    mode, gates = grading_mode_for(spec)
     return assemble_test_entry(
         test_id=spec.id,
         test_type=spec.type,
@@ -302,6 +303,8 @@ async def _run_one_test_async(
         mcp_fixtures=spec.mcp_fixtures,
         runs=runs,
         timestamp_for_run_id=timestamp,
+        grading_mode=mode,
+        dimensions_gate_outcome=gates,
     )
 
 
@@ -507,6 +510,7 @@ async def _execute_single_run(
     validator_results = run_validators(
         skill=spec.skill,
         validators_dir=paths.validators_dir,
+        text_response=result.text_response or "",
         before_state={
             "research_json": before_snapshot["research_json"],
             "tree_gedcomx_json": before_snapshot["tree_gedcomx_json"],
@@ -527,7 +531,6 @@ async def _execute_single_run(
         attempted_mcp_calls=result.attempted_mcp_calls,
         skill_frontmatter=skill_frontmatter,
         skills_invoked=result.skills_invoked,
-        text_response=result.text_response,
         test={
             **spec.raw.get("test", {}),
             # Top-level validator-facing block threaded in alongside the
@@ -671,16 +674,7 @@ async def _execute_single_run(
             "text_response": result.text_response,
             "activated": activated,
             "skills_invoked": result.skills_invoked,
-            "tool_calls": [
-                {
-                    "tool": c["tool"],
-                    "args": c["args"],
-                    "expected_args": c.get("expected_args"),
-                    "matched": c["matched"],
-                    "response_fixture": c.get("response_fixture"),
-                }
-                for c in result.tool_calls
-            ],
+            "tool_calls": [_tool_call_entry(c) for c in result.tool_calls],
             "files_created": files_created,
             # Omitted when empty so a run that called no built-in tool writes
             # the same run_output it always has — this field appearing is
@@ -1143,6 +1137,112 @@ def flag_routing_negative_judge_fail(
                     "rationale": dd.get("rationale") or "",
                 })
     return dimensions
+
+
+#: Keys the mock adds to a fixture's response AFTER matching and BEFORE logging
+#: (`mock_mcp.py` ~461/477/501). Their presence means the logged response is not
+#: the stored fixture, so `response_fixture` + `matched.index` cannot rebuild it
+#: — `staged.resultsRef` in particular comes from `randomUUID()` and exists in no
+#: commit.
+_MOCK_ENRICHED_KEYS = ("staged", "ranked", "rankingSkipped")
+
+
+def _is_mock_enriched(response: Any) -> bool:
+    """Whether the mock rewrote this response after choosing its fixture."""
+    return isinstance(response, dict) and any(
+        k in response for k in _MOCK_ENRICHED_KEYS
+    )
+
+
+def _tool_call_entry(c: dict[str, Any]) -> dict[str, Any]:
+    """One `output.tool_calls` entry, keeping the response the mock already captured.
+
+    The mock has always recorded it — `mock_mcp.py`'s call-log docstring lists
+    `"response"` as a key and all five `call_log.append` sites set it — and this
+    projection dropped it on the way into the run log. So no post-hoc analysis
+    of a committed run log could answer "what did the skill actually see?", and
+    the warn-only `person_evidence` guardrail (#1550) could not be calibrated
+    from the unit tier at all. Measured 2026-08-24: 2,812 tool calls across the
+    August-2x run logs, zero carrying a response.
+
+    **Kept where the content exists nowhere else** (lead, 2026-08-24): most
+    `predicate` matches are recoverable from `response_fixture` plus
+    `matched.index` at that commit, so re-storing those bytes duplicates what git
+    already holds — and shrinking run logs is why `schema_version` 3 exists.
+    `live` and `none` calls have no such source, and `live` is the case the named
+    use (`research_append`) needs.
+
+    **But "recoverable" is not true of every predicate match, so it is tested
+    rather than assumed.** The mock ENRICHES a matched fixture response after
+    selecting it and before logging it (`mock_mcp.py`: `staged` ~461, `ranked`
+    ~477, `rankingSkipped` ~501, all above `entry["response"] = response` at
+    ~506). An enriched response is therefore NOT the stored fixture, and
+    `staged.resultsRef` is not reconstructable at all — `results-staging.ts`
+    builds it from `randomUUID()`, so no commit holds that value. Up to 420 committed
+    predicate calls are in this state — the ones passing a `projectPath`, which
+    all three enrichment paths require (`staged` gates on it directly,
+    `rankingSkipped` on its presence, `ranked` on `staged`). Eligibility, not
+    confirmed enrichment, so it is a tight upper bound; the other 167
+    `external_links_search` calls pass none and are the plain-predicate case the
+    rule correctly omits.
+
+    So the rule keys on the RESPONSE, not on `matched.kind` alone: an enriched
+    response is kept whatever its kind. Keyed on the enrichment markers rather
+    than on a list of the three tools that have them today, so a fourth tool
+    gaining staging is covered without editing this function — a tool list would
+    silently drop it.
+    """
+    entry = {
+        "tool": c["tool"],
+        "args": c["args"],
+        "expected_args": c.get("expected_args"),
+        "matched": c["matched"],
+        "response_fixture": c.get("response_fixture"),
+    }
+    response = c.get("response")
+    kind = (c.get("matched") or {}).get("kind")
+    if kind in ("live", "none") or _is_mock_enriched(response):
+        entry["response"] = response
+    return entry
+
+
+def grading_mode_for(spec: TestSpec) -> tuple[str, bool]:
+    """What decides this test's outcome, and whether the judge dimensions do.
+
+    Returns `(grading_mode, dimensions_gate_outcome)` for the run log, so a
+    reader of the raw JSON can tell a designed contradiction from a broken one.
+
+    This is the defect issue #1000 was filed on: `ut_search_records_005`
+    reported `outcome: "pass"` beside `Correctness = 1` with a rationale
+    describing an outright routing failure, and a reviewer concluded from the
+    run log that the harness miscomputes negative outcomes — a confident,
+    incorrect correctness claim inside a PR approval. The outcome was right; the
+    run log simply never said the dimensions were diagnostic. It renders them
+    identically to a positive test's, where a 1 genuinely does force a fail.
+
+    The three modes mirror `_compute_outcome`'s branches exactly, and must keep
+    mirroring them — `test_grading_mode_matches_what_compute_outcome_does`
+    drives the real function with a dimension scored 1 and asserts the outcome
+    flips iff `dimensions_gate_outcome` is True, so this cannot drift into a
+    comfortable lie without a test going red:
+
+    - `"invariant"` — `negative.grade_on_invariant`. `_compute_outcome` returns
+      `pass` on the tag-gated validator alone. Dimensions never gate.
+    - `"routing"` — a negative with a non-empty `correct_skill`. The verdict is
+      the routing decision; the judge runs base-only and diagnostically.
+    - `"dimensions"` — positive tests, and out-of-scope negatives
+      (`correct_skill: []`), where "no skill fired" holds whether the model
+      cleanly declined or answered the request itself, so the base dimensions
+      are the only thing telling those apart and they DO gate.
+    """
+    if spec.type == "positive":
+        return "dimensions", True
+    negative = spec.negative or {}
+    if negative.get("grade_on_invariant"):
+        return "invariant", False
+    if negative.get("correct_skill", []) == []:
+        return "dimensions", True
+    return "routing", False
 
 
 def _compute_outcome(
@@ -1636,6 +1736,12 @@ def _aborted_entry(
         validators=ValidatorResult(passed=None, results=[]),
         judge=JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0),
     )
+    # The aborted path carries the two grading fields too. `spec` is in hand, and
+    # by this PR's own semantics an ABSENT `grading_mode` means "this run log
+    # predates the field" — so omitting it here would make a fresh run log
+    # misrepresent its aborted tests as old ones. 11 aborted entries across 6
+    # committed logs, so the path is live, not theoretical.
+    mode, gates = grading_mode_for(spec)
     return assemble_test_entry(
         test_id=spec.id,
         test_type=spec.type,
@@ -1644,4 +1750,6 @@ def _aborted_entry(
         mcp_fixtures=spec.mcp_fixtures,
         runs=[single_run],
         timestamp_for_run_id=timestamp,
+        grading_mode=mode,
+        dimensions_gate_outcome=gates,
     )
