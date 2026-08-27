@@ -179,9 +179,20 @@ Escalation guidance:
 - 1 `contradiction` + 1+ `implausible`s: likely identity confusion; recommend
   timeline review
 - 2+ `contradiction`s: first ask whether one wrong fact would produce
-  all of them -- a death date recorded decades too early fires both
-  `hasEventAfterDeath1` and `hasAgeRangeGreaterThan120`, which is two
-  symptoms rather than two people. If one error explains the cluster,
+  all of them, and settle it from the `factIds` the tool returned --
+  contradictions citing overlapping facts are two symptoms of one
+  wrong fact rather than two people; disjoint `factIds` mean no single
+  fact explains them. One tag cannot take part in that test:
+  `hasEventAfterDeath1` builds its `factIds` from `selfFactIds(mob,
+  null)`, every typed fact the person has, so it overlaps every other
+  warning by construction. Read disjointness off the narrower-scope
+  contradictions -- `hasChristeningBeforeBirth` (Christening, Birth)
+  and `hasBurialBeforeDeath` (Burial, Death) are disjoint families. Do not infer a shared cause from which
+  direction of date error would fire which tag: `hasEventAfterDeath1`
+  measures `latest(any fact) - latest(death-like fact)` and
+  `hasAgeRangeGreaterThan120` measures `earliestDeath - latestBirth`,
+  so a death date moved earlier fires the first and suppresses the
+  second. If one error explains the cluster,
   verify that fact against its original source first. If no single
   error explains it, two people merged is the stronger reading;
   recommend splitting the profile and rebuilding person_evidence links
