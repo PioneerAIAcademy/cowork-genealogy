@@ -25,7 +25,15 @@ and relative names — to filter out false matches immediately.
 
 ## Choosing a strategy per search
 
-Consider the name's uniqueness and your confidence in the details:
+**Check the per-site row first — it overrides the selector below.**
+
+| Site | First contact | Why |
+|------|---------------|-----|
+| Ancestry.com | **narrow start** | Its engine weights relatives heavily and degrades gracefully: extra parameters rank results rather than filtering them to zero, so a full-detail search costs nothing and sorts the best match to the top |
+| MyHeritage, FindMyPast, FindAGrave, Newspapers.com | broad start | No row asserting otherwise — use the selector below |
+
+For any site without a row above, choose on the name's uniqueness and
+your confidence in the details:
 - Rare name + uncertain details → broad start
 - Common name + strong details → narrow start
 - Any name + first time on this site → broad start to assess what
@@ -48,14 +56,22 @@ Try these adjustments in priority order:
    different language.
 2. **Broaden the date range** — if the site supports year ranges,
    widen to ±5 or ±10 years. Census ages are frequently inaccurate.
-3. **Try spelling variants** — use wildcards if the site supports
+3. **Remove the SURNAME instead — given name + place + date only.**
+   The mirror of step 1, and it recovers a different class: a woman
+   recorded under a married surname, an anglicised or misindexed
+   surname, or patronymic naming where the surname is not stable
+   across records. **Only worth running when the given name is
+   distinctive** — given-name-only on John or Mary returns noise, on
+   Bartholomew or Aoife it is often decisive. Say in the log why you
+   dropped the surname.
+4. **Try spelling variants** — use wildcards if the site supports
    them (Sm*th, Eli?abeth), or manually try common variant spellings.
-4. **Broaden the location** — move from county to state level.
-5. **Remove the location entirely** — the ancestor may have been
+5. **Broaden the location** — move from county to state level.
+6. **Remove the location entirely** — the ancestor may have been
    recorded in an unexpected jurisdiction.
-6. **Search by a relative instead** — use the spouse's or parent's
+7. **Search by a relative instead** — use the spouse's or parent's
    name as the primary search subject.
-7. **Try a different event type** — if searching by birth location,
+8. **Try a different event type** — if searching by birth location,
    try residence or death location instead.
 
 ### Still zero after all variations
