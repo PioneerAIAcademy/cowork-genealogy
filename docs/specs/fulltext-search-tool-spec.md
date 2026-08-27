@@ -97,7 +97,7 @@ descriptions distinct so Claude picks the right one.
     },
     "nlQuery": {
       "type": "string",
-      "description": "A natural-language query, mapped to the upstream `nlQuery` parameter (an alternative to the Lucene-style `keywords`)."
+      "description": "A natural-language query, or a FamilySearch tree person ID (e.g. \"Search for John Doe born in Austria\" or \"KD96-TV2\"). Mapped to the upstream `nlQuery` parameter; an alternative to the Lucene-style `keywords`. Supplying it also sends the feature header (see Query parameter mapping)."
     },
     "projectPath": {
       "type": "string",
@@ -134,6 +134,10 @@ The tool maps its input to the upstream API query parameters:
 | `includeFacets` | `m.defaultFacets` (set to `on` when true) |
 
 Additionally, `m.queryRequireDefault=on` is always sent.
+
+When — and only when — `nlQuery` is supplied, the request also carries the
+header `X-FS-Feature-Tag: search_naturalLanguageSupport`. Every other search
+omits it.
 
 ## Output schema
 
