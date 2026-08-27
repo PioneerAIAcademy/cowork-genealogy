@@ -123,8 +123,9 @@ can silently exclude the right record instead of just adding noise.
   document generates multiple hits.
 - A query returning millions of results means OR default is in
   effect — switch to `+TermA +TermB`.
-- Some matches won't appear in snippets when the term is in the
-  full transcript but not the displayed excerpt.
+- `highlightTerms` lists the bare terms a result matched on, not a
+  marked-up excerpt of surrounding text — and once a search is staged,
+  the full transcript isn't available to check context directly.
 
 ## Unit of indexing
 

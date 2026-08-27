@@ -176,8 +176,7 @@ Read `references/transcription-quirks.md` for HTR error patterns.
 transcript (`textDocument`) from every result — it is never present here.**
 Triage from the fields that do survive:
 - `highlightTerms` — the bare terms the query actually matched in this
-  record (e.g. `["Flynn", "witness"]`, not a marked-up excerpt). Confirms
-  which of your query terms this record actually hit on.
+  record (e.g. `["Flynn", "witness"]`, not a marked-up excerpt).
 - `names`/`places`/`dates` — every name, place, and date the record's own
   entity extraction found. Cross-check against the target's known
   associates, locality, and date range.
@@ -186,11 +185,9 @@ Triage from the fields that do survive:
 
 **What this cannot tell you: whether the name appears in the right
 *context*** (witness, will clause, deed party — vs. a false positive from
-cross-column alignment or a place name coincidence). None of the surviving
-fields carry surrounding text, so that judgment needs the source itself —
-use the attachment check below to prioritize, and let extraction
-(`record-extraction`, step 11) be where context actually gets read, from
-the record image, not guessed at from staged fields.
+cross-column alignment or a place name coincidence). Use the attachment
+check below to prioritize, and `record-extraction` (step 11) to read
+context from the record image.
 
 **Attachment check:** After narrowing to promising results, call
 `source_attachments({ uris: [ark1, ark2, ...] })` to check whether

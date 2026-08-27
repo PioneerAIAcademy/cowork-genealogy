@@ -196,7 +196,12 @@ interface FulltextSearchResponse {
   hasMore: boolean;
   results: FulltextSearchResult[];
   facets?: FulltextFacet[];
-  /** Present only when `projectPath` was supplied — search-result-staging-spec.md */
+  /**
+   * Present only when `projectPath` was supplied — search-result-staging-spec.md.
+   * Unlike a record_search staged handle, `resultsRef` here cannot currently be
+   * read back through `record_read`: its sidecar reader requires a `gedcomx`
+   * field, which a fulltext-staged entry never has.
+   */
   staged?: { resultsRef: string; returnedCount: number } | null;
   stagingError?: string;
 }

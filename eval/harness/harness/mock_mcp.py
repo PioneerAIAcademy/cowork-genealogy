@@ -478,7 +478,7 @@ def create_mock_server(
                     **response,
                     "results": [
                         {k: v for k, v in r.items() if k != "textDocument"}
-                        for r in response.get("results", [])
+                        for r in response["results"]
                     ],
                 }
 
