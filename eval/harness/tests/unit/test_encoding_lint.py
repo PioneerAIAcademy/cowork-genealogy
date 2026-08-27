@@ -21,7 +21,10 @@ Matching rules:
     the rest are flagged when they have no ``encoding=`` keyword.
   - ``Path(...).open(...)`` / ``PurePath(...).open(...)`` / ``io.open(...)`` /
     ``builtins.open(...)`` -- the closed allow-list of dotted opens whose receiver is
-    statically unambiguous. Only inline ``Path()``/``PurePath()`` constructor calls and
+    statically unambiguous. (``PurePath`` has no ``.open()`` at runtime -- only
+    concrete ``Path`` does -- but the allow-list entry is defensive: it prevents a
+    false negative if someone writes it, since the call would fail at runtime anyway.)
+    Only inline ``Path()``/``PurePath()`` constructor calls and
     ``io``/``builtins`` module names are matched; a bare variable's ``.open()``
     (``p.open("w")`` where ``p`` came from somewhere else) is statically undecidable
     and stays uncaught. ``Path(...).open()`` takes mode as the 1st positional (no file
@@ -290,14 +293,22 @@ def test_dotted_text_open_without_encoding_is_flagged():
     assert _offenders_in("builtins.open(p)") == [(1, "builtins.open()")]
     # encoding= present -- passes.
     assert _offenders_in("Path(tmp).open('w', encoding='utf-8')") == []
+    assert _offenders_in("PurePath(tmp).open('w', encoding='utf-8')") == []
     assert _offenders_in("io.open(p, encoding='utf-8')") == []
+    assert _offenders_in("builtins.open(p, encoding='utf-8')") == []
     # encoding=None is the platform default -- still flagged.
     assert _offenders_in("Path(tmp).open('w', encoding=None)") == [
         (1, "Path(...).open()")
     ]
+    assert _offenders_in("io.open(p, encoding=None)") == [(1, "io.open()")]
     # Binary mode -- out of scope, not an offender.
     assert _offenders_in("Path(tmp).open('rb')") == []
+    assert _offenders_in("PurePath(tmp).open('rb')") == []
     assert _offenders_in("io.open(p, 'rb')") == []
+    assert _offenders_in("builtins.open(p, 'rb')") == []
+    # Module-qualified constructor -- NOT flagged (receiver.func is
+    # ast.Attribute, not ast.Name, so it falls outside the allow-list).
+    assert _offenders_in("pathlib.Path(tmp).open('w')") == []
     # Ambiguous dotted .open() on other receivers -- NOT flagged (issue scope).
     assert _offenders_in("zipfile.ZipFile(z).open(name)") == []
     assert _offenders_in("Image.open(f)") == []
