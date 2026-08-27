@@ -57,6 +57,13 @@ So **four of the six dimensions have never, in five paid runs, said anything oth
 the context for every finding below: none of them was caught, and the two dimensions
 nominally responsible for catching most of them are the two that have never moved.
 
+> **Read this table as a property of the five committed logs, not of the suite.** The
+> sixth run (see "What the eval run showed") moved three negative tests from 1 to 3 with
+> no behaviour change, which shifts the whole-corpus count. Re-derive with
+> `make judge-report` rather than quoting these figures. What did *not* shift: `Evidence
+> weighing` and `Resolution completeness` are still 3 on every positive run, now 6 logs
+> deep.
+
 ---
 
 ## F1 — Standard 46 is stated in `independence_analysis` and discarded in `weighing_analysis`, on the same write, in 3 of 3 birthplace resolutions
@@ -764,6 +771,120 @@ on that same conflict.
 **Note:** this one is a *suite* validator rather than a per-run one, so it may want to live
 alongside `make judge-report` rather than in `eval/harness/validators/`. The developer
 should place it; the rule is what matters.
+
+---
+
+## What the eval run showed
+
+`make eval-skill SKILL=conflict-resolution` — run log
+`eval/runlogs/unit/conflict-resolution/v1_2026-08-27_15-11-46.json`, 13 tests, $2.7558,
+651s wall. **10 pass, 3 partial** (`ut_001`, `ut_006`, `ut_008`), against 12 pass / 1
+partial in the newest committed log. Recorded here before annotation, because two of the
+results contradict what this document predicted.
+
+### What the fixes achieved
+
+**The F3/F4 fix works, and the judge quotes it.** `ut_conflict_resolution_006` scored
+**Correctness 2** — the first time in six run logs that the resolve-over-an-open-identity-conflict
+defect has been caught by anything. The rationale:
+
+> "The skill treats a_002 (1850 census birthplace) as a settled attribute of the subject
+> Patrick Flynn without addressing the open dependency: c_002 asks whether the Patrick
+> Flynn in src_001 is even the same person as the Patrick Flynn on the 1908 death
+> certificate … It presents a contingent result (valid only if c_002 resolves in favor of
+> the subject being the 1850 Patrick Flynn) as a decided one."
+
+That is the defect, described correctly, in the judge's own words. Both edits contributed:
+the `judge_context` bullet stopped telling it `c_001` was the right answer, and the
+rationale closes by citing the new `Resolution completeness` wording verbatim.
+
+### What the fixes did not achieve — and this is the part to carry forward
+
+**`Evidence weighing` and `Resolution completeness` are still 3 in 6 of 6 positive runs.**
+The dive changed *outcomes* — three partials where the corpus had at most one — without
+un-flattening either dimension it wrote a new fail branch into. Both new rules fired; the
+judge attributed both to a **neighbouring dimension**:
+
+| Rule written into | Defect caught | Dimension the judge actually deducted on |
+|---|---|---|
+| `Evidence weighing` (independence/weighing contradiction) | yes, on `ut_001` | `Source independence analysis` = 2 |
+| `Resolution completeness` (resolving over an open identity conflict) | yes, on `ut_006` | `base/Correctness` = 2 |
+
+`ut_001`'s independence rationale describes **F1** almost exactly — *"it notes the sources
+are 'partially dependent' in underlying knowledge but then treats them as two independent
+sources for weighing purposes"* — and deducts on independence rather than on weighing.
+
+Two readings, and this dive cannot separate them on one run: either the rules are in the
+wrong dimensions and should be moved, or dimension attribution is loose enough that
+*which* dimension carries a rule matters less than whether the rule is stated anywhere the
+judge reads. **Do not re-word either dimension on this evidence alone** — that is a
+one-run inference about a judge that has already shown itself unstable (below). It wants
+the next paid run to settle.
+
+### F1, F2 and F8 all recurred
+
+No prose changed, so this is the expected result — recorded because it is what makes the
+validator requests load-bearing rather than speculative.
+
+- **F2:** **7 of 7** rationales over the ~250-word cap (`ut_008` at 429 words), **4 of them
+  on single-assertion conflicts** where the escape cannot apply. `Resolution completeness`
+  scored 3 on every one. Corpus total is now **38 of 44** writes over the cap. **V2 stands.**
+- **F8:** `ut_002` wrote `c_002` `resolved`/`a_001` and `ut_003` wrote the same `c_002`
+  `unresolved`/`null` — same scenario, same run log, both `pass`. Six of six run logs now.
+  **V7 stands.**
+- **F1:** recurred on `ut_001`, caught but mis-routed (above). **V1 stands, still
+  warning-level.**
+
+### F9 corrected: the negative-test 1s are stochastic, not systematic
+
+**This run refutes the stable half of F9 and I am correcting it rather than rewording it.**
+`ut_009`, `ut_012` and `ut_013` all scored **Correctness 3 / Completeness 3** here. Across
+the five committed logs `ut_009` was 1 in 5 of 5 and `ut_013` 1 in its only run.
+
+| Test | Committed corpus | This run |
+|---|---|---|
+| `ut_009` | 1, 1, 1, 1, 1 | **3** |
+| `ut_012` | 3, 3, 3, 3, 1 | **3** |
+| `ut_013` | 1 | **3** |
+
+The claim in F9 that these are "the only 1s either base dimension takes" was true of the
+committed corpus and is still true of it. The inference that the artifact is *deterministic*
+was wrong — it is run-to-run noise on a structurally identical input, which is the same
+conclusion `ut_012`'s 3→1 flip already hinted at and I under-weighted.
+
+This **strengthens** the proposal on #1972 rather than weakening it: a dimension that
+returns 3 or 1 at random on an identical empty-response routing pass is not measuring
+anything, and scoring it `N/A` loses no signal. It also means **the 4-of-6-flat figure in
+this document's opening table is a property of the committed corpus, not a stable
+property of the suite** — re-derive it with `make judge-report` rather than quoting it.
+
+`ut_010` remains 1/1, but it is not the same case: it is the `grade_on_invariant` test
+where the model does the classification in-body, so there is real output to grade.
+
+---
+
+## F11 — a `Tool Arguments` deduction whose own rationale awards full credit
+
+**Did:** `ut_conflict_resolution_008`, run `v1_2026-08-27_15-11-46`, `base/Tool Arguments`
+= **2**. The rationale's closing sentences:
+
+> "This represents a single clean recovery from validation errors—the tool told Claude
+> exactly what was wrong, and the retry succeeded with correct args. **Per the recovery
+> policy, this scores full credit.**"
+
+**Should:** a rationale concluding "scores full credit" should carry score 3. This
+deduction is the sole reason `ut_008` is `partial` rather than `pass`.
+
+**Gap — lane 2, global.** The recovery policy lives in the base judge prompt, not in this
+skill's `rubric.md`, so the wording is not this dive's to change. Filed with F9's proposal
+on #1972 for the lead.
+
+**Underneath it is a real tooling observation, worth its own look:** the skill called
+`research_query` with an `assertionId` filter three times and got a validation error each
+time — that filter is not supported — before recovering with an unfiltered call. The
+recovery was clean, but three wasted calls on a filter a skill plausibly expects to exist
+is a tool-surface question, not a skill defect. Not chased here; noted for whoever picks
+up `research_query`.
 
 ---
 
