@@ -320,22 +320,42 @@ hooks-test: ## Repo-tooling hooks — scripts/claude-hooks (stdlib python3, no v
 	python3 scripts/claude-hooks/test-gate-issue-create.py
 
 .PHONY: agent-smoke
-agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the plugin agents under their bare names (issue #939; no model call, bills nothing)
-	# The one thing no offline test can see: what the RUNTIME resolves the
-	# hosted options to. It reads the SDK init handshake's agent list — no
-	# query, so it costs nothing but a CLI process start. The key comes from
+agent-smoke: $(ENGINE_BUILD) ## Live agent-registration check (issue #939) + dead-stub MCP abort check (issue #1743)
+	# Arm 1 — agent registration (issue #939). Reads the SDK init
+	# handshake's agent list — no query, no model call. The key comes from
 	# $$ANTHROPIC_API_KEY, else this repo's eval/.env, and is passed under a
 	# distinct name because tests/conftest.py blanks ANTHROPIC_API_KEY.
+	# AGENT_SMOKE=1 turns the live test's skips into hard errors.
 	#
-	# AGENT_SMOKE=1 is what turns the live test's skips into hard errors. The
-	# test skips by design under a plain `make server-test`, so a contributor
-	# with no key still gets a green suite — but it made THIS target report
-	# "passed, 1 skipped" and read as if the check had run. Only the caller
-	# knows which of the two it is, so the caller says.
+	# Arm 2 — dead-stub e2e abort (issue #1743). A real run_e2e against a
+	# server that dies at startup; asserts the init-message abort text and
+	# the retention rule (no files written). Bills one session start (~25s).
+	#
+	# Both arms are hand-run; issue #1142 is what would make them CI.
 	cd apps/server && \
 	  AGENT_SMOKE=1 \
 	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run pytest tests/test_plugin_agents.py -q -rs
+	# Arm 2 — dead-stub e2e abort (issue #1743).
+	$(eval _SMOKE_RUNLOG := $(shell python3 -c "import tempfile; print(tempfile.mkdtemp(prefix='smoke-runlog-'))"))
+	$(eval _SMOKE_OUT := $(shell python3 -c "import tempfile; print(tempfile.mkdtemp(prefix='smoke-out-'))"))
+	cd eval/harness && \
+	  uv run --frozen python -m e2e.run_e2e \
+	    --test kenneth-quass-death \
+	    --mcp-server-entry "$(CURDIR)/eval/harness/tests/fixtures/dead-stub.js" \
+	    --runlog-root "$(_SMOKE_RUNLOG)" \
+	    --skip-judge > "$(_SMOKE_OUT)/capture.txt" 2>&1; \
+	  echo "--- Asserting dead-stub arm ---"; \
+	  grep -q "MCP UNAVAILABLE" "$(_SMOKE_OUT)/capture.txt" || \
+	    { echo "FAIL: output missing 'MCP UNAVAILABLE'" >&2; rm -rf "$(_SMOKE_RUNLOG)" "$(_SMOKE_OUT)"; exit 1; }; \
+	  grep -q "the 'genealogy' MCP server reported 'failed'" "$(_SMOKE_OUT)/capture.txt" || \
+	    { echo "FAIL: output missing server-reported-failed text" >&2; rm -rf "$(_SMOKE_RUNLOG)" "$(_SMOKE_OUT)"; exit 1; }; \
+	  grep -q "STUB-MARKER" "$(_SMOKE_OUT)/capture.txt" || \
+	    { echo "FAIL: output missing stub stderr (STUB-MARKER)" >&2; rm -rf "$(_SMOKE_RUNLOG)" "$(_SMOKE_OUT)"; exit 1; }; \
+	  [ -z "$$(find "$(_SMOKE_RUNLOG)" -type f 2>/dev/null | head -1)" ] || \
+	    { echo "FAIL: runlog-root should hold no files but found:" >&2; find "$(_SMOKE_RUNLOG)" -type f >&2; rm -rf "$(_SMOKE_RUNLOG)" "$(_SMOKE_OUT)"; exit 1; }; \
+	  rm -rf "$(_SMOKE_RUNLOG)" "$(_SMOKE_OUT)"; \
+	  echo "Dead-stub arm: PASS"
 
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
