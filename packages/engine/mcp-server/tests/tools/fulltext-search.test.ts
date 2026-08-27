@@ -80,7 +80,10 @@ function flynnEntry(): FSFulltextEntry {
         { type: "DATE", value: "1849" },
         { type: "OTHER", value: "ignored" }, // not NAME/PLACE/DATE -> dropped
       ],
-      highlightTexts: ["Patrick <em>Flynn</em>"],
+      // Bare matched terms, not marked-up snippets -- confirmed against a
+      // live upstream response (issue #1826); the old "<em>"-wrapped
+      // assumption here never matched what production actually sends.
+      highlightTexts: ["Patrick", "Flynn", "Patrick Flynn"],
     },
   };
 }
@@ -358,7 +361,7 @@ describe("fulltextSearchTool response shaping", () => {
     expect(r.names).toEqual(["Patrick Flynn", "Mary Flynn"]); // deduped, OTHER dropped
     expect(r.places).toEqual(["Tipperary"]);
     expect(r.dates).toEqual(["1849"]);
-    expect(r.highlightTerms).toEqual(["Patrick <em>Flynn</em>"]);
+    expect(r.highlightTerms).toEqual(["Patrick", "Flynn", "Patrick Flynn"]);
     expect(r.sourceUrl).toBe(
       "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M"
     );

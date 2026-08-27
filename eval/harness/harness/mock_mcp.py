@@ -460,6 +460,28 @@ def create_mock_server(
                 if staged is not None:
                     response = {**response, "staged": staged}
 
+            # Mirrors fulltext_search.ts's own strip: once staged, the inline
+            # textDocument is gone from the agent's view — the fixture's
+            # canned response still has it (it represents pre-strip upstream
+            # data), so this must run every time staging succeeded here, not
+            # be baked into the fixture file (which can't express "only when
+            # this call happened to stage" — the same fixture also serves
+            # un-staged call shapes). Scoped to fulltext_search only;
+            # record_search's equivalent gedcomx strip is a separate gap,
+            # not fixed here (issue #1826).
+            if (
+                _name == "fulltext_search"
+                and "error" not in response
+                and response.get("staged")
+            ):
+                response = {
+                    **response,
+                    "results": [
+                        {k: v for k, v in r.items() if k != "textDocument"}
+                        for r in response.get("results", [])
+                    ],
+                }
+
             # Fold in the ranking the real record_search performs when the
             # caller names a subject. Matched against the test's own
             # rank_search_matches fixtures so each test keeps the ranking it was

@@ -47,6 +47,10 @@ descriptions distinct so Claude picks the right one.
       "type": "string",
       "description": "Search within place fields. Same operator syntax. Note: place matches against collection metadata, which can cause false positives. Prefer using place as a post-filter rather than in the query."
     },
+    "nlQuery": {
+      "type": "string",
+      "description": "Natural language search query or a FamilySearch tree person ID (e.g. \"Search for John Doe born in Austria\" or \"KD96-TV2\"). Sends the X-FS-Feature-Tag: search_naturalLanguageSupport header — see Auth."
+    },
     "collectionId": {
       "type": "string",
       "description": "Filter to a specific FamilySearch collection by ID."
@@ -85,7 +89,7 @@ descriptions distinct so Claude picks the right one.
     },
     "count": {
       "type": "number",
-      "description": "Number of results to return. Default 20, max 100."
+      "description": "Number of results to return. Default 5, max 100."
     },
     "offset": {
       "type": "number",
@@ -94,13 +98,18 @@ descriptions distinct so Claude picks the right one.
     "includeFacets": {
       "type": "boolean",
       "description": "When true, include facet counts for collection, place, year, and record type. Default false."
+    },
+    "projectPath": {
+      "type": "string",
+      "description": "Absolute path to the active project directory. When supplied, the tool stages its raw response host-side and returns a `staged` handle (`search-result-staging-spec.md`) — pass `staged.resultsRef` to `research_log_append` as `stagedResultsRef`. Once staged, the inline `textDocument` field is stripped from every result (see Output schema)."
     }
   },
   "required": []
 }
 ```
 
-At least one of `keywords`, `name`, or `place` must be provided.
+At least one of `keywords`, `name`, `place`, `nlQuery`, or `imageGroupNumber`
+must be provided.
 
 ## Query parameter mapping
 
@@ -111,6 +120,7 @@ The tool maps its input to the upstream API query parameters:
 | `keywords` | `q.text` |
 | `name` | `q.fullName` |
 | `place` | `q.recordPlace` |
+| `nlQuery` | `nlQuery` |
 | `collectionId` | `f.collectionId` |
 | `imageGroupNumber` | `q.groupName` |
 | `yearFrom` | `f.recordYear0` |
@@ -133,33 +143,49 @@ interface FulltextSearchResult {
   /** The record's ARK in canonical form (a 3:1: or 3:2: entry, e.g.
    *  "ark:/61903/3:1:3Q9M-CSNL-S98H-M"). Feed to source_attachments' uris. */
   id: string;
-  /** Relevance score */
-  score?: number;
-  /** Collection title */
-  collectionTitle?: string;
+  /** Resolver URL for the record */
+  sourceUrl?: string;
   /** Collection ID */
   collectionId?: string;
+  /** Collection title */
+  collectionTitle?: string;
   /** Record title */
-  recordTitle?: string;
-  /** URL to the record page */
-  recordUrl?: string;
-  /** URL to the document image */
-  imageUrl?: string;
-  /** Transcript snippet with search term highlights */
-  snippet?: string;
+  title?: string;
+  /** Record date */
+  recordDate?: string;
+  /** Record type */
+  recordType?: string;
+  /** Record place */
+  recordPlace?: string;
+  /**
+   * The full AI-transcribed page text. Present when `projectPath` was NOT
+   * supplied (nothing was staged, so nothing to re-read from a sidecar).
+   * Once staged, this field is stripped unconditionally from every result —
+   * the overflow driver, 79-136 KB across a result set — and does not
+   * survive round-trip through record_read (its sidecar path requires
+   * `gedcomx`, which a fulltext-staged result never has). See
+   * search-result-staging-spec.md §2 "Inline-payload strip".
+   */
+  textDocument?: string;
   /** Names found in the record */
   names?: string[];
   /** Places found in the record */
   places?: string[];
   /** Dates found in the record */
   dates?: string[];
-  /** Record type */
-  recordType?: string;
+  /**
+   * Bare terms the query matched on (e.g. ["Flynn", "witness"]) — NOT
+   * marked-up transcript fragments, confirmed against a live upstream
+   * response. Survives the textDocument strip, so it is the primary
+   * post-strip triage signal.
+   */
+  highlightTerms?: string[];
 }
 
 interface FulltextFacet {
-  value: string;
+  name: string;
   count: number;
+  items: { name: string; count: number; filterParam: string }[];
 }
 
 interface FulltextSearchResponse {
@@ -169,12 +195,10 @@ interface FulltextSearchResponse {
   offset: number;
   hasMore: boolean;
   results: FulltextSearchResult[];
-  facets?: {
-    collections?: FulltextFacet[];
-    places?: FulltextFacet[];
-    years?: FulltextFacet[];
-    recordTypes?: FulltextFacet[];
-  };
+  facets?: FulltextFacet[];
+  /** Present only when `projectPath` was supplied — search-result-staging-spec.md */
+  staged?: { resultsRef: string; returnedCount: number } | null;
+  stagingError?: string;
 }
 ```
 
@@ -191,24 +215,25 @@ interface FulltextSearchResponse {
 
 Uses `getValidToken()` from `src/auth/refresh.ts` — same as the
 existing `search` tool. Requires the `BROWSER_USER_AGENT` from
-`src/constants.ts` (Imperva WAF requirement).
+`src/constants.ts` (Imperva WAF requirement). When `nlQuery` is set, an
+additional `X-FS-Feature-Tag: search_naturalLanguageSupport` header is sent
+(the `nlQuery` branch in `fulltextSearchTool`) — omitted for every other
+query shape.
 
 ## Implementation notes
 
-1. **Response mapping**: The upstream API likely returns a different
-   shape than the indexed search. The implementation must probe the
-   actual response and map it to the output schema above. The types
-   above are a starting point — adjust based on the actual API response.
+1. **Response mapping**: the upstream response is mapped to the output
+   schema above by `mapEntry` (`fulltext-search.ts`). Confirmed against a
+   live upstream response: the upstream entry carries no relevance `score`,
+   and its `content.highlightTexts` are bare matched terms, not marked-up
+   snippets — both are reflected in the output schema above, not left as an
+   open question.
 
-2. **Snippet extraction**: FTS results should include transcript
-   snippets showing where the search terms appear. This is the key
-   differentiator from indexed search.
-
-3. **Facets**: When `includeFacets` is true, send `m.defaultFacets=on`
+2. **Facets**: When `includeFacets` is true, send `m.defaultFacets=on`
    and extract facet data from the response. Facets help users narrow
    broad searches.
 
-4. **No fuzzy matching**: Unlike indexed search, FTS does exact text
+3. **No fuzzy matching**: Unlike indexed search, FTS does exact text
    matching only. The tool description must make this clear so Claude
    constructs appropriate queries.
 

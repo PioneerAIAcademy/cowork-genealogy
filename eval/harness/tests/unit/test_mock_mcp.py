@@ -305,6 +305,39 @@ def test_record_search_omits_ranked_when_test_declares_no_rank_fixture(tmp_path)
     assert "ranked" not in body
 
 
+def test_fulltext_search_strips_textDocument_once_staged(tmp_path):
+    """Mirrors fulltext_search.ts's own strip (issue #1826): once staging
+    succeeds, the inline textDocument must not reach the agent — the fixture's
+    canned response carries it unconditionally (pre-strip upstream shape), so
+    the mock must strip it the same way the real tool does."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flynn-witnesses"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(
+        tools_by_name,
+        "fulltext_search",
+        {"keywords": "+Flynn", "projectPath": str(tmp_path)},
+    )
+    body = _extract_response_dict(result)
+    assert body.get("staged"), "test assumes staging succeeded — check the build"
+    assert "textDocument" not in body["results"][0]
+    # The remaining triage stubs survive the strip.
+    assert body["results"][0].get("names")
+    assert body["results"][0].get("highlightTerms")
+
+
+def test_fulltext_search_keeps_textDocument_when_not_staged(tmp_path):
+    """No projectPath -> nothing staged -> nothing to strip (matches the real
+    tool's `if (out.staged)` guard — never strips an un-staged search)."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flynn-witnesses"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(tools_by_name, "fulltext_search", {"keywords": "+Flynn"})
+    body = _extract_response_dict(result)
+    assert "staged" not in body
+    assert "textDocument" in body["results"][0]
+
+
 # --- Returned-failure visibility (mirrors src/tool-result.ts) ------------------
 #
 # The production dispatch marks a returned `{ok: false}` as `isError`; this

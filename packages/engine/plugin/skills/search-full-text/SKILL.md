@@ -172,11 +172,25 @@ Read `references/transcription-quirks.md` for HTR error patterns.
 
 ### 6. Triage results
 
-For each result, evaluate match quality:
-- Does the target name appear in the textDocument?
-- Is the name in the right context (witness, will clause, deed party)
-  or a false positive (cross-column alignment, place name matching)?
-- Is the place and approximate date consistent?
+**Every logged search stages its results, and staging strips the full
+transcript (`textDocument`) from every result — it is never present here.**
+Triage from the fields that do survive:
+- `highlightTerms` — the bare terms the query actually matched in this
+  record (e.g. `["Flynn", "witness"]`, not a marked-up excerpt). Confirms
+  which of your query terms this record actually hit on.
+- `names`/`places`/`dates` — every name, place, and date the record's own
+  entity extraction found. Cross-check against the target's known
+  associates, locality, and date range.
+- `title`, `recordType`, `recordPlace` — is this the right kind of record,
+  in the right place, for the research question?
+
+**What this cannot tell you: whether the name appears in the right
+*context*** (witness, will clause, deed party — vs. a false positive from
+cross-column alignment or a place name coincidence). None of the surviving
+fields carry surrounding text, so that judgment needs the source itself —
+use the attachment check below to prioritize, and let extraction
+(`record-extraction`, step 11) be where context actually gets read, from
+the record image, not guessed at from staged fields.
 
 **Attachment check:** After narrowing to promising results, call
 `source_attachments({ uris: [ark1, ark2, ...] })` to check whether
@@ -265,8 +279,10 @@ name pairs. See `references/search-strategies.md` for triggers.
 
 ### 11. Pass records to extraction
 
-For each promising record, invoke record-extraction to process it.
-FTS results include transcript text — pass this context along.
+For each promising record, invoke record-extraction to process it. Staging
+strips the full transcript, so pass what survives — `names`/`places`/`dates`,
+`title`, `recordType`, `recordPlace`, `highlightTerms` — as triage context;
+record-extraction reads the source image itself for the transcript.
 
 ### 12. Present results
 
