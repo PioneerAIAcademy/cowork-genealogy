@@ -324,9 +324,10 @@ figure circulated for this parameter came from a probe that sent
 `q.isPrincipal=on`; the tool sends `true`/`false`, so that probe never
 exercised the `false` branch at all.
 
-Why `false` is the load-bearing half, and why relative-name anchors do
-not replace it: `fatherGivenName`/`spouseGivenName` search the *target*
-with a relative named, so they need the target's name. `false` matches on the *known* person's own persona;
+How `false` differs from the relative-name anchors:
+`fatherGivenName`/`spouseGivenName` match on the target's indexed
+relative fields, so a record that leaves those blank is not narrowed
+by them. `false` matches on the *known* person's own persona;
 `record_read` on a hit then gives the record's persons and
 relationships. Which route is better when the target has no name yet is
 not measured — `search-strategy-levers.md` prescribes clearing the
