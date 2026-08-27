@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_init_project_vqx",
+    "skill": "init-project",
+    "name": "Person-level sources must not be conflated with empty fact-level sources; error detection stays within the documented list",
+    "type": "positive",
+    "description": "Regression test for a live alpha-feedback report (issue #1901): the skill told the researcher a person had zero attached sources when 52 were actually returned, because it read the (correctly absent) per-fact `sources` refs instead of the top-level `sources` array the tool actually populates. The same session also flagged two things as 'structural errors' that are not on init-project's documented error-detection list (a shared given name between two children, and a relationship with no explicit subtype) and the researcher pushed back that neither was an error. This fixture reproduces both shapes at once: a top-level `sources` array of 6 real source descriptions with zero fact-level source refs anywhere, plus two siblings and two ParentChild links (Josephine's, one to each parent) with no `subtype`.",
+    "tags": ["initialization", "familysearch", "tree", "sources", "pedigree-analysis", "false-positive", "issue-1901"]
+  },
+  "input": {
+    "user_message": "Start a new research project. Analyze the sources and family structure for Jean Baptiste Moreau (MRQ1-JBM) and look for errors or inconsistencies.",
+    "scenario": null
+  },
+  "mcp_fixtures": ["person-read-moreau-person-level-sources"],
+  "judge_context": [
+    "The fixture's top-level `sources` array carries 6 source descriptions. The response must accurately reflect that sources ARE attached (a count at or near 6, or an accurate qualitative statement that sources exist) — never a claim of zero/no sources attached. Reporting zero sources when the tool returned 6 is a Correctness failure, not a minor imprecision.",
+    "Every fact on every person in this fixture has NO fact-level `sources` ref at all — this is correct and expected FamilySearch behavior (sources attached at the person level, not linked to a specific claim), not evidence that no sources exist. The skill may reasonably NOTE that sources aren't linked to individual facts (a real, useful observation about traceability) — but that observation must be presented alongside an accurate total count, never in place of one, and never phrased as 'no sources were found.'",
+    "The fixture's relationships include two ParentChild links for Josephine Moreau (MRQ1-T4W) -- one to each parent -- neither carrying a `subtype` field, alongside a sibling (Henri, MRQ1-P8R) whose two ParentChild links both carry `subtype: \"Biological\"`. Do NOT present the missing subtype on either of Josephine's relationships as a 'structural error,' data inconsistency, or anything requiring correction — an absent subtype is not on init-project's documented error-detection list (birth-after-death, parent-child age gaps outside 15-50 years, place inconsistency, non-existent-jurisdiction dates, sibling births under 9 months apart) and treating it as a defect is an unsupported inference the researcher would have to push back on.",
+    "Two of the returned children (Henri and Josephine) do not share a name with each other or their parents in this fixture, so there is no same-name-sibling pattern to (correctly or incorrectly) flag here — if the response nonetheless raises a naming-pattern concern about persons in this family, that is out-of-scope invention regardless of framing.",
+    "Should still perform and report the documented error-detection checks (birth-after-death, age gaps, place/jurisdiction consistency, sibling birth spacing) — staying within the list is not the same as skipping the analysis."
+  ]
+}
