@@ -9,6 +9,13 @@ Prohibition list: [`conflict-resolution-prohibition-list.md`](./conflict-resolut
 `v1_2026-08-19_15-24-31.json` — 63 runs over 13 tests, plus the five `.ann.json`
 annotations. Transcripts read before scores, per Step 2.
 
+> **`v1_2026-08-18_10-20-02` is no longer on disk.** It and its `.ann.json` were pruned by
+> the harness's 5-candidate retention cap when this dive's own run landed, and the
+> deletions are committed in this PR. It was read in full while it was present, and the
+> findings below cite it; recover it from git history (`git show
+> <pre-prune-commit>:eval/runlogs/unit/conflict-resolution/v1_2026-08-18_10-20-02.json`) if
+> you need to check a quotation against it.
+
 ---
 
 ## Sequencing
@@ -152,8 +159,10 @@ every one of those is an *identity* conflict carrying exactly **one**
 `competing_assertion_id`, so there is no second competing assertion to name and nothing
 for length to buy:
 
-- `ut_conflict_resolution_002` / `c_002`, `v1_2026-08-18_10-20-02` — **475 words** on
-  `competing_assertion_ids: ["a_001"]`. Nearly double the cap.
+- `ut_conflict_resolution_002` / `c_002`, `v1_2026-08-18_10-20-02` (pruned by the
+  5-candidate retention cap when this dive's run landed) — **475 words** on
+  `competing_assertion_ids: ["a_001"]`. Nearly double the cap. Highest surviving instance:
+  `ut_conflict_resolution_001` / `v1_2026-08-19_15-24-31`, 460 words.
 - `ut_conflict_resolution_003` / `c_002`, `v1_2026-08-18_19-42-11` — **424 words**, same
   single-assertion conflict.
 - `ut_conflict_resolution_005` / `c_003`, `v1_2026-08-18_15-37-43` — **420 words**,
@@ -631,10 +640,12 @@ Nothing needs interpreting, and the one exception is expressed entirely in terms
 array length.
 
 **What a violation looks like:** `ut_conflict_resolution_002`, run
-`v1_2026-08-18_10-20-02`, `c_002` — 475 words on `competing_assertion_ids: ["a_001"]`.
+`v1_2026-08-18_10-20-02` (pruned by the 5-candidate retention cap when this dive's run
+landed), `c_002` — 475 words on `competing_assertion_ids: ["a_001"]`.
 31 of 37 writes in the corpus are over the rationale cap, **16 of them on
 single-assertion conflicts where the escape clause cannot apply**; 16 of 37 blow the
-weighing cap too.
+weighing cap too. Highest surviving instance: `ut_conflict_resolution_001` /
+`v1_2026-08-19_15-24-31`, 460 words.
 
 ---
 
@@ -820,6 +831,48 @@ wrong dimensions and should be moved, or dimension attribution is loose enough t
 judge reads. **Do not re-word either dimension on this evidence alone** — that is a
 one-run inference about a judge that has already shown itself unstable (below). It wants
 the next paid run to settle.
+
+### Calibration note
+
+**The two new rubric fail branches did not move the dimensions they were written into.**
+`Evidence weighing` and `Resolution completeness` each scored **3 in 6 of 6 positive
+runs** — unchanged from the five committed logs, and unchanged by this PR's edits.
+
+`ut_conflict_resolution_008` is the sharpest case, because it scored **3 on both** while
+exhibiting the behaviour each branch names:
+
+- The `Resolution completeness` branch describes "a competing assertion treated as a
+  settled attribute of the research subject while an unresolved identity conflict covers
+  that assertion's person-link". `ut_008` resolved `c_001` on `a_002` with `c_002` and
+  `c_003` both still `unresolved`. Exact match. Scored 3.
+- The `Evidence weighing` branch forbids weighing that rests on "an informant identity,
+  relationship, or firsthand knowledge the record does not establish". `ut_008`'s
+  `weighing_analysis` says the census assertions were "recorded while Patrick lived in the
+  household of **his parents** — the people with direct, **firsthand knowledge** of where
+  he was born", and that the 1850 informant was "almost certainly Thomas Flynn or his
+  wife, **present at the birth**". `a_002.information_quality` is `indeterminate`; the
+  parentage is `q_001`, unproved. Exact match. Scored 3.
+- The first half of the `Evidence weighing` branch — the independence/weighing
+  contradiction — is only a **partial** match here, and that is worth stating rather than
+  rounding up. This run's independence analysis says "partially independent" rather than
+  collapsing the pair to one report, and the weighing carries that qualifier through
+  ("two partially independent records"). It still reaches for Standard 48 rationale 1 on a
+  side its own analysis calls partly dependent, which the branch forbids, but it is a
+  softer instance than the three in the committed corpus.
+
+**The edits are not inert.** `Source independence analysis` moved to **2** on `ut_001` —
+and the sampled annotation confirmed that 2 with no score change, so a human agrees the
+deduction is right. What the run cannot tell us is whether the two unmoved dimensions are
+mis-scoped or whether the judge simply attributes loosely; both readings fit, and one run
+does not separate them.
+
+**The `ut_008` gap is judge-only.** `ut_008` fell outside the harness's designated review
+sample (seed 2995: `ut_001`, `ut_007`, `ut_009`, `ut_012`, `ut_013`), so no human has
+confirmed either 3. **Recorded here rather than closed by re-annotating** — re-running the
+sample to reach one test would spend a paid run to confirm a negative result this
+paragraph already states, and the annotation would no longer be the harness's own sample.
+
+---
 
 ### F1, F2 and F8 all recurred
 
