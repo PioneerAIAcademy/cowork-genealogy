@@ -196,7 +196,7 @@ def test_resolved_question_not_reopened(before_state, after_state, test):
     So this names the specific deltas that are never legitimate here: the
     target question's `status` and `exhaustive_declaration`, and
     `project.status`. Same shape as
-    `test_search_external_sites.py::test_no_external_search_on_planning_request`.
+    `test_search_external_sites.py::test_no_external_search_or_log_on_routeaway_negative`.
     """
     if "no-plan-writes-when-resolved" not in test.get("tags", []):
         pytest.skip("not a no-plan-writes-when-resolved scenario")
