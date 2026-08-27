@@ -312,13 +312,10 @@ research_log_append({
   outcome: "<positive if returned > 0, else negative>",
   resultsExamined: <returned>,
   notes: "Curated external links for <place>.",
-  // This entry grades the FETCH, not the search. `positive` means links came
-  // back, even when none of them fit the plan item's record type — that case
-  // goes in `notes` ("2 links returned, both wrong record type: tax lists and
-  // an 1850 census"). Do not log it `negative`: "FS curates nothing here" and
-  // "FS curates plenty, none of it relevant" call for different next steps,
-  // and collapsing them loses that. The search's own outcome is the
-  // `external_site` entry below.
+  // Grades the FETCH, not the search: `positive` whenever links came back,
+  // even if none fit the plan item's record type. Put that in `notes`
+  // ("2 links returned, both wrong record type: tax lists and an 1850
+  // census"). The search's own outcome is the `external_site` entry below.
   stagedResultsRef: staged.resultsRef   // omit only when there is no staged handle (empty year-filtered set)
 })
 ```

@@ -27,7 +27,7 @@
   ],
   "judge_context": [
     "Generated URL should target MyHeritage (myheritage.com or appropriate locale) — not silently substitute Ancestry's URL structure",
-    "URL should include Patrick Flynn's search parameters (name, birth year ~1845) using MyHeritage's parameter naming conventions. MyHeritage's URL template only exposes `birth_place` for location encoding (no separate residence/jurisdiction field), so a residence or county value does not belong in this URL at all; the birthplace value itself is graded against the rubric's conflicts[] rule. Do not penalize the absence of a county-level location parameter — the template does not support it.",
+    "URL should include Patrick Flynn's search parameters (name, birth year ~1845) using MyHeritage's parameter naming conventions. MyHeritage's URL template only exposes `birth_place` for location encoding (no separate residence/jurisdiction field), so a residence or county value does not belong in this URL at all. Scenario state for grading the birthplace value, which the rendered before-state does not carry: research.json holds conflict c_001 on `birthplace`, `status: \"resolved\"`, `preferred_assertion_id: a_002` whose value is Ireland (corroborated by a_009); the competing value Pennsylvania was rejected. Grade the encoded `birth_place` against the rubric's conflicts[] rule using that state. Do not penalize the absence of a county-level location parameter — the template does not support it.",
     "Should not fabricate captured records or pre-populate sources — the URL-generation step is single-turn; results come back via the multi-turn capture phase which is out of v1 scope"
   ]
 }
