@@ -498,6 +498,50 @@ pick them up will never read your report.
 **Contention over a skill's eval snapshot is the exception and is Gate 4** — that
 one is hard, because the second item cannot land without paying for a second run.
 
+#### Finding them — because until 2026-08-27 nothing here did
+
+This gate told you to write reciprocal notes and never said how to find a pair.
+The Gate 4 map below was the only automated collision check, and it keys on
+snapshot paths by construction, so a collision anywhere else — engine source, the
+harness, a spec — was invisible to every mechanism in this skill.
+
+**The half that nothing else can cover is issue-against-issue.** `/review-ready`
+fans out one agent per issue and those agents do check open PRs, so the
+issue-against-PR half is largely redundant with the gate. But each agent sees
+exactly one issue, so a pair of issues that edit the same file is invisible to
+all of them — which is why `/review-ready` §3 asks its collator to cross-check
+the agents by hand. This is that check, mechanised.
+
+Run it over `Ready,In Progress,Review` for the issue-against-issue half, and over
+the promotion shortlist for the issue-against-PR half. It reads `**Touches:**`
+lines, so it is only ever as good as they are — a missing line means an item
+simply does not appear.
+
+```sh
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 > /tmp/board.json
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
+  --json number,title,body > /tmp/open.json
+gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
+  --json number,title,files > /tmp/prs.json
+python3 .claude/skills/fill-ready/collisions.py \
+  /tmp/board.json /tmp/open.json /tmp/prs.json "Ready,In Progress,Review"
+```
+
+**Three guards keep it from becoming a constant, and each one is there because
+the version without it fired on almost everything.** Do not remove one without
+re-measuring; the counts below are from the 2026-08-27 board.
+
+| Guard | Why | Without it |
+|---|---|---|
+| A concrete file never implies its directory | Two files in `src/tools/` are not a collision | Every `src/tools/` item paired with every other — 14 pairs on one issue |
+| A directory holding more than 10 tracked files is not pairable (snapshot dirs exempt) | Naming `src/tools/` (47 files) means "I add a file here", not "I edit all 47" | 3 of 8 pairs false, all from one issue's `src/tools/` entry |
+| A file named by more than 3 candidates is a hub, reported once | `docs/architecture.md` is the repo's map; everyone edits it, in different sections | 26 of 79 shared-path hits were that one file |
+
+The verdict it prints is advisory: a shared **snapshot** path means Gate 4 and is
+hard, anything else is Gate 3 and only needs the notes below. Read the pairs, do
+not paste them — the script cannot tell "both edit this file" from "one deletes
+what the other adds".
+
 **Write a reciprocal note at the top of both bodies** — below a `> **Reviewed …**`
 marker if `/review-ready` already left one — in the lead's own form:
 
@@ -643,6 +687,11 @@ named three other skills. Discount a `Touches:` line inherited from an issue sin
 **The map is a snapshot.** It is right for the pass that produced it and stale by the next
 one — re-run it before you write anything to the board, and tell a junior to re-check the
 slot before opening a PR rather than trusting a table in an issue body.
+
+**This map only sees snapshot paths, and that is correct — but it is not the whole
+collision picture.** `build_snapshot` deliberately excludes
+`packages/engine/mcp-server/src/**`, so two items rewriting one engine file collide
+without ever appearing here. That is Gate 3's detector, above; run both.
 
 **Reclaim a stalled slot.** A holder that has not moved in ~10 days is blocking a
 whole skill. Say so in your report with the assignee and the idle count, and
