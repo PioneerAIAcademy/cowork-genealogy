@@ -32,9 +32,28 @@ Always investigate.
 
 ### `hasEventAfterDeath1`
 - Rule: at least one event is dated more than 1 year after the
-  person's latest death-like fact.
-- Cause: a same-name individual's records merged in, or wrong
-  death date.
+  person's latest death-like fact. That family is Death, Burial,
+  Cremation, Funeral, Obituary, Probate, Will, DeathRegistration
+  and BurialRegistration; a fact of any of those types raises the
+  anchor and so cannot fire this tag on its own, however long
+  after the death it is dated.
+- Before the causes: read the date of the EVENT the record
+  describes, not the date the record was created, transcribed,
+  indexed or digitized. A transcription date recorded as the
+  event date does damage both ways -- on a death-like fact it
+  pushes the anchor forward and HIDES genuine post-death events
+  (and inflates `hasAgeRangeGreaterThan120`); on any other fact
+  type it manufactures a post-death event that never happened.
+- Cause: a same-name individual's records merged in; a wrong
+  death date; or a posthumous mention -- a record whose content
+  postdates the death and merely references the deceased.
+  Posthumous records include probate and estate administration
+  running years after death, including an heir petition that
+  reopens it; obituaries; death notices, which are distinct from
+  obituaries; and city directories. What decides whether such a
+  record fires this tag is the fact TYPE it was attached as, not
+  its date: the same estate file is silent as a Probate fact and
+  fires as a Residence fact.
 - Action: check person_evidence links for the post-death event.
 
 ### `hasAgeRangeGreaterThan120`
