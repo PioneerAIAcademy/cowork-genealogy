@@ -18,7 +18,9 @@
     "max_turns": 20,
     "max_wall_clock_seconds": 600,
     "stub_skills": [
-      "research-plan"
+      "question-selection", "locality-guide", "research-plan",
+      "search-records", "record-extraction", "person-evidence",
+      "research-exhaustiveness", "proof-conclusion"
     ]
   },
   "judge_context": [

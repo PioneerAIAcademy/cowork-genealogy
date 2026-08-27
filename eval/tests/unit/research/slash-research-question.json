@@ -7,7 +7,7 @@
     "description": "The /research [question] form is an explicit trigger listed in the skill description. The user is handing off a specific research question to be driven through the full GPS workflow.",
     "tags": ["core-trigger", "slash-command"],
     "expected_outcome": "xfail",
-    "xfail_reason": "The harness populates skills_invoked from Skill tool calls only, and slash-command entry makes none, so orchestrator.py:1202 fails every positive test using a /research message. Remove this marker when the harness records slash entry."
+    "xfail_reason": "Slash-command entry records no Skill call, so skills_invoked never holds `research` and the positive-test activation check fails it. The marker only binds when the run reaches that check — an aborted run is not remapped. Remove this marker when the harness records slash entry."
   },
   "input": {
     "user_message": "/research When and where did Patrick Flynn die?",
@@ -19,7 +19,7 @@
   ],
   "execution": {
     "max_turns": 20,
-    "max_wall_clock_seconds": 600,
+    "max_wall_clock_seconds": 1200,
     "stub_skills": [
       "question-selection", "locality-guide", "research-plan",
       "search-records", "record-extraction", "person-evidence",

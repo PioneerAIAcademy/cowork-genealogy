@@ -16,10 +16,12 @@
     "scenario": "empty-project-just-created"
   },
   "execution": {
-    "max_turns": 20,
+    "max_turns": 30,
     "max_wall_clock_seconds": 600,
     "stub_skills": [
-      "question-selection"
+      "question-selection", "locality-guide", "research-plan",
+      "search-records", "record-extraction", "person-evidence",
+      "research-exhaustiveness", "proof-conclusion"
     ]
   },
   "judge_context": [

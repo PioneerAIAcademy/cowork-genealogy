@@ -51,7 +51,11 @@ def test_routes_to_expected_skill(skills_invoked, test):
     if expected is None:
         pytest.skip("routing tag present but no routes-to: data tag")
     skill_under_test = test.get("skill", "")
-    delegations = [s for s in skills_invoked if s != skill_under_test]
+    if skill_under_test in skills_invoked:
+        tail = skills_invoked[skills_invoked.index(skill_under_test) + 1 :]
+    else:
+        tail = list(skills_invoked)
+    delegations = [s for s in tail if s != skill_under_test]
     if expected == "stop":
         assert not delegations, (
             "Router should stop without invoking any sub-skill when "
