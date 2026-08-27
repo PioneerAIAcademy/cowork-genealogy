@@ -294,7 +294,10 @@ Order items for efficient discovery (BCG Standard 15):
 
 1. **Highest probability first** — indexed sources where the subject
    should appear
-2. **Free before paid** — FamilySearch before Ancestry/MyHeritage
+2. **Free before paid** — FamilySearch before Ancestry/MyHeritage. For a
+   `newspaper` item this means Chronicling America and the place's
+   state/regional archive before Newspapers.com or GenealogyBank, with the
+   paid site as the `fallback_for`
 3. **Original before derivative** — search the index for discovery,
    plan to verify against the original image
 4. **Narrow before broad** — specific county before adjacent counties
@@ -407,16 +410,6 @@ research_append({
 - `status`: the item's progress — exactly one of `planned`,
   `in_progress`, `completed`, or `skipped`. New items are `planned`.
   Never use any other value (e.g. not `not_started`, not `pending`).
-
-**A `newspaper` item names a free archive before a paid one.** Chronicling
-America (US, 1690–1963) and the state/regional archive for the place — Utah
-Digital Newspapers, California Digital Newspaper Collection, and their
-equivalents — are free to search and need no subscription. Plan those first,
-with Newspapers.com or GenealogyBank as the `fallback_for` item, not the
-primary. Routing every newspaper item to a subscription site strands any
-researcher who lacks one, and strands the ones who have it too when the paper
-they need was never digitized there. Check the place's `locality-guide` output
-first: it usually already names the right regional archive.
 
 **Field-value rules (strict).** Use only schema-defined fields and
 values. A plan's `status` is one of `active`, `superseded`,
