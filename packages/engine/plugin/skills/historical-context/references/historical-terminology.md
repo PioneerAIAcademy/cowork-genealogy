@@ -60,6 +60,28 @@ before roughly 1900, consider the step-relationship interpretation
 alongside the marriage-relationship interpretation. Look for
 evidence of a remarriage that would create step-relations.
 
+### "Guardian"
+
+A man appointed guardian of minor children who bear a **different
+surname** from his own — especially shortly after he married a woman
+connected to that surname — is most often their **stepfather**, and the
+children are her children by a prior marriage. The differing surname is
+the expected pattern in that situation, not a conflict to be explained
+by a missing generation or unrelated kinship. (Guardianship took many
+forms — a natural parent, grandparent, uncle, or unrelated appointee
+could all serve — so the inference here is specific to the remarriage
+timing, not a general rule about guardianship.)
+
+**Research implication:** When a guardian and his wards have different
+surnames and the appointment closely follows the guardian's marriage to
+a woman tied to the wards' surname, read the wards as likely
+step-children (hers by a former husband) rather than minting them as
+unrelated persons or inferring an extra generation. Confirm with the
+mother's prior marriage, the wards' father's death or estate record, and
+the marriage that created the step-relationship. Absent that marriage
+timing, a differing surname is not by itself evidence of a
+step-relationship.
+
 ### "Base son" / "base born" / "natural child"
 
 These terms indicate illegitimacy — the child's parents were not

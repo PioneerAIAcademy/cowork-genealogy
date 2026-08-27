@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_historical_context_gsm",
+    "skill": "historical-context",
+    "name": "Guardian of differently-surnamed minors is likely their stepfather",
+    "type": "positive",
+    "description": "Tests whether the skill infers that a man appointed guardian of minor children bearing a different surname, shortly after marrying a widow connected to that surname, is most likely their stepfather and the children are hers by a prior marriage — so the differing surname is the expected pattern, not evidence they are unrelated or that a generation is missing. Complements the natural-parent case (ut_historical_context_hbt / issue #1618): the two are told apart by whose children they are and when the marriage happened (issue #1710).",
+    "tags": ["guardianship", "step-relation", "prior-marriage", "legal-terms", "issue-1710"]
+  },
+  "input": {
+    "user_message": "I'm looking at an 1821 guardianship bond in which Josiah Meacham was appointed legal guardian of four minor children surnamed Barlow — none of whom share his surname. About six months earlier, Josiah married Sarah Barlow, a widow. Does the children carrying a different surname from their guardian mean they aren't related to him, or that I'm missing a generation somewhere? What does this record actually tell me?",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "wiki-search-any",
+    "wikipedia-search-any"
+  ],
+  "judge_context": [
+    "Must recognize that a man appointed guardian of minors bearing a different surname, shortly after marrying a widow connected to that surname, is most likely their stepfather — the children are almost certainly the wife's children by a prior marriage, so the differing surname is the expected pattern here, not evidence they are unrelated to him or that a generation is missing.",
+    "Must tie the inference to the specific triggering facts — the guardian's recent marriage to a woman connected to the wards' surname shortly before the appointment. It must NOT state that guardianship of differently-surnamed children implies a step-relationship as a general rule absent that marriage timing.",
+    "Must NOT invent an extra generation, or treat the surname difference as a conflict requiring some unrelated-kinship explanation; the remarriage accounts for it directly.",
+    "Should suggest confirming the reading with the records that would establish it — the mother's prior marriage, the wards' deceased father's death or estate/probate file, and the marriage record linking Sarah Barlow to Josiah Meacham.",
+    "Should give a direct, confident explanation of the stepfather pattern rather than burying it as one of several unweighted possibilities, while stopping short of asserting it as proven before the corroborating records are checked.",
+    "Consistent with the complementary rule that a guardianship appointment alone is not evidence of orphanhood or non-relation: here the recent marriage makes the relationship a step-relationship, so the guardian is related to the wards through that marriage, not unrelated."
+  ]
+}
