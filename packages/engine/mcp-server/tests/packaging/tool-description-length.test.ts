@@ -10,13 +10,23 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * corpus says the family is barely used: across every committed run log only four
  * of the 43 toggles have EVER appeared in a call.
  *
- * **The justification is clarity; the token saving is small.** Measured after the
- * #1409 rewrite and #1771's year-clause edit: `record_search` 15,509 -> 14,043 and
- * `person_search` 3,745 -> 5,003 (its toggles were stubs that were also wrong, so
- * correctness cost tokens there), for a combined 19,254 -> 19,046 — a net saving of
- * about 208 characters, under 2%. This figure has been an increase and a saving at
- * different points in the same branch, which is the point: it is a side effect, not
- * the argument. #1771 brought `record_search.birthYearExact` from 475 down to 214
+ * **The justification is clarity. The token count is a side effect, and it is now
+ * an increase.** Measured after the #1409 rewrite and #1771's year-clause edit:
+ * `record_search` 15,509 -> 14,043 and `person_search` 3,745 -> 5,003 (its toggles
+ * were stubs that were also wrong, so correctness cost tokens there), for a
+ * combined 19,254 -> 19,046 — at that point a net saving of about 208 characters,
+ * under 2%. That 208 was an increase and a saving at different points of the same
+ * branch, which is why it was never the argument.
+ *
+ * #1323 then added 426 characters to `isPrincipal` (438 -> 864, so `record_search`
+ * 14,043 -> 14,469), putting the combined figure at 19,472. That is 218 ABOVE the
+ * 19,254 the family started at, so the 208 saving is spent and then some: do not
+ * read the paragraph above as a standing claim. The ruling on #1323 was to name
+ * both roles and when each applies instead of recommending omission, and naming
+ * the relative-discovery route is what that guidance exists to do. Recorded as an
+ * increase rather than argued away.
+ *
+ * #1771 brought `record_search.birthYearExact` from 475 down to 214
  * (the year behaviour is now measured, so its paragraph collapses to a one-liner)
  * and deleted its exemption. What this lint buys is that the shared rule is stated
  * once and cannot silently be re-expanded into 43 paragraphs.
@@ -123,7 +133,7 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14043],
+  ["record_search", 14469],
   ["person_search", 5003],
 ];
 
