@@ -294,10 +294,9 @@ Order items for efficient discovery (BCG Standard 15):
 
 1. **Highest probability first** — indexed sources where the subject
    should appear
-2. **Free before paid** — FamilySearch before Ancestry/MyHeritage. For a
-   `newspaper` item this means Chronicling America and the place's
-   state/regional archive before Newspapers.com or GenealogyBank, with the
-   paid site as the `fallback_for`
+2. **Free before paid** — FamilySearch before Ancestry/MyHeritage; for a
+   `newspaper` item, Chronicling America and the place's state/regional
+   archive before Newspapers.com or GenealogyBank
 3. **Original before derivative** — search the index for discovery,
    plan to verify against the original image
 4. **Narrow before broad** — specific county before adjacent counties

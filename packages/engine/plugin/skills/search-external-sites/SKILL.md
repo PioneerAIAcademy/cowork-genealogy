@@ -1,19 +1,20 @@
 ---
 name: search-external-sites
-description: Generates search URLs for external genealogy sites (Ancestry,
-  MyHeritage, FindMyPast, FindAGrave, Newspapers.com) and free newspaper
-  archives (Chronicling America, Utah Digital Newspapers), and walks the user
-  through the click-capture-analyze workflow. Logs each search to research.json (including nil results) and
-  triages results from captured PDFs before passing records to record-extraction. GPS Step 1 — Reasonably
+description: Generates search URLs for external genealogy sites and free
+  newspaper archives, and walks the user
+  through the click-capture-analyze workflow. Logs every search to research.json and triages
+  captured PDFs before handing records to record-extraction. GPS Step 1 — Reasonably
   Exhaustive Research (external site execution). Use when the user says
-  "search Ancestry"/"MyHeritage"/"FindMyPast"/"FindAGrave"/"Newspapers.com"/"Chronicling
-  America", "find newspaper articles", when a plan item targets a
-  non-FamilySearch repository, or when the user uploads a PDF capture.
-  Do NOT use when the target is
+  "search Ancestry", "search MyHeritage", "search FindMyPast", "search
+  FindAGrave", "search Newspapers.com", "search Chronicling America", "find
+  newspaper articles", when the user reports an external search
+  they ran themselves (including a nil result), when a plan item targets a
+  non-FamilySearch repository, or when the user uploads a PDF
+  capture from an external genealogy site. Do NOT use when the target is
   FamilySearch (use search-records); when the user is still choosing what or
   where to search — e.g. "what should I search next?" — which is planning,
-  not execution (use research-plan); or when the user wants to analyze a
-  single record already in context (use record-extraction).
+  not execution (use research-plan); or to analyze a single record
+  already in context (use record-extraction).
 allowed-tools:
   - place_search
   - collections_search
