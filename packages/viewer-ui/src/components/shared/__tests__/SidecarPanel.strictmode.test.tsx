@@ -24,7 +24,7 @@ const payload: SidecarFile = {
 
 function makeTransport(): ResearchTransport {
   return {
-    getProjectState: async () => ({ research: null, gedcomx: null, label: null }),
+    getProjectState: async () => ({ research: null, gedcomx: null, label: null, notice: null }),
     subscribe: () => () => {},
     readSidecar: async () => ({ raw: JSON.stringify(payload), mtime: 100 }),
     openExternal: () => {},

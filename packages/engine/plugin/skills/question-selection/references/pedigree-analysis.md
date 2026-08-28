@@ -121,8 +121,9 @@ question selection priority system:
 
 - Logical impossibilities map to `unresolved_conflict` (Priority 1)
   if they block other questions
-- Missing key data for the research subject maps to `pedigree_gap`
-  (Priority 5)
+- Missing key data for the research subject maps to Priority 5, whose
+  `selection_basis` is `objective_decomposition` (same enum value as
+  Priority 4 — there is no separate `pedigree_gap` value)
 - Unverified claims from compiled sources may trigger new questions
   to verify them before building further
 

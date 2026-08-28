@@ -139,9 +139,9 @@ titles mislead about scope and completeness.
 
 | Site | URL pattern | Notes |
 |------|------------|-------|
-| Ancestry.com | `ancestry.com/search/collections/{id}/?params` | Largest indexed collection. Paid subscription |
-| MyHeritage.com | `myheritage.com/research?action=query&params` | Independent indexing. Paid subscription |
-| FindMyPast.com | `findmypast.com/search/results?params` | Strong UK/Ireland coverage. Paid subscription |
+| Ancestry.com | `ancestry.com/search/collections/{id}/?params` | Largest indexed collection. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
+| MyHeritage.com | `myheritage.com/research?action=query&params` | Independent indexing. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
+| FindMyPast.com | `findmypast.com/search/results?params` | Strong UK/Ireland coverage. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
 | FindAGrave.com | `findagrave.com/memorial/search?params` | Cemetery records. Free. User-contributed — treat as compiled source |
 | Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription |
 
@@ -262,8 +262,13 @@ https://www.myheritage.com/research?action=query&first={first}&last={last}&birth
 
 #### FindMyPast.com
 ```
-https://www.findmypast.com/search/results?firstname={first}&lastname={last}&yearofbirth={year}&keywordsplace={place}&eventyear={year}&fatherfirstname={first}&motherfirstname={first}
+https://www.findmypast.com/search/results?firstname={first}&lastname={last}&yearofbirth={year}&yearofbirth_offset={plus_minus_years}&keywordsplace={place}&keywordsplace_proximity={miles}&eventyear={year}&fatherfirstname={first}&motherfirstname={first}
 ```
+- `yearofbirth_offset` is the give-or-take on the birth year (site default 2).
+  **Not** `yearofbirthrange` — that spelling is silently ignored and the search
+  runs at the default window.
+- `keywordsplace_proximity` is the place radius in miles (site default 5).
+- Never emit `sid` — it is browser session state, not a search parameter.
 
 #### FindAGrave.com
 ```
@@ -283,6 +288,17 @@ https://www.newspapers.com/search/?query={first}+{last}&dr_year={year}&dr_place=
 - Unusual name → start broad (surname + place only).
 - Common name → start narrow (add dates, relatives, a specific collection).
 - Include only parameters you're confident about; omit uncertain ones.
+- **Check `conflicts[]` before encoding a place or date.** If a
+  `conflicts[]` entry names that field in `disputed_attribute`:
+  - `status: "resolved"` → encode the value from
+    `preferred_assertion_id`, and only that value. A recorded resolution
+    is the project's answer; a competing value it rejected must not be
+    encoded, however plausible it looks elsewhere in the file.
+  - Any other status → the fact is still contested. **Omit the field.**
+    These sites *filter* on it, so a guessed side returns nothing and the
+    nil gets logged as evidence of absence for a record that exists. Say
+    in one line that the value is contested, naming the candidates so the
+    researcher can filter by eye.
 - Add relative names when you have them (Ancestry weights them heavily).
 - Widen with spelling variants or wildcards when a search returns little.
 
@@ -304,6 +320,10 @@ research_log_append({
   outcome: "<positive if returned > 0, else negative>",
   resultsExamined: <returned>,
   notes: "Curated external links for <place>.",
+  // Grades the FETCH, not the search: `positive` whenever links came back,
+  // even if none fit the plan item's record type. Put that in `notes`
+  // ("2 links returned, both wrong record type: tax lists and an 1850
+  // census"). The search's own outcome is the `external_site` entry below.
   stagedResultsRef: staged.resultsRef   // omit only when there is no staged handle (empty year-filtered set)
 })
 ```
