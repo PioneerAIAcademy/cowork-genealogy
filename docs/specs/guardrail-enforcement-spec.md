@@ -515,6 +515,17 @@ reachability is the tool that produced the assertion:
 | a search whose sidecar was not retained | **no** | nothing to read the persona out of |
 | provenance that cannot be resolved | **flagged anyway** | unknown is not proof; exempting on an absent field would let an assertion written with no `log_entry_id` shed the requirement |
 
+**A fourth legitimate null the predicate cannot see.** Scoring a record persona
+against a tree person *minted from that same persona* is circular — it can only
+confirm itself — so a null `match_score` is correct there and the skill says so.
+The detector cannot detect it: by the time the link is written the stub is an
+ordinary tree person, indistinguishable from one that has been in the tree for
+months. So it is named in the doctrine and in `research_append`'s warning text
+rather than encoded in `_persona_reachable`. Observed working:
+`ut_person_evidence_n7v` in `v1_2026-08-27_16-24-49` declined to score the groom
+persona against the stub it had just minted from it, having made that exact
+circular call in the two preceding runs.
+
 **The exemption is counted, not silent.** `make e2e-corpus RECOMPUTE=1` prints an
 *unscoreable by design (links)* line beside the violation arms, from
 `unscoreable_person_evidence_links`. A population dropped with no number attached
