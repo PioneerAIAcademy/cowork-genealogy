@@ -1,7 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import type { AppConfig } from "../types/auth.js";
 
 export const AUTHORIZATION_URL =
@@ -72,10 +72,15 @@ export async function loadConfig(): Promise<AppConfig> {
   }
 }
 
+export async function ensureStorageDir(): Promise<void> {
+  await mkdir(STORAGE_DIR, { recursive: true, mode: 0o700 });
+  await chmod(STORAGE_DIR, 0o700);
+}
+
 export async function saveConfig(patch: Partial<AppConfig>): Promise<void> {
   const existing = await loadConfig();
   const merged: AppConfig = { ...existing, ...patch };
-  await mkdir(STORAGE_DIR, { recursive: true });
+  await ensureStorageDir();
   await writeFile(
     CONFIG_STORAGE_PATH,
     JSON.stringify(merged, null, 2),

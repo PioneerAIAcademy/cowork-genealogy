@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import {
   saveTokens,
   loadTokens,
@@ -13,17 +13,20 @@ import {
 import type { TokenStore } from "../../src/types/auth.js";
 
 vi.mock("node:fs/promises", () => ({
+  chmod: vi.fn(),
   mkdir: vi.fn(),
   readFile: vi.fn(),
   writeFile: vi.fn(),
   rm: vi.fn(),
 }));
 
+const mockedChmod = vi.mocked(chmod);
 const mockedMkdir = vi.mocked(mkdir);
 const mockedReadFile = vi.mocked(readFile);
 const mockedWriteFile = vi.mocked(writeFile);
 
 beforeEach(() => {
+  mockedChmod.mockReset();
   mockedMkdir.mockReset();
   mockedReadFile.mockReset();
   mockedWriteFile.mockReset();
@@ -43,6 +46,7 @@ describe("saveTokens", () => {
     await saveTokens(sampleTokens);
 
     expect(mockedMkdir).toHaveBeenCalledWith(STORAGE_DIR, { recursive: true, mode: 0o700 });
+    expect(mockedChmod).toHaveBeenCalledWith(STORAGE_DIR, 0o700);
     expect(mockedWriteFile).toHaveBeenCalledTimes(1);
     const [writtenPath, writtenBody, writtenOpts] =
       mockedWriteFile.mock.calls[0];

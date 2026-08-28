@@ -48,7 +48,7 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
-function htmlPage(title: string, heading: string, body: string, color: string): string {
+function htmlPage(title: string, heading: string, body: string, color: "#cf222e" | "#1a7f37"): string {
   return (
     "<!DOCTYPE html>\n<html lang=\"en\"><head><meta charset=\"utf-8\">" +
     `<title>${escapeHtml(title)}</title>` +
