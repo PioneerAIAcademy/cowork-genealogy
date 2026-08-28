@@ -521,10 +521,21 @@ confirm itself — so a null `match_score` is correct there and the skill says s
 The detector cannot detect it: by the time the link is written the stub is an
 ordinary tree person, indistinguishable from one that has been in the tree for
 months. So it is named in the doctrine and in `research_append`'s warning text
-rather than encoded in `_persona_reachable`. Observed working:
-`ut_person_evidence_n7v` in `v1_2026-08-27_16-24-49` declined to score the groom
-persona against the stub it had just minted from it, having made that exact
-circular call in the two preceding runs.
+rather than encoded in `_persona_reachable`.
+
+Observed working, and the before/after is the sharpest evidence in this change.
+In the two committed runs preceding it (`v1_2026-08-24_18-17-08` and
+`v1_2026-08-24_22-05-46`) `ut_person_evidence_n7v` made **zero** `same_person`
+calls and wrote every `match_score` null — including for `I1` and `I2`, which are
+pre-existing scenario persons, not minted stubs — and failed both times. Its
+stated reason was the refuted claim itself: *"same_person scoring skipped — I1 and
+I2 are local stubs with no FamilySearch ARK, so any score would be degenerate
+(uninformative)."* In `v1_2026-08-27_16-24-49` the same test scores both
+reachable pairings (`F1`→`I1` at 0.58, `M1`→`I2` at 0.89), lets the distinctive
+surname carry `confident` while the given-name-only match stays `probable`, and
+declines exactly one — the persona it had just minted a stub from. So the skill
+went from skipping every score on a refuted excuse to scoring what is scoreable
+and declining only what is circular.
 
 **The exemption is counted, not silent.** `make e2e-corpus RECOMPUTE=1` prints an
 *unscoreable by design (links)* line beside the violation arms, from
