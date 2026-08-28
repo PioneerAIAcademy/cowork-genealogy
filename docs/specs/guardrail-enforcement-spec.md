@@ -472,9 +472,10 @@ to understand before reading either:
   (`harness/since_window.py`) appends a fixed caveat naming the branch-scope
   limitation to its own printed line. The three **unit**-corpus readers
   (`eval-timings`, `judge-report`, `skill-latency`) share the same function
-  but only print its line — caveat included — under an explicit `SINCE=`;
-  bare, they show every skill unfiltered and print no window line at all, so
-  there is nothing for the caveat to attach to by default.
+  but only print its line — caveat included — under a `SINCE=` that resolves
+  to a cutoff (`SINCE=all` is explicit and prints nothing); bare, they show
+  every skill unfiltered and print no window line at all, so there is nothing
+  for the caveat to attach to by default.
 - **The remedy is a caveat plus an on-demand crawl, not an exact count.**
   Considered and rejected: crawling remote branches inside every reader
   (real engineering cost for speculative value — measured 2026-08-25 at 23

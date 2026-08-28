@@ -3,7 +3,7 @@
 GitHub issue #1444. `all_result_jsons()` (and every reader built on it) reads
 `eval/runlogs/e2e/` in the CURRENT checkout only — a run graded and committed
 on an unmerged branch is not skipped, it is never seen, and no reader can say
-so. Every reader now prints a caveat saying that (`branch_scope_note()` in
+so. Every e2e reader now prints a caveat saying that (`branch_scope_note()` in
 `harness/since_window.py`); this is the on-demand remedy a human runs when
 that caveat actually matters, not something embedded in every reader.
 
@@ -74,8 +74,8 @@ def _refs() -> list[tuple[str, str]]:
     *deliberately deleted* from HEAD (`make prune-runlogs`, or a fixture
     rewrite like #627) is misreported as "present there, absent from HEAD" —
     a run committed-then-removed on purpose, not one this checkout has never
-    seen (T-FEH's review of this PR; live example: `pauline-shaver-death-burial`
-    and `scotland-thomson-grandparents`, deleted from HEAD by 13b36e6b/#627,
+    seen (live example: `pauline-shaver-death-burial` and
+    `scotland-thomson-grandparents`, deleted from HEAD by 13b36e6b/#627,
     still on the long-merged `senior-shaunese-applegarth-family-1878`).
 
     `refs/remotes/<remote>/HEAD` is a symbolic ref to another ref already in
@@ -147,7 +147,7 @@ def format_report(found: dict[str, RefEntry]) -> str:
         return "No graded run logs found on another ref that HEAD is missing."
     # A path can sit on more than one ref (a local branch and its remote
     # twin, most often) -- de-dupe before counting, or the header
-    # double-counts that run (T-FEH's review of this PR).
+    # double-counts that run.
     unique_runs = {p for e in found.values() for p in e.paths}
     lines = [f"{len(unique_runs)} run(s) across {len(found)} ref(s):"]
     for ref, entry in sorted(found.items(), key=lambda kv: kv[1].tip_date, reverse=True):

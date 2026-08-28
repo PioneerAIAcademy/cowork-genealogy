@@ -718,10 +718,9 @@ e2e-branch-only: ## Graded e2e runs that exist on another ref but not HEAD (issu
 	# property). The module itself makes no network call; this recipe fetches
 	# first (--prune, so a deleted remote branch doesn't linger as a stale
 	# local ref either) so a branch nobody has locally yet isn't invisible to
-	# it -- T-FEH's review found exactly that case in this PR: an in-flight
-	# graded run the crawl missed only because it had never been fetched
-	# here. Does not distinguish in-flight work from abandoned; triage by
-	# hand.
+	# it -- an in-flight graded run was once missed by the crawl only because
+	# it had never been fetched here. Does not distinguish in-flight work
+	# from abandoned; triage by hand.
 	git fetch --prune origin
 	cd eval/harness && uv run python -m scripts.branch_only_runlogs
 
