@@ -11,7 +11,10 @@ description: Invoke for FamilySearch full-text search (FTS) — immediately
   documents. FamilySearch document images only. Exclude external sites like
   Ancestry or Newspapers.com (use search-external-sites), structured
   indexed search by name/date/place (use search-records), and planning what
-  to search (use research-plan).
+  to search (use research-plan). Do NOT use to scope a new project or
+  propose opening research questions — a request to figure out what to
+  research first, with no plan item yet to execute, routes to
+  question-selection, not this skill.
 allowed-tools:
   - fulltext_search
   - source_attachments
