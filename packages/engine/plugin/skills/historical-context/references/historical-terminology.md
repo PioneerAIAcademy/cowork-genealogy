@@ -63,11 +63,18 @@ evidence of a remarriage that would create step-relations.
 ### "Guardian"
 
 A man appointed guardian of children who bear a **different surname**,
-shortly after marrying a woman connected to that surname, is most
-likely their **stepfather** — the children are hers by a prior
-marriage. The differing surname is the expected pattern here, not a
-conflict, and it is not grounds to posit an extra generation to explain
-the guardian's role.
+shortly after marrying a woman connected to that surname, is most often
+their **stepfather** — the children hers by a prior marriage. The
+differing surname is the expected pattern here, not a conflict, and not
+grounds to posit an extra generation to explain the guardian's role.
+
+**Which reading holds depends on whose surname it is.** If the wife's
+shared surname is a **married** name, the children are most likely hers
+and the step reading leads. If it is her **maiden** name, they may
+instead be her brother's orphans — the same bond, with the guardian an
+**uncle by marriage**. The bond does not distinguish these; her prior
+marriage, or the children's father's estate, does. Give the reading you
+favour and name the one the evidence has not yet ruled out.
 
 **Research implication:** Treat the step-relationship as the leading
 hypothesis, not a settled fact. Look for the mother's earlier marriage
