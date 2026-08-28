@@ -294,7 +294,9 @@ Order items for efficient discovery (BCG Standard 15):
 
 1. **Highest probability first** — indexed sources where the subject
    should appear
-2. **Free before paid** — FamilySearch before Ancestry/MyHeritage
+2. **Free before paid** — FamilySearch before Ancestry/MyHeritage; for a
+   `newspaper` item, Chronicling America and the place's state/regional
+   archive before Newspapers.com or GenealogyBank
 3. **Original before derivative** — search the index for discovery,
    plan to verify against the original image
 4. **Narrow before broad** — specific county before adjacent counties
@@ -397,7 +399,9 @@ research_append({
 - `jurisdiction`: Human-readable place description
 - `date_range`: Target period (e.g., "1875-1890", "1850")
 - `repository`: FamilySearch, Ancestry, MyHeritage, FindMyPast,
-  NARA, state_archives, county_courthouse, other
+  NARA, state_archives, county_courthouse, other. Open list — name the
+  actual repository (e.g. `Chronicling America`, `Utah Digital Newspapers`)
+  rather than forcing it to `other`.
 - `rationale`: Why this record set for this question — what it could
   reveal and why it's worth searching. "Because it exists" is insufficient.
 - `fallback_for`: `pli_` ID of the plan item this falls back from,
