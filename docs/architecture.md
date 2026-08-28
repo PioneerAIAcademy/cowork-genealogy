@@ -1426,10 +1426,10 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and negative routing tests across 26 skill suites. **427** committed
+  run logs, and negative routing tests across 26 skill suites. **430** committed
   test definitions (`make eval-inventory`) — one JSON file per test under
   `eval/tests/unit/` — and across the 26 live suites the latest run log per suite
-  totals **427 rows, 370 passing (87%)**. Those two numbers count different things
+  totals **430 rows, 375 passing (87%)**. Those two numbers count different things
   and can diverge in either direction: a test defined after its suite's last run
   has no row, and a row survives for a test since deleted. Both numbers are facts
   about the snapshots — not an identity, so re-derive rather than quoting them.
@@ -1527,7 +1527,7 @@ lives. A test is not just its definition: it usually needs a matching
 `eval/fixtures/mcp/` response, a dimension in that skill's `rubric.md`, and a
 check in `eval/harness/validators/`. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
-1 by policy. 92 of the 427 definitions are **negative** tests that exist to prove
+1 by policy. 92 of the 430 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is
