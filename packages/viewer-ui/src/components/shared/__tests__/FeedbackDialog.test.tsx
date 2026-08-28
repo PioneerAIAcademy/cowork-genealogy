@@ -198,6 +198,107 @@ describe('FeedbackDialog — worked-as-expected gate', () => {
     expect(screen.queryByText(/Not sent\./)).toBeNull()
   })
 
+  // Every blockable control must carry its own inline message. Deleting any one
+  // <FieldError> render site reproduces #1919 exactly and silently: nothing styles
+  // aria-invalid, and untoldOverLimit suppresses the live toast for a refused id,
+  // so the footer says "Fix the highlighted field above" with nothing highlighted.
+  it('gives every refused field its own inline message, not just the three the other tests use', async () => {
+    const user = userEvent.setup()
+    mount()
+    await user.click(screen.getByRole('radio', { name: 'No' }))
+    await user.clear(screen.getByLabelText(/Your email/))
+    await user.type(screen.getByLabelText(/Your email/), 'nope')
+    const over = 'x'.repeat(10_001)
+    for (const id of ['feedback-prompt', 'feedback-did', 'feedback-should', 'feedback-answer', 'feedback-notes']) {
+      fireEvent.change(document.getElementById(id)!, { target: { value: over } })
+    }
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    for (const id of [
+      'feedback-email',
+      'feedback-prompt',
+      'feedback-did',
+      'feedback-should',
+      'feedback-answer',
+      'feedback-notes'
+    ]) {
+      expect(document.getElementById(id)).toHaveAttribute('aria-invalid', 'true')
+      expect(document.getElementById(`${id}-error`)).not.toBeNull()
+    }
+  })
+
+  // Email is the one field that can pass EMAIL_RE and still be rejected downstream,
+  // where the web transport reports only "Failed to submit feedback" and names no
+  // field. That was the last path to a refusal the reporter cannot act on.
+  it('refuses an over-limit email inline instead of letting the backend reject it', async () => {
+    const user = userEvent.setup()
+    const { submitFeedback } = mount()
+    await user.click(screen.getByRole('radio', { name: 'Yes' }))
+    fireEvent.change(screen.getByLabelText(/Your email/), {
+      target: { value: `${'a'.repeat(10_000)}@b.co` }
+    })
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    expect(submitFeedback).not.toHaveBeenCalled()
+    expect(screen.getByLabelText(/Your email/)).toHaveAttribute('aria-invalid', 'true')
+    expect(document.getElementById('feedback-email-error')?.textContent).toContain('10,000')
+  })
+
+  // What the two consent boxes SHOW must be what the bundle carries. A failed
+  // lookup used to render them unticked and disabled reading "(none found)" while
+  // handleSend submitted both flags true and each producer read the folder itself.
+  it('says it could not check, rather than claiming an empty folder, when the lookup fails', async () => {
+    const user = userEvent.setup()
+    // Same loose typing as mount()'s mock, so mock.calls is indexable.
+    const submitFeedback: ReturnType<typeof vi.fn> = vi.fn(async () => ({ ok: true as const }))
+    vi.mocked(useResearchData).mockReturnValue({
+      ...buildMockContext(),
+      submitFeedback,
+      getFeedbackContext: async () => {
+        throw new Error('context unavailable')
+      }
+    })
+    render(<FeedbackDialog onClose={() => {}} />)
+
+    // The rejection lands in a microtask, so wait for the state it sets.
+    expect(await screen.findAllByText('(could not check)')).toHaveLength(2)
+    const media = screen.getByRole('checkbox', { name: /media/i })
+    const log = screen.getByRole('checkbox', { name: /session log/i })
+    expect(screen.queryByText('(none found)')).toBeNull()
+    expect(screen.queryByText('(none in folder)')).toBeNull()
+    expect(media).toBeChecked()
+    expect(log).toBeChecked()
+    expect(media).toBeEnabled()
+    expect(log).toBeEnabled()
+
+    await user.click(screen.getByRole('radio', { name: 'Yes' }))
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    const payload = submitFeedback.mock.calls[0][0] as Record<string, unknown>
+    // The boxes are ticked, so both must actually be requested.
+    expect(payload.includeMedia).toBe(true)
+    expect(payload.includeSessionLog).toBe(true)
+  })
+
+  it('does not go red for an untouched field while another is still refused', async () => {
+    const user = userEvent.setup()
+    mount()
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    expect(screen.getAllByText(/Choose Yes or No/).length).toBeGreaterThan(0)
+    await user.clear(screen.getByLabelText(/Your email/))
+    await user.type(screen.getByLabelText(/Your email/), 'a')
+    expect(screen.getByLabelText(/Your email/)).not.toHaveAttribute('aria-invalid')
+    expect(screen.queryByText(/does not look like an email address/)).toBeNull()
+  })
+
+  it('marks only the fields the refusal named, whatever kind the new breakage is', async () => {
+    const user = userEvent.setup()
+    mount()
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+    // Refused on the radio only. Now break a DIFFERENT field, of a different
+    // kind (length, not format): nothing may claim it was refused.
+    const notes = screen.getByLabelText(/Notes/)
+    fireEvent.change(notes, { target: { value: 'x'.repeat(10_001) } })
+    expect(notes).not.toHaveAttribute('aria-invalid')
+  })
+
   it('does not go red again for a field that was refused, then fixed, then re-broken', async () => {
     const user = userEvent.setup()
     mount()

@@ -372,9 +372,6 @@ describe('buildFeedbackZip — living-person redaction', () => {
   })
 })
 
-// The "## Session log" section must always render and say why the transcript
-// is or isn't there — so a Cowork bundle's missing log reads as expected, not
-// missing (issue #1481).
 describe('buildFeedbackZip — FEEDBACK.md on a blank prompt or did', () => {
   let folder: string
 
@@ -424,6 +421,9 @@ describe('buildFeedbackZip — FEEDBACK.md on a blank prompt or did', () => {
   })
 })
 
+// The "## Session log" section must always render and say why the transcript
+// is or isn't there — so a Cowork bundle's missing log reads as expected, not
+// missing (issue #1481).
 describe('buildFeedbackZip — FEEDBACK.md always states the session-log status', () => {
   let folder: string
 

@@ -228,8 +228,8 @@
   color: var(--badge-red-text);
 }
 
-/* Explanatory text under a field, for the one field whose "when do I fill this
-   in?" isn't obvious from its label. */
+/* Explanatory text under a field, for the fields whose "when do I fill this
+   in?" isn't obvious from the label alone. */
 .fieldHint {
   font-size: 0.78rem;
   line-height: 1.45;

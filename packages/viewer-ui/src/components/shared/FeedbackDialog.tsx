@@ -63,6 +63,11 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
   const [files, setFiles] = useState<ProjectFile[]>([])
   const [sessionLogSize, setSessionLogSize] = useState(0)
   const [hasSessionLog, setHasSessionLog] = useState(false)
+  // The lookup failed, so we do NOT know what the folder holds. Distinct from
+  // "checked, found nothing": the flags below are still submitted as-is and each
+  // producer reads the folder itself, so claiming "(none found)" here would tell
+  // the reporter the opposite of what the bundle does.
+  const [contextUnavailable, setContextUnavailable] = useState(false)
 
   // On by default: a report about an uploaded document is useless without it,
   // and when the project has no media the flag is a no-op (the checkbox is
@@ -112,9 +117,11 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
         setSessionLogSize(ctx.sessionLogSize)
       })
       .catch(() => {
-        // Leave the counts at zero. The submission still works; only the
-        // "what gets sent" summary is unavailable. An unhandled rejection here
-        // used to escape and fail the whole render in tests.
+        // Say we could not check rather than reporting an empty folder. The flags
+        // are submitted unchanged and each producer walks the folder itself, so a
+        // "(none found)" here would under-report what the bundle actually carries.
+        // An unhandled rejection here used to escape and fail the whole render.
+        setContextUnavailable(true)
       })
   }, [getFeedbackContext])
 
@@ -143,6 +150,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
   const emailValid = EMAIL_RE.test(emailTrimmed)
   const overLimitFields = useMemo(() => {
     const fields: Array<[string, string, string]> = [
+      ['feedback-email', 'Your email', email],
       ['feedback-prompt', 'What you asked', userPrompt],
       ['feedback-did', 'What the agent did', agentDid],
       ['feedback-should', 'What it should have done', agentShouldHave],
@@ -152,7 +160,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
     return fields
       .filter(([, , value]) => value.trim().length > MAX_FIELD_CHARS)
       .map(([id, label]) => ({ id, label }))
-  }, [userPrompt, agentDid, agentShouldHave, correctAnswer, notes])
+  }, [email, userPrompt, agentDid, agentShouldHave, correctAnswer, notes])
 
   // Everything that stops a send. Send is never disabled for any of it (#1919):
   // a greyed-out button with no explanation is indistinguishable from a broken
@@ -492,12 +500,12 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
 
           <div className={styles.toggles}>
             <label
-              className={`${styles.toggleLabel} ${mediaCount === 0 ? styles.disabledLabel : ''}`}
+              className={`${styles.toggleLabel} ${mediaCount === 0 && !contextUnavailable ? styles.disabledLabel : ''}`}
             >
               <input
                 type="checkbox"
-                checked={includeMedia && mediaCount > 0}
-                disabled={mediaCount === 0}
+                checked={includeMedia && (mediaCount > 0 || contextUnavailable)}
+                disabled={mediaCount === 0 && !contextUnavailable}
                 onChange={(e) => setIncludeMedia(e.target.checked)}
               />
               <span className={styles.labelText}>
@@ -507,17 +515,21 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
                     ({mediaCount} {mediaCount === 1 ? 'file' : 'files'} · {formatBytes(mediaBytes)})
                   </span>
                 )}
-                {mediaCount === 0 && <span className={styles.toggleAside}>(none in folder)</span>}
+                {mediaCount === 0 && (
+                  <span className={styles.toggleAside}>
+                    {contextUnavailable ? '(could not check)' : '(none in folder)'}
+                  </span>
+                )}
               </span>
             </label>
 
             <label
-              className={`${styles.toggleLabel} ${!hasSessionLog ? styles.disabledLabel : ''}`}
+              className={`${styles.toggleLabel} ${!hasSessionLog && !contextUnavailable ? styles.disabledLabel : ''}`}
             >
               <input
                 type="checkbox"
-                checked={includeSessionLog && hasSessionLog}
-                disabled={!hasSessionLog}
+                checked={includeSessionLog && (hasSessionLog || contextUnavailable)}
+                disabled={!hasSessionLog && !contextUnavailable}
                 onChange={(e) => setIncludeSessionLog(e.target.checked)}
               />
               <span className={styles.labelText}>
@@ -525,7 +537,11 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
                 {hasSessionLog && (
                   <span className={styles.toggleAside}>({formatBytes(sessionLogSize)})</span>
                 )}
-                {!hasSessionLog && <span className={styles.toggleAside}>(none found)</span>}
+                {!hasSessionLog && (
+                  <span className={styles.toggleAside}>
+                    {contextUnavailable ? '(could not check)' : '(none found)'}
+                  </span>
+                )}
               </span>
             </label>
           </div>
