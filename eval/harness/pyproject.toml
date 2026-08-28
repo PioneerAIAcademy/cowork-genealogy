@@ -2,7 +2,7 @@
 name = "cowork-genealogy-eval-harness"
 version = "0.1.0"
 description = "Python harness for Cowork Genealogy skill evaluation. See docs/specs/unit-test-spec.md."
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     # claude-agent-sdk: lower bound is what we built against; upper bound is
     # the next major (none currently). The harness uses
