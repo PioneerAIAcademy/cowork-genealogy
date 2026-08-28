@@ -109,6 +109,9 @@ export function ResearchDataProvider({
         setLastUpdated(new Date())
       }
       if (state.gedcomx) setGedcomx(state.gedcomx)
+      // A notice is push-delivered, so a renderer that mounts after the send
+      // would never see it without this replay (issue #1899).
+      if (state.notice) setNotice(state.notice)
     })
 
     const unsubscribe = transport.subscribe({
