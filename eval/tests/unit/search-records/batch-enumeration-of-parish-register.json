@@ -36,7 +36,8 @@
     "record-read-richardson-i03213-6-nfcy-7vm",
     "record-read-richardson-c00558-7-jmf4-cl",
     "validate-research-schema",
-    "record-read-richardson-dorcas-ngyp-kx"
+    "record-read-richardson-c00558-7-ngyp-rt5",
+    "record-read-richardson-c00558-7-ngyp-kxd"
   ],
   "judge_context": [
     "This is a POSITIVE test for BATCH ENUMERATION. The user asks for the parish register to be worked systematically but does NOT name the mechanism — finding it is the skill's job. 'Worked systematically' is not permission to invent a batch number: the batch must come off a returned result.",
