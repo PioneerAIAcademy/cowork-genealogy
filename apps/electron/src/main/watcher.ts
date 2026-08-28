@@ -7,6 +7,7 @@ let watcher: FSWatcher | null = null
 let currentFolderPath: string | null = null
 let lastResearch: unknown = null
 let lastGedcomx: unknown = null
+let lastNotice: string | null = null
 
 export const WATCHED_FILES = ['research.json', 'tree.gedcomx.json'] as const
 export type FixedFile = (typeof WATCHED_FILES)[number]
@@ -38,8 +39,14 @@ export function getCurrentState(): {
   folderPath: string | null
   research: unknown
   gedcomx: unknown
+  notice: string | null
 } {
-  return { folderPath: currentFolderPath, research: lastResearch, gedcomx: lastGedcomx }
+  return {
+    folderPath: currentFolderPath,
+    research: lastResearch,
+    gedcomx: lastGedcomx,
+    notice: lastNotice
+  }
 }
 
 // Dirs a nested research.json legitimately lives in — not a wrong-folder signal.
@@ -166,26 +173,45 @@ export async function assertResearchProject(folderPath: string): Promise<void> {
   )
 }
 
+/**
+ * Warn if research.json also exists in a subfolder: the viewer watches only the
+ * top level, so a project one level down looks like an empty/"lost" project
+ * (issue #1317, bug 2).
+ *
+ * Stores the message as well as sending it. The send only reaches a renderer
+ * that has already subscribed, and `--project-dir` calls `startWatching` at
+ * window creation — before React mounts — so without the stored copy the notice
+ * is gone for good on that launch and on any later reload (issue #1899).
+ *
+ * Exported so this half is reachable from a unit test: pass a stub
+ * `{ webContents: { send } }` and assert both the send and
+ * `getCurrentState().notice`, with no chokidar and no Electron.
+ */
+export async function scanAndNotify(
+  folderPath: string,
+  mainWindow: Pick<BrowserWindow, 'webContents'>
+): Promise<void> {
+  try {
+    const nested = await findNestedResearchJson(folderPath)
+    if (nested.length === 0) return
+    // The scan is async; if the user switched folders while it ran, its result
+    // describes the OLD folder — don't warn about a folder we're no longer
+    // watching, and don't store it either.
+    if (currentFolderPath !== resolve(folderPath)) return
+    const message = formatNestedNotice(nested)
+    lastNotice = message
+    mainWindow.webContents.send('project:folder-notice', message)
+  } catch {
+    // A scan failure must never break the watch.
+  }
+}
+
 export function startWatching(folderPath: string, mainWindow: BrowserWindow): void {
   stopWatching()
   currentFolderPath = resolve(folderPath)
 
-  // Warn if research.json also exists in a subfolder: the viewer watches only
-  // the top level, so a project one level down looks like an empty/"lost"
-  // project (issue #1317, bug 2). Fire-and-forget — never block or fail the
-  // watch on this heads-up.
-  void findNestedResearchJson(folderPath)
-    .then((nested) => {
-      if (nested.length === 0) return
-      // The scan is async; if the user switched folders while it ran, its
-      // result describes the OLD folder — don't warn about a folder we're no
-      // longer watching.
-      if (currentFolderPath !== resolve(folderPath)) return
-      mainWindow.webContents.send('project:folder-notice', formatNestedNotice(nested))
-    })
-    .catch(() => {
-      // A scan failure must never break the watch.
-    })
+  // Fire-and-forget — never block or fail the watch on this heads-up.
+  void scanAndNotify(folderPath, mainWindow)
 
   const fixedPaths = WATCHED_FILES.map((f) => join(folderPath, f))
   const sidecarDir = join(folderPath, 'results')
@@ -259,4 +285,8 @@ export function stopWatching(): void {
   currentFolderPath = null
   lastResearch = null
   lastGedcomx = null
+  // Must be cleared with the rest: otherwise picking a clean folder replays the
+  // previous folder's notice on the next reload — a wrong banner, worse than
+  // none (issue #1899).
+  lastNotice = null
 }

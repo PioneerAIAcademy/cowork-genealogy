@@ -17,7 +17,12 @@ export interface AppAPI {
   removeAllWatchListeners: () => void
   getSessionLog: () => Promise<{ entries: unknown[]; sizeBytes: number }>
   selectFolder: () => Promise<string | null>
-  getState: () => Promise<{ folderPath: string | null; research: unknown; gedcomx: unknown }>
+  getState: () => Promise<{
+    folderPath: string | null
+    research: unknown
+    gedcomx: unknown
+    notice: string | null
+  }>
   listProjectFiles: () => Promise<ProjectFile[]>
   submitFeedback: (payload: {
     includeMedia: boolean
