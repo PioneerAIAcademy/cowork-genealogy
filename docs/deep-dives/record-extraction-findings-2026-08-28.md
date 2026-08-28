@@ -162,6 +162,28 @@ Filed as **#2025**. In run 1 it cost `ut_009` and `ut_028` their Tool Arguments 
 The same change makes the "an identifier must trace to something a tool returned" class of
 validator writable for the first time.
 
+### The annotation confirms the `ut_021` fix
+
+`v1_2026-08-28_18-23-42.ann.json`: 37 cells across 7 tests, **zero score changes**. That
+is unremarkable by itself — `review_sample.py` records 0.55% of cells changing across the
+whole committed corpus — but the **single written comment in the entire file** is on
+`ut_021` Correctness (judge 2, human 2):
+
+> "Skill wrote `a_009`/`a_010` as negative evidence for unrecorded parent name fields on
+> present persons. Per `record-extractor.md:896-905`, negative evidence applies to
+> expected-but-absent persons, not blank fields."
+
+A genealogist, reviewing blind, docked the behaviour on the same lines F5 cites — and under
+the `judge_context` this PR replaced, that dock was impossible by construction. That is
+independent confirmation of the lane-2 fix, not just of the finding.
+
+**`ut_014` is not in the sample, and that is by design.** Its judge was skipped because the
+validator failed first, so it has zero graded dimensions, and
+`review_sample.is_gradeable()` excludes such tests because there are no cells to correct.
+The docstring names the compensating control — "Excluded is not unnoticed:
+`rule3_completeness` warns about these" — and `check_runlogs` does warn on it. I checked
+this before treating it as a gap in the calibration loop; it is not one.
+
 ### Judge-side advisories worth a look during annotation
 
 Counts are run 2's.
@@ -373,6 +395,10 @@ here it licenses the one shape the body forbids by name.
 when its `value` names the specific absent *person*; a `"No X recorded"` value about an
 unfilled field is the over-extraction `record-extractor.md:896–905` prohibits. It keeps
 the original bullet's real point (do not *invent* parent names) intact.
+
+**Confirmed by a human.** The 2026-08-28 annotation's only written comment docks exactly
+this behaviour, citing `record-extractor.md:896-905` — see §The annotation confirms the
+`ut_021` fix.
 
 The body is not perfectly self-consistent on this boundary — `:266–269` makes a missing
 consent signature recordable as `record_role: "absent"` — so the fix states the test
