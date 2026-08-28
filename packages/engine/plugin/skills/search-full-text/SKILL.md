@@ -261,7 +261,14 @@ Set `completed` (search executed) or `skipped` (unnecessary).
 **Never complete a different plan item because an unrelated ad-hoc
 search touched the same research question** — e.g. a witness-search
 or tree-ID lookup does not complete a probate/will item; only that
-item's own search does.
+item's own search does. **This includes a name collision**: finding a
+person who shares a name with a different plan item's target does not
+complete that item — a cross-reference witness search for "Thomas
+Flynn" does not complete a plan item asking for Thomas Flynn's own
+probate record. Before attaching a `planItemId` to a log entry (step 7)
+or marking one `completed`, check that the search's own record type and
+purpose match that specific plan item's `record_type`/rationale, not
+just that a name matches.
 
 ### 9. Handle nil results
 
@@ -291,7 +298,11 @@ When a search returns no results:
 
 Suggest sub-searches for named non-target persons (witnesses,
 executors, appraisers), distinctive landmarks, and slaveholder-enslaved
-name pairs. See `references/search-strategies.md` for triggers.
+name pairs. See `references/search-strategies.md` for triggers. **Log
+these as their own ad-hoc entries (`planItemId: null`)** unless a plan
+item specifically asks for that person's own record — a cross-reference
+person sharing a name with a different plan item's target is a name
+collision, not a match (step 8).
 
 ### 11. Pass records to extraction
 
