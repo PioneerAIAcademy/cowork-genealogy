@@ -211,25 +211,98 @@ year-only value does not naively trip a day-level check.
 
 ### W1: `DEATH_BEFORE_BIRTH`
 
-> **SUPERSEDED — this section described a design that was never shipped.**
+> **SUPERSEDED — this section describes a design that was never shipped.**
 > The tool emits no `DEATH_BEFORE_BIRTH` tag. The shipped birth/death
 > ordering checks are the `hasEventBeforeBirth365_2` family (§ Tag
-> Catalogue), which compares day ranges rather than years and reasons
-> about birth-like/death-like fact *families* rather than a single Birth
-> and Death fact. Retained only as the record of the original
-> `UPPER_SNAKE_CASE` placeholder design; see § Tag Catalogue for shipped
-> behaviour.
+> Catalogue): they compare day ranges rather than years and reason about
+> birth-like/death-like fact *families* rather than a single Birth and
+> Death fact, so a Death dated before the earliest birth-like fact trips
+> `hasEventBeforeBirth365_2` (a Death being an event more than a year
+> before birth). The placeholder note at the top of this file anticipated
+> the move to FamilySearch tags; that migration happened and these
+> definitions were not updated with it. Kept here as the record of the
+> original design, not as a description of current behaviour — the old
+> pseudocode below calls `extractEarliestYear`/`extractLatestYear`, helpers
+> that no longer exist; see § Tag Catalogue for shipped behaviour.
+
+**Severity:** `contradiction`
+
+**Condition:** The anchor has both a Birth and a Death fact with
+parseable years, and the latest possible death is before the earliest
+possible birth.
+
+**Logic:**
+
+```
+birthFact = anchor.facts.find(f => f.type === "Birth")
+deathFact = anchor.facts.find(f => f.type === "Death")
+if (!birthFact || !deathFact) → skip
+
+birthYear = extractEarliestYear(birthFact.date)
+deathYear = extractLatestYear(deathFact.date)
+
+if (birthYear != null && deathYear != null && deathYear < birthYear)
+  → emit warning
+```
+
+**Message:** `"Death year ({deathYear}) is before birth year ({birthYear}) for {personName}."`
+
+**factIds:** `[birthFact.id, deathFact.id]`
+
+**relatedPersonId:** omitted
 
 ---
 
 ### W2: `YOUNG_BIRTH`
 
-> **SUPERSEDED — this section described a design that was never shipped.**
+> **SUPERSEDED — this section describes a design that was never shipped.**
 > The tool emits no `YOUNG_BIRTH` tag. The shipped equivalent is
 > `earliestChildBirthToBirthMale14` (§ Tag Catalogue), with a
-> `relatives`/`maleRelatives` mob variant. Retained only as the record of
-> the original placeholder design; see § Tag Catalogue for shipped
-> behaviour.
+> `relatives`/`maleRelatives` mob variant that fires the same condition on
+> a one-hop relative. The placeholder note at the top of this file
+> anticipated the move to FamilySearch tags; that migration happened and
+> these definitions were not updated with it. Kept here as the record of
+> the original design, not as a description of current behaviour — the old
+> pseudocode below calls `extractEarliestYear`/`extractLatestYear`, helpers
+> that no longer exist; see § Tag Catalogue for shipped behaviour.
+
+**Severity:** `implausible`
+
+**Condition:** A ParentChild relationship involving the anchor exists
+where the parent is male, and even the maximum possible age at the
+child's birth is < 14.
+
+**Logic:**
+
+```
+for each relationship where type === "ParentChild"
+    AND (relationship.parent === anchor.id OR relationship.child === anchor.id):
+  parent = persons.find(p => p.id === relationship.parent)
+  child  = persons.find(p => p.id === relationship.child)
+  if (!parent || !child) → skip
+  if (parent.gender !== "Male") → skip
+
+  parentBirthFact = parent.facts.find(f => f.type === "Birth")
+  childBirthFact  = child.facts.find(f => f.type === "Birth")
+  if (!parentBirthFact || !childBirthFact) → skip
+
+  parentBirthYear = extractEarliestYear(parentBirthFact.date)
+  childBirthYear  = extractLatestYear(childBirthFact.date)
+
+  if (parentBirthYear != null && childBirthYear != null):
+    maxAge = childBirthYear - parentBirthYear
+    if (maxAge < 14) → emit warning on the CHILD person
+```
+
+**Message:** `"Father {parentName} would have been {maxAge} at the birth of {childName} (father born {parentBirthYear}, child born {childBirthYear})."`
+
+**factIds:** `[parentBirthFact.id, childBirthFact.id]`
+
+**relatedPersonId:** `parent.id`
+
+**Note:** The warning is emitted on the child's `personId` (since the
+child's data is what typically needs correction), with the father as
+`relatedPersonId`.
 
 ---
 
