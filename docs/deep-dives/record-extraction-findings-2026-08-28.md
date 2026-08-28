@@ -49,6 +49,123 @@ This trap cost me three draft findings. It is the single most useful thing on th
 
 ---
 
+## What the fresh run changed — `v1_2026-08-28_17-43-01`
+
+The paid run #1666 buys, executed against this branch after the findings below were
+written. 28 tests, $8.82, 26 minutes, 20 pass / 4 partial / 4 fail. Judge prompt
+`03f306ff` (the current one), so it is **not** comparable to the 08-24 baseline, which
+`check_runlogs` flags as scored under `0d186137`.
+
+Read this section against the findings, not instead of them: it is one run, n=1 per test.
+
+### Both lane-2 fixes produced the intended behaviour
+
+- **`ut_014`** wrote `head_of_household`, `resident_1`, `resident_2`, `resident_3` and
+  **zero** relationship assertions. Tie-neutral roles, no fabricated kinship, no lodger
+  framing — the ideal output for this fixture.
+- **`ut_021`** wrote **no** negative assertions, so the `"No parents' names recorded"`
+  field-level negative is gone.
+
+Neither result establishes causation. The 08-24 run already used `co_resident_N` on
+`ut_014` without the bullet, and 4 of 5 earlier runs of `ut_021` already wrote no
+negatives. Both sit inside prior variance.
+
+### …and the `ut_014` bullet misfired on the judge
+
+`ut_014` **failed**, `Correctness = 1`, on this rationale:
+
+> "The skill fabricated relationship assertions that the 1860 census does not state. The
+> persisted `record_role` values encode kinship and household relationships
+> (`head_of_household`, `resident_1`, `resident_2`, `resident_3`) that imply family
+> structure."
+
+**That is factually false.** The run wrote zero relationship assertions — verified
+directly in `file_changes`, not inferred — and `head_of_household` is the agent body's own
+first-listed role token (`record-extractor.md:199-200`). `resident_N` is the tie-neutral
+shape the bullet itself calls correct.
+
+The bullet caused it. It leads with "`record_role` is part of the fabrication ban", and
+the judge generalised that to every role token carrying household structure. Its list of
+acceptable labels named `co_resident_N` and `adult_male_1` but not `head_of_household` or
+`resident_N`, and read as closed.
+
+**This is the finding, not a footnote.** F1 says `record_role` is graded by nothing; the
+first attempt to make it gradeable in prose produced a false failure on the best-behaved
+run in the corpus, on the first try. It is direct evidence for `docs/skill-lifecycle.md`
+§5 and ADR-0011: a rule that can be decided by reading the persisted document belongs in a
+precondition or a validator, where it cannot be over-applied, and **not** in prose that has
+no scope. Validator request V1 (#2019) is the form this rule should take.
+
+The bullet as it stands is a landmine — it will misgrade every future run. It must be
+rewritten to lead with the closed list of *failing* tokens, or reverted.
+
+### `ut_022` failed the same class, in the other direction
+
+`ut_022` wrote `head_of_household` + `member_1..7` and zero relationship assertions, and
+**failed** four non-optional matchers: `no new assertion with record_role='wife'`, and the
+same for `child_1`, `child_2`, `child_3`.
+
+That failure is legitimate. All the Bakers share a surname, and
+`record-extractor.md:219-226` sanctions `head`/`wife`/`child_N` **within** one apparent
+family group — so `member_N` there is under-labelling, losing structure the record
+supports. Taken with `ut_014`, one run produced the over-labelling error and the
+under-labelling error on two fixtures, which is F1 and F11 exactly. The matcher pin that
+#1442 owns is what makes one loud and the other silent.
+
+### Three violations the earlier corpus never produced
+
+All three are rules my scan found **zero** violations of across 2,416 assertions:
+
+- **`ut_023` (burial index) — prohibition item 87.** `a_004` burial place at
+  `informant_proximity: official_duty` / `information_quality: primary`; the matcher
+  expects `unknown` / `indeterminate`. `record-extractor.md:592-595`: "A burial or
+  cemetery index entry identifies no informant at all: use `unknown` / `unknown`, never
+  the index compiler or the cemetery."
+- **`ut_027` (1910 census) — prohibition item 41.** Source written
+  `source_classification: original` where the fixture pins `derivative`. Judge,
+  Correctness 2.
+- **`ut_017` (obituary) — a validator I had not seen fire.**
+  `test_relationship_type_agrees_with_its_value`: `a_037` carries
+  `relationship_type: "child"` while its `value` reads "Sister of Harold Dean Whitaker".
+  The validator's own message names the consequence: "materialisation reads
+  `structured_value`, so this writes the wrong family edge (or the right one backwards)
+  while the value still reads correctly."
+
+### Correction to §What I did not find
+
+That section says multi-call `extraction_append` runs are "**not** a violation: every
+second call is either a permitted `op: "update"` correction or a resubmit after
+`{ ok: false }`". **A third cause exists and I could not have seen it:** the harness's
+`node --eval` subprocess is capped at 30 seconds (`mock_mcp.py:196-218`), and two calls in
+this run timed out — `ut_009` (18 ops) and `ut_028` (21 ops) — while 14 calls of 15–41 ops
+succeeded in the same run, including 41 and 39. It is load, not batch size.
+
+I could not have seen it because **the four older run logs do not record tool responses at
+all**; `response` appears on `tool_calls` for the first time in this log. So the
+attribution in that section holds only for what was visible, and any earlier timeout is
+invisible in the committed corpus.
+
+Filed as **#2025**. It costs real grades: both of `ut_009`'s and `ut_028`'s Tool Arguments
+2s trace to the timeout, and `ut_009`'s retry dropped `source_id` because the source op was
+in the batch that died.
+
+The same change makes the "an identifier must trace to something a tool returned" class of
+validator writable for the first time.
+
+### Judge-side advisories worth a look during annotation
+
+- `dropped_unknown_rubric_dimension` ×3 (`ut_003`, `ut_010`, `ut_014`) — the judge emitted
+  `Completeness` and `Information quality` as *rubric* dimensions; this rubric has only
+  three (`Assertion atomicity`, `Evidence type accuracy`, `Informant identification`), so
+  they were dropped.
+- `dropped_duplicate_dimension` ×5 — the judge emitted `Informant identification` twice in
+  one run, five times.
+- `routing_negative_judge_fail` on `ut_011`, whose advisory notes a human confirmed that
+  score in 20 of 24 such cells across the corpus. Relevant to F12: that test is the only
+  coverage of the refinement path and it is a 0-turn routing test.
+
+---
+
 ## F1 — `record_role` encodes a relationship the record does not state, and no dimension grades `record_role`
 
 **Lane 2 + validator.** The sharpest finding of the dive.
@@ -768,8 +885,10 @@ these. Across 2,416 assertions and 121 sources:
   `record_persona_id` population (item 66).
 - **Zero** prohibited framings in the delegation prompts — but see F9: the prompts are
   truncated at 200 characters, so that particular zero means nothing.
-- The apparent "15 runs made two `extraction_append` calls" is **not** a violation:
-  every second call is either a permitted `op: "update"` correction
-  (`record-extractor.md:849–855`) or a resubmit after `{ ok: false }`
-  (`:843–847`). No run double-wrote a fact — 0 duplicate `(role, fact_type, value)`
-  tuples across the corpus.
+- The apparent "15 runs made two `extraction_append` calls" is **not** a violation of the
+  one-call rule: no run double-wrote a fact — 0 duplicate `(role, fact_type, value)`
+  tuples across the corpus. **Superseded in part:** I attributed every second call to a
+  permitted `op: "update"` correction (`record-extractor.md:849–855`) or a resubmit after
+  `{ ok: false }` (`:843–847`). The fresh run shows a third cause — a 30-second harness
+  subprocess timeout (#2025) — that the four older logs cannot show, because they do not
+  record tool responses. See §What the fresh run changed.
