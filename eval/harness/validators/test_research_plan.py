@@ -351,3 +351,81 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
                     f"expected 'planned'"
                 )
     assert not errors, "New plan items with non-planned status:\n  - " + "\n  - ".join(errors)
+
+
+# --- Tag-gated: already-attached FAN-cluster facts must reach the response ---
+
+def test_survey_surfaces_already_attached_fan_facts(before_state, text_response, test):
+    """Tag-gated (issue #1948): when a non-subject person already has a
+    sourced fact in `tree.gedcomx.json`, the response must actually mention
+    it -- not just plan around it silently.
+
+    Live alpha-feedback report: a first plan for a "why did the family move"
+    question never surfaced a sibling's already-sourced 1875 land purchase in
+    the destination county, seven years before the subject's own documented
+    arrival. Three SKILL.md wording attempts (see the mined test
+    `ut_research_plan_bpx`) moved the failure rate from "every sample" to
+    "about half of samples" but never closed it -- expected, since the skill
+    runs without `temperature=0`, so no wording can pin any behavior at
+    exactly 100%. This validator makes the *test* airtight regardless: a
+    silent omission fails deterministically here, it never depends on the
+    judge noticing.
+
+    Deliberately gated on the `already-attached` tag rather than running on
+    every research-plan test: several existing scenarios (e.g. `fixtures`)
+    have non-subject persons with sourced facts that are incidental to their
+    test's actual point, and checking every one of those for content the test
+    was never designed to require would be a false-positive trap, not a
+    guard.
+
+    Check: for each non-subject person with a sourced fact, require that
+    BOTH their given name AND the fact's date appear somewhere in the
+    response text (case-insensitive substring). This is deliberately coarse
+    -- it does not check that the two appear near each other, or that the
+    response's *reasoning* about the fact is sound (that stays the judge's
+    job) -- only that the fact's existence and its distinguishing date were
+    not silently skipped.
+    """
+    if "already-attached" not in test.get("tags", []):
+        pytest.skip("not an already-attached-fan-facts scenario")
+    research = before_state.get("research_json")
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    if research is None or tree is None:
+        pytest.skip("missing research.json or tree.gedcomx.json for before-state")
+    if not text_response:
+        pytest.skip("no text_response captured")
+
+    subject_ids = set(research.get("project", {}).get("subject_person_ids") or [])
+    names_by_id = {
+        p.get("id"): (p.get("names") or [{}])[0].get("given", "")
+        for p in tree.get("persons", []) or []
+    }
+    response_lower = text_response.lower()
+
+    missed: list[str] = []
+    for person in tree.get("persons", []) or []:
+        pid = person.get("id")
+        if not pid or pid in subject_ids:
+            continue
+        given = names_by_id.get(pid, "")
+        if not given:
+            continue
+        sourced_facts = [f for f in (person.get("facts") or []) if f.get("sources")]
+        if not sourced_facts:
+            continue  # nothing already attached for this person -- not in scope for this check
+        surfaced = any(
+            fact.get("date")
+            and given.lower() in response_lower
+            and fact["date"].lower() in response_lower
+            for fact in sourced_facts
+        )
+        if not surfaced:
+            missed.append(
+                f"{pid} ({given}): has a sourced fact but neither the "
+                f"person's given name nor the fact's date appear in the "
+                f"response"
+            )
+    assert not missed, (
+        "already-attached FAN-cluster fact(s) never surfaced in the "
+        "response:\n  - " + "\n  - ".join(missed)
+    )

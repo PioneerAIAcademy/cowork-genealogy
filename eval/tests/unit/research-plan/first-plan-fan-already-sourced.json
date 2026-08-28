@@ -28,5 +28,8 @@
     "The plan should still include new record-type items for Michael's own movement and its cause (census, land/deed, tax, church, per the localities entry) -- surfacing Patrick's fact is additive, not a replacement for planning new searches about Michael himself.",
     "Should NOT plan a new search to (re)discover Patrick's 1875 land purchase or residence in Schuylkill County -- that fact is already sourced and attached; planning a fresh search for it would show the skill found it by re-searching rather than by surveying the tree it already had.",
     "Grade on whether the already-attached fact reached the response's reasoning at all, not on how elegantly it was woven in -- a blunt one-sentence acknowledgment is enough to pass; total silence about Patrick's tree fact is the failure."
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }
