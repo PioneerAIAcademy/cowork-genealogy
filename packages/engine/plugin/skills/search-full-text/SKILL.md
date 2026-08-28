@@ -14,7 +14,10 @@ description: Invoke for FamilySearch full-text search (FTS) — immediately
   to search (use research-plan). Do NOT use to scope a new project or
   propose opening research questions — a request to figure out what to
   research first, with no plan item yet to execute, routes to
-  question-selection, not this skill.
+  question-selection, not this skill. Do NOT use when the user already has
+  a specific record in hand (e.g. "I have a deed naming X as a witness,
+  extract the assertions") — that is record-extraction; this skill is for
+  finding records, not extracting from one already found.
 allowed-tools:
   - fulltext_search
   - source_attachments
