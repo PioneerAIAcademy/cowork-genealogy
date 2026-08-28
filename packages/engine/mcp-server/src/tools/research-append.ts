@@ -325,11 +325,13 @@ function personaRoute(entry: any, research: any): string {
  *  re-opened. So the gate is now reachability, at any confidence, and the text
  *  names the retrieval route instead of excusing the omission.
  *
- *  Gated on `confidence === "confident"`, mirroring `personEvidenceInvariants`:
- *  `research_append` is a stateless write that cannot see the tree or the session,
- *  so "brand-new tree person" is not knowable here, but the confidence claim is —
- *  and a confident identity is exactly the one that should carry the score behind
- *  it. The correct response is to call `same_person` on the pairing and record its
+ *  Gated on REACHABILITY at any confidence, not on `confidence === "confident"`.
+ *  The old gate reasoned that a stateless write cannot see the tree but can see
+ *  the confidence claim. Reachability is knowable statelessly too — the join runs
+ *  entirely inside the document being written — and it is the better question:
+ *  the confidence gate said nothing about the `probable` links where a skipped
+ *  score hides, and fired on links nothing could ever score.
+ *  The correct response is to call `same_person` on the pairing and record its
  *  score — NOT to lower the confidence to silence the warning. Confidence is the
  *  correlation judgment; `match_score` is the number behind it, and downgrading the
  *  first to escape a warning about the second games a genealogical claim (and can

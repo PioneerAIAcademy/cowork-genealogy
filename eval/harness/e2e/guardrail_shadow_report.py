@@ -631,6 +631,10 @@ class ProvenanceReplay:
     #: measured a different rule on part of its corpus is exactly the shape
     #: this module refuses elsewhere. 0 on today's corpus.
     runs_without_provenance: int = 0
+    #: Links the narrowing skipped — the *unscoreable by design* population,
+    #: printed as a number beside the rate so the exemption is never a silent
+    #: subtraction from it.
+    exempted_links: int = 0
 
 
 def _links_any_person_evidence(tool: str, args: dict[str, Any] | None) -> bool:
@@ -765,12 +769,26 @@ def replay_provenance(
             if not _links_any_person_evidence(tool, args):
                 continue
             links = True
+            scored_so_far = same_person_scored_ids(tool_calls[:i])
             unguarded = unguarded_new_person_evidence_links(
                 tool,
                 args,
-                scored_ids=same_person_scored_ids(tool_calls[:i]),
+                scored_ids=scored_so_far,
                 starting_ids=starting,
                 research=research,
+            )
+            # What the narrowing skipped on this call: the ids the UN-narrowed
+            # predicate would have flagged, minus the ones it still does. Counted
+            # so the exemption is a number beside the rate rather than a silent
+            # subtraction from it.
+            out.exempted_links += max(
+                0,
+                len(
+                    unguarded_new_person_evidence_links(
+                        tool, args, scored_ids=scored_so_far, starting_ids=starting
+                    )
+                )
+                - len(unguarded),
             )
             for pid in unguarded:
                 out.violations.append(
@@ -804,13 +822,14 @@ def format_provenance_replay(replay: ProvenanceReplay) -> str:
         f"{affected_runs} of {replay.runs_linking} run(s) that link a person have "
         f"≥1 gap ({len(replay.violations)} link(s), {affected_fixtures} fixture(s)).",
         "  A lower bound: the live hook may not see a same-turn same_person; the replay always does.",
-        "  Links whose provenance lane cannot yield a persona from what the run retained are not counted (spec §8).",
+        f"  {replay.exempted_links} link(s) NOT counted: their provenance lane cannot "
+        "yield a persona from what the run retained (spec §8).",
+        # Both numbers print unconditionally, including at 0. A count that appears
+        # only when non-zero reads identically to one nobody computed, which is
+        # the inference this module refuses everywhere else.
+        f"  {replay.runs_without_provenance} run(s) had no readable final-research.json "
+        "and were replayed UN-NARROWED (no provenance join).",
     ]
-    if replay.runs_without_provenance:
-        lines.append(
-            f"  {replay.runs_without_provenance} run(s) had no readable "
-            "final-research.json and were replayed UN-NARROWED (no provenance join)."
-        )
     if replay.skipped:
         lines.append(f"  Skipped {len(replay.skipped)} run(s) with no committed seed tree:")
         lines.extend(f"    {s}" for s in replay.skipped)
