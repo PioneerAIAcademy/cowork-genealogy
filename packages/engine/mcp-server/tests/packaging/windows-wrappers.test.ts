@@ -233,7 +233,17 @@ describe("Windows wrapper drift", () => {
    */
   const batFiles = (function walk(dir: string): string[] {
     return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
-      if (e.name === "node_modules" || e.name === ".venv" || e.name === ".git") return [];
+      // `.claude` holds gitignored review worktrees (.gitignore:25) -- whole checkouts
+      // of this repo at other commits. Walking them made this guard report the repo's
+      // own .bat as broken from files that are not in it, so `make test-all` was red
+      // for anyone using the worktree flow while CI, a fresh clone, stayed green.
+      if (
+        e.name === "node_modules" ||
+        e.name === ".venv" ||
+        e.name === ".git" ||
+        e.name === ".claude"
+      )
+        return [];
       const full = join(dir, e.name);
       if (e.isDirectory()) return walk(full);
       return e.name.toLowerCase().endsWith(".bat") ? [full] : [];

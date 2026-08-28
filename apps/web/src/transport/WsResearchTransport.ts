@@ -88,7 +88,10 @@ export class WsResearchTransport implements ResearchTransport {
     const res = await fetch(`/api/feedback/context?sessionId=${this.sessionId}`, {
       credentials: 'include'
     })
-    if (!res.ok) return { files: [], sessionLogSize: 0, hasSessionLog: false }
+    // Do NOT resolve empty here: the dialog cannot tell that apart from "the folder
+    // is empty", and it would then display "(none found)" while the bundle still
+    // carries the media and the session log. Let the caller see the failure.
+    if (!res.ok) throw new Error(`Failed to read feedback context (${res.status})`)
     return (await res.json()) as FeedbackContext
   }
 
