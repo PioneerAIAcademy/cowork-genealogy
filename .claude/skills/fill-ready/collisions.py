@@ -25,10 +25,26 @@ import sys
 ROOTS = ("packages/", "eval/", "docs/", "apps/", "scripts/", ".github/", ".claude/")
 _TOKEN = re.compile(r"(?:" + "|".join(re.escape(r) for r in ROOTS) + r")[A-Za-z0-9_./*-]+")
 
-# Guard 2. A directory holding more than this many tracked files is too coarse to
-# pair on: naming it means "I add a file here", not "I edit every file here".
-# Snapshot directories are exempt -- there, breadth IS the Gate 4 unit.
-_PREFIX_MAX_FILES = 10
+# Guard 2. A bare directory pairs only when it names a UNIT -- a directory that is
+# itself the thing being worked on, so naming it really does mean "all of this".
+# Everything else is a CONTAINER, where naming it means "a file in here" and
+# pairing it against its own siblings is a false positive.
+#
+# This replaced a tracked-file-count threshold (<= 10 files) on 2026-08-27. Size is
+# a proxy for the distinction and gets it wrong in both directions: measured over
+# the 27 bare-directory Touches entries then on the board, `apps/server/app/sandbox`
+# (5 files) and `eval/app/tests/unit` (6) passed the threshold and are containers,
+# while `eval/runlogs/unit/<skill>` (11) failed it and is a unit. The false pair it
+# produced: issue #1959 says `apps/server/app/sandbox/ (LocalProvider WS path)` --
+# i.e. local.py -- and was paired against #1729 and #1489, which name e2b.py.
+_UNIT_DIRS = (
+    re.compile(r"^packages/engine/plugin/skills/[a-z0-9-]+$"),
+    re.compile(r"^eval/tests/unit/[a-z0-9-]+$"),
+    re.compile(r"^eval/tests/e2e/[a-z0-9-]+$"),
+    re.compile(r"^eval/fixtures/scenarios/[a-z0-9-]+$"),
+    re.compile(r"^eval/runlogs/unit/[a-z0-9-]+$"),
+    re.compile(r"^eval/runlogs/e2e/[a-z0-9-]+$"),
+)
 
 # Guard 3. A concrete file named by more than this many candidates is a hub, not a
 # collision. Pairing on it emits N-squared rows nobody reads.
@@ -66,13 +82,17 @@ def tracked_count(prefix):
     return _count_cache[prefix]
 
 
+def is_unit_dir(path):
+    return any(r.match(path) for r in _UNIT_DIRS)
+
+
 def pairable(kind, path):
+    """A file always pairs. A directory pairs only if everything inside it is in
+    scope: a snapshot path (any file under it dirties a run log -- Gate 4), or a
+    unit dir (the directory *is* the thing being worked on)."""
     if kind == "file":
         return True
-    if in_snapshot(path + "/"):
-        return True
-    n = tracked_count(path)
-    return 0 < n <= _PREFIX_MAX_FILES
+    return in_snapshot(path + "/") or is_unit_dir(path)
 
 
 def parse(entry):
