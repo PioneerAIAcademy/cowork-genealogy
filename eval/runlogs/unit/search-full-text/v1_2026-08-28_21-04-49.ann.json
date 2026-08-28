@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-08-25_11-41-40.json",
-  "annotator": "mercybocumy2000@gmail.com",
+  "run_log": "v1_2026-08-28_21-04-49.json",
+  "annotator": "83524248+taiwo-stack@users.noreply.github.com",
   "corrections": [
     {
-      "test_id": "ut_search_full_text_011",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_011",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_011",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,7 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_011",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "rubric",
       "dimension_name": "Query construction",
       "llm_score": 3,
@@ -35,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_011",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "rubric",
       "dimension_name": "FAN awareness",
       "llm_score": 3,
@@ -43,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_011",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "rubric",
       "dimension_name": "Negative result handling",
       "llm_score": 3,
@@ -51,33 +51,9 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_007",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_007",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_007",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "rubric",
-      "dimension_name": "Query construction",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_007",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Result triage",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -99,20 +75,84 @@
       "comment": null
     },
     {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
       "test_id": "ut_search_full_text_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 1,
-      "comment": "Did not correctly route to record-extraction"
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_search_full_text_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
-      "corrected_score": 1,
-      "comment": "Did not correctly route to record-extraction"
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_search_full_text_003",
@@ -123,7 +163,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_008",
+      "test_id": "ut_search_full_text_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -131,7 +171,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_008",
+      "test_id": "ut_search_full_text_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -139,83 +179,11 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_008",
+      "test_id": "ut_search_full_text_004",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Query construction",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_008",
-      "dimension_source": "rubric",
-      "dimension_name": "FAN awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Negative result handling",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Query construction",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_010",
-      "dimension_source": "rubric",
-      "dimension_name": "FAN awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Negative result handling",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     }
   ]
