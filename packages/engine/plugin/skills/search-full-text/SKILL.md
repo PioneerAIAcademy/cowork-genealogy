@@ -101,9 +101,17 @@ Read `references/query-syntax.md` for operator details and wildcards.
 - **Search by name only first.** Do NOT send `recordPlace0/1/2/3`,
   `yearFrom`/`yearTo`, or `recordType` on the first `fulltext_search`
   call for a query — whether as `keywords` text or a structured
-  argument, both count as "the initial query." See
-  `references/query-syntax.md`'s "Filters (post-search)" section for
-  why, and the decision ladder below for when to add them.
+  argument, both count as "the initial query." **This holds even when
+  the user's own request phrases the place in the same sentence as the
+  person** — "find X as a witness in Schuylkill County, Pennsylvania"
+  is still an unscoped first call (`keywords: "+X +witness"`, no
+  `recordPlace*`); the place is a post-search filter to add on a later
+  call, not part of the request's wording to carry into the first one.
+  The log entry for that first call is unscoped too (step 7) — do not
+  resolve the temptation to include the place by adding it to the call
+  instead of dropping it from the log. See `references/query-syntax.md`'s
+  "Filters (post-search)" section for why, and the decision ladder below
+  for when to add them.
 - **Do NOT scope a full-text search to a record `collectionId`.** The
   FTS corpus is partitioned into its own auto-generated collections;
   a `collectionId` guessed from `record_search` (or from a collections
