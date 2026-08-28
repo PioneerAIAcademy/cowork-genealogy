@@ -831,10 +831,7 @@ copy first; check the echoed `resolvedPlaces`), validates once, and
 writes both files. **Never predict an id; never call `tree_edit` for the
 source; never write `research.json` or `tree.gedcomx.json` directly** —
 direct writes bypass validation, id allocation, and the `.bak` safety
-net. If a persistence tool shows as deferred, load it via ToolSearch
-first — search by **bare** tool name (`query: "+extraction_append"`),
-never by a hardcoded fully-qualified name, since the MCP server prefix
-differs per deployment.
+net.
 
 **Source reuse is tool-detected.** Always supply `sourceDescription` —
 the tool detects when this record already has a source (same
