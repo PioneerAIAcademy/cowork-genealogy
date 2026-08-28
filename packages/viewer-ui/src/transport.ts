@@ -51,6 +51,20 @@ export interface ProjectStateSnapshot {
    * project open", which gates the welcome screen.
    */
   label: string | null
+  /**
+   * A folder-level heads-up to replay on hydration — today, "this folder also
+   * has research.json in a subfolder". Required rather than optional so every
+   * transport has to answer: a notice is push-delivered via `onNotice`, and a
+   * renderer that subscribes after the send would otherwise never see it
+   * (issue #1899).
+   *
+   * The web transport returns `null` deliberately and this is settled: the
+   * hosted path pins the project to `/project`, so no notice is ever fired
+   * there and the control plane has none to serve. Do not make the notice a
+   * hosted concept to "complete" the symmetry — it buys nothing today and pulls
+   * pytest and the sandbox snapshot reader into a TypeScript-only change.
+   */
+  notice: string | null
 }
 
 export interface SidecarRead {
