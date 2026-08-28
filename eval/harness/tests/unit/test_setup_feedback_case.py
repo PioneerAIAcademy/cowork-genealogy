@@ -356,6 +356,15 @@ def test_windows_backslash_zip_completes_setup(tmp_path, monkeypatch):
     `.feedback-repo-root` marker, the git baseline and the skill symlinks —
     with no output at all, so it looked like the script had done nothing.
     Every Windows submission hit this.
+
+    HOW MUCH THIS GUARDS, AND WHERE. The failure needs an Info-ZIP build that
+    actually emits "appears to use backslashes as path separators" and exits 1
+    for it — observed on Git for Windows, which is where the genealogist team
+    and the bug both live. A runner whose unzip stays silent returns 0 either
+    way, so there this degrades to a smoke test that the script completes, not
+    a regression guard. Stated rather than left implied: it was verified to
+    fail against the pre-fix script on Windows, and CI is Linux, so a green
+    tick here is weaker evidence than it looks.
     """
     slug = "feedback-2026-08-26T21-23-06-618Z"
     zip_path = tmp_path / f"{slug}.zip"
