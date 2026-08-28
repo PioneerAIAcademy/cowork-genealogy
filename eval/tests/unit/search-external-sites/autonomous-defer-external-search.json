@@ -22,7 +22,8 @@
     "place-search-schuylkill-county",
     "place-search-schuylkill-by-name",
     "place-search-schuylkill-by-place",
-    "external-links-search-schuylkill"
+    "external-links-search-schuylkill",
+    "collections-search-schuylkill"
   ],
   "judge_context": [
     "This is an AUTONOMOUS run (the message contains --autonomous, and states no user is available). Autonomous mode INVERTS the normal click-capture-wait expectation: the correct behavior is NOT to present the URL and wait for a user to capture and upload a PDF.",

@@ -147,12 +147,6 @@ const ALLOWLIST: Array<{ relPath: string; text: string; reason: string }> = [
     text: "(issue #1471). Recording and testing the doubt is question-selection's job —",
     reason: "pre-existing; leaves with init-project's next paid eval run",
   },
-  {
-    relPath: "skills/question-selection/SKILL.md",
-    text: "for its own conclusion (issue #1471). Under `--autonomous` (no user to answer),",
-    reason:
-      "pre-existing; leaves with question-selection's next paid eval run (its slot is held by an open PR today)",
-  },
 ];
 
 const allFiles = discoverBodies();

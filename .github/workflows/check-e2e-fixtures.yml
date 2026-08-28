@@ -64,7 +64,7 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Check e2e grading gate (blocking)
         if: steps.scope.outputs.relevant == 'true'
