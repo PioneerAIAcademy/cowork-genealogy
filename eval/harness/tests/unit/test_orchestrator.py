@@ -1348,6 +1348,7 @@ from harness.orchestrator import (
 class _FakeValidator:
     name: str
     passed: bool
+    reporting_only: bool = False
 
 
 def test_compute_validators_passed_all_pass():

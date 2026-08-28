@@ -50,7 +50,7 @@ from harness.skill_runner import (
     SkillRunResult,
     run_skill,
 )
-from harness.validator_runner import as_dicts, run_validators
+from harness.validator_runner import as_dicts, run_validators, split_observations
 from harness.workspace import build_workspace, cleanup_session_store, snapshot_files
 
 
@@ -124,16 +124,18 @@ FILE_VALIDITY_VALIDATORS = frozenset(
 
 
 def compute_validators_passed(validator_results, *, intentionally_invalid: bool) -> bool:
-    """True when no validator failed.
+    """True when no gating validator failed.
 
-    When the test's scenario is intentionally invalid, the file-validity
-    validators are expected to fail and are ignored; every other validator
-    still counts.
+    Tier-2 (reporting_only) results are observations, never gates — they are
+    skipped here. When the test's scenario is intentionally invalid, the
+    file-validity validators are expected to fail and are also ignored; every
+    other gating validator still counts.
     """
     return all(
         r.passed
         for r in validator_results
-        if not (intentionally_invalid and r.name in FILE_VALIDITY_VALIDATORS)
+        if not r.reporting_only  # tier-2 never gates (issue #1749)
+        and not (intentionally_invalid and r.name in FILE_VALIDITY_VALIDATORS)
     )
 
 
@@ -506,6 +508,14 @@ async def _execute_single_run(
         other_skill_names=other_skill_names,
     )
 
+    # --- Extract usage early — validators may need num_turns / output_tokens
+    # (tier-2 reporting, issue #1749). Previously extracted after validators
+    # at the run-log assembly step; moved here so both sites use the same
+    # locals. _skill_tokens is pure so calling it twice would also work.
+    _usage = result.usage or {}
+    _num_turns = int(_usage.get("num_turns") or 0)
+    _, _, _, _output_tokens, _ = _skill_tokens(_usage)
+
     # --- Validators -----------------------------------------------------
     validator_results = run_validators(
         skill=spec.skill,
@@ -531,6 +541,10 @@ async def _execute_single_run(
         attempted_mcp_calls=result.attempted_mcp_calls,
         skill_frontmatter=skill_frontmatter,
         skills_invoked=result.skills_invoked,
+        activated=activated,
+        num_turns=_num_turns,
+        output_tokens=_output_tokens,
+        aborted_reason=result.aborted_reason,
         test={
             **spec.raw.get("test", {}),
             # Top-level validator-facing block threaded in alongside the
@@ -552,6 +566,23 @@ async def _execute_single_run(
         validator_results, intentionally_invalid=spec.intentionally_invalid
     )
 
+    # --- Split gating vs reporting validator results (issue #1749) --------
+    # Gating failures (tier 1, test_*): pass r.name — existing behavior.
+    validator_failures = [
+        r.name for r in validator_results
+        if not r.passed and not r.reporting_only
+    ]
+    # Reporting observations (tier 2, report_*): pass r.error (the
+    # observation text), NOT r.name (which is a verdict). The function name
+    # goes only to the run log for traceability, never the judge.
+    harness_observations = split_observations(validator_results)
+    # For _build_warnings: (name, observation) tuples so the run log records
+    # which report_* function fired.
+    _harness_observation_pairs = [
+        (r.name, r.error) for r in validator_results
+        if r.reporting_only and not r.passed and r.error
+    ]
+
     # --- Judge ----------------------------------------------------------
     # Advisories from _extract_dimensions (a dropped unknown/duplicate
     # dimension, #1361) — populated only on the successful branch below.
@@ -566,9 +597,8 @@ async def _execute_single_run(
             judge_output = _run_judge(
                 # Failures only — a passing list is a conclusion, and the judge
                 # grades a conclusion by agreeing with it.
-                validator_failures=[
-                    r.name for r in validator_results if not r.passed
-                ],
+                validator_failures=validator_failures,
+                harness_observations=harness_observations,
                 spec=spec,
                 rubric=rubric,
                 scenario_readme=scenario_readme,
@@ -638,14 +668,13 @@ async def _execute_single_run(
         judge_skipped=judge_result.skipped,
     )
 
-    usage = result.usage or {}
     skill_input, skill_cached, skill_cache_write, skill_output, per_model = (
-        _skill_tokens(usage)
+        _skill_tokens(_usage)
     )
     # SDK timing (present only when a ResultMessage arrived — i.e. not on a
     # wall-clock / stream-silence abort, where these stay 0).
-    skill_duration_api_ms = float(usage.get("duration_api_ms") or 0.0)
-    skill_num_turns = int(usage.get("num_turns") or 0)
+    skill_duration_api_ms = float(_usage.get("duration_api_ms") or 0.0)
+    skill_num_turns = _num_turns
     _ended_at = time.time()
 
     return SingleRun(
@@ -669,7 +698,7 @@ async def _execute_single_run(
         cache_creation_input_tokens=skill_cache_write,
         output_tokens=skill_output,
         model_usage=per_model,
-        skill_cost_usd=float(usage.get("total_cost_usd") or 0.0),
+        skill_cost_usd=float(_usage.get("total_cost_usd") or 0.0),
         output={
             "text_response": result.text_response,
             "activated": activated,
@@ -694,6 +723,7 @@ async def _execute_single_run(
                     attempted_mcp_calls=result.attempted_mcp_calls,
                     unread_skill_calls=result.unread_skill_calls,
                     judge_warnings=judge_dimension_warnings,
+                    harness_observations=_harness_observation_pairs,
                 ))
                 else {}
             ),
@@ -920,6 +950,7 @@ def _build_warnings(
     attempted_mcp_calls: list[dict[str, Any]] | None = None,
     unread_skill_calls: list[list[str]] | None = None,
     judge_warnings: list[dict[str, Any]] | None = None,
+    harness_observations: list[tuple[str, str]] | None = None,
 ) -> list[dict[str, Any]]:
     """Surface run-time advisories the judge / reviewer should see.
 
@@ -998,6 +1029,18 @@ def _build_warnings(
                 "an mcp_fixture whose args match the call."
             ),
             "attempted": attempted,
+        })
+
+    # Tier-2 reporting observations (issue #1749). The function name goes in
+    # the run log for traceability ("check"); the observation text goes to
+    # the reviewer. Neither the name nor the text reaches the judge — only
+    # harness_observations (the anonymous text list) is passed to the judge
+    # prompt, and that happens in _run_judge, not here.
+    for check_name, obs_text in (harness_observations or []):
+        warnings.append({
+            "kind": "prose_observation",
+            "check": check_name,
+            "observation": obs_text,
         })
 
     return warnings
@@ -1413,6 +1456,7 @@ def _run_judge(
     auth: AuthConfig,
     judge_model: str,
     validator_failures: list[str] | None = None,
+    harness_observations: list[str] | None = None,
 ) -> JudgeOutput:
     # Negative tests: the skill correctly declines, so there is no craft
     # output to grade against the skill's rubric. Spec §7 — "negative
@@ -1443,6 +1487,7 @@ def _run_judge(
         model=judge_model,
         before_state=_summarize_before_state(before_snapshot),
         validator_failures=validator_failures,
+        harness_observations=harness_observations,
     )
 
 

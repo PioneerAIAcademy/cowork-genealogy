@@ -795,6 +795,176 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
     )
 
 
+# --- V8: Activated run must produce a response --------------------------
+
+def test_activated_run_produces_response(
+    activated, aborted_reason, num_turns, output_tokens, text_response, test,
+    skills_invoked,
+):
+    """An activated run that produced no output is a dead run — fail it.
+
+    Gate on six conditions: activated is True, not aborted, no skills
+    invoked, num_turns == 0, output_tokens == 0, AND text_response shorter
+    than 200 characters. The skills_invoked check is the strongest signal —
+    a run that invoked a skill did real work even when telemetry reports zero
+    (343 of 1945 committed runs report zero telemetry normally). The 200-char
+    floor avoids flagging telemetry-only dropouts where a real response
+    exists.
+    """
+    if activated is not True:
+        pytest.skip("skill did not activate")
+    if aborted_reason is not None:
+        pytest.skip("run was aborted — already flagged separately")
+    if skills_invoked:
+        return  # a run that invoked a skill is not a dead run
+    if num_turns != 0 or output_tokens != 0:
+        return  # telemetry shows work happened
+    if len(text_response or "") >= 200:
+        return  # substantial response present despite missing telemetry
+    assert False, (
+        f"activated run produced no meaningful output: num_turns=0, "
+        f"output_tokens=0, text_response length={len(text_response or '')} "
+        f"(< 200 chars) — the run did not happen"
+    )
+
+
+# --- V7: In-body decline actually declines ------------------------------
+
+def test_decline_response_nonempty(activated, text_response, test):
+    """V7(a): an activated negative-test run must produce a non-empty response.
+
+    Tier 1 — gates. If the skill activated on an out-of-scope request but
+    produced no response, the test is vacuously passing on no evidence.
+    Skips grade_on_invariant tests (those deliberately bypass routing checks).
+    """
+    if test.get("type") != "negative":
+        pytest.skip("positive test")
+    if test.get("negative", {}).get("grade_on_invariant"):
+        pytest.skip("grade_on_invariant test — routing is not gated")
+    if activated is not True:
+        pytest.skip("skill did not activate")
+    assert (text_response or "").strip(), (
+        "activated negative test produced an empty response — cannot evaluate "
+        "whether the skill declined the out-of-scope request"
+    )
+
+
+def report_decline_names_routed_skill(activated, text_response, test, skills_invoked):
+    """V7(b): the decline response should name the skill it routes to.
+
+    Tier 2 — reports, never gates. The structured signal (skills_invoked)
+    already covers routing correctness in _compute_outcome; this is the
+    prose-level complement. Skips grade_on_invariant tests per the lead's
+    ruling (issue #1749).
+    """
+    if test.get("type") != "negative":
+        pytest.skip("positive test")
+    if test.get("negative", {}).get("grade_on_invariant"):
+        pytest.skip("grade_on_invariant test — routing is not gated")
+    if activated is not True:
+        pytest.skip("skill did not activate")
+    correct_skills = test.get("negative", {}).get("correct_skill", [])
+    if not correct_skills:
+        pytest.skip("no correct_skill declared in test")
+    response_lower = (text_response or "").lower()
+    # Check if any of the correct skills are named in the response
+    # (skill names use hyphens; check both hyphenated and space-separated)
+    for skill_name in correct_skills:
+        if skill_name.lower() in response_lower:
+            return
+        if skill_name.replace("-", " ").lower() in response_lower:
+            return
+    raise AssertionError(
+        f"the decline response does not name any of the expected skills "
+        f"{correct_skills}; the response text contains none of those skill "
+        f"names (hyphenated or space-separated)"
+    )
+
+
+def report_decline_no_first_person_commitment(activated, text_response, test):
+    """V7(c): no first-person commitment to perform the out-of-scope act.
+
+    Tier 2 — reports. Flags "I'll"/"I will"/"let me"/"I can" followed in
+    the same sentence by add/create/extract/format plus source/record.
+    """
+    import re as _re
+
+    if test.get("type") != "negative":
+        pytest.skip("positive test")
+    if test.get("negative", {}).get("grade_on_invariant"):
+        pytest.skip("grade_on_invariant test — routing is not gated")
+    if activated is not True:
+        pytest.skip("skill did not activate")
+    response = text_response or ""
+    # Split into sentences (rough: period/exclamation/question + space/end)
+    sentences = _re.split(r'(?<=[.!?])\s+', response)
+    commitment_re = _re.compile(
+        r"(?:I'?ll|I will|let me|I can)\s+"
+        r"(?:(?!\bnot\b|\bnever\b|\bcannot\b|n't).)*?(?:add|create|extract|format)"
+        r".*?(?:source|record)",
+        _re.IGNORECASE,
+    )
+    matches = []
+    for sent in sentences:
+        if commitment_re.search(sent):
+            matches.append(sent.strip()[:120])
+    if matches:
+        raise AssertionError(
+            "the decline response contains a first-person commitment to "
+            "perform the out-of-scope act: "
+            + "; ".join(f'"{m}"' for m in matches)
+        )
+
+
+# --- V2: No unbacked validation claim -----------------------------------
+
+def report_unbacked_validation_claim(text_response, tool_calls, test):
+    """V2: text must not assert validation ran unless the tool was called.
+
+    Tier 2 — reports, never gates. Matches case-insensitively on
+    'validated', 'validation', 'schema check', 'no warnings' in the same
+    sentence as a persistence claim. Cross-skill.
+
+    Observation text is neutral per anti-bias design: states what was
+    matched and what the tool ledger holds, nothing else.
+    """
+    import re as _re
+
+    if test.get("type") == "negative":
+        pytest.skip("negative test — tool calls belong to the routed-to skill")
+    response = text_response or ""
+    if not response.strip():
+        pytest.skip("no response text to check")
+    validate_calls = [
+        c for c in (tool_calls or [])
+        if (c.get("tool") or "").split("__")[-1] == "validate_research_schema"
+    ]
+    if validate_calls:
+        return  # validation actually ran — no claim is unbacked
+
+    # Split into sentences and look for validation language near persistence
+    sentences = _re.split(r'(?<=[.!?✓✗])\s+|(?<=\n)', response)
+    validation_re = _re.compile(
+        r'\b(?:validated|validation|schema\s+check|no\s+warnings)\b',
+        _re.IGNORECASE,
+    )
+    persistence_re = _re.compile(
+        r'\b(?:writ(?:ten|e|ing)|persist|sav(?:ed|ing)|append|research\.json)\b',
+        _re.IGNORECASE,
+    )
+    matches = []
+    for sent in sentences:
+        if validation_re.search(sent) and persistence_re.search(sent):
+            matches.append(sent.strip()[:150])
+    if matches:
+        raise AssertionError(
+            "the response contains "
+            + "; ".join(f"'{m}'" for m in matches[:3])
+            + " — a validation/persistence claim in the same sentence; "
+            "no validate_research_schema call appears in the tool ledger"
+        )
+
+
 def test_no_raw_writes_to_protected_files(blocked_protected_writes):
     """No raw Write/Edit/NotebookEdit hit research.json / tree.gedcomx.json.
 
