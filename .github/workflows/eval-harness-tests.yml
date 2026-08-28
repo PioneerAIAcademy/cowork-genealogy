@@ -140,7 +140,12 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         uses: astral-sh/setup-uv@v7
         with:
-          python-version: '3.11'
+          # Must match apps/server/.python-version (currently 3.12). The
+          # encoding lint AST-parses every .py in the repo, and a 3.11
+          # ast cannot parse 3.12-only syntax (feature_version only
+          # restricts to older grammars). A version mismatch silently
+          # skips files the lint exists to scan.
+          python-version: '3.12'
           enable-cache: true
           cache-dependency-glob: 'eval/harness/uv.lock'
 
