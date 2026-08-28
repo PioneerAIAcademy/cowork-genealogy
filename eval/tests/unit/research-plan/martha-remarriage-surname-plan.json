@@ -31,7 +31,10 @@
     "collections-search-texas-marriage-probate",
     "volume-search-texas-marriage-probate",
     "external-links-search-texas",
-    "place-search-all-any"
+    "place-search-all-any",
+    "external-links-search-any",
+    "collections-search-any",
+    "volume-search-any"
   ],
   "judge_context": [
     "The plan MUST include at least one item — anywhere in the sequence, not necessarily first — targeting records that would name Martha's parents directly or test whether 'Wood' is even her birth surname: a further/earlier marriage-record search (Smith County TX marriage indexes 1857-1889 are fully indexed and full-text searchable), a probate/estate record naming her as an heir or ward, a church/baptism record, or a sibling's record. Whether such an item is present anywhere in the plan is what Record type selection turns on for this test.",
