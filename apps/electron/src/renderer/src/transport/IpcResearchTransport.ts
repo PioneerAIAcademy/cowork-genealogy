@@ -26,7 +26,8 @@ export class IpcResearchTransport implements ResearchTransport {
     return {
       research: (state.research as ResearchData | null) ?? null,
       gedcomx: (state.gedcomx as GedcomxData | null) ?? null,
-      label: state.folderPath
+      label: state.folderPath,
+      notice: state.notice ?? null
     }
   }
 

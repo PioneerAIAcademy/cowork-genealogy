@@ -100,7 +100,7 @@ Given a zip, the setup script MUST:
 |---|---|
 | 1 | Unzip into `~/feedback/<slug>/` (`%USERPROFILE%\feedback\<slug>\` on Windows), where `<slug>` is the zip basename. An explicit destination may be passed instead. |
 | 2 | Refuse a non-empty destination unless `--force` (`FORCE=1`) is given. |
-| 3 | Write `.feedback-repo-root` containing the absolute path of the repo checkout it was run from. This is how the workflow skills find the repo to write test output into — they MUST resolve it from this marker rather than assuming the cwd. |
+| 3 | Write `.feedback-repo-root` containing the absolute path of the repo checkout the script itself lives in. This is how the workflow skills find the repo to write test output into — they MUST resolve it from this marker rather than assuming the cwd. |
 | 4 | Append `.claude/` to the case's `.gitignore`, preserving any existing entries, creating the file if absent. |
 | 5 | `git init` and make exactly one commit titled **`imported`**. |
 | 6 | Create `.claude/skills/` as a **real directory** (never a symlink) holding one symlink per skill — every skill in `packages/engine/plugin/skills/` and every dev skill in the repo's `.claude/skills/`. Symlinks mean a `SKILL.md` edit takes effect on the next run with no rebuild, which is what makes the fix loop cheap. |

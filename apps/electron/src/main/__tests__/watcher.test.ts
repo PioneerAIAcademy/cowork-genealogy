@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -11,7 +11,11 @@ import {
   formatNestedNotice,
   formatNestedPicker,
   assertResearchProject,
-  PICKER_SCAN_MAX_DEPTH
+  PICKER_SCAN_MAX_DEPTH,
+  scanAndNotify,
+  getCurrentState,
+  startWatching,
+  stopWatching
 } from '../watcher'
 
 // Pure-helper tests. The chokidar integration (lifecycle, awaitWriteFinish,
@@ -270,5 +274,78 @@ describe('assertResearchProject (the select-folder gate)', () => {
     await expect(findNestedResearchJson(dir)).resolves.toHaveLength(1)
     await expect(findNestedResearchJson(dir, PICKER_SCAN_MAX_DEPTH)).resolves.toEqual([])
     await expect(assertResearchProject(dir)).rejects.toThrow(/Not a research project/)
+  })
+})
+
+// #1899: the notice was only ever `send`-ed. A send reaches a renderer that has
+// already subscribed, and `--project-dir` calls startWatching at window creation
+// — before React mounts — so on that launch and on every later reload the notice
+// was gone for good. It has to be stored too.
+//
+// scanAndNotify is extracted from startWatching precisely so this is reachable
+// without chokidar or a real BrowserWindow: the integration around it is only
+// manually verified (see this file's header), so the storing line would
+// otherwise be green with it deleted.
+describe('scanAndNotify stores the folder notice for hydration (#1899)', () => {
+  let dir: string
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'notice-hydrate-'))
+    stopWatching()
+  })
+
+  afterEach(async () => {
+    stopWatching()
+    await rm(dir, { recursive: true, force: true })
+  })
+
+  function fakeWindow(): { webContents: { send: ReturnType<typeof vi.fn> } } {
+    return { webContents: { send: vi.fn() } }
+  }
+
+  it('both sends the notice and stores it in getCurrentState()', async () => {
+    await writeFile(join(dir, 'research.json'), '{}', 'utf-8')
+    await mkdir(join(dir, 'sub'), { recursive: true })
+    await writeFile(join(dir, 'sub', 'research.json'), '{}', 'utf-8')
+
+    // startWatching sets the current folder, which scanAndNotify checks before
+    // it stores anything; call it so the guard sees the folder we scan.
+    const win = fakeWindow()
+    startWatching(dir, win as unknown as Parameters<typeof startWatching>[1])
+    win.webContents.send.mockClear()
+
+    await scanAndNotify(dir, win as unknown as Parameters<typeof scanAndNotify>[1])
+
+    expect(win.webContents.send).toHaveBeenCalledWith(
+      'project:folder-notice',
+      expect.stringContaining('sub/research.json')
+    )
+    expect(getCurrentState().notice).toContain('sub/research.json')
+  })
+
+  it('stores nothing when there is no nested research.json', async () => {
+    await writeFile(join(dir, 'research.json'), '{}', 'utf-8')
+    const win = fakeWindow()
+    startWatching(dir, win as unknown as Parameters<typeof startWatching>[1])
+
+    await scanAndNotify(dir, win as unknown as Parameters<typeof scanAndNotify>[1])
+
+    expect(getCurrentState().notice).toBeNull()
+  })
+
+  it('stopWatching clears the stored notice', async () => {
+    await writeFile(join(dir, 'research.json'), '{}', 'utf-8')
+    await mkdir(join(dir, 'sub'), { recursive: true })
+    await writeFile(join(dir, 'sub', 'research.json'), '{}', 'utf-8')
+
+    const win = fakeWindow()
+    startWatching(dir, win as unknown as Parameters<typeof startWatching>[1])
+    await scanAndNotify(dir, win as unknown as Parameters<typeof scanAndNotify>[1])
+    expect(getCurrentState().notice).not.toBeNull()
+
+    // Without this, picking a clean folder replays the previous folder's notice
+    // on the next reload — a wrong banner, worse than none.
+    stopWatching()
+    expect(getCurrentState().notice).toBeNull()
   })
 })
