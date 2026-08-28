@@ -173,7 +173,8 @@ Read `references/transcription-quirks.md` for HTR error patterns.
 ### 6. Triage results
 
 **Every logged search stages its results, and staging strips the full
-transcript (`textDocument`) from every result — it is never present here.**
+transcript (`textDocument`) from every result — once `staged` is set it is
+not present here.**
 Triage from the fields that do survive:
 - `highlightTerms` — the bare terms the query actually matched in this
   record (e.g. `["Flynn", "witness"]`, not a marked-up excerpt).
@@ -276,10 +277,12 @@ name pairs. See `references/search-strategies.md` for triggers.
 
 ### 11. Pass records to extraction
 
-For each promising record, invoke record-extraction to process it. Staging
-strips the full transcript, so pass what survives — `names`/`places`/`dates`,
-`title`, `recordType`, `recordPlace`, `highlightTerms` — as triage context;
-record-extraction reads the source image itself for the transcript.
+For each promising record, invoke record-extraction to process it. Always
+pass the result's `id` (the record's ARK) — it is what record-extraction
+needs to reach the record. Staging strips the full transcript, so pass what
+survives — `names`/`places`/`dates`, `title`, `recordType`, `recordPlace`,
+`highlightTerms` — as triage context; record-extraction reads the source
+image itself for the transcript.
 
 ### 12. Present results
 

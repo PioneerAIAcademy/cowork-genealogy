@@ -467,8 +467,9 @@ def create_mock_server(
             # be baked into the fixture file (which can't express "only when
             # this call happened to stage" — the same fixture also serves
             # un-staged call shapes). Scoped to fulltext_search only;
-            # record_search's equivalent gedcomx strip is a separate gap,
-            # not fixed here (issue #1826).
+            # record_search's equivalent staged slim (record-search.ts:1100-1133 —
+            # gedcomx, collectionUrl, collectionTitle hoist, treeMatches, events)
+            # is a separate gap, not fixed here (issue #2009).
             if (
                 _name == "fulltext_search"
                 and "error" not in response
