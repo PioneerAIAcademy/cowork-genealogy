@@ -383,3 +383,143 @@ def test_capture_pending_item_not_terminal(before_state, after_state, test):
     `completed`/`skipped`. Shared with the other suite that can reach this
     state; the assertion lives in validators_lib."""
     _assert_capture_pending_item_not_terminal(before_state, after_state, test)
+
+
+# --- jurisdictionHints consumption -------------------------------------
+
+def _place_tokens(place):
+    """Matchable words from a free-text place string (>2 chars, so "of"/"Co"
+    don't create false matches)."""
+    raw_tokens = re.split(r"[,\s]+", place or "")
+    tokens = []
+    for t in raw_tokens:
+        if len(t) > 2:
+            tokens.append(t)
+    return tokens
+
+
+def test_jurisdiction_hints_followed(tool_calls, test):
+    """Tag-gated (jurisdiction-hints-followed): issue #1642 Finding 1
+    (mercyokum) -- when a record_search response returns a non-empty
+    jurisdictionHints (a marriage search that came back empty in a
+    sub-country place -- see packages/engine/mcp-server/src/tools/
+    record-search.ts's isMarriageSearch/foundNobody/isSubCountryPlace gate),
+    the next 1-2 record_search calls in the run must try the top-ranked
+    candidate's place before reverting to a jurisdiction used prior to the
+    hint.
+
+    Ground truth: jimmie-jewel-neal run 2026-07-30_23-05-46 -- the tool
+    returned a correctly-ordered hint naming Yell, Arkansas third (with
+    supporting date and source person); the agent ran one Arkansas-scoped
+    search, then reverted to nine more South Carolina searches. Both
+    grandparent findings were later scored false.
+
+    Shape: `jurisdictionHints.candidates[]`, each a `{place, earliestYear,
+    whose, fromFact}` (marriage-jurisdictions.ts's own JurisdictionCandidate).
+    The top candidate is candidates[0] -- the function's own date-proximity
+    ordering, not re-derived here.
+    """
+    if "jurisdiction-hints-followed" not in test.get("tags", []):
+        pytest.skip("not a jurisdiction-hints scenario")
+    record_calls = []
+    for c in (tool_calls or []):
+        bare = c.get("tool", "").split("__")[-1]
+        if bare == "record_search":
+            record_calls.append(c)
+
+    hint_pos = None
+    top_place = None
+    for i, c in enumerate(record_calls):
+        response = c.get("response") or {}
+        hints = response.get("jurisdictionHints") or {}
+        candidates = hints.get("candidates") or []
+        if not candidates:
+            continue
+        hint_pos = i
+        top_place = candidates[0].get("place")
+        break
+    if hint_pos is None:
+        pytest.skip("no jurisdictionHints returned in this run")
+    if not top_place:
+        pytest.skip("hint carried no usable place")
+    tokens = _place_tokens(top_place)
+    if not tokens:
+        pytest.skip("hint place had no matchable tokens")
+    place_fields = ("recordCountry", "residencePlace", "birthPlace", "marriagePlace", "anyPlace")
+    next_calls = record_calls[hint_pos + 1: hint_pos + 3]
+    followed = False
+    for c in next_calls:
+        args = c.get("args") or {}
+        for field in place_fields:
+            value = args.get(field) or ""
+            value_lower = value.lower()
+            for t in tokens:
+                if t.lower() in value_lower:
+                    followed = True
+    assert followed, (
+        "record_search returned a jurisdictionHints candidate naming "
+        + repr(top_place)
+        + ", but neither of the next 2 record_search calls set "
+        "recordCountry/residencePlace/birthPlace/marriagePlace to it "
+        "(issue #1642 Finding 1)."
+    )
+
+
+# --- Asks permission instead of executing a mandated lever -------------
+
+_PERMISSION_PHRASES = (
+    "should i",
+    "would you like",
+    "shall i",
+    "want me to",
+    "do you want",
+)
+
+
+def test_no_permission_ask_before_mandated_lever(tool_calls, text_response, test):
+    """Tag-gated (asks-permission-instead-of-executing): issue #1642
+    Finding 3 (mercyokum) -- when a nil result has been logged and Step
+    8.2's lever ladder mandates trying more variants automatically ("before
+    declaring negative"), the run must not stop and ask the user's
+    permission to try the next one -- it must have already tried it.
+
+    Ground truth: ut_search_records_nickname_bitsie
+    (v1_2026-08-13_13-13-43) -- the skill searched only "Bitsie Jackson,"
+    logged the nil, then asked whether to try "Mary" instead of just
+    running it.
+
+    Deterministic proxy, not a full plan re-derivation: exactly one
+    record_search call was made, it nilled, and the final text_response
+    asks a permission question. A single nil ending that way, with no
+    further record_search call in the same run, is asking permission for
+    a lever the skill was supposed to have already run.
+    """
+    if "asks-permission-instead-of-executing" not in test.get("tags", []):
+        pytest.skip("not an unconditional-next-variant scenario")
+    record_calls = []
+    for c in (tool_calls or []):
+        bare = c.get("tool", "").split("__")[-1]
+        if bare == "record_search":
+            record_calls.append(c)
+
+    if len(record_calls) != 1:
+        pytest.skip("this check only applies to a single-search run")
+    response = record_calls[0].get("response") or {}
+    total_matches = response.get("totalMatches")
+    results = response.get("results")
+    results_is_empty = isinstance(results, list) and len(results) == 0
+    is_nil = total_matches == 0 or results_is_empty
+    if not is_nil:
+        pytest.skip("the one search was not a nil")
+    text = (text_response or "").lower()
+    asked = False
+    for phrase in _PERMISSION_PHRASES:
+        if phrase in text:
+            asked = True
+
+    assert not asked, (
+        "the run made exactly one record_search call, it nilled, and the "
+        "final response asks the user's permission to try the next lever "
+        "instead of having already tried it (issue #1642 Finding 3): "
+        + repr(text_response)
+    )

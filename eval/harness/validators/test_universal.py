@@ -38,6 +38,7 @@ treated as "not applicable to this state" — recorded as passed with a
 skip marker, not as a failure.
 """
 
+import re
 from pathlib import Path
 
 import pytest
@@ -826,4 +827,133 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
         f"Route writes to research.json / tree.gedcomx.json through the writer "
         f"tools (research_append, research_log_append, tree_edit, tree_correct), "
         f"which validate before persisting."
+    )
+
+
+# --- Parent-child age plausibility (write-time gate) ------------------
+#
+# Bounds reused verbatim from packages/engine/mcp-server/src/tools/
+# person-warnings.ts (earliestChildBirthToBirth12, earliestChildBirthToBirthMale14,
+# latestChildBirthToBirth80, latestChildBirthToBirthFemale45) rather than invented
+# here. Known gap this inherits rather than papers over: person-warnings.ts has no
+# female-specific LOWER bound (only general <=12, male-specific <=14), so a
+# mother's age-14 birth -- the exact age in issue #1642 Finding 2's motivating bug
+# (jimmie-jewel-neal/run-2026-07-31_13-02-13, the Wood-family adoption) -- is not
+# caught by either lower bound. That is a separate open question for
+# person-warnings.ts's own coverage, not something this validator papers over.
+
+_PARENT_AGE_LOWER_GENERAL = 12
+_PARENT_AGE_LOWER_MALE = 14
+_PARENT_AGE_UPPER_GENERAL = 80
+_PARENT_AGE_UPPER_FEMALE = 45
+
+_UNCERTAINTY_MARKERS = (
+    r"needs?-?review",
+    r"speculative",
+    r"uncertain",
+    r"inferr",
+    r"unconfirmed",
+    r"possible\s+namesake",
+    r"not\s+(?:yet\s+)?confirmed",
+    r"tentative",
+)
+
+
+def _birth_year_and_gender(tree, person_id):
+    """(birth year, gender) for a tree person, or (None, gender) if no dated
+    birth-like fact is found. Reads Birth/Christening/Baptism, in that order
+    of preference, taking the first 4-digit year in the fact's `date`."""
+    for p in (tree.get("persons") or []):
+        if p.get("id") != person_id:
+            continue
+        gender = p.get("gender")
+        for fact_type in ("Birth", "Christening", "Baptism"):
+            for f in (p.get("facts") or []):
+                if f.get("type") != fact_type:
+                    continue
+                m = re.search(r"\d{4}", f.get("date") or "")
+                if m:
+                    return int(m.group(0)), gender
+        return None, gender
+    return None, None
+
+
+def test_parent_child_age_plausibility_flagged(before_state, after_state):
+    """Universal: a new ParentChild relationship implying an implausible
+    parent age at the child's birth must carry an uncertainty note.
+
+    Issue #1642 Finding 2 (mercyokum): jimmie-jewel-neal run
+    2026-07-31_13-02-13 adopted a same-surname Wood household as Martha's
+    birth family with an implied parent age of 14 at the child's birth, no
+    needs-review marker, after the run's own mid-session gps-mentor check had
+    already disproved a different wrong Wood lineage. Not scoped to
+    search-records specifically -- this checks the write (tree.gedcomx.json),
+    wherever it came from (record-extraction, tree-edit, merge_tree_persons),
+    matching the "research.json / tree.gedcomx.json... after-state" shape of
+    mercyokum's own validator request.
+
+    Detection primitive reused, not reinvented: the age bounds are the exact
+    ones packages/engine/mcp-server/src/tools/person-warnings.ts already
+    treats as implausible for `check-warnings` (earliestChildBirthToBirth12 /
+    Male14, latestChildBirthToBirth80 / Female45) -- see the module comment
+    above for the coverage gap this inherits rather than fixes.
+
+    A relationship this flags must carry a `notes[]` entry using inference/
+    uncertainty language (see _UNCERTAINTY_MARKERS) -- the same shape as
+    test_pre1880_census_structure_marked_inferred's marker check, applied to
+    the tree side rather than the search log.
+    """
+    before_tree = before_state.get("tree_gedcomx_json") or before_state.get(
+        "tree_gedcomx"
+    )
+    after_tree = after_state.get("tree_gedcomx_json") or after_state.get(
+        "tree_gedcomx"
+    )
+    if before_tree is None or after_tree is None:
+        pytest.skip("missing tree.gedcomx.json for diff")
+    before_relationships = before_tree.get("relationships") or []
+    before_ids = set()
+    for r in before_relationships:
+        before_ids.add(r.get("id"))
+    after_relationships = after_tree.get("relationships") or []
+    new_rels = []
+    for r in after_relationships:
+        if r.get("type") != "ParentChild":
+            continue
+        if r.get("id") in before_ids:
+            continue
+        new_rels.append(r)
+    if not new_rels:
+        pytest.skip("no new ParentChild relationships")
+    offenders = []
+    for rel in new_rels:
+        parent_year, parent_gender = _birth_year_and_gender(after_tree, rel.get("parent"))
+        child_year, _ = _birth_year_and_gender(after_tree, rel.get("child"))
+        if parent_year is None or child_year is None:
+            continue
+        age = child_year - parent_year
+        too_young_general = age <= _PARENT_AGE_LOWER_GENERAL
+        too_young_male = parent_gender == "Male" and age <= _PARENT_AGE_LOWER_MALE
+        too_old_general = age >= _PARENT_AGE_UPPER_GENERAL
+        too_old_female = parent_gender == "Female" and age >= _PARENT_AGE_UPPER_FEMALE
+        implausible = too_young_general or too_young_male or too_old_general or too_old_female
+        if not implausible:
+            continue
+        rel_notes = rel.get("notes") or []
+        notes = " ".join(rel_notes)
+        flagged = False
+        for pattern in _UNCERTAINTY_MARKERS:
+            if re.search(pattern, notes, re.IGNORECASE):
+                flagged = True
+        if flagged:
+            continue
+        offenders.append((rel.get("id"), rel.get("parent"), rel.get("child"), age, notes))
+    messages = []
+    for rid, pid, cid, age, notes in offenders:
+        messages.append(f"{rid}: parent {pid} age {age} at child {cid}'s birth (notes={notes!r})")
+    assert not offenders, (
+        "new ParentChild relationship(s) imply an implausible parent age at "
+        "the child's birth with no uncertainty note (issue #1642 Finding 2) -- "
+        "flag needs-review/speculative before writing a plain link: "
+        + "; ".join(messages)
     )

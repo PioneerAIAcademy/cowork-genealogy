@@ -28,6 +28,7 @@
     "record-read-urna-anders-1786-marriage"
   ],
   "execution": {
+    "max_turns": 35,
     "max_wall_clock_seconds": 600
   },
   "judge_context": [
