@@ -80,7 +80,18 @@ fi
 
 # --- Unzip ---
 mkdir -p "$DEST_DIR"
+# unzip exits 1 for a warning-only condition (e.g. "appears to use backslashes
+# as path separators" on a Windows-zipped bundle) even though extraction
+# succeeded; only exit codes >= 2 are real failures. Don't let `set -e` treat
+# the harmless case as fatal and silently skip everything after this line.
+set +e
 unzip -q "$ZIP_PATH" -d "$DEST_DIR"
+UNZIP_STATUS=$?
+set -e
+if [[ "$UNZIP_STATUS" -gt 1 ]]; then
+  echo "Error: unzip failed (exit $UNZIP_STATUS) extracting $ZIP_PATH" >&2
+  exit 1
+fi
 
 # --- Write .feedback-repo-root ---
 echo "$REPO_ROOT" > "$DEST_DIR/.feedback-repo-root"
