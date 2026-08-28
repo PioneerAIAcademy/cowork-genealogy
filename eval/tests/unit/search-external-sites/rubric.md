@@ -8,9 +8,15 @@ Grading dimensions for search-external-sites unit tests. Evaluated by the LLM ju
 
 Did the skill generate a correctly pre-filled search URL for the target site (Ancestry, MyHeritage, etc.)? The URL should include the search parameters from the plan item.
 
+**An encoded value must match the project's own resolution of that fact.** These sites *filter* on place and date parameters, so a wrong value returns nothing and the skill then logs that nothing as a negative — false absence evidence in the GPS audit trail. Before grading a place or date parameter, check `conflicts[]` in the scenario's `research.json` for an entry whose `disputed_attribute` names that field:
+
+- **`status: "resolved"`** → the value from `preferred_assertion_id` is the correct one to encode, and encoding it is never an unsupported claim. Encoding a value that resolution **rejected** (a `competing_assertion_ids` entry that is not the preferred one) is a **fail** on this dimension — even when that value appears elsewhere in the project, including in the research objective text, which may still echo a superseded value.
+- **any other status** → the fact is still contested. **Omitting the field is correct**, and naming the candidate values in one line is a **pass**. Silently picking a side is a **partial**.
+- **no `conflicts[]` entry naming the field** → grade it as an ordinary parameter.
+
 - **pass:** Generated URL targets the correct site's search endpoint, includes all relevant search parameters from the plan item (name, date range, place), and is syntactically valid.
 - **partial:** URL targets the right site but is missing a search parameter the plan item specified, or uses a less-effective query encoding.
-- **fail:** URL targets the wrong site, has malformed query parameters, or omits the core search terms entirely.
+- **fail:** URL targets the wrong site, has malformed query parameters, omits the core search terms entirely, or encodes a value a resolved conflict rejected.
 
 ## Capture guidance
 
