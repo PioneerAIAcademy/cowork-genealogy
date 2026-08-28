@@ -54,7 +54,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 if ! REPO_ROOT="$(cd "$SCRIPT_DIR" && git rev-parse --show-toplevel 2>/dev/null)"; then
   echo "Error: could not determine repo root from $SCRIPT_DIR" >&2
-  echo "Run this script from inside the cowork-genealogy repo." >&2
+  echo "This script must live inside the repo checkout; the cwd is irrelevant." >&2
   exit 1
 fi
 
