@@ -329,7 +329,7 @@ agent-smoke: $(ENGINE_BUILD) ## Live agent-registration check (issue #939) + dea
 	#
 	# Arm 2 — dead-stub e2e abort (issue #1743). A real run_e2e against a
 	# server that dies at startup; asserts the init-message abort text and
-	# the retention rule (no files written). Bills one session start (~25s).
+	# the retention rule (no files written). Bills one session start (~8s).
 	#
 	# Both arms are hand-run; issue #1142 is what would make them CI.
 	cd apps/server && \

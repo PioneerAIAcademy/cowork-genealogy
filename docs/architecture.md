@@ -1340,7 +1340,7 @@ Other environment differences that bite:
 **Change how the hosted agent session is configured.** Run **`make agent-smoke`**.
 Its first arm reads what the hosted runtime actually *resolved* — the SDK init
 handshake's agent list (no model call); its second arm runs `run_e2e` against a
-dead MCP stub and asserts the abort text (~25s, one billed session start). **No
+dead MCP stub and asserts the abort text (~8s, one billed session start). **No
 CI job runs it.** It needs `ANTHROPIC_API_KEY` or an `eval/.env` entry; **without one it
 skips silently**, which looks identical to passing.
 
