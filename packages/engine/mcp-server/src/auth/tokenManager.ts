@@ -24,7 +24,7 @@ function isTokenStore(value: unknown): value is TokenStore {
 }
 
 export async function saveTokens(tokens: TokenStore): Promise<void> {
-  await mkdir(STORAGE_DIR, { recursive: true });
+  await mkdir(STORAGE_DIR, { recursive: true, mode: 0o700 });
   await writeFile(TOKEN_STORAGE_PATH, JSON.stringify(tokens, null, 2), {
     mode: 0o600,
   });

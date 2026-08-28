@@ -44,13 +44,17 @@ function buildAuthorizationUrl(
   return `${AUTHORIZATION_URL}?${params.toString()}`;
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
 function htmlPage(title: string, heading: string, body: string, color: string): string {
   return (
     "<!DOCTYPE html>\n<html lang=\"en\"><head><meta charset=\"utf-8\">" +
-    `<title>${title}</title>` +
+    `<title>${escapeHtml(title)}</title>` +
     "<style>body{font-family:system-ui,sans-serif;text-align:center;padding:40px;color:#222}" +
     `h1{color:${color}}p{color:#555}</style></head><body>` +
-    `<h1>${heading}</h1><p>${body}</p></body></html>`
+    `<h1>${escapeHtml(heading)}</h1><p>${escapeHtml(body)}</p></body></html>`
   );
 }
 

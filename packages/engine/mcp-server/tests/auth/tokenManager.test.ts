@@ -42,7 +42,7 @@ describe("saveTokens", () => {
 
     await saveTokens(sampleTokens);
 
-    expect(mockedMkdir).toHaveBeenCalledWith(STORAGE_DIR, { recursive: true });
+    expect(mockedMkdir).toHaveBeenCalledWith(STORAGE_DIR, { recursive: true, mode: 0o700 });
     expect(mockedWriteFile).toHaveBeenCalledTimes(1);
     const [writtenPath, writtenBody, writtenOpts] =
       mockedWriteFile.mock.calls[0];
