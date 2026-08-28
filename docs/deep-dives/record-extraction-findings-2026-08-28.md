@@ -49,119 +49,129 @@ This trap cost me three draft findings. It is the single most useful thing on th
 
 ---
 
-## What the fresh run changed — `v1_2026-08-28_17-43-01`
+## What the two fresh runs changed
 
-The paid run #1666 buys, executed against this branch after the findings below were
-written. 28 tests, $8.82, 26 minutes, 20 pass / 4 partial / 4 fail. Judge prompt
-`03f306ff` (the current one), so it is **not** comparable to the 08-24 baseline, which
-`check_runlogs` flags as scored under `0d186137`.
+#1666 buys this skill's eval slot, and it was spent twice: `v1_2026-08-28_17-43-01` with
+both lane-2 fixes in place, then `v1_2026-08-28_18-23-42` after the `ut_014` bullet was
+reverted (see below). 28 tests each, $8.82 and $9.00, 26 minutes each. Outcomes went
+20 pass / 4 partial / 4 fail → **24 pass / 3 partial / 1 fail**. Both used judge prompt
+`03f306ff`, so neither is comparable to the 08-24 baseline, which `check_runlogs` flags as
+scored under `0d186137`.
 
-Read this section against the findings, not instead of them: it is one run, n=1 per test.
+**The pair is a clean natural experiment**, because `judge_context` reaches the judge and
+never the skill: the revert cannot have changed what the skill wrote, so the difference
+between the two `ut_014` runs is pure run-to-run variance in the skill, and the difference
+in *grading* is the bullet.
 
-### Both lane-2 fixes produced the intended behaviour
+### F1 and F2 both reproduced live — this is the headline
 
-- **`ut_014`** wrote `head_of_household`, `resident_1`, `resident_2`, `resident_3` and
-  **zero** relationship assertions. Tie-neutral roles, no fabricated kinship, no lodger
-  framing — the ideal output for this fixture.
-- **`ut_021`** wrote **no** negative assertions, so the `"No parents' names recorded"`
-  field-level negative is gone.
+| | run 1 (bullet present) | run 2 (bullet reverted) |
+|---|---|---|
+| roles written | `head_of_household`, `resident_1`, `resident_2`, `resident_3` | `head_of_household`, **`child_1` = Thomas Flynn (42)**, **`child_2` = Mary Flynn (38)**, `child_3` = Patrick Flynn (15) |
+| relationship assertions | 0 | 0 |
+| `test_expected_classifications` | passed (nothing matched the optional `child_1` matcher) | **failed** |
+| judge | ran, `Correctness 1` | **skipped** — the validator decided it first |
 
-Neither result establishes causation. The 08-24 run already used `co_resident_N` on
-`ut_014` without the bullet, and 4 of 5 earlier runs of `ut_021` already wrote no
-negatives. Both sit inside prior variance.
+Run 2 reproduced the exact 2026-08-17 defect, and failed with the **identical** message:
 
-### …and the `ut_014` bullet misfired on the judge
+> `assertions[a_012] (record_role='child_1', fact_type='birth' attribute='place'): value='Ireland' — expected to contain 'Pennsylvania'`
 
-`ut_014` **failed**, `Correctness = 1`, on this rationale:
+Every birthplace in that run is correct. So **F2 is confirmed verbatim on a fresh run**:
+the only check that catches the fabrication reports it as a birthplace error, because the
+matcher selects on `record_role` and asserts on `value`.
+
+And **F1 is no longer a stale-doctrine artifact of the 08-17 log** — the
+42-year-old-as-`child_1` fabrication recurred today, under current doctrine. Role choice
+across the seven runs now on record is pure variance: 2 of 7 fabricate, and run 1's
+`resident_N` and `ut_022`'s `member_N` are two more distinct vocabularies again.
+
+### The two lane-2 fixes went opposite ways, and the difference is the lesson
+
+**`ut_021`'s bullet worked.** Run 2's skill wrote the field-level negatives again, reworded
+— "Groom's parents not named in this index entry…", "Bride's parents not named…" — and the
+judge docked them, quoting the rule back:
+
+> "Per the per-test context (`record-extractor.md:896-905`), negative evidence applies to
+> PERSONS expected-but-absent, not blank FIELDS on present persons. The parents' names are
+> unrecorded optional fields, not evidence of absent persons. The skill should have
+> remained silent on parents…"
+
+Under the old bullet that behaviour was ungradeable **by construction** ("do not dock the
+skill for creating one, and do not dock it for omitting one"). It is now docked, correctly.
+
+**`ut_014`'s bullet over-applied, and is reverted.** In run 1 the judge scored a run that
+wrote tie-neutral roles and zero relationship assertions `Correctness = 1`, on this:
 
 > "The skill fabricated relationship assertions that the 1860 census does not state. The
 > persisted `record_role` values encode kinship and household relationships
 > (`head_of_household`, `resident_1`, `resident_2`, `resident_3`) that imply family
 > structure."
 
-**That is factually false.** The run wrote zero relationship assertions — verified
-directly in `file_changes`, not inferred — and `head_of_household` is the agent body's own
-first-listed role token (`record-extractor.md:199-200`). `resident_N` is the tie-neutral
-shape the bullet itself calls correct.
+That is factually false — verified in `file_changes`, not inferred — and
+`head_of_household` is the agent body's own first-listed role token
+(`record-extractor.md:199-200`).
 
-The bullet caused it. It leads with "`record_role` is part of the fabrication ban", and
-the judge generalised that to every role token carrying household structure. Its list of
-acceptable labels named `co_resident_N` and `adult_male_1` but not `head_of_household` or
-`resident_N`, and read as closed.
+**The difference between the two is not "prose works / prose does not".** `ut_021`'s bullet
+states a **test applied to something the skill wrote**: does this `value` name the absent
+person? `ut_014`'s asked the judge to **classify a label against an open vocabulary** —
+which token encodes a relationship? — and it generalised the ban to every role carrying
+household structure. The second shape has no natural boundary, which is why it belongs in
+validator request **V1 (#2019)**, where the check is a surname comparison and cannot
+over-apply. That is `docs/skill-lifecycle.md` §5 and ADR-0011, now with a measured instance.
 
-**This is the finding, not a footnote.** F1 says `record_role` is graded by nothing; the
-first attempt to make it gradeable in prose produced a false failure on the best-behaved
-run in the corpus, on the first try. It is direct evidence for `docs/skill-lifecycle.md`
-§5 and ADR-0011: a rule that can be decided by reading the persisted document belongs in a
-precondition or a validator, where it cannot be over-applied, and **not** in prose that has
-no scope. Validator request V1 (#2019) is the form this rule should take.
-
-The bullet as it stands is a landmine — it will misgrade every future run. It must be
-rewritten to lead with the closed list of *failing* tokens, or reverted.
-
-### `ut_022` failed the same class, in the other direction
-
-`ut_022` wrote `head_of_household` + `member_1..7` and zero relationship assertions, and
-**failed** four non-optional matchers: `no new assertion with record_role='wife'`, and the
-same for `child_1`, `child_2`, `child_3`.
-
-That failure is legitimate. All the Bakers share a surname, and
-`record-extractor.md:219-226` sanctions `head`/`wife`/`child_N` **within** one apparent
-family group — so `member_N` there is under-labelling, losing structure the record
-supports. Taken with `ut_014`, one run produced the over-labelling error and the
-under-labelling error on two fixtures, which is F1 and F11 exactly. The matcher pin that
-#1442 owns is what makes one loud and the other silent.
+Net effect: `record_role` is once again graded by nothing, which is F1 unchanged — but F1
+now carries a reproduction *and* evidence that the prose route to fixing it does not work.
 
 ### Three violations the earlier corpus never produced
 
-All three are rules my scan found **zero** violations of across 2,416 assertions:
+All three are rules my scan found **zero** violations of across 2,416 assertions.
 
-- **`ut_023` (burial index) — prohibition item 87.** `a_004` burial place at
-  `informant_proximity: official_duty` / `information_quality: primary`; the matcher
-  expects `unknown` / `indeterminate`. `record-extractor.md:592-595`: "A burial or
-  cemetery index entry identifies no informant at all: use `unknown` / `unknown`, never
-  the index compiler or the cemetery."
-- **`ut_027` (1910 census) — prohibition item 41.** Source written
-  `source_classification: original` where the fixture pins `derivative`. Judge,
-  Correctness 2.
-- **`ut_017` (obituary) — a validator I had not seen fire.**
-  `test_relationship_type_agrees_with_its_value`: `a_037` carries
-  `relationship_type: "child"` while its `value` reads "Sister of Harold Dean Whitaker".
-  The validator's own message names the consequence: "materialisation reads
-  `structured_value`, so this writes the wrong family edge (or the right one backwards)
-  while the value still reads correctly."
+- **`ut_027` (1910 census) — prohibition item 41. Reproduced in both runs.** Source written
+  `source_classification: original` where the fixture pins `derivative`. `partial` both
+  times. The most persistent of the new findings.
+- **`ut_023` (burial index) — prohibition item 87.** Run 1: `a_004` burial place at
+  `informant_proximity: official_duty` / `information_quality: primary`; the matcher expects
+  `unknown` / `indeterminate`. `record-extractor.md:592-595` is explicit. Passed in run 2,
+  so 1 of 2.
+- **`ut_017` (obituary) — a validator I had not seen fire.** Run 1 tripped
+  `test_relationship_type_agrees_with_its_value`: `a_037` carried
+  `relationship_type: "child"` while its `value` read "Sister of Harold Dean Whitaker". The
+  message names the consequence — "materialisation reads `structured_value`, so this writes
+  the wrong family edge (or the right one backwards) while the value still reads
+  correctly". Passed in run 2, so 1 of 2.
 
 ### Correction to §What I did not find
 
-That section says multi-call `extraction_append` runs are "**not** a violation: every
-second call is either a permitted `op: "update"` correction or a resubmit after
-`{ ok: false }`". **A third cause exists and I could not have seen it:** the harness's
-`node --eval` subprocess is capped at 30 seconds (`mock_mcp.py:196-218`), and two calls in
-this run timed out — `ut_009` (18 ops) and `ut_028` (21 ops) — while 14 calls of 15–41 ops
-succeeded in the same run, including 41 and 39. It is load, not batch size.
+That section attributes every second `extraction_append` call to a permitted `op: "update"`
+correction or a resubmit after a validation rejection. **A third cause exists and I could
+not have seen it:** the harness caps its `node --eval` subprocess at 30 seconds
+(`mock_mcp.py:196-218`). Run 1 timed out twice — `ut_009` (18 ops) and `ut_028` (21 ops) —
+while 14 calls of 15–41 ops succeeded in the same run, including 41 and 39. It is
+concurrency load, not batch size, and run 2 confirms it: **0 transient retries, no
+timeouts, and both `ut_009` and `ut_028` went `partial` → `pass` with nothing changed that
+they touch.**
 
-I could not have seen it because **the four older run logs do not record tool responses at
-all**; `response` appears on `tool_calls` for the first time in this log. So the
-attribution in that section holds only for what was visible, and any earlier timeout is
-invisible in the committed corpus.
+I could not have seen it because **the four older run logs record no tool responses at
+all**; `response` appears on `tool_calls` for the first time in these two. So that
+section's attribution holds only for what was visible, and any earlier timeout is invisible
+in the committed corpus.
 
-Filed as **#2025**. It costs real grades: both of `ut_009`'s and `ut_028`'s Tool Arguments
-2s trace to the timeout, and `ut_009`'s retry dropped `source_id` because the source op was
-in the batch that died.
+Filed as **#2025**. In run 1 it cost `ut_009` and `ut_028` their Tool Arguments scores, and
+`ut_009`'s retry dropped `source_id` because the source op died with the batch.
 
 The same change makes the "an identifier must trace to something a tool returned" class of
 validator writable for the first time.
 
 ### Judge-side advisories worth a look during annotation
 
-- `dropped_unknown_rubric_dimension` ×3 (`ut_003`, `ut_010`, `ut_014`) — the judge emitted
-  `Completeness` and `Information quality` as *rubric* dimensions; this rubric has only
-  three (`Assertion atomicity`, `Evidence type accuracy`, `Informant identification`), so
-  they were dropped.
-- `dropped_duplicate_dimension` ×5 — the judge emitted `Informant identification` twice in
-  one run, five times.
+Counts are run 2's.
+
+- `dropped_unknown_rubric_dimension` ×2 (`ut_023`, `ut_025`) — the judge emitted
+  `Completeness` / `Information quality` as *rubric* dimensions; this rubric has three
+  (`Assertion atomicity`, `Evidence type accuracy`, `Informant identification`).
+- `dropped_duplicate_dimension` ×3 — `Informant identification` emitted twice in one run.
 - `routing_negative_judge_fail` on `ut_011`, whose advisory notes a human confirmed that
-  score in 20 of 24 such cells across the corpus. Relevant to F12: that test is the only
+  score in 20 of 24 such cells across the corpus. Relevant to F12: `ut_011` is the only
   coverage of the refinement path and it is a 0-turn routing test.
 
 ---
@@ -802,16 +812,28 @@ this exact instability on `ut_018`. Finding F2 went there too.
 
 ---
 
-## Lane-2 fixes made in this PR
+## Lane-2 fixes attempted in this PR
 
-1. **`census-1860-different-surname-head.json`** — added a `judge_context` bullet making
-   `record_role` fabrication gradeable in both directions (F1). The existing bullets
-   forbid fabricating a relationship *assertion* and say nothing about the role token,
-   which is where two of five runs put it.
-2. **`marriage-index-no-parents-recorded.json`** — replaced the "do not dock the skill
-   for creating one, and do not dock it for omitting one" clause with the body's own
-   test: a negative is permitted only when its `value` names the specific absent person
-   (F5). The don't-invent-parent-names point is preserved.
+**One kept, one tried and reverted.** Both were measured on a paid run; see §What the two
+fresh runs changed.
+
+1. **`marriage-index-no-parents-recorded.json` — kept, and it works.** Replaced the "do not
+   dock the skill for creating one, and do not dock it for omitting one" clause with the
+   body's own test: a negative is permitted only when its `value` names the specific absent
+   person (F5). The don't-invent-parent-names point is preserved. Run 2 wrote the
+   field-level negatives again and the judge docked them, quoting
+   `record-extractor.md:896-905` back. Under the old clause that was ungradeable by
+   construction.
+2. **`census-1860-different-surname-head.json` — tried, reverted, and the reason is a
+   finding.** A `judge_context` bullet making `record_role` fabrication gradeable made the
+   judge score a run with tie-neutral roles and zero relationship assertions
+   `Correctness = 1`, calling `head_of_household` a fabricated relationship. Reverted;
+   `ut_014` matches `origin/main`. The rule belongs in validator V1 (#2019), where a
+   surname comparison cannot over-apply.
+
+   The two together are the useful result: a bullet that states a **test applied to what
+   the skill wrote** held; a bullet that asked the judge to **classify a label against an
+   open vocabulary** did not.
 
 **No `rubric.md` change.** Every finding that touches the rubric (F8's presentation
 rule, F13's atomicity dimension) is better served by a validator: both are arithmetic,
