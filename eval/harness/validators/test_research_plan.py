@@ -20,6 +20,8 @@ criteria-demotion rollout.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from validators_lib import (
@@ -365,9 +367,24 @@ def test_survey_surfaces_already_attached_fan_facts(before_state, text_response,
     the destination county, seven years before the subject's own documented
     arrival. Three SKILL.md wording attempts (see the mined test
     `ut_research_plan_bpx`) moved the failure rate from "every sample" to
-    "about half of samples" but never closed it -- expected, since the skill
-    runs without `temperature=0`, so no wording can pin any behavior at
-    exactly 100%. This validator makes the *test* airtight regardless: a
+    roughly half -- expected, since the skill runs without `temperature=0`,
+    so no wording can pin any behavior at exactly 100%. Measured directly
+    (PR #2004 review, EdmondOware): 6 valid re-runs of `ut_research_plan_bpx`
+    against the final wording (2 more runs were discarded as environment
+    aborts -- a connection failure and an `sdk_stream_silence` stall, neither
+    a skill behavior) came back 3 pass / 3 fail, exactly 50%.
+
+    Not marked `expected_outcome: xfail` despite that rate: xfail's
+    semantics are "known-failing", and a clean 50/50 split doesn't fit it --
+    half of future runs would come back as an unexpected `xpass` needing
+    investigation just as often as an `xfail` would need dismissing, trading
+    one kind of noise for another. Instead: a solo red result on this test
+    is expected roughly half the time and should be checked against this
+    measured rate before being treated as a regression, the same way
+    `eval/CLAUDE.md` already asks for any test's non-pass history across
+    committed run logs.
+
+    This validator makes the *test* airtight regardless of that variance: a
     silent omission fails deterministically here, it never depends on the
     judge noticing.
 
@@ -379,12 +396,28 @@ def test_survey_surfaces_already_attached_fan_facts(before_state, text_response,
     guard.
 
     Check: for each non-subject person with a sourced fact, require that
-    BOTH their given name AND the fact's date appear somewhere in the
-    response text (case-insensitive substring). This is deliberately coarse
-    -- it does not check that the two appear near each other, or that the
-    response's *reasoning* about the fact is sound (that stays the judge's
-    job) -- only that the fact's existence and its distinguishing date were
-    not silently skipped.
+    BOTH their given name AND the fact's date appear in the SAME paragraph
+    of the response text (case-insensitive, word-boundary match -- not a
+    bare substring test, which false-positives on short names: "Ann" inside
+    "planning", "Ed" inside "scoped").
+
+    The paragraph-proximity requirement was added after a false positive
+    found while re-measuring this validator for PR #2004 (EdmondOware's
+    review): a real run's pre-plan tool narration happened to say "the
+    1875-1900 window" (an unrelated search-date range) in one paragraph,
+    while a later paragraph said "Patrick Sheahan (I2) holds source S1... "
+    without ever restating what S1 records. A whole-response substring check
+    counted "Patrick" and "1875" as both present and called it surfaced; the
+    judge correctly scored it as a silent omission, since the two mentions
+    had nothing to do with each other. Splitting on blank lines (`\\n\\s*\\n`)
+    rather than sentences avoids the false negative a naive sentence-split
+    would risk on a period inside a citation ("S1, Deed Book 42 p. 118"),
+    while still failing a response that mentions a person and an unrelated
+    date in genuinely separate parts of the answer.
+
+    Does not grade whether the response's *reasoning* about the fact is
+    sound once it clears this bar -- that stays the judge's job
+    (Completeness/Correctness already grade reasoning quality on this test).
     """
     if "already-attached" not in test.get("tags", []):
         pytest.skip("not an already-attached-fan-facts scenario")
@@ -401,6 +434,7 @@ def test_survey_surfaces_already_attached_fan_facts(before_state, text_response,
         for p in tree.get("persons", []) or []
     }
     response_lower = text_response.lower()
+    paragraphs = re.split(r"\n\s*\n", response_lower)
 
     missed: list[str] = []
     for person in tree.get("persons", []) or []:
@@ -413,18 +447,37 @@ def test_survey_surfaces_already_attached_fan_facts(before_state, text_response,
         sourced_facts = [f for f in (person.get("facts") or []) if f.get("sources")]
         if not sourced_facts:
             continue  # nothing already attached for this person -- not in scope for this check
-        surfaced = any(
-            fact.get("date")
-            and given.lower() in response_lower
-            and fact["date"].lower() in response_lower
-            for fact in sourced_facts
+
+        dated_facts = [f for f in sourced_facts if f.get("date")]
+        name_pattern = rf"\b{re.escape(given.lower())}\b"
+        name_present = bool(re.search(name_pattern, response_lower))
+        date_present = any(
+            re.search(rf"\b{re.escape(fact['date'].lower())}\b", response_lower)
+            for fact in dated_facts
         )
-        if not surfaced:
-            missed.append(
-                f"{pid} ({given}): has a sourced fact but neither the "
-                f"person's given name nor the fact's date appear in the "
-                f"response"
+        surfaced_together = any(
+            re.search(name_pattern, para)
+            and re.search(rf"\b{re.escape(fact['date'].lower())}\b", para)
+            for fact in dated_facts
+            for para in paragraphs
+        )
+        if dated_facts and surfaced_together:
+            continue
+
+        if not dated_facts:
+            reason = "none of the sourced fact(s) have a date to check the response against"
+        elif not name_present and not date_present:
+            reason = "neither the person's given name nor any sourced fact's date appear"
+        elif not name_present:
+            reason = "the person's given name never appears (a sourced fact's date does)"
+        elif not date_present:
+            reason = "no sourced fact's date appears (the person's given name does)"
+        else:
+            reason = (
+                "the person's given name and a sourced fact's date each appear "
+                "somewhere in the response, but never together in the same paragraph"
             )
+        missed.append(f"{pid} ({given}): has a sourced fact but {reason} in the response")
     assert not missed, (
         "already-attached FAN-cluster fact(s) never surfaced in the "
         "response:\n  - " + "\n  - ".join(missed)
