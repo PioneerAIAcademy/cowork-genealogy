@@ -478,6 +478,13 @@ candidates; you still confirm the top ones:
   signals. Write the listing and mark the family structure inferred — not "head
   Daniel + wife Margaret + daughter Hannah" but "Daniel, Margaret, Hannah in one
   dwelling; family structure inferred from surname, ages and order, not stated."
+  **This inference is also the resolution to a role-based conflict, not a
+  separate fact to note alongside it.** When a pre-1880 role ("Head," "wife")
+  appears to contradict another fact — an implied age too young to hold that
+  role, say — the contradiction is often not real: the role was never stated
+  by the record, only inferred from listing order. Say so as part of
+  resolving the conflict, not as an afterthought once you've already settled
+  it some other way.
   **When a match turns on a field — or before calling one absent — check that
   year's entry in `references/census-field-availability.md`.**
 - **Cite `matchScore`, never `results[].score` — they are different numbers.** A

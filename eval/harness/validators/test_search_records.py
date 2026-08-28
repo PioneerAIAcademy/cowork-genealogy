@@ -113,8 +113,11 @@ _ROLE_ASSERTIONS = (
 # SKILL.md's exact sentence — it has to say, in some form, that the structure
 # is an inference rather than something the record stated.
 _INFERENCE_MARKERS = (
-    r"inferr",            # inferred, inferring, indexer-inferred
-    r"inference",         # inference, inferences
+    r"infer",             # infer, infers, inferred, inferring, inference(s) --
+                          # was "inferr" (double-r only), which missed the
+                          # present-tense "indexer infers ParentChild
+                          # relationships" and false-failed a compliant note
+                          # (issue #1642, ut_search_records_010 2026-08-24_16-32-45)
     r"\bnot\s+(?:a\s+)?stated\b",
     r"\bunstated\b",
     r"\bimplied\b",

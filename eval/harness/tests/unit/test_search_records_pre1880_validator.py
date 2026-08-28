@@ -74,6 +74,16 @@ COMPLIANT_QUOTED_ROLE = (
     "indexing error."
 )
 
+# ut_search_records_010, run v1_2026-08-24_16-32-45. Present-tense "infers" --
+# single r -- which the old "inferr" (double-r only) pattern missed and
+# false-failed. Pins the regression (issue #1642).
+COMPLIANT_PRESENT_TENSE_INFERS = (
+    "Top match (MXHY-TP4, matchScore 0.9481) is Patrick Flynn b. 1845 "
+    "Ireland in household of Thomas Flynn + Mary Flynn, Branch Township, "
+    "Schuylkill, PA -- already attached to subject I1 -- indexer infers "
+    "ParentChild relationships."
+)
+
 
 # --- Notes the rule rejects (from runs that carried no marker) --------
 
@@ -107,8 +117,8 @@ OFFENDER_BARE_LISTING = (
 
 @pytest.mark.parametrize(
     "notes",
-    [COMPLIANT_HEDGED, COMPLIANT_INFERRED, COMPLIANT_QUOTED_ROLE],
-    ids=["inferences-not-stated", "inferred-no-column", "quoted-role"],
+    [COMPLIANT_HEDGED, COMPLIANT_INFERRED, COMPLIANT_QUOTED_ROLE, COMPLIANT_PRESENT_TENSE_INFERS],
+    ids=["inferences-not-stated", "inferred-no-column", "quoted-role", "present-tense-infers"],
 )
 def test_a_hedged_household_passes(notes):
     check(EMPTY_BEFORE, after(entry(notes)), TAGGED)
