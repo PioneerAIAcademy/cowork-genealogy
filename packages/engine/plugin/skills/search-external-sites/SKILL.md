@@ -143,7 +143,7 @@ titles mislead about scope and completeness.
 | MyHeritage.com | `myheritage.com/research?action=query&params` | Independent indexing. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
 | FindMyPast.com | `findmypast.com/search/results?params` | Strong UK/Ireland coverage. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
 | FindAGrave.com | `findagrave.com/memorial/search?params` | Cemetery records. Free. User-contributed — treat as compiled source |
-| Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription |
+| Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
 
 ## Steps
 
