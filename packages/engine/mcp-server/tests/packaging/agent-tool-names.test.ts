@@ -20,10 +20,11 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 //     of it                          → mcp__Genealogy_Research__<tool>
 //
 // Which of the two Cowork spellings a session exposes has been observed to MOVE:
-// two censuses on 2026-08-15 (macOS, and Windows via #1732) found only the
-// bridged spelling, with the bare one absent — yet #1341 recorded the bare
-// spelling live on 2026-08-04/05, refusing record-extractor with the bridged
-// spelling among its unrecognized entries. Run mode is a per-task setting nothing
+// three censuses found only the bridged spelling with the bare one absent (macOS
+// and Windows on 2026-08-15, and a second Windows session via #1732 on
+// 2026-08-19) — yet #1341 recorded the bare spelling live on 2026-08-04/05,
+// refusing record-extractor with the bridged spelling among its unrecognized
+// entries. Run mode is a per-task setting nothing
 // in the plugin can see, and the exposed spelling is not stable over time, so
 // both Cowork spellings are required. Missing the bare one was issue #1341:
 // record-extractor was refused there, naming all 16 of its declared entries as
@@ -138,7 +139,8 @@ const BRIDGE_PREFIX = `mcp__remote-devices__${sanitizeServerSegment(manifest.dis
 // Cowork can instead expose the bare display_name with no `remote-devices` bridge
 // in front of it. Both live Cowork spellings derive from display_name; only the
 // bridged one is namespaced. Which one a session exposes has been observed to move
-// (bare live in #1341, absent in the 2026-08-15 censuses / #1732). Missing this
+// (bare live in #1341, absent in three later censuses — macOS and Windows on
+// 2026-08-15, and a Windows session via #1732). Missing this
 // third registrar was issue #1341: record-extractor was refused there, with all 16
 // of its declared entries named unrecognized. gps-mentor is the exception — its
 // bare `Read` always resolves, so it would spawn holding that alone.
@@ -198,7 +200,7 @@ describe("plugin agent tool names", () => {
     expect(BRIDGE_PREFIX).toBe("mcp__remote-devices__Genealogy_Research__");
   });
 
-  it("derives the on-computer prefix from manifest.display_name", () => {
+  it("derives the bare display_name prefix from manifest.display_name", () => {
     // Same pin for the un-bridged spelling: display_name with no bridge segment,
     // which is what Cowork exposed live in #1341.
     expect(LOCAL_PREFIX).toBe("mcp__Genealogy_Research__");
@@ -307,12 +309,12 @@ describe("plugin agent tool names", () => {
               );
               expect(
                 entries,
-                `missing Cowork on-computer spelling for ${bare} — ` +
+                `missing Cowork bare-display_name spelling for ${bare} — ` +
                   (key === "disallowedTools"
-                    ? `this deny binds NOTHING when the task runs on the user's own computer, ` +
+                    ? `this deny binds NOTHING wherever Cowork exposes the bare spelling, ` +
                       `and unlike a missing grant it fails OPEN`
-                    : `an agent whose entries all miss is refused outright when the task runs ` +
-                      `on the user's own computer`),
+                    : `an agent whose entries all miss is refused outright wherever ` +
+                      `Cowork exposes the bare spelling`),
               ).toContain(`${LOCAL_PREFIX}${bare}`);
             }
           });

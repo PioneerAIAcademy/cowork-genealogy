@@ -47,7 +47,7 @@ extractor outside its stated lane and it fabricated a match score.
 | **Skill** | VM, session context | judgment that depends on what the session already knows |
 | **Plugin agent** | VM, **fresh context** | isolation from session state, a narrowed capability set, or a different model |
 
-Today that is 47 tools, 27 skills, and 4 agents.
+Today that is 48 tools, 27 skills, and 4 agents.
 
 The dividing line between a skill and an agent is **not** size — it is whether
 inheriting the conversation helps or hurts. `record-extractor` runs one agent per
@@ -60,7 +60,7 @@ reasoning that produced it.
 | Option | Why rejected | Evidence |
 |---|---|---|
 | **Two kinds only — tools and skills** (no agents) | Loses all three things agents provide: fresh context, a narrowable capability set, and per-step model routing. Model routing especially: skill `model:` pins are read only by the unit harness, so an agent is the *only* place a per-step model choice binds in production | `docs/architecture.md` §3.5; the 26 skill pins were dead lines and were deleted in 2026-08 — no skill pins a model today |
-| **One tool per provider/endpoint** (`familysearch_search`, `wiki_search`, …) | Tool count is context budget in every session. The generic-tool-with-a-provider-parameter shape keeps the catalog small; at 47 tools Cowork already defers the schemas past a size threshold | `CLAUDE.md` § "MCP server tools". ToolSearch is **8.5%** of all tool calls (2,023 of 23,798 across the 145 committed e2e runs, re-measured 2026-08-09) — with `ENABLE_TOOL_SEARCH` on, which the 2026-08-02 polarity check confirmed is what `true` means. Treat it as a snapshot of the deferral-on configuration, not a stable property |
+| **One tool per provider/endpoint** (`familysearch_search`, `wiki_search`, …) | Tool count is context budget in every session. The generic-tool-with-a-provider-parameter shape keeps the catalog small; at 48 tools Cowork already defers the schemas past a size threshold | `CLAUDE.md` § "MCP server tools". ToolSearch is **8.5%** of all tool calls (2,023 of 23,798 across the 145 committed e2e runs, re-measured 2026-08-09) — with `ENABLE_TOOL_SEARCH` on, which the 2026-08-02 polarity check confirmed is what `true` means. Treat it as a snapshot of the deferral-on configuration, not a stable property |
 | **Put the GPS doctrine in tools** — make the tools enforce good research | Most of it is genuinely judgment. Of the orchestrator's 17 routing rows, only **6 are mechanically computable**, and those six were never the ones failing. The other 11 need an LLM | Row-by-row analysis in the 2026-07-30 review; the "routing as a tool" headline it demoted is the first row of `docs/adrs/ADR-0009-refuted-agent-design-claims.md` |
 | **Put the invariants in prose** — trust the skill bodies | Measured to decay. See ADR-0003 | 77% → 3% compliance after compaction |
 | **Split agents further**, one per record type (a probate agent, a census agent) | Every agent body is a full prompt; N agents is N prompts to keep consistent. The per-type material is a table inside one body instead — and the attempt to externalise those tables failed measurably | Issue #702; `CLAUDE.md` § "No playbook/reference files for agents" and `docs/architecture.md` §3.4 (no ADR yet) |

@@ -746,11 +746,11 @@ ships into the VM — cannot control that choice. `.mcp.json`, both harnesses, a
 the hosted control plane register it under `genealogy`. Both Cowork forms derive
 from `manifest.json`'s `display_name` (`Genealogy Research` → `Genealogy_Research`);
 only the bridged form is namespaced under `remote-devices`. **Which spelling a
-Cowork session exposes has been observed to move:** two censuses on 2026-08-15
-(macOS desktop, and Windows via #1732, reported 2026-08-19) found every tool
-under the bridged `mcp__remote-devices__Genealogy_Research__` spelling, with the
-bare `mcp__Genealogy_Research__` spelling absent — yet #1341 recorded the bare
-spelling live on 2026-08-04/05, refusing `record-extractor` with the bridged
+Cowork session exposes has been observed to move:** three censuses found every
+tool under the bridged `mcp__remote-devices__Genealogy_Research__` spelling with
+the bare `mcp__Genealogy_Research__` spelling absent — macOS and Windows on
+2026-08-15, and a second Windows session via #1732 on 2026-08-19 — yet #1341
+recorded the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the bridged
 spelling unrecognized. The registrar moved between those dates (or the configs
 differ in a way nobody has identified — same conclusion). **Run mode is a
 per-task setting the plugin cannot see, and the exposed spelling is not stable

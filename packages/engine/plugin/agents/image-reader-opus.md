@@ -4,8 +4,8 @@ description: Re-reads ONE FamilySearch image scan with Opus's own vision, for wh
 model: claude-opus-4-8
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
-  # hosted web), `remote-devices__Genealogy_Research` (cloud Cowork), and
-  # `Genealogy_Research` (on-computer Cowork). See record-extractor.md for the
+  # hosted web), `remote-devices__Genealogy_Research` (bridged), and
+  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   - mcp__genealogy__image_read
   - mcp__remote-devices__Genealogy_Research__image_read

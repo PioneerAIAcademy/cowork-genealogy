@@ -32,11 +32,11 @@ Both Cowork forms derive the segment from `manifest.json`'s `display_name`
 ("Genealogy Research" → `Genealogy_Research`), which is a *product* string —
 chosen for the install dialog, not for us. Only the bridged form is namespaced,
 because only it has a bridge to traverse. **Which spelling a Cowork session
-exposes has been observed to move.** Two censuses on 2026-08-15 (macOS desktop,
-and Windows via issue #1732, reported 2026-08-19) found every genealogy tool
+exposes has been observed to move.** Three censuses found every genealogy tool
 under the bridged `mcp__remote-devices__Genealogy_Research__` spelling ("via
-your device"), with the bare `mcp__Genealogy_Research__` spelling absent; issue
-#1341 recorded the opposite live on 2026-08-04/05, refusing `record-extractor`
+your device") with the bare `mcp__Genealogy_Research__` spelling absent — macOS
+and Windows on 2026-08-15, and a second Windows session via issue #1732 on
+2026-08-19; issue #1341 recorded the opposite live on 2026-08-04/05, refusing `record-extractor`
 with the bridged spelling among its *unrecognized* entries (see the reversal
 table below). The registrar moved between those dates — or the two
 configurations differ in a way nobody has identified; either reading lands in
@@ -112,7 +112,7 @@ Three corollaries:
 
 | Option | Why rejected | Evidence |
 |---|---|---|
-| **Two spellings** (harness + bridge), the original form of this ADR | Missed Cowork's on-computer registration, which uses `display_name` with no `remote-devices` segment. `record-extractor` was refused outright — "would be spawned with zero tools — refusing", naming all 16 declared entries as unrecognized — in the mode that reaches the host extension directly. Three of the four agents declare only MCP tools, so the same applies to them; `gps-mentor` declares a bare `Read`, so it would spawn holding that alone | #1341 |
+| **Two spellings** (harness + bridge), the original form of this ADR | Missed the bare `display_name` registration (no `remote-devices` segment), which Cowork exposed live in #1341: `record-extractor` was refused outright — "would be spawned with zero tools — refusing", naming all 16 declared entries as unrecognized. Three of the four agents declare only MCP tools, so the same applies to them; `gps-mentor` declares a bare `Read`, so it would spawn holding that alone | #1341 |
 | **One qualified name** (whichever prefix the author happens to know) | The exact failure of #650/#698. Whichever one you pick is wrong in some environment, and CI — which registers under `genealogy` — cannot see it | #650/#698; all three agents broken in Cowork, CI green |
 | **Bare names only** | Leaves the subagent toolless in the SDK path used by the unit harness. Bare works for skills' `allowed-tools` but not for the agent spawn filter | `CLAUDE.md` § "Dual-spelled tool names" |
 | **Grant the server-level prefix** `mcp__remote-devices` and let everything through | That namespace carries `device_bash`, `device_commit_files`, `project_memory_write`. A read-only critique agent would get host shell access | `agent-tool-names.test.ts` header comment |
@@ -153,8 +153,9 @@ reason.)
    length, which turns the next instance from a wrong bare name into a named
    failure. And the set does not only *grow*: the spelling a Cowork session
    exposes has been observed to **move** between dates — the bare form live in
-   #1341 (2026-08-04/05), absent in the 2026-08-15 censuses (macOS and Windows/#1732)
-   that found only the bridged form. So the third spelling is insurance against a
+   #1341 (2026-08-04/05), absent in three later censuses (macOS and Windows on
+   2026-08-15, and a second Windows session via #1732 on 2026-08-19) that found
+   only the bridged form. So the third spelling is insurance against a
    moving target, not dead weight to be cleaned up on the strength of one census.
 
 **Risks.** The lint verifies *spelling*, not *binding*. An agent can be perfectly

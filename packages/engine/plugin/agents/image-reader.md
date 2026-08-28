@@ -4,8 +4,8 @@ description: Reads ONE FamilySearch image scan and returns ONLY a full text tran
 model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
-  # hosted web), `remote-devices__Genealogy_Research` (cloud Cowork), and
-  # `Genealogy_Research` (on-computer Cowork). See record-extractor.md for the
+  # hosted web), `remote-devices__Genealogy_Research` (bridged), and
+  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   - mcp__genealogy__image_transcribe
   - mcp__remote-devices__Genealogy_Research__image_transcribe

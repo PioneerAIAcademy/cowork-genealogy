@@ -269,12 +269,12 @@ ships into the VM — cannot control that choice. `.mcp.json`, both
 harnesses, and the hosted web control plane register it under the key
 `genealogy`. Both Cowork spellings derive from `manifest.json`'s
 `display_name`; only the bridged form is namespaced under `remote-devices`.
-Which spelling a Cowork session exposes has been **observed to move**: two
-censuses on 2026-08-15 (macOS desktop, and Windows via issue #1732, reported
-2026-08-19) found every genealogy tool under
-`mcp__remote-devices__Genealogy_Research__…` ("via your device"), with the
-bare `mcp__Genealogy_Research__…` spelling absent — yet issue #1341 recorded
-the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the
+Which spelling a Cowork session exposes has been **observed to move**: three
+censuses found every genealogy tool under
+`mcp__remote-devices__Genealogy_Research__…` ("via your device") with the
+bare `mcp__Genealogy_Research__…` spelling absent — macOS and Windows on
+2026-08-15, and a second Windows session via issue #1732 on 2026-08-19 — yet
+issue #1341 recorded the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the
 bridged spelling among its *unrecognized* entries. The registrar moved
 between those dates (or the configurations differ in a way nobody has
 identified — same conclusion). **Run mode is a per-task setting nothing in
@@ -351,7 +351,7 @@ prefix rather than slicing it against another prefix's length.
 
 **No CI job can verify that a granted tool actually binds.** Only a
 live Cowork session can, and only in the run mode being tested — a cloud-mode
-check would have passed while on-computer was broken.
+check would have passed throughout #1341.
 
 **Never hardcode a qualified name in a ToolSearch query.** Cowork defers the
 genealogy tool schemas above a size threshold and offers no control over it, so

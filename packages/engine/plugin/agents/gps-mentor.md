@@ -20,7 +20,7 @@ model: claude-sonnet-5
 tools:
   # Every MCP tool appears under ALL THREE server spellings — `genealogy` (the
   # harnesses, .mcp.json, hosted web), `remote-devices__Genealogy_Research`
-  # (cloud Cowork), and `Genealogy_Research` (on-computer Cowork). Matched
+  # (bridged), and `Genealogy_Research` (bare display_name). Matched
   # exactly with no prefix fallback, and the plugin cannot control which name
   # the host registers. See record-extractor.md for the full rationale;
   # guarded by tests/packaging/agent-tool-names.test.ts.
