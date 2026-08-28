@@ -158,8 +158,9 @@ interface FulltextSearchResult {
   /** Record place */
   recordPlace?: string;
   /**
-   * The full AI-transcribed page text. Present when `projectPath` was NOT
-   * supplied (nothing was staged, so nothing to re-read from a sidecar).
+   * The full AI-transcribed page text. Present whenever nothing was staged —
+   * either `projectPath` was not supplied, or staging failed (`staged: null`
+   * with `stagingError` set), since the strip is guarded on `staged`.
    * Once staged, this field is stripped unconditionally from every result —
    * the overflow driver, 79-136 KB across a result set — and does not
    * survive round-trip through record_read (its sidecar path requires
