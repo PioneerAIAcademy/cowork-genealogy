@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import ts from "typescript";
+import { allToolSchemas } from "../../src/tool-schemas.js";
 
 /**
  * A mock fixture's `response` must be a shape its tool can actually return.
@@ -41,10 +42,13 @@ import ts from "typescript";
  *   - `engine-tests.yml` also runs UNGATED on every PR, by an explicit decision
  *     recorded in its header, so nothing can scope this check dark later.
  *
- * The narrow ancestor of this check — a hand-written
+ * A narrow ancestor of this check still stands: a hand-written
  * `{persons, relationships, sources}` set for `person_read` in
- * `eval/harness/tests/unit/test_fixtures.py` — is subsumed by the derived key
- * set here and was narrowed to the value assertion this check cannot make.
+ * `eval/harness/tests/unit/test_fixtures.py`. The derived key set here subsumes
+ * it, and the two agree today. They are NOT consolidated, deliberately, to keep
+ * this change to its issue — so if an optional field is ever added to
+ * `PersonReadResult`, the hand-written copy is the one that will wrongly reject
+ * a legitimate fixture, and it is the copy to fix.
  *
  * WHAT "THE SHAPE ITS TOOL RETURNS" MEANS FOR `image_read`, THE ONE ARM WHERE
  * THE TWO READINGS DIFFER. Every other arm serializes the whole awaited result,
@@ -74,6 +78,17 @@ import ts from "typescript";
  * larger job; a green run is not a validated corpus. Recorded in
  * `docs/specs/unit-test-spec.md` § 3.2 as well, so a reader of either finds it.
  *
+ * KNOWN DUPLICATION, accepted rather than resolved. `dispatchHandlers` below is
+ * the THIRD copy of the `request.params.name` dispatch walk in this directory:
+ * `writer-tool-results.test.ts` carries a near-identical arm collector and
+ * `manifest.test.ts` a names-only variant. A shared helper was written and then
+ * withdrawn to hold the change to its issue, so CLAUDE.md's reuse rule (two
+ * near-duplicates is the signal to consolidate) is knowingly unmet here. The
+ * type resolver below is not duplicated: no other test in the repo resolves
+ * types, and the only sibling that reads interface members
+ * (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`) sits in a
+ * package the engine is deliberately excluded from sharing code with.
+ *
  * NOTHING HAND-MAINTAINED. Both halves are derived from source, so a new tool
  * or a renamed field is covered without editing this file:
  *   1. `src/index.ts` dispatch arm  ->  the handler it awaits
@@ -101,6 +116,12 @@ const aliases = new Map<string, Named>();
 const duplicateTypeNames = new Set<string>();
 /** Function name -> its annotated return type node. */
 const returnTypes = new Map<string, Named>();
+/** Function names declared more than once anywhere under `src/`. Same
+ *  last-write-wins hazard as `duplicateTypeNames`: 18 annotated function names
+ *  are duplicated under `src/` today (`readJson`, `validateInput`, `mapEntry`,
+ *  …). None is a dispatch handler, so the reader is right by luck; this makes
+ *  the day one becomes a handler a failure instead of a wrong answer. */
+const duplicateFunctionNames = new Set<string>();
 
 function parse(path: string): ts.SourceFile {
   return ts.createSourceFile(
@@ -115,10 +136,18 @@ function indexFile(path: string): void {
   const file = parse(path);
   const visit = (node: ts.Node): void => {
     if (ts.isInterfaceDeclaration(node)) {
-      if (interfaces.has(node.name.text)) duplicateTypeNames.add(node.name.text);
+      // ACROSS both maps, not within one: a name declared once as an interface
+      // and once as a `type` alias is the same last-write-wins hazard, and
+      // `resolveType` silently prefers the interface because `interfaces.get` is
+      // consulted first. Checking only `interfaces.has` missed that entirely.
+      if (interfaces.has(node.name.text) || aliases.has(node.name.text)) {
+        duplicateTypeNames.add(node.name.text);
+      }
       interfaces.set(node.name.text, { node, file });
     } else if (ts.isTypeAliasDeclaration(node)) {
-      if (aliases.has(node.name.text)) duplicateTypeNames.add(node.name.text);
+      if (aliases.has(node.name.text) || interfaces.has(node.name.text)) {
+        duplicateTypeNames.add(node.name.text);
+      }
       aliases.set(node.name.text, { node, file });
     } else if (
       (ts.isFunctionDeclaration(node) || ts.isMethodDeclaration(node)) &&
@@ -126,6 +155,7 @@ function indexFile(path: string): void {
       ts.isIdentifier(node.name) &&
       node.type
     ) {
+      if (returnTypes.has(node.name.text)) duplicateFunctionNames.add(node.name.text);
       returnTypes.set(node.name.text, { node: node.type, file });
     } else if (
       ts.isVariableDeclaration(node) &&
@@ -470,11 +500,15 @@ function responseShapes(): Map<string, Alternative[]> {
 
 const shapes = responseShapes();
 
-/** A shape that admits ANY key and requires none constrains nothing, so every
- *  fixture for that tool would pass unexamined. `Promise<Record<string, X>>` on
- *  a handler produces exactly that. Treated as unresolved, not as coverage. */
+/** A shape that admits ANY key cannot be checked for unknown keys at all, which
+ *  is most of this check's value. `Promise<Record<string, X>>` produces one, and
+ *  so does an interface with an index signature — including one that ALSO has
+ *  required members, which is the case an earlier version of this predicate
+ *  missed: `open` makes `mismatch()` skip the unknown-key filter entirely, so
+ *  requiring `required.size === 0` as well let a partially-open type disarm the
+ *  check with every meta-assertion green. Any top-level openness is reported. */
 function constrainsNothing(alternatives: Alternative[]): boolean {
-  return alternatives.every((a) => a.open && a.required.size === 0);
+  return alternatives.some((a) => a.open);
 }
 
 // ─── Fixtures ─────────────────────────────────────────────────────
@@ -507,6 +541,23 @@ function fixturePaths(dir: string, prefix = ""): string[] {
   }
   return out;
 }
+
+/**
+ * The tool names the server ADVERTISES (`allToolSchemas`, the single source of
+ * truth `manifest.json` and `ListTools` are both checked against).
+ *
+ * This is what makes the aspirational-tool hatch safe. Without it the hatch was
+ * a hole big enough to swallow four live tools: `fulltext_search` (15 fixtures),
+ * `source_attachments` (2), `record_person_matches` (1) and
+ * `record_record_matches` (1) happen to have `input_schema` on EVERY fixture, so
+ * renaming any one of their dispatch arms made all of its fixtures read as
+ * "aspirational" and drop out of the comparison with the whole suite green.
+ * Verified by break-test before this line existed.
+ *
+ * An advertised tool can never be aspirational: it is registered, so it must
+ * dispatch and its handler must resolve, `input_schema` or not.
+ */
+const advertisedTools = new Set(allToolSchemas.map((s) => s.name));
 
 const fixtures: Fixture[] = fixturePaths(fixturesDir).map((rel) => {
   const raw = JSON.parse(readFileSync(join(fixturesDir, rel), "utf8")) as Record<
@@ -605,7 +656,9 @@ describe("eval/fixtures/mcp response shapes match the tools' return types", () =
             (f) =>
               typeof f.tool === "string" &&
               !dispatchedTools.has(f.tool) &&
-              !f.declaresInputSchema,
+              // The hatch is for a tool with no source yet. An ADVERTISED tool
+              // has source, so `input_schema` cannot excuse a missing arm.
+              (advertisedTools.has(f.tool) || !f.declaresInputSchema),
           )
           .map((f) => `${f.name} -> ${String(f.tool)}`),
       ),
@@ -687,6 +740,7 @@ describe("eval/fixtures/mcp response shapes match the tools' return types", () =
       // Aspirational tools are legitimately uncovered — see the dispatch test.
       const aspirational =
         !dispatchedTools.has(tool) &&
+        !advertisedTools.has(tool) &&
         fixtures.every((f) => f.tool !== tool || f.declaresInputSchema);
       if (aspirational) continue;
 
@@ -710,9 +764,20 @@ describe("eval/fixtures/mcp response shapes match the tools' return types", () =
       }
       if (constrainsNothing(alternatives)) {
         problems.push(
-          `${tool}: its return type admits any key and requires none ` +
-            `(a \`Record\`/index signature at the top level), so every fixture ` +
-            `for it would pass unexamined. Declare the real shape`,
+          `${tool}: its return type admits ANY key at the top level (a ` +
+            `\`Record\` or an index signature), so unknown-key detection is off ` +
+            `for every fixture of this tool even if it also has required ` +
+            `members. Declare the real shape`,
+        );
+        continue;
+      }
+      const handlerFn = handlers.get(tool);
+      if (handlerFn && duplicateFunctionNames.has(handlerFn)) {
+        problems.push(
+          `${tool}: its handler \`${handlerFn}\` is declared more than once ` +
+            `under src/, and the function index is keyed by bare name and ` +
+            `last-write-wins, so this may have read the wrong declaration's ` +
+            `return type. Rename one, or qualify the index by file`,
         );
         continue;
       }

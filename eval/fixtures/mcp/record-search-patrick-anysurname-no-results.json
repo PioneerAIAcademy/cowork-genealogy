@@ -6,9 +6,9 @@
   },
   "response": {
     "query": {
-    "givenName": "Patrick",
-    "recordCountry": "United States"
-  },
+      "givenName": "Patrick",
+      "recordCountry": "United States"
+    },
     "totalMatches": 0,
     "paginationCappedAt": 4999,
     "returned": 0,

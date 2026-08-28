@@ -1,6 +1,6 @@
 {
   "tool": "place_population",
-  "description": "Catch-all place_population fixture — answers any standardPlace with the place and NO population data. `population` and `indexed_records` are optional in PopulationResponse, so their absence is how the real tool reports that the Pop Stats corpus holds nothing for a place.",
+  "description": "Catch-all place_population fixture — answers any standardPlace with the place and NO population data. `population` and `indexed_records` are optional in PopulationResponse, so this shape is type-legal. It is NOT a measured response: probing the hosted Pop Stats API for a place it does not hold returned HTTP 200 with {error, place_id}, not a place with the sections absent, and the tool passes that body through unchecked. So this fixture is the type's no-data form, not the service's, and the placeholder ids are outside the vocabulary the probe observed.",
   "args": {
     "standardPlace": "~"
   },

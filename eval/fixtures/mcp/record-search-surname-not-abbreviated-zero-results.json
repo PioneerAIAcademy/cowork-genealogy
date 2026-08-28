@@ -6,10 +6,10 @@
   },
   "response": {
     "query": {
-    "surname": "Halsteinsdatter",
-    "collectionId": "1468080",
-    "recordType": "marriage"
-  },
+      "surname": "Halsteinsdatter",
+      "collectionId": "1468080",
+      "recordType": "marriage"
+    },
     "totalMatches": 0,
     "paginationCappedAt": 4999,
     "returned": 0,

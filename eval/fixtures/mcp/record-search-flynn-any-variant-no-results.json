@@ -6,8 +6,8 @@
   },
   "response": {
     "query": {
-    "surname": "Flinn"
-  },
+      "surname": "Flinn"
+    },
     "totalMatches": 0,
     "paginationCappedAt": 4999,
     "returned": 0,
