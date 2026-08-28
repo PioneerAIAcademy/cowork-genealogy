@@ -574,6 +574,10 @@ That catches the 2026-08-17 run on its own and needs no name parsing.
 
 ### V3 — a negative assertion has no record informant
 
+**Filed as a comment on #986**, which already owns the `record_role: "absent"` half of this
+cross-field rule at the `validator.ts` level. `record-extractor.md:533-537` prescribes both
+fields in one sentence.
+
 > **Rule:** every assertion with `evidence_type: "negative"` must carry
 > `informant_proximity: "researcher"` and an `informant` naming the researcher; and
 > every assertion with `record_role: "absent"` must carry `evidence_type: "negative"`
@@ -620,6 +624,9 @@ legitimately names a specific assertion or two in a key finding. Enumerating a w
 persona's ids is the behaviour the rule forbids.
 
 ### V6 — role tokens are numbered consistently within a run
+
+**Filed as a comment on #1442**, which already owns the single-role matcher pin and cites
+this exact instability on `ut_018`. Finding F2 went there too.
 
 > **Rule:** within one run, if any `record_role` matches `{stem}_{n}`, no assertion may
 > carry the bare `{stem}` for a different persona; and the sibling stems
@@ -699,27 +706,46 @@ settled pre-edit from #1635 (deleting the dead ToolSearch passage). Every behavi
 finding above is a rule the body already states and the run ignored; per the guide,
 restating it would lengthen the prompt and change nothing.
 
-## Follow-on work to file
+## Follow-on work — filed
 
-Grouped by lane and by which paid eval run they would ride on, per the guide's "do not
-open one issue per finding".
+Grouped by lane and by which paid eval run they ride, per the guide's "do not open one
+issue per finding". The one search before filing (`gh issue list --state open` over 194
+open issues, plus a grep of every `**Touches:**` line) found two existing owners, so two
+of the nine validator requests became comments rather than new issues.
 
-- **One `developer` issue, `nothing-checks`** — validators V1–V3, V5–V7, plus V4(b),
-  V8, V9. All read the committed corpus; none costs an eval run. V1 and V5 carry the
+- **#2019** — `developer`, `nothing-checks`. Validators V1, V2, V4(b), V5, V7, V8, V9.
+  All read the committed corpus; none costs an eval run. V1 and V5 carry the
   genealogist's threshold calls, quoted above.
-- **One `developer` issue, `nothing-checks`** — F9: `builtin_tool_calls[].args`
-  truncation at 200 characters hides the delegation message, and with it five
-  `SKILL.md` prohibitions, two of which are documented as having already caused a
-  destructive or fabricated outcome. Unblocks V4(a). F14 (the `fact_type_recommended`
-  "assertion's notes" instruction) rides here — one-line schema-text fix in both trees.
-- **One `genealogist` issue** — F7 (a `volume_search` fixture for
+- **#2020** — `developer`, `nothing-checks`. F9: `BUILTIN_ARG_TRUNCATE = 200`
+  (`eval/harness/harness/skill_runner.py:216`) cuts the `Agent` prompt, hiding the
+  delegation message and with it five `SKILL.md` prohibitions — two documented as having
+  already caused a destructive edit and a fabricated identity link. Unblocks V4(a). F14
+  (the `fact_type_recommended` "assertion's notes" instruction, plus `marital_status`
+  missing from its examples) rides here as a schema-text fix in both trees.
+- **#2021** — `genealogist`, `nothing-checks`. F7 (a `volume_search` fixture for
   `suspect-required-name-confirm-via-image`, so the image-confirmation *attempt* can be
   required rather than narrated) and F12 (a re-invocation/refinement fixture, the only
   path to the `op: "update"` branch). Both are fixture work on this suite, so they share
   one paid run and one annotation pass.
-- **F10** is a one-line `SKILL.md` addition naming where `projectPath` comes from. It is
-  lane 4 and arms this skill's eval slot, so it should ride the next
-  `record-extraction` body change rather than buy a run of its own.
+
+Two went to existing issues instead of new ones:
+
+- **V3 → comment on #986** (`validator.ts: evidence_type "negative" is not tied to
+  record_role "absent"`). That issue already owns the role half of the cross-field rule.
+  The comment adds the informant half — `record-extractor.md:533-537` prescribes both
+  fields in one sentence — with the F4 violations, and notes that the `a_012` blank-field
+  negative its "Why it was deferred" section describes reproduces live in F5.
+- **F2 + F11 (V6) → comment on #1442** (`expected_classifications can't express "either
+  party's record_role"`). That issue already owns the single-role matcher pin. The comment
+  adds two failure directions its body does not describe: the pin produced a **false-positive
+  report** on `ut_014` (a role fabrication surfaced as "Ireland vs Pennsylvania") and a
+  **silent miss** on the `lodger_N` run, and its §2 role-naming instability is now visible
+  *within* a single run (`ut_027`: `son_1`, `son_2`, bare `daughter`).
+
+**F10** is not filed. It is a one-line `SKILL.md` addition naming where `projectPath`
+comes from — lane 4, and it arms this skill's eval slot, so it should ride the next
+`record-extraction` body change rather than buy a run of its own. Recorded here so the
+next person editing that body picks it up.
 
 ## What I did not find
 
