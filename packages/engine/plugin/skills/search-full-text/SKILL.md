@@ -206,9 +206,16 @@ attachment status. Let the user confirm which records to examine.
 ### 7. Retain results and write the log entry
 
 **Every search gets a log entry — no exceptions.** Call
-`research_log_append` once per search:
+`research_log_append` once per search. **`query` must mirror exactly the
+arguments the `fulltext_search` call actually sent — never add a filter
+the call itself omitted, even one the user mentioned or that a later call
+will add.** An unscoped first call (step 4) logs an unscoped `query`; a
+filter only appears once it is actually sent in a call:
 
 ```
+// This example logs a SECOND call, made after an unfiltered first call
+// showed the filters were warranted — recordPlace1/yearFrom/yearTo are in
+// `query` because this specific call actually sent them.
 research_log_append({
   projectPath,
   planItemId: "pli_010",          // null for ad-hoc
