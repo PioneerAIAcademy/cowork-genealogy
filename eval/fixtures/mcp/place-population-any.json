@@ -1,13 +1,14 @@
 {
   "tool": "place_population",
-  "description": "Catch-all place_population fixture — returns generic population statistics for any standardPlace",
+  "description": "Catch-all place_population fixture — answers any standardPlace with the place and NO population data. `population` and `indexed_records` are optional in PopulationResponse, so their absence is how the real tool reports that the Pop Stats corpus holds nothing for a place.",
   "args": {
     "standardPlace": "~"
   },
   "response": {
-    "standardPlace": "",
-    "years_requested": [],
-    "data_points": [],
-    "notes": "No population data available for this fixture."
+    "place": {
+      "place_id": "",
+      "name": "",
+      "level": ""
+    }
   }
 }

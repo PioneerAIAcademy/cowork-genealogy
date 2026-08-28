@@ -5,7 +5,14 @@
     "surname": "~Fl"
   },
   "response": {
-    "results": [],
-    "total": 0
+    "query": {
+    "surname": "Fl*n"
+  },
+    "totalMatches": 0,
+    "paginationCappedAt": 4999,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
   }
 }
