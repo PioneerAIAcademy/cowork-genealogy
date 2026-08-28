@@ -84,6 +84,59 @@ COMPLIANT_PRESENT_TENSE_INFERS = (
     "ParentChild relationships."
 )
 
+# ut_search_records_010, run v1_2026-08-28_15-20-05. "relationships indexed"
+# with no inference/infer/presum word at all -- the old markers missed this
+# entirely, false-failing a note that already says the record's own
+# relationship edges came from indexing. Pins the "index near a role word"
+# marker (issue #1642).
+COMPLIANT_RELATIONSHIPS_INDEXED = (
+    "Rank-1 match (MXHY-TP4, matchScore 0.948) is Patrick Flynn b. 1845 "
+    "Ireland, residing Branch Township, Schuylkill, PA 1850, in household "
+    "of Thomas Flynn and Mary Flynn -- ParentChild relationships indexed; "
+    "already attached to subject I1 (src_001)."
+)
+
+# ut_search_records_014, run v1_2026-08-28_15-20-05. "Indexed as Head of
+# Household" -- functionally the same claim as "the indexer's inference",
+# just without the word "infer". Pins the same marker from the other word
+# order (index-word before the role word, rather than after).
+COMPLIANT_INDEXED_AS_HEAD = (
+    "One result: Patrick Flynn, born 1845, Ireland, residing Branch "
+    "Township, Schuylkill, PA, 1850. Indexed as Head of Household -- "
+    "NEEDS-REVIEW: a birth year of 1845 makes the subject 5 years old in "
+    "1850, incompatible with Head role."
+)
+
+# ut_search_records_027, run v1_2026-08-28_15-20-05. "co-residents indexed".
+COMPLIANT_CORESIDENTS_INDEXED = (
+    "One result: George Ackerman, Bucks Co., PA, born ~1818 PA. Household "
+    "co-residents indexed: Henry Ackerman (~1851) and Margaret Ackerman "
+    "(~1854). Spouse Catherine is absent from the index entry."
+)
+
+# ut_search_records_017, run v1_2026-08-24_12-28-26. "presumably her mother"
+# -- the old "presumed" (exact word only) pattern missed the adverb form.
+COMPLIANT_PRESUMABLY_HER_MOTHER = (
+    "Found Sarah A. Mullen (b. 1852, Wisconsin) in household of William "
+    "Mullen, Dodge County, Wisconsin. Household also includes Margaret "
+    "Mullen (b. 1830, Ireland), presumably her mother."
+)
+
+# ut_search_records_013, run v1_2026-08-28_15-20-05. Contains "indexed" --
+# but only about the surname SPELLING and the birth YEAR, never near the
+# role/relationship word it asserts flat ("Household head matches I2"). The
+# "index near a role word" marker must NOT accept this: the note never says
+# the household relationship itself is an inference, only that unrelated
+# fields were indexed. Pins the false-accept boundary the scoped marker
+# exists to draw (issue #1642).
+OFFENDER_INDEXED_SPELLING_FLAT_HEAD = (
+    "Found 1 result: Patrick Flyn (indexed spelling) in household of Thomas "
+    "Flyn, Branch Township, Schuylkill, PA, 1850 census. Birth year indexed "
+    "as 1842 vs. subject's approximate ~1845 -- 3-year discrepancy warrants "
+    "needs-review. Household head matches I2 (Thomas Flynn) already in "
+    "tree. Record already extracted as src_003."
+)
+
 
 # --- Notes the rule rejects (from runs that carried no marker) --------
 
@@ -117,11 +170,38 @@ OFFENDER_BARE_LISTING = (
 
 @pytest.mark.parametrize(
     "notes",
-    [COMPLIANT_HEDGED, COMPLIANT_INFERRED, COMPLIANT_QUOTED_ROLE, COMPLIANT_PRESENT_TENSE_INFERS],
-    ids=["inferences-not-stated", "inferred-no-column", "quoted-role", "present-tense-infers"],
+    [
+        COMPLIANT_HEDGED,
+        COMPLIANT_INFERRED,
+        COMPLIANT_QUOTED_ROLE,
+        COMPLIANT_PRESENT_TENSE_INFERS,
+        COMPLIANT_RELATIONSHIPS_INDEXED,
+        COMPLIANT_INDEXED_AS_HEAD,
+        COMPLIANT_CORESIDENTS_INDEXED,
+        COMPLIANT_PRESUMABLY_HER_MOTHER,
+    ],
+    ids=[
+        "inferences-not-stated",
+        "inferred-no-column",
+        "quoted-role",
+        "present-tense-infers",
+        "relationships-indexed",
+        "indexed-as-head",
+        "coresidents-indexed",
+        "presumably-her-mother",
+    ],
 )
 def test_a_hedged_household_passes(notes):
     check(EMPTY_BEFORE, after(entry(notes)), TAGGED)
+
+
+def test_indexed_spelling_alone_does_not_excuse_a_flat_role_assertion():
+    """The scoped 'index near a role word' marker must not accept an
+    unrelated 'indexed spelling'/'indexed as <year>' mention while the note
+    still asserts the household role flat elsewhere."""
+    with pytest.raises(AssertionError) as e:
+        check(EMPTY_BEFORE, after(entry(OFFENDER_INDEXED_SPELLING_FLAT_HEAD)), TAGGED)
+    assert "log_005" in str(e.value)
 
 
 @pytest.mark.parametrize(

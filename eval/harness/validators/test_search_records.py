@@ -112,6 +112,11 @@ _ROLE_ASSERTIONS = (
 # Any of these in the note satisfies the rule. The skill does not have to use
 # SKILL.md's exact sentence — it has to say, in some form, that the structure
 # is an inference rather than something the record stated.
+_ROLE_WORD = (
+    r"(?:heads?|wife|wives|husbands?|sons?|daughters?|fathers?|mothers?|"
+    r"parents?|relationships?|co-?residents?|roles?)"
+)
+
 _INFERENCE_MARKERS = (
     r"infer",             # infer, infers, inferred, inferring, inference(s) --
                           # was "inferr" (double-r only), which missed the
@@ -121,10 +126,23 @@ _INFERENCE_MARKERS = (
     r"\bnot\s+(?:a\s+)?stated\b",
     r"\bunstated\b",
     r"\bimplied\b",
-    r"\bpresumed\b",
+    r"\bpresum\w*\b",   # presumed, presumably, presuming -- was
+                          # "presumed" only, which missed a compliant
+                          # "presumably her mother" (issue #1642,
+                          # ut_search_records_017 2026-08-24_12-28-26)
     r"no\s+relationship\s+(?:to\s+head\s+)?column",
     r"relationship\s+column[^.]{0,40}\b(?:does\s+not|did\s+not|is\s+not|"
     r"was\s+not|never|absent)\b",
+    # "indexed"/"indexing" near the actual role/relationship word it
+    # qualifies -- "ParentChild relationships indexed", "indexed as Head
+    # of Household", "co-residents indexed". Deliberately NOT a bare
+    # "index" anywhere in the note: that would also accept "indexed
+    # spelling" / "surname indexed as Flyn" -- notes that flag a NAME or
+    # DATE as indexed while still asserting the household ROLE flat, which
+    # says nothing about the relationship being an inference (issue #1642,
+    # ut_search_records_010/_014/_027 2026-08-28_15-20-05).
+    rf"\bindex\w*\b[^.]{{0,50}}\b{_ROLE_WORD}\b",
+    rf"\b{_ROLE_WORD}\b[^.]{{0,50}}\bindex\w*\b",
 )
 
 

@@ -478,6 +478,10 @@ candidates; you still confirm the top ones:
   signals. Write the listing and mark the family structure inferred — not "head
   Daniel + wife Margaret + daughter Hannah" but "Daniel, Margaret, Hannah in one
   dwelling; family structure inferred from surname, ages and order, not stated."
+  **This is required for every pre-1880 household you log, including a clean,
+  unconflicted top match — a high `matchScore` does not put a relationship
+  column back on the page.** Do not save the inference marker for entries
+  where you are also flagging a conflict.
   **This inference belongs in the same sentence as any needs-review
   reasoning about the household, not just a role-based conflict.** Whenever
   you are already explaining why a candidate in THIS pre-1880 household is
