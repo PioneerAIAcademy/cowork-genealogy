@@ -368,10 +368,13 @@ later, so the package holds **13** today.
 > (`packages/viewer-ui/src/transport.ts`), with an Electron IPC adapter
 > (`apps/electron/src/renderer/src/transport/IpcResearchTransport.ts`) and a web
 > WebSocket adapter (`apps/web/src/transport/WsResearchTransport.ts`), exactly as
-> described. Three additions since: `getProjectState` also returns a `label`
-> (folder path in Electron, session title on the web), and three **optional**
-> methods were added rather than dropped — `selectFolder?`, `getFeedbackContext?`,
-> `getSourceImage?` — each optional precisely because one host cannot serve it.
+> described. Additions since: `getProjectState` also returns a `label` (folder
+> path in Electron, session title on the web) and a **required** `notice` (the
+> folder-in-subfolder heads-up, replayed to a late-mounting renderer through the
+> hydration snapshot); a `SubscriptionHandlers.onNotice` handler carries that
+> same heads-up as a push; and three **optional** methods were added rather than
+> dropped — `selectFolder?`, `getFeedbackContext?`, `getSourceImage?` — each
+> optional precisely because one host cannot serve it.
 >
 > **The "11 sections" above is correct and must not be changed to 13.** Exactly
 > 11 section components existed when this was written, and exactly those 11 moved
