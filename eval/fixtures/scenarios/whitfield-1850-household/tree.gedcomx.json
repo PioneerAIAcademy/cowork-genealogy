@@ -1,0 +1,16 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Amos", "surname": "Whitfield", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "~1817", "place": "Georgia, United States" }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}
