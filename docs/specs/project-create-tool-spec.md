@@ -14,8 +14,10 @@ denies `Write` on either filename **by basename, with no exemption for a file
 that does not exist yet**. So wherever the lockdown binds — Cowork, the hosted
 path — the one skill whose entire job is creating a project could not create one.
 
-Confirmed live in Cowork, on-computer mode, empty folder, *"Start a new research
-project for FamilySearch person KWCJ-RN4"*:
+Confirmed live in Cowork, empty folder, *"Start a new research
+project for FamilySearch person KWCJ-RN4"* (a device-bridge session — the write
+landed through `device_bash` on the host, per step 3; run mode is not visible
+from inside a session, so it is not labelled here):
 
 1. `Write` on both files → denied.
 2. `tree_edit` → refused; the writer tools require the files to already exist.
