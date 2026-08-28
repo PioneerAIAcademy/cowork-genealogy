@@ -7,10 +7,10 @@
  * they have (whether they agreed or disagreed).
  */
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import { z } from 'zod';
 import { runlogsUnitDir } from '../paths';
 import { atomicWriteJson } from './atomic';
+import { resolveWithin } from './safe-path';
 import { sampledTestIds, uncommentedSampledCorrections } from '../types';
 import type { AnnotationCorrection, AnnotationFile, RunLogFile } from '../types';
 
@@ -67,11 +67,24 @@ export function validateAnnotation(value: unknown): AnnotationFile {
 }
 
 function annPathForRunLog(runLogId: string): string {
-  return path.join(runlogsUnitDir(), `${runLogId}.ann.json`);
+  // `runLogId` is built from catch-all URL segments and reaches both a write and
+  // an `fs.rm`. Contained here, at the one place both callers share, rather than
+  // at each call site.
+  return resolveWithin(runlogsUnitDir(), `${runLogId}.ann.json`);
 }
 
 export async function readAnnotation(runLogId: string): Promise<AnnotationFile | null> {
-  const filePath = annPathForRunLog(runLogId);
+  // A refused path returns null, like `readFixture` and `readRunLogById`: a read
+  // with a not-found contract should not start throwing because the reason
+  // changed, and the caller cannot then tell "absent" from "refused" — which is
+  // the right amount to tell an unauthenticated requester. `writeAnnotation`
+  // deliberately still throws: a refused WRITE must be loud.
+  let filePath: string;
+  try {
+    filePath = annPathForRunLog(runLogId);
+  } catch {
+    return null;
+  }
   let raw: string;
   try {
     raw = await fs.readFile(filePath, 'utf8');

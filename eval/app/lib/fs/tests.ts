@@ -11,6 +11,7 @@ import path from 'node:path';
 import { testsUnitDir, scenariosDir, fixturesDir } from '../paths';
 import type { BlockedReason, UnitTestFile, UnitTestListEntry } from '../types';
 import { atomicWriteJson } from './atomic';
+import { resolveWithin } from './safe-path';
 
 /** Result of a `listTests` call — separates clean rows from corrupt ones. */
 export interface ListTestsResult {
@@ -173,11 +174,15 @@ export async function writeTest(test: UnitTestFile): Promise<string> {
   const existing = await readTest(test.test.id);
   let filePath: string;
 
+  // `test.skill` (a directory) and `test.id` (a basename) both arrive in the
+  // request body and both build this path. Contained on every branch — the
+  // else-branch takes a basename from disk but still joins an untrusted
+  // `test.skill`, so it needs the check as much as the first.
   if (!existing) {
-    filePath = path.join(testsUnitDir(), test.test.skill, `${test.test.id}.json`);
+    filePath = resolveWithin(testsUnitDir(), test.test.skill, `${test.test.id}.json`);
   } else {
-    const targetDir = path.join(testsUnitDir(), test.test.skill);
-    filePath = path.join(targetDir, path.basename(existing.filePath));
+    const targetDir = resolveWithin(testsUnitDir(), test.test.skill);
+    filePath = resolveWithin(targetDir, path.basename(existing.filePath));
   }
 
   await atomicWriteJson(filePath, test);
