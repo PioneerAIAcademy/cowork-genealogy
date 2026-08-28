@@ -13,5 +13,9 @@ if not exist node_modules (
   call npm install
 )
 
-start http://localhost:3000
+REM Open 127.0.0.1, not localhost. The dev server binds loopback IPv4 only
+REM (see eval/app/package.json), and on Windows "localhost" commonly resolves to
+REM IPv6 ::1 first — which would fail to connect. Do not change either without
+REM changing the other: the binding is what keeps this app off the LAN.
+start http://127.0.0.1:3000
 call npm run dev
