@@ -367,14 +367,25 @@ def test_windows_backslash_zip_completes_setup(tmp_path, monkeypatch):
 
     assert result.returncode == 0, result.stderr
     dest = home / "feedback" / slug
-    # Extraction landed, and the backslash names became real directories.
+
+    # Forward-slash members land identically everywhere.
     assert (dest / "research.json").is_file()
-    assert (dest / "results" / "log_006.json").is_file()
-    assert (dest / "images" / "ark_61903_3_1_S3HY-6SHQ-BFK.jpg").is_file()
     assert (dest / "_feedback" / "feedback.json").is_file()
-    # The steps *after* unzip ran — this is what the bug skipped.
+
+    # A backslash member's LAYOUT is platform-dependent and deliberately not
+    # asserted: Info-ZIP on Git-for-Windows rewrites "results\log_006.json"
+    # into a real `results/` directory, while on Linux the backslash stays a
+    # literal character in a single root-level filename. Both are "extracted";
+    # pinning either one makes this test pass on one CI runner and fail on the
+    # other, which is how it first went red. Assert only that the member
+    # arrived, under whichever spelling this platform produced.
+    extracted = {q.name for q in dest.rglob("*") if q.is_file()}
+    assert any(n.endswith("log_006.json") for n in extracted), extracted
+    assert any(n.endswith("S3HY-6SHQ-BFK.jpg") for n in extracted), extracted
+
+    # The steps *after* unzip ran — this is what the bug actually skipped, and
+    # the only thing this test exists to guard.
     assert (dest / ".feedback-repo-root").is_file()
     assert (dest / ".git").is_dir()
     assert (dest / ".claude" / "skills").is_dir()
-    # And the user's prompt was parsed out of the backslash-named member.
     assert "Look for newspaper articles" in result.stdout
