@@ -12,12 +12,9 @@ description: Invoke for FamilySearch full-text search (FTS) — immediately
   Ancestry or Newspapers.com (use search-external-sites), structured
   indexed search by name/date/place (use search-records), and planning what
   to search (use research-plan). Do NOT use to scope a new project or
-  propose opening research questions — a request to figure out what to
-  research first, with no plan item yet to execute, routes to
-  question-selection, not this skill. Do NOT use when the user already has
-  a specific record in hand (e.g. "I have a deed naming X as a witness,
-  extract the assertions") — that is record-extraction; this skill is for
-  finding records, not extracting from one already found.
+  propose opening questions with no plan item yet (use question-selection),
+  or when the user has a record in hand wanting extraction (use
+  record-extraction).
 allowed-tools:
   - fulltext_search
   - source_attachments
