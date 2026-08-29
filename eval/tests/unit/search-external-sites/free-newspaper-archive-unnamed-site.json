@@ -26,7 +26,7 @@
     "external-links-search-schuylkill"
   ],
   "judge_context": [
-    "A free digitized-newspaper archive URL must be generated — Chronicling America (chroniclingamerica.loc.gov/search/pages/results/) with the name as the search text, a date window covering 1908, and the state expressed as the full capitalized name (Pennsylvania), not a two-letter abbreviation",
+    "A free digitized-newspaper archive URL must be generated — Chronicling America on the loc.gov collections path (www.loc.gov/collections/chronicling-america/) carrying dl=page so the search targets digitised PAGES rather than the U.S. Newspaper Directory's title catalogue, with the name in qs, a start_date/end_date window in YYYY-MM-DD covering 1908, and location_state set to the state. The retired legacy form (chroniclingamerica.loc.gov/search/pages/results/ with andtext/date1/date2/state) is NOT acceptable: that API was retired 2025-08-04 and the redirect drops those parameters, producing an unscoped search.",
     "The free archive must NOT be described as unavailable, blocked, inaccessible, or requiring a subscription. Being unable to fetch it directly is a capture-required result, not a negative one — the response must hand the user a URL to open, not report a failure",
     "Newspapers.com may be offered as well, but must not be the only route presented: the researcher profile lists Ancestry only, so a Newspapers.com-only answer leaves the user with a link they cannot use",
     "A research-log entry must be written in the same turn the URL is generated: site chronicling_america, outcome partial, capture_received false, query capturing the name, the death window and the place",

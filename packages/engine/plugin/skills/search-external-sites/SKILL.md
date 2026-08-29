@@ -155,7 +155,7 @@ titles mislead about scope and completeness.
 | FindMyPast.com | `findmypast.com/search/results?params` | Strong UK/Ireland coverage. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
 | FindAGrave.com | `findagrave.com/memorial/search?params` | Cemetery records. Free. User-contributed — treat as compiled source |
 | Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription |
-| Chronicling America | `chroniclingamerica.loc.gov/search/pages/results/?params` | US newspapers 1690–1963, Library of Congress. **Free.** Bot-protected — capture required |
+| Chronicling America | `loc.gov/collections/chronicling-america/?dl=page&params` | US digitised newspaper pages 1798–1963, Library of Congress. **Free.** Bot-protected — capture required |
 | State/regional digital newspaper archives | varies — see below | e.g. Utah Digital Newspapers, California Digital Newspaper Collection. **Free.** Bot-protected — capture required |
 
 ## Steps
@@ -295,12 +295,23 @@ https://www.newspapers.com/search/?query={first}+{last}&dr_year={year}&dr_place=
 
 #### Chronicling America (free)
 ```
-https://chroniclingamerica.loc.gov/search/pages/results/?andtext={first}+{last}&date1={yyyy}&date2={yyyy}&dateFilterType=yearRange&state={State}&rows=20&searchType=basic
+https://www.loc.gov/collections/chronicling-america/?qs={first}+{last}&dl=page&start_date={yyyy}-01-01&end_date={yyyy}-12-31&location_state={state}
 ```
-- `state` — full state name, capitalized (`Utah`, `New York`), not the abbreviation
-- `date1`/`date2` — four-digit years; both required when `dateFilterType=yearRange`
-- Coverage is 1690–1963 and title-by-title, not complete for any state — a nil
-  result here never means no newspaper covered the event
+- `dl=page` — **required.** Without it the search returns newspaper *titles* from
+  the U.S. Newspaper Directory, a catalogue of what was published, not digitised
+  pages. A title-level nil says nothing about whether the event was reported.
+- `qs` — the search words
+- `start_date`/`end_date` — full `YYYY-MM-DD`, not bare years
+- `location_state` — lowercase state name (`utah`, `new york`)
+- Digitised page coverage runs **1798–1963**, title-by-title and complete for no
+  state — a nil result never means no newspaper covered the event. Do not run
+  page searches outside that window; 1690 is the Directory's catalogue range,
+  not the page corpus.
+- Do **not** use `chroniclingamerica.loc.gov/search/pages/results/` with
+  `andtext`/`date1`/`date2`/`state`. That API was retired on 2025-08-04; the
+  host 308-redirects and carries the query string across, but the new endpoint
+  ignores those parameters, so the user lands on an unscoped search and any nil
+  logged from it is meaningless.
 
 #### State/regional digital newspaper archives (free)
 Utah Digital Newspapers:
