@@ -1,0 +1,276 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search returning the 1850 US Census household of Nancy Doss, Pike County, Kentucky: Amos Whitfield (the search subject, no stated role) alongside two same-surname minors (Ezra, Noah) and one unrelated-surname co-resident (Patrick Coyne), also with no stated role. Carries the real RecordSearchToolResponse shape, scrubbed from the production report behind issue #1912 (household of 5, three surnames, no relationship facts on any person).",
+  "args": {
+    "surname": "Whitfield"
+  },
+  "response": {
+    "query": {
+      "count": 50,
+      "recordType": "census",
+      "residencePlace": "Pike, Kentucky, United States",
+      "residenceYearFrom": 1820,
+      "residenceYearTo": 1853,
+      "surname": "Whitfield"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 4999,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:A1WF-DOS",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Pike, Kentucky, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Amos Whitfield",
+        "score": 3.64,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1817",
+        "birthPlace": "Georgia, United States",
+        "collectionId": "1401638",
+        "collectionTitle": "United States, Census, 1850",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+        "recordTitle": "Household of Nancy Doss, \"United States, Census, 1850\"",
+        "recordArk": "ark:/61903/1:2:A1WF-HH1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_1",
+              "ark": "ark:/61903/1:1:A1WF-DOS",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Whitfield",
+                  "given": "Amos"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1817",
+                  "standard_date": "1817",
+                  "place": "Georgia",
+                  "standard_place": "Georgia, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Pike, Kentucky, United States",
+                  "standard_place": "Pike, Kentucky, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_2",
+              "ark": "ark:/61903/1:1:A1WF-DO2",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Doss",
+                  "given": "Nancy"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Pike, Kentucky, United States",
+                  "standard_place": "Pike, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1796",
+                  "standard_date": "1796",
+                  "place": "New York",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_3",
+              "ark": "ark:/61903/1:1:A1WF-DOG",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Whitfield",
+                  "given": "Ezra"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1839",
+                  "standard_date": "1839",
+                  "place": "Georgia",
+                  "standard_place": "Georgia, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Pike, Kentucky, United States",
+                  "standard_place": "Pike, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_4",
+              "ark": "ark:/61903/1:1:A1WF-DOP",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Whitfield",
+                  "given": "Noah"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1842",
+                  "standard_date": "1842",
+                  "place": "Georgia",
+                  "standard_place": "Georgia, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Pike, Kentucky, United States",
+                  "standard_place": "Pike, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_5",
+              "ark": "ark:/61903/1:1:A1WF-DO5",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Coyne",
+                  "given": "Patrick"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Pike, Kentucky, United States",
+                  "standard_place": "Pike, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1807",
+                  "standard_date": "1807",
+                  "place": "Ireland",
+                  "standard_place": "Ireland"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1",
+              "title": "Household of Nancy Doss, \"United States, Census, 1850\"",
+              "citation": "\"United States, Census, 1850\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:A1WF-DO2 : accessed 2026), Entry for Nancy Doss and Amos Whitfield, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:A1WF-HH1"
+            },
+            {
+              "id": "sd_c_1401638",
+              "title": "United States, Census, 1850",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-0000-000"
+            },
+            {
+              "id": "src_p_p_1",
+              "url": "#p_1"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "Ireland",
+              "latitude": 53,
+              "longitude": -8
+            },
+            {
+              "id": "2",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "3",
+              "name": "Georgia, United States",
+              "latitude": 32.6,
+              "longitude": -83.4
+            },
+            {
+              "id": "4",
+              "name": "Pike, Kentucky, United States",
+              "latitude": 37.47,
+              "longitude": -82.42
+            }
+          ]
+        },
+        "primaryId": "p_1"
+      }
+    ]
+  }
+}
