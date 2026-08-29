@@ -197,6 +197,40 @@ The docstring names the compensating control — "Excluded is not unnoticed:
 `rule3_completeness` warns about these" — and `check_runlogs` does warn on it. I checked
 this before treating it as a gap in the calibration loop; it is not one.
 
+### `make judge-report` reads differently after these runs — read it against the run, not the rubric
+
+#1666 points the auditor at `make judge-report SKILL=record-extraction` and reported **1 of
+6** non-discriminating on 2026-08-27. Against the newest log it now reports **3 of 6**.
+Nothing about the rubric changed; the command reads the newest log per skill, and that log
+is now run 2.
+
+| dimension | 08-24 | run 1 (17-43) | run 2 (18-23, newest) |
+|---|---|---|---|
+| base/Correctness | [1, 2, 3] | [1, 2, 3] | [1, 2, 3] |
+| base/Completeness | [1, 3] | [1, 3] | [1, 3] |
+| base/Tool Arguments | [2, 3] | [2, 3] | **[3] flat** |
+| rubric/Assertion atomicity | **[3] flat** | [2, 3] | **[3] flat** |
+| rubric/Evidence type accuracy | [2, 3] | [2, 3] | **[3] flat** |
+| rubric/Informant identification | [2, 3] | **[3] flat** | [2, 3] |
+
+**Flatness here is mostly run quality, not a dead dimension.** Run 2 was the cleanest run
+in the corpus (24 pass / 3 partial / 1 fail), and a dimension no test failed is flat at 3
+for that reason alone. The two runs are 40 minutes apart with only a `judge_context`
+revert between them — which reaches the judge, not the skill — and they disagree about
+*which* dimension is dead: `Assertion atomicity` is flat in run 2 and varies [2, 3] in run
+1; `Informant identification` is the reverse.
+
+Consequences worth carrying forward: a single-log flatness reading is not a property of
+the rubric, so **`make judge-report` is an entry point, not a verdict** — exactly as #1666
+frames it — and `rubric-critic`, which consumes flatness, inherits the same confound.
+F13's claim below is the one that depends on this, and it survives: `Assertion atomicity`
+is flat at 3 across n=24 in both the 08-24 baseline and run 2, and the F13 violation it
+fails to fire on is present in both.
+
+No rubric change follows from this. Acting on it would flip the snapshot and buy a paid
+run this PR cannot fund, so it rides the next `record-extraction` rubric or body change
+alongside F10.
+
 ### Judge-side advisories worth a look during annotation
 
 Counts are run 2's.
@@ -309,8 +343,9 @@ read at face value.
 **Validator.**
 
 **Did.** `ut_record_extraction_005` (`record-read-via-ark`), delegated with
-`recordId: ark:/61903/1:1:68Q9-K34P`. In **2 of 5 logs — including the newest,
-2026-08-24** — the head-of-household's three assertions carry
+`recordId: ark:/61903/1:1:68Q9-K34P`. In **2 of the 5 analysed logs — including
+`v1_2026-08-24_17-40-15`, the newest of them** — the head-of-household's three
+assertions carry
 `ark:/61903/1:1:68Q9-K34Q` (Thomas Flynn's own persona ARK) while the subject's five
 carry `…K34P`:
 
@@ -470,9 +505,11 @@ used once. Worth knowing before anyone invests in tuning that paragraph.
 **Did.** `ut_record_extraction_016` (`suspect-required-name-confirm-via-image`). The
 user says the indexed patronymic "Nadnesen" is probably wrong. In **5 of 5 runs** the
 router called no `volume_search`, delegated to no `@plugin:image-reader`, and went
-straight to `record-extractor` with a "record it tentative" flag. Tool sequence, all
-five: `record_read` → `project_context` → `research_log_append` → *(delegate)* →
-`extraction_append`.
+straight to `record-extractor` with a "record it tentative" flag — and the two fresh runs
+make it **7 of 7**. Every run makes the same five MCP calls and only those:
+`project_context` and `record_read` in either order, then `research_log_append`, a second
+`project_context`, *(delegate)*, `extraction_append`. (The second `project_context` is the
+router-then-agent split V8 describes, not a violation.)
 
 **Should.** Prohibition-list items 9 and 15. `SKILL.md:126–138` — "treat the indexed
 value as a lead: **route to the original register image (`volume_search` +
@@ -601,7 +638,9 @@ has no such bar, pulls the whole file in one run in five.
 latent. In a real project `research.json` is the largest artifact the system owns, and
 the router loads it to learn one string. One line in `SKILL.md` naming where
 `projectPath` comes from would remove all three improvisations. That is a body edit and
-therefore lane 4 — filed, not made.
+therefore lane 4 — **not made, and deliberately not filed either**: it arms this skill's
+eval slot, so it should ride the next `record-extraction` body change. §Follow-on work
+says the same; recorded in both places so the next person editing that body picks it up.
 
 ---
 
@@ -683,7 +722,9 @@ same thing, so the derivation is stored twice and `value` is no longer the fact.
 `Assertion atomicity` dimension names the failure — "mixes a fact with justification
 narrative" is its `partial` branch — and it is the dimension `make judge-report`
 reports as flat at 3 across n=24, which is what issue #1666 says to look at first. It
-does not fire here. **Validator request V7.**
+does not fire here. (Read that flatness with §`make judge-report` reads differently after
+these runs: it holds in both the 08-24 baseline and run 2, and run 1 is the exception.)
+**Validator request V7.**
 
 The rate is 3 of the 5 analysed logs, but the shape has survived a doctrine flip and
 recurs in **both** fresh runs — `v1_2026-08-28_17-43-01`, "born approximately 1845
@@ -965,8 +1006,18 @@ these. Across 2,416 assertions and 121 sources:
 - **Zero** prohibited framings in the delegation prompts — but see F9: the prompts are
   truncated at 200 characters, so that particular zero means nothing.
 - The apparent "15 runs made two `extraction_append` calls" is **not** a violation of the
-  one-call rule: no run double-wrote a fact — 0 duplicate `(role, fact_type, value)`
-  tuples across the corpus. **Superseded in part:** I attributed every second call to a
+  one-call rule — but the supporting count is not a clean zero, and the correction is
+  mine. **Exactly one** duplicate `(record_role, fact_type, value)` tuple exists across
+  the 2,416 assertions: `ut_record_extraction_017`, 2026-08-16_11-26, writes
+  `deceased`/`death`/"passed away peacefully on March 14, 2021" twice — `a_003` with no
+  `date` or `place`, `a_004` carrying both. That is one fact written twice, which is what
+  item 38 forbids; it is a single instance in one run, not the shape of the two-call
+  behaviour, and it sits in a log this PR prunes. **A second appears in fresh run 1**
+  (`ut_record_extraction_017` again: `sibling_1`/`relationship`/"Sister of Harold Dean
+  Whitaker" ×2), so the count on the 7 logs now on record is 2, both on the same test.
+  Worth a validator; folded into V2's neighbourhood rather than given its own number, and
+  named here so the next auditor does not re-derive a zero I got wrong.
+  **Superseded in part:** I attributed every second call to a
   permitted `op: "update"` correction (`record-extractor.md:849–855`) or a resubmit after
   `{ ok: false }` (`:843–847`). The fresh run shows a third cause — a 30-second harness
   subprocess timeout (#2025) — that the four older logs cannot show, because they do not

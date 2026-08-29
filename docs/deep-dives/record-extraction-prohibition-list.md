@@ -105,7 +105,7 @@ rebuilding it.**
 31. **Call the tool before narrating** — the transcript must show the actual
     invocation, not text claiming it (:804–805).
 32. **Never predict an id**; never `tree_edit` the source; never write the project
-    files directly (:831–835).
+    files directly (:831–834).
 33. **Always supply `sourceDescription`; never pre-check for source reuse yourself**
     (:836–841).
 34. On `{ ok: false }`: fix **only** the ops named in `errors`, check `opsReceived`
@@ -137,7 +137,7 @@ rebuilding it.**
 44. `access_date` / `when_accessed` are the **real** access date in ISO `YYYY-MM-DD` —
     never a placeholder, a raw timestamp, or the record's publication date (:178–181).
 45. **"Original not examined" is decided now, not later:** `derivative` +
-    a `notes` line naming the reason + a statement in the return summary (:184–192).
+    a `notes` line naming the reason + a statement in the return summary (:184–191).
 
 ## G. Agent — roles (Step 2)
 
@@ -172,7 +172,7 @@ rebuilding it.**
     death certificate the named father and mother EACH get `name` and (if stated)
     `birth`+`place` (:276–287).
 56. **Blank columns produce no assertions** — not a positive one, and **not** a
-    `"No X recorded"` negative (:289–305).
+    `"No X recorded"` negative (:289–304).
 
 ## H. Agent — assertion shape (Step 3)
 
@@ -248,7 +248,7 @@ rebuilding it.**
     `family_not_present`**; none of those rows is upgraded to `witness` (:571–578).
 87. **Death certificate — funeral director** is scoped to a certificate that names one.
     A burial or cemetery index names no informant: `unknown` / `unknown`, never the
-    compiler or the cemetery (:592–595).
+    compiler or the cemetery (:592–594).
 88. **Marriage — the parties are `self`** for their own facts and for the marriage
     event; the officiant and clerk are recorders and take no `official_duty` here
     (:597–616).
@@ -259,7 +259,7 @@ rebuilding it.**
 91. **A witness attests at `witness`, never `self`** (:621–625).
 92. **Christening**: the presenting parent is `household_member`; the officiant is
     informant only for the event itself at `official_duty`; the child is never `self`
-    (:627–639).
+    (:627–638).
 
 ## J. Agent — evidence type (Layer 3)
 
@@ -276,16 +276,16 @@ rebuilding it.**
 97. From **1880** on the relationship column makes the relationship stated → `direct`,
     written with a bare `relationship_type` (:720–723).
 98. **The record subject's `name` assertion stays `direct`**; a null `place` on it is
-    expected and is never grounds to demote it (:725–731).
+    expected and is never grounds to demote it (:725–730).
 99. **A third party named by an informant is still `direct`** — parents in the
     `Father's name` / `Mother's maiden name` fields, on a death certificate and a
     burial register alike (:735–743).
 100. **Shared-informant units** (same informant across assertions, even across sources)
-     are noted in `informant_bias_notes` and flagged in the return summary (:751–757).
+     are noted in `informant_bias_notes` and flagged in the return summary (:751–756).
 101. An identity conclusion resting on **one uncorroborated record** is **tentative at
      most**; a caller's stated doubt about a required identifier **is** a `[?]`, and the
      doubt lives at the information/source layers — **never** in `evidence_type`
-     (:759–790).
+     (:760–790).
 
 ## K. Agent — negative evidence
 
