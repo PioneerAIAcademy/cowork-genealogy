@@ -761,7 +761,7 @@ Entries are matched **exactly** — no prefix fallback, no inherit-on-miss. When
 spawned with zero tools — refusing"). That is how #650/#698 broke all three
 then-existing agents in Cowork **while CI stayed green**: they were qualified
 against the harness's arbitrary dict key rather than the product's name. The
-on-computer registrar repeated the shape one registrar later — the on-computer spelling was missing,
+bare `display_name` registration repeated the shape one registrar later — that spelling was missing,
 `record-extractor` was refused outright with all 16 of its entries named
 unrecognized, and the lint agreed with the omission because it derived its expected
 prefixes from the two registrars we knew about. (`gps-mentor` is the exception: it

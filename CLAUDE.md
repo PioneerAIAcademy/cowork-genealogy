@@ -287,7 +287,7 @@ When every `tools:` entry misses, the runtime refuses to spawn the agent at
 all ("would be spawned with zero tools — refusing"). That is how #650/#698
 broke all three agents in Cowork while CI stayed green: they were qualified
 against the *harness's* arbitrary dict key rather than the product's name.
-**The on-computer registrar repeated the shape** — that spelling
+**The bare `display_name` registration repeated the shape** — that spelling
 was missing, `record-extractor` was refused outright, and the lint stayed green because
 it derived its expected prefixes from the two registrars we knew about.
 Listing every spelling is safe because unrecognized entries are ignored so
@@ -350,8 +350,9 @@ loudly in CI instead of silently in production, and throws on an unrecognized
 prefix rather than slicing it against another prefix's length.
 
 **No CI job can verify that a granted tool actually binds.** Only a
-live Cowork session can, and only in the run mode being tested — a cloud-mode
-check would have passed throughout #1341.
+live Cowork session can, and only for the spelling that session exposes — the
+bare form was live in #1341 but absent in the later censuses, so a green check
+proves binding for one spelling at one moment, not in general.
 
 **Never hardcode a qualified name in a ToolSearch query.** Cowork defers the
 genealogy tool schemas above a size threshold and offers no control over it, so

@@ -57,7 +57,7 @@ That is not hypothetical, and the history is worth reading precisely — the usu
 | **#657** (07-15) | moved to **bare** names, on the reasoning that "the `mcp__genealogy__` prefix breaks in Cowork" |
 | **#698** (07-17) | moved back to qualified — bare leaves the subagent toolless in the SDK path |
 | **#742** (07-18) | **both spellings** — correct for the two registrars known at the time |
-| **#1341** (08-05) | **all three** — Cowork on the user's own computer is a third registrar; `record-extractor` was refused there, and the three agents whose entries are all MCP follow by the same rule |
+| **#1341** (08-05) | **all three** — the bare `display_name` spelling is a third registrar, observed live here; `record-extractor` was refused, and the three agents whose entries are all MCP follow by the same rule |
 
 Two full reversals before the answer stuck, and **every test passed at every
 step**. That is the argument for the lint, not the anecdote.
@@ -178,8 +178,9 @@ general-purpose stand-in that binds none of the deny list (#939).
 What it does **not** catch: whether a granted tool actually binds at runtime
 (#1084/#1085); whether the agent's body ever tells it to call the tool; and a
 **fourth** prefix nobody has registered yet. No CI job can see any of these. Only a
-live Cowork session can, and only in the run mode being tested — a cloud-mode check
-would have passed throughout #1341.
+live Cowork session can, and only for the spelling that session exposes — the bare
+form was live in #1341 but absent in the later censuses, so a green check proves
+binding for one spelling at one moment, not in general.
 
 ## Revisit when
 
