@@ -6,12 +6,24 @@ Step-1 output lives beside this file as
 107 transcript-checkable rules from the router and the agent. Read that first; the
 findings below are numbered against it where a rule exists.
 
-**Corpus.** All five committed unit run logs: 138 runs, 121 of which persisted, 2,416
-assertions and 121 sources written. Transcripts, `tool_calls` and `file_changes` read
-before any `outcome_summary`, judge rationale or `.ann.json`, per the guide.
+**Corpus.** The five unit run logs committed when this dive started — `v1_2026-08-15_12-52-37`,
+`v1_2026-08-16_11-26-54`, `v1_2026-08-16_13-06-08`, `v1_2026-08-17_18-57-51`,
+`v1_2026-08-24_17-40-15` — 138 runs, 121 of which persisted, 2,416 assertions and 121
+sources written. Transcripts, `tool_calls` and `file_changes` read before any
+`outcome_summary`, judge rationale or `.ann.json`, per the guide.
+
+> **Two of those five are not on `main` any more, and this PR is what removed them.**
+> The harness keeps the newest 5 candidates per skill and prunes on every write
+> (`prune_old_candidates`, `DEFAULT_KEEP_CANDIDATES`), so committing the two fresh runs
+> below evicted `v1_2026-08-15_12-52-37` and `v1_2026-08-16_11-26-54` with their
+> `.ann.json` siblings. Every count on this page was computed before that, against all
+> five. To re-derive any of them, read the two evicted logs at this PR's merge-base:
+> `git show <base>:eval/runlogs/unit/record-extraction/v1_2026-08-15_12-52-37.json`.
+> The three surviving logs plus the two fresh ones are what a reader finds on `main`.
 
 **Fourteen findings. Nine convert to validator requests** (§Validator requests). Two
-lane-2 fixes are made in this PR; one lane-2 fix is deliberately *not* made and §F7
+lane-2 fixes were attempted on a paid run: one is kept (§F5), one was reverted after it
+misgraded (§F1, §Lane-2 fixes attempted). A third is deliberately *not* attempted and §F7
 says why.
 
 ---
@@ -201,7 +213,7 @@ Counts are run 2's.
 
 ## F1 — `record_role` encodes a relationship the record does not state, and no dimension grades `record_role`
 
-**Lane 2 + validator.** The sharpest finding of the dive.
+**Lane 2 (attempted, reverted) + validator.** The sharpest finding of the dive.
 
 **Did.** `ut_record_extraction_014` (`census-1860-different-surname-head`) gives the
 same four people a different role vocabulary in each of the five logs:
@@ -245,10 +257,15 @@ schema does not constrain it either. The rule dates from 2026-08-03
 (`git log -S"Don't number everyone after the head"` → `36edfdec`), so it was live for
 all five runs.
 
-**Fix made:** a `judge_context` bullet on `census-1860-different-surname-head.json`
-making role fabrication gradeable in both directions (kinship *and* boardinghouse), so
-the judge grades the field rather than only the narration. **Validator request V1**
-carries the mechanical half.
+**Fix attempted, then reverted — the file in this PR matches `origin/main`.** A
+`judge_context` bullet on `census-1860-different-surname-head.json` making role
+fabrication gradeable in both directions (kinship *and* boardinghouse) scored run 1 —
+which wrote tie-neutral `resident_N` roles and zero relationship assertions —
+`Correctness = 1`, calling `head_of_household` itself a fabricated relationship. It asks
+the judge to classify a label against an open vocabulary, and that has no boundary it
+will hold; §Lane-2 fixes attempted has the comparison with the bullet that did hold.
+**Validator request V1** carries the mechanical half, where the check is a surname
+comparison and cannot over-apply.
 
 ---
 
@@ -412,15 +429,20 @@ on.
 
 **Validator.**
 
-**Did.** Every `@plugin:image-reader` delegation in the corpus, all four of them
-(`ut_record_extraction_015`, logs 2026-08-16_11-26 through 2026-08-24), is a bare
+**Did.** Every `@plugin:image-reader` delegation in the corpus — all four of them
+(`ut_record_extraction_015`, logs 2026-08-16_11-26 through 2026-08-24) — is a bare
 transcription request:
 
 > "Please transcribe the FamilySearch page scan at image ARK 3:1:3QS7-99QG-KBTG. Return
 > a full text transcription of everything visible on the page."
 
-No `project_path`. No `looking_for`. And across the whole corpus, **`image_filename`
-appears on 0 of 121 persisted sources; `transcription` on 1 of 121.**
+No `project_path`. No `looking_for`. **Read the caveat F9 forces on this:** three of
+the four prompts are 145, 147 and 197 characters, so they are recorded whole and the
+absence is real. The fourth (2026-08-17) is exactly 200 — the truncation cap — so for
+that one run the log cannot show whether `project_path` followed, and I do not claim it.
+The finding rests on the three complete prompts and on the independent corpus-wide
+count, which no truncation touches: **`image_filename` appears on 0 of 121 persisted
+sources; `transcription` on 1 of 121.**
 
 **Should.** Prohibition-list item 11, `SKILL.md:100–106` — "**Pass `project_path` so
 the scan is saved for the source.** Include `project_path: <your working folder>` in
@@ -541,8 +563,11 @@ link carrying a match score no tool had computed").
 
 **Gap.** None of the five can be checked from a committed run log. Both of the last two
 are documented as having *already caused* a destructive or fabricated outcome, and both
-are invisible to every reader of the corpus. F6 is only in this document because those
-four image-reader prompts happened to be shorter than 200 characters.
+are invisible to every reader of the corpus. F6 is in this document only because **three
+of the four** image-reader prompts happened to be shorter than 200 characters — every
+one of the three under-cap prompts in the whole corpus is one of them. The fourth is at
+the cap and is unreadable for exactly the reason this finding describes; F6 says so and
+leans on its corpus-wide count instead.
 
 My first pass at this dive reported "recordId missing from 80 of 99 delegations" —
 which is an artifact of the truncation, not a finding. That is how the gap presents:
