@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-08-28_19-50-30.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the identifiers, since the 08-24 dive flagged this exact test for scoring 3 while\nciting a fabricated collection id. They're real now: SYNTH-PA-CHURCH comes from\ncollections-search-schuylkill, and image groups 007936749/750/751 from\nvolume-search-schuylkill — both fixtures this test loads. F1 is fixed here.\n"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Seven items covering church baptism (primary + browse fallback), marriage, FAN siblings,\nnaturalization, cemetery and probate. All persisted with full metadata, all status=planned.\nThe completed pl_002 was left intact.\n"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Six calls, all matching their predicates, no fixture_not_found. Only three of the thirteen\ndeclared fixtures were actually consumed — the wiki and place-search ones went unused\nbecause the scenario is pre-surveyed. Not a defect, but the fixture list is heavier than\nthe test needs.\n"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every type earns its place on a parentage question: baptism names both parents, marriage\nconfirms the couple, sibling baptisms corroborate independently, probate names heirs.\nNothing padding the count.\n"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Each relative's record is justified by what it reveals about Patrick, not pursued for its\nown sake — the naturalization and cemetery rationales both state the link explicitly.\nThat's the distinction this dimension exists for.\n"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Indexed baptism at 1, its browse-only fallback at 2 with fallback_for=pli_007, free indexed\nitems ahead of browse-only and external ones, probate last. Defensible throughout.\n\nWorth recording: this dimension scored 3 on all 65 runs the 08-24 dive audited and was\ncalled \"worse than no\". Here the 3 looks earned — but a dimension that has never failed\ncan't distinguish an earned 3 from a reflex one, which is why the ordering rule this PR\nadds is guarded by a validator rather than by this dimension.\n"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Schuylkill County correct throughout for 1840–1910, and the pre-1868 Diocese of\nPhiladelphia note is right for Catholic parishes in that window. No anachronisms.\n"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Add-new was correct: pl_002 is completed, q_001 still in_progress at 'probable'. New plan\nwritten active, prior plan untouched, exactly one active plan for q_001.\n"
+    },
+    {
+      "test_id": "ut_research_plan_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Jurisdictions right for 1845–1908, PA civil registration correctly noted as 1906+, and the\nloc_001 facts it cites (county formed 1811, Diocese of Philadelphia to 1868, browse-only\nanthracite films) match the scenario's locality entry. Nothing fabricated.\n"
+    },
+    {
+      "test_id": "ut_research_plan_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Verified against the requirement and the plan. judge_context[4] asks for at least one\npost-1850 census (1870/1880/1900); the only census item is seq 7, 1860. The 1880\nrelationship column is named there as the best direct parentage indicator, and it's absent.\n\nNot variance: the 08-24 partial scored Completeness 2 on this same requirement with the\nsame omission. Two of five committed runs, identical miss — a real recurring gap, not a\nwobble.\n"
+    },
+    {
+      "test_id": "ut_research_plan_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls matched their predicates, no fixture_not_found, and the eight plan items were\nbatched into one correctly-structured research_append.\n"
+    },
+    {
+      "test_id": "ut_research_plan_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Types fit the parentage need throughout — death cert and baptism name parents directly,\nprobate names heirs, marriage supplies the mother's maiden name, siblings' certs\ncorroborate independently. Rationales are specific, not generic.\n"
+    },
+    {
+      "test_id": "ut_research_plan_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Thomas's probate and marriage, and the siblings' certificates, are each justified by what\nthey reveal about Patrick's parentage rather than pursued for their own sake.\n"
+    },
+    {
+      "test_id": "ut_research_plan_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Highest-probability single source first, browse-only fallbacks behind their primaries with\nexplicit fallback_for chains (pli_006→pli_005, pli_009→pli_008). Defensible.\n"
+    },
+    {
+      "test_id": "ut_research_plan_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "County-level for probate/church/census, statewide for post-1906 vital records — correct\nsplit for Pennsylvania. Uses loc_001's 1811 formation date in the probate rationale.\n"
+    },
+    {
+      "test_id": "ut_research_plan_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Add-new correct: q_001 had no prior plan, pl_001 for q_002 already completed and left\nintact. One active plan for q_001, fresh item ids continuing from pli_003.\n"
+    },
+    {
+      "test_id": "ut_research_plan_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Zero tool calls, empty response, skills_invoked = ['question-selection']. It recognised the\nquestion as \"which question next\" rather than \"how to pursue this one\" and handed off\nwithout doing any planning of its own.\n\nWorth contrasting with ut_check_warnings_011 from last week's PR, where the judge scored an\nidentical silent handoff Correctness 1 for not \"articulating the decision to the user\". Same\nshape, opposite grade. Here it's graded right.\n"
+    },
+    {
+      "test_id": "ut_research_plan_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing missing because nothing was owed — the correct output for a negative test is no\noutput. It also named no internal skill in user-facing text, which the skill's phrasing rule\nforbids; there was no user-facing text at all.\n\n"
+    },
+    {
+      "test_id": "ut_research_plan_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero MCP calls, which is exactly when this dimension should be null.\n"
+    },
+    {
+      "test_id": "ut_research_plan_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero MCP calls — exactly the condition under which this dimension may be null.\n"
+    },
+    {
+      "test_id": "ut_research_plan_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing owed, nothing missing. No user-facing text at all, so no internal skill name leaked\ninto it either.\n"
+    },
+    {
+      "test_id": "ut_research_plan_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Zero tool calls, empty response, skills_invoked = ['record-extraction']. \"Pull the key facts\nout of it and add them to the project\" is extraction work, not planning, and it handed off\nwithout writing anything.\n\nThe tell that it didn't half-do the job: every validator passed, including\ntest_ownership_table and test_project_file_changes_route_through_writer_tools. Nothing was\nwritten to research.json.\n"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge penalises the response for claiming q_001 is \"concluded\". The tool returned\nexactly that: questionStatuses -> {\"id\": \"q_001\", \"state\": \"concluded\", \"nextStep\":\n\"gps-mentor (proof-critique) — ps_001\"}. The response reported it faithfully — \"the\nproject's question-status tracker shows q_001 has already reached 'concluded' state\" — and\nthen hedged both readings correctly: if pli_006 fed the conclusion, mark it completed; if\nit's genuinely pending, finish it before the mentor review.\n\nThat is accurate reporting of tool output, not an unsupported claim. The judge's own\nrationale concedes the tool said 'concluded' and marks it down anyway.\n\nNot a one-off: the 08-24 partial called the same sentence \"a factual error\", and docked\nPlan mode and lifecycle for it too. The skill has now been penalised twice for quoting the\ntool correctly. If anything is wrong here it's the scenario, which carries a 'concluded'\nstatus alongside an in_progress plan item — a fixture problem, not a skill one.\n"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Two judge_context bullets unmet, so the 2 is if anything generous.\n\n[2] wants what comes after probate, concretely and with a reason — post-1860 censuses or\nthe parents' marriage for the mother's maiden name. Checked the text: no mention of 1880,\n1900, marriage or maiden. It ends by asking the user which to do, and the bullet says\nexplicitly that a review stopping at pli_006 with no forward path is what fails.\n\n[1] wants collections-search-schuylkill consulted to verify probate is actually available.\nOnly two tools were called, project_context and research_query. The fixture went untouched.\nSame miss as 08-24.\n"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both calls correct — projectPath on project_context, section='plans' with questionId='q_001'\non research_query. No fixture_not_found. Correct as far as it goes; that it should have\ncalled a third tool is a Completeness matter, graded there.\n"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Census, death certificate and probate all fit the parentage need, each with a specific\nrationale — probate framed as a will potentially naming Patrick as son, which is direct\nevidence where the censuses are indirect.\n"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Thomas's probate is justified by what it reveals about Patrick, not pursued for its own\nsake. Review mode, so no new items to over-reach with.\n"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Indirect to direct — household co-residence, then parental naming, then documentary proof.\nNo fallback chains needed since each is a primary search.\n"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Schuylkill County correct for the 1860 census, 1908 death certificate and 1870–1890 probate.\nNo boundary complications in this window.\n"
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Review mode was right for an active plan with an unfinished item. No prior items edited, no\nduplicate plan, audit trail intact.\n\nNote the 08-24 run scored this 2 for the same 'concluded' sentence I've defended under\nCorrectness. It's 3 here, correctly.\n"
+    }
+  ]
+}

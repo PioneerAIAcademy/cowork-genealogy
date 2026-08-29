@@ -1,0 +1,11 @@
+{
+  "tool": "place_population",
+  "description": "place_population -- the real 'Place not found' the live API returned for Kongsberg; kept faithful so the plan cannot lean on population data it never had.",
+  "args": {
+    "standardPlace": "~Kongsberg"
+  },
+  "response": {
+    "error": "Place not found",
+    "place_id": "4598174"
+  }
+}

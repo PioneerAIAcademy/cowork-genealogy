@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_research_plan_r3d",
+    "skill": "research-plan",
+    "name": "Plan leads with the record the objective asks for when its place is already known",
+    "type": "positive",
+    "description": "From alpha feedback #1945. The objective names the record wanted (a birth or baptism record), the place it happened (Kongsberg), the approximate year (~1780), and the death date and place. Both localities are already surveyed in the scenario, so nothing about locality work is under test. The submitted session opened its plan on the Trysil death record at sequence 1 -- to establish a birth year the objective already gives as ~1780 and to 'confirm Kongsberg as origin' when the objective already names Kongsberg -- and filed the Kongsberg baptism at sequence 6 of 11. It then ran item 1 only and spent three hours in Trysil burial images, never searching Kongsberg. Both records are indexed FamilySearch collections (Norway Baptisms col 1467014, Norway Burials col 1468081), so this is not a free-before-paid or indexed-before-browse question. Tests that BCG Standard 15 sequencing does not bury the objective's own target record behind work that re-derives the objective's inputs.",
+    "tags": ["planning", "sequencing", "objective-target", "norway", "baptism", "feedback-1945"]
+  },
+  "input": {
+    "user_message": "Create the first research plan for q_001.",
+    "scenario": "hansen-kongsberg-baptism"
+  },
+  "mcp_fixtures": [
+    "place-search-kongsberg",
+    "place-search-trysil",
+    "place-search-all-kongsberg",
+    "place-search-all-trysil",
+    "collections-search-kongsberg",
+    "collections-search-trysil",
+    "volume-search-kongsberg",
+    "volume-search-trysil",
+    "external-links-search-kongsberg",
+    "external-links-search-trysil",
+    "place-population-kongsberg-notfound",
+    "place-population-trysil-notfound"
+  ],
+  "judge_context": [
+    "THE CENTRAL REQUIREMENT. The objective asks for a birth or baptism record and already supplies the place (Kongsberg), the approximate year (~1780), and the death date and place. The first plan item MUST target the Kongsberg baptism -- record_type 'church' (or equivalent), jurisdiction Kongsberg. Score Sequencing logic as fail (1) if any item whose jurisdiction is Trysil, or whose record_type targets the death or burial, carries a lower sequence number than the first Kongsberg baptism item.",
+    "Including Trysil death/burial items in the plan is CORRECT and expected -- the death record is legitimate corroboration and may carry an age or a birthplace column. This test is about ORDER, not inclusion. Do not deduct for their presence, only for their position ahead of the baptism.",
+    "A rationale that justifies an early death-record item by saying it will establish the birth year or confirm the birthplace is itself the defect, because the objective states both. Note it in the Sequencing logic rationale where it appears.",
+    "The browse-only Kongsberg register (vol 008680156_003, 1769-1782, 382 images, 0% indexed) is the correct FALLBACK behind the indexed Norway Baptisms search (col 1467014), linked via fallback_for. An indexed-first ordering between those two is correct and should be credited. Being browse-only is not a reason to defer the baptism behind Trysil work.",
+    "Breadth beyond the baptism is expected and should be credited, not penalized: the 1801 censuses, the parents' marriage, probate, and Kongsberg Sølvverk (silver mine) employment records all earn their place. Standard 14 breadth and Standard 17's self-check still apply. This test does not narrow the plan to a single record type -- compare ut_research_plan_016, which tests the opposite failure.",
+    "At least one FAN item is required here: this is a parentage question (who were his parents), so SKILL.md step 4 item 6 makes a relatives/neighbors/associates item mandatory. Baptism sponsors and godparents are the natural candidates.",
+    "Do not require or credit any claim about which direction of a date error produces which result. Grade the sequence and the rationales as written."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 900
+  }
+}

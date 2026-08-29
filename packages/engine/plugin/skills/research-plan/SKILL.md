@@ -306,6 +306,14 @@ Order items for efficient discovery (BCG Standard 15):
    reveals *about the subject*. On those three question types at least one FAN
    item is mandatory. Everywhere else it is not a quota — if no associate could
    speak to this question, don't manufacture one
+7. **Prioritize the objective's target record** — when the objective explicitly
+   requests a particular record type and provides the jurisdiction needed to
+   search for it, that record is the first research target. Do not prioritize
+   indirect sources whose primary purpose is to re-establish information the
+   objective already supplies. Corroborating and supporting records remain in
+   the plan, but normally follow the target record rather than acting as a
+   prerequisite to searching it. Exceptions are appropriate when identity,
+   jurisdiction, or record availability remain uncertain
 
 **Plan size guidance:** A typical plan has 4-10 items: fewer than 3
 usually isn't exhaustive enough; more than 12 suggests the question is

@@ -1,0 +1,11 @@
+{
+  "tool": "place_population",
+  "description": "place_population -- the real 'Place not found' the live API returned for Trysil.",
+  "args": {
+    "standardPlace": "~Trysil"
+  },
+  "response": {
+    "error": "Place not found",
+    "place_id": "1969402"
+  }
+}
