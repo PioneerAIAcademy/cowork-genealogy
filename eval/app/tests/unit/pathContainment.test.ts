@@ -5,6 +5,8 @@ import path from 'node:path'
 import { readFixture } from '../../lib/fs/fixtures'
 import { readAnnotation, writeAnnotation } from '../../lib/fs/annotations'
 import { readRunLogById, readSnapshotFiles } from '../../lib/fs/runlogs'
+import { diffSnapshotVsDisk } from '../../lib/snapshot'
+import { repoRoot } from '../../lib/paths'
 import { deleteCandidate } from '../../lib/release'
 import { writeTest, nextTestId } from '../../lib/fs/tests'
 import { readScenario } from '../../lib/fs/scenarios'
@@ -148,6 +150,17 @@ describe('path containment at each sink', () => {
     // is loud.
     await withOutsideFile(async (rel) => {
       await expect(nextTestId(path.dirname(rel))).rejects.toThrow()
+    })
+  })
+
+  it('diffSnapshotVsDisk skips a key pointing outside the repo', async () => {
+    // The other guard the review-fix commit added without a test. The assertion
+    // discriminates: uncontained, the outside file IS read, its content is
+    // hashed, and it mismatches the bogus digest below — giving
+    // `content-differs` rather than `missing-on-disk`.
+    await withOutsideFile(async (rel) => {
+      const out = await diffSnapshotVsDisk({ [rel]: 'deadbeef' }, repoRoot())
+      expect(out[rel]).toBe('missing-on-disk')
     })
   })
 })

@@ -36,6 +36,18 @@ export class PathEscapeError extends Error {
   }
 }
 
+/**
+ * NOT covered: symlinks. Resolution here is purely lexical — `path.resolve`
+ * normalises the string and never touches the filesystem — so a symlink placed
+ * INSIDE the base that points outside it resolves to a contained path and is
+ * accepted, and reading it returns content from outside. Demonstrated in review.
+ *
+ * Low severity for a local tool, since exploiting it means getting a symlink
+ * committed into `eval/runlogs/`, `eval/fixtures/` or `eval/tests/unit/`. Stated
+ * because the rest of this comment is thorough about what IS defended, which
+ * would otherwise invite a reader to assume symlinks are too. Closing it means
+ * `fs.realpath` at each sink, which is async and per-call.
+ */
 export function resolveWithin(base: string, ...segments: string[]): string {
   const resolvedBase = path.resolve(base)
 
