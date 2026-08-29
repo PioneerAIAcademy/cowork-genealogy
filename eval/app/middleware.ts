@@ -17,10 +17,11 @@ import type { NextRequest } from 'next/server'
  * `Origin` is sent by every browser on exactly the requests that matter and
  * cannot be forged by page script.
  *
- * GET is deliberately not covered. Read routes are guarded by path containment
- * instead (`lib/fs/safe-path.ts`), because a same-origin `GET` is also how the
- * app's own pages load, and a `<script>`/`<img>` cross-site GET carries no
- * `Origin` at all — so a check here would either break the app or pass anyway.
+ * GET is deliberately not covered: a same-origin `GET` is also how the app's
+ * own pages load, and a `<script>`/`<img>` cross-site GET carries no `Origin`
+ * at all — so a check here would either break the app or pass anyway. Read
+ * routes are contained at the filesystem sink instead, ad hoc per sink today;
+ * PR #2000 consolidates that into `lib/fs/safe-path.ts`.
  *
  * The other half of this control is the loopback binding in `package.json`.
  * `Origin` reasoning only covers a browser; binding is what keeps the app off
