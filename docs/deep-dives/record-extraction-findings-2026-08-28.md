@@ -145,8 +145,9 @@ All three are rules my scan found **zero** violations of across 2,416 assertions
 That section attributes every second `extraction_append` call to a permitted `op: "update"`
 correction or a resubmit after a validation rejection. **A third cause exists and I could
 not have seen it:** the harness caps its `node --eval` subprocess at 30 seconds
-(`mock_mcp.py:196-218`). Run 1 timed out twice — `ut_009` (18 ops) and `ut_028` (21 ops) —
-while 14 calls of 15–41 ops succeeded in the same run, including 41 and 39. It is
+(`_run_node_eval`'s `timeout` default, in `eval/harness/harness/mock_mcp.py`). Run 1
+timed out twice — `ut_009` (18 ops) and `ut_028` (21 ops) — while 14 calls of 15–41 ops
+succeeded in the same run, including 41 and 39. It is
 concurrency load, not batch size, and run 2 confirms it: **0 transient retries, no
 timeouts, and both `ut_009` and `ut_028` went `partial` → `pass` with nothing changed that
 they touch.**
@@ -882,7 +883,7 @@ of the nine validator requests became comments rather than new issues.
   All read the committed corpus; none costs an eval run. V1 and V5 carry the
   genealogist's threshold calls, quoted above.
 - **#2020** — `developer`, `nothing-checks`. F9: `BUILTIN_ARG_TRUNCATE = 200`
-  (`eval/harness/harness/skill_runner.py:216`) cuts the `Agent` prompt, hiding the
+  (in `eval/harness/harness/skill_runner.py`) cuts the `Agent` prompt, hiding the
   delegation message and with it five `SKILL.md` prohibitions — two documented as having
   already caused a destructive edit and a fabricated identity link. Unblocks V4(a). F14
   (the `fact_type_recommended` "assertion's notes" instruction, plus `marital_status`
