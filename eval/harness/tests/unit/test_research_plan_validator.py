@@ -194,6 +194,69 @@ def test_v1_passes_on_identifier_from_before_state_localities():
     check_v1(before, after, [])
 
 
+def test_v1_grounds_before_state_hyphenated_range():
+    """Issue #1866, johnmarkpeterbrown: a before-state value written as a
+    hyphenated RANGE must ground BOTH endpoints. candidate_identifiers refuses a
+    digit run touching a hyphen, so "volumes 007316661-007316663" grounded
+    nothing while the rationale — which cites the volumes individually — flagged
+    them as fabrications. _grounded_identifiers (looser, applied to both arms)
+    rescues them; the cited side stays strict. Reds without the fix: the strict
+    grounded set is empty for the range, so both cited ids are 'untraceable'."""
+    before = {
+        "research_json": {
+            "plans": [
+                {"id": "pl_001", "status": "completed", "items": [_item("pli_001")]}
+            ],
+            "localities": [
+                {
+                    "id": "loc_001",
+                    "place": "Schuylkill County, Pennsylvania",
+                    "notes": "Marriage records on FamilySearch volumes 007316661-007316663",
+                }
+            ],
+        }
+    }
+    after = {
+        "research_json": {
+            "plans": [
+                *before["research_json"]["plans"],
+                {
+                    "id": "pl_002",
+                    "status": "active",
+                    "items": [
+                        _item(
+                            "pli_010",
+                            rationale="Order volume 007316661 first, then 007316663 as a fallback.",
+                        )
+                    ],
+                },
+            ],
+            "localities": before["research_json"]["localities"],
+        }
+    }
+    check_v1(before, after, [])  # both endpoints grounded by the before-state range
+
+
+def test_v1_grounds_served_hyphenated_range():
+    """The served arm gets the same looser grounding (johnmarkpeterbrown asked
+    for both): a volume_search response naming a range grounds both endpoints
+    for a rationale that cites them individually. Here the before-state carries
+    neither id, so grounding comes solely from the served response. Reds without
+    the fix."""
+    served = [_call("volume_search", {
+        "results": [
+            {
+                "title": "Schuylkill County Marriages",
+                "description": "Digitized as volumes 007316661-007316663",
+            }
+        ]
+    })]
+    before, after = _states([
+        _item("pli_010", rationale="Order volume 007316661; fall back to 007316663 if empty."),
+    ])
+    check_v1(before, after, served)
+
+
 # --- V5 -------------------------------------------------------------------
 
 def test_v5_fires_on_indexed_claim_against_zero_count():

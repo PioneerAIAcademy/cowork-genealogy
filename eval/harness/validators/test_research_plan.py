@@ -458,9 +458,34 @@ def test_research_plan_no_out_of_lane_tools(
 _TRACEABLE_ID_TOOLS = {"collections_search", "volume_search", "external_links_search"}
 
 
+# Grounding is deliberately more permissive than candidate_identifiers. A
+# served/before-state value written as a hyphenated RANGE — "(FamilySearch
+# volumes 007316661-007316663)" — must ground BOTH endpoints, but
+# candidate_identifiers' NUM_RE refuses any digit run touching a hyphen (one
+# endpoint blocked by the trailing '-', the other by the leading one), so the
+# range grounds nothing while the rationale, which cites the volumes
+# individually, extracts and flags them as fabrications (issue #1866,
+# johnmarkpeterbrown). This looser pattern tolerates hyphen adjacency; it is
+# unioned onto candidate_identifiers so grounding stays a strict SUPERSET —
+# permissive grounding can only remove a false fabrication, never add one. The
+# CITED side keeps candidate_identifiers, matching make provenance-report.
+_GROUNDED_NUM_RE = re.compile(r"(?<![\w.:/])\d{5,}(?![\w.])")
+
+
+def _grounded_identifiers(text: str) -> set[str]:
+    """Identifiers a rationale may cite without it counting as a fabrication.
+
+    Superset of candidate_identifiers: the same ARKs and strict numbers, plus
+    5+ digit runs that touch a hyphen (the endpoints of a written range), which
+    candidate_identifiers deliberately refuses. Used only for the GROUNDED set
+    (served responses ∪ before-state), never for the cited identifiers."""
+    return candidate_identifiers(text) | set(_GROUNDED_NUM_RE.findall(text))
+
+
 def _served_identifiers(tool_calls) -> set[str]:
     """Every ARK/5+digit identifier in a response this run received from a
-    tool that returns collection/volume identifiers."""
+    tool that returns collection/volume identifiers. Grounded (permissive):
+    a hyphenated range in the response grounds both endpoints."""
     served: set[str] = set()
     for c in tool_calls or []:
         if _bare(c.get("tool", "")) not in _TRACEABLE_ID_TOOLS:
@@ -468,7 +493,7 @@ def _served_identifiers(tool_calls) -> set[str]:
         resp = c.get("response")
         if resp is None:
             continue
-        served |= candidate_identifiers(json.dumps(resp))
+        served |= _grounded_identifiers(json.dumps(resp))
     return served
 
 
@@ -507,8 +532,10 @@ def test_research_plan_rationale_identifiers_traceable(
     # Grounded = served responses ∪ the run's starting research.json. The
     # before-state arm is scanned whole (not just `localities`): an id the
     # skill carried from any prior-state field it legitimately read is not a
-    # fabrication, and candidate_identifiers already excludes years.
-    grounded = _served_identifiers(tool_calls) | candidate_identifiers(
+    # fabrication, and _grounded_identifiers already excludes years. Both arms
+    # use _grounded_identifiers so a hyphenated range (json.dumps preserves the
+    # hyphen) grounds both endpoints; the CITED side below stays strict.
+    grounded = _served_identifiers(tool_calls) | _grounded_identifiers(
         json.dumps(before)
     )
     errors: list[str] = []
