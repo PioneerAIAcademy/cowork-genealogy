@@ -11,7 +11,7 @@ import path from 'node:path';
 import { testsUnitDir, scenariosDir, fixturesDir } from '../paths';
 import type { BlockedReason, UnitTestFile, UnitTestListEntry } from '../types';
 import { atomicWriteJson } from './atomic';
-import { resolveWithin } from './safe-path';
+import { resolveWithin, isWithin } from './safe-path';
 
 /** Result of a `listTests` call — separates clean rows from corrupt ones. */
 export interface ListTestsResult {
@@ -36,12 +36,22 @@ async function computeBlockedReason(
     return { kind: 'scenario-notes-present', notes: test.input.scenario_notes };
   }
   if (scenario) {
+    // Existence oracle: `fs.access` on a caller-supplied name leaks whether an
+    // arbitrary path exists. Same class as `diffSnapshotVsDisk`, which was
+    // contained; this one was missed. A traversing value is reported as missing
+    // rather than probed.
+    if (!isWithin(scenariosDir(), path.join(scenariosDir(), scenario))) {
+      return { kind: 'missing-scenario', scenario };
+    }
     const scenarioPath = path.join(scenariosDir(), scenario);
     if (!(await exists(scenarioPath))) {
       return { kind: 'missing-scenario', scenario };
     }
   }
   for (const fix of test.mcp_fixtures ?? []) {
+    if (!isWithin(fixturesDir(), path.join(fixturesDir(), `${fix}.json`))) {
+      return { kind: 'missing-fixture', fixture: fix };
+    }
     const fixPath = path.join(fixturesDir(), `${fix}.json`);
     if (!(await exists(fixPath))) {
       return { kind: 'missing-fixture', fixture: fix };
@@ -256,7 +266,12 @@ export async function nextTestId(skill: string): Promise<string> {
   // and the random-suffix ones.
   let prefix = `ut_${skill.replace(/-/g, '_')}_`;
 
-  const skillPath = path.join(testsUnitDir(), skill);
+  // Runs a readdir BEFORE the guarded write, from a POST body field. Lower
+  // severity than the write (POST is origin-checked) but uncontained all the same.
+  // Runs a readdir BEFORE the guarded write, from a POST body field. Throws
+  // rather than returning a fallback: this is the id-allocation step of a write,
+  // and this PR's rule is that a refused write is loud.
+  const skillPath = resolveWithin(testsUnitDir(), skill);
   let files: string[] = [];
   try {
     files = await fs.readdir(skillPath);

@@ -11,7 +11,7 @@
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { resolveWithin } from './safe-path';
+import { resolveWithin, PathEscapeError } from './safe-path';
 import { repoRoot, runlogsUnitDir } from '../paths';
 import { diffSnapshotVsDisk, hashFile } from '../snapshot';
 import { classify, sortNewestFirst } from '../versioning';
@@ -182,7 +182,11 @@ export async function readRunLogById(
   let filePath: string;
   try {
     filePath = resolveWithin(runlogsUnitDir(), `${id}.json`);
-  } catch {
+  } catch (e) {
+    // Narrowed: an untyped catch here also swallows an `evalDir()`
+    // misconfiguration, turning a broken environment into a silent "not found".
+    // Only a refused path is expected; anything else stays loud.
+    if (!(e instanceof PathEscapeError)) throw e;
     return null;
   }
   try {
@@ -235,7 +239,16 @@ export async function readSnapshotFiles(
 export async function listRunLogsForSkill(
   skill: string,
 ): Promise<{ runs: Array<{ id: string; log: RunLogFile; filePath: string; filename: string }>; corrupt: string[] }> {
-  const dir = path.join(runlogsUnitDir(), skill);
+  // `skill` arrives from the `?skill=` query param, then drives readdir +
+  // readFile + JSON.parse. `readRunLogById` and `readSnapshotFiles` in this file
+  // were contained; this one was missed.
+  let dir: string;
+  try {
+    dir = resolveWithin(runlogsUnitDir(), skill);
+  } catch (e) {
+    if (e instanceof PathEscapeError) return { runs: [], corrupt: [] };
+    throw e;
+  }
   let files: string[];
   try {
     files = await fs.readdir(dir);

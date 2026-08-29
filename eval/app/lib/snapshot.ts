@@ -12,8 +12,7 @@
  */
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
-import path from 'node:path';
-import { isWithin } from './fs/safe-path';
+import { resolveWithin } from './fs/safe-path';
 
 // MCP source is no longer embedded in new snapshots (the harness serves
 // tool calls from mocks; live tools run compiled build/, not src/). Run logs
@@ -233,11 +232,18 @@ export async function diffSnapshotVsDisk(
     // result is 'missing-on-disk' | 'content-differs', so this is an existence
     // oracle rather than a disclosure; contained anyway, and skipped rather than
     // thrown so one bad key cannot discard the rest of the comparison.
-    if (!isWithin(repoRoot, rel)) {
+    // Resolve ONCE and read exactly what was validated. Validating with
+    // `isWithin` and then rebuilding with `path.join` checks one string and opens
+    // another — they agree today, but nothing makes them agree, and that gap is
+    // the whole bug class this PR closes. `readSnapshotFiles` already does it
+    // this way.
+    let absPath: string;
+    try {
+      absPath = resolveWithin(repoRoot, rel);
+    } catch {
       out[rel] = 'missing-on-disk';
       continue;
     }
-    const absPath = path.join(repoRoot, rel);
     let bytes: Buffer;
     try {
       bytes = await fs.readFile(absPath);

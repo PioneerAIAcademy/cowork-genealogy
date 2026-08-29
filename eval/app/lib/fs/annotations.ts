@@ -10,7 +10,7 @@ import fs from 'node:fs/promises';
 import { z } from 'zod';
 import { runlogsUnitDir } from '../paths';
 import { atomicWriteJson } from './atomic';
-import { resolveWithin } from './safe-path';
+import { resolveWithin, PathEscapeError } from './safe-path';
 import { sampledTestIds, uncommentedSampledCorrections } from '../types';
 import type { AnnotationCorrection, AnnotationFile, RunLogFile } from '../types';
 
@@ -82,7 +82,11 @@ export async function readAnnotation(runLogId: string): Promise<AnnotationFile |
   let filePath: string;
   try {
     filePath = annPathForRunLog(runLogId);
-  } catch {
+  } catch (e) {
+    // Narrowed: an untyped catch here also swallows an `evalDir()`
+    // misconfiguration, turning a broken environment into a silent "not found".
+    // Only a refused path is expected; anything else stays loud.
+    if (!(e instanceof PathEscapeError)) throw e;
     return null;
   }
   let raw: string;

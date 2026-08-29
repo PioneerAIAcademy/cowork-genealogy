@@ -5,7 +5,7 @@
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { resolveWithin } from './safe-path';
+import { resolveWithin, PathEscapeError } from './safe-path';
 import { fixturesDir, testsUnitDir } from '../paths';
 import type { McpFixtureFile, UnitTestFile } from '../types';
 
@@ -56,7 +56,11 @@ export async function readFixture(name: string): Promise<McpFixtureFile | null> 
   let filePath: string;
   try {
     filePath = resolveWithin(fixturesDir(), `${name}.json`);
-  } catch {
+  } catch (e) {
+    // Narrowed: an untyped catch here also swallows an `evalDir()`
+    // misconfiguration, turning a broken environment into a silent "not found".
+    // Only a refused path is expected; anything else stays loud.
+    if (!(e instanceof PathEscapeError)) throw e;
     return null;
   }
   try {
