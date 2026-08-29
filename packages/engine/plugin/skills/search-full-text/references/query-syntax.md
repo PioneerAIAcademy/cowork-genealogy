@@ -91,6 +91,13 @@ range) or a known `imageGroupNumber` — never a borrowed `collectionId`.
 - Multiple wildcards per term allowed: `Sm?th??`
 - Best practice: ≥3 literal characters per wildcard term
 - Up to four `*` per term
+- **Combining `?` and `*` to cover variants of different lengths:** put `?`
+  where exactly one letter differs, and a trailing `*` where the ending is
+  optional/variable-length — `*` must trail, not lead into a fixed suffix.
+  To cover Flynn/Flinn/Flyn/Flynne in one term: `Fl?n*` (`?` covers y-vs-i,
+  trailing `*` covers "nothing" or "ne"). **NOT** `Fl*nn`: `*` before a
+  fixed `nn` suffix requires the string to literally END in "nn", which
+  excludes Flyn (ends in one "n") and Flynne (ends in "e").
 
 ## Filters (post-search)
 
