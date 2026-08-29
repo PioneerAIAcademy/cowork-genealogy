@@ -117,7 +117,7 @@ The CI `check-runlogs` action has already verified: ≤1 new released `v{N}.json
   Start.bat
   ```
 
-A browser tab opens at <http://localhost:3000>; keep the command-prompt window open while reviewing — closing it stops the app.
+A browser tab opens at <http://127.0.0.1:3000>; keep the command-prompt window open while reviewing — closing it stops the app.
 
 **macOS / Linux:** from `eval/app/`:
 

@@ -78,4 +78,17 @@ describe('middleware — cross-origin state-changing requests', () => {
     const res = middleware(req('GET', { host: '127.0.0.1:3000' }))
     expect(res.status).toBe(200)
   })
+
+  it('refuses a matched Origin/Host pair that is not loopback', () => {
+    // DNS rebinding: a page at evil.example:3000 rebound to 127.0.0.1 sends
+    // BOTH headers as evil.example:3000, so `Origin === Host` holds and the
+    // comparison alone lets it through — reproduced as a 200 before the fix.
+    // Every other `host:` in this file is loopback, and `evil.example` only
+    // ever appears as a MISMATCHED origin, which is exactly why the suite
+    // could not see this.
+    const res = middleware(
+      req('POST', { origin: 'http://evil.example:3000', host: 'evil.example:3000' }),
+    )
+    expect(res.status).toBe(403)
+  })
 })
