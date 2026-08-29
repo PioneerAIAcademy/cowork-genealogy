@@ -512,10 +512,10 @@ rather than made. What I did change: nothing. What the issue should carry is in
 
 **Validator.**
 
-**Did.** In the newest log alone, **24 of 25 persisting runs** end in a markdown table
-and **10 of 25** enumerate three or more `a_` ids. Corpus-wide: 116 of 121. Median
-relay is 21 non-blank lines and 2,077 characters. `ut_record_extraction_005`,
-2026-08-24, is representative:
+**Did.** In `v1_2026-08-24_17-40-15` alone — the newest log in the analysed corpus —
+**24 of 25 persisting runs** end in a markdown table and **10 of 25** enumerate three or
+more `a_` ids. Corpus-wide: 116 of 121. Median relay is 21 non-blank lines and 2,077
+characters. `ut_record_extraction_005`, 2026-08-24, is representative:
 
 ```
 ### 9 assertions written:
@@ -610,7 +610,8 @@ therefore lane 4 — filed, not made.
 **Validator.**
 
 **Did.** Corpus-wide, 59 distinct `record_role` values. Seven runs use a bare token
-where a numbered one is the convention, **two of them in the newest log**:
+where a numbered one is the convention, **two of them in `v1_2026-08-24_17-40-15`**, the
+newest log in the analysed corpus:
 
 - `ut_record_extraction_027`, 2026-08-24: `head_of_household`, **`daughter`**, `son_1`,
   `son_2` — one unnumbered sibling among numbered ones.
@@ -665,8 +666,8 @@ path it uses (`op: "update"` by `a_` id) is exercised nowhere else.
 
 **Validator.**
 
-**Did.** `ut_record_extraction_009`, the computed birth-year assertion, in three logs
-**including the newest**:
+**Did.** `ut_record_extraction_009`, the computed birth-year assertion, in three of the
+five analysed logs — **including `v1_2026-08-24_17-40-15`, the newest of them**:
 
 - 2026-08-15: `"Calculated birth year approximately 1845, derived from stated age of 63y 2m 10d at death on March 12, 1908"`
 - 2026-08-17: `"approximately 1845 (computed from stated age of 63 years, 2 months, 10 days at death on March 12, 1908)"`
@@ -684,8 +685,12 @@ narrative" is its `partial` branch — and it is the dimension `make judge-repor
 reports as flat at 3 across n=24, which is what issue #1666 says to look at first. It
 does not fire here. **Validator request V7.**
 
-The rate is 3 of 5, but the shape has survived a doctrine flip and is present in the
-newest log, so it is current behaviour, not history.
+The rate is 3 of the 5 analysed logs, but the shape has survived a doctrine flip and
+recurs in **both** fresh runs — `v1_2026-08-28_17-43-01`, "born approximately 1845
+(computed from stated age of 63y 2m 10d at death on 12 March 1908)", and
+`v1_2026-08-28_18-23-42`, "birth year computed from stated age of 63y 2m 10d at death on
+March 12, 1908". That is 5 of the 7 logs on record, the two most recent included, so it
+is current behaviour rather than history.
 
 ---
 
