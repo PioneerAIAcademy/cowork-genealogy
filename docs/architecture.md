@@ -338,8 +338,27 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-21 of the 27 skills carry a `references/` folder — **76 files** — loaded on
-demand, in-session, for material too long to sit in the skill body.
+19 of the 27 skills carry a `references/` folder, loaded on demand, in-session,
+for material too long to sit in the skill body.
+
+**A reference is loaded only if its own `SKILL.md` names it** — or if a
+reference the body names links on to it. Nothing lists a `references/` folder at
+runtime, so a file neither route reaches is unreachable: it costs no prompt
+tokens and carries every byte of the drift risk.
+
+`tests/packaging/skill-reference-reachability.test.ts` enforces that, and is
+where the still-unreached files are listed. Its exemption list **only shrinks** —
+an entry leaves by the file being deleted or wired into its `SKILL.md`, and the
+test fails on a stale entry either way, so it cannot outlive the problem. **A new
+reference that nothing names fails CI.** Read that list rather than recomputing:
+it carries a measured reason per file, which a grep cannot.
+
+The same test pins the other direction: **a `SKILL.md` naming a `references/`
+file that is not on disk fails CI too**, since the agent is then told to read
+something it cannot open. One is exempt — `project-status` names
+`output-formats.md` twice as the render source for both its summaries, and that
+file has never existed in this repo. Writing it decides what the skill outputs,
+which is a content call owing a paid eval run rather than a mechanical fix.
 
 A skill can read its own sibling files; the failure is **across** skills. Claude
 Code's relative-path resolution from one SKILL.md into another skill's folder is
@@ -350,9 +369,18 @@ Three families are duplicated today, and only one is lint-guarded:
 
 | File | Copies | Distinct contents | Lint |
 |---|---|---|---|
-| `validation-protocol.md` | 12 | **10** | **none** |
 | `places-guidance.md` | 9 | 2 | `tests/packaging/skill-guidance.test.ts` |
-| `research-log-protocol.md` | 3 | **3** | **none** |
+| `validation-protocol.md` | 2 | **2** | **none** |
+| `research-log-protocol.md` | 1 | 1 | **none** |
+
+The last two were 11 and 3 until the unreachable copies were deleted. Nine
+`validation-protocol.md` copies and two `research-log-protocol.md` copies were
+named by no `SKILL.md`, so no session could load them; three of the nine also
+carried the retired "run `validate_research_schema` after writing" doctrine, and
+four named a `check-warnings` trigger their skill cannot reach — it writes
+`questions` or `plans`, never `assertions` or `person_evidence`. The two
+surviving `validation-protocol.md` copies still **contradict each other**, and
+that is now a two-file disagreement rather than a nine-way one.
 
 The `places-guidance` lint holds 8 copies byte-identical to a canonical at
 `packages/engine/plugin/references/places-guidance.md` — a path deliberately
@@ -367,14 +395,16 @@ a fourth family gets a lint: every skill must land in exactly one of the two
 lists, and the test asserts that too.
 
 > **Today:** editing a duplicated reference means editing every copy by hand and
-> knowing which divergences are deliberate. For `validation-protocol.md` and
-> `research-log-protocol.md`, **nothing records which is which.**
+> knowing which divergences are deliberate. For `validation-protocol.md`,
+> **nothing records which is which** — its two survivors disagree on whether a
+> post-write `validate_research_schema` pass is required.
 > **Direction (#1112):** either lint a shared core plus a
 > per-skill "who calls what" section, or derive each copy at build time from the
 > skill's `allowed-tools`. The cheaper move is to *shrink* them —
 > `validation-protocol.md` largely restates rules `research_append`'s error
 > contract already enforces at write time, and a rule the tool rejects can be one
-> sentence. **Don't add a 13th copy without saying why in the PR.**
+> sentence. **Before adding a copy, say why in the PR — and name it in the
+> `SKILL.md`, or you are shipping a file nothing can read.**
 
 ### 3.4 Agent bodies are self-contained — do not split them
 
@@ -1037,6 +1067,16 @@ payload is curated third-party URLs with nothing to triage on. **The full payloa
 search tool → disk → log-append and never round-trips through the model**
 (`search-result-staging-spec.md`).
 
+Both per-row reductions live in `src/utils/staged-compaction.ts` rather than
+inline in their tools, because **the eval harness runs the same functions.**
+`mock_mcp.py` serves a canned response and then calls the compiled
+`stageSearchResults` and compactor, so what the agent sees in a unit run is the
+slimmed shape production sends. Restating a reduction in Python instead is how
+both tools came to serve the eval a field production strips — and a skill was
+left triaging on `textDocument`, which no staged result carries, while every run
+that graded the triage passed. **Add a post-staging transformation to a search
+tool and it belongs in that module**, so there is no second copy to drift.
+
 ### 6.2 Writes go only through validating writer tools
 
 `research_append` (and its lane-scoped variant `extraction_append`, §5.3),
@@ -1412,6 +1452,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
 | `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical, the 9th pinned to its own sha256, and every skill in exactly one of the two lists |
+| `skill-reference-reachability.test.ts` | both directions between a skill's `references/` folder and its `SKILL.md`: every file present is named by the body or by a reference the body names (one transitive hop), and every file the body names is present. Carries each pending case as a **shrink-only** exemption list with a measured reason, and fails when an entry becomes stale — deleted, wired up, or created — so neither list can outlive the problem |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
 | `readme-catalog.test.ts` | every registered tool, shipped skill, and plugin agent is named in `README.md`, and any stated tool or skill count matches the code |
 | `tool-schema-enums.test.ts` | no MCP tool input schema re-types a closed enum's values, exactly **or stale**; two documented `sex` exemptions |
@@ -1457,6 +1498,14 @@ lead you to them:**
   workflow (`.github/workflows/check-e2e-fixtures.yml`), on any change under
   `eval/tests/e2e/` or `eval/runlogs/e2e/`. It is not part of `make test-all`,
   so a fixture change can pass locally and fail in CI.
+- `packages/engine/mcp-server/tests/utils/staged-compaction.test.ts` — that the
+  search tools' post-staging reductions (§6.1) are **idempotent**. The tool
+  suites already cover what each reduction does; this covers the property the
+  eval harness depends on, and only it can. `mock_mcp.py` applies these to canned
+  fixtures. Every fixture is in the full shape today, so nothing applies them
+  twice yet; this pins idempotency ahead of the first fixture re-recorded from a
+  live call, which would arrive already reduced and be damaged by a destructive
+  second pass with no tool test seeing it. Runs under `make engine-test`.
 
 ### 9.3 The two eval tiers
 

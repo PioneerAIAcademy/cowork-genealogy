@@ -305,40 +305,78 @@ RANKING_SKIPPED_NOTE = (
 )
 
 
-def _stage_search_results(
-    workspace: Path, tool_name: str, response: dict[str, Any]
-) -> dict[str, Any] | None:
-    """Materialize a staged file for a mocked search response by calling the
-    compiled `stageSearchResults`, mirroring what the real search tool does.
+# Compaction the real search tool applies to its INLINE results once they are
+# staged, per tool. Both are exported from the compiled build so this harness
+# runs the production function rather than a Python restatement of it: a mock
+# that hands the agent a field production strips grades tool-usage and triage
+# against a shape production never sends (#1826, #2009). `external_links_search`
+# stages but compacts nothing, so it is absent here by design.
+_STAGED_COMPACTORS: dict[str, str] = {
+    "record_search": "compactStagedRecordSearch",
+    "fulltext_search": "compactStagedFulltextSearch",
+}
 
-    Returns the StagedHandle ({"resultsRef", "returnedCount"}) or None on a nil
-    search / staging failure (in which case the caller leaves `staged` null).
+
+def _stage_and_compact_search_results(
+    workspace: Path, tool_name: str, response: dict[str, Any]
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Stage a mocked search response and apply the tool's own post-staging
+    compaction, both by calling the compiled build.
+
+    Mirrors the real search tool's order: stage the full-fidelity payload to the
+    sidecar first, then slim the inline copy. Doing both in ONE node process is
+    deliberate — a second subprocess per search call would widen the mock's
+    existing 30s-cap flakiness under concurrency (#2025).
+
+    Returns `(staged_handle, response)`. `staged_handle` is None on a nil search
+    or a staging failure, and in that case `response` comes back untouched —
+    compaction is only ever correct once the sidecar holds the full payload.
+    The compaction functions are idempotent, so a fixture already written in the
+    compacted shape passes through unchanged.
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
     if not stager_js.exists():
-        return None
-    sjs_posix = str(stager_js).replace("\\", "/").replace("'", "\\'")
-    stager_url = ("file:///" + sjs_posix) if sys.platform == "win32" else sjs_posix
+        return None, response
+
+    def _url(p: Path) -> str:
+        posix = str(p).replace("\\", "/").replace("'", "\\'")
+        return ("file:///" + posix) if sys.platform == "win32" else posix
+
+    compactor = _STAGED_COMPACTORS.get(tool_name)
+    if compactor and compactor_js.exists():
+        compact_import = f"import {{ {compactor} }} from '{_url(compactor_js)}';"
+        compact_call = f" if (r) {compactor}(input.response);"
+    else:
+        compact_import = ""
+        compact_call = ""
+
     input_obj = {
         "projectPath": str(workspace).replace("\\", "/"),
         "tool": tool_name,
         "response": response,
     }
     script = (
-        f"import {{ stageSearchResults }} from '{stager_url}';"
+        f"import {{ stageSearchResults }} from '{_url(stager_js)}';"
+        f"{compact_import}"
         " import { readFileSync } from 'node:fs';"
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
         " const r = await stageSearchResults(input);"
-        " process.stdout.write(JSON.stringify(r));"
+        f"{compact_call}"
+        " process.stdout.write(JSON.stringify({ staged: r, response: input.response }));"
     )
     try:
         proc = _run_node_eval(script, json.dumps(input_obj))
         out = proc.stdout.strip()
         if not out:
-            return None
-        return json.loads(out)  # StagedHandle, or null -> None
+            return None, response
+        parsed = json.loads(out)
+        staged = parsed.get("staged")  # StagedHandle, or null -> None
+        if staged is None:
+            return None, response
+        return staged, parsed.get("response", response)
     except Exception:
-        return None
+        return None, response
 
 
 def create_mock_server(
@@ -446,8 +484,11 @@ def create_mock_server(
 
             # Stage the canned payload for search tools so the live
             # research_log_append can finalize the sidecar (mirrors the real
-            # tool returning staged.resultsRef). Only when projectPath was
-            # passed and results came back; nil searches retain nothing.
+            # tool returning staged.resultsRef), then apply the compaction the
+            # real tool applies to its inline results once staged — both by
+            # calling the compiled build, so the agent is graded on the shape
+            # production actually sends. Only when projectPath was passed and
+            # results came back; nil searches retain nothing and compact nothing.
             if (
                 _name in STAGING_SEARCH_TOOLS
                 and _workspace is not None
@@ -456,7 +497,9 @@ def create_mock_server(
                 and isinstance(response.get("results"), list)
                 and response.get("results")
             ):
-                staged = _stage_search_results(_workspace, _name, response)
+                staged, response = _stage_and_compact_search_results(
+                    _workspace, _name, response
+                )
                 if staged is not None:
                     response = {**response, "staged": staged}
 
