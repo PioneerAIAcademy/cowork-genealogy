@@ -327,9 +327,13 @@ short questions in one opening turn:
 2. **Experience level** — *just starting out / some research under my
    belt / experienced / professional or certified*.
 3. **Access** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
-   GenealogyBank, FindAGrave-Plus, other, or none. Free access counts:
-   a FamilySearch affiliate library or a partner subscription is access,
-   not "none".
+   GenealogyBank, FindAGrave-Plus, other, or none. Free access counts,
+   and is now recorded as such rather than collapsing to "other": a
+   partner subscription through your FamilySearch account stores as
+   `FamilySearch-Partner`, and a public library, family history centre
+   or affiliate library as `LibraryAccess`. A plain FamilySearch
+   account is the baseline everyone here has, so it isn't recorded —
+   that alone is "none".
 
 None of the three blocks. Answer what you like; anything you skip takes
 a documented default, and the summary at the end names what was
