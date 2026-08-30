@@ -41,7 +41,8 @@ state only when `.github/workflows/project-status-sync.yml` gets to it — so a
 just-closed card can still read `Review` for a while. Ready / In Progress /
 Review are the three active columns; **Done and Not planned are the terminal
 ones, and "outside Backlog" is never the test for anything**, because it counts
-them too.
+them too. **Feedback is none of the three** — it is an untriaged inbox that
+`/triage-feedback` owns and this skill never reads.
 
 **Re-read the board immediately before you apply anything.** The lead edits it
 while you work — in one session nine items moved to Ready and 23 assignments
@@ -55,23 +56,28 @@ Two labels carry the routing:
 | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
 | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose, prepared doctrine questions |
 
-**`feedback` items live in their own column and are outside every pool.** An
-issue labelled `feedback` is a user's bug report, filed automatically into the
-**Feedback** column by `add-to-project.yml`. It counts toward **no** target —
-not the ~10 unassigned `genealogist` pool, not the developer one — and you never
-move it: never promote one from Backlog, never return one to Backlog, never
-unassign one, and never move one into or out of Feedback. **Anyone on the roster
-may claim a `feedback` item**, so a developer holding one is not a mis-route.
+**The `feedback` label means untriaged, and nothing else.** An issue labelled
+`feedback` is a raw user bug report, filed automatically into the **Feedback**
+column by `add-to-project.yml`. `/triage-feedback` owns that column: it works
+each case and either moves it to Not planned, or moves it to Backlog **and drops
+the `feedback` label**. So the label and the column always agree, and a triaged
+item arrives in your Backlog as an ordinary `developer` or `genealogist` issue.
 
-Because feedback no longer sits in Ready, **it never displaces anything.** Rank
-and swap the genealogist pool on its own merits, and count only the items
-actually in Ready. A busy feedback week no longer squeezes the `test <slug>`
-queue out of the pool the way it did when both shared the ten slots.
+That is what makes the rest of this skill apply to it unchanged. It ranks on the
+same criteria, gates through `/review-ready` like anything else, counts toward
+its pool once promoted, and can lose a swap back to Backlog. **Do not give it
+standing weight for having come from a user** — by the time you see it, triage
+has already made that judgment, and the body is the evidence.
 
-§7 may close a `feedback` item — a duplicate submission, one that doesn't
-reproduce, junk — and that is the only way one leaves the Feedback column. Never
-propose closing one on age or body length; a Drive link plus the tester's own
-few lines is what every one of them looks like.
+**While an item is in the Feedback column, do nothing with it.** Do not rank it,
+promote it, count it toward any target, or propose closing it. Deciding a
+submission is a duplicate, doesn't reproduce, or is junk is triage's call, made
+by working the case — not a ranking judgment available from the board.
+
+**A `feedback`-labelled item sitting outside the Feedback column is a triage
+slip, not a candidate.** Report it and leave it; promoting it would put an
+un-worked bundle into someone's queue. **Anyone on the roster may claim work that
+came from feedback**, so a developer holding one is not a mis-route.
 
 **Exclude `label:icebox` from the Backlog when ranking.** Those are candidates
 with no decision behind them, filed there deliberately; `/review-icebox` owns
@@ -787,9 +793,10 @@ gh project item-edit --id "$ITEM_ID" --project-id "$PROJ_ID" \
 
 Verify with a fresh `gh project item-list`. New issues land in Backlog via an
 auto-add workflow that sets nothing else — a freshly filed issue that belongs in
-Ready still needs this move. (The exception is a `feedback` item, which the same
-workflow files directly into the Feedback column and which you never move at
-all.)
+Ready still needs this move. (A raw feedback submission is the exception: the
+same workflow files it into the Feedback column, where `/triage-feedback` moves
+it to Not planned or to Backlog, dropping the `feedback` label on the way. It
+reaches you as an ordinary issue and is promoted with this move like any other.)
 
 **Gate every issue you are moving into Ready through `/review-ready` before you
 promote it — both pools, not just `developer`, and not just the ones you rank as
