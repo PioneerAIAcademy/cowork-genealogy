@@ -404,3 +404,68 @@ def test_ordinary_returned_failure_is_still_marked_is_error():
     stopped marking anything at all."""
     envelope = _tool_envelope("research_append", {"ok": False, "errors": ["bad"]})
     assert envelope["is_error"] is True
+
+
+def test_record_search_response_is_compacted_once_staged(tmp_path):
+    """The mock must apply the SAME post-staging compaction the real tool does.
+
+    Without it the agent is handed `gedcomx`, `collectionUrl` and a per-row
+    `collectionTitle` that production deletes, and every unit test grading
+    triage or tool usage is scored against a shape production never sends
+    (#2009 — the same class as #1826's `textDocument`). The mock runs the
+    compiled `compactStagedRecordSearch` rather than restating it in Python,
+    so there is no second copy to drift.
+
+    Skips when the build is absent: compaction runs through the COMPILED
+    module, so with no build nothing is stripped for an environmental reason.
+    """
+    fixture = json.loads(
+        (FIXTURES_DIR / "record-search-1850-census-flynn.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw_rows = (fixture.get("response") or fixture).get("results") or []
+    # Guards the assertions below against silently passing on a fixture that
+    # was already written in the compacted shape — then this test would prove
+    # nothing. If this trips, point it at a fixture that still carries them.
+    assert any(
+        "gedcomx" in row or "collectionTitle" in row for row in raw_rows
+    ), "fixture no longer carries the fields production strips"
+
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+    )
+    body = _extract_response_dict(result)
+    if not body.get("staged"):
+        pytest.skip("compiled MCP build absent — nothing was staged")
+
+    for row in body["results"]:
+        assert "gedcomx" not in row
+        assert "collectionUrl" not in row
+        assert "collectionTitle" not in row, "hoisted into response-level collections"
+        assert row.get("treeMatches") != [], "empty treeMatches is dropped"
+    # The hoist landed, and the field the re-ranker needs survived.
+    assert body["collections"], "per-row titles hoist into one response-level map"
+    assert all(row.get("primaryId") for row in body["results"])
+
+
+def test_unstaged_record_search_is_not_compacted(tmp_path):
+    """The other half. Compaction is only correct once the sidecar holds the
+    full payload — an exploratory search with no `projectPath` retains nothing,
+    so stripping its inline results would destroy the only copy."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(
+        tools_by_name, "record_search", {"surname": "Flynn", "givenName": "Patrick"}
+    )
+    body = _extract_response_dict(result)
+    assert not body.get("staged")
+    assert any("gedcomx" in row for row in body["results"]), (
+        "an un-staged search keeps full fidelity inline"
+    )
