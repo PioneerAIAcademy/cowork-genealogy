@@ -214,7 +214,7 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | **47** | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **6** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list, any `disallowedTools:` denies (every shipped agent declares them), and its `model:` pin. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **5** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
 The five agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion` and `research-exhaustiveness`.
@@ -275,7 +275,7 @@ how to word it:
 |---|---|---|
 | across hours, many turns, past compaction | **a tool contract** — validate and reject | the write-boundary invariants in `research_append` |
 | for the main thread, which no allow-list can narrow | **a `PreToolUse` hook** (§5.4) | the raw-write lockdown |
-| for one delegated agent | **that agent's `tools:` / `disallowedTools:`**, or a narrowed tool (§5.3) | `extraction_append` |
+| for one delegated agent | **that agent's `tools:`** — omit the capability — or a narrowed tool (§5.3) | `extraction_append` |
 | within a single skill invocation | **skill prose** — this is what prose is *for* | "consult the stop criteria before draining the plan" |
 
 > **Direction.** Two gates are still prose that this same law
@@ -713,7 +713,7 @@ the most expensive mistake in this layer, because two of the three fail
 | Surface | Spelling | Binds in production? |
 |---|---|---|
 | Skill `allowed-tools:` | **bare** (`research_query`) | **No** — neither production path nor the unit harness narrows per skill. The field is a grant, not a restriction. Advisory only: the `test_tool_allowlist` validator warns on undeclared calls. |
-| Agent `tools:` / `disallowedTools:` | **spelled under all three registrars**, matched exactly | **Yes** — and a deny binds even under `bypassPermissions`. |
+| Agent `tools:` | **spelled under all three registrars**, matched exactly | **Yes** — a tool omitted from it is absent from the agent even under `bypassPermissions` (measured, §5.2). This is the whole of an agent's capability boundary: `disallowedTools:` was deleted from all five agents on 2026-08-30, because every deny restated the omission above it. |
 | `PreToolUse` hook | n/a — matches on tool name + input | **Yes**, in Cowork and the hosted path. **Neither harness loads the plugin's hooks** (§5.4). |
 
 ### 5.1 Skill `allowed-tools` — declarative everywhere
@@ -733,7 +733,7 @@ tell a legitimate direct call from a boundary violation.
 ### 5.2 Agent frontmatter: spelled per registrar, exactly matched
 
 *(Imperative owned by `CLAUDE.md` § "Dual-spelled tool names".)* Every MCP tool
-in an agent's `tools:` — **and** `disallowedTools:` — appears **three times**:
+in an agent's `tools:` — and in a `disallowedTools:`, if one ever comes back — appears **three times**:
 
 ```yaml
 - mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
@@ -764,10 +764,45 @@ declares a bare `Read`, which always resolves, so it would spawn holding that
 alone rather than be refused.) Listing every
 spelling is safe because unrecognized entries are ignored so long as one resolves.
 
-`disallowedTools:` matters **more**, not less: a deny binds even under
-`bypassPermissions` (the hosted path, #695), so it is the last line keeping
-`record-extractor` off the broad `research_append` — and a deny naming one
-spelling silently binds nothing wherever the server carries another name.
+**`disallowedTools:` was never the load-bearing layer — and this half of the
+page was wrong until it was measured.** This file, `CLAUDE.md`,
+ADR-0004, ADR-0006, ADR-0011, two specs, the packaging test and three agent
+bodies all said "a deny binds even under `bypassPermissions`; an omission alone
+is not." Seven of them cited issue #695 for it — the birkeland lane breach,
+which says nothing about `bypassPermissions`, denies, or omissions. Probed
+2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128 (`make
+probe-agent-binding`, reproduced twice): under `bypassPermissions` **both**
+bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
+denied one is. So the omission is what keeps `record-extractor` off the broad
+`research_append`, and its deny restates that rather than being the last line.
+
+**So all five deny blocks were deleted on 2026-08-30.** Every one named a tool
+already absent from its agent's `tools:`, which makes it a restatement, and 83
+lines of triple-spelled YAML that a reader has to check against the list above
+it. **To take a capability away from an agent, remove it from `tools:`.** The
+regression a deny insured against — someone later adding the tool back — is
+caught by the permission snapshot in `agent-tool-names.test.ts`, which fails on
+any change to an agent's list.
+
+Re-adding one is allowed and needs a reason the omission cannot serve; a test
+asks for it. Two rules bind any deny that returns. It needs all three spellings,
+since one naming a single spelling binds nothing under the others. And **it must
+never name a tool the same agent grants** — the deny is applied *before* the
+zero-tools spawn check: the probe's arm B granted one tool under all three
+spellings plus `ToolSearch`, denied that same tool, and the runtime refused the
+agent outright — "would be spawned with zero tools — refusing. Its tools list
+resolved to nothing: unrecognized [ToolSearch]", naming only the built-in,
+because the deny had already removed the three MCP entries. `image-reader`
+grants exactly one tool, so it is one entry from that shape. Guarded by the
+"never denies a tool it also grants" case in `agent-tool-names.test.ts`, which
+is pinned synthetically because no agent ships a deny for it to fire on.
+
+**One cost, accepted.** `check_rubric_tool_drift.py` asks whether a tool named
+in an agent body appears in either list, and `disallowedTools:` was doubling as
+the marker for a deliberate "you do NOT have this tool" mention. Removing the
+denies took that marker away, so its agent-body warnings went 5 → 12. It is
+warn-only and does not block a build; the suppression mechanism it wants is
+`gh issue list --state open --search "check_rubric_tool_drift suppression"`.
 
 **Two standing prohibitions:**
 
@@ -927,9 +962,12 @@ enforcing-vs-shadow status.
   passes. **Every tool addition is two edits: the frontmatter, and the
   instruction in the body that makes the call happen.**
 - `tests/packaging/agent-tool-names.test.ts` checks the spelling and cannot see
-  the body. **Nothing checks that the tool actually binds at runtime** (§9.4);
-  `make agent-smoke` is the closest instrument and it verifies name resolution,
-  not binding.
+  the body. **No CI job checks that the tool actually binds at runtime** (§9.4);
+  `make agent-smoke` verifies name resolution only, and `make
+  probe-agent-binding` verifies binding but is a live billed probe, not a check.
+- **Do not add a `disallowedTools:` block alongside it.** No agent ships one; a
+  tool in both lists is denied, and the deny is applied before the zero-tools
+  spawn check, which can make the runtime refuse the agent — see §5.2.
 - **Rebuild only where it matters.** The unit harness and Claude Code read your
   working tree — no rebuild. Cowork runs the uploaded `.zip`: `make plugin`, then
   **remove the old plugin before uploading the new one** (Cowork tab, not the
@@ -939,7 +977,7 @@ enforcing-vs-shadow status.
   fix that was never loaded."
 
 **Restrain something.** Pick the layer by *who* you are restraining: a subagent →
-its `disallowedTools:` (all three spellings) or a narrowed tool (§5.3); the main
+its `tools:` — omit the capability — or a narrowed tool (§5.3); the main
 thread → a `PreToolUse` hook (§5.4); a cross-turn invariant → the tool contract
 (§3.1). **An allow-list can never restrain the main thread** — it can only
 subtract from what the session already holds. Record the new guardrail's
@@ -1472,12 +1510,16 @@ confident near-misses for the rest.
 Three of these gaps are **architecture rather than backlog**, because each one
 changes how a correct change is made:
 
-1. **Spelling is not binding.** Nothing proves a declared agent tool actually
+1. **Spelling is not binding.** No *CI job* proves a declared agent tool actually
    *binds* at runtime — every lint stops at the name, and the SDK handshake
    exposes only name/description/model. `make agent-smoke` reads what the runtime
-   *resolved*, not what bound, and only in the mode it runs in. So a green CI run
-   says nothing about whether an agent can call what you granted it; only a live
-   session in the run mode you care about does (§5.2, §8).
+   *resolved*, not what bound. So a green CI run says nothing about whether an
+   agent can call what you granted it (§5.2, §8). What closed part of this:
+   `make probe-agent-binding` spawns a probe agent and reads whether a real tool
+   call landed, off the `tool_result` rather than the agent's prose. It is a
+   live, billed probe rather than a check — run it when the CLI or the SDK moves.
+   And it answers the question only for the **hosted** options it builds; Cowork
+   in either run mode still has no instrument but a live session.
 2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
    not rebuild the `genealogy-agent` E2B image production runs the agent on, and
    both guards over it are advisory. Production can run weeks-old skills, agents,

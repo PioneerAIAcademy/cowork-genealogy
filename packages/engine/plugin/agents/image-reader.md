@@ -10,21 +10,6 @@ tools:
   - mcp__genealogy__image_transcribe
   - mcp__remote-devices__Genealogy_Research__image_transcribe
   - mcp__Genealogy_Research__image_transcribe
-# This agent has one tool — image_transcribe — and only that. Pivoting to
-# an indexed record or fixing a missing OpenRouter key is the caller's job
-# (see "the caller should..." below). The deny is enforced even under
-# `bypassPermissions` (issue #695) and must carry all three server
-# spellings for the same reason the allow-list above does.
-disallowedTools:
-  - mcp__genealogy__record_read
-  - mcp__remote-devices__Genealogy_Research__record_read
-  - mcp__Genealogy_Research__record_read
-  - mcp__genealogy__record_search
-  - mcp__remote-devices__Genealogy_Research__record_search
-  - mcp__Genealogy_Research__record_search
-  - mcp__genealogy__configure_openrouter
-  - mcp__remote-devices__Genealogy_Research__configure_openrouter
-  - mcp__Genealogy_Research__configure_openrouter
 ---
 
 # Image Reader
