@@ -163,9 +163,11 @@ interface FulltextSearchResult {
    * with `stagingError` set), since the strip is guarded on `staged`.
    * Once staged, this field is stripped unconditionally from every result —
    * the overflow driver, 79-136 KB across a result set — and does not
-   * survive round-trip through record_read (its sidecar path requires
-   * `gedcomx`, which a fulltext-staged result never has). See
-   * search-result-staging-spec.md §2 "Inline-payload strip".
+   * survive round-trip through record_read: its sidecar reader filters
+   * entries on `recordId`, a field a fulltext result never has (it carries
+   * `id` instead), so the lookup finds no match before it would even reach
+   * the `gedcomx` check that follows. See search-result-staging-spec.md §2
+   * "Inline-payload strip".
    */
   textDocument?: string;
   /** Names found in the record */
