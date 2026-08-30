@@ -13,6 +13,7 @@ import type {
 } from "../types/fulltext-search.js";
 
 import { stageSearchResults } from "../utils/results-staging.js";
+import { compactStagedFulltextSearch } from "../utils/staged-compaction.js";
 
 export type { FulltextSearchInput } from "../types/fulltext-search.js";
 
@@ -234,22 +235,13 @@ export async function fulltextSearchTool(
     }
   }
 
-  // Whenever results were staged, drop the heavy inline `textDocument` (the full
-  // AI-transcribed page, 79–136 KB across a result set — the overflow driver).
-  // The full text lives in the staged sidecar. It is NOT retrievable via a tool:
-  // record_read reads a staged sidecar back only for record_search results (it
-  // matches on recordId + gedcomx — readFromSidecar in record-read.ts — which a
-  // fulltext result has neither of), so a caller cannot re-read this transcript.
-  // The remaining flat fields (names/places/dates/highlightTerms/title/recordType)
-  // are the triage stubs the agent works from. Mirrors record_search's
-  // inline-gedcomx strip: unconditional once staged so the overflow protection
-  // can't be forgotten, and safe because the staged file is already serialized to
-  // disk. Never strip when `staged` is null (an un-staged exploratory search —
-  // nothing was retained, and the transcript is the only copy).
+  // Whenever results were staged, drop the heavy inline `textDocument`. What is
+  // dropped and why is documented on `compactStagedFulltextSearch`. It lives in
+  // `utils/` because the eval harness runs the same function on its canned
+  // responses; mirroring it in Python would make the copy that drifts — and did:
+  // `search-full-text` was left triaging on a field production strips (#1826).
   if (out.staged) {
-    for (const r of out.results) {
-      delete r.textDocument;
-    }
+    compactStagedFulltextSearch(out);
   }
 
   return out;

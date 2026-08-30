@@ -267,7 +267,9 @@ the plan** line is silent — meaning nobody raised it.
   `write_text`, tests included. Breaks the Windows genealogists.
 - Skill scripts that need the network, or non-stdlib imports (the VM has
   neither).
-- Agent `tools:`/`disallowedTools:` entries not dual-spelled.
+- Agent `tools:` entries missing any of the three server spellings. (No agent
+  declares `disallowedTools:` — a deny only restates the omission, and one that
+  names a granted tool can make the runtime refuse the agent.)
 - A `research.json` or tree-schema change that misses one of its edit sites.
 - Docs that describe changed behaviour and were not updated.
 - Prose added to a doc juniors read (`DEVELOPMENT.md`, `docs/task-lifecycle.md`,
