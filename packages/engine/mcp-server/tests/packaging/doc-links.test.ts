@@ -50,11 +50,12 @@ const engineRoot = join(here, "..", "..", ".."); // packages/engine/
 const projectRoot = join(engineRoot, "..", ".."); // repo root
 
 /**
- * Process docs under `docs/` that are linted. Deliberately a list and not all
- * of `docs/`: the rest of the directory has never been swept, and widening it
- * is its own task with its own backlog of real breaks to fix.
+ * Process docs that are linted. Deliberately a list and not all of `docs/`: the
+ * rest of the directory has never been swept, and widening it is its own task
+ * with its own backlog of real breaks to fix. `CLAUDE.md` is here because it is
+ * the always-loaded tier — a path that rots there rots for every session.
  */
-const LINTED_DOCS = ["docs/task-lifecycle.md"];
+const LINTED_DOCS = ["docs/task-lifecycle.md", "CLAUDE.md"];
 
 /**
  * Claude Code subagents, slash commands, and project skills. Every `.md` at or
@@ -85,6 +86,21 @@ const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
     file: ".claude/skills/mine-unit-test/SKILL.md",
     path: "eval/e2e-project/<slug>/",
     why: "created at runtime by `make e2e-project`; gitignored, so it is absent at rest",
+  },
+  {
+    file: "CLAUDE.md",
+    path: "packages/engine/mcp-server/build/",
+    why: "compiler output; gitignored, so it is absent at rest",
+  },
+  {
+    file: "CLAUDE.md",
+    path: "packages/engine/mcp-server/scripts/",
+    why: "named because nothing may be put there; the directory does not exist",
+  },
+  {
+    file: "CLAUDE.md",
+    path: "docs/TODOs.md",
+    why: "named because it was retired on 2026-08-02 and must not come back",
   },
 ];
 

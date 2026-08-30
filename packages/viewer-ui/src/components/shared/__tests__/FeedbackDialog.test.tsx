@@ -28,9 +28,9 @@ async function fillRequired(user: ReturnType<typeof userEvent.setup>): Promise<v
 }
 
 describe('FeedbackDialog — worked-as-expected gate', () => {
-  // This repo's jsdom env doesn't expose a full Storage, so stub an in-memory one
-  // (the dialog's own localStorage reads/writes are try/caught, but the test needs
-  // a real clear() to isolate the remembered-email state between cases).
+  // These cases need a real clear() to isolate the remembered-email state between
+  // them, so stub an in-memory Storage. (The dialog's own localStorage reads and
+  // writes are already try/caught.)
   beforeEach(() => {
     const store = new Map<string, string>()
     vi.stubGlobal('localStorage', {

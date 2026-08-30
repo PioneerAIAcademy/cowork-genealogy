@@ -212,8 +212,8 @@ subagents (`.claude/agents/`). Each plugin agent has YAML frontmatter
 system prompt. The `description` field determines when the Cowork
 orchestrator auto-delegates to the agent. Agents run in fresh context
 (no main-session state bleeds in) and are read-only by convention unless
-explicitly specced otherwise. Per-agent contracts live in
-`docs/specs/<agent>-agent-spec.md`.
+explicitly specced otherwise. Where an agent has a spec it is
+`docs/specs/<agent>-agent-spec.md`; not every agent has one.
 
 **How each environment loads them, and why the hosted path is the odd one.**
 Both eval harnesses stage `agents/*.md` into the workspace's `.claude/agents/`
@@ -405,7 +405,7 @@ change, with different (and easy-to-undercount) site lists:
   and `packages/schema/schemas/`), the `CLOSED_ENUMS` set in `validator.ts`, and the
   prose tables/discussion in `research-schema-spec.md`. **Do not hand-edit the TS
   union**: `packages/schema/src/enums.generated.ts` is emitted from that package's
-  own `enums.schema.json` by `scripts/gen-enums.mjs`, chained into `build`,
+  own `enums.schema.json` by `packages/schema/scripts/gen-enums.mjs`, chained into `build`,
   `typecheck` and each app's `dev`, and gitignored (ADR-0008 tier 2). Every
   closed enum in `enums.schema.json` is generated, with no exceptions —
   `gen-enums.mjs` throws rather than let a hand-written union shadow a generated
