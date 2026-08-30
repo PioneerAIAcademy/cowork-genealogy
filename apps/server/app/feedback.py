@@ -327,6 +327,18 @@ def _norm(v: str) -> str:
     return v
 
 
+# Email, "what you asked" and "what the agent did" are all optional at the dialog
+# (issue #1919), so any of the three can arrive empty. Say so rather than printing
+# a heading or a bullet with nothing after it — a triager cannot otherwise tell
+# "the reporter left it blank" from "the bundler lost it".
+# Mirrored verbatim in apps/electron/src/main/feedback.ts.
+NOT_PROVIDED = "_(not provided)_"
+
+
+def _or_blank(value: str) -> str:
+    return value if value.strip() else NOT_PROVIDED
+
+
 def _feedback_markdown(
     f: dict,
     submitted_at: str,
@@ -340,7 +352,7 @@ def _feedback_markdown(
     parts = [
         "# Feedback",
         "",
-        f"- **From:** {f['email']}",
+        f"- **From:** {_or_blank(f['email'])}",
         f"- **When:** {submitted_at}",
         f"- **Viewer version:** {viewer_version}",
         f"- **Project:** {project_label}",
@@ -348,11 +360,11 @@ def _feedback_markdown(
         "",
         "## What I asked",
         "",
-        f["userPrompt"],
+        _or_blank(f["userPrompt"]),
         "",
         "## What the agent did",
         "",
-        f["agentDid"],
+        _or_blank(f["agentDid"]),
     ]
     # Omitted on a positive report and when a bug reporter didn't know the ideal
     # behavior (both send it empty) — the "Worked as expected" line carries the signal.
