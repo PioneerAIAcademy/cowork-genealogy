@@ -11,7 +11,7 @@
     "user_message": "Run separate full-text searches for Thomas Flynn AND for Patrick Flynn appearing as witnesses in Schuylkill County records — both names must be queried.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["fulltext-search-flynn-witnesses", "fulltext-search-flynn-witnesses-by-name", "fulltext-search-flynn-flinn-variant", "fulltext-search-flynn-wildcard-variant"],
+  "mcp_fixtures": ["fulltext-search-flynn-witnesses", "fulltext-search-flynn-witnesses-by-name", "fulltext-search-flynn-flinn-variant", "fulltext-search-flynn-wildcard-variant", "fulltext-search-flynn-prefix-wildcard-variant"],
   "execution": {
     "max_wall_clock_seconds": 600
   },
