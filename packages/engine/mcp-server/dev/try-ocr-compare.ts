@@ -1,5 +1,7 @@
 /**
- * OCR quality spike — Qwen3-VL vs Claude on FamilySearch scans.
+ * OCR model comparison on FamilySearch scans — Qwen3-VL vs Gemini 3.7 Flash
+ * vs Opus 5 (the arms behind the 2026-08-30 switch to Gemini as the
+ * `image_transcribe` default), plus the older prep/thinking/hint arms.
  *
  * Dev-only, NOT shipped. Standalone one-shot per the spike brief
  * (~/pioneeracademy/ocr-quality-spike-plan.md). It:
@@ -201,6 +203,48 @@ const IMAGES: ImageSpec[] = [
     ark: "ark:/61903/3:1:3QS7-897J-Q396",
   },
   // -------------------------------------------------------------------------
+  // Västra Karaby — the CONFIDENT-GARBAGE class. These returned clean-looking
+  // text with no [illegible] markers at all while corrupting exactly the fields
+  // that decide identity, which is why no marker-density signal can see them.
+  // Ground truth was read directly off the scans by a genealogist and is
+  // recorded per image below; there is no full-page human key, so these grade
+  // against the Opus key like the rest of the hard subset — the Qwen-vs-Gemini
+  // delta on this page class is the question, not an absolute score.
+  // -------------------------------------------------------------------------
+  {
+    slug: "vastra-karaby-1762",
+    scenario: "vastra-karaby-christenings",
+    lang: "Swedish",
+    recordType: "parish christening register (1762)",
+    note: "Confident garbage, no markers: farm Henckelstorp read as 'Hornekelltorp'/'Honekelkorp', patronymic Andersson as 'Olsensfon' or dropped, Barsebäck as 'Dansebäck' — and it varied per call at temperature 0. Structure survived (Anno 1762, foddes, 5 of 6 dates).",
+    subset: "hard",
+    languageHint:
+      "This is a mid-18th-century Swedish parish christening register (1762), handwritten in an early-modern Swedish hand.",
+    imageId: "004523018_00150",
+  },
+  {
+    slug: "vastra-karaby-accounts-1693",
+    scenario: "vastra-karaby-accounts",
+    lang: "Swedish",
+    recordType: "church accounts (1693)",
+    note: "Fabricated a vital-record heading on an accounts page: returned 'Pro A: 1673.' under a heading 'Född.' (Born). The page is 'Wästra Carleby Kyrckio Rächningh Pro A° 1693', Debet/Credit, no births heading and the year is 1693.",
+    subset: "hard",
+    languageHint:
+      "This is a late-17th-century Swedish parish document, handwritten in an early-modern Swedish hand.",
+    imageId: "004523021_00100",
+  },
+  {
+    slug: "vastra-karaby-accounts-1713",
+    scenario: "vastra-karaby-accounts",
+    lang: "Swedish",
+    recordType: "church accounts ledger (1713-1717)",
+    note: "Same fabrication class: returned a heading 'Födde. Jahr 1707' for a Credit/Debet ledger covering 1713-1717.",
+    subset: "hard",
+    languageHint:
+      "This is an early-18th-century Swedish parish document, handwritten in an early-modern Swedish hand.",
+    imageId: "004523021_00190",
+  },
+  // -------------------------------------------------------------------------
   // Typed subset — printed, typeset 19th-century pages from Holt genealogy,
   // recovered from the book-to-tree sibling repo. These are the ONLY images in
   // this corpus with a human-verified key (dev/ocr-keys/, see its README), so
@@ -360,8 +404,8 @@ const GEMINI_MODEL = "google/gemini-3.7-flash";
 const DEFAULT_VARIANT_KEYS = ["P_qwen_prod", "G_geminiFlash", "O_opus5"];
 
 const VARIANTS: Variant[] = [
-  { key: "P_qwen_prod", label: "Qwen3-VL 235B Instruct (production default)", provider: "openrouter", model: "qwen/qwen3-vl-235b-a22b-instruct", prep: false },
-  { key: "G_geminiFlash", label: "Gemini 3.7 Flash", provider: "openrouter", model: GEMINI_MODEL, prep: false },
+  { key: "P_qwen_prod", label: "Qwen3-VL 235B Instruct (the pre-2026-08-30 default)", provider: "openrouter", model: "qwen/qwen3-vl-235b-a22b-instruct", prep: false },
+  { key: "G_geminiFlash", label: "Gemini 3.7 Flash (production default)", provider: "openrouter", model: GEMINI_MODEL, prep: false },
   { key: "O_opus5", label: "Claude Opus 5 (via OpenRouter)", provider: "openrouter", model: "anthropic/claude-opus-5", prep: false },
   { key: "A1_sonnet46", label: "Claude Sonnet 4.6 (raw)", provider: "anthropic", model: "claude-sonnet-4-6", prep: false },
   { key: "A2_sonnet5", label: "Claude Sonnet 5 (raw)", provider: "anthropic", model: "claude-sonnet-5", prep: false },
@@ -419,7 +463,13 @@ function parseArgs() {
     const i = argv.indexOf(flag);
     return i !== -1 && i + 1 < argv.length ? argv[i + 1] : undefined;
   };
-  const limit = get("--limit") ? parseInt(get("--limit")!, 10) : undefined;
+  const limitRaw = get("--limit");
+  const limit = limitRaw !== undefined ? Number(limitRaw) : undefined;
+  // Same reason as the two filters below: `parseInt("abc")` is NaN, and
+  // `slice(0, NaN)` is an empty selection that exits 0 having done nothing.
+  if (limit !== undefined && (!Number.isInteger(limit) || limit < 1)) {
+    throw new Error(`--limit: expected a positive integer, got: ${limitRaw}`);
+  }
   const only = get("--only")?.split(",").map((s) => s.trim()).filter(Boolean);
   const variants = get("--variants")?.split(",").map((s) => s.trim()).filter(Boolean);
 
@@ -634,18 +684,27 @@ async function main() {
   // Merge into any existing results.json so a --only run ADDS images without
   // clobbering previously-transcribed ones. FS auth is fetched lazily — a run
   // over only local images needs no FamilySearch session.
+  // meta.variants must be merged too, not replaced. The grader derives the
+  // columns it scores from meta.variants while the transcriptions live in
+  // images/, so a narrowed re-run (`--variants G_geminiFlash`) would otherwise
+  // drop every other model from grades.json AND scorecard.md — for every image,
+  // not just the re-run one — with no warning and the data still on disk.
   let priorImages: any = {};
+  let priorVariants: any[] = [];
   try {
-    priorImages = JSON.parse(readFileSync(join(OUT_DIR, "results.json"), "utf-8")).images ?? {};
+    const prior = JSON.parse(readFileSync(join(OUT_DIR, "results.json"), "utf-8"));
+    priorImages = prior.images ?? {};
+    priorVariants = prior.meta?.variants ?? [];
   } catch {
     /* no prior run */
   }
 
   let token: string | undefined;
+  const thisRun = variants.map((v) => ({ key: v.key, label: v.label, model: v.model, prep: v.prep, hint: !!v.hint }));
   const results: any = {
     meta: {
       groundTruthModel: GROUND_TRUTH_MODEL,
-      variants: variants.map((v) => ({ key: v.key, label: v.label, model: v.model, prep: v.prep, hint: !!v.hint })),
+      variants: [...priorVariants.filter((p: any) => !thisRun.some((v) => v.key === p.key)), ...thisRun],
       prompt: OCR_PROMPT,
       maxLongestSidePrep: MAX_LONGEST_SIDE,
       privacyFlag: 'provider.data_collection="deny"',
