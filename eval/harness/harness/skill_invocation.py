@@ -1015,7 +1015,6 @@ DEDICATED_AGENT_NAMES = frozenset(
     {
         "record-extractor",
         "image-reader",
-        "image-reader-opus",
         "gps-mentor",
         # Added when proof_summaries moved behind the hook's caller check: the
         # owning skill now delegates the write, so EVERY legitimate proof
