@@ -1026,6 +1026,16 @@ payload is curated third-party URLs with nothing to triage on. **The full payloa
 search tool → disk → log-append and never round-trips through the model**
 (`search-result-staging-spec.md`).
 
+Both per-row reductions live in `src/utils/staged-compaction.ts` rather than
+inline in their tools, because **the eval harness runs the same functions.**
+`mock_mcp.py` serves a canned response and then calls the compiled
+`stageSearchResults` and compactor, so what the agent sees in a unit run is the
+slimmed shape production sends. Restating a reduction in Python instead is how
+both tools came to serve the eval a field production strips — and a skill was
+left triaging on `textDocument`, which no staged result carries, while every run
+that graded the triage passed. **Add a post-staging transformation to a search
+tool and it belongs in that module**, so there is no second copy to drift.
+
 ### 6.2 Writes go only through validating writer tools
 
 `research_append` (and its lane-scoped variant `extraction_append`, §5.3),
@@ -1446,6 +1456,13 @@ lead you to them:**
   workflow (`.github/workflows/check-e2e-fixtures.yml`), on any change under
   `eval/tests/e2e/` or `eval/runlogs/e2e/`. It is not part of `make test-all`,
   so a fixture change can pass locally and fail in CI.
+- `packages/engine/mcp-server/tests/utils/staged-compaction.test.ts` — that the
+  search tools' post-staging reductions (§6.1) are **idempotent**. The tool
+  suites already cover what each reduction does; this covers the property the
+  eval harness depends on, and only it can. `mock_mcp.py` applies these to canned
+  fixtures, and the corpus carries both the full and the already-reduced shape,
+  so a destructive second pass would damage every already-reduced fixture with no
+  tool test seeing it. Runs under `make engine-test`.
 
 ### 9.3 The two eval tiers
 

@@ -108,13 +108,16 @@ export function compactStagedRecordSearch(
 /**
  * Drop `fulltext_search`'s heavy inline `textDocument` (the full AI-transcribed
  * page, 79–136 KB across a result set — the overflow driver). The full text
- * lives in the staged sidecar; record_read reads it back from there via the
- * staged ref, and the remaining flat fields (names/places/dates/highlightTerms/
- * title/recordType) still carry the triage stubs. Mirrors record_search's
- * inline-gedcomx strip: unconditional once staged so the overflow protection
- * can't be forgotten, and safe because the staged file is already serialized to
- * disk. The caller must never apply this when `staged` is null (an un-staged
- * exploratory search — nothing was retained to re-read from).
+ * lives in the staged sidecar. It is **NOT retrievable via a tool**: record_read
+ * reads a staged sidecar back only for record_search results (it matches on
+ * recordId + gedcomx — `readFromSidecar` in record-read.ts — which a fulltext
+ * result has neither of), so a caller cannot re-read this transcript. The
+ * remaining flat fields (names/places/dates/highlightTerms/title/recordType) are
+ * the triage stubs the agent works from. Mirrors record_search's inline-gedcomx
+ * strip: unconditional once staged so the overflow protection can't be
+ * forgotten, and safe because the staged file is already serialized to disk. The
+ * caller must never apply this when `staged` is null (an un-staged exploratory
+ * search — nothing was retained, and the transcript is the only copy).
  *
  * Mutates and returns `out`.
  */
