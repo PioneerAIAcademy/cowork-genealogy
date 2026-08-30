@@ -259,12 +259,24 @@ all ("would be spawned with zero tools — refusing"), which has broken every
 agent in Cowork twice while CI stayed green. Listing every spelling is safe
 because unrecognized entries are ignored so long as at least one resolves.
 
-`disallowedTools:` matters more, not less. A deny binds even under
-`bypassPermissions`, so it is the last line of defence keeping
-`record-extractor` off the broad `research_append` — and a deny naming one
-spelling silently fails to bind under the others. Unlike a missing grant,
-**a missing deny fails open and silently.** Why, and the two incidents:
-ADR-0004.
+`disallowedTools:` is **defence in depth, not the load-bearing layer** —
+and it is measured, not assumed. Under `bypassPermissions` **both** bind: a
+tool merely omitted from `tools:` is absent from the agent, and so is one named
+in `disallowedTools:` (`make probe-agent-binding`, 2026-08-30, Claude Code
+2.1.251 / SDK 0.2.128). So the omission above already keeps `record-extractor`
+off the broad `research_append`; the deny restates it. Keep the denies — a deny
+wins if someone later adds the tool to `tools:` — but do not add one *because*
+nothing else would bind, and do not describe one as the last line of defence.
+
+**Never name a tool in both lists.** The deny is applied *before* the
+zero-tools spawn check, so a deny that strips every entry which would have
+resolved makes the runtime refuse the agent outright rather than merely
+narrowing it. Enforced by `tests/packaging/agent-tool-names.test.ts`.
+
+A deny that is kept still needs all three spellings: one naming a single
+spelling binds nothing under the others, and unlike a missing grant **a missing
+deny fails open and silently.** Why, the two incidents, and what the probe
+retired: ADR-0004.
 
 ### Plugin hooks (`packages/engine/plugin/hooks/`)
 
@@ -599,7 +611,8 @@ construct the test's *inputs* freely. A deny that hides the answer from the agen
 e2e tree-read block, a fixture's `blocked_tools` — is a fixture and stays. A deny that
 changes what the agent may *do* is a distortion and goes. Denies production genuinely has
 stay too: the protected-file write lockdown mirrors the shipped plugin hook, and agent
-`disallowedTools:` binds even under `bypassPermissions`.
+frontmatter binds even under `bypassPermissions` — both a `disallowedTools:` deny and a
+plain omission from `tools:` (measured; see "Dual-spelled tool names" above).
 
 ### Python file I/O: always pass `encoding="utf-8"`
 

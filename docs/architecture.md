@@ -713,7 +713,7 @@ the most expensive mistake in this layer, because two of the three fail
 | Surface | Spelling | Binds in production? |
 |---|---|---|
 | Skill `allowed-tools:` | **bare** (`research_query`) | **No** — neither production path nor the unit harness narrows per skill. The field is a grant, not a restriction. Advisory only: the `test_tool_allowlist` validator warns on undeclared calls. |
-| Agent `tools:` / `disallowedTools:` | **spelled under all three registrars**, matched exactly | **Yes** — and a deny binds even under `bypassPermissions`. |
+| Agent `tools:` / `disallowedTools:` | **spelled under all three registrars**, matched exactly | **Yes** — both halves, even under `bypassPermissions`: a tool omitted from `tools:` is absent from the agent, and so is one named in `disallowedTools:` (measured, §5.2). |
 | `PreToolUse` hook | n/a — matches on tool name + input | **Yes**, in Cowork and the hosted path. **Neither harness loads the plugin's hooks** (§5.4). |
 
 ### 5.1 Skill `allowed-tools` — declarative everywhere
@@ -764,10 +764,28 @@ declares a bare `Read`, which always resolves, so it would spawn holding that
 alone rather than be refused.) Listing every
 spelling is safe because unrecognized entries are ignored so long as one resolves.
 
-`disallowedTools:` matters **more**, not less: a deny binds even under
-`bypassPermissions` (the hosted path, #695), so it is the last line keeping
-`record-extractor` off the broad `research_append` — and a deny naming one
-spelling silently binds nothing wherever the server carries another name.
+**`disallowedTools:` is defence in depth, not the load-bearing layer — and this
+half of the page was wrong until it was measured.** This file, `CLAUDE.md`,
+ADR-0004, ADR-0006, ADR-0011, two specs, the packaging test and three agent
+bodies all said "a deny binds even under `bypassPermissions`; an omission alone
+is not." Seven of them cited issue #695 for it — the birkeland lane breach,
+which says nothing about `bypassPermissions`, denies, or omissions. Probed
+2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128 (`make
+probe-agent-binding`, reproduced twice): under `bypassPermissions` **both**
+bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
+denied one is. So the omission is what keeps `record-extractor` off the broad
+`research_append`, and its deny restates that rather than being the last line.
+
+Keep the denies — a deny still wins if someone later adds the tool to `tools:`,
+and one naming a single spelling binds nothing under the others, which is why
+the lint checks all three. But **never name a tool in both lists.** The deny is
+applied *before* the zero-tools spawn check: the probe's arm B granted one tool
+under all three spellings plus `ToolSearch`, denied that same tool, and the
+runtime refused the agent outright — "would be spawned with zero tools —
+refusing. Its tools list resolved to nothing: unrecognized [ToolSearch]",
+naming only the built-in, because the deny had already removed the three MCP
+entries. `image-reader` is one entry away from that shape. Guarded by the
+"never denies a tool it also grants" case in `agent-tool-names.test.ts`.
 
 **Two standing prohibitions:**
 
@@ -927,9 +945,11 @@ enforcing-vs-shadow status.
   passes. **Every tool addition is two edits: the frontmatter, and the
   instruction in the body that makes the call happen.**
 - `tests/packaging/agent-tool-names.test.ts` checks the spelling and cannot see
-  the body. **Nothing checks that the tool actually binds at runtime** (§9.4);
-  `make agent-smoke` is the closest instrument and it verifies name resolution,
-  not binding.
+  the body. **No CI job checks that the tool actually binds at runtime** (§9.4);
+  `make agent-smoke` verifies name resolution only, and `make
+  probe-agent-binding` verifies binding but is a live billed probe, not a check.
+- **Never add it to `disallowedTools:` as well.** A tool in both lists is denied,
+  and the deny is applied before the zero-tools spawn check — see §5.2.
 - **Rebuild only where it matters.** The unit harness and Claude Code read your
   working tree — no rebuild. Cowork runs the uploaded `.zip`: `make plugin`, then
   **remove the old plugin before uploading the new one** (Cowork tab, not the
@@ -1472,12 +1492,16 @@ confident near-misses for the rest.
 Three of these gaps are **architecture rather than backlog**, because each one
 changes how a correct change is made:
 
-1. **Spelling is not binding.** Nothing proves a declared agent tool actually
+1. **Spelling is not binding.** No *CI job* proves a declared agent tool actually
    *binds* at runtime — every lint stops at the name, and the SDK handshake
    exposes only name/description/model. `make agent-smoke` reads what the runtime
-   *resolved*, not what bound, and only in the mode it runs in. So a green CI run
-   says nothing about whether an agent can call what you granted it; only a live
-   session in the run mode you care about does (§5.2, §8).
+   *resolved*, not what bound. So a green CI run says nothing about whether an
+   agent can call what you granted it (§5.2, §8). What closed part of this:
+   `make probe-agent-binding` spawns a probe agent and reads whether a real tool
+   call landed, off the `tool_result` rather than the agent's prose. It is a
+   live, billed probe rather than a check — run it when the CLI or the SDK moves.
+   And it answers the question only for the **hosted** options it builds; Cowork
+   in either run mode still has no instrument but a live session.
 2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
    not rebuild the `genealogy-agent` E2B image production runs the agent on, and
    both guards over it are advisory. Production can run weeks-old skills, agents,

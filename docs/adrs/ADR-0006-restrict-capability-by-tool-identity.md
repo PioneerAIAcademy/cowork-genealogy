@@ -7,7 +7,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-18 (#695/#736, after the birkeland lane breach — the agent itself shipped 2026-07-12 in #650 carrying the *prose* lane this replaced)
-- **Last updated:** 2026-08-09 (the refutation ledger moved to ADR-0009)
+- **Last updated:** 2026-08-30 (the omission, not the deny, is what binds — measured)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -59,8 +59,13 @@ builds only the first one from tool input. The restriction is not in the payload
 so there is nothing for the model to set.
 
 The agent then holds `extraction_append` and **not** `research_append` — omitted
-from `tools:` and additionally named in `disallowedTools:` under all three spellings
-(ADR-0004), because a deny binds even under `bypassPermissions`.
+from `tools:`, and additionally named in `disallowedTools:` under all three
+spellings (ADR-0004) as defence in depth. **The omission is what binds.**
+Measured 2026-08-30 (`make probe-agent-binding`): under `bypassPermissions` a
+tool merely omitted from `tools:` is absent from the agent, exactly as a denied
+one is. An earlier version of this ADR said the deny was doing that work alone;
+it is not. Never name the same tool in both lists — the deny is applied before
+the zero-tools spawn check and can make the runtime refuse the agent.
 
 The general form:
 
@@ -76,7 +81,7 @@ The general form:
 |---|---|---|
 | **Prose in the agent body** — "only write sources and assertions" | This is what was there. A delegation message prompted past it and the agent fabricated a `match_score` | The birkeland re-run; `research-append-tool-spec.md` §11 |
 | **A `sections:` parameter** on `research_append` | The caller supplies the input; a parameter is a request. Same class of failure as prose, one layer down | `research-append-tool-spec.md` §11.2 |
-| **A separate per-skill write tool for every lane** (`person_evidence_append`, `conflict_append`, …) | Rejected earlier and independently: *"a split tool is exactly as callable by the router as a section branch is."* Splitting names does not constrain a caller who holds all of them — the constraint comes from *not holding* the broad one, which is what `disallowedTools:` provides | `docs/specs/guardrail-enforcement-spec.md` §9 |
+| **A separate per-skill write tool for every lane** (`person_evidence_append`, `conflict_append`, …) | Rejected earlier and independently: *"a split tool is exactly as callable by the router as a section branch is."* Splitting names does not constrain a caller who holds all of them — the constraint comes from *not holding* the broad one, which is what omitting it from `tools:` provides (the `disallowedTools:` deny restates it — measured 2026-08-30) | `docs/specs/guardrail-enforcement-spec.md` §9 |
 | **A `PreToolUse` hook** discriminating by caller | A design exists, but it is less portable than it looks. `eval/harness/harness/context_policy.py` denies `image_read` on **three** conditions — the tool is guarded, `agent_id` is absent, **and** the calling skill did not declare it in its own `allowed-tools` (`search-images` declares it and legitimately calls it on the main thread). The discriminator is therefore the skill's declaration, which the production path has no equivalent of, and the module says the e2e orchestrator cannot use it either. Unported. It was gated on calibrating the shadow window, and that calibration was retired as having no instrument (`guardrail-enforcement-spec.md` §7, "What the success gate can and cannot see"); what the port needs first now is the live Cowork run that settles whether the router holds `image_read` at all. Tool identity needed no new machinery | #911; `context_policy.py` ("Membership here is necessary but NOT sufficient") |
 | **Duplicate the implementation** into a genuinely separate `extraction_append` | Two copies of the validation logic drift. Same implementation, different entry point, keeps one contract | Code-reuse convention, `CLAUDE.md` |
 | **Trust the eval suite to catch lane violations** | Grades after the fact and only on cases the corpus covers. `research-append-tool-spec.md` is explicit that for `match_score` specifically *"the lever there is eval/rubric, not tooling"* — which is precisely the gap this pattern closes for sections | `research-append-tool-spec.md` |
@@ -85,9 +90,10 @@ The general form:
 
 **Gains.** The boundary is unforgeable from the callee's side: there is no
 argument, no parameter, and no prompt that lets `record-extractor` write a proof
-summary, because the capability is not in its world. It composes with ADR-0004 —
-the deny binds even under `bypassPermissions`, which is the hosted path's mode —
-and it needed no new enforcement machinery. This is textbook least-privilege by
+summary, because the capability is not in its world — and "not in its world" is
+now measured rather than argued: under `bypassPermissions`, the hosted path's
+mode, a tool omitted from `tools:` is absent from the agent (`make
+probe-agent-binding`, 2026-08-30). It needed no new enforcement machinery. This is textbook least-privilege by
 2025 standards (OWASP Excessive Agency); what is worth keeping is the specific
 mechanism, the second function parameter that dispatch cannot populate.
 
@@ -104,8 +110,10 @@ mechanism, the second function parameter that dispatch cannot populate.
    frontmatter must omit-and-deny the broad one. Getting only the first gives an
    agent that can still call `research_append` directly.
 
-**Risks.** Nothing verifies the deny actually binds at runtime — the lint checks
-spelling only (#1084/#1085, ADR-0004). And the same reasoning is wanted for
+**Risks.** No CI job verifies that either half binds at runtime — the lint checks
+spelling only (#1084/#1085, ADR-0004). `make probe-agent-binding` does, for the
+hosted options, and as of 2026-08-30 both halves do; it is a live billed probe
+rather than a check, so it says nothing about a later CLI. And the same reasoning is wanted for
 identity scoring (`same_person`), where it has **not** been made to work: three
 candidate discriminators failed adversarial review and a fourth now runs only in
 **shadow**, so what is open there is graduating that check to a deny, against six

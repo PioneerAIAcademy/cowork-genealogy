@@ -12,9 +12,14 @@ tools:
   - mcp__Genealogy_Research__image_transcribe
 # This agent has one tool — image_transcribe — and only that. Pivoting to
 # an indexed record or fixing a missing OpenRouter key is the caller's job
-# (see "the caller should..." below). The deny is enforced even under
-# `bypassPermissions` (issue #695) and must carry all three server
-# spellings for the same reason the allow-list above does.
+# (see "the caller should..." below). Their absence from the allow-list above
+# is what binds — measured 2026-08-30 under `bypassPermissions` (`make
+# probe-agent-binding`). The deny restates it as defence in depth, and must
+# carry all three server spellings for the same reason the allow-list does.
+#
+# NEVER add image_transcribe here. A tool in both lists is denied, and the deny
+# runs before the zero-tools spawn check — with one granted tool, that refusal
+# would leave this agent unspawnable. Guarded by agent-tool-names.test.ts.
 disallowedTools:
   - mcp__genealogy__record_read
   - mcp__remote-devices__Genealogy_Research__record_read

@@ -9,7 +9,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-18 (#742, repairing #650/#698)
-- **Last updated:** 2026-08-09 (a critique §9 citation repointed at ADR-0009)
+- **Last updated:** 2026-08-30 (the deny's justification was measured and half of it was false; grant/deny overlap is now a lint)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -61,11 +61,33 @@ zero-tools refusal above is the documented runtime rule, but the blast radius of
 #650 specifically rests on a small number of live sessions rather than a
 systematic sweep.
 
-The deny side is sharper still. `disallowedTools:` binds **even under
-`bypassPermissions`**, which is the hosted path's mode (#695), making it the last
-line keeping `record-extractor` off the broad `research_append`. A deny naming
-one spelling binds *nothing* wherever the server carries another name — and
-unlike a missing grant, a missing deny fails open and silently.
+The deny side needs the same treatment, though **for a weaker reason than this
+ADR originally gave.** It said `disallowedTools:` binds even under
+`bypassPermissions` while an omission alone does not, making the deny "the last
+line" keeping `record-extractor` off the broad `research_append`. The first half
+is true; the second is false. Probed 2026-08-30 against Claude Code 2.1.251 /
+SDK 0.2.128 (`make probe-agent-binding`, reproduced twice): under
+`bypassPermissions` a tool merely **omitted** from `tools:` is absent from the
+agent, exactly as a denied one is. The omission is the load-bearing half; the
+deny restates it.
+
+The claim spread to `CLAUDE.md`, `docs/architecture.md`, ADR-0006, ADR-0011, two
+specs, the packaging test and three agent bodies, and seven of those cited issue
+#695 for it. That issue is the birkeland lane breach and says nothing about
+`bypassPermissions`, denies, or omissions — a citation chain that never
+terminated in evidence.
+
+The deny still earns all three spellings: it wins if someone later adds the tool
+to `tools:`, one naming a single spelling binds nothing wherever the server
+carries another name, and unlike a missing grant a missing deny fails open and
+silently. What it does not earn is being described as the only thing that binds.
+
+**One thing the probe found that changes an instruction: never name a tool in
+both lists.** The deny is applied *before* the zero-tools spawn check. A probe
+agent granting one tool under all three spellings plus `ToolSearch`, and denying
+that same tool, was refused outright — "would be spawned with zero tools —
+refusing. Its tools list resolved to nothing: unrecognized [ToolSearch]" — with
+the three MCP entries not named, because the deny had already removed them.
 
 ## Decision
 
@@ -158,14 +180,23 @@ general-purpose stand-in that binds none of the deny list (#939).
 > `disallowedTools:`; **derives** both `display_name`-based prefixes from
 > `manifest.json`, so renaming the extension fails in CI; asserts all five
 > registration sites still agree on the `genealogy` key; throws rather than
-> mis-slicing on an unrecognized prefix; and fails any `select:mcp__…` in a
-> plugin body.
+> mis-slicing on an unrecognized prefix; fails any `select:mcp__…` in a
+> plugin body; and fails any agent that names a tool in **both** `tools:` and
+> `disallowedTools:`, which can make the runtime refuse the agent outright.
 
-What it does **not** catch: whether a granted tool actually binds at runtime
+> `make probe-agent-binding` (`apps/server/dev/probe_agent_binding.py`) — a
+> live, billed probe rather than a check: spawns a probe agent under the exact
+> hosted options and reads whether a real tool call landed, off the
+> `tool_result` rather than the agent's prose. Six arms — granted, granted **and**
+> denied, omitted — each with tool search off and on. Run it when the CLI or the
+> SDK moves, or before adding a deny on the strength of it binding.
+
+What no CI job catches: whether a granted tool actually binds at runtime
 (#1084/#1085); whether the agent's body ever tells it to call the tool; and a
-**fourth** prefix nobody has registered yet. No CI job can see any of these. Only a
-live Cowork session can, and only in the run mode being tested — a cloud-mode check
-would have passed throughout #1341.
+**fourth** prefix nobody has registered yet. Only a live session can, and only in
+the run mode being tested — a cloud-mode check would have passed throughout
+#1341. The probe above closes the first of these for the **hosted** options only;
+Cowork in either run mode still has no instrument but a live session.
 
 ## Revisit when
 

@@ -1263,8 +1263,10 @@ this section before reopening one.
   (`proof_conclusion_append`, `exhaustiveness_declare`, …, mirroring
   `extraction_append`). Attributes nothing on its own: a split tool is exactly
   as callable by the router as a section branch is. It is a multiplier on
-  agent conversion — `disallowedTools` binds even under `bypassPermissions` but
-  is tool-name-granular only — not a substitute for any layer here.
+  agent conversion — agent frontmatter binds even under `bypassPermissions`
+  (both the `tools:` omission and the `disallowedTools:` deny, measured
+  2026-08-30) but is tool-name-granular only — not a substitute for any layer
+  here.
 - **Per-turn scoping for a production detector** — proposed for #1054 and dead.
   Three of `find_effects_without_invocation`'s arms read whole-document state
   with no baseline — research-exhaustiveness, conflict-resolution, and

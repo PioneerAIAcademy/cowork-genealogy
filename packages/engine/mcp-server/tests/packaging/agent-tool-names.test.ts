@@ -33,12 +33,21 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 // qualified against the test harness's arbitrary dict key rather than the
 // product's name.
 //
-// `disallowedTools:` needs the same treatment for a sharper reason. A deny is
-// enforced even under `bypassPermissions` (the hosted path — issue #695), so
-// it is the last line of defence keeping record-extractor off the broad
-// `research_append`. A deny naming only some spellings silently fails to bind
-// wherever the server is registered under another name — and unlike a missing
-// grant, a missing deny fails OPEN.
+// `disallowedTools:` needs the same treatment, for a weaker reason than this
+// file used to give. It said a deny is the last line of defence keeping
+// record-extractor off the broad `research_append`, because a deny binds under
+// `bypassPermissions` and an omission does not. Probed 2026-08-30 against
+// Claude Code 2.1.251 / SDK 0.2.128 (`make probe-agent-binding`, reproduced
+// twice): BOTH bind. A tool merely omitted from `tools:` is absent from the
+// agent exactly as a denied one is, so the omission is the load-bearing half
+// and the deny restates it. (The old claim cited issue #695 here and in six
+// other spots; that issue is the birkeland lane breach and says nothing about
+// `bypassPermissions`, denies, or omissions.)
+//
+// The deny still earns all three spellings: it wins if someone later adds the
+// tool to `tools:`, one naming only some spellings silently fails to bind
+// wherever the server carries another name, and unlike a missing grant a
+// missing deny fails OPEN.
 //
 // Listing every spelling is the only form that resolves everywhere. A
 // server-level prefix grant cannot substitute: Cowork's `remote-devices`
@@ -202,12 +211,16 @@ describe("plugin agent tool names", () => {
   it("record-extractor still denies the broad writer, under every spelling", () => {
     // Pinned by name, deliberately, because the per-agent loop below SKIPS
     // `disallowedTools` when the block parses empty — correct for the agents that
-    // have no denies, but it means deleting record-extractor's block entirely is
-    // green. Verified: removing it leaves the suite at 289 passing.
+    // have no denies, but it means deleting record-extractor's block entirely
+    // would otherwise be green. Verified by deleting it and watching the rest of
+    // the file stay green.
     //
-    // That block is the last line keeping this agent off the broad `research_append`
-    // under `bypassPermissions` (the hosted path, #695), and a missing deny fails
-    // OPEN. So its existence is asserted here rather than only its shape.
+    // That block is defence in depth rather than the last line: what actually
+    // keeps this agent off the broad `research_append` is `research_append`
+    // being absent from its `tools:` (measured under `bypassPermissions`,
+    // 2026-08-30 — see the header). The deny is still worth asserting, because
+    // it is what wins if someone later adds the tool to `tools:`, and unlike a
+    // missing grant a missing deny fails OPEN.
     const denies = extractList(
       readFileSync(join(agentsDir, "record-extractor.md"), "utf8"),
       "disallowedTools",
@@ -313,6 +326,38 @@ describe("plugin agent tool names", () => {
           });
         });
       }
+
+      it("never denies a tool it also grants", () => {
+        // A deny is applied BEFORE the zero-tools spawn check, so an entry in
+        // both lists does not merely cancel out — it can make the runtime
+        // refuse the agent outright. Measured 2026-08-30 against Claude Code
+        // 2.1.251 / agent SDK 0.2.128 (`make probe-agent-binding`): a probe
+        // agent granting one tool under all three spellings plus `ToolSearch`,
+        // and denying that same tool, was rejected with
+        //
+        //   Agent 'probe-b-deny' would be spawned with zero tools — refusing.
+        //   Its tools list resolved to nothing: unrecognized [ToolSearch].
+        //
+        // The three MCP entries are not named as unrecognized: the deny had
+        // already removed them. `image-reader` is one entry away from this —
+        // it grants exactly one tool.
+        //
+        // Nothing else here catches it. The shape assertions above check each
+        // list separately, and AGENT_PERMISSIONS pins each list's contents but
+        // compares them to a snapshot, not to each other.
+        const granted = new Set(extractList(text, "tools").map(bareOrBuiltin));
+        const overlap = [...new Set(extractList(text, "disallowedTools").map(bareOrBuiltin))]
+          .filter((t) => granted.has(t))
+          .sort();
+        expect(
+          overlap,
+          `${file} both grants and denies: ${overlap.join(", ")}. The deny wins and is ` +
+            `applied before the spawn check, so if it strips every entry that would have ` +
+            `resolved, the runtime refuses to spawn this agent at all. Drop it from one ` +
+            `list — omitting a tool from tools: already keeps it out of the agent ` +
+            `(measured under bypassPermissions, 2026-08-30).`,
+        ).toEqual([]);
+      });
     });
   }
 });

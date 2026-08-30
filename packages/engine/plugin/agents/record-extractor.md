@@ -50,15 +50,19 @@ tools:
   - mcp__Genealogy_Research__record_person_matches
   - mcp__Genealogy_Research__record_record_matches
 # `extraction_append` writes only `sources` + `assertions`. The broad
-# `research_append` is denied both by omission above and explicitly here:
-# a `disallowedTools` deny is enforced even under `bypassPermissions`,
-# which the hosted path runs (issue #695).
+# `research_append` is kept out of this agent by its ABSENCE from the allow-list
+# above — measured 2026-08-30 (`make probe-agent-binding`): under
+# `bypassPermissions`, the hosted path's mode, a tool omitted from `tools:` is
+# absent from the agent. The deny below restates that as defence in depth, and
+# wins if someone later adds the tool above.
 #
-# The deny MUST carry all three spellings for the same reason the allow-list does.
-# A deny that names only `mcp__genealogy__research_append` silently fails to
-# bind wherever the server is registered under another name — which is exactly
-# the environment where it matters most, since the deny is the only thing
-# standing between this agent and the broad writer under bypassPermissions.
+# The deny MUST carry all three spellings for the same reason the allow-list does:
+# one naming only `mcp__genealogy__research_append` binds nothing wherever the
+# server is registered under another name, and unlike a missing grant a missing
+# deny fails open silently.
+#
+# Never name a tool in BOTH lists — the deny is applied before the zero-tools
+# spawn check, so it can make the runtime refuse this agent outright.
 disallowedTools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
