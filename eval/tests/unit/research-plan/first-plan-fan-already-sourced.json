@@ -5,7 +5,7 @@
     "name": "First plan must survey what's already attached to FAN-cluster persons before planning new searches",
     "type": "positive",
     "description": "q_001 asks why/when Michael Sheahan moved to Schuylkill County. His brother Patrick already has a sourced tree fact -- a 1875 land purchase in Schuylkill County, seven years before Michael's earliest confirmed presence there -- sitting unused. A sound first plan should surface and build on this already-attached FAN-cluster evidence (a sibling arriving years earlier is a classic chain-migration signal), not proceed as if it doesn't exist. Mined from a live alpha-feedback report (issue #1948): the tester asked why plan item 1 didn't check sources already attached to tree people, and the agent's own answer named the gap -- the skill's 'verify the starting point' step checks assumptions, not what's already attached.",
-    "tags": ["planning", "fan-cluster", "already-attached", "migration", "first-plan-fan-already-sourced", "issue-1948"]
+    "tags": ["planning", "fan-cluster", "already-attached", "migration", "first-plan-fan-already-sourced", "issue-1948", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status"]
   },
   "input": {
     "user_message": "Create the first research plan for q_001 -- why did Michael Sheahan move to Schuylkill County around 1882?",
@@ -29,6 +29,7 @@
     "Should NOT plan a new search to (re)discover Patrick's 1875 land purchase or residence in Schuylkill County -- that fact is already sourced and attached; planning a fresh search for it would show the skill found it by re-searching rather than by surveying the tree it already had.",
     "Grade on whether the already-attached fact reached the response's reasoning at all, not on how elegantly it was woven in -- a blunt one-sentence acknowledgment is enough to pass; total silence about Patrick's tree fact is the failure."
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600
   }
