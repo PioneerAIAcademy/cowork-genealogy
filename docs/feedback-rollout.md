@@ -22,7 +22,7 @@ Nothing else works until `add-to-project.yml` is on `main`.
 
 ```sh
 gh label create feedback --repo PioneerAIAcademy/cowork-genealogy \
-  --description "User feedback submission — routes straight to the Feedback column" \
+  --description "Untriaged alpha feedback; routes to the Feedback column, dropped on triage" \
   --color D4C5F9
 ```
 
