@@ -43,10 +43,6 @@ tools:
   - mcp__remote-devices__Genealogy_Research__source_attachments
   - mcp__Genealogy_Research__source_attachments
   - Read
-disallowedTools:
-  - mcp__genealogy__extraction_append
-  - mcp__remote-devices__Genealogy_Research__extraction_append
-  - mcp__Genealogy_Research__extraction_append
 ---
 
 # Proof Conclusion
