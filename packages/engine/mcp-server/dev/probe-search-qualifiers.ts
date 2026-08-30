@@ -873,7 +873,8 @@ async function search(query: string): Promise<Hit> {
 // RETRYABLE_STATUS, MAX_RETRIES, backoff() and RETRY sentinel, so a run's retry
 // tally covers both endpoints. `fetchWithTimeout`, not the bare `fetch`
 // searchOnce uses: the tree endpoint throttles hardest of all and a stalled
-// connection would hang the whole run (CLAUDE.md: volume_search hung 236 min).
+// connection would hang the whole run (volume_search hung 236 min; the figure
+// and the guard live in tests/packaging/no-bare-fetch.test.ts).
 const TREE_URL = "https://api.familysearch.org/platform/tree/search";
 
 interface TreeHit {

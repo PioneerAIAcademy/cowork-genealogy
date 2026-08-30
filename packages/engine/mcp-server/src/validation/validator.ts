@@ -57,7 +57,8 @@ const CLOSED_ENUMS = {
   experience_level: new Set(["novice", "intermediate", "experienced", "professional"]),
   subscription: new Set([
     "Ancestry", "MyHeritage", "FindMyPast", "Newspapers.com",
-    "GenealogyBank", "FindAGrave-Plus", "other", "none",
+    "GenealogyBank", "FindAGrave-Plus",
+    "FamilySearch-Partner", "LibraryAccess", "other", "none",
   ]),
   holding_type: new Set([
     "document", "prior_research", "oral_knowledge", "gedcom",

@@ -4,7 +4,7 @@
 > sibling of `project_context` (`project-context-tool-spec.md`) — a second
 > read-side tool, not an extension of the first (see §3 for why).
 > **Updated 2026-08-03:** added `offset` pagination so items 51+ are reachable
-> (#1031, tool half; teaching the skills to page is the skill half, #1183).
+> (#1031, tool half; the skill half, #1183, has since landed).
 
 ```
 research_query({ projectPath, section, ...well-known filters }) -> { count, items, truncated }
@@ -183,10 +183,10 @@ whole section, one 50-item page at a time.
     here for the same on-disk reason.
 
   `offset` is typed `number` and rejected loudly when it is not a non-negative
-  whole number (§4). The **tool** now supports paging; teaching proof-conclusion
-  and the other consumers to actually page is the **skill half, #1183** — until
-  that lands the gate can still under-read, so a tool-only fix does not by itself
-  clear the reported symptom.
+  whole number (§4). The **tool** supports paging, and the **skill half
+  (#1183)** has landed: `research/SKILL.md` and `agents/proof-conclusion.md`
+  both check `truncated` and page with `offset`. A tool-only fix would not have
+  cleared the reported symptom on its own.
 
 ## 4. Errors / edge cases
 

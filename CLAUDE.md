@@ -6,7 +6,8 @@ For developer-facing build, test, and feature-addition recipes, see
 [DEVELOPMENT.md](./DEVELOPMENT.md). For how the system fits together and
 which sites a given change touches, see
 [docs/architecture.md](./docs/architecture.md) — its "If you're asked to…"
-blocks are the map, and its §9.4 points at what nothing checks. This file
+blocks are the map, and its "what nothing checks" section names the gaps that
+let CI stay green while the thing is broken. This file
 covers architecture, conventions, and rules — what Claude needs to know to
 make correct changes; on conflict, this file wins.
 
@@ -81,63 +82,17 @@ in the sense that they cannot.
   smoke tests that invoke a tool directly against live APIs (no MCP
   harness; useful for debugging a tool in isolation), plus
   `probe-*.ts` and `explore-*.ts` scripts that document the live-API
-  evidence trail behind each spec. Not shipped in any artifact.
-- `packages/engine/mcp-server/scripts/` — Reserved for future user-facing scripts.
-  Currently empty. Do not put internal/developer scripts here; they
-  belong in `packages/engine/mcp-server/dev/`.
-- `packages/engine/mcp-server/src/utils/` — Shared utility modules consumed by multiple
-  MCP tools. Houses `gedcomx-convert.ts` (round-trip between
-  full GedcomX and the simplified format defined in
-  `docs/specs/simplified-gedcomx-spec.md`; implementation spec at
-  `docs/specs/gedcomx-convert-spec.md`) and `search-helpers.ts` (shared
-  input validators, output shaping and error parsing used by the search
-  tools `record_search`, `person_search`, `collections_search` and
-  `volume_search`; `parseUpstreamErrorBody` is also reused by
-  `person_ancestors`, and `formatYearRange` is the single date-range
-  format shared by `collections_search` and `volume_search`).
+  evidence trail behind each spec. Not shipped in any artifact. Internal and
+  developer scripts go here, never in `packages/engine/mcp-server/scripts/`.
+- `packages/engine/mcp-server/src/utils/` — Shared modules consumed by multiple
+  tools. What is in there and when to reach for it: "Code reuse" below.
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
-
-### Hosted web workbench (monorepo overlay)
-
-This repo is also a **pnpm + turborepo monorepo** for the hosted web product
-(see `DEVELOPMENT.md` and `docs/realtime-rearch-status.md`). The engine
-(`packages/engine/{mcp-server,plugin}`) is deliberately **kept out of the pnpm
-workspace** via the `!packages/engine/**` negation in `pnpm-workspace.yaml`,
-and stays npm-managed, so the `.mcpb`/plugin release pipeline and CI are unchanged.
-The web side depends on `packages/schema`, never on the engine.
-
-- `packages/schema/` — single source of `research.json` + simplified-GedcomX TS
-  types + JSON Schemas (seeded from the viewer). Consumed by viewer-ui, web, server.
-- `packages/viewer-ui/` — the extracted renderer (App, 14 sections, shared
-  components, `ResearchDataProvider`), transport-agnostic via a
-  `ResearchTransport` (see `src/transport.ts`). Runs in Electron (IPC) and web (WS).
-- `apps/electron/` — the former `cowork-genealogy-ui` Electron viewer, now an
-  app package consuming `viewer-ui` via an IPC transport. `main/`/`preload/` as-is.
-- `apps/web/` — React+Vite client: login, session list, chat sidebar + the
-  shared viewer. WebSocket + REST transport.
-- `apps/server/` — **FastAPI control plane** (Python/uv): auth + allowlist,
-  session/sandbox orchestration via a vendor-neutral `SandboxProvider`
-  (`LocalProvider` for local dev, `E2BProvider` for the hosted E2B path —
-  `make server-e2b` and the Fly deploy run `SANDBOX_PROVIDER=e2b`), the viewer/chat
-  WebSocket, and `app/agent/` (the in-sandbox `agent_runner` — mock + real modes).
-
-Memorable commands live in the **`Makefile`** (`make install`, `make server`,
-`make web`, `make test`, `make mcpb`, `make plugin`). The POC runs fully on
-mocks (no E2B/Anthropic/OAuth needed).
-
-- `docs/plan/` — Implementation plans for work that is **not yet built**.
-  A plan is deleted once the work ships: the spec, the code, and any
-  issues filed from it become the record. Do not keep shipped plans
-  as historical artifacts — if a plan's rationale is worth preserving,
-  fold it into the spec instead. **A plan's `**Status:**` line is load-bearing** —
-  it is what tells the next reader whether the file describes pending work, so
-  update it when the work lands. Two files here spent weeks claiming
-  "not yet implemented" and "not yet branched" for things that had shipped.
-  And **only plans live here.** An architecture note, a status/checkpoint log, a
-  process doc, a measurement write-up, or a spec is *not* a plan: those go in
-  `docs/` (or `docs/specs/`), because a directory holding all five cannot answer
-  "is this still pending?" at a glance. Eight such files were moved out in the
-  follow-up that moved them.
+- `docs/plan/` — Implementation plans for work that is **not yet built**, and
+  nothing else. An architecture note, a status log, a process doc, a measurement
+  write-up, or a spec is not a plan; those go in `docs/` or `docs/specs/`.
+  Update a plan's `**Status:**` line when the work lands — it is what tells the
+  next reader whether the file describes pending work — and delete the plan once
+  it ships. If its rationale is worth keeping, fold that into the spec.
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth an implementation is checked against.
   This is the durable tier; a live tool must have a live spec.
@@ -150,6 +105,20 @@ mocks (no E2B/Anthropic/OAuth needed).
   `docs/testing-guides/` cover setup paths the harness can't
   (`oauth-tool-testing-guide.md`, `mcpb-install-testing-guide.md`,
   `gps-mentor-agent-testing-guide.md`). Do not add new ones.
+
+### Hosted web workbench (monorepo overlay)
+
+This repo is also a pnpm + turborepo monorepo for the hosted web product —
+`packages/schema`, `packages/viewer-ui`, `apps/electron`, `apps/web`,
+`apps/server`. Two rules bind when you touch it:
+
+- **Keep the engine out of the pnpm workspace.** `pnpm-workspace.yaml` carries a
+  `!packages/engine/**` negation; the engine stays npm-managed so the
+  `.mcpb`/plugin release pipeline is unaffected.
+- **The web side depends on `packages/schema`, never on the engine.**
+
+What each package is and how they bind: `docs/architecture.md`, "The hosted web
+workbench". Commands: the `Makefile`.
 
 ## Work you find along the way
 
@@ -172,6 +141,11 @@ Walk these in order and stop at the first that fits:
    `**Touches:**` lines.
 4. **File a new issue**, in the same PR that defers it.
 
+A follow-on PR, a Task, and a "known limitation" written into a docstring or a
+PR body are all step 4 wearing a disguise — same debt, minus the tracking. If
+you can describe the limitation precisely enough to document it, you understand
+it well enough to fix it.
+
 You may only reach step 4 by naming, in both the PR body and the issue body,
 which of these is true: the fix needs a different reviewer or skill; it depends
 on a decision only the lead can make **and he is not reachable** (a decision is a
@@ -189,6 +163,11 @@ creating the issue*, which looks like success.
 
 **Do not reintroduce a queue file under any name.** This replaced
 `docs/TODOs.md`, retired 2026-08-02.
+
+**Never write "does not close #N" in a PR body.** GitHub's closing-keyword
+parser matches the substring `close #N` and has no notion of negation, so a
+sentence disclaiming an issue closes it on merge. To say an issue is *not*
+addressed, name it without the keyword — "issue #N stays open".
 
 Label `developer` or `genealogist` by who does the work, and add
 `nothing-checks` when the item **is a missing guard** — a way CI can be green
@@ -233,8 +212,8 @@ subagents (`.claude/agents/`). Each plugin agent has YAML frontmatter
 system prompt. The `description` field determines when the Cowork
 orchestrator auto-delegates to the agent. Agents run in fresh context
 (no main-session state bleeds in) and are read-only by convention unless
-explicitly specced otherwise. The first such agent is `gps-mentor`
-(spec: `docs/specs/gps-mentor-agent-spec.md`).
+explicitly specced otherwise. Where an agent has a spec it is
+`docs/specs/<agent>-agent-spec.md`; not every agent has one.
 
 **How each environment loads them, and why the hosted path is the odd one.**
 Both eval harnesses stage `agents/*.md` into the workspace's `.claude/agents/`
@@ -252,8 +231,8 @@ the loader registers *those* under bare names). If you change how the hosted
 agent is configured, run `make agent-smoke`: it is the only check that reads
 what the runtime actually resolved, and no CI job covers this path.
 
-**Dual-spelled tool names.** (Heading kept as a stable anchor —
-`docs/architecture.md` §5.2 and ADR-0004 both cite it by name — though the rule now
+**Dual-spelled tool names.** (Heading kept as a stable anchor — the
+architecture guide and ADR-0004 both cite it by name — though the rule now
 names three spellings.) In `tools:` — and in `disallowedTools:` —
 every MCP tool **must** be listed **three times**, once under each server
 spelling:
@@ -276,39 +255,30 @@ plugin can see.** No single spelling resolves everywhere.
 
 Entries are matched **exactly** — no prefix fallback, no inherit-on-miss.
 When every `tools:` entry misses, the runtime refuses to spawn the agent at
-all ("would be spawned with zero tools — refusing"). That is how #650/#698
-broke all three agents in Cowork while CI stayed green: they were qualified
-against the *harness's* arbitrary dict key rather than the product's name.
-**The on-computer registrar repeated the shape** — that spelling
-was missing, `record-extractor` was refused outright, and the lint stayed green because
-it derived its expected prefixes from the two registrars we knew about.
-Listing every spelling is safe because unrecognized entries are ignored so
-long as at least one resolves.
+all ("would be spawned with zero tools — refusing"), which has broken every
+agent in Cowork twice while CI stayed green. Listing every spelling is safe
+because unrecognized entries are ignored so long as at least one resolves.
 
 `disallowedTools:` matters more, not less. A deny binds even under
-`bypassPermissions` (the hosted path, issue #695), so it is the last line
-of defence keeping `record-extractor` off the broad `research_append` — and
-a deny naming one spelling silently fails to bind under the others. Unlike a
-missing grant, **a missing deny fails open and silently.**
+`bypassPermissions`, so it is the last line of defence keeping
+`record-extractor` off the broad `research_append` — and a deny naming one
+spelling silently fails to bind under the others. Unlike a missing grant,
+**a missing deny fails open and silently.** Why, and the two incidents:
+ADR-0004.
 
 ### Plugin hooks (`packages/engine/plugin/hooks/`)
 
 The plugin ships a `PreToolUse` hook — the **only** guardrail that reaches
 Cowork. `hooks=` is an SDK argument the hosted control plane can set and Cowork
-cannot be made to; a plugin-shipped `hooks/hooks.json` binds in both. Verified
-live in Cowork 2026-07-30 (issue #940): the hook loads, fires for `Write` and
-`Bash` under either matcher form, and its `deny` is honored. Two things that
-run counter to the upstream issues — check behavior, don't trust the threads:
-the reported drop of plugin `PreToolUse` command hooks
-(anthropics/claude-code#34573) does not reproduce; and `SessionStart` hooks do
-**not** fire in Cowork — the same 2026-07-30 probe saw no invocation and no
-`additionalContext` reaching the session, which is the *inverse* of the Cowork
-report in anthropics/claude-code#16288, so that thread is not a reliable guide
-to current behavior either. Nothing depends on `SessionStart` today; it is
-recorded because it is the natural place to put per-session setup (seeding
-state, injecting project context) and it would silently not run.
-Cowork runs `permission_mode: "default"`; the hosted path runs
-`bypassPermissions`; a hook binds under both.
+cannot be made to; a plugin-shipped `hooks/hooks.json` binds in both. Cowork runs
+`permission_mode: "default"`, the hosted path runs `bypassPermissions`, and a
+hook binds under both.
+
+**`SessionStart` hooks do not fire in Cowork.** Nothing depends on one today, so
+do not put per-session setup — seeding state, injecting project context — in
+one: it would silently not run. `PreToolUse` does fire. Both were probed live;
+where an upstream issue thread says otherwise, the probe wins. Dates, probes and
+thread numbers: ADR-0005.
 
 Hook scripts run in the VM: **stdlib-only Python, no network** — the same rule
 as skill `scripts/`. A hook must never raise; every failure path falls through
@@ -320,13 +290,11 @@ refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
 **Allow-lists are subtractive; hooks are not.** A per-agent `tools:` list can
 only narrow what the session already holds — the session's tool set is always a
 superset — so no allow-list can deny the *main thread* a tool one of its
-subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
-hook layer always could do it: `eval/harness/harness/context_policy.py` denies
-`image_read` when `agent_id` is absent. Don't re-derive a per-context policy
-design; it exists. What is missing is a production port into the shipped
-`hooks/` hook — the raw-write half has shipped. That port is **not** gated on
-calibrating the shadow window; the issue that owned the calibration closed
-`not planned` on 2026-08-09.
+subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and a
+per-context policy already exists in the harness
+(`eval/harness/harness/context_policy.py`) — don't re-derive one. It is unported
+to the shipped `hooks/` hook, and ADR-0006 is where its portability problem and
+current blocker are recorded; read that before proposing the port.
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and
@@ -361,8 +329,7 @@ deferral being on, and what flipping it would cost: `docs/architecture.md`,
 Everything an agent needs at runtime lives inline in its `.md`. Do **not**
 split per-topic reference material (e.g. per-record-type extraction tables)
 into sibling files for the agent to `Read` on demand, and do **not** assemble
-them into the body at build time. Decided 2026-07-27 after measuring both;
-tried on `record-extractor` (issue #702, closed) and reverted. Revisit only
+them into the body at build time. Both were measured and reverted; revisit only
 with a mechanism that cannot silently skip. What each alternative measured,
 and the ownership cost knowingly accepted: `docs/architecture.md`, "Agent
 bodies are self-contained — do not split them".
@@ -395,11 +362,12 @@ Three architectural rules made this design necessary:
   ephemeral; only the project folder persists. Anything that needs to
   live across sessions has to live in the project folder — `research.json`,
   `tree.gedcomx.json`, or the `results/` directory of search-result
-  sidecar files (`results/<log_id>.json`, see
-  `docs/specs/research-schema-spec.md` §5.4.1). There is no
+  sidecar files (`results/<log_id>.json` — `research-schema-spec.md`,
+  "Sidecar result files"). There is no
   `~/.cowork-genealogy/` to write to.
 - **No shared SKILL.md reference loading.** Claude Code's relative-
-  path resolution from SKILL.md is unreliable (issue #17741). Shared
+  path resolution from SKILL.md is unreliable (upstream Claude Code issue
+  #17741). Shared
   reference docs across skills are duplicated, not linked from a
   `packages/engine/plugin/references/` location.
 - **No plugin-level CLAUDE.md auto-load.** Anthropic's plugin docs are
@@ -437,7 +405,7 @@ change, with different (and easy-to-undercount) site lists:
   and `packages/schema/schemas/`), the `CLOSED_ENUMS` set in `validator.ts`, and the
   prose tables/discussion in `research-schema-spec.md`. **Do not hand-edit the TS
   union**: `packages/schema/src/enums.generated.ts` is emitted from that package's
-  own `enums.schema.json` by `scripts/gen-enums.mjs`, chained into `build`,
+  own `enums.schema.json` by `packages/schema/scripts/gen-enums.mjs`, chained into `build`,
   `typecheck` and each app's `dev`, and gitignored (ADR-0008 tier 2). Every
   closed enum in `enums.schema.json` is generated, with no exceptions —
   `gen-enums.mjs` throws rather than let a hand-written union shadow a generated
@@ -462,32 +430,23 @@ The interview lives in `init-project/SKILL.md`.
 
 ## Auth architecture (`packages/engine/mcp-server/src/auth/`)
 
-All authenticated tools (`collections_search`, `collection_read`, `record_search`,
-`record_read`, `person_search`, `person_read`, `person_ancestors`, `fulltext_search`,
-`image_search`, `image_read`, `volume_search`, `same_person`, `person_record_matches`,
-`record_person_matches`, `person_person_matches`, `record_record_matches`, and
-`source_attachments`) must go through this module — do not re-implement token plumbing.
+Every tool that calls a FamilySearch endpoint must get its token through this
+module — do not re-implement token plumbing. To see which tools those are today,
+`grep -rl getValidToken src/tools/ src/utils/`.
 
-- `config.ts` — OAuth URLs, callback port, scopes, a per-user
-  config store at `~/.familysearch-mcp/config.json` (`loadConfig` /
-  `saveConfig`, used only for tunables like `wikiApiUrl`), and
-  `getClientId()` which reads the bundled
-  `packages/engine/mcp-server/config/familysearch.json` at runtime. The bundled file
-  is the **sole** source of the FS client ID — no env-var fallback,
-  no per-user override. On missing/corrupt bundled file it throws an
-  installation-framed error (not an LLM-actionable one), since the
-  file ships with the `.mcpb` and is always present under normal
-  install.
-- `pkce.ts` — `generatePKCE()` and `generateState()`, stdlib `crypto` only.
-- `tokenManager.ts` — `saveTokens` / `loadTokens` / `clearTokens` /
-  `isExpired` against `~/.familysearch-mcp/tokens.json`. All file ops
-  return `null` rather than throwing on missing/corrupt input.
-- `refresh.ts` — **`getValidToken()` is the single entry point** for
-  authenticated tools. It loads tokens, auto-refreshes if expired, and
-  throws an LLM-instruction error ("Call the login tool to
-  authenticate.") when no valid session is available.
-- `login.ts` — Full OAuth flow (HTTP callback server + browser launch +
-  code exchange + token save). Returns `LoginResult`, never throws.
+Four rules hold across the module:
+
+- **`getValidToken()` (`refresh.ts`) is the single entry point.** It loads
+  tokens, auto-refreshes if expired, and throws an LLM-instruction error
+  ("Call the login tool to authenticate.") when there is no valid session.
+- **The bundled `config/familysearch.json` is the sole source of the FS client
+  ID** — no env-var fallback, no per-user override. A missing or corrupt file
+  throws an installation-framed error, not an LLM-actionable one: it ships with
+  the `.mcpb` and is always present under a normal install.
+- **Token file ops return `null` rather than throwing** on missing or corrupt
+  input (`tokenManager.ts`), and `login.ts` returns a `LoginResult` rather than
+  throwing. Keep new code in this module to that shape.
+- **Stdlib `crypto` only** in `pkce.ts`.
 
 ### Secrets/config convention
 
@@ -515,9 +474,7 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | `popStatsUrl` | `place_population` | Optional | Base URL of the Pop Stats API. Read directly in `src/tools/place-population.ts`; defaults to `DEFAULT_POP_STATS_URL` when absent. |
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
 | `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey()` in `src/auth/config.ts` (config-only — never `process.env`). Written by the `configure_openrouter` tool. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent so Claude can prompt the user. |
-| `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel()` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`qwen/qwen3-vl-235b-a22b-instruct`) when absent. |
-| `learningCenterDir` | (future) | Optional | Path to the pre-crawled learning center markdown files. Read by `getLearningCenterDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
-| `libraryDir` | (future) | Optional | Path to the pre-crawled library markdown files. Read by `getLibraryDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
+| `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel()` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
 
 Each `get*` helper throws an LLM-instruction error when its required
 field is missing — the error message tells Claude what to put in the
@@ -605,12 +562,10 @@ findings are lanes 1–2; prose edits never compensate for a tool or eval bug.
 **Lane 4 means prose is the last resort, not the destination.** Apply ADR-0011's
 first question — *can this be decided by reading the project documents alone?*
 If yes it is a writer-tool precondition, where it binds everywhere and cannot be
-argued with. Measured while converting `proof-conclusion` to a skill-agent pair:
-five behaviours on one fixture were each stated correctly in the body, read, and
-not followed; each held on the first run after moving into `research_append`,
-and several of the rewordings broke a neighbouring test on the way, because a
-prompt has no scope. Full version:
-`docs/skill-lifecycle.md` §5.
+argued with. A prompt has no scope: rewording one rule in a body routinely
+breaks a neighbouring test, and a rule the model reads is not a rule the model
+follows. The measurement behind that: `docs/skill-lifecycle.md`, "Improve the
+skill".
 
 ### A new lint must be proven to fail
 
@@ -635,7 +590,9 @@ advertises — the hosted control plane runs `bypassPermissions` with no allowli
 Cowork loads the plugin whole. A skill's `allowed-tools` is a **grant, not a
 restriction**: the field that removes a tool from the pool is `disallowed-tools`, which
 no skill here declares, so a deny list derived as the complement of a grant inverts the
-field's meaning. The unit harness still derives one; retiring it is open work.
+field's meaning. The unit harness grants every registered MCP tool to every skill, and
+`compute_allowed_tools` survives only to feed an advisory validator — do not rebuild a
+narrowing on top of it.
 
 The boundary, so this is not over-applied: emulate production's *permission model*,
 construct the test's *inputs* freely. A deny that hides the answer from the agent — the
@@ -701,8 +658,7 @@ Where to look first:
 - **`src/utils/http.ts`** — `fetchWithTimeout()` is the only correct way to call
   an external service. Node's global `fetch` never times out on its own; a
   stalled upstream connection (FamilySearch/Imperva, the wiki-query-api
-  sidecar, OpenRouter) hangs the call forever otherwise — confirmed live when
-  `volume_search` hung for 236 minutes. Every tool that touches
+  sidecar, OpenRouter) hangs the call forever otherwise. Every tool that touches
   the network calls this instead of the global `fetch` directly; it is the
   only file allowed to (enforced by `tests/packaging/no-bare-fetch.test.ts`).
   Default timeout 30s; pass a longer one as the third argument (180s for
@@ -723,6 +679,14 @@ Where to look first:
   (e.g. `volume_search`, `place_population`, `external_links_search`,
   `place_distance`, `wiki_place_page`); skills/persisted artifacts use only the
   name. It builds on the low-level fetchers in `src/utils/place-api.ts`.
+- **`src/utils/gedcomx-convert.ts`** — the round-trip between full GedcomX and
+  the simplified format (`docs/specs/simplified-gedcomx-spec.md`; implementation
+  spec `docs/specs/gedcomx-convert-spec.md`). Don't hand-map between the two.
+- **`src/utils/search-helpers.ts`** — shared input validators, output shaping and
+  error parsing for `record_search`, `person_search`, `collections_search` and
+  `volume_search`. `parseUpstreamErrorBody` is also used by `person_ancestors`,
+  and `formatYearRange` is the single date-range format shared by
+  `collections_search` and `volume_search`.
 - **`src/utils/place-api.ts`** — the low-level FamilySearch Places API
   fetchers (raw HTTP, no caching): `searchPlace`, `getPlaceById`,
   `getPlaceByPrimaryId`, `getPlaceRepIds`, `getPlaceCandidateNames`,
@@ -770,21 +734,17 @@ explicitly with the Agent tool.
   the `review-ready` skill; never edits an issue, the board, or any code.
   Spec: `docs/specs/task-review-spec.md`.
 
-**Three others were deleted on 2026-08-02** (issue #1161): `spec-review`,
-`mcp-tool-scaffolder`, and `cowork-skill-builder`. All three had gone stale
-after the `packages/engine/` move — unresolvable paths, broken template links —
-and `mcp-tool-scaffolder` additionally instructed callers to send
-`User-Agent: genealogy-mcp-server/<version>` **on every request**, which is
-exactly the non-browser UA Imperva 403s on any FamilySearch endpoint. Tooling
-that looks authoritative and is wrong is worse than no tooling.
+There is no scaffolding subagent for tools, skills, or spec review. Use the
+templates directly:
 
-What replaced them is the templates they pointed at, used directly:
-
-| Was | Do instead |
-|---|---|
-| `mcp-tool-scaffolder` | Copy `src/tools/wikipedia.ts` and its sibling four files. The site list is in `DEVELOPMENT.md` → "How to add a new feature" and `docs/architecture.md` §3. |
-| `cowork-skill-builder` | Copy `packages/engine/plugin/skills/search-wikipedia/`. Its architectural rule still stands: **no network in skill `scripts/`.** |
-| `spec-review` | Read the implementation against `docs/specs/<tool>-tool-spec.md` yourself, or ask a general-purpose subagent to, quoting both sides. The spec is still the source of truth; only the automation is gone. |
+- **A new MCP tool** — copy `src/tools/wikipedia.ts` and its sibling four files.
+  The full site list is in `DEVELOPMENT.md` → "How to add a new feature" and
+  `docs/architecture.md` → "The engine's three-way decomposition".
+- **A new skill** — copy `packages/engine/plugin/skills/search-wikipedia/`, and
+  keep its rule: **no network in skill `scripts/`.**
+- **Checking an implementation against its spec** — read it against
+  `docs/specs/<tool>-tool-spec.md` yourself, or ask a general-purpose subagent
+  to, quoting both sides. The spec is the source of truth.
 
 ## Reviewing a PR
 
