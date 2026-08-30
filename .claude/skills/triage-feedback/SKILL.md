@@ -140,6 +140,18 @@ issue holding N findings as rows.
 The instructions are the product of this skill. Whoever picks the card up has
 none of your context, and `/review-ready` will read it before a junior does.
 
+**Retitle it first.** A submission is titled `[feedback] 2026-08-25T22:22Z`,
+which is a filing stamp, not a task. It reaches Ready as an ordinary issue and
+someone self-serves from that column by reading titles — and `/fill-ready`,
+`/audit-board` and `/merge-recent-issues` all rank, cluster and search on them.
+Give it the same shape as every other issue on the board: what is wrong, stated
+so it can be recognised without opening it.
+
+```sh
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \
+  --title "<what is wrong, in a line>"
+```
+
 Write into the body:
 
 - **`**Touches:**`** — the files the work would change, repo-relative,
