@@ -8,13 +8,17 @@ Schuylkill County dated 1875, seven years before Michael's earliest
 confirmed presence there (1882) — sitting in the tree, already cited to
 a real source description.
 
-- **Objective / Questions / Hypotheses / Log:** identical to
-  `first-plan-migration-hypothesis` (see that scenario's README).
+- **Objective / Questions / Hypotheses / Log:** same shape as
+  `first-plan-migration-hypothesis` (see that scenario's README), with one
+  divergence — `questions[0].rationale` and `hypotheses[0].notes` both end
+  "for Michael himself" here, since this scenario adds a second person
+  (Patrick) with evidence in scope, and the wording needed to be explicit
+  that no direct record of the move exists *for Michael* specifically.
 - **Plans:** none — `plans: []`. This is the FIRST plan for the question.
 - **GedcomX persons:** I1 (Michael Sheahan, subject), I2 (Patrick
-  Sheahan, brother, FAN-cluster), I3 (their father, unnamed stub, only
-  to establish the sibling relationship via two `ParentChild` links —
-  carries no facts).
+  Sheahan, brother, FAN-cluster), I3 (parent, gender `Unknown`, unnamed
+  stub, only to establish the sibling relationship via two `ParentChild`
+  links — carries no facts).
 - **Sources:** `S1`, a deed/land record for Patrick's 1875 purchase,
   `quality: 3` (a real, cited record — not an unverified tree import).
 
@@ -33,16 +37,20 @@ prior in the real case), which would have been a relevant clue the
 agent didn't surface until directly prompted.
 
 This scenario re-derives that shape with entirely invented names, no
-real FamilySearch identifiers, and decade-level dates — the real case
+real FamilySearch identifiers, and year-precise (not decade-level) dates
+picked for the fixture's own timeline — the real case
 involved a private individual's actual family history and real
 FamilySearch person IDs, which do not belong in a committed test. It
 deliberately reuses `first-plan-migration-hypothesis`'s place and
 `localities` entry so the only new variable under test is the
 already-sourced sibling fact, not the place infrastructure.
 
-**First-cut caveat — verify before committing:** confirm Patrick's 1875
-land purchase is unambiguous FAN-cluster evidence a plan should surface
-(not so subtle the test is unfair, not so on-the-nose it grades itself).
+Verified across two PR #2004 review rounds and multiple full-suite runs:
+Patrick's 1875 land purchase is unambiguous FAN-cluster evidence a plan
+should surface, and the fixture reliably discriminates a response that
+actually reads it from one that only notices the source exists (see
+`test_survey_surfaces_already_attached_fan_facts` in
+`eval/harness/validators/test_research_plan.py`).
 
 ## Used by
 
