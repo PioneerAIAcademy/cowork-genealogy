@@ -61,11 +61,11 @@ descriptions distinct so Claude picks the right one.
     },
     "yearFrom": {
       "type": "number",
-      "description": "Start of year range filter."
+      "description": "Start of year range filter. Must be provided together with yearTo, and must be <= yearTo."
     },
     "yearTo": {
       "type": "number",
-      "description": "End of year range filter."
+      "description": "End of year range filter. Must be provided together with yearFrom, and must be >= yearFrom."
     },
     "recordType": {
       "type": "string",

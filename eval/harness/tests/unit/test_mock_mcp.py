@@ -305,11 +305,17 @@ def test_record_search_omits_ranked_when_test_declares_no_rank_fixture(tmp_path)
     assert "ranked" not in body
 
 
+@pytest.mark.requires_engine_build
 def test_fulltext_search_strips_textDocument_once_staged(tmp_path):
     """Mirrors fulltext_search.ts's own strip (issue #1826): once staging
     succeeds, the inline textDocument must not reach the agent — the fixture's
     canned response carries it unconditionally (pre-strip upstream shape), so
-    the mock must strip it the same way the real tool does."""
+    the mock must strip it the same way the real tool does.
+
+    Skips when the build is absent, like the record_search staging tests
+    above: staging runs through the COMPILED stager, so with no build
+    `staged` is never set and this fails for an environmental reason rather
+    than a real one."""
     server, call_log, tools_by_name = create_mock_server(
         ["fulltext-search-flynn-witnesses"], FIXTURES_DIR, workspace=tmp_path
     )

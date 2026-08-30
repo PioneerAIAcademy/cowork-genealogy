@@ -54,8 +54,8 @@ FTS and indexed search are completely different systems:
 - **Default is OR** — at least one term must appear. Always use `+` to require terms.
 - **Unique strength:** Finding non-principal mentions (witnesses, neighbors, heirs).
 
-FTS results are derivative sources (original → image → AI transcript →
-textDocument, ~10% error rate). **Always verify against the original image.**
+FTS results are derivative sources (original → image → AI transcript,
+~10% error rate). **Always verify against the original image.**
 
 ## Steps
 
