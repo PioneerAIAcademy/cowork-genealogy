@@ -147,3 +147,31 @@ def text_response() -> str:
     overriding this fixture with the text under test.
     """
     return ""
+
+
+@pytest.fixture
+def activated() -> bool | None:
+    """Whether the skill activated (derived by derive_activated).
+
+    None = unknown (e.g. abort before derivation). None is the right standalone
+    default: a validator gating on activated should skip when unknown.
+    """
+    return None
+
+
+@pytest.fixture
+def num_turns() -> int:
+    """SDK-reported turn count. Zero is the right default (same as abort)."""
+    return 0
+
+
+@pytest.fixture
+def output_tokens() -> int:
+    """SDK-reported output token count. Zero is the right default."""
+    return 0
+
+
+@pytest.fixture
+def aborted_reason() -> str | None:
+    """Abort reason if the run was aborted. None = completed normally."""
+    return None

@@ -66,7 +66,7 @@ Record data arrives in one of four ways:
    Number (an imageId like `004022578_00190`). **Do not call `image_read`
    yourself** — delegate to the **`image-reader` subagent** by invoking
    `@plugin:image-reader`, once per image (it reads exactly one). By
-   default it OCRs the scan cheaply and fast (a hosted Qwen model) and
+   default it OCRs the scan cheaply and fast (a hosted Gemini Flash model) and
    returns a full text transcription plus an extracted-facts list — the
    raw image never enters your context (accumulated base64 overflows the
    transport's ~1 MiB buffer and crashes the run).
@@ -78,13 +78,6 @@ Record data arrives in one of four ways:
    scan reads is the subagent's report to make, not yours to pre-empt.
    Reporting "image unreachable" without an actual delegation attempt is a
    completeness failure.
-
-   If the returned transcription comes back heavy with `[illegible]` marks or
-   otherwise looks unreliable (faded ink, difficult handwriting,
-   Kurrentschrift), a higher-accuracy but slower and far more expensive
-   re-read is available: `@plugin:image-reader-opus`, invoked the same way,
-   one image at a time. Use it only when there's a real reason to expect a
-   better read — never as the default.
 
    **`looking_for` is a search key, not the answer.** Phrase it as *who
    or what* to locate — "the christening entry for a Christina born ~Jan

@@ -337,6 +337,21 @@ agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the pl
 	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run pytest tests/test_plugin_agents.py -q -rs
 
+.PHONY: probe-agent-binding
+probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallowedTools: actually bind under bypassPermissions? (6 short sessions, ~13k tokens)
+	# agent-smoke above reads what the runtime RESOLVED; this reads what it
+	# BOUND, which is the gap issue #1084 names. Six arms — granted, granted
+	# AND denied, omitted — each with tool search off and on, spawn a probe
+	# agent and check whether a harmless tool call actually landed, read off
+	# the tool_result rather than the agent's own prose.
+	#
+	# Answered 2026-08-30 (Claude Code 2.1.251, SDK 0.2.128): BOTH bind, so a
+	# deny is redundant with omitting the tool. Re-run when the CLI or the SDK
+	# moves, or before adding a deny on the strength of it binding.
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python dev/probe_agent_binding.py
+
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test

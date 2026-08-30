@@ -124,6 +124,15 @@ function redactLivingPersons(selected: { relativePath: string; buf: Buffer }[]):
 }
 
 export const MAX_FIELD_CHARS = 10_000
+
+// Email, "what you asked" and "what the agent did" are all optional at the dialog
+// (issue #1919), so any of the three can arrive empty. Say so rather than printing
+// a heading or a bullet with nothing after it — a triager cannot otherwise tell
+// "the reporter left it blank" from "the bundler lost it".
+// Mirrored verbatim in apps/server/app/feedback.py.
+export const NOT_PROVIDED = '_(not provided)_'
+
+const orBlank = (value: string): string => (value.trim() ? value : NOT_PROVIDED)
 export const FEEDBACK_SCHEMA_VERSION = 1
 
 export type ProjectFile = {
@@ -467,7 +476,7 @@ function renderFeedbackMarkdown(args: {
   const sections = [
     '# Feedback',
     '',
-    `- **From:** ${fields.email}`,
+    `- **From:** ${orBlank(fields.email)}`,
     `- **When:** ${timestamp}`,
     `- **Viewer version:** ${viewerVersion}`,
     `- **Project folder:** ${projectFolder}`,
@@ -475,11 +484,11 @@ function renderFeedbackMarkdown(args: {
     '',
     '## What I asked',
     '',
-    fields.userPrompt,
+    orBlank(fields.userPrompt),
     '',
     '## What the agent did',
     '',
-    fields.agentDid
+    orBlank(fields.agentDid)
   ]
 
   // Omitted on a positive report and when a bug reporter didn't know the ideal

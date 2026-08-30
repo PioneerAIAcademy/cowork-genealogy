@@ -37,6 +37,7 @@ import {
 } from "../utils/search-helpers.js";
 import { toArk } from "../utils/ark.js";
 import { stageSearchResults } from "../utils/results-staging.js";
+import { compactStagedRecordSearch } from "../utils/staged-compaction.js";
 import { readProjectJson } from "../utils/project-io.js";
 import { withRetry } from "../utils/place-resolver.js";
 import { fetchWithTimeout } from "../utils/http.js";
@@ -1063,73 +1064,12 @@ export async function recordSearchTool(
   }
 
   // Whenever results were staged, slim the INLINE projection so a broad search
-  // can't overflow the model's context — the bulk lives in the staged file,
-  // which rank_search_matches (and record_read) read host-side, and the
-  // remaining flat stub fields still carry names/dates/places for triage. This
-  // is unconditional (no opt-in flag): once staged, nothing needs the dropped
-  // fields inline, so the overflow protection can't be forgotten by the caller.
-  //
-  // Safe because the staged file is already serialized to disk by the awaited
-  // stageSearchResults above, so mutating the inline copy cannot corrupt the
-  // sidecar — the sidecar, the viewer's SidecarResultCard, and the eval fixtures
-  // all keep full fidelity. Never slim when `staged` is null (an un-staged
-  // exploratory search — nothing was retained to re-read from).
-  //
-  // Measured against the 3,380 rows of a real 140-search session: gedcomx aside,
-  // collectionUrl was 14.0% of row bytes, collectionTitle 9.4%, empty
-  // treeMatches 2.9%. primaryId (4.6%) is deliberately KEPT — rank_search_matches
-  // skips any candidate lacking it (rank-search-matches.ts), so dropping it would
-  // silently disable the re-ranker.
-  //
-  // `batchNumber` is KEPT for the same class of reason (#1592): it is the only
-  // route to a batch the agent can enumerate, and the staged case is the normal
-  // one — dropping it here would leave the field working only in the exploratory
-  // searches nobody logs. Being flat and top-level, it survives this block by
-  // construction; the test that pins it is what stops a future `delete`.
-  //
-  // It is not free on every call shape, and the cheap-looking dedupe is declined
-  // deliberately. On an ordinary search most rows carry none. On a
-  // BATCH-ANCHORED search every row repeats the batch the caller just sent —
-  // ~25 bytes x `count`, already echoed in `query.batchNumber`. Suppressing it
-  // when it equals `input.batchNumber` would save that, at the cost of making
-  // presence depend on how the search was phrased: the same record would carry
-  // the field or not depending on the query, and a row read out of the staged
-  // sidecar (where `query` is a sibling, not an ancestor) would lose its only
-  // copy. A field whose meaning is stable is worth more here than 2.5 KB on the
-  // one call shape where the caller demonstrably already knows the value.
+  // can't overflow the model's context. What is dropped and why — including the
+  // fields deliberately KEPT — is documented on `compactStagedRecordSearch`.
+  // It lives in `utils/` because the eval harness runs the same function on its
+  // canned responses; mirroring it in Python would make the copy that drifts.
   if (out.staged) {
-    const collections: Record<string, string> = {};
-    for (const r of out.results) {
-      delete r.gedcomx;
-
-      // Derivable from collectionId; nothing reads it off the inline stub.
-      delete r.collectionUrl;
-
-      // Hoist the repeated per-row title into one response-level map.
-      if (r.collectionId && r.collectionTitle) {
-        collections[r.collectionId] = r.collectionTitle;
-        delete r.collectionTitle;
-      }
-
-      // `treeMatches: []` on most rows — say nothing instead of saying "none".
-      if (Array.isArray(r.treeMatches) && r.treeMatches.length === 0) {
-        delete (r as Partial<RecordSearchResult>).treeMatches;
-      }
-
-      // FamilySearch repeats identical event entries (e.g. the same Census
-      // date+place twice). Exact-duplicate removal only — no type filtering,
-      // since Race/MaritalStatus are real triage signal.
-      if (Array.isArray(r.events) && r.events.length > 1) {
-        const seen = new Set<string>();
-        r.events = r.events.filter((e) => {
-          const k = JSON.stringify(e);
-          if (seen.has(k)) return false;
-          seen.add(k);
-          return true;
-        });
-      }
-    }
-    if (Object.keys(collections).length > 0) out.collections = collections;
+    compactStagedRecordSearch(out);
   }
 
   // Rank host-side when the caller named a subject. This is the "always call

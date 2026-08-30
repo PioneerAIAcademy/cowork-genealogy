@@ -997,7 +997,7 @@ images are digitized, indexed, or full-text processed.
 | `dev/try-volume-search.ts` | Create — one-shot smoke test |
 | `tests/tools/volume-search.test.ts` | Create — unit tests |
 | `README.md` | Add `volume_search` to the tool catalog |
-| `CLAUDE.md` | Add `volume_search` to the authenticated-tools list; ensure the code-reuse note points at `src/utils/place-resolver.ts` as the home of `standardPlaceToPlaceId`/`placeIdToRepIds` (not the old `image-search.ts`) |
+| `CLAUDE.md` | Point the code-reuse note at `src/utils/place-resolver.ts` as the home of `standardPlaceToPlaceId`/`placeIdToRepIds` (not the old `image-search.ts`). Nothing to add for the tool being authenticated — the auth section carries the rule and tells you to grep for `getValidToken`, not a tool list |
 
 ### Edits for record-type groups and structured dates
 
