@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_search_records_jurisdiction_hint",
+    "skill": "search-records",
+    "name": "Follow a returned jurisdictionHints candidate before reverting to the searched jurisdiction",
+    "type": "positive",
+    "description": "Issue #1642 Finding 1 (mercyokum), the validator this test wires up: a marriage search scoped to the plan item's jurisdiction (Union County, South Carolina) comes back nil with a jurisdictionHints block naming the subject's own Birth-fact place (Yell County, Arkansas) as the top candidate. SKILL.md's Step 4 jurisdictionHints rule requires the next 1-2 record_search calls to set recordCountry/residencePlace/birthPlace/marriagePlace to that place before reverting. Ground truth: the jimmie-jewel-neal e2e incident (2026-07-30_23-05-46) where the agent ran one Arkansas-scoped search then reverted to nine more South Carolina searches, missing both grandparent findings. Hand-authored -- no committed run captured a real jurisdictionHints payload to model this on.",
+    "tags": [
+      "search",
+      "marriage",
+      "jurisdiction-hints",
+      "jurisdiction-hints-followed"
+    ]
+  },
+  "input": {
+    "user_message": "Execute plan item pli_001 -- search FamilySearch for Jesse Neal's marriage record.",
+    "scenario": "jesse-neal-marriage-jurisdiction-hint"
+  },
+  "mcp_fixtures": [
+    "record-search-neal-marriage-arkansas-recordsubdivision",
+    "record-search-neal-marriage-arkansas-residenceplace",
+    "record-search-neal-marriage-arkansas-marriageplace",
+    "record-search-neal-marriage-nil-with-jurisdiction-hint"
+  ],
+  "judge_context": [
+    "GENERAL RULE UNDER TEST: after a record_search response carries a non-empty jurisdictionHints, the next 1-2 record_search calls in the same plan-item sequence must try the top-ranked candidate's place (here, Yell County, Arkansas -- the subject's own Birth-fact place) before reverting to the originally-searched jurisdiction (Union County, South Carolina).",
+    "This is graded here primarily by a deterministic validator (test_jurisdiction_hints_followed), which reads tool_calls directly -- it does not depend on the judge. Base dimensions still apply normally.",
+    "Compliant behavior: the first record_search nils on South Carolina and returns jurisdictionHints; one of the next two record_search calls sets a place field (recordCountry, residencePlace, birthPlace, or marriagePlace) to a value containing 'Arkansas' or 'Yell', and that call returns a positive match, which the skill logs and reports.",
+    "Non-compliant behavior: the skill re-runs South Carolina variants (spelling, date range, collection) after the nil, without ever trying the Arkansas candidate the hint named.",
+    "Do not penalize the skill for also eventually returning to South Carolina after trying Arkansas -- the rule requires trying the hint within the next 1-2 calls, not abandoning the original jurisdiction forever."
+  ],
+  "judge_reads_files": true
+}

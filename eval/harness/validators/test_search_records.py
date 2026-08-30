@@ -145,10 +145,17 @@ _CLAIM_PATTERNS = (
 # Any of these in the note satisfies the rule. The skill does not have to use
 # SKILL.md's exact sentence — it has to say, in some form, that the structure
 # is an inference rather than something the record stated.
-_ROLE_WORD = (
-    r"(?:heads?|wife|wives|husbands?|sons?|daughters?|fathers?|mothers?|"
-    r"parents?|relationships?|co-?residents?|roles?)"
-)
+_ROLE_WORD = r"(?:heads?|relationships?|co-?residents?|roles?)"
+# Deliberately excludes the bare kinship words (wife/husband/son/daughter/
+# father/mother/parent) that _ROLE_ASSERTIONS/_CLAIM_PATTERNS use elsewhere:
+# "Mother indexed as Sarah A. Price" would satisfy an index-near-role check
+# on the NAME being indexed while a flat, unhedged "Household head: Thomas
+# Flynn" sits elsewhere in the same note -- the marker would fire for a
+# reason unrelated to the household-relationship claim it exists to qualify.
+# "household" is excluded too: it is one of the initial describes_household
+# gate words, and adding it here would let ANY "indexed ... household"
+# combination satisfy the marker regardless of what "indexed" modifies
+# (chesworthrm review, issue #1642; verified against all 28 pinned cases).
 
 _INFERENCE_MARKERS = (
     r"infer",             # infer, infers, inferred, inferring, inference(s) --
@@ -528,7 +535,14 @@ def test_jurisdiction_hints_followed(tool_calls, test):
     tokens = _place_tokens(top_place)
     if not tokens:
         pytest.skip("hint place had no matchable tokens")
-    place_fields = ("recordCountry", "residencePlace", "birthPlace", "marriagePlace", "anyPlace")
+    place_fields = (
+        "recordCountry", "recordSubdivision", "residencePlace", "birthPlace",
+        "marriagePlace", "anyPlace",
+    )  # recordSubdivision added (issue #1642): record-search.ts's own
+    # searchedPlace computation reads recordSubdivision ahead of recordCountry
+    # for a marriage search, and a real run confirmed the model reaches for
+    # it naturally -- the field was missing here, false-failing a run that
+    # tried the hinted place on its very next call.
     next_calls = record_calls[hint_pos + 1: hint_pos + 3]
     followed = False
     for c in next_calls:

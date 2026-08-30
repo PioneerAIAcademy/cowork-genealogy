@@ -113,6 +113,18 @@ it("every Name-lever row was actually found", () => {
   expect(NAME_LEVER_ROWS.length).toBeGreaterThanOrEqual(9);
 });
 
+it("the same number of rows still produce an anchor check", () => {
+  // deriveShape() decides whether a row applies by matching its "API change"
+  // cell prose (`clear q.surname` / `keep q.surname`). A row whose wording
+  // changes to something the regex does not recognize is silently SKIPPED,
+  // not failed -- the loop below only emits an `it()` for rows that apply,
+  // so a row falling out of that set produces no red test, just a smaller
+  // suite. This pins the count so that drop is visible (issue #1642,
+  // chesworthrm's review).
+  const checked = ALL_ROWS.filter((r) => deriveShape(r).applies);
+  expect(checked.length).toBe(6);
+});
+
 for (const row of ALL_ROWS) {
   const check = deriveShape(row);
   if (check.applies === false) continue;

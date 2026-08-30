@@ -40,6 +40,19 @@ try the top-ranked hint's place before reverting.
 `jurisdiction-hints-followed`. Direct proof tests in
 `eval/harness/tests/unit/test_search_records_jurisdiction_hints_validator.py`.
 
+**Correction (chesworthrm review):** the guard above was written but never
+actually wired -- no test carried the `jurisdiction-hints-followed` tag and no
+fixture returned a `jurisdictionHints` field, so it passed vacuously. Wired
+properly now: `ut_search_records_jurisdiction_hint` (new scenario
+`jesse-neal-marriage-jurisdiction-hint`, four new `record_search` fixtures)
+carries the tag and a fixture whose response includes `jurisdictionHints`.
+Running it caught a second, real bug in the same pass: the model's actual
+next call used `recordSubdivision` -- the exact field
+`record-search.ts`'s own `searchedPlace` computation reads for a marriage
+search -- which the validator's `place_fields` tuple was missing, so a run
+that had genuinely complied still failed. Both are fixed and the test now
+passes end-to-end (all 7 dimensions score 3).
+
 ### F2 — the skill asks permission instead of running a lever it already mandates (mercyokum, Finding 3)
 
 **Did:** `ut_search_records_nickname_bitsie`
@@ -135,7 +148,7 @@ Investigating the two real anomalies found three distinct causes:
 3. `_t9p` was a harness activation flake unrelated to content — all
    validators passed and the judge scored 3/3 on every dimension, but
    `skills_invoked` came back empty, which `derive_activated`
-   (`runlog.py:250`) treats as non-activation regardless. The harness's own
+   (`eval/harness/harness/runlog.py`) treats as non-activation regardless. The harness's own
    docstring already names this as a known, accepted Agent SDK
    skill-discovery bug ("re-runs typically clear it") — confirmed: it passed
    on the very next run with no skill change.

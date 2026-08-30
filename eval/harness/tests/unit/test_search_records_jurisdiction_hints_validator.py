@@ -80,6 +80,23 @@ def test_hint_followed_two_calls_later_passes():
     check(calls, TAGGED)
 
 
+def test_hint_followed_via_recordsubdivision_passes():
+    """Real run, ut_search_records_jurisdiction_hint (issue #1642): the model
+    followed the hint on its very next call using recordSubdivision, not one
+    of the other four fields -- record-search.ts's own searchedPlace
+    computation reads recordSubdivision for a marriage search, and the
+    validator's place_fields tuple was missing it, false-failing a run that
+    had actually complied."""
+    calls = [
+        rs_call(
+            {"surname": "Neal", "recordCountry": "United States", "recordSubdivision": "South Carolina"},
+            hint_response("Yell County, Arkansas"),
+        ),
+        rs_call({"surname": "Neal", "recordCountry": "United States", "recordSubdivision": "Arkansas"}),
+    ]
+    check(calls, TAGGED)
+
+
 def test_hint_ignored_reverting_to_prior_jurisdiction_fails():
     """The real jimmie-jewel-neal miss: a jurisdictionHints candidate names
     Arkansas, and every subsequent call stays scoped to South Carolina --
