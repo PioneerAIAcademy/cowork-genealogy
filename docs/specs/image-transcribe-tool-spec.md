@@ -567,6 +567,56 @@ changing it.
 number, so a hunt driven by `ark` rather than `imageId` never advances the budget.
 Resolving an ARK to its group is deliberately out of scope.
 
+### 5.9 Runtime failure: one retry, transport only
+
+**The measurement.** Over the committed e2e corpus, 30 of 175 classifiable
+`image_transcribe` calls (17.1%) were lost before reaching a model — 24 at the
+transport, 6 to the timeout. The true corpus rate is unrecoverable, bounded
+[7.6%, 63.2%], because the 14-day capture strip removed 219 calls; the report is
+`make e2e-transcribe-failures` and every rate it prints carries its denominator.
+
+**Why it is not a standing block.** Two probes found the path healthy minutes
+after real failures — 70/70 host-to-OpenRouter POSTs with a realistic multi-MB
+body, and 46/46 later the same evening on a host that had just lost ~25–50% of
+calls in a ~100-minute window. IPv6 misconfiguration, path-MTU blackholing,
+conntrack exhaustion and concurrency were each measured and ruled out. The
+failures are **intermittent**.
+
+**What it costs when it is not retried.** On one run, 2 of 4 calls were lost and
+the agent generalised from them — *"the OCR service is network-unreachable in
+this environment… All further image-reader attempts will encounter the same
+block"* — abandoned the image route entirely, and concluded from an indexed
+namesake, writing a false parentage into the tree. The reachability failure did
+not tax that result, it **selected** it. That inference is the damage, and it is
+reachable from the tool layer rather than from skill prose (ADR-0011).
+
+**The rule.** One retry, 1s apart, on a **transport** failure only. Never on a
+timeout. The two cost different amounts to re-attempt: a connect-level failure
+never reached OpenRouter, so it bills no inference and returns fast, while a
+timeout has already spent `OCR_TIMEOUT_MS` and a second attempt would double the
+worst case past the budget §5.7 is sized around. That objection is the reason no
+retry shipped earlier; splitting on the failure shape answers it rather than
+overriding it. The socket cause code must survive both attempts into the thrown
+message, or the classification the code exists for is lost exactly when needed.
+
+**Alternatives it beat.**
+
+- **Retry everything, including timeouts.** Rejected on the budget: 2 × 180s
+  exceeds what §5.7 sizes, for the failure shape least likely to succeed on a
+  second try.
+- **Retry more than once, with backoff.** Rejected as unmeasured. Nothing in the
+  corpus shows a third attempt would convert anything a second does not, and
+  each attempt is a live OCR call.
+- **Wait for the host-vs-provider classification first.** Rejected because the
+  classification does not change the action. Both hypotheses are "intermittent",
+  and a bounded retry is the right response to either. The classification remains
+  genuinely open — 0 of 30 committed failures carry a socket code, since every
+  one predates the change that surfaces it — and it is now an observability
+  question, not a gate on this fix.
+- **Fix it in skill prose** ("if a read fails, try once more"). Rejected per the
+  lane rule: the escalation prose this spec previously shipped fired zero times
+  on the page it was written for.
+
 ## 6. OpenRouter integration
 
 ### 6.1 Request
@@ -960,8 +1010,9 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
    parked in §15.9 below).
 7. **Batching / cost.** Worth a multi-image call later, or is one-per-call
    fine? (Kept out of v1.)
-8. **Fallback if OpenRouter is down** at runtime — degrade to a clean
-   NOT-READ→pivot-to-indexes, same as any fetch failure.
+8. ~~**Fallback if OpenRouter is down** at runtime.~~ RESOLVED 2026-08-30 — see
+   §5.9. Degrade to a clean NOT-READ→pivot-to-indexes still holds, but only
+   after **one** bounded retry on a transport failure.
 9. **User-invoked Opus transcription ("Flow 2") — parked, not requested.**
    Brainstormed alongside this spec and never asked for by a user, so it is
    recorded here rather than carried as work. The research workflow stays on
