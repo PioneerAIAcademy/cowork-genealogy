@@ -1,25 +1,9 @@
 {
-  "run_log": "v1_2026-08-21_19-08-50.json",
-  "annotator": "chesworthrm@familysearch.org",
+  "run_log": "v1_2026-08-23_19-10-10.json",
+  "annotator": "benteroyiembo@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_search_records_012",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_012",
+      "test_id": "ut_proof_conclusion_006",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,39 +11,47 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_012",
+      "test_id": "ut_proof_conclusion_006",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Tier justification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_012",
+      "test_id": "ut_proof_conclusion_006",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Narrative standalone",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_012",
+      "test_id": "ut_proof_conclusion_006",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Evidence completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_012",
+      "test_id": "ut_proof_conclusion_006",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_019",
+      "test_id": "ut_proof_conclusion_006",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -67,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_019",
+      "test_id": "ut_proof_conclusion_006",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -75,7 +67,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_019",
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -83,79 +91,111 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_019",
+      "test_id": "ut_proof_conclusion_007",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Tier justification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_019",
+      "test_id": "ut_proof_conclusion_007",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Narrative standalone",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_019",
+      "test_id": "ut_proof_conclusion_007",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_019",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -163,7 +203,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -171,23 +211,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_013",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_013",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_013",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -195,39 +219,47 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_013",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Tier justification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_013",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Narrative standalone",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_013",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Evidence completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_013",
+      "test_id": "ut_proof_conclusion_005",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_t9p",
+      "test_id": "ut_proof_conclusion_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -235,7 +267,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_t9p",
+      "test_id": "ut_proof_conclusion_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -243,7 +275,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_t9p",
+      "test_id": "ut_proof_conclusion_004",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -251,89 +283,41 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_t9p",
+      "test_id": "ut_proof_conclusion_004",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Tier justification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_t9p",
+      "test_id": "ut_proof_conclusion_004",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Narrative standalone",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_t9p",
+      "test_id": "ut_proof_conclusion_004",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Evidence completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_t9p",
+      "test_id": "ut_proof_conclusion_004",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Proof-conclusion fit",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
+      "test_id": "ut_proof_conclusion_004",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
+      "dimension_name": "Tree encoding",
       "llm_score": null,
       "corrected_score": null,
       "comment": null

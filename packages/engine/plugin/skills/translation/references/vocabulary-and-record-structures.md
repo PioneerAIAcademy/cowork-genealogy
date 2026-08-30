@@ -101,6 +101,12 @@ son of [father], and the maiden [bride], legitimate daughter of
 > [masculin/feminin], ne le [date] a [time], auquel il a declare
 > vouloir donner les prenoms de [given names].
 
+Translation: "In the year [year], on the [day] of the month of [month],
+before us [official], civil registrar of the commune of [town], appeared
+[declarant], [occupation], who presented to us a child of the
+[male/female] sex, born on [date] at [time], to whom he declared he
+wished to give the given names of [given names]."
+
 ### German death register
 
 > [Date] ist gestorben [name], des [father's name] und der [mother's

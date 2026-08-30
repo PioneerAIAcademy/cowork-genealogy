@@ -1115,47 +1115,59 @@ One file per skill in `eval/harness/validators/`, following pytest naming (`test
 - **Tool allowlist (advisory)** — warns when the skill called MCP tools not listed in its SKILL.md `allowed-tools` frontmatter. Does not fail the test — the session grants all tools. Operates on the tool calls list.
 - **Skill structural rules** — requirements from SKILL.md that are deterministically checkable (e.g., "every conflict must have ≥2 competing_assertion_ids"). Operates on the diff.
 
+### Three tiers
+
+Validators are split into three tiers:
+
+- **Tier 1 (gating):** `test_*` prefix. Failure = test fail, judge is skipped. The validator's function name appears in the judge prompt under "Deterministic validators that FAILED".
+- **Tier 2 (reporting):** `report_*` prefix. An `AssertionError` is a finding: it is fed to the judge as anonymous text under "Harness observations on the response text" and never gates the test outcome. The function name goes only to the run log (`output.warnings[]` with `kind: "prose_observation"`) for traceability. Use this tier when the harness can detect a pattern but cannot decide whether it is wrong — that decision belongs to the judge.
+  - **A broken tier-2 validator gates like tier 1.** A validator that declares an argument the harness does not supply, or raises anything other than `AssertionError`, is a bug in the validator rather than a finding about the run, so it fails the test and is recorded in the run log like any tier-1 failure. Its error text never reaches the judge — a harness diagnostic is not an observation about the response, and the judge is instructed to weigh whatever appears in that section.
+- **Advisory:** Existing `warnings.warn()` pattern inside `test_*` functions (e.g. `test_tool_allowlist`). Not surfaced to the judge.
+
 ### Conventions
 
 - Universal validators live in `eval/harness/validators/test_universal.py`
 - Skill-specific validators live in `eval/harness/validators/test_<skill>.py`, one file per skill
-- Validators are plain Python functions with the signature `def test_<name>(before_state, after_state, tool_calls)` and raise `AssertionError` on failure
+- Tier-1 validators are plain Python functions with the `test_` prefix; tier-2 validators use the `report_` prefix. Both raise `AssertionError` to signal a finding and take arguments from the same pool.
 - The harness calls validators as direct function calls (not via pytest subprocess) for speed and reliability
-- Developers can also run validators standalone with `pytest eval/harness/validators/ -v` for debugging — pytest invokes them with fixtures the harness provides; see `eval/harness/validators/conftest.py`
+- Developers can also run validators standalone with `pytest eval/harness/validators/ -v` for debugging — pytest invokes them with fixtures the harness provides; see `eval/harness/validators/conftest.py`. Both tiers are collected: `python_functions` in `eval/harness/pyproject.toml` lists `report_*` alongside `test_*`, without which every tier-2 validator is silently skipped by that command.
 
 ### Validator signature
 
-Validators declare whichever subset of the available arguments they need. The harness inspects each function's signature and passes only the requested parameters — validators that don't need an argument simply omit it:
+Validators declare whichever subset of the available arguments they need. The harness introspects each function's signature and injects only the declared arguments. A validator that does not need an argument simply omits it from the signature.
 
 ```python
 def test_log_append_only(before_state, after_state, tool_calls):
-    """Universal: log entries never modified or deleted."""
+    """Tier 1 (gating): log entries never modified or deleted."""
     before_log = before_state["research_json"]["log"]
     after_log = after_state["research_json"]["log"]
     for entry in before_log:
         assert entry in after_log, f"log entry {entry['id']} was modified or removed"
 
-def test_tool_allowlist(tool_calls, skill_frontmatter, test):
-    """Advisory: warns when undeclared tools were called."""
-    import warnings
-    allowed = (skill_frontmatter or {}).get("allowed-tools", [])
-    bad = [c["tool"].split("__")[-1] for c in tool_calls
-           if c["tool"].split("__")[-1] not in allowed]
-    if bad:
-        warnings.warn(f"undeclared tools called: {sorted(set(bad))}")
+def report_example_pattern(text_response):
+    """Tier 2 (reporting): fires when a pattern is found in the response.
+    The assertion message becomes the observation text the judge sees."""
+    assert "bad pattern" not in text_response, (
+        "Response contains 'bad pattern' — the record shows X but the text says Y"
+    )
 ```
 
-**Available arguments** (a validator declares whichever subset it needs):
+**Available arguments** (the full pool from `validator_runner.py::available_args`):
 
 - `before_state` (dict) — `{"research_json": {...}, "tree_gedcomx_json": {...}, "files": {<path>: <content>}, "skill_frontmatter": {...}}`. Files present in the temp dir before the skill ran. `research_json` and `tree_gedcomx_json` are convenience aliases for the parsed contents of those files; absent if the test is stateless. `skill_frontmatter` is the parsed YAML frontmatter of the skill under test's SKILL.md.
 - `after_state` (dict) — same shape as `before_state`, snapshotting state after the skill ran. Files created during the run appear here with no `before` counterpart.
 - `tool_calls` (list) — every MCP tool call made by the skill, with the shape `{"tool": "mcp__genealogy__record_search", "args": {...}, "matched": {...}, "response_fixture": "...", "response": {...}}` (Section 10). `response` is present for `live` and unmatched (`none`) calls, and for a fixture-matched response the mock enriched — see Section 10.
 - `skill_frontmatter` (dict) — the parsed YAML frontmatter of the skill under test's SKILL.md (also available inside `before_state`/`after_state`).
 - `test` (dict) — the parsed test JSON dict, including `test.type`, `test.tags`, and any validator-facing blocks the orchestrator threads in.
-- `skills_invoked` (list) — skills invoked via the SDK `Skill` tool, captured by the PreToolUse hook.
-- `blocked_context_calls` (list) — main-thread calls to subagent-only tools that the PreToolUse hook denied.
-- `blocked_protected_writes` (list) — raw Write/Edit calls to a protected project file that the hook denied.
+- `skills_invoked` (list[str]) — every skill invoked through the SDK's `Skill` tool, in call order.
+- `blocked_context_calls` (list) — main-thread calls to subagent-only tools denied by the PreToolUse hook.
+- `blocked_protected_writes` (list) — raw writes to protected project files denied by the hook.
+- `attempted_mcp_calls` (list) — MCP calls the model emitted that never reached a fixture match.
 - `text_response` (str) — every assistant text block concatenated, no separator: narration and closing reply in one string, not the final reply alone (`"".join(text_chunks)` in `skill_runner.run_skill`). Empty when the run produced no assistant text. Use it for a **literal** property of the text — a phrase that must never appear, an identifier that must be named — and **not** to re-grade prose quality, which is a rubric dimension's job. A validator that tries to score how well the reply reads becomes a dimension nobody can tune. The case it exists for: a reply-shape rule a skill body states outright ("One sentence only", "do not restate the article content") is graded unevenly by a judge — on `search-wikipedia`'s run `v1_2026-08-22_10-20-08` the `Reply economy` dimension caught a narrating reply on one test and scored a byte-identical shape 3 on another, quoting a reply it had not been given.
+- `activated` (bool | None) — whether the skill activated (derived by `derive_activated`). `None` = unknown (e.g. abort before derivation).
+- `num_turns` (int) — SDK-reported turn count. 0 when absent or on early abort.
+- `output_tokens` (int) — SDK-reported output token count. 0 when absent or on early abort.
+- `aborted_reason` (str | None) — abort reason if the run was aborted (e.g. `"max_wall_clock_seconds"`, `"sdk_stream_silence"`, `"error"`). `None` when the run completed normally.
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.
 

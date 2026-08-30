@@ -53,7 +53,7 @@ the e2e benchmark; see
 
 ## Prerequisites
 
-- **Python 3.11+** with [uv](https://github.com/astral-sh/uv) (`pip install uv` or `brew install uv`).
+- **Python 3.12+** with [uv](https://github.com/astral-sh/uv) (`pip install uv` or `brew install uv`).
 - **Node.js 20+** with npm.
 - **Claude Code CLI** — required. The harness drives the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-python), which spawns the `claude` CLI as a subprocess. Install once:
   ```
