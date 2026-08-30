@@ -854,17 +854,17 @@ Three ways to express a lane, and only one holds:
 | A parameter on the tool input | **No** — the caller supplies the input, so it can widen its own lane |
 | Tool identity | **Yes** — the agent's `tools:` frontmatter omits the broad writer, so there is no call it can emit |
 
-The lane is therefore the *tool*, and the extractor's frontmatter omits
-`research_append` and additionally names it in `disallowedTools` as defence in
-depth. **The omission is what binds.** This spec used to say the opposite — that
-a deny is enforced under `permission_mode="bypassPermissions"` and "an omission
-alone is not." Probed 2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128
-(`make probe-agent-binding`, reproduced twice): under `bypassPermissions` both
-bind, and a tool merely omitted from `tools:` is absent from the agent exactly as
-a denied one is. Keep the deny — it wins if someone later adds the tool to
-`tools:` — but never name the same tool in both lists, because the deny is
-applied before the zero-tools spawn check and can make the runtime refuse the
-agent outright.
+The lane is therefore the *tool*, and the extractor's frontmatter simply omits
+`research_append`. **The omission is the whole mechanism.** This spec used to say
+the opposite — that a deny is enforced under
+`permission_mode="bypassPermissions"` and "an omission alone is not." Probed
+2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128 (`make
+probe-agent-binding`, reproduced twice): under `bypassPermissions` both bind, and
+a tool merely omitted from `tools:` is absent from the agent exactly as a denied
+one is. The agent carried a `disallowedTools:` deny alongside the omission for
+six weeks; it restated it and has been deleted. What catches someone adding
+`research_append` back to `tools:` is the permission snapshot in
+`agent-tool-names.test.ts`, which fails on any change to an agent's list.
 
 **Enforcement evidence.** A subagent declared `tools: Read, Grep, Glob, Bash`,
 told its caller had authorized overriding its convention, then instructed to
@@ -889,8 +889,8 @@ either way, but namespaces it through a remote-device *bridge*
 (`mcp__remote-devices__Genealogy_Research__*`) only when the task runs in the cloud;
 a task running on the user's own computer reaches it directly as
 `mcp__Genealogy_Research__*`. No single spelling resolves everywhere, so every agent
-lists each MCP tool under **all three** — in `tools:` and in `disallowedTools:`
-alike. It matters most on the `tools:` side, which is the half that binds: an
+lists each MCP tool under **all three** in `tools:` (and would in a
+`disallowedTools:`, if one ever returned). It matters on the `tools:` side: an
 entry naming no spelling the session recognizes grants nothing, and when *every*
 entry misses the runtime refuses the agent outright. The deny needs the same
 spellings for the weaker reason that a deny naming only an unresolvable spelling

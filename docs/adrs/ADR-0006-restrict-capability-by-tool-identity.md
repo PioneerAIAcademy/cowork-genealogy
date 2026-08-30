@@ -58,14 +58,12 @@ A tool caller structurally cannot reach that second argument, because dispatch
 builds only the first one from tool input. The restriction is not in the payload,
 so there is nothing for the model to set.
 
-The agent then holds `extraction_append` and **not** `research_append` — omitted
-from `tools:`, and additionally named in `disallowedTools:` under all three
-spellings (ADR-0004) as defence in depth. **The omission is what binds.**
-Measured 2026-08-30 (`make probe-agent-binding`): under `bypassPermissions` a
-tool merely omitted from `tools:` is absent from the agent, exactly as a denied
-one is. An earlier version of this ADR said the deny was doing that work alone;
-it is not. Never name the same tool in both lists — the deny is applied before
-the zero-tools spawn check and can make the runtime refuse the agent.
+The agent then holds `extraction_append` and **not** `research_append` — simply
+omitted from `tools:`. **The omission is the whole mechanism.** Measured
+2026-08-30 (`make probe-agent-binding`): under `bypassPermissions` a tool omitted
+from `tools:` is absent from the agent, exactly as a denied one is. An earlier
+version of this ADR paired the omission with a `disallowedTools:` deny and said
+the deny was doing the work; it was not, and the deny has been deleted (ADR-0004).
 
 The general form:
 
@@ -81,7 +79,7 @@ The general form:
 |---|---|---|
 | **Prose in the agent body** — "only write sources and assertions" | This is what was there. A delegation message prompted past it and the agent fabricated a `match_score` | The birkeland re-run; `research-append-tool-spec.md` §11 |
 | **A `sections:` parameter** on `research_append` | The caller supplies the input; a parameter is a request. Same class of failure as prose, one layer down | `research-append-tool-spec.md` §11.2 |
-| **A separate per-skill write tool for every lane** (`person_evidence_append`, `conflict_append`, …) | Rejected earlier and independently: *"a split tool is exactly as callable by the router as a section branch is."* Splitting names does not constrain a caller who holds all of them — the constraint comes from *not holding* the broad one, which is what omitting it from `tools:` provides (the `disallowedTools:` deny restates it — measured 2026-08-30) | `docs/specs/guardrail-enforcement-spec.md` §9 |
+| **A separate per-skill write tool for every lane** (`person_evidence_append`, `conflict_append`, …) | Rejected earlier and independently: *"a split tool is exactly as callable by the router as a section branch is."* Splitting names does not constrain a caller who holds all of them — the constraint comes from *not holding* the broad one, which is what omitting it from `tools:` provides | `docs/specs/guardrail-enforcement-spec.md` §9 |
 | **A `PreToolUse` hook** discriminating by caller | A design exists, but it is less portable than it looks. `eval/harness/harness/context_policy.py` denies `image_read` on **three** conditions — the tool is guarded, `agent_id` is absent, **and** the calling skill did not declare it in its own `allowed-tools` (`search-images` declares it and legitimately calls it on the main thread). The discriminator is therefore the skill's declaration, which the production path has no equivalent of, and the module says the e2e orchestrator cannot use it either. Unported. It was gated on calibrating the shadow window, and that calibration was retired as having no instrument (`guardrail-enforcement-spec.md` §7, "What the success gate can and cannot see"); what the port needs first now is the live Cowork run that settles whether the router holds `image_read` at all. Tool identity needed no new machinery | #911; `context_policy.py` ("Membership here is necessary but NOT sufficient") |
 | **Duplicate the implementation** into a genuinely separate `extraction_append` | Two copies of the validation logic drift. Same implementation, different entry point, keeps one contract | Code-reuse convention, `CLAUDE.md` |
 | **Trust the eval suite to catch lane violations** | Grades after the fact and only on cases the corpus covers. `research-append-tool-spec.md` is explicit that for `match_score` specifically *"the lever there is eval/rubric, not tooling"* — which is precisely the gap this pattern closes for sections | `research-append-tool-spec.md` |
@@ -124,8 +122,9 @@ generalises to that problem** — read
 ## Enforcement
 
 > `packages/engine/mcp-server/tests/packaging/agent-tool-names.test.ts` —
-> asserts `disallowedTools:` entries carry all three spellings, so the deny binds
-> wherever the server is registered.
+> pins each agent's permission surface, so `research_append` cannot reappear in
+> `record-extractor`'s `tools:` without a reviewer seeing it, and asserts by name
+> that the agent does not hold it.
 
 The structural half needs no test: dispatch builds only the first argument, so
 the second is unreachable from tool input by construction. That is the point of

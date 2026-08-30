@@ -77,10 +77,15 @@ specs, the packaging test and three agent bodies, and seven of those cited issue
 `bypassPermissions`, denies, or omissions — a citation chain that never
 terminated in evidence.
 
-The deny still earns all three spellings: it wins if someone later adds the tool
-to `tools:`, one naming a single spelling binds nothing wherever the server
-carries another name, and unlike a missing grant a missing deny fails open and
-silently. What it does not earn is being described as the only thing that binds.
+**So all five deny blocks were deleted in the same change.** Each named a tool
+already absent from its agent's `tools:`, so each was a restatement — 83 lines of
+triple-spelled YAML a reader has to check against the list above it. The
+regression a deny insured against, someone later adding the tool back, is caught
+by the permission snapshot in `agent-tool-names.test.ts`, which fails on any
+change to an agent's list.
+
+The spelling rule below still governs a deny, because one may return for a reason
+the omission cannot serve. It just has nothing to govern today.
 
 **One thing the probe found that changes an instruction: never name a tool in
 both lists.** The deny is applied *before* the zero-tools spawn check. A probe
@@ -91,8 +96,9 @@ the three MCP entries not named, because the deny had already removed them.
 
 ## Decision
 
-**Every MCP tool in an agent's `tools:` — and in `disallowedTools:` — is listed
-three times, once under each live server spelling:**
+**Every MCP tool in an agent's `tools:` is listed three times, once under each
+live server spelling — as would every entry of a `disallowedTools:` block, if one
+ever returned:**
 
 ```yaml
 - mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web

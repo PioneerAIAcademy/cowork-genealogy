@@ -216,10 +216,11 @@ Two consequences worth holding onto:
 
 - **A skill's `allowed-tools` does not restrict anything.** It is a grant, and both
   production paths hold every tool the server advertises. The three surfaces that
-  actually bind are the writer tool's own preconditions, an agent's `tools:` /
-  `disallowedTools:`, and the `PreToolUse` hook.
+  actually bind are the writer tool's own preconditions, an agent's `tools:`,
+  and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
+  on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only three skills hold `research_query`** — `research`, `search-records`,
-  `person-evidence` — and three of the six agents. Everything else that needs project
+  `person-evidence` — and three of the five agents. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
 - **The hook carries exactly three rules**, in

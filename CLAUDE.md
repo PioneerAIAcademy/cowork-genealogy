@@ -233,9 +233,9 @@ what the runtime actually resolved, and no CI job covers this path.
 
 **Dual-spelled tool names.** (Heading kept as a stable anchor — the
 architecture guide and ADR-0004 both cite it by name — though the rule now
-names three spellings.) In `tools:` — and in `disallowedTools:` —
-every MCP tool **must** be listed **three times**, once under each server
-spelling:
+names three spellings.) In `tools:` — and in `disallowedTools:`, if one ever
+comes back — every MCP tool **must** be listed **three times**, once under each
+server spelling:
 
     - mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
     - mcp__remote-devices__Genealogy_Research__record_read   # Cowork in the cloud
@@ -259,24 +259,27 @@ all ("would be spawned with zero tools — refusing"), which has broken every
 agent in Cowork twice while CI stayed green. Listing every spelling is safe
 because unrecognized entries are ignored so long as at least one resolves.
 
-`disallowedTools:` is **defence in depth, not the load-bearing layer** —
-and it is measured, not assumed. Under `bypassPermissions` **both** bind: a
-tool merely omitted from `tools:` is absent from the agent, and so is one named
-in `disallowedTools:` (`make probe-agent-binding`, 2026-08-30, Claude Code
-2.1.251 / SDK 0.2.128). So the omission above already keeps `record-extractor`
-off the broad `research_append`; the deny restates it. Keep the denies — a deny
-wins if someone later adds the tool to `tools:` — but do not add one *because*
-nothing else would bind, and do not describe one as the last line of defence.
+**No agent declares `disallowedTools:` any more — omit the tool instead.**
+Under `bypassPermissions` **both** bind: a tool merely omitted from `tools:` is
+absent from the agent, exactly as a denied one is (`make probe-agent-binding`,
+2026-08-30, Claude Code 2.1.251 / SDK 0.2.128). Every deny we shipped named a
+tool already absent from the list above it, so all five were deleted as
+restatements. What keeps `record-extractor` off the broad `research_append` is
+`research_append` not being in its `tools:`.
 
-**Never name a tool in both lists.** The deny is applied *before* the
-zero-tools spawn check, so a deny that strips every entry which would have
-resolved makes the runtime refuse the agent outright rather than merely
-narrowing it. Enforced by `tests/packaging/agent-tool-names.test.ts`.
+**To take a capability away from an agent, remove it from `tools:`.** The
+regression a deny insured against — someone later adding the tool back — is
+caught by the permission snapshot in
+`tests/packaging/agent-tool-names.test.ts`, which fails on any change to an
+agent's list.
 
-A deny that is kept still needs all three spellings: one naming a single
+Re-adding a deny is allowed but needs a reason the omission cannot serve, and
+the test asks for one. If you add one: all three spellings (one naming a single
 spelling binds nothing under the others, and unlike a missing grant **a missing
-deny fails open and silently.** Why, the two incidents, and what the probe
-retired: ADR-0004.
+deny fails open and silently**), and **never a tool the same agent grants** —
+the deny is applied *before* the zero-tools spawn check, so it can make the
+runtime refuse the agent outright rather than merely narrowing it. Why, the two
+incidents, and what the probe retired: ADR-0004.
 
 ### Plugin hooks (`packages/engine/plugin/hooks/`)
 

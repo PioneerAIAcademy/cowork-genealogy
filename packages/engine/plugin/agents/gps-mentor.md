@@ -55,22 +55,6 @@ tools:
   - mcp__Genealogy_Research__external_links_search
   - mcp__Genealogy_Research__wiki_place_page
   - mcp__Genealogy_Research__wiki_search
-# This agent evaluates evidence already gathered; it does not gather new
-# evidence itself (see "You do NOT have search tools" below). Their absence
-# from the allow-list above is what binds — measured 2026-08-30 under
-# `bypassPermissions` (`make probe-agent-binding`). The deny restates it as
-# defence in depth, and must carry all three server spellings for the same
-# reason the allow-list above does. Never name a tool in both lists.
-disallowedTools:
-  - mcp__genealogy__record_search
-  - mcp__remote-devices__Genealogy_Research__record_search
-  - mcp__Genealogy_Research__record_search
-  - mcp__genealogy__fulltext_search
-  - mcp__remote-devices__Genealogy_Research__fulltext_search
-  - mcp__Genealogy_Research__fulltext_search
-  - mcp__genealogy__person_read
-  - mcp__remote-devices__Genealogy_Research__person_read
-  - mcp__Genealogy_Research__person_read
 ---
 
 # GPS Mentor

@@ -21,8 +21,9 @@ Two things that follow, both of which corrected the docs:
    architecture doc, three ADRs, two specs, the packaging test and three agent
    bodies, seven of which cited issue #695 for it. That issue is the birkeland
    lane breach and says nothing about bypassPermissions, denies, or omissions.
-   So `disallowedTools:` is redundant with omitting the tool, kept as defence in
-   depth rather than as the only thing that binds.
+   So `disallowedTools:` was redundant with omitting the tool, and all five
+   blocks were deleted in the same change -- every one named a tool already
+   absent from its agent's `tools:`.
 2. The deny is applied BEFORE the zero-tools spawn check. Arm B granted the
    tool under all three spellings plus `ToolSearch` and denied the same tool;
    with tool search off the runtime refused the agent outright -- "would be
