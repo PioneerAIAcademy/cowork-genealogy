@@ -203,6 +203,48 @@ const IMAGES: ImageSpec[] = [
     ark: "ark:/61903/3:1:3QS7-897J-Q396",
   },
   // -------------------------------------------------------------------------
+  // Västra Karaby — the CONFIDENT-GARBAGE class. These returned clean-looking
+  // text with no [illegible] markers at all while corrupting exactly the fields
+  // that decide identity, which is why no marker-density signal can see them.
+  // Ground truth was read directly off the scans by a genealogist and is
+  // recorded per image below; there is no full-page human key, so these grade
+  // against the Opus key like the rest of the hard subset — the Qwen-vs-Gemini
+  // delta on this page class is the question, not an absolute score.
+  // -------------------------------------------------------------------------
+  {
+    slug: "vastra-karaby-1762",
+    scenario: "vastra-karaby-christenings",
+    lang: "Swedish",
+    recordType: "parish christening register (1762)",
+    note: "Confident garbage, no markers: farm Henckelstorp read as 'Hornekelltorp'/'Honekelkorp', patronymic Andersson as 'Olsensfon' or dropped, Barsebäck as 'Dansebäck' — and it varied per call at temperature 0. Structure survived (Anno 1762, foddes, 5 of 6 dates).",
+    subset: "hard",
+    languageHint:
+      "This is a mid-18th-century Swedish parish christening register (1762), handwritten in an early-modern Swedish hand.",
+    imageId: "004523018_00150",
+  },
+  {
+    slug: "vastra-karaby-accounts-1693",
+    scenario: "vastra-karaby-accounts",
+    lang: "Swedish",
+    recordType: "church accounts (1693)",
+    note: "Fabricated a vital-record heading on an accounts page: returned 'Pro A: 1673.' under a heading 'Född.' (Born). The page is 'Wästra Carleby Kyrckio Rächningh Pro A° 1693', Debet/Credit, no births heading and the year is 1693.",
+    subset: "hard",
+    languageHint:
+      "This is a late-17th-century Swedish parish document, handwritten in an early-modern Swedish hand.",
+    imageId: "004523021_00100",
+  },
+  {
+    slug: "vastra-karaby-accounts-1713",
+    scenario: "vastra-karaby-accounts",
+    lang: "Swedish",
+    recordType: "church accounts ledger (1713-1717)",
+    note: "Same fabrication class: returned a heading 'Födde. Jahr 1707' for a Credit/Debet ledger covering 1713-1717.",
+    subset: "hard",
+    languageHint:
+      "This is an early-18th-century Swedish parish document, handwritten in an early-modern Swedish hand.",
+    imageId: "004523021_00190",
+  },
+  // -------------------------------------------------------------------------
   // Typed subset — printed, typeset 19th-century pages from Holt genealogy,
   // recovered from the book-to-tree sibling repo. These are the ONLY images in
   // this corpus with a human-verified key (dev/ocr-keys/, see its README), so
