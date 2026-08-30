@@ -28,7 +28,7 @@ import {
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-const MODEL = "qwen/qwen3-vl-235b-a22b-instruct";
+const MODEL = "google/gemini-3.7-flash";
 
 function mockOpenRouterOk(content: string) {
   mockFetch.mockResolvedValueOnce({

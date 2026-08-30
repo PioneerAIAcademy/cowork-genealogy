@@ -8,7 +8,7 @@ doc only covers what differs.
 ## 1. Purpose
 
 `image-reader` (the default reader) OCRs a scan host-side via a hosted,
-cheap, fast vision model (Qwen3-VL through `image_transcribe`) and returns
+cheap, fast vision model (Gemini Flash through `image_transcribe`) and returns
 text. That model is not the strongest vision model available, and some
 scans need better: badly faded ink, a difficult hand, Kurrentschrift.
 
@@ -19,7 +19,7 @@ its own native vision rather than a hosted OCR call.
 ## 2. Why this agent calls `image_read`, not `image_transcribe`
 
 `image_transcribe`'s OCR happens host-side, via a fixed vision model chosen
-by the tool (OpenRouter/Qwen3-VL) — the calling agent's own model never sees
+by the tool (OpenRouter/Gemini Flash) — the calling agent's own model never sees
 the pixels, so a caller pinned to Opus gains nothing by delegating to
 `image-reader`; the read quality is set by the tool, not the agent.
 

@@ -156,7 +156,7 @@ function parseFound(text: string): "FOUND" | "NOT FOUND" | undefined {
 
 /**
  * OCR a FamilySearch page scan via a hosted VLM (OpenRouter, default
- * Qwen-VL) and return the transcription as text. The image bytes go
+ * Gemini Flash) and return the transcription as text. The image bytes go
  * host-side → OpenRouter and never cross the MCP transport, so there is no
  * size cap (unlike image_read). See docs/specs/image-transcribe-tool-spec.md.
  */

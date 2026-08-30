@@ -8,17 +8,33 @@
 >
 > Owner: unassigned. Review against this spec once implemented.
 >
+> **Revision (2026-08-30) — the default OCR model is now
+> `google/gemini-3.7-flash`, replacing Qwen3-VL.** A three-way comparison
+> (Qwen / Gemini 3.7 Flash / Opus 5) over 9 handwritten pages graded against an
+> Opus-4.8 key and 10 printed pages graded against hand-verified human gold
+> found Qwen at **50%** field accuracy with **37** hallucinations against
+> Gemini's **79%** and **8**. Gemini reads better on **every** handwritten page
+> in the corpus, by 10 to 47 points. Qwen's failures are fabrications in
+> identity-critical fields — invented surnames, `Norg` read as `Storq`,
+> `Langeloe` as `Dwingeloo`, and on one page a birth register transcribed as a
+> death record in the wrong town. Cost rises from $0.0023 to $0.0146 per page
+> ($0.09 → $0.58 per 40-transcribe research run) and latency from 2.3s to 4.0s,
+> both far inside the §5.7 budget and the 60s device-bridge abort. Opus 5 scores
+> higher still (87%) at $0.1418/page, but see the caveat under §4.5 — that
+> ranking is not settled. Typed pages saturate at 100% for all three and
+> discriminate nothing.
+>
 > **Revision (2026-07-17) — three changes from the original draft, per a
 > design review:**
-> 1. **Qwen-only reader.** The `image-reader` subagent OCRs **every** image via
->    `image_transcribe` (Qwen3-VL — ~10× cheaper/faster, any size, text out).
+> 1. **Single-model reader.** The `image-reader` subagent OCRs **every** image
+>    via `image_transcribe` (one hosted VLM — cheap, fast, any size, text out).
 >    That is the sole runtime reader. (Design history: a "Sonnet for small,
 >    Qwen for large" split, then a Qwen-first path with an opt-in Sonnet-5
 >    reconciling *second opinion*, were both tried and **dropped** — the second
 >    opinion was rarely used, and the viewer (item 2) lets a human verify a
 >    cite-worthy read against the actual scan, a better check than a second
 >    machine read. A user-invoked **Opus** transcription is parked in
->    §15.9, separate from this Qwen-only workflow.) `image_read`'s
+>    §15.9, separate from this single-model workflow.) `image_read`'s
 >    inline path is unused by the agent (kept only for the Issue #28 eval).
 > 2. **Image persistence + viewing (§8.5).** The backing JPEG is saved for
 >    **retained** sources so the Electron viewer (then the hosted web
@@ -29,14 +45,18 @@
 >    sandbox.
 >
 > **Phase 0 is COMPLETE — spike PR 723.**
-> The gate passed: build the tool and route large scans to **Qwen3-VL-235B
-> Instruct, raw bytes — no pre-processing** (prep *lowered* accuracy and
-> doubled hallucinations, so §7's `jimp` path is dropped, not built). Bonus:
-> Bonus spike finding: **Sonnet 5 ≫ Sonnet 4.6 for OCR** (incl. German
-> Kurrent/Fraktur: Sonnet 5 76% / Qwen 67% / Sonnet 4.6 60% — same pattern as
-> the other hard hands). This motivated the (now-dropped) Sonnet-5 second
-> opinion; the workflow reader is Qwen only (revision item 1). German is no
-> longer an open item; it read like every other hard record.
+> The gate passed: build the tool and route large scans to a hosted VLM on
+> **raw bytes — no pre-processing** (prep *lowered* accuracy and doubled
+> hallucinations, so §7's `jimp` path is dropped, not built). That part stands.
+>
+> **The model Phase 0 chose does not.** Phase 0 picked Qwen3-VL-235B Instruct
+> and recorded Sonnet 5 76% / Qwen 67% / Sonnet 4.6 60% on German
+> Kurrent/Fraktur, concluding German was "no longer an open item". The
+> 2026-08-30 three-way run measured Qwen at **41%** on German Kurrent — those
+> three figures are superseded, German is an open item again, and the default is
+> now Gemini 3.7 Flash. Phase 0's error was its answer key: it compared models
+> only against another model's transcription, on a corpus with no
+> human-verified page.
 
 ---
 
@@ -79,22 +99,22 @@ at all. That dissolves the entire T13 problem class at once:
 - No 700 KB single-image floor.
 
 For the **large** scans `image_read` refuses today, this is a clean win — and
-the spike (§4) showed Qwen is a strong-enough reader that it became the **only
-reader for every image**, not just the large ones: the `image-reader` subagent
-OCRs via `image_transcribe` (Qwen) for every scan and never reads inline. The
+the spike (§4) showed a hosted VLM is a strong-enough reader that it became the
+**only reader for every image**, not just the large ones: the `image-reader`
+subagent OCRs via `image_transcribe` for every scan and never reads inline. The
 subagent is not retired, but its base64-isolation job is now moot (the tool
 returns text) — it remains as the delegation seam + one-image-per-source
 boundary.
 
 This spec proposes a new tool, **`image_transcribe`**, that fetches the FS
 scan host-side and sends the raw bytes to a vision-language model (VLM)
-hosted on **OpenRouter** (default **Qwen3-VL-235B Instruct**), returning a
+hosted on **OpenRouter** (default **Gemini 3.7 Flash**), returning a
 faithful text transcription.
 
 ## 2. The bet (why Phase 0 exists)
 
 Moving OCR off the caller's model (Claude Sonnet vision, via the current
-`image-reader` subagent) onto Qwen-VL is a **quality bet on a brutal
+`image-reader` subagent) onto a cheap hosted VLM is a **quality bet on a brutal
 domain**: 18th–19th-century German church-register hands (Kurrent /
 Fraktur), faint ink, uneven exposure. The pre-spike `image-reader` spec
 flagged "quality on faint German script is the constraint to watch" — which
@@ -102,11 +122,17 @@ the spike then measured (see the banner / §4.4).
 
 The upsides are real and worth chasing — no transport cap, materially
 cheaper per image than Claude vision, and the main model is freed — **but
-they only cash in if Qwen holds recall on *this* corpus.** That was an
-empirical question, and Phase 0 answered it (PR 723): Qwen Instruct clears
-the bar on the hard subset, so the tool is built. (German Kurrent/Fraktur was
-subsequently added to the spike — Sonnet 5 76% / Qwen 67% / Sonnet 4.6 60%,
-the same pattern as the other hard hands — so it is no longer an open item.)
+they only cash in if the reader holds recall on *this* corpus.** That was an
+empirical question, and Phase 0 answered it for Qwen (PR 723): Qwen Instruct
+cleared the bar on the hard subset, so the tool was built.
+
+**That answer did not survive a better instrument.** Phase 0 also recorded
+Sonnet 5 76% / Qwen 67% / Sonnet 4.6 60% on German Kurrent/Fraktur and called
+German closed. The 2026-08-30 three-way run — the first here with any
+human-verified key — put Qwen at 41% on German Kurrent and 50% across the
+handwritten corpus, fabricating identity-critical fields rather than marking
+them illegible. **The bet still pays, but on Gemini 3.7 Flash, not Qwen**, and
+the constraint the pre-spike spec named is still the live one.
 
 ## 3. Non-goals
 
@@ -114,8 +140,8 @@ the same pattern as the other hard hands — so it is no longer an open item.)
   need the *pixels* (e.g. Issue #28's OCR-model comparison). `image_read`
   stays (§8).
 - Not a native-vision reader. The `image-reader` subagent OCRs every scan via
-  `image_transcribe` (Qwen) and does **not** use Claude's own vision. A
-  Qwen-first path with an opt-in Sonnet-5 reconciling second opinion was tried
+  `image_transcribe` and does **not** use Claude's own vision. A
+  VLM-first path with an opt-in Sonnet-5 reconciling second opinion was tried
   and dropped (§1); `image_read` the tool is kept only for the Issue #28 eval
   (§8), not as a workflow reader.
 - Not a general document-understanding tool. It transcribes one page and
@@ -218,6 +244,47 @@ Record the outcome (corpus, per-image grades, decision) as a short results
 doc under `docs/plan/` so the choice is auditable, per the team-review-docs
 convention.
 
+### 4.5 Re-measurement (2026-08-30) — the default moved to Gemini 3.7 Flash
+
+Phase 0 compared models only against another model's transcription, on a
+corpus with no human-verified page. A three-way run rebuilt that instrument:
+`dev/try-ocr-compare.ts` + `dev/try-ocr-grade.ts`, 9 handwritten pages graded
+against an Opus-4.8 key and 10 printed pages graded against **hand-verified
+human gold** (`dev/ocr-keys/`, recovered from the `book-to-tree` sibling repo).
+
+Handwritten pages (Opus-4.8 key):
+
+| model | field acc | hallucinations | $/page | latency | calls over 60s |
+|---|--:|--:|--:|--:|--:|
+| Qwen3-VL (the Phase 0 pick) | 50% | 37 | $0.0023 | 2.3s | 0 |
+| Gemini 3.7 Flash | 79% | 8 | $0.0146 | 4.0s | 0 |
+| Opus 5 | 87% | 4 | $0.1418 | 4.4s | 0 |
+
+Printed pages scored 100% for all three against the human gold and
+discriminate nothing — typed material is solved. Gemini beats Qwen on **every**
+handwritten page, by 10 to 47 points. Per 40-transcribe research run: Qwen
+$0.09, Gemini $0.58, Opus $5.67.
+
+Two findings outrank the table:
+
+- **`[illegible]` marker density cannot be an escalation trigger.** It is
+  high-precision, low-recall: Qwen emitted 60 markers on the one page it knew
+  it had failed and 0–2 on the other eight, while scoring 41% with 6
+  fabrications on a zero-marker page. It fires when the model knows it failed
+  and is blind when it does not — which is the case that corrupts a tree. Any
+  future "escalate to `image-reader-opus`" rule needs a different signal.
+- **The Gemini-vs-Opus ordering is NOT settled.** On the single page with
+  non-model truth available (a record index), Gemini recovers 5 of 5 indexed
+  facts to Opus's 4 of 5, while the judge scores Opus higher — because the
+  answer key is an Opus-4.8 transcription that shares Opus's caution, marking
+  a birthplace illegible where Gemini reads it correctly. Read every
+  Opus-vs-Gemini number above with that in mind. Settling it needs 3–5
+  handwritten pages with human ground truth, which is genealogist
+  adjudication, not another model run.
+
+The switch to Gemini does not rest on the unsettled half: Qwen loses to Gemini
+on every page, under a key that flatters neither.
+
 ---
 
 > **Everything below (§5–§11) is the build contract, conditional on §4.4.**
@@ -231,7 +298,7 @@ host-side, and return a faithful text transcription. The image bytes never
 cross the MCP transport.
 
 This is the **sole read** for every image, via the `image-reader` subagent
-(the spike showed Qwen is a strong-enough reader; §8). There is no second
+(the spike showed a hosted VLM is a strong-enough reader; §8). There is no second
 reader — the agent never reads a scan inline with Claude's own vision.
 
 ### 5.2 Relationship to existing tools (naming)
@@ -284,9 +351,9 @@ consistent across schema, manifest, and skill.)*
 
 There is **no size cap on the fetched image** for transport reasons — the
 image goes host→OpenRouter, never back over MCP. The raw `dist.jpg` bytes are
-sent as-is (no prep, §7); the spike (PR 723) confirmed Qwen3-VL reads the
-large T13 scans that way with no body-limit issue. A pathological multi-MB
-scan exceeding OpenRouter/Qwen's own request-body limit is an open risk, not
+sent as-is (no prep, §7); the spike (PR 723) confirmed the hosted VLM reads
+the large T13 scans that way with no body-limit issue. A pathological multi-MB
+scan exceeding OpenRouter's own request-body limit is an open risk, not
 handled today.
 
 ### 5.5 Output
@@ -479,7 +546,7 @@ Resolving an ARK to its group is deliberately out of scope.
 
 ```jsonc
 {
-  "model": "<configured slug, default Qwen-VL>",
+  "model": "<configured slug, default Gemini Flash>",
   "messages": [{
     "role": "user",
     "content": [
@@ -672,7 +739,7 @@ on its own; image persistence + the Electron and hosted-web viewers followed.
 ## 10. Migration (skills + subagent)
 
 - **`record-extraction/SKILL.md`**: keep delegating the **Image** input path
-  to `@plugin:image-reader` (the subagent OCRs every scan with Qwen). The
+  to `@plugin:image-reader` (the subagent OCRs every scan with the hosted VLM). The
   skill's prose contract barely changes — it still receives a text
   transcription + extracted-facts list and keeps the NOT-READ→pivot-to-indexes
   behavior. Thread `projectPath` through so the subagent's `image_transcribe`
@@ -682,11 +749,11 @@ on its own; image persistence + the Electron and hosted-web viewers followed.
   the image" guidance. (A Sonnet-5 second-opinion escalation was considered and
   **dropped** — the viewer lets a human verify a cite-worthy read against the
   scan; a user-invoked Opus transcription is parked in §15.9.)
-- **`image-reader` subagent: Qwen only.** Its sole reader is `image_transcribe`
-  (Qwen) for every image; it never reads a scan inline with Claude's own
-  vision. It returns **text only**, so record-extraction's contract is
+- **`image-reader` subagent: one reader only.** Its sole reader is
+  `image_transcribe` for every image; it never reads a scan inline with Claude's
+  own vision. It returns **text only**, so record-extraction's contract is
   unchanged. Its one tool is `image_transcribe` (`mcp__genealogy__*`),
-  `model: claude-sonnet-4-6` (relays/formats text only — Qwen does the OCR),
+  `model: claude-sonnet-4-6` (relays/formats text only — the hosted VLM does the OCR),
   and `docs/specs/image-reader-agent-spec.md` is updated to match. Follow the
   **lane rule** (`docs/skill-lifecycle.md` §5): this is a tooling change
   (lane 1).
@@ -696,9 +763,11 @@ on its own; image persistence + the Electron and hosted-web viewers followed.
 
 ## 11. Cost & privacy
 
-- **Cost**: Qwen-VL on OpenRouter is far cheaper per image than Claude vision
-  and moves OCR off the main model. Phase 0 measures the exact delta. This is
-  a primary justification, so quantify it.
+- **Cost**: a hosted VLM on OpenRouter is far cheaper per image than Claude
+  vision and moves OCR off the main model. Measured 2026-08-30 (§4.5): Gemini
+  3.7 Flash $0.0146/page against Opus 5's $0.1418 — roughly $0.58 versus $5.67
+  per 40-transcribe research run. The switch from Qwen ($0.0023/page, $0.09 per
+  run) gives up ~$0.49 per run to cut hallucinations from 37 to 8.
 - **Privacy**: this sends FamilySearch **record scans (PII)** to a third
   party (OpenRouter → an underlying inference provider), where FS OAuth kept
   them first-party. Mitigations to spec: set OpenRouter's
@@ -795,7 +864,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `dev/try-image-transcribe.ts`
 - `tests/tools/image-transcribe.test.ts`
 - `tests/tools/configure-openrouter.test.ts`
-- Phase 0 results write-up *(done: PR 723; the model-comparison conclusions live in §5 of this spec — Qwen 67% / Sonnet 5 76% / Sonnet 4.6 60% on hard hands, and why an opt-in Sonnet-5 second opinion was dropped)*
+- Phase 0 results write-up *(done: PR 723; the model-comparison conclusions live in §5 of this spec — Qwen 67% / Sonnet 5 76% / Sonnet 4.6 60% on hard hands, **superseded by §4.5**, and why an opt-in Sonnet-5 second opinion was dropped)*
 
 **Modify**
 - `src/types/auth.ts` — `openRouterApiKey`, `openRouterModel` on `AppConfig`
@@ -831,18 +900,19 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 
 **Keep + extend (not retire)**
 - `packages/engine/plugin/agents/image-reader.md` — make `image_transcribe`
-  (Qwen) the **sole** reader for every image; drop the inline `image_read`
+  the **sole** reader for every image; drop the inline `image_read`
   path; `model` stays **claude-sonnet-4-6** (the agent relays/formats text
-  only — Qwen does the OCR).
-- `docs/specs/image-reader-agent-spec.md` — document the Qwen-only reader.
+  only — the hosted VLM does the OCR).
+- `docs/specs/image-reader-agent-spec.md` — document the single-reader design.
 
 ## 15. Open questions for the researcher
 
-1. ~~**Exact Qwen model + tier.**~~ RESOLVED (PR 723): `qwen/qwen3-vl-235b-a22b-instruct`
+1. ~~**Exact model + tier.**~~ RE-DECIDED 2026-08-30 (§4.5): `google/gemini-3.7-flash`.
+   Was `qwen/qwen3-vl-235b-a22b-instruct`
    — Instruct, not Thinking; raw bytes. This is the §6.3 default.
 2. ~~**Does prep help, and which steps?**~~ RESOLVED (PR 723): no — prep hurt
    accuracy and doubled hallucinations. No `jimp`.
-3. **Prompt/language hinting.** Does Qwen benefit from a language hint
+3. **Prompt/language hinting.** Does the reader benefit from a language hint
    ("German church register, Kurrent script") in the OCR prompt, or does the
    reuse-`image-reader.md` prompt suffice?
 4. **OpenRouter rate limits / latency / provider routing** for the chosen
@@ -850,8 +920,8 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
    or raises cost.
 5. **Privacy sign-off.** Is sending FS record scans to OpenRouter acceptable
    (§11)? Policy call for Dallan.
-6. ~~**Partial-win handling.**~~ RESOLVED (PR 723): Qwen is the sole reader for
-   all record types incl. German — no per-record-type split. A Sonnet-5 second
+6. ~~**Partial-win handling.**~~ RESOLVED (PR 723): one model is the sole reader
+   for all record types incl. German — no per-record-type split. A Sonnet-5 second
    opinion was considered and dropped (the viewer lets a human verify a
    cite-worthy read against the scan; a user-invoked Opus transcription is
    parked in §15.9 below).
@@ -861,8 +931,8 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
    NOT-READ→pivot-to-indexes, same as any fetch failure.
 9. **User-invoked Opus transcription ("Flow 2") — parked, not requested.**
    Brainstormed alongside this spec and never asked for by a user, so it is
-   recorded here rather than carried as work. The research workflow stays
-   **Qwen only**; this would let a user ask Claude to transcribe *one specific*
+   recorded here rather than carried as work. The research workflow stays on
+   **one default reader**; this would let a user ask Claude to transcribe *one specific*
    image with **Opus** on demand (premium, higher accuracy). Recommended shape:
    a user-only tool `image_transcribe_opus`, a thin wrapper over the same
    host-side OCR helper with the model pinned to an Opus slug **via OpenRouter**
@@ -883,7 +953,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `docs/specs/image-read-spec.md` (`image_read`'s inline-base64 path is no
   longer used by the `image-reader` subagent; it stays only for the Issue #28
   pixel consumer, and its transport floor still guards that single read)
-- `docs/specs/image-reader-agent-spec.md` (the subagent — **kept**; Qwen-only
+- `docs/specs/image-reader-agent-spec.md` (the subagent — **kept**; single
   reader via `image_transcribe`; its OCR prompt/output protocol is reused
   verbatim)
 - `~/pioneeracademy/book-to-tree/backend/src/book_to_tree/ocr/image_prep.py`

@@ -1,6 +1,6 @@
 ---
 name: image-reader
-description: Reads ONE FamilySearch image scan and returns ONLY a full text transcription. Call this whenever you need the content of a page scan (a `3:1:.../$dist` image ARK or a `dgs:{DGS}_{IMAGE}/dist.jpg` Image Group Number) — e.g. "transcribe this register page", "read this image", "OCR this scan", "what does image 004022578_00190 say". It OCRs the scan cheaply and fast via a hosted model (Qwen3-VL) and returns text. Reads exactly one image per invocation; invoke it once per image. Do NOT use for indexed records (use record_read / record_search), PDFs (read them directly), or to search for which image to read (use image_search / volume_search first, then hand this agent the specific imageId).
+description: Reads ONE FamilySearch image scan and returns ONLY a full text transcription. Call this whenever you need the content of a page scan (a `3:1:.../$dist` image ARK or a `dgs:{DGS}_{IMAGE}/dist.jpg` Image Group Number) — e.g. "transcribe this register page", "read this image", "OCR this scan", "what does image 004022578_00190 say". It OCRs the scan cheaply and fast via a hosted model (Gemini Flash) and returns text. Reads exactly one image per invocation; invoke it once per image. Do NOT use for indexed records (use record_read / record_search), PDFs (read them directly), or to search for which image to read (use image_search / volume_search first, then hand this agent the specific imageId).
 model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
@@ -31,7 +31,7 @@ disallowedTools:
 
 You read **one** FamilySearch page scan and return a **full text
 transcription** of it. Your reader is `image_transcribe`, a hosted vision
-model (Qwen3-VL) that OCRs the scan host-side and returns **text** — cheap,
+model (Gemini Flash) that OCRs the scan host-side and returns **text** — cheap,
 fast, and any size (the bytes never enter your context, so there is nothing
 to accumulate or overflow). You wrap that one call, hold a clean
 one-image-per-source boundary, and hand back only text.
@@ -63,7 +63,7 @@ passed more than one imageId, read only the first and say so.
 1. Call `image_transcribe({ imageId })` — add `lookingFor` if you were given a
    `looking_for`, and `projectPath` if you were given a `project_path` (so the
    scan is saved; note the returned `imageRef`). It OCRs the scan host-side via
-   Qwen3-VL and returns the transcription as **text** (any size). If it
+   Gemini Flash and returns the transcription as **text** (any size). If it
    **errors** (unreachable image, or no OpenRouter key), that is a genuine miss
    → see "When an image can't be read."
 2. Present the returned transcription as a **faithful, complete transcription
