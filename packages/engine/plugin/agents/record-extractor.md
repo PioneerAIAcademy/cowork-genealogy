@@ -49,26 +49,6 @@ tools:
   - mcp__Genealogy_Research__research_log_append
   - mcp__Genealogy_Research__record_person_matches
   - mcp__Genealogy_Research__record_record_matches
-# `extraction_append` writes only `sources` + `assertions`. The broad
-# `research_append` is denied both by omission above and explicitly here:
-# a `disallowedTools` deny is enforced even under `bypassPermissions`,
-# which the hosted path runs (issue #695).
-#
-# The deny MUST carry all three spellings for the same reason the allow-list does.
-# A deny that names only `mcp__genealogy__research_append` silently fails to
-# bind wherever the server is registered under another name — which is exactly
-# the environment where it matters most, since the deny is the only thing
-# standing between this agent and the broad writer under bypassPermissions.
-disallowedTools:
-  - mcp__genealogy__research_append
-  - mcp__remote-devices__Genealogy_Research__research_append
-  - mcp__Genealogy_Research__research_append
-  - mcp__genealogy__tree_edit
-  - mcp__remote-devices__Genealogy_Research__tree_edit
-  - mcp__Genealogy_Research__tree_edit
-  - mcp__genealogy__materialize_facts
-  - mcp__remote-devices__Genealogy_Research__materialize_facts
-  - mcp__Genealogy_Research__materialize_facts
 ---
 
 # Record Extractor

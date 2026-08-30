@@ -117,8 +117,7 @@ To enable them later (two steps):
 2. Wire the config — have the control plane include
    `{"wikiMarkdownDir": "/opt/genealogy-agent/wiki"}` in the per-sandbox
    `$HOME/.familysearch-mcp/config.json` it writes on connect (alongside the FS
-   token). `learningCenterDir` / `libraryDir` are optional and return `null`
-   when absent (no error), so they need no baking.
+   token).
 
 ---
 

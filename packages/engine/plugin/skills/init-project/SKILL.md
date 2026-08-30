@@ -59,9 +59,10 @@ Asking a question and then stopping to wait is a failure: the project never gets
 > family history centre.
 
 **Normalize before storing** (downstream skills do exact-equality lookups):
-- Canonical enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none`.
+- Canonical enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner`, `LibraryAccess`, `other`, `none`.
 - Case-fold, trim, dedupe.
-- Aliases: `ancestry.com` → `Ancestry`; `findmypast.com`/`find my past` → `FindMyPast`; `myheritage.com` → `MyHeritage`; `newspapers` → `Newspapers.com`; `genealogybank.com` → `GenealogyBank`; `findagrave`/`findagrave+` → `FindAGrave-Plus`.
+- Aliases: `ancestry.com` → `Ancestry`; `findmypast.com`/`find my past` → `FindMyPast`; `myheritage.com` → `MyHeritage`; `newspapers` → `Newspapers.com`; `genealogybank.com` → `GenealogyBank`; `findagrave`/`findagrave+` → `FindAGrave-Plus`; `FamilySearch partnership`/`FamilySearch partner`/`partner subscription` → `FamilySearch-Partner`; `library`/`library card`/`family history centre`/`family history center`/`FHC`/`affiliate library` → `LibraryAccess`.
+- **A plain FamilySearch account is the baseline every researcher has — never store it.** Bare `FamilySearch`/`familysearch.org`, with no partnership or library mentioned, drops from the list; if nothing else remains, store `["none"]`.
 - Unrecognized → `other`. Show normalized result and confirm.
 - Empty → `["none"]`.
 

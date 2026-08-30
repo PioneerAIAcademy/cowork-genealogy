@@ -33,12 +33,25 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 // qualified against the test harness's arbitrary dict key rather than the
 // product's name.
 //
-// `disallowedTools:` needs the same treatment for a sharper reason. A deny is
-// enforced even under `bypassPermissions` (the hosted path — issue #695), so
-// it is the last line of defence keeping record-extractor off the broad
-// `research_append`. A deny naming only some spellings silently fails to bind
-// wherever the server is registered under another name — and unlike a missing
-// grant, a missing deny fails OPEN.
+// **No agent ships a `disallowedTools:` block any more, and that is the
+// measured position rather than an oversight.** Every deny we had was on a tool
+// already absent from that agent's `tools:`, and this file used to justify them
+// by claiming a deny binds under `bypassPermissions` while an omission does not.
+// Probed 2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128
+// (`make probe-agent-binding`, reproduced twice): BOTH bind. A tool merely
+// omitted from `tools:` is absent from the agent exactly as a denied one is, so
+// every deny was restating the line above it. (The old claim cited issue #695
+// here and in six other spots; that issue is the birkeland lane breach and says
+// nothing about `bypassPermissions`, denies, or omissions.) The regression a
+// deny insured against — someone later adding the tool to `tools:` — is caught
+// by AGENT_PERMISSIONS below, which fails on any change to either list.
+//
+// The rules below still apply to a deny, because one may come back for a reason
+// the omission cannot serve. If it does: it needs all three spellings, since one
+// naming only some silently binds nothing wherever the server carries another
+// name and unlike a missing grant a missing deny fails OPEN — and it must not
+// name a tool the same agent grants, which can make the runtime refuse the agent
+// outright (see "never denies a tool it also grants").
 //
 // Listing every spelling is the only form that resolves everywhere. A
 // server-level prefix grant cannot substitute: Cowork's `remote-devices`
@@ -182,6 +195,44 @@ function bareName(entry: string): string {
 const agentFiles = readdirSync(agentsDir).filter((f) => f.endsWith(".md"));
 const knownTools = new Set(allToolSchemas.map((s) => s.name));
 
+/** Bare tool names an agent names in BOTH `tools:` and `disallowedTools:`.
+ *
+ * A deny is applied BEFORE the zero-tools spawn check, so an entry in both
+ * lists does not merely cancel out — it can make the runtime refuse the agent
+ * outright. Measured 2026-08-30 against Claude Code 2.1.251 / agent SDK 0.2.128
+ * (`make probe-agent-binding`): a probe agent granting one tool under all three
+ * spellings plus `ToolSearch`, and denying that same tool, was rejected with
+ *
+ *   Agent 'probe-b-deny' would be spawned with zero tools — refusing.
+ *   Its tools list resolved to nothing: unrecognized [ToolSearch].
+ *
+ * The three MCP entries are not named as unrecognized: the deny had already
+ * removed them. `image-reader` grants exactly one tool, so it is one entry from
+ * this shape.
+ *
+ * No agent ships a deny today (see the header), so the per-agent arm below
+ * cannot fail on the current corpus — which is why the rule is ALSO pinned
+ * synthetically. A check that cannot fail reads as coverage and is worse than
+ * none (`CLAUDE.md`, "A new lint must be proven to fail"); the same argument
+ * and the same remedy as the denied-built-in case further down this file.
+ */
+function grantedAndDenied(text: string): string[] {
+  const granted = new Set(extractList(text, "tools").map(bareOrBuiltin));
+  return [...new Set(extractList(text, "disallowedTools").map(bareOrBuiltin))]
+    .filter((t) => granted.has(t))
+    .sort();
+}
+
+function overlapMessage(file: string, overlap: string[]): string {
+  return (
+    `${file} both grants and denies: ${overlap.join(", ")}. The deny wins and is ` +
+    `applied before the spawn check, so if it strips every entry that would have ` +
+    `resolved, the runtime refuses to spawn this agent at all. Drop it from one ` +
+    `list — omitting a tool from tools: already keeps it out of the agent ` +
+    `(measured under bypassPermissions, 2026-08-30).`
+  );
+}
+
 describe("plugin agent tool names", () => {
   it("finds the plugin agents", () => {
     expect(agentFiles.length).toBeGreaterThan(0);
@@ -199,27 +250,27 @@ describe("plugin agent tool names", () => {
     expect(LOCAL_PREFIX).toBe("mcp__Genealogy_Research__");
   });
 
-  it("record-extractor still denies the broad writer, under every spelling", () => {
-    // Pinned by name, deliberately, because the per-agent loop below SKIPS
-    // `disallowedTools` when the block parses empty — correct for the agents that
-    // have no denies, but it means deleting record-extractor's block entirely is
-    // green. Verified: removing it leaves the suite at 289 passing.
+  it("record-extractor cannot reach the broad writer", () => {
+    // The lane ADR-0006 defines. It used to be asserted on record-extractor's
+    // `disallowedTools:` block; that block is gone, because the deny only ever
+    // restated the omission (see the header). So assert the thing that actually
+    // binds: `research_append` is absent from the agent's `tools:`.
     //
-    // That block is the last line keeping this agent off the broad `research_append`
-    // under `bypassPermissions` (the hosted path, #695), and a missing deny fails
-    // OPEN. So its existence is asserted here rather than only its shape.
-    const denies = extractList(
+    // This is not redundant with AGENT_PERMISSIONS below. That snapshot fails on
+    // ANY change to the list and says only "the surface moved"; this one names
+    // the invariant, so a reviewer reading a red suite is told which rule broke.
+    const granted = extractList(
       readFileSync(join(agentsDir, "record-extractor.md"), "utf8"),
-      "disallowedTools",
-    );
-    for (const prefix of SERVER_PREFIXES) {
-      expect(
-        denies,
-        `record-extractor must deny ${prefix}research_append. A deny that names no ` +
-          `spelling the session recognizes denies nothing, and unlike a missing grant ` +
-          `it fails open and silently.`,
-      ).toContain(`${prefix}research_append`);
-    }
+      "tools",
+    ).map(bareOrBuiltin);
+    expect(
+      granted,
+      `record-extractor must not hold the broad research_append — it writes only ` +
+        `sources + assertions, through extraction_append (ADR-0006). A tool omitted ` +
+        `from tools: is absent from the agent even under bypassPermissions ` +
+        `(measured 2026-08-30, \`make probe-agent-binding\`); adding it here is what ` +
+        `would hand this agent every section.`,
+    ).not.toContain("research_append");
   });
 
   describe("harness prefix vs. the keys the environments actually register", () => {
@@ -313,6 +364,25 @@ describe("plugin agent tool names", () => {
           });
         });
       }
+
+      it("never denies a tool it also grants", () => {
+        expect(grantedAndDenied(text), overlapMessage(file, grantedAndDenied(text))).toEqual([]);
+      });
+
+      it("ships no disallowedTools block", () => {
+        // Not a style rule — the position the probe settled. Every deny we had
+        // named a tool already absent from `tools:`, and an omission binds
+        // (header). Re-adding one is allowed, but it should be a decision with
+        // a reason the omission cannot serve, not a reflex; this is what makes
+        // a reviewer look at it.
+        expect(
+          extractList(text, "disallowedTools"),
+          `${file} declares disallowedTools. Denies were removed 2026-08-30 as ` +
+            `restatements of the omission above them (\`make probe-agent-binding\`). ` +
+            `If this one earns its place, say why in the frontmatter, give it all ` +
+            `three spellings, keep it clear of tools:, and update this test.`,
+        ).toEqual([]);
+      });
     });
   }
 });
@@ -383,11 +453,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "wiki_place_page",
       "wiki_search",
     ],
-    denies: ["fulltext_search", "person_read", "record_search"],
-  },
-  "image-reader-opus.md": {
-    tools: ["image_read"],
-    denies: ["image_transcribe", "record_read", "record_search"],
+    denies: [],
   },
   // The only caller permitted to write research.json's proof_summaries; the
   // plugin PreToolUse hook denies that section to everyone else. It holds the
@@ -405,11 +471,11 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "tree_correct",
       "tree_edit",
     ],
-    denies: ["extraction_append"],
+    denies: [],
   },
   "image-reader.md": {
     tools: ["image_transcribe"],
-    denies: ["configure_openrouter", "record_read", "record_search"],
+    denies: [],
   },
   "record-extractor.md": {
     tools: [
@@ -422,7 +488,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "record_record_matches",
       "research_log_append",
     ],
-    denies: ["materialize_facts", "research_append", "tree_edit"],
+    denies: [],
   },
   // The only caller permitted to set `exhaustive_declaration.declared: true`;
   // the plugin PreToolUse hook denies that claim to everyone else. Like
@@ -434,14 +500,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // five writers fails open on the other four, silently, and no CI job sees it.
   "research-exhaustiveness.md": {
     tools: ["Read", "project_context", "research_append", "research_query"],
-    denies: [
-      "extraction_append",
-      "materialize_facts",
-      "merge_tree_persons",
-      "tree_correct",
-      "tree_edit",
-      "tree_forget",
-    ],
+    denies: [],
   },
 };
 
@@ -599,6 +658,31 @@ function isAllowedBuiltinHit(h: BuiltinHit): boolean {
 }
 
 describe("plugin agent bodies name no built-in tool the agent cannot call", () => {
+  it("the grant/deny overlap rule still detects an overlap", () => {
+    // Same anti-silent-zero argument as the canary below, and it bites harder
+    // here: no agent ships a deny at all now, so the per-agent arm has NOTHING
+    // to fail on and would report coverage it does not have. Drives the real
+    // `grantedAndDenied` over a synthetic frontmatter so the parse, the
+    // bare-name mapping and the set intersection are all covered.
+    const head = ["---", "name: probe", "tools:", "  - mcp__genealogy__record_read"];
+    const clean = [...head, "---", "", "body"].join("\n");
+    const overlapping = [
+      ...head,
+      "disallowedTools:",
+      "  - mcp__Genealogy_Research__record_read",
+      "---",
+      "",
+      "body",
+    ].join("\n");
+
+    expect(grantedAndDenied(clean), "a deny-free agent must not report an overlap").toEqual([]);
+    expect(
+      grantedAndDenied(overlapping),
+      "the overlap rule no longer fires — the per-agent arm passes vacuously, and " +
+        "nothing would catch a deny that makes the runtime refuse an agent",
+    ).toEqual(["record_read"]);
+  });
+
   it("the scanner still detects a built-in mention", () => {
     // The anti-silent-zero guard that OUTLIVES the allow-list, which is now
     // empty — nothing in the corpus exercises the scanner, so this is the only
