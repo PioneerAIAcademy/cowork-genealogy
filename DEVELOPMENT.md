@@ -214,11 +214,12 @@ gh issue create --label developer|genealogist [--label icebox] \
   so an unlabelled gap is invisible to everyone who goes looking there.
 - **Creating the issue is all you do — the board takes care of itself.** A CI
   workflow (`add-to-project.yml`) adds the card to Backlog the moment the issue
-  opens — the one exception is the `feedback` label, which routes to Ready — and
-  the lead's `/fill-ready` pass moves it from there. Don't run
-  `gh project` commands to place it yourself: a `gh` token without the `project`
-  scope (the default from `gh auth login`) fails a board write *while still
-  creating the issue*, which looks like it worked.
+  opens — the one exception is the `feedback` label, which routes to the
+  Feedback column for `/triage-feedback` — and the lead's `/fill-ready` pass
+  moves it from there. Don't run `gh project` commands to place it yourself: a
+  `gh` token without the `project` scope (the default from `gh auth login`)
+  fails a board write *while still creating the issue*, which looks like it
+  worked.
 - **Keep the body short and put the reasoning elsewhere.** Say what the work is
   and enough of why it's still open to stop the next person re-opening a settled
   question. A settled tradeoff, a rejected alternative, or a measurement belongs

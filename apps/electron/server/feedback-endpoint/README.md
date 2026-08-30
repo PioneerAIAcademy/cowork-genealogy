@@ -83,11 +83,17 @@ to point to your deployed Apps Script URL instead of `http://localhost:3000/feed
 
 - Each feedback submission is saved as `feedback-<timestamp>.zip` in the Drive folder
 - Each submission also opens a GitHub issue titled `[feedback] <timestamp>`,
-  labelled `genealogist` + `feedback`, carrying the Drive link and the
-  `make feedback-case` command. The `feedback` label routes the card straight to
-  **Ready**; see `.github/workflows/add-to-project.yml`.
-- **The issue body never contains user-typed text.** The repo is public. Only
-  `submitted_at` and `platform` are read out of the bundle, and both are clamped.
+  labelled `genealogist` + `feedback`, carrying the Drive link, the
+  `make feedback-case` command, and the tester's own prose. The `feedback` label
+  routes the card straight to the **Feedback** column; see
+  `.github/workflows/add-to-project.yml`.
+- **The issue body carries the tester's prose, and the repo is public.** The five
+  free-text fields plus `worked_as_expected` are reproduced verbatim, so testers
+  must be told their feedback is published and asked to keep PII out of it.
+  `email` and `project_folder_path` are never copied — one is the submitter's
+  contact address, the other leaks a username from their machine. Every copied
+  value is capped and has `@` escaped, so a submission cannot @-mention real
+  people from a public issue body.
 - **A GitHub failure never fails the submission.** The zip is already saved by
   then, so the user gets success either way and the failure is logged. The cost
   is an orphaned zip with no issue — which is exactly what the smoke test checks.
@@ -110,8 +116,9 @@ console edit**.
    rules out the stale-console, unpublished-deployment and unset-property cases
    before you spend a submission on them.
 2. Submit a bundle with a throwaway email. Confirm an issue exists, labelled
-   `genealogist` + `feedback`, titled `[feedback] …`, sitting in **Ready** on
-   project 1.
+   `genealogist` + `feedback`, titled `[feedback] …`, sitting in the **Feedback**
+   column on project 1, and carrying a `## Feedback text` section that reproduces
+   what you typed — and no email address or local path anywhere in the body.
    **If there is no issue and no error, and step 1 was clean, suspect an
    ungranted `script.external_request` scope before you suspect the PAT** — the
    `try/catch` makes both look identical from the client. Executions in the Apps
