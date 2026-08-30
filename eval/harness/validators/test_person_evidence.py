@@ -680,6 +680,14 @@ def test_same_person_called_at_all_when_a_reachable_persona_was_linked(
     cannot predict — while still being unarguable about the case that actually
     occurred: zero calls in a run that wrote reachable links.
 
+    **Scope differs from the harness detector, deliberately.** That one asks only
+    about BRAND-NEW tree persons; this asks about every new `pe_` link with a
+    reachable persona, including one to a pre-existing seed person. The two are a
+    mirrored *predicate* (`_persona_reachable`), not a mirrored population — the
+    harness detector answers "was a new identity asserted unscored", this answers
+    "did a run that owed a score make the call". Harmless in today's suite, and
+    named so the difference is not read as drift.
+
     **What it does NOT assert.** Which pairing was scored, that the score was
     used, or that the RIGHT persona was chosen for a relationship assertion's
     second party. Those are the per-pair check, the `Score discipline` rubric
@@ -700,7 +708,15 @@ def test_same_person_called_at_all_when_a_reachable_persona_was_linked(
     if not owed:
         pytest.skip("no new pe_ entry had a reachable record persona — nothing owed")
 
-    if any("same_person" in (tc.get("tool") or "") for tc in tool_calls):
+    # A call that ERRORED is not a score. Without this an upstream failure would
+    # satisfy the check, which is the same success-gating
+    # `same_person_scored_ids` applies in the harness. Latent rather than live
+    # today — no committed `same_person` call carries `is_error: true` — so this
+    # arm is unexercised by the corpus and is here for the run that first errors.
+    if any(
+        "same_person" in (tc.get("tool") or "") and tc.get("is_error") is not True
+        for tc in tool_calls
+    ):
         return
 
     detail = ", ".join(
