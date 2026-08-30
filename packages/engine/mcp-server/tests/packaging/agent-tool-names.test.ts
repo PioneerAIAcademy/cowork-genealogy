@@ -385,10 +385,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     ],
     denies: ["fulltext_search", "person_read", "record_search"],
   },
-  "image-reader-opus.md": {
-    tools: ["image_read"],
-    denies: ["image_transcribe", "record_read", "record_search"],
-  },
   // The only caller permitted to write research.json's proof_summaries; the
   // plugin PreToolUse hook denies that section to everyone else. It holds the
   // BROAD research_append, which is what the hook's caller check — not this

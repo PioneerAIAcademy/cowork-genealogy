@@ -28,7 +28,8 @@
  *
  * Uses `fetchWithTimeout`, never the global `fetch`: these scripts page for tens
  * of minutes against an endpoint that throttles, and Node's fetch never times
- * out on its own (`volume_search` hung 236 minutes on exactly this — CLAUDE.md).
+ * out on its own (`volume_search` hung 236 minutes on exactly this — see
+ * `tests/packaging/no-bare-fetch.test.ts`).
  */
 import { fetchWithTimeout } from "../src/utils/http.js";
 
