@@ -179,12 +179,6 @@ a short `looking_for` pointer for *who/what* to locate — never an assertion of
 what the page says). If it returns `NOT READ`, do not fabricate the page — note it
 and move on.
 
-If a page you land on comes back heavy with `[illegible]` marks or otherwise
-looks unreliable (faded ink, difficult handwriting, Kurrentschrift), a
-higher-accuracy but slower and far more expensive re-read is available:
-`@plugin:image-reader-opus`, invoked the same way, one image at a time. Reserve
-it for a specific page that's worth the cost — never for routine browsing.
-
 **Listing a volume's images IS a completed browse — log it (step 6) before you
 present anything or defer reading.** The `image_search` call is the browse event
 this skill exists to record; log it once you have the image list, whether you go

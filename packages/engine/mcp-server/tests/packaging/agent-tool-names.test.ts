@@ -54,7 +54,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 // Both Cowork spellings derive from manifest.display_name, so renaming the
 // extension would silently re-break production. That is what this test catches.
 // What it CANNOT catch is whether a granted tool actually binds at runtime
-// (#1084/#1085) — only a live Cowork session can, in the run mode being tested.
+// (#1084/#1085) — only a live Cowork session can, and only for the spelling it exposes.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const mcpRoot = join(here, "..", "..");
@@ -360,8 +360,8 @@ describe("plugin agent/skill bodies", () => {
 // tool under all three server spellings. Nothing checked the CONTENT: adding a
 // tool to `tools:`, or dropping one from `disallowedTools:`, was green. That is
 // the change most worth seeing, because no CI job can verify what a grant
-// actually binds to at runtime (only a live Cowork session can, in the run mode
-// being tested), and a missing deny fails OPEN — record-extractor silently
+// actually binds to at runtime (only a live Cowork session can, and only for the
+// spelling it exposes), and a missing deny fails OPEN — record-extractor silently
 // regains the broad `research_append` rather than erroring.
 //
 // This does not judge whether a permission is correct. It makes a change to one
@@ -391,10 +391,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "wiki_search",
     ],
     denies: ["fulltext_search", "person_read", "record_search"],
-  },
-  "image-reader-opus.md": {
-    tools: ["image_read"],
-    denies: ["image_transcribe", "record_read", "record_search"],
   },
   // The only caller permitted to write research.json's proof_summaries; the
   // plugin PreToolUse hook denies that section to everyone else. It holds the
