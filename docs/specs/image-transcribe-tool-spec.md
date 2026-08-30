@@ -591,13 +591,27 @@ not tax that result, it **selected** it. That inference is the damage, and it is
 reachable from the tool layer rather than from skill prose (ADR-0011).
 
 **The rule.** One retry, 1s apart, on a **transport** failure only. Never on a
-timeout. The two cost different amounts to re-attempt: a connect-level failure
-never reached OpenRouter, so it bills no inference and returns fast, while a
-timeout has already spent `OCR_TIMEOUT_MS` and a second attempt would double the
-worst case past the budget §5.7 is sized around. That objection is the reason no
-retry shipped earlier; splitting on the failure shape answers it rather than
-overriding it. The socket cause code must survive both attempts into the thrown
+timeout. A timeout has already spent `OCR_TIMEOUT_MS`, so a second attempt
+doubles the worst case past the budget §5.7 is sized around — the objection that
+kept a retry out until now, answered by splitting on the failure shape rather
+than overridden. The socket cause code must survive both attempts into the thrown
 message, or the classification the code exists for is lost exactly when needed.
+
+**Two limits of that argument, stated because neither is measured.** The
+transport branch is cheaper to re-attempt only *usually*: it catches every
+non-timeout fetch rejection, including a reset that arrives after the request was
+sent and inference may already have been billed, which neither returns fast nor
+costs nothing. Nothing in the corpus separates those cases — 0 of 30 recorded
+failures carry a socket cause code — so "cheap to retry" is a reasoned default
+awaiting the coded failures, not a measured property.
+
+And the budget the argument is framed against is the wrong one for the
+environment most users are in. `OCR_TIMEOUT_MS` is 180s, but Cowork's device
+bridge aborts every MCP call at 60s, and the retry does not check any clock — it
+spends a budget the code never reads. At the current default's measured 4.0s per
+page a second attempt is nowhere near either ceiling, which is why this is
+recorded rather than guarded; a slower default would make it bite, and that is
+the condition to re-check on.
 
 **Alternatives it beat.**
 

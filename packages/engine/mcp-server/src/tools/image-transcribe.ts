@@ -231,11 +231,15 @@ export async function imageTranscribeTool(
       );
       break;
     } catch (error) {
-      // Retry a TRANSPORT failure once; never a timeout. The two cost completely
-      // different amounts to re-attempt: a connect-level failure never reached
-      // OpenRouter, so it bills no inference and returns fast, while a timeout
-      // has already spent OCR_TIMEOUT_MS and a second attempt would double the
-      // worst case — which is the objection that kept a retry out until now.
+      // Retry a TRANSPORT failure once; never a timeout. A timeout has already
+      // spent OCR_TIMEOUT_MS, so a second attempt doubles the worst case — the
+      // objection that kept a retry out until now. The transport branch is the
+      // cheaper one to re-attempt, but only USUALLY: it catches every non-timeout
+      // fetch rejection, which includes a reset after the request was sent and
+      // inference may already have been billed. The corpus cannot separate those
+      // — 0 of 30 recorded failures carry a socket cause code — so this is a
+      // reasoned default, not a measured one. Re-check it once coded failures
+      // accumulate.
       if (attempt >= OCR_TRANSPORT_RETRIES || isFetchTimeout(error)) {
         throw new Error(
           `Could not reach OpenRouter${attempt > 0 ? " (2 attempts)" : ""}. ` +
