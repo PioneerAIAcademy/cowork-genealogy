@@ -163,8 +163,9 @@ const [showFileList, setShowFileList] = useState(false)
 ```
 
 Derived (memoized): `selectedFiles`, `selectedCount`, `selectedBytes`,
-filtered by `includeMedia`. Send disabled at > 50 MB or when nothing
-selected and the comment is empty.
+filtered by `includeMedia`. (Superseded: Send is never disabled for missing
+content — see issue #1919. The 50 MB disable described here was never built;
+oversize bundles are trimmed largest-first instead.)
 
 Empty-folder case: `folderPath == null` → render only session log + comment
 (current behavior).

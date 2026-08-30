@@ -78,7 +78,7 @@ So the question when writing a new rule is *where it goes*:
 |---|---|
 | across hours, past compaction | a tool contract — validate and reject |
 | for the main thread, which no allow-list can narrow | a `PreToolUse` hook (ADR-0005) |
-| for one delegated agent | that agent's `tools:`/`disallowedTools:`, or a narrowed tool (ADR-0006) |
+| for one delegated agent | that agent's `tools:` — omit the capability — or a narrowed tool (ADR-0006) |
 | within a single invocation | skill prose — this is what prose is *for* |
 
 ## Alternatives considered

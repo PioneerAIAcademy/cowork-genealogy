@@ -254,6 +254,20 @@ if a validator says the skill deleted an entry it may not delete, that is a
 Correctness problem whatever the prose looks like. If a failure is unrelated to
 the dimension you are scoring, ignore it.
 
+## Harness observations on the response text
+
+{harness_observations}
+
+These are pattern matches the harness ran over Claude's text response. They are
+observations, not verdicts: a match says a pattern was present, not that the
+response is wrong, and a pattern can match correct text. **Only matches appear
+here** — a check that found nothing is deliberately not listed.
+
+Weigh each against the response and the tool calls you already have above, the
+same way you would weigh anything you noticed yourself. A match does not require
+a deduction of any size, and none of them names a dimension or a score. If a
+match is unrelated to the dimension you are scoring, ignore it.
+
 ────────────────────────────────────────
 # Critical: Negative tests (decline / routing / non-activation)
 

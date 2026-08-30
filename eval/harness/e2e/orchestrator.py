@@ -202,14 +202,12 @@ def is_blocked_tree_tool(tool_name: str) -> bool:
 def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
     """Whether this is a main-thread call to a `SUBAGENT_ONLY_TOOLS` member.
 
-    Both members are a Task-spawned subagent's private tool, declared by NO
-    skill's `allowed-tools`: `extraction_append` lives only on
-    `agents/record-extractor.md` (the #942 case), and `image_read` only on
-    `agents/image-reader-opus.md` since `search-images` moved to
-    `@plugin:image-reader` (2026-07-17). So the only legitimate caller of either
-    is the subagent, whose PreToolUse firing carries `agent_id`; a call on the
-    main thread (no `agent_id`) is the router substituting for a failed spawn and
-    doing the work itself.
+    Both members are declared by NO skill's `allowed-tools`: `extraction_append`
+    lives only on `agents/record-extractor.md` (the #942 case), and `image_read`
+    is declared by no agent at all since `image-reader-opus` was retired (issue
+    #2013) — the deny is kept regardless, because it is what keeps inline base64
+    off the main thread. A call on the main thread (no `agent_id`) is the router
+    substituting for a failed spawn and doing the work itself.
 
     The policy binds in e2e for both because `agent_id` presence alone is a
     sufficient discriminator — which is all e2e can see, since its sub-skills run
@@ -1350,10 +1348,9 @@ async def _run_agent(
             # Per-tool recovery target (issue #1273 Item 1 asks for per-tool
             # guidance), mirroring each `_DENIAL_REASONS` entry, which
             # `blocked_context_calls` does not store — so a runlog reader can act on
-            # this line alone. NOTE: for image_read this is the transcription plugin
-            # @plugin:image-reader (the deny doctrine's recovery), deliberately NOT
-            # the tool's owner image-reader-opus — the interpret-e2e-result skill
-            # names the owner for the separate "whose spawn failed" diagnostic.
+            # this line alone. For image_read the recovery is the transcription
+            # plugin @plugin:image-reader, which is now also the only image reader
+            # (image-reader-opus retired, issue #2013).
             # The fallback covers a future third guarded tool.
             recovery = {
                 "extraction_append": "@plugin:record-extractor",

@@ -121,8 +121,8 @@ way project state changes.
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
-| `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. The `image-reader-opus` subagent's reader — not called directly by any skill. | OAuth |
-| `image_transcribe` | OCR a FamilySearch image by imageId or ark host-side (Qwen3-VL via OpenRouter) and return **text** — no bytes cross the MCP transport, so it handles scans of any size. The `image-reader` subagent's reader. | OAuth + OpenRouter |
+| `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. Kept for the Issue #28 OCR-comparison pipeline — no skill or agent calls it, and the eval harness denies it on the main thread. | OAuth |
+| `image_transcribe` | OCR a FamilySearch image by imageId or ark host-side (Gemini Flash via OpenRouter) and return **text** — no bytes cross the MCP transport, so it handles scans of any size. The `image-reader` subagent's reader. | OAuth + OpenRouter |
 | `configure_openrouter` | Save the user's OpenRouter API key to `~/.familysearch-mcp/config.json` (`openRouterApiKey`) so `image_transcribe` can run; returns a masked preview. Direct-invocation — Claude calls it when `image_transcribe` reports a missing/rejected key. | None |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives, reading the local tree — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
@@ -149,7 +149,7 @@ sidecar APIs (Pop Stats and `wiki-query-api`); no local setup required
 for end users.
 
 The `image_transcribe` tool OCRs page scans host-side via OpenRouter
-(default model `qwen/qwen3-vl-235b-a22b-instruct`). It needs an
+(default model `google/gemini-3.7-flash`). It needs an
 OpenRouter API key in `~/.familysearch-mcp/config.json` (`openRouterApiKey`);
 in Cowork, if the key is missing or rejected the workflow asks the user
 for one and saves it via `configure_openrouter`. The e2e harness and the
@@ -266,8 +266,7 @@ don't load it explicitly.
 | **record-extractor** | Extracts every assertion from **one** record — the source entry, atomic per-fact assertions, and their GPS evidence classifications — in a single validated write. The `record-extraction` skill delegates one of these per record; classifications are set here and are final. | (not invoked directly — `record-extraction` delegates) |
 | **proof-conclusion** | Writes the GPS proof conclusion for **one** question — selects the confidence tier and the proof form, writes the self-contained narrative, and encodes the conclusion into your tree once it reaches Probable or better. The `proof-conclusion` skill delegates to it; it is the only caller allowed to write the `proof_summaries` section, which is what keeps a conclusion from being hand-authored around the tier and citation rules. | (not invoked directly — `proof-conclusion` delegates) |
 | **research-exhaustiveness** | Judges whether the research on **one** question is reasonably exhaustive — applies the GPS 5 threshold questions and the 7-point stop criteria, then either declares the question exhaustive or names what is still missing. The `research-exhaustiveness` skill delegates to it; it is the only caller allowed to declare a question exhaustive, which is what keeps that claim from being hand-authored around the criteria it rests on. | (not invoked directly — `research-exhaustiveness` delegates) |
-| **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Qwen3-VL OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
-| **image-reader-opus** | Re-reads **one** FamilySearch image scan using its own (Opus) vision, for a page the fast reader handled poorly (faded ink, difficult handwriting, Kurrentschrift). Slower and far more expensive than `image-reader` — invoked only on an explicit request for a higher-accuracy re-read, never as a default. | "Re-read this page with Opus" / "The fast OCR garbled this — try harder" |
+| **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
 
 ## Recommended workflow
 
@@ -328,9 +327,13 @@ short questions in one opening turn:
 2. **Experience level** — *just starting out / some research under my
    belt / experienced / professional or certified*.
 3. **Access** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
-   GenealogyBank, FindAGrave-Plus, other, or none. Free access counts:
-   a FamilySearch affiliate library or a partner subscription is access,
-   not "none".
+   GenealogyBank, FindAGrave-Plus, other, or none. Free access counts,
+   and is now recorded as such rather than collapsing to "other": a
+   partner subscription through your FamilySearch account stores as
+   `FamilySearch-Partner`, and a public library, family history centre
+   or affiliate library as `LibraryAccess`. A plain FamilySearch
+   account is the baseline everyone here has, so it isn't recorded —
+   that alone is "none".
 
 None of the three blocks. Answer what you like; anything you skip takes
 a documented default, and the summary at the end names what was
@@ -509,8 +512,7 @@ What's shipped:
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
   for one question, and the only writer of `proof_summaries`),
   `research-exhaustiveness` (the exhaustiveness judgment for one question, and
-  the only caller that may declare one exhaustive), `image-reader` (fast/cheap
-  page OCR), and `image-reader-opus` (explicit-only, higher-accuracy re-read).
+  the only caller that may declare one exhaustive) and `image-reader` (page OCR).
 - **Researcher profile.** `init-project` asks the research objective,
   experience level, and site access together in one non-blocking opening
   turn; every skill adapts narration density to the answer.
