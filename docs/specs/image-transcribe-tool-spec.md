@@ -272,7 +272,8 @@ Two findings outrank the table:
   it had failed and 0–2 on the other eight, while scoring 41% with 6
   fabrications on a zero-marker page. It fires when the model knows it failed
   and is blind when it does not — which is the case that corrupts a tree. Any
-  future "escalate to `image-reader-opus`" rule needs a different signal.
+  future escalation rule needs a different signal. `image-reader-opus` was
+  retired here rather than kept as an unreachable escalation target.
 - **The Gemini-vs-Opus ordering is NOT settled.** On the single page with
   non-model truth available (a record index), Gemini recovers 5 of 5 indexed
   facts to Opus's 4 of 5, while the judge scores Opus higher — because the
@@ -284,6 +285,38 @@ Two findings outrank the table:
 
 The switch to Gemini does not rest on the unsettled half: Qwen loses to Gemini
 on every page, under a key that flatters neither.
+
+### 4.6 `image-reader-opus` is retired, and no auto-escalation replaces it
+
+The plan of record was to keep Qwen and add an in-tool escalation to a better
+model, triggered by `[illegible]` density, deleting `image-reader-opus` once that
+worked. **The escalation is deliberately not built.** Raising the floor replaced
+it:
+
+- **The trigger does not work.** Marker density is high-precision and low-recall
+  (§4.5). It cannot see the fabrication class, which is the one that writes a
+  wrong parent into a tree, so an escalation built on it would have advertised a
+  safety property it does not have.
+- **There is much less to escalate from.** The escalation existed to rescue
+  Qwen's 50%. Gemini reads at 79% on the same pages and hallucinates 8 times
+  against 37.
+- **The escalation target was unreachable anyway.** `image-reader-opus` read
+  through `image_read`, which refuses scans over 700 KB — 80% of a 15-ARK sample
+  of our own corpus — and it had to be invoked by prose that fired zero times on
+  a page carrying 165 `[illegible]` markers.
+
+So `packages/engine/plugin/agents/image-reader-opus.md` and its spec are deleted,
+along with the `HARD SCAN —` prefix instruction and both callers' escalation
+offers. `image_read` the **tool** stays for the Issue #28 pixel consumer, and
+stays in the harness's `SUBAGENT_ONLY_TOOLS` main-thread deny: no agent declares
+it now, but the deny is what keeps inline base64 off the main thread, and that
+hazard is unchanged by the agent's removal.
+
+**What this does not fix.** The confident-garbage class — clean-looking text with
+no markers, a farm name and a patronymic quietly corrupted into different ones —
+is not addressed by a model swap, and Gemini has not been measured on the Västra
+Karaby pages where that was recorded. Nothing checks a transcription against its
+scan.
 
 ---
 

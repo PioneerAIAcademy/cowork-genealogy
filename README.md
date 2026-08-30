@@ -120,7 +120,7 @@ way project state changes.
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
-| `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. The `image-reader-opus` subagent's reader — not called directly by any skill. | OAuth |
+| `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. Kept for the Issue #28 OCR-comparison pipeline — no skill or agent calls it, and the main session is denied it. | OAuth |
 | `image_transcribe` | OCR a FamilySearch image by imageId or ark host-side (Gemini Flash via OpenRouter) and return **text** — no bytes cross the MCP transport, so it handles scans of any size. The `image-reader` subagent's reader. | OAuth + OpenRouter |
 | `configure_openrouter` | Save the user's OpenRouter API key to `~/.familysearch-mcp/config.json` (`openRouterApiKey`) so `image_transcribe` can run; returns a masked preview. Direct-invocation — Claude calls it when `image_transcribe` reports a missing/rejected key. | None |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives, reading the local tree — offline | None |
@@ -266,7 +266,6 @@ don't load it explicitly.
 | **proof-conclusion** | Writes the GPS proof conclusion for **one** question — selects the confidence tier and the proof form, writes the self-contained narrative, and encodes the conclusion into your tree once it reaches Probable or better. The `proof-conclusion` skill delegates to it; it is the only caller allowed to write the `proof_summaries` section, which is what keeps a conclusion from being hand-authored around the tier and citation rules. | (not invoked directly — `proof-conclusion` delegates) |
 | **research-exhaustiveness** | Judges whether the research on **one** question is reasonably exhaustive — applies the GPS 5 threshold questions and the 7-point stop criteria, then either declares the question exhaustive or names what is still missing. The `research-exhaustiveness` skill delegates to it; it is the only caller allowed to declare a question exhaustive, which is what keeps that claim from being hand-authored around the criteria it rests on. | (not invoked directly — `research-exhaustiveness` delegates) |
 | **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
-| **image-reader-opus** | Re-reads **one** FamilySearch image scan using its own (Opus) vision, for a page the fast reader handled poorly (faded ink, difficult handwriting, Kurrentschrift). Slower and far more expensive than `image-reader` — invoked only on an explicit request for a higher-accuracy re-read, never as a default. | "Re-read this page with Opus" / "The fast OCR garbled this — try harder" |
 
 ## Recommended workflow
 
@@ -512,8 +511,7 @@ What's shipped:
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
   for one question, and the only writer of `proof_summaries`),
   `research-exhaustiveness` (the exhaustiveness judgment for one question, and
-  the only caller that may declare one exhaustive), `image-reader` (fast/cheap
-  page OCR), and `image-reader-opus` (explicit-only, higher-accuracy re-read).
+  the only caller that may declare one exhaustive) and `image-reader` (page OCR).
 - **Researcher profile.** `init-project` asks the research objective,
   experience level, and site access together in one non-blocking opening
   turn; every skill adapts narration density to the answer.

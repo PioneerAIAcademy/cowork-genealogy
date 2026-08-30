@@ -43,7 +43,8 @@ So there are **two distinct image-reader latency modes**:
    (run 1's deed detour; run 2's 267-image burial register), each a full subagent
    round-trip.
 
-Main's `#850 image-reader-opus` (an opt-in Opus re-read for hard scans) is the right
+Main's `#850 image-reader-opus` (an opt-in Opus re-read for hard scans; retired
+2026-08-30, issue #2013) is the right
 *escalation target*, but nothing yet **bounds** the sonnet reader or routes a hard
 scan to it after a fixed number of attempts — so the reader still thrashes.
 
@@ -51,7 +52,7 @@ scan to it after a fixed number of attempts — so the reader still thrashes.
 
 1. **Bound the image-reader re-read (highest leverage, low risk).** Cap the reader:
    OCR once (twice at most); if the scan is still substantially `[illegible]`,
-   **escalate to `image-reader-opus` exactly once and stop** — never thrash for
+   **escalate exactly once and stop** — never thrash for
    dozens of turns. Preserves accuracy (opus does the hard read) while cutting the
    56/41-turn runaways to a bounded 2–3 turns + one opus read. Target: the ~40 min
    the two runaway spawns cost run 2.
@@ -88,5 +89,5 @@ that Lever 1 does not *hurt* an already-lean image path (reads stayed [3, 2]).
 
 ## 5. References
 - `docs/plan/research-latency-reduction-plan.md` — the model-generation plan (Phase 0 re-measure, Phase 1 tool-coverage, Phase 2 behavior tuning).
-- `packages/engine/plugin/agents/image-reader.md` / `image-reader-opus.md` (#850).
+- `packages/engine/plugin/agents/image-reader.md` (#850; `image-reader-opus.md` retired).
 - Data: `eval/runlogs/e2e/john-perry-witbeck-vitals/run-2026-07-21_{14-34-50,17-13-01}.{json,session.jsonl}`.

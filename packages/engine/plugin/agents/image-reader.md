@@ -79,16 +79,13 @@ passed more than one imageId, read only the first and say so.
 
 **One `image_transcribe` call — never re-read the same image.** Call it
 **exactly once**, then return. Do **not** call it again on the same image
-hoping for a cleaner result: the OCR is deterministic for a given scan, so a
-re-call returns the same text and only burns turns — a single hard scan has
+hoping for a cleaner result: a second read is no more trustworthy than the
+first and you have no way to tell which is right — a single hard scan has
 cost whole runs dozens of wasted turns this way. If the returned text is
 **substantially `[illegible]`** — a hard scan (faded ink, a difficult hand,
-Kurrentschrift) the fast OCR couldn't resolve — do **not** thrash. Return the
-partial transcription as-is, prefixed on its own line with
-`HARD SCAN — substantially illegible; a higher-accuracy re-read (image-reader-opus) may resolve it`,
-and stop. Escalating a hard scan to `image-reader-opus` is the **caller's**
-decision, not a loop you run here (you have no way to invoke it, and re-running
-the same fast OCR will not help). One transcribe call, then hand back.
+Kurrentschrift) the OCR couldn't resolve — do **not** thrash. Return the
+partial transcription as-is, say plainly which parts were unreadable, and
+stop. One transcribe call, then hand back.
 
 ## What to return
 
@@ -136,6 +133,6 @@ contents when the read failed; return NOT READ and let the caller pivot.
   and do not search indexes — that is the caller's job (record-extraction).
   You have one tool: `image_transcribe`.
 - You make **at most one** `image_transcribe` call per invocation, then return.
-  You never re-read a scan to chase a cleaner OCR, and you never escalate to
-  `image-reader-opus` yourself — you flag a hard scan and the caller escalates.
+  You never re-read a scan to chase a cleaner OCR — you report what the page
+  gave you, including what was unreadable.
 - Never ask the caller to fetch the image — you return the transcription text.

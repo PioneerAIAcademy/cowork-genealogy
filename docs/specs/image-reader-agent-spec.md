@@ -126,10 +126,8 @@ browse doesn't accumulate ten full transcriptions in the caller's context.
 judge relevance and shorten its output was found to encourage hallucination,
 whereas this agent's contract is faithful full OCR that never slants toward an
 asked-for answer (§5, and the `looking_for` row in §3.1). Raised again
-independently while designing `image-reader-opus` (2026-07-29) and rejected
-again for the same reason. It binds both agents: `image-reader-opus-agent-spec.md`
-§6 inherits this protocol, and its anti-slant charter is weaker (no tool-side
-prompt backstop), so the risk is higher there.
+independently while designing the (since-retired) `image-reader-opus`
+(2026-07-29) and rejected again for the same reason.
 
 **One candidate distinction is unresolved, and is the only thing worth reopening
 on:** gate the caller-facing *relay* on `image_transcribe`'s own `FOUND` /

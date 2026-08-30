@@ -47,7 +47,7 @@ are deliberately excluded — they belong to the judge, per the guide.
 11. Hand the subagent only the `imageId` (optionally a short `looking_for` pointer
     for who/what — **never** an assertion of what the page says).
 12. If the subagent returns `NOT READ`, do not fabricate the page — note it and move on.
-13. `@plugin:image-reader-opus` is reserved for a specific hard page — never routine browsing.
+13. ~~`@plugin:image-reader-opus` is reserved for a specific hard page.~~ Retired with the switch to Gemini (issue #2013); there is one reader.
 
 ## C. Volume selection
 
