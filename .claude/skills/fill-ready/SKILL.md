@@ -42,7 +42,7 @@ just-closed card can still read `Review` for a while. Ready / In Progress /
 Review are the three active columns; **Done and Not planned are the terminal
 ones, and "outside Backlog" is never the test for anything**, because it counts
 them too. **Feedback is none of the three** — it is an untriaged inbox that
-`/triage-feedback` owns and this skill never reads.
+the `triage-feedback` skill owns and this skill never reads.
 
 **Re-read the board immediately before you apply anything.** The lead edits it
 while you work — in one session nine items moved to Ready and 23 assignments
@@ -58,10 +58,11 @@ Two labels carry the routing:
 
 **The `feedback` label means untriaged, and nothing else.** An issue labelled
 `feedback` is a raw user bug report, filed automatically into the **Feedback**
-column by `add-to-project.yml`. `/triage-feedback` owns that column: it works
-each case and either moves it to Not planned, or moves it to Backlog **and drops
-the `feedback` label**. So the label and the column always agree, and a triaged
-item arrives in your Backlog as an ordinary `developer` or `genealogist` issue.
+column by `add-to-project.yml`. The `triage-feedback` skill owns that column: it
+works each case and either moves it to Not planned, or moves it to Backlog **and
+drops the `feedback` label**. So the label and the column always agree, and a
+triaged item arrives in your Backlog as an ordinary `developer` or `genealogist`
+issue.
 
 That is what makes the rest of this skill apply to it unchanged. It ranks on the
 same criteria, gates through `/review-ready` like anything else, counts toward
@@ -794,7 +795,7 @@ gh project item-edit --id "$ITEM_ID" --project-id "$PROJ_ID" \
 Verify with a fresh `gh project item-list`. New issues land in Backlog via an
 auto-add workflow that sets nothing else — a freshly filed issue that belongs in
 Ready still needs this move. (A raw feedback submission is the exception: the
-same workflow files it into the Feedback column, where `/triage-feedback` moves
+same workflow files it into the Feedback column, where the `triage-feedback` skill moves
 it to Not planned or to Backlog, dropping the `feedback` label on the way. It
 reaches you as an ordinary issue and is promoted with this move like any other.)
 
