@@ -341,21 +341,17 @@ descriptions because a user may still invoke any of them directly.
 19 of the 27 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
-**A reference is loaded only if its own `SKILL.md` names it.** Nothing lists a
-skill's `references/` folder at runtime, so a file no body names is unreachable —
-it costs no prompt tokens and carries every byte of the drift risk. Recompute
-which files those are before trusting any count here:
+**A reference is loaded only if its own `SKILL.md` names it** — or if a
+reference the body names links on to it. Nothing lists a `references/` folder at
+runtime, so a file neither route reaches is unreachable: it costs no prompt
+tokens and carries every byte of the drift risk.
 
-```sh
-for f in packages/engine/plugin/skills/*/references/*.md; do
-  s=$(dirname $(dirname "$f"))
-  grep -q "$(basename "$f")" "$s/SKILL.md" || echo "$f"
-done
-```
-
-That is a first pass, not a verdict: a hit can still be reached when a *sibling*
-reference the body does name links on to it. Check the whole skill folder before
-calling one dead.
+`tests/packaging/skill-reference-reachability.test.ts` enforces that, and is
+where the still-unreached files are listed. Its exemption list **only shrinks** —
+an entry leaves by the file being deleted or wired into its `SKILL.md`, and the
+test fails on a stale entry either way, so it cannot outlive the problem. **A new
+reference that nothing names fails CI.** Read that list rather than recomputing:
+it carries a measured reason per file, which a grep cannot.
 
 A skill can read its own sibling files; the failure is **across** skills. Claude
 Code's relative-path resolution from one SKILL.md into another skill's folder is
@@ -1411,6 +1407,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
 | `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical, the 9th pinned to its own sha256, and every skill in exactly one of the two lists |
+| `skill-reference-reachability.test.ts` | every file in a skill's `references/` is named by its `SKILL.md`, or by a reference the body names (one transitive hop). Carries the still-unreached files as a **shrink-only** exemption list, each with a measured reason, and fails when an entry becomes stale — deleted, or wired up — so the list cannot outlive the problem |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
 | `readme-catalog.test.ts` | every registered tool, shipped skill, and plugin agent is named in `README.md`, and any stated tool or skill count matches the code |
 | `tool-schema-enums.test.ts` | no MCP tool input schema re-types a closed enum's values, exactly **or stale**; two documented `sex` exemptions |
