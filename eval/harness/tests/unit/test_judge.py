@@ -1353,6 +1353,7 @@ def _prompt_parts_kwargs(sample_rubric):
         text_response="text",
         file_changes_summary="changes",
         tool_calls=[],
+        harness_observations=["sample observation"],
     )
 
 
@@ -1726,3 +1727,27 @@ def test_only_the_named_failures_reach_the_prompt():
     out = _minimal_prompt(validator_failures=["test_that_failed"])
     assert "test_that_failed" in out
     assert "test_that_passed" not in out
+
+
+# --- harness observations in the prompt (issue #1749) ---------------------
+
+
+def test_harness_observations_appear_in_the_prompt():
+    out = _minimal_prompt(harness_observations=["found pattern X in response"])
+    assert "found pattern X in response" in out
+
+
+def test_no_observations_renders_a_neutral_marker():
+    out = _minimal_prompt(harness_observations=[])
+    assert "(no observations)" in out
+
+
+def test_only_fired_observations_reach_the_prompt():
+    """Only observations that fired appear — the function name does NOT appear,
+    since passing r.error (observation text) rather than r.name (verdict) is
+    the anti-bias design from issue #1749."""
+    out = _minimal_prompt(harness_observations=["pattern matched in text"])
+    assert "pattern matched in text" in out
+    # The function name (e.g. "report_example_check") should NOT be in the
+    # judge prompt — it goes only to the run log via _build_warnings.
+    assert "report_" not in out
