@@ -338,8 +338,24 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-21 of the 27 skills carry a `references/` folder — **76 files** — loaded on
-demand, in-session, for material too long to sit in the skill body.
+19 of the 27 skills carry a `references/` folder, loaded on demand, in-session,
+for material too long to sit in the skill body.
+
+**A reference is loaded only if its own `SKILL.md` names it.** Nothing lists a
+skill's `references/` folder at runtime, so a file no body names is unreachable —
+it costs no prompt tokens and carries every byte of the drift risk. Recompute
+which files those are before trusting any count here:
+
+```sh
+for f in packages/engine/plugin/skills/*/references/*.md; do
+  s=$(dirname $(dirname "$f"))
+  grep -q "$(basename "$f")" "$s/SKILL.md" || echo "$f"
+done
+```
+
+That is a first pass, not a verdict: a hit can still be reached when a *sibling*
+reference the body does name links on to it. Check the whole skill folder before
+calling one dead.
 
 A skill can read its own sibling files; the failure is **across** skills. Claude
 Code's relative-path resolution from one SKILL.md into another skill's folder is
@@ -350,9 +366,18 @@ Three families are duplicated today, and only one is lint-guarded:
 
 | File | Copies | Distinct contents | Lint |
 |---|---|---|---|
-| `validation-protocol.md` | 12 | **10** | **none** |
 | `places-guidance.md` | 9 | 2 | `tests/packaging/skill-guidance.test.ts` |
-| `research-log-protocol.md` | 3 | **3** | **none** |
+| `validation-protocol.md` | 2 | **2** | **none** |
+| `research-log-protocol.md` | 1 | 1 | **none** |
+
+The last two were 11 and 3 until the unreachable copies were deleted. Nine
+`validation-protocol.md` copies and two `research-log-protocol.md` copies were
+named by no `SKILL.md`, so no session could load them; three of the nine also
+carried the retired "run `validate_research_schema` after writing" doctrine, and
+four named a `check-warnings` trigger their skill cannot reach — it writes
+`questions` or `plans`, never `assertions` or `person_evidence`. The two
+surviving `validation-protocol.md` copies still **contradict each other**, and
+that is now a two-file disagreement rather than a nine-way one.
 
 The `places-guidance` lint holds 8 copies byte-identical to a canonical at
 `packages/engine/plugin/references/places-guidance.md` — a path deliberately
@@ -367,14 +392,16 @@ a fourth family gets a lint: every skill must land in exactly one of the two
 lists, and the test asserts that too.
 
 > **Today:** editing a duplicated reference means editing every copy by hand and
-> knowing which divergences are deliberate. For `validation-protocol.md` and
-> `research-log-protocol.md`, **nothing records which is which.**
+> knowing which divergences are deliberate. For `validation-protocol.md`,
+> **nothing records which is which** — its two survivors disagree on whether a
+> post-write `validate_research_schema` pass is required.
 > **Direction (#1112):** either lint a shared core plus a
 > per-skill "who calls what" section, or derive each copy at build time from the
 > skill's `allowed-tools`. The cheaper move is to *shrink* them —
 > `validation-protocol.md` largely restates rules `research_append`'s error
 > contract already enforces at write time, and a rule the tool rejects can be one
-> sentence. **Don't add a 13th copy without saying why in the PR.**
+> sentence. **Before adding a copy, say why in the PR — and name it in the
+> `SKILL.md`, or you are shipping a file nothing can read.**
 
 ### 3.4 Agent bodies are self-contained — do not split them
 
