@@ -292,14 +292,20 @@ function appendFeedbackText(body, meta) {
  * The cap applies to the raw value, before escaping. Escaping can only grow the
  * string, so MAX_BODY_CHARS is what actually bounds the body; this bounds how
  * much of any one field is reproduced.
+ *
+ * A cut field says so. The clients accept 10,000 characters and this keeps
+ * 6,000, the section calls the text verbatim, and triage reads the body rather
+ * than the bundle — so an unmarked cut reads as a report the tester ended there.
  */
 function clampProse(value) {
   if (typeof value !== 'string') return '';
-  return value
+  var cut = value.length > MAX_PROSE_CHARS;
+  var text = value
     .slice(0, MAX_PROSE_CHARS)
     .replace(/\r\n?/g, '\n')
     .replace(/@/g, '&#64;')
     .trim();
+  return cut ? text + '\n\n[… truncated — full text in the bundle]' : text;
 }
 
 /**

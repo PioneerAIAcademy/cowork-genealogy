@@ -528,10 +528,10 @@ runlog gate checks every skill the PR touches. What to avoid is bundling two
 You push and open the PR; the senior genealogist reviews and
 merges.
 
-**Put `Closes #<issue>` in the PR body** — the number of the `[feedback]` issue
-you claimed in Step 1. That line is the only thing that closes the issue and
-moves its card off the board when the PR merges; a PR with no linked issue moves
-no card, and Ready fills up with finished work. It is one line and it is easy to
+**Put `Closes #<issue>` in the PR body** — the number of the issue you claimed
+in Step 1. That line is the only thing that closes the issue and moves its card
+off the board when the PR merges; a PR with no linked issue moves no card, and
+Ready fills up with finished work. It is one line and it is easy to
 forget.
 
 **Not every case ends in a fix, and those still close.** Say which it was and
@@ -539,8 +539,8 @@ close the issue by hand:
 
 - **Doesn't reproduce** — close, with a comment saying what you tried.
 - **Tool bug, not a skill bug** — file a `developer` issue, link it from the
-  feedback issue, close the feedback issue.
-- **Duplicate of another submission** — close as a duplicate, naming the one it
+  one you claimed, close the one you claimed.
+- **Duplicate of another issue** — close as a duplicate, naming the one it
   duplicates.
 
 **Then tell Marta what changed.** An alpha tester who never hears back stops
@@ -563,7 +563,7 @@ Drive folder as the immutable record, so re-importing later is always possible.
 | Step | What you do | Where |
 |---|---|---|
 | 0 Notice | research; spot it; write Did/Should | 🌐 Workbench |
-| 1 Claim + branch | assign the `[feedback]` issue to yourself; download the zip; `git checkout -b <short-task-name>` | 🌐 GitHub → ⌨️ Terminal (repo) |
+| 1 Claim + branch | assign the issue to yourself; read the tester's words in the body, download the zip only if Step 2 needs it; `git checkout -b <short-task-name>` | 🌐 GitHub → ⌨️ Terminal (repo) |
 | 2 Unpack | `make feedback-case ZIP=<zip>`; copy the prompt it prints, or recover it from the session log when the box was left blank (check for a `_truncation_note`) | ⌨️ Terminal (repo) |
 | 3 Reproduce | paste the user's prompt; viewer open; `/compare-state --against=what-went-wrong` | 🤖 Claude Code (case dir) + Viewer |
 | 4 Classify | skill, tool, or grading fault? | 🤖 Claude Code (case dir) |

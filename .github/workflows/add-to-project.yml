@@ -4,10 +4,11 @@ name: add-to-project
 # PioneerAIAcademy/projects/1) in Backlog, so triage is a column move rather
 # than a periodic archaeology sweep. One exception: an issue labelled
 # `feedback` goes straight to the Feedback column — it is filed by the feedback
-# endpoint, nobody triages it, and `/fill-ready` never promotes one out of
-# Backlog, so a card that lands there is stranded. Feedback is its own column
-# rather than Ready so an untriaged submission is never mistaken for work the
-# team has been cleared to start.
+# endpoint, and `/triage-feedback` works that column, moving what survives to
+# Backlog with the label dropped. Filing it into Backlog still labelled would
+# strand it: `/fill-ready` never promotes a `feedback`-labelled item. Feedback
+# is its own column rather than Ready so an untriaged submission is never
+# mistaken for work the team has been cleared to start.
 #
 # WHY. Nothing has ever linked issue creation to the board. On 2026-07-30 a
 # sweep found 28 open issues with no card — 13 of them filed in the previous
@@ -183,9 +184,9 @@ jobs:
               options[name] = option;
             }
 
-            // Feedback issues are filed by the Apps Script endpoint and nobody
-            // triages them; `/fill-ready` never promotes one out of Backlog, so
-            // Backlog is a dead end for this label rather than a waiting room.
+            // Feedback issues are filed by the Apps Script endpoint and triaged
+            // by `/triage-feedback`, which owns this column. Backlog is a dead
+            // end for this label — `/fill-ready` never promotes one out of it.
             const statusFor = issue =>
               issue.labels.includes(FEEDBACK_LABEL) ? FEEDBACK_ITEM_STATUS : NEW_ITEM_STATUS;
 
