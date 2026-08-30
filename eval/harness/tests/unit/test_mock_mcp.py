@@ -25,6 +25,9 @@ from harness.mock_mcp import (
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 FIXTURES_DIR = REPO_ROOT / "eval/fixtures/mcp"
+COMPACTOR_JS = (
+    REPO_ROOT / "packages/engine/mcp-server/build/utils/staged-compaction.js"
+)
 
 
 def _extract_response_dict(handler_result):
@@ -416,8 +419,11 @@ def test_record_search_response_is_compacted_once_staged(tmp_path):
     compiled `compactStagedRecordSearch` rather than restating it in Python,
     so there is no second copy to drift.
 
-    Skips when the build is absent: compaction runs through the COMPILED
-    module, so with no build nothing is stripped for an environmental reason.
+    Skips only when the compiled module is absent — an environmental reason.
+    It must NOT skip on `staged` being falsy: a compactor name that no longer
+    resolves in the build makes the node import throw, the staging helper
+    swallows it, and staging silently stops. Keying the skip on that symptom
+    would mute this test on exactly the failure it exists to catch.
     """
     fixture = json.loads(
         (FIXTURES_DIR / "record-search-1850-census-flynn.json").read_text(
@@ -440,9 +446,12 @@ def test_record_search_response_is_compacted_once_staged(tmp_path):
         "record_search",
         {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
     )
+    if not COMPACTOR_JS.exists():
+        pytest.skip("compiled MCP build absent")
     body = _extract_response_dict(result)
-    if not body.get("staged"):
-        pytest.skip("compiled MCP build absent — nothing was staged")
+    assert body.get("staged"), (
+        "the compiled module is present but nothing staged — compaction never ran"
+    )
 
     for row in body["results"]:
         assert "gedcomx" not in row

@@ -3,8 +3,9 @@ import { readdirSync, readFileSync, existsSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Every file under a skill's references/ folder must be named by something that
-// skill can actually read.
+// A skill's references/ folder and its SKILL.md must agree in both directions:
+// every file present is named by something the skill reads, and every file the
+// body names is present.
 //
 // Nothing lists a references/ folder at runtime — a reference is loaded because
 // the SKILL.md names it (or because a reference the body names links on to it).
@@ -14,10 +15,14 @@ import { fileURLToPath } from "node:url";
 // `validation-protocol.md`, three of those carrying a doctrine the writer tools
 // had already retired and one contradicting its own skill body.
 //
+// The mirror failure is a body naming a file that is not there — the agent is
+// told to read something it cannot open and improvises instead. `project-status`
+// does that today for a file that has never existed in this repo.
+//
 // This is a REACHABILITY check, not a content check. Whether an unreached file's
-// text is right, and whether it should be deleted or wired up, is the
-// adjudication issue #1112 owns. What this stops is a twelfth one appearing
-// while that is pending.
+// text is right, whether it should be deleted or wired up, and what a missing
+// one should say, are the adjudications issue #1112 owns. What this stops is a
+// twelfth orphan or a second dangling pointer appearing while that is pending.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "..", "..", "..");
@@ -65,6 +70,18 @@ const UNREACHED_PENDING_ADJUDICATION: Array<{ path: string; why: string }> = [
 
 const EXEMPT = new Set(UNREACHED_PENDING_ADJUDICATION.map((e) => e.path));
 
+// The mirror failure: a SKILL.md naming a references/ file that is not there.
+// The body tells the agent to read a file it cannot open, and the agent
+// improvises. Same shrink-only rule as the list above.
+const MISSING_PENDING_ADJUDICATION: Array<{ path: string; why: string }> = [
+  {
+    path: "project-status/references/output-formats.md",
+    why: "named twice as the render source for both summaries; never existed in this repo's history, so writing it decides what the skill outputs and owes a paid eval run",
+  },
+];
+
+const MISSING_EXEMPT = new Set(MISSING_PENDING_ADJUDICATION.map((e) => e.path));
+
 function listSkills(): string[] {
   return readdirSync(skillsDir).filter((name) =>
     statSync(join(skillsDir, name)).isDirectory()
@@ -103,6 +120,29 @@ function reachableRefs(skill: string): Set<string> {
   return reachable;
 }
 
+/**
+ * `references/<file>.md` paths a skill's own SKILL.md names that are not on
+ * disk. The lookbehind drops a cross-skill citation
+ * (`check-warnings/references/assumption-categories.md`), which names another
+ * skill's file — real, and not this skill's to hold.
+ */
+function namedButMissing(skill: string): string[] {
+  const bodyPath = join(skillsDir, skill, "SKILL.md");
+  if (!existsSync(bodyPath)) return [];
+  const refsDir = join(skillsDir, skill, "references");
+  const present = new Set(existsSync(refsDir) ? readdirSync(refsDir) : []);
+  const body = readFileSync(bodyPath, "utf8");
+  const named = new Set<string>();
+  for (const m of body.matchAll(
+    /(?<![A-Za-z0-9._-]\/)references\/([A-Za-z0-9._-]+\.md)/g
+  )) {
+    named.add(m[1]);
+  }
+  return [...named]
+    .filter((f) => !present.has(f))
+    .map((f) => `${skill}/references/${f}`);
+}
+
 describe("skill references are reachable", () => {
   for (const skill of listSkills()) {
     const refsDir = join(skillsDir, skill, "references");
@@ -126,6 +166,33 @@ describe("skill references are reachable", () => {
     });
   }
 
+  it("every references/ file a SKILL.md names is on disk", () => {
+    const missing = listSkills()
+      .flatMap((skill) => namedButMissing(skill))
+      .filter((rel) => !MISSING_EXEMPT.has(rel));
+
+    expect(
+      missing,
+      `A SKILL.md names a references/ file that does not exist, so the agent is ` +
+        `told to read a file it cannot open. Create the file, or drop the ` +
+        `pointer. Do NOT add it to MISSING_PENDING_ADJUDICATION — that list ` +
+        `only shrinks.`
+    ).toEqual([]);
+  });
+
+  it("every missing-reference exemption is still named and still missing", () => {
+    const stale: string[] = [];
+    for (const { path: rel } of MISSING_PENDING_ADJUDICATION) {
+      const [skill, , file] = rel.split("/");
+      if (existsSync(join(skillsDir, skill, "references", file))) {
+        stale.push(`${rel}: file now exists — drop this entry`);
+      } else if (!namedButMissing(skill).includes(rel)) {
+        stale.push(`${rel}: no longer named by ${skill}/SKILL.md — drop this entry`);
+      }
+    }
+    expect(stale, "MISSING_PENDING_ADJUDICATION has stale entries").toEqual([]);
+  });
+
   it("every pending-adjudication entry still exists and is still unreached", () => {
     const stale: string[] = [];
     for (const { path: rel } of UNREACHED_PENDING_ADJUDICATION) {
@@ -145,7 +212,10 @@ describe("skill references are reachable", () => {
   });
 
   it("every pending-adjudication entry carries a reason", () => {
-    for (const { path: rel, why } of UNREACHED_PENDING_ADJUDICATION) {
+    for (const { path: rel, why } of [
+      ...UNREACHED_PENDING_ADJUDICATION,
+      ...MISSING_PENDING_ADJUDICATION,
+    ]) {
       expect(why.trim().length, `${rel} needs a reason`).toBeGreaterThan(20);
     }
   });

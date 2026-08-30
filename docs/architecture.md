@@ -353,6 +353,13 @@ test fails on a stale entry either way, so it cannot outlive the problem. **A ne
 reference that nothing names fails CI.** Read that list rather than recomputing:
 it carries a measured reason per file, which a grep cannot.
 
+The same test pins the other direction: **a `SKILL.md` naming a `references/`
+file that is not on disk fails CI too**, since the agent is then told to read
+something it cannot open. One is exempt — `project-status` names
+`output-formats.md` twice as the render source for both its summaries, and that
+file has never existed in this repo. Writing it decides what the skill outputs,
+which is a content call owing a paid eval run rather than a mechanical fix.
+
 A skill can read its own sibling files; the failure is **across** skills. Claude
 Code's relative-path resolution from one SKILL.md into another skill's folder is
 unreliable (claude-code#17741). So guidance several skills must follow
@@ -1407,7 +1414,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
 | `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical, the 9th pinned to its own sha256, and every skill in exactly one of the two lists |
-| `skill-reference-reachability.test.ts` | every file in a skill's `references/` is named by its `SKILL.md`, or by a reference the body names (one transitive hop). Carries the still-unreached files as a **shrink-only** exemption list, each with a measured reason, and fails when an entry becomes stale — deleted, or wired up — so the list cannot outlive the problem |
+| `skill-reference-reachability.test.ts` | both directions between a skill's `references/` folder and its `SKILL.md`: every file present is named by the body or by a reference the body names (one transitive hop), and every file the body names is present. Carries each pending case as a **shrink-only** exemption list with a measured reason, and fails when an entry becomes stale — deleted, wired up, or created — so neither list can outlive the problem |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
 | `readme-catalog.test.ts` | every registered tool, shipped skill, and plugin agent is named in `README.md`, and any stated tool or skill count matches the code |
 | `tool-schema-enums.test.ts` | no MCP tool input schema re-types a closed enum's values, exactly **or stale**; two documented `sex` exemptions |
@@ -1457,9 +1464,10 @@ lead you to them:**
   search tools' post-staging reductions (§6.1) are **idempotent**. The tool
   suites already cover what each reduction does; this covers the property the
   eval harness depends on, and only it can. `mock_mcp.py` applies these to canned
-  fixtures, and the corpus carries both the full and the already-reduced shape,
-  so a destructive second pass would damage every already-reduced fixture with no
-  tool test seeing it. Runs under `make engine-test`.
+  fixtures. Every fixture is in the full shape today, so nothing applies them
+  twice yet; this pins idempotency ahead of the first fixture re-recorded from a
+  live call, which would arrive already reduced and be damaged by a destructive
+  second pass with no tool test seeing it. Runs under `make engine-test`.
 
 ### 9.3 The two eval tiers
 

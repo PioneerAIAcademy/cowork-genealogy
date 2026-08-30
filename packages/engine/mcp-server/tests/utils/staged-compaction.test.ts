@@ -5,10 +5,11 @@
  * The tool suites already pin what each transformation does on a fresh
  * response. What they cannot cover is the property the eval harness newly
  * depends on: **idempotency**. `mock_mcp.py` applies these functions to canned
- * fixture responses, and the fixture corpus carries BOTH shapes — some written
- * before the compaction shipped (full), some after (already compacted). If a
- * second application were destructive, every already-compacted fixture would
- * reach the agent damaged, and no tool test would see it.
+ * fixture responses. Every fixture is in the full shape today — measured, not
+ * assumed — so nothing applies them twice yet. This pins the property before
+ * the first fixture re-recorded from a live call arrives already compacted, at
+ * which point a destructive second pass would reach the agent damaged with no
+ * tool test seeing it.
  */
 
 import { describe, it, expect } from "vitest";
