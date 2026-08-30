@@ -14,7 +14,7 @@
  * so the (live, expensive) transcription pass doesn't have to re-run to re-grade.
  *
  * Usage:
- *   npx tsx dev/try-ocr-compare.ts                 # all images, all variants
+ *   npx tsx dev/try-ocr-compare.ts                 # all images, the 3 default variants
  *   npx tsx dev/try-ocr-compare.ts --limit 1       # smoke test: first image only
  *   npx tsx dev/try-ocr-compare.ts --only cruz-corona,birkeland-death
  *   npx tsx dev/try-ocr-compare.ts --variants A1_sonnet46,B_qwenInstruct_raw
@@ -35,6 +35,7 @@ import { toArk, arkToUrl } from "../src/utils/ark.js";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(HERE, "ocr-spike-out");
 const PREP_SCRIPT = join(HERE, "ocr_prep.py");
+const KEYS_DIR = join(HERE, "ocr-keys");
 const REPO_ROOT = join(HERE, "..", "..", "..", "..");
 const ENV_FILE = join(REPO_ROOT, "eval", ".env");
 const MAX_LONGEST_SIDE = 2000; // for the enhanced (prep) variant only
@@ -54,11 +55,16 @@ interface ImageSpec {
   lang: string;
   recordType: string;
   note: string;
-  subset: "hard" | "control";
+  subset: "hard" | "control" | "typed";
   languageHint: string;
   imageId?: string;
   ark?: string;
   localPath?: string; // a local JPEG (e.g. a user-supplied scan) — bypasses FS fetch
+  // A human-verified answer key under dev/ocr-keys/. When set the image is
+  // graded TWICE — against this key and against the Opus-4.8 ground truth — so
+  // the delta between the two bounds how far an Opus key flatters Opus. The
+  // ground-truth pass still runs; keyPath adds a key, it never replaces one.
+  keyPath?: string;
 }
 
 const IMAGES: ImageSpec[] = [
@@ -183,6 +189,144 @@ const IMAGES: ImageSpec[] = [
       "This is an 1854 German Protestant church baptism register (Taufregister). The column headers are printed in Fraktur; the entries are handwritten in Kurrent script. Columns: child's baptismal name, parents, place of birth, time of birth, place/day of baptism, officiant, and godparents (Taufzeugen).",
     ark: "ark:/61903/3:1:3Q9M-CSQR-S57W",
   },
+  {
+    slug: "luxembourg-1819",
+    scenario: "alpha-feedback-1791",
+    lang: "German (Kurrent)",
+    recordType: "Luxembourg civil birth register (1819)",
+    note: "the #1791 tester's own page, 1.93 MB — the user-facing failure this benchmark exists to answer. Independently indexed: 19 July 1819, Obercorn, father Francois Kuntzigne, mother Barbe Andre. Also the single page behind #2013's claim that Qwen marks hard scans [illegible].",
+    subset: "hard",
+    languageHint:
+      "This is an 1819 Luxembourg civil birth register, handwritten in German Kurrent script.",
+    ark: "ark:/61903/3:1:3QS7-897J-Q396",
+  },
+  // -------------------------------------------------------------------------
+  // Typed subset — printed, typeset 19th-century pages from Holt genealogy,
+  // recovered from the book-to-tree sibling repo. These are the ONLY images in
+  // this corpus with a human-verified key (dev/ocr-keys/, see its README), so
+  // they are the only place a model's absolute score is trustworthy.
+  // -------------------------------------------------------------------------
+  {
+    slug: "holt-004",
+    scenario: "holt-genealogy-book",
+    lang: "English",
+    recordType: "printed genealogy book page (order 4)",
+    note: "typeset print, human-verified gold from book-to-tree@e7d5c6a",
+    subset: "typed",
+    languageHint: "Printed 19th-century English genealogy book.",
+    ark: "ark:/61903/3:1:3Q9M-CSDM-2S31-B",
+    keyPath: "holt-004.txt",
+  },
+  {
+    slug: "holt-042",
+    scenario: "holt-genealogy-book",
+    lang: "English",
+    recordType: "printed genealogy book page (order 42)",
+    note: "typeset print, human-verified gold from book-to-tree@e7d5c6a",
+    subset: "typed",
+    languageHint: "Printed 19th-century English genealogy book.",
+    ark: "ark:/61903/3:1:3Q9M-CSDM-2S31-F",
+    keyPath: "holt-042.txt",
+  },
+  {
+    slug: "holt-045",
+    scenario: "holt-genealogy-book",
+    lang: "English",
+    recordType: "printed genealogy book page (order 45)",
+    note: "typeset print, human-verified gold from book-to-tree@e7d5c6a",
+    subset: "typed",
+    languageHint: "Printed 19th-century English genealogy book.",
+    ark: "ark:/61903/3:1:3Q9M-CSDM-2S31-H",
+    keyPath: "holt-045.txt",
+  },
+  {
+    slug: "holt-058",
+    scenario: "holt-genealogy-book",
+    lang: "English",
+    recordType: "printed genealogy book page (order 58)",
+    note: "typeset print, human-verified gold from book-to-tree@e7d5c6a",
+    subset: "typed",
+    languageHint: "Printed 19th-century English genealogy book.",
+    ark: "ark:/61903/3:1:3Q9M-CSDM-2S31-P",
+    keyPath: "holt-058.txt",
+  },
+  {
+    slug: "holt-059",
+    scenario: "holt-genealogy-book",
+    lang: "English",
+    recordType: "printed genealogy book page (order 59)",
+    note: "typeset print, human-verified gold from book-to-tree@e7d5c6a",
+    subset: "typed",
+    languageHint: "Printed 19th-century English genealogy book.",
+    ark: "ark:/61903/3:1:3Q9M-CSDM-2S31-V",
+    keyPath: "holt-059.txt",
+  },
+  {
+    slug: "holt-069",
+    scenario: "holt-genealogy-book",
+    lang: "English",
+    recordType: "printed genealogy book page (order 69)",
+    note: "typeset print, human-verified gold from book-to-tree@e7d5c6a",
+    subset: "typed",
+    languageHint: "Printed 19th-century English genealogy book.",
+    ark: "ark:/61903/3:1:3Q9M-CSDM-2S31-T",
+    keyPath: "holt-069.txt",
+  },
+  {
+    slug: "holt-092",
+    scenario: "holt-genealogy-book",
+    lang: "English",
+    recordType: "printed genealogy book page (order 92)",
+    note: "typeset print, human-verified gold from book-to-tree@e7d5c6a",
+    subset: "typed",
+    languageHint: "Printed 19th-century English genealogy book.",
+    ark: "ark:/61903/3:1:3Q9M-CSDM-2S31-3",
+    keyPath: "holt-092.txt",
+  },
+  {
+    slug: "holt-098",
+    scenario: "holt-genealogy-book",
+    lang: "English",
+    recordType: "printed genealogy book page (order 98)",
+    note: "typeset print, human-verified gold from book-to-tree@e7d5c6a",
+    subset: "typed",
+    languageHint: "Printed 19th-century English genealogy book.",
+    ark: "ark:/61903/3:1:3Q9M-CSDM-2S31-D",
+    keyPath: "holt-098.txt",
+  },
+  {
+    slug: "holt-160",
+    scenario: "holt-genealogy-book",
+    lang: "English",
+    recordType: "printed genealogy book page (order 160)",
+    note: "typeset print, human-verified gold from book-to-tree@e7d5c6a",
+    subset: "typed",
+    languageHint: "Printed 19th-century English genealogy book.",
+    ark: "ark:/61903/3:1:3Q9M-CSDM-2S32-3",
+    keyPath: "holt-160.txt",
+  },
+  {
+    slug: "holt-175",
+    scenario: "holt-genealogy-book",
+    lang: "English",
+    recordType: "printed genealogy book page (order 175)",
+    note: "typeset print, human-verified gold from book-to-tree@e7d5c6a",
+    subset: "typed",
+    languageHint: "Printed 19th-century English genealogy book.",
+    ark: "ark:/61903/3:1:3Q9M-CSDM-2S31-G",
+    keyPath: "holt-175.txt",
+  },
+  {
+    slug: "holt-187",
+    scenario: "holt-genealogy-book",
+    lang: "English",
+    recordType: "printed genealogy book page (order 187)",
+    note: "typeset print, human-verified gold from book-to-tree@e7d5c6a",
+    subset: "typed",
+    languageHint: "Printed 19th-century English genealogy book.",
+    ark: "ark:/61903/3:1:3Q9M-CSDM-2S31-9",
+    keyPath: "holt-187.txt",
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -202,7 +346,23 @@ interface Variant {
   hint?: boolean;
 }
 
+// The three-way model comparison this corpus exists for today. All three run
+// through OpenRouter because that is the only path `image_transcribe` has — a
+// native-Anthropic arm would measure a transport we cannot ship.
+//
+// GEMINI_MODEL is PINNED, never resolved as "the newest matching slug".
+// `google/gemini-3.7-flash` and `google/gemini-3.7-flash:batch` carry an
+// identical `created` timestamp, so "newest" is decided by array order, and the
+// batch variant prices prompt tokens 4x lower against a batch queue. Since the
+// cost column reads OpenRouter's `usage.cost` verbatim, picking up `:batch`
+// would silently report a quarter of the real price at batch latency.
+const GEMINI_MODEL = "google/gemini-3.7-flash";
+const DEFAULT_VARIANT_KEYS = ["P_qwen_prod", "G_geminiFlash", "O_opus5"];
+
 const VARIANTS: Variant[] = [
+  { key: "P_qwen_prod", label: "Qwen3-VL 235B Instruct (production default)", provider: "openrouter", model: "qwen/qwen3-vl-235b-a22b-instruct", prep: false },
+  { key: "G_geminiFlash", label: "Gemini 3.7 Flash", provider: "openrouter", model: GEMINI_MODEL, prep: false },
+  { key: "O_opus5", label: "Claude Opus 5 (via OpenRouter)", provider: "openrouter", model: "anthropic/claude-opus-5", prep: false },
   { key: "A1_sonnet46", label: "Claude Sonnet 4.6 (raw)", provider: "anthropic", model: "claude-sonnet-4-6", prep: false },
   { key: "A2_sonnet5", label: "Claude Sonnet 5 (raw)", provider: "anthropic", model: "claude-sonnet-5", prep: false },
   { key: "B_qwenInstruct_raw", label: "Qwen3-VL 235B Instruct (raw)", provider: "openrouter", model: "qwen/qwen3-vl-235b-a22b-instruct", prep: false },
@@ -260,9 +420,49 @@ function parseArgs() {
     return i !== -1 && i + 1 < argv.length ? argv[i + 1] : undefined;
   };
   const limit = get("--limit") ? parseInt(get("--limit")!, 10) : undefined;
-  const only = get("--only")?.split(",").map((s) => s.trim());
-  const variants = get("--variants")?.split(",").map((s) => s.trim());
+  const only = get("--only")?.split(",").map((s) => s.trim()).filter(Boolean);
+  const variants = get("--variants")?.split(",").map((s) => s.trim()).filter(Boolean);
+
+  // Reject unknown names BEFORE any network call. Both filters were plain
+  // `Array.includes` lookups, so a typo produced an empty selection, exit 0 and
+  // no output — and with --limit, a PAID ground-truth call against an empty
+  // variant map. A run that silently does nothing is worse than one that stops.
+  const unknownImages = (only ?? []).filter((s) => !IMAGES.some((i) => i.slug === s));
+  if (unknownImages.length > 0) {
+    throw new Error(
+      `--only: unknown image slug(s): ${unknownImages.join(", ")}\n` +
+        `Known slugs: ${IMAGES.map((i) => i.slug).join(", ")}`,
+    );
+  }
+  const unknownVariants = (variants ?? []).filter((k) => !VARIANTS.some((v) => v.key === k));
+  if (unknownVariants.length > 0) {
+    throw new Error(
+      `--variants: unknown variant key(s): ${unknownVariants.join(", ")}\n` +
+        `Known keys: ${VARIANTS.map((v) => v.key).join(", ")}`,
+    );
+  }
   return { limit, only, variants };
+}
+
+/**
+ * Confirm the pinned Gemini slug is actually served, and fail closed if not.
+ * Never substitutes a sibling: an unavailable model must stop the run, not
+ * quietly become a different (and differently-priced) one.
+ */
+async function assertGeminiModelAvailable(apiKey: string): Promise<void> {
+  const res = await fetch("https://openrouter.ai/api/v1/models", {
+    headers: { Authorization: `Bearer ${apiKey}` },
+    signal: AbortSignal.timeout(60_000),
+  });
+  if (!res.ok) throw new Error(`Could not list OpenRouter models: HTTP ${res.status}`);
+  const ids: string[] = ((await res.json()).data ?? []).map((m: { id: string }) => m.id);
+  if (!ids.includes(GEMINI_MODEL)) {
+    throw new Error(
+      `Pinned model ${GEMINI_MODEL} is not served by OpenRouter. Refusing to ` +
+        `fall back to a sibling slug — update GEMINI_MODEL deliberately instead.`,
+    );
+  }
+  console.log(`Gemini model pin verified: ${GEMINI_MODEL}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -407,17 +607,29 @@ async function callOpenRouter(
 // main
 // ---------------------------------------------------------------------------
 async function main() {
-  const { anthropic, openrouter } = loadEnv();
+  // Argument validation first, and deliberately before loadEnv(): rejecting a
+  // typo must not depend on having credentials, or the error you get for a bad
+  // slug is a missing-API-key message.
   const { limit, only, variants: variantFilter } = parseArgs();
+  const { anthropic, openrouter } = loadEnv();
 
   let images = IMAGES;
   if (only) images = images.filter((i) => only.includes(i.slug));
   if (limit != null) images = images.slice(0, limit);
-  const variants = variantFilter ? VARIANTS.filter((v) => variantFilter.includes(v.key)) : VARIANTS;
+  // Default to the three-way comparison; the older prep/thinking/hint arms stay
+  // in the file but are opt-in via --variants, since running all of them triples
+  // the paid pass for axes the model decision does not turn on.
+  const variants = VARIANTS.filter((v) =>
+    (variantFilter ?? DEFAULT_VARIANT_KEYS).includes(v.key),
+  );
 
   console.log(`Images: ${images.map((i) => i.slug).join(", ")}`);
   console.log(`Variants: ${variants.map((v) => v.key).join(", ")}`);
   console.log(`Ground truth: ${GROUND_TRUTH_MODEL} (thinking disabled)\n`);
+
+  if (variants.some((v) => v.model === GEMINI_MODEL)) {
+    await assertGeminiModelAvailable(openrouter);
+  }
 
   // Merge into any existing results.json so a --only run ADDS images without
   // clobbering previously-transcribed ones. FS auth is fetched lazily — a run
@@ -513,12 +725,22 @@ async function main() {
       console.log(`  ${key.padEnd(22)} ${tag}`);
     }
 
+    // The human key travels IN results.json rather than as a path the grader
+    // re-reads, so a re-grade cannot silently drift from what was graded.
+    let humanKey: string | undefined;
+    if (img.keyPath) {
+      humanKey = readFileSync(join(KEYS_DIR, img.keyPath), "utf-8");
+      console.log(`  human key [${img.keyPath}]: ${humanKey.trim().length} chars`);
+    }
+
     results.images[slug] = {
       ...imgMeta(img),
       source,
       rawMime,
+      sizeBytes: rawBytes.length,
       dims: prepInfo,
       groundTruth: { model: GROUND_TRUTH_MODEL, ...gt },
+      humanKey,
       variants: variantsOut,
     };
 
