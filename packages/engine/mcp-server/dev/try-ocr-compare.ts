@@ -189,6 +189,17 @@ const IMAGES: ImageSpec[] = [
       "This is an 1854 German Protestant church baptism register (Taufregister). The column headers are printed in Fraktur; the entries are handwritten in Kurrent script. Columns: child's baptismal name, parents, place of birth, time of birth, place/day of baptism, officiant, and godparents (Taufzeugen).",
     ark: "ark:/61903/3:1:3Q9M-CSQR-S57W",
   },
+  {
+    slug: "luxembourg-1819",
+    scenario: "alpha-feedback-1791",
+    lang: "German (Kurrent)",
+    recordType: "Luxembourg civil birth register (1819)",
+    note: "the #1791 tester's own page, 1.93 MB — the user-facing failure this benchmark exists to answer. Independently indexed: 19 July 1819, Obercorn, father Francois Kuntzigne, mother Barbe Andre. Also the single page behind #2013's claim that Qwen marks hard scans [illegible].",
+    subset: "hard",
+    languageHint:
+      "This is an 1819 Luxembourg civil birth register, handwritten in German Kurrent script.",
+    ark: "ark:/61903/3:1:3QS7-897J-Q396",
+  },
   // -------------------------------------------------------------------------
   // Typed subset — printed, typeset 19th-century pages from Holt genealogy,
   // recovered from the book-to-tree sibling repo. These are the ONLY images in
