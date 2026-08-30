@@ -326,11 +326,6 @@ const GRANDFATHERED_LINE_CITES: Record<string, string[]> = {
     "runner.py:65",
   ],
   "docs/record-search-compaction-scope.md": ["results-staging.ts:108-124"],
-  "docs/specs/image-reader-opus-agent-spec.md": [
-    "e2e/orchestrator.py:752",
-    "index.ts:291-297",
-    "subprocess_cli.py:30",
-  ],
   "docs/specs/match-merge-workflow-spec.md": ["gedcomx.ts:161"],
   "docs/specs/merge-gedcomx-spec.md": [
     "packages/engine/mcp-server/src/types/gedcomx.ts:112",
@@ -485,7 +480,6 @@ const ISSUE_REF_BASELINE: Record<string, number> = {
   "docs/specs/guardrail-enforcement-spec.md": 16,
   "docs/specs/hosted-web-workbench-spec.md": 4,
   "docs/specs/image-reader-agent-spec.md": 3,
-  "docs/specs/image-reader-opus-agent-spec.md": 1,
   "docs/specs/match-merge-workflow-spec.md": 3,
   "docs/specs/merge-gedcomx-spec.md": 8,
   "docs/specs/place-search-tool-spec.md": 1,

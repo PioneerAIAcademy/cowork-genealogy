@@ -233,9 +233,9 @@ what the runtime actually resolved, and no CI job covers this path.
 
 **Dual-spelled tool names.** (Heading kept as a stable anchor — the
 architecture guide and ADR-0004 both cite it by name — though the rule now
-names three spellings.) In `tools:` — and in `disallowedTools:` —
-every MCP tool **must** be listed **three times**, once under each server
-spelling:
+names three spellings.) In `tools:` — and in `disallowedTools:`, if one ever
+comes back — every MCP tool **must** be listed **three times**, once under each
+server spelling:
 
     - mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
     - mcp__remote-devices__Genealogy_Research__record_read   # Cowork in the cloud
@@ -259,12 +259,27 @@ all ("would be spawned with zero tools — refusing"), which has broken every
 agent in Cowork twice while CI stayed green. Listing every spelling is safe
 because unrecognized entries are ignored so long as at least one resolves.
 
-`disallowedTools:` matters more, not less. A deny binds even under
-`bypassPermissions`, so it is the last line of defence keeping
-`record-extractor` off the broad `research_append` — and a deny naming one
-spelling silently fails to bind under the others. Unlike a missing grant,
-**a missing deny fails open and silently.** Why, and the two incidents:
-ADR-0004.
+**No agent declares `disallowedTools:` any more — omit the tool instead.**
+Under `bypassPermissions` **both** bind: a tool merely omitted from `tools:` is
+absent from the agent, exactly as a denied one is (`make probe-agent-binding`,
+2026-08-30, Claude Code 2.1.251 / SDK 0.2.128). Every deny we shipped named a
+tool already absent from the list above it, so all five were deleted as
+restatements. What keeps `record-extractor` off the broad `research_append` is
+`research_append` not being in its `tools:`.
+
+**To take a capability away from an agent, remove it from `tools:`.** The
+regression a deny insured against — someone later adding the tool back — is
+caught by the permission snapshot in
+`tests/packaging/agent-tool-names.test.ts`, which fails on any change to an
+agent's list.
+
+Re-adding a deny is allowed but needs a reason the omission cannot serve, and
+the test asks for one. If you add one: all three spellings (one naming a single
+spelling binds nothing under the others, and unlike a missing grant **a missing
+deny fails open and silently**), and **never a tool the same agent grants** —
+the deny is applied *before* the zero-tools spawn check, so it can make the
+runtime refuse the agent outright rather than merely narrowing it. Why, the two
+incidents, and what the probe retired: ADR-0004.
 
 ### Plugin hooks (`packages/engine/plugin/hooks/`)
 
@@ -474,7 +489,7 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | `popStatsUrl` | `place_population` | Optional | Base URL of the Pop Stats API. Read directly in `src/tools/place-population.ts`; defaults to `DEFAULT_POP_STATS_URL` when absent. |
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
 | `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey()` in `src/auth/config.ts` (config-only — never `process.env`). Written by the `configure_openrouter` tool. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent so Claude can prompt the user. |
-| `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel()` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`qwen/qwen3-vl-235b-a22b-instruct`) when absent. |
+| `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel()` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
 
 Each `get*` helper throws an LLM-instruction error when its required
 field is missing — the error message tells Claude what to put in the
@@ -599,7 +614,8 @@ construct the test's *inputs* freely. A deny that hides the answer from the agen
 e2e tree-read block, a fixture's `blocked_tools` — is a fixture and stays. A deny that
 changes what the agent may *do* is a distortion and goes. Denies production genuinely has
 stay too: the protected-file write lockdown mirrors the shipped plugin hook, and agent
-`disallowedTools:` binds even under `bypassPermissions`.
+frontmatter binds even under `bypassPermissions` — both a `disallowedTools:` deny and a
+plain omission from `tools:` (measured; see "Dual-spelled tool names" above).
 
 ### Python file I/O: always pass `encoding="utf-8"`
 

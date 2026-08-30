@@ -31,7 +31,7 @@ is what lets the `PreToolUse` hook route a section's writes to exactly one calle
 **Monolithic skill.** Reads state, does the work, writes its own section. Most skills.
 
 **Leaf agent.** Called by a skill, calls nothing (agents cannot nest agents), returns
-text. `image-reader`, `image-reader-opus`, `gps-mentor`.
+text. `image-reader`, `gps-mentor`.
 
 ---
 
@@ -53,7 +53,6 @@ flowchart TD
 
     SI ==> IR["image-reader<br/>agent"]
     RE ==> IR
-    IR -.->|"caller escalates a hard scan"| IRO["image-reader-opus<br/>agent"]
 
     SR --> RE
     SE --> RE
@@ -112,8 +111,7 @@ unreachable from an autonomous run.
 | 5b | **`search-external-sites`** | Same row, but the plan item targets Ancestry, MyHeritage, FindMyPast, FindAGrave or Newspapers.com | Constructing the pre-filled URL and triaging the PDF the user brings back. Never loads an external page | `research.json` `plans[]` and `researcher_profile.subscriptions` by whole-file `Read`; `place_search`, `external_links_search`, `collections_search`; the user's uploaded PDF | Two or three `log[]` entries — `research_log_append`; `plans[].items[].status = "completed"` — `research_append` |
 | 5c | **`search-images`** | A plan item targets a digitized-but-unindexed record set (`volume_search` shows ~0% record-searchable), or indexed and full-text search are spent | Browsing a volume page by page. Never reads an image in its own context | `volume_search`, `image_search`; page text returned by `@plugin:image-reader` | `log[]` — `research_log_append`, **no sidecar** (`image_search` stages nothing); `plans[].items[].status` |
 | 5d | **`search-full-text`** | **No routing row names it.** Reached by a prose handoff from `search-records`/`search-images`, or a direct request. Its own step 1 picks the next `planned` full-text item | Lucene-style search over FamilySearch's AI-transcribed images — the only lane that finds a person as witness, bondsman, appraiser or neighbour rather than as principal | `fulltext_search`, `source_attachments`; `research.json` `plans[]`, `log[]`, `assertions` by whole-file `Read` | `log[]` + sidecar — `research_log_append`; `plans[].items[].status` |
-| — | **`image-reader`** (agent) | Delegated by `record-extraction` or `search-images`, once per image. Mandatory when the user supplies an image — the caller may not pre-judge that a scan is unreadable | One `image_transcribe` call, so the raw scan never enters the caller's context | The scan, fetched host-side and OCR'd by Qwen3-VL through OpenRouter. No project file | Nothing. Host-side side effect only: `images/<key>.jpg` when `project_path` is passed |
-| — | **`image-reader-opus`** (agent) | Only after the fast reader returned an unreliable transcription, and only on scans under ~700 KB raw — its tool refuses larger ones, which the fast reader does not | The same one-page read, using Opus's own vision instead of the hosted OCR model | The scan, returned inline by `image_read`. No project file | Nothing; same `images/<key>.jpg` side effect |
+| — | **`image-reader`** (agent) | Delegated by `record-extraction` or `search-images`, once per image. Mandatory when the user supplies an image — the caller may not pre-judge that a scan is unreadable | One `image_transcribe` call, so the raw scan never enters the caller's context | The scan, fetched host-side and OCR'd by Gemini Flash through OpenRouter. No project file | Nothing. Host-side side effect only: `images/<key>.jpg` when `project_path` is passed |
 | 6 | **`record-extraction`** (skill) | **Any** `log[]` entry with a positive or partial outcome and no assertion referencing it — even one, even late in a run. The orchestrator forbids extracting inline | Acquiring and triaging record input (search stub, ARK, PDF, image), writing the log entry when no search skill did, and one delegation per record | `record_read`, `volume_search`, the user's PDF. Explicitly **never** the `results/` sidecar — it already holds each `recordId` | `log[]` + sidecar — `research_log_append`. Nothing else; it holds no persistence tool |
 | 6 | **`record-extractor`** (agent) | Delegated once per record, carrying `projectPath`, `recordId`, `logId`, and either the content or a `resultsRef` | Every assertion in one record and its three-layer GPS classification — **first and final**; no downstream refinement pass exists | `project_context` (one call), `record_read` against the sidecar, the delegated content, `record_person_matches` / `record_record_matches` on request. Never reads `research.json` or the tree | `sources` + `assertions` in one composite `extraction_append`, which also mints the mirroring tree `S` source description. **Cannot** write `person_evidence` — the tool's section enum is exactly those two |
 | 7 | **`person-evidence`** | Assertions not yet linked to persons. Always the skill — writing a `pe_` link inline is how a same-named stranger's record gets attached to the subject | The identity decision — which tree person each persona is — scored with `same_person` first; and the household skeleton the link requires | `research_query` projections on `assertions` and `person_evidence`; `results/<log_id>.json`; `tree.gedcomx.json` walked directly | `person_evidence` — `research_append`; tree `persons` and their sourced facts — `materialize_facts`; tree `relationships` (a household record's ParentChild and Couple edges only) — `tree_edit` |
@@ -218,10 +216,11 @@ Two consequences worth holding onto:
 
 - **A skill's `allowed-tools` does not restrict anything.** It is a grant, and both
   production paths hold every tool the server advertises. The three surfaces that
-  actually bind are the writer tool's own preconditions, an agent's `tools:` /
-  `disallowedTools:`, and the `PreToolUse` hook.
+  actually bind are the writer tool's own preconditions, an agent's `tools:`,
+  and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
+  on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only three skills hold `research_query`** — `research`, `search-records`,
-  `person-evidence` — and three of the six agents. Everything else that needs project
+  `person-evidence` — and three of the five agents. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
 - **The hook carries exactly three rules**, in

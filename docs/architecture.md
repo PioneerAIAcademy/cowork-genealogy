@@ -214,10 +214,10 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | **47** | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **6** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list, any `disallowedTools:` denies (every shipped agent declares them), and its `model:` pin. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **5** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The six agents are `gps-mentor`, `record-extractor`, `image-reader`,
-`image-reader-opus`, `proof-conclusion` and `research-exhaustiveness`.
+The five agents are `gps-mentor`, `record-extractor`, `image-reader`,
+`proof-conclusion` and `research-exhaustiveness`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -275,7 +275,7 @@ how to word it:
 |---|---|---|
 | across hours, many turns, past compaction | **a tool contract** — validate and reject | the write-boundary invariants in `research_append` |
 | for the main thread, which no allow-list can narrow | **a `PreToolUse` hook** (§5.4) | the raw-write lockdown |
-| for one delegated agent | **that agent's `tools:` / `disallowedTools:`**, or a narrowed tool (§5.3) | `extraction_append` |
+| for one delegated agent | **that agent's `tools:`** — omit the capability — or a narrowed tool (§5.3) | `extraction_append` |
 | within a single skill invocation | **skill prose** — this is what prose is *for* | "consult the stop criteria before draining the plan" |
 
 > **Direction.** Two gates are still prose that this same law
@@ -338,8 +338,27 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-21 of the 27 skills carry a `references/` folder — **76 files** — loaded on
-demand, in-session, for material too long to sit in the skill body.
+19 of the 27 skills carry a `references/` folder, loaded on demand, in-session,
+for material too long to sit in the skill body.
+
+**A reference is loaded only if its own `SKILL.md` names it** — or if a
+reference the body names links on to it. Nothing lists a `references/` folder at
+runtime, so a file neither route reaches is unreachable: it costs no prompt
+tokens and carries every byte of the drift risk.
+
+`tests/packaging/skill-reference-reachability.test.ts` enforces that, and is
+where the still-unreached files are listed. Its exemption list **only shrinks** —
+an entry leaves by the file being deleted or wired into its `SKILL.md`, and the
+test fails on a stale entry either way, so it cannot outlive the problem. **A new
+reference that nothing names fails CI.** Read that list rather than recomputing:
+it carries a measured reason per file, which a grep cannot.
+
+The same test pins the other direction: **a `SKILL.md` naming a `references/`
+file that is not on disk fails CI too**, since the agent is then told to read
+something it cannot open. One is exempt — `project-status` names
+`output-formats.md` twice as the render source for both its summaries, and that
+file has never existed in this repo. Writing it decides what the skill outputs,
+which is a content call owing a paid eval run rather than a mechanical fix.
 
 A skill can read its own sibling files; the failure is **across** skills. Claude
 Code's relative-path resolution from one SKILL.md into another skill's folder is
@@ -350,9 +369,18 @@ Three families are duplicated today, and only one is lint-guarded:
 
 | File | Copies | Distinct contents | Lint |
 |---|---|---|---|
-| `validation-protocol.md` | 12 | **10** | **none** |
 | `places-guidance.md` | 9 | 2 | `tests/packaging/skill-guidance.test.ts` |
-| `research-log-protocol.md` | 3 | **3** | **none** |
+| `validation-protocol.md` | 2 | **2** | **none** |
+| `research-log-protocol.md` | 1 | 1 | **none** |
+
+The last two were 11 and 3 until the unreachable copies were deleted. Nine
+`validation-protocol.md` copies and two `research-log-protocol.md` copies were
+named by no `SKILL.md`, so no session could load them; three of the nine also
+carried the retired "run `validate_research_schema` after writing" doctrine, and
+four named a `check-warnings` trigger their skill cannot reach — it writes
+`questions` or `plans`, never `assertions` or `person_evidence`. The two
+surviving `validation-protocol.md` copies still **contradict each other**, and
+that is now a two-file disagreement rather than a nine-way one.
 
 The `places-guidance` lint holds 8 copies byte-identical to a canonical at
 `packages/engine/plugin/references/places-guidance.md` — a path deliberately
@@ -367,14 +395,16 @@ a fourth family gets a lint: every skill must land in exactly one of the two
 lists, and the test asserts that too.
 
 > **Today:** editing a duplicated reference means editing every copy by hand and
-> knowing which divergences are deliberate. For `validation-protocol.md` and
-> `research-log-protocol.md`, **nothing records which is which.**
+> knowing which divergences are deliberate. For `validation-protocol.md`,
+> **nothing records which is which** — its two survivors disagree on whether a
+> post-write `validate_research_schema` pass is required.
 > **Direction (#1112):** either lint a shared core plus a
 > per-skill "who calls what" section, or derive each copy at build time from the
 > skill's `allowed-tools`. The cheaper move is to *shrink* them —
 > `validation-protocol.md` largely restates rules `research_append`'s error
 > contract already enforces at write time, and a rule the tool rejects can be one
-> sentence. **Don't add a 13th copy without saying why in the PR.**
+> sentence. **Before adding a copy, say why in the PR — and name it in the
+> `SKILL.md`, or you are shipping a file nothing can read.**
 
 ### 3.4 Agent bodies are self-contained — do not split them
 
@@ -404,7 +434,7 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `image-reader-opus` → `claude-opus-4-8`; `record-extractor`, `image-reader`, `proof-conclusion` + `research-exhaustiveness` → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `record-extractor`, `image-reader`, `proof-conclusion` + `research-exhaustiveness` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
 | **Session effort** | `.claude/settings.json` `effortLevel`; never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted inherits |
@@ -713,7 +743,7 @@ the most expensive mistake in this layer, because two of the three fail
 | Surface | Spelling | Binds in production? |
 |---|---|---|
 | Skill `allowed-tools:` | **bare** (`research_query`) | **No** — neither production path nor the unit harness narrows per skill. The field is a grant, not a restriction. Advisory only: the `test_tool_allowlist` validator warns on undeclared calls. |
-| Agent `tools:` / `disallowedTools:` | **spelled under all three registrars**, matched exactly | **Yes** — and a deny binds even under `bypassPermissions`. |
+| Agent `tools:` | **spelled under all three registrars**, matched exactly | **Yes** — a tool omitted from it is absent from the agent even under `bypassPermissions` (measured, §5.2). This is the whole of an agent's capability boundary: `disallowedTools:` was deleted from all five agents on 2026-08-30, because every deny restated the omission above it. |
 | `PreToolUse` hook | n/a — matches on tool name + input | **Yes**, in Cowork and the hosted path. **Neither harness loads the plugin's hooks** (§5.4). |
 
 ### 5.1 Skill `allowed-tools` — declarative everywhere
@@ -733,7 +763,7 @@ tell a legitimate direct call from a boundary violation.
 ### 5.2 Agent frontmatter: spelled per registrar, exactly matched
 
 *(Imperative owned by `CLAUDE.md` § "Dual-spelled tool names".)* Every MCP tool
-in an agent's `tools:` — **and** `disallowedTools:` — appears **three times**:
+in an agent's `tools:` — and in a `disallowedTools:`, if one ever comes back — appears **three times**:
 
 ```yaml
 - mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
@@ -764,10 +794,45 @@ declares a bare `Read`, which always resolves, so it would spawn holding that
 alone rather than be refused.) Listing every
 spelling is safe because unrecognized entries are ignored so long as one resolves.
 
-`disallowedTools:` matters **more**, not less: a deny binds even under
-`bypassPermissions` (the hosted path, #695), so it is the last line keeping
-`record-extractor` off the broad `research_append` — and a deny naming one
-spelling silently binds nothing wherever the server carries another name.
+**`disallowedTools:` was never the load-bearing layer — and this half of the
+page was wrong until it was measured.** This file, `CLAUDE.md`,
+ADR-0004, ADR-0006, ADR-0011, two specs, the packaging test and three agent
+bodies all said "a deny binds even under `bypassPermissions`; an omission alone
+is not." Seven of them cited issue #695 for it — the birkeland lane breach,
+which says nothing about `bypassPermissions`, denies, or omissions. Probed
+2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128 (`make
+probe-agent-binding`, reproduced twice): under `bypassPermissions` **both**
+bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
+denied one is. So the omission is what keeps `record-extractor` off the broad
+`research_append`, and its deny restates that rather than being the last line.
+
+**So all five deny blocks were deleted on 2026-08-30.** Every one named a tool
+already absent from its agent's `tools:`, which makes it a restatement, and 83
+lines of triple-spelled YAML that a reader has to check against the list above
+it. **To take a capability away from an agent, remove it from `tools:`.** The
+regression a deny insured against — someone later adding the tool back — is
+caught by the permission snapshot in `agent-tool-names.test.ts`, which fails on
+any change to an agent's list.
+
+Re-adding one is allowed and needs a reason the omission cannot serve; a test
+asks for it. Two rules bind any deny that returns. It needs all three spellings,
+since one naming a single spelling binds nothing under the others. And **it must
+never name a tool the same agent grants** — the deny is applied *before* the
+zero-tools spawn check: the probe's arm B granted one tool under all three
+spellings plus `ToolSearch`, denied that same tool, and the runtime refused the
+agent outright — "would be spawned with zero tools — refusing. Its tools list
+resolved to nothing: unrecognized [ToolSearch]", naming only the built-in,
+because the deny had already removed the three MCP entries. `image-reader`
+grants exactly one tool, so it is one entry from that shape. Guarded by the
+"never denies a tool it also grants" case in `agent-tool-names.test.ts`, which
+is pinned synthetically because no agent ships a deny for it to fire on.
+
+**One cost, accepted.** `check_rubric_tool_drift.py` asks whether a tool named
+in an agent body appears in either list, and `disallowedTools:` was doubling as
+the marker for a deliberate "you do NOT have this tool" mention. Removing the
+denies took that marker away, so its agent-body warnings went 5 → 12. It is
+warn-only and does not block a build; the suppression mechanism it wants is
+`gh issue list --state open --search "check_rubric_tool_drift suppression"`.
 
 **Two standing prohibitions:**
 
@@ -927,9 +992,12 @@ enforcing-vs-shadow status.
   passes. **Every tool addition is two edits: the frontmatter, and the
   instruction in the body that makes the call happen.**
 - `tests/packaging/agent-tool-names.test.ts` checks the spelling and cannot see
-  the body. **Nothing checks that the tool actually binds at runtime** (§9.4);
-  `make agent-smoke` is the closest instrument and it verifies name resolution,
-  not binding.
+  the body. **No CI job checks that the tool actually binds at runtime** (§9.4);
+  `make agent-smoke` verifies name resolution only, and `make
+  probe-agent-binding` verifies binding but is a live billed probe, not a check.
+- **Do not add a `disallowedTools:` block alongside it.** No agent ships one; a
+  tool in both lists is denied, and the deny is applied before the zero-tools
+  spawn check, which can make the runtime refuse the agent — see §5.2.
 - **Rebuild only where it matters.** The unit harness and Claude Code read your
   working tree — no rebuild. Cowork runs the uploaded `.zip`: `make plugin`, then
   **remove the old plugin before uploading the new one** (Cowork tab, not the
@@ -939,7 +1007,7 @@ enforcing-vs-shadow status.
   fix that was never loaded."
 
 **Restrain something.** Pick the layer by *who* you are restraining: a subagent →
-its `disallowedTools:` (all three spellings) or a narrowed tool (§5.3); the main
+its `tools:` — omit the capability — or a narrowed tool (§5.3); the main
 thread → a `PreToolUse` hook (§5.4); a cross-turn invariant → the tool contract
 (§3.1). **An allow-list can never restrain the main thread** — it can only
 subtract from what the session already holds. Record the new guardrail's
@@ -998,6 +1066,16 @@ it caps the *number* of inline rows and leaves each row intact, because its
 payload is curated third-party URLs with nothing to triage on. **The full payload travels
 search tool → disk → log-append and never round-trips through the model**
 (`search-result-staging-spec.md`).
+
+Both per-row reductions live in `src/utils/staged-compaction.ts` rather than
+inline in their tools, because **the eval harness runs the same functions.**
+`mock_mcp.py` serves a canned response and then calls the compiled
+`stageSearchResults` and compactor, so what the agent sees in a unit run is the
+slimmed shape production sends. Restating a reduction in Python instead is how
+both tools came to serve the eval a field production strips — and a skill was
+left triaging on `textDocument`, which no staged result carries, while every run
+that graded the triage passed. **Add a post-staging transformation to a search
+tool and it belongs in that module**, so there is no second copy to drift.
 
 ### 6.2 Writes go only through validating writer tools
 
@@ -1374,6 +1452,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
 | `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical, the 9th pinned to its own sha256, and every skill in exactly one of the two lists |
+| `skill-reference-reachability.test.ts` | both directions between a skill's `references/` folder and its `SKILL.md`: every file present is named by the body or by a reference the body names (one transitive hop), and every file the body names is present. Carries each pending case as a **shrink-only** exemption list with a measured reason, and fails when an entry becomes stale — deleted, wired up, or created — so neither list can outlive the problem |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
 | `readme-catalog.test.ts` | every registered tool, shipped skill, and plugin agent is named in `README.md`, and any stated tool or skill count matches the code |
 | `tool-schema-enums.test.ts` | no MCP tool input schema re-types a closed enum's values, exactly **or stale**; two documented `sex` exemptions |
@@ -1419,6 +1498,14 @@ lead you to them:**
   workflow (`.github/workflows/check-e2e-fixtures.yml`), on any change under
   `eval/tests/e2e/` or `eval/runlogs/e2e/`. It is not part of `make test-all`,
   so a fixture change can pass locally and fail in CI.
+- `packages/engine/mcp-server/tests/utils/staged-compaction.test.ts` — that the
+  search tools' post-staging reductions (§6.1) are **idempotent**. The tool
+  suites already cover what each reduction does; this covers the property the
+  eval harness depends on, and only it can. `mock_mcp.py` applies these to canned
+  fixtures. Every fixture is in the full shape today, so nothing applies them
+  twice yet; this pins idempotency ahead of the first fixture re-recorded from a
+  live call, which would arrive already reduced and be damaged by a destructive
+  second pass with no tool test seeing it. Runs under `make engine-test`.
 
 ### 9.3 The two eval tiers
 
@@ -1472,12 +1559,16 @@ confident near-misses for the rest.
 Three of these gaps are **architecture rather than backlog**, because each one
 changes how a correct change is made:
 
-1. **Spelling is not binding.** Nothing proves a declared agent tool actually
+1. **Spelling is not binding.** No *CI job* proves a declared agent tool actually
    *binds* at runtime — every lint stops at the name, and the SDK handshake
    exposes only name/description/model. `make agent-smoke` reads what the runtime
-   *resolved*, not what bound, and only in the mode it runs in. So a green CI run
-   says nothing about whether an agent can call what you granted it; only a live
-   session in the run mode you care about does (§5.2, §8).
+   *resolved*, not what bound. So a green CI run says nothing about whether an
+   agent can call what you granted it (§5.2, §8). What closed part of this:
+   `make probe-agent-binding` spawns a probe agent and reads whether a real tool
+   call landed, off the `tool_result` rather than the agent's prose. It is a
+   live, billed probe rather than a check — run it when the CLI or the SDK moves.
+   And it answers the question only for the **hosted** options it builds; Cowork
+   in either run mode still has no instrument but a live session.
 2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
    not rebuild the `genealogy-agent` E2B image production runs the agent on, and
    both guards over it are advisory. Production can run weeks-old skills, agents,
@@ -1597,7 +1688,7 @@ questions that only look open.
 | The write boundary and the `extraction_append` lane | [`research-append-tool-spec.md`](specs/research-append-tool-spec.md) §11 |
 | The persisted schemas | [`research-schema-spec.md`](specs/research-schema-spec.md), [`simplified-gedcomx-spec.md`](specs/simplified-gedcomx-spec.md) |
 | The projection tools | [`project-context-tool-spec.md`](specs/project-context-tool-spec.md), [`research-query-tool-spec.md`](specs/research-query-tool-spec.md) |
-| Per-agent contracts | [`gps-mentor-agent-spec.md`](specs/gps-mentor-agent-spec.md), [`image-reader-agent-spec.md`](specs/image-reader-agent-spec.md), [`image-reader-opus-agent-spec.md`](specs/image-reader-opus-agent-spec.md) (`record-extractor` has no standalone spec — its lane is `research-append-tool-spec.md` §11) |
+| Per-agent contracts | [`gps-mentor-agent-spec.md`](specs/gps-mentor-agent-spec.md), [`image-reader-agent-spec.md`](specs/image-reader-agent-spec.md) (`record-extractor` has no standalone spec — its lane is `research-append-tool-spec.md` §11) |
 | How do I write a skill? How does it get tuned, tested, and rebuilt? | [`skill-authoring-guide.md`](skill-authoring-guide.md), [`skill-lifecycle.md`](skill-lifecycle.md) |
 | The eval harness — formats, workflow, run logs, CI rules | [`unit-test-spec.md`](specs/unit-test-spec.md) (the live format — [`unit-test-spec-v2.md`](specs/unit-test-spec-v2.md) is a **plan** for deferred features, not the format), [`e2e-test-spec.md`](specs/e2e-test-spec.md), [`e2e-testing-guide.md`](e2e-testing-guide.md), `eval/README.md`, `eval/CLAUDE.md` |
 | Setup paths the harness can't reach | `docs/testing-guides/` — OAuth tokens, `.mcpb` install, gps-mentor |

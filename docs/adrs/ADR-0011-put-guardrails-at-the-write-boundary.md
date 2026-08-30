@@ -91,7 +91,7 @@ Concretely, this is a placement question with six answers — **the layer map**:
 | **Writer tool** (precondition) | a value or a state transition in `research.json` / `tree.gedcomx.json`; every MUST; every completion gate; every foreign key | *"Can this be decided by reading the documents alone?"* If yes it goes here and nowhere else. **The only substrate that binds in all five environments.** |
 | **Schema validator** | document *shape* — types, closed enums, required fields, id patterns, referential integrity | *"Would violating this make the document malformed, rather than merely wrong?"* This is the **integrity tier**: violating it yields a document no writer tool will accept. |
 | **`PreToolUse` hook** | a route no writer tool owns (raw `Write`/`Edit`, the shell, the device bridge), and any rule that turns on **who** is calling | *"Does this depend on the caller?"* Only substrate that can restrain the main thread (ADR-0005). **Fails open** — never the sole guarantee for anything that matters. **First production caller rule: 2026-08-19**, `proof_summaries` to the `proof-conclusion` agent. It is not the sole guarantee there — the writer tool's own content invariants (the mentor gate, `proofSummaryInvariants`) sit underneath it and do not fail open. **A second on 2026-08-23, and of a different KIND:** `exhaustive_declaration.declared: true` is routed to the `research-exhaustiveness` agent by FIELD rather than by section, because the schema makes that field required on every question — so routing the section would deny question creation itself, 197 of 392 corpus ops. Route the claim, not the field. |
-| **Agent frontmatter** | what one delegated agent may touch | tool identity plus a `disallowedTools:` deny (ADR-0006). Binds under `bypassPermissions`; a missing deny fails open **silently**. |
+| **Agent frontmatter** | what one delegated agent may touch | tool identity — omit the tool from the agent's `tools:` (ADR-0006). Binds under `bypassPermissions`, measured 2026-08-30. `disallowedTools:` also binds, but every deny we shipped restated an omission, so all five blocks were deleted. |
 | **Tool description** | what the model must know *at the moment of the call* but that no predicate can enforce — paging, argument choice, budget notices | *"Does the model need this to choose correctly, and is it advice rather than a constraint?"* Reloaded after compaction; **strength unmeasured** — two rules already in `record_search`'s schema decay anyway. Includes the advisory-field shape for a read-tool resource budget. |
 | **Harness validator** | rules judgeable only over a **whole run** — bypass detection, episode analysis, compliance axes | *"Does evaluating this need the whole run?"* **Eval-only; never reaches production** — say so wherever one is added. |
 | **Prose** | judgment exercised inside a single invocation | *"Is this a matter of judgment no predicate can express?"* **Not an enforcement layer.** State the rule; label it guidance. |
@@ -248,11 +248,13 @@ measured rather than argued.
    writes** — 1,451 protected pairs across 140 runs — which projects to failing
    132 of 145 runs. A check that fails almost every run is a constant, not a
    guardrail, and each of those runs costs $7–25.
-3. **A deny binds even under `bypassPermissions`, but only by exact tool name.**
-   That is what makes `disallowedTools:` the last line of defence for a
-   delegated agent (see the plugin-agents section of `CLAUDE.md`) — and it is
-   also the limit: the matcher decides whether the hook runs at all, so a name
-   it omits is a hole the script behind it can never close. `device_bash` is
+3. **Agent frontmatter binds even under `bypassPermissions`, but only by exact
+   tool name.** A tool omitted from an agent's `tools:` is absent from it
+   (measured 2026-08-30, `make probe-agent-binding`). This entry used to call
+   `disallowedTools:` "the last line of defence"; the omission already was, and
+   the denies have since been deleted. The exact-name matching is the limit that
+   matters here: the matcher decides whether the hook runs at all, so a name it
+   omits is a hole the script behind it can never close. `device_bash` is
    omitted deliberately and the write landed (issue #1509);
    `device_commit_files` was omitted by accident, which left the route open
    after all three predicate copies had been taught to deny it. The matcher is

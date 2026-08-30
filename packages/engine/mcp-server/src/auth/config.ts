@@ -38,9 +38,13 @@ export const CLIENT_ID_PACKAGING_ERROR =
 export const DEFAULT_WIKI_API_URL = "https://malachi.taild68f1b.ts.net/wiki";
 
 // Default OCR model for image_transcribe. Overridable per-user via
-// `openRouterModel` in config.json (set the Phase-0-chosen slug without a
-// rebuild). The LLM does not choose the model — it is not a tool parameter.
-export const DEFAULT_OPENROUTER_MODEL = "qwen/qwen3-vl-235b-a22b-instruct";
+// `openRouterModel` in config.json (swap the slug without a rebuild). The LLM
+// does not choose the model — it is not a tool parameter.
+//
+// Do NOT "update to the latest Gemini" by reaching for `:batch` — that sibling
+// slug runs against a batch queue, and batch latency blows the 60s Cowork
+// device-bridge abort that §5.7 of the spec sizes this call against.
+export const DEFAULT_OPENROUTER_MODEL = "google/gemini-3.7-flash";
 
 // What to tell the LLM when FamilySearch auth is unusable in the HOSTED runtime.
 // The `login` tool's loopback flow cannot complete there: the callback listener
