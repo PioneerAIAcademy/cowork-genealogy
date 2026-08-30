@@ -125,7 +125,8 @@ deliberately:**
    which is a schema problem to surface instead.)*
 2. **Watch for truncation.** `research_query` caps `items` at 50 and reports
    `count` as the true total. If `count > 50`, you are seeing part of the set —
-   narrow the filter, and never describe a partial set as complete.
+   page with `offset` (50, then 100) until you hold `count` items, and never
+   describe a partial set as complete.
 
 `Read` remains available for the rare body no projection carries — a verdict
 file under `evaluations/`, or a specific entry you have already located by id.
