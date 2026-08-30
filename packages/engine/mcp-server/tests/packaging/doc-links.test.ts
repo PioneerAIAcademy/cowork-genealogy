@@ -472,8 +472,8 @@ describe("docs/ cite symbols, not line numbers", () => {
  * IS the fact and stays.
  */
 const ISSUE_REF_BASELINE: Record<string, number> = {
-  "CLAUDE.md": 2,
-  "docs/architecture.md": 19,
+  "CLAUDE.md": 5,
+  "docs/architecture.md": 22,
   "docs/specs/e2e-test-spec.md": 10,
   "docs/specs/feedback-case-spec.md": 1,
   "docs/specs/gps-mentor-agent-spec.md": 2,
