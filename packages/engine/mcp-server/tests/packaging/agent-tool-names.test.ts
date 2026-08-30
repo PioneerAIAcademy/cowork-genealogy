@@ -13,8 +13,8 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 //   - `.mcp.json`, the unit harness (skill_runner's `mcp_servers={"genealogy": …}`),
 //     the e2e orchestrator, and the hosted web control plane all register it
 //     under the key `genealogy`      → mcp__genealogy__<tool>
-//   - Cowork IN THE CLOUD reaches the host-installed .mcpb through a
-//     remote-device bridge, which namespaces the manifest's display_name
+//   - Cowork can reach the host-installed .mcpb through a remote-device
+//     bridge, which namespaces the manifest's display_name
 //                                    → mcp__remote-devices__Genealogy_Research__<tool>
 //   - Cowork can instead expose the bare display_name with no bridge in front
 //     of it                          → mcp__Genealogy_Research__<tool>

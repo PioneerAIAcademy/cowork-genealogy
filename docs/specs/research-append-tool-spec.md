@@ -596,8 +596,8 @@ register.
   on the same project folder share one `.mcpb` process is **unverified**; if they
   do not, the lock does not bind across them. The change is strictly better than
   today either way.
-- Under contention the queued call now **waits** instead of losing its write. In
-  Cowork's cloud mode a bridged MCP call is killed at 60s (a limit imposed by the
+- Under contention the queued call now **waits** instead of losing its write. A
+  bridged Cowork MCP call is killed at 60s (a limit imposed by the
   bridge, not settable from our side), so a call queued behind a slow composite
   append can be killed there — a **visible** failure replacing a silent loss. Do
   not add a timeout or retry to work around it.

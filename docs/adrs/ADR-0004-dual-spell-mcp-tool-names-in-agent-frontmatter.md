@@ -104,7 +104,8 @@ Three corollaries:
   name (`query: "+research_append"`), which matches whatever prefix the session
   exposes. Cowork defers tool schemas past a size threshold and offers no control
   over it, so `ToolSearch` is the real load path there — and
-  `select:mcp__genealogy__…` resolves to nothing in either Cowork mode.
+  `select:mcp__genealogy__…` resolves to nothing under either Cowork spelling —
+  bridged or bare.
 - **Built-in tools (`Read`) stay bare**, and skill `allowed-tools` stays bare
   everywhere — it is not an exact-match spawn filter.
 

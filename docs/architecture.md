@@ -1480,9 +1480,9 @@ changes how a correct change is made:
 1. **Spelling is not binding.** Nothing proves a declared agent tool actually
    *binds* at runtime — every lint stops at the name, and the SDK handshake
    exposes only name/description/model. `make agent-smoke` reads what the runtime
-   *resolved*, not what bound, and only in the mode it runs in. So a green CI run
+   *resolved*, not what bound, and only for the spelling that session exposed. So a green CI run
    says nothing about whether an agent can call what you granted it; only a live
-   session in the run mode you care about does (§5.2, §8).
+   session binds it, and only for the spelling it exposes at that moment (§5.2, §8).
 2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
    not rebuild the `genealogy-agent` E2B image production runs the agent on, and
    both guards over it are advisory. Production can run weeks-old skills, agents,
