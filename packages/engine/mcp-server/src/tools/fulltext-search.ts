@@ -237,9 +237,11 @@ export async function fulltextSearchTool(
   // Whenever results were staged, drop the heavy inline `textDocument` (the full
   // AI-transcribed page, 79–136 KB across a result set — the overflow driver).
   // The full text lives in the staged sidecar, but nothing currently reads it
-  // back: record_read's sidecar path (readFromSidecar) requires `gedcomx`,
-  // which is record_search's shape, not fulltext_search's — a fulltext-staged
-  // entry always throws "was not found in staged results" (issue #1826). The
+  // back: record_read's sidecar path (readFromSidecar) filters staged entries
+  // on `r.recordId`, a field `FulltextResult` never has (it carries `id`
+  // instead) — the lookup finds no match before it would even reach the
+  // `gedcomx` check that follows. A fulltext-staged entry always throws "was
+  // not found in staged results". The
   // remaining flat fields (names/places/dates/recordPlace/recordDate/
   // highlightTerms/title/recordType) are the intended triage stubs. Mirrors
   // record_search's inline-gedcomx strip: unconditional once staged so the

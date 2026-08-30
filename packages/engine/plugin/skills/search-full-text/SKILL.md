@@ -221,9 +221,6 @@ will add.** An unscoped first call (step 4) logs an unscoped `query`; a
 filter only appears once it is actually sent in a call:
 
 ```
-// This example logs a SECOND call, made after an unfiltered first call
-// showed the filters were warranted — recordPlace1/yearFrom/yearTo are in
-// `query` because this specific call actually sent them.
 research_log_append({
   projectPath,
   planItemId: "pli_010",          // null for ad-hoc

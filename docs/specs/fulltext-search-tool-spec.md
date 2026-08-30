@@ -200,8 +200,10 @@ interface FulltextSearchResponse {
   /**
    * Present only when `projectPath` was supplied — search-result-staging-spec.md.
    * Unlike a record_search staged handle, `resultsRef` here cannot currently be
-   * read back through `record_read`: its sidecar reader requires a `gedcomx`
-   * field, which a fulltext-staged entry never has.
+   * read back through `record_read`: its sidecar reader filters entries on
+   * `recordId`, a field a fulltext result never has (it carries `id` instead),
+   * so the lookup finds no match before it would even reach the `gedcomx`
+   * check that follows.
    */
   staged?: { resultsRef: string; returnedCount: number } | null;
   stagingError?: string;
