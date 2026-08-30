@@ -124,16 +124,6 @@ export async function getWikiApiUrl(): Promise<string> {
   return url || DEFAULT_WIKI_API_URL;
 }
 
-export async function getLearningCenterDir(): Promise<string | null> {
-  const config = await loadConfig();
-  return config.learningCenterDir?.trim() ?? null;
-}
-
-export async function getLibraryDir(): Promise<string | null> {
-  const config = await loadConfig();
-  return config.libraryDir?.trim() ?? null;
-}
-
 // OpenRouter key resolution is config-only (no env-var fallback, per the repo
 // rule): the server reads it here in every runtime. e2e and the hosted
 // sandbox bridge their env var into config.json at the orchestration layer —
