@@ -1042,12 +1042,12 @@ edit and re-emit.**
 > and **36 — 23% — read `tree.gedcomx.json`**. A tree projection surface reclaims
 > that 23%, not "most of it," and `Read` stays regardless because skills read
 > their own reference files through it.
-> **Direction (#1031).** The tool half shipped: `offset`
-> makes items 51+ reachable, closing the "no way to fetch past 50" correctness bug
-> at the tool. What remains is the **skill half (#1183)** — the consumers must
-> actually page. `proof-conclusion/SKILL.md` still says "no offset/pagination
-> guessing," so its "collect every assertion" gate can under-read (it once saw 50
-> of 57) until that line is rewritten. **If you consume `research_query`, check the
+> **Direction (#1031).** Both halves shipped. The tool half made items 51+
+> reachable via `offset`, closing the "no way to fetch past 50" correctness bug at
+> the tool. The **skill half (#1183)** taught the consumers to page:
+> `research/SKILL.md` and `agents/proof-conclusion.md` both check `truncated` and
+> page with `offset`. The latter's "collect every assertion" gate had under-read
+> (it once saw 50 of 57). **If you consume `research_query`, check the
 > `truncated` flag and page with `offset`** — a skill already ignored truncation
 > once. The projection tools *are* being adopted: over the whole 145-run corpus
 > `Read` still leads (4,730 calls against 637 `research_query` + 450

@@ -110,6 +110,14 @@ account. Use it as a tie-breaker, never as a gate.
 | FindMyPast.com | `FindMyPast` |
 | FindAGrave.com | free to search; `FindAGrave-Plus` adds features |
 | Newspapers.com | `Newspapers.com` |
+| any of the above | `FamilySearch-Partner`, `LibraryAccess` — may cover it |
+
+`FamilySearch-Partner` and `LibraryAccess` are access *routes*, not
+sites: which sites each unlocks varies by institution and changes. Treat
+neither as access to a named site, and neither as `none`. Generate the
+URL and note the route instead of flagging a paywall the researcher may
+not hit — "a family history centre often carries [SITE]; worth checking
+before you pay."
 
 - If a plan item is repository-agnostic, prefer a site the researcher
   has access to — that search is immediately actionable.
@@ -135,7 +143,7 @@ titles mislead about scope and completeness.
 | MyHeritage.com | `myheritage.com/research?action=query&params` | Independent indexing. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
 | FindMyPast.com | `findmypast.com/search/results?params` | Strong UK/Ireland coverage. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
 | FindAGrave.com | `findagrave.com/memorial/search?params` | Cemetery records. Free. User-contributed — treat as compiled source |
-| Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription |
+| Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
 
 ## Steps
 
