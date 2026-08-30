@@ -635,7 +635,10 @@ advertises — the hosted control plane runs `bypassPermissions` with no allowli
 Cowork loads the plugin whole. A skill's `allowed-tools` is a **grant, not a
 restriction**: the field that removes a tool from the pool is `disallowed-tools`, which
 no skill here declares, so a deny list derived as the complement of a grant inverts the
-field's meaning. The unit harness still derives one; retiring it is open work.
+field's meaning. The unit harness derived one until that narrowing was retired; it now
+grants every registered MCP tool to every skill, and `compute_allowed_tools` survives
+only to feed the advisory `test_tool_allowlist` warning and to validate `run_skills`
+references. Do not reintroduce the narrowing.
 
 The boundary, so this is not over-applied: emulate production's *permission model*,
 construct the test's *inputs* freely. A deny that hides the answer from the agent — the
