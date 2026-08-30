@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -657,6 +658,39 @@ def _sidecar_refs(runlog: Path, skill_dir: Path) -> list[Path]:
     return out
 
 
+def _replace_with_retry(src: Path, dst: Path, *, attempts: int = 8) -> None:
+    """`os.replace`, retried on a Windows sharing violation.
+
+    On Windows a rename fails with PermissionError (WinError 5/32) whenever
+    ANOTHER process holds a handle to either path — an on-access antivirus
+    scan of the just-written temp file is the common one, and the file is
+    typically released within a few hundred milliseconds. POSIX has no
+    equivalent: the rename succeeds regardless of open handles, so this loop
+    is a no-op there and costs one successful call.
+
+    This is not hypothetical. A full init-project run (14 tests, ~$2.50)
+    aborted on this exact call — `.partial_<ts>.json.tmp` -> `.partial_<ts>.json`
+    with WinError 5 — after every test had already completed. The run was
+    demoted to a `scratch_` log, which is gitignored and cannot satisfy the
+    runlog CI gate, so the whole run had to be paid for again. Retrying is
+    cheaper than re-running by three orders of magnitude.
+
+    Deliberately re-raises after the last attempt rather than falling back to
+    a copy: a silent non-atomic write is how a half-written run log would get
+    read as a real one.
+    """
+    delay = 0.05
+    for attempt in range(attempts):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(delay)
+            delay = min(delay * 2, 1.0)
+
+
 # ---- Partial (in-progress) run logs ---------------------------------------
 #
 # When the harness is stopped part-way (Ctrl-C) or crashes, the completed
@@ -699,7 +733,7 @@ def write_partial_runlog(
     validate_run_log(log)
     tmp = out.parent / (out.name + ".tmp")
     tmp.write_text(json.dumps(log, indent=2), encoding="utf-8")
-    os.replace(tmp, out)
+    _replace_with_retry(tmp, out)
     return out
 
 
@@ -711,5 +745,5 @@ def promote_partial_to_scratch(partial_path: Path, *, timestamp: str) -> Path:
     log the CRUD UI can read.
     """
     scratch = partial_path.parent / f"scratch_{timestamp}.json"
-    os.replace(partial_path, scratch)
+    _replace_with_retry(partial_path, scratch)
     return scratch

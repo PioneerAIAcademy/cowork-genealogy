@@ -232,3 +232,59 @@ def test_a_raising_partial_writer_does_not_discard_finished_tests(tmp_path, monk
     # not as an orphaned gitignored dotfile.
     scratch = list((runlogs / "unit" / "skill-a").glob("scratch_*.json"))
     assert scratch, "the partial that DID land was never promoted to a scratch run log"
+
+
+# ---- Windows sharing-violation retry (_replace_with_retry) -----------------
+#
+# A full init-project run (14 tests, ~$2.50) aborted on the partial write's
+# `os.replace` with WinError 5 after every test had completed, and was demoted
+# to a gitignored `scratch_` log — so the whole run had to be paid for again.
+# These pin the retry that prevents that, and the re-raise that keeps a
+# genuinely stuck rename from passing silently.
+
+
+def test_replace_with_retry_survives_a_transient_sharing_violation(tmp_path, monkeypatch):
+    """A PermissionError that clears (antivirus releasing the temp file) retries."""
+    import os as _os
+
+    from harness import runlog as _runlog
+
+    src, dst = tmp_path / "a.tmp", tmp_path / "a.json"
+    src.write_text("payload", encoding="utf-8")
+
+    real_replace = _os.replace
+    calls = {"n": 0}
+
+    def flaky(a, b):
+        calls["n"] += 1
+        if calls["n"] <= 3:
+            raise PermissionError(5, "Access is denied")
+        return real_replace(a, b)
+
+    monkeypatch.setattr(_os, "replace", flaky)
+    _runlog._replace_with_retry(src, dst)
+
+    assert calls["n"] == 4, "should have retried until the rename succeeded"
+    assert dst.read_text(encoding="utf-8") == "payload"
+
+
+def test_replace_with_retry_reraises_when_the_lock_never_clears(tmp_path, monkeypatch):
+    """A permanent lock must raise, not fall back to a non-atomic copy.
+
+    Falling back is how a half-written run log gets read as a complete one.
+    """
+    import os as _os
+
+    from harness import runlog as _runlog
+
+    src, dst = tmp_path / "a.tmp", tmp_path / "a.json"
+    src.write_text("payload", encoding="utf-8")
+
+    def always_locked(a, b):
+        raise PermissionError(5, "Access is denied")
+
+    monkeypatch.setattr(_os, "replace", always_locked)
+    with pytest.raises(PermissionError):
+        _runlog._replace_with_retry(src, dst, attempts=3)
+
+    assert not dst.exists(), "must not leave a destination behind on failure"
