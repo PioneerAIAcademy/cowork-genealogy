@@ -105,7 +105,7 @@ mechanism, the second function parameter that dispatch cannot populate.
    into a section it legitimately owns — `match_score` remains caller-fabricable,
    and the spec says so plainly.
 3. **Two places must agree.** The tool must be narrowed *and* the agent's
-   frontmatter must omit-and-deny the broad one. Getting only the first gives an
+   frontmatter must omit the broad one. Getting only the tool half gives an
    agent that can still call `research_append` directly.
 
 **Risks.** No CI job verifies that either half binds at runtime — the lint checks
@@ -130,8 +130,9 @@ The structural half needs no test: dispatch builds only the first argument, so
 the second is unreachable from tool input by construction. That is the point of
 choosing this mechanism over a parameter.
 
-What is **not** covered: that the deny binds at runtime; that a *value* written
-into an owned section is correct.
+What is **not** covered: that the omission binds at runtime — no CI job checks
+it, and `make probe-agent-binding` is a live billed probe rather than a check;
+that a *value* written into an owned section is correct.
 
 ## Revisit when
 
