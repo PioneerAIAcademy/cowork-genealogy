@@ -80,7 +80,7 @@ flowchart TD
     PCA --> GM["gps-mentor · agent<br/>evaluations[]"]
     GM --> GATE{"all questions resolved,<br/>tree encoded,<br/>critique on record?"}
     GATE -- no --> QS
-    GATE -- yes --> DONE["research writes<br/>project.status = completed"]
+    GATE -- yes --> DONE["proof-conclusion agent writes<br/>project.status = completed"]
 
     subgraph ASK ["Reached only by asking — no routing row"]
         direction LR
@@ -104,8 +104,8 @@ unreachable from an autonomous run.
 | # | Skill / agent | Gate — true before it runs | Owns | Reads | Writes |
 |---|---|---|---|---|---|
 | 0 | **`init-project`** (skill) | No `research.json` in the folder. A guard clause refuses — reading no project file at all — if one exists. Not a routing row; `/research` names it in prose. | Creating both project files, the researcher profile, and the known-holdings survey | `person_read` (with `relatives` + `sourceDescriptions`), `person_search`, `place_search`; the user's opening answers | `research.json` `project` + empty sections and `tree.gedcomx.json` `persons`/`relationships`/`sources` — `project_create`; then `researcher_profile` and `known_holdings` — `research_append` |
-| 1 | **`research`** (skill, orchestrator) | Entry point. `research.json` exists. | Routing only — plus the four contracts that forbid it doing the work inline (extraction, identity links, conflict/hypothesis, exhaustiveness/proof), and the two completion gates | `research_query` projections only; it explicitly bans a whole-file `Read` of `research.json` for itself | `project.status = "completed"` — `research_append`. Nothing else. (Who owns that write is unsettled — see below) |
-| 2 | **`question-selection`** | Objective but no questions; or exhaustiveness returned gaps and the next move is a FAN pivot; or new evidence raised a new question | Minting at most one `q_` per invocation with its selection basis. Not a question's `status` after creation — all four transitions belong elsewhere | `research.json` `project.objective`, `questions`, `assertions`, `conflicts`, `hypotheses`, `timelines`, `log`, `proof_summaries`; tree `persons`. Conditional whole-file `Read` | `questions[]` append — `research_append` |
+| 1 | **`research`** (skill, orchestrator) | Entry point. `research.json` exists. | Routing only — plus the four contracts that forbid it doing the work inline (extraction, identity links, conflict/hypothesis, exhaustiveness/proof), and the two completion gates | `research_query` projections only; it explicitly bans a whole-file `Read` of `research.json` for itself | **Nothing.** The file still instructs it to write `project.status = "completed"`; that was ruled to the `proof-conclusion` agent on 2026-08-25 and the prose has not caught up — see [How the project gets closed](#how-the-project-gets-closed) |
+| 2 | **`question-selection`** | Objective but no questions; or exhaustiveness returned gaps and the next move is a FAN pivot; or new evidence raised a new question | Minting at most one `q_` per invocation with its selection basis. Not a question's `status` after creation — all four transitions belong elsewhere | `research.json` `project.objective`, `questions`, `assertions`, `conflicts`, `hypotheses`, `timelines`, `log`, `proof_summaries`; tree `persons`. Conditional whole-file `Read` | `questions[]` append — `research_append`. Never `project.status` — when its step 1b stop point fires ("no further questions — objective answered") it returns a signal whose closing line still names `/research` as the writer; the 2026-08-25 ruling redirects it to a `proof-conclusion` re-invocation, and that edit has not landed — see [How the project gets closed](#how-the-project-gets-closed) |
 | 3 | **`locality-guide`** | A question has no plan **and** its target jurisdiction has no `localities` entry | The survey of what records survive for one place and period, persisted as the one `loc_` entry `research-plan` plans from | `place_search`, `place_search_all`, `place_population`, `collections_search`, `volume_search`, `external_links_search`, `wiki_search`, `wiki_read`, `wiki_place_page` — the hosted wiki API and Pop Stats | `localities` — one entry per jurisdiction, `research_append`. Nothing at all in standalone Q&A with no project |
 | 4 | **`research-plan`** | A question has no plan and its jurisdiction **already has** a `localities` entry; or exhaustiveness returned gaps to fill | Plan and plan-item structure — the sequenced record sets, their repositories, reasons and fallbacks. Never surveys a locality, never runs a search | `research.json` questions / plans / localities / log / assertions / proof_summaries and tree persons, by whole-file `Read`; `collections_search`, `volume_search` | `plans` and `plan_items` in one batched `research_append`; `plans[].status` → `superseded` or `exhausted` |
 | 5a | **`search-records`** | Plan items not yet executed and no analyzed evidence plausibly answers the question; target is a FamilySearch indexed collection | Executing one already-chosen indexed search, triaging ranked candidates, logging every search including nil results | `record_search`, `rank_search_matches`, `record_read`, `research_query` (at most one call), tree persons | `log[]` + its `results/<log_id>.json` sidecar — `research_log_append`; `plans[].items[].status` — `research_append`. Never `completed` |
@@ -124,7 +124,44 @@ unreachable from an autonomous run.
 | 11 | **`proof-conclusion`** (skill) | A question at `exhaustive_declared` with no `proof_summaries` entry; or re-invoked because a tier-≥-probable conclusion is not yet in the tree | Resolving to one `q_` and delegating. Reads nothing else and forms no view on readiness | `project_context` only | Nothing — the section is denied to it at the hook |
 | 11 | **`proof-conclusion`** (agent) | Delegated with `questionId` + `projectPath`. Its own three-check gate — unresolved conflicts, unclassified assertions, unlinked persons — hard-blocks before Step 1 | Tier and form selection, the self-contained narrative, and the tree encoding | `research_query` projections (never a raw whole-file `Read`), `sources[].citation`, tree facts and relationships, `source_attachments`, `merge_warnings` | `proof_summaries[]` + the question's `status`/`resolved`/`resolution_assertion_ids` in one batch, and `project` — `research_append`; tree `relationships`, `persons[].facts[]` and `sources` at tier ≥ probable — `tree_edit` / `tree_correct` |
 | 12 | **`gps-mentor`** (agent) | `proof-conclusion` wrote a `ps_id`, and either tier < probable or the conclusion is now in the tree. Skipped when `evaluations/` already holds a `proof-critique-<ps_id>-*.json` newer than the summary | One structured advisory verdict on the finished proof, read as a standalone document. **Mandatory to invoke and record; advisory in what it recommends.** It holds no search tool — it grades what was gathered | `project_context`, `research_query` (`evaluations`, `conflicts`, `hypotheses`, and the proof's `narrative_markdown`), the `evaluations/` verdict files, `validate_research_schema`, `collections_search` | `evaluations[]` in `research.json` — `research_append` — plus `superseded_by` on the prior entry for the same focus and target. The verdict file under `evaluations/` is written by the tool, not by the agent |
-| 13 | back to **`research`** | Every question `resolved`, **and** both gates pass: each tier-≥-probable conclusion encoded in the tree, and each resolved question's `ps_id` carrying a `proof-critique` verdict | Closing the project | `research_query` | `project.status = "completed"` — `research_append` |
+| 13 | **`proof-conclusion`** (agent), re-entered | Every question `resolved`, **and** both gates pass: each tier-≥-probable conclusion encoded in the tree, and each resolved question's `ps_id` carrying a `proof-critique` verdict. The orchestrator is to route here and not write; `research/SKILL.md` still tells it to make the write itself | Closing the project | `research_query` | `project.status = "completed"` — `research_append`, refused by the tool while a blocking conflict is unresolved or a mentor verdict is missing |
+
+---
+
+## How the project gets closed
+
+Three components meet at the last step, and the split is easy to get wrong because each
+one holds a piece of the answer. The table below is the split **as ruled** on
+2026-08-25; the paragraph after it says which planes on disk still disagree.
+
+| Component | Holds | Does not hold |
+|---|---|---|
+| **`question-selection`** | Whether the **objective** is answered. Its step 1b is the autonomous stop point: every *independent* part of the objective `resolved` with a `proof_summary` at `probable` or better, with corroboration explicitly not required | Any write to `project`. It signals and returns |
+| **`research`** (orchestrator) | The routing decision — which component runs next, and re-invoking `proof-conclusion` once the stop point is reached | The write. Its `allowed-tools` names only `research_query` and `validate_research_schema` — but that field is a grant, not a restriction, so it denies nothing; the body still instructs the write at its completion gate |
+| **`proof-conclusion`** (agent) | The `project.status = "completed"` write, alongside the two gates that guard it — every tier-≥-probable conclusion encoded in the tree, and a `proof-critique` verdict on record for each resolved question's `ps_id` | Any view of `project.objective`. It never reads that field |
+
+Ruled 2026-08-25 on issue #1335, against a routing table that still says the orchestrator
+writes it. Three planes already match the ruling: the `project` row of the ownership
+manifest, `research_append`'s own comment, and the `PreToolUse` hook, whose
+`AGENT_WRITABLE_SECTIONS` grants the proof-conclusion agent `project`. The hook permits
+that agent; it denies the orchestrator nothing, because `project` is not in
+`OWNED_SECTIONS`.
+
+**The condition the agent fires on is not the condition that should close a project.**
+`agents/proof-conclusion.md` step 8 writes `completed` when "ALL questions are now
+`resolved`". Since PR #1819 that agent also resolves the question it concluded, in the
+same batch as the summary — so its own condition is true the moment it finishes the
+**first** question of an objective that will need a second one, before
+`question-selection` has minted the next. The agent cannot tell the two cases apart: it
+holds no view of the objective, and "all questions resolved" is a proxy that is briefly
+true on the way to every multi-question objective. On the first pass the tool still
+refuses — no `proof-critique` verdict exists yet for the summary just written — so the
+premature write lands only when the agent is re-invoked after the mentor gate has run.
+
+What closes the gap is the re-invocation seam, not a wider condition: `question-selection`
+returns its stop-point signal, the orchestrator re-invokes `proof-conclusion`, and that
+call makes the write. Do not instead widen step 8's condition — the agent has nothing to
+evaluate it against. Tracked on issue #1335 as a consequence of the ruling.
 
 ---
 
@@ -206,17 +243,20 @@ touch either side.
 
 1. **Who writes `project.status = "completed"`.** The routing table has the orchestrator
    write it; the same file's re-invocation section says the orchestrator writes "nothing
-   directly"; the ownership manifest names `proof-conclusion`. Do not build a check that
-   assumes any one of the three. — issue #1492
+   directly"; the ownership manifest names `proof-conclusion`. — issue #1335, **ruled
+   2026-08-25: the `proof-conclusion` agent owns the write.** The three sites still
+   disagree on disk until that lands; the manifest is the one that is already right.
 2. **What an `address_first` mentor verdict does.** `research/SKILL.md` carries two
    verdict tables, one after the other. The first says stop and ask the user (interactive)
    or invoke the suggested skill (autonomous); the second says "do not block, re-open the
-   resolved question, or force a remediation skill." They are opposites. — issue #1492
+   resolved question, or force a remediation skill." They are opposites. — issue #1335,
+   **ruled 2026-08-25: the second table is doctrine** and the first is deleted along with
+   its reinforcement paragraph.
 3. **Whether `gps-mentor` touches `research.json`.** The orchestrator says it "writes
    verdict files under `evaluations/` and never touches `research.json`". The ownership
    manifest makes it the owner and sole writer of the `evaluations` section, through
    `research_append`. The manifest is right — the section holds a pointer record and the
-   file holds the verdict. — issue #1492, where this one needs no ruling
+   file holds the verdict. — issue #1335, where this one needs no ruling
 4. **`proof-conclusion` advertises a mentor call it does not make.** Its `description`
    says it handles proof review and "invokes the gps-mentor critique", and `gps-mentor`'s
    own description agrees. Its body has no such step, and the only file that delegates to
