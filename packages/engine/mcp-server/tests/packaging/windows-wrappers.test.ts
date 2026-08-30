@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
@@ -211,5 +211,79 @@ describe("Windows wrapper drift", () => {
       ].map((m) => `${f}: ${m[0].trim()}`),
     );
     expect(bare).toEqual([]);
+  });
+
+  /**
+   * cmd's `shift` moves `%1` into `%0`, so ANY `%0` / `%~dp0` / `%~f0` read
+   * after a `shift` yields the caller's first argument rather than the script.
+   * `setup-feedback-case.bat` resolved the repo root that way and could not
+   * unpack a single feedback case (issue #1876) -- and because that line sat
+   * above everything else, nothing below it in the file had ever run.
+   *
+   * This is cmd-only. The `.sh` twin resolves SCRIPT_DIR after its parse loop
+   * too and is fine, because bash's `shift` never touches `$0`. Do not carry
+   * "resolve before parsing" away as a cross-shell rule.
+   *
+   * Scans EVERY `.bat` in the repo, not just `scripts/windows/`: the file that
+   * had the bug is in `scripts/`, which the helpers above never read. REM/`::`
+   * comment bodies are stripped first -- an explanatory comment naming `%~dp0`
+   * sits directly above the assignment it explains, and matching the comment
+   * instead of the code made the FIRST version of this guard pass on the very
+   * bug it was written for (Ikennaya1's review of PR #1905).
+   */
+  const batFiles = (function walk(dir: string): string[] {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+      // `.claude` holds gitignored review worktrees (.gitignore:25) -- whole checkouts
+      // of this repo at other commits. Walking them made this guard report the repo's
+      // own .bat as broken from files that are not in it, so `make test-all` was red
+      // for anyone using the worktree flow while CI, a fresh clone, stayed green.
+      if (
+        e.name === "node_modules" ||
+        e.name === ".venv" ||
+        e.name === ".git" ||
+        e.name === ".claude"
+      )
+        return [];
+      const full = join(dir, e.name);
+      if (e.isDirectory()) return walk(full);
+      return e.name.toLowerCase().endsWith(".bat") ? [full] : [];
+    });
+  })(projectRoot);
+
+  /** Body with REM / `::` comment lines blanked, so a comment cannot match. */
+  const code = (f: string) =>
+    read(f)
+      .split("\n")
+      .map((l) => (/^\s*(?:rem\b|::)/i.test(l) ? "" : l))
+      .join("\n");
+
+  const ZERO = /%~?[dpfnxsatz]*0\b/;
+  const SHIFT = /^\s*shift\b/m;
+  const rel = (f: string) => relative(projectRoot, f).split(sep).join("/");
+
+  it("found .bat files to check (guards the reader itself)", () => {
+    expect(batFiles.length).toBeGreaterThan(10);
+  });
+
+  it("a .bat still uses shift (guards the reader itself)", () => {
+    const shifting = batFiles.filter((f) => SHIFT.test(code(f)));
+    expect(shifting.map(rel).length).toBeGreaterThan(0);
+  });
+
+  it("a .bat still reads %0 (guards the reader itself)", () => {
+    const reading = batFiles.filter((f) => ZERO.test(code(f)));
+    expect(reading.map(rel).length).toBeGreaterThan(0);
+  });
+
+  it("no .bat reads %0 after it shifts", () => {
+    const late = batFiles.flatMap((f) => {
+      const body = code(f);
+      const shift = body.search(SHIFT);
+      if (shift === -1) return [];
+      return [...body.matchAll(new RegExp(ZERO.source, "g"))]
+        .filter((m) => (m.index ?? 0) > shift)
+        .map((m) => `${rel(f)}: ${m[0]} read after shift`);
+    });
+    expect(late).toEqual([]);
   });
 });

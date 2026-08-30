@@ -33,9 +33,10 @@ One scope limit (plan §4.1):
 
   **No skill declares either guarded tool today**, so the exemption is currently
   unreachable: `search-images` moved to delegating via `@plugin:image-reader`
-  (2026-07-17) and `image_read` lives only on `agents/image-reader-opus.md`;
-  `extraction_append` has only ever lived on `agents/record-extractor.md`. Both
-  facts are pinned by tests in `tests/unit/test_context_policy.py`. The clause
+  (2026-07-17), and since `image-reader-opus` was retired (issue #2013) NO agent
+  declares `image_read` either; `extraction_append` has only ever lived on
+  `agents/record-extractor.md`. Both facts are pinned by tests in
+  `tests/unit/test_context_policy.py`. The clause
   stays because it is the mechanism a future skill would need, not because
   anything depends on it firing.
 
@@ -64,9 +65,14 @@ from typing import Any
 # the discriminator: a skill may call what it declared; it may not call what was
 # granted only to its subagent.
 #
-# - `image_read` — held only by `agents/image-reader-opus.md`. It returns a page
-#   scan as inline base64; in the router's context the bytes accumulate and
-#   overflow the transport buffer, so every caller must delegate.
+# - `image_read` — declared by NO agent since `image-reader-opus` was retired
+#   (issue #2013). It STAYS in this set deliberately: the deny exists because the
+#   tool returns a page scan as inline base64 that accumulates in the router's
+#   context and overflows the transport buffer, and retiring the agent changed
+#   nothing about that. The recovery target was already `@plugin:image-reader`
+#   (which returns text), never the retired agent, so the denial reason below
+#   still names the right fix. Dropping the entry would silently reopen the
+#   main thread to inline scans — the opposite of issue #1874's direction.
 # - `extraction_append` — held only by `agents/record-extractor.md`. When that
 #   agent fails to spawn, the router must re-delegate to it (and skip the record
 #   after a repeat failure), never do the extraction and append itself (issue #942).

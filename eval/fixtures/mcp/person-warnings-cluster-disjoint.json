@@ -1,0 +1,28 @@
+{
+  "tool": "person_warnings",
+  "description": "person_warnings on Patrick (I1) returns two contradictions whose factIds are disjoint by construction: hasChristeningBeforeBirth cites the Christening and Birth facts (F5, F1), hasBurialBeforeDeath cites the Burial and Death facts (F6, F2). No one fact is implicated in both, so the shared-cause reading is unavailable and the merged-profile reading is the stronger one. Severities, messages and factId families are copied from checkHasChristeningBeforeBirth and checkHasBurialBeforeDeath in person-warnings.ts. hasEventAfterDeath1 is deliberately NOT used here: its factIds are selfFactIds(mob, null), i.e. every fact the person has, so it overlaps everything by construction and can never establish disjointness. Counterpart to person-warnings-cluster.json, where all of Patrick's warnings share F2. Used by ut_check_warnings_019.",
+  "args": { "personId": "I1" },
+  "response": {
+    "warningCount": 2,
+    "warnings": [
+      {
+        "scoreType": "COHERENCE",
+        "issueType": "hasChristeningBeforeBirth",
+        "severity": "contradiction",
+        "personId": "I1",
+        "personName": "Patrick Flynn",
+        "factIds": ["F5", "F1"],
+        "message": "This person's Christening is dated before their Birth -- a date impossibility."
+      },
+      {
+        "scoreType": "COHERENCE",
+        "issueType": "hasBurialBeforeDeath",
+        "severity": "contradiction",
+        "personId": "I1",
+        "personName": "Patrick Flynn",
+        "factIds": ["F6", "F2"],
+        "message": "This person's Burial is dated before their Death -- a date impossibility."
+      }
+    ]
+  }
+}

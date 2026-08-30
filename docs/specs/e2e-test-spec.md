@@ -837,7 +837,8 @@ legitimately declares a guarded tool would be denied here too, and closing
 that needs the predicate widened by hand.
 
 Both members are enforced. Neither `extraction_append` nor `image_read` is
-declared by any skill — `image_read` lives only on `agents/image-reader-opus.md`
+declared by any skill — `image_read` is declared by no agent at all since
+the `image-reader-opus` agent was retired
 since `search-images` moved to `@plugin:image-reader` (2026-07-17) — so `agent_id`
 presence alone discriminates for each, and a third tool added to the set is
 covered here automatically.

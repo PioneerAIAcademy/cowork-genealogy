@@ -13,7 +13,7 @@
 - **Supersedes:** —
 - **Superseded by:** —
 - **Applies to:** `packages/engine/mcp-server/src/tools/research-append.ts`, `packages/engine/mcp-server/src/tools/image-transcribe.ts`, `packages/engine/plugin/hooks`, `packages/engine/plugin/skills`, `scripts/claude-hooks`, `docs/specs/guardrail-enforcement-spec.md` — *linted; keep current*
-- **Related:** ADR-0003, ADR-0005, ADR-0006, ADR-0009; PR #1029; issues #1335, #1463, #1490, #1492, #1493, #1499, #1509, #1081, #1273, #1399
+- **Related:** ADR-0003, ADR-0005, ADR-0006, ADR-0009; PR #1029; issues #1335, #1463, #1490, #1493, #1499, #1509, #1081, #1273, #1399
 
 ## Context
 
@@ -54,10 +54,11 @@ The refusal did not block correct work; it redirected the agent into doing it.
 **And the same reasoning keeps being re-derived from scratch.** Four independent
 issues in one week: issue #1490 (move the two completion gates out of
 `research/SKILL.md` and into the tool — "reinforced prose did not survive one
-day"); issue #1492's second ruling (the question of who writes
+day"); issue #1335's second ruling (the question of who writes
 `project.status = "completed"`, where the body enumerates five disagreeing sites,
 names a sixth, and its analysis note counts seven — one option on the table being
-to move the write into `research_append` as a computed gate); issue #1493 (the
+to move the write into `research_append` as a computed gate; ruled 2026-08-25 to
+the `proof-conclusion` agent, leaving the computed-gate option to issue #1490); issue #1493 (the
 raw-write lockdown exists in three implementations and the unit eval harness,
 the tier that runs the most sessions, is not one of them); and issues #1499 and
 #1509 (the lockdown has a hole — `device_bash` wrote both protected files past it,

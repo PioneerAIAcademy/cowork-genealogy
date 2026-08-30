@@ -1230,6 +1230,23 @@ this section before reopening one.
   from the one participant that cannot see the evidence. A thin caller needs to
   be thin in capability, not just in wording.
 
+  **`research-exhaustiveness` followed, 2026-08-23, and the ceiling argument has
+  moved — re-measured 2026-08-30.** It is a pair on the same shape: a 63-line
+  routing skill plus `agents/research-exhaustiveness.md` at 21,852 bytes, with
+  the rules that must hold moved into `research_append` *before* the prose moved,
+  exactly as the conversion guide above prescribes. Two of the four are now
+  converted, so the opening bullet reads as history — and all three of its
+  figures have moved, `record-extractor` most of all. **The body-size objection
+  reverses on the unit, so quote the unit.** In bytes, `person-evidence` is
+  41,657 and `conflict-resolution` 26,091 against `record-extractor`'s 58,541,
+  and inlining their `references/` (9,403 and 22,540) leaves both **under** the
+  high-water mark. In the lines the bullet used, both still clear it — 998 and
+  1,016 against `record-extractor`'s 986, which simply has longer lines. Bytes
+  is the unit this ceiling is about, because prompt cost is what it prices, so
+  the body-size objection falls — on that unit, and only stated with it. The
+  measured reference-reading regression survives either way. Re-measure before
+  quoting any of these figures.
+
   **This is the only route that reopens §7.** An agent is the one form a
   guardrail skill can take that emits a completion signal (`SubagentStop`) and
   carries an `agent_id`, which is what §7's success gate has never had. Weigh
