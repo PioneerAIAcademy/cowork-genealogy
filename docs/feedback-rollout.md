@@ -22,7 +22,7 @@ Nothing else works until `add-to-project.yml` is on `main`.
 
 ```sh
 gh label create feedback --repo PioneerAIAcademy/cowork-genealogy \
-  --description "User feedback submission — routes straight to Ready" \
+  --description "User feedback submission — routes straight to the Feedback column" \
   --color D4C5F9
 ```
 
@@ -81,7 +81,7 @@ orphans every installed Electron build.
 
 ```sh
 curl -sL <exec-url>
-# {"status":"Feedback endpoint is running","version":"2026-08-26","notifyCount":2}
+# {"status":"Feedback endpoint is running","version":"2026-08-30","notifyCount":2}
 ```
 
 An older `version` means the paste or the publish did not take. A `notifyCount`
@@ -98,7 +98,8 @@ immutable record the whole workflow rests on.
 The claim rule is new and nothing enforces it. Two people can both self-assign,
 and the only thing preventing it is that everyone knows to check.
 
-> Feedback now arrives as GitHub issues in Ready, titled `[feedback] <time>`.
+> Feedback now arrives as GitHub issues in the Feedback column, titled
+> `[feedback] <time>`, carrying the tester's own words in the body.
 > Assign one to yourself before you start — that's the claim. If it already has
 > an assignee, take another. Everything else is the same guide:
 > `docs/alpha-feedback-guide.md`.
@@ -112,9 +113,9 @@ The full version, including the failure-path checks, is in
 after **every** future console edit — CI cannot reach any of this.
 
 Five checks: version and `notifyCount` match; a submission creates a labelled
-issue in Ready; everyone in `NOTIFICATION_EMAILS` gets the email; the body leaks
-no user text; and with `GITHUB_TOKEN` deleted, the user still gets a success
-response.
+issue in the Feedback column; everyone in `NOTIFICATION_EMAILS` gets the email;
+the body reproduces the tester's prose but carries no email address or local
+path; and with `GITHUB_TOKEN` deleted, the user still gets a success response.
 
 ---
 
@@ -131,12 +132,13 @@ as bugs.
 
 - **This widens issue #1121, and does not fix it.** The endpoint takes
   unauthenticated writes and its URL is in a public repo. After this, the same
-  POST creates issues in a public repo, auto-routed to Ready. The clamping and
-  script-clock title bound what an attacker can write, not whether they can. A
-  flood is cleared by closing the issues.
-- **Ready's genealogist half tracks the feedback rate.** Six feedback items in
-  Ready leaves four slots, and the rest of the genealogist queue promotes as
-  usual. Ten leaves none, and `/fill-ready` returns the non-feedback items to
-  Backlog. The `test <slug>` queue moves on quiet weeks and stalls on busy ones.
+  POST creates issues in a public repo, auto-routed to the Feedback column. The
+  clamping and script-clock title bound what an attacker can write, not whether
+  they can — and since the body now reproduces submitted prose, that bound is
+  what keeps a submission from @-mentioning people or overrunning the body
+  limit. A flood is cleared by closing the issues.
+- **Feedback no longer consumes Ready's genealogist slots.** It lands in its own
+  column, so a busy feedback week no longer squeezes the `test <slug>` queue out
+  of Ready the way it did when both shared ten slots.
 - **Repeat submissions each open their own issue.** Adjacent timestamps are the
   signal; the guide says to check.

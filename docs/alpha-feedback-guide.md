@@ -151,10 +151,12 @@ below is mechanics.
 *(Step 0 happened days earlier, and by someone else. Your work starts here.)*
 
 Every submission opens a GitHub issue titled `[feedback] <timestamp>`, sitting in
-**Ready** on the board. Pick one with no assignee and **assign it to yourself
-before you start** — that is the claim, and it is the only thing stopping two
-people working the same case. If it already has an assignee, take another one.
-The zip link is in the issue body; download it now, you need it in Step 2.
+the **Feedback** column on the board. Pick one with no assignee and **assign it
+to yourself before you start** — that is the claim, and it is the only thing
+stopping two people working the same case. If it already has an assignee, take
+another one. The issue body carries the tester's own words, so you can judge
+which case to take before downloading anything; the zip link is there too, and
+you need it in Step 2.
 
 Two issues with timestamps a few minutes apart are usually one tester
 resubmitting, not two bugs. Open both before you start.
