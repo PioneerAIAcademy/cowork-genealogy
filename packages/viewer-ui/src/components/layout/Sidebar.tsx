@@ -8,8 +8,17 @@ interface SectionItem {
   countFn: () => number
 }
 
+function readStoredTheme(): string | null {
+  try {
+    return localStorage.getItem('theme')
+  } catch {
+    // Storage can throw outright — a private window with site data blocked.
+    return null
+  }
+}
+
 function getInitialTheme(): string {
-  const stored = localStorage.getItem('theme') || 'light'
+  const stored = readStoredTheme() || 'light'
   if (document.documentElement.dataset.theme == null) {
     document.documentElement.dataset.theme = stored
   }
@@ -35,7 +44,11 @@ export default function Sidebar({
   const toggleTheme = useCallback(() => {
     const next = theme === 'dark' ? 'light' : 'dark'
     document.documentElement.dataset.theme = next
-    localStorage.setItem('theme', next)
+    try {
+      localStorage.setItem('theme', next)
+    } catch {
+      // Not fatal: the theme still applies for this session, just isn't remembered.
+    }
     setTheme(next)
   }, [theme])
 
