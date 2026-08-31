@@ -102,6 +102,14 @@ Then **fully quit and reopen Claude Desktop.** Cowork runs the uploaded `.zip`,
 not your working tree — skip the rebuild and your fix will look like it did
 nothing.
 
+After reinstalling the plugin, ask the Cowork session: *"List every tool
+available to you, with names spelled exactly as you see them."* If the genealogy
+tools carry a prefix that appears in no agent's `tools:` list, stop — every
+plugin agent is being refused a spawn and every `disallowedTools:` deny is open —
+and file an issue with `--label nothing-checks`. This one prompt is the only known
+detector that the Cowork MCP registrar has moved (ADR-0004); nothing in CI reaches
+Cowork in any run mode.
+
 ---
 
 ## The steps

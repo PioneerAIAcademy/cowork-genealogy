@@ -337,25 +337,41 @@ agent-smoke: $(ENGINE_BUILD) ## Live agent-registration check (issue #939) + dea
 	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run pytest tests/test_plugin_agents.py -q -rs
 	# Arm 2 — dead-stub e2e abort (issue #1743).
-	$(eval _SMOKE_RUNLOG := $(shell python3 -c "import tempfile; print(tempfile.mkdtemp(prefix='smoke-runlog-'))"))
-	$(eval _SMOKE_OUT := $(shell python3 -c "import tempfile; print(tempfile.mkdtemp(prefix='smoke-out-'))"))
 	cd eval/harness && \
+	  SMOKE_RUNLOG=$$(mktemp -d) && SMOKE_OUT=$$(mktemp -d) && \
 	  uv run --frozen python -m e2e.run_e2e \
 	    --test kenneth-quass-death \
 	    --mcp-server-entry "$(CURDIR)/eval/harness/tests/fixtures/dead-stub.js" \
-	    --runlog-root "$(_SMOKE_RUNLOG)" \
-	    --skip-judge > "$(_SMOKE_OUT)/capture.txt" 2>&1; \
+	    --runlog-root "$$SMOKE_RUNLOG" \
+	    --skip-judge > "$$SMOKE_OUT/capture.txt" 2>&1; rc=$$?; \
+	  [ "$$rc" = 2 ] || \
+	    { echo "FAIL: expected exit 2, got $$rc" >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
 	  echo "--- Asserting dead-stub arm ---"; \
-	  grep -q "MCP UNAVAILABLE" "$(_SMOKE_OUT)/capture.txt" || \
-	    { echo "FAIL: output missing 'MCP UNAVAILABLE'" >&2; rm -rf "$(_SMOKE_RUNLOG)" "$(_SMOKE_OUT)"; exit 1; }; \
-	  grep -q "the 'genealogy' MCP server reported 'failed'" "$(_SMOKE_OUT)/capture.txt" || \
-	    { echo "FAIL: output missing server-reported-failed text" >&2; rm -rf "$(_SMOKE_RUNLOG)" "$(_SMOKE_OUT)"; exit 1; }; \
-	  grep -q "STUB-MARKER" "$(_SMOKE_OUT)/capture.txt" || \
-	    { echo "FAIL: output missing stub stderr (STUB-MARKER)" >&2; rm -rf "$(_SMOKE_RUNLOG)" "$(_SMOKE_OUT)"; exit 1; }; \
-	  [ -z "$$(find "$(_SMOKE_RUNLOG)" -type f 2>/dev/null | head -1)" ] || \
-	    { echo "FAIL: runlog-root should hold no files but found:" >&2; find "$(_SMOKE_RUNLOG)" -type f >&2; rm -rf "$(_SMOKE_RUNLOG)" "$(_SMOKE_OUT)"; exit 1; }; \
-	  rm -rf "$(_SMOKE_RUNLOG)" "$(_SMOKE_OUT)"; \
+	  grep -q "MCP UNAVAILABLE" "$$SMOKE_OUT/capture.txt" || \
+	    { echo "FAIL: output missing 'MCP UNAVAILABLE'" >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  grep -q "the 'genealogy' MCP server reported 'failed'" "$$SMOKE_OUT/capture.txt" || \
+	    { echo "FAIL: output missing server-reported-failed text" >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  grep -q "STUB-MARKER" "$$SMOKE_OUT/capture.txt" || \
+	    { echo "FAIL: output missing stub stderr (STUB-MARKER)" >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  [ -z "$$(find "$$SMOKE_RUNLOG" -type f 2>/dev/null | head -1)" ] || \
+	    { echo "FAIL: runlog-root should hold no files but found:" >&2; find "$$SMOKE_RUNLOG" -type f >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; \
 	  echo "Dead-stub arm: PASS"
+
+.PHONY: probe-agent-binding
+probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallowedTools: actually bind under bypassPermissions? (6 short sessions, ~13k tokens)
+	# agent-smoke above reads what the runtime RESOLVED; this reads what it
+	# BOUND, which is the gap issue #1084 names. Six arms — granted, granted
+	# AND denied, omitted — each with tool search off and on, spawn a probe
+	# agent and check whether a harmless tool call actually landed, read off
+	# the tool_result rather than the agent's own prose.
+	#
+	# Answered 2026-08-30 (Claude Code 2.1.251, SDK 0.2.128): BOTH bind, so a
+	# deny is redundant with omitting the tool. Re-run when the CLI or the SDK
+	# moves, or before adding a deny on the strength of it binding.
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python dev/probe_agent_binding.py
 
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)

@@ -29,6 +29,13 @@ uv run --frozen python -m e2e.run_e2e ^
   --mcp-server-entry "%~dp0..\..\eval\harness\tests\fixtures\dead-stub.js" ^
   --runlog-root "%SMOKE_RUNLOG%" ^
   --skip-judge > "%SMOKE_OUT%\capture.txt" 2>&1
+set RC=%ERRORLEVEL%
+if not "%RC%"=="2" (
+    echo FAIL: expected exit 2, got %RC% 1>&2
+    rmdir /s /q "%SMOKE_RUNLOG%" 2>nul
+    rmdir /s /q "%SMOKE_OUT%" 2>nul
+    exit /b 1
+)
 echo --- Asserting dead-stub arm ---
 findstr /C:"MCP UNAVAILABLE" "%SMOKE_OUT%\capture.txt" >nul
 if errorlevel 1 (

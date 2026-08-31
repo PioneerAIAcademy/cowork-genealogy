@@ -1,0 +1,40 @@
+{
+  "test": {
+    "id": "ut_search_records_h4k",
+    "skill": "search-records",
+    "name": "1850 census household with extra co-residents: describe as co-residence, not as 'sons'",
+    "type": "positive",
+    "description": "Execute the planned 1850 census search for Amos Whitfield in Pike County, Kentucky (pli_001). The single hit is a household headed (per the record title) by an unrelated surname, containing the subject plus two same-surname minors and one unrelated-surname adult — none of the five persons carries a relationship fact, because the 1850 census has no relationship-to-head column. Guards against the exact production failure behind issue #1912: narrating the two minors as the subject's 'sons' (or the household head as 'head', or anyone else by an unstated role) in the log entry's notes, when the record itself states only co-enumeration.",
+    "tags": [
+      "search",
+      "census",
+      "1850",
+      "plan-execution",
+      "log-quality",
+      "log-positive-record-search",
+      "from-cowork",
+      "whitfield-1850-household",
+      "re-invoke-safe",
+      "pre-1880-census-household"
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "search-records violates its own already-correct pre-1880-census rule frequently, not rarely -- 6 of 9 pre-1880-census-household-tagged tests failed this exact way in one full-suite run (eval/runlogs/unit/search-records/v1_2026-08-27_11-50-40.json). Issue #1967 (blocked on this PR merging) re-analyzed the underlying cause and found it is partly a grading defect, not only a skill-compliance gap: the judge contradicts this test's own judge_context, scoring a correctly-hedged note (hedge in a later sentence of the same log entry, the shape judge_context itself calls \"the correct shape, not a violation\") as low as it would score a genuinely bare, unhedged claim -- confirmed directly in v1_2026-08-27_13-03-15.json's judge rationale for this test. A tool-boundary content gate on `notes` was considered and explicitly rejected by the lead (2026-08-27): measured against the full corpus (n=776), a hard pre-1880/US census gate would refuse 41% of record_search calls, is not generalizable outside the US (post-1851 England & Wales censuses do carry a relationship column), and the year/country signal is author-supplied and optional, so a constrained model can switch the gate off by simply omitting the field. #1967's fix is reconciling judge_context and rubric.md so the judge and the deterministic validator cannot disagree, then a graded re-run. Remove this marker once #1967 lands and this test passes reliably."
+  },
+  "input": {
+    "user_message": "Execute the next item on the research plan — the 1850 census search for Amos Whitfield in Pike County, Kentucky (pli_001).",
+    "scenario": "whitfield-1850-household"
+  },
+  "mcp_fixtures": [
+    "record-search-whitfield-1850-household"
+  ],
+  "judge_context": [
+    "The 1850 U.S. Census has no relationship-to-head-of-household column (introduced in 1880). Every person in this household record — Amos Whitfield (the search subject), Nancy Doss (the person the record is filed under), Ezra Whitfield, Noah Whitfield, and Patrick Coyne — carries only Birth, Census, and Race facts. Nothing in the record states who is whose son, wife, head, or anything else.",
+    "The two same-surname minors (Ezra, Noah) are new information the subject's tree does not yet hold. The skill should surface them as a promising find worth logging and pursuing — that is correct triage — but must describe what the record actually shows (co-enumeration in one household, same surname, plausible age gap) rather than assert a parent-child relationship as a stated fact.",
+    "Score the log entry's `notes` field (and any equivalent narrative in the chat) low ONLY if it uses a kinship or role noun — 'sons', 'son', 'daughter', 'wife', 'head of household' — to describe any of these five people, and the SAME log entry never says anywhere that the structure is inferred, presumed, or not stated by the record. 'James [sic] plus sons Ezra and Noah', with no hedge anywhere else in the entry, is exactly the failure this test exists to catch.",
+    "Do not penalize the skill for hypothesizing that Ezra and Noah are likely Amos's sons — that is a reasonable working hypothesis from surname, age, and co-residence — nor for stating that hypothesis in one sentence and the record's own limits (no relationship column; family structure inferred, not stated) in a following sentence of the same log entry. A hedge does not have to sit immediately next to the name it qualifies; it has to be somewhere in the entry a reader would connect to it. 'Ezra and Noah Whitfield, likely Amos's children. Pre-1880 census — no relationship column; family structure inferred from surname, ages, and listing order.' is the correct shape, not a violation — the second sentence qualifies the first. Penalize only a claim with no such qualification anywhere in the entry.",
+    "The plan item's `jurisdiction` and `date_range` (Pike County, Kentucky; 1820-1853) should shape the search parameters; a `residenceYearFrom`/`residenceYearTo` spanning that range with `surname: Whitfield` is expected.",
+    "Tool Arguments: score 3 if record_search was called with a surname anchor and a residence place/year range consistent with the plan item. Do not require subjectId/projectPath ranking for this single-hit fixture — there is no ranked pool to triage.",
+    "Must NOT set pli_001 status to 'completed' — extraction of these two new candidates has not happened yet, so the plan item should remain 'in_progress', not 'completed'.",
+    "IMPORTANT — How file writes work: `research_log_append` writes the log entry AND the results/ sidecar host-side from the staged handle; the skill does not hand-write either. The sidecar is a newly created file, so it never appears in the file-change diff — its absence from it is not evidence of anything."
+  ]
+}

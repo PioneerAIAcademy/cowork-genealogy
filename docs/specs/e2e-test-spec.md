@@ -591,9 +591,8 @@ the `max_cost_usd` note in §6 step 5.
    exits, not `1` = "a test failed"). None of §8's artifacts is written, no
    `E2eResult` is constructed, and **the judge is never called**. "This run never
    happened." The init-message abort is command-proved by `make agent-smoke`'s
-   dead-stub arm (issue #1743); the ToolSearch backstop and the `run_e2e_test`
-   fallback remain hand-proved only. `make agent-smoke` runs in no CI workflow
-   (issue #1142).
+   dead-stub arm; the ToolSearch backstop and the `run_e2e_test`
+   fallback remain hand-proved only. `make agent-smoke` runs in no CI workflow.
 
    **The printed error can now name the server's own cause.** The
    SDK's `stderr:` callback never receives the MCP child's output — verified
@@ -840,7 +839,8 @@ legitimately declares a guarded tool would be denied here too, and closing
 that needs the predicate widened by hand.
 
 Both members are enforced. Neither `extraction_append` nor `image_read` is
-declared by any skill — `image_read` lives only on `agents/image-reader-opus.md`
+declared by any skill — `image_read` is declared by no agent at all since
+the `image-reader-opus` agent was retired
 since `search-images` moved to `@plugin:image-reader` (2026-07-17) — so `agent_id`
 presence alone discriminates for each, and a third tool added to the set is
 covered here automatically.
@@ -1300,9 +1300,14 @@ checks over the final project state and the run's tool-call log
    `proof_summaries` entry has no matching `proof-critique` entry in
    `evaluations[]`, i.e. the mandatory `gps-mentor` gate never fired.
 3. **`find_person_evidence_missing_same_person`** — a brand-new tree person
-   received a `person_evidence` link without a single `same_person` call for
-   it. Narrower than check 1 on purpose: a run can invoke `person-evidence`
-   somewhere and still skip identity scoring for the person that matters.
+   received a **scoreable** `person_evidence` link without a single
+   `same_person` call for it. Narrower than check 1 on purpose: a run can
+   invoke `person-evidence` somewhere and still skip identity scoring for the
+   person that matters. "Scoreable" means a record persona is reachable — a
+   non-null `record_persona_id`, a `record_read`-sourced assertion, or a search
+   whose sidecar was retained; links that provably cannot be scored are skipped
+   and counted separately (`guardrail-enforcement-spec.md` §4). A null
+   `record_persona_id` alone does **not** exempt a link.
 
 Any violation sets `compliance: fail`, which forces `outcome: fail`. The
 checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
@@ -1432,6 +1437,14 @@ worth trusting**, and `not_checked` is the honest label rather than a placeholde
 for work in progress: a replay only means something if the checks are pinned to
 the version each run actually executed, and nothing records that version per run.
 Recording it is the prerequisite for any corpus-wide compliance number.
+
+**Check 3 got LOOSER when the persona-reachability narrowing landed.** A run's
+stored violation count can therefore exceed what today's detector recomputes
+from the same trace — the opposite direction from the `is_error` join below, and
+the correct reading rather than a bug. `make e2e-corpus RECOMPUTE=1` names every
+such run in its `regressed` list. No `harness_schema_version` bump: the runlog
+payload shape did not change, and the counter exists for a field whose *meaning*
+shifts while its name does not.
 
 **`compliance` and `outcome` are not comparable across the `is_error` join.**
 Before it, `tool_calls[]` carried no `is_error` key, so the
