@@ -5,7 +5,16 @@
     "name": "Plan leads with the record the objective asks for when its place is already known",
     "type": "positive",
     "description": "From alpha feedback #1945. The objective names the record wanted (a birth or baptism record), the place it happened (Kongsberg), the approximate year (~1780), and the death date and place. Both localities are already surveyed in the scenario, so nothing about locality work is under test. The submitted session opened its plan on the Trysil death record at sequence 1 -- to establish a birth year the objective already gives as ~1780 and to 'confirm Kongsberg as origin' when the objective already names Kongsberg -- and filed the Kongsberg baptism at sequence 6 of 11. It then ran item 1 only and spent three hours in Trysil burial images, never searching Kongsberg. Both records are indexed FamilySearch collections (Norway Baptisms col 1467014, Norway Burials col 1468081), so this is not a free-before-paid or indexed-before-browse question. Tests that BCG Standard 15 sequencing does not bury the objective's own target record behind work that re-derives the objective's inputs.",
-    "tags": ["planning", "sequencing", "objective-target", "norway", "baptism", "feedback-1945"]
+    "tags": [
+      "planning",
+      "sequencing",
+      "objective-target",
+      "norway",
+      "baptism",
+      "feedback-1945"
+    ],
+    "expected_outcome": "xfail",
+    "xfail_reason": "The plan sequences the Trysil death record ahead of the Kongsberg baptism the objective asks for. Measured three times with identical ordering -- once before SKILL.md step 4 item 7 was written (scratch_2026-08-28_16-54-42) and twice after (scratch_2026-08-28_18-16-58, v1_2026-08-28_19-50-30) -- so the prose rule does not bind. That is the finding of PR #2033, not an unhandled regression. test_objective_target_leads_the_plan is the deterministic guard; the rubric cannot carry it because Sequencing logic scored 3 on all 65 runs the 2026-08-24 dive audited and rubric.md is fenced by #1404/#1668. Remove this marker once #2030 lands the research_append precondition and this test passes reliably; an xpass here is the signal that it did."
   },
   "input": {
     "user_message": "Create the first research plan for q_001.",
