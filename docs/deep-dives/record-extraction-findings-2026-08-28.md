@@ -12,14 +12,15 @@ findings below are numbered against it where a rule exists.
 sources written. Transcripts, `tool_calls` and `file_changes` read before any
 `outcome_summary`, judge rationale or `.ann.json`, per the guide.
 
-> **Two of those five are not on `main` any more, and this PR is what removed them.**
+> **Three of those five are not on `main` any more, and this PR is what removed them.**
 > The harness keeps the newest 5 candidates per skill and prunes on every write
-> (`prune_old_candidates`, `DEFAULT_KEEP_CANDIDATES`), so committing the two fresh runs
-> below evicted `v1_2026-08-15_12-52-37` and `v1_2026-08-16_11-26-54` with their
-> `.ann.json` siblings. Every count on this page was computed before that, against all
-> five. To re-derive any of them, read the two evicted logs at this PR's merge-base:
+> (`prune_old_candidates`, `DEFAULT_KEEP_CANDIDATES`), so committing the three fresh runs
+> below evicted `v1_2026-08-15_12-52-37`, `v1_2026-08-16_11-26-54` and
+> `v1_2026-08-16_13-06-08` with their `.ann.json` siblings. Every count on this page was
+> computed before that, against all five. To re-derive any of them, read the three evicted
+> logs at this PR's merge-base:
 > `git show <base>:eval/runlogs/unit/record-extraction/v1_2026-08-15_12-52-37.json`.
-> The three surviving logs plus the two fresh ones are what a reader finds on `main`.
+> The two surviving logs plus the three fresh ones are what a reader finds on `main`.
 
 **Fourteen findings. Nine convert to validator requests** (§Validator requests). Two
 lane-2 fixes were attempted on a paid run: one is kept (§F5), one was reverted after it
@@ -61,14 +62,25 @@ This trap cost me three draft findings. It is the single most useful thing on th
 
 ---
 
-## What the two fresh runs changed
+## What the three fresh runs changed
 
-#1666 buys this skill's eval slot, and it was spent twice: `v1_2026-08-28_17-43-01` with
-both lane-2 fixes in place, then `v1_2026-08-28_18-23-42` after the `ut_014` bullet was
-reverted (see below). 28 tests each, $8.82 and $9.00, 26 minutes each. Outcomes went
-20 pass / 4 partial / 4 fail → **24 pass / 3 partial / 1 fail**. Both used judge prompt
-`03f306ff`, so neither is comparable to the 08-24 baseline, which `check_runlogs` flags as
-scored under `0d186137`.
+#1666 buys this skill's eval slot, and it was spent three times: `v1_2026-08-28_17-43-01`
+with both lane-2 fixes in place, then `v1_2026-08-28_18-23-42` after the `ut_014` bullet
+was reverted (see below), then `v1_2026-08-31_10-34-08` after the `ut_021` judge_context
+was repinned off `record-extractor.md`'s line numbers (`eadfee34`). 28 tests each; $8.82,
+$9.00 and $8.89; 26, 26 and 72 minutes. Outcomes went 20 pass / 4 partial / 4 fail →
+**24 pass / 3 partial / 1 fail** → **23 pass / 4 partial / 1 fail**. All three used judge
+prompt `03f306ff`, so they are comparable to each other but none is comparable to the
+08-24 baseline, which `check_runlogs` flags as scored under `0d186137`.
+
+**The third run is jitter, not a regression, and it is not yet annotated.** Seven tests
+moved and they moved both ways — `ut_005` and `ut_027` partial→pass, `ut_014` fail→pass,
+against `ut_016`, `ut_023` and `ut_026` pass→partial and `ut_022` pass→fail; the single
+fail relocated from `ut_014` to `ut_022` rather than persisting. `ut_021`, the only test
+whose fixture this run changed, scored identically in both runs (`Correctness` 2, every
+other dimension 3) for the same reason — §F5's blank-field negative reproducing. Its
+`review_sample` (`ut_010`, `ut_014`, `ut_020`, `ut_024`, `ut_026`) has no `.ann.json`
+yet, so unlike `v1_2026-08-28_18-23-42` this log carries no human overlay.
 
 **The pair is a clean natural experiment**, because `judge_context` reaches the judge and
 never the skill: the revert cannot have changed what the skill wrote, so the difference
@@ -505,8 +517,8 @@ used once. Worth knowing before anyone invests in tuning that paragraph.
 **Did.** `ut_record_extraction_016` (`suspect-required-name-confirm-via-image`). The
 user says the indexed patronymic "Nadnesen" is probably wrong. In **5 of 5 runs** the
 router called no `volume_search`, delegated to no `@plugin:image-reader`, and went
-straight to `record-extractor` with a "record it tentative" flag — and the two fresh runs
-make it **7 of 7**. Every run makes the same five MCP calls and only those:
+straight to `record-extractor` with a "record it tentative" flag — and the three fresh
+runs make it **8 of 8**. Every run makes the same five MCP calls and only those:
 `project_context` and `record_read` in either order, then `research_log_append`, a second
 `project_context`, *(delegate)*, `extraction_append`. (The second `project_context` is the
 router-then-agent split V8 describes, not a violation.)
