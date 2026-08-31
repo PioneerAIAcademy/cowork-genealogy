@@ -2,13 +2,13 @@
 
 Systematic evaluation of Cowork Genealogy skills through automated testing with human verification. This file is the agent-facing conventions doc for working inside `eval/`. For the human-facing quick-start, see `eval/README.md`. For the versioning + release workflow, see `docs/plan/eval-runlog-versioning.md`. For the per-PR cadence and team workflow, see `docs/per-pr-review-workflow.md`.
 
-> **TEST-AUTHORING POLICY (current stage): `runs_per_test` is always 1.**
+> **TEST-AUTHORING POLICY (standing, not a stage): `runs_per_test` is always 1.**
 > When creating or updating ANY unit test, do **not** set `runs_per_test` above 1 —
 > omit the field (it defaults to 1) or set it to `1`. Multi-run tests make the
 > suite painfully slow (each run is a full skill execution **plus** a judge LLM
 > call). The multi-run aggregation under "Variance: runs per test" in
-> `unit-test-spec.md` is reserved for a later description-optimizer / golden-set
-> phase. The JSON Schema pins `maximum: 1` to enforce this.
+> `unit-test-spec.md` stays in the code but is unreachable. The JSON Schema pins
+> `maximum: 1` to enforce this, and the pin is not scheduled to be lifted.
 >
 > **The pin means we do not detect single-run variance. It does not mean we
 > tolerate it.** A test that passes on one run and fails on the next is a defect

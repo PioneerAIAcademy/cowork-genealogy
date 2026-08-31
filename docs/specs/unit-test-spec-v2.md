@@ -407,17 +407,23 @@ transport (or running the CLI in a controlled subprocess).
 
 ---
 
-### 3. Stability floor (regression-vs-noise thresholds)
+### 3. Stability floor (regression-vs-noise thresholds) — ruled out, not deferred
 
-**Cut:** No regression threshold. Per-skill pass-rate noise band is unknown.
+**Cut:** No regression threshold. Per-skill pass-rate noise band is unknown, and
+will stay unknown.
 
-**Spec §7 "Stability floor (TBD)".**
+See "Stability floor — ruled out" in the companion spec.
 
-**Integration point:** `eval/harness/run_tests.py` summary table. v2 adds
-`--regression-baseline <path>` that reads a baseline run and flags any
-pass-rate drop > noise_band as a regression.
+**Integration point (if it were built):** `eval/harness/run_tests.py` summary
+table, plus a `--regression-baseline <path>` that reads a baseline run and flags
+any pass-rate drop > noise_band as a regression.
 
-**Prerequisite:** N=5 on the golden set to compute per-skill noise bands.
+**Prerequisite, and why this is not merely deferred:** computing per-skill noise
+bands needs N=5 on the golden set. `runs_per_test` is pinned to 1 as standing
+policy, so the prerequisite cannot be met and this item is not on a path to being
+built. Do not plan around it, and do not reach for "within the noise band" as a
+way to explain a test that flaps — there is no band, and a flapping test is a
+defect to fix.
 
 ---
 
