@@ -94,6 +94,13 @@ export interface FulltextSearchResponse {
   returned: number;
   offset: number;
   hasMore: boolean;
+  // Set when this project holds staged search responses with no research.json
+  // log entry. Advisory — refuses nothing. Serialized before `results` and
+  // withheld from the staged payload.
+  unloggedSearches?: string;
+  // Set on a `projectPath` search that returned nothing — a nil search stages
+  // no file, so `unloggedSearches` structurally cannot see it.
+  nilSearchNeedsLog?: string;
   results: FulltextResult[];
   facets?: FulltextFacet[];
   // Present only when `projectPath` was supplied — see RecordSearchToolResponse.

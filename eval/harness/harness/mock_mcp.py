@@ -614,8 +614,8 @@ def create_mock_server(
                 response = reordered
 
             # The unlogged-search notes (#2056), mirrored for the same reason and
-            # inserted in the same pre-`results` slot. `fulltext_search` is absent
-            # deliberately: its arm of the change is sequenced behind PR #2001.
+            # inserted in the same pre-`results` slot. All three staging tools carry
+            # them, so this list is STAGING_SEARCH_TOOLS.
             #
             # The nil condition differs from production by a knowable margin. The
             # real external_links_search keys it on the PRE-FILTER link set, so a
@@ -624,7 +624,7 @@ def create_mock_server(
             # available mirror. A fixture written to represent a host-filtered-to-
             # zero search would therefore over-emit here.
             if (
-                _name in ("record_search", "external_links_search")
+                _name in STAGING_SEARCH_TOOLS
                 and "error" not in response
                 and args.get("projectPath")
             ):

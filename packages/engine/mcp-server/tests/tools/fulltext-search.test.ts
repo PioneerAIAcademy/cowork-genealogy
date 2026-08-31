@@ -6,14 +6,26 @@ vi.mock("../../src/auth/refresh.js", () => ({
 
 // Stage results host-side is best-effort and touches the filesystem; mock it so
 // these tool tests stay offline and deterministic. The real staging contract is
-// covered by tests/utils/results-staging.test.ts.
-vi.mock("../../src/utils/results-staging.js", () => ({
-  stageSearchResults: vi.fn(),
-}));
+// covered by tests/utils/results-staging.test.ts. The real module is spread back in
+// so the note CONSTANTS stay real — a hand-written copy here would let the tool's
+// wording drift with no test noticing.
+vi.mock("../../src/utils/results-staging.js", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../src/utils/results-staging.js")>();
+  return {
+    ...actual,
+    stageSearchResults: vi.fn(),
+    countUnloggedStagedSearches: vi.fn(),
+  };
+});
 
 import { fulltextSearchTool } from "../../src/tools/fulltext-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
-import { stageSearchResults } from "../../src/utils/results-staging.js";
+import {
+  stageSearchResults,
+  countUnloggedStagedSearches,
+  NIL_SEARCH_NEEDS_LOG_NOTE,
+} from "../../src/utils/results-staging.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import type {
   FSFulltextResponse,
@@ -22,6 +34,7 @@ import type {
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockedStage = vi.mocked(stageSearchResults);
+const mockedUnloggedCount = vi.mocked(countUnloggedStagedSearches);
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
@@ -30,6 +43,8 @@ beforeEach(() => {
   mockedGetValidToken.mockReset();
   mockedGetValidToken.mockResolvedValue("test-token");
   mockedStage.mockReset();
+  mockedUnloggedCount.mockReset();
+  mockedUnloggedCount.mockResolvedValue(0);
 });
 
 afterEach(() => {
@@ -601,6 +616,63 @@ describe("fulltextSearchTool result staging", () => {
 });
 
 describe("fulltextSearchTool request headers", () => {
+  it("38. carries the unlogged-search note, ordered before results", async () => {
+    mockedUnloggedCount.mockResolvedValue(3);
+    mockFetch.mockResolvedValueOnce(
+      makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
+    );
+    mockedStage.mockResolvedValueOnce({
+      resultsRef: "results/.staging/abc123.json",
+      returnedCount: 1,
+    });
+
+    const result = await fulltextSearchTool({
+      keywords: "Flynn",
+      projectPath: "/tmp/project",
+    });
+
+    expect(result.unloggedSearches).toContain("3 earlier staged search");
+    const keys = Object.keys(result);
+    expect(keys.indexOf("unloggedSearches")).toBeLessThan(keys.indexOf("results"));
+  });
+
+  it("39. asks for a negative log entry on a nil projectPath search", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk({ results: 0, index: 0, entries: [] }));
+
+    const result = await fulltextSearchTool({
+      keywords: "Nonesuch",
+      projectPath: "/tmp/project",
+    });
+
+    expect(result.nilSearchNeedsLog).toBe(NIL_SEARCH_NEEDS_LOG_NOTE);
+    // …and says nothing when there is no project to log into.
+    mockFetch.mockResolvedValueOnce(makeOk({ results: 0, index: 0, entries: [] }));
+    const noProject = await fulltextSearchTool({ keywords: "Nonesuch" });
+    expect(noProject.nilSearchNeedsLog).toBeUndefined();
+  });
+
+  it("40. withholds both notes from the staged payload", async () => {
+    mockedUnloggedCount.mockResolvedValue(1);
+    mockFetch.mockResolvedValueOnce(
+      makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
+    );
+    mockedStage.mockResolvedValueOnce({
+      resultsRef: "results/.staging/abc123.json",
+      returnedCount: 1,
+    });
+
+    const result = await fulltextSearchTool({
+      keywords: "Flynn",
+      projectPath: "/tmp/project",
+    });
+
+    expect(result.unloggedSearches).toBeTruthy();
+    // The sidecar records what the search RETURNED, not instructions to the model.
+    const staged = mockedStage.mock.calls[0][0].response as Record<string, unknown>;
+    expect(staged.unloggedSearches).toBeUndefined();
+    expect(staged.nilSearchNeedsLog).toBeUndefined();
+  });
+
   it("37. sends Bearer auth, JSON Accept, and the browser User-Agent", async () => {
     mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
     await fulltextSearchTool({ keywords: "Flynn" });

@@ -168,6 +168,16 @@ interface FulltextSearchResponse {
   returned: number;
   offset: number;
   hasMore: boolean;
+  /** Present only when this project holds staged search responses that no
+   *  research.json log entry accounts for. Advisory — refuses nothing.
+   *  Serialized before `results` and withheld from the staged payload;
+   *  contract and rationale in record-search-tool-spec-v2.md. */
+  unloggedSearches?: string;
+  /** Present only when `projectPath` was supplied and the search returned
+   *  nothing. A nil search stages no file, so the note above cannot see it.
+   *  Safe to key on `results` here, unlike external_links_search: nothing
+   *  narrows the inline copy before staging. */
+  nilSearchNeedsLog?: string;
   results: FulltextSearchResult[];
   facets?: {
     collections?: FulltextFacet[];
