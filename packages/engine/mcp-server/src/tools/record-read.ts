@@ -37,8 +37,8 @@ export const recordReadSchema = {
           "finalized results/<log_id>.json ref) — read this record from that " +
           "sidecar host-side, WITHOUT a live FamilySearch fetch. For the person " +
           "you searched, the sidecar carries the same facts, the source citation, " +
-          "and correctly standardized places (more reliable than a live read, whose " +
-          "place standardization can misfire). It returns OTHER household members " +
+          "and standardized places from the search stage — a live read leaves " +
+          "standard_place unset. It returns OTHER household members " +
           "(co-residents) with reduced facts — so omit this (live read) when you " +
           "need a co-resident's full facts, or for a record that was not part of a " +
           "staged search. Requires `projectPath`.",
@@ -168,10 +168,12 @@ async function readFromSidecar(
     );
   }
   // Return the staged record as-is. The search result already carries the
-  // record's standardized places (from FamilySearch), and they are the more
-  // trustworthy value. A live record_read does NOT re-standardize: it uses
-  // toSimplified (see the comment above), leaving standard_place unset rather
-  // than resolving an ambiguous place NAME through the resolver and mis-placing
+  // record's standardized places from the search stage (record_search runs
+  // standardizePlaces), and they are the more trustworthy value: the search
+  // response supplies FS-normalized places the recapi record response lacks. A
+  // live record_read does NOT re-standardize: it uses toSimplified (see the
+  // comment above), leaving standard_place unset rather than resolving an
+  // ambiguous place NAME through the resolver and mis-placing
   // it (observed 2026-07-08: "Southampton, NY" -> "Southampton, England";
   // "Rochdale, England" -> "Rochdale, South Africa"). So we deliberately do NOT
   // re-run standardizePlaces here either.

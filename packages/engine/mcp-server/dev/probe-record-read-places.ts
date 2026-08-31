@@ -4,7 +4,7 @@
  *
  * Evidence for issue #1908 (phase 1). `record_read`'s live path calls
  * `toSimplified` (not `toSimplifiedStandardized`), so it never fills
- * `standard_place`. The justification (record-read.ts:127-133) cites two
+ * `standard_place`. The justification (record-read.ts:128-134) cites two
  * mis-resolutions observed 2026-07-08 — before two resolver fixes landed
  * (4823ffdf, 2026-07-22, phrase-quote the `name:` query; 1af50fab, 2026-07-31,
  * derive a `contextName` from the second comma-segment). This probe re-measures,

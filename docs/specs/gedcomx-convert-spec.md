@@ -379,9 +379,10 @@ that return facts to the model call `toSimplifiedStandardized` (single doc) or
 run `standardizePlaces` over the flattened facts of a multi-result response
 (`record_search` / `person_search`). The pure `toSimplified` remains for
 callers that want no I/O. Exception — `record_read`'s live path calls the pure
-`toSimplified`, not `toSimplifiedStandardized`; `standard_place` is therefore
-left unset rather than populated by the resolver. See
-`docs/record-read-sidecar-scope.md` for the measurement and rationale.
+`toSimplified`, not `toSimplifiedStandardized`: it keeps whatever `standard_place`
+the response's own `normalized` value supplies, and never falls back to the
+resolver. See `docs/record-read-sidecar-scope.md` for the measurement and
+rationale.
 
 ### 7.5 `value` on facts
 

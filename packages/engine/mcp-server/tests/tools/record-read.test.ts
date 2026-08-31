@@ -340,6 +340,11 @@ describe("recordReadTool — sidecar mode (resultsRef)", () => {
     expect(out.persons!.map((p) => p.names![0].given)).toEqual(["Patrick", "Thomas"]);
     expect(out.relationships).toHaveLength(1);
     expect(mockFetch).not.toHaveBeenCalled();
+    // The sidecar returns the staged record as-is — it must NOT re-standardize
+    // places through the resolver (the staged data already carries the search
+    // stage's standardized places). Pins the rule the three comments state.
+    const { resolveStandardPlace } = await import("../../src/utils/place-resolver.js");
+    expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
   });
 
   it("matches by bare entity id when the caller passes a full ark result (and vice-versa)", async () => {
