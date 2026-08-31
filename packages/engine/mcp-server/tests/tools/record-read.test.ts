@@ -282,7 +282,7 @@ describe("recordReadTool", () => {
     } as unknown as GedcomX);
     await recordReadTool({ recordId: "QVS9-DHDB" });
     // toSimplifiedStandardized would have resolved the place name (and mis-placed
-    // it — the recapi response has no FS-normalized place); toSimplified must not
+    // it — this mock response carries no `normalized` place); toSimplified must not
     // touch the resolver at all.
     expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
   });

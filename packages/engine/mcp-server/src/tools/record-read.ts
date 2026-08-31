@@ -125,13 +125,16 @@ export async function recordReadTool(
   }
 
   const body = (await res.json()) as GedcomX;
-  // Use toSimplified, NOT toSimplifiedStandardized. The recapi record response
-  // carries no FS-normalized place (only `original` + parsed County/City/State
-  // fields), so re-standardizing would resolve the ambiguous place *name* through
-  // the resolver and mis-place it (observed: "Southampton, NY" -> "Southampton,
-  // England"; "Rochdale, England" -> "Rochdale, South Africa"). Leaving
-  // standard_place unset is correct — never fabricate a wrong one. Records reached
-  // via the search sidecar already carry FS's correct normalized place.
+  // Use toSimplified, NOT toSimplifiedStandardized. toSimplified keeps whatever
+  // standard_place the record's own `normalized` value supplies and never falls
+  // back to the resolver; toSimplifiedStandardized would additionally resolve any
+  // free-text place NAME the record left un-normalized, and the resolver
+  // mis-places ambiguous names (observed 2026-07-08: "Southampton, NY" ->
+  // "Southampton, England"; "Rochdale, England" -> "Rochdale, South Africa").
+  // How often a recapi record response carries a `normalized` place is what
+  // dev/probe-record-read-places.ts measures; either way, we never resolver-fill
+  // it here. Records reached via the search sidecar already carry the search
+  // stage's standardized place.
   return toSimplified(body);
 }
 
@@ -167,17 +170,19 @@ async function readFromSidecar(
         "Do a live read (omit `resultsRef`) instead, or verify the ref/id.",
     );
   }
-  // Return the staged record as-is. Its standard_place values are a mixture,
-  // produced by record_search's standardizePlaces at search time: FS-normalized
-  // where the search response supplied a `normalized` value, resolver-derived
-  // where it did not. We do NOT re-run standardizePlaces here — re-running would
-  // change nothing for the FS-normalized facts and merely re-roll the same
-  // resolver dice for the rest. A live record_read (omit resultsRef) does not
-  // resolver-standardize at all: it uses pure toSimplified (see the comment
-  // above), keeping only the record's own normalized places — never resolving an
-  // ambiguous place NAME and mis-placing it (observed 2026-07-08:
-  // "Southampton, NY" -> "Southampton, England"; "Rochdale, England" ->
-  // "Rochdale, South Africa").
+  // Return the staged record as-is. Its standard_place values are a mixture set
+  // at search time: FS-normalized where the search response supplied a
+  // `normalized` value (via toSimplified), resolver-derived where it did not (via
+  // record_search's standardizePlaces, whose filter fills only facts that lack a
+  // standard_place). We do NOT re-run standardizePlaces here — that same filter
+  // skips every fact that already has a standard_place, so a re-run cannot change
+  // any value already set; it could only retry the few that resolved to null or
+  // hit the soft cap, spending FS round-trips on the one path whose purpose is to
+  // avoid them. A live record_read (omit resultsRef) does not resolver-standardize
+  // at all: it uses pure toSimplified (see the comment above), keeping only the
+  // record's own normalized places — never resolving an ambiguous place NAME and
+  // mis-placing it (observed 2026-07-08: "Southampton, NY" -> "Southampton,
+  // England"; "Rochdale, England" -> "Rochdale, South Africa").
   return match.gedcomx as SimplifiedGedcomX;
 }
 

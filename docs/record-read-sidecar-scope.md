@@ -28,14 +28,18 @@ round-trips for content it already has staged on disk.
 
 ## What the staged data has vs. what `record_read` adds
 
-- `record_search` stages the **`toSimplified`** tool output: persons, relationships,
-  facts, and `sources` **if** the FS search response carried `sourceDescriptions`.
+- `record_search` stages its **`toSimplified`** output **after running
+  `standardizePlaces`** (inside `record_search`, before it stages the results): persons,
+  relationships, facts each carrying a `standard_place` (FS-normalized where the
+  search response supplied a `normalized` value, resolver-derived otherwise), and
+  `sources` **if** the FS search response carried `sourceDescriptions`.
 - `record_read`'s live path uses pure **`toSimplified`** (it does **not** run
   `standardizePlaces` — see Findings), so it keeps only the record's own
   `normalized` places and never adds resolver-derived `standard_place`. Its
   output also carries the source `citation`.
 
-Two deltas, one closable, one **unverified**:
+Two deltas were identified; delta 1 is now **settled** (see Findings), delta 2
+remains **unverified**:
 
 1. **Place standardization** — the staged data already carries the search stage's
    `standard_place`. This was originally scoped as a delta "closable host-side by
@@ -114,13 +118,13 @@ England death/burial). For **the person you searched** (the matched persona):
   #1908 Phase 1: `Southampton, NY → Southampton, England`;
   `Rochdale, England → Rochdale, South Africa`). The sidecar is therefore *more*
   reliable, and the sidecar tool returns the staged place **as-is** (no
-  `standardizePlaces` re-run). **The live `record_read` path is also fixed:** the
-  recapi record response carries **no** FS-normalized place (only `original` +
-  parsed County/City/State fields — verified), so `record_read` now uses
-  `toSimplified` (FS's provided data) instead of `toSimplifiedStandardized` and
-  leaves `standard_place` **unset** rather than resolving the ambiguous name to a
-  wrong place. Staged records still carry FS's correct normalized place from the
-  search endpoint.
+  `standardizePlaces` re-run). **The live `record_read` path is also fixed:** it
+  now uses `toSimplified` instead of `toSimplifiedStandardized`, so it keeps
+  whatever `standard_place` the record's own `normalized` value supplies and never
+  falls back to the resolver, rather than resolving an un-normalized name to a
+  wrong place. (How often a recapi record response carries a `normalized` place is
+  what `dev/probe-record-read-places.ts` re-measures — Phase 1's open question.)
+  Staged records carry the search stage's standardized place regardless.
 
 The one genuine "read has more" is **co-residents**: a census search returns other
 household members with **reduced facts** (name + a fact or two); a live read fills
