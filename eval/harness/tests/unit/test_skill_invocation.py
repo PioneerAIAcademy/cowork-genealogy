@@ -34,6 +34,7 @@ from harness.skill_invocation import (
     unguarded_new_person_evidence_links,
     classify_question_type,
     find_conclusions_without_tree_encoding,
+    unscoreable_person_evidence_links,
 )
 
 # Sentinel distinguishing "key absent entirely" (the historical tool_calls
@@ -1999,3 +2000,224 @@ def test_malformed_tree_input_does_not_raise():
     assert find_citation_nulling_in_tree_sources(
         _CONCLUDED, {"persons": ["not a dict"], "sources": [{"id": "S1", "citation": None}]}
     ) == []
+
+
+# --- §8 provenance narrowing (issue #1429) -----------------------------------
+# A link is exempt ONLY when its own provenance lane cannot yield a record
+# persona from what the run retained. These pin the rule from both sides: the exempt lanes must stop
+# firing, and the reachable ones must keep firing -- one set alone would pass
+# under a do-nothing change, the other under an over-broad one.
+
+
+def _research(tool, *, results_ref=None, persona=None, log_entry_id="log_001", n_links=1):
+    """A minimal project document: one assertion on one log entry, with
+    `n_links` person_evidence links to the new person I1."""
+    return {
+        "assertions": [
+            {
+                "id": "a_001",
+                "record_persona_id": persona,
+                "log_entry_id": log_entry_id,
+            }
+        ],
+        "log": [{"id": "log_001", "tool": tool, "results_ref": results_ref}],
+        "person_evidence": [
+            {"id": f"pe_{i:03d}", "assertion_id": "a_001", "person_id": "I1"}
+            for i in range(1, n_links + 1)
+        ],
+    }
+
+
+_TREE = {"persons": [{"id": "I1"}]}
+_NO_SEED = {"persons": []}
+
+
+def _flagged(research):
+    return find_person_evidence_missing_same_person([], research, _TREE, starting_tree=_NO_SEED)
+
+
+@pytest.mark.parametrize(
+    "tool,results_ref",
+    [
+        ("image_transcribe", None),
+        ("image_read", None),
+        ("image_search", None),
+        ("external_site", None),
+        ("record_search", None),        # a search whose sidecar was not retained
+        ("fulltext_search", None),
+        ("fulltext_search", "results/log_001.json"),  # FTS is exempt even WITH a sidecar
+    ],
+)
+def test_unscoreable_lane_is_not_flagged(tool, results_ref):
+    """No record persona can be reached, so `same_person` cannot run and the
+    detector must not demand it.
+
+    `fulltext_search` is exempt with a live `results_ref` too: an FTS result
+    carries transcript text, names and places but no GedcomX, and its ARK is a
+    `3:1:` image entry `record_read` cannot open."""
+    assert _flagged(_research(tool, results_ref=results_ref)) == []
+
+
+@pytest.mark.parametrize(
+    "label,research",
+    [
+        ("record_read", _research("record_read")),
+        ("search with a retained sidecar", _research("record_search", results_ref="results/log_001.json")),
+        ("non-null record_persona_id", _research("image_transcribe", persona="p_1")),
+        ("assertion has no log_entry_id", _research("record_search", log_entry_id=None)),
+        ("log entry does not resolve", _research("record_search", log_entry_id="log_missing")),
+    ],
+)
+def test_reachable_or_unknown_provenance_is_still_flagged(label, research):
+    """The regression half. `record_read` returns GedcomX with persons and a
+    retained sidecar carries it, so both are scoreable -- exempting them was the
+    refuted null-field rule. Unknown provenance keeps flagging too: exempting on
+    an ABSENT field would let an assertion written with no `log_entry_id` shed
+    the requirement entirely."""
+    violations = _flagged(research)
+    assert len(violations) == 1, label
+    assert "I1" in violations[0]
+
+
+def test_a_person_with_one_scoreable_link_is_still_flagged():
+    """The exemption is per LINK but the verdict is per PERSON: one reachable
+    persona anywhere on the person is enough to require the call."""
+    research = _research("image_transcribe", n_links=1)
+    research["assertions"].append(
+        {"id": "a_002", "record_persona_id": None, "log_entry_id": "log_002"}
+    )
+    research["log"].append(
+        {"id": "log_002", "tool": "record_read", "results_ref": None}
+    )
+    research["person_evidence"].append(
+        {"id": "pe_002", "assertion_id": "a_002", "person_id": "I1"}
+    )
+    assert len(_flagged(research)) == 1
+
+
+def test_person_evidence_with_no_assertion_id_is_still_flagged():
+    """Provenance that cannot be resolved at all is not proof of anything. This
+    is also the shape every pre-existing fixture in this file uses, so a
+    fail-open here would have turned those regression tests vacuous."""
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]}
+    assert len(_flagged(research)) == 1
+
+
+def test_unscoreable_links_are_counted_for_the_labelled_bucket():
+    research = _research("image_transcribe", n_links=2)
+    assert unscoreable_person_evidence_links(research, _TREE, starting_tree=_NO_SEED) == [
+        "pe_001",
+        "pe_002",
+    ]
+
+
+def test_unscoreable_links_counts_only_brand_new_persons():
+    """Complement of the detector over the same population: a seed person is
+    never a new identity, so their links belong in neither number."""
+    research = _research("image_transcribe")
+    assert (
+        unscoreable_person_evidence_links(research, _TREE, starting_tree={"persons": [{"id": "I1"}]})
+        == []
+    )
+
+
+def test_unscoreable_links_excludes_a_reachable_link():
+    assert unscoreable_person_evidence_links(_research("record_read"), _TREE, starting_tree=_NO_SEED) == []
+
+
+# --- the same narrowing on the pre-write predicate ---------------------------
+
+
+def _pe_append_with_assertion(person_id, assertion_id):
+    return {
+        "section": "person_evidence",
+        "op": "append",
+        "entry": {"person_id": person_id, "assertion_id": assertion_id},
+    }
+
+
+def test_pending_link_on_an_unscoreable_assertion_is_not_flagged():
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        _pe_append_with_assertion("I1", "a_001"),
+        scored_ids=set(),
+        starting_ids=set(),
+        research=_research("image_transcribe"),
+    )
+    assert out == []
+
+
+def test_pending_link_on_a_record_read_assertion_is_still_flagged():
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        _pe_append_with_assertion("I1", "a_001"),
+        scored_ids=set(),
+        starting_ids=set(),
+        research=_research("record_read"),
+    )
+    assert out == ["I1"]
+
+
+def test_pending_link_without_research_narrows_nothing():
+    """`research=None` means "no provenance available", which must reproduce
+    today's un-narrowed behaviour -- NOT exempt everything. It is the fallback
+    the live hook and the replay both take when the document cannot be read, and
+    `_links_any_person_evidence` relies on it to keep meaning "does this call
+    link anyone at all"."""
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        _pe_append_with_assertion("I1", "a_001"),
+        scored_ids=set(),
+        starting_ids=set(),
+    )
+    assert out == ["I1"]
+
+
+def test_pending_link_with_an_unresolvable_assertion_id_is_still_flagged():
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        _pe_append_with_assertion("I1", "a_nope"),
+        scored_ids=set(),
+        starting_ids=set(),
+        research=_research("image_transcribe"),
+    )
+    assert out == ["I1"]
+
+
+def test_pending_batch_flags_a_person_whose_other_link_is_scoreable():
+    research = _research("image_transcribe")
+    research["assertions"].append({"id": "a_002", "log_entry_id": "log_002"})
+    research["log"].append({"id": "log_002", "tool": "record_read", "results_ref": None})
+    args = {
+        "ops": [
+            _pe_append_with_assertion("I1", "a_001"),  # exempt
+            _pe_append_with_assertion("I1", "a_002"),  # scoreable -> flags the person
+        ]
+    }
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        args,
+        scored_ids=set(),
+        starting_ids=set(),
+        research=research,
+    )
+    assert out == ["I1"]
+
+
+def test_a_plural_assertion_ids_op_is_not_treated_as_resolvable():
+    """103 committed ops carry a plural `assertion_ids` array, which is not a
+    schema field -- those are rejected writes, so reading one as a resolvable
+    id would exempt a link that never landed."""
+    op = {
+        "section": "person_evidence",
+        "op": "append",
+        "entry": {"person_id": "I1", "assertion_ids": ["a_001"]},
+    }
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        op,
+        scored_ids=set(),
+        starting_ids=set(),
+        research=_research("image_transcribe"),
+    )
+    assert out == ["I1"]

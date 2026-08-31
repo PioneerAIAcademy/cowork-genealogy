@@ -596,8 +596,8 @@ register.
   on the same project folder share one `.mcpb` process is **unverified**; if they
   do not, the lock does not bind across them. The change is strictly better than
   today either way.
-- Under contention the queued call now **waits** instead of losing its write. In
-  Cowork's cloud mode a bridged MCP call is killed at 60s (a limit imposed by the
+- Under contention the queued call now **waits** instead of losing its write. A
+  bridged Cowork MCP call is killed at 60s (a limit imposed by the
   bridge, not settable from our side), so a call queued behind a slow composite
   append can be killed there — a **visible** failure replacing a silent loss. Do
   not add a timeout or retry to work around it.
@@ -648,21 +648,41 @@ flagged but not audited (`guardrail-enforcement-spec.md` §10).
 table above, `research_append` also surfaces non-blocking advisories on the
 successful response's `validation.warnings`. One is the `person_evidence`
 **match_score** advisory (the other is §5.1's sources-without-assertions nudge,
-which shipped first): a link claiming `confidence: "confident"` that
-records no numeric `match_score` is warned, not rejected. `same_person` returns
-the 0–1 identity score and `match_score` is the field meant to carry it, yet ~94%
-of historical `person_evidence` writes leave it unset — identity asserted, never
-scored. A hard reject on day one would break ~94% of runs and the hosted path at
-once, so this ships warn-only and is measured on live runs first; graduating it to
-a reject is a separate decision (needs `@DallanQ`), the same shadow-then-graduate
-discipline as `guardrail-enforcement-spec.md` §7. It is gated on `confidence:
-"confident"` — the stateless narrowing (a write cannot see the tree, so it cannot
-tell a brand-new person from a seeded one, but the confidence claim it *can* see)
-and the narrowest claim a stateless write can check. It is not an escape hatch:
-a link that genuinely cannot be scored keeps `match_score: null` and the confidence
-its correlation analysis supports (person-evidence/SKILL.md §3). Downgrading
-confidence to silence this warning also slips the link past the confident-gated
-epistemic reject above. `personEvidenceScoreWarnings` in `research-append.ts`.
+which shipped first): a link that records no numeric `match_score` **where a
+record persona was reachable for its assertion** is warned, not rejected.
+`same_person` returns the 0–1 identity score and `match_score` is the field meant
+to carry it, yet ~94% of historical `person_evidence` writes leave it unset —
+identity asserted, never scored. A hard reject on day one would break ~94% of runs
+and the hosted path at once, so this ships warn-only and is measured on live runs
+first; graduating it to a reject is a separate decision (needs `@DallanQ`), the
+same shadow-then-graduate discipline as `guardrail-enforcement-spec.md` §7 — and
+it must answer ADR-0009 constraint 2, since `match_score` is caller-fabricable and
+a rejection therefore buys a number rather than a call.
+
+**The gate is reachability, at any confidence.** It was `confidence:
+"confident"` on the reasoning that a stateless write cannot see the
+tree but can see the confidence claim. Two things were wrong with that. It said
+nothing about a `probable` link, which is where a skipped score actually hides;
+and knowing nothing about provenance it fired on image- and full-text-sourced
+links nothing could ever score, while its escape text — "if no comparable
+FamilySearch persona exists to score against, leave `match_score` null" — invited
+the agent to read a null `record_persona_id` as that case. It is not: `same_person`
+takes two GedcomX documents plus a focus id inside each and never reads that
+field. Reachability *is* knowable statelessly — the join is
+`assertion_id → assertions[].id → log_entry_id → log[].tool/results_ref`, all
+inside the document being written — so the narrowing costs nothing in
+statelessness and buys precision. `personaReachable` in `research-append.ts`
+mirrors `_persona_reachable` in `eval/harness/harness/skill_invocation.py`;
+`guardrail-enforcement-spec.md` §4 owns the criterion.
+
+It is not an escape hatch: a link that genuinely cannot be scored keeps
+`match_score: null` and the confidence its correlation analysis supports
+(person-evidence/SKILL.md §3), and the warning stays silent there. Two nulls are
+legitimate and the warning names both — no reachable persona, and a candidate
+minted from the very persona being scored, which is circular. Downgrading
+confidence no longer silences this warning, though it still slips the link past
+the confident-gated epistemic reject above. `personEvidenceScoreWarnings` in
+`research-append.ts`.
 
 ### 5.1 Sources-without-assertions nudge (warning, not a precondition)
 
@@ -924,10 +944,11 @@ denial mechanism this section depends on is real in Cowork.
 deployment-dependent: `mcp__genealogy__*` is the arbitrary `mcp_servers` dict
 key the harnesses, `.mcp.json`, and the hosted web control plane chose, while
 Cowork exposes the host-installed `.mcpb` under `manifest.json`'s `display_name`
-either way, but namespaces it through a remote-device *bridge*
-(`mcp__remote-devices__Genealogy_Research__*`) only when the task runs in the cloud;
-a task running on the user's own computer reaches it directly as
-`mcp__Genealogy_Research__*`. No single spelling resolves everywhere, so every agent
+either way — namespaced through a remote-device *bridge*
+(`mcp__remote-devices__Genealogy_Research__*`) or bare
+(`mcp__Genealogy_Research__*`), and the spelling a Cowork session exposes has been
+observed to move (bare live in #1341 on 2026-08-04/05, absent in the 2026-08-15
+censuses; see ADR-0004). No single spelling resolves everywhere, so every agent
 lists each MCP tool under **all three** in `tools:` (and would in a
 `disallowedTools:`, if one ever returned). It matters on the `tools:` side: an
 entry naming no spelling the session recognizes grants nothing, and when *every*
@@ -936,7 +957,7 @@ spellings for the weaker reason that a deny naming only an unresolvable spelling
 denies nothing. Enforced by `tests/packaging/agent-tool-names.test.ts`.
 
 With that in place, this section's guarantee holds in every environment. It did **not**
-hold for an on-computer Cowork task until the third spelling was added: the deny
+hold until the third spelling was added: the deny
 named no spelling that session recognized, so it denied nothing.
 `CLAUDE.md`'s superseded claim that a single qualified spelling makes an agent
 "behave identically" across them has been corrected accordingly. The one residual
@@ -1018,9 +1039,11 @@ why its message names no write tool.
 
 `match_score` also remains fabricable by `person-evidence` itself. It is not
 derivable at the tool boundary: `same_person`'s tree side is a hand-curated
-"record-sized" slice, and a local stub returns a degenerate near-zero score the
-skill must interpret as *no score*. The *value* therefore cannot be validated
-here; what can be is its **presence**, which is the warn-only advisory
+"record-sized" slice, and a *thin* subject — a stub carrying little more than a
+name — scores near zero against everything, since the match engine scores on
+document content. (That is a content signal, not an id artifact: an ARK-less or
+locally-minted person is scorable, measured at `0.9999484` against a `0.999967`
+control.) The *value* therefore cannot be validated here; what can be is its **presence**, which is the warn-only advisory
 `personEvidenceScoreWarnings` (alongside `personEvidenceInvariants`) decided in
 issue #1006 (2026-08-01). That decision
 supersedes an earlier reading of this paragraph as "the lever is eval/rubric,

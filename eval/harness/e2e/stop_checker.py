@@ -14,14 +14,26 @@ from typing import Any
 
 
 def read_research_json(workspace: Path) -> dict[str, Any] | None:
-    """Return parsed research.json or None if missing/invalid."""
+    """Return parsed research.json, or None if missing or unusable.
+
+    `UnicodeDecodeError` is caught because it is a `ValueError`, not an
+    `OSError` — `read_text` decodes before `json` sees the bytes, so a file with
+    invalid UTF-8 would otherwise propagate out of every caller. The
+    `isinstance` check is load-bearing for the same reason: a research.json
+    parsing to a JSON *array* is not None, so without it the value passes every
+    `is None` test and then raises `AttributeError` on `.get(...)`. Both matter
+    because `pretool_hook` calls this with no `try` around it, so a raise here
+    aborts the whole run instead of degrading. Mirrors the guards the sibling
+    `guardrail_shadow_report._load_json` already documents.
+    """
     path = Path(workspace) / "research.json"
     if not path.exists():
         return None
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
         return None
+    return parsed if isinstance(parsed, dict) else None
 
 
 def read_tree_json(workspace: Path) -> dict[str, Any] | None:

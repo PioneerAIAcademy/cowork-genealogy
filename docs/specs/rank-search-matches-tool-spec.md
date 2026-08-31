@@ -122,10 +122,11 @@ snake_case envelope it reads.
    `subjectId` is absent from the tree, return an LLM-actionable input error.
    *(Future: enrich with 1-hop relatives; deferred — the minimal doc scored decisively.)*
 
-   **Thin / unresolvable subject (guardrail).** A subject that is a sparse local
-   stub (few facts, e.g. a not-in-FS `I1` person) can score uniformly near-zero
-   against every candidate — the "degenerate score on an unresolvable id" case
-   `person-evidence/SKILL.md:510-516` documents. Detect it: when **every**
+   **Thin subject (guardrail).** A subject that is a sparse local stub (few
+   facts, e.g. a not-in-FS `I1` person) can score uniformly near-zero against
+   every candidate. The cause is **thin content, not an unresolvable id** — the
+   determinant is content richness, as the probe 12 lines above measures: an
+   ark-less subject scores 0.99999 on the correct record. Detect it: when **every**
    `matchScore` is null or below a degenerate floor (≈0.01), set
    `subjectResolvable: false` in the output so the skill treats it as *no match
    signal* (fall back to the manual `same_person` / cross-check path) rather than
