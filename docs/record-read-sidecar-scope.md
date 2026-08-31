@@ -30,15 +30,18 @@ round-trips for content it already has staged on disk.
 
 - `record_search` stages the **`toSimplified`** tool output: persons, relationships,
   facts, and `sources` **if** the FS search response carried `sourceDescriptions`.
-- `record_read` uses **`toSimplifiedStandardized`** = `toSimplified` **+ `standardizePlaces`**
-  (resolves free-text places to `standard_place`). Its output also carries the
-  source `citation`.
+- `record_read`'s live path uses pure **`toSimplified`** (it does **not** run
+  `standardizePlaces` — see Findings), so it keeps only the record's own
+  `normalized` places and never adds resolver-derived `standard_place`. Its
+  output also carries the source `citation`.
 
 Two deltas, one closable, one **unverified**:
 
-1. **Place standardization** — `record_read` adds `standard_place`; the staged data
-   doesn't. **Closable host-side** by re-applying `standardizePlaces` (needs the
-   network the VM lacks — so this must live in the host tool, not a skill script).
+1. **Place standardization** — the staged data already carries the search stage's
+   `standard_place`. This was originally scoped as a delta "closable host-side by
+   re-applying `standardizePlaces`", but the Findings settled it the other way:
+   the staged place is more reliable, so the sidecar returns it **as-is** and the
+   live path does not add resolver-derived standardization.
 2. **Source citations** — `record_read`'s output carries the full `citation`;
    whether the FS *search* response carries `sourceDescriptions` per result is
    **unverified** (token expired mid-analysis; test fixtures are trimmed). This is
@@ -55,8 +58,9 @@ backward-compatible):
 - `record_read({ recordId })` — unchanged: a live FS read.
 - `record_read({ recordId, resultsRef, projectPath })` — reads the record's gedcomx
   from the staged sidecar (`results/.staging/<uuid>.json` **or** finalized
-  `results/<log_id>.json`) **host-side, no FS round-trip**, re-applies
-  `standardizePlaces`, and returns it. Reuses the exact guard+read path
+  `results/<log_id>.json`) **host-side, no FS round-trip**, and returns it
+  **as-is** (earlier drafts re-applied `standardizePlaces` here; the Findings
+  settled that the staged place is more reliable than a re-resolved one). Reuses the exact guard+read path
   `rank_search_matches` uses (`assertInsideProject`/`isInsideProject` +
   `readFile` + `envelope.payload.results`), matching the result by `recordId`.
   Returns a `source: "sidecar"` marker so the skill/tests can tell them apart.

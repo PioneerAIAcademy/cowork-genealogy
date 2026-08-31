@@ -192,8 +192,9 @@ the log editor behaves exactly as its own spec describes.
   staged result against the tree subject) and `record_read` in **sidecar mode**
   (`record_read({ recordId, resultsRef, projectPath })` returns one record's
   gedcomx from the staged/finalized sidecar — no live FS fetch — returning the
-  search stage's standardized places as-is (a live read uses pure `toSimplified`
-  and leaves `standard_place` unset); used by record-extraction /
+  search stage's standardized places as-is (a live read uses pure `toSimplified`,
+  keeping only the record's own normalized places, never resolver-derived ones);
+  used by record-extraction /
   search-records to avoid re-fetching a record they already searched). Both share
   the dual-location read helper `readStagedResults` (staged handle OR finalized
   `results/<log_id>.json`) and never unlink, so a staged handle can still be

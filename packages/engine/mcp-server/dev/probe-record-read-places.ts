@@ -3,8 +3,10 @@
  * the resolver place it correctly TODAY?
  *
  * Evidence for issue #1908 (phase 1). `record_read`'s live path calls
- * `toSimplified` (not `toSimplifiedStandardized`), so it never fills
- * `standard_place`. The justification (record-read.ts:128-134) cites two
+ * `toSimplified` (not `toSimplifiedStandardized`), so it fills `standard_place`
+ * only from the record's own `normalized` values, never from the resolver —
+ * whether recapi supplies a `normalized` value at all is one thing this probe
+ * measures. The justification (record-read.ts:128-134) cites two
  * mis-resolutions observed 2026-07-08 — before two resolver fixes landed
  * (4823ffdf, 2026-07-22, phrase-quote the `name:` query; 1af50fab, 2026-07-31,
  * derive a `contextName` from the second comma-segment). This probe re-measures,
@@ -22,10 +24,14 @@
  * Usage:
  *   npx tsx dev/probe-record-read-places.ts
  *
- * The ARKs below are taken verbatim from committed real-record fixtures under
+ * The ARKs below are taken verbatim from committed fixtures under
  * eval/fixtures/mcp/record-read-*.json, labelled by each fixture's FS collection
- * title. None are invented. Adjust the list before the live run if a genealogist
- * wants wider coverage of the three record families.
+ * title. None are invented, but fixture-derived is not the same as captured-live:
+ * only the Richardson pair (JMF4-CL9, NFCY-7VM) is marked CAPTURED LIVE in its
+ * fixture; ackerman-1860 (M7QZ-8KD) and patrick-flynn (CFLT-9K2) are constructed
+ * ("stocked to stop an ABORT" / "mirrors an embedded gedcomx"), so a run over
+ * them settles less than a run over live-captured records. Adjust the list before
+ * the live run for wider real coverage of the three record families.
  */
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
@@ -138,6 +144,7 @@ async function main(): Promise<void> {
   const token = await getValidToken();
   const rows: PlaceObs[] = [];
   const seen = new Set<string>();
+  const skippedArks: string[] = [];
 
   for (const ark of ARKS) {
     const entityId = extractEntityId(ark.id);
@@ -146,6 +153,7 @@ async function main(): Promise<void> {
       body = await fetchRecord(entityId, token);
     } catch (e) {
       console.error(`SKIP ${ark.id} (${ark.category}): ${(e as Error).message}`);
+      skippedArks.push(ark.id);
       continue;
     }
     for (const { original, hasNormalized } of placesOf(body)) {
@@ -194,6 +202,10 @@ async function main(): Promise<void> {
   };
 
   console.log("\n=== summary ===");
+  console.log(
+    `ARKs: ${ARKS.length} requested, ${ARKS.length - skippedArks.length} fetched, ` +
+      `${skippedArks.length} skipped${skippedArks.length ? ` (${skippedArks.join(", ")})` : ""}`,
+  );
   console.log(`places observed: ${total}`);
   console.log(
     `single-segment: ${single} (${total ? Math.round((single / total) * 100) : 0}%)`,
