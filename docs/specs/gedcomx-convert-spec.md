@@ -381,8 +381,7 @@ run `standardizePlaces` over the flattened facts of a multi-result response
 callers that want no I/O. Exception — `record_read`'s live path calls the pure
 `toSimplified`, not `toSimplifiedStandardized`; `standard_place` is therefore
 left unset rather than populated by the resolver. See
-`docs/record-read-sidecar-scope.md` and issue #1908 for the measurement and
-rationale.
+`docs/record-read-sidecar-scope.md` for the measurement and rationale.
 
 ### 7.5 `value` on facts
 
