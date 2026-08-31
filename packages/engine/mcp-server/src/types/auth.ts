@@ -36,8 +36,6 @@ export interface AppConfig {
   hosted?: boolean;
   wikiApiUrl?: string;
   popStatsUrl?: string;
-  learningCenterDir?: string;
-  libraryDir?: string;
   openRouterApiKey?: string;
   openRouterModel?: string;
 }

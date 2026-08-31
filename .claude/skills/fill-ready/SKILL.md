@@ -41,7 +41,8 @@ state only when `.github/workflows/project-status-sync.yml` gets to it — so a
 just-closed card can still read `Review` for a while. Ready / In Progress /
 Review are the three active columns; **Done and Not planned are the terminal
 ones, and "outside Backlog" is never the test for anything**, because it counts
-them too.
+them too. **Feedback is none of the three** — it is an untriaged inbox that
+`/triage-feedback` owns and this skill never reads.
 
 **Re-read the board immediately before you apply anything.** The lead edits it
 while you work — in one session nine items moved to Ready and 23 assignments
@@ -55,30 +56,28 @@ Two labels carry the routing:
 | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
 | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose, prepared doctrine questions |
 
-**`feedback` items are fixed in Ready, and they displace.** An issue labelled
-`feedback` is a user's bug report, filed automatically into Ready by
-`add-to-project.yml`. It counts toward the ~10 unassigned `genealogist` target
-exactly like any other `genealogist` item, and you never move it — never promote
-one from Backlog, never return one to Backlog, never unassign one. **Anyone on
-the roster may claim a `feedback` item**, so a developer holding one is not a
-mis-route.
+**The `feedback` label means untriaged, and nothing else.** An issue labelled
+`feedback` is a raw user bug report, filed automatically into the **Feedback**
+column by `add-to-project.yml`. `/triage-feedback` owns that column: it works
+each case and either moves it to Not planned, or moves it to Backlog **and drops
+the `feedback` label**. So the label and the column always agree, and a triaged
+item arrives in your Backlog as an ordinary `developer` or `genealogist` issue.
 
-Because a `feedback` item cannot be the loser of a swap, **every return to
-Backlog comes from the non-`feedback` members of the pool.** Over target, return
-the lowest-ranked non-`feedback` genealogist items until the pool is at target —
-and when `feedback` alone reaches ~10, that means all of them. Ten feedback items
-and four `test <slug>` items in Ready is fourteen against a target of ten: the
-four go back. Name them and say why, as with any swap.
+That is what makes the rest of this skill apply to it unchanged. It ranks on the
+same criteria, gates through `/review-ready` like anything else, counts toward
+its pool once promoted, and can lose a swap back to Backlog. **Do not give it
+standing weight for having come from a user** — by the time you see it, triage
+has already made that judgment, and the body is the evidence.
 
-**Under target, nothing about `feedback` changes how you promote.** Six feedback
-items in Ready is a pool of six against a target of ten, so promote the best four
-genealogist items out of Backlog as usual. A quiet feedback week is when the rest
-of the genealogist queue moves.
+**While an item is in the Feedback column, do nothing with it.** Do not rank it,
+promote it, count it toward any target, or propose closing it. Deciding a
+submission is a duplicate, doesn't reproduce, or is junk is triage's call, made
+by working the case — not a ranking judgment available from the board.
 
-§7 may close a `feedback` item — a duplicate submission, one that doesn't
-reproduce, junk — and that is the only way one leaves Ready. Never propose
-closing one on age or body length; a four-line body and a Drive link is what
-every one of them looks like.
+**A `feedback`-labelled item sitting outside the Feedback column is a triage
+slip, not a candidate.** Report it and leave it; promoting it would put an
+un-worked bundle into someone's queue. **Anyone on the roster may claim work that
+came from feedback**, so a developer holding one is not a mis-route.
 
 **Exclude `label:icebox` from the Backlog when ranking.** Those are candidates
 with no decision behind them, filed there deliberately; `/review-icebox` owns
@@ -794,8 +793,10 @@ gh project item-edit --id "$ITEM_ID" --project-id "$PROJ_ID" \
 
 Verify with a fresh `gh project item-list`. New issues land in Backlog via an
 auto-add workflow that sets nothing else — a freshly filed issue that belongs in
-Ready still needs this move. (The exception is a `feedback` item, which the same
-workflow files directly into Ready and which you never move at all.)
+Ready still needs this move. (A raw feedback submission is the exception: the
+same workflow files it into the Feedback column, where `/triage-feedback` moves
+it to Not planned or to Backlog, dropping the `feedback` label on the way. It
+reaches you as an ordinary issue and is promoted with this move like any other.)
 
 **Gate every issue you are moving into Ready through `/review-ready` before you
 promote it — both pools, not just `developer`, and not just the ones you rank as

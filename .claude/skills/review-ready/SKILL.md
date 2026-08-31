@@ -52,11 +52,16 @@ Other entry points:
   coverage.
 
 **`feedback`-labeled items are never in scope**, in any mode. They carry
-`genealogist`, so they would otherwise land in the fan-out, but they are user bug
-reports filed automatically — the body is a Drive link, and every question the
-three passes ask is answered by working the case, not by reading the issue.
-Reviewing one costs ~110k tokens to learn nothing. Their triage is
-`docs/alpha-feedback-guide.md`.
+`genealogist`, so they would otherwise land in the fan-out, but they are raw user
+submissions sitting untriaged in the Feedback column — every question the three
+passes ask is answered by working the case, not by reading the issue. Reviewing
+one costs ~110k tokens to learn nothing. `/triage-feedback` owns them.
+
+**A triaged one has already lost the label**, and is in scope exactly like any
+other Backlog item: triage retitles it, writes the instructions and the
+`**Touches:**` line, and drops `feedback` on the way to Backlog. So the filter
+below needs no special case — if you are seeing the label, it has not been
+triaged yet.
 
 **Why both pools, since this was developer-only until 2026-08-19.** A stale
 premise is not a developer-shaped defect. The run that changed it gated six
@@ -78,8 +83,9 @@ answers this for every candidate at once — this is the whole standing-pool que
 # above is why. `--developer-only` is what narrows this back to one lane; do not
 # bake that filter in here, which silently reverted the both-pools change once.
 # `feedback` items are never in scope, in either lane — most carry `genealogist`
-# and are raw bundles whose body is a Drive link, and reviewing one costs ~110k
-# tokens to learn nothing. A triaged one should lose the label, not be gated here.
+# and are raw untriaged bundles, and reviewing one costs ~110k tokens to learn
+# nothing. `/triage-feedback` drops the label on the way to Backlog, so anything
+# still carrying it has not been triaged and this filter is the whole guard.
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 | jq -r '
   .items[]
   | select(.status == "Ready" and (.assignees | length) == 0
