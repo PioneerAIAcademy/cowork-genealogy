@@ -717,10 +717,10 @@ not abstract.
   jurisdiction. "FamilySearch has 'Pennsylvania Probate Records,
   1683-1994' indexed and you haven't searched it" beats "consider
   probate."
-- **`wiki_place_page`** (`section: "online_records"` and
-  `section: "research_tips"`) — Use these to identify record
-  types and strategies the researcher hasn't tried. Quote specific
-  guidance.
+- **`wiki_place_page`** (`section: "online_records"` /
+  `"research_tips"`) — Only if `project_context` returned no locality for
+  the jurisdiction. Otherwise cite that locality's `collections` /
+  `quirks` and its `loc_` id.
 - **`external_links_search`** — Use when flagging repository
   diversity gaps. Name the specific third-party site.
 - **`place_distance`** + **`place_search`** — Use whenever an
