@@ -48,6 +48,21 @@ describe("tree_diff", () => {
     expect(d.personsChanged[0].removedFacts).toHaveLength(1);
   });
 
+  it("counts a seeded Birth gaining a date as new structure", () => {
+    // Regression: the merge tool's dedupe predicate treated a bare Birth and a
+    // dated Birth as the same fact, so filling in a date read as no change and
+    // the tree-encoding gate warned on correct work. A content signature keeps
+    // them distinct, so the dated fact is new structure.
+    const bareBirth = { id: "f1", type: "Birth" };
+    const before = { persons: [person("I1", [bareBirth])], relationships: [] };
+    const after = { persons: [person("I1", [birth("3 Mar 1850")])], relationships: [] };
+    const d = treeDiff({ before, after });
+    expect(d.personsChanged).toHaveLength(1);
+    expect(d.personsChanged[0].addedFacts).toHaveLength(1);
+    expect(d.personsChanged[0].removedFacts).toHaveLength(1);
+    expect(d.personsWithNewStructure).toContain("I1");
+  });
+
   it("reports an added Couple relationship and its Marriage fact as one relationship", () => {
     const before = {
       persons: [person("I1"), person("I2")],

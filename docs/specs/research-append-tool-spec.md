@@ -743,13 +743,16 @@ tool against the write-once `starting-tree.gedcomx.json` baseline.
   route out — worse on the hosted path, where the sandbox has no text-editor
   escape. A shape-match gate cannot clear that bar, so it ships warn-only.
 - **The fire rate, measured before shipping.** Over the committed e2e corpus
-  (`make e2e-guardrail-shadow REPLAY=1 SINCE=all`, the §11.5 shadow family), 3 of
-  143 tier-≥-probable conclusions in 127 completed projects added no new tree
-  structure. The diff counts a fact gained on a relationship present in both
-  trees — a Marriage dated onto an already-seeded Couple — so a proved marriage
-  on a pre-existing couple is not a false fire. This re-measurement corrected a
-  first-pass 32/22% that had mis-classified parentage questions naming a birth
-  date as birth questions.
+  (`make e2e-guardrail-shadow REPLAY=1 SINCE=all`, the §11.5 shadow family), 3
+  tier-≥-probable conclusions — in 3 of the 158 committed runs scanned — added no
+  new tree structure. The gate keys facts on a content signature (type, date,
+  place, value), so filling in a date or narrowing a place on a seeded fact reads
+  as new structure rather than a false fire; on standardized data this matches
+  the shadow signature the figure is measured from. The diff also counts a fact
+  gained on a relationship present in both trees — a Marriage dated onto an
+  already-seeded Couple — so a proved marriage on a pre-existing couple is not a
+  false fire. This re-measurement corrected a first-pass 32/22% that had
+  mis-classified parentage questions naming a birth date as birth questions.
 - **Fails open on a missing baseline.** A project created before the baseline
   shipped has no `starting-tree.gedcomx.json`; the check returns no warning rather
   than treating every fact as new. Fires only on the call that *sets* `completed`,

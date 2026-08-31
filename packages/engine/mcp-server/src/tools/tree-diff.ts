@@ -31,7 +31,7 @@
 // Pure and read-only: it takes both trees as input and touches no file and no
 // network, so it is safe to call from the gate mid-write.
 
-import { relationshipKey, factsEquivalent } from "../utils/merge-gedcomx.js";
+import { relationshipKey } from "../utils/merge-gedcomx.js";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -95,20 +95,44 @@ function personMap(tree: SimplifiedGedcomX | undefined): Map<string, SimplifiedP
   return out;
 }
 
-/** Facts in `a` not matched (by content) by any fact in `b`. */
+/** A fact's content signature. NOT `factsEquivalent` from the merge tool: that
+ *  is a DEDUPE predicate ("could these two be the same fact?") and returns true
+ *  whenever either side's date or place is absent, so a seeded bare `Birth` and
+ *  a `Birth` this session dated and placed match, and the encoding the gate
+ *  exists to find reads as no change. Mirrors the shadow measurement's
+ *  `_fact_signatures` so the gate and the fire rate it is calibrated against
+ *  read the same facts. Raw `date`/`place` are in the signature on purpose — a
+ *  corrected but unstandardized date is a real change. */
+function factSignature(f: SimplifiedFact): string {
+  // JSON array so fields containing spaces or punctuation cannot collide onto
+  // one signature. A superset of the Python shadow's `_fact_signatures`
+  // (`type`, `standard_date`, `standard_place`): it also keys on raw
+  // `date`/`place`/`value` so a corrected but unstandardized fact still reads as
+  // a change. On standardized production data the two agree.
+  return JSON.stringify([
+    f.type ?? "",
+    f.standard_date ?? "",
+    f.date ?? "",
+    f.standard_place ?? "",
+    f.place ?? "",
+    f.value ?? "",
+  ]);
+}
+
+/** Facts in `a` whose signature is not matched by a fact in `b`, respecting
+ *  multiplicity. */
 function factsNotIn(a: SimplifiedFact[], b: SimplifiedFact[]): SimplifiedFact[] {
-  const used = new Array(b.length).fill(false);
+  const available = new Map<string, number>();
+  for (const fb of b) {
+    const k = factSignature(fb);
+    available.set(k, (available.get(k) ?? 0) + 1);
+  }
   const out: SimplifiedFact[] = [];
   for (const fa of a) {
-    let matched = false;
-    for (let i = 0; i < b.length; i++) {
-      if (!used[i] && factsEquivalent(fa, b[i])) {
-        used[i] = true;
-        matched = true;
-        break;
-      }
-    }
-    if (!matched) out.push(fa);
+    const k = factSignature(fa);
+    const n = available.get(k) ?? 0;
+    if (n > 0) available.set(k, n - 1);
+    else out.push(fa);
   }
   return out;
 }
