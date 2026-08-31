@@ -556,8 +556,29 @@ function fixturePaths(dir: string, prefix = ""): string[] {
  *
  * An advertised tool can never be aspirational: it is registered, so it must
  * dispatch and its handler must resolve, `input_schema` or not.
+ *
+ * It is NOT sufficient on its own, which is the second thing this hatch got
+ * wrong. `!advertisedTools.has(tool)` is also true of a RENAMED or MISSPELLED
+ * tool name, so a fixture reading `"tool": "fulltext_query"` with an
+ * `input_schema` and a response no tool can return still dropped out silently —
+ * proven by editing nothing but the fixture's own `tool` field. See
+ * `ASPIRATIONAL_TOOLS` below for the fix.
  */
 const advertisedTools = new Set(allToolSchemas.map((s) => s.name));
+
+/**
+ * Tools that legitimately have fixtures before they have source.
+ *
+ * EMPTY TODAY, and that is the point: the hatch now DENIES by default. Every
+ * fixture in the corpus that declares `input_schema` names a live, dispatched
+ * tool, so nothing needs to be listed. An unrecognised undispatched name is far
+ * more likely to be a typo or a half-finished rename than a real aspirational
+ * tool, and the previous shape guessed the charitable reading and skipped.
+ *
+ * Add a name here only alongside the fixtures that need it, and remove it when
+ * the tool ships.
+ */
+const ASPIRATIONAL_TOOLS = new Set<string>();
 
 const fixtures: Fixture[] = fixturePaths(fixturesDir).map((rel) => {
   const raw = JSON.parse(readFileSync(join(fixturesDir, rel), "utf8")) as Record<
@@ -667,8 +688,9 @@ describe("eval/fixtures/mcp response shapes match the tools' return types", () =
       unknownTools,
       "these fixtures mock a tool with no dispatch arm in src/index.ts. If the " +
         "tool is aspirational (fixtures before source), declare the fixture's " +
-        "own `input_schema` — the harness honours it and this check then skips " +
-        "the shape comparison, because there is no return type to compare to",
+        "own `input_schema` AND add the name to ASPIRATIONAL_TOOLS — the harness " +
+        "honours the schema, and the name is what stops a renamed or misspelled " +
+        "tool being read as aspirational and skipped",
     ).toEqual([]);
   });
 
@@ -742,7 +764,18 @@ describe("eval/fixtures/mcp response shapes match the tools' return types", () =
         !dispatchedTools.has(tool) &&
         !advertisedTools.has(tool) &&
         fixtures.every((f) => f.tool !== tool || f.declaresInputSchema);
-      if (aspirational) continue;
+      if (aspirational) {
+        if (!ASPIRATIONAL_TOOLS.has(tool)) {
+          problems.push(
+            `${tool}: no dispatch arm, not advertised, and every fixture ` +
+              `declares input_schema, so all of its fixtures would drop out of ` +
+              `the shape comparison. If the tool really is aspirational, add it ` +
+              `to ASPIRATIONAL_TOOLS; if this is a renamed or misspelled tool ` +
+              `name, fix the fixtures`,
+          );
+        }
+        continue;
+      }
 
       if (projectingArms.includes(tool)) {
         problems.push(

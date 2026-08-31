@@ -1,6 +1,6 @@
 {
   "tool": "place_population",
-  "description": "place_population — census population statistics for Schuylkill County, Pennsylvania across the 1840–1910 period Population context an earlier version of this fixture carried inline, kept here because `notes` is not a field the tool returns: rapid growth driven by anthracite coal mining, with a large immigrant population (Irish, Welsh, German, later Eastern European) from the 1840s onward.",
+  "description": "place_population — census population statistics for Schuylkill County, Pennsylvania across the 1840–1910 period. Population context an earlier version of this fixture carried inline, kept here because `notes` is not a field the tool returns: rapid growth driven by anthracite coal mining, with a large immigrant population (Irish, Welsh, German, later Eastern European) from the 1840s onward.",
   "args": {
     "standardPlace": "~Schuylkill"
   },
