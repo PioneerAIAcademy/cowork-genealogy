@@ -54,6 +54,7 @@ from typing import Any
 from e2e.runlog_selection import (
     add_since_arg,
     all_result_jsons,
+    branch_scope_note,
     describe_window,
     filter_since,
     is_result_json as _is_result_json,
@@ -1449,6 +1450,7 @@ def main(argv: list[str] | None = None) -> int:
     paths = filter_since(all_paths, cutoff)
     if not paths:
         print("No committed runs found.", file=sys.stderr)
+        print(branch_scope_note(), file=sys.stderr)
         return 1
 
     by_window = scan_corpus(paths, windows=windows)

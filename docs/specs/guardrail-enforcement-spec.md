@@ -470,7 +470,11 @@ to understand before reading either:
   fixture PRs merged, or it is biased at the moment it is used. Every **e2e**
   corpus reader now states this itself, every time it runs — `describe_window()`
   (`harness/since_window.py`) appends a fixed caveat naming the branch-scope
-  limitation to its own printed line. The three **unit**-corpus readers
+  limitation to its own printed line when the reader found runs, and each
+  reader also prints `branch_scope_note()` directly on its empty-corpus path
+  (a bare "No committed runs found" never reaches `describe_window()`, and an
+  empty read is exactly the case a reader cannot rule out "the run exists on
+  another branch" — see `test_e2e_branch_scope_caveat.py`). The three **unit**-corpus readers
   (`eval-timings`, `judge-report`, `skill-latency`) share the same function
   but only print its line — caveat included — under a `SINCE=` that resolves
   to a cutoff (`SINCE=all` is explicit and prints nothing); bare, they show
