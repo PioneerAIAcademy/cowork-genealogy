@@ -140,7 +140,7 @@ The tool returns two content blocks:
 
 1. **Image block** (`type: "image"`) — base64-encoded image bytes + MIME type.
    The calling agent sees this as a real image via its own vision (used by
-   the `image-reader-opus` agent — `docs/specs/image-reader-opus-agent-spec.md`).
+   the retired `image-reader-opus` agent).
 
 2. **Metadata block** (`type: "text"`) — JSON with:
 

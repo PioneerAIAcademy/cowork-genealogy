@@ -186,11 +186,11 @@ def test_bare_tool_name_strips_only_the_mcp_prefix():
 
 def test_declared_matches_the_real_committed_agents():
     """The frontmatter `name` values must be the exact `agent_type` strings the
-    corpus records, or every diff silently misses. Pins the real four."""
+    corpus records, or every diff silently misses."""
     declared = declared_tools_by_agent()
-    assert {"gps-mentor", "record-extractor", "image-reader", "image-reader-opus"} <= set(
-        declared
-    )
+    assert {"gps-mentor", "record-extractor", "image-reader"} <= set(declared)
+    # Retired with the switch to Gemini (issue #2013).
+    assert "image-reader-opus" not in declared
     assert {"wiki_place_page", "wiki_search"} <= declared["gps-mentor"]
 
 

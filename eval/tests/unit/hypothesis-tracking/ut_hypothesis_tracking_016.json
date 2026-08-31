@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_016",
+    "skill": "hypothesis-tracking",
+    "name": "Writing the conclusion for a supported hypothesis should not trigger hypothesis-tracking",
+    "type": "negative",
+    "description": "User asks for the formal write-up of h_001, a hypothesis already at supported. The request names a hypothesis by id, and hypothesis-tracking owns the hypotheses section, so it is the obvious wrong answer — but the deliverable is a tier and a self-contained narrative, which hypothesis-tracking's own DO-NOT clause assigns to proof-conclusion. Completes the third of the three pairs hypothesis-tracking's DO-NOT clauses call for; the conflict-resolution and timeline pairs shipped in #1783.",
+    "tags": [
+      "near-miss",
+      "hypothesis-tracking-vs-proof-conclusion",
+      "routing"
+    ]
+  },
+
+  "input": {
+    "user_message": "h_001 is supported and the research is done — write it up as the formal conclusion for the parentage question.",
+    "scenario": "flynn-exhaustive-ready"
+  },
+
+  "negative": {
+    "correct_skill": ["proof-conclusion"],
+    "explanation": "Selecting a confidence tier and writing a self-contained narrative is proof-conclusion's workflow, written to the `proof_summaries` section. hypothesis-tracking's SKILL.md states: 'Do NOT use when the user ... wants to write a final conclusion (use proof-conclusion).' Its own writes are limited to the `hypotheses` section — claim, status, and supporting/contradicting assertion links. A hypothesis reaching `supported` is the precondition for a conclusion, not the conclusion; promoting h_001's status again, or restating its evidence as a summary, does not produce the tiered narrative the user asked for."
+  },
+
+  "judge_context": [
+    "Should route to proof-conclusion rather than updating or re-summarising h_001",
+    "The request naming a hypothesis id is not sufficient reason to activate — hypothesis-tracking maintains the candidate while evidence accumulates; proof-conclusion is what converts a supported candidate into a tiered, written conclusion",
+    "Must not write to `hypotheses` here. Re-promoting an already-supported hypothesis, or appending a narrative to it, is the specific failure this test pins — the narrative belongs in `proof_summaries`",
+    "Note the scenario already holds ps_001 at tier probable for q_001, so a correct response may reasonably treat this as updating that existing conclusion; either way the destination is proof-conclusion"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

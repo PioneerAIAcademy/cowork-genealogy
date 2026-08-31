@@ -148,7 +148,9 @@ up in `narration[]` with `kind: "blocked"`.
 - **Non-empty** — the router tried to substitute for a failed spawn and was
   blocked, so the subagent's work was not done on the main thread. Flag it: it
   points at a spawn failure for the tool's owning subagent (`record-extractor`
-  for `extraction_append`, `image-reader-opus` for `image_read`), not a records gap.
+  for `extraction_append`), not a records gap. No agent owns `image_read` since
+  `image-reader-opus` was retired, so a blocked `image_read` is the router
+  reaching for a scan instead of delegating to `image-reader`.
   Read the matching `narration[]` turn to see where the spawn failed.
 
 ### Step 2d — Note any GPS guardrail bypasses

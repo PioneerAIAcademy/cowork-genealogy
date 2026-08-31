@@ -661,6 +661,9 @@ async def _execute_single_run(
     outcome = _compute_outcome(
         spec=spec,
         validators_passed=validators_passed,
+        failed_validators=frozenset(
+            r.name for r in validator_results if not r.passed
+        ),
         judge_dimensions=judge_result.dimensions,
         aborted_reason=result.aborted_reason,
         activated=activated,
@@ -1182,6 +1185,57 @@ def flag_routing_negative_judge_fail(
     return dimensions
 
 
+# Deterministic execution-cap aborts that a validator FAILURE dominates in the
+# recorded outcome (issue #1866 V7). A run that wrote a section it doesn't own
+# and then hit its wall-clock cap is a skill defect, not a timeout — recording
+# it `aborted` tells every reader (eval/CLAUDE.md "Reading an `aborted` row")
+# that it "says nothing about the skill", which is how ut_research_plan_016's
+# two failed validators stayed invisible.
+#
+# Only these three are dominated. `unmatched_tool_call` is a test-corpus problem
+# (exit 2) and the two transient reasons (`error`, `sdk_stream_silence`) drive
+# the exit-code split and the suite breaker (`_TRANSIENT_ABORT_REASONS`,
+# run_tests.py) — demoting either would report an environment failure as a skill
+# regression. `not_runnable` never reaches this function (`_aborted_entry`).
+# `max_input_tokens_per_turn` is a fourth deterministic cap of the same class,
+# left out and staying out: now that a demotion is gated on a failed COMMISSION
+# validator (below), which cap fired no longer carries the classification weight,
+# so the fourth cap adds nothing here (johnmarkpeterbrown's ruling, #1866).
+_VALIDATOR_DOMINATED_ABORTS = frozenset(
+    {"max_wall_clock_seconds", "max_turns", "max_tool_calls"}
+)
+
+
+# Validators whose FAILURE means the run actively DID something wrong — wrote to a
+# section it does not own, or bypassed the writer tools to touch a protected file.
+# A deterministic execution cap (`_VALIDATOR_DOMINATED_ABORTS`) truncates a run
+# mid-write: it can only make the run FAIL TO DO something (an omission), never make
+# it DO something wrong (a commission). So only a failed commission validator proves
+# a defect the timeout cannot explain, and only then is an abort demoted to `fail`
+# (issue #1866 V7, johnmarkpeterbrown's ruling).
+#
+# An ALLOW-LIST, deliberately: it fails in the safe direction. A validator nobody
+# has classified is absent here, so its failure under a cap leaves the run `aborted`
+# — the pre-V7 behaviour — rather than risking a real regression being filed against
+# a run the clock killed. That is the exact mis-file (pointed the other way) V7 exists
+# to prevent: on the committed corpus the blanket rule demoted 3 of 4 cap-aborts whose
+# only failing validators were omissions (record_extraction_018/020's "no new
+# assertion…", person_evidence_022's "never invoked check-warnings"). Membership is
+# intentionally minimal — the universal forbidden-write checks, which a timeout cannot
+# trip; extend it as validators are classified, never by complementing the omission set.
+#
+# `test_commission_validators_are_all_collected` fails if a name here stops matching a
+# real validator: a silent rename would quietly stop demoting it (the lead's condition).
+_COMMISSION_VALIDATORS = frozenset(
+    {
+        "test_ownership_table",
+        "test_tree_ownership_table",
+        "test_no_raw_writes_to_protected_files",
+        "test_project_file_changes_route_through_writer_tools",
+    }
+)
+
+
 #: Keys the mock adds to a fixture's response AFTER matching and BEFORE logging
 #: (`mock_mcp.py` ~461/477/501). Their presence means the logged response is not
 #: the stored fixture, so `response_fixture` + `matched.index` cannot rebuild it
@@ -1292,6 +1346,7 @@ def _compute_outcome(
     *,
     spec: TestSpec,
     validators_passed: bool,
+    failed_validators: frozenset[str] = frozenset(),
     judge_dimensions: list[dict[str, Any]],
     aborted_reason: str | None,
     activated: bool,
@@ -1309,8 +1364,23 @@ def _compute_outcome(
     determined (see the negative branch), so a skipped judge doesn't gate
     them; out-of-scope negatives (`correct_skill: []`) have no routing
     signal and are judge-gated, so a skipped judge fails them too.
+
+    A COMMISSION-validator failure dominates a deterministic execution-cap abort
+    (issue #1866 V7): `aborted` normally short-circuits, but a run that failed a
+    validator in `_COMMISSION_VALIDATORS` AND hit one of
+    `_VALIDATOR_DOMINATED_ABORTS` is recorded `fail`, so a real defect isn't filed
+    under a timeout. Scoped to commission validators, not any failed validator: a
+    cap truncates a run mid-write, so an omission-only failure ("expected X, got
+    none") is the timeout's doing, not the skill's, and stays `aborted`. The
+    `aborted_reason` field stays populated on the SingleRun either way — only
+    `outcome` changes.
     """
     if aborted_reason:
+        if (
+            failed_validators & _COMMISSION_VALIDATORS
+            and aborted_reason in _VALIDATOR_DOMINATED_ABORTS
+        ):
+            return "fail"
         return "aborted"
     if not validators_passed:
         return "fail"

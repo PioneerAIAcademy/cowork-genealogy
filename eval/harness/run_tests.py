@@ -1079,8 +1079,12 @@ def main(argv: list[str] | None = None) -> int:
                     # here is what made issue #1245's 19 of 20 unexplainable
                     # after the fact. The reason is already on the entry.
                     why = ""
-                    if outcome == "aborted" and entry.get("runs"):
-                        why = f" [{entry['runs'][0].get('aborted_reason') or 'unrecorded'}]"
+                    if entry.get("runs") and entry["runs"][0].get("aborted_reason"):
+                        r0 = entry["runs"][0].get("aborted_reason") or "unrecorded"
+                        # A V7-demoted fail (issue #1866) carries a cap reason
+                        # but is a real defect, not an abort — label it so the
+                        # two don't read alike on the line an operator watches.
+                        why = f" [{r0}]" if outcome == "aborted" else f" [hit {r0}]"
                     print(
                         f"  {mark} [{done_n}/{total}] {spec.id} ({spec.skill}) "
                         f"— {outcome}{why} ({dur:.0f}s skill)",
@@ -1137,9 +1141,16 @@ def main(argv: list[str] | None = None) -> int:
                 # the operator's only remaining clue is the suite-wide exit
                 # code. That is what left issue #1245's 19 aborts unexplained;
                 # the value was already on the entry, one level up.
+                #
+                # Keyed on the reason being present, NOT on outcome=="aborted":
+                # a V7-demoted fail (issue #1866) carries a cap `aborted_reason`
+                # while its outcome is `fail`, and gating this on the outcome
+                # string is exactly what left that reason unprinted — the defect
+                # stopped hiding behind a timeout only for the timeout to start
+                # hiding behind the fail.
                 "reason": (
                     (entry["runs"][0].get("aborted_reason") or "")
-                    if entry["outcome"] == "aborted" and entry.get("runs")
+                    if entry.get("runs") and entry["runs"][0].get("aborted_reason")
                     else ""
                 ),
                 # Judge-rule violations for _print_judge_warnings. The
