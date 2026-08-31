@@ -1,6 +1,6 @@
-import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
+import { readFile, writeFile, rm } from "node:fs/promises";
 import {
-  STORAGE_DIR,
+  ensureStorageDir,
   TOKEN_STORAGE_PATH,
   EXPIRY_BUFFER_MS,
 } from "./config.js";
@@ -24,7 +24,7 @@ function isTokenStore(value: unknown): value is TokenStore {
 }
 
 export async function saveTokens(tokens: TokenStore): Promise<void> {
-  await mkdir(STORAGE_DIR, { recursive: true });
+  await ensureStorageDir();
   await writeFile(TOKEN_STORAGE_PATH, JSON.stringify(tokens, null, 2), {
     mode: 0o600,
   });
