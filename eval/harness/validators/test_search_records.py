@@ -477,13 +477,26 @@ def test_capture_pending_item_not_terminal(before_state, after_state, test):
 
 # --- jurisdictionHints consumption -------------------------------------
 
+_GENERIC_PLACE_WORDS = frozenset({
+    "county", "counties", "parish", "province", "state", "states",
+    "district", "township", "borough", "city", "town", "united",
+    "kingdom", "republic", "region", "department", "canton", "shire",
+})
+
+
 def _place_tokens(place):
-    """Matchable words from a free-text place string (>2 chars, so "of"/"Co"
-    don't create false matches)."""
-    raw_tokens = re.split(r"[,\s]+", place or "")
+    """Matchable words from a free-text place string. Drops words of 3
+    characters or fewer ("of", "Co") and the generic administrative-unit
+    words every place name shares: "Yell County, Arkansas" and "Union
+    County, South Carolina" both contain "County", so keeping it lets a
+    run that never left the searched jurisdiction satisfy the assertion
+    (promise-emmanuel review, issue #1642 -- verified: the real
+    jimmie-jewel-neal failure sequence, reverting to three more South
+    Carolina searches with no Arkansas anywhere, passed this validator
+    before this fix)."""
     tokens = []
-    for t in raw_tokens:
-        if len(t) > 2:
+    for t in re.split(r"[,\s]+", place or ""):
+        if len(t) > 2 and t.lower() not in _GENERIC_PLACE_WORDS:
             tokens.append(t)
     return tokens
 
@@ -557,7 +570,8 @@ def test_jurisdiction_hints_followed(tool_calls, test):
         "record_search returned a jurisdictionHints candidate naming "
         + repr(top_place)
         + ", but neither of the next 2 record_search calls set "
-        "recordCountry/residencePlace/birthPlace/marriagePlace to it "
+        "recordSubdivision/residencePlace/marriagePlace/recordCountry/"
+        "birthPlace/anyPlace to it "
         "(issue #1642 Finding 1)."
     )
 

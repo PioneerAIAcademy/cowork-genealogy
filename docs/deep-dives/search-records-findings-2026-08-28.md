@@ -53,6 +53,22 @@ search -- which the validator's `place_fields` tuple was missing, so a run
 that had genuinely complied still failed. Both are fixed and the test now
 passes end-to-end (all 7 dimensions score 3).
 
+**Second correction (promise-emmanuel review):** the guard above still
+passed on the exact failure mode it exists to catch. `_place_tokens` kept
+any word over 2 characters as matchable, and the hint place ("Yell County,
+Arkansas") shares the word "County" with the reverted-to place ("Union
+County, South Carolina") -- so any subsequent US-place search satisfied the
+assertion regardless of whether the run ever tried Arkansas. Verified
+directly: the real jimmie-jewel-neal failure sequence (nil, then two more
+South-Carolina-scoped searches, no Arkansas anywhere) passed the validator
+before the fix and correctly fails it after. Fixed with a
+`_GENERIC_PLACE_WORDS` filter (county/parish/state/district/...); pinned
+regression test added using the fixture's own strings. Separately,
+SKILL.md's Step 4 rule and the validator's own assertion message still
+named `recordCountry`/`birthPlace` as the first-choice fields -- wrong for a
+within-country jurisdiction change, and unstocked by any fixture -- both
+corrected to `recordSubdivision`/`residencePlace`/`marriagePlace`.
+
 ### F2 — the skill asks permission instead of running a lever it already mandates (mercyokum, Finding 3)
 
 **Did:** `ut_search_records_nickname_bitsie`
@@ -266,6 +282,13 @@ calling one absent — check that year's entry in
 `references/census-field-availability.md`." Confirmed present; not touched
 this round.
 
+**Both of issue #1817's folded-in reference gaps** (promise-emmanuel review):
+`census-field-availability.md`'s 1840 line now reads "1840 additionally
+lists names and ages of Revolutionary War pensioners" (reworded elsewhere in
+this diff), and `collection-quirks.md` now carries the leading/middle-wildcard
+guidance for the Bipes/Bippes/Biepes/... case. Both confirmed present on
+disk; this findings doc previously listed them under "Still open" in error.
+
 ---
 
 ## Still open — not addressed this round
@@ -306,10 +329,6 @@ this round.
   last SKILL.md widening aimed at this exact family showed no measurable
   effect across the available run logs, and a third attempt without new
   evidence would repeat that.
-- **`census-field-availability.md:34`** ("1840 additionally names and ages
-  Revolutionary War pensioners") and **`collection-quirks.md:16-20`**
-  (S/L, F/T, n/u, U/V only — wants leading/middle wildcards for the
-  Bipes/Bippes/Biepes/... case) — both from issue #1817, not touched.
 
 ---
 

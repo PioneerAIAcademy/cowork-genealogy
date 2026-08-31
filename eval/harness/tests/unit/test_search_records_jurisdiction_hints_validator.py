@@ -97,6 +97,32 @@ def test_hint_followed_via_recordsubdivision_passes():
     check(calls, TAGGED)
 
 
+def test_hint_ignored_reverting_to_shared_generic_word_place_fails():
+    """promise-emmanuel review (issue #1642): the fixture's own strings --
+    hint "Yell County, Arkansas", reverted-to "Union County, South
+    Carolina" -- share the word "County". Before the _GENERIC_PLACE_WORDS
+    filter, _place_tokens kept "County" as a matchable token, so any
+    subsequent US place description (nearly all of which say "County")
+    satisfied the assertion regardless of whether the run ever actually
+    tried Arkansas. This is the real jimmie-jewel-neal failure sequence --
+    nil on Union County SC, then two more Union County SC searches, no
+    Arkansas anywhere -- and it PASSED the validator before this fix."""
+    calls = [
+        rs_call(
+            {"surname": "Neal", "recordSubdivision": "South Carolina",
+             "residencePlace": "Union County, South Carolina"},
+            hint_response("Yell County, Arkansas"),
+        ),
+        rs_call({"surname": "Neal", "givenName": "James",
+                  "residencePlace": "Union County, South Carolina"}),
+        rs_call({"surname": "Neal", "givenName": "William",
+                  "residencePlace": "Union County, South Carolina"}),
+    ]
+    with pytest.raises(AssertionError) as e:
+        check(calls, TAGGED)
+    assert "Yell County, Arkansas" in str(e.value)
+
+
 def test_hint_ignored_reverting_to_prior_jurisdiction_fails():
     """The real jimmie-jewel-neal miss: a jurisdictionHints candidate names
     Arkansas, and every subsequent call stays scoped to South Carolina --
