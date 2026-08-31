@@ -336,7 +336,7 @@ resolution patterns:
    name, so two records giving the "same" person different patronymics
    name different fathers — treat that as evidence of distinct people,
    not a surname variant to smooth over. (The Americanized/farm surname
-   an emigrant later adopts is separate from, and does not resolve, the patronymic. Iberian naming — Spanish and Portuguese two-surname systems — follows different rules and variation there does not carry the same implication.)
+   an emigrant later adopts is separate from, and does not resolve, the patronymic. Iberian naming — Spanish and Portuguese two-surname systems — follows different rules: the two surnames are reordered or one is dropped, and on emigration the maternal surname often becomes a middle name, so variation there does not carry the same implication.)
 
 **Do not confirm identity by the absence of an alternative.** Not
 finding a competing same-name candidate in a later record is not
