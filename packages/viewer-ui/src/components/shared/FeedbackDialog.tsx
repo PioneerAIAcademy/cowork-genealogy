@@ -310,6 +310,11 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
         </div>
 
         <div className={styles.body}>
+          <p className={styles.notice}>
+            Comments are public; the files you send are not. Don't include personal
+            details in your comments.
+          </p>
+
           <div className={styles.field}>
             <label className={styles.fieldLabel} htmlFor="feedback-email">
               Your email <span className={styles.optional}>(optional)</span>

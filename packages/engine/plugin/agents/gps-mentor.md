@@ -20,7 +20,7 @@ model: claude-sonnet-5
 tools:
   # Every MCP tool appears under ALL THREE server spellings — `genealogy` (the
   # harnesses, .mcp.json, hosted web), `remote-devices__Genealogy_Research`
-  # (cloud Cowork), and `Genealogy_Research` (on-computer Cowork). Matched
+  # (bridged), and `Genealogy_Research` (bare display_name). Matched
   # exactly with no prefix fallback, and the plugin cannot control which name
   # the host registers. See record-extractor.md for the full rationale;
   # guarded by tests/packaging/agent-tool-names.test.ts.
@@ -55,21 +55,6 @@ tools:
   - mcp__Genealogy_Research__external_links_search
   - mcp__Genealogy_Research__wiki_place_page
   - mcp__Genealogy_Research__wiki_search
-# This agent evaluates evidence already gathered; it does not gather new
-# evidence itself (see "You do NOT have search tools" below). The deny is
-# enforced even under `bypassPermissions`, which the hosted path runs
-# (issue #695), and must carry all three server spellings for the same
-# reason the allow-list above does.
-disallowedTools:
-  - mcp__genealogy__record_search
-  - mcp__remote-devices__Genealogy_Research__record_search
-  - mcp__Genealogy_Research__record_search
-  - mcp__genealogy__fulltext_search
-  - mcp__remote-devices__Genealogy_Research__fulltext_search
-  - mcp__Genealogy_Research__fulltext_search
-  - mcp__genealogy__person_read
-  - mcp__remote-devices__Genealogy_Research__person_read
-  - mcp__Genealogy_Research__person_read
 ---
 
 # GPS Mentor

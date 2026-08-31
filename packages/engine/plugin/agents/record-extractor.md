@@ -18,8 +18,8 @@ tools:
   # Every MCP tool appears under ALL THREE server spellings, because the name is
   # chosen by whoever registers the server and the VM-side plugin cannot control
   # it: `genealogy` (.mcp.json, both harnesses, hosted web);
-  # `remote-devices__Genealogy_Research` (Cowork in the cloud, via the bridge);
-  # `Genealogy_Research` (Cowork on this computer, no bridge). The latter two
+  # `remote-devices__Genealogy_Research` (Cowork, via the remote-device bridge);
+  # `Genealogy_Research` (Cowork, bare display_name spelling). The latter two
   # derive from manifest.json's display_name, spaces → underscores. Entries are
   # matched EXACTLY with no prefix fallback. Unrecognized entries are ignored as
   # long as one resolves; when ALL of them miss, the runtime refuses to spawn the
@@ -49,26 +49,6 @@ tools:
   - mcp__Genealogy_Research__research_log_append
   - mcp__Genealogy_Research__record_person_matches
   - mcp__Genealogy_Research__record_record_matches
-# `extraction_append` writes only `sources` + `assertions`. The broad
-# `research_append` is denied both by omission above and explicitly here:
-# a `disallowedTools` deny is enforced even under `bypassPermissions`,
-# which the hosted path runs (issue #695).
-#
-# The deny MUST carry all three spellings for the same reason the allow-list does.
-# A deny that names only `mcp__genealogy__research_append` silently fails to
-# bind wherever the server is registered under another name — which is exactly
-# the environment where it matters most, since the deny is the only thing
-# standing between this agent and the broad writer under bypassPermissions.
-disallowedTools:
-  - mcp__genealogy__research_append
-  - mcp__remote-devices__Genealogy_Research__research_append
-  - mcp__Genealogy_Research__research_append
-  - mcp__genealogy__tree_edit
-  - mcp__remote-devices__Genealogy_Research__tree_edit
-  - mcp__Genealogy_Research__tree_edit
-  - mcp__genealogy__materialize_facts
-  - mcp__remote-devices__Genealogy_Research__materialize_facts
-  - mcp__Genealogy_Research__materialize_facts
 ---
 
 # Record Extractor
@@ -831,10 +811,7 @@ copy first; check the echoed `resolvedPlaces`), validates once, and
 writes both files. **Never predict an id; never call `tree_edit` for the
 source; never write `research.json` or `tree.gedcomx.json` directly** —
 direct writes bypass validation, id allocation, and the `.bak` safety
-net. If a persistence tool shows as deferred, load it via ToolSearch
-first — search by **bare** tool name (`query: "+extraction_append"`),
-never by a hardcoded fully-qualified name, since the MCP server prefix
-differs per deployment.
+net.
 
 **Source reuse is tool-detected.** Always supply `sourceDescription` —
 the tool detects when this record already has a source (same

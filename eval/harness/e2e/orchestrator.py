@@ -202,14 +202,12 @@ def is_blocked_tree_tool(tool_name: str) -> bool:
 def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
     """Whether this is a main-thread call to a `SUBAGENT_ONLY_TOOLS` member.
 
-    Both members are a Task-spawned subagent's private tool, declared by NO
-    skill's `allowed-tools`: `extraction_append` lives only on
-    `agents/record-extractor.md` (the #942 case), and `image_read` only on
-    `agents/image-reader-opus.md` since `search-images` moved to
-    `@plugin:image-reader` (2026-07-17). So the only legitimate caller of either
-    is the subagent, whose PreToolUse firing carries `agent_id`; a call on the
-    main thread (no `agent_id`) is the router substituting for a failed spawn and
-    doing the work itself.
+    Both members are declared by NO skill's `allowed-tools`: `extraction_append`
+    lives only on `agents/record-extractor.md` (the #942 case), and `image_read`
+    is declared by no agent at all since `image-reader-opus` was retired (issue
+    #2013) — the deny is kept regardless, because it is what keeps inline base64
+    off the main thread. A call on the main thread (no `agent_id`) is the router
+    substituting for a failed spawn and doing the work itself.
 
     The policy binds in e2e for both because `agent_id` presence alone is a
     sufficient discriminator — which is all e2e can see, since its sub-skills run
@@ -433,6 +431,7 @@ def person_evidence_provenance_gap(
     *,
     tool_calls: list[dict[str, Any]],
     starting_person_ids: set[str],
+    research: dict[str, Any] | None = None,
 ) -> str | None:
     """The issue-#963 provenance gap for a pending `research_append` that links
     a brand-new, unscored tree person via `person_evidence`, or None if clean.
@@ -442,7 +441,17 @@ def person_evidence_provenance_gap(
     numbers this produces.
 
     Pure decision logic, extracted from `pretool_hook` so the clean, fail-open,
-    and gap paths are unit-testable without spinning up the SDK.
+    and gap paths are unit-testable without spinning up the SDK. `pretool_hook`
+    does not route through this function — it calls
+    `unguarded_new_person_evidence_links` directly so it can reuse the flagged
+    ids for the deny valve's key — so the two must be kept equivalent, which is
+    why `research` is threaded here too.
+
+    `research` is the run's workspace `research.json`, needed to join a pending
+    link through `assertion_id -> assertions[].id -> log_entry_id -> log[]` and
+    skip a link whose provenance lane cannot yield a persona from what the run retained. `None` means
+    "narrow nothing", i.e. today's un-narrowed behaviour — NOT "exempt
+    everything"; see `unguarded_new_person_evidence_links`.
 
     Scoring is read from `tool_calls` alone. There is deliberately no
     `pending_tool_uses` argument: `pretool_hook` runs from a spawned control-
@@ -467,7 +476,11 @@ def person_evidence_provenance_gap(
     """
     scored = same_person_scored_ids(tool_calls)
     unguarded = unguarded_new_person_evidence_links(
-        tool_name, tool_input, scored_ids=scored, starting_ids=starting_person_ids
+        tool_name,
+        tool_input,
+        scored_ids=scored,
+        starting_ids=starting_person_ids,
+        research=research,
     )
     if not unguarded:
         return None
@@ -490,7 +503,11 @@ def person_evidence_gap_reason(unguarded: list[str]) -> str:
     return (
         f"person_evidence link written for new tree person(s) {shown} with no "
         "prior same_person call: a brand-new identity should be scored before it "
-        "is asserted (research/SKILL.md doctrine; issue #963). "
+        # person-evidence/SKILL.md owns the identity decision; research/SKILL.md's
+        # "scores every cross-record link" is the orchestrator's paraphrase, and
+        # the narrower owning contract wins on conflict (lead ruling 2026-08-09).
+        # This string is what the AGENT reads, so the citation matters here too.
+        "is asserted (person-evidence/SKILL.md doctrine; issue #963). "
         # Issue #1231 prereq 2. The text above alone is unactionable — replayed
         # over the corpus it would have denied 100 of 103 runs that link a new
         # person, and the agent believes it DID call same_person. The cause is an
@@ -508,11 +525,37 @@ def person_evidence_gap_reason(unguarded: list[str]) -> str:
         "If this call was denied, the entire batch was rejected — including any "
         "ops in other sections — and must be re-issued after the same_person "
         "call. "
-        # The one real escape: scoring needs a record persona to compare
-        # against, and a non-record_search assertion has no record_persona_id.
+        # The old escape ("not record_search-sourced, so no record_persona_id")
+        # is gone: the check no longer flags a link whose provenance lane cannot
+        # yield a persona from what the run retained, so no flagged link is that case. What replaces
+        # it is the retrieval recipe, because the reason has to tell the agent
+        # HOW to get the persona it is being asked to score.
         #
+        # Branch on the LOG ENTRY'S TOOL, not on record_persona_id being null:
+        # a sidecar-backed search with a null persona already has its gedcomx in
+        # `results/<log_id>.json`, so branching on nullity would send the agent
+        # to record_read for a document it is holding.
+        "Get the record persona and score it: from the log entry's sidecar "
+        "(`results/<log_id>.json`) when the entry has a `results_ref`, or by "
+        "re-opening the record with `record_read({ recordId })` when the "
+        "assertion came from `record_read`. `primaryId1` is the persona for the "
+        "person THIS link is about: `record_persona_id` when it is set AND the "
+        "link is about the assertion's own `record_role` party, otherwise the "
+        "`persons[].id` matching that party's name — a relationship assertion "
+        "names two parties and gets a link for each, and reusing the first "
+        "party's persona for the second is how a near-zero score gets "
+        "manufactured and then explained away. "
+        # The narrower exit that survives. NOT the refuted escape: that one
+        # excused a REACHABLE persona. This one covers the only case the check
+        # still flags without one — provenance it could not resolve at all —
+        # which the predicate deliberately does not exempt, because exempting on
+        # an absent field would let an assertion written with no log_entry_id
+        # shed the requirement entirely.
+        "If the assertion or its log entry cannot be resolved at all, say so in "
+        "the link's `rationale` and proceed — the gap is still recorded; the "
+        "rationale is the record of why, not a waiver. "
         # There is deliberately NO escape for "the id is a locally-minted stub".
-        # person-evidence/SKILL.md says such an id returns a degenerate score to
+        # person-evidence/SKILL.md said such an id returns a degenerate score to
         # be treated as "no score available", but that guidance (2026-07-02)
         # predates the match-engine mint-hardening (2026-07-07) and is stale.
         # Probed live against the API (dev/probe-same-person-local-id.ts): with
@@ -521,10 +564,8 @@ def person_evidence_gap_reason(unguarded: list[str]) -> str:
         # minting a fresh id each call. FS scores document CONTENT, so a minted
         # person IS scorable, and telling the agent otherwise would hand it a
         # documented way to skip a call that works.
-        "If no score is obtainable — the assertion is not record_search-sourced, "
-        "so it has no record_persona_id to compare against — say so in the "
-        "link's `rationale` and proceed. A locally-minted tree id is NOT such a "
-        "case: it scores on document content and must be scored."
+        "A locally-minted tree id is NOT such a case: it scores on document "
+        "content and must be scored."
     )
 
 
@@ -1178,6 +1219,10 @@ async def _run_agent(
     # per-key counter cannot, since a batch differing by one op mints a new key.
     pe_deny_repeat_counts: dict[frozenset[str], int] = {}
     pe_denied_total = {"n": 0}
+    # One-shot latch for the "could not read research.json" warning below. The
+    # hook re-reads the document on every research_append, so without this a
+    # broken workspace would print the same line dozens of times per run.
+    pe_provenance_warned = {"n": 0}
 
     # docs/specs/guardrail-enforcement-spec.md §11, "Step 0" — every
     # tool_use_id's (agent_id, agent_type) as PreToolUse saw it, joined onto
@@ -1343,10 +1388,9 @@ async def _run_agent(
             # Per-tool recovery target (issue #1273 Item 1 asks for per-tool
             # guidance), mirroring each `_DENIAL_REASONS` entry, which
             # `blocked_context_calls` does not store — so a runlog reader can act on
-            # this line alone. NOTE: for image_read this is the transcription plugin
-            # @plugin:image-reader (the deny doctrine's recovery), deliberately NOT
-            # the tool's owner image-reader-opus — the interpret-e2e-result skill
-            # names the owner for the separate "whose spawn failed" diagnostic.
+            # this line alone. For image_read the recovery is the transcription
+            # plugin @plugin:image-reader, which is now also the only image reader
+            # (image-reader-opus retired, issue #2013).
             # The fallback covers a future third guarded tool.
             recovery = {
                 "extraction_append": "@plugin:record-extractor",
@@ -1509,16 +1553,63 @@ async def _run_agent(
         # research_append tool, so it's safe either way. Decision logic lives in
         # that helper so it's unit-testable without the SDK.
         if bare == "research_append" and starting_person_ids is not None:
-            # Scanned ONCE. The flagged ids are needed twice — for the reason
-            # text and for the deny valve's per-id-set key — so they are computed
-            # here rather than via person_evidence_provenance_gap, which would
-            # re-walk the whole tool_calls list to rebuild the same list.
+            # Scanned ONCE and reused. The flagged ids are needed twice — for
+            # the reason text and for the deny valve's per-id-set key — so they
+            # are computed here rather than via person_evidence_provenance_gap,
+            # which would re-walk the whole tool_calls list to rebuild them; and
+            # `pe_scored_ids` is that single scan, reused by the narrowing pass.
+            pe_scored_ids = same_person_scored_ids(tool_calls)
             unguarded_ids = unguarded_new_person_evidence_links(
                 tool_name,
                 input_data.get("tool_input") or {},
-                scored_ids=same_person_scored_ids(tool_calls),
+                scored_ids=pe_scored_ids,
                 starting_ids=starting_person_ids,
             )
+            if unguarded_ids:
+                # Narrow only once there is something to narrow. Most
+                # research_append calls write no person_evidence at all, and the
+                # un-narrowed pass is a walk over the pending ops while this is a
+                # file read — narrowing can only REMOVE ids, never add one, so
+                # running it second is identical and skips the read on the
+                # majority of calls. Only the workspace document can answer
+                # the question — `assertion_id -> assertions[].id ->
+                # log_entry_id -> log[].tool/results_ref`.
+                #
+                # On an unreadable/missing file, pass None = "narrow nothing",
+                # i.e. today's un-narrowed behaviour. Deliberately NOT "skip the
+                # check" (a guardrail that disables itself on an IO hiccup) and
+                # NOT "exempt everything" (the bypass the narrowing exists to
+                # reject). Warned once so the fallback is never silent.
+                #
+                # NOTE the workspace document is the state BEFORE this call
+                # lands, so an assertion created by this very batch is not in it
+                # and its link reads as unresolvable provenance — which flags,
+                # the safe direction. Measured: 17 landed calls across 9 runs
+                # write `assertions` and `person_evidence` ops together (66 ops).
+                # `replay_provenance` reads the run's FINAL document and so
+                # RESOLVES those, meaning hook and replay genuinely differ on
+                # this shape. Both docstrings say so; #1231 reads the replay's
+                # rate, so the divergence has to be visible, not discovered.
+                pe_research = read_research_json(workspace)
+                if pe_research is None:
+                    if not pe_provenance_warned["n"]:
+                        pe_provenance_warned["n"] = 1
+                        print(
+                            "  [warn] could not read research.json in the workspace — "
+                            "the issue-#963 same_person check runs UN-NARROWED for "
+                            "this run (no provenance join): it still flags, it just "
+                            "cannot skip links nothing could score.",
+                            file=sys.stderr,
+                            flush=True,
+                        )
+                else:
+                    unguarded_ids = unguarded_new_person_evidence_links(
+                        tool_name,
+                        input_data.get("tool_input") or {},
+                        scored_ids=pe_scored_ids,
+                        starting_ids=starting_person_ids,
+                        research=pe_research,
+                    )
             provenance_gap = person_evidence_gap_reason(unguarded_ids) if unguarded_ids else None
             if provenance_gap:
                 # Shaped to match find_unguarded_protected_writes' entries so

@@ -26,7 +26,8 @@ to code architecture.** Review topology, eval economics, team process, and what
 the team is *permitted* to do are all in scope.
 
 **Subtractions count, and are usually cheaper than additions.** Retiring a
-mechanism, dropping a guarantee, deleting a lane. Hunt them (§4).
+mechanism, dropping a guarantee, deleting a lane. Hunt them — see the
+subtraction hunt below.
 
 **You propose, then apply what is approved.** No branches, no PRs, no code
 changes, no eval runs, and **never the plan** — the person assigned the issue
@@ -74,8 +75,8 @@ therefore unavailable.
 
 ## How this run is scoped
 
-One invocation, weekly, after `/audit-board`: §0, all three evidence layers, the
-subtraction hunt, the proposals. It is the expensive pass and is meant to be.
+One invocation, weekly, after `/audit-board`: the carry-forward, all three
+evidence layers, the subtraction hunt, the proposals. It is the expensive pass and is meant to be.
 
 **Answering the queue is `/make-decisions`, which runs daily and stays cheap.**
 Three skills apply `needs-decision` every day, so a consumer that ran only weekly
@@ -92,7 +93,7 @@ Four verdicts, and only one of them closes a direction:
 | Verdict | Do this run |
 |---|---|
 | `deferred` | **Pull it into this run's ranking**, re-ranked against fresh ideas. It does not keep its old position — an idea that was third-best in a thin week is not automatically third-best this week |
-| `set aside` | Considered but **never researched**. Available to re-propose, under the higher burden in §6. Not a refusal |
+| `set aside` | Considered but **never researched**. Available to re-propose, under the higher burden in the ledger check below. Not a refusal |
 | `rejected` | **Researched and rejected, with reasoning. Do not propose it again, and do not re-derive it.** Read the reasoning; if you believe it is wrong, say so as a correction to that row with new evidence, which is a different act from re-proposing |
 | `accepted` | It is an issue now. Nothing to do unless it is evidence for something new |
 
@@ -105,11 +106,7 @@ without a decision. Then say which it is:
 - it keeps not being reached → that is a capacity finding about the review
   ceiling, not about the idea, and the lead should hear it as one.
 
-This is the whole reason the carry-forward exists. The failure it prevents is
-recorded in `docs/adrs/ADR-0009-refuted-agent-design-claims.md`: routing-as-a-tool
-was demoted to a P2 spike, and then nothing aged it visibly, so it sat untouched
-for months and was neither run nor dropped. A row with a date that grows is
-visible; an intention is not.
+A row with a date that grows is visible; an intention is not.
 
 ## 1. Layer 1 — the board as **symptom**, never as idea source
 
@@ -129,8 +126,7 @@ scheduling constraint someone hit repeatedly.
 *sentence*, not a repeated file: "measure this before graduating," "we need to
 decide X first," "this exists so we don't repeat #N." `/audit-board` merges
 those. This skill asks what mechanism is missing such that three people
-independently re-derived the same undone task. Its worked case is issues #911,
-#980 and #1231 — three issues, one calibration, nobody sequencing.
+independently re-derived the same undone task.
 
 ```sh
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 400 \
@@ -218,10 +214,10 @@ nothing:
 | `make e2e-agent-tools` | tools an agent declares and never calls — dead capability |
 | `make e2e-guardrail-shadow` | what a shadow guardrail would have denied |
 
-**Do not quote a violation *rate*.** `docs/architecture.md` §9.4 records that
-the detectors are uncalibrated and no denominator is trustworthy; `make
-e2e-corpus` deliberately prints counts and refuses a percentage. Quote counts,
-and read the report's concentration block before quoting any total.
+**Do not quote a violation *rate*** — the detectors are uncalibrated and no
+denominator is trustworthy, which is why `make e2e-corpus` prints counts and
+refuses a percentage. Quote counts, and read the report's concentration block
+before quoting any total.
 
 **The standing lists of known holes.**
 
@@ -230,15 +226,15 @@ and read the report's concentration block before quoting any total.
   label on the board, not a table in a file: `gh issue list --state open --label
   nothing-checks`. Read it asking *which of these are one mechanism*, not *which
   should we fix*: four issues that all say "no production telemetry exists in any
-  form" are one bet, not four issues. `docs/architecture.md` §9.4 keeps only the
-  three gaps that change how a correct change is made — read those too, then the
-  register for the rest.
+  form" are one bet, not four issues. `docs/architecture.md`'s "What nothing
+  checks" keeps only the gaps that change how a correct change is made — read
+  those too, then the register for the rest.
 - `gh issue list --state open --label needs-decision` — the open questions.
   `/make-decisions` answers them daily; read them here only for repeats. Two more
   sit in `docs/architecture.md` under "Open questions" and carry no label — read
   those too.
-- `docs/adrs/` — every decision, with what it costs. §3 below is how to read
-  these for *expiry* rather than for compliance.
+- `docs/adrs/` — every decision, with what it costs. The outside-the-repo layer
+  below is how to read these for *expiry* rather than for compliance.
 - `docs/specs/guardrail-enforcement-spec.md` § "Options set aside" — a second
   negative record, scoped to guardrails.
 - `docs/e2e-run-latency-findings.md` — the measured split between model
@@ -263,8 +259,8 @@ Four places to look, none of which the developer-lane commands above touch:
 - **Annotation cost per paid run.** `eval/harness/scripts/check_runlogs.py`
   rule 3 requires the `.ann.json` to carry a correction entry for **every
   dimension of every test** in the suite. That is genealogist hours, and it is
-  the binding cost of a skill edit — not the $8–12 of machine time everybody
-  quotes. Verify the current per-suite test count before repeating a number.
+  the binding cost of a skill edit — not the $8–12 of machine time. Verify the
+  current per-suite test count before repeating a number.
 - **Judge audits.** `docs/record-extraction-judge-audit.md`, and the
   `cluster:judge-overrides` issues, which are cases where the judge ignored an
   explicit rubric instruction. A grader that does not follow its own prompt is a
@@ -311,19 +307,16 @@ this working around, and does that limitation still exist?** Not "is this
 decision still good" — that is a compliance read, and it will always come back
 "yes."
 
-The worked example of the shape: agent frontmatter must spell every MCP tool
-name **three times**, once per registrar, because the three environments
-namespace the server differently and no single spelling resolves everywhere
-(`docs/adrs/ADR-0004-dual-spell-mcp-tool-names-in-agent-frontmatter.md`). Every
-guardrail we own inherits that constraint. If upstream has since made the
-namespacing addressable, a consolidated guardrail system gets dramatically
-cheaper — and **nothing inside this repo would ever reveal it**, because from in
-here the workaround simply works.
+The shape to look for: agent frontmatter must spell every MCP tool name **three
+times**, once per registrar, because the three environments namespace the server
+differently (`docs/adrs/ADR-0004-dual-spell-mcp-tool-names-in-agent-frontmatter.md`).
+Every guardrail we own inherits that constraint, and **nothing inside this repo
+can reveal that upstream has lifted it** — from in here the workaround simply
+works.
 
-Do the same for every constraint of that family: hook lifecycle (which
-`SessionStart` behaviour a `CLAUDE.md` note records as inverted from the
-upstream issue), tool-search deferral, per-subagent model and effort control,
-sandbox capabilities.
+Do the same for every constraint of that family: hook lifecycle (ADR-0005),
+tool-search deferral, per-subagent model and effort control, sandbox
+capabilities.
 
 **Never propose on "I think X shipped."** Find the changelog entry, the docs
 page or the release note, and cite it with its date. A proposal built on a
@@ -336,10 +329,10 @@ multi-agent decomposition, prompt-size budgets, grader calibration. The
 question is not "what is popular" — it is "has a class of work we do by hand
 become a solved commodity."
 
-**3. Published work.** ADR-0009 records that a claim of novelty was falsified by
-a paper published a month earlier and found in one search. Before proposing a
-mechanism as new, look — and where a published result contradicts an internal
-one, say which you believe and why.
+**3. Published work.** Before proposing a mechanism as new, search for it — a
+claim of novelty here has already been falsified by a paper found in one search.
+Where a published result contradicts an internal one, say which you believe and
+why.
 
 ## 4. Hunt subtractions
 
@@ -354,18 +347,18 @@ Four shapes, each greppable:
   other. `docs/adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md`
   is the worked precedent — its first option is *eliminate the copy*, and only
   then generate or lint it.
-- **A warn-only check nobody reads.** `docs/architecture.md` §9.2 names three
-  lints that never fail, and their warnings compete for GitHub's per-step
-  annotation cap against a standing backlog in the dozens — so the edge a PR
-  *adds* is not distinguishable from the ones already there. A check whose output
-  nobody can read is cost with no signal — either it blocks or it goes.
+- **A warn-only check nobody reads.** `docs/architecture.md`'s lint layer names
+  the lints that never fail; their warnings compete for GitHub's per-step
+  annotation cap against a standing backlog in the dozens, so a PR's own warning
+  is not distinguishable from the ones already there. A check whose output nobody
+  can read is cost with no signal — either it blocks or it goes.
 - **A guarantee nothing consumes.** A held invariant, a preserved field, a
   supported path with no caller. Dropping it can retire a whole validation
   surface.
 - **A lane.** A whole category of work — a review stage, a doc tier, a test
   tier — whose absence would cost less than it does.
 
-A subtraction clears the bar in §5 exactly like an addition: it names the class
+A subtraction clears the bar below exactly like an addition: it names the class
 of work it eliminates and what we would observe. It does **not** need to name a
 replacement.
 
@@ -408,16 +401,8 @@ demoted, dismissed and spiked ideas scattered across the repo:** read them, and
 **do not treat a row as a veto.**
 
 Most of ADR-0009's rows correct *arithmetic, scope or attribution* rather than
-refuting a direction. Three from the ledger itself:
-
-| Row | What was actually refuted |
-|---|---|
-| "the routing table … is 431 lines of prose" | **Arithmetic.** 431 was the whole file; the table is 17 rows |
-| "the single largest unanchored rule we own" | **Nothing.** Never measured at all |
-| routing-as-a-tool as the P0 | **Magnitude and attribution** — the router did invoke the skill in all five failures. Demoted to a P2 spike that nobody ever ran |
-
-Those were quick passes under time pressure. A wrong number is not a refuted
-idea.
+refuting a direction — a wrong count, a claim that was never measured at all, a
+magnitude that was overstated. **A wrong number is not a refuted idea.**
 
 **For any proposal that touches the ledger, state explicitly which was refuted
 — the DIRECTION, the MAGNITUDE, or the ARITHMETIC — and re-size it honestly.**
@@ -432,13 +417,6 @@ table, and `docs/specs/guardrail-enforcement-spec.md` § "Options set aside".
 They record arguments that failed, which is not the same as directions that were
 researched and closed. Only ADR-0010's `rejected` rows are the latter.
 
-### On the first run
-
-**Make a deliberate pass over the ledger and over every idea that was demoted,
-dismissed or spiked but never actually investigated.** That backlog of
-under-considered bets is likely this skill's highest-yield output, and it will
-never be as rich again. Spend the run on it.
-
 ## 7. What every proposal carries, pre-verified
 
 Six fields per proposal, all verified **before** the lead reads it:
@@ -446,11 +424,11 @@ Six fields per proposal, all verified **before** the lead reads it:
 | Field | Rule |
 |---|---|
 | **Claim** | One sentence. What changes about the system |
-| **Constraint removed / class eliminated** | §5's bar. Name the constraint, or the class of work that stops being generated |
+| **Constraint removed / class eliminated** | The bar above. Name the constraint, or the class of work that stops being generated |
 | **What we would observe** | The difference visible if it worked. Not necessarily a number |
 | **Issues it closes or prevents** | Counted against the **real** board, with numbers. "Prevents" needs the shape it prevents, not a guess at volume |
 | **The cheapest probe that could kill it in under a day** | With a cost. A probe that cannot come back negative is not a probe |
-| **Ledger check** | Which row it touches, and whether the direction, the magnitude or the arithmetic was refuted — or "no ledger row". A `rejected` row means it does not get proposed at all (§6) |
+| **Ledger check** | Which row it touches, and whether the direction, the magnitude or the arithmetic was refuted — or "no ledger row". A `rejected` row means it does not get proposed at all |
 
 **Verify counts, dates and the ledger check by running the real commands.**
 Not the design — the design is stage 2's job, and pre-verifying it is how a
@@ -473,8 +451,8 @@ The three that go stale fastest here, and all three have bitten:
 - **Costs.** Per-run figures are recomputed by `make e2e-corpus`; the numbers
   frozen into docs are older than the corpus.
 - **Upstream capabilities.** A platform fact more than a few weeks old is a
-  guess. This one is the whole point of §3 — get it wrong and the proposal is
-  worse than nothing.
+  guess. This is the whole point of the outside-the-repo layer — get it wrong
+  and the proposal is worse than nothing.
 
 If you could not verify something, say so rather than repeating it with
 confidence. A ledger row is itself a claim written on a particular day, not a
@@ -492,8 +470,8 @@ ideas and two filler ones to reach five is strictly worse than producing four,
 because the filler consumes the same scarce read.
 
 **A run that returns zero is a successful run.** Say so plainly, say what you
-swept, and say which layer came back empty — a zero from §3 means something
-different from a zero from §2, and the lead needs to know which.
+swept, and name which layer came back empty — a zero from the outside sweep
+means something different from a zero from the internal evidence.
 
 Rank by expected value, not by confidence: a 30%-confidence bet that eliminates
 a class beats a certain increment, and saying "30%" is what makes that
@@ -549,9 +527,9 @@ Never batch these. He decides one at a time, and each one gets a row.
 | Verdict | Means | Row |
 |---|---|---|
 | **accepted** | goes to stage 2 | written now; the `Issue` cell filled in when stage 3 files it, and `What was learned` filled in from the research |
-| **deferred** | he did not reach it, or reached it and held it | first-proposed date; §0 carries it forward and **re-ranks** it |
+| **deferred** | he did not reach it, or reached it and held it | first-proposed date; the next run carries it forward and **re-ranks** it |
 | **set aside** | considered at proposal stage, **not researched** | one clause plus a **direction** / **magnitude** / **arithmetic** tag. A record, not a bar |
-| **rejected** | **researched in stage 2 and rejected** | the reasoning, in full. **This one is a bar** — §6 stops the next run proposing it again |
+| **rejected** | **researched in stage 2 and rejected** | the reasoning, in full. **This one is a bar** — the ledger check stops the next run proposing it again |
 
 `set aside` and `rejected` are not interchangeable, and the difference is whether
 a deep dive happened. Never write `rejected` for something nobody researched.
@@ -582,8 +560,8 @@ multi-week structural projects, not weekly items.
 ### Writing the ledger
 
 **Every proposal gets a row, including the ones he never reached** — those are
-`deferred`. That is what makes §0's carry-forward complete rather than a
-best-effort recollection of a long session.
+`deferred`. That is what makes the next run's carry-forward complete rather than
+a best-effort recollection of a long session.
 
 Write them yourself, into the table in
 `docs/adrs/ADR-0010-record-structural-bets-in-a-ledger.md`, once he has decided.
@@ -606,17 +584,17 @@ Four rules:
 
 0. **Carried forward** — ideas from previous runs, with first-proposed dates and
    how many runs each has survived. Anything carried more than twice leads, as
-   its own finding (§0). Skip the heading on a first run and say it is the first.
+   its own finding.
 1. **Headline** — how many cleared the bar, and the one thing you would spend
    his first read on. If the answer is zero, this section is the report: what
    you swept, and which layer came back empty.
-2. **The proposals** — ranked by expected value, each with the six fields from
-   §7 and your confidence. Most consequential first. Do not pad to five.
+2. **The proposals** — ranked by expected value, each with the six required
+   fields and your confidence. Most consequential first. Do not pad to five.
 3. **Subtractions** — kept as their own list even though they clear the same
    bar, because they are the ones a reader skims past. Say "none found" if none.
-4. **Genealogist lane** — what §2's genealogist pass found, or explicitly that
-   it found nothing this run.
-5. **Outside evidence** — what §3's sweep turned up, each with a dated primary
+4. **Genealogist lane** — what the genealogist pass found, or explicitly that it
+   found nothing this run.
+5. **Outside evidence** — what the outside sweep turned up, each with a dated primary
    source. If a platform constraint was checked and still holds, say so: that is
    a real result and it stops the next run re-checking it.
 
