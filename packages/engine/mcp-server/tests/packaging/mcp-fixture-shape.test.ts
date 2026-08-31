@@ -166,6 +166,12 @@ function indexFile(path: string): void {
       node.initializer.type
     ) {
       // `export const fooTool = async (…): Promise<X> => …`
+      // Records the collision too. This branch writes the SAME bare-name index as
+      // the function-declaration branch above, and guarding only that one left a
+      // `const` arrow able to shadow a handler and silently redirect the whole
+      // comparison: a planted `export const wikiReadTool = async (): Promise<Bogus>`
+      // let all three `wiki_read` fixtures hold an impossible shape, green.
+      if (returnTypes.has(node.name.text)) duplicateFunctionNames.add(node.name.text);
       returnTypes.set(node.name.text, { node: node.initializer.type, file });
     }
     node.forEachChild(visit);
