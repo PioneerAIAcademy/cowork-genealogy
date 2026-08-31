@@ -670,8 +670,8 @@ def test_survey_surfaces_already_attached_fan_facts(before_state, text_response,
     arrival. Three SKILL.md wording attempts (see the mined test
     `ut_research_plan_bpx`) moved the failure rate from "every sample" to
     roughly half -- expected, since the skill runs without `temperature=0`,
-    so no wording can pin any behavior at exactly 100%. Measured directly
-    (PR #2004 review, EdmondOware): 6 valid re-runs of `ut_research_plan_bpx`
+    so no wording can pin any behavior at exactly 100%. Measured directly,
+    per EdmondOware's PR #2004 review ask: 6 valid re-runs of `ut_research_plan_bpx`
     against the final wording (2 more runs were discarded as environment
     aborts -- a connection failure and an `sdk_stream_silence` stall, neither
     a skill behavior) came back 3 pass / 3 fail, exactly 50%. Not marked
