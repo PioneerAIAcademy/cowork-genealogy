@@ -18,8 +18,8 @@ tools:
   # Every MCP tool appears under ALL THREE server spellings, because the name is
   # chosen by whoever registers the server and the VM-side plugin cannot control
   # it: `genealogy` (.mcp.json, both harnesses, hosted web);
-  # `remote-devices__Genealogy_Research` (Cowork in the cloud, via the bridge);
-  # `Genealogy_Research` (Cowork on this computer, no bridge). The latter two
+  # `remote-devices__Genealogy_Research` (Cowork, via the remote-device bridge);
+  # `Genealogy_Research` (Cowork, bare display_name spelling). The latter two
   # derive from manifest.json's display_name, spaces → underscores. Entries are
   # matched EXACTLY with no prefix fallback. Unrecognized entries are ignored as
   # long as one resolves; when ALL of them miss, the runtime refuses to spawn the

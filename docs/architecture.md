@@ -212,7 +212,7 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 
 | Component | Count | Where | What it is for |
 |---|---|---|---|
-| **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | **47** | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
+| **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
 | **Plugin agents** — `packages/engine/plugin/agents/*.md` | **5** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
@@ -773,26 +773,31 @@ in an agent's `tools:` — and in a `disallowedTools:`, if one ever comes back �
 
 ```yaml
 - mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
-- mcp__remote-devices__Genealogy_Research__record_read   # Cowork in the cloud (bridged)
-- mcp__Genealogy_Research__record_read                   # Cowork on the user's own computer
+- mcp__remote-devices__Genealogy_Research__record_read   # Cowork via the remote-device bridge
+- mcp__Genealogy_Research__record_read                   # Cowork, bare display_name spelling
 ```
 
 The MCP server's name belongs to whoever registers it, and the plugin — which
 ships into the VM — cannot control that choice. `.mcp.json`, both harnesses, and
-the hosted control plane register it under `genealogy`. Cowork uses
-`manifest.json`'s `display_name` (`Genealogy Research` → `Genealogy_Research`)
-**both** times, but namespaces it under `remote-devices` only when the task runs
-in the cloud and has to reach the host through the device bridge. A task running
-on the user's own computer reaches the `.mcpb` directly and gets the bare
-`display_name` segment. **Run mode is a per-task setting the plugin cannot see**,
-so all three must be present.
+the hosted control plane register it under `genealogy`. Both Cowork forms derive
+from `manifest.json`'s `display_name` (`Genealogy Research` → `Genealogy_Research`);
+only the bridged form is namespaced under `remote-devices`. **Which spelling a
+Cowork session exposes has been observed to move:** three censuses found every
+tool under the bridged `mcp__remote-devices__Genealogy_Research__` spelling with
+the bare `mcp__Genealogy_Research__` spelling absent — macOS and Windows on
+2026-08-15, and a second Windows session via #1732 on 2026-08-19 — yet #1341
+recorded the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the bridged
+spelling unrecognized. The registrar moved between those dates (or the configs
+differ in a way nobody has identified — same conclusion). **Run mode is a
+per-task setting the plugin cannot see, and the exposed spelling is not stable
+over time**, so all three must be present.
 
 Entries are matched **exactly** — no prefix fallback, no inherit-on-miss. When
 *every* entry misses, the runtime refuses to spawn the agent at all ("would be
 spawned with zero tools — refusing"). That is how #650/#698 broke all three
 then-existing agents in Cowork **while CI stayed green**: they were qualified
 against the harness's arbitrary dict key rather than the product's name. The
-on-computer registrar repeated the shape one registrar later — the on-computer spelling was missing,
+bare `display_name` registration repeated the shape one registrar later — that spelling was missing,
 `record-extractor` was refused outright with all 16 of its entries named
 unrecognized, and the lint agreed with the omission because it derived its expected
 prefixes from the two registrars we knew about. (`gps-mentor` is the exception: it
@@ -847,8 +852,8 @@ warn-only and does not block a build; the suppression mechanism it wants is
   — it would hand a read-only agent shell access to the host.
 - **Never hardcode a qualified name in a `ToolSearch` query.** Search by bare
   name (`query: "+research_append"`), which matches whatever prefix the session
-  exposes. `select:mcp__genealogy__…` resolves to nothing in either Cowork mode —
-  behind the bridge or on the user's own computer.
+  exposes. `select:mcp__genealogy__…` resolves to nothing under either Cowork
+  spelling — bridged or bare.
 
 Built-in tools (`Read`) stay **bare** in agent frontmatter. Skill
 `allowed-tools` stays **bare** everywhere.
@@ -1371,7 +1376,7 @@ Four environments run the engine, and they load the plugin differently.
 | Environment | Skills | Agents | Hooks | Permission mode | MCP server |
 |---|---|---|---|---|---|
 | **Cowork** (cloud) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` via the remote-device bridge |
-| **Cowork** (on this computer) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` **directly**, no bridge — `mcp__Genealogy_Research__*` |
+| **Cowork** (on this computer) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` — exposed spelling has **moved**: bare `mcp__Genealogy_Research__*` live in #1341, but the 2026-08-15 censuses saw the bridged `mcp__remote-devices__Genealogy_Research__*` here too (§5.2) |
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — no plugin hooks, and **no write-lockdown rule at all** | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
@@ -1574,7 +1579,8 @@ changes how a correct change is made:
    call landed, off the `tool_result` rather than the agent's prose. It is a
    live, billed probe rather than a check — run it when the CLI or the SDK moves.
    And it answers the question only for the **hosted** options it builds; Cowork
-   in either run mode still has no instrument but a live session.
+   still has no instrument but a live session, and only for the spelling that
+   session exposes.
 2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
    not rebuild the `genealogy-agent` E2B image production runs the agent on, and
    both guards over it are advisory. Production can run weeks-old skills, agents,

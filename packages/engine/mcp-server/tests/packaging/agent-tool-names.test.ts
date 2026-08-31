@@ -13,15 +13,20 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 //   - `.mcp.json`, the unit harness (skill_runner's `mcp_servers={"genealogy": …}`),
 //     the e2e orchestrator, and the hosted web control plane all register it
 //     under the key `genealogy`      → mcp__genealogy__<tool>
-//   - Cowork IN THE CLOUD reaches the host-installed .mcpb through a
-//     remote-device bridge, which namespaces the manifest's display_name
+//   - Cowork can reach the host-installed .mcpb through a remote-device
+//     bridge, which namespaces the manifest's display_name
 //                                    → mcp__remote-devices__Genealogy_Research__<tool>
-//   - Cowork ON THE USER'S OWN COMPUTER reaches the same .mcpb directly, so the
-//     display_name segment appears with no bridge in front of it
-//                                    → mcp__Genealogy_Research__<tool>
+//   - Cowork can instead expose the bare display_name with no bridge in front
+//     of it                          → mcp__Genealogy_Research__<tool>
 //
-// Run mode is a per-task setting nothing in the plugin can see, so both Cowork
-// spellings are required. Missing the on-computer one is issue #1341:
+// Which of the two Cowork spellings a session exposes has been observed to MOVE:
+// three censuses found only the bridged spelling with the bare one absent (macOS
+// and Windows on 2026-08-15, and a second Windows session via #1732 on
+// 2026-08-19) — yet #1341 recorded the bare spelling live on 2026-08-04/05,
+// refusing record-extractor with the bridged spelling among its unrecognized
+// entries. Run mode is a per-task setting nothing
+// in the plugin can see, and the exposed spelling is not stable over time, so
+// both Cowork spellings are required. Missing the bare one was issue #1341:
 // record-extractor was refused there, naming all 16 of its declared entries as
 // unrecognized, and this test stayed green because it derived its expected
 // prefixes from the two registrars we knew about.
@@ -62,7 +67,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 // Both Cowork spellings derive from manifest.display_name, so renaming the
 // extension would silently re-break production. That is what this test catches.
 // What it CANNOT catch is whether a granted tool actually binds at runtime
-// (#1084/#1085) — only a live Cowork session can, in the run mode being tested.
+// (#1084/#1085) — only a live Cowork session can, and only for the spelling it exposes.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const mcpRoot = join(here, "..", "..");
@@ -144,12 +149,14 @@ function sanitizeServerSegment(name: string): string {
 
 const HARNESS_PREFIX = "mcp__genealogy__";
 const BRIDGE_PREFIX = `mcp__remote-devices__${sanitizeServerSegment(manifest.display_name)}__`;
-// Cowork running ON THE USER'S COMPUTER reaches the .mcpb directly, with no bridge,
-// so the display_name segment appears with no `remote-devices` in front of it. Both
-// live Cowork spellings derive from display_name; only the bridged one is namespaced.
-// Missing this third registrar is issue #1341: record-extractor was refused there,
-// with all 16 of its declared entries named unrecognized. gps-mentor is the
-// exception — its bare `Read` always resolves, so it would spawn holding that alone.
+// Cowork can instead expose the bare display_name with no `remote-devices` bridge
+// in front of it. Both live Cowork spellings derive from display_name; only the
+// bridged one is namespaced. Which one a session exposes has been observed to move
+// (bare live in #1341, absent in three later censuses — macOS and Windows on
+// 2026-08-15, and a Windows session via #1732). Missing this
+// third registrar was issue #1341: record-extractor was refused there, with all 16
+// of its declared entries named unrecognized. gps-mentor is the exception — its
+// bare `Read` always resolves, so it would spawn holding that alone.
 const LOCAL_PREFIX = `mcp__${sanitizeServerSegment(manifest.display_name)}__`;
 
 // Longest-first so that a prefix which is itself the prefix of another can never
@@ -244,9 +251,9 @@ describe("plugin agent tool names", () => {
     expect(BRIDGE_PREFIX).toBe("mcp__remote-devices__Genealogy_Research__");
   });
 
-  it("derives the on-computer prefix from manifest.display_name", () => {
+  it("derives the bare display_name prefix from manifest.display_name", () => {
     // Same pin for the un-bridged spelling: display_name with no bridge segment,
-    // which is what an on-computer Cowork task exposes (#1341).
+    // which is what Cowork exposed live in #1341.
     expect(LOCAL_PREFIX).toBe("mcp__Genealogy_Research__");
   });
 
@@ -353,12 +360,12 @@ describe("plugin agent tool names", () => {
               );
               expect(
                 entries,
-                `missing Cowork on-computer spelling for ${bare} — ` +
+                `missing Cowork bare-display_name spelling for ${bare} — ` +
                   (key === "disallowedTools"
-                    ? `this deny binds NOTHING when the task runs on the user's own computer, ` +
+                    ? `this deny binds NOTHING wherever Cowork exposes the bare spelling, ` +
                       `and unlike a missing grant it fails OPEN`
-                    : `an agent whose entries all miss is refused outright when the task runs ` +
-                      `on the user's own computer`),
+                    : `an agent whose entries all miss is refused outright wherever ` +
+                      `Cowork exposes the bare spelling`),
               ).toContain(`${LOCAL_PREFIX}${bare}`);
             }
           });
@@ -423,8 +430,8 @@ describe("plugin agent/skill bodies", () => {
 // tool under all three server spellings. Nothing checked the CONTENT: adding a
 // tool to `tools:`, or dropping one from `disallowedTools:`, was green. That is
 // the change most worth seeing, because no CI job can verify what a grant
-// actually binds to at runtime (only a live Cowork session can, in the run mode
-// being tested), and a missing deny fails OPEN — record-extractor silently
+// actually binds to at runtime (only a live Cowork session can, and only for the
+// spelling it exposes), and a missing deny fails OPEN — record-extractor silently
 // regains the broad `research_append` rather than erroring.
 //
 // This does not judge whether a permission is correct. It makes a change to one

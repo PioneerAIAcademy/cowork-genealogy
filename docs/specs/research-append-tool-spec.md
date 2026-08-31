@@ -596,8 +596,8 @@ register.
   on the same project folder share one `.mcpb` process is **unverified**; if they
   do not, the lock does not bind across them. The change is strictly better than
   today either way.
-- Under contention the queued call now **waits** instead of losing its write. In
-  Cowork's cloud mode a bridged MCP call is killed at 60s (a limit imposed by the
+- Under contention the queued call now **waits** instead of losing its write. A
+  bridged Cowork MCP call is killed at 60s (a limit imposed by the
   bridge, not settable from our side), so a call queued behind a slow composite
   append can be killed there — a **visible** failure replacing a silent loss. Do
   not add a timeout or retry to work around it.
@@ -905,10 +905,11 @@ denial mechanism this section depends on is real in Cowork.
 deployment-dependent: `mcp__genealogy__*` is the arbitrary `mcp_servers` dict
 key the harnesses, `.mcp.json`, and the hosted web control plane chose, while
 Cowork exposes the host-installed `.mcpb` under `manifest.json`'s `display_name`
-either way, but namespaces it through a remote-device *bridge*
-(`mcp__remote-devices__Genealogy_Research__*`) only when the task runs in the cloud;
-a task running on the user's own computer reaches it directly as
-`mcp__Genealogy_Research__*`. No single spelling resolves everywhere, so every agent
+either way — namespaced through a remote-device *bridge*
+(`mcp__remote-devices__Genealogy_Research__*`) or bare
+(`mcp__Genealogy_Research__*`), and the spelling a Cowork session exposes has been
+observed to move (bare live in #1341 on 2026-08-04/05, absent in the 2026-08-15
+censuses; see ADR-0004). No single spelling resolves everywhere, so every agent
 lists each MCP tool under **all three** in `tools:` (and would in a
 `disallowedTools:`, if one ever returned). It matters on the `tools:` side: an
 entry naming no spelling the session recognizes grants nothing, and when *every*
@@ -917,7 +918,7 @@ spellings for the weaker reason that a deny naming only an unresolvable spelling
 denies nothing. Enforced by `tests/packaging/agent-tool-names.test.ts`.
 
 With that in place, this section's guarantee holds in every environment. It did **not**
-hold for an on-computer Cowork task until the third spelling was added: the deny
+hold until the third spelling was added: the deny
 named no spelling that session recognized, so it denied nothing.
 `CLAUDE.md`'s superseded claim that a single qualified spelling makes an agent
 "behave identically" across them has been corrected accordingly. The one residual
