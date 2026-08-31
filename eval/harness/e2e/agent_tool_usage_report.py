@@ -20,9 +20,25 @@ for it, which is what makes the finding actionable (Dallan, PR #1085 review):
 - **not mentioned in the body** — granted but never asked for; a candidate to
   drop from the agent's `tools:`.
 - **mentioned in the body** — the body tells the agent to call it, yet it never
-  does (`gps-mentor`'s two wiki tools). Either the body is not forcing enough, or
-  the grant did not bind — and *that* split is exactly what #1084's live probe
-  resolves; this offline report cannot.
+  does (`gps-mentor`'s two wiki tools). Three readings, not two, and this offline
+  report separates none of them:
+  1. the body is not forcing enough — the agent read the instruction and did not
+     comply;
+  2. the grant did not bind — partly closed on 2026-08-30 by
+     `make probe-agent-binding`, but only for the **hosted** option set
+     (ADR-0004 § Enforcement). This corpus comes from `e2e/orchestrator.py`, a
+     different one, so #1084 stays open for the path measured here;
+  3. **the instruction sits in a branch the orchestrator no longer enters.**
+     Check the routing table before reading a never-called tool as
+     non-compliance. Worked example: three of the five `wiki_place_page` sites
+     #1344 cites live in `gps-mentor.md`'s `### pre-exhaustiveness` rubric, and
+     `/research` deleted the rows that invoked that gate on 2026-07-07 (commit
+     `1bc84e58e`, PR #597) — so those three cannot fire, whatever the agent does.
+     Reading 3 does **not** dispose of #1344: the surviving mode-agnostic site
+     still applies under `proof-critique`, and its condition demonstrably obtains
+     (17 of the 30 focus-attributed `proof-critique` verdicts raise untried
+     record types or repository diversity) with the tool still uncalled. It
+     narrows which sites are live; it does not explain the zero.
 
 Adds NO instrumentation to a run (same posture as `corpus_report.py` /
 `guardrail_shadow_report.py` / `latency_report.py`): pure analysis over
@@ -382,7 +398,10 @@ def format_report(
             mentioned = set(d.mentioned_in_body)
             for tool in d.declared_never_used:
                 if tool in mentioned:
-                    action = "mentioned in body → clarify the body, or a binding gap (#1084)"
+                    action = (
+                        "mentioned in body → non-compliance, a binding gap "
+                        "(#1084), or an unrouted branch — check which"
+                    )
                 else:
                     action = "not in body → candidate to drop from tools:"
                 lines.append(f"    {tool:22} {action}")
@@ -411,11 +430,19 @@ def format_report(
             "Limits (this is a report, not a gate):",
             "  - A never-called tool is a candidate, not a defect. `not in body` "
             "→ likely drop it",
-            "    from `tools:`; `mentioned in body` → clarify the body or check "
-            "binding (#1084).",
+            "    from `tools:`; `mentioned in body` → one of three, and this "
+            "report separates none:",
+            "    non-compliance, a binding gap (#1084), or an instruction in a "
+            "branch the",
+            "    orchestrator no longer routes to — read the skill's routing "
+            "table before",
+            "    concluding non-compliance (worked example in the module "
+            "docstring).",
             "    The body scan is a whole-word name match — it cannot tell a "
             "genuine call site",
-            "    from a mere mention, only presence from absence.",
+            "    from a mere mention, nor a mode-agnostic instruction from one "
+            "confined to a",
+            "    focus mode; only presence from absence.",
             "  - Capture coverage is partial (see the coverage line) — absence of "
             "a call is",
             "    sometimes absence of a capture, not proof the tool was never "
@@ -439,6 +466,12 @@ def format_report(
 
 
 def main(argv: list[str] | None = None) -> int:
+    # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
+    # and dies on the arrows and box glyphs this module prints; the team it is
+    # written for is on Windows. Guarded by tests/unit/test_encoding_lint.py.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(
         description=(
             "Declared-but-never-called tools per plugin agent, over committed "

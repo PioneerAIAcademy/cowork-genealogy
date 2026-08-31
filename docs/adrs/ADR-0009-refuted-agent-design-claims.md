@@ -9,15 +9,18 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09
-- **Last updated:** 2026-08-30 (the compliance-rate row's anachronism clause
-  withdrawn; constraint 6's fire-rate figure annotated with the deny-mode run
-  that met it. Previously 2026-08-09, promoted from
-  `docs/agentic-system-critique.md` §9, which was retired; constraint 6 added)
+- **Last updated:** 2026-08-31 (added the issue #1344 section — four claims about
+  `gps-mentor`'s never-called wiki tools, including the two tidy explanations a
+  reader is likeliest to reach for). Previously 2026-08-30 (the compliance-rate
+  row's anachronism clause withdrawn; constraint 6's fire-rate figure annotated
+  with the deny-mode run that met it), and 2026-08-09, promoted from
+  `docs/agentic-system-critique.md` §9, which was retired; constraint 6 added
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
 - **Applies to:** `.claude/agents/task-reviewer.md`, `.claude/skills/review-ready/SKILL.md`, `docs/specs/guardrail-enforcement-spec.md`, `docs/architecture.md` — *linted; keep current*
-- **Related:** ADR-0002, ADR-0003, ADR-0006; issues #1006, #1012, #1015, #702, #941
+- **Related:** ADR-0002, ADR-0003, ADR-0004, ADR-0006; issues #1006, #1012,
+  #1015, #702, #941, #1084, #1085, #1253, #1344
 
 ## Context
 
@@ -95,6 +98,29 @@ failure rather than into a vacuum.
 | The record-identity exemption "exempts the stub's introducing links and still catches bagley's cross-record links" | A project's *first* pe batch has an empty pre-call pe → assertion → `record_id` join — bagley's idx 86 is a 30-op first batch across three persons, so the gate denies all 30 links, introducing ones included; a tree-source-ref basis instead exempts all 30; and the violation actually commits at idx 85 (`materialize_facts` attaching unscored refs to existing persons) before any pe append exists to gate. "A `same_person` result on record" also named no mechanism — nothing persists `same_person` output, and `research-append-tool-spec.md` records that `match_score` is caller-fabricable. The P0 is now spec-first with named constraints |
 | "bagley: `materialize_facts` at idx 85, **all 13 links at idx 86**" | Idx 86 is a 30-op batch across three persons carrying 11 of I1's 13 links; the other 2 land at idx 141, from a fourth record. The idx-85 → 86 ordering argument stands; the count did not |
 | 20-fixture pass "≈$150–165" | The doc's own median gives $145.80 — the low bound is ≈$146 |
+
+### Claims refuted while working issue #1344, 2026-08-31
+
+`gps-mentor` declares `wiki_search` and `wiki_place_page` and has never called
+either. All figures below are over the **159** committed e2e result JSONs at
+`312d3c670`, re-derived twice independently. Two of the four rows are claims this
+ADR's own reader is most likely to reach for next, because they are the tidy
+explanations; both are wrong.
+
+| claim | Why it was wrong |
+|---|---|
+| The wiki pair is unused because its mandatory sites sit in `gps-mentor.md`'s `### pre-exhaustiveness` rubric, and `/research` retired that gate | The premise is true — commit `1bc84e58e` (PR #597, 2026-07-07 11:48) deleted the rows that invoked the `pre-exhaustiveness` and `conclusion-readiness` gates, and both rubrics are still in the agent body. The **inference** is refuted three ways. (1) Wiki calls per run went **up** after the retirement: gate-era runs that wrote a pre-exhaustiveness verdict 1.00 (10 runs), gate-era runs that wrote none 1.10 (10), post-removal **5.25** (100). (2) The surviving mode-agnostic site (`gps-mentor.md`'s `## Tool usage guidance`) applies under `proof-critique`, and its condition demonstrably obtains — **17 of the 30** focus-attributed `proof-critique` verdicts raise untried record types or repository diversity ("Standard 14 — topical breadth"; "no probate, notarial, or passport records were consulted") with the tool still uncalled. (3) See the control row below. The retirement narrows *which* sites are live; it does not explain the zero |
+| Confinement of a mandatory instruction to an unrouted focus mode explains a zero call count | `place_search` / `place_distance` are the control, and it was not run. Their only mandatory site is `### conclusion-readiness` — retired by the *same* commit — plus a permissive tool-usage entry, i.e. the identical structure. They were called **28** and **16** times. Structure does not predict the zero; only the wiki pair is at zero |
+| The committed corpus can measure whether `gps-mentor` complies with its `pre-exhaustiveness` instructions | It cannot, and the finding is unfalsifiable against it. All **91** gps-mentor invocations (84 `subagents[]` captures + 7 reachable only via `tool_calls[].agent_id`, over 68 runs) are dated **2026-07-20 → 2026-08-23**; the first run carrying a non-empty `subagents` list is 2026-07-30. **Zero** invocations exist from the window when the gate was still routed. Of the 23 `pre-exhaustiveness` writes (11 runs), 10 runs have **no `subagents` key at all** — not `subagents: []`, a distinct bucket the report separates — and the eleventh (`katalin-horak-son/run-2026-08-03_21-26-35`) wrote it from the **main thread** at `tool_calls[94]`, `agent_type: null`, three calls *before* the `Agent` delegation at `[97]` |
+| #1344's unblock condition — "#1253 must land first; nothing can measure this until an eval path can invoke the agent" | The offline half needed no new harness path: the corpus already carries 91 invocations, which is what refuted the rows above. And the live half does not need #1253's *unit*-harness agent path either — `on-demand` is an orchestrated trigger in `/research`'s "When to invoke" table and routes to light `pre-exhaustiveness`, so an e2e fixture whose user turn asks for a review of a question with incomplete plan items reaches the rubric today. Fixture work, not harness work |
+
+Two claims that survive, so they are not re-litigated: the grant is **not** the
+problem (9 of `gps-mentor`'s 11 declared tools are called in this path, from the
+same frontmatter block that spells the wiki pair under all three prefixes), and
+`gps-mentor` **does** ignore explicit unconditional instructions — 9 of 16
+attributed `Read` calls open `research.json` against "Do not open
+`research.json`", and only 26 of 82 tool-using captures call `project_context`
+against "Open every invocation with `project_context`".
 
 ## The `same_person` write-boundary gate: six constraints any design must satisfy
 

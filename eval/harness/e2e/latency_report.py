@@ -411,6 +411,12 @@ def _load(path: Path) -> LatencyBreakdown:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
+    # and dies on the arrows and box glyphs this module prints; the team it is
+    # written for is on Windows. Guarded by tests/unit/test_encoding_lint.py.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description="e2e latency breakdown (Phase 0).")
     ap.add_argument("files", nargs="*", help="explicit result JSON paths")
     ap.add_argument("--test", help="latest committed run for this fixture slug")
