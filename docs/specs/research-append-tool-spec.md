@@ -648,21 +648,41 @@ flagged but not audited (`guardrail-enforcement-spec.md` §10).
 table above, `research_append` also surfaces non-blocking advisories on the
 successful response's `validation.warnings`. One is the `person_evidence`
 **match_score** advisory (the other is §5.1's sources-without-assertions nudge,
-which shipped first): a link claiming `confidence: "confident"` that
-records no numeric `match_score` is warned, not rejected. `same_person` returns
-the 0–1 identity score and `match_score` is the field meant to carry it, yet ~94%
-of historical `person_evidence` writes leave it unset — identity asserted, never
-scored. A hard reject on day one would break ~94% of runs and the hosted path at
-once, so this ships warn-only and is measured on live runs first; graduating it to
-a reject is a separate decision (needs `@DallanQ`), the same shadow-then-graduate
-discipline as `guardrail-enforcement-spec.md` §7. It is gated on `confidence:
-"confident"` — the stateless narrowing (a write cannot see the tree, so it cannot
-tell a brand-new person from a seeded one, but the confidence claim it *can* see)
-and the narrowest claim a stateless write can check. It is not an escape hatch:
-a link that genuinely cannot be scored keeps `match_score: null` and the confidence
-its correlation analysis supports (person-evidence/SKILL.md §3). Downgrading
-confidence to silence this warning also slips the link past the confident-gated
-epistemic reject above. `personEvidenceScoreWarnings` in `research-append.ts`.
+which shipped first): a link that records no numeric `match_score` **where a
+record persona was reachable for its assertion** is warned, not rejected.
+`same_person` returns the 0–1 identity score and `match_score` is the field meant
+to carry it, yet ~94% of historical `person_evidence` writes leave it unset —
+identity asserted, never scored. A hard reject on day one would break ~94% of runs
+and the hosted path at once, so this ships warn-only and is measured on live runs
+first; graduating it to a reject is a separate decision (needs `@DallanQ`), the
+same shadow-then-graduate discipline as `guardrail-enforcement-spec.md` §7 — and
+it must answer ADR-0009 constraint 2, since `match_score` is caller-fabricable and
+a rejection therefore buys a number rather than a call.
+
+**The gate is reachability, at any confidence.** It was `confidence:
+"confident"` on the reasoning that a stateless write cannot see the
+tree but can see the confidence claim. Two things were wrong with that. It said
+nothing about a `probable` link, which is where a skipped score actually hides;
+and knowing nothing about provenance it fired on image- and full-text-sourced
+links nothing could ever score, while its escape text — "if no comparable
+FamilySearch persona exists to score against, leave `match_score` null" — invited
+the agent to read a null `record_persona_id` as that case. It is not: `same_person`
+takes two GedcomX documents plus a focus id inside each and never reads that
+field. Reachability *is* knowable statelessly — the join is
+`assertion_id → assertions[].id → log_entry_id → log[].tool/results_ref`, all
+inside the document being written — so the narrowing costs nothing in
+statelessness and buys precision. `personaReachable` in `research-append.ts`
+mirrors `_persona_reachable` in `eval/harness/harness/skill_invocation.py`;
+`guardrail-enforcement-spec.md` §4 owns the criterion.
+
+It is not an escape hatch: a link that genuinely cannot be scored keeps
+`match_score: null` and the confidence its correlation analysis supports
+(person-evidence/SKILL.md §3), and the warning stays silent there. Two nulls are
+legitimate and the warning names both — no reachable persona, and a candidate
+minted from the very persona being scored, which is circular. Downgrading
+confidence no longer silences this warning, though it still slips the link past
+the confident-gated epistemic reject above. `personEvidenceScoreWarnings` in
+`research-append.ts`.
 
 ### 5.1 Sources-without-assertions nudge (warning, not a precondition)
 
@@ -980,9 +1000,11 @@ why its message names no write tool.
 
 `match_score` also remains fabricable by `person-evidence` itself. It is not
 derivable at the tool boundary: `same_person`'s tree side is a hand-curated
-"record-sized" slice, and a local stub returns a degenerate near-zero score the
-skill must interpret as *no score*. The *value* therefore cannot be validated
-here; what can be is its **presence**, which is the warn-only advisory
+"record-sized" slice, and a *thin* subject — a stub carrying little more than a
+name — scores near zero against everything, since the match engine scores on
+document content. (That is a content signal, not an id artifact: an ARK-less or
+locally-minted person is scorable, measured at `0.9999484` against a `0.999967`
+control.) The *value* therefore cannot be validated here; what can be is its **presence**, which is the warn-only advisory
 `personEvidenceScoreWarnings` (alongside `personEvidenceInvariants`) decided in
 issue #1006 (2026-08-01). That decision
 supersedes an earlier reading of this paragraph as "the lever is eval/rubric,
