@@ -321,7 +321,7 @@ cheaper — and **nothing inside this repo would ever reveal it**, because from 
 here the workaround simply works.
 
 Do the same for every constraint of that family: hook lifecycle (which
-`SessionStart` behaviour a `CLAUDE.md` note records as inverted from the
+`SessionStart` behaviour ADR-0005 records as inverted from the
 upstream issue), tool-search deferral, per-subagent model and effort control,
 sandbox capabilities.
 

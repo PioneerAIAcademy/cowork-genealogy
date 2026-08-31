@@ -1027,8 +1027,8 @@ Each individual run of a test resolves to one of four outcomes:
 |---------|------|
 | `pass` | All deterministic validators passed AND (for positive tests) every judge dimension scored `3` (pass) AND `output.activated` matches the test type: `true` for positive with the skill under test in `output.skills_invoked`; `false` for negative AND the `negative.correct_skill` array match rule (Section 6) is satisfied |
 | `partial` | All validators passed AND any judge dimension scored `2` (partial) but none scored `1` (fail). For positive tests only — negative tests don't have rubric dimensions, so partial doesn't apply |
-| `fail` | Any validator failed, OR any judge dimension scored `1` (fail), OR a positive test invoked the wrong skill, OR a negative test invoked the skill under test |
-| `aborted` | Execution exceeded a budget guardrail (Section 15). The judge is not run. Not a fail — flagged separately so it doesn't count as a quality regression |
+| `fail` | Any validator failed, OR any judge dimension scored `1` (fail), OR a positive test invoked the wrong skill, OR a negative test invoked the skill under test. **A validator failure also dominates a deterministic-cap abort** (`max_wall_clock_seconds`, `max_turns`, `max_tool_calls`): a run that failed a validator and then hit one of those caps is `fail`, not `aborted` — the defect is real and must not be filed under a timeout |
+| `aborted` | Execution exceeded a budget guardrail (Section 15) **and no validator failed** (a concurrent validator failure demotes the three deterministic caps to `fail`, per the `fail` row). The judge is not run. Not a fail — flagged separately so it doesn't count as a quality regression. `aborted_reason` is still recorded on the run even when the outcome is demoted to `fail` |
 
 `expected_outcome: xfail` (Section 5.1) reframes the outcome to match pytest convention: an xfail-marked test that resolves to `fail` is reported as `xfail` (expected failure — does not count as a regression on the dashboard), and one that resolves to `pass` is reported as `xpass` (unexpected pass — investigate whether the bug is fixed and the marker can be removed).
 
@@ -1063,7 +1063,7 @@ The harness executes the test N times (one for N=1, three for N=3, etc.) and sto
 **Why these tie-break rules:**
 
 - **3-way splits collapse down.** When N=3 produces three different outcomes, there is no genuine signal of correctness — the skill is unstable on this test. Collapsing to `fail` matches how engineers actually treat flapping tests: assume the worst case and investigate. The `flaky: true` flag (always set in this case) preserves the underlying instability signal for anyone reading the dashboard.
-- **`aborted` dominates rather than being averaged out.** An abort means the skill hit a hard limit (max_turns, max_tool_calls, etc.) — failing to converge is itself a failure mode worth flagging, not infrastructure noise to discount. If real infrastructure noise becomes a problem (rate limit hits, network blips), the right fix is a new `aborted_reason` category that aggregates separately, not relaxing this rule.
+- **`aborted` dominates rather than being averaged out.** An abort means the skill hit a hard limit (max_turns, max_tool_calls, etc.) — failing to converge is itself a failure mode worth flagging, not infrastructure noise to discount. If real infrastructure noise becomes a problem (rate limit hits, network blips), the right fix is a new `aborted_reason` category that aggregates separately, not relaxing this rule. This aggregation operates on the per-run outcomes *after* the validator-dominates-cap-abort demotion in the `fail` row above: a run that failed a validator under a deterministic cap is already `fail` here, so it never lands in the `aborted` bucket, and the two computations agree by construction.
 
 **`flaky` is a boolean flag, not an outcome.** It's true when the per-run outcomes are not unanimous. It composes orthogonally with `outcome`:
 
