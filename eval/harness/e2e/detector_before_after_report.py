@@ -41,8 +41,10 @@ from harness.skill_invocation import (
     DEDICATED_AGENT_NAMES,
     _iter_ops,
     find_effects_without_invocation,
+    find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
     owning_skills,
+    same_person_scored_ids,
     strip_agent_namespace,
 )
 
@@ -328,10 +330,110 @@ def _replay_person_evidence_arm(paths: list[Path]) -> tuple[list[Divergence], in
     return out, skipped
 
 
+# --- same-person-provenance: find_person_evidence_missing_same_person's §8
+# --- provenance narrowing (issue #1429) --------------------------------------
+
+
+def _same_person_provenance_old(
+    tool_calls: list[dict[str, Any]],
+    research: dict[str, Any],
+    tree: dict[str, Any],
+    starting_tree: dict[str, Any] | None,
+) -> list[str]:
+    """Pre-fix replica: the detector with NO provenance narrowing — every
+    `person_evidence` link on a brand-new person counts, whatever produced the
+    assertion behind it.
+
+    Kept local rather than imported, because the live function no longer
+    behaves this way. Everything else mirrors the live detector exactly (the
+    seed-tree scoping, the no-baseline "treat every person as new" convention,
+    and `same_person_scored_ids`' success gate), so the old-vs-new diff stays
+    isolated to the one thing this change is: which links are scoreable.
+    `test_same_person_provenance_replica_never_drifts_from_live_across_the_corpus`
+    pins that isolation."""
+    persons = tree.get("persons") if isinstance(tree.get("persons"), list) else []
+    starting_persons = (
+        (starting_tree or {}).get("persons")
+        if isinstance((starting_tree or {}).get("persons"), list)
+        else []
+    )
+    starting_ids = {p.get("id") for p in starting_persons if isinstance(p, dict)}
+    new_person_ids = {
+        p.get("id") for p in persons if isinstance(p, dict) and p.get("id") not in starting_ids
+    }
+    person_evidence = (
+        research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
+    )
+    linked = {
+        pe.get("person_id")
+        for pe in person_evidence
+        if isinstance(pe, dict) and pe.get("person_id") in new_person_ids
+    }
+    if not linked:
+        return []
+    scored = same_person_scored_ids(tool_calls)
+    # Same message text as the live detector, so old and new are directly
+    # comparable — a replica that returned bare ids could never be diffed
+    # against the real thing, only counted.
+    return [
+        f"tree person '{pid}' is new this run and has a person_evidence link, but 'same_person' "
+        "was never called for it anywhere in the run — the identity was asserted, never scored"
+        for pid in sorted(pid for pid in linked if pid not in scored)
+    ]
+
+
+def _same_person_provenance_new(
+    tool_calls: list[dict[str, Any]],
+    research: dict[str, Any],
+    tree: dict[str, Any],
+    starting_tree: dict[str, Any] | None,
+) -> list[str]:
+    """Real, current detector."""
+    return find_person_evidence_missing_same_person(
+        tool_calls, research, tree, starting_tree=starting_tree
+    )
+
+
+def _replay_same_person_provenance(paths: list[Path]) -> tuple[list[Divergence], int]:
+    """Returns (divergences, n_skipped_no_fixture_starting_tree).
+
+    Reports the violation LISTS, not a bool. Most of this correction's effect is
+    runs whose count merely shrinks — a bool would name only the handful that
+    stop firing entirely and hide the largest reductions."""
+    out: list[Divergence] = []
+    skipped = 0
+    for path in paths:
+        final_tree_path = path.with_name(path.name.replace(".json", ".final-tree.gedcomx.json"))
+        final_research_path = path.with_name(path.name.replace(".json", ".final-research.json"))
+        if not final_tree_path.is_file() or not final_research_path.is_file():
+            continue  # this run produced no final state at all -- not this detector's input
+        starting_tree = _fixture_starting_tree(path.parent.name)
+        if starting_tree is None:
+            skipped += 1
+            continue
+        final_tree = json.loads(final_tree_path.read_text(encoding="utf-8"))
+        final_research = json.loads(final_research_path.read_text(encoding="utf-8"))
+        tool_calls = json.loads(path.read_text(encoding="utf-8")).get("tool_calls") or []
+        old = _same_person_provenance_old(tool_calls, final_research, final_tree, starting_tree)
+        new = _same_person_provenance_new(tool_calls, final_research, final_tree, starting_tree)
+        if len(old) != len(new):
+            out.append(
+                Divergence(
+                    run_file=str(path.relative_to(REPO_ROOT)),
+                    fixture=path.parent.name,
+                    old_result=len(old),
+                    new_result=len(new),
+                    note="no longer fires" if not new else "fewer persons flagged",
+                )
+            )
+    return out, skipped
+
+
 DETECTORS: dict[str, Callable[[list[Path]], Any]] = {
     "lane-check": _replay_lane_check,
     "person-evidence-arm": _replay_person_evidence_arm,
     "proof-conclusion-arm": _replay_proof_conclusion_arm,
+    "same-person-provenance": _replay_same_person_provenance,
 }
 
 
@@ -376,6 +478,11 @@ def main(argv: list[str] | None = None) -> int:
         print(format_divergences(args.detector, divergences))
     elif args.detector == "person-evidence-arm":
         divergences, skipped = _replay_person_evidence_arm(paths)
+        if skipped:
+            print(f"Skipped {skipped} run(s): no matching fixture starting-tree.gedcomx.json.")
+        print(format_divergences(args.detector, divergences))
+    elif args.detector == "same-person-provenance":
+        divergences, skipped = _replay_same_person_provenance(paths)
         if skipped:
             print(f"Skipped {skipped} run(s): no matching fixture starting-tree.gedcomx.json.")
         print(format_divergences(args.detector, divergences))

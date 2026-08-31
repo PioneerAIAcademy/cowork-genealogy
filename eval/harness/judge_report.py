@@ -370,9 +370,11 @@ def format_footer(reports: list[SkillReport]) -> str:
             "time, which is the ambiguity this report exists to surface rather than "
             "resolve.",
             "",
-            "Not computed here: rubric-critic's 'Flaky / high-variance dimension' is out "
-            "of reach for an offline single-log reader — runs_per_test is pinned to 1, so "
-            "there is no within-test variance to measure.",
+            "Not computed here: rubric-critic's 'Flaky / high-variance dimension'. "
+            "runs_per_test is pinned to 1, so the flaky flag is dead by construction, "
+            "not healthy: a silent flakiness column means this report is blind to it, "
+            "never that the suite is stable. Re-run a suspect test with "
+            "run_tests.py --test <id> to see whether it flaps, then fix it.",
         ]
     )
 

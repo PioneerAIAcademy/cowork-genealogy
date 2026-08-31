@@ -739,6 +739,44 @@ def test_recompute_recovers_violations_a_stored_only_read_counts_as_zero(tmp_pat
     assert rt.regressed == []
 
 
+_UNSCOREABLE_RESEARCH = {
+    "assertions": [{"id": "a_001", "record_persona_id": None, "log_entry_id": "log_001"}],
+    "log": [{"id": "log_001", "tool": "image_transcribe", "results_ref": None}],
+    "person_evidence": [{"id": "pe_001", "assertion_id": "a_001", "person_id": "I1"}],
+}
+
+
+def test_recompute_reports_the_unscoreable_by_design_bucket(tmp_path: Path):
+    """Issue #1429. The §8 narrowing exempts links whose provenance lane cannot
+    yield a record persona from what the run retained; the lead asked for that population to be
+    LABELLED rather than silently dropped, so it can be watched if it grows and
+    so the revisit trigger has something concrete to fire on."""
+    runs, fixtures = tmp_path / "runs", tmp_path / "fixtures"
+    run = _run_with_sidecars(runs, "myfix", _UNSCOREABLE_RESEARCH, {"persons": [{"id": "I1"}]})
+    (fixtures / "myfix").mkdir(parents=True)
+    _write(fixtures / "myfix", "starting-tree.gedcomx.json", {"persons": []})
+
+    rt = recompute_tally([run], fixtures_root=fixtures)
+    assert rt.unscoreable == 1
+    # Counted, never a violation -- it must not reach an arm.
+    assert rt.arms.get("same_person (per person)", 0) == 0
+    assert "unscoreable by design (links)" in format_recompute(Counter(), rt)
+
+
+def test_stored_report_calls_the_bucket_unknown_not_zero(tmp_path: Path):
+    """A stored run carries no such field, and an unknown is never a zero --
+    the same rule `axes_from_runlog` follows for `not_checked`."""
+    line = format_report(
+        Counter({"pass": 1}),
+        Counter({"fail": 1}),
+        Counter({"fail": 1}),
+        n_runs=1,
+        arms=Counter({"same_person (per person)": 1}),
+        per_fixture=Counter({"myfix": 1}),
+    )
+    assert "unscoreable by design: unknown for stored runs" in line
+
+
 def test_recompute_surfaces_a_run_where_stored_exceeds_recomputed(tmp_path: Path):
     """The mary-mcandrew-son case (#1340): a run recorded a violation today's
     detector clears. It must be NAMED as a detector correction, not absorbed into

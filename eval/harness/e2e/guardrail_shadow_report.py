@@ -427,15 +427,15 @@ def load_run_inputs(path: Path, *, fixtures_root: Path = E2E_FIXTURES) -> RunInp
     faithful: the orchestrator writes them from the same post-run reads the live
     detectors saw.
 
-    Serves `replay_post_hoc`. **`replay_provenance` deliberately does not use it**,
-    though the plan for this change said it would. Two reasons found on contact:
-    that function needs only the run log and the seed — routing it through a
-    four-input loader would parse ~19 MB of final-state sidecars it never reads,
-    twice over, since `--replay` now runs both replays — and its skip message
-    carries the exception type (`unreadable run log (JSONDecodeError)`) plus a
-    stderr note, which this loader does not preserve. Merging them would trade a
-    real diagnostic for a cosmetic de-duplication. They are two loaders because
-    they load two different things.
+    Serves `replay_post_hoc`. **`replay_provenance` deliberately does not use it.**
+    It now reads one final-state sidecar (`final-research.json`, for the §8
+    provenance join) but still not the other, and routing it through a
+    four-input loader would parse every `final-tree` it never touches, twice
+    over, since `--replay` runs both replays. Its skip message also carries the
+    exception type (`unreadable run log (JSONDecodeError)`) plus a stderr note,
+    which this loader does not preserve, and its missing-sidecar path is a
+    *counter* rather than a skip. They are two loaders because they load two
+    different things.
 
     The near-identical copies in `e2e/corpus_report.py` (`recompute_tally`) and
     `e2e/detector_before_after_report.py` are left alone for a separate reason:
@@ -624,6 +624,17 @@ class ProvenanceReplay:
     skipped: list[str] = field(default_factory=list)
     runs_scanned: int = 0
     runs_linking: int = 0
+    #: Runs measured with NO provenance join, because no committed
+    #: `run-<ts>.final-research.json` could be read. Those runs are replayed
+    #: un-narrowed (today's behaviour) rather than skipped, so they still
+    #: contribute — but the count is printed, because a replay that silently
+    #: measured a different rule on part of its corpus is exactly the shape
+    #: this module refuses elsewhere. 0 on today's corpus.
+    runs_without_provenance: int = 0
+    #: Links the narrowing skipped — the *unscoreable by design* population,
+    #: printed as a number beside the rate so the exemption is never a silent
+    #: subtraction from it.
+    exempted_links: int = 0
 
 
 def _links_any_person_evidence(tool: str, args: dict[str, Any] | None) -> bool:
@@ -673,6 +684,24 @@ def replay_provenance(
     doesn't. Read any rate off an up-to-date `main` with in-flight fixture PRs
     merged, or it is biased at exactly the moment it is used.
 
+    **The provenance join reads the run's FINAL research.json**, since the
+    narrowed rule (spec §8) skips a link whose provenance lane cannot yield a
+    persona from what the run retained and only the project document can answer that. This is loaded with
+    the module's own `_load_json` on that one sidecar rather than through
+    `load_run_inputs`, for the reasons that loader documents. A run with no
+    readable sidecar is replayed with `research=None` — un-narrowed, today's
+    behaviour — and counted in `runs_without_provenance`, NOT skipped: every
+    `replay_provenance` unit test builds a run log with no sidecar, so skipping
+    would turn the whole suite into vacuous passes.
+
+    That join introduces one asymmetry worth stating, because it runs opposite to
+    the lower-bound caveat above: the document is the run's FINAL state, so an
+    assertion written AFTER the link that cites it is visible to the replay and
+    was not on disk when the hook ran. The replay therefore under-flags the hook
+    on that shape. It is measured, not hypothetical — 17 landed `research_append`
+    calls across 9 runs write `assertions` and `person_evidence` ops together,
+    covering 66 ops.
+
     A run whose fixture has no committed `starting-tree.gedcomx.json` is NAMED in
     `skipped` and excluded from both counts, never silently dropped — with no
     baseline every person reads as new, which would manufacture exactly the
@@ -706,6 +735,11 @@ def replay_provenance(
         persons = seed.get("persons") if isinstance(seed.get("persons"), list) else []
         starting = {p["id"] for p in persons if isinstance(p, dict) and isinstance(p.get("id"), str)}
         tool_calls = data.get("tool_calls") or []
+        # The provenance join. Absent sidecar => replay un-narrowed (None) and
+        # count it, rather than skip: see this function's docstring.
+        research = _load_json(path.with_name(f"{path.stem}.final-research.json"))
+        if research is None:
+            out.runs_without_provenance += 1
 
         out.runs_scanned += 1
         try:
@@ -734,11 +768,26 @@ def replay_provenance(
             if not _links_any_person_evidence(tool, args):
                 continue
             links = True
+            scored_so_far = same_person_scored_ids(tool_calls[:i])
             unguarded = unguarded_new_person_evidence_links(
                 tool,
                 args,
-                scored_ids=same_person_scored_ids(tool_calls[:i]),
+                scored_ids=scored_so_far,
                 starting_ids=starting,
+                research=research,
+            )
+            # What the narrowing skipped on this call: the ids the UN-narrowed
+            # predicate would have flagged, minus the ones it still does. Counted
+            # so the exemption is a number beside the rate rather than a silent
+            # subtraction from it.
+            out.exempted_links += max(
+                0,
+                len(
+                    unguarded_new_person_evidence_links(
+                        tool, args, scored_ids=scored_so_far, starting_ids=starting
+                    )
+                )
+                - len(unguarded),
             )
             for pid in unguarded:
                 out.violations.append(
@@ -772,6 +821,13 @@ def format_provenance_replay(replay: ProvenanceReplay) -> str:
         f"{affected_runs} of {replay.runs_linking} run(s) that link a person have "
         f"≥1 gap ({len(replay.violations)} link(s), {affected_fixtures} fixture(s)).",
         "  A lower bound: the live hook may not see a same-turn same_person; the replay always does.",
+        f"  {replay.exempted_links} link(s) NOT counted: their provenance lane cannot "
+        "yield a persona from what the run retained (spec §8).",
+        # Both numbers print unconditionally, including at 0. A count that appears
+        # only when non-zero reads identically to one nobody computed, which is
+        # the inference this module refuses everywhere else.
+        f"  {replay.runs_without_provenance} run(s) had no readable final-research.json "
+        "and were replayed UN-NARROWED (no provenance join).",
     ]
     if replay.skipped:
         lines.append(f"  Skipped {len(replay.skipped)} run(s) with no committed seed tree:")

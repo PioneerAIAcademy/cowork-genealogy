@@ -378,6 +378,68 @@ def _same_person_call(pid1="p_9", pid2="I1"):
     return {"tool": "mcp__genealogy__same_person", "args": {"primaryId1": pid1, "primaryId2": pid2}}
 
 
+def _write_final_research(run_path, tool, *, results_ref=None):
+    """The provenance sidecar beside a replay run log (issue #1429)."""
+    run_path.with_name(run_path.stem + ".final-research.json").write_text(
+        json.dumps(
+            {
+                "assertions": [
+                    {"id": "a_001", "record_persona_id": None, "log_entry_id": "log_001"}
+                ],
+                "log": [{"id": "log_001", "tool": tool, "results_ref": results_ref}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def _pe_write_with_assertion(person_id="I1", assertion_id="a_001"):
+    return {
+        "tool": "mcp__genealogy__research_append",
+        "args": {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {"person_id": person_id, "assertion_id": assertion_id},
+        },
+    }
+
+
+def test_replay_provenance_narrows_on_an_unscoreable_assertion(tmp_path):
+    """The replay must apply the same join as the live hook, or the free replay
+    stops measuring the rule that ships."""
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write_with_assertion()])
+    _write_final_research(p, "image_transcribe")
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert rep.violations == []
+    assert rep.runs_linking == 1  # still counts toward the denominator
+    assert rep.runs_without_provenance == 0
+
+
+def test_replay_provenance_still_fires_on_a_record_read_assertion(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write_with_assertion()])
+    _write_final_research(p, "record_read")
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert len(rep.violations) == 1
+    assert "I1" in rep.violations[0]["detail"]
+
+
+def test_replay_provenance_counts_a_run_with_no_provenance_sidecar(tmp_path):
+    """No committed final-research.json => replay UN-NARROWED and count it,
+    never skip it. Every other `replay_provenance` test in this file builds a
+    run log with no sidecar, so a skip would turn the whole suite into vacuous
+    passes — and a silent fallback would mean the replay measured a different
+    rule on part of its corpus without saying so."""
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write_with_assertion()])
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert len(rep.violations) == 1  # un-narrowed: still flagged
+    assert rep.runs_without_provenance == 1
+    assert rep.skipped == []
+    assert "UN-NARROWED" in format_provenance_replay(rep)
+
+
 def test_replay_provenance_flags_unscored_new_person(tmp_path):
     fixtures = _write_fixture(tmp_path, "fx", ["KN19-Q19"]).parent
     p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write("I1")])
