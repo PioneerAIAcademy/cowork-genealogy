@@ -10,25 +10,20 @@ allowed-tools:
 
 # Merge recent issues
 
-`/audit-board` is the twice-weekly whole-pool pass and it **owns merge doctrine**.
-This skill owns *selection and cadence*: it looks only at what was filed in the
-last couple of days, while the reason for each filing is still recoverable and
-before a duplicate gets ranked, promoted and assigned.
+`/audit-board` is the weekly whole-pool pass and it **owns merge doctrine**. This
+skill owns *selection and cadence*: it looks only at what was filed in the last
+couple of days, while the reason for each filing is still recoverable and before
+a duplicate gets ranked, promoted and assigned.
 
-**Run this daily; do not run `/audit-board` daily instead.** They catch different
-things. A new issue landing on top of an existing one is the case that decays
-fastest — the filer's context is gone within days and the duplicate gets ranked,
-promoted and assigned in the meantime — and it is cheap to check, because one side
-of every comparison is fresh. Two *old* issues colliding, obsolescence, clusters,
-eval-slot queues and board hygiene are what `/audit-board` is for; none of them
-change materially in a day, and all of them need every open body in one head,
-which is why that pass is expensive and this one is not.
+**Run this daily; do not run `/audit-board` daily instead.** A new issue landing
+on top of an existing one is the case that decays fastest and the cheapest to
+check. Two *old* issues colliding, obsolescence, clusters, eval-slot queues and
+board hygiene are what `/audit-board` is for.
 
-**Read `/audit-board`'s merge section before proposing anything, and use its
-verdicts verbatim.** Do not invent a verdict here, do not restate its rules in
-your own words, and if this file and that one ever disagree, that one wins and
-the disagreement is a finding to report. Two skills with two sets of merge rules
-is how the board ends up with two answers for the same pair.
+**Read `.claude/skills/audit-board/SKILL.md`'s merge section before proposing
+anything, and use its verdicts verbatim.** Do not invent a verdict here and do
+not restate its rules in your own words. If this file and that one ever disagree,
+that one wins and the disagreement is a finding to report.
 
 **You propose, then apply what is approved.** No branches, no PRs, no code edits.
 You have no `Edit` or `Write` tool on purpose.
@@ -77,86 +72,52 @@ is a different action from a merge and should never be reported as one.
 
 ## 2. The verdicts
 
-Use `/audit-board`'s four — duplicate, absorb, batch, and the lane split — plus
-the close-as-duplicate-of-active-work above. Its two hard rules bind here in full:
+Read `/audit-board`'s merge section and use its four verdicts — duplicate,
+absorb, batch, and the lane split — plus the close-as-duplicate-of-active-work
+above. Everything it says about **which** verdict applies binds here unchanged;
+do not re-derive it from this file.
+
+Three of its rules decide most of what this pass sees:
 
 - **Search by fix site, not by topic.** Read the `**Touches:**` line first; fall
   back to its grep for older bodies. Issues that collide almost never share a
   title — they want different lines in one file.
 - **Never replace N issues with one issue holding N rows.** No trackers, no
-  umbrellas, no index issues. That anti-pattern cost real data on 2026-08-04 and
-  the reasoning is recorded there.
+  umbrellas, no index issues.
+- **The default is merge.** Same decision, same files, same paid eval run, same
+  reviewer, or one is the class and the other its instance — all merge.
+  "Cross-reference and note it", "schedule together" and "decide together but
+  keep separate" are not verdicts. Splitting on *mechanism purity* — two tools,
+  two matchers, two code paths — is an author's aesthetic, not a work boundary.
 
-### The default is merge
+Two instructions this pass owes on top of that:
 
-Ruled by the lead 2026-08-11, after a pass that produced a "decide together but
-keep separate" bucket:
+**Never report "different lanes" as the reason for an independent verdict.** A
+lane difference is never on its own a reason to keep two issues apart. If it is
+the only thing separating two issues on the same skill, they merge — and the paid
+eval run they would otherwise each need is the reason.
 
-> Anything that should be done together sounds like a reason to merge. Otherwise
-> we have to cross-reference the issues and rely on people remembering to assign
-> both issues to themselves, which they have forgotten several times.
-
-So: **same decision, same files, same paid eval run, same reviewer, or one is the
-class and the other its instance — all merge.** "Cross-reference and note it" is
-not a verdict. Splitting on *mechanism purity* — two tools, two matchers, two
-code paths — is an author's aesthetic, not a work boundary; merge on the decision
-boundary instead.
-
-The failure a split invites is worse than a forgotten assignment: someone lands
-half the work, updates the spec to record the gap as closed, and the other half
-stays open with a document claiming otherwise.
-
-**Extended 2026-08-31**, on a pass that reported #2030 (`developer`) and #2032
-(`genealogist`) as independent purely because doctrine forbade a cross-lane merge:
-
-> it's okay to merge developer and genealogist lanes for the same skill because
-> genealogists and developers can request help as needed.
-
-So **a lane difference is never on its own a reason to keep two issues apart.**
-
-### The lane split survives only where each half finishes without the other
-
-`/audit-board`'s lane-split verdict used to keep two halves apart when they were
-different labor — a `developer` lint and a `genealogist` audit — on the grounds
-that one card spanning two lanes has no single assignee. **That ground is retired**
-by the ruling above: two issues on one skill merge even when one is `developer` and
-the other `genealogist`. The card carries both labels, and whoever takes it asks
-the other lane for the half they do not own.
-
-One test survives, and it is the only one: **can each half be finished, reviewed
-and merged without waiting on the other?** If yes, split cleanly and give each its
-own acceptance. If no, merge. When you do split, split at the lane boundary and
-move the content, so neither issue is left pointing at the other for something it
-needs.
-
-**Never report "different lanes" as the reason for an independent verdict.** If a
-lane difference is the only thing separating two issues on the same skill, they
-merge — and the paid eval run they would otherwise each need is the reason.
-
-### One-way mechanical dependencies are a body edit, not a merge
-
-When issue B only needs to *apply* something issue A defines — a convention, a
-constant, a helper — do not merge and do not cross-reference. **Edit B's body** so
-the dependency reads as an instruction ("apply the convention issue #A defines")
-rather than a coordination requirement. Nobody then needs both assignments, which
-is the whole objection to cross-referencing.
+**A one-way mechanical dependency is a body edit, not a merge.** When issue B
+only needs to *apply* something issue A defines — a convention, a constant, a
+helper — do not merge and do not cross-reference. **Edit B's body** so the
+dependency reads as an instruction ("apply the convention issue #A defines")
+rather than a coordination requirement.
 
 ## 3. Prove it before proposing
 
 **Open the files both issues name.** Title and framing resemblance is the
-dominant false positive here, and it is convincing: on 2026-08-11 this pass
-proposed merging two issues both described as "a prose lint with a file-and-line
-allow-list." Reading the two test files killed it — one compares hashes across
-duplicated file copies, the other matches a banned phrase, and they share no
-mechanism at all.
+dominant false positive here, and it is convincing — two issues both described as
+"a prose lint with a file-and-line allow-list" routinely share no mechanism at
+all, one comparing hashes across duplicated copies and the other matching a
+banned phrase.
 
 Three checks, every proposed merge:
 
 1. **Same fix site?** Open the file. Quote the lines.
 2. **Blocked or unblocked?** **Never merge an unblocked issue into a blocked
-   one.** That same wrong proposal would have parked a cheap, fully-specified,
-   ready-to-start lint behind an adjudication issue it did not need. Check both
-   bodies for a stated blocker and resolve it (`gh issue view <N> --json state`).
+   one** — that parks ready-to-start work behind an adjudication it does not
+   need. Check both bodies for a stated blocker and resolve it
+   (`gh issue view <N> --json state`).
 3. **Does it add a paid eval run?** If the absorbed issue's skill is already in
    the target's touch list, merging is free — say so. If it is not, the merge adds
    a `make eval-skill` run plus an annotation pass, which is a real cost the lead
