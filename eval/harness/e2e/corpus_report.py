@@ -81,7 +81,10 @@ from e2e import pricing
 # `--recompute` can import it without pulling `claude_agent_sdk` into this
 # module's pure-analysis posture — importing it from `e2e.orchestrator` (which
 # re-exports it) would drag the SDK in. See issue #1484.
-from harness.skill_invocation import check_guardrail_compliance
+from harness.skill_invocation import (
+    check_guardrail_compliance,
+    unscoreable_person_evidence_links,
+)
 
 # Where a run's committed seed tree lives, for `--recompute`. A run whose fixture
 # has no readable `starting-tree.gedcomx.json` is named in a skip list and left
@@ -106,6 +109,10 @@ TOP_CONTRIBUTORS = 3
 #
 # `person-evidence` is safe after `same_person` because the same_person arm's
 # message spells it `person_evidence` (underscore), never hyphenated.
+#: The arm the §8 provenance narrowing subtracts from — named so the
+#: "unscoreable by design" line can be gated on it rather than on any violation.
+_SAME_PERSON_ARM = "same_person (per person)"
+
 VIOLATION_ARMS: tuple[tuple[str, str], ...] = (
     ("same_person", "same_person (per person)"),
     ("research-exhaustiveness", "exhaustiveness"),
@@ -311,7 +318,9 @@ class RecomputeTally(NamedTuple):
     violation the run recorded that today's detector clears (a detector
     correction, not a corpus change). Surfaced for the same reason skips are: a
     `stored > recomputed` case otherwise vanishes into the aggregate and the
-    report reads as if the recompute could only ever find more.
+    report reads as if the recompute could only ever find more. The §8
+    provenance narrowing is exactly such a correction, so it populates this
+    list; that is the intended reading, not a bug.
     """
 
     arms: Counter
@@ -319,6 +328,13 @@ class RecomputeTally(NamedTuple):
     scanned: int
     skipped: list[str]
     regressed: list[str]
+    #: `person_evidence` links on brand-new persons that the §8 provenance check
+    #: deliberately does NOT flag, because their assertion's provenance lane cannot
+    #: yield a record persona from what the run retained — the "unscoreable by design" bucket the lead asked
+    #: for on 2026-08-09 so the exemption is visible instead of silent. A count,
+    #: never a violation, so it gets no `VIOLATION_ARMS` entry. Defaulted
+    #: because this is a NamedTuple built with all-keyword calls in the tests.
+    unscoreable: int = 0
 
 
 def recompute_tally(paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES) -> RecomputeTally:
@@ -348,6 +364,7 @@ def recompute_tally(paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES) ->
     skipped: list[str] = []
     regressed: list[str] = []
     scanned = 0
+    unscoreable = 0
     for path in paths:
         slug = path.parent.name
         seed = _load_json(fixtures_root / slug / "starting-tree.gedcomx.json")
@@ -365,6 +382,10 @@ def recompute_tally(paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES) ->
             continue
         tool_calls = data.get("tool_calls") or []
         scanned += 1
+        # The exemption's own counter, from the same sidecars already loaded.
+        unscoreable += len(
+            unscoreable_person_evidence_links(final_research, final_tree, starting_tree=seed)
+        )
         recomputed_here = 0
         for violation in check_guardrail_compliance(
             tool_calls, final_research, final_tree, starting_tree=seed
@@ -377,7 +398,7 @@ def recompute_tally(paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES) ->
             regressed.append(
                 f"{slug}/{path.name}  stored {stored_here} -> recomputed {recomputed_here}"
             )
-    return RecomputeTally(arms, per_fixture, scanned, skipped, regressed)
+    return RecomputeTally(arms, per_fixture, scanned, skipped, regressed, unscoreable)
 
 
 class Spend(NamedTuple):
@@ -619,6 +640,7 @@ def format_report(
     *,
     n_runs: int,
     arms: Counter | None = None,
+    recomputing: bool = False,
     per_fixture: Counter | None = None,
     bash: list[BashHit] | None = None,
     windowed: bool = False,
@@ -650,6 +672,15 @@ def format_report(
         for arm, n in arms.most_common():
             lines.append(f"    {arm:34} {n:3}")
         lines.extend(_concentration_lines(per_fixture or Counter(), total_violations))
+    if arms.get(_SAME_PERSON_ARM) and not recomputing:
+        # A reader of the default report would otherwise see the same_person arm
+        # with no sign that a labelled population was subtracted from it. Gated
+        # on the arm being present (the line is meaningless without it) and on
+        # the recompute being off — with RECOMPUTE=1 the real number is printed
+        # a few lines down, and claiming "unknown" beside it is just wrong.
+        lines.append(
+            "  unscoreable by design: unknown for stored runs — re-run with RECOMPUTE=1"
+        )
     lines.append(_compliance_rate_line(compliance, windowed=windowed))
     lines.extend(_bash_lines(bash or []))
     return "\n".join(lines)
@@ -702,6 +733,19 @@ def format_recompute(stored_arms: Counter, rt: RecomputeTally) -> str:
     lines.append(
         f"    {'TOTAL':<34} {sum(stored_arms.values()):>7} {sum(rt.arms.values()):>11}"
         f"   ({rt.scanned} run(s) scanned)"
+    )
+    # The exemption, next to the violations it was subtracted from. Stored runs
+    # carry no such field, so that column is `-` rather than 0 — the same rule
+    # `axes_from_runlog` follows for `not_checked`: an unknown is never a zero.
+    # Below the TOTAL and labelled with its own unit, because it is NOT a term
+    # of that sum: the arms count flagged PERSONS, this counts exempted LINKS.
+    # Printed unlabelled and inline it invites a subtraction that means nothing.
+    lines.append("")
+    lines.append(
+        f"    not a term of the total above — links, not persons:"
+    )
+    lines.append(
+        f"    {'unscoreable by design (links)':<34} {'-':>7} {rt.unscoreable:>11}"
     )
     if rt.regressed:
         lines.append(
@@ -804,6 +848,7 @@ def main(argv: list[str] | None = None) -> int:
             bash=counts.bash,
             windowed=cutoff is not None,
             skipped=skipped,
+            recomputing=args.recompute,
         )
     )
     # Everything above this line is byte-identical to the pre-#1484 report — the
