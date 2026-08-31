@@ -612,3 +612,105 @@ describe("fulltextSearchTool request headers", () => {
     expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
   });
 });
+
+describe("fulltextSearchTool given-name expansion (issue #607)", () => {
+  function bettyEntry(): FSFulltextEntry {
+    return {
+      id: "3:1:3Q9M-XXXX-YYYY-Z",
+      collectionId: "1234567",
+      content: {
+        title: "Christening Record",
+        entities: [
+          { type: "NAME", value: "Betty Martin" },
+          { type: "DATE", value: "1812" },
+        ],
+      },
+    };
+  }
+
+  it("38. expands a recognized given name in the URL using an OR group", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    await fulltextSearchTool({ name: "Elizabeth Martin" });
+    const url = mockFetch.mock.calls[0][0] as string;
+    // q.fullName should contain the OR group, not the bare name
+    const fullNameParam = decodeURIComponent(
+      url.match(/q\.fullName=([^&]+)/)?.[1] ?? ""
+    );
+    expect(fullNameParam).toContain("(Elizabeth OR");
+    expect(fullNameParam).toContain("Betty");
+    expect(fullNameParam).toContain("Martin");
+    // Martin should NOT be in an OR group
+    expect(fullNameParam).not.toMatch(/Martin OR/);
+  });
+
+  it("39. nameExpansion is present when expansion happens", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOk({ results: 1, index: 0, entries: [bettyEntry()] })
+    );
+    const result = await fulltextSearchTool({ name: "Elizabeth Martin" });
+    expect(result.nameExpansion).toBeDefined();
+    expect(result.nameExpansion!.original).toBe("Elizabeth Martin");
+    expect(result.nameExpansion!.expanded).toContain("(Elizabeth OR");
+    expect(result.nameExpansion!.expansions).toHaveProperty("Elizabeth");
+  });
+
+  it("40. nameExpansion is absent when no expansion applies", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    const result = await fulltextSearchTool({ name: "Patrick Flynn" });
+    expect(result.nameExpansion).toBeUndefined();
+  });
+
+  it("41. nameExpansion is absent when only keywords are used", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    const result = await fulltextSearchTool({ keywords: "Elizabeth" });
+    expect(result.nameExpansion).toBeUndefined();
+  });
+
+  it("42. variantsInResults detects variant forms in result names", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOk({ results: 1, index: 0, entries: [bettyEntry()] })
+    );
+    const result = await fulltextSearchTool({ name: "Elizabeth Martin" });
+    expect(result.nameExpansion).toBeDefined();
+    expect(result.nameExpansion!.variantsInResults).toContain("Betty");
+  });
+
+  it("43. echoQuery reflects the original input, not the expanded name", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    const result = await fulltextSearchTool({ name: "Elizabeth Martin" });
+    expect(result.query.name).toBe("Elizabeth Martin");
+    // Should NOT contain the OR group
+    expect(String(result.query.name)).not.toContain("OR");
+  });
+
+  it("44. does not expand when name tokens use explicit operators", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    await fulltextSearchTool({ name: "+Elizabeth +Martin" });
+    const url = mockFetch.mock.calls[0][0] as string;
+    const fullNameParam = decodeURIComponent(
+      url.match(/q\.fullName=([^&]+)/)?.[1] ?? ""
+    );
+    // With operators, no expansion — bare name sent
+    expect(fullNameParam).toBe("+Elizabeth +Martin");
+  });
+
+  it("45. expansion does not interfere with other parameters", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    await fulltextSearchTool({
+      name: "Elizabeth Martin",
+      keywords: "will testament",
+      place: "Tipperary",
+      collectionId: "2221234",
+    });
+    const url = mockFetch.mock.calls[0][0] as string;
+    // Other params are intact
+    expect(url).toContain("q.text=will%20testament");
+    expect(url).toContain("q.recordPlace=Tipperary");
+    expect(url).toContain("f.collectionId=2221234");
+    // Name is still expanded
+    const fullNameParam = decodeURIComponent(
+      url.match(/q\.fullName=([^&]+)/)?.[1] ?? ""
+    );
+    expect(fullNameParam).toContain("(Elizabeth OR");
+  });
+});

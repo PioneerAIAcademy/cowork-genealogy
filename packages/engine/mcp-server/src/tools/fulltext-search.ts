@@ -2,11 +2,13 @@ import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "../utils/http.js";
 import { toArk } from "../utils/ark.js";
+import { expandNameForFulltext } from "../utils/name-variants.js";
 import type {
   FulltextSearchInput,
   FulltextSearchResponse,
   FulltextResult,
   FulltextFacet,
+  NameExpansionInfo,
   FSFulltextResponse,
   FSFulltextEntry,
   FSFulltextFacetItem,
@@ -49,14 +51,17 @@ function validateInput(input: FulltextSearchInput): void {
   }
 }
 
-function buildUrl(input: FulltextSearchInput): string {
+function buildUrl(input: FulltextSearchInput, nameOverride?: string): string {
   const params: string[] = [];
   const add = (key: string, value: string | number): void => {
     params.push(`${key}=${encodeURIComponent(String(value))}`);
   };
 
   if (input.keywords) add("q.text", input.keywords);
-  if (input.name) add("q.fullName", input.name);
+  // When a name expansion is active, nameOverride carries the Lucene OR-group
+  // query; input.name stays untouched so echoQuery and staging see the original.
+  const nameValue = nameOverride ?? input.name;
+  if (nameValue) add("q.fullName", nameValue);
   if (input.place) add("q.recordPlace", input.place);
   if (input.nlQuery) add("nlQuery", input.nlQuery);
   if (input.collectionId) add("f.collectionId", input.collectionId);
@@ -157,8 +162,13 @@ export async function fulltextSearchTool(
 ): Promise<FulltextSearchResponse> {
   validateInput(input);
 
+  // Expand recognized given names with historical diminutives (issue #607).
+  // The expansion rewrites the Lucene query but never mutates input — echoQuery
+  // and stageSearchResults must both see the caller's original input.name.
+  const expansion = input.name ? expandNameForFulltext(input.name) : null;
+
   const token = await getValidToken();
-  const url = buildUrl(input);
+  const url = buildUrl(input, expansion?.expanded);
 
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
@@ -219,6 +229,44 @@ export async function fulltextSearchTool(
     out.facets = mapFacets(data.facets);
   }
 
+  // Populate nameExpansion when the name was expanded with diminutives.
+  if (expansion && input.name) {
+    // Collect all variant forms (lowercased) that were added by expansion.
+    const allVariants = new Set<string>();
+    for (const variants of Object.values(expansion.expansions)) {
+      for (const v of variants) {
+        allVariants.add(v.toLowerCase());
+      }
+    }
+
+    // Detect which variants actually appear in result names or highlights.
+    const matched = new Set<string>();
+    for (const r of results) {
+      for (const name of r.names ?? []) {
+        for (const word of name.split(/\s+/)) {
+          if (allVariants.has(word.toLowerCase())) {
+            matched.add(word);
+          }
+        }
+      }
+      for (const hl of r.highlightTerms ?? []) {
+        for (const word of hl.split(/\s+/)) {
+          const clean = word.replace(/[<>]/g, "").toLowerCase();
+          if (allVariants.has(clean)) {
+            matched.add(clean);
+          }
+        }
+      }
+    }
+
+    out.nameExpansion = {
+      original: input.name,
+      expanded: expansion.expanded,
+      expansions: expansion.expansions,
+      variantsInResults: [...matched],
+    };
+  }
+
   // Host-side result staging (search-result-staging-spec.md). Purely additive
   // and best-effort: a staging failure never fails a successful search.
   if (input.projectPath !== undefined) {
@@ -273,7 +321,10 @@ export const fulltextSearchToolSchema = {
       name: {
         type: "string",
         description:
-          "Search within name fields only. Same operator syntax as keywords.",
+          "Search within name fields only. Same operator syntax as keywords. " +
+          "Recognized English given names are automatically expanded with historical " +
+          "diminutives (e.g. Elizabeth also matches Betty, Bess, Eliza). The response " +
+          "includes a nameExpansion field showing what was expanded and which variants matched.",
       },
       place: {
         type: "string",

@@ -178,6 +178,68 @@ interface FulltextSearchResponse {
 }
 ```
 
+## Given-name diminutive expansion (issue #607)
+
+When the `name` parameter contains a recognized English given name (formal
+or variant), the tool automatically expands it with historical diminutives
+from the bundled variant table (`config/given-name-variants.json`). This
+addresses the hard exclusion caused by `m.queryRequireDefault=on`: without
+expansion, a search for "Elizabeth Martin" cannot match a page transcribed
+as "Betty Martin" because every term is required.
+
+### Mechanism
+
+Each recognized given name token is replaced with a Lucene OR group:
+
+- Input: `name: "Elizabeth Martin"`
+- Sent to API: `q.fullName=(Elizabeth OR Betty OR Betsy OR Beth OR Liz OR Lizzy OR Eliza OR Lisa OR Bess OR Eliz) Martin`
+
+The OR group is required as a whole (any member matching satisfies it)
+while `m.queryRequireDefault=on` keeps the remaining tokens required.
+
+### Bidirectional
+
+Expansion is bidirectional: searching for a variant form (e.g. "Betty")
+also expands to include the formal name and all other variants. The
+variant table is keyed by formal name but lookup works from any member.
+
+### Excluded from expansion
+
+- Tokens starting with `+`, `-`, or containing `"` / `*` (explicit
+  operator syntax — do not interfere).
+- Period-containing scribal abbreviations (e.g. `Eliz.`, `Thos.`) are
+  excluded from the Lucene OR group because periods risk field-access
+  parse errors. They are included in `image_transcribe`'s VLM prompt
+  expansion, where the context is natural language.
+
+### Response field
+
+When expansion occurs, the response includes `nameExpansion`:
+
+```typescript
+nameExpansion?: {
+  original: string;            // the caller's input.name
+  expanded: string;            // the Lucene query actually sent
+  expansions: Record<string, string[]>;  // formal name → variant forms added
+  variantsInResults: string[]; // variant forms found in result names/highlights
+};
+```
+
+The `query` echo always reflects the **original** input.name — the
+expansion metadata lives separately in `nameExpansion`.
+
+### Scope
+
+English only. The variant table covers 22 formal names with diminutives
+and scribal abbreviations, seeded from
+`search-records/references/name-search-mechanics.md` and
+`search-full-text/references/search-strategies.md`. Three pairs are
+attested by measurement (Betty→Elizabeth, Peggy→Margaret, Polly→Mary);
+the rest are present because they appear in the cited seed tables.
+
+`keywords` and `place` are not expanded — only `name` (which maps to
+`q.fullName`, a name-field query).
+
 ## Error handling
 
 | Status | Behavior |
