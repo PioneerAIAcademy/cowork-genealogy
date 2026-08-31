@@ -1,0 +1,17 @@
+{
+  "tool": "same_person",
+  "description": "same_person — the Kilrush baptism scored against the tree. Issue #1429: a record_read-sourced assertion has a null record_persona_id because there is no sidecar, not because nothing can be scored — record_read returns GedcomX with persons, so the pair IS scoreable. Strong on name, weak on everything else (a stub carries only a name and gender), which is what a genuine thin-subject score looks like. BOTH primaryId predicates use the  any-match form: this test requires a link for each party named in the relationship assertion (Patrick BP1 and the Bridget stub BP3), so an exact primaryId1 would miss one of the two calls and return fixture_not_found; and the tree side is a stub the agent mints itself, so its id is unpredictable. The subject here is lane discipline, not the score, so one fixture serving both calls is correct.",
+  "args": {
+    "primaryId1": "~",
+    "primaryId2": "~"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 6,
+    "score": 0.71,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:BAPT-K1Q",
+    "candidateArk": null,
+    "apiTitle": "Matches for ark:/61903/1:1:BAPT-K1Q",
+    "updated": "2026-05-21T00:00:00Z"
+  }
+}
