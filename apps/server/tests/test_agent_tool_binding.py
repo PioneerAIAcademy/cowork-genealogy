@@ -120,7 +120,16 @@ def _subagent_tool_calls(project_dir: Path, agent_type: str) -> list[str] | None
     # would report as a bound grant. Measured across 665 committed subagent summaries:
     # `agentType` is non-null in every one, so the missing-meta case a fallback would
     # cover has never occurred, while 19 general-purpose stand-ins have.
-    chosen: Path | None = None
+    # UNION every matching transcript rather than picking one. gps-mentor is
+    # delegated more than once in ordinary runs, `rglob` order carries no dispatch
+    # information (real names are `agent-<random hex>`), and the reference function
+    # this reimplements -- `subagent_capture.find_subagent_transcripts` -- sorts by
+    # mtime for exactly that reason. First-match could report a BOUND grant as
+    # unbound: two gps-mentor transcripts, one recording `Read` and one
+    # `wiki_search`, would return only `['Read']` and fail with the very message
+    # this probe exists to raise. Every match's meta already names gps-mentor, so a
+    # `wiki_search` in any of them proves the grant bound.
+    mine: list[Path] = []
     for jsonl in jsonls:
         meta = jsonl.parent / (jsonl.stem + ".meta.json")
         if meta.exists():
@@ -133,26 +142,26 @@ def _subagent_tool_calls(project_dir: Path, agent_type: str) -> list[str] | None
             # match stays live if the SDK ever namespaces it, rather than
             # silently leaning on the sole-transcript fallback below.
             if isinstance(at, str) and at.split(":")[-1] == agent_type:
-                chosen = jsonl
-                break
-    if chosen is None:
+                mine.append(jsonl)
+    if not mine:
         return None
 
     calls: list[str] = []
-    for line in chosen.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            rec = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        content = (rec.get("message") or {}).get("content")
-        if not isinstance(content, list):
-            continue
-        for block in content:
-            if isinstance(block, dict) and block.get("type") == "tool_use":
-                calls.append(_bare_tool_name(block.get("name", "")))
+    for jsonl in mine:
+        for line in jsonl.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            content = (rec.get("message") or {}).get("content")
+            if not isinstance(content, list):
+                continue
+            for block in content:
+                if isinstance(block, dict) and block.get("type") == "tool_use":
+                    calls.append(_bare_tool_name(block.get("name", "")))
     return calls
 
 
@@ -243,17 +252,24 @@ async def test_gps_mentor_wiki_search_grant_binds(monkeypatch):
 # probe means anything, and both were reverted-green before they existed.
 
 
-def _write_subagent(root: Path, leaf: str, agent_type: str | None, tool: str) -> None:
-    """One fake subagent transcript under a fake ~/.claude/projects."""
+def _write_subagent(
+    root: Path, leaf: str, agent_type: str | None, tool: str, name: str = "agent-x"
+) -> None:
+    """One fake subagent transcript under a fake ~/.claude/projects.
+
+    `name` exists so a test can write TWO transcripts for the same agent -- the
+    repeat-delegation case. Real names are `agent-<random hex>`, so the name
+    carries no dispatch information either way.
+    """
     d = root / ".claude" / "projects" / f"-tmp-{leaf}"
     d.mkdir(parents=True, exist_ok=True)
-    (d / "agent-x.jsonl").write_text(
+    (d / f"{name}.jsonl").write_text(
         json.dumps({"message": {"content": [{"type": "tool_use", "name": tool, "input": {}}]}})
         + "\n",
         encoding="utf-8",
     )
     if agent_type is not None:
-        (d / "agent-x.meta.json").write_text(
+        (d / f"{name}.meta.json").write_text(
             json.dumps({"agentType": agent_type}), encoding="utf-8"
         )
 
@@ -359,3 +375,29 @@ def test_the_billing_probe_is_gated_on_opt_in_not_on_prerequisites():
     # Opt-in runs the body: with no key it reaches the pytest.fail remedy list rather
     # than skipping silently, which is what makes `make agent-tool-bind` loud.
     assert _gate_verdict(key=False, flag=True) == "RUNS"
+
+
+def test_every_matching_transcript_is_unioned_not_just_the_first(monkeypatch, tmp_path):
+    """gps-mentor is delegated more than once in ordinary runs, and `rglob` order
+    carries no dispatch information. A first-match pick could therefore report a
+    BOUND grant as unbound -- the exact defect this probe exists to detect -- by
+    reading whichever transcript happens not to hold the `wiki_search` call.
+
+    Measured on the committed corpus: 13 of 64 runs containing gps-mentor spawned
+    it more than once, and in 6 of those the transcripts disagree on which tools
+    they called. Reverting the union to break-on-first fails this test and nothing
+    else in the suite.
+    """
+    leaf = "agent-tool-bind-d0ubled"
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    _write_subagent(tmp_path, leaf, "gps-mentor", "Read", name="agent-first")
+    _write_subagent(
+        tmp_path, leaf, "gps-mentor", "mcp__genealogy__wiki_search", name="agent-second"
+    )
+
+    calls = _subagent_tool_calls(Path("/tmp") / leaf, "gps-mentor")
+    assert calls is not None
+    assert sorted(calls) == ["Read", "wiki_search"], (
+        "only one gps-mentor transcript was read; a repeat delegation whose "
+        f"wiki_search call sits in the other would read as unbound (got {calls})"
+    )

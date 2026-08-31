@@ -338,12 +338,19 @@ agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the pl
 	  uv run pytest tests/test_plugin_agents.py -q -rs
 
 .PHONY: agent-tool-bind
-agent-tool-bind: $(ENGINE_BUILD) ## Live probe that gps-mentor's wiki_search grant BINDS at runtime (issue #1084). SPENDS ONE MODEL TURN (~$0.35/run) — the only check that bills; opt-in behind a live key. Covers the mcp__genealogy__ spelling only; does not close the nothing-checks gap.
+agent-tool-bind: $(ENGINE_BUILD) ## Live probe that a SHIPPED agent's grant binds — gps-mentor calls wiki_search (issue #1084). SPENDS ONE MODEL TURN (~$0.35/run); opt-in behind a live key. For the frontmatter MECHANISM use probe-agent-binding instead. Covers the mcp__genealogy__ spelling only; does not close the nothing-checks gap.
 	# The residue no static check reaches: everything spelled right and STILL not
 	# bound. agent-tool-names.test.ts proves the tools: entries are well-formed;
-	# this proves the agent can actually CALL one. It is behavioral by necessity —
+	# this proves a SHIPPED agent can actually CALL one. Behavioral by necessity —
 	# the SDK handshake exposes no tool list (issue #1084) — so it forces gps-mentor
 	# to call wiki_search and asserts on the recorded tool_use, never the narration.
+	#
+	# Distinct from probe-agent-binding below, which answers the MECHANISM question
+	# (does frontmatter bind at all?) with purpose-built probe agents. Those always
+	# spawn as themselves, so they cannot see the #939 failure: Task delegation
+	# falling back to a general-purpose stand-in, which is NOT bound by gps-mentor's
+	# tools: and would read as a grant that bound. That needs a shipped agent, and
+	# is why this target's first assertion is "a gps-mentor transcript exists".
 	#
 	# This is the FIRST check in the repo that spends a model turn (agent-smoke
 	# bills nothing; eval-skill/e2e-run bill but are eval runs, not checks) and the
@@ -358,6 +365,21 @@ agent-tool-bind: $(ENGINE_BUILD) ## Live probe that gps-mentor's wiki_search gra
 	  AGENT_TOOL_BIND=1 \
 	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run pytest tests/test_agent_tool_binding.py -q -rs -s
+.PHONY: probe-agent-binding
+probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallowedTools: actually bind under bypassPermissions? (6 short sessions, ~13k tokens)
+	# agent-smoke above reads what the runtime RESOLVED; this reads what it
+	# BOUND, which is the gap issue #1084 names. Six arms — granted, granted
+	# AND denied, omitted — each with tool search off and on, spawn a probe
+	# agent and check whether a harmless tool call actually landed, read off
+	# the tool_result rather than the agent's own prose.
+	#
+	# Answered 2026-08-30 (Claude Code 2.1.251, SDK 0.2.128): BOTH bind, so a
+	# deny is redundant with omitting the tool. Re-run when the CLI or the SDK
+	# moves, or before adding a deny on the strength of it binding.
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python dev/probe_agent_binding.py
+
 
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)

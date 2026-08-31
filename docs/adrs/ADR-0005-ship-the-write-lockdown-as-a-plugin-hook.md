@@ -167,6 +167,22 @@ honours it, and whether the real `device_commit_files` payload looks anything
 like the vectors, only a live Cowork session can say (#1160); or the `Bash`
 route, which is out of scope by design.
 
+**What the live probe found (Cowork, 2026-07-30, #940).** The plugin's
+`PreToolUse` hook loads, fires for `Write` and `Bash` under either matcher form,
+and its `deny` is honored — so the binding half above is answered for
+`PreToolUse`, and only the `device_commit_files` payload shape is open. The same
+probe found two things that contradict the upstream issue threads, which is why
+this ADR records behaviour rather than citing them:
+
+- The reported drop of plugin `PreToolUse` command hooks
+  (anthropics/claude-code#34573) **does not reproduce.**
+- **`SessionStart` hooks do not fire in Cowork** — no invocation, no
+  `additionalContext` reaching the session. That is the *inverse* of the Cowork
+  report in anthropics/claude-code#16288, so that thread is not a reliable guide
+  either. Nothing depends on `SessionStart` today; it is recorded because it is
+  the natural place to put per-session setup (seeding state, injecting project
+  context) and it would silently not run. `CLAUDE.md` carries that as a rule.
+
 `docs/specs/guardrail-enforcement-spec.md` **§6** is the authority on this
 guardrail; **§4** is the table of every guardrail's instrument, binding
 environment, and enforcing-vs-shadow status.

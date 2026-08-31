@@ -3,9 +3,12 @@ name: add-to-project
 # Puts every new issue on the kanban board (org project
 # PioneerAIAcademy/projects/1) in Backlog, so triage is a column move rather
 # than a periodic archaeology sweep. One exception: an issue labelled
-# `feedback` goes straight to Ready — it is filed by the feedback endpoint,
-# nobody triages it, and `/fill-ready` never promotes one out of Backlog, so
-# a card that lands there is stranded.
+# `feedback` goes straight to the Feedback column — it is filed by the feedback
+# endpoint, and `/triage-feedback` works that column, moving what survives to
+# Backlog with the label dropped. Filing it into Backlog still labelled would
+# strand it: `/fill-ready` never promotes a `feedback`-labelled item. Feedback
+# is its own column rather than Ready so an untriaged submission is never
+# mistaken for work the team has been cleared to start.
 #
 # WHY. Nothing has ever linked issue creation to the board. On 2026-07-30 a
 # sweep found 28 open issues with no card — 13 of them filed in the previous
@@ -124,8 +127,8 @@ jobs:
             const STATUS_FIELD   = 'Status';
             const NEW_ITEM_STATUS = 'Backlog';
             // An issue carrying this label skips triage entirely.
-            const READY_LABEL       = 'feedback';
-            const READY_ITEM_STATUS = 'Ready';
+            const FEEDBACK_LABEL       = 'feedback';
+            const FEEDBACK_ITEM_STATUS = 'Feedback';
 
             const dryRun = process.env.DRY_RUN === 'true';
             const { owner, repo } = context.repo;
@@ -166,11 +169,11 @@ jobs:
               return;
             }
             // Both options are resolved up front, and a missing one fails the
-            // job. Resolving Ready lazily inside act() would mean a renamed
+            // job. Resolving Feedback lazily inside act() would mean a renamed
             // column surfaced only on the first feedback submission — as a
             // stranded card, not as a failed run.
             const options = {};
-            for (const name of [NEW_ITEM_STATUS, READY_ITEM_STATUS]) {
+            for (const name of [NEW_ITEM_STATUS, FEEDBACK_ITEM_STATUS]) {
               const option = statusField.options.find(o => o.name === name);
               if (!option) {
                 core.setFailed(
@@ -181,11 +184,11 @@ jobs:
               options[name] = option;
             }
 
-            // Feedback issues are filed by the Apps Script endpoint and nobody
-            // triages them; `/fill-ready` never promotes one out of Backlog, so
-            // Backlog is a dead end for this label rather than a waiting room.
+            // Feedback issues are filed by the Apps Script endpoint and triaged
+            // by `/triage-feedback`, which owns this column. Backlog is a dead
+            // end for this label — `/fill-ready` never promotes one out of it.
             const statusFor = issue =>
-              issue.labels.includes(READY_LABEL) ? READY_ITEM_STATUS : NEW_ITEM_STATUS;
+              issue.labels.includes(FEEDBACK_LABEL) ? FEEDBACK_ITEM_STATUS : NEW_ITEM_STATUS;
 
             // ---- which issues to consider -----------------------------------
             const sweep = context.eventName === 'workflow_dispatch';

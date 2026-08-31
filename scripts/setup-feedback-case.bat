@@ -16,7 +16,7 @@ set "SCRIPT_DIR=%~dp0"
 if "%~1"=="" goto :done_parse
 if /i "%~1"=="--force" (
     set "FORCE=1"
-    shift
+    shift /1
     goto :parse
 )
 if /i "%~1"=="-h" goto :usage
@@ -28,12 +28,12 @@ if "!ARG:~0,2!"=="--" (
 )
 if "!ZIP_PATH!"=="" (
     set "ZIP_PATH=%~1"
-    shift
+    shift /1
     goto :parse
 )
 if "!DEST_DIR!"=="" (
     set "DEST_DIR=%~1"
-    shift
+    shift /1
     goto :parse
 )
 echo Too many positional arguments 1>&2

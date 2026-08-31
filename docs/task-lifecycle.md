@@ -152,7 +152,8 @@ Plus whatever you actually touched:
 |---|---|
 | An MCP tool | `npx tsx dev/try-<tool>.ts` from `packages/engine/mcp-server/` against the live API — write one if it doesn't exist, and run `dev/try-login.ts` first for an authenticated tool. Then read your implementation against `docs/specs/<tool>-tool-spec.md`, quoting both sides. |
 | Any file in a skill's run-log **snapshot** — `packages/engine/plugin/skills/<skill>/`, an agent it delegates to, `eval/tests/unit/<skill>/`, or a scenario/fixture it references | `make eval-skill SKILL=<name>`, and commit the run log **and its `.ann.json`**. `check-runlogs.yml` blocks merge otherwise — a comment or a typo counts, because the whole skill dir is in the snapshot. For a behaviour-neutral edit, ask a senior for the `eval-cosmetic-skip` label instead of burning a paid run. Rules and the exact snapshot set: [`eval/CLAUDE.md`](../eval/CLAUDE.md) § "Snapshot model" and § "GitHub Action rules". |
-| Plugin agent frontmatter, hooks, or tool binding | `make agent-smoke`. **It exits 0 when it skips**, so confirm the output lists resolved agents rather than `1 skipped` — that means no API key was reachable. |
+| Plugin agent frontmatter or hooks | `make agent-smoke`. **It exits 0 when it skips**, so confirm the output lists resolved agents rather than `1 skipped` — that means no API key was reachable. |
+| An agent's `tools:` grant | `make agent-tool-bind`. Spends one model turn (~$0.35); proves gps-mentor's `wiki_search` grant binds, under the `mcp__genealogy__` spelling only. |
 | An e2e fixture | `make e2e-validate TEST=<slug>` |
 | Anything user-facing | Run it. `make server` / `make web`, or the Claude Desktop install path. |
 | An HTTP route or `apps/server/` auth/allowlist code, anything that reads a token or writes to `~/.familysearch-mcp/`, or anything that renders user-supplied data in the viewer | `/security-review` |
@@ -398,7 +399,8 @@ git fetch origin && git checkout -b <branch> origin/main
 # 5. verify
 make test-all                        # everything; == scripts/test.sh
 make eval-skill SKILL=<name>         # anything in a skill's run-log snapshot
-make agent-smoke                     # plugin agent frontmatter / hooks / tool binding
+make agent-smoke                     # plugin agent frontmatter / hooks
+make agent-tool-bind                 # an agent's tools: grant — spends ~$0.35
 make e2e-validate TEST=<slug>        # an e2e fixture changed
 /security-review                     # route, auth, token, or user state touched
 

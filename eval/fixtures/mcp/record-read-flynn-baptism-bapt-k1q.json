@@ -1,0 +1,35 @@
+{
+  "tool": "record_read",
+  "description": "record_read — the 1858 Kilrush baptism of Patrick Flynn, re-opened from its ARK. flynn-baptism-names-mother's assertions are record_read-sourced (no search sidecar, so record_persona_id is null by schema design), which since issue #1429 is a scoreable lane: record_read returns simplified GedcomX with a persons array, so a persona IS reachable and person-evidence is expected to score the link. Without this fixture the tool is never registered in the mock and that call aborts the whole run as an unregistered tool (Type 1) — see record-read-patrick-flyn-vrnt-7m3.json, which records the same failure observed on 019, 023 and 014. The `~` predicate is a case-insensitive substring match, so this matches whether the agent passes the full resolver URL or the bare entity id.",
+  "args": {
+    "recordId": "~BAPT-K1Q"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "BP1",
+        "gender": "Male",
+        "names": [{ "id": "BN1", "preferred": true, "given": "Patrick", "surname": "Flynn", "type": "BirthName" }],
+        "facts": [
+          { "id": "BF1", "type": "Christening", "date": "12 March 1858", "place": "Kilrush, County Clare, Ireland" }
+        ]
+      },
+      {
+        "id": "BP2",
+        "gender": "Male",
+        "names": [{ "id": "BN2", "preferred": true, "given": "Thomas", "surname": "Flynn", "type": "BirthName" }],
+        "facts": []
+      },
+      {
+        "id": "BP3",
+        "gender": "Female",
+        "names": [{ "id": "BN3", "preferred": true, "given": "Bridget", "surname": "Doyle", "type": "BirthName" }],
+        "facts": []
+      }
+    ],
+    "relationships": [
+      { "id": "BR1", "type": "ParentChild", "person1": "BP2", "person2": "BP1" },
+      { "id": "BR2", "type": "ParentChild", "person1": "BP3", "person2": "BP1" }
+    ]
+  }
+}
