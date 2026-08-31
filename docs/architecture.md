@@ -1449,7 +1449,7 @@ skips silently**, which looks identical to passing.
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
 | **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names | whether a granted tool actually **binds**; skips silently with no API key |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
-| `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions, and `runs_per_test` is pinned to 1, so within-test flakiness is out of reach |
+| `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: `runs_per_test` is pinned to 1, so the harness's `flaky` flag is **dead by construction, not healthy**. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
 
 ### 9.2 The lint layer
@@ -1635,7 +1635,14 @@ type; copy the envelope from a sibling fixture for the same tool rather than
 writing a short form, because a nil result still carries every field a hit
 carries. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
-1 by policy. 87 of the 404 definitions are **negative** tests that exist to prove
+1 by policy. **The pin buys suite wall-clock, not permission to ship a test that
+flaps.** A test that does not pass every run is a defect — in the test, its
+fixture, its rubric, or the skill — and it gets diagnosed and fixed, never
+re-run until it comes back green (`docs/skill-lifecycle.md` carries the
+symptom-to-fix table). Because the pin also makes the `flaky` flag dead by
+construction, catching one is on you: re-run a suspect test with
+`run_tests.py --test <id> --runlogs-root <tmp>` and fix whatever differs.
+87 of the 404 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is
