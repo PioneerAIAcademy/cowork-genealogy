@@ -528,6 +528,12 @@ Architecturally:
   — your only real debugger when the MCP harness swallows errors),
   `tests/tools/<name>.test.ts`, `README.md`'s tool table, and — if a skill will
   call it — an `eval/fixtures/mcp/` fixture.
+- **Changing an existing tool's response type also breaks its fixtures**, in the
+  other direction: add or rename a required field and every fixture for that tool
+  is now a shape the tool cannot return.
+  `packages/engine/mcp-server/tests/packaging/mcp-fixture-shape.test.ts` derives
+  the field list from the handler's `Promise<T>` and fails on the mismatch, so
+  this one does tell you — top-level key names only, and blind to a wrong value.
 - **If it calls an external service:** the base URL/key is a field on `AppConfig`
   (`src/types/auth.ts`) plus a `get*` helper in `src/auth/config.ts`, read from
   `~/.familysearch-mcp/config.json`. **Never a `process.env` fallback** — the
@@ -1623,7 +1629,11 @@ a sub-skill regression rather than a routing one.
 format; `eval/README.md` is the workflow; `eval/tests/unit/<skill>/` is where it
 lives. A test is not just its definition: it usually needs a matching
 `eval/fixtures/mcp/` response, a dimension in that skill's `rubric.md`, and a
-check in `eval/harness/validators/`. `test.id` must be unique across the **whole**
+check in `eval/harness/validators/`. A fixture's `response` must be a shape its
+tool can actually return, checked per tool against the handler's declared return
+type; copy the envelope from a sibling fixture for the same tool rather than
+writing a short form, because a nil result still carries every field a hit
+carries. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
 1 by policy. **The pin buys suite wall-clock, not permission to ship a test that
 flaps.** A test that does not pass every run is a defect — in the test, its
