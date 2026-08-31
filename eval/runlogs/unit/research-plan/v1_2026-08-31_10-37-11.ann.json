@@ -1,249 +1,217 @@
 {
-  "run_log": "v1_2026-08-27_16-18-15.json",
+  "run_log": "v1_2026-08-31_10-37-11.json",
   "annotator": "122873616+Cia-3@users.noreply.github.com",
   "corrections": [
     {
-      "test_id": "ut_research_plan_006",
+      "test_id": "ut_research_plan_fbn",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. Real structural gap: pli_006 (East Feliciana) uses fallback_for pointing at pli_001 (West Feliciana), implying a primary/fallback relationship, when the per-test requirement is both parishes are co-equal primaries. Narrative text gets it right; the persisted structure does not. First occurrence in 5 runs of this test, unrelated to the already-attached validator work in this PR."
     },
     {
-      "test_id": "ut_research_plan_006",
+      "test_id": "ut_research_plan_fbn",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_006",
+      "test_id": "ut_research_plan_fbn",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree. Genuine fixture-shape mismatch: volume_search called with recordTypeGroups as a bare string array that no fixture matched. Unrelated to this PR."
     },
     {
-      "test_id": "ut_research_plan_006",
+      "test_id": "ut_research_plan_fbn",
       "dimension_source": "rubric",
       "dimension_name": "Record type selection",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_006",
+      "test_id": "ut_research_plan_fbn",
       "dimension_source": "rubric",
       "dimension_name": "Objective scope containment",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_006",
+      "test_id": "ut_research_plan_fbn",
       "dimension_source": "rubric",
       "dimension_name": "Sequencing logic",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_006",
+      "test_id": "ut_research_plan_fbn",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_006",
+      "test_id": "ut_research_plan_fbn",
       "dimension_source": "rubric",
       "dimension_name": "Plan mode and lifecycle",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_007",
+      "test_id": "ut_research_plan_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree with the judge score as a diagnostic read, but the test outcome (pass) is correct: this is a routing-negative test graded by the routing-independent validators (test_no_plan_writes_when_resolved / test_resolved_question_not_reopened), not by these base dimensions, per eval/CLAUDE.md's routing-negative rule. The skill correctly produced no output and made no plan changes on an already-resolved question."
     },
     {
-      "test_id": "ut_research_plan_007",
+      "test_id": "ut_research_plan_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Same as Correctness above -- diagnostic-only score on a routing-negative test; the actual gate (no plan writes when resolved) passed."
     },
     {
-      "test_id": "ut_research_plan_007",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_research_plan_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_research_plan_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_research_plan_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_research_plan_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_research_plan_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_research_plan_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_research_plan_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3
-    },
-    {
-      "test_id": "ut_research_plan_004",
+      "test_id": "ut_research_plan_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null
     },
     {
-      "test_id": "ut_research_plan_q7m",
+      "test_id": "ut_research_plan_009",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_q7m",
+      "test_id": "ut_research_plan_009",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_q7m",
+      "test_id": "ut_research_plan_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null
+    },
+    {
+      "test_id": "ut_research_plan_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_research_plan_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_research_plan_002",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_q7m",
+      "test_id": "ut_research_plan_002",
       "dimension_source": "rubric",
       "dimension_name": "Record type selection",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_q7m",
+      "test_id": "ut_research_plan_002",
       "dimension_source": "rubric",
       "dimension_name": "Objective scope containment",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_q7m",
+      "test_id": "ut_research_plan_002",
       "dimension_source": "rubric",
       "dimension_name": "Sequencing logic",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_q7m",
+      "test_id": "ut_research_plan_002",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_q7m",
+      "test_id": "ut_research_plan_002",
       "dimension_source": "rubric",
       "dimension_name": "Plan mode and lifecycle",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_bpx",
+      "test_id": "ut_research_plan_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Agree. This is the pre-edit baseline for issue #1948's mined regression test. Did: the plan added a new 'FAN item for Patrick' (a fresh search) but never acknowledged Patrick's already-sourced 1875 land-purchase fact already sitting in tree.gedcomx.json (S1). Should: before planning new searches, survey what's already attached to in-scope FAN-cluster persons -- a sibling's documented arrival 7 years before the subject's own move is directly relevant to a 'why did the subject move' question. Gap: SKILL.md's 'Verify the starting point' step (BCG Standard 11) only checks assumptions, not what's already attached -- confirmed by the agent's own quoted explanation in the original alpha-feedback report. Fix staged (adds a 'Survey what's already attached' step right after verify-starting-point), to be gated against this baseline."
+      "llm_score": 3,
+      "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_bpx",
+      "test_id": "ut_research_plan_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "Agree, same root cause as Correctness above -- the response addresses the question thoroughly in every other respect but omits surveying Patrick's already-attached fact."
+      "comment": "Agree. Same recurring gap as prior runs of this test: confirmed pli_006 as next step but did not verify probate-record availability, and did not name a concrete forward path beyond pli_006."
     },
     {
-      "test_id": "ut_research_plan_bpx",
+      "test_id": "ut_research_plan_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_bpx",
+      "test_id": "ut_research_plan_001",
       "dimension_source": "rubric",
       "dimension_name": "Record type selection",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_bpx",
+      "test_id": "ut_research_plan_001",
       "dimension_source": "rubric",
       "dimension_name": "Objective scope containment",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_bpx",
+      "test_id": "ut_research_plan_001",
       "dimension_source": "rubric",
       "dimension_name": "Sequencing logic",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_bpx",
+      "test_id": "ut_research_plan_001",
       "dimension_source": "rubric",
       "dimension_name": "Jurisdiction accuracy",
       "llm_score": 3,
       "corrected_score": 3
     },
     {
-      "test_id": "ut_research_plan_bpx",
+      "test_id": "ut_research_plan_001",
       "dimension_source": "rubric",
       "dimension_name": "Plan mode and lifecycle",
       "llm_score": 3,
