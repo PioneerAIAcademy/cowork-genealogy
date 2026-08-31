@@ -120,7 +120,7 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": null
+      "comment": "First research_append targeted nonexistent ps_001; recovered on retry with correct project-level target. Partial per retry policy."
     }
   ]
 }
