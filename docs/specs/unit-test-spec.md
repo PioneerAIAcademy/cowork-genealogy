@@ -603,7 +603,9 @@ Only present when `test.type` is `"negative"`.
 
 ### 5.6 `runs_per_test`
 
-**POLICY (current stage): always 1. When creating or updating a test, do not set `runs_per_test` above 1** — omit the field (it defaults to 1) or set it to `1`. We are deliberately not addressing single-run variance yet; every test runs exactly once. Multi-run tests multiply suite wall-time (each run is a full skill execution **plus** a judge LLM call) for no benefit at this stage.
+**POLICY (current stage): always 1. When creating or updating a test, do not set `runs_per_test` above 1** — omit the field (it defaults to 1) or set it to `1`. Multi-run tests multiply suite wall-time (each run is a full skill execution **plus** a judge LLM call); at this stage that budget goes on covering more tests rather than on re-running the same one.
+
+**The pin decides what the harness measures, not what the suite tolerates.** We are deliberately not *detecting* single-run variance yet. We are not accepting it. A test that passes on one run and fails on the next is a defect — an ambiguous rubric dimension, a thin `judge_context`, a missing fixture, or genuine skill inconsistency — and every one of those is fixable (`docs/skill-lifecycle.md`, "Improve the skill", carries the symptom-to-fix table). Diagnose and fix a flapping test. Never re-run one until it happens to come back green, and never read the absent `flaky` flag as evidence that a test is stable.
 
 The multi-run aggregation machinery described in Section 7 ("Variance: runs per test") is retained for a *future* phase — description-optimizer passes and golden-set calibration, where variance detection matters. Until the project explicitly enters that phase, treat `runs_per_test > 1` as a mistake. The JSON Schema currently pins `maximum: 1` to enforce this.
 
@@ -1018,12 +1020,12 @@ Models are nondeterministic even at `temperature=0` — tool-selection and struc
 
 **Default: N=1 run per test.** Combined with `temperature=0` (Section 15), this gives stable, low-cost regression catching for day-to-day iteration. A single run is the right grain for PR gating, dev-time iteration, and the suite-level dashboard.
 
-**N=3 (or higher) is recommended for two specific cases:**
+**N=3 (or higher) would serve two specific cases** — both currently blocked by the schema pin ("Overrides" below):
 
-- **Description-optimizer passes.** When the optimizer compares two SKILL.md descriptions, it relies on pass-rate deltas across the test set (e.g., 60% → 70%). At N=1 those deltas are dominated by sampling noise. Bump `runs_per_test: 3` on the tests being scored against during an optimization pass; revert to N=1 afterward for routine runs.
+- **Description-optimizer passes.** When the optimizer compares two SKILL.md descriptions, it relies on pass-rate deltas across the test set (e.g., 60% → 70%). At N=1 those deltas are dominated by sampling noise, so `runs_per_test: 3` on the tests being scored would be the right instrument for an optimization pass, reverting to N=1 afterward.
 - **Golden-set calibration.** Tests under active senior-genealogist calibration benefit from variance detection (`flaky: true` signals an unstable test) to identify rubric items that need tightening.
 
-For everything else, N=1 is the right choice — the cost saving is ~2.5x and the lost signal (flakiness detection) is recoverable by re-running the test manually when something looks off.
+For everything else, N=1 is the right choice — the cost saving is ~2.5x, and what is lost is flakiness *detection*, not the obligation to fix flakiness. Re-run a suspect test yourself (`run_tests.py --test <id> --runlogs-root <tmp>`, twice or more) and fix whatever differs between the runs before trusting it again.
 
 The harness executes the test N times (one for N=1, three for N=3, etc.) and stores every run in the run log (Section 10).
 
@@ -1052,22 +1054,26 @@ The harness executes the test N times (one for N=1, three for N=3, etc.) and sto
 This composition cleanly handles all edge cases:
 
 - **xfail tests:** xfail reframes `outcome` (a `fail` becomes `xfail`, a `pass` becomes `xpass`) but does not affect `flaky`. An xfail test that's also flaky stays flaky.
-- **Dashboard semantics:** "pass rate" excludes flaky tests by default (they aren't a stable signal either way); "flake rate" is reported alongside. Treat `flaky: true` like a yellow caution light, regardless of which color the outcome shows.
+- **Dashboard semantics:** "pass rate" excludes flaky tests by default (they aren't a stable signal either way); "flake rate" is reported alongside. **`flaky: true` is a defect to fix, not a caution light to read past.** A flaky test is not a weaker pass; it is a test that has stopped answering the question it was written to ask. Fix it or retire it — a suite with a nonzero flake rate is not green, whatever its pass rate says.
 
 **Per-run aggregation of judge dimensions.** Within a single run, the judge produces one integer score per dimension. Across N runs the aggregated dimension score is the modal value (most common); ties resolve toward the lower score (`1` < `2` < `3`). The aggregated rationale is the rationale from the modal run. Dimension aggregation and outcome aggregation are independent — a `flaky: true, outcome: pass` test can have all-`3` aggregated dimensions, because flaky measures run-to-run *stability* and dimensions measure *per-run consensus on individual rubric items*. The reviewer-facing display should show both: "this test passed 2/3 runs; the dimensions that fired all scored `3`."
 
-**Overrides.** The schema's optional `runs_per_test` field (Section 4) bumps the count above the default of 1 in these specific cases:
+**Overrides are currently unavailable.** The schema pins `runs_per_test` to `maximum: 1` and the loader rejects anything higher (`InvalidTestError`, "maximum of 1"), so none of the multi-run cases below can be requested from a test definition today. They record what the retained aggregation machinery is *for*, once the pin is lifted:
 
 - `runs_per_test: 3` — description-optimizer passes (so pass-rate deltas aren't dominated by sampling noise) and golden-set calibration during rubric tuning.
 - `runs_per_test: 5+` — only when calibrating a high-variance rubric dimension and you specifically need a tighter estimate of per-dimension stability.
 
-Because the default is N=1, `flaky` only ever fires during these optimization and calibration runs; routine regression dashboards will not surface borderline cases on their own — re-run a suspect test manually with `runs_per_test: 3` when something looks off.
+Until the pin is lifted, `flaky` never fires and no dashboard surfaces a flapping test. **That is the instrument being blind, not the suite being stable** — do not cite a silent `flaky` column as evidence that a test is consistent. To check a test you suspect, re-run it yourself: `run_tests.py --test <id> --runlogs-root <tmp>`, twice or more, comparing the outcome and the per-dimension scores. Treat any disagreement between those runs as a bug to fix before the test is trusted again.
 
 **Cost impact.** Running N=3 triples skill-execution cost and (when validators pass) judge cost. Prompt caching mitigates the skill-execution side — only the test-specific tail re-runs uncached. Budget impact is roughly 2.5x rather than 3x for batched skill runs. Because N=1 is the default, this cost only applies during optimization passes and calibration work.
 
 ### Stability floor (TBD)
 
-At `temperature=0`, Sonnet is documented as not fully deterministic — tool selection and structured output sampling produce run-to-run variation. The spec does not yet pin a "regression threshold" (e.g., "pass rate drop > X% on a skill counts as a regression vs noise") because it cannot be set without empirical baseline data. After the first golden-set run with N=5 produces a noise characterization, this section gets filled in with:
+At `temperature=0`, Sonnet is documented as not fully deterministic — tool selection and structured output sampling produce run-to-run variation.
+
+**A noise band measures how blind the suite currently is. It is not an allowance.** Its only job is to let a reader tell a real regression from sampling noise when comparing two runs; it never licenses an individual test to flap, and a test whose variation sits inside the band is still a test that has to be made to pass consistently. The band's own width is a number to drive *down* — by sharpening the rubric dimensions that admit two readings, widening thin `judge_context`, and replacing judged assertions with deterministic validators wherever the correct behaviour is a no-op.
+
+The spec does not yet pin a "regression threshold" (e.g., "pass rate drop > X% on a skill counts as a regression vs noise") because it cannot be set without empirical baseline data. After the first golden-set run with N=5 produces a noise characterization, this section gets filled in with:
 
 - A per-skill pass-rate noise band (the expected variation when nothing has changed).
 - A regression threshold (pass-rate drop exceeding the noise band).
