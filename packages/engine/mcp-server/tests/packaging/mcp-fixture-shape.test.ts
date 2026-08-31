@@ -257,7 +257,12 @@ function dispatchHandlers(): {
         let init: ts.Expression = node.initializer;
         const wasAwaited = ts.isAwaitExpression(init);
         if (wasAwaited) init = (init as ts.AwaitExpression).expression;
-        if (ts.isCallExpression(init) && ts.isIdentifier(init.expression) && wasAwaited) {
+        // A direct call is the handler's result whether or not it is awaited:
+        // `convert_calendar` calls its handler synchronously. Requiring `await`
+        // here dropped that arm from the index and then flagged it as projecting,
+        // losing one tool from the comparison silently. `built` is what
+        // distinguishes a projection, so this condition must not also try to.
+        if (ts.isCallExpression(init) && ts.isIdentifier(init.expression)) {
           const fn = init.expression.text;
           if (ts.isIdentifier(node.name)) {
             awaited.set(node.name.text, fn);
