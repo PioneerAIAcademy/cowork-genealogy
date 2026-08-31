@@ -374,7 +374,7 @@ def format_footer(reports: list[SkillReport]) -> str:
             "runs_per_test is pinned to 1, so the flaky flag is dead by construction, "
             "not healthy: a silent flakiness column means this report is blind to it, "
             "never that the suite is stable. Re-run a suspect test with "
-            "--test <id> to see whether it flaps, then fix it.",
+            "run_tests.py --test <id> to see whether it flaps, then fix it.",
         ]
     )
 
