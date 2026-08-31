@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** As built, verified against the repo 2026-08-09. Every count and file
+**Status:** As built, verified against the repo 2026-08-31. Every count and file
 reference below was confirmed at a source site; where a claim could not be
 verified, it says so.
 
@@ -403,7 +403,7 @@ lists, and the test asserts that too.
 > knowing which divergences are deliberate. For `validation-protocol.md`,
 > **nothing records which is which** — its two survivors disagree on whether a
 > post-write `validate_research_schema` pass is required.
-> **Direction (#1112):** either lint a shared core plus a
+> **Direction.** Either lint a shared core plus a
 > per-skill "who calls what" section, or derive each copy at build time from the
 > skill's `allowed-tools`. The cheaper move is to *shrink* them —
 > `validation-protocol.md` largely restates rules `research_append`'s error
@@ -415,7 +415,7 @@ lists, and the test asserts that too.
 
 Everything an agent needs at runtime lives inline in its `.md`. **No sibling
 reference files read at runtime, no build-time assembly.** Both alternatives
-were measured on `record-extractor` (issue #702) and reverted.
+were measured on `record-extractor` in 2026-07 and reverted.
 *(Imperative owned by `CLAUDE.md` § "No playbook/reference files for agents".)*
 
 - **On-demand `Read` fails silently, in three modes.** With the files provably
@@ -573,7 +573,7 @@ Architecturally:
 > `BROWSER_USER_AGENT`; anything else → the service's own convention.** The
 > deleted `mcp-tool-scaffolder` subagent stated it unconditionally — because its
 > canonical template was one of the non-FS tools — which is part of why it and
-> its two siblings were removed (#1161).
+> its two siblings were removed on 2026-08-02.
 
 **Add a skill.** Copy `packages/engine/plugin/skills/search-wikipedia/` — the
 canonical minimal example of the full pipeline. Don't mutate it. Then:
@@ -628,7 +628,7 @@ There **is** an orchestrator, and it is a skill:
 2. **A 17-row routing table maps state → next sub-skill** — in
    `research/SKILL.md` under `## What to do`, the table whose header row reads
    `| If research.json has... | Invoke |`. The table is the source of truth and
-   is not duplicated here. Since PR #1029 its `Invoke` column is a **literal
+   is not duplicated here. Since 2026-08-01 its `Invoke` column is a **literal
    `Skill` tool call** — "writing `proceed to research-exhaustiveness` and then
    hand-authoring the fields that skill would have written is not invoking it."
    Agents are delegated as `Task` calls using the bare `@plugin:<name>` form.
@@ -685,8 +685,9 @@ record), and it never writes identity links or eliminations inline
 > `allowed-tools` and the agent-union semantics, and reconciling the two
 > contradictory `address_first` verdict tables in the body (item 3 above), which
 > currently cannot tell a test which behavior is correct. One design hazard on
-> top: #1012 — a `Skill()` callee can bind toolless in the unit path, so callee
-> binding must be made real before routing can be graded.
+> top: a `Skill()` callee can bind toolless in the unit path, so callee binding
+> must be made real before routing can be graded
+> (`gh issue list --state open --search "Skill callee binds toolless"`).
 
 ### If you're asked to…
 
@@ -749,7 +750,7 @@ the most expensive mistake in this layer, because two of the three fail
 |---|---|---|
 | Skill `allowed-tools:` | **bare** (`research_query`) | **No** — neither production path nor the unit harness narrows per skill. The field is a grant, not a restriction. Advisory only: the `test_tool_allowlist` validator warns on undeclared calls. |
 | Agent `tools:` | **spelled under all three registrars**, matched exactly | **Yes** — a tool omitted from it is absent from the agent even under `bypassPermissions` (measured, §5.2). This is the whole of an agent's capability boundary: `disallowedTools:` was deleted from all five agents on 2026-08-30, because every deny restated the omission above it. |
-| `PreToolUse` hook | n/a — matches on tool name + input | **Yes**, in Cowork and the hosted path. **Neither harness loads the plugin's hooks** (§5.4). |
+| `PreToolUse` hook | n/a — matches on tool name + input | **Yes** — and it carries more than the raw-write lockdown: it also routes `research_append` by **caller identity** (§5.4), which is the only surface that can restrain the main thread. Neither harness loads the plugin's `hooks.json`, but both harness hooks **import its predicates**, so the rules bind in all four environments (§5.4). |
 
 ### 5.1 Skill `allowed-tools` — declarative everywhere
 
@@ -784,8 +785,8 @@ only the bridged form is namespaced under `remote-devices`. **Which spelling a
 Cowork session exposes has been observed to move:** three censuses found every
 tool under the bridged `mcp__remote-devices__Genealogy_Research__` spelling with
 the bare `mcp__Genealogy_Research__` spelling absent — macOS and Windows on
-2026-08-15, and a second Windows session via #1732 on 2026-08-19 — yet #1341
-recorded the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the bridged
+2026-08-15, and a second Windows session on 2026-08-19 — yet a session on
+2026-08-04/05 recorded the bare spelling live, refusing `record-extractor` with the bridged
 spelling unrecognized. The registrar moved between those dates (or the configs
 differ in a way nobody has identified — same conclusion). **Run mode is a
 per-task setting the plugin cannot see, and the exposed spelling is not stable
@@ -793,7 +794,7 @@ over time**, so all three must be present.
 
 Entries are matched **exactly** — no prefix fallback, no inherit-on-miss. When
 *every* entry misses, the runtime refuses to spawn the agent at all ("would be
-spawned with zero tools — refusing"). That is how #650/#698 broke all three
+spawned with zero tools — refusing"). That is how a 2026-07 regression broke all three
 then-existing agents in Cowork **while CI stayed green**: they were qualified
 against the harness's arbitrary dict key rather than the product's name. The
 bare `display_name` registration repeated the shape one registrar later — that spelling was missing,
@@ -808,8 +809,8 @@ spelling is safe because unrecognized entries are ignored so long as one resolve
 page was wrong until it was measured.** This file, `CLAUDE.md`,
 ADR-0004, ADR-0006, ADR-0011, two specs, the packaging test and three agent
 bodies all said "a deny binds even under `bypassPermissions`; an omission alone
-is not." Seven of them cited issue #695 for it — the birkeland lane breach,
-which says nothing about `bypassPermissions`, denies, or omissions. Probed
+is not." Seven of them cited one lane-breach report for it, which says nothing
+about `bypassPermissions`, denies, or omissions. Probed
 2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128 (`make
 probe-agent-binding`, reproduced twice): under `bypassPermissions` **both**
 bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
@@ -869,7 +870,7 @@ loudly in CI) and asserts all five registration sites still agree on `genealogy`
 > **unset also means on** — deleting the variable does not eager-load anything.
 > (It is additionally forced off on a non-first-party `ANTHROPIC_BASE_URL`, on
 > Vertex, and under `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`.) **Five sites
-> described the opposite and were corrected in #1173 and its follow-up** — the
+> described the opposite and were corrected on 2026-08-13 and after** — the
 > three harness/hosted comments plus `CLAUDE.md` and this repo's own packaging
 > test. The flag **values** are unchanged; flipping them is separate work that
 > has to re-measure the tool mix before and after, and
@@ -922,11 +923,28 @@ Full rationale and error contract: `research-append-tool-spec.md` §11.
 ### 5.4 The write-lockdown hook
 
 The plugin ships one `PreToolUse` hook (`packages/engine/plugin/hooks/hooks.json`
-+ `guard_project_files.py`): it **denies raw `Write` / `Edit` / `NotebookEdit` on
-`research.json` and `tree.gedcomx.json`**, matched on basename with both path
-separators handled. The deny message names the sanctioned writer tools, and no
-`stopReason` is set — a denied write is a recoverable mistake and the turn
-continues. *(Imperative owned by `CLAUDE.md` § "Plugin hooks".)*
++ `guard_project_files.py`), and despite this section's name it enforces **three**
+rules, not one. Its matcher is
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append` — wider than
+the file-write tools, because two of the three rules act on `research_append`
+itself:
+
+1. **The raw-write lockdown.** Denies raw `Write` / `Edit` / `NotebookEdit` on
+   `research.json` and `tree.gedcomx.json` (`PROTECTED_PROJECT_FILES`), matched
+   on basename with both path separators handled.
+2. **Section ownership by caller.** `owner_denied()` refuses a `research_append`
+   op writing a section another unit owns — `OWNED_SECTIONS` reserves
+   `proof_summaries` to `proof-conclusion`, and `OWNED_DECLARATIONS` reserves
+   `questions.exhaustive_declaration` to `research-exhaustiveness`.
+3. **The reverse rule.** `AGENT_WRITABLE_SECTIONS` stops an owning agent writing
+   *outside* its own set, added after a measured 2026-08-19 incident in which
+   `proof-conclusion` wrote `status: "resolved"` onto a conflict it does not own.
+
+Rule 2 is why this layer matters more than any allow-list: **caller identity is
+the one thing no `tools:` list can express.** The deny message names the
+sanctioned writer tools, and no `stopReason` is set — a denied write is a
+recoverable mistake and the turn continues. *(Imperative owned by `CLAUDE.md`
+§ "Plugin hooks".)*
 
 **Why a hook and not an allow-list:** allow-lists are **subtractive**. A
 per-agent `tools:` list can only narrow what a subagent inherits from the
@@ -956,14 +974,21 @@ the directory never ships. Asserted by `tests/packaging/plugin-hooks.test.ts`,
 which runs the real script.
 
 **Three sibling implementations exist**, in three packages that cannot import
-each other:
+each other — plus a fourth consumer that *can*, and does:
 
 - `packages/engine/plugin/hooks/guard_project_files.py` — ships in the VM
   (Cowork + hosted)
 - `apps/server/app/agent/real_agent.py` — the hosted SDK hook
 - `eval/harness/e2e/orchestrator.py` — the e2e harness's own hook
 
-**A parity test holds them to the same behavior:**
+`eval/harness/harness/context_policy.py` is the fourth, and it is **not** a copy:
+it loads `guard_project_files.py` by path and re-exports the live
+`protected_target` and `owner_denied` predicates, because that file is the only
+one of the three that is stdlib-only. An imported predicate cannot diverge from
+what the plugin ships, which is strictly stronger than a vector-checked copy —
+**prefer the import when you add a consumer.**
+
+**A parity test holds the three copies to the same behavior:**
 `eval/harness/tests/unit/test_write_lockdown_parity.py` lifts each copy's
 constant and predicate out with `ast` and runs all three against one vector set,
 so a change landing in one and not the others fails `make harness-test`. It is
@@ -972,21 +997,26 @@ different by design (the predicate is `protected_target` in one and
 `direct_project_file_write` in the other two). It also fails on an
 *unregistered* fourth copy, so adding one means adding it to the test.
 
-The unit harness stages **no** plugin hooks at all.
+The unit harness stages **no** plugin `hooks.json` — but that does not mean the
+lockdown is absent there. Its own `PreToolUse` hook calls
+`context_policy.protected_file_denial`, which wraps the shipped
+`protected_target` above and **returns the deny**, so raw writes are refused in
+the unit tier too.
 
 `guardrail-enforcement-spec.md` **§6** is the authority on this guardrail; **§4**
 is the table of every guardrail's instrument, binding environment, and
 enforcing-vs-shadow status.
 
-> **Direction.** Discriminating by *caller* is a hook's job, and the hook layer
-> already does it once: `eval/harness/harness/context_policy.py` denies
-> `image_read` when `agent_id` is absent. **The per-context policy design exists —
-> don't re-derive it.** What is missing is a production port of it into the
-> shipped `packages/engine/plugin/hooks/` hook. **That port is no longer gated on
-> calibrating the shadow window** — the issue that owned the calibration closed
-> `not planned` on 2026-08-09, so anything still naming it as a prerequisite is
-> naming a dead gate. What the port needs first is the one live Cowork run that
-> settles whether the *router* holds `image_read` at all
+> **Direction.** Discriminating by *caller* is a hook's job, and **the
+> section-ownership half has landed in the shipped hook** — rules 2 and 3 above.
+> Do not re-derive that design, and do not describe it as pending. What is still
+> only in the harness is the *tool*-level arm:
+> `eval/harness/harness/context_policy.py` denies `image_read` when `agent_id` is
+> absent, and no production port of that exists. **It is not gated on calibrating
+> the shadow window** — the issue that owned the calibration closed `not planned`
+> on 2026-08-09, so anything still naming it as a prerequisite is naming a dead
+> gate. What it needs first is the one live Cowork run that settles whether the
+> *router* holds `image_read` at all
 > (`gh issue list --search "does the router hold image_read"`).
 
 ### If you're asked to…
@@ -995,8 +1025,8 @@ enforcing-vs-shadow status.
 
 - **A `tools:` entry grants a capability; it does not create a behavior.** The
   agent will not call a tool its body never tells it to call. `record-extractor`
-  has held `place_search` and `place_search_all` since #650 (2026-07-12), under two
-  spellings since #742 (07-18) and all three since 2026-08-05, while its body tells
+  has held `place_search` and `place_search_all` since 2026-07-12, under two
+  spellings since 07-18 and all three since 2026-08-05, while its body tells
   it to *omit* `standard_place` (`record-extractor.md`, its `standard_place`
   instruction) — dead grants that every lint
   passes. **Every tool addition is two edits: the frontmatter, and the
@@ -1116,7 +1146,7 @@ JSON to think." **Never design a flow that hands the LLM a large document to
 edit and re-emit.**
 
 > **Today:** `research_query` returns 50 items per call with a `truncated` flag
-> and an `offset` parameter for paging past 50 (#1031 tool half), and covers
+> and an `offset` parameter for paging past 50, and covers
 > **11 of the 15** `research.json` sections — missing `project`,
 > `researcher_profile`, `known_holdings`, and `localities`. On the tree side,
 > `project_context` returns a fixed projection of tree persons (id, name, gender,
@@ -1130,9 +1160,9 @@ edit and re-emit.**
 > and **36 — 23% — read `tree.gedcomx.json`**. A tree projection surface reclaims
 > that 23%, not "most of it," and `Read` stays regardless because skills read
 > their own reference files through it.
-> **Direction (#1031).** Both halves shipped. The tool half made items 51+
+> **Direction.** Both halves shipped. The tool half made items 51+
 > reachable via `offset`, closing the "no way to fetch past 50" correctness bug at
-> the tool. The **skill half (#1183)** taught the consumers to page:
+> the tool. The **skill half** taught the consumers to page:
 > `research/SKILL.md` and `agents/proof-conclusion.md` both check `truncated` and
 > page with `offset`. The latter's "collect every assertion" gate had under-read
 > (it once saw 50 of 57). **If you consume `research_query`, check the
@@ -1227,7 +1257,7 @@ in `enums.schema.json` is generated, with no exceptions. Regeneration is automat
 and typing a union by hand creates a sixth copy — `gen-enums.mjs` throws rather
 than let a hand-written union silently shadow a generated one.
 
-> **Direction (#1087/#1014; [ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).**
+> **Direction** ([ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).
 > These are **four-plus hand-maintained copies of one source**, kept in sync by
 > elimination, automatic generation, or lint — never by a step a human has to
 > remember. `packages/schema`'s enum unions are generated; everything else is
@@ -1303,51 +1333,90 @@ the full analysis and is the closest thing this repo has to an ADR today.
 
 ### 7.3 What is built, and what is not
 
-**Verified on `main` 2026-08-02:** the in-sandbox WS server
+**Verified on `main` 2026-08-31:** the in-sandbox WS server
 (`app/sandbox_server.py`), the E2B image, and the direct-WSS wiring all exist and
-match the flow above. No Ably code remains in `apps/server/app` (one comment
-reference in `sandbox/e2b.py`), and there is no idle-suspend loop.
+match the flow above. There is no idle-suspend loop, and no Ably code anywhere in
+`apps/server` — the last comment reference went from `sandbox/e2b.py` on
+2026-08-09. Two historical comments survive, neither in a runtime path:
+`apps/server/tests/conftest.py` and `deploy/fly.toml`.
 
-**Known gaps**, from `docs/realtime-rearch-status.md`:
+**FamilySearch tokens are injected, and encrypted at rest.**
+`sessions.sync_fs_token` refreshes the user's grant and writes it into the
+sandbox's `~/.familysearch-mcp/tokens.json` on session create *and again on every
+`/connect`*, returning an `ok` / `expired` / `none` state that drives the
+client's "Reconnect FamilySearch" banner. Re-injecting on connect is the only
+path by which a *fresh* login reaches a sandbox that already exists. The stored
+`access_token` / `refresh_token` columns are Fernet-encrypted by
+`crypto.EncryptedStr` at SQLAlchemy's Core layer, so no caller can forget to; a
+decrypt failure soft-fails to `None`, which `auth.fresh_fs_token` turns into
+"expired", so a legacy or wrong-key row self-heals on the next login rather than
+500-ing. **The copy inside the sandbox stays plaintext by design** — the
+in-sandbox MCP needs it, and both copies die on the same FS grant clock (8h idle
+/ 24h absolute). That 24h ceiling is why the at-rest encryption is
+belt-and-braces rather than a gate on anything: it costs nothing at runtime, and
+**it is not a gap and no decision waits on it.**
 
-- FamilySearch tokens **are** injected: `sessions.sync_fs_token` writes the
-  user's token into the sandbox's `~/.familysearch-mcp/tokens.json` on session
-  create *and* again on every `/connect`, and returns a `familysearch` state so
-  the client can prompt on expiry. The open gap is a different one — the
-  `familysearch_tokens` access and refresh values are stored **unencrypted at
-  rest** in the control plane's database, which has to change before a real-PII
-  alpha (`gh issue list --search "Encrypt familysearch_tokens"`).
+**Known gaps:**
+
+- **A resumed sandbox may not exist, and nothing checks.** `E2BProvider.resume`
+  returns a handle carrying `state=SandboxState.MISSING` rather than raising when
+  E2B no longer has the sandbox (`get()` does the same), and `app/sessions.py`
+  never reads `SandboxState` at all. The first write into that handle hits
+  `_require_handle` and `/connect` 500s. **Check the state yourself after any
+  `resume()` or `get()`; the interface will not fail for you.** This is the
+  leading candidate cause behind the reported hang where reopening a session
+  after inactivity leaves the chat on "Connecting to the agent…"
+  (`gh issue list --state open --search "Connecting to the agent"`).
+
 - **E2B Hobby caps *uninterrupted* runtime at 1 hour — not total session
-  length.** The cap is real, measured from `startedAt`, and is the maximum the
-  tier permits rather than a backstop we chose: a larger create timeout is
-  rejected outright. But **the window resets on pause/resume**, and the sandbox
-  is created with `on_timeout: pause` + `auto_resume`, so reaching the cap pauses
-  the sandbox and the next request resumes it (~1s). A session therefore runs for
-  as many hours as it needs; the only cost is that a pause landing mid-turn
-  breaks that turn. Verified against the live API 2026-08-09. **Do not read the
-  cap as a session-length limit** — both "there is a 1-hour cap" and "sessions
-  run for hours" are true at once.
-- The **delete-janitor** for abandoned sandboxes is unimplemented — paused
-  sandboxes are never reclaimed. *Compute* is gated: `WsSessionConnection`
-  suspends reconnects while the tab is hidden, precisely so a backgrounded tab
-  cannot silently resume a paused sandbox. What retained sandboxes cost while
-  paused is a vendor billing question this repo does not answer.
-- `ws_signing_key` still defaults to a dev value, but a production deploy can no
-  longer run on it: when `PUBLIC_URL` is https and `ws_signing_key`, `session_secret`,
-  or `DATABASE_URL` is missing or still at its default, the app refuses to boot
-  (`config.assert_production_config`, first statement of `main.py`'s lifespan).
+  length.** `_RUNNING_TIMEOUT_S = 3600` is the maximum the tier permits, not a
+  backstop we chose: create with 7200 fails 400 "Timeout cannot be greater than 1
+  hours" (measured 2026-08-09), while `set_timeout` past the ceiling returns 204
+  and silently no-ops — so an over-large value fails loudly at create and
+  silently everywhere else. But **the window resets on pause/resume**: the
+  sandbox is created with `on_timeout: pause` + `auto_resume` and `resume()`
+  re-arms the full window on every `/connect`, so reaching the cap pauses rather
+  than kills and the next request resumes (~1s). A session therefore runs for as
+  many hours as it needs. **Do not read the cap as a session-length limit** —
+  both "there is a 1-hour cap" and "sessions run for hours" are true at once.
+  Whether a pause landing mid-turn breaks that turn is **asserted, not
+  measured**.
 
-> **Both source docs were corrected 2026-08-02.** `docs/realtime-architecture.md`
-> and `docs/realtime-rearch-status.md` used to carry a
-> `**Branch:** hosted-web-workbench` line (the code is on `main`), and the status
-> doc used to list the "C5 cleanup" (Ably backends, the old relay, the
-> idle-suspend loop) as **still present** when it was already done. Both now say
-> so. The last remnant is gone too: `ably` is no longer declared in
-> `apps/server/pyproject.toml`. **Still read those two docs for the reasoning,
-> not as the current-state reference — this guide is**, and the status doc's own
-> "deferred / known gaps" list is the stalest part of it: it still names the
-> `ably` dependency and the FamilySearch-token injection above, both closed, and
-> already marks the wiki-corpus bake obsolete rather than pending.
+- **The delete-janitor for abandoned sandboxes is unimplemented** — paused
+  sandboxes are never reclaimed, by us or by E2B (never reaping them is what
+  makes resume work). Nothing suspends a sandbox but the running-timeout above:
+  `SandboxProvider.suspend()` has no route and no background task behind it.
+  **Compute is only half-gated:** `WsSessionConnection` suspends reconnects while
+  the tab is hidden, so a backgrounded tab cannot silently resume a *paused*
+  sandbox — but a *running* one keeps billing until its hour elapses, which is
+  the larger cost. Iceboxed by lead decision 2026-08-11 as too early, with stated
+  thaw triggers: the user pool growing past in-house testers, or someone wanting
+  Opus on the model picker
+  (`gh issue list --state open --search "delete-janitor"`).
+
+- **Four settings are boot-enforced in production, and one of them can never be
+  rotated.** When `PUBLIC_URL` starts with `https` — the sole production
+  discriminant — `config.assert_production_config` refuses to boot if
+  `session_secret`, `ws_signing_key`, or `fs_token_enc_key` is still at its
+  declared default, or if `DATABASE_URL` is unset or blank (which would put a Fly
+  deploy on SQLite over an unmounted rootfs). It runs as the first statement of
+  `main.py`'s lifespan and names every offender at once, so one deploy fixes all
+  of them. **`ws_signing_key` is set-once in practice:** `E2BProvider.create`
+  bakes `HMAC(ws_signing_key, sandbox_id)` into the in-sandbox WS server's
+  process env and that server is deliberately never restarted across
+  pause/resume, so rotating the key orphans every existing sandbox — the control
+  plane mints against the new key, the sandbox verifies against the old, and
+  every handshake fails with no recovery but a new session
+  (`gh issue list --state open --search "WS_TOKEN_SECRET rotation"`).
+
+> **Read the two source docs for reasoning, not for current state — this guide is
+> the current-state reference.** `docs/realtime-architecture.md` carries the
+> analysis behind sandbox-as-server; `docs/realtime-rearch-status.md` is the
+> build log. The status doc's "deferred / known gaps" list is in good shape — the
+> Ably dependency, the FamilySearch-token injection, and the wiki-corpus bake are
+> all correctly struck through as closed or obsolete. **Its checkpoint section
+> above that list is not**, and its three stale lines are corrected in the same
+> pass as this one.
 
 ### If you're asked to…
 
@@ -1372,12 +1441,22 @@ path.
 
 Four environments run the engine, and they load the plugin differently.
 
+**There is one Cowork row, not two.** Every live census has found the same
+configuration — the agent runs in a cloud sandbox (`cwd = /home/claude`) and
+reaches the host `.mcpb` over the device bridge — on macOS and Windows alike,
+with or without a connected folder. What has varied is the **tool-name spelling
+the session exposes**, and it varied by *date*: a 2026-08-04/05 session saw the
+bare `mcp__Genealogy_Research__*`, the 2026-08-15 and 08-19 censuses saw the
+bridged `mcp__remote-devices__Genealogy_Research__*`. The registrar moved. That
+is why every agent lists all three spellings (§5.2) — insurance against a moving
+target, **not** two environments to build for. A "run mode" that selects a
+bridge-free path has never been observed.
+
 | Environment | Skills | Agents | Hooks | Permission mode | MCP server |
 |---|---|---|---|---|---|
-| **Cowork** (cloud) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` via the remote-device bridge |
-| **Cowork** (on this computer) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` — exposed spelling has **moved**: bare `mcp__Genealogy_Research__*` live in #1341, but the 2026-08-15 censuses saw the bridged `mcp__remote-devices__Genealogy_Research__*` here too (§5.2) |
+| **Cowork** | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` — the exposed spelling has **moved over time**, not by run mode (§5.2) |
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
-| **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — no plugin hooks, and **no write-lockdown rule at all** | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
+| **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — not the plugin's `hooks.json`, but it **imports the shipped predicates**, so the write lockdown and the ownership rules bind (§5.4) | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
 
 **The permission-mode column is not a footnote.** It is why the e2e tier and the
@@ -1390,9 +1469,8 @@ one tier is not thereby proved in another.
 redundancy. SDK plugin loading registers agents **only** under the namespaced
 name `genealogy-research:<agent>`, while every SKILL.md delegates by the **bare**
 name. Without the staging, the `Task` call errors and the model **silently falls
-back to a general-purpose stand-in that binds none of the agent's `tools:` or
-`disallowedTools:`** (#939). Skills are unaffected — the loader registers those
-under bare names.
+back to a general-purpose stand-in that binds none of the agent's `tools:`**.
+Skills are unaffected — the loader registers those under bare names.
 
 Both harnesses load the staged files via `setting_sources=["project"]`.
 
@@ -1400,10 +1478,12 @@ Other environment differences that bite:
 
 - **Permission mode.** See the column above; `bypassPermissions` on the hosted
   path is why denies and hooks matter more than allow-lists (§5).
-- **The unit harness's baseline grants `Write`/`Edit` to every skill**, and while
-  it does install its own `PreToolUse` hook (`Skill` tracking, the `image_read`
-  context policy, call limits), that hook carries **no protected-file rule** — so
-  §5.4's raw-write class is entirely ungated at call time there.
+- **The unit harness's baseline grants `Write`/`Edit` to every skill**, but its
+  own `PreToolUse` hook (`Skill` tracking, the `image_read` context policy, call
+  limits) also calls `context_policy.protected_file_denial`, which wraps the
+  **shipped** `protected_target` predicate and returns the deny. So the raw-write
+  class is gated at call time here too — what differs between the tiers is the
+  permission mode, not the lockdown.
 - **Tool deferral.** Cowork defers tool schemas above a size threshold and offers
   no control over it, so `ToolSearch` is the real load path there (§5.2).
 - **The Cowork bridge caps every MCP call at 60s.** A client-side ceiling this
@@ -1428,8 +1508,12 @@ Other environment differences that bite:
 **Change how the hosted agent session is configured.** Run **`make agent-smoke`**.
 It is the only check that reads what the hosted runtime actually *resolved* — the
 SDK init handshake's agent list, no model call, bills nothing — and **no CI job
-runs it.** It needs `ANTHROPIC_API_KEY` or an `eval/.env` entry; **without one it
-skips silently**, which looks identical to passing.
+runs it.** It needs `ANTHROPIC_API_KEY` or an `eval/.env` entry. The target sets
+`AGENT_SMOKE=1`, which turns the underlying test's skips into hard errors, so a
+missing key fails loudly here while the same test still skips under a plain
+`make server-test` — only the caller knows which of the two it is, so the caller
+says. Resolution is not binding: for whether a granted tool actually *binds*, run
+`make probe-agent-binding`.
 
 ---
 
@@ -1446,7 +1530,7 @@ skips silently**, which looks identical to passing.
 | `make harness-test` | `eval/harness` (pytest) — including the **`packages/schema/schemas/` JSON mirror** (`test_schema_mirrors.py`) and the three write-lockdown copies' parity | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug. **Not** the TS half of the `packages/schema` mirror — that is `make test-js` |
 | `make typecheck` | the whole JS workspace (turbo) | Python; and it is not the only viewer gate — `make test-js` runs viewer-ui's vitest suite (including `schema-interface-drift.test.ts`), and `make engine-test` runs `field-render-drift.test.ts` against the viewer's section components |
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
-| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names | whether a granted tool actually **binds**; skips silently with no API key |
+| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names (fails loudly with no API key — the target sets `AGENT_SMOKE=1`) | whether a granted tool actually **binds** — that is `make probe-agent-binding` |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: `runs_per_test` is pinned to 1, so the harness's `flaky` flag is **dead by construction, not healthy**. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
@@ -1536,7 +1620,7 @@ lead you to them:**
   directory that is not one), blind
   human `.ann.json` annotations, and `calibrate_judge` measuring judge-vs-human
   agreement **offline** rather than inferring it from expensive live runs. Three
-  axes since #1050: `verdict` (genealogical), `compliance` (guardrail), and
+  axes since 2026-07-31: `verdict` (genealogical), `compliance` (guardrail), and
   `outcome` (the gate) — so a run whose answer is right but whose audit trail was
   not earned **fails**.
 
@@ -1716,4 +1800,4 @@ questions that only look open.
 | A user submitted a feedback zip | [`alpha-feedback-guide.md`](alpha-feedback-guide.md), then [`feedback-case-spec.md`](specs/feedback-case-spec.md) |
 | The hosted web product | [`hosted-web-workbench-spec.md`](specs/hosted-web-workbench-spec.md), [`sandbox-provider-spec.md`](specs/sandbox-provider-spec.md), [`realtime-architecture.md`](realtime-architecture.md) (reasoning, not current state) |
 | I'm a genealogist, not a developer | `eval/JUNIOR-WALKTHROUGH.md`, `eval/SENIOR-WALKTHROUGH.md` |
-| What work is queued but not yet started? | The **Backlog column** on the project board. The repo's staging queue was retired 2026-08-02 (#1163) — its 54 items became issues #1117–#1157. Deferred work goes straight to an issue; there is no staging file. |
+| What work is queued but not yet started? | The **Backlog column** on the project board. The repo's staging queue was retired 2026-08-02 — its 54 items each became an issue. Deferred work goes straight to an issue; there is no staging file. |
