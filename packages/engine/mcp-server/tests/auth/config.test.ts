@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import {
   loadConfig,
   saveConfig,
@@ -11,6 +11,7 @@ import {
 } from "../../src/auth/config.js";
 
 vi.mock("node:fs/promises", () => ({
+  chmod: vi.fn(),
   mkdir: vi.fn(),
   readFile: vi.fn(),
   writeFile: vi.fn(),
@@ -19,11 +20,13 @@ vi.mock("node:fs/promises", () => ({
 const mockedReadFile = vi.mocked(readFile);
 const mockedWriteFile = vi.mocked(writeFile);
 const mockedMkdir = vi.mocked(mkdir);
+const mockedChmod = vi.mocked(chmod);
 
 beforeEach(() => {
   mockedReadFile.mockReset();
   mockedWriteFile.mockReset();
   mockedMkdir.mockReset();
+  mockedChmod.mockReset();
 });
 
 describe("loadConfig", () => {
@@ -102,7 +105,8 @@ describe("saveConfig", () => {
 
     await saveConfig({ wikiApiUrl: "http://localhost:9000" });
 
-    expect(mockedMkdir).toHaveBeenCalledWith(STORAGE_DIR, { recursive: true });
+    expect(mockedMkdir).toHaveBeenCalledWith(STORAGE_DIR, { recursive: true, mode: 0o700 });
+    expect(mockedChmod).toHaveBeenCalledWith(STORAGE_DIR, 0o700);
     expect(mockedWriteFile).toHaveBeenCalledTimes(1);
     const [writtenPath, writtenBody, writtenOpts] =
       mockedWriteFile.mock.calls[0];
