@@ -8,7 +8,7 @@ import type {
 } from '../../lib/schema'
 import { getPreferredName, getPrimaryFact } from '../../lib/schema'
 import { orderPersons, relationshipFromPerspective } from '../../lib/relationship-label'
-import { openExternal } from '../../lib/external'
+import { openFamilySearch } from '../../lib/external'
 import Pill from './Pill'
 import styles from './SidecarResultCard.module.css'
 
@@ -122,7 +122,7 @@ function RecordSearchBody({
                     <button
                       type="button"
                       className={styles.externalLink}
-                      onClick={() => openExternal(tm.ark)}
+                      onClick={() => openFamilySearch(tm.ark)}
                     >
                       View →
                     </button>
@@ -139,7 +139,7 @@ function RecordSearchBody({
           <button
             type="button"
             className={styles.externalLink}
-            onClick={() => openExternal(result.arkUrl)}
+            onClick={() => openFamilySearch(result.arkUrl)}
           >
             Open in FamilySearch →
           </button>
@@ -190,7 +190,7 @@ function FulltextSearchBody({ result }: { result: FulltextSearchResult }): React
           <button
             type="button"
             className={styles.externalLink}
-            onClick={() => openExternal(result.id)}
+            onClick={() => openFamilySearch(result.id)}
           >
             Open in FamilySearch →
           </button>

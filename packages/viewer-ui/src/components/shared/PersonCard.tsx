@@ -1,6 +1,6 @@
 import type { GedcomxPerson } from '../../lib/schema'
 import { getPreferredName, getPrimaryFact } from '../../lib/schema'
-import { openExternal } from '../../lib/external'
+import { openFamilySearch } from '../../lib/external'
 import styles from './PersonCard.module.css'
 
 interface PersonCardProps {
@@ -13,9 +13,9 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
   const birth = getPrimaryFact(person, 'Birth')
   const death = getPrimaryFact(person, 'Death')
 
-  const handleArkClick = (e: React.MouseEvent<HTMLAnchorElement>): void => {
+  const handleArkClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
     e.preventDefault()
-    openExternal(person.ark)
+    openFamilySearch(person.ark)
   }
 
   return (
@@ -42,9 +42,19 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
         {person.ark && (
           <>
             {' · '}
-            <a href={person.ark} onClick={handleArkClick} className={styles.ark} title={person.ark}>
+            {/* A <button>, not an <a href>: a raw href is followed by
+                ctrl/middle-click WITHOUT the handler, bypassing the destination
+                policy. That only bites when `ark` holds an https:// value — which
+                is exactly the poisoned case this constrains, and what the shipped
+                fixtures contain. `title` keeps the hover disclosure. */}
+            <button
+              type="button"
+              onClick={handleArkClick}
+              className={styles.ark}
+              title={person.ark}
+            >
               View on FamilySearch
-            </a>
+            </button>
           </>
         )}
       </div>

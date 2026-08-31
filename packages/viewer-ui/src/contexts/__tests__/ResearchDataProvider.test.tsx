@@ -60,6 +60,7 @@ function makeMockTransport(): ResearchTransport {
     },
     readSidecar: (logId: string) => currentReadSidecar(logId),
     openExternal: () => {},
+    openFamilySearch: () => {},
     submitFeedback: async () => ({ ok: true })
   }
 }
