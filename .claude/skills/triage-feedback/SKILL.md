@@ -20,8 +20,7 @@ it treats a `feedback`-labelled item outside this column as a triage slip and
 refuses to promote it.
 
 **You propose, then apply what is approved.** No branches, no PRs, no code edits.
-You have no `Edit` or `Write` tool on purpose — a session that starts fixing the
-first bug never triages the other seven.
+You have no `Edit` or `Write` tool on purpose.
 
 **One item at a time.** Report, verify, recommend, wait for the verdict, apply,
 move on. Do not batch the report and do not run ahead of the lead.
@@ -48,9 +47,9 @@ reads returns "API rate limit exceeded" while `gh api rate_limit` still shows
 5000/5000. Read the board once at the start of the run and work from that
 snapshot, re-reading only before a write.
 
-**Oldest first**, and **cap the run at about eight**. Quality collapses past
-that, and there is nothing to resume — the column is the queue, so an item you
-did not reach is simply still there next run. Say how many are left when you stop.
+**Oldest first**, and **cap the run at about eight.** The column is the queue, so
+an item you did not reach is still there next run. Say how many are left when you
+stop.
 
 Two items with timestamps a few minutes apart are usually one tester resubmitting,
 not two bugs. Open both before triaging either.
@@ -75,16 +74,11 @@ Give the lead, in this order and nothing else:
 **Separate what the tester observed from what they concluded, and check the
 conclusion against the repo.** Their observations are reliable — they were there.
 Their diagnoses frequently are not, and a fix designed from a wrong diagnosis
-builds the wrong thing.
+builds the wrong thing. A refuted diagnosis routinely sits on top of a real
+observation that is sharper than the report: "feature X is missing" where X ships
+and works, but the project state that made them say it is genuinely broken.
 
-The case that set this rule: a tester reported "Localities is missing from the
-supported schema." It is not, and has not been since 2026-07-15 — it is in both
-schema trees, the validator, `research_append`, the ownership table and the
-viewer. But the observation underneath was real and sharper than the report: that
-project had three plans across four jurisdictions and an empty `localities`, so a
-routing gate that should have fired never did.
-
-So for each claim, say which it is:
+For each claim, say which it is:
 
 - **Confirmed** — you found the code, the doc, or the state that shows it.
 - **Refuted** — the thing the tester says is missing or broken is present and
@@ -96,10 +90,9 @@ So for each claim, say which it is:
 
 ## 3. Check whether an issue already covers it
 
-**Before the expensive code read, not after.** One bundle produced four findings
-on 2026-08-26; two were already filed by someone else and a third belonged on an
-issue that already carried a ruling from the lead. Without this step that bundle
-becomes three duplicate issues.
+**Before the expensive code read, not after.** One bundle routinely produces
+several findings that are already filed, and without this step it becomes several
+duplicate issues.
 
 ```sh
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open \
@@ -121,10 +114,10 @@ Put one to the lead with a recommendation and the context behind it. He decides.
 |---|---|---|
 | **Not planned** | Nothing to build: the agent behaved correctly, the ask is out of scope, the claim is refuted with nothing real underneath, or it is a duplicate submission of another feedback item. | Close with a one-line reason. The card moves itself. |
 | **Fold into #N** | An open issue already covers it. | Comment on #N with what this case adds — a second instance, a new cost, a sharper repro. Then close the feedback issue pointing at #N. |
-| **Backlog** | Real work nobody has filed. | Write the instructions (§5), relabel, move the card (§6). |
+| **Backlog** | Real work nobody has filed. | Write the instructions below, relabel, and move the card. |
 
 **A refuted claim is not automatically Not planned.** Ask what the tester saw
-first. The Localities case above would have been closed wrongly.
+first — the observation under a wrong diagnosis is usually real.
 
 **"Worked as expected: yes" is not automatically Not planned either.** Testers
 tick it and then describe four problems. The prose decides.
@@ -191,7 +184,7 @@ Closing moves the card to Not planned on its own. Nothing else to do.
 
 ```sh
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \
-  --body-file <(...)                       # instructions, per §5
+  --body-file <(...)                       # the instructions written above
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \
   --add-label developer                    # or genealogist, by who does the work
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \
