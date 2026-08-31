@@ -106,7 +106,8 @@ England death/burial). For **the person you searched** (the matched persona):
   question that earlier looked like the blocker is **resolved** — no live read
   needed for it.
 - **Standardized place: the search result's is correct; a live `record_read`
-  re-standardizes it WRONGLY** (observed `Southampton, NY → Southampton, England`;
+  re-standardizes it WRONGLY** (observed 2026-07-08; re-probe pending — issue
+  #1908 Phase 1: `Southampton, NY → Southampton, England`;
   `Rochdale, England → Rochdale, South Africa`). The sidecar is therefore *more*
   reliable, and the sidecar tool returns the staged place **as-is** (no
   `standardizePlaces` re-run). **The live `record_read` path is also fixed:** the

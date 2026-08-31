@@ -69,10 +69,11 @@ export async function recordReadTool(
 
   // Sidecar mode: resolve the record from a staged/finalized search sidecar
   // instead of a live FS fetch (no network round-trip). The staged gedcomx
-  // carries the same persons, facts, and relationships as a live read (verified);
-  // we re-apply place standardization here (the search stage skips it) so the
-  // result matches a live read. A live read (omit `resultsRef`) additionally
-  // guarantees the authoritative source citation.
+  // carries the same persons, facts, and relationships as a live read (verified),
+  // and it already carries standardized places from the search stage
+  // (record_search runs standardizePlaces) — so we return it as-is and do NOT
+  // re-standardize here. A live read (omit `resultsRef`) additionally guarantees
+  // the authoritative source citation.
   if (resultsRef !== undefined) {
     return await readFromSidecar(recordId.trim(), resultsRef, projectPath);
   }
@@ -137,7 +138,9 @@ export async function recordReadTool(
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
 // Resolve one record's gedcomx from a staged/finalized search sidecar by id,
-// re-applying place standardization so the result matches a live record_read.
+// returning it as-is. The staged search result already carries standardized
+// places from the search stage; this path does not re-standardize (and a live
+// record_read does not standardize either — it uses pure toSimplified).
 async function readFromSidecar(
   recordId: string,
   resultsRef: string,
@@ -166,10 +169,12 @@ async function readFromSidecar(
   }
   // Return the staged record as-is. The search result already carries the
   // record's standardized places (from FamilySearch), and they are the more
-  // trustworthy value: a live record_read re-standardizes place NAMES through the
-  // resolver, which mis-resolves ambiguous names (observed: "Southampton, NY" ->
-  // "Southampton, England"; "Rochdale, England" -> "Rochdale, South Africa"). So
-  // we deliberately do NOT re-run standardizePlaces here.
+  // trustworthy value. A live record_read does NOT re-standardize: it uses
+  // toSimplified (see the comment above), leaving standard_place unset rather
+  // than resolving an ambiguous place NAME through the resolver and mis-placing
+  // it (observed 2026-07-08: "Southampton, NY" -> "Southampton, England";
+  // "Rochdale, England" -> "Rochdale, South Africa"). So we deliberately do NOT
+  // re-run standardizePlaces here either.
   return match.gedcomx as SimplifiedGedcomX;
 }
 
