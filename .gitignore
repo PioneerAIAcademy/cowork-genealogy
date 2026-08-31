@@ -110,3 +110,6 @@ apps/server/sandbox/.last-image-build
 warnings.java
 # Working scratch document, never a checked-in artifact
 PROBES.md
+
+# OCR model-comparison spike output: FamilySearch page scans (PII) + full transcriptions.
+packages/engine/mcp-server/dev/ocr-spike-out/

@@ -161,7 +161,15 @@ _DIMENSION_RANK = {1: 1, 2: 2, 3: 3, None: 4}
 
 
 def aggregate_per_run_outcome(per_run: list[str]) -> str:
-    """Aggregate per-run outcomes per unit-test-spec.md §7."""
+    """Aggregate per-run outcomes per unit-test-spec.md §7.
+
+    Operates on the strings `_compute_outcome` already produced, so the
+    validator-dominates-cap-abort demotion (issue #1866 V7) is baked in
+    upstream: a run that failed a validator under a deterministic cap
+    arrives here as "fail", never "aborted". This abort-precedence branch
+    therefore only fires on a genuinely ungradeable run, and the two sites
+    agree by construction.
+    """
     if not per_run:
         raise RunlogAssemblyError("no per-run outcomes to aggregate")
     if "aborted" in per_run:
