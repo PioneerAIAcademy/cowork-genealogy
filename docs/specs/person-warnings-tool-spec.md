@@ -473,7 +473,7 @@ imprecise dates are widened per § Date Parsing Rules.
 | `birthRangeGreaterThan3` | implausible | Merge-mode only: the merged record's Birth facts span more than 3 years, with no shared marriage date to corroborate the join | The two records are different people |
 | `birthLikeRangeGreaterThan8` | implausible | Merge-mode only: the merged record's birth-like facts span more than 8 years, with no shared marriage date | As above, at the looser birth-like tolerance |
 | `hasCloseChildBirthsIgnoreSimilarChildren` | implausible | Two of this person's children (that are not already flagged as similar) have Birth dates suspiciously close together | Two records of one child attached as two children |
-| `hasCloseChildChristenings6_30` | implausible | Two of this person's children have Christening/Baptism dates within 6 months of each other | As above, on christening dates |
+| `hasCloseChildChristenings6_30` | implausible | Two of this person's children whose names are similar have Christening/Baptism dates 2 to 180 days apart | Two records of one child attached as two children, on christening dates |
 | `similarChildren` | implausible | Two children look like the same individual recorded twice (similar names and dates) | One child duplicated under two records |
 | `similarChildrenConflictingDates` | implausible | Two children have similar names but conflicting dates | Same child recorded twice with a date discrepancy |
 | `similarSpouses` | implausible | Two spouses look like the same individual recorded twice | One spouse duplicated |
@@ -680,7 +680,10 @@ and need not be added to that reference.
 4. Add the tag to the `ALL_WARNING_TAGS` array.
 5. Add unit tests in `tests/tools/person-warnings.test.ts`.
 6. Add the tag's row to § Tag Catalogue in this spec.
-7. **Run the drift lint** (`make engine-test`, or the
+7. Bump the three hardcoded tag-count assertions in
+   `tests/packaging/person-warnings-spec-drift.test.ts` (the `toBe(74)` guards)
+   to the new total.
+8. **Run the drift lint** (`make engine-test`, or the
    `tests/packaging/person-warnings-spec-drift.test.ts` suite directly).
    It is bidirectional: it fails if the tag is emitted but undocumented,
    or documented but not emitted. Steps 4 and 6 both feed it.

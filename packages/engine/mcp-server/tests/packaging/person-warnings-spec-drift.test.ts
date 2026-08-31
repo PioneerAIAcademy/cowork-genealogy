@@ -48,8 +48,10 @@ function emittedTags(): Set<string> {
     ),
   );
   const out = new Set<string>();
-  for (const m of toolSrc.matchAll(/issueType:\s*([A-Z_0-9]+)/g)) {
-    const val = constMap.get(m[1]);
+  for (const m of toolSrc.matchAll(
+    /issueType:\s*(?:([A-Z_0-9]+)|"([a-z][A-Za-z0-9_]*)")/g,
+  )) {
+    const val = m[1] ? constMap.get(m[1]) : m[2];
     if (val) out.add(val);
   }
   return out;
