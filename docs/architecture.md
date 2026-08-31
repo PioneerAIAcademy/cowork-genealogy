@@ -167,10 +167,15 @@ engine.
 | **Covered by** | §§2–6, 8 | §7 |
 
 **The engine is deliberately outside the pnpm workspace.** `pnpm-workspace.yaml`
-carries a `!packages/engine/**` negation, so the engine stays npm-managed and its
-release pipeline and CI are untouched by anything the web side does. The
-dependency runs one way only: **the web side depends on `packages/schema`, never
-on the engine.**
+carries a `!packages/engine/**` negation. The reason is the lockfile, not the
+build: both shipped artifacts — the `.mcpb` staged by `scripts/build-mcpb.mjs`
+and the E2B sandbox image built from `apps/server/sandbox/e2b.Dockerfile` —
+install a clean production tree with `npm ci --omit=dev` from
+`packages/engine/mcp-server/package-lock.json`, and **no CI job builds either
+one**, so a lockfile that stopped being npm's would first go wrong at a release.
+Neither artifact copies the development `node_modules`, and the plugin `.zip`
+has no dependency step at all. The dependency runs one way only: **the web side
+depends on `packages/schema`, never on the engine.**
 
 Memorable commands live in the **`Makefile`** (`make help` lists them). The
 hosted POC runs entirely on mocks — `make server-mock` needs no E2B, Anthropic,

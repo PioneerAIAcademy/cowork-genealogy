@@ -113,8 +113,11 @@ This repo is also a pnpm + turborepo monorepo for the hosted web product —
 `apps/server`. Two rules bind when you touch it:
 
 - **Keep the engine out of the pnpm workspace.** `pnpm-workspace.yaml` carries a
-  `!packages/engine/**` negation; the engine stays npm-managed so the
-  `.mcpb`/plugin release pipeline is unaffected.
+  `!packages/engine/**` negation. Both shipped artifacts install their production
+  tree with `npm ci --omit=dev` from
+  `packages/engine/mcp-server/package-lock.json`, and no CI job builds either
+  one, so that lockfile has to stay npm's — a break surfaces at release time,
+  not in a green PR.
 - **The web side depends on `packages/schema`, never on the engine.**
 
 What each package is and how they bind: `docs/architecture.md`, "The hosted web
