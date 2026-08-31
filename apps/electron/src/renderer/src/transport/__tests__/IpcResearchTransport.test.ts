@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { assertTransportContract } from '@genealogy/viewer-ui/contract'
 import { IpcResearchTransport, unwrapIpcError } from '../IpcResearchTransport'
+import type { AppAPI } from '../../../../preload/index.d'
 
 let folderNoticeCb: ((m: string) => void) | null = null
 
@@ -8,7 +9,12 @@ let folderNoticeCb: ((m: string) => void) | null = null
 // does (shared harness from @genealogy/viewer-ui/contract).
 function installApiStub(): void {
   folderNoticeCb = null
-  ;(window as unknown as { api: unknown }).api = {
+  // Annotated, NOT cast. The previous `as unknown` threw the type away, so a
+  // channel missing from this stub was invisible to typecheck — it was missing
+  // both `openFamilySearch` (added here) and `readImage` (drifted earlier and
+  // nobody saw). Typecheck is the only net that catches a stub falling behind
+  // the real API, and a cast blinds it.
+  const stub: AppAPI = {
     getState: async () => ({ folderPath: null, research: null, gedcomx: null, notice: null }),
     onResearchUpdated: () => {},
     onGedcomxUpdated: () => {},
@@ -25,8 +31,14 @@ function installApiStub(): void {
     listProjectFiles: async () => [],
     getSessionLog: async () => ({ entries: [], sizeBytes: 0 }),
     openFile: async () => null,
-    getVersion: async () => 'test'
+    getVersion: async () => 'test',
+    // The channel this PR adds. Present because the annotation above forces it.
+    openFamilySearch: async () => {},
+    // Pre-existing drift the cast had been hiding: the real API has had this
+    // since source-image reading landed, and the stub never gained it.
+    readImage: async () => null
   }
+  ;(window as unknown as { api: unknown }).api = stub
 }
 
 describe('IpcResearchTransport', () => {

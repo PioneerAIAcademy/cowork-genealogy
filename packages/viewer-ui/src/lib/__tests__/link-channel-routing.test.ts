@@ -49,9 +49,10 @@ describe('outbound link channel routing', () => {
   })
 
   it('PersonCard does not carry a raw href that bypasses the handler', () => {
-    // ctrl/middle-click follows an href WITHOUT firing onClick, so the policy
-    // would be skipped entirely. Only bites when `ark` holds an https:// value —
-    // which is the poisoned case, and what the shipped fixtures contain.
+    // MIDDLE-click fires `auxclick`, not `click`, so an onClick handler never
+    // runs and the href is followed unchecked. (Ctrl+click does fire `click`;
+    // preventDefault stops that one.) Only bites when `ark` holds an https://
+    // value — the poisoned case, and what the shipped fixtures contain.
     expect(read('shared/PersonCard.tsx')).not.toMatch(/href=\{person\.ark\}/)
   })
 })

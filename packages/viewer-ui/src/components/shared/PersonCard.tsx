@@ -42,11 +42,13 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
         {person.ark && (
           <>
             {' · '}
-            {/* A <button>, not an <a href>: a raw href is followed by
-                ctrl/middle-click WITHOUT the handler, bypassing the destination
-                policy. That only bites when `ark` holds an https:// value — which
-                is exactly the poisoned case this constrains, and what the shipped
-                fixtures contain. `title` keeps the hover disclosure. */}
+            {/* A <button>, not an <a href>. The hole is MIDDLE-click, which fires
+                `auxclick` — not `click` — so an onClick handler never runs and the
+                href is followed unchecked. (Ctrl+click does fire `click`, and the
+                handler's preventDefault stops it; an earlier version of this
+                comment claimed otherwise.) It only bites when `ark` holds an
+                https:// value, which is the poisoned case and what the fixtures
+                contain. `title` keeps the hover disclosure. */}
             <button
               type="button"
               onClick={handleArkClick}

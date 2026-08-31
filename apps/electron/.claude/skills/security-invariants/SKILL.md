@@ -126,7 +126,7 @@ channels come from a hardcoded filename→channel map, not a computed name).
 The renderer is untrusted. Every IPC handler in the main process must validate
 its inputs before acting on them.
 
-Check `src/main/index.ts` for each `ipcMain.handle`:
+Check `src/main/index.ts` for each `ipcMain.handle` — **and `src/main/external-link.ts`**, which registers `open-familysearch` in its own module so its policy is reachable from a test (nothing can import `index.ts` in one). A handler is not unregistered just because it is absent from `index.ts`:
 
 - [ ] `open-file`: file dialog filters (JSON/MD only), null byte check, extension whitelist, 50MB size limit
 - [ ] `open-external`: type check (`typeof url !== 'string'`), URL parse, HTTPS-only protocol check
