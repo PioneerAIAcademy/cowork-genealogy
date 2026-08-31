@@ -1004,18 +1004,31 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
 #
 # Bounds reused verbatim from packages/engine/mcp-server/src/tools/
 # person-warnings.ts (earliestChildBirthToBirth12, earliestChildBirthToBirthMale14,
-# latestChildBirthToBirth80, latestChildBirthToBirthFemale45) rather than invented
-# here. Known gap this inherits rather than papers over: person-warnings.ts has no
-# female-specific LOWER bound (only general <=12, male-specific <=14), so a
-# mother's age-14 birth -- the exact age in issue #1642 Finding 2's motivating bug
-# (jimmie-jewel-neal/run-2026-07-31_13-02-13, the Wood-family adoption) -- is not
-# caught by either lower bound. That is a separate open question for
-# person-warnings.ts's own coverage, not something this validator papers over.
+# latestChildBirthToBirth80) rather than invented here. Known gap this inherits
+# rather than papers over: person-warnings.ts has no female-specific LOWER bound
+# (only general <=12, male-specific <=14), so a mother's age-14 birth -- the exact
+# age in issue #1642 Finding 2's motivating bug (jimmie-jewel-neal/
+# run-2026-07-31_13-02-13, the Wood-family adoption) -- is not caught by either
+# lower bound. That is a separate open question for person-warnings.ts's own
+# coverage, not something this validator papers over.
+#
+# _PARENT_AGE_UPPER_FEMALE (45, person-warnings.ts's latestChildBirthToBirthFemale45)
+# is deliberately NOT enforced here -- chesworthrm review, issue #1642. It was live
+# briefly and measured against the full repo: 3 committed, non-exempt relationships
+# (anders-monsen-ancestry R2, mccarley-spouse R23/R25 -- mothers aged 46-51) would
+# fail it with no way for any skill to comply. relationship.notes[] is fully
+# specified (docs/specs/simplified-gedcomx-spec.md SS4.2) and already in
+# tree-shape.ts's allow-lists, so tree_edit accepts it at write time -- but no
+# skill is ever told to write it, and adding that instruction to the seven callers
+# that can create a ParentChild/Couple edge is real cross-skill work with its own
+# paid re-run per skill touched, not something to scatter into this PR. Issue #2050
+# proposes the better fix -- a tree_edit write-time precondition instead of
+# per-skill prose, since the age computation needs nothing the tool doesn't already
+# have in hand. Restore this bound once #2050 lands.
 
 _PARENT_AGE_LOWER_GENERAL = 12
 _PARENT_AGE_LOWER_MALE = 14
 _PARENT_AGE_UPPER_GENERAL = 80
-_PARENT_AGE_UPPER_FEMALE = 45
 
 _UNCERTAINTY_MARKERS = (
     r"needs?-?review",
@@ -1032,7 +1045,8 @@ _UNCERTAINTY_MARKERS = (
 def _birth_year_and_gender(tree, person_id):
     """(birth year, gender) for a tree person, or (None, gender) if no dated
     birth-like fact is found. Reads Birth/Christening/Baptism, in that order
-    of preference, taking the first 4-digit year in the fact's `date`."""
+    of preference, taking the first 4-digit year in the fact's `standard_date`,
+    falling back to `date`."""
     for p in (tree.get("persons") or []):
         if p.get("id") != person_id:
             continue
@@ -1041,7 +1055,10 @@ def _birth_year_and_gender(tree, person_id):
             for f in (p.get("facts") or []):
                 if f.get("type") != fact_type:
                     continue
-                m = re.search(r"\d{4}", f.get("date") or "")
+                raw = f.get("standard_date") or f.get("date")
+                if not isinstance(raw, str):
+                    continue
+                m = re.search(r"\b(1[0-9]{3}|20[0-9]{2})\b", raw)
                 if m:
                     return int(m.group(0)), gender
         return None, gender
@@ -1062,11 +1079,12 @@ def test_parent_child_age_plausibility_flagged(before_state, after_state):
     matching the "research.json / tree.gedcomx.json... after-state" shape of
     mercyokum's own validator request.
 
-    Detection primitive reused, not reinvented: the age bounds are the exact
-    ones packages/engine/mcp-server/src/tools/person-warnings.ts already
-    treats as implausible for `check-warnings` (earliestChildBirthToBirth12 /
-    Male14, latestChildBirthToBirth80 / Female45) -- see the module comment
-    above for the coverage gap this inherits rather than fixes.
+    Detection primitive reused, not reinvented: the age bounds are a subset of
+    what packages/engine/mcp-server/src/tools/person-warnings.ts already treats
+    as implausible for `check-warnings` (earliestChildBirthToBirth12 / Male14,
+    latestChildBirthToBirth80) -- see the module comment above for the coverage
+    gaps this inherits (no female-specific lower bound) or deliberately does not
+    enforce yet (Female45 upper bound, dropped pending issue #2050).
 
     A relationship this flags must carry a `notes[]` entry using inference/
     uncertainty language (see _UNCERTAINTY_MARKERS) -- the same shape as
@@ -1105,8 +1123,7 @@ def test_parent_child_age_plausibility_flagged(before_state, after_state):
         too_young_general = age <= _PARENT_AGE_LOWER_GENERAL
         too_young_male = parent_gender == "Male" and age <= _PARENT_AGE_LOWER_MALE
         too_old_general = age >= _PARENT_AGE_UPPER_GENERAL
-        too_old_female = parent_gender == "Female" and age >= _PARENT_AGE_UPPER_FEMALE
-        implausible = too_young_general or too_young_male or too_old_general or too_old_female
+        implausible = too_young_general or too_young_male or too_old_general
         if not implausible:
             continue
         rel_notes = rel.get("notes") or []

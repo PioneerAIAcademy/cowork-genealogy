@@ -298,6 +298,38 @@ def test_indexed_spelling_alone_does_not_excuse_a_flat_role_assertion():
     assert "log_005" in str(e.value)
 
 
+# chesworthrm review (issue #1642): the original 50-char/period-only window
+# reached across a semicolon from an indexed NAME or DATE to a flat role
+# assertion in the next clause -- exactly the shape the comment on the
+# pattern already said it rejected. Both offenders below satisfied the
+# marker before the window was narrowed to 20 chars stopping at ./;/, --
+# and the fix was verified against all 299 log notes in the run logs this
+# PR shipped: nothing that passed kept passing, nothing that failed kept
+# failing, and these two start failing correctly.
+OFFENDER_INDEXED_NAME_THEN_FLAT_ROLE_ACROSS_SEMICOLON = (
+    "1860 census, Yell Co. Arkansas: surname indexed as Flyn; household "
+    "head Thomas Flynn, wife Mary, son John."
+)
+OFFENDER_INDEXED_DATE_THEN_FLAT_ROLE_ACROSS_SEMICOLON = (
+    "Match on Thomas Flynn. Birth year indexed as 1822; head of household "
+    "Thomas, plus sons John and Amos."
+)
+
+
+@pytest.mark.parametrize(
+    "notes",
+    [
+        OFFENDER_INDEXED_NAME_THEN_FLAT_ROLE_ACROSS_SEMICOLON,
+        OFFENDER_INDEXED_DATE_THEN_FLAT_ROLE_ACROSS_SEMICOLON,
+    ],
+    ids=["indexed-name-then-flat-role", "indexed-date-then-flat-role"],
+)
+def test_indexed_marker_does_not_reach_across_a_semicolon(notes):
+    with pytest.raises(AssertionError) as e:
+        check(EMPTY_BEFORE, after(entry(notes)), TAGGED)
+    assert "log_005" in str(e.value)
+
+
 @pytest.mark.parametrize(
     "notes",
     [

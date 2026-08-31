@@ -1,7 +1,7 @@
 # Deep dive: search-records — findings and validator requests
 
-Issue #1642. Base `25b0f434`. Release candidate: `v1_2026-08-28_16-51-11` (28
-tests, 27 pass / 1 fail, annotated).
+Issue #1642. Base `25b0f434`. Release candidate: `v1_2026-08-31_11-03-19` (30
+tests, 28 pass / 1 fail / 1 xfail, annotated).
 
 Step 1's output is
 [`search-records-prohibition-list.md`](./search-records-prohibition-list.md) —
@@ -269,6 +269,16 @@ flagged by this validator either. Documented rather than hidden: a direct
 proof test, `test_known_gap_female_age_14_is_not_caught`, asserts the gap
 exists (does not raise) rather than papering over it.
 
+### Both of issue #1817's folded-in reference gaps (promise-emmanuel review)
+
+`census-field-availability.md`'s 1840 line now reads "1840 additionally lists
+names and ages of Revolutionary War pensioners", and `collection-quirks.md`
+now carries the leading/middle-wildcard guidance for the
+Bipes/Bippes/Biepes/... case -- both landed in this diff (via the parallel
+PR #1946 work merged into this branch, not authored in this round directly),
+and this findings doc previously and incorrectly listed them under "Still
+open" (chesworthrm review, issue #1642).
+
 ---
 
 ## Already resolved before this round (verified live, no credit claimed here)
@@ -281,13 +291,6 @@ florencemashipei's suggested fix: "When a match turns on a field — or before
 calling one absent — check that year's entry in
 `references/census-field-availability.md`." Confirmed present; not touched
 this round.
-
-**Both of issue #1817's folded-in reference gaps** (promise-emmanuel review):
-`census-field-availability.md`'s 1840 line now reads "1840 additionally
-lists names and ages of Revolutionary War pensioners" (reworded elsewhere in
-this diff), and `collection-quirks.md` now carries the leading/middle-wildcard
-guidance for the Bipes/Bippes/Biepes/... case. Both confirmed present on
-disk; this findings doc previously listed them under "Still open" in error.
 
 ---
 
@@ -325,10 +328,15 @@ disk; this findings doc previously listed them under "Still open" in error.
 - **`_013` and `_012`'s residual content gap**: `_013` never uses inference
   language even where needs-review reasoning already exists in the same note
   (0 of 5 observed runs); `_012` failed the same way for the first time in
-  the release-candidate run. Deliberately not re-worded this round — the
-  last SKILL.md widening aimed at this exact family showed no measurable
-  effect across the available run logs, and a third attempt without new
-  evidence would repeat that.
+  the release-candidate run. This round already tried one fix at this exact
+  family, earlier in this same PR: the needs-review cross-reference sentence
+  in Step 4 ("This inference belongs in the same sentence as any needs-review
+  reasoning about the household...") — and it showed no measurable
+  effect across the available run logs (chesworthrm review, issue #1642; this
+  was the finding that made this bullet's earlier wording — "deliberately
+  not re-worded this round" — misleading, since a reword did happen). A
+  second attempt in this PR is deliberately declined without new evidence of
+  what specifically would move it.
 
 ---
 
@@ -341,11 +349,16 @@ disk; this findings doc previously listed them under "Still open" in error.
   move a specific test (`_015`) via a mechanism check, not just an outcome
   label. `_013`/`_012`'s residual gap is real and still open; the fix is more
   likely a validator or a rubric change than a fourth restatement.
-- **Retention keeps only 5 candidate run logs per skill.** The four pre-fix
-  baselines (`v1_2026-08-24_09-59-31` through `v1_2026-08-25_00-44-28`) that
-  this round's before/after comparison depended on are already down to
-  three, one auto-pruned when the post-fix candidate landed. A future
-  before/after comparison on this skill has a shrinking window.
+- **Retention keeps only 5 candidate run logs per skill, and this doc's own
+  citations rot with it, not just the before/after comparison's inputs.** The
+  four pre-fix baselines (`v1_2026-08-24_09-59-31` through
+  `v1_2026-08-25_00-44-28`) this round's before/after comparison depended on
+  are gone now, not "down to three" as an earlier version of this note said --
+  three more review rounds each bought a full re-run, and each one prunes the
+  oldest candidate. The same thing happened to a specific-run-log citation in
+  the whitfield xfail_reason (promise-emmanuel/chesworthrm review): fixed by
+  repointing it, but the next full re-run will make it stale again. Prefer
+  citing a measurement method over a specific filename where the two diverge.
 - **`_t9p`'s harness flake is accepted, not fixed, project-wide** —
   `runlog.py`'s `derive_activated` docstring already names the Agent SDK
   skill-discovery bug as a known-accepted v1.x limitation. Do not spend time

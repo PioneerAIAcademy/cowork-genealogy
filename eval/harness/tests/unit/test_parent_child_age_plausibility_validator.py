@@ -95,6 +95,24 @@ def test_known_gap_female_age_14_is_not_caught():
     check(before, after)  # does NOT raise -- age 14 clears every bound above
 
 
+def test_known_gap_female_upper_bound_45_is_not_caught():
+    """Documents, rather than hides, a new limitation deliberately introduced
+    this round: _PARENT_AGE_UPPER_FEMALE (person-warnings.ts's
+    latestChildBirthToBirthFemale45) is no longer enforced (chesworthrm
+    review, issue #1642). It was live briefly and measured against the full
+    repo: 3 committed, non-exempt relationships (anders-monsen-ancestry R2,
+    mccarley-spouse R23/R25 -- mothers aged 46-51) would fail it with no way
+    for any skill to comply -- relationship.notes[] is fully specified and
+    schema-accepted, but no skill is ever told to write it (issue #2050).
+    Pinned so a future restoration of this bound is a deliberate, measured
+    choice, not an accidental silent regression the other direction."""
+    before = tree([], [])
+    persons = [person("P1", "Female", 1805), person("P2", "Female", 1852)]
+    rels = [rel("R1", "P1", "P2")]
+    after = tree(persons, rels)
+    check(before, after)  # does NOT raise -- age 47, no upper female bound anymore
+
+
 def test_implausible_age_with_uncertainty_note_passes():
     """The same implausible gap, but flagged -- the documented escape hatch."""
     before = tree([], [])
@@ -123,3 +141,49 @@ def test_no_new_relationships_skips():
 def test_missing_tree_skips():
     with pytest.raises(pytest.skip.Exception):
         check({}, {})
+
+
+def test_malformed_run_together_date_is_not_misread_as_a_year():
+    """chesworthrm review (issue #1642): eval/tests/e2e/concepcion-alegre-parents/
+    starting-tree.gedcomx.json's person P73Z-2WC has a real committed Birth
+    date of "06031947" (day+month+year run together, no separators, no
+    standard_date). The old r"\\d{4}" scan took the first 4 digits and read
+    a birth year of 603 -- against a parent born 1915 that computed an age
+    of -1312, tripping the "too young" branch on a person actually born in
+    1947. The fixed (1[0-9]{3}|20[0-9]{2}) scan finds no valid 4-digit
+    year bounded on both sides inside a pure digit run, so the age check is
+    skipped for this person entirely rather than computing a bogus age --
+    the correct outcome, not a forced pass."""
+    before = tree([], [])
+    persons = [
+        person("P1", "Male", 1915),
+        {"id": "P2", "gender": "Female", "facts": [
+            {"type": "Birth", "date": "06031947", "place": "Altos, Cordillera, Paraguai"},
+        ]},
+    ]
+    rels = [rel("R1", "P1", "P2")]
+    after = tree(persons, rels)
+    check(before, after)  # does NOT raise -- year is unparseable, so unchecked
+
+
+def test_dict_shaped_date_does_not_crash():
+    """chesworthrm review (issue #1642): eval/runlogs/e2e/mckee-birth-1904/
+    run-2026-07-09_11-43-28.final-tree.gedcomx.json has a real committed
+    Birth fact whose `date` is an object ({"original": "January-March 1904",
+    "formal": "+1904"}), not a string -- FamilySearch's own shape for an
+    uncertain-precision date. re.search(r"\\d{4}", <dict>) raised TypeError,
+    which the harness turned into a plain validator failure with the
+    exception text as the message, unrelated to any real parent-age
+    problem. The isinstance(raw, str) guard skips this person's date
+    instead of crashing."""
+    before = tree([], [])
+    persons = [
+        person("P1", "Male", 1875),
+        {"id": "P2", "gender": "Male", "facts": [
+            {"type": "Birth", "date": {"original": "January-March 1904", "formal": "+1904"},
+             "place": {"original": "Banbridge, County Down, Ireland"}},
+        ]},
+    ]
+    rels = [rel("R1", "P1", "P2")]
+    after = tree(persons, rels)
+    check(before, after)  # does NOT raise TypeError, and does NOT flag

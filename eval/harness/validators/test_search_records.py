@@ -181,8 +181,8 @@ _INFERENCE_MARKERS = (
     # DATE as indexed while still asserting the household ROLE flat, which
     # says nothing about the relationship being an inference (issue #1642,
     # ut_search_records_010/_014/_027 2026-08-28_15-20-05).
-    rf"\bindex\w*\b[^.]{{0,50}}\b{_ROLE_WORD}\b",
-    rf"\b{_ROLE_WORD}\b[^.]{{0,50}}\bindex\w*\b",
+    rf"\bindex\w*\b[^.;,]{{0,20}}\b{_ROLE_WORD}\b",
+    rf"\b{_ROLE_WORD}\b[^.;,]{{0,20}}\bindex\w*\b",
 )
 
 
@@ -203,16 +203,21 @@ def test_pre1880_census_structure_marked_inferred(
     Deterministic rather than judged because compliance is genuinely
     inconsistent, not because the judge misreads it. See issue #1284.
 
-    Re-measured for PR #1946 (superseding this docstring's earlier figure —
-    "17 of 32 ... and all 32 passed" — which the review caught silently
-    dropped rather than updated): across the 5 committed run logs as of this
-    PR, the 9 `pre-1880-census-household`-tagged tests produced 44 logged
-    searches. The marker appears in 26 of 44; outcome is 23 pass / 21 fail.
-    Unlike the earlier figure, marker presence and pass no longer coincide —
-    3 of the 26 marker-present runs still failed (`ut_search_records_014`
-    once, `ut_search_records_h4k` twice), because this validator's own gate
-    is now live and the judge separately reads whether a marker actually
-    qualifies its claim. Re-derive by scanning `research_log_append` notes in
+    Re-measured for this round (issue #1642, chesworthrm review): the PR #1946
+    figure this superseded -- "44 logged searches, marker in 26, 23 pass / 21
+    fail" -- was already stale by the time it was reviewed, because retention
+    keeps only 5 candidate run logs and this PR's own commits rolled three of
+    the five past that measurement. This citation will do the same to whoever
+    reads it next; re-derive rather than trust it. As of this commit, across
+    the 5 committed run logs, the 9 `pre-1880-census-household`-tagged tests
+    produced 43 logged searches; the marker appears in 32. The prior
+    docstring's pass/fail split was a per-note judge-qualification tally
+    (whether a present marker actually qualifies its claim in context, not
+    just appears in the note -- see "the validator is a floor, not a
+    ceiling" in the deep-dive findings doc) and was not re-derived this round;
+    it needs a judge-rationale read per note, not a regex count, so state it
+    freshly rather than carry a guessed number forward. Re-derive the counts
+    above by scanning `research_log_append` notes in
     `eval/runlogs/unit/search-records/v1_*.json` for the tagged test ids --
     a call there is sometimes a single entry, sometimes a batched `ops`
     array of several; count each op with `outcome` in (positive, partial)
