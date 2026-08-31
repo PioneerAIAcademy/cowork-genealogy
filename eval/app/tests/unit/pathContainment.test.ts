@@ -7,9 +7,10 @@ import { readAnnotation, writeAnnotation } from '../../lib/fs/annotations'
 import { readRunLogById, readSnapshotFiles } from '../../lib/fs/runlogs'
 import { diffSnapshotVsDisk } from '../../lib/snapshot'
 import { repoRoot } from '../../lib/paths'
-import { deleteCandidate } from '../../lib/release'
+import { deleteCandidate, releaseRunLog } from '../../lib/release'
 import { writeTest, nextTestId } from '../../lib/fs/tests'
 import { readScenario } from '../../lib/fs/scenarios'
+import { makeFixtureTree, buildRunLog } from '../helpers/fixtureTree'
 import { listRunLogsForSkill } from '../../lib/fs/runlogs'
 
 /**
@@ -67,10 +68,56 @@ describe('path containment at each sink', () => {
     })
   })
 
+  it('releaseRunLog refuses to rename outside the runlogs/unit directory', async () => {
+    // `skill` is a catch-all URL segment, and `classify()` only vets the
+    // FILENAME. `..` with a valid candidate filename classifies cleanly, so
+    // containment is the only thing between this call and an fs.rename outside
+    // runlogs/unit. The PR body claimed this sink had a test; it did not —
+    // stripping its guards left all 191 green.
+    const handle = await makeFixtureTree({ runlogs: [] })
+    process.env.EVAL_DIR = handle.root
+    const outside = path.join(handle.root, 'runlogs')
+    await fs.mkdir(outside, { recursive: true })
+    const fname = 'v9_2026-05-18_10-30-00.json'
+    await fs.writeFile(
+      path.join(outside, fname),
+      JSON.stringify(buildRunLog({ skill: 'x', version: 9, timestamp: '2026-05-18_10-30-00' })),
+      'utf8',
+    )
+    await fs.writeFile(
+      path.join(outside, 'v9_2026-05-18_10-30-00.ann.json'),
+      JSON.stringify({ run_log: fname, annotator: 'a', corrections: [] }),
+      'utf8',
+    )
+    try {
+      await expect(releaseRunLog('../v9_2026-05-18_10-30-00')).rejects.toThrow()
+      // The file is still where it was: the rename never happened.
+      await expect(fs.access(path.join(outside, fname))).resolves.toBeUndefined()
+    } finally {
+      delete process.env.EVAL_DIR
+      await handle.cleanup()
+    }
+  })
+
   it('readAnnotation does not read outside the runlogs directory', async () => {
-    await withOutsideFile(async (rel) => {
-      expect(await readAnnotation(rel.replace(/\.ann\.json$/, ''))).toBeNull()
-    })
+    // The traversal must land on a REAL `.ann.json`. `withOutsideFile` creates
+    // `secret.json`, which `/\.ann\.json$/` does not match, so the id kept its
+    // `.json` and `annPathForRunLog` appended another suffix — the sink opened
+    // `secret.json.ann.json`, a file that never existed. ENOENT, null, green
+    // with or without the guard.
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'containment-ann-'))
+    const abs = path.join(dir, 'secret.ann.json')
+    await fs.writeFile(
+      abs,
+      JSON.stringify({ run_log: 'v1.json', annotator: 'outsider', corrections: [] }),
+      'utf8',
+    )
+    try {
+      const rel = UP + abs.replace(/^\//, '').replace(/\.ann\.json$/, '')
+      expect(await readAnnotation(rel)).toBeNull()
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true })
+    }
   })
 
   it('writeAnnotation refuses to write outside the runlogs directory', async () => {
