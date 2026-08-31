@@ -11,7 +11,7 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 27 skills and 6 agents. Besides the `research` orchestrator itself, its routing
+There are 27 skills and 5 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
 name. The remaining 14 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
