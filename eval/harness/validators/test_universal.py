@@ -1021,10 +1021,10 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
 # tree-shape.ts's allow-lists, so tree_edit accepts it at write time -- but no
 # skill is ever told to write it, and adding that instruction to the seven callers
 # that can create a ParentChild/Couple edge is real cross-skill work with its own
-# paid re-run per skill touched, not something to scatter into this PR. Issue #2050
+# paid re-run per skill touched, not something to scatter into this PR. Issue #1837
 # proposes the better fix -- a tree_edit write-time precondition instead of
 # per-skill prose, since the age computation needs nothing the tool doesn't already
-# have in hand. Restore this bound once #2050 lands.
+# have in hand. Restore this bound once #1837 lands.
 
 _PARENT_AGE_LOWER_GENERAL = 12
 _PARENT_AGE_LOWER_MALE = 14
@@ -1084,7 +1084,7 @@ def test_parent_child_age_plausibility_flagged(before_state, after_state):
     as implausible for `check-warnings` (earliestChildBirthToBirth12 / Male14,
     latestChildBirthToBirth80) -- see the module comment above for the coverage
     gaps this inherits (no female-specific lower bound) or deliberately does not
-    enforce yet (Female45 upper bound, dropped pending issue #2050).
+    enforce yet (Female45 upper bound, dropped pending issue #1837).
 
     A relationship this flags must carry a `notes[]` entry using inference/
     uncertainty language (see _UNCERTAINTY_MARKERS) -- the same shape as

@@ -103,7 +103,7 @@ def test_known_gap_female_upper_bound_45_is_not_caught():
     repo: 3 committed, non-exempt relationships (anders-monsen-ancestry R2,
     mccarley-spouse R23/R25 -- mothers aged 46-51) would fail it with no way
     for any skill to comply -- relationship.notes[] is fully specified and
-    schema-accepted, but no skill is ever told to write it (issue #2050).
+    schema-accepted, but no skill is ever told to write it (issue #1837).
     Pinned so a future restoration of this bound is a deliberate, measured
     choice, not an accidental silent regression the other direction."""
     before = tree([], [])
