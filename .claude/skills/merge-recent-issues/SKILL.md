@@ -106,18 +106,32 @@ The failure a split invites is worse than a forgotten assignment: someone lands
 half the work, updates the spec to record the gap as closed, and the other half
 stays open with a document claiming otherwise.
 
-### The lane split survives only when it is clean
+**Extended 2026-08-31**, on a pass that reported #2030 (`developer`) and #2032
+(`genealogist`) as independent purely because doctrine forbade a cross-lane merge:
 
-`/audit-board`'s lane-split verdict keeps two halves apart when they are different
-labor — a `developer` lint and a `genealogist` audit — because one card spanning
-two lanes has no single assignee. That reason is real, but it holds **only if
-neither half needs the other to land**. Test it explicitly: can each be finished,
-reviewed and merged without waiting on the other? If yes, split cleanly and give
-each its own acceptance. If no, merge and let the card carry both labels — a card
-with two labels is assignable; two cards that each need the other are not.
+> it's okay to merge developer and genealogist lanes for the same skill because
+> genealogists and developers can request help as needed.
 
-When you do split, split at the lane boundary and move the content, so neither
-issue is left pointing at the other for something it needs.
+So **a lane difference is never on its own a reason to keep two issues apart.**
+
+### The lane split survives only where each half finishes without the other
+
+`/audit-board`'s lane-split verdict used to keep two halves apart when they were
+different labor — a `developer` lint and a `genealogist` audit — on the grounds
+that one card spanning two lanes has no single assignee. **That ground is retired**
+by the ruling above: two issues on one skill merge even when one is `developer` and
+the other `genealogist`. The card carries both labels, and whoever takes it asks
+the other lane for the half they do not own.
+
+One test survives, and it is the only one: **can each half be finished, reviewed
+and merged without waiting on the other?** If yes, split cleanly and give each its
+own acceptance. If no, merge. When you do split, split at the lane boundary and
+move the content, so neither issue is left pointing at the other for something it
+needs.
+
+**Never report "different lanes" as the reason for an independent verdict.** If a
+lane difference is the only thing separating two issues on the same skill, they
+merge — and the paid eval run they would otherwise each need is the reason.
 
 ### One-way mechanical dependencies are a body edit, not a merge
 

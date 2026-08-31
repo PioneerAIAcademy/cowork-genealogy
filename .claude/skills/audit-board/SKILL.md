@@ -144,16 +144,22 @@ so exactly one owns the scope.
 **Batch — separate issues, one paid run.** This is the most common and the most
 valuable. See §4.
 
-**Split the lanes — only when the split is clean.** Two halves that are different
-labor — a `developer` lint and a `genealogist` audit — can stay apart, because one
-card spanning two lanes has no single assignee. That holds **only if neither half
-needs the other to land**. Test it: can each be finished, reviewed and merged
-without waiting on the other? If yes, split at the lane boundary and move the
-content, so neither issue is left pointing at the other for something it needs,
-and give each its own acceptance.
+**Split the lanes — only when each half finishes without the other.** Two halves
+that are genuinely different labor — a `developer` lint and a `genealogist` audit
+on unrelated ground — can stay apart. **The reason is not that a two-lane card has
+no single assignee.** That premise is retired: the lead ruled on 2026-08-31 that a
+`developer` half and a `genealogist` half of one skill's work belong on one card,
+*"because genealogists and developers can request help as needed"* — whoever holds
+it pulls in the other lane rather than the board splitting the work for them. So
+**"these are different lanes" is not a reason to keep two issues apart**, and on
+the same skill it is not even a reason to hesitate.
 
-If no — merge, and let the card carry both labels. A card with two labels is
-assignable; two cards that each need the other are not.
+One test survives, and it is now the only one: **can each half be finished,
+reviewed and merged without waiting on the other?** If yes, split at the lane
+boundary and move the content, so neither issue is left pointing at the other for
+something it needs, and give each its own acceptance.
+
+If no — merge, and let the card carry both labels.
 
 **"Schedule together, leave both open" is not a verdict.** The lead ruled it out
 on 2026-08-11: *"Anything that should be done together sounds like a reason to
@@ -207,8 +213,27 @@ Search for merge candidates **by fix site, not by topic**. Issues that collide
 here almost never share a title; they want different lines in one file.
 
 **Two issues wanting different lines in the same file default to one issue.**
-Keeping them apart needs a stated reason — different lane, different reviewer, or
-a paid-run slot they cannot share. Absent one, merge.
+Keeping them apart needs a stated reason, and there are only two left: a **blocker
+on one side** — never park an unblocked issue behind a blocked one — or **each half
+genuinely finishes without the other**, tested as the lane-split verdict above
+tests it. Absent one, merge.
+
+Two reasons that used to sit on this list are gone:
+
+- **"Different lane" is not one** (lead, 2026-08-31 — see the lane-split verdict).
+- **"A paid-run slot they cannot share" is not one — it is the single strongest
+  reason to merge.** It read as a keep-apart reason here and as a merge reason in
+  §4, which is one fact pointing two ways; §4 is right. Two changes to one skill's
+  snapshot cannot share a paid run, so leaving them on separate cards buys two
+  runs at $8–12 and 45–65 minutes each, plus two annotation passes. Merging buys
+  one of each.
+
+**A shared paid run outranks the finishes-independently test.** Two issues can
+each be finished alone and still both need the same skill's snapshot re-run — that
+is a merge, because the run is what the split actually costs. Read the two reasons
+in order: a blocker on one side keeps them apart no matter what; absent a blocker,
+a shared run merges them; only when no run is at stake does finishing
+independently decide.
 
 Bodies filed from 2026-08-04 open with a `**Touches:**` line — the instruction
 lives in `CLAUDE.md`'s `gh issue create` recipe, and essentially every issue in
@@ -621,20 +646,27 @@ larger ones during this pass**, so that one run carries what would have been
 three. Seven issues serialized is seven runs; the same work merged into three
 issues is three. Same economics as batching branches, no new git process.
 
-Merge when the issues share a lane — the same doctrine question, the same test
-files, the same agent body. Do not merge across lanes to save a run: a
-`developer` harness fix and a `genealogist` fixture adjudication in one issue is
-unassignable, which costs more than the run saved.
+Merge when the issues share a **skill** — the same doctrine question, the same
+test files, the same agent body, the same snapshot. **Merge across lanes when they
+do.** The lead ruled on 2026-08-31 that a `developer` precondition and a
+`genealogist` wording change on one skill belong on one card: *"it's okay to merge
+developer and genealogist lanes for the same skill because genealogists and
+developers can request help as needed."* The rule here previously said the
+opposite — that such a card is unassignable and costs more than the run saved —
+and it was wrong on the premise, not on the arithmetic. A junior holding a
+two-lane card asks the other lane for the half they do not own, which is cheaper
+than a second paid run and a second annotation pass.
 
-**Sharing a lane is necessary and not sufficient.** The run being paid once is
+**Sharing a skill is necessary and not sufficient.** The run being paid once is
 what makes a merge pay, so this only applies where a single run covers the
 merged work — one snapshot, one suite, one annotation pass. It does **not**
-apply to N independent pieces of research that merely happen to be filed by the
-same lane against the same directory. Twenty record-hint adjudications are
+apply to N independent pieces of research that merely happen to be filed
+against the same directory. Twenty record-hint adjudications are
 twenty separate investigations of twenty different people; merging them buys no
-run at all, because each still costs its own. Same-lane plus same-directory is
+run at all, because each still costs its own. Same-directory-and-nothing-else is
 where this rule has misfired — apply the "does one person finish all of it in
-one sitting?" test from §1 before merging on lane alone.
+one sitting?" test from §1, reading *one person* as one person who can ask the
+other lane for help, not as one person who must already hold both skills.
 
 Do **not** reach for `eval-cosmetic-skip` to squeeze a second edit past the gate.
 It is for behavior-neutral changes only, and a gate too expensive to satisfy
