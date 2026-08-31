@@ -13,15 +13,12 @@ allowed-tools:
 
 `/fill-ready` ranks the Backlog, `/review-ready` vets one shortlist,
 `/review-icebox` sweeps the frozen pool. All three look at issues one at a time.
-This skill is the only pass that looks at the pool **as a whole** — the merges,
-the rot, the clusters, and the handling that no single body can propose because
-no single body can see the others.
+This skill is the only pass that looks at the pool **as a whole** — merges, rot,
+clusters, and cross-cutting handling.
 
-**Run it weekly, and run it before `/fill-ready`.** That ordering is the point:
-filers search once and then file, because judging fit needs the whole pool and
-cannot be made from inside one PR. This pass is where duplicates get merged,
-premises get corrected and dead items get dropped. `/fill-ready` then ranks a
-deduped Backlog. Run it the other way round and it ranks duplicates.
+**Run it weekly, and run it before `/fill-ready`**, so that pass ranks a deduped
+Backlog. This is where duplicates get merged, premises get corrected and dead
+items get dropped.
 
 **You propose, then apply what is approved.** No branches, no PRs, no code edits.
 You have no `Edit` or `Write` tool on purpose.
@@ -60,16 +57,13 @@ which pairs collide.
 
 ### Reading the pool without silently sampling it
 
-§1 and §3 need every body in one head — that is where collisions and clusters
-come from, and it is why you read them all. **§2 does not.** Its checks are
-per-issue and mechanical, and running eight of them across ~220 bodies will not
-fit alongside everything else. A pass that quietly does forty and reports as
-though it did all of them is worse than one that states its sample.
-
-So split the work: read the whole pool yourself for §1 and §3, and **fan §2 out**.
-Partition the issue numbers into batches of ~25–30 and give each batch an
-explicit, non-overlapping list, so nothing is checked twice and nothing is
-missed. Generate the partition — do not eyeball it.
+Read the whole pool yourself for the merges and the clusters — both need every
+body in one head. **Fan the obsolescence checks out.** They are per-issue and
+mechanical, and eight of them across ~220 bodies will not fit alongside
+everything else. Partition the issue numbers into batches of ~25–30 and give each
+batch an explicit, non-overlapping list, so nothing is checked twice and nothing
+is missed. Generate the partition — do not eyeball it. Never report a sample as
+though it were the whole pool.
 
 Give each batch the five verdicts rather than a summary instruction: **FIXED**
 (name the commit or PR), **STILL BROKEN** (quote the evidence), **PARTLY**
@@ -120,11 +114,10 @@ neither filed recently, both quietly wanting the same lines — plus obsolescenc
 clusters, eval-slot queues and board hygiene. None of those change materially in a
 day, and all of them need every body in one head.
 
-If you cannot reach the target, **say so at the top of the output**: the number you
-propose, the target, and the gap. Four merges against a week of two hundred
-filings is not a successful audit; the shortfall is the finding, and burying it
-under the merges you did find misreports the week. The lead still approves every
-item — the target binds what you propose, not what he accepts.
+If you cannot reach the target, **say so at the top of the output**: the number
+you propose, the target, and the gap. The shortfall is itself a finding — report
+it above the merges you did find. The target binds what you propose, not what the
+lead accepts.
 
 ## 1. Merges
 
@@ -142,26 +135,23 @@ claim before acting on it, then either close the subset or narrow the superset
 so exactly one owns the scope.
 
 **Batch — separate issues, one paid run.** This is the most common and the most
-valuable. See §4.
+valuable. See the paid-run tax below.
 
-**Split the lanes — only when the split is clean.** Two halves that are different
-labor — a `developer` lint and a `genealogist` audit — can stay apart, because one
-card spanning two lanes has no single assignee. That holds **only if neither half
-needs the other to land**. Test it: can each be finished, reviewed and merged
-without waiting on the other? If yes, split at the lane boundary and move the
-content, so neither issue is left pointing at the other for something it needs,
-and give each its own acceptance.
+**Split the lanes — only when each half finishes without the other.** One test
+decides it: **can each half be finished, reviewed and merged without waiting on
+the other?** If yes, split at the lane boundary and move the content, so neither
+issue is left pointing at the other for something it needs, and give each its own
+acceptance. If no, merge and let the card carry both labels.
 
-If no — merge, and let the card carry both labels. A card with two labels is
-assignable; two cards that each need the other are not.
+**"These are different lanes" is never on its own a reason to keep two issues
+apart.** A `developer` half and a `genealogist` half of one skill's work go on one
+card; whoever holds it asks the other lane for the half they do not own.
 
-**"Schedule together, leave both open" is not a verdict.** The lead ruled it out
-on 2026-08-11: *"Anything that should be done together sounds like a reason to
-merge. Otherwise we have to cross-reference the issues and rely on people
-remembering to assign both issues to themselves, which they have forgotten
-several times."* Same decision, same files, same paid run, same reviewer, or
-class-and-instance — all merge. Splitting on *mechanism purity* (two tools, two
-matchers, two code paths) is an author's aesthetic, not a work boundary.
+**"Schedule together, leave both open" is not a verdict, and neither is
+"cross-reference and note it".** Same decision, same files, same paid run, same
+reviewer, or class-and-instance — all merge. Splitting on *mechanism purity* (two
+tools, two matchers, two code paths) is an author's aesthetic, not a work
+boundary.
 
 The one legitimate not-a-merge is a **one-way mechanical dependency**: issue B
 only needs to *apply* something issue A defines. Then edit B's body so it reads as
@@ -185,30 +175,32 @@ invisible the moment the tracker scrolls.
 Ask: does one person, doing this once, finish all of it? If no, they are
 separate issues no matter how alike the bodies read.
 
-Template-filled bodies are the trap, because a fleet of them looks like mass
-duplication at a glance. This happened, and cost real data: on 2026-08-04 this
-skill closed twenty `test <slug>` record-hint adjudications into one tracker,
-justifying it as "byte-identical bodies differing only in a name and two URLs".
-They were not duplicates in any sense — twenty different people, twenty
-different records, four different countries — and the shared text was the
-`/resolve-record-hint` boilerplate every one of them carries. The tracker then
-asserted three things that were false within days: that eighteen fixtures were
-still draft (ten were), that the unlisted ones had no card (three did, all
-assigned), and it dropped one fixture's hint ark entirely, pointing at a README
-that did not contain it. All four were reopened 2026-08-10 and the tracker
-deleted.
+**Template-filled bodies are the trap.** A fleet of them looks like mass
+duplication at a glance and is not: twenty `test <slug>` record-hint
+adjudications are twenty different people, twenty different records and four
+different countries, and the shared text is the `/resolve-record-hint`
+boilerplate every one of them carries.
 
 If a set genuinely wants shared coordination, the tools for that are the
-`cluster:*` label and §4's batching, which keep every issue open and assignable.
-A standing `next run:` issue is the one legitimate umbrella, and it schedules
-work rather than containing it.
+`cluster:*` label and the paid-run batching below, which keep every issue open
+and assignable. A standing `next run:` issue is the one legitimate umbrella, and
+it schedules work rather than containing it.
 
 Search for merge candidates **by fix site, not by topic**. Issues that collide
 here almost never share a title; they want different lines in one file.
 
 **Two issues wanting different lines in the same file default to one issue.**
-Keeping them apart needs a stated reason — different lane, different reviewer, or
-a paid-run slot they cannot share. Absent one, merge.
+Decide in this order and stop at the first that applies:
+
+1. **A blocker on one side** — keep them apart. Never park an unblocked issue
+   behind a blocked one.
+2. **A paid run they would otherwise each need** — merge. Two changes to one
+   skill's snapshot cannot share a run while they sit on separate cards.
+3. **Each half finishes without the other**, tested as the lane-split verdict
+   above tests it — keep them apart.
+
+Absent all three, merge. Neither "different lane" nor "different reviewer" is a
+reason to keep two issues apart.
 
 Bodies filed from 2026-08-04 open with a `**Touches:**` line — the instruction
 lives in `CLAUDE.md`'s `gh issue create` recipe, and essentially every issue in
@@ -234,18 +226,12 @@ grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|ts
   /tmp/bodies.txt | sort | uniq -c | sort -rn | awk '$1 >= 3'
 ```
 
-**The `>= 3` line is a triage cutoff, not an exclusion filter.** It orders where
-to spend attention first on a large pool — it is not a claim that a 2-hit file
-never hides a real duplicate. A pair of issues filed close together, before
-either has accumulated other unrelated citations, is exactly the shape most
-likely to sit at count 2 and be skipped by a skim. Run the 2-hit tier too
-(same command, `awk '$1 == 2'`) and give it the same close read — #1395 and
-#1396 cited the identical two lines (`research/SKILL.md:147`,
-`research-exhaustiveness/SKILL.md:113-116`) and were a clean absorb, but sat
-at count 2 in a large pool and were missed on a first pass that only read the
-`>= 3` tier. On a small pool, or when re-checking a single
-column against itself, drop the threshold to 2 outright rather than reporting
-only the head of the tally.
+**The `>= 3` line is a triage cutoff, not an exclusion filter.** A 2-hit file can
+hide a real duplicate, and a pair filed close together — before either has
+accumulated unrelated citations — is exactly the shape that sits at count 2. Run
+the 2-hit tier too and give it the same close read. On a small pool, or when
+re-checking a single column against itself, drop the threshold to 2 outright
+rather than reporting only the head of the tally.
 
 ```sh
 grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|tsx\|md\|json\)' \
@@ -253,12 +239,10 @@ grep -ho '\(docs\|eval\|packages\|apps\|scripts\)/[A-Za-z0-9._/-]*\.\(py\|ts\|ts
 ```
 
 Same-file convergence is a strong batch signal on its own — verify it, don't
-wave it through. Same-*topic* convergence across different files is a weaker
-one and is usually not a batch: two issues that both say "the judge fabricated
-something" can be unrelated defects on different tests (this happened —
-issues #1330 and #1332 read alike by topic and turned out to be distinct
-fabrications on different runs). Don't merge on topic resemblance alone; open
-the files both cite and confirm they want the same edit.
+wave it through. Same-*topic* convergence across different files is weak and
+usually not a batch: two issues that both say "the judge fabricated something"
+are routinely unrelated defects on different tests. Never merge on topic
+resemblance alone — open the files both cite and confirm they want the same edit.
 
 Cross-check the file-convergence list against open PRs on the same files — a
 file with four issues *and* five PRs is a rebase queue nobody is sequencing:
@@ -316,17 +300,13 @@ on #N", "gated on the #N probe", "land after PR #N". Extract every one and
 resolve it. A closed blocker on an issue still marked blocked is the highest-value
 find in this section, because nothing else in the workflow notices.
 
-**Sweep it, do not read for it.** This check was prose-only until 2026-08-20 and
-therefore never ran; a `/fill-ready` pass that day found **six** items whose every
-named blocker had closed — including issue #847, the prompt-injection gate for the
-public launch, freed when its probe closed and parked for weeks anyway. Two more
-were found by accident the same morning, each after a promotion had already been
-proposed on a stale body.
+**Sweep it, do not read for it.** Run this every pass, before proposing any
+promotion — a stale banner is invisible to a body read.
 
 ```sh
 python3 - <<'PY'
 import json, re, subprocess
-issues = json.load(open('/tmp/issues.json', encoding='utf-8'))    # written by §0
+issues = json.load(open('/tmp/issues.json', encoding='utf-8'))    # written above
 BLOCK = re.compile(r'(blocked on|do not start until|wait for|waits on|prerequisite'
                    r'|gated on|land(?:s)? first|must land|queues behind|start(?:s)? after'
                    r'|do after)', re.I)
@@ -359,11 +339,10 @@ shipped, which is the very next check below. A blocker closed `not planned` free
 the issue too, but for the opposite reason: nobody is doing that work, so the
 dependent item needs its premise re-read, not just its banner deleted.
 
-**Report only the freed items sitting in Backlog.** The sweep reads the whole open
-pool, and on 2026-08-20 it returned 14 — but a freed item already in Ready, In
-Progress or Review is not a find: someone holds it, and its banner is their
-problem, not the board's. Cross the list against `/tmp/board.json` before you
-report. Backlog is where a cleared blocker leaves an item invisible.
+**Report only the freed items sitting in Backlog.** The sweep reads the whole
+open pool, but a freed item already in Ready, In Progress or Review is not a
+find — someone holds it, and its banner is their problem. Cross the list against
+`/tmp/board.json` before you report.
 
 Each survivor needs its stale banner struck in the body — a
 `> **Do not start until #N**` line outlives the blocker and parks the issue again
@@ -376,11 +355,7 @@ not trust it — an issue can be closed `completed` with the work never landed.
 
 Resolve every closed issue cited **as a tracker**, in a body or in the code
 (`grep -rn '#<N>' packages/ apps/ eval/ docs/ scripts/ CLAUDE.md`), by checking
-the artifact, not the
-state. One case: a consolidation issue closed `completed` while all five copies
-it was meant to remove are still on `main` — with a source comment pointing
-readers at it. Anyone following that pointer lands on a closed ticket and an
-unsolved problem.
+the artifact, not the state.
 
 Where the work did not land, say so on the closed issue and name what actually
 owns the scope. Reopening is usually wrong: the right survivor is often a
@@ -430,12 +405,8 @@ The `--all` search reads local refs, so a branch nobody fetched looks identical
 to a branch that never existed — hence the `fetch --prune` first, which also
 drops refs for branches deleted after merging.
 
-Both showed up in one 22-issue sample: an issue asserting a function had shipped
-warn-only when it sat on `origin/<feature-branch>`, with two follow-up comments
-written against code `main` does not contain; and a cluster of four issues citing
-test ids from an auditor's working tree, one of which had never existed in any
-branch. **Whole clusters can be filed from a tree that is not `main`** — when one
-issue in a group fails this check, check its siblings before trusting any of them.
+**Whole clusters can be filed from a tree that is not `main`.** When one issue in
+a group fails this check, check its siblings before trusting any of them.
 
 ## 3. Clusters — find them, then manage them
 
@@ -462,28 +433,22 @@ a cluster's work is done, delete the label rather than leaving it on closed issu
 
 Every cluster reaches a point where the next move is a spend or doctrine call —
 which of two designs, whether to pay for six eval runs, which measurement window
-is canonical. **Those are the lead's and cannot be delegated.** Surface them in §5
-as decisions, not as work.
+is canonical. **Those are the lead's and cannot be delegated.** Surface them
+under better handling as decisions, not as work.
 
 But **do not record the lead as the standing owner of a cluster** and stop there.
-An owner with no forcing function is how #911 sat uncalibrated for weeks while
-#980 was filed specifically to avoid repeating it and #1231 then repeated it
-anyway — three issues, one task, no one sequencing. A name on a cluster is
-unfalsifiable; it reads identically in six weeks.
+A name on a cluster is unfalsifiable — it reads identically in six weeks, and an
+owner with no forcing function is how one task becomes three issues nobody
+sequences.
 
-That sequence — #911, #980, #1231 — is also a *merge* miss, not only a
-staleness one: three issues each re-derived the same undone calibration
-instead of one issue tracking it once. Check every cluster for the same
-shape before writing its Since date: **has this cluster's decision been
-independently re-filed more than once?** If a second or third issue exists
-whose body restates "we need to measure/decide X before graduating" for a
-decision an earlier issue in the same cluster already owns, that is not
-three parallel tasks — merge them into the one that's furthest along and
-close the rest as duplicates-of-the-decision (§1's Duplicate verdict), even
-if their bodies aren't about the same file. The tell is the *sentence*, not
-the file: "before graduating," "before hard-denying," "measure first" said
-more than once in one cluster is the same missing mechanism asking to be
-merged, not scheduled harder.
+Check every cluster for a **re-filed decision** before writing its Since date:
+has this cluster's decision been independently re-filed more than once? If a
+second or third issue restates "we need to measure/decide X before graduating"
+for a decision an earlier issue in the same cluster already owns, merge them into
+the one that is furthest along and close the rest as duplicates of the decision,
+even if their bodies are not about the same file. The tell is the *sentence*, not
+the file: "before graduating", "before hard-denying", "measure first" said more
+than once in one cluster is one missing mechanism, not three parallel tasks.
 
 Instead every cluster carries, and this skill re-checks weekly:
 
@@ -503,7 +468,8 @@ check the standing-owner model does not have.
 
 - **A cluster with no owner.** Every member says "coordinate with the others" and
   none of them is the coordinator. This is where issues rot at full body quality.
-- **A cluster converging on one file.** Count open PRs against it (§1). Whoever
+- **A cluster converging on one file.** Count open PRs against it, as the
+  file-convergence check does. Whoever
   lands last rebases, and the bodies name only the collision that existed the day
   they were written. This kind is usually not a real cluster — it is a transient
   rebase queue, and it wants a merge order stated in a comment, not a label.
@@ -542,7 +508,7 @@ the live example — the matchers can only pin values once the mechanism exists.
 
 Rule 2 requires the skill's latest run log to be active **against the PR branch's
 state**, and the snapshot covers every file under the skill dir — "including a
-`references/` doc or even a comment" (`eval/CLAUDE.md`, § Snapshot model). So the
+`references/` doc or even a comment" (`eval/CLAUDE.md`, the snapshot model). So the
 run log goes stale the moment the *next* edit lands. Six issues landing as six
 sequential PRs is six runs, however carefully they are ordered.
 
@@ -562,14 +528,10 @@ which holders have gone quiet, and which queues have grown long enough that the
 answer is to merge issues rather than to wait.
 
 **Check open PRs against the snapshot set too, not just issue columns.** A PR
-can hold a skill's slot without the issue that spawned it ever needing to sit
-in Ready/In Progress/Review as a separate card — the PR's own file list is the
-thing that actually collides. Two live violations existed simultaneously this
-way: `record-extraction` had PR #1441 and PR #1294 both open against
-`record-extractor.md` at once, and `search-records` had #1319 (an in-progress
-issue) *and* PR #1328 open against `search-records/SKILL.md` at the same
-time — neither caught by an issue-column-only read, because the second
-occupant in each pair was a PR, not a competing issue.
+holds a skill's slot whether or not the issue that spawned it ever sits in
+Ready/In Progress/Review as a separate card — the PR's own file list is what
+collides, and an issue-column-only read misses every pair whose second occupant
+is a PR.
 
 ```sh
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 60 \
@@ -579,14 +541,14 @@ gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 60 \
 
 Run this per skill with anything in the paid-run tax table. Two PRs (or a
 PR plus an issue) against one slot is the same "who rebases last" problem
-as §1's file-convergence check — report it as a reconciliation finding, not
+as the file-convergence check — report it as a reconciliation finding, not
 a new merge, since the fix is usually sequencing the two PRs, not combining
 their issues.
 
 This is a *collision* rule, not a cost rule, and the distinction matters when
-reporting on it. It stops two people editing one SKILL.md at once and invalidating
-each other's run — PRs #929 and #924 both edited `search-records/SKILL.md`
-concurrently. It does **not** by itself reduce the number of runs.
+reporting on it. It stops two people editing one SKILL.md at once and
+invalidating each other's run. It does **not** by itself reduce the number of
+runs.
 
 Three things this pass owes the rule:
 
@@ -601,12 +563,11 @@ slot only if its work lands under that skill's snapshot set:
 Issues that only touch tool or harness code do **not** take the lock even when
 their title names the skill. #1073 is about `record-search.ts` and says in its own
 DoD *not* to edit `search-records/SKILL.md`; locking search-records for it would
-be wrong. The `**Touches:**` line is what makes this decidable (§1).
+be wrong. The `**Touches:**` line is what makes this decidable.
 
 **2. Reclaim a stalled slot.** A held slot blocks a whole skill, so a card that
 has not moved in ~10 days hands its slot back to Backlog and the next issue is
-promoted. Report every reclaim with the assignee and the idle days — today's board
-carries six cards untouched for a week or more, so this rule will fire.
+promoted. Report every reclaim with the assignee and the idle days.
 
 **3. Make the queue's size the finding.** A skill whose queue is five deep is not
 a scheduling problem, it is a sizing problem — see below.
@@ -621,20 +582,21 @@ larger ones during this pass**, so that one run carries what would have been
 three. Seven issues serialized is seven runs; the same work merged into three
 issues is three. Same economics as batching branches, no new git process.
 
-Merge when the issues share a lane — the same doctrine question, the same test
-files, the same agent body. Do not merge across lanes to save a run: a
-`developer` harness fix and a `genealogist` fixture adjudication in one issue is
-unassignable, which costs more than the run saved.
+Merge when the issues share a **skill** — the same doctrine question, the same
+test files, the same agent body, the same snapshot. **Merge across lanes when
+they do**: a `developer` precondition and a `genealogist` wording change on one
+skill go on one card, and whoever holds it asks the other lane for the half they
+do not own.
 
-**Sharing a lane is necessary and not sufficient.** The run being paid once is
-what makes a merge pay, so this only applies where a single run covers the
-merged work — one snapshot, one suite, one annotation pass. It does **not**
-apply to N independent pieces of research that merely happen to be filed by the
-same lane against the same directory. Twenty record-hint adjudications are
-twenty separate investigations of twenty different people; merging them buys no
-run at all, because each still costs its own. Same-lane plus same-directory is
-where this rule has misfired — apply the "does one person finish all of it in
-one sitting?" test from §1 before merging on lane alone.
+**Sharing a skill is necessary and not sufficient.** This applies only where a
+single run covers the merged work — one snapshot, one suite, one annotation
+pass. It does **not** apply to N independent pieces of research that merely
+happen to be filed against the same directory. Twenty record-hint adjudications
+are twenty separate investigations of twenty different people; each still costs
+its own run, so merging them buys none. Before merging on a shared directory
+alone, apply the "does one person finish all of it in one sitting?" test — where
+*one person* means one person who can ask the other lane for help, not one who
+must already hold both skills.
 
 Do **not** reach for `eval-cosmetic-skip` to squeeze a second edit past the gate.
 It is for behavior-neutral changes only, and a gate too expensive to satisfy
@@ -650,8 +612,7 @@ It is the queue made visible. Without it, an issue that is merely *waiting its
 turn* looks identical to one nobody wants, and the person who filed it has no way
 to see which. It holds pointers only — `#N — one clause` — never content.
 
-Rules that keep it from becoming a queue file — the failure the repo's retired
-staging queue was closed for:
+Rules that keep it from becoming a queue file:
 
 - **It holds pointers, never content.** Each line is `#N — one clause`. The work,
   the reasoning and the acceptance criteria stay in the real issue. If someone
@@ -664,7 +625,8 @@ staging queue was closed for:
   add the pointer here.
 
 When a skill's list is long enough to justify a run, that becomes the cluster's
-**next action** under §3, with a doer and a date — not a standing intention.
+**next action** on that cluster, with a doer and a date — not a standing
+intention.
 
 Check `check_runlogs.py` rule 2 directly for skills that are *already* stale, since
 those cost a run before any new work lands:
@@ -680,10 +642,10 @@ where you propose something that only makes sense across several.
 
 Ask these, and answer only the ones with a real finding:
 
-- **Is a family of near-identical issues better as one worklist?** Many issues
-  with byte-identical bodies differing by a name and a URL generate one board
-  card, one assignment decision and one PR each, and are discussed in none of
-  them. A tracking issue plus a checklist table costs less and loses nothing.
+- **Is a family of near-identical issues waiting on one missing mechanism?**
+  Bodies differing only by a name and a URL usually point at a generator, lint or
+  convention nobody has built — propose that. Do **not** propose folding them
+  into a tracker or worklist; that is the anti-pattern above.
 - **Has the same decision been made more than twice?** If the lead has
   independently decided the same tradeoff on three issues, that is doctrine and
   belongs written down once — an ADR the next issue cites instead of
@@ -754,7 +716,7 @@ confidence.
 
 ## Output shape
 
-Open with the week's arithmetic (§0) — filed, closed, and whether this run's
+Open with the week's arithmetic — filed, closed, and whether this run's
 proposals meet the target, naming the gap when they do not. Then the two or three
 things that change what happens this week. Then:
 
@@ -765,7 +727,7 @@ things that change what happens this week. Then:
    than a close. One line of evidence each. Keep **blocked on an unmerged branch**
    as its own group: those are not obsolete, they are unbuildable, and the fix is
    naming the branch rather than closing the issue. Keep **freed — every blocker
-   closed** (§2's sweep) as its own group too, and put it first: those are the
+   closed** (the blocker sweep) as its own group too, and put it first: those are the
    opposite of obsolete. They are startable work that has been parked, invisibly,
    for as long as the blocker has been closed, and they are this week's
    `/fill-ready` candidates.
@@ -776,7 +738,8 @@ things that change what happens this week. Then:
    `next run:` issue that needs opening or closing.
 5. **Decisions for the lead** — pulled out as its own list, phrased as questions
    with the options and what each costs. These are the spend and doctrine calls
-   from §3 and §5; they should not be buried inside a cluster block.
+   from the cluster and better-handling passes; they should not be buried inside
+   a cluster block.
 6. **Cross-cutting proposals** — only the ones with a real finding behind them.
    Two good ones beat six speculative ones.
 7. **Board hygiene** — the mechanical list, terse.
