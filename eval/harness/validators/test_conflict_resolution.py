@@ -243,3 +243,184 @@ def test_resolved_flynn_birthplace(after_state, test):
         f"birthplace preferred_assertion_id should be one of "
         f"a_002 / a_009 (the Ireland census assertions); got {preferred!r}"
     )
+
+
+# --- One conflict per invocation (V6), and the word caps (V2) ----------
+#
+# Both come from the conflict-resolution deep dive
+# (docs/deep-dives/conflict-resolution-findings-2026-08-27.md, findings F7 and
+# F2; requests V6 and V2 in issue #1972).
+#
+# The five fields that make a conflict *resolved* rather than merely
+# *identified*. Creating an entry is identification and is unrestricted; writing
+# any of these is resolution.
+_ANALYSIS_FIELDS = (
+    "independence_analysis",
+    "weighing_analysis",
+    "preferred_assertion_id",
+    "resolution_rationale",
+    "status",
+)
+
+
+def _conflicts_by_id(state: dict) -> dict:
+    return {c.get("id"): c for c in (state.get("conflicts") or []) if c.get("id")}
+
+
+def _analysis_written(conflict: dict) -> bool:
+    """True when a conflict entry carries resolution work, not just identity.
+
+    The skill's own creation template (conflict-resolution/SKILL.md:145-152)
+    sets all five to null / "unresolved", so a freshly identified conflict is
+    False here and a created-already-resolved one is True.
+    """
+    for f in _ANALYSIS_FIELDS:
+        v = conflict.get(f)
+        if f == "status":
+            if v not in (None, "unresolved"):
+                return True
+        elif v not in (None, "", [], {}):
+            return True
+    return False
+
+
+def _conflicts_with_changed_analysis(before: dict, after: dict) -> list[dict]:
+    """V6's population: entries this run *resolved*.
+
+    An entry present in both states counts when any analysis field differs. An
+    entry new in `after` counts only when it ARRIVES carrying analysis --
+    creating an empty conflict is identification and is explicitly unrestricted.
+    Exempting new entries wholesale would leave a bypass: nothing stops a create
+    arriving already `resolved` with full analysis, so a run could resolve one
+    conflict and create-and-resolve a second in the same turn and pass.
+    """
+    before_by_id = _conflicts_by_id(before)
+    touched: list[dict] = []
+    for c in (after.get("conflicts") or []):
+        cid = c.get("id")
+        if not cid:
+            continue
+        prev = before_by_id.get(cid)
+        if prev is None:
+            if _analysis_written(c):
+                touched.append(c)
+        elif any(c.get(f) != prev.get(f) for f in _ANALYSIS_FIELDS):
+            touched.append(c)
+    return touched
+
+
+def _conflicts_written(before: dict, after: dict) -> list[dict]:
+    """V2's population, deliberately WIDER than V6's: every after-state conflict
+    whose prose this run authored, created entries included.
+
+    V6 asks "how many did you resolve"; V2 asks "how long is the prose you
+    wrote". A conflict the run created with a 460-word rationale is exactly what
+    a word cap is for, so it must not be filtered out by V6's five-field test.
+    """
+    before_by_id = _conflicts_by_id(before)
+    written: list[dict] = []
+    for c in (after.get("conflicts") or []):
+        cid = c.get("id")
+        if not cid:
+            continue
+        prev = before_by_id.get(cid)
+        if prev is None or any(
+            c.get(f) != prev.get(f) for f in ("weighing_analysis", "resolution_rationale")
+        ):
+            written.append(c)
+    return written
+
+
+def test_at_most_one_conflict_analysis_modified(before_state, after_state):
+    """At most one conflict may be resolved per invocation (V6).
+
+    SKILL.md works one conflict at a time, and ut_conflict_resolution_002's own
+    judge_context states the rule -- yet 2 of 5 committed runs of that test write
+    both c_001 and c_002 to resolved with full analysis in one turn, and both
+    graded pass with all six dimensions 3.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+
+    touched = _conflicts_with_changed_analysis(before, after)
+    assert len(touched) <= 1, (
+        "more than one conflict's analysis fields were written in a single "
+        "invocation: "
+        + ", ".join(sorted(str(c.get("id")) for c in touched))
+        + ". Resolve one conflict per invocation; creating further conflict "
+        "entries is fine, but leave their analysis fields unwritten."
+    )
+
+
+# Bands, set from each field's own distribution across the five committed
+# conflict-resolution run logs (37 writes), NOT from a single worst case.
+#
+#   weighing_analysis  cap 200, corpus MAXIMUM 251.
+#       >200: 13 writes   >210: 7   >220: 4   >240: 2
+#     210 reports 7 of the 13. 240 -- the figure the issue floats -- is the 95th
+#     percentile of what the corpus actually produces, so it would report 2 of 13
+#     and a green arm would read as "weighing lengths are fine".
+#
+#   resolution_rationale  cap 250, on conflicts with <3 competing assertions.
+#       >250: 17 writes   >300: 12
+#     300 keeps a 20% grace band and still reports 12 of 17.
+#
+# Re-derive against the committed corpus before changing either.
+_WEIGHING_CAP, _WEIGHING_BAND = 200, 210
+_RATIONALE_CAP, _RATIONALE_BAND = 250, 300
+
+
+def report_resolution_word_caps(before_state, after_state):
+    """Word caps on the prose a resolution writes (V2). Tier 2 by design.
+
+    SKILL.md:193 asks for ~200 words on weighing_analysis, :258-262 for ~250 on
+    resolution_rationale unless the conflict is three-or-more-way, where
+    completeness outranks the cap. 32 of 37 committed writes exceed the
+    rationale cap.
+
+    Reporting, not gating, and that is not a style choice: a failing tier-1
+    validator suppresses the LLM judge for that run (orchestrator.py:594), so a
+    gating version would silence the Evidence weighing and Resolution
+    completeness grading on the runs it fires -- the craft grading this dive
+    exists to protect.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+
+    observations = []
+    for c in _conflicts_written(before, after):
+        cid = c.get("id", "?")
+
+        weighing = c.get("weighing_analysis") or ""
+        if weighing:
+            n = len(weighing.split())
+            if n > _WEIGHING_BAND:
+                observations.append(
+                    f"conflicts[{cid}].weighing_analysis is {n} words; the "
+                    f"skill asks for ~{_WEIGHING_CAP} or fewer."
+                )
+
+        rationale = c.get("resolution_rationale") or ""
+        if rationale:
+            # competing_assertion_ids comes from the AFTER STATE, never from a
+            # diff of changed fields. A run almost never writes that field --
+            # it is absent from changed_fields on 0 of the 32 over-cap writes in
+            # the corpus -- so reading it from a diff makes the three-or-more-way
+            # escape never apply and roughly doubles the finding, 17 -> 32.
+            competing = c.get("competing_assertion_ids") or []
+            n = len(rationale.split())
+            if len(competing) < 3 and n > _RATIONALE_BAND:
+                observations.append(
+                    f"conflicts[{cid}].resolution_rationale is {n} words on a "
+                    f"conflict with {len(competing)} competing assertion(s); the "
+                    f"skill asks for ~{_RATIONALE_CAP} or fewer below three."
+                )
+
+    # The message is the whole observation the judge sees -- split_observations
+    # (validator_runner.py:264-274) passes r.error and deliberately never
+    # r.name. State counts as fact; a verdict here would anchor the grade.
+    assert not observations, "\n".join(observations)
