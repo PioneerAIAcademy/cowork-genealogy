@@ -281,9 +281,8 @@ findings resolved is what keeps that gate spent on judgment.
 **One senior approval covers a PR that spans both kinds of file.** GitHub
 resolves CODEOWNERS per file, not per PR, and a rule's owners are an OR — so
 a PR changing a `.ts` tool implementation alongside a `SKILL.md` is unblocked
-by one approval from either senior team. It will carry both queue labels,
-because each queue shows the paths it owns; that is a routing signal, not two
-outstanding requirements.
+by one approval from either senior team. GitHub will show both senior teams as
+requested reviewers; that is one requirement shown twice, not two.
 
 **Peer-only merges aren't reviewed by a senior zero times — they're sampled
 after merge, not before.** `/audit-merged-prs` is the lead's weekly pass
@@ -362,6 +361,11 @@ Three rules can each hold a green, approved PR. Check them in this order:
   sit showing a team that owns none of its files. Check the current file before
   believing the request, and clear a dead one with
   `gh api -X DELETE /repos/{owner}/{repo}/pulls/{n}/requested_reviewers -f 'team_reviewers[]=<team>'`.
+  This works only for a team the current file no longer claims. While
+  `require_code_owner_review` is on, the same call against a team CODEOWNERS
+  *does* still mandate returns HTTP 200 and does nothing — no error, and the team
+  is still listed on a fresh read (verified three ways, 2026-08-11). Re-read the
+  PR before believing the 200.
 
 ---
 
