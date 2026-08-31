@@ -244,14 +244,20 @@ function dispatchHandlers(): {
   for (const { tool, statement: body } of arms) {
     /** bound name -> awaited function name */
     const awaited = new Map<string, string>();
+    /** `const a = b` where b is a plain identifier. An alias is NOT a projection. */
+    const aliasOf = new Map<string, string>();
+    /** `const a = <anything constructed>` — an object literal, a call, a spread.
+     *  Serializing one of these means the arm hands the model a shape it BUILT. */
+    const built = new Set<string>();
     const serialized = new Set<string>();
     let projected = false;
 
     const visit = (node: ts.Node): void => {
       if (ts.isVariableDeclaration(node) && node.initializer) {
         let init: ts.Expression = node.initializer;
-        if (ts.isAwaitExpression(init)) init = init.expression;
-        if (ts.isCallExpression(init) && ts.isIdentifier(init.expression)) {
+        const wasAwaited = ts.isAwaitExpression(init);
+        if (wasAwaited) init = (init as ts.AwaitExpression).expression;
+        if (ts.isCallExpression(init) && ts.isIdentifier(init.expression) && wasAwaited) {
           const fn = init.expression.text;
           if (ts.isIdentifier(node.name)) {
             awaited.set(node.name.text, fn);
@@ -260,6 +266,13 @@ function dispatchHandlers(): {
               if (ts.isIdentifier(element.name)) awaited.set(element.name.text, fn);
             }
           }
+        } else if (ts.isIdentifier(node.name)) {
+          // Classify every other local binding, because a projection can be bound
+          // to a name before it is serialized and the earlier version only looked
+          // at the DIRECT argument to JSON.stringify. `const payload = {...result,
+          // x}; JSON.stringify(payload)` was green while the inline form was red.
+          if (ts.isIdentifier(init)) aliasOf.set(node.name.text, init.text);
+          else built.add(node.name.text);
         }
       }
       if (ts.isCallExpression(node) && node.arguments.length > 0) {
@@ -283,11 +296,33 @@ function dispatchHandlers(): {
     };
     visit(body);
 
+    /** Follow `const a = b` chains to the name that actually holds the value.
+     *  An alias of an awaited result is still that result; a chain that ends in a
+     *  constructed value is a projection however many names it passes through. */
+    const resolveAlias = (name: string): string => {
+      const seen = new Set<string>();
+      let cur = name;
+      while (aliasOf.has(cur) && !seen.has(cur)) {
+        seen.add(cur);
+        cur = aliasOf.get(cur)!;
+      }
+      return cur;
+    };
+
     // Prefer the variable the arm actually serializes; fall back to the arm's
     // single awaited call when nothing names one (the writer-tool shape).
     let fn: string | undefined;
     for (const name of serialized) {
-      const candidate = awaited.get(name);
+      const target = resolveAlias(name);
+      if (built.has(target)) {
+        // Serializing a name bound to something the arm constructed. Flagging the
+        // mere ABSENCE of a name from `awaited` would be wrong: a plain alias
+        // (`const payload = result`) is absent too and is not a projection, which
+        // is why this keys on `built` rather than on `!awaited.has(...)`.
+        projected = true;
+        continue;
+      }
+      const candidate = awaited.get(target);
       if (candidate) {
         fn = candidate;
         break;
