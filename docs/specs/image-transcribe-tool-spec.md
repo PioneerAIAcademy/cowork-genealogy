@@ -370,6 +370,25 @@ consistent across schema, manifest, and skill.)*
   and just get text.
 - All input is camelCase (MCP wire convention).
 
+### 5.3.1 Given-name expansion in `lookingFor` (issue #607)
+
+When `lookingFor` contains a recognized English given name (formal or
+variant), the tool automatically expands it with historical diminutives
+from the bundled variant table (`config/given-name-variants.json`) before
+building the OCR prompt.
+
+- Input: `lookingFor: "Elizabeth Martin"`
+- VLM sees: `mentions "Elizabeth Martin (also known as Betty, Betsy, Beth, Liz, Lizzy, Eliza, Lisa, Bess, Eliz, Eliz., Elizth.)" by writing exactly FOUND or NOT FOUND`
+
+All variant forms are included (including scribal abbreviations with
+periods) because the VLM reads natural language, not query syntax.
+Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
+and all other variants.
+
+No change to the response shape — the issue decided no reporting channel
+is needed for `image_transcribe` (unlike `fulltext_search`, which reports
+`nameExpansion`).
+
 ### 5.4 Behavior (pipeline)
 
 1. **Resolve + fetch** the FS distribution image host-side, authed, via the

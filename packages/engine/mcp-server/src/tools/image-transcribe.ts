@@ -5,6 +5,7 @@ import {
 } from "../utils/fs-image-fetch.js";
 import { saveSourceImage } from "../utils/image-store.js";
 import { fetchWithTimeout, isFetchTimeout } from "../utils/http.js";
+import { expandLookingFor } from "../utils/name-variants.js";
 import type {
   ImageTranscribeInput,
   ImageTranscribeResult,
@@ -195,7 +196,13 @@ export async function imageTranscribeTool(
     fallbackUrl,
   );
   const dataUrl = `data:${contentType};base64,${Buffer.from(bytes).toString("base64")}`;
-  const prompt = buildOcrPrompt(input.lookingFor);
+  // Expand recognized given names in lookingFor with historical diminutives
+  // (issue #607). The VLM reads this as natural language, so all forms
+  // (including scribal abbreviations with periods) are included.
+  const expandedLookingFor = input.lookingFor
+    ? (expandLookingFor(input.lookingFor)?.expanded ?? input.lookingFor)
+    : input.lookingFor;
+  const prompt = buildOcrPrompt(expandedLookingFor);
 
   let response!: Response;
   for (let attempt = 0; ; attempt++) {

@@ -428,3 +428,58 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
     expect(r21.browseBudget?.distinctImagesRead).toBe(21);
   });
 });
+
+describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607)", () => {
+  it("expands a recognized given name in the OCR prompt", async () => {
+    mockOpenRouterOk("Betty Martin, christened 1 November 1812\nFOUND");
+
+    await imageTranscribeTool({
+      imageId: "004884748_02613",
+      lookingFor: "Elizabeth Martin",
+    });
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    const prompt: string = body.messages[0].content[0].text;
+    // The prompt should include variant forms
+    expect(prompt).toContain("also known as");
+    expect(prompt).toContain("Betty");
+    expect(prompt).toContain("Bess");
+  });
+
+  it("does not expand when lookingFor has no recognized given name", async () => {
+    mockOpenRouterOk("Patrick Flynn, witness\nFOUND");
+
+    await imageTranscribeTool({
+      imageId: "004884748_02613",
+      lookingFor: "Patrick Flynn",
+    });
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    const prompt: string = body.messages[0].content[0].text;
+    // No expansion — bare name only
+    expect(prompt).not.toContain("also known as");
+    expect(prompt).toContain('"Patrick Flynn"');
+  });
+
+  it("FOUND/NOT FOUND parsing still works with expanded prompt", async () => {
+    mockOpenRouterOk("Betty Martin, christened 1812\nFOUND");
+
+    const result = await imageTranscribeTool({
+      imageId: "004884748_02613",
+      lookingFor: "Elizabeth Martin",
+    });
+
+    expect(result.found).toBe("FOUND");
+  });
+
+  it("leaves the prompt unchanged when lookingFor is absent", async () => {
+    mockOpenRouterOk("Johann Schreck, b. 1801, Bayern");
+
+    await imageTranscribeTool({ imageId: "004884748_02613" });
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    const prompt: string = body.messages[0].content[0].text;
+    expect(prompt).not.toContain("also known as");
+    expect(prompt).not.toContain("FOUND or NOT FOUND");
+  });
+});
