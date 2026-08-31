@@ -257,14 +257,18 @@ those extensions.
 
 **Every rule names both senior teams, so a senior of either kind can approve
 any of it.** The team a rule names FIRST is the one whose judgment the path
-normally wants, and it is the one `senior-queue.yml` puts the PR's review
-label on — `.ts`/`.py`/`.json` and friends queue to `senior-developers`, the
+normally wants — `.ts`/`.py`/`.json` and friends to `senior-developers`, the
 skill, agent and eval trees to `senior-genealogists`. So the working split is
 still **genealogists review skills and runlogs; developers review
 infrastructure**; what the second team on each line buys is that a PR is never
 stuck waiting on one specific team when a senior is already reading it. By the
 time a senior looks at a PR everything mechanical should be settled, so their
 time goes to whether the approach is right.
+
+**Getting a senior to look is the author's job.** CODEOWNERS requests review
+from both senior teams when the PR opens, so it is already in their GitHub
+review-request queue; say when it is actually ready. There is no bot that
+labels a PR ready and no queue to wait in.
 
 **CODEOWNERS is the source of truth for which paths need a senior, not this
 paragraph.** Read the file rather than trusting a path list here — it can
