@@ -240,8 +240,15 @@ def test_match_score_persisted(before_state, after_state, test):
 
 def test_fts_assertion_no_score(before_state, after_state, test):
     """Tag-gated (no-score-fallback): a full-text-sourced assertion has no
-    record_persona_id, so same_person cannot run — the new
-    person_evidence entry for a_004 must leave match_score null."""
+    reachable record persona, so `same_person` cannot run — the new
+    person_evidence entry for a_004 must leave match_score null.
+
+    The CAUSE matters, because the wrong one was load-bearing elsewhere: it is
+    not that `record_persona_id` is null. `same_person` never reads that field,
+    and a null value means only that no search sidecar was retained. A full-text
+    hit is unscoreable because its sidecar holds transcript text rather than
+    GedcomX — there is no indexed persona to compare against — and its ARK is a
+    `3:1:`/`3:2:` image entry `record_read` cannot open (#1429)."""
     if "no-score-fallback" not in test.get("tags", []):
         pytest.skip("not a no-score-fallback scenario")
     before = before_state.get("research_json")
@@ -332,10 +339,25 @@ def test_stub_person_created_and_linked(before_state, after_state, test):
         f"new stub ids={sorted(new_pids)}"
     )
 
-    # a_005 is full-text-sourced — no same_person score, so match_score null.
+    # Whether a_005's link may carry a score depends on ITS PROVENANCE, which
+    # differs between the two scenarios this tag covers (#1429). In
+    # `flynn-stub-needed` a_005 is full-text-sourced, so nothing can be scored
+    # and match_score must stay null. In `flynn-spouse-stub-marriage` it is
+    # `record_search` with a RETAINED sidecar, so a persona is reachable and a
+    # score is correct — this assertion used to hardcode the full-text case and
+    # failed `ut_person_evidence_022` in v1_2026-08-27_12-36-32 for doing the
+    # right thing (it scored the pairing at 0.79 after the writer tool's
+    # reachability warning pointed it at the sidecar).
+    a_005 = _assertions_by_id(after_r).get("a_005")
+    if _persona_reachable(after_r, a_005):
+        pytest.skip(
+            "a_005's persona is reachable in this scenario, so a match_score is "
+            "legitimate — the null-score rule belongs to the unscoreable lanes"
+        )
     scored = [e for e in linked_to_new if e.get("match_score") is not None]
     assert not scored, (
-        "a_005 is full-text-sourced — its link must leave match_score null; "
+        "a_005 has no reachable record persona here — its link must leave "
+        "match_score null; "
         f"got {[(e.get('id'), e.get('match_score')) for e in linked_to_new]}"
     )
 
@@ -439,6 +461,37 @@ def _results_ref_missing(research: dict, assertion: dict) -> bool:
         if entry.get("id") == log_id:
             return entry.get("results_ref") is None
     return False
+
+
+def _persona_reachable(research: dict, assertion: dict | None) -> bool:
+    """Whether a record persona `same_person` could score against is reachable
+    for this assertion — the same predicate as
+    `harness/skill_invocation.py::_persona_reachable` and
+    `research-append.ts::personaReachable`, kept in step with both.
+
+    `same_person` takes two GedcomX documents plus a focus id inside each and
+    never reads `record_persona_id`; that field points into a retained search
+    sidecar, so a null value proves only that no sidecar was kept. Reachable when
+    the assertion carries a persona id, came from `record_read` (which returns a
+    persons array, so the record can be re-opened), or came from a
+    `record_search` that retained its sidecar. Unresolvable provenance counts as
+    reachable, so an assertion written with no `log_entry_id` cannot shed the
+    requirement by omission.
+    """
+    if not isinstance(assertion, dict):
+        return True
+    if assertion.get("record_persona_id"):
+        return True
+    log_id = assertion.get("log_entry_id")
+    if not log_id:
+        return True
+    for entry in research.get("log") or []:
+        if entry.get("id") != log_id:
+            continue
+        if entry.get("tool") == "record_read":
+            return True
+        return bool(entry.get("tool") == "record_search" and entry.get("results_ref"))
+    return True
 
 
 def _same_person_pairs(tool_calls: list[dict]) -> set[tuple]:
@@ -589,6 +642,95 @@ def test_same_person_called_when_persona_meets_existing_candidate(
         "never a substitute. Matched per persona, not per run: one call on a "
         "household of several scored personas leaves the rest unattested, which "
         "is the §7.3 path where scoring most often goes wrong."
+    )
+
+
+def test_same_person_called_at_all_when_a_reachable_persona_was_linked(
+    before_state, after_state, tool_calls
+):
+    """A run that wrote `person_evidence` links with a reachable record persona
+    must call `same_person` **at least once**. Deliberately coarse.
+
+    Why a second, blunter check beside
+    `test_same_person_called_when_persona_meets_existing_candidate`: that one
+    matches per PAIR, keyed on `(record_persona_id, person_id)`, so it
+    structurally cannot cover the two lanes issue #1429 corrected. A
+    `record_read`-sourced assertion and a sidecar-backed search with a null
+    persona both have no `record_persona_id` to key a pair on — the agent
+    chooses the `persons[].id` itself and this tier records no tool responses to
+    read it back from. So the finer check stands down there, and without this one
+    nothing at all asserts the call.
+
+    **Measured need.** In `v1_2026-08-27_11-28-52` — the run that shipped the
+    corrected retrieval recipe — `same_person` was called in 7 of 22 tests, and
+    every one of those seven has a non-null `record_persona_id`. `record_read`
+    was called **zero** times across the whole suite. `ut_person_evidence_024`
+    (a `record_read`-sourced assertion) and `_022` (a retained sidecar, null
+    persona) each wrote a `confident` link with a null `match_score` and made no
+    `same_person` call anywhere in the run, and both still PASSED, because their
+    `judge_context` says the subject is lane discipline and waives the score.
+    Prose was corrected, read, and not followed — `docs/skill-lifecycle.md` §5's
+    pattern — and the suite could not see it.
+
+    **Coarse on purpose.** It asks "was the tool used at all in a run that owed
+    a score", not "was this pairing scored". That dodges every false-failure the
+    per-pair check had to be narrowed against — relationship-type assertions
+    scoring through a parent persona, `matchRelatives: true` returning scores in
+    a response body this tier does not record, a stub whose id the validator
+    cannot predict — while still being unarguable about the case that actually
+    occurred: zero calls in a run that wrote reachable links.
+
+    **Scope differs from the harness detector, deliberately.** That one asks only
+    about BRAND-NEW tree persons; this asks about every new `pe_` link with a
+    reachable persona, including one to a pre-existing seed person. The two are a
+    mirrored *predicate* (`_persona_reachable`), not a mirrored population — the
+    harness detector answers "was a new identity asserted unscored", this answers
+    "did a run that owed a score make the call". Harmless in today's suite, and
+    named so the difference is not read as drift.
+
+    **What it does NOT assert.** Which pairing was scored, that the score was
+    used, or that the RIGHT persona was chosen for a relationship assertion's
+    second party. Those are the per-pair check, the `Score discipline` rubric
+    dimension, and the reachability warning `research_append` now emits at write
+    time.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    assertions = _assertions_by_id(after)
+    owed = [
+        e
+        for e in _new_person_evidence(before, after)
+        if _persona_reachable(after, assertions.get(e.get("assertion_id")))
+    ]
+    if not owed:
+        pytest.skip("no new pe_ entry had a reachable record persona — nothing owed")
+
+    # A call that ERRORED is not a score. Without this an upstream failure would
+    # satisfy the check, which is the same success-gating
+    # `same_person_scored_ids` applies in the harness. Latent rather than live
+    # today — no committed `same_person` call carries `is_error: true` — so this
+    # arm is unexercised by the corpus and is here for the run that first errors.
+    if any(
+        "same_person" in (tc.get("tool") or "") and tc.get("is_error") is not True
+        for tc in tool_calls
+    ):
+        return
+
+    detail = ", ".join(
+        f"{e.get('id')} ({e.get('assertion_id')} -> {e.get('person_id')})" for e in owed
+    )
+    raise AssertionError(
+        f"wrote {len(owed)} person_evidence link(s) with a REACHABLE record "
+        f"persona and never called same_person anywhere in the run: {detail}. "
+        "A null record_persona_id is not a reason to skip — same_person takes "
+        "two gedcomx documents plus a focus id inside each and never reads that "
+        "field; a null value means only that no search sidecar was retained. "
+        "Take the persona from the log entry's sidecar when it has a "
+        "results_ref, or re-open the record with record_read when the assertion "
+        "came from one (SKILL.md §2, step 1)."
     )
 
 
