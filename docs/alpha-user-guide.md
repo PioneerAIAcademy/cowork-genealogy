@@ -101,7 +101,10 @@ won't come back and ask:
 - **Your experience level** — just starting out / some research / experienced /
   professional.
 - **Your subscriptions** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
-  GenealogyBank, FindAGrave-Plus, or none.
+  GenealogyBank, FindAGrave-Plus, or none. Free access counts, so say so if you
+  get partner subscriptions through your FamilySearch account or use a library
+  or family history centre — both are recorded, and neither is "none". A plain
+  FamilySearch account is the baseline, so there's no need to mention it.
 
 Skip them and it quietly assumes "intermediate" and "none", which changes how much
 it explains as it works. You can correct it later, but it's easier up front.

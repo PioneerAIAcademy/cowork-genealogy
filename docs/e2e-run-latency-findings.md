@@ -43,18 +43,23 @@ So there are **two distinct image-reader latency modes**:
    (run 1's deed detour; run 2's 267-image burial register), each a full subagent
    round-trip.
 
-Main's `#850 image-reader-opus` (an opt-in Opus re-read for hard scans) is the right
-*escalation target*, but nothing yet **bounds** the sonnet reader or routes a hard
-scan to it after a fixed number of attempts — so the reader still thrashes.
+`#850 image-reader-opus` was an opt-in Opus re-read for hard scans, and was the
+intended *escalation target* when this was written. **It has since been retired
+and nothing replaced it** — the escalation trigger it depended on (counting
+`[illegible]` markers) does not detect the failure that matters, and the default
+reader was changed instead. There is no escalation target now. What this section
+identified still stands, minus the destination: nothing bounded the reader, so it
+thrashed.
 
 ## 3. Levers (ranked: leverage × feasibility × risk)
 
-1. **Bound the image-reader re-read (highest leverage, low risk).** Cap the reader:
-   OCR once (twice at most); if the scan is still substantially `[illegible]`,
-   **escalate to `image-reader-opus` exactly once and stop** — never thrash for
-   dozens of turns. Preserves accuracy (opus does the hard read) while cutting the
-   56/41-turn runaways to a bounded 2–3 turns + one opus read. Target: the ~40 min
-   the two runaway spawns cost run 2.
+1. ~~**Bound the image-reader re-read (highest leverage, low risk).**~~ **DONE,
+   without the escalation.** `image-reader` now makes exactly one
+   `image_transcribe` call and returns — if the scan is substantially
+   `[illegible]` it reports that and stops, rather than re-reading or escalating.
+   Do **not** revive "escalate once to a stronger model" from this line: that was
+   evaluated and rejected. The 56/41-turn runaways this targeted are bounded by
+   the one-call rule alone.
 2. **Don't OCR whole browse volumes page-by-page.** Use the volume TOC / targeted
    `fulltext_search` to jump to the relevant scan instead of reading every image.
    Target: run 1's 25 reads / run 2's 267-image paging.
@@ -66,7 +71,9 @@ scan to it after a fixed number of attempts — so the reader still thrashes.
 
 Implemented Lever 1 (`image-reader.md`: one `image_transcribe` call, no re-read
 thrash, flag hard scans for caller-driven opus escalation) and re-ran
-`john-perry-witbeck-vitals` live.
+`john-perry-witbeck-vitals` live. The flagging half was removed when the Opus
+re-reader was retired; the one-call rule below is what survives, and it is what
+produced this result.
 
 | Metric | Baseline run 2 `17-13-01` | **Lever 1 run `23-52-08`** |
 |---|---|---|
@@ -88,5 +95,5 @@ that Lever 1 does not *hurt* an already-lean image path (reads stayed [3, 2]).
 
 ## 5. References
 - `docs/plan/research-latency-reduction-plan.md` — the model-generation plan (Phase 0 re-measure, Phase 1 tool-coverage, Phase 2 behavior tuning).
-- `packages/engine/plugin/agents/image-reader.md` / `image-reader-opus.md` (#850).
+- `packages/engine/plugin/agents/image-reader.md` (#850; `image-reader-opus.md` retired).
 - Data: `eval/runlogs/e2e/john-perry-witbeck-vitals/run-2026-07-21_{14-34-50,17-13-01}.{json,session.jsonl}`.

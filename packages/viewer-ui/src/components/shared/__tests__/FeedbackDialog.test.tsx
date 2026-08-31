@@ -30,9 +30,9 @@ async function fillOptionalText(user: ReturnType<typeof userEvent.setup>): Promi
 }
 
 describe('FeedbackDialog — worked-as-expected gate', () => {
-  // This repo's jsdom env doesn't expose a full Storage, so stub an in-memory one
-  // (the dialog's own localStorage reads/writes are try/caught, but the test needs
-  // a real clear() to isolate the remembered-email state between cases).
+  // These cases need a real clear() to isolate the remembered-email state between
+  // them, so stub an in-memory Storage. (The dialog's own localStorage reads and
+  // writes are already try/caught.)
   beforeEach(() => {
     const store = new Map<string, string>()
     vi.stubGlobal('localStorage', {
@@ -442,5 +442,26 @@ describe('FeedbackDialog — worked-as-expected gate', () => {
     expect(payload.workedAsExpected).toBe(true)
     expect(payload.agentShouldHave).toBe('')
     expect(payload.correctAnswer).toBeUndefined()
+  })
+})
+
+describe('FeedbackDialog — publication notice', () => {
+  // The feedback endpoint copies these fields into a public GitHub issue, so this
+  // sentence is the only place a tester is told before typing. Nothing else would
+  // catch its removal: every other test here passes with the dialog silent.
+  it('tells the tester their comments are published, and the files are not', () => {
+    mount()
+    const notice = screen.getByText(/Comments are public/)
+    expect(notice.textContent).toContain('the files you send are not')
+    expect(notice.textContent).toContain("Don't include personal details")
+  })
+
+  it('shows the notice above the first field, not buried at the end', () => {
+    mount()
+    const notice = screen.getByText(/Comments are public/)
+    const email = screen.getByLabelText(/Your email/)
+    // eslint-disable-next-line no-bitwise
+    const precedes = notice.compareDocumentPosition(email) & Node.DOCUMENT_POSITION_FOLLOWING
+    expect(precedes).toBeTruthy()
   })
 })

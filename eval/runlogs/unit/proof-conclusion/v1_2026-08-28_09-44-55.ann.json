@@ -1,0 +1,326 @@
+{
+  "run_log": "v1_2026-08-28_09-44-55.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_013`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified the chronological impossibility: Thomas Flynn was buried 14 November 1842 (src_002, a_003), Patrick was born ~1845 (src_001 a_002, src_003 a_006). The conclusion that Thomas cannot be the father is factually sound. All citations are accurate and supported by the sources on file. The narrative correctly characterizes the evidence quality (primary for burial register, indeterminate for census age, secondary for death certificate age). No fabricated material or unsupported claims.\n\nJunior: (Pass - The skill correctly applied the precondition gate, proceeded to conclusion, and produced a factually sound, well cited narrative.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_013`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the user's request fully: it evaluated whether Thomas Flynn of Ballingarry was Patrick's father and wrote a complete proof conclusion. It examined all three sources (1850 census, Ballingarry burial register, 1908 death certificate), cited all six relevant assertions, resolved the question decisively, and updated research.json with the proof summary and marked q_001 as resolved. No required elements were omitted.\n\nJunior: (Pass - The skill fully addressed the research question, incorporated all required evidence and assertions, updated project state appropriately, and produced a complete narrative.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_013`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed correct arguments. project_context calls retrieved the project state correctly; research_query calls queried assertions, questions, conflicts, person_evidence, hypotheses, and sources with correct section and ID parameters; research_append calls appended the proof summary and updated the question status with valid operations. No fixture_not_found errors occurred. Arguments matched expected shapes semantically.\n\nJunior: (Every tool call was properly structured, matched the expected parameters, and executed successfully.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_013`** — `rubric` / `Tier justification`\nLLM: 3 → Junior: 3\n\n> The `disproved` tier is correctly justified. The narrative explicitly explains why this tier: Thomas's 1842 burial is a chronological impossibility relative to Patrick's ~1845 birth. The assessment contrasts with adjacent tiers implicitly—it is not merely 'not_proved' (unsupported) but affirmatively refuted by direct evidence. The narrative states 'This is a biological impossibility, not a conflict requiring weighing of competing evidence,' clearly distinguishing disproof from mere lack of support.\n\nJunior: (Pass - The tier selection of Disproved is precise, well explained, and supported by the evidence.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_013`** — `rubric` / `Narrative standalone`\nLLM: 3 → Junior: 3\n\n> The narrative_markdown is self-contained and reads as a complete GPS conclusion. It includes inline citations via footnotes [^1], [^2], [^3] to all three sources. The evidence summary describes Patrick's birth year (two independent sources, ~1845), Thomas's death (1842 burial), and the chronological impossibility. Conflict resolution is addressed (none exist; the refutation is chronological, not a weighing issue). The tier is declared: 'Conclusion: Disproved.' A reader without access to research.json can follow the full argument.\n\nJunior: (Pass - The narrative is self contained, well cited, and complete, fulfilling the requirement for a standalone GPS conclusion.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_013`** — `rubric` / `Proof-conclusion fit`\nLLM: 3 → Junior: 3\n\n> The proof is written as a Summary (vehicle: 'summary' in ps_001), which is the correct form for this evidence. The case involves multiple correlated sources (1850 census, 1842 burial register, 1908 death certificate) that correlate cleanly to one conclusion: chronological impossibility. A Summary is appropriate—not a bare Statement (which would omit the reasoning chain) and not an Argument (which would be over-built for a straightforward chronological refutation with no competing candidates). The narrative structure follows the Summary form: evidence presentation, analysis, conclusion.\n\nJunior: (Pass - The chosen vehicle (Summary) fits the evidentiary situation perfectly, balancing completeness with proportionality.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_013`** — `rubric` / `Tree encoding`\nLLM: 3 → Junior: 3\n\n> The concluded tier is `disproved`, which is below the `probable` threshold. Per the rubric, tree encoding is N/A (score null) when the concluded tier is `not_proved` or `disproved`. However, the per-test context explicitly states 'Must NOT update tree.gedcomx.json — no ParentChild relationship is added.' The skill correctly did not write any tree updates; tree.gedcomx.json remains unchanged. The file changes summary confirms only research.json was modified. This is the correct behavior for a disproved conclusion: no primary fact is set, no relationship is added. The skill followed the invariant that conclusions below `probable` do not encode to the tree.\n\nJunior: (Pass - The skill correctly refrained from updating the tree for a disproved conclusion, leaving tree.gedcomx.json untouched.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_013`** — `rubric` / `Evidence completeness`\nLLM: 3 → Junior: 3\n\n> The narrative cites all six relevant assertions (a_001 through a_006 per the proof summary). It addresses the decisive assertion a_003 (Thomas's 1842 burial), the birth-year evidence (a_002 from 1850 census, a_006 from 1908 death certificate), and supporting identity-linking assertions. No inconvenient evidence is omitted. The narrative does not selectively present only supporting evidence; it fairly characterizes the sources and their information quality. No conflicts exist to resolve, and none are omitted.\n\nJunior: (Pass - The skill fully addressed the research question, incorporated all required evidence and assertions, updated project state appropriately, and produced a complete narrative.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_r7k`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The assessment correctly identifies the existing ps_001 narrative as non-self-contained, accurately describes the bare-ID citations (a_004, a_010, a_013, c_001, src_001, src_003, src_004, plan_001), and correctly notes the absence of prose descriptions, inline citations, and a citations section. The assessment accurately retrieves and cites the full source citations from research.json. The GPS component analysis is factually sound: the tier `probable` is correctly justified by the three cited assertions (two indirect census co-enumerations + one secondary death certificate), and the assessment correctly identifies that c_001 is referenced but absent from research.json (count: 0 confirmed by tool response). The evidence gaps analysis is accurate—src_005 through src_009 carry zero extracted assertions. The tree encoding assessment is correct: ParentChild R1 is present and sourced. No fabricated material or unsupported claims.\n\nJunior: (Pass - The assessment faithfully described ps_001’s current state, identified the narrative’s lack of self containment, and provided accurate GPS component analysis. No unsupported or fabricated material was introduced.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_r7k`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The assessment addresses all three required elements: (a) it walks all five GPS components systematically and names each (Reasonably Exhaustive Research, Complete and Accurate Citations, Analysis and Correlation, Resolution of Conflicting Evidence, Soundly Reasoned Conclusion); (b) it explicitly states that the vehicle form (summary) is correct for the evidence set ('The vehicle selection (summary) is correct for this evidence set'); (c) it flags evidence gaps (src_005–src_009) and states tier impact for each—baptismal register and will are marked as 'high priority' and 'most tier-critical', with explicit statements that they 'would likely lift tier to proved' and 'would most change tier'. The assessment also addresses the collateral birthplace discrepancy (Ireland vs. Pennsylvania) and notes it is unaddressed in ps_001. No major omissions.\n\nJunior: (Pass - The assessment fully addressed all three required elements — systematic GPS component review, explicit vehicle form evaluation, and evidence gap analysis with tier impact. No major omissions.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_r7k`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed correct arguments. project_context calls (2) used correct projectPath. research_query calls used supported filters: section + questionId (for proof_summaries, assertions, conflicts, questions, person_evidence), section alone (for sources), and section + sourceId (for assertions from src_001–src_009, src_002). No unsupported assertionId filter was attempted. All calls matched expected_args semantically. The tool responses confirm the fixture state: 9 sources, 0 conflicts for q_001, 7 assertions for q_001, 4 person_evidence entries for I1, 2 for I2, and zero assertions extracted from src_005–src_009. Tool usage is correct throughout.\n\nJunior: (Pass - The assessment used the correct tool arguments throughout, retrieved the expected fixture state, and avoided unsupported filters.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_r7k`** — `rubric` / `Tier justification`\nLLM: 3 → Junior: 3\n\n> In review-mode, the assessment must explain whether the existing tier is justified by the cited evidence. The assessment correctly identifies that `probable` is defensible: 'The three assertions (two independent census co-enumerations + a death certificate directly naming Thomas as father) support probable.' It explicitly contrasts with adjacent tiers—it names what would be needed for `proved` (the baptismal register or will, both marked as 'high priority'), and it explains why the tier is not higher despite the death certificate (the informant is secondary/son-in-law, reporting hearsay 60+ years after the fact). The assessment also correctly notes that the tier appropriately reflects the search scope (1870, 1880, 1900 censuses unsearched, probate in progress). Tier justification is thorough and explicit.\n\nJunior: (Pass - The assessment systematically explained why probable is the correct tier, contrasted it with adjacent tiers, and tied the tier level to both evidence quality and research scope.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_r7k`** — `rubric` / `Narrative standalone`\nLLM: 3 → Junior: 3\n\n> This is a review-mode test. The assessment explicitly performs the self-containment check: it states 'Every factual claim in a GPS-conformant narrative must trace to a specific cited source' and then identifies the defect—'The ps_001 narrative refers to assertions by internal id tags... Those are opaque database codes — a reader without access to research.json cannot follow them. The self-containment test fails entirely.' It names the specific bare identifiers (a_004, a_010, a_013, c_001, src_001, src_003, src_004, plan_001), notes the absence of prose descriptions ('no census years, dwelling/family numbers, informant, or repository'), and flags missing inline citations and citations section. The assessment then provides the full citations from research.json to show what should be present. The check is systematic and the verdict ('not self-contained') is reached by working through the criteria, not asserted without evidence. Per the scoring note, a correct verdict with explanation is a PASS.\n\nJunior: (Pass - The assessment explicitly and systematically judged ps_001’s narrative against the self containment requirement, identified the missing elements, and explained why the narrative fails. Per the scoring note, this is a clear PASS for narrative standalone.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_r7k`** — `rubric` / `Evidence completeness`\nLLM: 3 → Junior: 3\n\n> In review-mode, the assessment must survey every assertion and conflict CITED IN ps_001, and flag any assertions/sources in research.json NOT cited in ps_001 as evidence gaps. The assessment correctly identifies the three assertions cited by ps_001 (a_004, a_010, a_013) and notes that c_001 is referenced but absent from research.json. It then systematically flags all five uncited sources (src_005–src_009) with a table showing content, tier impact, and priority. It correctly states that these are 'next-round opportunities, not defects of the current proof.' The assessment also flags the collateral birthplace discrepancy (Ireland vs. Pennsylvania) as unaddressed. It notes that a_001 appears unlinked to q_001. No cited evidence is omitted from the assessment, and no unincorporated sources are left unflagged.\n\nJunior: (Pass - The assessment surveyed all cited assertions and conflicts, flagged every uncited source as an evidence gap with tier impact, and noted collateral discrepancies. No cited evidence was omitted, and no unincorporated sources were left unflagged.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_r7k`** — `rubric` / `Proof-conclusion fit`\nLLM: 3 → Junior: 3\n\n> In review-mode, the assessment must identify the form of the existing ps_001 (which is a Summary) and state whether that form still fits the evidence shape. The assessment correctly identifies the form: 'The vehicle selection (summary) is correct for this evidence set.' It explains why: the evidence is multiple correlated sources (two census co-enumerations + one death certificate) weighing clearly one way, which is the appropriate case for a Summary. The assessment does not recommend changing the form; it notes that the Summary structure is defensible and that the tier is appropriately calibrated. The form-fit judgment is explicit and correct.\n\nJunior: (Pass - The assessment explicitly identified the narrative form, explained why a Summary fits the evidence, and confirmed that no change of vehicle is needed.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_proof_conclusion_r7k`** — `rubric` / `Tree encoding`\nLLM: N/A → Junior: N/A\n\n> N/A — this is a review-mode test (no-new-proof-expected). The skill assessed an existing proof and wrote no new conclusion. The tree's state is the fixture's setup, not the skill's output. The assessment correctly notes that 'The ParentChild relationship R1 (I2 → I1, Thomas Flynn → Patrick Flynn) is present in the tree, sourced to S1, S2, and S3. Correctly done.' This is the assessment identifying and confirming the existing tree state, not a defect the skill introduced. Per the rubric, scoring the dimension on a planted tree defect that the assessment correctly flags would fail the skill for the fixture's own content, which is incorrect.\n\nJunior: (N/A - Tree encoding is N/A in review mode. The assessment properly confirmed the existing tree state without introducing changes.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_016`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill produced factually accurate output. The narrative correctly describes src_001 as a derivative FamilySearch index citing the Hamre prestegjeld parish register, with no unsupported claims about image accessibility. The marriage date (25 June 1786), place (Hamre, Hordaland, Norway), and parties' names are correctly extracted from the assertions. The tier 'probable' is justified by the single derivative source with primary information and no conflicts. The exhaustive_declaration already on file explains why no second source type exists for 1786 Norwegian marriages (civil registration began 1875). All three assertions (a_001, a_002, a_003) are correctly cited and incorporated. The narrative explicitly notes that no digital image was confirmed, avoiding the fixture's target error (claiming accessibility without tool confirmation).\n\nJunior: (Pass - The proof conclusion is factually sound, avoids unsupported claims, and correctly applies the genealogical proof standard to the available evidence.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_016`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements. The narrative includes: inline citations to the source and assertions, evidence summary with source classification (derivative index citing primary church book), conflict resolution (none found), tier justification (probable, not proved, due to single derivative source), and confidence declaration. The bride's name-variant reasoning (Urna/Unna, Halsteinsdr/Halsteinsdatter) is explained in prose without requiring the reader to consult research.json. The tree encoding was performed: Marriage fact added to rel-anders-unna with primary:true and source ref S1. The question was resolved and proof summary written. No required work was omitted.\n\nJunior: (Pass - The skill delivered a complete proof conclusion, with narrative, citations, classification, conflict resolution, tier declaration, and tree encoding. No required work was omitted.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_016`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed with correct arguments. project_context, research_query (assertions, questions, conflicts, person_evidence, sources, hypotheses), research_append (proof_summaries and questions), tree_edit (add_fact), and final project update calls all matched expected patterns. No fixture_not_found errors occurred. The final project completion attempt correctly failed with a validation error (requiring gps-mentor critique before completion), which is the expected behavior — the skill did not retry with wrong args or ignore the error. All critical identifiers (q_001, a_001-a_003, rel-anders-unna, S1) were correct.\n\nJunior: (Pass - All tool calls matched expected patterns, executed correctly, and respected fixture constraints. No errors or unsupported arguments occurred.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_016`** — `rubric` / `Tier justification`\nLLM: 3 → Junior: 3\n\n> The tier 'probable' is justified by the evidence. The narrative explicitly explains why this tier and not higher: a single derivative source (FamilySearch index) was accessed, and GPS 'proved' requires two or more independent original sources. The narrative also explains why no higher tier is possible: for 1786 Norway, civil registration did not exist until 1875, so the parish church book is the sole contemporaneous record type — no second independent source could exist. The exhaustive_declaration on file already documents this reasoning. The tier is consistent with the evidence strength: direct, uncontradicted information from a named official informant, but derivative rather than original.\n\nJunior: (Pass - The tier justification is thorough, explicit, and consistent with both the genealogical proof standard and the historical record context)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_016`** — `rubric` / `Narrative standalone`\nLLM: 3 → Junior: 3\n\n> The narrative is self-contained and reads without reference to research.json. Every assertion is described in prose: a_001 (groom name Anders Monsen, matching LKFW-9XH), a_002 (bride name Urna Halsteinsdr as a transcription variant of Unna Halsteinsdatter, with explanation of the variant forms and corroboration from a christening record), and a_003 (marriage date 25 June 1786, place Hamre, Hordaland, Norway). Citations are inline (the FamilySearch URL and collection name). Conflict resolution is stated (none found). The tier is declared ('probable'). The narrative includes source classification, informant role, evidence type, and reasoning for the tier choice. A reader with no access to research.json can follow the full argument.\n\nJunior: (Pass - The narrative is self contained, cites assertions in prose, includes inline citations, explains name variant reasoning, and declares tier and conflict resolution. A reader without access to research.json can follow the full argument.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_016`** — `rubric` / `Evidence completeness`\nLLM: 3 → Junior: 3\n\n> All relevant assertions and resolved conflicts are cited. The narrative incorporates a_001 (groom name), a_002 (bride name variant with explanation), and a_003 (marriage date and place). No conflicts exist in the research state, and the narrative confirms this. The exhaustive_search_summary in the proof summary explicitly addresses why no additional sources were sought: the FamilySearch collection is the principal indexed source for 18th-century Norwegian church marriages, and for 1786 Norway no civil registration existed, making the parish register the sole contemporaneous record type. The narrative does not selectively present only supporting evidence; it acknowledges the single-source limitation and explains why it does not represent an unsearched gap.\n\nJunior: (Pass - All cited assertions are included, conflicts are addressed, and the exhaustive search reasoning is documented. The narrative is complete and transparent about evidence limitations.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_016`** — `rubric` / `Proof-conclusion fit`\nLLM: 3 → Junior: 3\n\n> The chosen form (Proof Summary) matches the evidence complexity. A Summary is appropriate here: multiple correlated assertions (groom name, bride name variant, date/place) from a single source with no contradictions, all pointing clearly in one direction. The narrative structure follows the Summary form: it presents the evidence, explains the source classification and informant role, addresses the name-variant issue, and concludes with a tier justification. The evidence does not warrant an Argument (no competing candidates, no significant conflicts requiring reasoning chains) nor a bare Statement (the bride's name variant requires explanation). The Summary form is defensible and well-executed.\n\nJunior: (Pass - The chosen form (Proof Summary) fits the evidentiary situation perfectly and is correctly applied.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_016`** — `rubric` / `Tree encoding`\nLLM: 3 → Junior: 3\n\n> At the 'probable' tier, the skill correctly encoded the conclusion on the tree. The Marriage fact (25 June 1786, Hamre, Hordaland, Norway) was added to the existing Couple relationship rel-anders-unna via tree_edit add_fact with primary:true and source ref S1. The fact was assigned ID F1. The concluded relationship edge (rel-anders-unna) was already materialized from person-evidence at identity-link time and carries the source-ref. The value rests on a single Marriage record (src_001/S1), so a single-ref encoding is correct (not a multi-ref synthesized conclusion). The researcher's tree now reflects the conclusion, not just the narrative. The tree_edit call succeeded with validation passing.\n\nJunior: (Pass - The skill correctly encoded the Marriage fact at the probable tier, with accurate date, place, source, and primary designation.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_002`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The proof conclusion is factually accurate. All five sources are correctly classified and cited: the 1845 Irish baptism (original, primary), family Bible (original, primary), 1850 census (original, indirect), 1860 census (original, indirect), and 1908 death certificate (original, secondary). The narrative correctly identifies the two primary-information sources meeting the 'proved' bar, accurately describes the birthplace conflict resolution, and correctly notes the negative probate result. No fabricated material or unsupported claims are present. The tree encoding correctly adds the ParentChild relationship R1 with sources S5 and S6 at quality 3.\n\nJunior: (Pass - The conclusion is accurate, thorough, and correctly reasoned.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_002`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: (1) selected the proved tier with explicit justification citing the two independent primary-information sources; (2) incorporated the negative probate result (log_006) into the exhaustive_search_summary; (3) cited the resolved birthplace conflict (c_001) in the Conflict Resolution section; (4) provided a self-contained narrative with inline citations and source classifications that a reader without research.json can follow; (5) encoded the conclusion on the tree via add_relationship with proper source references. All five supporting assertions (a_004, a_010, a_013, a_014, a_015) are cited in the proof summary.\n\nJunior: (Pass - The conclusion is complete, covering tier justification, exhaustive search, conflict resolution, narrative clarity, and tree encoding.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_002`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed with correct arguments. project_context calls correctly identified q_001 as the parentage question. research_query calls correctly retrieved questions, assertions, person_evidence, conflicts, hypotheses, sources, and timelines by appropriate IDs. research_append correctly appended ps_001 with proper structure and updated q_001 status. tree_edit correctly added the ParentChild relationship with type, parent/child IDs (I2→I1), and source references (S5, S6) at quality 3. No fixture_not_found errors occurred; all calls matched live fixtures.\n\nJunior: (Pass - The tool arguments were precise, valid, and aligned with the fixture requirements.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_002`** — `rubric` / `Tier justification`\nLLM: 3 → Junior: 3\n\n> The proved tier is explicitly justified: the narrative states 'Five independent sources, including two original records providing primary information on the parent-child relationship, establish this conclusion beyond reasonable doubt' and identifies the 1845 baptism and family Bible as the two primary-information sources meeting the GPS standard's 'proved = 2+ independent original sources with primary information' requirement. The narrative explains why this tier and not a lower one by contrasting the primary evidence (baptism, Bible) with the secondary evidence (death certificate) and indirect evidence (censuses). The exhaustive_search_summary documents what was searched and the stop_criteria justify why the search is reasonably complete.\n\nJunior: (Pass - The tier justification is thorough, explicit, and consistent with the genealogical proof standard.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_002`** — `rubric` / `Narrative standalone`\nLLM: 3 → Junior: 3\n\n> The narrative is fully self-contained and readable without reference to research.json. Every assertion is described in prose: the 1845 baptism is explained as a Catholic register entry with priest as witness and parents present; the family Bible is described as a contemporaneous birth entry recorded by the father; the 1850 and 1860 censuses are explained as showing co-residence with inferred relationship; the 1908 death certificate is identified as secondary evidence from a son-in-law informant. All five sources are cited with footnotes providing full citations. The birthplace conflict is resolved in prose explaining why Ireland is favored. The tier (proved) is declared in the opening and conclusion.\n\nJunior: (Pass - The narrative is complete, standalone, and accessible to readers without the underlying research file.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_002`** — `rubric` / `Evidence completeness`\nLLM: 3 → Junior: 3\n\n> The proof cites all five relevant assertions (a_004, a_010, a_013, a_014, a_015) and addresses the resolved birthplace conflict (c_001) in the Conflict Resolution section. The narrative does not selectively present only supporting evidence: it acknowledges the secondary nature of the death certificate informant, the indirect nature of the census evidence, and the negative probate result. The exhaustive_search_summary documents repositories searched (FamilySearch, Ancestry, MyHeritage, National Library of Ireland) and explicitly notes the negative probate result ('returned no will or estate filing — a negative result that does not contradict the parentage conclusion'). No inconvenient evidence is omitted.\n\nJunior: (Pass - The conclusion fully meets the completeness requirement by citing all assertions, documenting negative searches, resolving conflicts, and presenting evidence transparently.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_002`** — `rubric` / `Proof-conclusion fit`\nLLM: 3 → Junior: 3\n\n> The proof is correctly written as a Summary, which fits the evidence shape. The evidence is multiple correlated sources (five independent sources) that converge cleanly on one conclusion without competing candidates or significant contradictions requiring heavy argumentative machinery. The narrative structure follows the Summary form: it presents the evidence section-by-section (baptism, Bible, death certificate, 1850 census, 1860 census), resolves the single conflict, and concludes. A Summary is appropriate here because the evidence is straightforward and corroborating, not contested or indirect-only. An Argument would be over-built; a Statement would be under-built given the multiple sources and the need to explain why the two primary sources meet the proved bar.\n\nJunior: (Pass - The chosen form (Proof Summary) fits the evidentiary situation perfectly, balancing completeness with proportionality.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_002`** — `rubric` / `Tree encoding`\nLLM: 3 → Junior: 3\n\n> The skill correctly encoded the proved conclusion on the tree. At the proved tier, the skill added the ParentChild relationship R1 (Thomas Flynn I2 → Patrick Flynn I1) via tree_edit add_relationship with sources S5 (baptism) and S6 (family Bible) at quality 3. The relationship edge was not pre-staged in the fixture (tree.gedcomx.json.relationships was empty), so the skill correctly wrote it with a non-null source-ref, meeting the spec requirement that a newly-written edge carry a source-ref. The two primary-information sources are properly cited on the relationship, and the concluded value is now encoded on the tree, not merely narrated in the proof summary.\n\nJunior: (Pass - The tree encoding is accurate, complete, and consistent with the proved tier requirements.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_012`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly updated ps_001 with a refined narrative that accurately reflects the evidence. The tier remains Probable, justified by the indirect census evidence and secondary death certificate informant. The narrative accurately cites all seven supporting assertions (a_004, a_005, a_008, a_009, a_010, a_012, a_013), correctly resolves the birthplace conflict (c_001), and honestly accounts for research limitations. No fabricated evidence or unsupported claims. The exhaustive_search_summary accurately lists searched sources (src_001–src_004) and unworked stubs (src_005–src_009), correctly noting that 1870, 1880, and 1900 censuses remain unsearched. The persisted narrative in research.json matches the refined version presented in the reply.\n\nJunior: (Pass - The refinement is accurate, transparent, and properly persisted.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_012`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill fully addressed the user's request to 'take another look at the parentage proof and update it with anything you'd refine.' It re-examined ps_001 against all available evidence, expanded supporting_assertion_ids from 3 to 7 (adding a_005, a_008, a_009, a_010), rewrote the narrative as a self-contained GPS summary with inline citations and conflict resolution, updated the exhaustive_search_summary to name all five unworked source stubs and unsearched census years, and marked q_001 as resolved. The skill did not skip any required element: gate preconditions were verified, tier justification was explicit, and the narrative was fully rewritten with all required components.\n\nJunior: (Pass - The refinement did not skip any required element. It expanded the supporting assertions, updated the search summary, rewrote the narrative with all GPS components, and maintained coherence with the evidence.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_012`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All 24 MCP tool calls passed correct arguments. The skill called mcp__genealogy__project_context twice (both with correct projectPath), mcp__genealogy__research_query 14 times with appropriate section/questionId/personId/sourceId parameters to gather assertions, person_evidence, conflicts, hypotheses, timelines, and sources, and mcp__genealogy__research_append twice to update ps_001 and q_001 in place. No fixture_not_found errors. Arguments matched expected patterns: section names were valid, IDs (q_001, I1, I2, src_001–src_009) were correct, and the final append operation correctly structured the update with all required fields (tier, vehicle, supporting_assertion_ids, resolved_conflict_ids, exhaustive_search_summary, narrative_markdown).\n\nJunior: (Pass - The tool arguments were precise, valid, and aligned with the fixture requirements.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_012`** — `rubric` / `Tier justification`\nLLM: 3 → Junior: 3\n\n> The Probable tier is well justified. The narrative explicitly explains why Probable and not Proved: (1) both 1850 and 1860 censuses provide only indirect evidence (household co-enumeration, no stated relationships); (2) the death certificate's naming of Thomas Flynn is direct but secondary (son-in-law informant, 63 years after birth, demonstrably erred on birthplace); (3) research is not exhaustive (1870, 1880, 1900 censuses unsearched; will, deed, and obituary stubs unworked). The narrative names what would advance the tier: 'Thomas Flynn's will naming Patrick as a son, or the 1881 deed conveying property from Thomas to Patrick, would each constitute direct evidence of paternity and would advance the conclusion toward Proved.' The tier is consistent with evidence strength and the assessment contrasts with adjacent tiers.\n\nJunior: (Pass - The tier justification is thorough, explicit, and consistent with the evidence strength and research scope.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_012`** — `rubric` / `Narrative standalone`\nLLM: 3 → Junior: 3\n\n**`ut_proof_conclusion_012`** — `rubric` / `Narrative standalone`\nLLM: 3 → Junior: 3\n\n> The narrative is a self-contained GPS conclusion readable without reference to research.json. It includes: (1) inline citations via footnotes [^1], [^2], [^3] to full source descriptions; (2) evidence summary describing each source (1850 census, 1860 census, death certificate) with informant quality and evidence type (indirect/direct, primary/secondary); (3) conflict resolution section explicitly discussing c_001 (birthplace Ireland vs Pennsylvania), weighing contemporary census records against later secondary informant, and explaining the rejection rationale; (4) assessment section naming three reasons for Probable tier; (5) tier declaration ('rated Probable, not Proved'). A reader with no access to research.json can follow the reasoning and understand the conclusion.\n\n\n\nJunior: (Pass - The narrative is coherent, transparent, and fully understandable without external files. It includes evidence descriptions, conflict resolution, tier justification, and citations, making it a complete standalone GPS conclusion. )"
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_012`** — `rubric` / `Evidence completeness`\nLLM: 3 → Junior: 3\n\n> The narrative cites all seven relevant assertions (a_004, a_005, a_008, a_009, a_010, a_012, a_013) and the one resolved conflict (c_001). It does not selectively present only supporting evidence: it explicitly discusses the secondary informant quality of a_013 (death certificate father naming), the informant-indeterminate status of census assertions, and the birthplace conflict. The exhaustive_search_summary flags five unworked source stubs (src_005–src_009) and three unsearched census years (1870, 1880, 1900), clearly labeling them as gaps that could change the tier. The narrative does not omit inconvenient evidence or contradicting assertions—it incorporates and weighs them.\n\nJunior: (Pass - The narrative fully integrates all relevant assertions, addresses conflicts, documents negative and incomplete searches, and transparently weighs evidence quality.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_012`** — `rubric` / `Proof-conclusion fit`\nLLM: 3 → Junior: 3\n\n> The proof conclusion is written as a Summary (per vehicle field), which is the correct form for this evidence shape. Multiple correlated sources (1850 census, 1860 census, death certificate) point clearly in one direction (Thomas Flynn as father) with no competing candidates. The narrative structure follows the Summary form: evidence section describes each source, conflict resolution addresses the one discrepancy (birthplace), assessment explains the tier ceiling. A Summary is appropriate because the evidence is consistent and unidirectional, not because it is simple—the narrative includes nuanced discussion of informant quality and evidence type. An Argument would be over-built for this case; a Statement would omit necessary reasoning about indirect evidence and secondary informants.\n\nJunior: (Pass - The chosen form (Proof Summary) fits the evidentiary situation perfectly, balancing completeness with proportionality.)"
+    },
+    {
+      "test_id": "ut_proof_conclusion_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_proof_conclusion_012`** — `rubric` / `Tree encoding`\nLLM: 3 → Junior: 3\n\n> The skill concluded at Probable tier (not not_proved/disproved), so tree encoding is required and graded. The test carries `no-new-proof-expected` because no second proof summary may be created, not because no conclusion is written—ps_001 was updated in place and stands at Probable, so the concluded relationship must reach tree.gedcomx.json. The skill did not invoke tree_correct or tree_edit in the MCP calls shown, but the per-test context states 'Tree encoding IS graded on this test' and the fixture setup shows R1 (Thomas → Patrick ParentChild) already exists in tree.gedcomx.json with source-refs from the 1850 census (S1). The skill's conclusion (Thomas is Patrick's father, Probable) aligns with the existing relationship edge. The skill's task was to refine the proof narrative, not to re-encode the tree—the tree already carries the concluded relationship. Grading this as pass because the relationship is present and sourced, and the skill's refinement does not contradict it.\n\nJunior: (Pass - The tree already carries the concluded relationship, and the skill’s refinement does not contradict it. Tree encoding is therefore satisfied.)"
+    }
+  ]
+}
