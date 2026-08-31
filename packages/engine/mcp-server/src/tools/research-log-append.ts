@@ -30,16 +30,13 @@ import {
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
-import { finalizeStagedResults } from "../utils/results-staging.js";
+import { finalizeStagedResults, STAGING_CAPABLE_TOOLS } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
 
 // Tools that can stage their raw response host-side (search-result-staging-spec.md).
-// Keep in sync with the `stageSearchResults` callers: record-search.ts,
-// fulltext-search.ts, external-links-search.ts.
-const STAGING_CAPABLE_TOOLS = new Set(["record_search", "fulltext_search", "external_links_search"]);
 
 /** Fire the "logging without persistence" nudge once this many positive-outcome
  *  searches have been logged while the project still holds zero sources and zero

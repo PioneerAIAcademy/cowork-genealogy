@@ -36,7 +36,12 @@ import {
   echoQuery,
 } from "../utils/search-helpers.js";
 import { toArk } from "../utils/ark.js";
-import { stageSearchResults } from "../utils/results-staging.js";
+import {
+  stageSearchResults,
+  countUnloggedStagedSearches,
+  UNLOGGED_SEARCHES_NOTE,
+  NIL_SEARCH_NEEDS_LOG_NOTE,
+} from "../utils/results-staging.js";
 import { compactStagedRecordSearch } from "../utils/staged-compaction.js";
 import { readProjectJson } from "../utils/project-io.js";
 import { withRetry } from "../utils/place-resolver.js";
@@ -992,6 +997,15 @@ export async function recordSearchTool(
     results.flatMap((r) => (r.gedcomx ? collectFacts(r.gedcomx) : [])),
   );
 
+  // The staged-search backlog, read BEFORE this call stages its own response — a
+  // count taken afterwards would include the search being answered right now and
+  // fire on the first search of every session. Advisory: never throws, 0 on any
+  // failure, and refuses nothing.
+  const unloggedStaged =
+    input.projectPath !== undefined
+      ? await countUnloggedStagedSearches(input.projectPath)
+      : 0;
+
   const out: RecordSearchToolResponse = {
     query: echoQuery(input),
     totalMatches: data.results ?? 0,
@@ -1031,6 +1045,15 @@ export async function recordSearchTool(
     ...(input.projectPath !== undefined && !input.subjectId
       ? { rankingSkipped: RANKING_SKIPPED_NOTE }
       : {}),
+    // Both model-facing notes sit in the same pre-`results` slot as
+    // `rankingSkipped`, for the same reason: a field after `results` is the first
+    // thing a size bound drops (spec § Key order).
+    ...(unloggedStaged > 0
+      ? { unloggedSearches: UNLOGGED_SEARCHES_NOTE.replace("{n}", String(unloggedStaged)) }
+      : {}),
+    ...(input.projectPath !== undefined && results.length === 0
+      ? { nilSearchNeedsLog: NIL_SEARCH_NEEDS_LOG_NOTE }
+      : {}),
     results,
   };
 
@@ -1051,7 +1074,12 @@ export async function recordSearchTool(
       // not know one caller's field names. Destructuring a copy also keeps `out`
       // itself untouched, so the live response the model reads is unaffected and
       // the key order (`rankingSkipped` before `results`) is preserved in both.
-      const { rankingSkipped: _advisory, ...persistable } = out;
+      const {
+        rankingSkipped: _advisory,
+        unloggedSearches: _backlog,
+        nilSearchNeedsLog: _nilNote,
+        ...persistable
+      } = out;
       out.staged = await stageSearchResults({
         projectPath: input.projectPath,
         tool: "record_search",

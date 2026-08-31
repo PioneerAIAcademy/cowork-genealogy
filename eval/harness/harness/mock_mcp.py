@@ -304,6 +304,26 @@ RANKING_SKIPPED_NOTE = (
     "broad survey, or a person not yet in the tree."
 )
 
+# Verbatim copies of UNLOGGED_SEARCHES_NOTE and NIL_SEARCH_NEEDS_LOG_NOTE in
+# packages/engine/mcp-server/src/utils/results-staging.ts, same rule as above:
+# grep the constant name to find both copies when editing either. The COUNT is
+# never computed here — `countUnloggedStagedSearches` is called out of the
+# compiled build (see `_stage_and_compact_search_results`), because a Python
+# restatement of the pairing rule is a second implementation the drift test
+# cannot see.
+UNLOGGED_SEARCHES_NOTE = (
+    "{n} earlier staged search response(s) in this project have no research.json log "
+    "entry. Call `research_log_append` for each, passing the `staged.resultsRef` that "
+    "search returned as `stagedResultsRef` — a search with no log entry is a search "
+    "that did not happen, and the staged response is deleted 24h after it was made."
+)
+
+NIL_SEARCH_NEEDS_LOG_NOTE = (
+    "Nothing returned, and nothing staged. A nil result is evidence: log it with "
+    "`research_log_append`, `outcome: \"negative\"`, the exact parameters used, and no "
+    "`stagedResultsRef`."
+)
+
 
 # Compaction the real search tool applies to its INLINE results once they are
 # staged, per tool. Both are exported from the compiled build so this harness
@@ -319,7 +339,7 @@ _STAGED_COMPACTORS: dict[str, str] = {
 
 def _stage_and_compact_search_results(
     workspace: Path, tool_name: str, response: dict[str, Any]
-) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+) -> tuple[dict[str, Any] | None, dict[str, Any], int]:
     """Stage a mocked search response and apply the tool's own post-staging
     compaction, both by calling the compiled build.
 
@@ -328,16 +348,17 @@ def _stage_and_compact_search_results(
     deliberate — a second subprocess per search call would widen the mock's
     existing 30s-cap flakiness under concurrency (#2025).
 
-    Returns `(staged_handle, response)`. `staged_handle` is None on a nil search
-    or a staging failure, and in that case `response` comes back untouched —
-    compaction is only ever correct once the sidecar holds the full payload.
-    The compaction functions are idempotent, so a fixture already written in the
-    compacted shape passes through unchanged.
+    Returns `(staged_handle, response, unlogged_count)`. `staged_handle` is None on
+    a nil search or a staging failure, and in that case `response` comes back
+    untouched — compaction is only ever correct once the sidecar holds the full
+    payload. The compaction functions are idempotent, so a fixture already written
+    in the compacted shape passes through unchanged. `unlogged_count` is the staged
+    backlog read before this call staged anything (0 when unavailable).
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
     if not stager_js.exists():
-        return None, response
+        return None, response, 0
 
     def _url(p: Path) -> str:
         posix = str(p).replace("\\", "/").replace("'", "\\'")
@@ -357,26 +378,61 @@ def _stage_and_compact_search_results(
         "response": response,
     }
     script = (
-        f"import {{ stageSearchResults }} from '{_url(stager_js)}';"
+        f"import {{ stageSearchResults, countUnloggedStagedSearches }} from '{_url(stager_js)}';"
         f"{compact_import}"
         " import { readFileSync } from 'node:fs';"
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        # Counted BEFORE staging, exactly as the real tools order it: a count taken
+        # after would include the call being answered and fire on every first search.
+        " const unlogged = await countUnloggedStagedSearches(input.projectPath);"
         " const r = await stageSearchResults(input);"
         f"{compact_call}"
-        " process.stdout.write(JSON.stringify({ staged: r, response: input.response }));"
+        " process.stdout.write(JSON.stringify({ staged: r, unlogged, response: input.response }));"
     )
     try:
         proc = _run_node_eval(script, json.dumps(input_obj))
         out = proc.stdout.strip()
         if not out:
-            return None, response
+            return None, response, 0
         parsed = json.loads(out)
+        unlogged = parsed.get("unlogged") or 0
         staged = parsed.get("staged")  # StagedHandle, or null -> None
         if staged is None:
-            return None, response
-        return staged, parsed.get("response", response)
+            return None, response, unlogged
+        return staged, parsed.get("response", response), unlogged
     except Exception:
-        return None, response
+        return None, response, 0
+
+
+def _count_unlogged_staged(workspace: Path) -> int:
+    """The staged backlog for a call that stages nothing (a nil search).
+
+    Runs the compiled `countUnloggedStagedSearches` on its own. That is one node
+    process where a nil search currently spawns none, so the per-call subprocess
+    count does not rise — the concern behind #2025 was a SECOND process per call,
+    not a first. Returns 0 on any failure; this is advisory.
+    """
+    stager_js = _MCP_BUILD / "utils" / "results-staging.js"
+    if not stager_js.exists():
+        return 0
+
+    posix = str(stager_js).replace("\\", "/").replace("'", "\'")
+    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    script = (
+        f"import {{ countUnloggedStagedSearches }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify("
+        " { unlogged: await countUnloggedStagedSearches(input.projectPath) }));"
+    )
+    try:
+        proc = _run_node_eval(
+            script, json.dumps({"projectPath": str(workspace).replace("\\", "/")})
+        )
+        out = proc.stdout.strip()
+        return int(json.loads(out).get("unlogged") or 0) if out else 0
+    except Exception:
+        return 0
 
 
 def create_mock_server(
@@ -497,11 +553,22 @@ def create_mock_server(
                 and isinstance(response.get("results"), list)
                 and response.get("results")
             ):
-                staged, response = _stage_and_compact_search_results(
+                staged, response, _unlogged_staged = _stage_and_compact_search_results(
                     _workspace, _name, response
                 )
                 if staged is not None:
                     response = {**response, "staged": staged}
+            elif (
+                _name in STAGING_SEARCH_TOOLS
+                and _workspace is not None
+                and "error" not in response
+                and args.get("projectPath")
+            ):
+                # Nil search: nothing staged, so the combined helper above never
+                # ran and the backlog still has to be read for the note below.
+                _unlogged_staged = _count_unlogged_staged(_workspace)
+            else:
+                _unlogged_staged = 0
 
             # Fold in the ranking the real record_search performs when the
             # caller names a subject. Matched against the test's own
@@ -545,6 +612,38 @@ def create_mock_server(
                     reordered[_key] = _value
                 reordered.setdefault("rankingSkipped", RANKING_SKIPPED_NOTE)
                 response = reordered
+
+            # The unlogged-search notes (#2056), mirrored for the same reason and
+            # inserted in the same pre-`results` slot. `fulltext_search` is absent
+            # deliberately: its arm of the change is sequenced behind PR #2001.
+            #
+            # The nil condition differs from production by a knowable margin. The
+            # real external_links_search keys it on the PRE-FILTER link set, so a
+            # host filter that matches none does not claim a nil; the mock applies
+            # no host filter at all, so an empty fixture `results` is the closest
+            # available mirror. A fixture written to represent a host-filtered-to-
+            # zero search would therefore over-emit here.
+            if (
+                _name in ("record_search", "external_links_search")
+                and "error" not in response
+                and args.get("projectPath")
+            ):
+                _notes: dict[str, str] = {}
+                if _unlogged_staged > 0:
+                    _notes["unloggedSearches"] = UNLOGGED_SEARCHES_NOTE.replace(
+                        "{n}", str(_unlogged_staged)
+                    )
+                if not response.get("results"):
+                    _notes["nilSearchNeedsLog"] = NIL_SEARCH_NEEDS_LOG_NOTE
+                if _notes:
+                    reordered = {}
+                    for _key, _value in response.items():
+                        if _key == "results":
+                            reordered.update(_notes)
+                        reordered[_key] = _value
+                    for _key, _value in _notes.items():
+                        reordered.setdefault(_key, _value)
+                    response = reordered
 
             entry["response"] = response
             entry["response_fixture"] = source_name

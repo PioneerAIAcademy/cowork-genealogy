@@ -326,6 +326,14 @@ export interface RecordSearchToolResponse {
   // Serialized BEFORE `results` — see the assembly comment in
   // `tools/record-search.ts` for why that ordering is load-bearing.
   rankingSkipped?: string;
+  // Set when this project holds staged search responses with no research.json log
+  // entry (issue #2056). Advisory — refuses nothing. Serialized BEFORE `results`,
+  // and withheld from the staged payload: it is an instruction to the model, not a
+  // record of what the search returned.
+  unloggedSearches?: string;
+  // Set on a `projectPath`-carrying search that returned nothing. A nil search
+  // stages no file, so `unloggedSearches` structurally cannot see it.
+  nilSearchNeedsLog?: string;
   // Present only when `projectPath` was supplied. The host-staged handle to pass
   // to research_log_append as `stagedResultsRef`; null for a nil search or when
   // staging failed (see `stagingError`).

@@ -187,6 +187,23 @@ the log editor behaves exactly as its own spec describes.
   The **skill** recovers by re-running the search (cheap — it re-stages); the
   consuming skills should document that fallback. Raising the TTL trades disk for
   fewer misses; 24h fits genealogy research cadence and is the v1 default.
+- **The un-finalized set is also a signal, not only garbage.** `stageSearchResults`
+  prunes it; `countUnloggedStagedSearches(projectPath)` *reads* it, and the two search
+  tools surface the count as an advisory note (contract in
+  `record-search-tool-spec-v2.md`). What makes it a signal rather than a file count is
+  the pairing rule: `research_log_append` only WARNS when a staging-capable tool logs
+  `results_available > 0` with no `stagedResultsRef` (§6), so that entry's staged file
+  survives the full TTL although its search WAS logged — measured at 126 of 1242
+  non-nil staging-capable entries across the committed corpus. Each staged file
+  therefore consumes at most one such entry (same `tool`, entry `performed` at or
+  after the file's `retrieved`), and only unpaired files count. Subtracting the two
+  populations is incorrect: the unattached set also holds searches made with no
+  `projectPath`, which stage nothing, so subtraction zeroes a real backlog. The reader
+  never throws and returns 0 on any failure — it runs inside a successful search, and
+  a project-state read that cannot complete must not turn that search into an error.
+- **A nil search is invisible to it.** Nothing is staged (§4), so the backlog count
+  cannot see the case a reasonably exhaustive search is most obliged to log. That half
+  is covered by a separate args-only note on the search tools, not by this mechanism.
 - **Read-only consumers.** Besides `research_log_append` (which finalizes), two
   tools read the sidecar without consuming it: `rank_search_matches` (scores every
   staged result against the tree subject) and `record_read` in **sidecar mode**

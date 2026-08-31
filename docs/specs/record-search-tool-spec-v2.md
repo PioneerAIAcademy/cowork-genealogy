@@ -418,8 +418,48 @@ Strict surname + birth-place match:
 | `offset` | number | Echo of the input offset (0 if not supplied). |
 | `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). |
 | `rankingSkipped` | string \| undefined | Present **only** when `projectPath` was supplied and `subjectId` was not. Names the two features that therefore did not run, and how to get them. **Serialized before `results`** — see below. |
+| `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses with no `research.json` log entry. Advisory — the search still succeeded and nothing is refused. **Serialized before `results`** — see below. |
+| `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied and the search returned nothing. A nil search stages no file, so `unloggedSearches` structurally cannot see it. **Serialized before `results`.** |
 | `results` | RecordSearchResult[] | The ranked results, best-scoring first. |
 | `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
+
+### `unloggedSearches` / `nilSearchNeedsLog` — the log obligation, at the tool
+
+A search whose results are never logged leaves no trace in `research.json`: the
+nil results that prove a query shape fails, the candidates that were examined and
+set aside, the raw response itself. `search-records/SKILL.md` says so plainly ("a
+search without a log entry is a search that didn't happen"), but that sentence is
+only read when the skill is invoked. One reported alpha-feedback session answered a research question
+with 11 `record_search` calls, one skill invocation (`init-project`), and zero log
+entries; 154 scored candidate rows reached `results/match-scores.jsonl` while
+`log[]` stayed empty.
+
+**`unloggedSearches` counts staged responses that no log entry accounts for.**
+`stageSearchResults` writes `results/.staging/<uuid>.json` and
+`research_log_append` unlinks it on finalize, so a surviving file is a candidate
+unlogged search. It is only a candidate: `research_log_append` *warns* rather than
+fails when a staging-capable tool logs `results_available > 0` with no
+`stagedResultsRef`, so a logged search can leave its file behind for the full TTL.
+Each staged file therefore consumes at most one such entry — same `tool`,
+`performed` at or after the file's `retrieved` — and only unpaired files count.
+Subtracting the two populations is wrong and was rejected: the unattached set also
+contains searches made with no `projectPath` at all, which stage nothing, so
+subtraction silently zeroes a real backlog.
+
+The count is read **before** this call stages its own response. A count taken after
+would include the search being answered and fire on the first search of every
+session.
+
+**`nilSearchNeedsLog` is args-only**, keyed on `projectPath` plus an empty result
+set, because a nil search stages nothing for the other note to find — and a nil
+result is the case a reasonably exhaustive search is most obliged to record.
+
+Both are advisory: no deny, no error, no changed exit path. Both are withheld from
+the staged payload, for the same reason `rankingSkipped` is — the sidecar records
+what the search returned, not instructions to the model. Whether the advisory ever
+becomes a refusal is an open question that wants the run-log rate first;
+`docs/specs/schemas/ownership.json`'s `log` row records the plane claim and its
+limits.
 
 ### `rankingSkipped` — saying so when no subject was named
 

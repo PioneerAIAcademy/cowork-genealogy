@@ -16,8 +16,10 @@ import pytest
 from harness.fixtures import InvalidFixtureError
 from harness.mock_mcp import (
     LIVE_TOOLS,
+    NIL_SEARCH_NEEDS_LOG_NOTE,
     OK_FALSE_IS_FAILURE_LIVE,
     RANKING_SKIPPED_NOTE,
+    UNLOGGED_SEARCHES_NOTE,
     _tool_envelope,
     create_mock_server,
 )
@@ -287,6 +289,59 @@ def test_ranking_skipped_note_has_not_drifted_from_the_typescript_source():
     ts_note = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', decl.group(1)))
     assert ts_note, "parsed an empty note — the declaration's shape changed"
     assert ts_note == RANKING_SKIPPED_NOTE
+
+
+def test_unlogged_search_notes_have_not_drifted_from_the_typescript_source():
+    """Both #2056 notes must stay byte-identical to the compiled source.
+
+    Same rule as the ranking note above, and the same silent failure mode: a stale
+    copy grades the skill against wording production no longer sends. These two live
+    in the staging util rather than the tool, because both search tools emit them.
+    """
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/utils/results-staging.ts"
+    ).read_text(encoding="utf-8")
+    for name, expected in (
+        ("UNLOGGED_SEARCHES_NOTE", UNLOGGED_SEARCHES_NOTE),
+        ("NIL_SEARCH_NEEDS_LOG_NOTE", NIL_SEARCH_NEEDS_LOG_NOTE),
+    ):
+        decl = re.search(rf"const {name} =(.*?);\n", src, re.DOTALL)
+        assert decl, f"{name} is gone from results-staging.ts"
+        ts_note = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', decl.group(1)))
+        assert ts_note, f"parsed an empty note for {name} — the declaration shape changed"
+        # The TS source escapes the inner quotes of `outcome: "negative"`; Python's
+        # own literal does not, so unescape before comparing.
+        assert ts_note.replace('\\"', '"') == expected
+
+
+def test_nil_search_carries_the_negative_log_note(tmp_path):
+    """The emission CONDITION, not the text — a text-only test passes on a wrong gate."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-patrick-flynn-no-results"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+        )
+    )
+    assert body["nilSearchNeedsLog"] == NIL_SEARCH_NEEDS_LOG_NOTE
+    # Ordered ahead of `results`, like every other model-facing note.
+    keys = list(body)
+    assert keys.index("nilSearchNeedsLog") < keys.index("results")
+
+
+def test_no_log_note_without_a_project_path(tmp_path):
+    """Neither note fires when the caller passed no projectPath — nothing is owed."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-patrick-flynn-no-results"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_search", {"surname": "Flynn", "givenName": "Patrick"})
+    )
+    assert "nilSearchNeedsLog" not in body
+    assert "unloggedSearches" not in body
 
 
 def test_record_search_omits_ranked_when_test_declares_no_rank_fixture(tmp_path):
