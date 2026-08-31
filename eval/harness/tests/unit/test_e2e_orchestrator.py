@@ -862,7 +862,15 @@ def test_provenance_gap_reason_names_the_satisfiable_call_shape():
     assert "primaryId2" in reason
     # the whole batch is lost, not just the flagged op
     assert "entire batch" in reason
-    # the documented escape when no score is obtainable at all
+    # Issue #1429. The check no longer flags a link whose provenance lane cannot
+    # yield a persona from what the run retained, so the reason has to say HOW to get the persona it
+    # is demanding a score for -- both retrieval routes, and the per-party rule
+    # that stops the first party's persona being reused for the second.
+    assert "record_read" in reason
+    assert "results_ref" in reason
+    assert "record_role" in reason
+    # The one exit that survives: provenance the check could not resolve at all.
+    # NOT the deleted escape, which excused a REACHABLE persona.
     assert "rationale" in reason
 
 
@@ -877,8 +885,9 @@ def test_provenance_gap_reason_offers_no_escape_for_a_locally_minted_id():
     across two runs despite a fresh random mint each call.
 
     So an escape for that case would hand the agent a documented reason to skip
-    the one call this gate exists to require. The only escape offered is the real
-    one: no record persona to compare against."""
+    the one call this gate exists to require. Since #1429 the persona-absence
+    escape is gone entirely — those links are no longer flagged — and the only
+    exit offered is for provenance the check could not resolve at all."""
     reason = person_evidence_provenance_gap(
         "mcp__genealogy__research_append",
         _pe_append("I1"),
@@ -888,8 +897,65 @@ def test_provenance_gap_reason_offers_no_escape_for_a_locally_minted_id():
     assert reason is not None
     assert "degenerate" not in reason.lower()
     assert "unresolvable stub" not in reason.lower()
-    # the surviving escape is still stated
+    # The per-party persona rule still names the field, so this stays pinned.
     assert "record_persona_id" in reason
+
+
+def _pe_append_with_assertion(person_id="I1", assertion_id="a_001"):
+    return {
+        "section": "person_evidence",
+        "op": "append",
+        "entry": {"person_id": person_id, "assertion_id": assertion_id},
+    }
+
+
+def _research_doc(tool, *, results_ref=None):
+    return {
+        "assertions": [{"id": "a_001", "record_persona_id": None, "log_entry_id": "log_001"}],
+        "log": [{"id": "log_001", "tool": tool, "results_ref": results_ref}],
+    }
+
+
+def test_provenance_gap_narrows_on_an_unscoreable_assertion():
+    """Issue #1429. An image-sourced assertion has no record persona to compare
+    against, so the gate must not demand a call that cannot be made."""
+    gap = person_evidence_provenance_gap(
+        "mcp__genealogy__research_append",
+        _pe_append_with_assertion(),
+        tool_calls=[],
+        starting_person_ids=set(),
+        research=_research_doc("image_transcribe"),
+    )
+    assert gap is None
+
+
+def test_provenance_gap_still_fires_on_a_record_read_assertion():
+    """The regression half: `record_read` returns GedcomX with a persons array,
+    so the persona was in hand and the pair is scoreable."""
+    gap = person_evidence_provenance_gap(
+        "mcp__genealogy__research_append",
+        _pe_append_with_assertion(),
+        tool_calls=[],
+        starting_person_ids=set(),
+        research=_research_doc("record_read"),
+    )
+    assert gap is not None
+    assert "I1" in gap
+
+
+def test_provenance_gap_without_research_narrows_nothing():
+    """The fallback the hook takes when the workspace research.json cannot be
+    read: un-narrowed, i.e. exactly today's behaviour. Deliberately NOT "skip
+    the check" (a guardrail that disables itself on an IO hiccup) and NOT
+    "exempt everything" (the bypass the narrowing exists to reject)."""
+    gap = person_evidence_provenance_gap(
+        "mcp__genealogy__research_append",
+        _pe_append_with_assertion(),
+        tool_calls=[],
+        starting_person_ids=set(),
+    )
+    assert gap is not None
+    assert "I1" in gap
 
 
 # --- person_evidence_deny_decision (issue #1231 prereq 3: deny + loop valve) --

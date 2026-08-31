@@ -55,7 +55,7 @@ runs on tests carrying the tag, i.e. it is inert on the other ~19).
 | D6 | The autonomous rejection is stated explicitly — "the candidate, the score, and exactly what conflicted" — in the summary, "**never in `hypotheses` or `log`**" | response + file_changes | — |
 | D7 | **Disclose the score**: whenever a score was computed, state it in the `pe_` rationale | file_changes (rationale text) | — |
 | D8 | A low score caused by a **transcription/surname variant** does NOT make the match Weak; "document the variant explanation in `rationale`" | file_changes | `test_low_score_variant_still_links` `[score-variant]` |
-| D9 | A **degenerate near-zero score** on an unresolvable id is "**no score available**"; fall back to correlation and "Note in the rationale that the score was uninformative and why" | file_changes | — |
+| D9 | ~~A **degenerate near-zero score** on an unresolvable id is "no score available"~~ — **retired.** The bullet this transcribed was deleted from the body: an ARK-less or locally-minted person scores on document content (`0.9999484` against a `0.999967` control), so a missing ARK was never the cause. The surviving rule is thin-*content*, in `rank-search-matches-tool-spec.md`'s thin-subject guardrail | — | — |
 | D10 | "**Never auto-merge persons.**" No `merge_tree_persons`; links only | tool_calls | — |
 
 ## E. Writing `pe_` entries (Steps 4 and 6)
