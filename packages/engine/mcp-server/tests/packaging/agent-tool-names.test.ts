@@ -613,15 +613,6 @@ function agentBodyStart(lines: string[]): number {
 // This is not an escape hatch for an inconvenient lint: a new mention gets the
 // tool granted or the line removed, not a row here.
 const BUILTIN_BODY_ALLOWLIST: { file: string; word: string; text: string; reason: string }[] = [
-  {
-    file: "record-extractor.md",
-    word: "ToolSearch",
-    text: "net. If a persistence tool shows as deferred, load it via ToolSearch",
-    reason:
-      "ruled 2026-08-23, folded into #1666 (deep dive: record-extraction), which pays that " +
-      "directory's eval run; the row leaves in that PR when it deletes the passage. Editing " +
-      "record-extractor.md here would flip its run log inactive and force a paid re-run.",
-  },
 ];
 
 interface BuiltinHit {
@@ -693,9 +684,9 @@ describe("plugin agent bodies name no built-in tool the agent cannot call", () =
   });
 
   it("the scanner still detects a built-in mention", () => {
-    // The anti-silent-zero guard that OUTLIVES the allow-list. The canary below
-    // proves the scanner fires — but only while a row exists, and that row leaves
-    // with #1666. Measured before this guard: with the row removed AND
+    // The anti-silent-zero guard that OUTLIVES the allow-list, which is now
+    // empty — nothing in the corpus exercises the scanner, so this is the only
+    // thing proving it fires. Measured before this guard: with the row removed AND
     // BUILTIN_TOOL_VOCAB emptied, the whole file passed 75/75 — green, zero
     // coverage. Drives the REAL scanner over a synthetic body, so it covers the
     // vocabulary, the word-boundary regex, `agentBodyStart` and the held-set
@@ -746,8 +737,7 @@ describe("plugin agent bodies name no built-in tool the agent cannot call", () =
     // return past end-of-file would scan zero lines, every offenders check would
     // pass vacuously, and CI would stay green — the exact failure mode this lint
     // exists to catch, reproduced in the lint itself. Assert real body lines were
-    // available to scan, independent of the allow-list canary below (which is
-    // temporary — it leaves when #1666 deletes record-extractor's ToolSearch line).
+    // available to scan, independent of the allow-list, which is now empty.
     for (const file of agentFiles) {
       const lines = readFileSync(join(agentsDir, file), "utf8").split(/\r?\n/);
       expect(
@@ -775,6 +765,16 @@ describe("plugin agent bodies name no built-in tool the agent cannot call", () =
   });
 
   describe("allow-list entries are still needed", () => {
+    // Vitest fails a suite that registers no test ("No test found in suite"),
+    // so an empty allow-list needs a placeholder to hold the block open. It
+    // disappears the moment a row is added, which is when the per-row checks
+    // below start registering — the two are mutually exclusive by construction.
+    if (BUILTIN_BODY_ALLOWLIST.length === 0) {
+      it("the allow-list is empty, so there is nothing to re-check", () => {
+        expect(BUILTIN_BODY_ALLOWLIST).toHaveLength(0);
+      });
+    }
+
     for (const { file, word, text, reason } of BUILTIN_BODY_ALLOWLIST) {
       it(`${file} still contains its allowed line (${reason})`, () => {
         const stillMatches = allBuiltinHits.some(
