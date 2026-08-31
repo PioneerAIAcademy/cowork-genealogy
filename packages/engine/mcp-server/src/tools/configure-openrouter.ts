@@ -57,7 +57,7 @@ export const configureOpenRouterSchema = {
         type: "string",
         description:
           "Optional OpenRouter model slug for OCR. Defaults to the built-in " +
-          "Qwen-VL model when unset.",
+          "Gemini Flash model when unset.",
       },
     },
     required: ["apiKey"],
