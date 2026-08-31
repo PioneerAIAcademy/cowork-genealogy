@@ -355,10 +355,14 @@ it carries a measured reason per file, which a grep cannot.
 
 The same test pins the other direction: **a `SKILL.md` naming a `references/`
 file that is not on disk fails CI too**, since the agent is then told to read
-something it cannot open. One is exempt — `project-status` names
-`output-formats.md` twice as the render source for both its summaries, and that
-file has never existed in this repo. Writing it decides what the skill outputs,
-which is a content call owing a paid eval run rather than a mechanical fix.
+something it cannot open. **Nothing is exempt from this half** — its exemption
+list is empty, so a dangling pointer fails outright. The one entry it ever
+carried was `project-status` naming `output-formats.md` twice as the render
+source for both its summaries, a file that never existed in this repo. Issue
+#1750 settled it by deleting both pointers rather than writing the file:
+`SKILL.md` already states what each summary must carry, and `rubric.md` grades
+them on that coverage and on being distinct from each other, so there was no
+layout contract to lose.
 
 A skill can read its own sibling files; the failure is **across** skills. Claude
 Code's relative-path resolution from one SKILL.md into another skill's folder is
