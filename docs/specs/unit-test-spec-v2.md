@@ -419,11 +419,12 @@ table, plus a `--regression-baseline <path>` that reads a baseline run and flags
 any pass-rate drop > noise_band as a regression.
 
 **Prerequisite, and why this is not merely deferred:** computing per-skill noise
-bands needs N=5 on the golden set. `runs_per_test` is pinned to 1 as standing
-policy, so the prerequisite cannot be met and this item is not on a path to being
-built. Do not plan around it, and do not reach for "within the noise band" as a
-way to explain a test that flaps — there is no band, and a flapping test is a
-defect to fix.
+bands needs five golden-set passes. Nothing prevents running them by hand, and
+that is the point — it is a standing cost nobody is going to pay for a number
+that changes with every model, rubric and harness bump. This item is not on a
+path to being built. Do not plan around it, and do not reach for "within the
+noise band" as a way to explain a test that flaps — there is no band, and a
+flapping test is a defect to fix.
 
 ---
 
