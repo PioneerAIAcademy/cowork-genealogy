@@ -360,6 +360,48 @@ something it cannot open. One is exempt — `project-status` names
 file has never existed in this repo. Writing it decides what the skill outputs,
 which is a content call owing a paid eval run rather than a mechanical fix.
 
+**Reachable is not read, and the thing that fails is conditionality — not the
+file.** A reference named as an unconditional member of a labelled pre-work block
+is read essentially always; the same file named conditionally is read almost
+never, and no strength of wording closes the gap. Measured over the committed
+e2e and unit run logs (`builtin_tool_calls` records built-in calls, including
+inside a subagent, so a skipped `Read` does leave a trace):
+
+| how the `SKILL.md` names it | file | read |
+|---|---|---|
+| `**Load reference files before proceeding:**` + list | `question-selection/question-formulation.md` | 10/10 |
+| a numbered "Step 1. Load reference files — always load this one" | `historical-context/historical-broad-context.md` | 11/11 |
+| `Reference files in references/:` block | `conflict-resolution/weighing-evidence.md` | 7/7 |
+| an imperative trailing a paragraph about something else | `person-evidence/evidence-standards.md` | **0/18** |
+| a bare noun phrase, not an instruction | `check-warnings/warning-checks.md` | **0/16** |
+| point-of-use, gated on "for that year" | `search-records/census-field-availability.md` | **0/25** |
+
+Positive unit fixtures only — a negative fixture is a skill correctly declining,
+which loads nothing, and including them understates every row.
+
+**The cleanest control is inside one code block in one sentence.**
+`locality-guide`'s Step 3 mandates a single-turn parallel batch and ends "Do not
+drop any call — parallelize, don't prune." Its unconditional members —
+`wiki_search`, `collections_search`, `volume_search`, `external_links_search` and
+all four `wiki_place_page` sections — run at 97–98.5% across 73 e2e segments.
+`wiki_read` is named in the *same sentence*, as the one exception, because it
+needs a URL from `wiki_search` first: 24/73, and still only 24/69 once you
+condition on `wiki_search` having returned non-error. Tool type, framing,
+position and skill are all held constant; conditionality is the whole difference.
+(Not airtight — the logs cannot confirm a *usable* URL came back every time.)
+
+**Transport is not the axis.** In `research-plan` the two instructed `Read`s beat
+four of that body's five instructed MCP tools. Do not justify a design on Reads
+being less salient than tool calls; the corpus refutes it.
+
+What follows for design: **a rule that applies only sometimes cannot be delivered
+by naming a file, at any wording.** A bolded point-of-use imperative was added to
+`census-field-availability.md`; it stayed at zero. Per-case guidance — this
+record type, this collection, this jurisdiction — has to arrive on a call the
+agent is already making, or become a precondition in the writer tool (ADR-0011).
+§3.4's playbook result is an instance of this rather than a separate fact about
+agents: what was measured there was a *conditional* read.
+
 A skill can read its own sibling files; the failure is **across** skills. Claude
 Code's relative-path resolution from one SKILL.md into another skill's folder is
 unreliable (claude-code#17741). So guidance several skills must follow
@@ -413,11 +455,15 @@ reference files read at runtime, no build-time assembly.** Both alternatives
 were measured on `record-extractor` (issue #702) and reverted.
 *(Imperative owned by `CLAUDE.md` § "No playbook/reference files for agents".)*
 
-- **On-demand `Read` fails silently, in three modes.** With the files provably
-  reachable, the agent read the playbook on some tests, ignored it on others, and
+- **On-demand `Read` failed in three modes.** With the files provably reachable,
+  the agent read the playbook on some tests, ignored it on others, and
   over-applied it on others — 6/19 against a 12–14/19 baseline. No error is
-  raised, and the unit harness records only MCP calls, so a skipped `Read` leaves
-  **no trace at all.**
+  raised on a skipped read. It is no longer *invisible*, though:
+  `builtin_call_record` (`eval/harness/harness/skill_runner.py`) records built-in
+  calls off the `PreToolUse` hook — the one site that sees calls made inside a
+  Task-spawned subagent — so both tiers now show whether a reference was read.
+  Older statements that a skipped `Read` "leaves no trace" predate it.
+  What was measured here was a **conditional** read, so §3.3's rule covers it.
 - **Build-time assembly** works mechanically but splits the reviewed artifact
   from the executed one. Here the prompt *is* the product: whoever edits a
   fragment must see the whole body it lands in, and seeing the real size is the
