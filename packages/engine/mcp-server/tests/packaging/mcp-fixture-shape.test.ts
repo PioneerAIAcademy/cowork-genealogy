@@ -333,10 +333,6 @@ function dispatchHandlers(): {
         break;
       }
     }
-    if (!fn) {
-      const distinct = new Set(awaited.values());
-      if (distinct.size === 1) fn = [...distinct][0];
-    }
     if (projected) projectingArms.push(tool);
     else if (fn) handlers.set(tool, fn);
   }
