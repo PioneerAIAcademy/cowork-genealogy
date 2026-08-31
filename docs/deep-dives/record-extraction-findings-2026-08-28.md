@@ -12,15 +12,19 @@ findings below are numbered against it where a rule exists.
 sources written. Transcripts, `tool_calls` and `file_changes` read before any
 `outcome_summary`, judge rationale or `.ann.json`, per the guide.
 
-> **Three of those five are not on `main` any more, and this PR is what removed them.**
+> **Three of those five are gone once this PR merges, and two of them are its doing.**
 > The harness keeps the newest 5 candidates per skill and prunes on every write
-> (`prune_old_candidates`, `DEFAULT_KEEP_CANDIDATES`), so committing the three fresh runs
-> below evicted `v1_2026-08-15_12-52-37`, `v1_2026-08-16_11-26-54` and
-> `v1_2026-08-16_13-06-08` with their `.ann.json` siblings. Every count on this page was
-> computed before that, against all five. To re-derive any of them, read the three evicted
-> logs at this PR's merge-base:
+> (`prune_old_candidates`, `DEFAULT_KEEP_CANDIDATES`). Committing the three fresh runs
+> below evicted `v1_2026-08-16_11-26-54` and `v1_2026-08-16_13-06-08` with their
+> `.ann.json` siblings; `v1_2026-08-15_12-52-37` was already off `main` before this branch
+> merged `main` back in, so this PR is not what removed that one. Every count on this page
+> was computed before any of it, against all five. To re-derive them, read the evicted logs
+> at this PR's merge-base:
 > `git show <base>:eval/runlogs/unit/record-extraction/v1_2026-08-15_12-52-37.json`.
-> The two surviving logs plus the three fresh ones are what a reader finds on `main`.
+> `v1_2026-08-17_18-57-51` and `v1_2026-08-24_17-40-15` survive. #2046 landed a sixth
+> candidate of its own (`v1_2026-08-30_17-17-24`), so post-merge the directory sits one
+> over the keep-5 policy until the next harness write prunes it — no CI job checks the
+> count, and pruning it here would evict `v1_2026-08-17_18-57-51`, which this page reads.
 
 **Fourteen findings. Nine convert to validator requests** (§Validator requests). Two
 lane-2 fixes were attempted on a paid run: one is kept (§F5), one was reverted after it
