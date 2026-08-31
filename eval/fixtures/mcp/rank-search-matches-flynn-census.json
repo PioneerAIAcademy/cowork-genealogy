@@ -9,6 +9,7 @@
     "scoredCount": 3,
     "returnedCount": 3,
     "scoringErrors": 0,
+    "scoreLogError": null,
     "matches": [
       {
         "matchRank": 1,
