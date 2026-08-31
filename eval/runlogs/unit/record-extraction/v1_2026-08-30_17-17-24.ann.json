@@ -197,14 +197,6 @@
     {
       "test_id": "ut_record_extraction_005",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_005",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -229,18 +221,26 @@
     {
       "test_id": "ut_record_extraction_005",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_005",
-      "dimension_source": "rubric",
       "dimension_name": "Evidence type accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "this seems like a nit - I'm ok with this"
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "ok, the note is not needed"
     }
   ]
 }
