@@ -185,12 +185,20 @@ function FulltextSearchBody({ result }: { result: FulltextSearchResult }): React
           <span>{result.places.join(', ')}</span>
         </div>
       )}
+      {(result.recordDate || (result.dates && result.dates.length > 0)) && (
+        <div className={styles.metaRow}>
+          <span className={styles.metaLabel}>Dates</span>
+          <span>{result.recordDate ?? result.dates?.join(', ')}</span>
+        </div>
+      )}
       {result.id && (
         <div className={styles.footerLink}>
           <button
             type="button"
             className={styles.externalLink}
-            onClick={() => openExternal(result.id)}
+            onClick={() =>
+              openExternal(result.sourceUrl ?? `https://www.familysearch.org/${result.id}`)
+            }
           >
             Open in FamilySearch →
           </button>
@@ -211,7 +219,8 @@ export default function SidecarResultCard({
   const isRS = isRecordSearch(result, tool)
   const title = isRS
     ? (result.recordTitle ?? result.collectionTitle ?? 'Untitled record')
-    : ((result as FulltextSearchResult).recordType ??
+    : ((result as FulltextSearchResult).title ??
+      (result as FulltextSearchResult).recordType ??
       (result as FulltextSearchResult).collectionTitle ??
       'Untitled record')
   const score = isRS ? result.score : undefined

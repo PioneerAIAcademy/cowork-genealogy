@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import SidecarResultCard from '../SidecarResultCard'
 import { patrickFlynnSidecar } from '../../../lib/__fixtures__/patrick-flynn-sidecar'
+import { setOpenExternal } from '../../../lib/external'
 import type { RecordSearchResult, FulltextSearchResult } from '../../../lib/schema'
 
 describe('SidecarResultCard — record_search', () => {
@@ -61,16 +62,27 @@ describe('SidecarResultCard — record_search', () => {
 })
 
 describe('SidecarResultCard — fulltext_search', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setOpenExternal(() => {})
+  })
 
+  // Production-shaped: mapEntry emits a bare ARK `id` plus a separate
+  // `sourceUrl`, and a `title` when the upstream record has one (#1996) —
+  // the old fixture gave `id` a full URL and no `title`, a shape the tool
+  // never actually emits, which is why the title/link bugs passed CI.
   const fulltextResult: FulltextSearchResult = {
-    id: 'https://www.familysearch.org/ark:/61903/3:1:S3HT-XYZ',
+    id: 'ark:/61903/3:1:S3HT-XYZ',
+    sourceUrl: 'https://www.familysearch.org/ark:/61903/3:1:S3HT-XYZ',
     collectionTitle: 'Pennsylvania Probate Records',
+    title: 'Last Will and Testament of Thomas Flynn',
+    recordDate: '1849',
     recordType: 'Will',
     recordPlace: 'Schuylkill County, PA',
     textDocument: 'Last Will of Thomas Flynn, naming sons Patrick and James as heirs.',
     names: ['Thomas Flynn', 'Patrick Flynn', 'James Flynn'],
     places: ['Schuylkill County, PA'],
+    dates: ['1849'],
     highlightTerms: ['Thomas', 'Patrick']
   }
 
@@ -91,5 +103,47 @@ describe('SidecarResultCard — fulltext_search', () => {
     )
     expect(screen.getByText('Thomas Flynn, Patrick Flynn, James Flynn')).toBeInTheDocument()
     expect(screen.getByText('Schuylkill County, PA')).toBeInTheDocument()
+  })
+
+  it('titles the card from `title`, not `recordType`', () => {
+    render(<SidecarResultCard result={fulltextResult} tool="fulltext_search" defaultExpanded={false} />)
+    expect(
+      screen.getByRole('heading', { name: 'Last Will and Testament of Thomas Flynn' })
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Will' })).toBeNull()
+  })
+
+  it('falls back to recordType then collectionTitle when title is absent', () => {
+    const { title: _title, ...noTitle } = fulltextResult
+    render(<SidecarResultCard result={noTitle} tool="fulltext_search" defaultExpanded={false} />)
+    expect(screen.getByRole('heading', { name: 'Will' })).toBeInTheDocument()
+  })
+
+  it('opens sourceUrl (not the bare ARK id) when the footer link is clicked', async () => {
+    const spy = vi.fn()
+    setOpenExternal(spy)
+    render(
+      <SidecarResultCard result={fulltextResult} tool="fulltext_search" defaultExpanded={true} />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    expect(spy).toHaveBeenCalledWith('https://www.familysearch.org/ark:/61903/3:1:S3HT-XYZ')
+  })
+
+  it('derives the FamilySearch URL from the bare ARK id when sourceUrl is absent', async () => {
+    const { sourceUrl: _sourceUrl, ...noSourceUrl } = fulltextResult
+    const spy = vi.fn()
+    setOpenExternal(spy)
+    render(
+      <SidecarResultCard result={noSourceUrl} tool="fulltext_search" defaultExpanded={true} />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    expect(spy).toHaveBeenCalledWith('https://www.familysearch.org/ark:/61903/3:1:S3HT-XYZ')
+  })
+
+  it('renders the record date', () => {
+    render(
+      <SidecarResultCard result={fulltextResult} tool="fulltext_search" defaultExpanded={true} />
+    )
+    expect(screen.getByText('1849')).toBeInTheDocument()
   })
 })
