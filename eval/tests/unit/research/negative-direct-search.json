@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_research_006",
+    "skill": "research",
+    "name": "Direct record search should not trigger research",
+    "type": "negative",
+    "description": "The user wants to drive a specific search step directly. The skill description says: 'Do NOT use when the user wants to drive a specific step directly (use question-selection, research-plan, search-records, etc.).' A named record search is search-records, not the orchestrator.",
+    "tags": ["near-miss", "research-vs-search-records", "boundary"]
+  },
+  "input": {
+    "user_message": "Search the 1880 census for Patrick Flynn in New York. I want to see if he appears as head of household.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["search-records"],
+    "explanation": "The user names the specific record collection (1880 census) and the person to find. This is a direct search request — search-records' job. The research orchestrator routes between sub-skills; it does not handle a single named search."
+  },
+  "judge_context": [
+    "Should route to search-records — the user is asking for a specific record search, not a full research objective"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

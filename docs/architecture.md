@@ -601,8 +601,9 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 > eval-ui`); hand-writing them is forbidden. A behavior-neutral edit can instead
 > take the `eval-cosmetic-skip` label from a senior, which relaxes **the snapshot
 > rule only** — the annotation rule still runs against the prior run log — and
-> expires on every new push. **`research` and `forget-and-rederive` are exempt**
-> (`RUNLOG_GATE_EXEMPT_SKILLS`), because neither has a unit suite. Full rules:
+> expires on every new push. **`forget-and-rederive` is exempt**
+> (`RUNLOG_GATE_EXEMPT_SKILLS`), because it has no unit suite. `research` was
+> formerly exempt but gained a trigger corpus and is now gated. Full rules:
 > `eval/CLAUDE.md` → "GitHub Action rules".
 
 Remember the unit suite grades a *single invocation in fresh context* — it will
@@ -683,14 +684,13 @@ record), and it never writes identity links or eliminations inline
 > [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md)** — it was the rev. 1
 > headline and was demoted after measurement.
 
-> **Direction.** There is **no `eval/tests/unit/research/`
-> suite.** The component that fails most is exercised only by live e2e runs. A
-> router suite is planned, with two prerequisites: settling the router's
-> `allowed-tools` and the agent-union semantics, and reconciling the two
-> contradictory `address_first` verdict tables in the body (item 3 above), which
-> currently cannot tell a test which behavior is correct. One design hazard on
-> top: #1012 — a `Skill()` callee can bind toolless in the unit path, so callee
-> binding must be made real before routing can be graded.
+> **Direction.** `eval/tests/unit/research/` now exists: trigger
+> corpus (15 tests) plus stubbed routing tests covering rows 1–4 and the
+> shortcut guard. Rows 14 (post-verdict `address_first` handler) and 16
+> (`project.status = "completed"`) remain blocked on #1492 (the two
+> contradictory verdict tables in the body, item 3 above). A live e2e run
+> is still the only instrument for routing-table rows the unit suite does
+> not yet cover.
 
 ### If you're asked to…
 
@@ -699,13 +699,14 @@ record), and it never writes identity links or eliminations inline
 `## Direct user requests name a destination, not a shortcut` section contradicts
 your change.** That section is a second routing
 surface: it takes a user asking for a named downstream skill and sends the router
-back through the table anyway. There is **no unit suite** to catch you; the only
-instrument is a live e2e run. Name the fixture you ran in the PR, or say you ran
-none.
+back through the table anyway. The trigger corpus catches routing
+*into* `research` from the description, but not the internal routing table; a
+live e2e run is still the only instrument for table changes. Name the fixture
+you ran in the PR, or say you ran none.
 
-The runlog CI gate does **not** apply here: `research` and `forget-and-rederive`
-are in `RUNLOG_GATE_EXEMPT_SKILLS` (`eval/harness/scripts/check_runlogs.py`),
-precisely because neither has a unit suite. The frontmatter lint still runs.
+The runlog CI gate now applies to `research` (armed by adding
+`eval/tests/unit/research/`). `forget-and-rederive` remains exempt
+(`RUNLOG_GATE_EXEMPT_SKILLS`) because it still has no unit suite.
 
 **Add a sub-skill to the loop.** It needs a routing row *and* a `description`
 that doesn't collide with an existing skill's (§3.2). Check the negative routing
@@ -713,9 +714,9 @@ tests in the unit corpus — but know what they pin. **A negative test pins
 *triggering*: "utterance U must land on skill B, not skill A."** It says nothing
 about the routing table, which runs *after* `/research` has already been
 selected. And `check_negative_reciprocity.py` skips any edge whose target has no
-`eval/tests/unit/<target>/` directory, so — `research` having no suite —
-**routing *into* `research` is unpinnable by construction**, not merely
-unpinned.
+`eval/tests/unit/<target>/` directory, so routing *into* a skill is pinnable
+only once it has a suite. `research` now has one, so edges into it
+are now visible to the reciprocity lint.
 
 **Fix a skill that isn't triggering.** First work out **which binding missed** —
 they have different fixes, and only one of them is a description problem.
@@ -724,8 +725,9 @@ they have different fixes, and only one of them is a description problem.
    first** (`| If research.json has... | Invoke |`) — check whether any row's
    state condition matches, whether an earlier row shadows it, and whether
    `## Direct user requests name a destination, not a shortcut` re-routed a
-   direct request. No unit suite covers this; a
-   live `make e2e-run` is the only instrument. The sub-skill's `description` is
+   direct request. The trigger corpus covers routing *into*
+   `research`, but not the internal routing table; a live `make e2e-run`
+   is the only instrument for table changes. The sub-skill's `description` is
    still in play as the *tiebreaker*: the table explicitly says to "defer to each
    sub-skill's own 'Use when' guidance when state is ambiguous," and that text
    lives in the description frontmatter.
@@ -1430,9 +1432,10 @@ Other environment differences that bite:
 ### If you're asked to…
 
 **Change how the hosted agent session is configured.** Run **`make agent-smoke`**.
-It is the only check that reads what the hosted runtime actually *resolved* — the
-SDK init handshake's agent list, no model call, bills nothing — and **no CI job
-runs it.** It needs `ANTHROPIC_API_KEY` or an `eval/.env` entry; **without one it
+Its first arm reads what the hosted runtime actually *resolved* — the SDK init
+handshake's agent list (no model call); its second arm runs `run_e2e` against a
+dead MCP stub and asserts the abort text (~8s, one billed session start). **No
+CI job runs it.** It needs `ANTHROPIC_API_KEY` or an `eval/.env` entry; **without one it
 skips silently**, which looks identical to passing.
 
 ---
@@ -1450,7 +1453,7 @@ skips silently**, which looks identical to passing.
 | `make harness-test` | `eval/harness` (pytest) — including the **`packages/schema/schemas/` JSON mirror** (`test_schema_mirrors.py`) and the three write-lockdown copies' parity | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug. **Not** the TS half of the `packages/schema` mirror — that is `make test-js` |
 | `make typecheck` | the whole JS workspace (turbo) | Python; and it is not the only viewer gate — `make test-js` runs viewer-ui's vitest suite (including `schema-interface-drift.test.ts`), and `make engine-test` runs `field-render-drift.test.ts` against the viewer's section components |
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
-| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names | whether a granted tool actually **binds**; skips silently with no API key |
+| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names (arm 1), and that a dead MCP server triggers the init-message abort with captured stderr and no files written (arm 2) | whether a granted tool actually **binds**; the ToolSearch backstop and `run_e2e_test` fallback abort paths; skips silently with no API key |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: `runs_per_test` is pinned to 1, so the harness's `flaky` flag is **dead by construction, not healthy**. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
@@ -1525,16 +1528,13 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and 87 negative routing tests. **404** committed test definitions
-  (`make eval-inventory`) — one JSON file per test under `eval/tests/unit/` — and
-  across the 25 live suites the latest run log per suite totals **403 rows, 362
-  passing (90%)**. Those two numbers count different things and can diverge in
-  either direction: a test defined after its suite's last run has no row, and a
-  row survives for a test since deleted. Today they differ by one, in the first
-  direction: `ut_timeline_010` was added to `timeline` after that suite's last
-  run, so it has no row; no row survives for a deleted test. Both numbers are
-  facts about the snapshots — taken between 2026-07-27 and 2026-08-24 — not an
-  identity, so re-derive rather than quoting them.
+  run logs, and negative routing tests across 26 skill suites. **433** committed
+  test definitions (`make eval-inventory`) — one JSON file per test under
+  `eval/tests/unit/` — and across the 26 live suites the latest run log per suite
+  totals **433 rows, 379 passing (88%)**. Those two numbers count different things
+  and can diverge in either direction: a test defined after its suite's last run
+  has no row, and a row survives for a test since deleted. Both numbers are facts
+  about the snapshots — not an identity, so re-derive rather than quoting them.
 - **E2e** (`eval/tests/e2e/<fixture>/`) — live FamilySearch, 106 fixtures
   (`make eval-inventory`; directories carrying a `fixture.json`; `eval/tests/e2e/` holds one more
   directory that is not one), blind
@@ -1645,7 +1645,7 @@ re-run until it comes back green (`docs/skill-lifecycle.md` carries the
 symptom-to-fix table). Because the pin also makes the `flaky` flag dead by
 construction, catching one is on you: re-run a suspect test with
 `run_tests.py --test <id> --runlogs-root <tmp>` and fix whatever differs.
-87 of the 404 definitions are **negative** tests that exist to prove
+94 of the 433 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is
