@@ -82,9 +82,7 @@ FIXTURE_PATH_RE = re.compile(r"^eval/fixtures/(scenarios|mcp)/([^/]+?)(?:/.*|\.j
 # can't clear it — that escape hatch only relaxes rule 2 once a runlog dir
 # already exists.
 #
-# Two reasons a skill lands here:
-#   - `research` — an orchestrator, validated by e2e GPS fixtures rather than
-#     unit tests.
+# Currently one skill:
 #   - `forget-and-rederive` — a setup/utility skill, not a research step. It
 #     strips a slice of the local tree to stage a practice run, so there is no
 #     genealogical output for a judge to grade: its mechanical half is the
@@ -100,7 +98,7 @@ FIXTURE_PATH_RE = re.compile(r"^eval/fixtures/(scenarios|mcp)/([^/]+?)(?:/.*|\.j
 # Otherwise keep this set minimal: it is the only way to edit a skill body
 # without eval discipline, so every addition needs the "no unit suite by design"
 # rationale above, not just "the gate is inconvenient right now."
-RUNLOG_GATE_EXEMPT_SKILLS = frozenset({"research", "forget-and-rederive"})
+RUNLOG_GATE_EXEMPT_SKILLS = frozenset({"forget-and-rederive"})
 
 
 def gh_error(message: str, *, file: str | None = None) -> None:
@@ -774,13 +772,12 @@ def main() -> int:
         fixture_referencing = skills_referencing_fixtures(TESTS_UNIT_DIR)
         for key in sorted(touched_fixtures):
             fixture_touched_skills |= fixture_referencing.get(key, set())
-    # Exempt only the orchestrator skills that still have NO unit suite — keyed
+    # Exempt only the skills that still have NO unit suite — keyed
     # on directory existence, not name, so adding eval/tests/unit/<skill>/ later
     # auto-arms the gate instead of silently staying exempt until someone also
-    # remembers to edit RUNLOG_GATE_EXEMPT_SKILLS (#1094 review). No-op today:
-    # neither exempt skill has a unit-test dir. A skill-body edit to such a
-    # suiteless skill would otherwise hard-fail the per-skill rules with no way
-    # to clear them (it has a plugin dir but no run logs).
+    # remembers to edit RUNLOG_GATE_EXEMPT_SKILLS (#1094 review). A skill-body
+    # edit to a suiteless exempt skill would otherwise hard-fail the per-skill
+    # rules with no way to clear them (it has a plugin dir but no run logs).
     exempt_suiteless = {
         s for s in RUNLOG_GATE_EXEMPT_SKILLS if not (TESTS_UNIT_DIR / s).is_dir()
     }
