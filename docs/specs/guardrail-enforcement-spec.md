@@ -1322,9 +1322,9 @@ this section before reopening one.
   whole doctrine inlined at 49,900 bytes — between `gps-mentor.md` (40,802) and
   `record-extractor.md` (58,541), so no new high-water mark. Both ends of that
   band moved during the work (the agent grew as rules landed, `record-extractor`
-  grew on main), which is the argument for measuring a ceiling rather than
-  quoting one. Both `references/` files were deleted rather than kept
-  beside it — an agent reading its own reference material on demand scored 6/19
+  grew on main), which is why that mark is precedent rather than a limit. Both
+  `references/` files were deleted rather than kept beside it — an agent reading
+  its own reference material on demand scored 6/19
   against a 12–14/19 baseline, and failed silently. What this bought beyond
   attribution: the agent emits a
   real `agent_id`, which is the thing the success gate below has never had. It
@@ -1356,15 +1356,16 @@ this section before reopening one.
   exactly as the conversion guide above prescribes. Two of the four are now
   converted, so the opening bullet reads as history — and all three of its
   figures have moved, `record-extractor` most of all. **The body-size objection
-  reverses on the unit, so quote the unit.** In bytes, `person-evidence` is
-  41,657 and `conflict-resolution` 26,091 against `record-extractor`'s 58,541,
+  falls whichever unit you quote, because there is no ceiling to clear.** In
+  bytes, `person-evidence` is 41,657 and `conflict-resolution` 26,091 against
+  `record-extractor`'s 58,541,
   and inlining their `references/` (9,403 and 22,540) leaves both **under** the
   high-water mark. In the lines the bullet used, both still clear it — 998 and
-  1,016 against `record-extractor`'s 986, which simply has longer lines. Bytes
-  is the unit this ceiling is about, because prompt cost is what it prices, so
-  the body-size objection falls — on that unit, and only stated with it. The
-  measured reference-reading regression survives either way. Re-measure before
-  quoting any of these figures.
+  1,016 against `record-extractor`'s 986, which simply has longer lines. Neither
+  reading blocks a candidate — see `docs/skill-to-agent-pair-conversion.md`,
+  "Folded size sizes the work; it does not disqualify". The measured
+  reference-reading regression survives either way. Re-measure before quoting
+  any of these figures.
 
   **This is the only route that reopens §7.** An agent is the one form a
   guardrail skill can take that emits a completion signal (`SubagentStop`) and
