@@ -1,6 +1,6 @@
 # Enforcement layer — the phase programme
 
-**Status, 2026-08-21.**
+**Status, 2026-09-01.**
 
 | Phase | State |
 |---|---|
@@ -73,6 +73,14 @@ move a rule that must hold into the writer tool *before* the prose moves, and
 fold verbatim then run once unchanged to get the pair's own baseline.
 
 
+**This phase ranks candidates by bypass rate, and that is the right instrument
+for the guardrail rationale only.** A second, cost-motivated pair track was
+opened on 2026-09-01 (issues #2115-#2123): it converts skills that have no
+bypass problem at all, to reach the `model:`/`effort:` pins and to keep the body
+out of the orchestrator's context. Those candidates are ranked by main-thread
+context cost instead, and none of them belongs in the table below. See
+`docs/skill-to-agent-pair-conversion.md`, "Two rationales reach a pair".
+
 **Ranked by measured traffic, not by tractability.** Across the e2e corpus only
 18 distinct skills are ever routed to; `timeline`, `hypothesis-tracking`,
 `citation`, `convert-dates` and `tree-edit` are invoked **zero** times.
@@ -89,18 +97,39 @@ fix a known-unsatisfiable gate in the body first.
 
 | Candidate | e2e invocations | Folded size |
 |---|---:|---|
-| ~~`research-exhaustiveness`~~ | 115 | **landed 2026-08-23** — folded to 21,632 bytes |
-| `conflict-resolution` | 9 | 48,513 bytes |
-| `person-evidence` | 149 | 49,473 bytes |
+| ~~`research-exhaustiveness`~~ | 115 | **landed 2026-08-23** — folded to ~21 KB |
+| `conflict-resolution` | 9 | ~48 KB |
+| `person-evidence` | 149 | ~52 KB |
 
-**The fold ceiling is whatever `record-extractor.md` currently measures** — 58,541
-bytes as of 2026-08-21, up from the 53,845 this line used to quote, which is why
-it says "measure it" rather than naming a number. `wc -c` on that file is the
-check —
-the only agent body the team has shipped and lived with. `search-records` folds
-to 142,746 bytes and is disqualified on size before anything else. Agent bodies
-only grow: `record-extractor` went 32,042 → 58,541 in under two months, because an
-agent cannot offload to `references/`.
+**There is no fold ceiling. `record-extractor.md`'s size is precedent, not a
+limit** — it is the largest agent body the team has shipped and lived with, and
+that is the whole of its authority. Quoting it as a bar has produced a pass/fail
+test that decides nothing: the file measured 53,845 bytes, then 58,541, and
+measures 57,229 today, so a candidate can cross the "ceiling" in either
+direction without anyone touching it. `docs/specs/unit-test-spec.md` has already
+ruled on a threshold in this band — "**the variable is anchoring, not length**",
+plugin agents are "exempt from the decay argument entirely" because they run in
+fresh context per invocation, and "the only band that binds `search-records`
+alone and spares `record-extractor` is a ~1 KB window around a single file."
+ADR-0003 says the same from the other side: reopen a size argument only on a
+measurement that body size costs something end to end, "not on a byte count."
+
+So do not disqualify a candidate on `wc -c`. Use the folded size to *size the
+work* — what moves, what stays skill-side, how much prose a reviewer has to
+read — and decide on the rationale the candidate is being converted for.
+
+**`search-records` is the largest candidate by a wide margin and it is
+genuinely blocked, but not by a byte count.** It folds to roughly 143 KB, of
+which about 87 KB is `references/` — and an agent cannot keep a `references/`
+directory. That is the real constraint, and issue #2123 is its prerequisite:
+whether `wiki_search` can serve that reference layer. Note also that stripping
+the references leaves the body at 56,244 bytes, which "clears" any
+record-extractor-derived ceiling by about 2%, i.e. inside the meaningless
+window — another reason not to run this decision through a threshold.
+
+**Agent bodies do not only grow.** Of the committed revisions of
+`record-extractor.md`, roughly a quarter shrank it, including recent ones.
+The direction of that file is not evidence about any other.
 
 **Do not split references back out.** Measured and reverted: on-demand `Read`
 inside an agent scored 6/19 against a 12–14/19 baseline, and the external

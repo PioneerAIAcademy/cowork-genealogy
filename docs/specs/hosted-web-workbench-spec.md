@@ -313,8 +313,9 @@ and electron share code" requires).
 > - **`/packages/engine` split in two** — `packages/engine/mcp-server` (the TS MCP
 >   server) and `packages/engine/plugin` (the Cowork skills + agents). `engine`
 >   itself is a bare container with no `package.json`, deliberately excluded from
->   the pnpm workspace (`!packages/engine/**` in `pnpm-workspace.yaml`) so the
->   `.mcpb` release pipeline stays npm-managed.
+>   the pnpm workspace (`!packages/engine/**` in `pnpm-workspace.yaml`) because
+>   both shipped artifacts install from the engine's own npm lockfile and no CI
+>   job builds either one — see `docs/architecture.md`, "Two products, one repo".
 > - **The counts have moved:** **27** skills (not 28) and **47** MCP tools in
 >   `allToolSchemas`/`manifest.json` (not 30).
 > - **`viewer-ui` holds 13 section components**, not 11 — see the note under
