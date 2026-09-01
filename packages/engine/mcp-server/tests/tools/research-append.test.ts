@@ -1954,6 +1954,65 @@ describe("research_append (project singleton section)", () => {
     expect(r.ok).toBe(true);
   });
 
+  // ── Completed-gate: the tree-encoding WARNING (issue #1490 phase 2) ──
+  // A tier->=-probable conclusion is expected to leave a fact or relationship on
+  // the tree. This warns — never refuses (2026-08-24 no-override ruling) — when a
+  // completed project holds one whose evidence persons gained nothing since the
+  // starting-tree.gedcomx.json baseline. Fires only on the completing call.
+
+  const writeBaseline = async (tree: any) =>
+    writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  const withEvidence = (research: any) => {
+    research.person_evidence.push({
+      id: "pe_001", assertion_id: "a_001", person_id: "I1",
+      confidence: "confident", match_score: 0.9, rationale: "match", created: "2026-01-02", superseded_by: null,
+    });
+    return research;
+  };
+
+  it("warns on completion when a probable conclusion added no tree structure (#1490)", async () => {
+    // Baseline == current tree, so I1 (linked to the summary via a_001) gained
+    // nothing this session — the conclusion was reached and left un-encoded.
+    await writeProject(withEvidence(withProof([critique()])), baseTree);
+    await writeBaseline(baseTree);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.validation.warnings.join(" ");
+    expect(w).toMatch(/ps_001/);
+    expect(w).toMatch(/no tree person it draws evidence from/);
+  });
+
+  it("is silent when the conclusion's person gained a tree fact (#1490)", async () => {
+    // The current tree adds a Birth fact for I1 that the baseline lacked, so the
+    // conclusion is encoded and no warning fires.
+    const current = {
+      ...baseTree,
+      persons: [
+        {
+          id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [{ id: "f1", type: "Birth", date: "1850", standard_date: "+1850" }],
+        },
+      ],
+    };
+    await writeProject(withEvidence(withProof([critique()])), current);
+    await writeBaseline(baseTree);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
+  });
+
+  it("does not warn when the project predates the baseline (fail-open) (#1490)", async () => {
+    // No starting-tree.gedcomx.json on disk — a legacy project. The check must
+    // fail open (no warning), never treat every fact as new.
+    await writeProject(withEvidence(withProof([critique()])), baseTree);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
+  });
+
   it("does not count a superseded verdict", async () => {
     // If a newer verdict replaced it, that one is itself in evaluations[] and
     // satisfies the gate. If nothing replaced it, the critique no longer stands.

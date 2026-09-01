@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_research_010",
+    "skill": "research",
+    "name": "Direct question-selection request should not trigger research",
+    "type": "negative",
+    "description": "The user wants to derive or refine the research questions for the project. The skill description says: 'Do NOT use when the user wants to drive a specific step directly (use question-selection, research-plan, search-records, etc.).' Directly asking to formulate questions is question-selection's job.",
+    "tags": ["near-miss", "research-vs-question-selection", "boundary"]
+  },
+  "input": {
+    "user_message": "What research questions should I be asking about Patrick Flynn? Derive the questions from the tree and the objective.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["question-selection"],
+    "explanation": "The user is asking to formulate research questions — the exact job of question-selection. They are driving that specific step, not handing off the full research workflow."
+  },
+  "judge_context": [
+    "Should route to question-selection — the user is explicitly asking to derive research questions"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}
