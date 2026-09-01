@@ -49,8 +49,8 @@ jobs:
     name: project-status-sync routing table
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - run: node .github/tests/project-status-sync-routing.test.mjs
@@ -59,8 +59,8 @@ jobs:
     name: CODEOWNERS names both senior teams
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - run: node .github/tests/codeowners-teams.test.mjs
@@ -69,8 +69,8 @@ jobs:
     name: CODEOWNERS review routing
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - run: node .github/tests/codeowners-routing.test.mjs
@@ -79,8 +79,8 @@ jobs:
     name: senior-queue readiness rules
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - run: node .github/tests/senior-queue-readiness.test.mjs
@@ -94,15 +94,15 @@ jobs:
     name: gate-issue-create hook fires
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: python3 scripts/claude-hooks/test-gate-issue-create.py
 
   check-runlogs-post-gate:
     name: check-runlogs post-gate lints carry !cancelled()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - run: node .github/tests/check-runlogs-post-gate-lints.test.mjs
