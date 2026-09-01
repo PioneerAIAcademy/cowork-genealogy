@@ -150,10 +150,11 @@ which #2044 retired. Re-reading the same pinned pages:
   drengen Jöns Jönson och Qwinfolcket Elena Asmunds doter."* Against Qwen's `Widus` /
   `St. Davidsthofst` / `Enna de mans Sohn` on this same line, the identity fields are now
   sound.
-- **f6 `004523018_00072` — not measured.** The FamilySearch download leg exceeded its 90s
-  budget on a degraded local link (~55 KB/s against a corpus maximum of 7.2s for that leg,
-  and 0 download-leg failures across 451 corpus image calls). Environmental, not a tool
-  defect.
+- **f6 `004523018_00072` — exact.** *"Dom: 1. p. Epiph: Kastades mull på Asmun Torson i
+  Henckelstorp som döde emellan d 4 och 5 hujus, Siuk d 8 dager 67 gl"* — the name, the
+  farm, both death dates and the age. (First measured 2026-09-01 once a degraded local
+  link recovered; the download leg is not a tool defect — its corpus maximum is 7.2s and
+  451 corpus image calls carry zero download-leg failures.)
 
 **`af Henckestorp` on f4's line defeats every model tried, and does not block the
 fixture.** Three Gemini reads of that page returned the farm token omitted, then
@@ -167,6 +168,40 @@ fixture nothing: f4 needs the date, the parties and the parish, and both f1 and 
 **Grading note: do not trust `found`.** f2's page returned `NOT FOUND` while that same
 call's transcription contained the answer. The spec frames `found` as a locate hint only;
 read the transcription.
+
+**2026-09-01 — run 3, `timeout`, 0 of 6. The blocker has moved from reading to
+navigation.** With Gemini in place the reading layer behaved: 6 of 57 transcribes errored
+(11%, against run 2's 50%), `compliance: pass` with zero guardrail bypasses, and nothing
+wrong was written to the tree — where run 2 asserted a false father and mother, run 3
+left the tree at its starting state. It timed out at the 120-minute cap with no proof
+summary.
+
+What it spent the run on:
+
+| volume | transcribes | what it is |
+|---|--:|---|
+| `004516861` | 31 | Källinge/Keflinge kyrkobok — wrong parish |
+| `004516862` | 14 | Källinge — wrong |
+| `004514823` | 7 | Barsebäck — **holds f1 at image 347** |
+| `004514824` | 5 | Barsebäck migration certificates, wrong era |
+| `004523018` | **0** | Västra Karaby — **holds f2, f4 and f6** |
+
+79% of the OCR budget went to a parish with no connection to the case, and the Västra
+Karaby register was never opened. `Karaby` appears once in the whole research document,
+in a list of parishes near Barsebäck where compiled genealogies mention men named Asmund;
+`Henckelstorp` and `Torsson` appear zero times. The six `Pernilla` hits are a Pernilla
+Larsdotter baptised in Källinge in 1699, unrelated.
+
+**The browse budget fired and did not change behaviour.** Nine `browseBudget` advisories
+were returned on the main thread (no delegation — all 57 transcribes were `<main>`),
+starting at the 21st distinct image in `004516861` and instructing the agent to log a
+negative outcome and pivot to the indexed route. It then made 22 more transcribes,
+9 of them in that same group, narrating the wrong-parish hits as "Extraordinary
+findings". Evidence recorded on issue #2067, which asks whether advisory return-fields
+work at all.
+
+So the fixture is not blocked by the reading layer any more — every page its answer rests
+on is legible (above) — and a fourth run would want a navigation fix, not a better model.
 
 **Caps: the fixture's overrides were removed, 2026-08-25.** It carried
 `wall_clock_seconds: 3600`, `tool_calls: 200`, `max_turns: 100` — half the `FixtureCaps`
