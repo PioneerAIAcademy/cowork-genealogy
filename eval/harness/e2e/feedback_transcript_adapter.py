@@ -95,6 +95,11 @@ def adapt_bundle_transcript(path: Path) -> dict[str, Any]:
             seen_sids.add(sid)
             session_ids.append(sid)
 
+        # A sidechain record carries the subagent's own id. Kept so a spliced
+        # entry can say WHO made the call — `agent_id is None` means main thread
+        # to the delegate detector, so an unstamped child write fails open.
+        rec_agent_id = rec.get("agentId")
+
         message = rec.get("message")
         content = message.get("content") if isinstance(message, dict) else None
         if not isinstance(content, list):
@@ -119,6 +124,7 @@ def adapt_bundle_transcript(path: Path) -> dict[str, Any]:
                     # that is the only way to SPLICE its calls in at the right
                     # index instead of appending them (see `adapt_bundle`).
                     "tool_use_id": block.get("id"),
+                    "agent_id": rec_agent_id if isinstance(rec_agent_id, str) else None,
                     "args": inp if isinstance(inp, dict) else {},
                     # Filled in from the matching tool_result below. It must NOT
                     # stay None: `did_not_land`'s second clause reads this field
@@ -180,6 +186,17 @@ def _parse_meta(path: Path) -> dict[str, Any] | None:
     except (ValueError, OSError):
         return None
     return meta if isinstance(meta, dict) else None
+
+
+def _agent_id_of(calls: list[dict[str, Any]]) -> str | None:
+    """The `agentId` the child's own records carry, if any. It is on the
+    records, not on the `.meta.json` (whose four keys are `agentType`,
+    `description`, `toolUseId`, `spawnDepth`)."""
+    for entry in calls:
+        value = entry.get("agent_id")
+        if isinstance(value, str) and value:
+            return value
+    return None
 
 
 def _splice_after(base: list[dict[str, Any]], child: list[dict[str, Any]], anchor: Any) -> bool:
@@ -277,6 +294,19 @@ def adapt_bundle(bundle_dir: Path) -> dict[str, Any]:
                 unreadable.append(f"{name}/subagents/{path.name}")
                 continue
             anchor = (meta or {}).get("toolUseId")
+            agent_type = (meta or {}).get("agentType")
+            # Stamp every child entry, and NEVER leave `agent_id` None on one:
+            # `find_protected_writes_by_unnamed_delegate` reads `agent_id is
+            # None` as "the main thread did it", so an unstamped subagent write
+            # fails open the moment that detector is wired to bundles. The id
+            # comes from the child's own records when they carry one, and falls
+            # back to the transcript's file stem, which is unique per subagent.
+            child_id = _agent_id_of(child["tool_calls"]) or stem
+            for entry in child["tool_calls"]:
+                entry.setdefault("agent_id", child_id)
+                entry["agent_id"] = entry.get("agent_id") or child_id
+                if isinstance(agent_type, str) and agent_type:
+                    entry["agent_type"] = agent_type
             if not _splice_after(calls, child["tool_calls"], anchor):
                 # No meta, or an id matching nothing here. EXCLUDED and named —
                 # never appended.
@@ -284,7 +314,6 @@ def adapt_bundle(bundle_dir: Path) -> dict[str, Any]:
                 continue
             truncated = truncated or child["truncated"]
             adapted_records += child["adapted_records"]
-            agent_type = (meta or {}).get("agentType")
             if isinstance(agent_type, str) and agent_type:
                 anchored_agents.add(agent_type.split(":", 1)[-1])
 
@@ -300,4 +329,5 @@ def adapt_bundle(bundle_dir: Path) -> dict[str, Any]:
         "unreadable_transcripts": unreadable,
         "anchored_agents": sorted(anchored_agents),
         "subagent_transcripts": subagent_transcripts,
+        "subagent_transcripts_anchored": subagent_transcripts - len(unanchored),
     }

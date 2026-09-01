@@ -869,3 +869,35 @@ def test_arm_visibility_still_falls_back_to_the_date(tmp_path):
         "proof-conclusion": "live", "research-exhaustiveness": "live"}
     assert arm_visibility(None, anchored_agents=set(), has_dropped=False) == {
         "proof-conclusion": "unknown", "research-exhaustiveness": "unknown"}
+
+
+def test_spliced_entries_carry_who_made_the_call(tmp_path):
+    """`find_protected_writes_by_unnamed_delegate` reads `agent_id is None` as
+    "the main thread did it". An unstamped subagent write therefore fails OPEN
+    the moment that detector is wired to bundles — silently, since no detector
+    running today reads the field."""
+    bundle = _subagent_bundle(tmp_path / "stamped")
+    adapted = adapt_bundle(bundle)
+    write = next(c for c in adapted["tool_calls"] if "research_append" in c["tool"])
+    assert write["agent_type"] == "proof-conclusion"
+    assert write["agent_id"], "never None on a child — None means main thread"
+    summons = next(c for c in adapted["tool_calls"] if c["tool"] == "Skill")
+    assert not summons.get("agent_type"), "a parent-stream call is not a child"
+
+
+def test_a_subagent_that_overruns_the_window_is_counted_not_hidden(tmp_path):
+    """Splicing puts the child's own calls inside the window, so a subagent
+    making more than `window` calls before its write pushes the parent's Skill
+    call back out. Not fixed here (the e2e corpus has the same flat shape), so
+    it has to be COUNTED — the trigger for changing it is a measurement."""
+    bundle = _subagent_bundle(tmp_path / "chatty")
+    _write_jsonl(bundle / "_feedback" / "subagents" / "agent-a1.jsonl", [
+        _assistant([{"type": "tool_use", "id": f"c{i}", "name": "record_search",
+                     "input": {}}])
+        for i in range(45)
+    ] + [_assistant([_PROOF_WRITE])])
+    result = scan_feedback_bundle(bundle)
+    assert result["window_overruns"] == 1
+    assert result["subagent_transcripts_anchored"] == 1
+    # And the finding it produces is exactly the one the count warns about.
+    assert len(result["unguarded_writes"]) == 1

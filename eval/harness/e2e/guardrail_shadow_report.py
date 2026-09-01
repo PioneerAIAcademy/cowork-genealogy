@@ -75,6 +75,7 @@ from harness.skill_invocation import (
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
     find_unpersisted_conflict_resolutions,
+    owning_skills,
     strip_agent_namespace,
     PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
@@ -1147,6 +1148,38 @@ def arm_visibility(
     return out
 
 
+def _window_overruns(groups: list[dict[str, Any]], *, window: int) -> int:
+    """Spliced protected writes whose spawning call sits more than `window`
+    entries back — the one limit the splice does NOT fix.
+
+    Putting a subagent's own calls into the list is what lets its write see the
+    `Skill` call that authorised it. But those calls occupy window slots, so a
+    subagent making more than `window` calls before its protected write pushes
+    that `Skill` call back out and the false violation returns by another door.
+    Local subagent transcripts run 0-204 tool calls, so it is reachable.
+
+    Not fixed here on purpose: the e2e harness carries subagent calls in one
+    flat list too, so a bundle-only window rule would make the two corpora
+    incomparable. Anchoring the window at the spawning call instead of the write
+    is a change to `skill_invocation.py`. This counts how often it would matter,
+    so that change is made on a measurement rather than a hunch."""
+    overruns = 0
+    for group in groups:
+        calls = group["tool_calls"]
+        for i, entry in enumerate(calls):
+            # A spliced child entry carries `agent_type`; a parent one does not.
+            if not entry.get("agent_type"):
+                continue
+            if not owning_skills(entry.get("tool", ""), entry.get("args") or {}):
+                continue
+            # Walk back to the nearest parent-stream entry: that is the call
+            # that spawned this subagent (directly, or its ancestor).
+            spawn = next((j for j in range(i - 1, -1, -1) if not calls[j].get("agent_type")), None)
+            if spawn is not None and i - spawn > window:
+                overruns += 1
+    return overruns
+
+
 def _dropped_transcripts(bundle_dir: Path) -> list[str]:
     """Transcripts the PRODUCER could not include, from `feedback.json`.
 
@@ -1216,6 +1249,10 @@ def scan_feedback_bundle(
         "arms": arm_visibility(submitted, has_dropped=bool(dropped_transcripts)),
         "dropped_transcripts": dropped_transcripts,
         "subagent_transcripts": 0,
+        "subagent_transcripts_anchored": 0,
+        # Spliced writes whose spawning call is further back than the window —
+        # the limit the splice does not fix, counted rather than guessed at.
+        "window_overruns": 0,
         # Named, never appended: a transcript we cannot place would land far
         # from its own skill invocation and manufacture a violation.
         "unanchored_subagents": [],
@@ -1265,7 +1302,9 @@ def scan_feedback_bundle(
             out["could_not_adapt"] = adapted.get("adapted_records", 0) == 0
             out["session_ids"] = adapted["session_ids"]
             out["subagent_transcripts"] = adapted["subagent_transcripts"]
+            out["subagent_transcripts_anchored"] = adapted["subagent_transcripts_anchored"]
             out["unanchored_subagents"] = adapted["unanchored_subagents"]
+            out["window_overruns"] = _window_overruns(adapted["groups"], window=window)
             if adapted["unreadable_transcripts"]:
                 out["transcript_unreadable"] = True
             out["arms"] = arm_visibility(
@@ -1468,6 +1507,15 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
             f"because a deploy does not ship the sandbox image "
             f"(docs/architecture.md §9.4 pt 2), so the era is unknown, not post-split."
         )
+    overruns = sum(r.get("window_overruns") or 0 for r in results)
+    lines.append(
+        f"  Window overruns: {overruns} spliced protected write(s) whose spawning "
+        f"call sits more than the window back, so the parent's Skill call is out "
+        f"of reach and the finding may be false. Non-zero is the trigger for "
+        f"anchoring the window at the spawning call (skill_invocation.py), which "
+        f"is deliberately NOT done here — the e2e corpus has the same flat shape, "
+        f"and a bundle-only rule would make the two incomparable."
+    )
     lines.append(
         "  The tree_edit/tree_correct arms were blind only to the agent route (the "
         "hook covers research_append alone, so a main-thread primary:true or "

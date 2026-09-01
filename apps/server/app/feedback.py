@@ -512,7 +512,7 @@ def _feedback_markdown(
     worked_as_expected: bool,
     dropped: list[str] | None = None,
     redacted_living: int = 0,
-    dropped_transcripts: list[str] | None = None,
+    has_subagents: bool = False,
 ) -> str:
     parts = [
         "# Feedback",
@@ -546,23 +546,19 @@ def _feedback_markdown(
             "",
             "See `_feedback/session-log.jsonl` — the full Claude Code conversation "
             "transcript (user turns, tool calls, results, and the agent's reasoning).",
-            "",
-            "Work the agent delegated to a subagent has its own transcript under "
-            "`_feedback/subagents/`, one `.jsonl` per subagent with a small "
-            "`.meta.json` beside it naming the parent `Agent` call that spawned "
-            "it. A session other than the most recent one ships the same pair "
-            "under `_feedback/sessions/<session-id>/`.",
         ]
-    if dropped_transcripts:
-        parts += [
-            "",
-            "## Transcripts not included",
-            "",
-            "Left out of this bundle. A count of zero read from what IS here "
-            "cannot account for these:",
-            "",
-            *[f"- `{name}`" for name in dropped_transcripts],
-        ]
+        # Only when the bundle actually carries one: describing a directory that
+        # is not there sends a triager hunting for a missing file, which is the
+        # confusion the session-log status line exists to prevent (#1481).
+        if has_subagents:
+            parts += [
+                "",
+                "Work the agent delegated to a subagent has its own transcript "
+                "under `_feedback/subagents/`, one `.jsonl` per subagent with a "
+                "small `.meta.json` beside it naming the parent `Agent` call "
+                "that spawned it. A session other than the most recent one "
+                "ships the same pair under `_feedback/sessions/<session-id>/`.",
+            ]
     if redacted_living:
         parts += [
             "",
@@ -647,6 +643,11 @@ async def submit_feedback(
 
     redacted_files, redacted_living = _redact_living(await _walk_project(sandbox))
     project_files, dropped = _select_files(redacted_files, body.includeMedia)
+    # One "not included" list, not two. The Electron producer pushes dropped
+    # transcripts into its own `skipped` list, and FEEDBACK.md is the file a
+    # triager reads across both — a web case and a desktop case must not report
+    # the same fact in structurally different places.
+    dropped = dropped + dropped_transcripts
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -663,7 +664,8 @@ async def submit_feedback(
                 body.workedAsExpected,
                 dropped,
                 redacted_living,
-                dropped_transcripts,
+                any(rel.startswith("_feedback/") and "/subagents/" in rel
+                    for rel, _data in session_log),
             ),
         )
         zf.writestr("_feedback/feedback.json", json.dumps(feedback_json, indent=2) + "\n")
