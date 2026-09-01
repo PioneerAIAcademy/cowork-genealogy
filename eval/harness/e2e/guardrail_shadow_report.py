@@ -54,6 +54,7 @@ from typing import Any
 from e2e.runlog_selection import (
     add_since_arg,
     all_result_jsons,
+    branch_scope_note,
     describe_window,
     filter_since,
     is_result_json as _is_result_json,
@@ -678,12 +679,11 @@ def replay_provenance(
 
     **The corpus is branch-scoped.** This reads `eval/runlogs/e2e/` as it exists
     in the CURRENT checkout, so a graded run committed on an unmerged branch is
-    invisible — it is not skipped, it is never seen, and nothing here can say so.
-    Two are known: `katalin-horak-son` and `heinrich-dewus-children-death`, both
-    on `land-heinrich-dewus-children-fixture`, and the latter is the first run
-    ever to store live entries for this check. Read any rate off an up-to-date
-    `main` with in-flight fixture PRs merged, or it is biased at exactly the
-    moment it is used.
+    invisible — it is not skipped, it is never seen (issue #1444).
+    `describe_window()`'s printed line says so on every run of this report;
+    `make e2e-branch-only` names what another ref carries that this one
+    doesn't. Read any rate off an up-to-date `main` with in-flight fixture PRs
+    merged, or it is biased at exactly the moment it is used.
 
     **The provenance join reads the run's FINAL research.json**, since the
     narrowed rule (spec §8) skips a link whose provenance lane cannot yield a
@@ -1450,6 +1450,7 @@ def main(argv: list[str] | None = None) -> int:
     paths = filter_since(all_paths, cutoff)
     if not paths:
         print("No committed runs found.", file=sys.stderr)
+        print(branch_scope_note(), file=sys.stderr)
         return 1
 
     by_window = scan_corpus(paths, windows=windows)
