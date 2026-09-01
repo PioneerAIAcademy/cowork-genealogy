@@ -42,12 +42,11 @@ for it, which is what makes the finding actionable (Dallan, PR #1085 review):
      sites are live; it does not explain the zero;
   4. **the mention BOUNDS the tool rather than asking for it** — a last-resort
      note, or an only-if-X condition — so zero calls is the instruction working,
-     not failing. Read the mention itself, not just its presence. Both of
-     `gps-mentor`'s wiki entries are now this case: `wiki_search` is marked
-     "Last-resort", and `wiki_place_page` is fenced behind "only when
-     `project_context` returned no locality for the jurisdiction" (#1344) —
-     which held in 0 of the 12 corpus cases that would have triggered it, every
-     one having a locality already, so zero is the expected count, not a gap.
+     not failing. Read the mention itself, not just its presence. The live
+     example is `gps-mentor`'s `wiki_search`, whose only site marks it
+     "Last-resort for finding published guidance" — an instruction that is
+     working precisely when the count stays at zero, so reading it as
+     non-compliance inverts its meaning.
 
 Adds NO instrumentation to a run (same posture as `corpus_report.py` /
 `guardrail_shadow_report.py` / `latency_report.py`): pure analysis over

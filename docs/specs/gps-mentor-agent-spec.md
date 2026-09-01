@@ -973,7 +973,8 @@ specific, not as a box-checking ritual.
 | `research_query` | Every specific state lookup, one section per call (`assertions`, `person_evidence`, `conflicts`, `hypotheses`, `proof_summaries`, `questions`, `plans`, `log`, `timelines`, `evaluations`). Two required habits: run `conflicts` and `hypotheses` **unfiltered** to catch project-wide absences, and check `count` against the 50-item cap before calling a set complete. |
 | `Read` | Exception only — a body no projection carries (a verdict file under `evaluations/`, an entry already located by id). **Never** `research.json` front-to-back. |
 | `collections_search` | When flagging a missing record type — quote the specific collection name FamilySearch offers for the jurisdiction. "FamilySearch has 'Pennsylvania Probate Records, 1683–1994'" beats "consider probate." |
-| `wiki_place_page` (`section: "online_records"` / `"research_tips"`) | Only when `project_context` returned no locality for the jurisdiction. Otherwise cite that locality's `collections` / `quirks` and its `loc_` id. |
+| `wiki_place_page` (`section: "online_records"`) | When auditing topical breadth (pre-exhaustiveness rubric check 1). |
+| `wiki_place_page` (`section: "research_tips"`) | When flagging repository diversity gaps or suggesting strategy improvements. |
 | `external_links_search` | When flagging repository diversity — name the specific third-party sites for the jurisdiction. Also useful for FAN-relevant repositories. |
 | `place_distance` + `place_search` | When an assertion or proof implies travel between two places. Quote the distance and era travel norms in the feedback. |
 | `wiki_search` | Last resort for finding published guidance on a specific record type or strategy question. |
