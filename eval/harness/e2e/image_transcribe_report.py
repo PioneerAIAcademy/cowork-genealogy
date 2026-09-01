@@ -72,7 +72,12 @@ from e2e.runlog_selection import all_result_jsons, result_jsons_for, run_date
 # Left in their module rather than lifted to a shared one — this is the second
 # consumer, so a third is the point to lift (CLAUDE.md § Code reuse).
 from e2e.wiki_failure_report import commit_author, resolve_authors
-from harness.since_window import add_since_arg, describe_window, filter_since
+from harness.since_window import (
+    add_since_arg,
+    branch_scope_note,
+    describe_window,
+    filter_since,
+)
 
 # Matched on the BARE tail so every server spelling resolves — the harness
 # registers `mcp__genealogy__`, Cowork uses two other prefixes (CLAUDE.md
@@ -434,6 +439,7 @@ def main(argv: list[str] | None = None) -> int:
     if not paths:
         where = f" on/after {cutoff.isoformat()}" if (cutoff and all_paths) else ""
         print(f"No committed runs found{where}.", file=sys.stderr)
+        print(branch_scope_note(), file=sys.stderr)
         return 1
 
     authors = resolve_authors(paths)

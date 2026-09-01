@@ -1,20 +1,16 @@
 name: workflow-logic-tests
 
-# Runs the pure-logic tests for the repo-governance files that route work:
-# which board column a card lands in, and which team reviews a path.
+# Runs the pure-logic tests for the repo-governance files that decide something
+# where a wrong answer is still a VALID answer, so nothing downstream complains.
 #
-# WHY. Both decide something where a wrong answer is still a VALID answer, so
-# nothing downstream complains. project-status-sync.yml picks a column and a
-# wrong column is still a column; senior-queue.yml picks a review queue off
-# CODEOWNERS, and a pattern its parser cannot read routes the PR to the wrong
-# team while the merge gate still enforces correctly. It also decides WHEN a PR
-# is ready, and a PR wrongly held back is indistinguishable from one nobody has
-# approved yet — an absent label looks the same either way. The run goes green,
-# the board or the review queue is quietly wrong, and the only detector is a
-# human noticing weeks later. Nothing else in CI reads either file — the JS suite
+# project-status-sync.yml picks a board column, and a wrong column is still a
+# column. .github/CODEOWNERS states two rules about itself that GitHub does not
+# check — every rule names both senior teams, and there is no `*` default — and a
+# line that breaks either parses fine and is accepted, silently re-narrowing who
+# may merge. In both cases the run goes green and the only detector is a human
+# noticing weeks later. Nothing else in CI reads either file: the JS suite
 # (`make test-js`) covers web, electron, viewer-ui and schema, and neither a
-# workflow branch table nor a CODEOWNERS resolution belongs in any of those
-# packages.
+# workflow branch table nor a CODEOWNERS invariant belongs in those packages.
 #
 # WHAT THIS DOES NOT COVER. Only the pure decision functions. A green run here
 # says nothing about whether the App token can still write the board, whether
@@ -31,7 +27,6 @@ on:
     paths: &paths
       - '.github/CODEOWNERS'
       - '.github/workflows/project-status-sync.yml'
-      - '.github/workflows/senior-queue.yml'
       - '.github/workflows/check-runlogs.yml'
       - '.github/workflows/workflow-logic-tests.yml'
       - '.github/tests/**'
@@ -56,26 +51,16 @@ jobs:
       - run: node .github/tests/project-status-sync-routing.test.mjs
 
   codeowners:
-    name: CODEOWNERS review routing
+    name: CODEOWNERS names both senior teams
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
-      - run: node .github/tests/codeowners-routing.test.mjs
+      - run: node .github/tests/codeowners-teams.test.mjs
 
-  readiness:
-    name: senior-queue readiness rules
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '22'
-      - run: node .github/tests/senior-queue-readiness.test.mjs
-
-  # Same class as the three above: the issue-filing gate decides something where
+  # Same class as the two above: the issue-filing gate decides something where
   # a wrong answer is a valid-looking one. It fails open by design, so a broken
   # regex stops the prompt without stopping anything else — the filing goes
   # through ungated and the run is green. Its test proved this from a clean
