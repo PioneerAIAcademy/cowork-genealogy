@@ -30,7 +30,6 @@ import {
 } from "./tree-shape.js";
 import { iteratePersonIdRefs } from "./person-id-refs.js";
 import { arkToBareId } from "../utils/ark.js";
-import { noPersonaInSidecarError, stagesPersonas } from "./sidecar-producers.js";
 
 // Enum definitions (single source of truth, matching Python validator)
 const CLOSED_ENUMS = {
@@ -1715,17 +1714,6 @@ async function validateSidecars(
     const payload = payloads.get(logId);
     if (!payload) {
       continue; // sidecar missing/unreadable — already reported above
-    }
-
-    // A sidecar staged by a producer that returns no GedcomX (full-text,
-    // external links) holds no persona to resolve against, and its results
-    // carry `id` rather than `recordId` — so the match below could never
-    // succeed and reported "does not match any result's recordId" with an empty
-    // list, naming the wrong thing. Say why instead. Shared with D2 in
-    // `research-append.ts` so the two messages cannot drift.
-    if (!stagesPersonas(entry.tool)) {
-      addError(report, ap, noPersonaInSidecarError(logId, entry.tool));
-      continue;
     }
 
     const recordId = a.record_id;

@@ -39,10 +39,7 @@ const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
 // Tools that can stage their raw response host-side (search-result-staging-spec.md).
 // Keep in sync with the `stageSearchResults` callers: record-search.ts,
 // fulltext-search.ts, external-links-search.ts.
-/** Exported for the drift guard in `tests/validation/sidecar-producers-drift.test.ts`:
- *  every tool here must be classified as persona-bearing or not in
- *  `src/validation/sidecar-producers.ts`, and nothing else may be. */
-export const STAGING_CAPABLE_TOOLS = new Set(["record_search", "fulltext_search", "external_links_search"]);
+const STAGING_CAPABLE_TOOLS = new Set(["record_search", "fulltext_search", "external_links_search"]);
 
 /** Fire the "logging without persistence" nudge once this many positive-outcome
  *  searches have been logged while the project still holds zero sources and zero

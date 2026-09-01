@@ -21,7 +21,6 @@
 import { join } from "path";
 import { readFile, mkdir } from "fs/promises";
 import { validateIntroduced } from "../validation/introduced-errors.js";
-import { noPersonaInSidecarError, stagesPersonas } from "../validation/sidecar-producers.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
@@ -268,11 +267,7 @@ function personaReachable(entry: any, research: any): boolean {
   const logEntry = log.find((l: any) => l?.id === assertion.log_entry_id);
   if (!logEntry) return true; // no log entry — provenance unknown
   if (logEntry.tool === "record_read") return true;
-  // Same whitelist the D2/D5 refusal reads, not a second copy of it: a
-  // persona is reachable through a retained sidecar exactly when that
-  // sidecar's producer stages GedcomX. Held together by
-  // `sidecar-producers-drift.test.ts`.
-  if (stagesPersonas(logEntry.tool) && logEntry.results_ref) return true;
+  if (logEntry.tool === "record_search" && logEntry.results_ref) return true;
   return false;
 }
 
@@ -2169,31 +2164,7 @@ async function prepareOps(
         }
       } else if (typeof ref === "string") {
         const results = await readSidecarResults(ref);
-        if (results && !stagesPersonas(logEntry.tool)) {
-          // A sidecar whose producer returns no GedcomX. `FulltextResult`
-          // carries `id`, not `recordId`; `PlaceExternalLink` carries neither —
-          // so the `recordId` match below is unconditionally empty for these,
-          // and every FTS-sourced assertion took the no-match arm: a supplied
-          // persona was rejected by a message listing nothing, and an omitted
-          // one skipped the canonicalization silently. Handle them here, on the
-          // producer, and never attempt persona resolution: an FTS-sourced
-          // assertion carries a null record_persona_id by design.
-          if (entry.record_persona_id != null) {
-            errors.push(fmt(i, noPersonaInSidecarError(String(logId), logEntry.tool)));
-            continue;
-          }
-          // Canonicalize record_id to the sidecar's stored form — the one thing
-          // §3.5 says the match exists to do. `matchedRecord` deliberately
-          // stays null: there is no `gedcomx`, so the place-lever echo below
-          // has nothing to read (it read nothing today either).
-          const key = arkToBareId(String(entry.record_id ?? ""));
-          const hit = results.find(
-            (r) => r && typeof r === "object" && typeof r.id === "string" && arkToBareId(r.id) === key,
-          );
-          if (hit && entry.record_id !== hit.id) {
-            entry.record_id = hit.id;
-          }
-        } else if (results) {
+        if (results) {
           const key = arkToBareId(String(entry.record_id ?? ""));
           const matches = results.filter(
             (r) => r && typeof r === "object" && typeof r.recordId === "string" && arkToBareId(r.recordId) === key,
