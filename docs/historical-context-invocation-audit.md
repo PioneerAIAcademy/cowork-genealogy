@@ -164,6 +164,52 @@ patronymic variant equated with Cruz", "a minor spelling variant of Reuben" —
 which is `person-evidence` reasoning, not a naming-system explanation. Nothing
 in the corpus shows either gap costing a conclusion.
 
+## Genealogist review
+
+@Ikennaya1 reviewed the three judgement calls this audit could not settle by
+counting. Recorded here because the conclusion rests on them, and because the
+first answer produced a further measurement.
+
+**Boundary changes — conditional, and the condition is testable.** "Formed 1853
+from Navarro County; stable during the target period" is usually *not* enough
+**when the research period crosses the formation date**, because the
+genealogical value is not the formation year but where the earlier records now
+sit: a researcher needs to be told that pre-1853 records are likely in Navarro
+County. Where the target period lies entirely after formation, the formation
+note alone is sufficient.
+
+That converts the judgement into a check. Of the **8** formation statements in
+the corpus, only **2** have a research period that crosses the formation date —
+and in both, the run already wrote the strong form:
+
+> "Records before 1891 fall under Lincoln County." — `jimmie-jewel-neal`
+
+> "born April 1792 in the area that became Garrard County (formed 1796 from
+> Madison and Lincoln counties), so his marriage likely occurred 1789-1792 in
+> Madison or Lincoln Co[unties]" — `mccarley-spouse`
+
+**2 of 2**, so the corpus passes the reviewer's own test. The sample is two
+cases and should not be read as more than it is, but it points the same way as
+everything else here.
+
+**Record availability — genuine genealogical value.** "Hesse-Nassau civil
+registration began 1874; an 1870 birth predates it" is correct and useful: it
+explains why the expected record does not exist and redirects the researcher to
+church records or other contemporary sources. That is exactly the kind of
+context that changes a research decision.
+
+**Migration patterns — situational, not a missing requirement.** Migration
+reasoning earns its place when it explains why a person appears in a new
+jurisdiction, where to search next, or how a family moved. It is not required
+by most research objectives. Runs reaching correct conclusions without it means
+migration should be treated as situational evidence; its absence matters only
+when movement between places is central to the problem.
+
+**Verdict:** the card does not demonstrate that `historical-context` is missing
+from the workflow. The runs are already performing at least some of its work
+inline, and the strongest form of boundary reasoning appears in the cases that
+need it.
+
 ## Limit of this measurement
 
 The e2e run logs capture `tool_calls` only — there is no narration field. This
