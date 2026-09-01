@@ -224,6 +224,41 @@ describe("tree_forget", () => {
     expect(i1.facts.map((f: any) => f.id)).toEqual(["F1"]);
   });
 
+  it("parents-of warns about a left-behind fact sharing a leading word with `Parents` but not an exact match (#1549)", async () => {
+    // Synthetic — no real FS example of a "Parents"-prefixed custom type is on
+    // record the way the spouses-of ones below are (issue #1549 only measured
+    // the spouse side); this exercises the same leading-token mechanism.
+    const tree: any = family();
+    tree.persons[0].facts.push({
+      id: "FPR",
+      type: "Parents Registration",
+      date: "1850",
+      value: "Michael Ryan - Mary Doyle",
+    } as any);
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    // Nothing named `Parents` exactly, so nothing is removed for it — but the
+    // structural removal still happens.
+    expect(r.removed.persons).toBe(2);
+    expect(r.removed.factsByType.Parents).toBeUndefined();
+    expect(r.validation.warnings).toEqual([
+      expect.stringMatching(/^A Parents-prefixed fact 'FPR' on I1 was left in the tree/),
+    ]);
+
+    // The left-behind fact really does survive, untouched.
+    const i1 = (await readTree()).persons.find((p: any) => p.id === "I1");
+    expect(i1.facts.map((f: any) => f.id)).toContain("FPR");
+    expect(JSON.stringify(r)).not.toContain("Michael");
+    expect(JSON.stringify(r)).not.toContain("Doyle");
+  });
+
   it("parents-of still errors when there is neither a parent link nor a `Parents` fact", async () => {
     await writeProject(family());
     const r = await treeForget({
@@ -260,6 +295,8 @@ describe("tree_forget", () => {
     const tree = await readTree();
     expect(tree.persons.map((p: any) => p.id)).not.toContain("I5");
     expect(tree.relationships.map((x: any) => x.id)).not.toContain("R6");
+    // No leading-token match present, so no left-behind warning fires.
+    expect(r.validation.warnings).toEqual([]);
   });
 
   it("spouses-of also strips the subject's own person-level `Marriage` fact", async () => {
@@ -346,11 +383,92 @@ describe("tree_forget", () => {
     expect(i1.facts.map((f: any) => f.type)).not.toContain("Annulment");
   });
 
+  it("spouses-of also sweeps person-level `Engagement`, `MarriageBanns`, and `Separation` facts (2026-08-24 ruling)", async () => {
+    const tree: any = family();
+    tree.persons[0].facts.push(
+      { id: "FE", type: "Engagement", date: "1844" } as any,
+      { id: "FB", type: "MarriageBanns", date: "1845" } as any,
+      { id: "FS", type: "Separation", date: "1895" } as any,
+    );
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "spouses-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.factsByType).toEqual({ Engagement: 1, MarriageBanns: 1, Separation: 1 });
+
+    const i1 = (await readTree()).persons.find((p: any) => p.id === "I1");
+    const types = i1.facts.map((f: any) => f.type);
+    expect(types).not.toContain("Engagement");
+    expect(types).not.toContain("MarriageBanns");
+    expect(types).not.toContain("Separation");
+  });
+
+  it("spouses-of warns about left-behind facts sharing a leading word with a swept type but not an exact match (#1549)", async () => {
+    // Real FS-observed custom types from committed run logs (issue #1549's
+    // measurement), not invented: "Marriage Registration" (space-separated)
+    // and "Marriage+bond" (`+`-separated, exercises the normalization).
+    // Distinct documentary events per the ruling — correctly not swept, but
+    // worth flagging.
+    const tree: any = family();
+    tree.persons[0].facts.push(
+      { id: "FMR", type: "Marriage Registration", date: "1845" } as any,
+      { id: "FMB", type: "Marriage+bond", date: "1844", value: "Marriage bond between…" } as any,
+    );
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "spouses-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    // Neither is an exact `Marriage` match, so neither is removed.
+    expect(r.removed.factsByType.Marriage).toBeUndefined();
+    expect(r.validation.warnings).toHaveLength(2);
+    expect(r.validation.warnings).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/^A Marriage-prefixed fact 'FMR' on I1 was left in the tree/),
+        expect.stringMatching(/^A Marriage-prefixed fact 'FMB' on I1 was left in the tree/),
+      ]),
+    );
+
+    const i1 = (await readTree()).persons.find((p: any) => p.id === "I1");
+    expect(i1.facts.map((f: any) => f.id)).toEqual(expect.arrayContaining(["FMR", "FMB"]));
+    // No fact value leaked into the warning.
+    expect(JSON.stringify(r)).not.toContain("Marriage bond between");
+  });
+
+  it("multi-selector call does not falsely warn when a later selector removes the fact (#1549)", async () => {
+    const tree: any = family();
+    tree.persons[0].facts.push(
+      { id: "FMR", type: "Marriage Registration", date: "1845" } as any,
+    );
+    await writeProject(tree);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [
+        { selector: "spouses-of", personId: "I1" },
+        { selector: "facts-of", personId: "I1", factType: "Marriage Registration" },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    expect(r.removed.factsByType["Marriage Registration"]).toBe(1);
+    expect(r.validation.warnings).toHaveLength(0);
+  });
+
   it("spouses-of still errors when there is neither a spouse link nor a marriage-class fact", async () => {
     await writeProject(family());
     const r = await treeForget({
       projectPath: dir,
-      // I4 is a sibling only: no couple relationship, no Marriage/Divorce/Annulment fact.
+      // I4 is a sibling only: no couple relationship, no couple-event fact.
       forget: [{ selector: "spouses-of", personId: "I4" }],
     });
     expect(r.ok).toBe(false);
@@ -604,7 +722,7 @@ describe("tree_forget", () => {
     if (!r.ok) return;
     expect(r.removed.factsByType).toEqual({ Marriage: 1 });
     expect(r.validation.warnings).toEqual([
-      expect.stringMatching(/Marriage\/Divorce\/Annulment fact 'SHARED2' also exists on: C2/),
+      expect.stringMatching(/couple-event fact 'SHARED2' also exists on: C2/),
     ]);
     const c2 = (await readTree()).persons.find((p: any) => p.id === "C2");
     expect(c2.facts.map((f: any) => f.id)).toEqual(["SHARED2"]);
@@ -880,6 +998,48 @@ describe("tree_forget", () => {
     expect(restored).toEqual(original);
     // Both slices are gone from the live tree — forgetting is additive.
     expect((await readTree()).persons[0].facts.map((f: any) => f.id)).toEqual(["F3"]);
+  });
+
+  // ─── #1490: the completion-gate baseline ─────────────────────────────────────
+
+  it("rewinds an existing starting-tree.gedcomx.json baseline to the forgotten tree", async () => {
+    await writeProject(family());
+    // A project that has passed init carries the write-once baseline.
+    await writeFile(
+      join(dir, "starting-tree.gedcomx.json"),
+      JSON.stringify(family(), null, 2),
+      "utf-8",
+    );
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    // Reported and rewound to match the forgotten live tree, so a later
+    // re-derivation registers as new structure against the baseline.
+    expect(r.filesWritten).toEqual(["tree.gedcomx.json", "starting-tree.gedcomx.json"]);
+    const baseline = JSON.parse(
+      await readFile(join(dir, "starting-tree.gedcomx.json"), "utf-8"),
+    );
+    expect(baseline).toEqual(await readTree());
+    expect(baseline.persons.map((p: any) => p.id)).toEqual(["I1", "I4", "I5", "I6"]);
+  });
+
+  it("never creates a baseline where none exists", async () => {
+    await writeProject(family());
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    expect(r.filesWritten).toEqual(["tree.gedcomx.json"]);
+    expect(await exists("starting-tree.gedcomx.json")).toBe(false);
   });
 
   // ─── redaction ─────────────────────────────────────────────────────────────

@@ -24,25 +24,6 @@ tools:
   - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__Genealogy_Research__project_context
   - Read
-disallowedTools:
-  - mcp__genealogy__extraction_append
-  - mcp__remote-devices__Genealogy_Research__extraction_append
-  - mcp__Genealogy_Research__extraction_append
-  - mcp__genealogy__tree_edit
-  - mcp__remote-devices__Genealogy_Research__tree_edit
-  - mcp__Genealogy_Research__tree_edit
-  - mcp__genealogy__tree_correct
-  - mcp__remote-devices__Genealogy_Research__tree_correct
-  - mcp__Genealogy_Research__tree_correct
-  - mcp__genealogy__tree_forget
-  - mcp__remote-devices__Genealogy_Research__tree_forget
-  - mcp__Genealogy_Research__tree_forget
-  - mcp__genealogy__materialize_facts
-  - mcp__remote-devices__Genealogy_Research__materialize_facts
-  - mcp__Genealogy_Research__materialize_facts
-  - mcp__genealogy__merge_tree_persons
-  - mcp__remote-devices__Genealogy_Research__merge_tree_persons
-  - mcp__Genealogy_Research__merge_tree_persons
 ---
 
 # Research Exhaustiveness

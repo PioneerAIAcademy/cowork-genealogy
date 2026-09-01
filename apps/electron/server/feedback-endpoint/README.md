@@ -25,27 +25,29 @@ script works at all, so run it after every console edit.
 - Go to [script.google.com](https://script.google.com) and create a new project
 - Replace the contents of `Code.gs` with the file from this directory
 - Set `FOLDER_ID` to your Drive folder ID
-- Optionally set `NOTIFICATION_EMAIL` to your email address
 - **Bump `SCRIPT_VERSION`** to today's date, here and in the committed copy
 
 Checking what is deployed is then one command — no submission needed:
 
 ```bash
 curl -sL <exec-url>
-# {"status":"Feedback endpoint is running","version":"2026-08-04"}
+# {"status":"Feedback endpoint is running","version":"2026-08-26","notifyCount":2}
 ```
 
 A version older than the committed `Code.gs` means the console copy is stale or
-the deployment was never published.
+the deployment was never published. `notifyCount` is how many addresses
+`NOTIFICATION_EMAILS` currently parses to — `0` means nobody is being emailed.
 
 ### 3. Set the Script Properties
 
-**Project Settings → Script Properties.** Both are required for issue creation;
-without them the endpoint still saves zips and returns success, and silently
-creates no issues.
+**Project Settings → Script Properties.** None of these are required to save a
+zip. Without the GitHub pair the endpoint still returns success and silently
+creates no issues; without `NOTIFICATION_EMAILS` it emails nobody, just as
+silently. `curl -sL <exec-url>` is what catches the email half — `notifyCount`.
 
 | Property | Value |
 |---|---|
+| `NOTIFICATION_EMAILS` | Comma-separated addresses to email on each new submission, e.g. `dallan@gmail.com,chesworthrm@familysearch.org`. Whitespace around each address is trimmed. Leave the property unset to disable notification entirely. Not a constant in `Code.gs` because this repo is public, and because adding a reviewer should not mean republishing the deployment. |
 | `GITHUB_TOKEN` | A fine-grained PAT scoped to the one repo, `Issues: Read and write` and nothing else. Org-owned repos additionally need fine-grained PAT access enabled on the org and an owner to approve the token — an unapproved token creates nothing and reports no error. |
 | `GITHUB_REPO` | `PioneerAIAcademy/cowork-genealogy` |
 
@@ -81,15 +83,26 @@ to point to your deployed Apps Script URL instead of `http://localhost:3000/feed
 
 - Each feedback submission is saved as `feedback-<timestamp>.zip` in the Drive folder
 - Each submission also opens a GitHub issue titled `[feedback] <timestamp>`,
-  labelled `genealogist` + `feedback`, carrying the Drive link and the
-  `make feedback-case` command. The `feedback` label routes the card straight to
-  **Ready**; see `.github/workflows/add-to-project.yml`.
-- **The issue body never contains user-typed text.** The repo is public. Only
-  `submitted_at` and `platform` are read out of the bundle, and both are clamped.
+  labelled `genealogist` + `feedback`, carrying the Drive link, the
+  `make feedback-case` command, and the tester's own prose. The `feedback` label
+  routes the card straight to the **Feedback** column; see
+  `.github/workflows/add-to-project.yml`.
+- **The issue body carries the tester's prose, and the repo is public.** The five
+  free-text fields plus `worked_as_expected` are reproduced verbatim, so testers
+  must be told their feedback is published and asked to keep PII out of it.
+  `email` and `project_folder_path` are never copied — one is the submitter's
+  contact address, the other leaks a username from their machine. Every copied
+  value is capped and has `@` escaped, so a submission cannot @-mention real
+  people from a public issue body.
 - **A GitHub failure never fails the submission.** The zip is already saved by
   then, so the user gets success either way and the failure is logged. The cost
   is an orphaned zip with no issue — which is exactly what the smoke test checks.
-- If `NOTIFICATION_EMAIL` is set, you get an email with a summary and link to the file
+- Every address in `NOTIFICATION_EMAILS` gets one email with the `FEEDBACK.md`
+  summary and a link to the zip — a single send to all recipients, not one per
+  person
+- **A notification failure never fails the submission either.** A typo in
+  `NOTIFICATION_EMAILS` throws for the whole send, and that is logged rather
+  than returned, so one bad address costs the emails and not the zip
 - Your team accesses feedback by opening the shared Drive folder — no special accounts needed
 
 ## Smoke test
@@ -98,20 +111,23 @@ Nothing in CI can reach this — the script runs in Google's runtime against a r
 Drive folder and the real GitHub API. Run this at rollout **and after every
 console edit**.
 
-1. `curl -sL <exec-url>` and check `version` matches the committed `Code.gs`.
-   This rules out the stale-console and unpublished-deployment cases before you
-   spend a submission on them.
+1. `curl -sL <exec-url>` and check `version` matches the committed `Code.gs`,
+   and that `notifyCount` equals the number of addresses you configured. This
+   rules out the stale-console, unpublished-deployment and unset-property cases
+   before you spend a submission on them.
 2. Submit a bundle with a throwaway email. Confirm an issue exists, labelled
-   `genealogist` + `feedback`, titled `[feedback] …`, sitting in **Ready** on
-   project 1.
+   `genealogist` + `feedback`, titled `[feedback] …`, sitting in the **Feedback**
+   column on project 1, and carrying a `## Feedback text` section that reproduces
+   what you typed — and no email address or local path anywhere in the body.
    **If there is no issue and no error, and step 1 was clean, suspect an
    ungranted `script.external_request` scope before you suspect the PAT** — the
    `try/catch` makes both look identical from the client. Executions in the Apps
    Script console tell them apart.
-3. Confirm the body contains no `@`, no `/Users/`, no `C:\`, and none of
+3. Confirm every address in `NOTIFICATION_EMAILS` received the email.
+4. Confirm the body contains no `@`, no `/Users/`, no `C:\`, and none of
    `email`, `project_folder_path`, `user_prompt`, `agent_did`,
    `agent_should_have`, `correct_answer`, `notes`.
-4. **Delete the `GITHUB_TOKEN` Script Property** and submit again. The user must
+5. **Delete the `GITHUB_TOKEN` Script Property** and submit again. The user must
    still get a success response, with no issue created. Restore the value
    afterwards. This is the step that proves the `try/catch`, and the one most
    likely to be skipped. Do not prove it by revoking the PAT instead — that is

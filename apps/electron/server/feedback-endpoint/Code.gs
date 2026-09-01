@@ -12,9 +12,9 @@
  * Setup:
  *   1. Create a Google Drive folder for feedback storage
  *   2. Set FOLDER_ID below to that folder's ID
- *   3. Optionally set NOTIFICATION_EMAIL to receive alerts
- *   4. Set the GITHUB_TOKEN and GITHUB_REPO Script Properties (see README)
- *   5. Deploy as web app (Execute as: me, Access: anyone)
+ *   3. Set the NOTIFICATION_EMAILS, GITHUB_TOKEN and GITHUB_REPO Script
+ *      Properties (see README)
+ *   4. Deploy as web app (Execute as: me, Access: anyone)
  */
 
 // ── Configuration ──────────────────────────────────────────────────
@@ -22,18 +22,36 @@
 // Find this in the folder's URL: drive.google.com/drive/folders/<THIS_ID>
 var FOLDER_ID = 'YOUR_FOLDER_ID_HERE';
 
-// Optional: email address to notify on new feedback. Leave empty to disable.
-var NOTIFICATION_EMAIL = '';
-
 // Bump this when you paste a new Code.gs into the console. doGet() returns it,
 // so `curl <exec-url>` says which version is actually deployed — otherwise an
 // unpublished edit is indistinguishable from a working one.
-var SCRIPT_VERSION = '2026-08-06';
+var SCRIPT_VERSION = '2026-08-30';
 
 // Labels applied to every feedback issue, in the same POST that creates it.
-// `genealogist` puts it in that pool and counts it; `feedback` is what
-// add-to-project.yml matches on to route the card to Ready instead of Backlog.
+// `genealogist` says who claims it; `feedback` is what add-to-project.yml
+// matches on to route the card to the Feedback column instead of Backlog.
 var ISSUE_LABELS = ['genealogist', 'feedback'];
+
+// The prose the tester types, in the order the form asks for it. Copied into
+// the issue body so the report is readable without downloading the bundle.
+// `email` and `project_folder_path` are deliberately absent — see
+// createFeedbackIssue.
+var PROSE_FIELDS = [
+  ['user_prompt',       'What I asked'],
+  ['agent_did',         'What the agent did'],
+  ['agent_should_have', 'What it should have done'],
+  ['correct_answer',    'The correct answer'],
+  ['notes',             'Notes']
+];
+
+// Per-field ceiling on prose copied into the body. The clients cap a field at
+// 10,000 characters, but doPost validates presence and nothing else, so nothing
+// enforces that by the time a value reaches here.
+var MAX_PROSE_CHARS = 6000;
+
+// GitHub rejects an issue body over 65,536 characters. Staying under a lower
+// ceiling leaves room for the escaping below, which can only grow the text.
+var MAX_BODY_CHARS = 60000;
 
 // ── Endpoint ───────────────────────────────────────────────────────
 
@@ -65,15 +83,24 @@ function doPost(e) {
 
     createFeedbackIssue(payload.filename, file.getUrl(), zipBlob);
 
-    if (NOTIFICATION_EMAIL) {
-      MailApp.sendEmail({
-        to: NOTIFICATION_EMAIL,
-        subject: 'Research Viewer feedback from ' + email + ' (' + zipKB + ' KB)',
-        body: feedbackMd
-            + '\n\n---\n'
-            + 'Zip: ' + file.getUrl() + '\n'
-            + 'Size: ' + zipKB + ' KB\n'
-      });
+    // Same rule as the GitHub call above: the zip is already saved, so a
+    // notification failure must not tell the user their submission failed.
+    // One malformed address in NOTIFICATION_EMAILS throws for the whole send,
+    // which would otherwise fail every submission until someone noticed.
+    try {
+      var recipients = notificationRecipients();
+      if (recipients) {
+        MailApp.sendEmail({
+          to: recipients,
+          subject: 'Research Viewer feedback from ' + email + ' (' + zipKB + ' KB)',
+          body: feedbackMd
+              + '\n\n---\n'
+              + 'Zip: ' + file.getUrl() + '\n'
+              + 'Size: ' + zipKB + ' KB\n'
+        });
+      }
+    } catch (mailErr) {
+      Logger.log('Failed to send notification for ' + payload.filename + ': ' + mailErr.message);
     }
 
     Logger.log('Saved feedback: ' + payload.filename + ' (' + zipKB + ' KB) from ' + email);
@@ -88,6 +115,36 @@ function doPost(e) {
       .createTextOutput(JSON.stringify({ ok: false, error: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+/**
+ * The addresses to notify, as the comma-separated string MailApp.sendEmail
+ * wants in `to`. Returns '' when nothing is configured, which disables the
+ * notification without touching the submission.
+ *
+ * Lives in a Script Property rather than a constant here because this file is
+ * committed to a public repo, and because adding a reviewer should not require
+ * republishing a deployment.
+ *
+ * One send, not one per address: MailApp's daily quota counts recipients, and
+ * a partial failure part-way through a loop would leave some reviewers
+ * notified and no way to tell which.
+ */
+function notificationRecipients() {
+  var raw = PropertiesService.getScriptProperties().getProperty('NOTIFICATION_EMAILS');
+  if (!raw) {
+    Logger.log('No NOTIFICATION_EMAILS Script Property — skipping notification email.');
+    return '';
+  }
+
+  var cleaned = [];
+  var parts = raw.split(',');
+  for (var i = 0; i < parts.length; i++) {
+    var address = parts[i].trim();
+    if (address) cleaned.push(address);
+  }
+
+  return cleaned.join(',');
 }
 
 function extractFeedbackMarkdown(zipBlob) {
@@ -111,9 +168,16 @@ function extractFeedbackMarkdown(zipBlob) {
  * failed — the zip is already saved by the time this runs, and a false
  * failure makes them resubmit. Logs and returns instead.
  *
- * Never reads user-typed text. The repo is public, so email, project paths,
- * the prompt, and the four prose answers are not touched here. Only
- * submitted_at and platform are permitted, and both are clamped.
+ * Copies the tester's own prose into the body (2026-08-30) so a reviewer can
+ * read the report on the board. This reverses the earlier rule that no
+ * user-typed text was published; testers are now told their feedback is public
+ * and asked to keep PII out of it.
+ *
+ * Two fields stay excluded, and the repo being public is why: `email` is the
+ * submitter's own contact address, and `project_folder_path` is a path on their
+ * machine that leaks a username. Neither says anything about the run. Every
+ * value that is copied goes through clampProse first — untrusted text in a
+ * public body can @-mention real people.
  */
 function createFeedbackIssue(filename, driveUrl, zipBlob) {
   try {
@@ -147,6 +211,17 @@ function createFeedbackIssue(filename, driveUrl, zipBlob) {
     if (meta) {
       if (meta.submitted_at) body.push('', '- Submitted: ' + clampField(meta.submitted_at));
       if (meta.platform) body.push('- Platform: ' + clampField(meta.platform));
+
+      // Drop the prose rather than the issue if it would blow the body limit:
+      // a rejected POST loses the Drive link too, and the link is the only
+      // thing standing between this zip and nobody ever finding it.
+      var beforeProse = body.length;
+      appendFeedbackText(body, meta);
+      if (body.join('\n').length > MAX_BODY_CHARS) {
+        body.length = beforeProse;
+        body.push('', '---', '', '## Feedback text', '',
+                  '_Too long for an issue body — read it in the bundle._');
+      }
     }
 
     var response = UrlFetchApp.fetch('https://api.github.com/repos/' + repo + '/issues', {
@@ -177,6 +252,73 @@ function createFeedbackIssue(filename, driveUrl, zipBlob) {
   } catch (err) {
     Logger.log('Failed to create feedback issue for ' + filename + ': ' + err.message);
   }
+}
+
+/**
+ * Append the tester's own words to the issue body.
+ *
+ * A field the tester left blank is omitted rather than rendered as an empty
+ * heading, which is why the section is assembled before any of it is pushed:
+ * a bundle carrying no prose at all must add no section.
+ */
+function appendFeedbackText(body, meta) {
+  var fields = [];
+  for (var i = 0; i < PROSE_FIELDS.length; i++) {
+    var value = clampProse(meta[PROSE_FIELDS[i][0]]);
+    if (value) fields.push([PROSE_FIELDS[i][1], value]);
+  }
+
+  var hasVerdict = typeof meta.worked_as_expected === 'boolean';
+  if (!fields.length && !hasVerdict) return;
+
+  body.push('', '---', '', '## Feedback text', '',
+            'Submitted by the tester through the Cowork viewer, reproduced verbatim.', '');
+  if (hasVerdict) {
+    body.push('**Worked as expected:** ' + (meta.worked_as_expected ? 'yes' : 'no'), '');
+  }
+  for (var j = 0; j < fields.length; j++) {
+    body.push('### ' + fields[j][0], '', blockquote(fields[j][1]), '');
+  }
+}
+
+/**
+ * Prose is untrusted and lands in a public issue body.
+ *
+ * `@` is escaped for the same reason clampField strips it from the two metadata
+ * fields: a body full of @-mentions notifies real people. `&#64;` renders as an
+ * @ and forms no mention, so the tester's words still read exactly as typed —
+ * which a plain strip would not preserve.
+ *
+ * The cap applies to the raw value, before escaping. Escaping can only grow the
+ * string, so MAX_BODY_CHARS is what actually bounds the body; this bounds how
+ * much of any one field is reproduced.
+ *
+ * A cut field says so. The clients accept 10,000 characters and this keeps
+ * 6,000, the section calls the text verbatim, and triage reads the body rather
+ * than the bundle — so an unmarked cut reads as a report the tester ended there.
+ */
+function clampProse(value) {
+  if (typeof value !== 'string') return '';
+  var cut = value.length > MAX_PROSE_CHARS;
+  var text = value
+    .slice(0, MAX_PROSE_CHARS)
+    .replace(/\r\n?/g, '\n')
+    .replace(/@/g, '&#64;')
+    .trim();
+  return cut ? text + '\n\n[… truncated — full text in the bundle]' : text;
+}
+
+/**
+ * Quote every line, blank ones included. A blockquote ends at the first line
+ * that is not prefixed, so prefixing unconditionally is what stops the tester's
+ * text from closing the quote and rendering as body markdown of its own.
+ */
+function blockquote(text) {
+  var lines = text.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    lines[i] = lines[i].trim() ? '> ' + lines[i] : '>';
+  }
+  return lines.join('\n');
 }
 
 /**
@@ -228,7 +370,8 @@ function doGet() {
   return ContentService
     .createTextOutput(JSON.stringify({
       status: 'Feedback endpoint is running',
-      version: SCRIPT_VERSION
+      version: SCRIPT_VERSION,
+      notifyCount: notificationRecipients().split(',').filter(String).length
     }))
     .setMimeType(ContentService.MimeType.JSON);
 }

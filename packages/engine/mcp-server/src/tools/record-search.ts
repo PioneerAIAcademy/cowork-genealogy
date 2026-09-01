@@ -37,6 +37,7 @@ import {
 } from "../utils/search-helpers.js";
 import { toArk } from "../utils/ark.js";
 import { stageSearchResults } from "../utils/results-staging.js";
+import { compactStagedRecordSearch } from "../utils/staged-compaction.js";
 import { readProjectJson } from "../utils/project-io.js";
 import { withRetry } from "../utils/place-resolver.js";
 import { fetchWithTimeout } from "../utils/http.js";
@@ -1063,73 +1064,12 @@ export async function recordSearchTool(
   }
 
   // Whenever results were staged, slim the INLINE projection so a broad search
-  // can't overflow the model's context — the bulk lives in the staged file,
-  // which rank_search_matches (and record_read) read host-side, and the
-  // remaining flat stub fields still carry names/dates/places for triage. This
-  // is unconditional (no opt-in flag): once staged, nothing needs the dropped
-  // fields inline, so the overflow protection can't be forgotten by the caller.
-  //
-  // Safe because the staged file is already serialized to disk by the awaited
-  // stageSearchResults above, so mutating the inline copy cannot corrupt the
-  // sidecar — the sidecar, the viewer's SidecarResultCard, and the eval fixtures
-  // all keep full fidelity. Never slim when `staged` is null (an un-staged
-  // exploratory search — nothing was retained to re-read from).
-  //
-  // Measured against the 3,380 rows of a real 140-search session: gedcomx aside,
-  // collectionUrl was 14.0% of row bytes, collectionTitle 9.4%, empty
-  // treeMatches 2.9%. primaryId (4.6%) is deliberately KEPT — rank_search_matches
-  // skips any candidate lacking it (rank-search-matches.ts), so dropping it would
-  // silently disable the re-ranker.
-  //
-  // `batchNumber` is KEPT for the same class of reason (#1592): it is the only
-  // route to a batch the agent can enumerate, and the staged case is the normal
-  // one — dropping it here would leave the field working only in the exploratory
-  // searches nobody logs. Being flat and top-level, it survives this block by
-  // construction; the test that pins it is what stops a future `delete`.
-  //
-  // It is not free on every call shape, and the cheap-looking dedupe is declined
-  // deliberately. On an ordinary search most rows carry none. On a
-  // BATCH-ANCHORED search every row repeats the batch the caller just sent —
-  // ~25 bytes x `count`, already echoed in `query.batchNumber`. Suppressing it
-  // when it equals `input.batchNumber` would save that, at the cost of making
-  // presence depend on how the search was phrased: the same record would carry
-  // the field or not depending on the query, and a row read out of the staged
-  // sidecar (where `query` is a sibling, not an ancestor) would lose its only
-  // copy. A field whose meaning is stable is worth more here than 2.5 KB on the
-  // one call shape where the caller demonstrably already knows the value.
+  // can't overflow the model's context. What is dropped and why — including the
+  // fields deliberately KEPT — is documented on `compactStagedRecordSearch`.
+  // It lives in `utils/` because the eval harness runs the same function on its
+  // canned responses; mirroring it in Python would make the copy that drifts.
   if (out.staged) {
-    const collections: Record<string, string> = {};
-    for (const r of out.results) {
-      delete r.gedcomx;
-
-      // Derivable from collectionId; nothing reads it off the inline stub.
-      delete r.collectionUrl;
-
-      // Hoist the repeated per-row title into one response-level map.
-      if (r.collectionId && r.collectionTitle) {
-        collections[r.collectionId] = r.collectionTitle;
-        delete r.collectionTitle;
-      }
-
-      // `treeMatches: []` on most rows — say nothing instead of saying "none".
-      if (Array.isArray(r.treeMatches) && r.treeMatches.length === 0) {
-        delete (r as Partial<RecordSearchResult>).treeMatches;
-      }
-
-      // FamilySearch repeats identical event entries (e.g. the same Census
-      // date+place twice). Exact-duplicate removal only — no type filtering,
-      // since Race/MaritalStatus are real triage signal.
-      if (Array.isArray(r.events) && r.events.length > 1) {
-        const seen = new Set<string>();
-        r.events = r.events.filter((e) => {
-          const k = JSON.stringify(e);
-          if (seen.has(k)) return false;
-          seen.add(k);
-          return true;
-        });
-      }
-    }
-    if (Object.keys(collections).length > 0) out.collections = collections;
+    compactStagedRecordSearch(out);
   }
 
   // Rank host-side when the caller named a subject. This is the "always call
@@ -1369,7 +1309,7 @@ export const recordSearchToolSchema = {
       recordSubdivision: { type: "string", description: "State, province, or first-level subdivision within the country (e.g., `'Alabama'`). Requires `recordCountry` to be supplied alongside it." },
       recordType: { type: "string", enum: ["birth", "marriage", "death", "census", "immigration", "military", "probate", "other"], description: "Type of record. Mapped to the upstream's integer recordType encoding by the tool." },
       maritalStatus: { type: "string", enum: ["Married", "Single", "Divorced", "Widowed"], description: "Marital status of the searched person. Case-sensitive — must be supplied with the exact capitalization shown. Many records leave this field unfilled, so filtering on it excludes records where the field is blank." },
-      isPrincipal: { type: "boolean", description: "Filter by the searched person's role in the record. `true` returns only records where the matched person is the principal subject (e.g., the deceased on a death certificate, the bride/groom on a marriage). `false` returns only records where the matched person is mentioned but is not the principal (e.g., as a parent, witness, sibling). Omit the parameter to return both — the broadest set, recommended for most natural-language searches." },
+      isPrincipal: { type: "boolean", description: "Filter by the searched person's role in the record. `true` returns only records where the matched person is the principal subject (e.g., the deceased on a death certificate, the bride/groom on a marriage). `false` returns only records where the matched person is mentioned but is not the principal (e.g., as a parent, witness, sibling). Pick by intent, do not default to omitting. Records ABOUT a person (their own birth/marriage/death) take `true` — a heavy filter, which is the point: it drops incidental mentions. Finding a relative THROUGH a person you already know is `false` — the response does not mark who the principal is, so `record_read` a hit and read its `persons`/`relationships` for the relative. It matches on the known person's own name, where `fatherGivenName`/`spouseGivenName` match on the target's indexed relative fields. Omit to return both." },
 
       subjectId: { type: "string", description: "A `persons[].id` from the project's tree.gedcomx.json (e.g. `\"I1\"`). Supply it together with `projectPath` and the tool ALSO ranks the results against that subject with FamilySearch's own matcher and returns them under `ranked` — match-scored, attachment-checked, best first. This replaces a separate `rank_search_matches` call. Supply it for any search where you know which tree person you are looking for, which is nearly all of them. Ranking never fails the search: on a ranking error you still get `results`, plus `rankingError`. Omit it only when the search is not about a specific tree person (a broad survey, or a person not yet in the tree)." },
       count: { type: "number", description: "Number of results per page. Max 100. Default 50 when `subjectId` is supplied — ranking cuts a deep pool back host-side, so fetching one is worth it — and 20 otherwise, since an unranked deep pool is just more stubs for you to read. Override only for a deliberate reason." },

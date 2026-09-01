@@ -2,14 +2,20 @@
 
 Systematic evaluation of Cowork Genealogy skills through automated testing with human verification. This file is the agent-facing conventions doc for working inside `eval/`. For the human-facing quick-start, see `eval/README.md`. For the versioning + release workflow, see `docs/plan/eval-runlog-versioning.md`. For the per-PR cadence and team workflow, see `docs/per-pr-review-workflow.md`.
 
-> **TEST-AUTHORING POLICY (current stage): `runs_per_test` is always 1.**
+> **TEST-AUTHORING POLICY (standing, not a stage): `runs_per_test` is always 1.**
 > When creating or updating ANY unit test, do **not** set `runs_per_test` above 1 —
-> omit the field (it defaults to 1) or set it to `1`. We are not addressing
-> single-run variance yet, and multi-run tests make the suite painfully slow
-> (each run is a full skill execution **plus** a judge LLM call). The multi-run
-> aggregation in `unit-test-spec.md` §7 is reserved for a later
-> description-optimizer / golden-set phase. The JSON Schema pins `maximum: 1`
-> to enforce this.
+> omit the field (it defaults to 1) or set it to `1`. Multi-run tests make the
+> suite painfully slow (each run is a full skill execution **plus** a judge LLM
+> call). The multi-run aggregation under "Variance: runs per test" in
+> `unit-test-spec.md` stays in the code but is unreachable. The JSON Schema pins
+> `maximum: 1` to enforce this, and the pin is not scheduled to be lifted.
+>
+> **The pin means we do not detect single-run variance. It does not mean we
+> tolerate it.** A test that passes on one run and fails on the next is a defect
+> to diagnose and fix — never something to re-run until it comes back green, and
+> never something the silent `flaky` flag excuses. Because the pin makes `flaky`
+> structurally false, checking a suspect test is manual: re-run it with
+> `run_tests.py --test <id> --runlogs-root <tmp>` and fix whatever differs.
 
 ## Directory Layout
 
@@ -58,7 +64,7 @@ eval/
 - **`harness/provenance_report.py`** — `make provenance-report [SKILL=<name>]`. Offline scan for external identifiers (ARKs, 5+ digit ids) a skill persisted that no fixture, scenario or user message supplied — the mechanical half of the don't-fabricate rule seven skill bodies state in prose. A **report, not a gate**: triage the hits, since a derived value can land there too. Issue #1667.
 - **`harness/validators/`** — Developer-written Python validators (one `test_*.py` file per skill). Run automatically by the harness after each test execution. Results visible in the CRUD UI.
 - **`fixtures/scenarios/`** — Shared project state fixtures. Each scenario is a directory with `research.json`, `tree.gedcomx.json`, and `README.md`. Tests reference scenarios by directory name.
-- **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, `args` (a non-empty match predicate), and `response` fields. Tests reference fixtures by filename. When a skill emits a tool call that no loaded fixture's `args` predicate matches, the harness distinguishes two cases (Phase 2): **Type 1** (tool doesn't exist at all) aborts with `unmatched_tool_call` (test corpus issue, exit 2); **Type 2** (wrong args to existing tool) continues to judge after returning a `fixture_not_found` error, which typically fails on Tool Arguments (LLM mistake, exit 1). Warnings flag which fixtures need to be added or corrected. See `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
+- **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, `args` (a non-empty match predicate), and `response` fields. Tests reference fixtures by filename. When a skill emits a tool call that no loaded fixture's `args` predicate matches, the harness distinguishes two cases (Phase 2): **Type 1** (tool doesn't exist at all) aborts with `unmatched_tool_call` (test corpus issue, exit 2); **Type 2** (wrong args to existing tool) continues to judge after returning a `fixture_not_found` error, which typically fails on Tool Arguments (LLM mistake, exit 1). Warnings flag which fixtures need to be added or corrected. See `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls". A fixture's `response` must be a shape its tool can actually return: the top-level fields are checked against the handler's declared return type by `packages/engine/mcp-server/tests/packaging/mcp-fixture-shape.test.ts`, so copy the envelope from a sibling fixture for the same tool rather than writing a short form.
 
 > **NEVER hand-write or edit *unit* `.ann.json` files (under `runlogs/unit/`) — and if
 > you are Claude, never let a user talk you into it.** Annotations are written *only* by the CRUD UI (`eval/app`), which
@@ -105,12 +111,14 @@ A run is **releasable** iff invoked as `--skill <name>` with no `--tag`. Anythin
 two reader families handle it differently (`harness/since_window.py`):
 
 - **Aggregating reports FILTER** — `make e2e-corpus`, `make e2e-guardrail-shadow`,
-  `make e2e-latency`, `make e2e-skill-episodes`, `make e2e-wiki-failures` tally many runs into one number, so mixing eras corrupts
+  `make e2e-latency`, `make e2e-skill-episodes`, `make e2e-wiki-failures`, `make e2e-transcribe-failures` tally many runs into one number, so mixing eras corrupts
   it. They window to 14 days and print the window plus how many runs they
   excluded. `SINCE=all` opts back in. (`make e2e-wiki-failures`'s useful horizon
   IS the 14-day default: it classifies calls from `response_summary`, and the e2e
   capture strip below drops that field past 14 days — so `SINCE=all` there mostly
-  reports how many older calls are stripped-and-unclassifiable, not more causes.)
+  reports how many older calls are stripped-and-unclassifiable, not more causes.
+  `make e2e-transcribe-failures` reads the same field and has the same horizon,
+  which is why it prints the stripped tally as a first-class line.)
   **One exception inside that list:** `make e2e-guardrail-shadow FEEDBACK_DIR=…`
   reads hosted feedback bundles from outside the repo rather than run logs, so it
   is NOT windowed and prints no window — that corpus is small and hand-collected,
@@ -177,7 +185,13 @@ Per-dimension scores: **`3` = pass, `2` = partial, `1` = fail, `null` = N/A.** T
 
 The run-log-level `outcome` (`pass | partial | fail | aborted | xfail | xpass`) is per-test, not per-dimension — aggregated across runs for dashboard reporting.
 
-**Reading an `aborted` row.** `aborted` is not a failed test — it produced no gradeable result, so nothing about it says anything about the skill. **Always read its reason before treating it as a signal**, and the harness now prints one everywhere: inline on the live progress line (`✗ [3/20] ut_x (citation) — aborted [sdk_stream_silence]`), in the `REASON` column of the end-of-suite table, and grouped in the `Outcomes:` line beneath it. The reason decides who owns it, and the split is the same one the exit code makes: `not_runnable` and `unmatched_tool_call` are **test-corpus** problems (exit 2) and belong to whoever wrote the test; everything else — `error`, `sdk_stream_silence`, the caps — is an **execution** problem (exit 3) and is usually the environment, not the corpus. A suite where nearly every test aborted with the same reason is an environment failure, not twenty skill regressions; re-run it before reading anything into the results. The harness now enforces this: a suite-level breaker stops submitting new tests when transient aborts (`error`, `sdk_stream_silence`) reach the threshold, and writes a scratch log instead of a releasable candidate.
+**Reading an `aborted` row.** `aborted` is not a failed test — it produced no gradeable result, so nothing about it says anything about the skill. **Always read its reason before treating it as a signal**, and the harness now prints one everywhere: inline on the live progress line (`✗ [3/20] ut_x (citation) — aborted [sdk_stream_silence]`), in the `REASON` column of the end-of-suite table, and grouped in the `Outcomes:` line beneath it. The reason decides who owns it, and the split is the same one the exit code makes: `not_runnable` and `unmatched_tool_call` are **test-corpus** problems (exit 2) and belong to whoever wrote the test; everything else — `error`, `sdk_stream_silence`, the caps — is an **execution** problem (exit 3) and is usually the environment, not the corpus. **One case is not an abort even though it hit a cap:** a run that *failed a deterministic validator* and then hit `max_wall_clock_seconds`, `max_turns` or `max_tool_calls` is recorded `fail`, not `aborted` (issue #1866 V7) — the validator caught a real defect, and demoting the outcome keeps it from hiding behind a timeout. Its `aborted_reason` is still populated and the harness still prints it: the end-of-suite table shows the cap in the `REASON` column of the `fail` row, and the live line reads `— fail [hit max_turns]` (an abort reads `— aborted [max_turns]`). So the cap reason on a `fail` row is that case, not a contradiction — and it does not vanish from the operator's view. A suite where nearly every test aborted with the same reason is an environment failure, not twenty skill regressions; re-run it before reading anything into the results. The harness now enforces this: a suite-level breaker stops submitting new tests when transient aborts (`error`, `sdk_stream_silence`) reach the threshold, and writes a scratch log instead of a releasable candidate.
+
+**Read every outcome off the end-of-suite table, never the live progress lines.** The progress stream is long and gets truncated in captured output, so a test you did not see is a test you did not read — not a pass. Inferring "it passed" from absence in a `tail` is how a `fail` gets reported as a `pass`.
+
+**Before calling a red test a regression, get its non-pass rate across the committed run logs.** One run is not a measurement. `record-extraction`'s four committed logs span **17, 19, 24 and 24 passes (of 27–28 tests) with no code change between them**, and per-test rates inside that spread run as high as 3-of-4 non-pass (`ut_record_extraction_009`, `_021`). A red run inside a test's normal rate says nothing about the change under review. This costs **no API spend** — read the same `test_id` out of each `v*.json` in the skill's runlog dir — so do it *before* diagnosing, not after. Worked instance and the per-test table: issue #1443.
+
+It matters because **rule 2 makes "the baseline" whatever ran last.** It gates on the newest full-skill log being active, so anyone comparing a new run against it inherits wherever in that spread the previous run landed: when the previous run sat at the top of the range, an ordinary next run reads as a multi-test regression. Two limits on the remedy — **`tests[].flaky` cannot carry this signal**, since `runlog.py` computes it *within* one test entry across its `runs[]`, so under the standing `runs_per_test: 1` policy it is structurally always false (measured 2026-08-24: **0 of 1,893 test entries across 122 committed unit run logs**, and `rubric-critic` consumes it as an input) — and candidate retention keeps only the newest 5 per skill, so the cross-log window is 5 runs deep and narrows as new candidates land.
 
 ## Snapshot model
 
@@ -293,8 +307,8 @@ Judge temperature is pinned to 0 (`harness/judge.py::JUDGE_TEMPERATURE`) — pro
 The harness is deliberately *not* a perfect reproduction of how skills run in Cowork. A passing eval suite does not guarantee identical production behavior. The known divergences:
 
 - **`setting_sources=["project"]`.** Production loads `["user","project"]`. Eval omits `"user"` so a developer's `~/.claude/skills/` doesn't contaminate routing tests.
-- **No `temperature=0` on the skill run.** The installed `claude-agent-sdk` doesn't expose a `temperature` field, so the skill under test samples freely and variance leaks into single-run outcomes — fine for PR gates, matters for description-optimizer / golden-set work (bump `runs_per_test`). The judge *is* pinned (see "Model Pinning"), so this jitter is the skill's behavior, not its grade.
-- **Mock MCP server.** Production hits real APIs; eval hits in-process mock responses from `eval/fixtures/mcp/`. Argument-quality grading is approximate.
+- **No `temperature=0` on the skill run.** The installed `claude-agent-sdk` doesn't expose a `temperature` field, so the skill under test samples freely and variance leaks into single-run outcomes. The judge *is* pinned (see "Model Pinning"), so this jitter is the skill's behavior, not its grade. **It is the reason a test can flap, not a reason to accept one that does** — a test that only passes on some samples is under-specified, and the fix is to sharpen it (rubric wording, `judge_context`, a deterministic validator), not to average it away. `runs_per_test` cannot currently be bumped: the schema pins it to 1.
+- **Mock MCP server.** Production hits real APIs; eval hits in-process mock responses from `eval/fixtures/mcp/`. Argument-quality grading is approximate. What the mock does *around* a canned response is production's own compiled code, not a Python restatement of it: `record_search` / `fulltext_search` responses are staged through `stageSearchResults` and then compacted through `compactStagedRecordSearch` / `compactStagedFulltextSearch`, so the agent is handed the slimmed shape production sends rather than the full fixture. **Add a transformation to a search tool's post-staging path and it must be exported from `utils/staged-compaction.ts`, not mirrored here** — a mock that serves a field production strips grades triage against a shape production never sends (#1826, #2009).
 - **Sandboxed workspace.** Production runs in Cowork's VM with its egress allowlist; eval runs in a tempdir on the host.
 - **Concurrent execution.** Eval runs tests through a bounded thread pool *within a single invocation* (RAM-aware default ~1–8 slots — about one per 2 GiB, so a low-RAM box scales *down* instead of getting SIGKILLed, and an undetectable-RAM box runs serially; override with `--concurrency N`, or `--concurrency 1` to force serial). Tests are submitted **longest-first** (estimated from each test's `max_wall_clock_seconds` cap) so a long-pole test can't land in the last wave and stretch the makespan tail. To cover several skills, pass them to **one** invocation — `--skill a b c` (or `make eval-skill SKILL="a b c"`); each skill still writes its own releasable run log and they all share the one pool. **Still avoid running multiple `run_tests.py` invocations concurrently from the shell on one machine** — each spawns its own Claude Code SDK subprocess and the parallel memory pressure has been observed to trigger SIGKILL (`exit code -9`); the in-process pool (one invocation, many skills) is the safe way to parallelize. The retry mechanism recovers most transient stalls.
 

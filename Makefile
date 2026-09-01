@@ -337,6 +337,21 @@ agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the pl
 	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run pytest tests/test_plugin_agents.py -q -rs
 
+.PHONY: probe-agent-binding
+probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallowedTools: actually bind under bypassPermissions? (6 short sessions, ~13k tokens)
+	# agent-smoke above reads what the runtime RESOLVED; this reads what it
+	# BOUND, which is the gap issue #1084 names. Six arms — granted, granted
+	# AND denied, omitted — each with tool search off and on, spawn a probe
+	# agent and check whether a harmless tool call actually landed, read off
+	# the tool_result rather than the agent's own prose.
+	#
+	# Answered 2026-08-30 (Claude Code 2.1.251, SDK 0.2.128): BOTH bind, so a
+	# deny is redundant with omitting the tool. Re-run when the CLI or the SDK
+	# moves, or before adding a deny on the strength of it binding.
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python dev/probe_agent_binding.py
+
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test
@@ -650,6 +665,20 @@ e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-transcribe-failures
+e2e-transcribe-failures: ## How often image_transcribe fails to REACH OpenRouter, over committed e2e runs (issue #1594): make e2e-transcribe-failures | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. Replaces the shell snippet
+	# in issue #1594, which counted stripped calls in its denominator and could
+	# never match them in its numerator — so re-running it made a 9.7% rate print
+	# as 7.6% and read as the problem receding. Every rate here carries the
+	# denominator it was taken over, the stripped tally is a first-class line, and
+	# the by-author split states in words whether the corpus can actually separate
+	# a bad machine from a bad service (today it cannot). Same 14-day horizon as
+	# e2e-wiki-failures and for the same reason: it reads response_summary.
+	cd eval/harness && uv run python -m e2e.image_transcribe_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-wiki-failures
 e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (issue #1552): make e2e-wiki-failures | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs. Splits every wiki_search/
@@ -694,6 +723,21 @@ e2e-compaction: ## record_search subjectId supply by compaction segment, over co
 	cd eval/harness && uv run python -m e2e.compaction_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-branch-only
+e2e-branch-only: ## Graded e2e runs that exist on another ref but not HEAD (issue #1444): make e2e-branch-only
+	# On-demand crawl, not embedded in any reader (measured 2026-08-25: 23
+	# stale-branch hits against 0 in-flight runs that day -- a reader-embedded
+	# version would add that noise to every invocation; see the module
+	# docstring for why that count is a dated snapshot, not a standing
+	# property). The module itself makes no network call; this recipe fetches
+	# first (--prune, so a deleted remote branch doesn't linger as a stale
+	# local ref either) so a branch nobody has locally yet isn't invisible to
+	# it -- an in-flight graded run was once missed by the crawl only because
+	# it had never been fetched here. Does not distinguish in-flight work
+	# from abandoned; triage by hand.
+	git fetch --prune origin
+	cd eval/harness && uv run python -m scripts.branch_only_runlogs
 
 .PHONY: provenance-report
 provenance-report: ## Identifiers a skill persisted that no input supplied: make provenance-report [SKILL=<name>]

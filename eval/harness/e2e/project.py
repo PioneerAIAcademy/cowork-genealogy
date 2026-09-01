@@ -73,6 +73,9 @@ def main(argv: list[str] | None = None) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(starting_research, dest_research)
     shutil.copyfile(starting_tree, out_dir / "tree.gedcomx.json")
+    # The write-once baseline the tree-encoding gate diffs against (issue #1490),
+    # matching what project_create seeds in production.
+    shutil.copyfile(starting_tree, out_dir / "starting-tree.gedcomx.json")
 
     print(f"Seeded an editable project at {out_dir}")
     print()

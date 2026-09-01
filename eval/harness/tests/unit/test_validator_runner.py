@@ -10,9 +10,11 @@ from pathlib import Path
 import pytest
 
 from harness.validator_runner import (
+    ValidatorRunResult,
     all_passed,
     as_dicts,
     run_validators,
+    split_observations,
 )
 
 
@@ -117,6 +119,30 @@ def test_assertion_error_captured_as_failure(tmp_path):
     assert len(results) == 1
     assert results[0].passed is False
     assert "intentional" in results[0].error
+
+
+def test_unknown_parameter_is_a_failure_not_a_skip(tmp_path):
+    """A validator asking for an arg the runner cannot supply is recorded
+    FAILED — for every test it runs against, not once.
+
+    The code comment beside this branch says "skip it gracefully", which reads
+    as dormancy and is how PR #1764 shipped two validators declaring an
+    unsupplied `text_response`: they did not lie idle, they failed every
+    translation test. Pinned so the next reader learns it from a test rather
+    than from a red suite.
+    """
+    v = tmp_path / "test_universal.py"
+    v.write_text(
+        "def test_wants_the_impossible(before_state, no_such_arg):\n"
+        "    assert True\n", encoding="utf-8"
+    )
+    results = run_validators(
+        skill="x", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+    )
+    assert len(results) == 1
+    assert results[0].passed is False
+    assert "no_such_arg" in results[0].error
 
 
 def test_validator_with_no_args_still_runs(tmp_path):
@@ -1782,3 +1808,836 @@ def test_text_response_defaults_to_empty_string_not_none(tmp_path):
 # `text_response=result.text_response` appears three times in orchestrator.py
 # (derive_activated, run_validators, grade), so asserting its presence stays
 # green when the run_validators one specifically is removed.
+
+
+# --- Tier-2 reporting mechanism (issue #1749) ----------------------------
+
+
+def test_report_function_is_collected_and_marked_reporting_only(tmp_path):
+    """report_* functions are collected with reporting_only=True."""
+    module = tmp_path / "test_probe_skill.py"
+    module.write_text(
+        "def report_example_check(text_response):\n"
+        "    assert 'hello' in text_response, 'no hello found'\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="probe-skill",
+        validators_dir=tmp_path,
+        before_state=_empty_research_state(),
+        after_state=_empty_research_state(),
+        tool_calls=[],
+        text_response="hello world",
+    )
+    assert len(results) == 1
+    assert results[0].name == "report_example_check"
+    assert results[0].passed is True
+    assert results[0].reporting_only is True
+
+
+def test_report_finding_fires_on_assertion(tmp_path):
+    """A report_* that raises AssertionError gets passed=False, reporting_only=True."""
+    module = tmp_path / "test_probe_skill.py"
+    module.write_text(
+        "def report_example_check(text_response):\n"
+        "    assert False, 'pattern X found in response'\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="probe-skill",
+        validators_dir=tmp_path,
+        before_state=_empty_research_state(),
+        after_state=_empty_research_state(),
+        tool_calls=[],
+    )
+    assert len(results) == 1
+    r = results[0]
+    assert r.passed is False
+    assert r.reporting_only is True
+    assert "pattern X found in response" in r.error
+
+
+def test_report_finding_does_not_gate():
+    """A failed report_* does not make compute_validators_passed() false."""
+    from harness.orchestrator import compute_validators_passed
+
+    results = [
+        ValidatorRunResult(name="test_ok", passed=True, error=None),
+        ValidatorRunResult(
+            name="report_fired", passed=False,
+            error="observation text", reporting_only=True,
+        ),
+    ]
+    assert compute_validators_passed(results, intentionally_invalid=False) is True
+
+
+def test_as_dicts_omits_reporting_only():
+    """Reporting-only results don't appear in the run-log validators block."""
+    results = [
+        ValidatorRunResult(name="test_ok", passed=True, error=None),
+        ValidatorRunResult(
+            name="report_fired", passed=False,
+            error="obs", reporting_only=True,
+        ),
+    ]
+    dicts = as_dicts(results)
+    assert len(dicts) == 1
+    assert dicts[0]["name"] == "test_ok"
+
+
+def test_new_args_are_injectable(tmp_path):
+    """activated, num_turns, output_tokens, aborted_reason are available
+    to validator functions."""
+    module = tmp_path / "test_probe_skill.py"
+    module.write_text(
+        "def test_new_args(activated, num_turns, output_tokens, aborted_reason):\n"
+        "    assert activated is True\n"
+        "    assert num_turns == 5\n"
+        "    assert output_tokens == 1000\n"
+        "    assert aborted_reason is None\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="probe-skill",
+        validators_dir=tmp_path,
+        before_state=_empty_research_state(),
+        after_state=_empty_research_state(),
+        tool_calls=[],
+        activated=True,
+        num_turns=5,
+        output_tokens=1000,
+        aborted_reason=None,
+    )
+    assert len(results) == 1
+    assert results[0].passed, results[0].error
+
+
+def test_report_and_test_coexist(tmp_path):
+    """Both test_* and report_* in the same file are collected."""
+    module = tmp_path / "test_probe_skill.py"
+    module.write_text(
+        "def test_gating(text_response):\n"
+        "    pass\n"
+        "\n"
+        "def report_advisory(text_response):\n"
+        "    assert False, 'advisory finding'\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="probe-skill",
+        validators_dir=tmp_path,
+        before_state=_empty_research_state(),
+        after_state=_empty_research_state(),
+        tool_calls=[],
+    )
+    names = {r.name for r in results}
+    assert "test_gating" in names
+    assert "report_advisory" in names
+    gating = [r for r in results if r.name == "test_gating"][0]
+    advisory = [r for r in results if r.name == "report_advisory"][0]
+    assert gating.reporting_only is False
+    assert advisory.reporting_only is True
+
+
+# --- V8: Activated run must produce a response ---------------------------
+
+def test_v8_fires_on_dead_activated_run():
+    """V8: activated=True, num_turns=0, output_tokens=0, short response → fail."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        activated=True,
+        num_turns=0,
+        output_tokens=0,
+        text_response="Short.",
+        aborted_reason=None,
+        skills_invoked=[],
+    )
+    result = _named(results, "test_activated_run_produces_response")
+    assert result is not None, "test_activated_run_produces_response did not run"
+    assert result.passed is False
+    assert "no meaningful output" in (result.error or "")
+
+
+def test_v8_passes_when_telemetry_present():
+    """V8 passes when num_turns > 0 (work happened)."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        activated=True,
+        num_turns=3,
+        output_tokens=500,
+        text_response="Did some work.",
+        aborted_reason=None,
+    )
+    result = _named(results, "test_activated_run_produces_response")
+    assert result is not None
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v8_passes_on_long_response_despite_missing_telemetry():
+    """V8: if text_response >= 200 chars, pass even with zero telemetry."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        activated=True,
+        num_turns=0,
+        output_tokens=0,
+        text_response="A" * 200,
+        aborted_reason=None,
+        skills_invoked=[],
+    )
+    result = _named(results, "test_activated_run_produces_response")
+    assert result is not None
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v8_skips_when_not_activated():
+    """V8 skips when activated is not True."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        activated=False,
+        num_turns=0,
+        output_tokens=0,
+        text_response="",
+    )
+    result = _named(results, "test_activated_run_produces_response")
+    assert result is not None
+    assert result.passed is True  # skipped = passed
+    assert "skipped" in (result.error or "").lower()
+
+
+def test_v8_passes_when_skills_invoked():
+    """V8: a run that invoked a sub-skill is not a dead run, even with zero
+    telemetry — skills_invoked is the direct signal."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        activated=True,
+        num_turns=0,
+        output_tokens=0,
+        text_response="Short routing announcement.",
+        aborted_reason=None,
+        skills_invoked=["citation"],
+    )
+    result = _named(results, "test_activated_run_produces_response")
+    assert result is not None
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+# --- Anti-bias constraint (issue #1749) -----------------------------------
+
+def test_judge_observations_carry_text_not_validator_names():
+    """Anti-bias constraint (#1749): the judge sees the observation text,
+    never the function name — a name is a verdict. And only fired findings
+    appear — a passing report_* must not reach the judge."""
+    results = [
+        ValidatorRunResult(
+            name="report_x", passed=False,
+            error="the response names a volume", reporting_only=True,
+        ),
+        ValidatorRunResult(
+            name="report_ok", passed=True,
+            error=None, reporting_only=True,
+        ),
+        ValidatorRunResult(
+            name="report_skipped", passed=True,
+            error="skipped: not applicable", reporting_only=True,
+        ),
+    ]
+    obs = split_observations(results)
+    assert obs == ["the response names a volume"]
+    # The function name must never leak into observation text
+    assert not any("report_" in o for o in obs)
+
+
+def _broken_validator_results(tmp_path, body: str):
+    """Run one deliberately broken report_* through the real runner."""
+    (tmp_path / "test_universal.py").write_text(
+        "def test_ok():\n    pass\n", encoding="utf-8"
+    )
+    (tmp_path / "test_citation.py").write_text(body, encoding="utf-8")
+    return run_validators(
+        skill="citation",
+        validators_dir=tmp_path,
+        before_state={},
+        after_state={},
+        tool_calls=[],
+        text_response="a normal answer",
+    )
+
+
+def test_report_with_bad_signature_gates_and_is_not_an_observation(tmp_path):
+    """A report_* that declares an argument the harness does not supply is a
+    validator bug, not a finding about the run.
+
+    Left as reporting_only it would be invisible three ways over: it would not
+    gate, as_dicts would drop it from the run log, and split_observations would
+    hand the harness's own error text — the full arg roster included — to the
+    judge under "Harness observations on the response text", which tells the
+    judge to weigh it against the response. Standalone pytest cannot catch it
+    either unless python_functions collects report_*.
+    """
+    from harness.orchestrator import compute_validators_passed
+
+    results = _broken_validator_results(
+        tmp_path,
+        "def report_typo(text_response, skil_frontmatter):\n    pass\n",
+    )
+    broken = [r for r in results if r.name == "report_typo"]
+    assert broken, f"report_typo did not run: {[r.name for r in results]}"
+    assert broken[0].passed is False
+    assert broken[0].reporting_only is False
+    # It gates, it is recorded, and the judge is told nothing about it.
+    assert compute_validators_passed(results, intentionally_invalid=False) is False
+    assert "report_typo" in {d["name"] for d in as_dicts(results)}
+    assert split_observations(results) == []
+
+
+def test_report_that_crashes_gates_and_is_not_an_observation(tmp_path):
+    """Same rule for a runtime crash: a TypeError is a validator bug, so it
+    gates whatever the prefix, and its traceback text never reaches the judge.
+    """
+    from harness.orchestrator import compute_validators_passed
+
+    results = _broken_validator_results(
+        tmp_path,
+        "def report_crashes(text_response):\n    return text_response['nope']\n",
+    )
+    broken = [r for r in results if r.name == "report_crashes"]
+    assert broken, f"report_crashes did not run: {[r.name for r in results]}"
+    assert broken[0].passed is False
+    assert broken[0].reporting_only is False
+    assert "TypeError" in (broken[0].error or "")
+    assert compute_validators_passed(results, intentionally_invalid=False) is False
+    assert split_observations(results) == []
+
+
+def test_a_genuine_report_finding_still_reports(tmp_path):
+    """The guard above must not swallow the tier-2 mechanism itself: an
+    AssertionError from a report_* is a finding, so it still does not gate and
+    still reaches the judge as anonymous text."""
+    from harness.orchestrator import compute_validators_passed
+
+    results = _broken_validator_results(
+        tmp_path,
+        "def report_real_finding(text_response):\n"
+        "    raise AssertionError('the response names a volume')\n",
+    )
+    fired = [r for r in results if r.name == "report_real_finding"]
+    assert fired and fired[0].reporting_only is True
+    assert compute_validators_passed(results, intentionally_invalid=False) is True
+    assert split_observations(results) == ["the response names a volume"]
+    assert "report_real_finding" not in {d["name"] for d in as_dicts(results)}
+
+
+def test_standalone_pytest_collects_report_validators():
+    """python_functions must collect report_* or `pytest validators/ -v` — the
+    debugging path unit-test-spec.md points developers at — silently runs none
+    of the tier-2 validators."""
+    import tomllib
+    from pathlib import Path
+
+    pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
+    cfg = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    patterns = cfg["tool"]["pytest"]["ini_options"]["python_functions"]
+    assert "report_*" in patterns, (
+        "pytest collects only "
+        f"{patterns} — every report_* validator is invisible to "
+        "`pytest eval/harness/validators/ -v`"
+    )
+
+
+# --- V7: In-body decline tests -------------------------------------------
+
+def test_v7a_decline_nonempty_fires_on_empty_response():
+    """V7(a): activated negative test with empty response → fail."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        activated=True,
+        text_response="",
+        test={"type": "negative", "negative": {"correct_skill": ["citation"]}},
+    )
+    result = _named(results, "test_decline_response_nonempty")
+    assert result is not None
+    assert result.passed is False
+    assert "empty response" in (result.error or "")
+
+
+def test_v7a_passes_with_nonempty_response():
+    """V7(a): activated negative test with response → pass."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        activated=True,
+        text_response="I'll route this to the citation skill.",
+        test={"type": "negative", "negative": {"correct_skill": ["citation"]}},
+    )
+    result = _named(results, "test_decline_response_nonempty")
+    assert result is not None
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v7b_report_names_skill_fires_when_missing():
+    """V7(b): decline response that doesn't name the correct skill → report fires."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        activated=True,
+        text_response="I can help you with that request.",
+        test={"type": "negative", "negative": {"correct_skill": ["citation"]}},
+    )
+    result = _named(results, "report_decline_names_routed_skill")
+    assert result is not None
+    assert result.reporting_only is True
+    assert result.passed is False
+    assert "citation" in (result.error or "")
+
+
+def test_v7b_report_passes_when_skill_named():
+    """V7(b): decline response naming the correct skill → pass."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        activated=True,
+        text_response="I'll route this to the citation skill for formatting.",
+        test={"type": "negative", "negative": {"correct_skill": ["citation"]}},
+    )
+    result = _named(results, "report_decline_names_routed_skill")
+    assert result is not None
+    assert result.passed is True
+
+
+def test_v7c_report_commitment_fires():
+    """V7(c): first-person commitment to out-of-scope act → report fires."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        activated=True,
+        text_response="I'll create the source record and format the citation.",
+        test={"type": "negative", "negative": {"correct_skill": ["citation"]}},
+    )
+    result = _named(results, "report_decline_no_first_person_commitment")
+    assert result is not None
+    assert result.reporting_only is True
+    assert result.passed is False
+
+
+def test_v7c_passes_when_no_commitment():
+    """V7(c): no first-person commitment → pass."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        activated=True,
+        text_response="The citation skill handles source formatting.",
+        test={"type": "negative", "negative": {"correct_skill": ["citation"]}},
+    )
+    result = _named(results, "report_decline_no_first_person_commitment")
+    assert result is not None
+    assert result.passed is True
+
+
+def test_v7_skips_on_grade_on_invariant():
+    """V7 all parts skip on grade_on_invariant tests per lead's ruling."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        activated=True,
+        text_response="",
+        test={
+            "type": "negative",
+            "negative": {
+                "correct_skill": ["citation"],
+                "grade_on_invariant": True,
+            },
+        },
+    )
+    for name in ("test_decline_response_nonempty",
+                 "report_decline_names_routed_skill",
+                 "report_decline_no_first_person_commitment"):
+        result = _named(results, name)
+        assert result is not None, f"{name} did not run"
+        assert result.passed is True, f"{name} should skip (pass) on grade_on_invariant"
+        assert "skipped" in (result.error or "").lower()
+
+
+# --- V2: No unbacked validation claim ------------------------------------
+
+def test_v2_fires_on_unbacked_claim():
+    """V2: response claims validation but no validate call → report fires."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[
+            {"tool": "mcp__genealogy__research_append", "args": {}},
+        ],
+        text_response="I've written the source to research.json (validated ✓).",
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "report_unbacked_validation_claim")
+    assert result is not None
+    assert result.reporting_only is True
+    assert result.passed is False
+    assert "validate_research_schema" in (result.error or "")
+
+
+def test_v2_passes_when_validate_called():
+    """V2: response claims validation AND validate was called → pass."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[
+            {"tool": "mcp__genealogy__research_append", "args": {}},
+            {"tool": "mcp__genealogy__validate_research_schema", "args": {}},
+        ],
+        text_response="I've written the source to research.json (validated ✓).",
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "report_unbacked_validation_claim")
+    assert result is not None
+    assert result.passed is True
+
+
+def test_v2_passes_when_no_validation_language():
+    """V2: response without validation language → pass (nothing to flag)."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        text_response="I've updated the research notes.",
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "report_unbacked_validation_claim")
+    assert result is not None
+    assert result.passed is True
+
+
+# --- V3: No invented locators (citation-specific) ------------------------
+
+def _v3_states(before_locators, after_locators):
+    """State pair for V3 tests with locator values in citation fields."""
+    src_before = {
+        "id": "src_001",
+        "citation": before_locators.get("citation", ""),
+        "citation_detail": {
+            "who": "",
+            "where": before_locators.get("where", ""),
+            "where_within": before_locators.get("where_within", ""),
+        },
+        "notes": before_locators.get("notes", ""),
+    }
+    src_after = {
+        "id": "src_001",
+        "citation": after_locators.get("citation", ""),
+        "citation_detail": {
+            "who": "",
+            "where": after_locators.get("where", ""),
+            "where_within": after_locators.get("where_within", ""),
+        },
+        "notes": after_locators.get("notes", ""),
+    }
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src_before]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [src_after]
+    return before, after
+
+
+def test_v3_persisted_fires_on_invented_locator():
+    """V3 persisted: a locator numeral not in the before-state → fail."""
+    before, after = _v3_states(
+        before_locators={"notes": "Searched for records in the county."},
+        after_locators={"where_within": "Will Book 7, p. 214"},
+    )
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "test_no_invented_locators_persisted")
+    assert result is not None
+    assert result.passed is False
+    assert "on-file data" in (result.error or "")
+
+
+def test_v3_persisted_passes_on_known_locator():
+    """V3 persisted: a locator numeral present in the before-state → pass."""
+    before, after = _v3_states(
+        before_locators={"notes": "Will Book 12, p. 45"},
+        after_locators={"where_within": "Will Book 12, p. 45"},
+    )
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "test_no_invented_locators_persisted")
+    assert result is not None
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v3_response_fires_on_invented_locator():
+    """V3 response: a locator numeral not in the before-state → report fires."""
+    before, _ = _v3_states(
+        before_locators={"notes": "Searched county records."},
+        after_locators={},
+    )
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=_empty_research_state(),
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+        text_response="Check Will Book 7, p. 214 for the record.",
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "report_invented_locators_response")
+    assert result is not None
+    assert result.reporting_only is True
+    assert result.passed is False
+
+
+# --- V4: Skill example values in persisted / response ---------------------
+
+
+def test_v4_persisted_does_not_fire_on_digit_superstring():
+    r"""V4 persisted: `pp. 88` in the deny list must not match `pp. 880-884`.
+
+    The digit-boundary bug: a plain `in` check sees `88` inside `880`, so any
+    harvested value fires on its next-digit sibling. The fix adds a negative
+    lookahead `(?!\d)` after the escaped value."""
+    before = _empty_research_state()
+    after = _empty_research_state()
+    # The source must exist in before so V4 checks it.
+    before["research_json"]["sources"] = [{
+        "id": "src_001", "citation": "", "citation_detail": {}, "notes": "",
+    }]
+    # The after-state persists a citation with `pp. 880-884`, which is NOT the
+    # example value `pp. 88` — it just happens to contain the substring.
+    after["research_json"]["sources"] = [{
+        "id": "src_001",
+        "citation": "Some County, Will Book 41, pp. 880-884",
+        "citation_detail": {"who": "", "where": "", "where_within": "pp. 880-884"},
+        "notes": "",
+    }]
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "test_no_skill_example_values_persisted")
+    if result is None:
+        pytest.skip("V4 validator did not run (SKILL.md may be absent)")
+    assert result.passed is True, (
+        f"V4 false-flagged a digit superstring: {result.error}"
+    )
+
+
+def test_v4_persisted_fires_on_exact_example_value():
+    """V4 persisted: an exact example value from SKILL.md → fail."""
+    before = _empty_research_state()
+    after = _empty_research_state()
+    # The source must exist in before (empty fields) so V4 checks its after
+    # fields — it only inspects sources that already existed, not new ones.
+    before["research_json"]["sources"] = [{
+        "id": "src_001", "citation": "", "citation_detail": {}, "notes": "",
+    }]
+    # `Will Book 9` and `p. 113` are both in the harvested deny list.
+    after["research_json"]["sources"] = [{
+        "id": "src_001",
+        "citation": "Some County, Will Book 9, p. 113",
+        "citation_detail": {"who": "", "where": "", "where_within": "p. 113"},
+        "notes": "",
+    }]
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "test_no_skill_example_values_persisted")
+    if result is None:
+        pytest.skip("V4 validator did not run (SKILL.md may be absent)")
+    assert result.passed is False
+    assert "example values from SKILL.md" in (result.error or "")
+
+
+def test_v4_persisted_passes_when_example_value_on_file_in_log():
+    """V4 persisted: a deny-list value present in a before-state log entry's
+    notes is subtracted and does not fire — the log entry is on-file data."""
+    before = _empty_research_state()
+    after = _empty_research_state()
+    # The source must exist in before so V4 checks it.
+    before["research_json"]["sources"] = [{
+        "id": "src_001", "citation": "", "citation_detail": {}, "notes": "",
+    }]
+    # Put the example value in the before-state log notes so it is on file.
+    before["research_json"]["log"] = [
+        {"notes": "Searched Will Book 9, p. 113 in the county office."}
+    ]
+    after["research_json"]["sources"] = [{
+        "id": "src_001",
+        "citation": "Some County, Will Book 9, p. 113",
+        "citation_detail": {"who": "", "where": "", "where_within": "p. 113"},
+        "notes": "",
+    }]
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "test_no_skill_example_values_persisted")
+    if result is None:
+        pytest.skip("V4 validator did not run (SKILL.md may be absent)")
+    assert result.passed is True, (
+        f"V4 fired despite the value being on file in log notes: {result.error}"
+    )
+
+
+# --- V12: No framework walkthrough (citation-specific) --------------------
+
+def test_v12_fires_on_field_label_headings():
+    """V12: 3+ field labels as headings outside code blocks → report fires."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+        text_response=(
+            "Here's the citation breakdown:\n"
+            "**Who**: County Recorder\n"
+            "**What**: Death certificate\n"
+            "**When created**: 1923\n"
+            "**Where**: Pennsylvania\n"
+        ),
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "report_no_framework_walkthrough")
+    assert result is not None
+    assert result.reporting_only is True
+    assert result.passed is False
+    assert "field labels as headings" in (result.error or "")
+
+
+def test_v12_passes_when_labels_inside_code_block():
+    """V12: field labels inside a fenced code block → pass."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+        text_response=(
+            "Here's the citation:\n"
+            "```json\n"
+            '{"who": "Recorder", "what": "Certificate", '
+            '"when_created": "1923", "where": "PA"}\n'
+            "```\n"
+        ),
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "report_no_framework_walkthrough")
+    assert result is not None
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v12_passes_when_fewer_than_three_labels():
+    """V12: fewer than 3 field labels as headings → pass."""
+    state = _empty_research_state()
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=state,
+        after_state=state,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+        text_response="**Who**: Recorder\n**Where**: PA\n",
+        test={"type": "positive", "tags": []},
+    )
+    result = _named(results, "report_no_framework_walkthrough")
+    assert result is not None
+    assert result.passed is True, f"unexpected failure: {result.error}"

@@ -229,7 +229,7 @@ def test_tree_relationship_written_at_probable_plus(before_state, after_state, t
 
     That absent->present check is what catches a "found-but-lost" run that
     concludes in the proof-summary narrative but skips the tree write
-    (proof-conclusion SKILL.md §6): such a run leaves the persons unlinked and
+    (proof-conclusion agent body §6): such a run leaves the persons unlinked and
     fails here even though it produced a proof_summary. A weaker
     present-in-after check would pass a skipped write whenever the scenario
     pre-loaded the link — which is exactly how the elizabeth-geach e2e
@@ -261,7 +261,7 @@ def test_tree_relationship_written_at_probable_plus(before_state, after_state, t
         "proof-conclusion concluded at probable/proved but did NOT write the "
         "ParentChild relationship (parent I2 -> child I1) into "
         "tree.gedcomx.json — the conclusion reached the proof summary but "
-        "never the tree (found-but-lost; see proof-conclusion SKILL.md §6). "
+        "never the tree (found-but-lost; see proof-conclusion agent body §6). "
         f"post-state relationships={after.get('relationships', [])!r}"
     )
 
@@ -403,15 +403,15 @@ def test_bounded_conclusion_is_tiered_and_encoded(after_state, test):
         "it belongs in the date (e.g. 'after 1870, before 1885')."
     )
 
-# --- Tag-gated: research_query tool coverage (SKILL.md §1) -------------
+# --- Tag-gated: research_query tool coverage (agent body §1) -------------
 
 def test_research_query_called_for_coverage(tool_calls, test):
     """Tag-gated (research-query-coverage): the skill must actually call
     research_query to gather a question's accumulated evidence, not fall
-    back to a whole-file Read of research.json (SKILL.md §1).
+    back to a whole-file Read of research.json (agent body §1).
 
     Deterministic regression catch — not judge-graded — for a future
-    SKILL.md edit that reverts to a raw Read or drops the scoped lookup:
+    agent-body edit that reverts to a raw Read or drops the scoped lookup:
     such an edit produces zero research_query calls, and this assertion
     flips. Substring match on the tool name so it holds under any MCP
     server-prefix spelling.
@@ -422,5 +422,87 @@ def test_research_query_called_for_coverage(tool_calls, test):
     assert called, (
         "research-query-coverage test made no research_query call — "
         "proof-conclusion must gather the question's evidence via scoped "
-        "research_query, not a whole-file Read of research.json (SKILL.md §1)."
+        "research_query, not a whole-file Read of research.json (agent body §1)."
     )
+
+# --- Open-candidate invariant (routing-flaky negatives) ----------------
+#
+# For a `grade_on_invariant` negative where the request is an ACCOUNT of
+# competing candidates, not a conclusion: whichever skill answers, the
+# question must not be closed out while a rival hypothesis is still
+# `active`. Routing is deliberately not graded (proof-conclusion may fire
+# and correctly decline, or hypothesis-tracking may fire) — only the
+# resulting state is. That is what makes the test immune to which of two
+# plausible routes the model picks, while still failing the one outcome
+# that is actually wrong.
+#
+# hypotheses[] is deliberately NOT asserted: hypothesis-tracking owns that
+# section and may legitimately record evidence against h_002 in the course
+# of answering.
+
+_TIER_RANK = {
+    "disproved": 0,
+    "not_proved": 1,
+    "possible": 2,
+    "probable": 3,
+    "proved": 4,
+}
+
+
+def test_open_candidate_blocks_closure(before_state, after_state, test):
+    """Tagged `hypothesis-open-blocks-tier`: while a competing hypothesis is
+    still `active`, no route may close the question out — no second proof
+    summary for it, no tier advanced above what the pre-state already held,
+    and the question not marked resolved."""
+    if "hypothesis-open-blocks-tier" not in test.get("tags", []):
+        pytest.skip("not a hypothesis-open-blocks-tier scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    open_h = [
+        h.get("id")
+        for h in (before.get("hypotheses") or [])
+        if h.get("status") == "active"
+    ]
+    assert open_h, (
+        "fixture error: this tag asserts an invariant that only holds while a "
+        "hypothesis is `active`, and the pre-state has none — the test would "
+        "pass vacuously"
+    )
+
+    qid = "q_001"
+    before_ps = [
+        ps for ps in (before.get("proof_summaries") or [])
+        if ps.get("question_id") == qid
+    ]
+    after_ps = [
+        ps for ps in (after.get("proof_summaries") or [])
+        if ps.get("question_id") == qid
+    ]
+
+    assert len(after_ps) <= len(before_ps), (
+        f"a proof summary was added for {qid} while {', '.join(open_h)} is "
+        f"still `active` — an account of competing candidates is not a "
+        f"conclusion, and there is no settled answer to conclude"
+    )
+
+    if before_ps and after_ps:
+        was = _TIER_RANK.get(before_ps[0].get("tier"), -1)
+        now = _TIER_RANK.get(after_ps[0].get("tier"), -1)
+        assert now <= was, (
+            f"{qid}'s tier advanced from {before_ps[0].get('tier')!r} to "
+            f"{after_ps[0].get('tier')!r} while {', '.join(open_h)} is still "
+            f"`active` — a rival candidate that has not been ruled out cannot "
+            f"support a stronger conclusion"
+        )
+
+    q = next(
+        (x for x in (after.get("questions") or []) if x.get("id") == qid), None
+    )
+    if q is not None:
+        assert q.get("status") != "resolved" and not q.get("resolved"), (
+            f"{qid} was marked resolved while {', '.join(open_h)} is still "
+            f"`active`"
+        )

@@ -174,11 +174,11 @@ def declared_skill_tools(skill_name: str, skills_dir: Path) -> set[str]:
     policy (harness/context_policy.py) uses this for its "unless the skill
     declared the tool itself" exemption: a legitimate direct call by a skill
     that owns the tool is not a boundary violation. Today no skill declares
-    either guarded tool — `image_read` lives only on `agents/image-reader-opus.md`
-    (search-images moved to delegating via `@plugin:image-reader` on 2026-07-17)
-    and `extraction_append` only on `agents/record-extractor.md` — so the
-    exemption is currently unreachable and `agent_id` presence alone
-    discriminates (see `context_policy.py` and `e2e/orchestrator.py`).
+    either guarded tool, and since `image-reader-opus` was retired (issue #2013)
+    no agent declares `image_read` either; `extraction_append` lives only on
+    `agents/record-extractor.md` — so the exemption is currently unreachable and
+    `agent_id` presence alone discriminates (see `context_policy.py` and
+    `e2e/orchestrator.py`).
     """
     fm = load_skill_frontmatter(skills_dir / skill_name / "SKILL.md")
     return {

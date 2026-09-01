@@ -85,6 +85,58 @@ def test_feedback_context_and_drive_upload(monkeypatch):
         client.delete(f"/api/sessions/{sid}")
 
 
+def test_blank_submission_is_accepted_end_to_end(monkeypatch):
+    """The whole point of issue #1919: a report with every text box empty must go
+    through. Three other tests here POST to /api/feedback, but all of them send
+    populated fields; this is the only one that puts a blank submission through
+    request validation, which is where a non-empty requirement would bite.
+    """
+    captured: dict = {}
+
+    class _FakeClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def post(self, url, json):
+            captured["envelope"] = json
+            return _FakeResp()
+
+    monkeypatch.setattr(fb.httpx, "AsyncClient", _FakeClient)
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = client.post("/api/sessions", json={"sample": True}).json()["id"]
+
+        # Only the Yes/No answer. No email, no prompt, no description.
+        r = client.post(
+            "/api/feedback",
+            json={"sessionId": sid, "workedAsExpected": False},
+        )
+        assert r.status_code == 200 and r.json()["ok"] is True
+
+        env = captured["envelope"]
+        assert env["email"] == ""
+        zf = zipfile.ZipFile(io.BytesIO(base64.b64decode(env["zipBase64"])))
+        meta = json.loads(zf.read("_feedback/feedback.json"))
+        assert meta["email"] == ""
+        assert meta["user_prompt"] == ""
+        assert meta["agent_did"] == ""
+        # The flag triage reads is still there, which is what keeps a clean report
+        # distinguishable from a problem report.
+        assert meta["worked_as_expected"] is False
+
+        md = zf.read("FEEDBACK.md").decode("utf-8")
+        assert md.count(fb.NOT_PROVIDED) == 3  # From, What I asked, What the agent did
+
+        client.delete(f"/api/sessions/{sid}")
+
+
 class _FakeSandbox:
     """Minimal Sandbox stub backed by an in-memory {path: bytes} map."""
 
@@ -267,7 +319,96 @@ def test_unparseable_tree_passes_through_rather_than_failing_the_send():
     assert count == 0
 
 
+def test_starting_tree_baseline_is_redacted_too():
+    """The write-once starting-tree.gedcomx.json baseline (issue #1490) carries the
+    same living persons and is bundled by the same non-media walk, so it must be
+    redacted like tree.gedcomx.json — or a feedback bundle leaks living details."""
+    files = [("starting-tree.gedcomx.json", json.dumps(_TREE).encode("utf-8"))]
+    out, count = fb._redact_living(files)
+    raw = dict(out)["starting-tree.gedcomx.json"].decode("utf-8")
+    for leak in ("Jane Marie", "Bobby", "3 March 1985", "Riverside, CA", "SECRET"):
+        assert leak not in raw
+    assert "Reuben Spencer" in raw  # the deceased subject survives
+    assert count == 2
+
+
+def test_both_tree_files_redacted_and_counted_together():
+    """With both trees present the redaction count spans both, and the earlier
+    reset-to-zero on a later parse failure would have clobbered the running total."""
+    files = [
+        ("tree.gedcomx.json", json.dumps(_TREE).encode("utf-8")),
+        ("starting-tree.gedcomx.json", json.dumps(_TREE).encode("utf-8")),
+    ]
+    out, count = fb._redact_living(files)
+    assert count == 4  # two living persons in each file
+    for name in ("tree.gedcomx.json", "starting-tree.gedcomx.json"):
+        assert "Jane Marie" not in dict(out)[name].decode("utf-8")
+
+
+def test_a_file_that_fails_partway_ships_untouched_and_counts_zero():
+    """The count must describe the bytes written, not the persons visited. A
+    living first person is redacted in the loop, then a malformed `names` entry
+    on a later person raises inside _redact_person — the whole file must ship
+    untouched (the living details still in the clear) and contribute 0, so
+    FEEDBACK.md never claims a record was protected that was not."""
+    tree = {
+        "persons": [
+            {"id": "P1", "gender": "Female", "living": True,
+             "names": [{"id": "N1", "given": "Jane Marie", "surname": "Doe"}],
+             "facts": [{"id": "F1", "type": "Birth", "date": "3 March 1985"}]},
+            {"id": "P2", "gender": "Male", "living": True, "names": ["Bob Smith"]},
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    raw = json.dumps(tree).encode("utf-8")
+    out, count = fb._redact_living([("tree.gedcomx.json", raw)])
+    assert count == 0, "a file that failed partway must contribute nothing to the count"
+    # The file ships byte-for-byte as it came in — nothing half-redacted.
+    assert dict(out)["tree.gedcomx.json"] == raw
+
+
 # --- endpoint rejection / non-JSON response -----------------------------------
+
+def _markdown_for(user_prompt: str, agent_did: str, email: str = "t@example.com") -> str:
+    return fb._feedback_markdown(
+        {
+            "email": email,
+            "userPrompt": user_prompt,
+            "agentDid": agent_did,
+            "agentShouldHave": "",
+            "correctAnswer": "",
+            "notes": "",
+        },
+        "2026-08-26T00:00:00Z",
+        "A project",
+        False,
+        "web 2026-08-26 (abc123)",
+        True,
+    )
+
+
+def test_blank_prompt_and_did_render_as_not_provided():
+    # Both are optional at the dialog (#1919). A heading with nothing under it
+    # reads like the bundler dropped the field; say it was left blank instead.
+    md = _markdown_for("", "   ")
+    assert md.count(fb.NOT_PROVIDED) == 2
+    assert "## What I asked\n\n_(not provided)_" in md
+    assert "## What the agent did\n\n_(not provided)_" in md
+
+
+def test_blank_email_renders_as_not_provided():
+    # Email went optional in the same change, so the From bullet can be empty too.
+    md = _markdown_for("q", "d", email="")
+    assert f"- **From:** {fb.NOT_PROVIDED}" in md
+
+
+def test_supplied_prompt_and_did_are_untouched():
+    md = _markdown_for("Find John Smith.", "It searched 1860 and stopped.")
+    assert fb.NOT_PROVIDED not in md
+    assert "## What I asked\n\nFind John Smith." in md
+    assert "## What the agent did\n\nIt searched 1860 and stopped." in md
+
 
 def test_rejected_upload_surfaces_as_502(monkeypatch):
     """An {ok:false} 200 from Apps Script must become a 502, not a silent success."""

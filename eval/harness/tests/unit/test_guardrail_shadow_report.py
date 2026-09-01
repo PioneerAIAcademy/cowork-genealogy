@@ -17,6 +17,7 @@ from e2e.guardrail_shadow_report import (
     _is_result_json,
     all_result_jsons,
     format_citation_nulling,
+    format_tree_citation_nulling,
     format_conflict_unpersisted,
     format_detail,
     format_post_hoc_replay,
@@ -26,18 +27,23 @@ from e2e.guardrail_shadow_report import (
     replay_post_hoc,
     replay_provenance,
     scan_citation_nulling,
+    scan_tree_citation_nulling,
     scan_conflict_unpersisted,
     scan_corpus,
     scan_provenance,
     scan_one,
     scan_unnamed_delegate,
     format_unnamed_delegate,
+    scan_tree_encoding,
+    format_tree_encoding,
     UnnamedDelegateScan,
 )
 from harness.skill_invocation import (
     CITATION_NULLING_KIND,
+    TREE_CITATION_NULLING_KIND,
     CONFLICT_UNPERSISTED_KIND,
     PERSON_EVIDENCE_DENY_KIND,
+    TREE_ENCODING_KIND,
     WARNINGS_UNCHECKED_KIND,
 )
 
@@ -373,6 +379,68 @@ def _pe_write(person_id="I1"):
 
 def _same_person_call(pid1="p_9", pid2="I1"):
     return {"tool": "mcp__genealogy__same_person", "args": {"primaryId1": pid1, "primaryId2": pid2}}
+
+
+def _write_final_research(run_path, tool, *, results_ref=None):
+    """The provenance sidecar beside a replay run log (issue #1429)."""
+    run_path.with_name(run_path.stem + ".final-research.json").write_text(
+        json.dumps(
+            {
+                "assertions": [
+                    {"id": "a_001", "record_persona_id": None, "log_entry_id": "log_001"}
+                ],
+                "log": [{"id": "log_001", "tool": tool, "results_ref": results_ref}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def _pe_write_with_assertion(person_id="I1", assertion_id="a_001"):
+    return {
+        "tool": "mcp__genealogy__research_append",
+        "args": {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {"person_id": person_id, "assertion_id": assertion_id},
+        },
+    }
+
+
+def test_replay_provenance_narrows_on_an_unscoreable_assertion(tmp_path):
+    """The replay must apply the same join as the live hook, or the free replay
+    stops measuring the rule that ships."""
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write_with_assertion()])
+    _write_final_research(p, "image_transcribe")
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert rep.violations == []
+    assert rep.runs_linking == 1  # still counts toward the denominator
+    assert rep.runs_without_provenance == 0
+
+
+def test_replay_provenance_still_fires_on_a_record_read_assertion(tmp_path):
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write_with_assertion()])
+    _write_final_research(p, "record_read")
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert len(rep.violations) == 1
+    assert "I1" in rep.violations[0]["detail"]
+
+
+def test_replay_provenance_counts_a_run_with_no_provenance_sidecar(tmp_path):
+    """No committed final-research.json => replay UN-NARROWED and count it,
+    never skip it. Every other `replay_provenance` test in this file builds a
+    run log with no sidecar, so a skip would turn the whole suite into vacuous
+    passes — and a silent fallback would mean the replay measured a different
+    rule on part of its corpus without saying so."""
+    fixtures = _write_fixture(tmp_path, "fx", []).parent
+    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write_with_assertion()])
+    rep = replay_provenance([p], fixtures_root=fixtures)
+    assert len(rep.violations) == 1  # un-narrowed: still flagged
+    assert rep.runs_without_provenance == 1
+    assert rep.skipped == []
+    assert "UN-NARROWED" in format_provenance_replay(rep)
 
 
 def test_replay_provenance_flags_unscored_new_person(tmp_path):
@@ -977,3 +1045,182 @@ def test_format_unnamed_delegate_always_prints_the_attribution_denominator():
     plain = format_unnamed_delegate(scan, replay=False)
     assert "replayed over tool_calls" not in plain
     assert "of 20 run(s) that carry any caller attribution at all" in plain
+
+
+# --- tree-encoding shadow check (issue #1490) --------------------------------
+
+
+def _write_te_fixture(root, slug, seed_persons):
+    """A fixture whose starting-tree carries full person dicts (with facts), so a
+    test can control what counts as seeded vs newly encoded."""
+    d = root / "eval" / "tests" / "e2e" / slug
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "starting-tree.gedcomx.json").write_text(
+        json.dumps({"persons": seed_persons, "relationships": []}), encoding="utf-8"
+    )
+    return d
+
+
+def _te_research(*, tier="probable", status="completed"):
+    """A completed project with one tier->=-probable conclusion whose supporting
+    assertion has person_evidence pointing at person I1."""
+    return {
+        "project": {"id": "rp_001", "status": status, "subject_person_ids": ["I1"]},
+        "proof_summaries": [
+            {"id": "ps_001", "question_id": "q_001", "tier": tier, "supporting_assertion_ids": ["a_001"]}
+        ],
+        "person_evidence": [{"id": "pe_001", "assertion_id": "a_001", "person_id": "I1"}],
+        "questions": [{"id": "q_001", "question": "When was I1 born?"}],
+    }
+
+
+def test_replay_tree_encoding_fires_when_the_conclusion_added_no_structure(tmp_path):
+    # Seed already carries I1 with a Birth fact; the final tree is identical, so
+    # the completed tier=probable conclusion encoded nothing new -> one violation.
+    seed = [{"id": "I1", "facts": [{"type": "Birth", "standard_date": "+1850"}]}]
+    fixtures = _write_te_fixture(tmp_path, "fx", seed).parent
+    final_tree = {"persons": seed, "relationships": []}
+    p = _write_posthoc_run(
+        tmp_path, "fx", "run-1.json", tool_calls=[], research=_te_research(), tree=final_tree
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert len(rep.tree_encoding.violations) == 1
+    assert rep.tree_encoding.violations[0]["kind"] == TREE_ENCODING_KIND
+    assert rep.tree_encoding.runs_scanned == 1
+    assert rep.tree_encoding.skipped == []
+
+
+def test_replay_tree_encoding_silent_when_the_subject_gained_a_fact(tmp_path):
+    # Same conclusion, but the final tree adds a NEW fact for I1 that the seed
+    # lacked -> the conclusion was encoded, so no violation. This is the control
+    # that proves the check reads the seed diff, not the mere presence of a fact.
+    seed = [{"id": "I1", "facts": []}]
+    fixtures = _write_te_fixture(tmp_path, "fx", seed).parent
+    final_tree = {
+        "persons": [{"id": "I1", "facts": [{"type": "Birth", "standard_date": "+1850"}]}],
+        "relationships": [],
+    }
+    p = _write_posthoc_run(
+        tmp_path, "fx", "run-1.json", tool_calls=[], research=_te_research(), tree=final_tree
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert rep.tree_encoding.violations == []
+    assert rep.tree_encoding.runs_scanned == 1
+
+
+def test_replay_tree_encoding_silent_on_a_non_completed_project(tmp_path):
+    # An in-progress project has not reached the completion gate this measures.
+    seed = [{"id": "I1", "facts": [{"type": "Birth", "standard_date": "+1850"}]}]
+    fixtures = _write_te_fixture(tmp_path, "fx", seed).parent
+    p = _write_posthoc_run(
+        tmp_path, "fx", "run-1.json", tool_calls=[],
+        research=_te_research(status="active"), tree={"persons": seed, "relationships": []},
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert rep.tree_encoding.violations == []
+
+
+def test_replay_tree_encoding_silent_below_probable_tier(tmp_path):
+    # possible / not_proved / disproved warrant no tree write, so never flagged.
+    seed = [{"id": "I1", "facts": [{"type": "Birth", "standard_date": "+1850"}]}]
+    fixtures = _write_te_fixture(tmp_path, "fx", seed).parent
+    p = _write_posthoc_run(
+        tmp_path, "fx", "run-1.json", tool_calls=[],
+        research=_te_research(tier="possible"), tree={"persons": seed, "relationships": []},
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert rep.tree_encoding.violations == []
+
+
+def test_scan_tree_encoding_reads_stored_kind(tmp_path):
+    # The STORED scan reads what a run recorded, keyed on the kind.
+    d = tmp_path / "eval" / "runlogs" / "e2e" / "fx"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "run-1.json").write_text(
+        json.dumps(
+            {"guardrail_shadow_violations": [{"kind": TREE_ENCODING_KIND, "detail": "x", "question_type": "marriage"}]}
+        ),
+        encoding="utf-8",
+    )
+    got = scan_tree_encoding([d / "run-1.json"])
+    assert len(got) == 1
+    assert got[0]["question_type"] == "marriage"
+
+
+def test_format_tree_encoding_prints_the_count_and_per_type_breakdown():
+    # The per-type breakdown is the point (issue #1490): an aggregate rate can
+    # hide a type that is mostly false flags. Dropping it must fail here.
+    out = format_tree_encoding(
+        [
+            {"file": "a", "question_type": "parentage"},
+            {"file": "a", "question_type": "marriage"},
+            {"file": "b", "question_type": None},
+        ]
+    )
+    assert "3 tier->=-probable conclusion(s)" in out
+    assert "across 2 run(s)" in out  # two distinct files
+    assert "parentage: 1" in out
+    assert "marriage: 1" in out
+    assert "unclassified: 1" in out
+
+
+# --- scan/format tree citation-nulling (issue #1358) --------------------------
+# The tree-side arm shares `guardrail_shadow_violations` with four other classes
+# and is told apart only by its `kind`. The bucket it must NOT be folded into is
+# its own research-side sibling: those two read opposite sides of one seam and
+# measure 0 and 111 over the same 159 runs, so one bucket would hide the finding.
+
+
+def _tree_citation_entry(sid="S1"):
+    return {
+        "index": -1,
+        "tool": "tree.gedcomx.json",
+        "required_skill": "proof-conclusion",
+        "question_id": None,
+        "kind": TREE_CITATION_NULLING_KIND,
+        "detail": f"uploaded tree source {sid} (referenced by primary fact F1) has a null/empty citation string",
+    }
+
+
+def test_scan_tree_citation_nulling_picks_up_only_its_own_kind(tmp_path):
+    p = _write_result(
+        tmp_path / "fx",
+        "run-1.json",
+        [_provenance_entry(), _citation_entry(), _tree_citation_entry()],
+    )
+    out = scan_tree_citation_nulling([p])
+    assert len(out) == 1, "must not absorb the research-side or provenance entries"
+    assert out[0]["kind"] == TREE_CITATION_NULLING_KIND
+    assert out[0]["fixture"] == "fx"
+
+
+def test_the_two_citation_arms_never_absorb_each_other(tmp_path):
+    """The pair IS the finding — 0 research-side beside 111 tree-side is what
+    says the class lives at the upload copy rather than at authoring. Either
+    scanner counting the other's entries would erase that."""
+    p = _write_result(
+        tmp_path / "fx", "run-1.json", [_citation_entry(), _tree_citation_entry()]
+    )
+    assert len(scan_citation_nulling([p])) == 1
+    assert len(scan_tree_citation_nulling([p])) == 1
+
+
+def test_the_provenance_scan_excludes_the_tree_arm(tmp_path):
+    """`scan_provenance` is the catch-all for entries carrying `detail`; a new kind
+    that forgets to exclude itself is double-counted there and in its own
+    bucket, inflating the very rate the graduation decision reads."""
+    p = _write_result(tmp_path / "fx", "run-1.json", [_tree_citation_entry()])
+    assert scan_provenance([p]) == []
+
+
+def test_format_tree_citation_nulling_reports_sources_and_runs():
+    out = format_tree_citation_nulling(
+        [
+            {**_tree_citation_entry("S1"), "file": "a.json"},
+            {**_tree_citation_entry("S2"), "file": "a.json"},
+            {**_tree_citation_entry("S3"), "file": "b.json"},
+        ]
+    )
+    assert "3 uploaded tree source(s)" in out
+    assert "across 2 run(s)" in out
+    assert "#1358" in out

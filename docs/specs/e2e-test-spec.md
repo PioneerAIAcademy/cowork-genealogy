@@ -837,7 +837,8 @@ legitimately declares a guarded tool would be denied here too, and closing
 that needs the predicate widened by hand.
 
 Both members are enforced. Neither `extraction_append` nor `image_read` is
-declared by any skill — `image_read` lives only on `agents/image-reader-opus.md`
+declared by any skill — `image_read` is declared by no agent at all since
+the `image-reader-opus` agent was retired
 since `search-images` moved to `@plugin:image-reader` (2026-07-17) — so `agent_id`
 presence alone discriminates for each, and a third tool added to the set is
 covered here automatically.
@@ -1297,9 +1298,14 @@ checks over the final project state and the run's tool-call log
    `proof_summaries` entry has no matching `proof-critique` entry in
    `evaluations[]`, i.e. the mandatory `gps-mentor` gate never fired.
 3. **`find_person_evidence_missing_same_person`** — a brand-new tree person
-   received a `person_evidence` link without a single `same_person` call for
-   it. Narrower than check 1 on purpose: a run can invoke `person-evidence`
-   somewhere and still skip identity scoring for the person that matters.
+   received a **scoreable** `person_evidence` link without a single
+   `same_person` call for it. Narrower than check 1 on purpose: a run can
+   invoke `person-evidence` somewhere and still skip identity scoring for the
+   person that matters. "Scoreable" means a record persona is reachable — a
+   non-null `record_persona_id`, a `record_read`-sourced assertion, or a search
+   whose sidecar was retained; links that provably cannot be scored are skipped
+   and counted separately (`guardrail-enforcement-spec.md` §4). A null
+   `record_persona_id` alone does **not** exempt a link.
 
 Any violation sets `compliance: fail`, which forces `outcome: fail`. The
 checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
@@ -1347,9 +1353,32 @@ time, so a run that legitimately stops before upload has empty citations by
 design — scoping to sources of an actual written conclusion is what keeps a
 future hard version from false-positiving on honest partial runs. Its entries
 carry `kind: "citation_nulling"` so `guardrail_shadow_report` counts them in
-their own bucket (`make e2e-guardrail-shadow`). **Graduating it to a hard
-fourth check is gated on reading that shadow fire rate across the corpus first**
-— not decided here.
+their own bucket (`make e2e-guardrail-shadow`).
+
+**That fire rate has now been read, and the answer is zero: it does not
+graduate.** Across 159 committed runs the research-side arm flags nothing, and a
+replay over every committed `final-research.json` reaches 1,884 concluded
+sources with a citation on all of them. Zero is not a licence — per
+`guardrail-enforcement-spec.md`, "zero is not 'low enough', it is nobody has seen
+this detector fire." The arm stays in shadow as a **regression pin**: the zero
+is a real invariant — a conclusion's citations are populated whenever a
+conclusion exists — and this is what would catch it breaking.
+
+**The failure class it was built for lives on the other side of the seam, and a
+companion check measures it there.** `find_citation_nulling_in_tree_sources` reads
+the final `tree.gedcomx.json` and flags a `sources[]` entry with a null or empty
+`citation` that an *uploaded* conclusion rests on. Its gate is both clauses of
+one sentence in `packages/engine/plugin/agents/proof-conclusion.md` step 3 — the
+run wrote a `proof_summaries` entry, **and** the source is referenced by a
+`primary` fact or a relationship, i.e. by content that actually uploads. The
+second clause is load-bearing: the working tree carries every sourced evidence
+fact `person-evidence` materialized at link time, and those are citation-less by
+design until a conclusion promotes them. Entries carry
+`kind: "tree_citation_nulling"` for their own bucket, kept separate from the
+research-side arm because the pair is the finding — **0 there against 111 of 171
+referenced sources here, across 50 of the same 159 runs**. This one is shadow
+too, and deliberately not graduated: part of that 111 is
+legitimately-not-yet-uploaded evidence only a genealogist can price.
 
 **A fifth check runs in shadow mode only: a conclusion relies on a resolved
 conflict that was never persisted.** `find_unpersisted_conflict_resolutions` (in
@@ -1406,6 +1435,14 @@ worth trusting**, and `not_checked` is the honest label rather than a placeholde
 for work in progress: a replay only means something if the checks are pinned to
 the version each run actually executed, and nothing records that version per run.
 Recording it is the prerequisite for any corpus-wide compliance number.
+
+**Check 3 got LOOSER when the persona-reachability narrowing landed.** A run's
+stored violation count can therefore exceed what today's detector recomputes
+from the same trace — the opposite direction from the `is_error` join below, and
+the correct reading rather than a bug. `make e2e-corpus RECOMPUTE=1` names every
+such run in its `regressed` list. No `harness_schema_version` bump: the runlog
+payload shape did not change, and the counter exists for a field whose *meaning*
+shifts while its name does not.
 
 **`compliance` and `outcome` are not comparable across the `is_error` join.**
 Before it, `tool_calls[]` carried no `is_error` key, so the

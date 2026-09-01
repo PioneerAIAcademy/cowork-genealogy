@@ -17,11 +17,19 @@ Matching rules:
     when it has no ``encoding=`` keyword.
   - bare ``open(...)`` -- a Name call only, so ``Image.open`` / ``webbrowser.open`` /
     ``gzip.open`` (attribute calls) are excluded structurally, no lookbehind needed.
-    This is the issue's chosen scope, and it also drops attribute opens that ARE real
-    text offenders (``Path(...).open()``, ``io.open``, ``builtins.open``) because
-    ``x.open`` is ambiguous; widening it safely is #1355. Binary mode (a ``"b"`` in the
-    2nd positional arg or a ``mode=`` kwarg) is skipped; the rest are flagged when they
-    have no ``encoding=`` keyword.
+    Binary mode (a ``"b"`` in the 2nd positional arg or a ``mode=`` kwarg) is skipped;
+    the rest are flagged when they have no ``encoding=`` keyword.
+  - ``Path(...).open(...)`` / ``PurePath(...).open(...)`` / ``io.open(...)`` /
+    ``builtins.open(...)`` -- the closed allow-list of dotted opens whose receiver is
+    statically unambiguous. (``PurePath`` has no ``.open()`` at runtime -- only
+    concrete ``Path`` does -- but the allow-list entry is defensive: it prevents a
+    false negative if someone writes it, since the call would fail at runtime anyway.)
+    Only inline ``Path()``/``PurePath()`` constructor calls and
+    ``io``/``builtins`` module names are matched. Two forms stay uncaught: a bare
+    variable's ``.open()`` (``p.open("w")``), which is statically undecidable, and
+    the module-qualified constructor ``pathlib.Path(...).open()``, whose receiver
+    is an ``ast.Attribute`` rather than an ``ast.Name``. Neither occurs today. ``Path(...).open()`` takes mode as the 1st positional (no file
+    arg), so binary-mode detection uses index 0 there and index 1 elsewhere.
   - ``subprocess.run(...)`` / ``.check_output(...)`` / ``.Popen(...)`` / ``.call(...)`` /
     ``.check_call(...)`` -- the same failure class, one call shape over: CPython's own
     gate is ``self.text_mode = encoding or errors or text or universal_newlines``
@@ -83,11 +91,17 @@ def _iter_python_files(root: Path):
         yield path
 
 
-def _is_binary_open(call: ast.Call) -> bool:
-    """True if this open(...) is binary mode -- 2nd positional or mode= kwarg has a 'b'."""
+def _is_binary_open(call: ast.Call, mode_arg_index: int = 1) -> bool:
+    """True if this open(...) is binary mode -- positional or mode= kwarg has a 'b'.
+
+    ``mode_arg_index`` is the 0-based position of the mode argument: 1 for
+    ``open(file, mode)`` / ``io.open(file, mode)`` / ``builtins.open(file, mode)``
+    where the file path comes first, and 0 for ``Path(...).open(mode)`` where the
+    path is the receiver and mode is the first positional.
+    """
     mode = None
-    if len(call.args) >= 2 and isinstance(call.args[1], ast.Constant):
-        mode = call.args[1].value
+    if len(call.args) > mode_arg_index and isinstance(call.args[mode_arg_index], ast.Constant):
+        mode = call.args[mode_arg_index].value
     for kw in call.keywords:
         if kw.arg == "mode" and isinstance(kw.value, ast.Constant):
             mode = kw.value.value
@@ -104,6 +118,34 @@ def _is_subprocess_call(call: ast.Call) -> str | None:
         and func.value.id == "subprocess"
     ):
         return func.attr
+    return None
+
+
+DOTTED_OPEN_MODULES = frozenset({"io", "builtins"})
+DOTTED_OPEN_CONSTRUCTORS = frozenset({"Path", "PurePath"})
+
+
+def _is_dotted_text_open(call: ast.Call) -> str | None:
+    """The display name if this is a known dotted text-mode open(), else None.
+
+    Matches only forms whose receiver is statically unambiguous:
+      - Path(...).open() / PurePath(...).open()  (inline constructor)
+      - io.open() / builtins.open()              (module-qualified)
+    A bare variable's .open() (p.open()) is statically undecidable and stays
+    uncaught -- documented in the module docstring.
+    """
+    func = call.func
+    if not (isinstance(func, ast.Attribute) and func.attr == "open"):
+        return None
+    receiver = func.value
+    if isinstance(receiver, ast.Name) and receiver.id in DOTTED_OPEN_MODULES:
+        return f"{receiver.id}.open"
+    if (
+        isinstance(receiver, ast.Call)
+        and isinstance(receiver.func, ast.Name)
+        and receiver.func.id in DOTTED_OPEN_CONSTRUCTORS
+    ):
+        return f"{receiver.func.id}(...).open"
     return None
 
 
@@ -164,6 +206,10 @@ def _offenders_in(source: str) -> list[tuple[int, str]]:
         elif isinstance(func, ast.Name) and func.id == "open":
             if not _is_binary_open(node) and not _has_encoding(node):
                 offenders.append((node.lineno, "open"))
+        elif (dotted_name := _is_dotted_text_open(node)) is not None:
+            mode_idx = 0 if dotted_name.endswith(").open") else 1
+            if not _is_binary_open(node, mode_idx) and not _has_encoding(node):
+                offenders.append((node.lineno, dotted_name))
         elif (
             (subprocess_method := _is_subprocess_call(node))
             and _is_text_mode(node)
@@ -173,35 +219,31 @@ def _offenders_in(source: str) -> list[tuple[int, str]]:
     return offenders
 
 
+def _scan_tree(root: Path) -> tuple[list[str], list[str]]:
+    """Scan all .py files under *root*, returning (offenders, unparseable)."""
+    offenders: list[str] = []
+    unparseable: list[str] = []
+    for path in _iter_python_files(root):
+        rel = path.relative_to(root).as_posix()
+        try:
+            hits = _offenders_in(path.read_text(encoding="utf-8"))
+        except (SyntaxError, ValueError, UnicodeDecodeError) as exc:
+            unparseable.append(f"{rel}: {type(exc).__name__}: {exc}")
+            continue
+        for lineno, name in hits:
+            offenders.append(f'{rel}:{lineno}: {name}() has no encoding= (add encoding="utf-8")')
+    return offenders, unparseable
+
+
 def test_no_bare_text_mode_file_io():
     assert REPO_ROOT.joinpath("CLAUDE.md").is_file(), (
         f"repo-root detection is wrong: {REPO_ROOT} has no CLAUDE.md; "
         "the lint would scan the wrong tree (a false green)."
     )
 
-    offenders: list[str] = []
-    unparseable: list[str] = []
-    for path in _iter_python_files(REPO_ROOT):
-        rel = path.relative_to(REPO_ROOT).as_posix()
-        try:
-            hits = _offenders_in(path.read_text(encoding="utf-8"))
-        except (SyntaxError, ValueError, UnicodeDecodeError) as exc:
-            # Defensive skip for a file the harness parser (Python 3.11) genuinely
-            # cannot parse -- e.g. a future apps/server file using 3.12-only syntax
-            # (apps/server targets >=3.12). Today every apps/server file parses
-            # under 3.11, so apps/server IS scanned; this branch guards against a
-            # parser-version mismatch false-redding the lint, it does not mean any
-            # tree is unscanned. Skipped files are surfaced as a warning (below),
-            # never silent.
-            unparseable.append(f"{rel}: {type(exc).__name__}: {exc}")
-            continue
-        for lineno, name in hits:
-            offenders.append(f'{rel}:{lineno}: {name}() has no encoding= (add encoding="utf-8")')
+    offenders, unparseable = _scan_tree(REPO_ROOT)
 
     if unparseable:
-        # warnings.warn, not print: pytest captures stdout and shows it only on
-        # failure, so a print would hide a skipped file on the green runs where it
-        # matters most. A warning lands in pytest's warnings summary on pass too.
         warnings.warn(
             "encoding lint could not parse and skipped these files (not scanned):\n  "
             + "\n  ".join(sorted(unparseable)),
@@ -245,6 +287,36 @@ def test_no_aliased_subprocess_import():
     )
 
 
+def test_dotted_text_open_without_encoding_is_flagged():
+    assert _offenders_in("Path(tmp).open('w')") == [(1, "Path(...).open")]
+    assert _offenders_in("PurePath(tmp).open('r')") == [(1, "PurePath(...).open")]
+    assert _offenders_in("io.open(p)") == [(1, "io.open")]
+    assert _offenders_in("builtins.open(p)") == [(1, "builtins.open")]
+    # encoding= present -- passes.
+    assert _offenders_in("Path(tmp).open('w', encoding='utf-8')") == []
+    assert _offenders_in("PurePath(tmp).open('w', encoding='utf-8')") == []
+    assert _offenders_in("io.open(p, encoding='utf-8')") == []
+    assert _offenders_in("builtins.open(p, encoding='utf-8')") == []
+    # encoding=None is the platform default -- still flagged.
+    assert _offenders_in("Path(tmp).open('w', encoding=None)") == [
+        (1, "Path(...).open")
+    ]
+    assert _offenders_in("io.open(p, encoding=None)") == [(1, "io.open")]
+    # Binary mode -- out of scope, not an offender.
+    assert _offenders_in("Path(tmp).open('rb')") == []
+    assert _offenders_in("PurePath(tmp).open('rb')") == []
+    assert _offenders_in("io.open(p, 'rb')") == []
+    assert _offenders_in("builtins.open(p, 'rb')") == []
+    # Module-qualified constructor -- NOT flagged (receiver.func is
+    # ast.Attribute, not ast.Name, so it falls outside the allow-list).
+    assert _offenders_in("pathlib.Path(tmp).open('w')") == []
+    # Ambiguous dotted .open() on other receivers -- NOT flagged (issue scope).
+    assert _offenders_in("zipfile.ZipFile(z).open(name)") == []
+    assert _offenders_in("Image.open(f)") == []
+    assert _offenders_in("webbrowser.open(url)") == []
+    assert _offenders_in("p.open('w')") == []
+
+
 def test_encoding_none_is_flagged():
     # A literal encoding=None is the platform default (cp1252 on Windows) this
     # lint exists to catch, so it must be flagged, not waved through by the mere
@@ -278,3 +350,22 @@ def test_subprocess_text_mode_without_encoding_is_flagged():
     # Only the subprocess.<name> attribute form is matched (this repo's sole
     # convention) -- an unrelated .run(...) on some other object is not subprocess's.
     assert _offenders_in("session.run(cmd, text=True)") == []
+
+
+def test_pep695_file_is_parsed_and_scanned(tmp_path):
+    """A file using PEP 695 type-alias syntax (Python 3.12+) with a bare open()
+    must be parsed and caught, not silently skipped. This proves the CI
+    interpreter can handle 3.12 syntax -- a 3.11 ast.parse would raise
+    SyntaxError and the file would land in the unparseable list instead."""
+    fixture = tmp_path / "pep695_example.py"
+    fixture.write_text(
+        "type Vector[T] = list[T]\n"
+        "\n"
+        "def load(p):\n"
+        "    return open(p).read()\n",
+        encoding="utf-8",
+    )
+    offenders, unparseable = _scan_tree(tmp_path)
+    assert not unparseable, f"PEP 695 file was not parsed: {unparseable}"
+    assert len(offenders) == 1
+    assert "open()" in offenders[0]

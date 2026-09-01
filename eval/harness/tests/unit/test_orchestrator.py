@@ -8,6 +8,7 @@ from harness.orchestrator import (
     _summarize_before_state_sources,
     _build_warnings,
     _compute_outcome,
+    _COMMISSION_VALIDATORS,
     _negative_judge_context,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
@@ -313,9 +314,14 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
             text_response="I saved the file.",
             skills_invoked=["search-wikipedia"],
             tool_calls=[
+                # LIVE, so this test also covers the production wiring of
+                # #1000's two new fields — the retention rule keeps a live
+                # response, and reverting either call site in
+                # `_run_one_test_async` must fail something.
                 {"tool": "mcp__genealogy__wikipedia_search", "args": {"query": "X"},
-                 "matched": {"kind": "predicate", "index": None},
-                 "response_fixture": None, "response": stub_response}
+                 "matched": {"kind": "live", "index": None},
+                 "response_fixture": "live:wikipedia_search",
+                 "response": stub_response},
             ],
             duration_ms=10.0,
             usage={"total_cost_usd": 0.01, "usage": {"input_tokens": 100,
@@ -347,6 +353,24 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     # v1.7 fix: outcome must be "fail" — empty judge_dimensions can't
     # silently satisfy "every dimension scored pass" (spec §7).
     assert entry["outcome"] == "fail"
+
+    # --- #1000: the PRODUCTION WIRING, not the helpers -----------------------
+    #
+    # Every other test for these fields drives a helper directly, so reverting
+    # either call site in `_run_one_test_async` — the path that wrote all 1,945
+    # committed entries — left the whole suite green. Only the aborted path (11
+    # entries) was pinned. These four assertions close that, and they belong in
+    # this test because it is the one that already drives the real function end
+    # to end.
+    #
+    # It matters here specifically because ABSENT means "predates #1000": a
+    # refactor dropping either line yields fresh run logs that misrepresent
+    # themselves as old ones, with CI green.
+    assert entry["grading_mode"] == "dimensions"
+    assert entry["dimensions_gate_outcome"] is True
+    live = entry["runs"][0]["output"]["tool_calls"][0]
+    assert live["matched"]["kind"] == "live"
+    assert live["response"] == stub_response, "a live response survives the projection"
 
 
 def test_uncovered_tool_call_continues_to_judge(tmp_path, monkeypatch):
@@ -1073,6 +1097,105 @@ def test_error_aborted_reason_treated_as_aborted():
     ) == "aborted"
 
 
+# --- V7 (#1866): a COMMISSION-validator failure dominates a deterministic-cap
+# abort. The demotion is scoped to `_COMMISSION_VALIDATORS` (johnmarkpeterbrown's
+# ruling): a cap truncates a run mid-write, so an OMISSION-only failure ("expected
+# X, got none") is the timeout's doing and must stay `aborted`, while a commission
+# failure (wrote something it shouldn't) is a real defect a timeout cannot explain.
+# Proof-of-failure: without the demotion, the first parametrisation reads "aborted"
+# and a real defect hides behind a timeout (ut_research_plan_016's ownership-table
+# failure); without the commission SCOPING, the omission-only case below reds a
+# timeout as a skill regression (record_extraction_018/020, person_evidence_022).
+# The rest pin the scope so the demotion cannot over-fire. Nothing in CI mutates a
+# run to red a gating check (CLAUDE.md, "a new lint must be proven to fail"), so
+# these assertions are that proof.
+
+_A_COMMISSION_VALIDATOR = "test_ownership_table"  # a member of _COMMISSION_VALIDATORS
+_AN_OMISSION_VALIDATOR = "test_research_plan_new_plan_for_q_001"  # not a member
+
+
+@pytest.mark.parametrize("cap", ["max_wall_clock_seconds", "max_turns", "max_tool_calls"])
+def test_commission_validator_failure_demotes_deterministic_cap_abort_to_fail(cap):
+    spec = _positive_spec()
+    assert _compute_outcome(
+        spec=spec, validators_passed=False,
+        failed_validators=frozenset({_A_COMMISSION_VALIDATOR}),
+        judge_dimensions=[], aborted_reason=cap, activated=True,
+        skills_invoked=["search-wikipedia"],
+    ) == "fail"
+
+
+@pytest.mark.parametrize("cap", ["max_wall_clock_seconds", "max_turns", "max_tool_calls"])
+def test_omission_only_validator_failure_under_cap_stays_aborted(cap):
+    """The scoping half of the ruling, and the case nothing caught before: a run
+    the clock killed before it wrote its plan fails only an OMISSION validator
+    ("expected exactly one new plan; got []"). That is the timeout's doing, not a
+    regression, so it must stay `aborted` — the exact mis-file (pointed the other
+    way) V7 exists to prevent. Reds if the demotion ever keys on `validators_passed`
+    instead of the commission set."""
+    spec = _positive_spec()
+    assert _compute_outcome(
+        spec=spec, validators_passed=False,
+        failed_validators=frozenset({_AN_OMISSION_VALIDATOR}),
+        judge_dimensions=[], aborted_reason=cap, activated=True,
+        skills_invoked=["search-wikipedia"],
+    ) == "aborted"
+
+
+@pytest.mark.parametrize("cap", ["max_wall_clock_seconds", "max_turns", "max_tool_calls"])
+def test_clean_deterministic_cap_abort_stays_aborted(cap):
+    """The demotion must not over-fire: a cap abort with validators PASSING (no
+    failed validators at all) is still a genuine no-gradeable-result abort."""
+    spec = _positive_spec()
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, failed_validators=frozenset(),
+        judge_dimensions=[], aborted_reason=cap, activated=True,
+        skills_invoked=["search-wikipedia"],
+    ) == "aborted"
+
+
+@pytest.mark.parametrize("reason", ["error", "sdk_stream_silence", "unmatched_tool_call"])
+def test_commission_failure_does_not_demote_non_cap_abort(reason):
+    """Only the three deterministic caps are dominated, even with a commission
+    failure. `error` and `sdk_stream_silence` feed the suite breaker and exit-code
+    split; `unmatched_tool_call` is a test-corpus (exit 2) problem. Demoting any of
+    them would report an environment/corpus failure as a skill regression."""
+    spec = _positive_spec()
+    assert _compute_outcome(
+        spec=spec, validators_passed=False,
+        failed_validators=frozenset({_A_COMMISSION_VALIDATOR}),
+        judge_dimensions=[], aborted_reason=reason, activated=True,
+        skills_invoked=["search-wikipedia"],
+    ) == "aborted"
+
+
+def test_commission_validators_are_all_collected():
+    """The lead's condition (#1866): a silent rename must not drop a name out of
+    `_COMMISSION_VALIDATORS` and quietly stop demoting it. Every name in the set
+    must match a real validator `def test_*` in the validators dir. Prove it by
+    renaming any of the four members (or its collector) and watching this red."""
+    import ast
+
+    validators_dir = Path(__file__).resolve().parents[2] / "validators"
+    collected: set[str] = set()
+    for path in validators_dir.glob("test_*.py"):
+        module = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(module):
+            if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
+                collected.add(node.name)
+    # Guard the guard: an empty/misdirected scan would make the subset check vacuous.
+    assert "test_ownership_table" in collected, (
+        f"validator collection found nothing at {validators_dir} — fix this test's "
+        f"discovery, do not delete it"
+    )
+    missing = _COMMISSION_VALIDATORS - collected
+    assert not missing, (
+        f"_COMMISSION_VALIDATORS names validators no longer collected: "
+        f"{sorted(missing)}. A validator was renamed — update the set, or its "
+        f"failure under a cap silently stops demoting to fail."
+    )
+
+
 # --- Phase 2: unmatched tool calls (Type 1 vs Type 2) ----------------------
 
 
@@ -1280,6 +1403,7 @@ from harness.orchestrator import (
 class _FakeValidator:
     name: str
     passed: bool
+    reporting_only: bool = False
 
 
 def test_compute_validators_passed_all_pass():

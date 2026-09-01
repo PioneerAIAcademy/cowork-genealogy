@@ -8,12 +8,15 @@ REM Counterpart to setup-feedback-case.sh.
 set "FORCE=0"
 set "ZIP_PATH="
 set "DEST_DIR="
+REM %~dp0 must be read BEFORE :parse -- `shift` moves %1 into %0, so
+REM after the loop %~dp0 is the zip's directory, not the script's (issue #1876).
+set "SCRIPT_DIR=%~dp0"
 
 :parse
 if "%~1"=="" goto :done_parse
 if /i "%~1"=="--force" (
     set "FORCE=1"
-    shift
+    shift /1
     goto :parse
 )
 if /i "%~1"=="-h" goto :usage
@@ -25,12 +28,12 @@ if "!ARG:~0,2!"=="--" (
 )
 if "!ZIP_PATH!"=="" (
     set "ZIP_PATH=%~1"
-    shift
+    shift /1
     goto :parse
 )
 if "!DEST_DIR!"=="" (
     set "DEST_DIR=%~1"
-    shift
+    shift /1
     goto :parse
 )
 echo Too many positional arguments 1>&2
@@ -44,13 +47,12 @@ if not exist "!ZIP_PATH!" (
 )
 
 REM --- Resolve repo root from script location ---
-set "SCRIPT_DIR=%~dp0"
 pushd "%SCRIPT_DIR%" >nul
 for /f "delims=" %%i in ('git rev-parse --show-toplevel 2^>nul') do set "REPO_ROOT=%%i"
 popd >nul
 if "!REPO_ROOT!"=="" (
     echo Error: could not determine repo root from %SCRIPT_DIR% 1>&2
-    echo Run this script from inside the cowork-genealogy repo. 1>&2
+    echo This script must live inside the repo checkout; the cwd is irrelevant. 1>&2
     exit /b 1
 )
 REM git rev-parse on Windows returns forward slashes; normalize.
@@ -79,7 +81,10 @@ if exist "!DEST_DIR!\." (
 
 REM --- Unzip via PowerShell (Expand-Archive ships with Windows 10+) ---
 if not exist "!DEST_DIR!" mkdir "!DEST_DIR!"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -LiteralPath '!ZIP_PATH!' -DestinationPath '!DEST_DIR!' -Force"
+REM -ErrorAction Stop + exit 1: without them powershell.exe returns 0 even
+REM when Expand-Archive errors, so the errorlevel check below never fired
+REM and a corrupt zip printed "Imported to ..." and exited 0 (issue #1876).
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Expand-Archive -LiteralPath '!ZIP_PATH!' -DestinationPath '!DEST_DIR!' -Force -ErrorAction Stop } catch { Write-Error $_; exit 1 }"
 if errorlevel 1 (
     echo Error: failed to unzip !ZIP_PATH! 1>&2
     exit /b 1
@@ -98,9 +103,16 @@ if exist .gitignore (
 )
 
 REM --- git init + initial commit ---
+REM The .sh counterpart runs under `set -euo pipefail`, so a failing git
+REM baseline aborts there. cmd has no equivalent, so check each step --
+REM an unset user.email made all three fail while the script still
+REM reported success (issue #1876).
 git init -q
+if errorlevel 1 goto :git_baseline_failed
 git add .
+if errorlevel 1 goto :git_baseline_failed
 git commit -q -m "imported"
+if errorlevel 1 goto :git_baseline_failed
 
 REM --- Per-skill junctions under .claude\skills\ ---
 REM Junctions (mklink /J) work without admin or Developer Mode, unlike /D.
@@ -141,6 +153,14 @@ echo Then: /compare-state --against=what-went-wrong
 echo.
 echo Full workflow: docs\alpha-feedback-guide.md
 exit /b 0
+
+:git_baseline_failed
+echo Error: could not create the git baseline in !DEST_DIR!. 1>&2
+echo The case was unpacked, but it has no baseline to reset to. 1>&2
+echo Re-import with: scripts\reset-feedback-case.bat, then retry. 1>&2
+echo A partial import leaves files behind, so the retry needs --force. 1>&2
+echo If git reported an unknown author, set user.name and user.email. 1>&2
+exit /b 1
 
 :usage
 echo Usage: setup-feedback-case.bat ^<path-to-feedback.zip^> [^<dest-dir^>] [--force]
