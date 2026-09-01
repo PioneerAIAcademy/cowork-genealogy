@@ -1,4 +1,5 @@
-// Readiness truth table for senior-queue.yml's two decision rules.
+// Readiness truth table for senior-queue.yml's two decision rules, plus its
+// `workflow_run` trigger targets.
 //
 // WHY THIS EXISTS. Both rules fail in the direction nothing complains about. A
 // PR that should be queued and is not looks exactly like a PR nobody has
@@ -206,6 +207,46 @@ const SUPERSEDED = [
 ];
 for (const { label, threads, approvals, want } of SUPERSEDED) {
   eq(supersededThreads(threads, approvals), want, `supersededThreads: ${label}`);
+}
+
+// ---- `workflow_run` trigger targets ------------------------------------------
+//
+// Same failure direction as the two rules above, and a nastier version of it:
+// `workflow_run` matches a workflow by its `name:`, not its filename, and a name
+// that matches nothing simply never fires. No error, no warning, no red run —
+// the sweep just stops converging on that workflow's completions and the queue
+// silently falls back to the cron. Renaming a CI workflow is an ordinary thing
+// to do, and nothing else in the repo connects the two files.
+{
+  const before = failures;
+  const names = new Map();
+  for (const f of fs.readdirSync('.github/workflows')) {
+    if (!/\.ya?ml$/.test(f)) continue;
+    const m = fs.readFileSync(`.github/workflows/${f}`, 'utf8').match(/^name:\s*(.+)$/m);
+    if (m) names.set(m[1].trim(), f);
+  }
+  const raw = fs.readFileSync(WORKFLOW, 'utf8');
+  const block = raw.split(/^  workflow_run:$/m)[1];
+  if (!block) {
+    fail(`${WORKFLOW}: no \`workflow_run:\` trigger — the sweep that substitutes for the ` +
+         `forbidden approval trigger is gone; the cron is the only thing left converging`);
+  } else {
+    const listed = [...block.split(/^    types:/m)[0]
+      .matchAll(/^      - "(.+)"$/gm)].map(m => m[1]);
+    if (!listed.length) {
+      fail(`${WORKFLOW}: \`workflow_run\` names no workflows, so it never fires`);
+    }
+    for (const n of listed) {
+      if (!names.has(n)) {
+        fail(`${WORKFLOW}: \`workflow_run\` targets "${n}", which is no workflow's \`name:\` ` +
+             `in .github/workflows — it will never fire. Known names: ` +
+             `${[...names.keys()].sort().join(', ')}`);
+      }
+    }
+    if (failures === before) {
+      console.log(`ok    all ${listed.length} \`workflow_run\` targets name a real workflow`);
+    }
+  }
 }
 
 if (!failures) {

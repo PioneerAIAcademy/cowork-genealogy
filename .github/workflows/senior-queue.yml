@@ -84,17 +84,19 @@ name: senior-queue
 # writes — so a dispatch dry run is the way to check a readiness change against
 # the live board before letting it label or resolve anything.
 #
-# THE SCHEDULE IS WHAT MAKES THE QUEUE CONVERGE, and it now carries both of the
-# two things that make a PR ready. `check_suite` never fires here (see the
-# trigger below), so nothing observes CI turning green, and there is no approval
-# trigger either (see below), so nothing observes the peer review landing. The
-# `pull_request_target` events are a fast path for open/push only. If you remove
-# the schedule, something else must answer "what re-checks a PR after CI
-# finishes, and after someone approves it?" — and the answer cannot be an
-# approval event.
+# WHAT MAKES THE QUEUE CONVERGE is the `workflow_run` sweep, with the schedule as
+# its floor. `check_suite` never fires here (see the trigger below) and there is
+# no approval trigger (see below), so neither of the two things that make a PR
+# ready is observed directly. `workflow_run` covers both indirectly: any CI
+# completion in the repo re-evaluates every open PR, so a peer approval is picked
+# up by the next one. The `pull_request_target` events are a fast path for
+# open/push only. If you remove BOTH the sweep trigger and the schedule,
+# something else must answer "what re-checks a PR after CI finishes, and after
+# someone approves it?" — and the answer cannot be an approval event.
 #
-# WHAT THIS COSTS: up to 30 minutes between the approval that makes a PR ready
-# and the label that puts it in a senior's queue.
+# WHAT THIS COSTS: minutes during a working day, when CI is running constantly.
+# On a quiet repo it falls back to the cron's cadence, which GitHub delays or
+# drops under load — so the honest worst case is still hours, not 30 minutes.
 
 # TRIGGER CHOICE: `pull_request_target`, because developers without write access
 # contribute from forks and a `pull_request` run gets a read-only token there,
@@ -119,10 +121,52 @@ name: senior-queue
 # returns before it ever writes, and goes green. So it only reddened on the
 # approval that mattered, and the sweep 30 minutes later applied the label
 # anyway, leaving a red X on a PR that was correctly queued.
+#
+# WHAT REPLACED IT (2026-09-01, issue #1968): a `workflow_run` trigger on the
+# repo's CI workflows, handled as a sweep. `workflow_run` runs in the base-repo
+# context even for fork-PR CI, so it keeps `issues: write` where the review
+# trigger is denied it, and it needs no new identity. Chosen over granting the
+# Projects App `Issues: write` — the only remedy that fires deterministically on
+# the approval, but an org-admin permission change on a private-key-holding
+# identity, widening it to label writes across every issue and PR, for a path
+# that fires ~1% as often as CI does. Also chosen over a detect-only check, which
+# makes the gap visible and closes nothing.
+#
+# The schedule STAYS. `workflow_run` converges within minutes while CI is busy
+# and does nothing on a quiet weekend; the cron is the floor under it. Do not
+# remove one because the other exists.
 
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
+  workflow_run:
+    # THE APPROVAL-EVENT SUBSTITUTE. `pull_request_review` cannot be used here
+    # (see the ledger above), so nothing observed a peer approval and the cron
+    # was the only thing that converged the queue — measured at 200 of an
+    # expected 352 runs on 2026-08-27, with an 11h23m gap on 2026-08-28.
+    #
+    # `workflow_run` fires in the BASE-REPO context even for a fork PR's CI, so
+    # its `GITHUB_TOKEN` keeps the `issues: write` that a `pull_request_review`
+    # run is denied. It is handled as a SWEEP, never per-PR: see the `sweep`
+    # branch below for why `context.payload.workflow_run.pull_requests` must not
+    # be used.
+    #
+    # This does not fire on the approval itself — it fires on the next CI
+    # completion anywhere in the repo, which during a working day is minutes
+    # away (median inter-run gap 0 min, max 23 min over 400 runs in 2h46m,
+    # measured 2026-08-27). On a quiet weekend an approval still waits for the
+    # cron. Fast and probabilistic, not deterministic; the cron stays as the
+    # floor.
+    workflows:
+      - "Engine tests"
+      - "JS workspace tests"
+      - "Eval harness tests"
+      - "Server tests"
+      - "Check runlog discipline"
+      - "Check e2e fixtures + grading"
+      - "check-engine-lockfile"
+      - "payload-guard"
+    types: [completed]
   check_suite:
     # DEAD TRIGGER, kept only to document that it is dead. Every check suite here
     # is created by an Actions workflow using `GITHUB_TOKEN`, and GitHub does not
@@ -156,6 +200,13 @@ concurrency:
   # Per-PR events serialize per PR. Sweeps share ONE key so a delayed cron run
   # cannot race the next one; they are add-only and idempotent, so queueing
   # rather than cancelling costs nothing.
+  #
+  # `workflow_run` has neither a pull_request nor a check_suite payload, so it
+  # falls through to 'sweep' — which is what keeps it cheap. A burst of CI
+  # completions collapses to one running sweep plus one pending, because GitHub
+  # cancels the previously-pending run in a group; and since every sweep
+  # evaluates every open PR, the survivor does the same work the cancelled ones
+  # would have.
   group: >-
     senior-queue-${{ github.event.pull_request.number
       || github.event.check_suite.id
@@ -334,8 +385,16 @@ jobs:
             core.info(`parsed ${rules.length} CODEOWNERS rule(s)`);
 
             // ---- which PRs to evaluate --------------------------------------
+            // `workflow_run` is a SWEEP, deliberately. Do NOT narrow it to
+            // `context.payload.workflow_run.pull_requests`: that array is EMPTY
+            // for fork-authored PRs, which is the exact population the forbidden
+            // `pull_request_review` trigger already fails on — narrowing it here
+            // would rebuild that hole in a new place. Sweeping is also what makes
+            // the trigger useful at all: any CI completion in the repo re-converges
+            // every open PR, not just the one whose CI finished.
             const sweep = context.eventName === 'schedule'
-                       || context.eventName === 'workflow_dispatch';
+                       || context.eventName === 'workflow_dispatch'
+                       || context.eventName === 'workflow_run';
 
             let numbers = [];
             if (sweep) {
