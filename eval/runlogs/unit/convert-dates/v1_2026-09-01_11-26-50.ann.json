@@ -1,9 +1,17 @@
 {
-  "run_log": "v1_2026-08-19_22-13-16.json",
-  "annotator": "eruth937@gmail.com",
+  "run_log": "v1_2026-09-01_11-26-50.json",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
       "test_id": "ut_convert_dates_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -37,9 +45,9 @@
     {
       "test_id": "ut_convert_dates_004",
       "dimension_source": "rubric",
-      "dimension_name": "Ambiguity handling",
-      "llm_score": null,
-      "corrected_score": null,
+      "dimension_name": "Genealogical presentation",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
@@ -51,63 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Genealogical presentation",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The original date is preserved and identified as Julian, but the response then explicitly presents “Modern Gregorian date: 14 September 1582 — unchanged”. That is genealogically misleading: before 15 October 1582, there was no contemporaneous Gregorian equivalent, so the unchanged date cannot be labeled a Gregorian date. A researcher should be told to record 14 September 1582 (Julian/Old Style) as written; 24 September 1582 may only be supplied separately as a proleptic Gregorian alignment for comparison. Because the response's table encodes the central distinction incorrectly rather than merely making the notation less explicit,"
-    },
-    {
-      "test_id": "ut_convert_dates_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool response interpretation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Genealogical presentation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Ambiguity handling",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Conversion accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_002",
+      "test_id": "ut_convert_dates_014",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -115,9 +67,49 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_003",
+      "test_id": "ut_convert_dates_014",
       "dimension_source": "base",
       "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Conversion accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical presentation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool response interpretation",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -131,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_003",
+      "test_id": "ut_convert_dates_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -139,23 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_001",
+      "test_id": "ut_convert_dates_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -163,7 +139,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_001",
+      "test_id": "ut_convert_dates_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_008",
       "dimension_source": "rubric",
       "dimension_name": "Conversion accuracy",
       "llm_score": 3,
@@ -171,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_001",
+      "test_id": "ut_convert_dates_008",
       "dimension_source": "rubric",
       "dimension_name": "Ambiguity handling",
       "llm_score": null,
@@ -179,7 +163,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_001",
+      "test_id": "ut_convert_dates_008",
       "dimension_source": "rubric",
       "dimension_name": "Genealogical presentation",
       "llm_score": 3,
@@ -187,49 +171,17 @@
       "comment": null
     },
     {
-      "test_id": "ut_convert_dates_001",
+      "test_id": "ut_convert_dates_008",
       "dimension_source": "rubric",
       "dimension_name": "Tool response interpretation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool response interpretation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Genealogical presentation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Ambiguity handling",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_convert_dates_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Conversion accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
       "test_id": "ut_convert_dates_005",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -245,10 +197,58 @@
     {
       "test_id": "ut_convert_dates_005",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Conversion accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical presentation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The skill correctly did not invoke the convert-dates skill"
+    },
+    {
+      "test_id": "ut_convert_dates_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The skill correctly did not invoke the convert-dates skill"
     }
   ]
 }
