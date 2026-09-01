@@ -47,7 +47,10 @@ describe('the control is actually wired', () => {
     // is untested on Windows, so the launcher uses the address that cannot depend
     // on the resolver. Nothing enforced the pairing either.
     const bat = fs.readFileSync(path.resolve(__dirname, '../../../Start.bat'), 'utf8')
-    expect(bat).toContain('127.0.0.1:3000')
-    expect(bat).not.toMatch(/start http:\/\/localhost:3000/)
+    // Anchored to the launch line itself. `toContain` was satisfied by any
+    // occurrence anywhere in the file — including the comment above — and the
+    // negative ruled out only one wrong spelling, so a comment mentioning the
+    // address plus a launcher on 0.0.0.0 passed both.
+    expect(bat).toMatch(/^start http:\/\/127\.0\.0\.1:3000\s*$/m)
   })
 })
