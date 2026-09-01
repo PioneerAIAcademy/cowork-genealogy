@@ -231,8 +231,12 @@ for (const { label, threads, approvals, want } of SUPERSEDED) {
     fail(`${WORKFLOW}: no \`workflow_run:\` trigger — the sweep that substitutes for the ` +
          `forbidden approval trigger is gone; the cron is the only thing left converging`);
   } else {
+    // Match all three YAML scalar styles. An earlier version matched only
+    // - "double-quoted", so a plain or single-quoted target was skipped in
+    // silence and the guard still reported success on the ones it did see.
     const listed = [...block.split(/^    types:/m)[0]
-      .matchAll(/^      - "(.+)"$/gm)].map(m => m[1]);
+      .matchAll(/^      - +(?:"(?<dq>[^"]+)"|'(?<sq>[^']+)'|(?<pl>[^"'#\s][^#]*?))\s*$/gm)]
+      .map(m => (m.groups.dq ?? m.groups.sq ?? m.groups.pl).trim());
     if (!listed.length) {
       fail(`${WORKFLOW}: \`workflow_run\` names no workflows, so it never fires`);
     }
