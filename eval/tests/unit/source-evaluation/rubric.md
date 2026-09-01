@@ -38,7 +38,7 @@ Does the report separate what the researcher can act on from FamilySearch storag
 Does the skill reach the sources the way its body says to, and pass arguments that match what it read? `person_read` with `sourceDescriptions: true` is the only path from a person id to the attached list; `record_read` takes the ARK carried by each source's `url`; `source_attachments` is required before a misattribution is called, so the recommendation can name where the record actually belongs.
 
 - **pass:** `person_read` is called with `sourceDescriptions: true`; every source carrying a `1:1:` ARK is read with the ARK it actually carries; `source_attachments` is called before any detach recommendation.
-- **partial:** The sources are enumerated and read correctly, but a misattribution is called without the `source_attachments` check, so the report says where the record does not belong without saying where it does.
+- **partial:** The sources are enumerated and read correctly, but a misattribution is called without the `source_attachments` check, so the report says where the record does not belong without saying where it does; **or** another person is named as the record's true subject on the attachment check alone, without a `person_read` of that person to confirm their facts fit — an attachment proves attachment, not ownership.
 - **fail:** `person_read` is called without `sourceDescriptions` and the audit proceeds on an empty source list; or an ARK is invented rather than taken from the source's `url`; or records are judged without being read.
 - **N/A:** The test routes away to another skill, so no tool work is expected. Score `null`.
 
