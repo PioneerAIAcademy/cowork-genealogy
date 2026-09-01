@@ -111,9 +111,9 @@ search*, not whether a plan exists.
 | No plan item, and **you** thought of the search | `Skill("research-plan")` and stop. It comes back as a plan item — not as ad-hoc |
 
 Refusing a researcher's own request is obstruction, not rigour; inventing a search
-nobody asked for is how a session drifts off its question. The rows above apply
-under `--autonomous` too, where `research-plan` decides in the user's place: route
-the search through it, never run it yourself.
+nobody asked for is how a session drifts off its question. The third row applies
+under `--autonomous` too — `research-plan` decides in the user's place, so route the
+search through it rather than running it yourself.
 
 ### 2. Construct the search query
 

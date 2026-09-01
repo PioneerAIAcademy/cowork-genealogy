@@ -416,8 +416,10 @@ supersession only by updating the prior plan's `status` to
 
 ### 6. Handle re-planning
 
-If a previous plan for this question exists and all items are searched
-but the question remains unresolved:
+If a previous plan for this question exists and either all its items are
+searched but the question remains unresolved, or new information has
+invalidated its assumptions while items are still unfinished (Step 1a,
+supersede mode):
 
 1. Supersede the old plan with an `update`:
 
@@ -435,7 +437,10 @@ but the question remains unresolved:
 
 2. Create a new plan (Step 5) targeting what the old missed —
    different repositories, jurisdictions, record types, FAN or
-   contextual sources. Reference the old plan in the rationale.
+   contextual sources. Reference the old plan in the rationale. When
+   superseding a plan with unfinished items, **carry forward every
+   `planned` item the new information does not invalidate**: an item left
+   behind on the superseded plan is never executed again.
 
 Never modify a superseded plan — it is part of the audit trail. Status
 transitions (`planned → in_progress → completed`) on existing items are
