@@ -110,9 +110,9 @@ genuinely blocked, but not by a byte count.** It folds to roughly 143 KB, of
 which about 87 KB is `references/` — and an agent cannot keep a `references/`
 directory. That is the real constraint, and issue #2123 is its prerequisite:
 whether `wiki_search` can serve that reference layer. Note also that stripping
-the references leaves the body at 56,244 bytes, which "clears" any
-record-extractor-derived ceiling by about 2%, i.e. inside the meaningless
-window — another reason not to run this decision through a threshold.
+the references leaves the body at 56,244 bytes — within 2% of
+`record-extractor.md`, and well inside the range that file has moved through
+on its own. One more reason not to run this decision through a threshold.
 
 **Do not split references back out.** Measured and reverted: on-demand `Read`
 inside an agent scored 6/19 against a 12–14/19 baseline, and the external
