@@ -1180,16 +1180,16 @@ export default function RunLogDetailPage({
     queryFn: async () => {
       const res = await fetch(`/api/runlogs/${runLogId}`);
       if (res.status === 422) {
-        // The annotation file is corrupt (temp-name collision spliced two
-        // saves together). The message already names the file's full path.
-        // There is no in-product repair — explain and give the recovery line,
-        // per the corrupt-annotation guard in eval-crud-ui-spec.md. No delete
-        // button: an unrecoverable destructive action on the annotator's
-        // written comments does not belong on the page where they are already
-        // confused.
+        // The annotation file is corrupt (e.g. a temp-name collision spliced
+        // two saves together, or an off-schema file). There is no in-product
+        // repair — explain and give the recovery line, per the
+        // corrupt-annotation guard in eval-crud-ui-spec.md. No delete button:
+        // an unrecoverable destructive action on the annotator's written
+        // comments does not belong on the page where they are already
+        // confused. The route hands us the file path directly.
         const body = await res.json().catch(() => ({}));
         const msg: string = body.message ?? 'Annotation file is corrupt.';
-        const filePath = msg.match(/Annotation file (.+?) is not valid JSON/)?.[1];
+        const filePath: string | undefined = body.filePath;
         const recovery = filePath
           ? `\n\nTo recover, delete the corrupt file and re-annotate from the start:\n\n    rm ${filePath}\n\n(Copy it somewhere first if you want to keep the partial content.)`
           : '';
