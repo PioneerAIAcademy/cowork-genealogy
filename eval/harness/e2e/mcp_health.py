@@ -105,8 +105,8 @@ _UNAVAILABLE_STATUSES = frozenset({"failed", "needs-auth", "disabled"})
 # That is not a precaution; it is measured. Against this CLI (2026-08-04) the
 # init message for a HEALTHY genealogy server arrives at ~11s carrying
 # "pending" (it settles to "connected"/47 tools at ~25s), while a server that
-# died at startup has already settled to "failed" by the time its init arrives
-# at ~25s. So a `status != "connected"` abort would have killed EVERY healthy
+# died at startup has already settled to "failed" by the time its init
+# arrives (~0.3-1.0s, re-measured 2026-08-27 on CLI 2.1.248; was ~25s on 2026-08-04). So a `status != "connected"` abort would have killed EVERY healthy
 # e2e run, and the three-way split is what makes the init check safe. A
 # `pending` that never resolves — or a dead server that settles late — produces
 # exactly the zero-`mcp__`-calls signature the backstop watches for.
