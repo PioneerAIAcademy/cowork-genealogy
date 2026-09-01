@@ -467,7 +467,49 @@ to understand before reading either:
 - Both counts are **branch-scoped** — they read `eval/runlogs/e2e/` in the
   current checkout, so a graded run committed on an unmerged branch is not
   skipped, it is never seen. Read a count off an up-to-date `main` with in-flight
-  fixture PRs merged, or it is biased at the moment it is used.
+  fixture PRs merged, or it is biased at the moment it is used. Every **e2e**
+  corpus reader now states this itself, every time it runs — `describe_window()`
+  (`harness/since_window.py`) appends a fixed caveat naming the branch-scope
+  limitation to its own printed line when the reader found runs, and each
+  reader also prints `branch_scope_note()` directly on its empty-corpus path
+  (a bare "No committed runs found" never reaches `describe_window()`, and an
+  empty read is exactly the case a reader cannot rule out "the run exists on
+  another branch" — see `test_e2e_branch_scope_caveat.py`). The three **unit**-corpus readers
+  (`eval-timings`, `judge-report`, `skill-latency`) share the same function
+  but only print its line — caveat included — under a `SINCE=` that resolves
+  to a cutoff (`SINCE=all` is explicit and prints nothing); bare, they show
+  every skill unfiltered and print no window line at all, so there is nothing
+  for the caveat to attach to by default.
+- **The remedy is a caveat plus an on-demand crawl, not an exact count.**
+  Considered and rejected: crawling remote branches inside every reader
+  (real engineering cost for speculative value — measured 2026-08-25 at 23
+  stale-branch result JSONs against 0 runs behind an open PR, so an
+  embedded crawl would add that cost and noise to every invocation for no
+  live gain that day), and warning when an open PR touches
+  `eval/runlogs/e2e/` (needs network access in a module deliberately kept
+  pure-analysis). What shipped instead: `make e2e-branch-only`
+  (`eval/harness/scripts/branch_only_runlogs.py`) diffs `git ls-tree` between
+  HEAD and every local/remote-tracking ref already known to the checkout, and
+  excludes any ref already merged into HEAD — a merged-then-deliberately-deleted
+  run is not a run HEAD is missing, only a run HEAD chose to drop; without the
+  exclusion, a prior fixture-authoring cleanup that removed two runs from
+  `main` on purpose still reported them as branch-only on the long-merged
+  ref they were authored on.
+
+  The module itself makes no network call; the Makefile target fetches
+  (`--prune`) first, since a branch nobody has locally fetched is invisible
+  to it regardless of how in-flight its work is. That is not a theoretical
+  gap: the "0 runs behind an open PR" figure above was contradicted by a
+  genuinely in-flight graded run within about a day of being measured, and a
+  crawl run without fetching first missed it for exactly that reason — the
+  tool is weakest precisely where this issue is strongest. Re-measured
+  2026-08-27 with the fetch-first fix in place, then cross-checked by hand
+  against `gh pr list --state open`: 21 result JSONs across 16 refs, of which
+  1 ref is behind a currently-open PR — nonzero, confirming the fix closes
+  the gap the counterexample found, and still a small minority, which is why
+  the crawl leaves the GitHub-side cross-reference to the human rather than
+  querying it itself. A human runs the target and triages the result only
+  when a decision is actually about to be taken off one of these counts.
 - The **replayed** counts read the whole corpus. `same_person` provenance: **115
   of the 149 runs that link a person have ≥1 gap (699 links, 76 fixtures)**, with
   one run skipped and named for having no committed seed tree. Before the
