@@ -1,0 +1,3766 @@
+{
+  "schema_version": 3,
+  "skill": "research",
+  "version": 1,
+  "released": false,
+  "releasable": true,
+  "invocation": "skill",
+  "timestamp": "2026-08-26_20-01-53",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "c39d70034788a3190bc9f65e6e1c41adf6311eb54831799fc3c6edb9c3263202",
+  "snapshot": {
+    "packages/engine/plugin/skills/research/SKILL.md": "ce77543aebfbbca58b537637dbb0b256edab41eb531d5ffd8cd8b9cc427aaa4d",
+    "packages/engine/plugin/agents/gps-mentor.md": "3e044aaf951bb8e74094dc3e0c582e887733d8080f8b0a6e5cf752fe0d1ebfcd",
+    "eval/tests/unit/research/README.md": "659376a5633305de24c61c8ae0cc30c465d6797090d03526ae136460a0c87d5c",
+    "eval/tests/unit/research/autonomous-handoff.json": "52d853e5c0423e84f6ad29daa5b21c6c03b035e31a3927065036f6bc5f63c4b0",
+    "eval/tests/unit/research/find-relative.json": "a1b79267fbc9278ea3c97ec5e5262d6042802825c135c598c4219095e3763ec7",
+    "eval/tests/unit/research/investigate-person.json": "4fa1d5939c71ed964546c76e51fbebefde0691b3f229d6477c1b3ddd0afcb9f2",
+    "eval/tests/unit/research/negative-direct-plan.json": "06594ac75b921f349392b556a739f8849ba671087d7b0e6c6ea3abbe2f6cb691",
+    "eval/tests/unit/research/negative-direct-question-selection.json": "64a2c9c53db31ecd6179c69c5ceaf0830ab537835df0cffaef8a956d422d5587",
+    "eval/tests/unit/research/negative-direct-search.json": "42aea4c905da58b54e50eda5e9ecf70b3db76c2663e776a9777ad9300ada6cb9",
+    "eval/tests/unit/research/negative-no-project.json": "178fd5341187d9037739bfffee2b0ae12918960852cf21debde32bc73789f32d",
+    "eval/tests/unit/research/negative-status-summary.json": "c9700335a63467df1ed7cd2c6f1a8885df79b6981f936e66efd31644c162b0f1",
+    "eval/tests/unit/research/research-objective.json": "04af92716106d2704743715051bfbb907fbfd53200f06e0e8440c1cf17966adb",
+    "eval/tests/unit/research/route-no-plan-no-localities.json": "dec9e5cbc30d19a445748a69cdf37883641f6bd964b025e80d9fa34df30a182a",
+    "eval/tests/unit/research/route-no-plan-with-localities.json": "286a566eb11dd8bce1fcb10fb49e78e39e0d336674d5ab9a8e69dec1ea347135",
+    "eval/tests/unit/research/route-no-questions.json": "19e68df7e81e862367a304b63b674617d1c8bfabbeb70635060e3867852dbe12",
+    "eval/tests/unit/research/route-planned-items.json": "79b2fc1412d44fcffa37e6b53359878ecb0200edb33652ed4674e2070ace7640",
+    "eval/tests/unit/research/route-shortcut-guard.json": "df3ec4aff30c787bf9187d79676871d8774b83cfa7f215bdcf9b2002182d3ce5",
+    "eval/tests/unit/research/slash-research-question.json": "69ff7bcba7ebf270f990110a8295c6e70797852ce1ca20f11ffde6abe318b2f1",
+    "eval/fixtures/scenarios/anders-unna-marriage-search/README.md": "eb0d9375ec7c884c655f6e656800373ce0f398b2d0077a301b1238c70ce1c4e9",
+    "eval/fixtures/scenarios/anders-unna-marriage-search/research.json": "180d103a25da3e6d9744c02bd61707178f5e39b1c4583adc430aa4c6315bed2f",
+    "eval/fixtures/scenarios/anders-unna-marriage-search/tree.gedcomx.json": "c6e1602c1331b356759a6dd9dd5354bf96033d0f3c66168e62818886e20cd8b4",
+    "eval/fixtures/scenarios/blyeberg-first-plan/README.md": "cd02df5af5264ad5277c2ad1b211de26e6cc648fe4efd96ddf1b164f682d380f",
+    "eval/fixtures/scenarios/blyeberg-first-plan/research.json": "30d8d2fd4abae88eadb83cbed56c7e02342674d205aca86af3aed55aa5cc435b",
+    "eval/fixtures/scenarios/blyeberg-first-plan/tree.gedcomx.json": "c656011cc2b7098f4c1404ed176c541704226e1215ed1cd244085467b566ec27",
+    "eval/fixtures/scenarios/empty-folder-no-project/README.md": "1cdd34da59a1860660fd904b5752dc2e232102b1471c3df6d2951c26dda285cb",
+    "eval/fixtures/scenarios/empty-project-just-created/README.md": "1eaade55626961964ad31d03c770c2285ee400834dd6f03d21a0518f477f9346",
+    "eval/fixtures/scenarios/empty-project-just-created/research.json": "e4e30a5994357264b24ab099dca321d438ecdf7244b738182e7ca65e386fe049",
+    "eval/fixtures/scenarios/empty-project-just-created/tree.gedcomx.json": "2f78821d8cee590a01ff5aed4483aa8037c07fa92f6fcedab6a8ec205ee9ca98",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "8ec8f1927ff467c125a40c1e40ad66f452739526f4121b346f29626f192f4c9d",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/scenarios/wilkins-first-plan/README.md": "90142108c3b03a74692f3871ffc55668790949c1ad633042a3f4a39e769e7895",
+    "eval/fixtures/scenarios/wilkins-first-plan/research.json": "3656379a89e6011c6ed44bce41eee45563ae282b81fe8f3610563e9b6de382bc",
+    "eval/fixtures/scenarios/wilkins-first-plan/tree.gedcomx.json": "5e74476e2c2556d3405d46a7595622cbd820d5d16d51511b204ebb782d238441"
+  },
+  "tests": [
+    {
+      "test_id": "ut_research_005",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 50336.20660499582,
+        "duration_api_ms": 50387.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 50478.188037872314,
+        "num_turns": 9,
+        "input_tokens": 360,
+        "cached_input_tokens": 167343,
+        "cache_creation_input_tokens": 20536,
+        "output_tokens": 2286,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.1617509,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.1617509
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_005_2026-08-26_20-01-53_0",
+          "outcome": "aborted",
+          "aborted_reason": "max_turns",
+          "duration_ms": 50336.20660499582,
+          "duration_api_ms": 50387.0,
+          "num_turns": 9,
+          "skill_attempts": 1,
+          "input_tokens": 360,
+          "cached_input_tokens": 167343,
+          "cache_creation_input_tokens": 20536,
+          "output_tokens": 2286,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 346,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00041600000000000003,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 14,
+              "outputTokens": 2272,
+              "cacheReadInputTokens": 167343,
+              "cacheCreationInputTokens": 20536,
+              "webSearchRequests": 0,
+              "costUSD": 0.1613349,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.1617509,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "research"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_005-0-0-pbujkeqy"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_005-0-0-pbujkeqy",
+                  "section": "questions"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_005-0-0-pbujkeqy",
+                  "section": "proof_summaries"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_005-0-0-pbujkeqy",
+                  "section": "evaluations"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_005-0-0-pbujkeqy",
+                  "section": "log"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_005-0-0-pbujkeqy",
+                  "section": "assertions"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "research",
+                  "args": "Research Patrick Flynn's parentage --autonomous"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
+                  "max_results": "2"
+                }
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: research.json was not modified"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": "skipped: not a routing test"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1787774577.127475,
+          "ended_at": 1787774627.605663
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_003",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 94759.04167999397,
+        "duration_api_ms": 91408.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 96395.62582969666,
+        "num_turns": 9,
+        "input_tokens": 385,
+        "cached_input_tokens": 199374,
+        "cache_creation_input_tokens": 32530,
+        "output_tokens": 2699,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.22255970000000003,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.22255970000000003
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_003_2026-08-26_20-01-53_0",
+          "outcome": "aborted",
+          "aborted_reason": "max_turns",
+          "duration_ms": 94759.04167999397,
+          "duration_api_ms": 91408.0,
+          "num_turns": 9,
+          "skill_attempts": 1,
+          "input_tokens": 385,
+          "cached_input_tokens": 199374,
+          "cache_creation_input_tokens": 32530,
+          "output_tokens": 2699,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 365,
+              "outputTokens": 15,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00043999999999999996,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 20,
+              "outputTokens": 2684,
+              "cacheReadInputTokens": 199374,
+              "cacheCreationInputTokens": 32530,
+              "webSearchRequests": 0,
+              "costUSD": 0.22211970000000003,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.22255970000000003,
+          "output": {
+            "text_response": "No `research.json` exists yet. I need to initialize the project first.",
+            "activated": true,
+            "skills_invoked": [
+              "research",
+              "init-project"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "research",
+                  "args": "Find the wife of Patrick Flynn, born around 1845 in Ireland, living in New York by 1870."
+                }
+              },
+              {
+                "tool": "Glob",
+                "args": {
+                  "pattern": "**/*",
+                  "path": "/tmp/eval-ut_research_003-0-0-ev763vrx"
+                }
+              },
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "init-project",
+                  "args": "Research objective: Find the wife of Patrick Flynn, born around 1845 in Ireland, living in New York by 1870. Project path: /tmp/eval-ut_research_003-0-0-ev763vrx"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__project_create,mcp__genealogy__research_append,mcp__genealogy__project_context",
+                  "max_results": "5"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "person_search person_read genealogy",
+                  "max_results": "3"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__person_search,mcp__genealogy__person_read",
+                  "max_results": "3"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "place_search record_search genealogy mcp",
+                  "max_results": "5"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "mcp genealogy place_search",
+                  "max_results": "3"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: research.json was not modified"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": "skipped: not a routing test"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1787774513.474867,
+          "ended_at": 1787774609.870493
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_004",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 109494.77696699614,
+        "duration_api_ms": 104815.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 111074.0807056427,
+        "num_turns": 9,
+        "input_tokens": 377,
+        "cached_input_tokens": 171277,
+        "cache_creation_input_tokens": 23225,
+        "output_tokens": 5083,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.21499684999999996,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.21499684999999996
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_004_2026-08-26_20-01-53_0",
+          "outcome": "aborted",
+          "aborted_reason": "max_turns",
+          "duration_ms": 109494.77696699614,
+          "duration_api_ms": 104815.0,
+          "num_turns": 9,
+          "skill_attempts": 1,
+          "input_tokens": 377,
+          "cached_input_tokens": 171277,
+          "cache_creation_input_tokens": 23225,
+          "output_tokens": 5083,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 363,
+              "outputTokens": 13,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000428,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 14,
+              "outputTokens": 5070,
+              "cacheReadInputTokens": 171277,
+              "cacheCreationInputTokens": 23225,
+              "webSearchRequests": 0,
+              "costUSD": 0.21456884999999998,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.21499684999999996,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "research"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_004-0-0-j_x41jjg"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_004-0-0-j_x41jjg",
+                  "section": "questions"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_004-0-0-j_x41jjg",
+                  "section": "proof_summaries"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_004-0-0-j_x41jjg",
+                  "section": "evaluations"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "research",
+                  "args": "Investigate Patrick Flynn \u2014 find where he came from in Ireland and whether there are any records of his immigration."
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__project_context,mcp__genealogy__research_query",
+                  "max_results": "2"
+                }
+              },
+              {
+                "tool": "Glob",
+                "args": {
+                  "pattern": "tree.gedcomx.json",
+                  "path": "/tmp/eval-ut_research_004-0-0-j_x41jjg"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/tmp/eval-ut_research_004-0-0-j_x41jjg/tree.gedcomx.json"
+                }
+              },
+              {
+                "tool": "Glob",
+                "args": {
+                  "pattern": "evaluations/**/*",
+                  "path": "/tmp/eval-ut_research_004-0-0-j_x41jjg"
+                }
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: research.json was not modified"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": "skipped: not a routing test"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1787774513.476377,
+          "ended_at": 1787774624.5504577
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_009",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test. The skill correctly declined to perform its own task (research) and routed the user to research-plan, which is the appropriate skill for writing a research plan for a specific question. The decline/routing decision is correct."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "This is a negative test. The skill correctly identified that the user's request (write a research plan for question Q1) should be handled by research-plan, not by research. The routing decision is complete and appropriate. Not performing research's own task is the correct outcome."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly routed to research-plan without invoking tools itself. N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 4796.747927997785,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 3178.919681995467,
+        "wall_clock_ms": 8118.119478225708,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 9367,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 284,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.010787,
+        "total_cost_usd": 0.010787
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_009_2026-08-26_20-01-53_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 4796.747927997785,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "research-plan"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "research-plan",
+                  "args": "question Q1 - Patrick Flynn's parents"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": "skipped: not a routing test"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test. The skill correctly declined to perform its own task (research) and routed the user to research-plan, which is the appropriate skill for writing a research plan for a specific question. The decline/routing decision is correct."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "This is a negative test. The skill correctly identified that the user's request (write a research plan for question Q1) should be handled by research-plan, not by research. The routing decision is complete and appropriate. Not performing research's own task is the correct outcome."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill correctly routed to research-plan without invoking tools itself. N/A."
+              }
+            ],
+            "judge_cost_usd": 0.010787,
+            "duration_ms": 3178.919681995467,
+            "error": null,
+            "input_tokens": 9367,
+            "cached_input_tokens": 0,
+            "output_tokens": 284
+          },
+          "started_at": 1787774621.8126197,
+          "ended_at": 1787774629.9307392
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_010",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test. The skill correctly declined to perform its own task (research) and routed the user to question-selection, which is the appropriate skill for deriving research questions from the tree and objective. The routing decision is correct."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "This is a negative test. Correct behavior is to decline and route, not to perform research's task. The skill did not perform its own task, which is the correct outcome. No substantive output was produced when none should have been."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly routed to question-selection without invoking tools itself. N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 4677.754990996618,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 3221.575681003742,
+        "wall_clock_ms": 8070.380210876465,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 9355,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 276,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.010735,
+        "total_cost_usd": 0.010735
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_010_2026-08-26_20-01-53_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 4677.754990996618,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "question-selection"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "question-selection"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": "skipped: not a routing test"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test. The skill correctly declined to perform its own task (research) and routed the user to question-selection, which is the appropriate skill for deriving research questions from the tree and objective. The routing decision is correct."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "This is a negative test. Correct behavior is to decline and route, not to perform research's task. The skill did not perform its own task, which is the correct outcome. No substantive output was produced when none should have been."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill correctly routed to question-selection without invoking tools itself. N/A."
+              }
+            ],
+            "judge_cost_usd": 0.010735,
+            "duration_ms": 3221.575681003742,
+            "error": null,
+            "input_tokens": 9355,
+            "cached_input_tokens": 0,
+            "output_tokens": 276
+          },
+          "started_at": 1787774624.601018,
+          "ended_at": 1787774632.6713982
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_006",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test. The skill correctly declined to perform its own task (research) and instead routed the user to search-records, which is the appropriate skill for a specific record search request. The user asked for a targeted 1880 census search for Patrick Flynn in New York, not a full research objective. The skill made the correct routing decision."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "This is a negative test. The skill's task was to decline and route to search-records, which it did. Completeness on a negative test is measured by whether the routing decision was made correctly, not by whether the skill performed its own task. The skill completed the correct action: declining and routing."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill under test. The skill correctly declined to invoke tools itself and routed to search-records instead. Tool Arguments is N/A when zero MCP calls occur."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 5611.288432999572,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 3971.770092000952,
+        "wall_clock_ms": 9756.553411483765,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 9365,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 330,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.011015,
+        "total_cost_usd": 0.011015
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_006_2026-08-26_20-01-53_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 5611.288432999572,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "search-records"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-records",
+                  "args": "Search the 1880 US Census for Patrick Flynn in New York, looking for him as head of household."
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": "skipped: not a routing test"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test. The skill correctly declined to perform its own task (research) and instead routed the user to search-records, which is the appropriate skill for a specific record search request. The user asked for a targeted 1880 census search for Patrick Flynn in New York, not a full research objective. The skill made the correct routing decision."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "This is a negative test. The skill's task was to decline and route to search-records, which it did. Completeness on a negative test is measured by whether the routing decision was made correctly, not by whether the skill performed its own task. The skill completed the correct action: declining and routing."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the skill under test. The skill correctly declined to invoke tools itself and routed to search-records instead. Tool Arguments is N/A when zero MCP calls occur."
+              }
+            ],
+            "judge_cost_usd": 0.011015,
+            "duration_ms": 3971.770092000952,
+            "error": null,
+            "input_tokens": 9365,
+            "cached_input_tokens": 0,
+            "output_tokens": 330
+          },
+          "started_at": 1787774624.414197,
+          "ended_at": 1787774634.1707504
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_008",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "empty-folder-no-project",
+      "mcp_fixtures": [],
+      "outcome": "fail",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "fail"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly recognized that no project exists (no research.json or tree.gedcomx.json) and declined to perform research work. The response appropriately asked for information rather than attempting to initialize a project or create files inline, which is the correct behavior for this negative test scenario."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude's response fully addresses the correct behavior for this scenario: it declines to perform research without a project, and implicitly routes by asking for the person's information\u2014the natural next step before init-project would be invoked. The response does not attempt to create research.json or proceed with research tasks."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The skill correctly avoided attempting any tool calls, which is appropriate given the negative test requirement to decline and route rather than perform research tasks."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 7682.707644999027,
+        "duration_api_ms": 9334.0,
+        "judge_duration_ms": 4066.188811993925,
+        "wall_clock_ms": 11845.39008140564,
+        "num_turns": 1,
+        "input_tokens": 362,
+        "cached_input_tokens": 7564,
+        "cache_creation_input_tokens": 5814,
+        "output_tokens": 190,
+        "judge_input_tokens": 5740,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 309,
+        "skill_cost_usd": 0.0271497,
+        "judge_cost_usd": 0.007285,
+        "total_cost_usd": 0.0344347
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_008_2026-08-26_20-01-53_0",
+          "outcome": "fail",
+          "aborted_reason": null,
+          "duration_ms": 7682.707644999027,
+          "duration_api_ms": 9334.0,
+          "num_turns": 1,
+          "skill_attempts": 1,
+          "input_tokens": 362,
+          "cached_input_tokens": 7564,
+          "cache_creation_input_tokens": 5814,
+          "output_tokens": 190,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 359,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000429,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 3,
+              "outputTokens": 176,
+              "cacheReadInputTokens": 7564,
+              "cacheCreationInputTokens": 5814,
+              "webSearchRequests": 0,
+              "costUSD": 0.0267207,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.0271497,
+          "output": {
+            "text_response": "I'd love to help you research your ancestor's parents! I just need a bit more information to get started. Could you tell me about the person whose parents you want to find?\n\nPlease share what you know:\n- **Full name** (as best you know it)\n- **Birth year/place** (approximate is fine)\n- **Death year/place** (if known)\n- **Any other details** \u2014 spouse, children, known records, etc.",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": "skipped: not a routing test"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude correctly recognized that no project exists (no research.json or tree.gedcomx.json) and declined to perform research work. The response appropriately asked for information rather than attempting to initialize a project or create files inline, which is the correct behavior for this negative test scenario."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude's response fully addresses the correct behavior for this scenario: it declines to perform research without a project, and implicitly routes by asking for the person's information\u2014the natural next step before init-project would be invoked. The response does not attempt to create research.json or proceed with research tasks."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. The skill correctly avoided attempting any tool calls, which is appropriate given the negative test requirement to decline and route rather than perform research tasks."
+              }
+            ],
+            "judge_cost_usd": 0.007285,
+            "duration_ms": 4066.188811993925,
+            "error": null,
+            "input_tokens": 5740,
+            "cached_input_tokens": 0,
+            "output_tokens": 309
+          },
+          "started_at": 1787774609.8885386,
+          "ended_at": 1787774621.7339287
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_007",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test. The skill correctly declined to perform its own task (research) and routed the user to project-status, which is the appropriate skill for answering a status/summary question. The routing decision is correct."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "This is a negative test. The skill correctly identified that the user's request (asking for project status and what's left to do) should be handled by project-status, not by research. The decline/routing is the complete and correct response required here."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tools and instead routed to another skill. N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 4925.318531000812,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 4292.417687000125,
+        "wall_clock_ms": 9359.24506187439,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 9358,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 277,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.010742999999999999,
+        "total_cost_usd": 0.010742999999999999
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_007_2026-08-26_20-01-53_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 4925.318531000812,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "project-status"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "project-status"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": "skipped: not a routing test"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test. The skill correctly declined to perform its own task (research) and routed the user to project-status, which is the appropriate skill for answering a status/summary question. The routing decision is correct."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "This is a negative test. The skill correctly identified that the user's request (asking for project status and what's left to do) should be handled by project-status, not by research. The decline/routing is the complete and correct response required here."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tools and instead routed to another skill. N/A."
+              }
+            ],
+            "judge_cost_usd": 0.010742999999999999,
+            "duration_ms": 4292.417687000125,
+            "error": null,
+            "input_tokens": 9358,
+            "cached_input_tokens": 0,
+            "output_tokens": 277
+          },
+          "started_at": 1787774614.8935497,
+          "ended_at": 1787774624.2527947
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_001",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 100019.67631400476,
+        "duration_api_ms": 96102.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 101373.50296974182,
+        "num_turns": 9,
+        "input_tokens": 381,
+        "cached_input_tokens": 162099,
+        "cache_creation_input_tokens": 20527,
+        "output_tokens": 4683,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.19608995,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.19608995
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_001_2026-08-26_20-01-53_0",
+          "outcome": "aborted",
+          "aborted_reason": "max_turns",
+          "duration_ms": 100019.67631400476,
+          "duration_api_ms": 96102.0,
+          "num_turns": 9,
+          "skill_attempts": 1,
+          "input_tokens": 381,
+          "cached_input_tokens": 162099,
+          "cache_creation_input_tokens": 20527,
+          "output_tokens": 4683,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 367,
+              "outputTokens": 17,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000452,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 14,
+              "outputTokens": 4666,
+              "cacheReadInputTokens": 162099,
+              "cacheCreationInputTokens": 20527,
+              "webSearchRequests": 0,
+              "costUSD": 0.19563795,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.19608995,
+          "output": {
+            "text_response": "Let me check the tree encoding and assertions to complete the routing picture before proceeding.",
+            "activated": true,
+            "skills_invoked": [
+              "research"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_001-0-0-twxx5iqn"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_001-0-0-twxx5iqn",
+                  "section": "questions"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_001-0-0-twxx5iqn",
+                  "section": "proof_summaries"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_001-0-0-twxx5iqn",
+                  "section": "evaluations"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_001-0-0-twxx5iqn",
+                  "section": "log"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_001-0-0-twxx5iqn",
+                  "section": "assertions",
+                  "questionId": "q_001"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "research",
+                  "args": "Identify the parents (father and mother) of Patrick Flynn, born about 1845 in Ireland. Find their names from primary records."
+                }
+              },
+              {
+                "tool": "Glob",
+                "args": {
+                  "pattern": "**/*.json",
+                  "path": "/tmp/eval-ut_research_001-0-0-twxx5iqn"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
+                  "max_results": "2"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/tmp/eval-ut_research_001-0-0-twxx5iqn/tree.gedcomx.json"
+                }
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: research.json was not modified"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": "skipped: not a routing test"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1787774513.4804122,
+          "ended_at": 1787774614.8539152
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_012",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "wilkins-first-plan",
+      "mcp_fixtures": [],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 62772.01716700074,
+        "duration_api_ms": 58495.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 64104.25043106079,
+        "num_turns": 11,
+        "input_tokens": 368,
+        "cached_input_tokens": 257459,
+        "cache_creation_input_tokens": 26592,
+        "output_tokens": 2206,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.21032170000000003,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.21032170000000003
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_012_2026-08-26_20-01-53_0",
+          "outcome": "aborted",
+          "aborted_reason": "max_turns",
+          "duration_ms": 62772.01716700074,
+          "duration_api_ms": 58495.0,
+          "num_turns": 11,
+          "skill_attempts": 1,
+          "input_tokens": 368,
+          "cached_input_tokens": 257459,
+          "cache_creation_input_tokens": 26592,
+          "output_tokens": 2206,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 350,
+              "outputTokens": 13,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000415,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 18,
+              "outputTokens": 2193,
+              "cacheReadInputTokens": 257459,
+              "cacheCreationInputTokens": 26592,
+              "webSearchRequests": 0,
+              "costUSD": 0.20990670000000003,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.21032170000000003,
+          "output": {
+            "text_response": "The project has one open question about Elijah Wilkins's death date and place, currently in \"framed\" state with no research plan and no locality guide yet. The routing table says: question with no plan + no localities entry \u2192 `locality-guide` first.Now that the locality guide has surveyed Kentucky vital records, I'll move on to building the research plan.No plans yet, no log entries, and the locality-guide ran (noted). I'll now discover which collections cover Kentucky death records for the relevant period, then write the plan.",
+            "activated": false,
+            "skills_invoked": [
+              "locality-guide",
+              "research-plan"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_012-0-0-17pedl15"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_012-0-0-17pedl15",
+                  "section": "questions",
+                  "questionId": "q_001"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_012-0-0-17pedl15",
+                  "section": "plans",
+                  "questionId": "q_001"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_012-0-0-17pedl15",
+                  "section": "log"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
+                  "max_results": "2"
+                }
+              },
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "locality-guide",
+                  "args": "projectPath=/tmp/eval-ut_research_012-0-0-17pedl15 questionId=q_001 place=\"Kentucky, United States\" timePeriod=\"late 19th\u2013early 20th century\" focus=\"death certificates and supporting vital records for"
+                }
+              },
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "research-plan",
+                  "args": "projectPath=/tmp/eval-ut_research_012-0-0-17pedl15 questionId=q_001"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__collections_search,mcp__genealogy__external_links_search,mcp__genealogy__place_search,mcp__genealogy__research_append",
+                  "max_results": "4"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__collections_search,mcp__genealogy__external_links_search,mcp__genealogy__place_search",
+                  "max_results": "3"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "collections search genealogy",
+                  "max_results": "5"
+                }
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: research.json was not modified"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1787774513.4734664,
+          "ended_at": 1787774577.5777168
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_013",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "blyeberg-first-plan",
+      "mcp_fixtures": [],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 120572.29380000354,
+        "duration_api_ms": 117580.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 122197.68023490906,
+        "num_turns": 11,
+        "input_tokens": 370,
+        "cached_input_tokens": 296148,
+        "cache_creation_input_tokens": 41931,
+        "output_tokens": 5609,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.33049065,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.33049065
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_013_2026-08-26_20-01-53_0",
+          "outcome": "aborted",
+          "aborted_reason": "max_turns",
+          "duration_ms": 120572.29380000354,
+          "duration_api_ms": 117580.0,
+          "num_turns": 11,
+          "skill_attempts": 1,
+          "input_tokens": 370,
+          "cached_input_tokens": 296148,
+          "cache_creation_input_tokens": 41931,
+          "output_tokens": 5609,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 350,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00042,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 20,
+              "outputTokens": 5595,
+              "cacheReadInputTokens": 296148,
+              "cacheCreationInputTokens": 41931,
+              "webSearchRequests": 0,
+              "costUSD": 0.33007064999999997,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.33049065,
+          "output": {
+            "text_response": "The project has one open question (q_001) about Mikkel Nielsen Blyeberg's father. The locality guide is already in place (loc_001), and the next step per the routing table is **research-plan**. Let me invoke that now.The research plan has been created. Per the routing table, with plan items now established but not yet executed, the next step is **search-records**.",
+            "activated": false,
+            "skills_invoked": [
+              "research-plan",
+              "search-records"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_013-0-0-525cw6wu"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_013-0-0-525cw6wu",
+                  "section": "plans",
+                  "questionId": "q_001"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_013-0-0-525cw6wu",
+                  "section": "plans",
+                  "questionId": "q_001"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
+                  "max_results": "2"
+                }
+              },
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "research-plan",
+                  "args": "questionId: q_001, projectPath: /tmp/eval-ut_research_013-0-0-525cw6wu"
+                }
+              },
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-records",
+                  "args": "questionId: q_001, projectPath: /tmp/eval-ut_research_013-0-0-525cw6wu"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_log_append,mcp__genealogy__research_append",
+                  "max_results": "3"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__record_search",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "record_search genealogy",
+                  "max_results": "3"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "+mcp__genealogy record search FamilySearch",
+                  "max_results": "5"
+                }
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: research.json was not modified"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1787774513.4613762,
+          "ended_at": 1787774635.6590564
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_011",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "empty-project-just-created",
+      "mcp_fixtures": [],
+      "outcome": "fail",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "fail"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified that the project has an objective but no questions yet, accurately assessed the project state via tool calls, and correctly invoked question-selection as the appropriate next step per the routing table. The narration of next steps is accurate and grounded in the project's actual state."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's request to 'drive the next step for this project' by correctly diagnosing the project state (objective present, no questions), invoking the appropriate routing decision (question-selection), and explaining the expected workflow. No required elements were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three MCP tool calls used correct arguments: mcp__genealogy__project_context with the correct projectPath, and two mcp__genealogy__research_query calls with correct projectPath and section='questions'. All calls matched expected patterns and returned valid responses with no fixture_not_found errors."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 57028.67678799521,
+        "duration_api_ms": 52628.0,
+        "judge_duration_ms": 4723.860567995871,
+        "wall_clock_ms": 63535.30693054199,
+        "num_turns": 8,
+        "input_tokens": 362,
+        "cached_input_tokens": 168287,
+        "cache_creation_input_tokens": 16952,
+        "output_tokens": 2261,
+        "judge_input_tokens": 6473,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 332,
+        "skill_cost_usd": 0.14822709999999997,
+        "judge_cost_usd": 0.008133,
+        "total_cost_usd": 0.15636009999999997
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_011_2026-08-26_20-01-53_0",
+          "outcome": "fail",
+          "aborted_reason": null,
+          "duration_ms": 57028.67678799521,
+          "duration_api_ms": 52628.0,
+          "num_turns": 8,
+          "skill_attempts": 1,
+          "input_tokens": 362,
+          "cached_input_tokens": 168287,
+          "cache_creation_input_tokens": 16952,
+          "output_tokens": 2261,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 350,
+              "outputTokens": 13,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000415,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 12,
+              "outputTokens": 2248,
+              "cacheReadInputTokens": 168287,
+              "cacheCreationInputTokens": 16952,
+              "webSearchRequests": 0,
+              "costUSD": 0.14781209999999997,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.14822709999999997,
+          "output": {
+            "text_response": "The project has an objective but no questions yet. Per the routing table, I'll invoke `question-selection` to derive the first question.**Project State Assessment**\n\nThe project has a clear objective \u2014 *Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA* \u2014 but no questions, plans, or research log entries yet.\n\n**What I did:** Invoked `question-selection` to derive the first formal research question from the project objective.\n\n---\n\n**Next steps when you resume:**\n\nOnce `question-selection` has written the derived question(s) to `research.json`, the workflow will continue in this order:\n\n1. **`locality-guide`** \u2014 Survey Schuylkill County, PA (and Ireland, if an immigrant origin is suspected) to map the available record sets, repositories, and jurisdictional quirks before planning.\n2. **`research-plan`** \u2014 Stage a prioritized search plan drawing on what the locality guide surfaces (vital records, censuses, church registers, naturalization papers, etc.).\n3. **`search-records` / `search-external-sites`** \u2014 Execute searches against FamilySearch and external repositories per the plan.\n4. **`record-extraction` \u2192 `person-evidence` \u2192 `conflict-resolution` \u2192 `research-exhaustiveness` \u2192 `proof-conclusion` \u2192 mentor review** \u2014 the full GPS chain to a defensible conclusion about Patrick's parents.\n\nRun `/research continue` again once the system is ready and the skill chain will pick up automatically from wherever the file is.",
+            "activated": false,
+            "skills_invoked": [
+              "question-selection"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_011-0-0-blt0i6ny"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_011-0-0-blt0i6ny",
+                  "section": "questions"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_011-0-0-blt0i6ny",
+                  "section": "questions"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
+                  "max_results": "2"
+                }
+              },
+              {
+                "tool": "Glob",
+                "args": {
+                  "pattern": "**/*.json",
+                  "path": "/tmp/eval-ut_research_011-0-0-blt0i6ny"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/tmp/eval-ut_research_011-0-0-blt0i6ny/research.json"
+                }
+              },
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "question-selection",
+                  "args": "projectPath=/tmp/eval-ut_research_011-0-0-blt0i6ny"
+                }
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: research.json was not modified"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified that the project has an objective but no questions yet, accurately assessed the project state via tool calls, and correctly invoked question-selection as the appropriate next step per the routing table. The narration of next steps is accurate and grounded in the project's actual state."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's request to 'drive the next step for this project' by correctly diagnosing the project state (objective present, no questions), invoking the appropriate routing decision (question-selection), and explaining the expected workflow. No required elements were omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All three MCP tool calls used correct arguments: mcp__genealogy__project_context with the correct projectPath, and two mcp__genealogy__research_query calls with correct projectPath and section='questions'. All calls matched expected patterns and returned valid responses with no fixture_not_found errors."
+              }
+            ],
+            "judge_cost_usd": 0.008133,
+            "duration_ms": 4723.860567995871,
+            "error": null,
+            "input_tokens": 6473,
+            "cached_input_tokens": 0,
+            "output_tokens": 332
+          },
+          "started_at": 1787774513.496056,
+          "ended_at": 1787774577.031363
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_014",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "anders-unna-marriage-search",
+      "mcp_fixtures": [],
+      "outcome": "fail",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "fail"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified the active question (q_001), retrieved the planned search item (pli_001) targeting FamilySearch collection 1468080 for Unna Halsteinsdatter, and accurately described the project state. The response correctly notes that search-records was invoked and that no results have been logged yet. All factual claims about the project structure, persons, and plan are supported by the tool responses. No fabricated material or unsupported assertions."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed the user's request to 'continue' the project by identifying and executing the next planned step (search-records on pli_001). It retrieved all necessary context: the active question, the planned search item with its parameters (collection, principal, jurisdiction, date range), and confirmed no prior searches had been logged. The response appropriately outlines the subsequent workflow steps pending search results, completing the scope of what the routing decision required."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All five MCP tool calls used correct arguments. The project_context call correctly specified the project path. The two research_query calls for plans and log sections correctly specified the projectPath and appropriate section parameters. The sources query was correctly formed. All calls matched the expected structure and returned valid responses with no fixture_not_found errors. Arguments were semantically appropriate for retrieving the project state needed to route to search-records."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 44679.98304399953,
+        "duration_api_ms": 44547.0,
+        "judge_duration_ms": 7214.222308000899,
+        "wall_clock_ms": 52007.986545562744,
+        "num_turns": 8,
+        "input_tokens": 362,
+        "cached_input_tokens": 122808,
+        "cache_creation_input_tokens": 17418,
+        "output_tokens": 2150,
+        "judge_input_tokens": 7992,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 433,
+        "skill_cost_usd": 0.1346559,
+        "judge_cost_usd": 0.010157000000000001,
+        "total_cost_usd": 0.1448129
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_014_2026-08-26_20-01-53_0",
+          "outcome": "fail",
+          "aborted_reason": null,
+          "duration_ms": 44679.98304399953,
+          "duration_api_ms": 44547.0,
+          "num_turns": 8,
+          "skill_attempts": 1,
+          "input_tokens": 362,
+          "cached_input_tokens": 122808,
+          "cache_creation_input_tokens": 17418,
+          "output_tokens": 2150,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 350,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00042,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 12,
+              "outputTokens": 2136,
+              "cacheReadInputTokens": 122808,
+              "cacheCreationInputTokens": 17418,
+              "webSearchRequests": 0,
+              "costUSD": 0.1342359,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.1346559,
+          "output": {
+            "text_response": "The project has one active question (q_001) with a plan ready to execute and no searches run yet. The next step per the routing table is `search-records` \u2014 executing plan item pli_001 against FamilySearch's Norway Marriages collection for Unna Halsteinsdatter in Hamre prestegjeld, Hordaland.The search-records skill ran against FamilySearch collection 1468080 (*Norway, Marriages, 1660\u20131926*) for **Unna Halsteinsdatter** in Hamre prestegjeld, Hordaland, 1770\u20131800 (plan item pli_001). Here's where the project stands:\n\n---\n\n**Question q_001:** *When and where did Anders Monsen (LKFW-9XH) marry Unna Halsteinsdatter (KZHH-VTX)?*\n\n| Stage | Status |\n|-------|--------|\n| Question framed | \u2705 |\n| Locality surveyed | \u2014 (skipped; plan was already in place) |\n| Research plan | \u2705 pli_001 \u2014 Norway Marriages, FamilySearch |\n| Search executed | \u2705 Just run (pli_001) |\n| Record extraction | Pending \u2014 awaiting log/assertion output from the search |\n| Person-linking | Not yet |\n| Exhaustiveness | Not yet |\n| Proof conclusion | Not yet |\n\n---\n\n**Next steps** (once search results are logged):\n1. If the search returned a hit, `record-extraction` will extract the marriage assertions (date, place, witnesses, etc.) and classify each fact.\n2. `person-evidence` will link the extracted assertions to **Anders Monsen** (LKFW-9XH) and **Unna Halsteinsdatter** (KZHH-VTX).\n3. `research-exhaustiveness` will evaluate whether the evidence is sufficient to answer the question.\n4. `proof-conclusion` will write the GPS-conformant proof summary.\n\nWould you like me to continue driving the workflow \u2014 or is there a specific step you'd like to focus on?",
+            "activated": false,
+            "skills_invoked": [
+              "search-records"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_014-0-0-rzc2lt79"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_014-0-0-rzc2lt79",
+                  "section": "plans",
+                  "questionId": "q_001"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_014-0-0-rzc2lt79",
+                  "section": "log"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_014-0-0-rzc2lt79",
+                  "section": "log"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_014-0-0-rzc2lt79",
+                  "section": "sources"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
+                  "max_results": "2"
+                }
+              },
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-records",
+                  "args": "projectPath=/tmp/eval-ut_research_014-0-0-rzc2lt79 questionId=q_001 planItemId=pli_001"
+                }
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: research.json was not modified"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified the active question (q_001), retrieved the planned search item (pli_001) targeting FamilySearch collection 1468080 for Unna Halsteinsdatter, and accurately described the project state. The response correctly notes that search-records was invoked and that no results have been logged yet. All factual claims about the project structure, persons, and plan are supported by the tool responses. No fabricated material or unsupported assertions."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed the user's request to 'continue' the project by identifying and executing the next planned step (search-records on pli_001). It retrieved all necessary context: the active question, the planned search item with its parameters (collection, principal, jurisdiction, date range), and confirmed no prior searches had been logged. The response appropriately outlines the subsequent workflow steps pending search results, completing the scope of what the routing decision required."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All five MCP tool calls used correct arguments. The project_context call correctly specified the project path. The two research_query calls for plans and log sections correctly specified the projectPath and appropriate section parameters. The sources query was correctly formed. All calls matched the expected structure and returned valid responses with no fixture_not_found errors. Arguments were semantically appropriate for retrieving the project state needed to route to search-records."
+              }
+            ],
+            "judge_cost_usd": 0.010157000000000001,
+            "duration_ms": 7214.222308000899,
+            "error": null,
+            "input_tokens": 7992,
+            "cached_input_tokens": 0,
+            "output_tokens": 433
+          },
+          "started_at": 1787774598.009051,
+          "ended_at": 1787774650.0170376
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_015",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "empty-project-just-created",
+      "mcp_fixtures": [],
+      "outcome": "fail",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "fail"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 47240.507152993814,
+        "duration_api_ms": 46362.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 47423.580169677734,
+        "num_turns": 6,
+        "input_tokens": 359,
+        "cached_input_tokens": 97536,
+        "cache_creation_input_tokens": 16642,
+        "output_tokens": 2064,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.12288929999999999,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.12288929999999999
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_015_2026-08-26_20-01-53_0",
+          "outcome": "fail",
+          "aborted_reason": null,
+          "duration_ms": 47240.507152993814,
+          "duration_api_ms": 46362.0,
+          "num_turns": 6,
+          "skill_attempts": 1,
+          "input_tokens": 359,
+          "cached_input_tokens": 97536,
+          "cache_creation_input_tokens": 16642,
+          "output_tokens": 2064,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 348,
+              "outputTokens": 12,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000408,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 11,
+              "outputTokens": 2052,
+              "cacheReadInputTokens": 97536,
+              "cacheCreationInputTokens": 16642,
+              "webSearchRequests": 0,
+              "costUSD": 0.12248129999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.12288929999999999,
+          "output": {
+            "text_response": "There's nothing to conclude yet \u2014 the project is essentially empty. Here's what I found after checking every section of `research.json`:\n\n| Section | Count |\n|---|---|\n| Research questions | **0** |\n| Plans | 0 |\n| Log entries | 0 |\n| Sources | 0 |\n| Assertions | 0 |\n| Proof summaries | 0 |\n\nThe only thing in the project is a single tree person \u2014 **Patrick Flynn** \u2014 with no source references attached.\n\nA GPS-conformant proof conclusion requires, at minimum:\n\n1. **A research question** \u2014 what are we trying to answer about Patrick Flynn?\n2. **A research plan** \u2014 which record sets to search, and why\n3. **Evidence gathered** \u2014 sources found and extracted into assertions\n4. **Persons linked** \u2014 assertions tied to Patrick Flynn via `person-evidence`\n5. **Conflicts resolved** \u2014 any competing assertions weighed\n6. **Exhaustiveness declared** \u2014 confirmation that the search was reasonably thorough\n\nNone of these steps have been completed. To drive this project forward, the next step would be to establish the research objective and then invoke **`question-selection`** to derive the first research question.\n\nWould you like me to:\n- **Start from the beginning** \u2014 define a research objective for Patrick Flynn and route through the full GPS workflow?\n- **Tell me what you've already established** \u2014 if you have a specific question in mind (e.g., \"Who were Patrick Flynn's parents?\"), I can initialize the project from that point?",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_015-0-0-r0io5ui3"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_015-0-0-r0io5ui3",
+                  "section": "questions"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_015-0-0-r0io5ui3",
+                  "section": "proof_summaries"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_015-0-0-r0io5ui3",
+                  "section": "assertions"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
+                  "max_results": "2"
+                }
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: research.json was not modified"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": false,
+                "error": "Router should invoke Skill('question-selection') but made no sub-skill call. skills_invoked=[]"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1787774577.6032536,
+          "ended_at": 1787774625.0268338
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_002",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 83029.42848500243,
+        "duration_api_ms": 78627.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 84498.77285957336,
+        "num_turns": 9,
+        "input_tokens": 362,
+        "cached_input_tokens": 180218,
+        "cache_creation_input_tokens": 20712,
+        "output_tokens": 3587,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.1858004,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.1858004
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_002_2026-08-26_20-01-53_0",
+          "outcome": "aborted",
+          "aborted_reason": "max_turns",
+          "duration_ms": 83029.42848500243,
+          "duration_api_ms": 78627.0,
+          "num_turns": 9,
+          "skill_attempts": 1,
+          "input_tokens": 362,
+          "cached_input_tokens": 180218,
+          "cache_creation_input_tokens": 20712,
+          "output_tokens": 3587,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 348,
+              "outputTokens": 13,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000413,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 14,
+              "outputTokens": 3574,
+              "cacheReadInputTokens": 180218,
+              "cacheCreationInputTokens": 20712,
+              "webSearchRequests": 0,
+              "costUSD": 0.1853874,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.1858004,
+          "output": {
+            "text_response": "I can see the project has two existing questions about Patrick Flynn \u2014 one about his parentage (q_001, in progress) and one placing him in the 1850 census (q_002, resolved). The new question about when and where he died is not yet in the project. I'll route to `question-selection` to add it, then drive the full workflow forward.The new question has been added to the project. Now I need to plan the research. Since we don't yet know Patrick Flynn's death location (that's part of the question), I'll route to `research-plan` to lay out a search strategy targeting Pennsylvania death records and other mortality sources around 1908.Good \u2014 the research plan is in place. Now I'll execute the first searches: Pennsylvania death records and relevant indexes on FamilySearch for Patrick Flynn, targeting ~1908 in Pennsylvania.",
+            "activated": false,
+            "skills_invoked": [
+              "question-selection",
+              "research-plan",
+              "search-records"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_002-0-0-0i6oytnu"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_002-0-0-0i6oytnu",
+                  "section": "questions"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_002-0-0-0i6oytnu",
+                  "section": "questions"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/tmp/eval-ut_research_002-0-0-0i6oytnu",
+                  "section": "log"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__project_context,mcp__genealogy__research_query",
+                  "max_results": "2"
+                }
+              },
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "question-selection",
+                  "args": "projectPath=/tmp/eval-ut_research_002-0-0-0i6oytnu New research question requested by user: \"When and where did Patrick Flynn die?\" \u2014 Add this as a new question to the project and select it as the nex"
+                }
+              },
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "research-plan",
+                  "args": "projectPath=/tmp/eval-ut_research_002-0-0-0i6oytnu questionId=q_003 Create a research plan for the question \"When and where did Patrick Flynn die?\" Subject: Patrick Flynn, b. ~1845 in Pennsylvania, de"
+                }
+              },
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-records",
+                  "args": "projectPath=/tmp/eval-ut_research_002-0-0-0i6oytnu questionId=q_003 Search for Patrick Flynn's death record. Subject: Patrick Flynn, male, b. ~1845 Pennsylvania, d. ~1908. Execute plan items for: (1) "
+                }
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: research.json was not modified"
+              },
+              {
+                "name": "test_routes_to_expected_skill",
+                "passed": true,
+                "error": "skipped: not a routing test"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1787774513.488598,
+          "ended_at": 1787774597.987371
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "duration_ms": 797626.4255309796,
+    "duration_api_ms": 750285.0,
+    "judge_duration_ms": 30668.95482999098,
+    "num_turns": 90,
+    "input_tokens": 4048,
+    "cached_input_tokens": 1830113,
+    "cache_creation_input_tokens": 242879,
+    "output_tokens": 32818,
+    "judge_input_tokens": 57650,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 2241,
+    "skill_cost_usd": 1.9549321499999999,
+    "judge_cost_usd": 0.068855,
+    "total_cost_usd": 2.02378715,
+    "wall_clock_ms": 136555.66143989563
+  },
+  "review_sample": {
+    "tests": [
+      "ut_research_006",
+      "ut_research_008",
+      "ut_research_009",
+      "ut_research_011",
+      "ut_research_014"
+    ],
+    "cursor": [
+      "ut_research_006",
+      "ut_research_008",
+      "ut_research_009",
+      "ut_research_011",
+      "ut_research_014"
+    ],
+    "seed": 1829
+  }
+}

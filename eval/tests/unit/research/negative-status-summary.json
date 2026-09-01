@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_research_007",
+    "skill": "research",
+    "name": "Status summary should not trigger research",
+    "type": "negative",
+    "description": "The user wants only a status summary of the current project. The skill description says: 'Do NOT use when the user ... wants only a status summary (use project-status).' project-status reads and summarizes research.json without driving any GPS work.",
+    "tags": ["near-miss", "research-vs-project-status", "boundary"]
+  },
+  "input": {
+    "user_message": "What's the current status of this research project? How many questions are resolved and what's left to do?",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["project-status"],
+    "explanation": "The user is asking for a summary of research.json state — how many questions, what status each is in, what remains. This is a read-only status report, not a request to advance the GPS workflow. project-status handles this."
+  },
+  "judge_context": [
+    "Should route to project-status — the user wants a summary, not forward progress on the research"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}
