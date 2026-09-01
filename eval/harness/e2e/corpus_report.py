@@ -70,6 +70,7 @@ from e2e.runlog_selection import (
     REPO_ROOT,
     add_since_arg,
     all_result_jsons,
+    branch_scope_note,
     describe_window,
     filter_since,
     result_jsons_for,
@@ -130,7 +131,7 @@ VIOLATION_ARMS: tuple[tuple[str, str], ...] = (
 # registering it there would be false and leaving it unregistered would trip
 # that test's "no unregistered copy" rule. Kept in step with the real constant
 # by `test_the_census_watches_the_files_the_lockdown_protects`.
-WATCHED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+WATCHED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
 
 _PROTECTED_RE = "|".join(re.escape(f) for f in WATCHED_PROJECT_FILES)
 
@@ -820,6 +821,7 @@ def main(argv: list[str] | None = None) -> int:
         # hunting for a window bug that isn't there.
         where = f" on/after {cutoff.isoformat()}" if (cutoff and all_paths) else ""
         print(f"No committed runs found{where}.", file=sys.stderr)
+        print(branch_scope_note(), file=sys.stderr)
         return 1
 
     counts = tally(paths)
