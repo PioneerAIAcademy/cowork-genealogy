@@ -1954,6 +1954,65 @@ describe("research_append (project singleton section)", () => {
     expect(r.ok).toBe(true);
   });
 
+  // ── Completed-gate: the tree-encoding WARNING (issue #1490 phase 2) ──
+  // A tier->=-probable conclusion is expected to leave a fact or relationship on
+  // the tree. This warns — never refuses (2026-08-24 no-override ruling) — when a
+  // completed project holds one whose evidence persons gained nothing since the
+  // starting-tree.gedcomx.json baseline. Fires only on the completing call.
+
+  const writeBaseline = async (tree: any) =>
+    writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  const withEvidence = (research: any) => {
+    research.person_evidence.push({
+      id: "pe_001", assertion_id: "a_001", person_id: "I1",
+      confidence: "confident", match_score: 0.9, rationale: "match", created: "2026-01-02", superseded_by: null,
+    });
+    return research;
+  };
+
+  it("warns on completion when a probable conclusion added no tree structure (#1490)", async () => {
+    // Baseline == current tree, so I1 (linked to the summary via a_001) gained
+    // nothing this session — the conclusion was reached and left un-encoded.
+    await writeProject(withEvidence(withProof([critique()])), baseTree);
+    await writeBaseline(baseTree);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.validation.warnings.join(" ");
+    expect(w).toMatch(/ps_001/);
+    expect(w).toMatch(/no tree person it draws evidence from/);
+  });
+
+  it("is silent when the conclusion's person gained a tree fact (#1490)", async () => {
+    // The current tree adds a Birth fact for I1 that the baseline lacked, so the
+    // conclusion is encoded and no warning fires.
+    const current = {
+      ...baseTree,
+      persons: [
+        {
+          id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [{ id: "f1", type: "Birth", date: "1850", standard_date: "+1850" }],
+        },
+      ],
+    };
+    await writeProject(withEvidence(withProof([critique()])), current);
+    await writeBaseline(baseTree);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
+  });
+
+  it("does not warn when the project predates the baseline (fail-open) (#1490)", async () => {
+    // No starting-tree.gedcomx.json on disk — a legacy project. The check must
+    // fail open (no warning), never treat every fact as new.
+    await writeProject(withEvidence(withProof([critique()])), baseTree);
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
+  });
+
   it("does not count a superseded verdict", async () => {
     // If a newer verdict replaced it, that one is itself in evaluations[] and
     // satisfies the gate. If nothing replaced it, the critique no longer stands.
@@ -4052,12 +4111,139 @@ describe("research_append — person_evidence match_score warning (#1006)", () =
     expect(r.validation.warnings.join(" ")).toMatch(/records no usable match_score/);
   });
 
-  it("does not warn on a probable link with no match_score — the gate is confidence, not a downgrade route", async () => {
+  it("warns on a probable link too — the gate is reachability, not confidence (#1429)", async () => {
+    // Was the inverse assertion until #1429. Gating on `confident` meant the
+    // warning said nothing at all about the ~two-thirds of links written at
+    // `probable`, which is exactly where a skipped score hides: measured in
+    // v1_2026-08-27_11-28-52, ut_person_evidence_022/_024 each wrote probable
+    // links with a null score and no same_person call anywhere in the run.
     await writeProject();
     const r = await researchAppend(link({ confidence: "probable", match_score: null }));
     expect(r.ok).toBe(true);
     if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/records no usable match_score/);
+  });
+
+  // --- the reachability gate itself (#1429) ---------------------------------
+  // Silent where nothing could be scored, loud with a named route where
+  // something could. Before #1429 this warning knew nothing about provenance:
+  // it fired on image- and full-text-sourced links nothing can ever score, and
+  // its escape ("if no comparable FamilySearch persona exists to score against,
+  // leave match_score null") invited the agent to read a null
+  // `record_persona_id` as that case. It is not: `same_person` never reads that
+  // field.
+
+  /** A project whose a_010 hangs off one log entry of the given shape. */
+  async function writeProjectWithProvenance(
+    logEntry: Record<string, unknown>,
+    assertionOverrides: Record<string, unknown> = {},
+  ) {
+    const r = baseResearch();
+    r.log = [logEntry] as any;
+    r.assertions = [
+      ...r.assertions,
+      {
+        ...validAssertion("a_010"),
+        record_id: "https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4",
+        fact_type: "name",
+        value: "Father: Thomas Flynn",
+        log_entry_id: logEntry.id,
+        ...assertionOverrides,
+      },
+    ] as any;
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+
+  const unreachable: [string, Record<string, unknown>][] = [
+    // An FTS result carries transcript text, names and places but no gedcomx —
+    // and a retained sidecar does not change that, which is why this lane is
+    // exempt even WITH a results_ref.
+    ["fulltext_search with a retained sidecar", { id: "log_001", tool: "fulltext_search", results_ref: "results/log_001.json" }],
+    ["fulltext_search with no sidecar", { id: "log_001", tool: "fulltext_search", results_ref: null }],
+    ["image_transcribe", { id: "log_001", tool: "image_transcribe", results_ref: null }],
+    ["image_read", { id: "log_001", tool: "image_read", results_ref: null }],
+    ["external_site", { id: "log_001", tool: "external_site", results_ref: null }],
+    ["record_search whose sidecar was not retained", { id: "log_001", tool: "record_search", results_ref: null }],
+  ];
+
+  it.each(unreachable)("stays silent when the assertion came from %s", async (_label, logEntry) => {
+    await writeProjectWithProvenance(logEntry);
+    const r = await researchAppend(link({ match_score: null }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
     expect(r.validation.warnings.join(" ")).not.toMatch(/match_score/);
+  });
+
+  it("warns and names the record_read route when the assertion came from record_read", async () => {
+    await writeProjectWithProvenance({ id: "log_001", tool: "record_read", results_ref: null });
+    const r = await researchAppend(link({ match_score: null }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.validation.warnings.join(" ");
+    expect(w).toMatch(/records no usable match_score/);
+    // The route, not just the absence — a warning that only says "missing" is
+    // what the agent talked its way past.
+    expect(w).toMatch(/came from record_read/);
+    expect(w).toMatch(/1:1:MXHY-TP4/);
+  });
+
+  it("warns and names the sidecar route when a record_search retained its results", async () => {
+    await writeProjectWithProvenance({ id: "log_001", tool: "record_search", results_ref: "results/log_001.json" });
+    const r = await researchAppend(link({ match_score: null }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.validation.warnings.join(" ");
+    expect(w).toMatch(/records no usable match_score/);
+    expect(w).toMatch(/results\/log_001\.json/);
+  });
+
+  it("warns when the assertion carries a record_persona_id, and names it", async () => {
+    await writeProjectWithProvenance(
+      { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" },
+      { record_persona_id: "p_293161675629" },
+    );
+    const r = await researchAppend(link({ match_score: null }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/p_293161675629/);
+  });
+
+  it("warns on unresolvable provenance — an absent log_entry_id is not an exemption", async () => {
+    // Exempting on a MISSING field is the bypass this gate exists to refuse:
+    // write the assertion with no log_entry_id and the requirement would vanish.
+    await writeProject();
+    const r = await researchAppend(link({ match_score: null }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/records no usable match_score/);
+  });
+
+  it("names the circular case as a legitimate null, so it does not badger a minted stub", async () => {
+    // The warning drove ut_person_evidence_n7v to score the groom persona against
+    // the stub it had just minted from that persona (v1_2026-08-27_12-36-32) — a
+    // comparison that can only confirm itself. The tool cannot DETECT the case
+    // (by write time the stub is an ordinary tree person), so the text has to
+    // name it as a sanctioned exception.
+    await writeProjectWithProvenance({ id: "log_001", tool: "record_read", results_ref: null });
+    const r = await researchAppend(link({ match_score: null }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.validation.warnings.join(" ");
+    expect(w).toMatch(/minted from the very persona/);
+    expect(w).toMatch(/circular/);
+  });
+
+  it("tells the agent a null record_persona_id is not a reason to skip", async () => {
+    // The old text's escape, inverted. same_person takes two gedcomx documents
+    // plus a focus id inside each and never reads record_persona_id.
+    await writeProjectWithProvenance({ id: "log_001", tool: "record_read", results_ref: null });
+    const r = await researchAppend(link({ match_score: null }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.validation.warnings.join(" ");
+    expect(w).toMatch(/null record_persona_id is\s+NOT a reason to skip/);
+    expect(w).not.toMatch(/no comparable FamilySearch persona exists/);
   });
 });
 

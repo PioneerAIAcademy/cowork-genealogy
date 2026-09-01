@@ -41,7 +41,10 @@ import json
 import sys
 
 # Matched on the basename, so an absolute or relative path is caught alike.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+# starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
+# diffs against (issue #1490); a raw overwrite of it would defeat the gate the
+# same way a raw tree.gedcomx.json write defeats the write-boundary invariants.
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
 
 # The raw file-write tools. Their `file_path` is unambiguously a destination —
 # there is no reading of `Write(file_path=...)` where that file is an input.
