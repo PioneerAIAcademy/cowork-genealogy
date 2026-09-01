@@ -135,6 +135,28 @@ describe('path containment at each sink', () => {
     await expect(deleteCandidate(`${UP}tmp/containment-escape/x`)).rejects.toThrow()
   })
 
+  it('deleteCandidate refuses a traversing FILENAME, not just a traversing skill', async () => {
+    // The test above puts the traversal in `skill`, which the first guard
+    // catches. `classify()` returns kind 'other' for a traversing filename and
+    // deleteCandidate only rejects 'released', so the filename guard is the only
+    // thing between this call and an fs.rm outside the base — and nothing
+    // exercised it.
+    const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'containment-del-'))
+    const victim = path.join(outside, 'victim.json')
+    await fs.writeFile(victim, '{"keep":true}', 'utf8')
+    const handle = await makeFixtureTree({ runlogs: [] })
+    process.env.EVAL_DIR = handle.root
+    try {
+      const id = 'citation/' + UP + path.join(outside, 'victim').replace(/^\//, '')
+      await expect(deleteCandidate(id)).rejects.toThrow()
+      await expect(fs.access(victim)).resolves.toBeUndefined()
+    } finally {
+      delete process.env.EVAL_DIR
+      await handle.cleanup()
+      await fs.rm(outside, { recursive: true, force: true })
+    }
+  })
+
   it('writeTest refuses a traversing skill or id', async () => {
     const base = {
       test: { name: 'n', type: 'positive', description: 'd', tags: [] },
@@ -150,6 +172,39 @@ describe('path containment at each sink', () => {
         test: { ...base.test, skill: 'citation', id: `${UP}tmp/ut_x_001` },
       } as never),
     ).rejects.toThrow()
+  })
+
+  it('writeTest refuses a traversing skill when EDITING an existing test', async () => {
+    // The else-branch. `readTest` finds the id, so the guards that run are the
+    // two on the edit path, not the one on the create path — and the test above
+    // only ever reaches the create path. Uncontained, this writes the file
+    // outside the base AND unlinks the original inside it.
+    const existing = {
+      test: { id: 'ut_citation_001', skill: 'citation', name: 'n', type: 'positive', description: 'd', tags: [] },
+      input: { user_message: 'm', scenario: null },
+      mcp_fixtures: [],
+      judge_context: [],
+    }
+    const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'containment-edit-'))
+    const handle = await makeFixtureTree({
+      tests: [{ skill: 'citation', filename: 'orig.json', body: existing }],
+    })
+    process.env.EVAL_DIR = handle.root
+    const origPath = path.join(handle.root, 'tests', 'unit', 'citation', 'orig.json')
+    try {
+      await expect(
+        writeTest({
+          ...existing,
+          test: { ...existing.test, skill: UP + outside.replace(/^\//, '') },
+        } as never),
+      ).rejects.toThrow()
+      expect(await fs.readdir(outside)).toEqual([])
+      await expect(fs.access(origPath)).resolves.toBeUndefined()
+    } finally {
+      delete process.env.EVAL_DIR
+      await handle.cleanup()
+      await fs.rm(outside, { recursive: true, force: true })
+    }
   })
 
   // --- sinks missed by the first pass of this PR (review, 2026-08-28) ---------
