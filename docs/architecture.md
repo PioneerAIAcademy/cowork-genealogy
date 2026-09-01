@@ -37,7 +37,7 @@ is `eval/JUNIOR-WALKTHROUGH.md` (first PR) and `eval/SENIOR-WALKTHROUGH.md`
 | Add a field to `research.json` · Add an enum value · Add a tree field | [§6](#if-youre-asked-to-3) |
 | Add a viewer feature · Change what the sandbox runs · Add a control-plane endpoint | [§7](#if-youre-asked-to-4) |
 | Change hosted agent config | [§8](#if-youre-asked-to-5) |
-| Verify a change · Debug a failing e2e run · Add a unit eval test · Write a spec | [§9](#if-youre-asked-to-6) |
+| Verify a change · Debug a failing e2e run · Add a unit eval test · Write a spec · **Write a rule that behaves differently under `--autonomous`** | [§9](#if-youre-asked-to-6) |
 
 > **Before you trust a green CI run, read [§9.4 — What nothing checks](#94-what-nothing-checks).**
 > Much of this system has no automated guard, and several of those gaps fail
@@ -401,7 +401,7 @@ lists, and the test asserts that too.
 > knowing which divergences are deliberate. For `validation-protocol.md`,
 > **nothing records which is which** — its two survivors disagree on whether a
 > post-write `validate_research_schema` pass is required.
-> **Direction (#1112):** either lint a shared core plus a
+> **Direction:** either lint a shared core plus a
 > per-skill "who calls what" section, or derive each copy at build time from the
 > skill's `allowed-tools`. The cheaper move is to *shrink* them —
 > `validation-protocol.md` largely restates rules `research_append`'s error
@@ -413,7 +413,7 @@ lists, and the test asserts that too.
 
 Everything an agent needs at runtime lives inline in its `.md`. **No sibling
 reference files read at runtime, no build-time assembly.** Both alternatives
-were measured on `record-extractor` (issue #702) and reverted.
+were measured on `record-extractor` and reverted.
 *(Imperative owned by `CLAUDE.md` § "No playbook/reference files for agents".)*
 
 - **On-demand `Read` fails silently, in three modes.** With the files provably
@@ -465,9 +465,13 @@ agents.**
 > surface, the share of work that *can* be routed to another model is the share
 > that runs inside one: `Agent` is **3.8% of all tool calls** across the 145
 > committed e2e runs, and **5.2%** in the 14 runs since 2026-07-31. A model swap
-> on an agent moves a few percent of the session, not the session. Anything that
-> needs to move the bulk of the work has to change what the *main thread* runs on,
-> which no per-step mechanism in this repo can do.
+> on an agent moves a few percent of the session, not the session.
+>
+> **That ceiling is a property of which steps are agents today, not a law.** It
+> rises when a skill becomes a skill-agent pair, which is the one mechanism here
+> that moves a step's work — and its body — off the main thread. Read the figure
+> as the current population, and re-measure it rather than quoting it at a
+> proposal that would change it.
 
 ### 3.6 The lane rule — classify a finding before you edit prose
 
@@ -577,7 +581,7 @@ Architecturally:
 > `BROWSER_USER_AGENT`; anything else → the service's own convention.** The
 > deleted `mcp-tool-scaffolder` subagent stated it unconditionally — because its
 > canonical template was one of the non-FS tools — which is part of why it and
-> its two siblings were removed (#1161).
+> its two siblings were removed.
 
 **Add a skill.** Copy `packages/engine/plugin/skills/search-wikipedia/` — the
 canonical minimal example of the full pipeline. Don't mutate it. Then:
@@ -633,7 +637,7 @@ There **is** an orchestrator, and it is a skill:
 2. **A 17-row routing table maps state → next sub-skill** — in
    `research/SKILL.md` under `## What to do`, the table whose header row reads
    `| If research.json has... | Invoke |`. The table is the source of truth and
-   is not duplicated here. Since PR #1029 its `Invoke` column is a **literal
+   is not duplicated here. Its `Invoke` column is a **literal
    `Skill` tool call** — "writing `proceed to research-exhaustiveness` and then
    hand-authoring the fields that skill would have written is not invoking it."
    Agents are delegated as `Task` calls using the bare `@plugin:<name>` form.
@@ -687,8 +691,8 @@ record), and it never writes identity links or eliminations inline
 > **Direction.** `eval/tests/unit/research/` now exists: trigger
 > corpus (15 tests) plus stubbed routing tests covering rows 1–4 and the
 > shortcut guard. Rows 14 (post-verdict `address_first` handler) and 16
-> (`project.status = "completed"`) remain blocked on #1492 (the two
-> contradictory verdict tables in the body, item 3 above). A live e2e run
+> (`project.status = "completed"`) remain blocked on the two
+> contradictory verdict tables in the body (item 3 above). A live e2e run
 > is still the only instrument for routing-table rows the unit suite does
 > not yet cover.
 
@@ -790,7 +794,7 @@ only the bridged form is namespaced under `remote-devices`. **Which spelling a
 Cowork session exposes has been observed to move:** three censuses found every
 tool under the bridged `mcp__remote-devices__Genealogy_Research__` spelling with
 the bare `mcp__Genealogy_Research__` spelling absent — macOS and Windows on
-2026-08-15, and a second Windows session via #1732 on 2026-08-19 — yet #1341
+2026-08-15, and a second Windows session on 2026-08-19 — yet an earlier census
 recorded the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the bridged
 spelling unrecognized. The registrar moved between those dates (or the configs
 differ in a way nobody has identified — same conclusion). **Run mode is a
@@ -799,7 +803,8 @@ over time**, so all three must be present.
 
 Entries are matched **exactly** — no prefix fallback, no inherit-on-miss. When
 *every* entry misses, the runtime refuses to spawn the agent at all ("would be
-spawned with zero tools — refusing"). That is how #650/#698 broke all three
+spawned with zero tools — refusing"). That is how the first two agent-frontmatter
+changes broke all three
 then-existing agents in Cowork **while CI stayed green**: they were qualified
 against the harness's arbitrary dict key rather than the product's name. The
 bare `display_name` registration repeated the shape one registrar later — that spelling was missing,
@@ -814,7 +819,7 @@ spelling is safe because unrecognized entries are ignored so long as one resolve
 page was wrong until it was measured.** This file, `CLAUDE.md`,
 ADR-0004, ADR-0006, ADR-0011, two specs, the packaging test and three agent
 bodies all said "a deny binds even under `bypassPermissions`; an omission alone
-is not." Seven of them cited issue #695 for it — the birkeland lane breach,
+is not." Seven of them cited the birkeland lane breach for it,
 which says nothing about `bypassPermissions`, denies, or omissions. Probed
 2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128 (`make
 probe-agent-binding`, reproduced twice): under `bypassPermissions` **both**
@@ -875,7 +880,7 @@ loudly in CI) and asserts all five registration sites still agree on `genealogy`
 > **unset also means on** — deleting the variable does not eager-load anything.
 > (It is additionally forced off on a non-first-party `ANTHROPIC_BASE_URL`, on
 > Vertex, and under `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`.) **Five sites
-> described the opposite and were corrected in #1173 and its follow-up** — the
+> described the opposite and have been corrected** — the
 > three harness/hosted comments plus `CLAUDE.md` and this repo's own packaging
 > test. The flag **values** are unchanged; flipping them is separate work that
 > has to re-measure the tool mix before and after, and
@@ -1001,8 +1006,8 @@ enforcing-vs-shadow status.
 
 - **A `tools:` entry grants a capability; it does not create a behavior.** The
   agent will not call a tool its body never tells it to call. `record-extractor`
-  has held `place_search` and `place_search_all` since #650 (2026-07-12), under two
-  spellings since #742 (07-18) and all three since 2026-08-05, while its body tells
+  has held `place_search` and `place_search_all` since 2026-07-12, under two
+  spellings since 07-18 and all three since 2026-08-05, while its body tells
   it to *omit* `standard_place` (`record-extractor.md`, its `standard_place`
   instruction) — dead grants that every lint
   passes. **Every tool addition is two edits: the frontmatter, and the
@@ -1122,7 +1127,7 @@ JSON to think." **Never design a flow that hands the LLM a large document to
 edit and re-emit.**
 
 > **Today:** `research_query` returns 50 items per call with a `truncated` flag
-> and an `offset` parameter for paging past 50 (#1031 tool half), and covers
+> and an `offset` parameter for paging past 50, and covers
 > **11 of the 15** `research.json` sections — missing `project`,
 > `researcher_profile`, `known_holdings`, and `localities`. On the tree side,
 > `project_context` returns a fixed projection of tree persons (id, name, gender,
@@ -1136,9 +1141,9 @@ edit and re-emit.**
 > and **36 — 23% — read `tree.gedcomx.json`**. A tree projection surface reclaims
 > that 23%, not "most of it," and `Read` stays regardless because skills read
 > their own reference files through it.
-> **Direction (#1031).** Both halves shipped. The tool half made items 51+
+> **Direction.** Both halves shipped. The tool half made items 51+
 > reachable via `offset`, closing the "no way to fetch past 50" correctness bug at
-> the tool. The **skill half (#1183)** taught the consumers to page:
+> the tool. The **skill half** taught the consumers to page:
 > `research/SKILL.md` and `agents/proof-conclusion.md` both check `truncated` and
 > page with `offset`. The latter's "collect every assertion" gate had under-read
 > (it once saw 50 of 57). **If you consume `research_query`, check the
@@ -1233,7 +1238,7 @@ in `enums.schema.json` is generated, with no exceptions. Regeneration is automat
 and typing a union by hand creates a sixth copy — `gen-enums.mjs` throws rather
 than let a hand-written union silently shadow a generated one.
 
-> **Direction (#1087/#1014; [ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).**
+> **Direction ([ADR-0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md)).**
 > These are **four-plus hand-maintained copies of one source**, kept in sync by
 > elimination, automatic generation, or lint — never by a step a human has to
 > remember. `packages/schema`'s enum unions are generated; everything else is
@@ -1381,7 +1386,7 @@ Four environments run the engine, and they load the plugin differently.
 | Environment | Skills | Agents | Hooks | Permission mode | MCP server |
 |---|---|---|---|---|---|
 | **Cowork** (cloud) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` via the remote-device bridge |
-| **Cowork** (on this computer) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` — exposed spelling has **moved**: bare `mcp__Genealogy_Research__*` live in #1341, but the 2026-08-15 censuses saw the bridged `mcp__remote-devices__Genealogy_Research__*` here too (§5.2) |
+| **Cowork** (on this computer) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` — exposed spelling has **moved**: bare `mcp__Genealogy_Research__*` live on 2026-08-04/05, but the 2026-08-15 censuses saw the bridged `mcp__remote-devices__Genealogy_Research__*` here too (§5.2) |
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — no plugin hooks, and **no write-lockdown rule at all** | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
@@ -1397,7 +1402,7 @@ redundancy. SDK plugin loading registers agents **only** under the namespaced
 name `genealogy-research:<agent>`, while every SKILL.md delegates by the **bare**
 name. Without the staging, the `Task` call errors and the model **silently falls
 back to a general-purpose stand-in that binds none of the agent's `tools:` or
-`disallowedTools:`** (#939). Skills are unaffected — the loader registers those
+`disallowedTools:`**. Skills are unaffected — the loader registers those
 under bare names.
 
 Both harnesses load the staged files via `setting_sources=["project"]`.
@@ -1540,7 +1545,7 @@ lead you to them:**
   directory that is not one), blind
   human `.ann.json` annotations, and `calibrate_judge` measuring judge-vs-human
   agreement **offline** rather than inferring it from expensive live runs. Three
-  axes since #1050: `verdict` (genealogical), `compliance` (guardrail), and
+  axes: `verdict` (genealogical), `compliance` (guardrail), and
   `outcome` (the gate) — so a run whose answer is right but whose audit trail was
   not earned **fails**.
 
@@ -1604,6 +1609,71 @@ changes how a correct change is made:
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
 
+### 9.5 An autonomous run must be able to reach what a production run can
+
+**Nothing here measures production — every figure in this repo is computed over the
+eval corpus (§9.4). The e2e tier is the closest proxy: live FamilySearch, the whole
+route end to end. It holds only so far as the run it measures can do what a user's
+run can do.** Every capability an autonomous run cannot reach is a capability the
+benchmark never exercises and never scores — so the gap is invisible in exactly the
+place you would look for it. A divergence here does not make the number noisy; it
+makes the number about the harness.
+
+This generalizes a rule `CLAUDE.md` already states narrowly for one dimension —
+"the eval harness emulates production's permission model," grant what production
+grants. Permissions were the first instance, not the whole rule. `CLAUDE.md` owns
+that statement and wins on conflict; this section is the general case and the
+reason it exists.
+
+**The test that separates a correct mode difference from a bug: does the rule
+remove a *pause*, or a *capability*?**
+
+Removing the pause is correct and is the established shape. `agents/proof-conclusion.md`
+states it for one gate — under `--autonomous`, route to the missing skill
+automatically instead of asking, because "autonomous mode changes who decides, not
+whether the gate runs." **Generalized: it changes who decides, not what the run can
+reach.** `question-selection` applies the same shape — with no user to answer, skip
+the ask and take the action. Production behaviour is preserved; only the prompt is
+gone.
+
+Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
+both green in CI for months:
+
+- **The plan freeze.** `search-records` tells an autonomous run it has no ad-hoc
+  searches, which closes the skill's self-initiated route back to `research-plan`. An
+  interactive researcher who notices the plan is wrong can get it revised; an
+  autonomous one cannot. `research-plan` compounds it by superseding a plan
+  "only when the user is explicitly re-planning" — never true with no user — so even
+  reaching the skill changes nothing. Measured consequence: across the
+  committed e2e corpus, 93% of question-plan pairs carry exactly one plan, and only
+  seven plans in the whole corpus were ever superseded.
+- **External-site captures.** `search-external-sites` marks a plan item `skipped`
+  under `--autonomous` because no user can click a paywalled link. Controlling for
+  fallback items, that produces a 76% skip rate on primary Ancestry items against
+  12% on FamilySearch — so corpus breadth on external repositories cannot be read as
+  production breadth.
+
+**When the divergence is genuinely forced, supply the input rather than removing the
+capability.** The second case above is not irreducible: `provided-documents/` in a
+fixture is copied into the workspace root where an uploaded capture would land, and
+named in the user message so the agent reads it instead of asking. The mechanism is
+built, spec'd and unit-tested; it is used by three of the fixtures. A headless run
+cannot click a link, but the fixture can hand it what clicking would have produced.
+
+**If you truly cannot supply it, label the outcome honestly.** The failure mode is
+reusing a status that already means something else: `skipped` is defined as "the
+search was determined to be unnecessary," while a deferred capture means "could not
+be attempted." Those are opposite claims to the exhaustiveness gate, whose own
+doctrine separates a pursued-and-unavailable source from an unsearched one. A
+forced divergence that is recorded as a judgement call is worse than one recorded
+as a limitation, because only the second can be measured later.
+
+**What nothing checks.** No test compares the capability set an autonomous run can
+reach against an interactive one's, and no fixture check asserts that a plan reaching
+an external repository ships the capture that repository requires. Both instances
+above were added to a skill body, in prose, with every suite green. Per §9.4, that
+absence belongs on the board under `nothing-checks` rather than in a table here.
+
 ### If you're asked to…
 
 **Verify a change.** Match the instrument to the layer: a tool → `make engine-test`
@@ -1614,6 +1684,15 @@ plus the annotation gate (§3); routing or anything cross-skill → a live
 run `make test-all`, which the PR template requires. **If you cannot name the
 check that would have caught your change, say so in the PR** rather than implying
 CI covered you (§9.4).
+
+**Write a rule that behaves differently under `--autonomous`.** Ask which of the two
+things it removes — a pause, or a capability (§9.5). Removing the pause is the
+established shape and is fine: decide instead of asking, and log the decision.
+Removing a capability makes the benchmark stop measuring production, silently, and
+is almost never what you want. If a headless run genuinely cannot perform the step,
+supply its input as a fixture rather than deleting the step, and if you cannot do
+even that, record the outcome as a limitation rather than reusing a status that
+means a judgement was made.
 
 **Debug a failing e2e run.** Check the two setup gates first — `make e2e-preflight`
 and `make e2e-login` (the FS token lasts ~24h, and its absence looks exactly like
@@ -1724,4 +1803,4 @@ questions that only look open.
 | A user submitted a feedback zip | [`alpha-feedback-guide.md`](alpha-feedback-guide.md), then [`feedback-case-spec.md`](specs/feedback-case-spec.md) |
 | The hosted web product | [`hosted-web-workbench-spec.md`](specs/hosted-web-workbench-spec.md), [`sandbox-provider-spec.md`](specs/sandbox-provider-spec.md), [`realtime-architecture.md`](realtime-architecture.md) (reasoning, not current state) |
 | I'm a genealogist, not a developer | `eval/JUNIOR-WALKTHROUGH.md`, `eval/SENIOR-WALKTHROUGH.md` |
-| What work is queued but not yet started? | The **Backlog column** on the project board. The repo's staging queue was retired 2026-08-02 (#1163) — its 54 items became issues #1117–#1157. Deferred work goes straight to an issue; there is no staging file. |
+| What work is queued but not yet started? | The **Backlog column** on the project board. The repo's staging queue was retired 2026-08-02 and its 54 items became issues. Deferred work goes straight to an issue; there is no staging file. |
