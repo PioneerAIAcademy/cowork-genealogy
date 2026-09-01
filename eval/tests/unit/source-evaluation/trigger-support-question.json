@@ -23,6 +23,7 @@
   ],
   "judge_context": [
     "The source-evaluation skill must activate",
-    "Should read the attached sources and compare each against the recorded facts rather than answering from the tree alone"
+    "Should read the attached sources and compare each against the recorded facts rather than answering from the tree alone",
+    "Ground truth for the death index: `record_read` on HOLE-002 indexes the death as 10 June 1954, and `person_read` on KD96-TV2 records 10 June 1945 on the profile. A finding that reports the index as 1954 and the profile as 1945 is CORRECT and must not be deducted."
   ]
 }

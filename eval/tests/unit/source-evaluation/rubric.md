@@ -6,6 +6,8 @@ Grading dimensions for source-evaluation unit tests. Evaluated by the LLM judge 
 
 Do not assert that a fact is or is not in the tree, in a source, or in any record unless a tool response or the scenario README says so verbatim. This applies symmetrically: do not deduct because the skill missed something you cannot verify, and do not credit it for matching something you cannot verify. When the skill cites a value from a tool response, grade whether the citation matches that response. When it asserts something present in no tool response and no README, that is a Correctness deduction — the skill invented it.
 
+**Which value came from where.** Two documents are in play and they are easy to transpose. The **indexed** value is whatever a `record_read` response holds; the **profile** value is whatever the `person_read` response holds. A finding names both, in that order. Before deducting for a factual error, check the skill's two values against those two responses specifically — a rationale that alleges a mismatch and then quotes the same number on both sides has transposed them, and the deduction is yours, not the skill's.
+
 ## Remediation doctrine
 
 The core of the skill. When a source disagrees with the profile, does the recommended remedy match the kind of disagreement? An indexing or transcription error — one field wrong in a record that otherwise fits the person — is fixed by re-reading the original image and correcting the index, with the source left attached. Detaching is correct only for a source genuinely about a different person.
