@@ -21,7 +21,8 @@
     "record-read-hole-1900-census",
     "record-read-hole-mn-death-index",
     "record-read-hole-1885-state-census",
-    "source-attachments-hole-1885"
+    "source-attachments-hole-1885",
+    "person-read-hole-wx7-otter-tail"
   ],
   "judge_context": [
     "The findings list must contain only user-actionable items -- the death index's transposed year and the misattributed 1885 state census",
