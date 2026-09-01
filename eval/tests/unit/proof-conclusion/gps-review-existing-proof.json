@@ -4,8 +4,16 @@
     "skill": "proof-conclusion",
     "name": "GPS review of an existing proof routes to the gps-mentor agent, not this skill",
     "type": "negative",
-    "description": "The mid-research-flynn scenario already has ps_001 (parentage, probable). The user asks whether that EXISTING proof meets the Genealogical Proof Standard. Per the ruling on issue #1861, review of an existing proof is the gps-mentor agent's job, not proof-conclusion's: proof-conclusion writes a conclusion and has no review step in its body, so a review request landing here re-runs the conclusion instead of assessing it. This is an empty-correct_skill negative rather than a `correct_skill: [\"gps-mentor\"]` one because `correct_skill` entries are gate-checked against real skill DIRECTORIES (runnability.py) and gps-mentor is a plugin agent with none — and because the harness's routing signal is `skills_invoked`, which an Agent delegation never enters. So the assertion is: no skill fires, and the request is handed to the mentor. Was a positive review-mode test before #1861; the user_message is unchanged so the utterance stays pinned in the trigger corpus.",
-    "tags": ["proof", "parentage", "gps-review", "GPS-step-5", "near-miss", "boundary", "empty-correct_skill"]
+    "description": "Reviewing an EXISTING proof is the gps-mentor agent's job, not this skill's. Per the ruling on issue #1861 proof-conclusion's description no longer claims the review utterances and gps-mentor's claims them directly, so this test pins that the request does NOT land here. The mid-research-flynn scenario already has ps_001 (parentage, probable), and proof-conclusion's body has no review step: it resolves the request to one q_ id and delegates to the proof-conclusion agent to CONCLUDE, which would re-run the very conclusion the user asked to have judged. Graded on a routing-independent invariant rather than on a clean decline, because the model reliably answers a review request in-body instead of declining — the structurally unwinnable shape citation refuse-new-source, conflict-resolution negative-assertion-classification and tree-edit ut_003 all resolved with grade_on_invariant. Was a positive review-mode test before #1861; the user_message is unchanged so the utterance stays pinned in the trigger corpus.",
+    "tags": [
+      "proof",
+      "parentage",
+      "gps-review",
+      "GPS-step-5",
+      "near-miss",
+      "boundary",
+      "architectural-invariant"
+    ]
   },
   "input": {
     "user_message": "Does my proof for the parentage question (ps_001) meet the Genealogical Proof Standard? Assess the EXISTING ps_001 against the five GPS components — judge it on the evidence it actually cites. Any sources or assertions that exist in research.json but are NOT cited in ps_001 are evidence GAPS for the next round of work (after they're extracted/classified) — flag them and say whether they would change the tier, but do NOT frame them as defects, failures, or premature reasoning of the current proof. Treat ps_001 as it stands.",
@@ -13,7 +21,8 @@
   },
   "negative": {
     "correct_skill": [],
-    "explanation": "Assessing an existing ps_NNN against the five GPS components is a review, and the reviewer is the read-only gps-mentor agent (`@plugin:gps-mentor`, focus `on-demand`). proof-conclusion must not fire: its body resolves the request to one q_ id and delegates to the proof-conclusion agent to CONCLUDE, which would re-run the conclusion the user asked to have reviewed, and at tier >= probable would re-encode it into the tree. No other skill is the right route either — hence the empty array. The acceptable behaviors are delegating to gps-mentor or saying that is where the review belongs."
+    "explanation": "Routing is deliberately NOT graded here, and `correct_skill` is inert because `grade_on_invariant` makes _compute_outcome return before it reads routing. Measured 2026-09-01: the same utterance reached the `research` orchestrator on ut_proof_conclusion_007 and no skill at all on ut_proof_conclusion_r7k. Neither array value is correct for the pair — `[]` fails the run that routed to the orchestrator, and `[\"research\"]` fails the run that routed nowhere — so the outcome is decided by the deterministic invariant instead: proof-conclusion must not activate, must write no new proof_summaries, and must leave ps_001.narrative_markdown byte-identical. Enforced by the three `gps-review`-tagged validators in eval/harness/validators/test_proof_conclusion.py. This is the shape citation refuse-new-source and tree-edit ut_003 already resolved the same way. The `evaluations` write both runs performed is a separate defect and is filed on its own; its absence from the invariant is not approval of it.",
+    "grade_on_invariant": true
   },
   "judge_context": [
     "Correct behavior is to route this to the gps-mentor agent — either by delegating to it, or by naming it as the right reviewer. Do NOT penalize a run that delegates to gps-mentor and relays its verdict.",

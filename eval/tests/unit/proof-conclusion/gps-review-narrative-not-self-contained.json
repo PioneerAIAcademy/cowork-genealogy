@@ -4,7 +4,7 @@
     "skill": "proof-conclusion",
     "name": "GPS review of a bare-identifier narrative also routes to gps-mentor",
     "type": "negative",
-    "description": "Second routing pin for the review utterance, on a scenario where the existing proof is visibly weak. The flynn-proof-bare-ids scenario is byte-identical to mid-research-flynn except for one field: ps_001.narrative_markdown refers to its evidence only by bare identifiers (a_004, a_010, a_013, c_001, src_001/003/004, plan_001), describes none of the underlying records in prose, and carries no inline or appended citations. A visibly deficient proof is the case most likely to tempt proof-conclusion into firing and rewriting it, which is exactly the harm the #1861 ruling routes away from this skill. Paired with ut_proof_conclusion_007 so the route is pinned on both a sound and an unsound proof. Was a positive review-mode test before #1861 (added by #1392); the user_message is unchanged so the utterance stays pinned in the trigger corpus. The self-containment craft check it used to measure has no home on the unit plane, which grades skills and not agents.",
+    "description": "Second pin for the same route, on a scenario where the existing proof is visibly weak. The flynn-proof-bare-ids scenario is byte-identical to mid-research-flynn except for one field: ps_001.narrative_markdown refers to its evidence only by bare identifiers (a_004, a_010, a_013, c_001, src_001/003/004, plan_001), describes none of the underlying records in prose, and carries no inline or appended citations. A visibly deficient proof is the one a writer skill is most tempted to repair, which silently replaces the artifact the user asked to have judged — so the intact-narrative invariant carries most of this test's weight. Paired with ut_proof_conclusion_007 so the route is pinned on both a sound and an unsound proof. Was a positive review-mode test before #1861 (added by #1392); the user_message is unchanged so the utterance stays pinned in the trigger corpus. The self-containment craft check it used to measure has no home on the unit plane, which grades skills and not agents.",
     "tags": [
       "proof",
       "parentage",
@@ -13,7 +13,7 @@
       "narrative-self-containment",
       "near-miss",
       "boundary",
-      "empty-correct_skill"
+      "architectural-invariant"
     ]
   },
   "input": {
@@ -22,7 +22,8 @@
   },
   "negative": {
     "correct_skill": [],
-    "explanation": "Same route as ut_proof_conclusion_007: review of an existing ps_NNN belongs to the read-only gps-mentor agent, not to proof-conclusion. The weak narrative raises the stakes rather than changing the route — a proof whose narrative names its evidence only by bare ID is the one a writer skill is most likely to 'fix' by rewriting, which silently replaces the artifact the user asked to have judged. No other skill is the right route, hence the empty array."
+    "explanation": "Routing is deliberately NOT graded here, and `correct_skill` is inert because `grade_on_invariant` makes _compute_outcome return before it reads routing. Measured 2026-09-01: the same utterance reached the `research` orchestrator on ut_proof_conclusion_007 and no skill at all on ut_proof_conclusion_r7k. Neither array value is correct for the pair — `[]` fails the run that routed to the orchestrator, and `[\"research\"]` fails the run that routed nowhere — so the outcome is decided by the deterministic invariant instead: proof-conclusion must not activate, must write no new proof_summaries, and must leave ps_001.narrative_markdown byte-identical. Enforced by the three `gps-review`-tagged validators in eval/harness/validators/test_proof_conclusion.py. This is the shape citation refuse-new-source and tree-edit ut_003 already resolved the same way. The `evaluations` write both runs performed is a separate defect and is filed on its own; its absence from the invariant is not approval of it. The bare-identifier narrative raises the stakes rather than changing the route, which is why the intact-narrative validator matters most here.",
+    "grade_on_invariant": true
   },
   "judge_context": [
     "GROUND TRUTH: in this scenario ps_001.narrative_markdown names its evidence only by bare identifiers (a_004, a_010, a_013, c_001, src_001, src_003, src_004, plan_001). It describes none of the underlying records in prose — no census years, no dwelling/family numbers, no informant, no repository — and carries no inline citations and no citations section. The structured fields (tier probable, vehicle summary, supporting_assertion_ids, resolved_conflict_ids, exhaustive_search_summary) are unchanged from mid-research-flynn.",

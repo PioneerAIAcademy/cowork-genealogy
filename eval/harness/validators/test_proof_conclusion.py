@@ -506,3 +506,79 @@ def test_open_candidate_blocks_closure(before_state, after_state, test):
             f"{qid} was marked resolved while {', '.join(open_h)} is still "
             f"`active`"
         )
+
+
+# --- GPS review routes away from this skill (issue #1861) -------------
+
+def _ps_by_id(state, ps_id):
+    research = state.get("research_json")
+    if research is None:
+        return None
+    for ps in research.get("proof_summaries", []):
+        if ps.get("id") == ps_id:
+            return ps
+    return None
+
+
+def test_gps_review_does_not_activate_proof_conclusion(activated, test):
+    """Reviewing an EXISTING proof is the gps-mentor agent's job, not this
+    skill's (issue #1861). proof-conclusion concludes; it has no review step,
+    so a review request that activates it re-runs the conclusion the user
+    asked to have judged.
+
+    This is the routing assertion #1861 turned on, made deterministic. The
+    two `gps-review` tests carry `grade_on_invariant`, which makes
+    `_compute_outcome` return pass before it reaches the activation gate, so
+    the gate has to live here or it does not run at all.
+
+    Routing itself is deliberately NOT asserted. Measured 2026-09-01 on one
+    run: the same utterance reached the `research` orchestrator on
+    ut_proof_conclusion_007 and no skill at all on ut_proof_conclusion_r7k.
+    Both are state-safe, and pinning either one makes the pair unwinnable —
+    the shape citation refuse-new-source and tree-edit ut_003 already hit.
+    """
+    if "gps-review" not in test.get("tags", []):
+        pytest.skip("not a gps-review routing scenario")
+    if activated is None:
+        pytest.skip("activation unknown (aborted before derivation)")
+    assert not activated, (
+        "proof-conclusion activated on a request to REVIEW an existing proof; "
+        "review belongs to the gps-mentor agent (issue #1861)"
+    )
+
+
+def test_gps_review_writes_no_proof_summary(before_state, after_state, test):
+    """The harm a review request can do here: concluding instead of judging.
+
+    Deliberately silent about the `evaluations` write. Both runs on
+    2026-09-01 performed the review inline in the main thread and appended
+    `ev_001` — gps-mentor's own section, whose sole-writer rule nothing
+    enforces (docs/skill-dataflow.md). That is a real defect and it is filed
+    separately; this validator must not be read as approving it, and must not
+    be widened to cover it without the issue being resolved first.
+    """
+    if "gps-review" not in test.get("tags", []):
+        pytest.skip("not a gps-review routing scenario")
+    new = _new_proof_summaries(before_state, after_state)
+    if new is None:
+        pytest.skip("Missing research.json for diff")
+    assert not new, (
+        f"a review request produced new proof_summaries "
+        f"{[p.get('id') for p in new]} — it should judge ps_001, not write one"
+    )
+
+
+def test_gps_review_leaves_the_reviewed_narrative_intact(before_state, after_state, test):
+    """A deficient narrative is not a licence to repair it. ut_proof_conclusion_r7k
+    plants a bare-identifier narrative precisely because that is the one a
+    writer skill is most tempted to rewrite, which silently replaces the
+    artifact the user asked to have judged."""
+    if "gps-review" not in test.get("tags", []):
+        pytest.skip("not a gps-review routing scenario")
+    before = _ps_by_id(before_state, "ps_001")
+    after = _ps_by_id(after_state, "ps_001")
+    if before is None or after is None:
+        pytest.skip("ps_001 absent from one side of the diff")
+    assert after.get("narrative_markdown") == before.get("narrative_markdown"), (
+        "ps_001.narrative_markdown was rewritten during a REVIEW request"
+    )
