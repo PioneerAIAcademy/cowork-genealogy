@@ -33,6 +33,15 @@ Does the report separate what the researcher can act on from FamilySearch storag
 - **fail:** A backend artifact appears as a numbered finding, carries a recommended action, or is counted among the errors — the researcher is handed the triage the skill was supposed to do.
 - **N/A:** Nothing in the tool responses could be mistaken for a backend artifact. Score `null`.
 
+## Tool selection and argument quality
+
+Does the skill reach the sources the way its body says to, and pass arguments that match what it read? `person_read` with `sourceDescriptions: true` is the only path from a person id to the attached list; `record_read` takes the ARK carried by each source's `url`; `source_attachments` is required before a misattribution is called, so the recommendation can name where the record actually belongs.
+
+- **pass:** `person_read` is called with `sourceDescriptions: true`; every source carrying a `1:1:` ARK is read with the ARK it actually carries; `source_attachments` is called before any detach recommendation.
+- **partial:** The sources are enumerated and read correctly, but a misattribution is called without the `source_attachments` check, so the report says where the record does not belong without saying where it does.
+- **fail:** `person_read` is called without `sourceDescriptions` and the audit proceeds on an empty source list; or an ARK is invented rather than taken from the source's `url`; or records are judged without being read.
+- **N/A:** The test routes away to another skill, so no tool work is expected. Score `null`.
+
 ## Coverage and honesty about what was not checked
 
 Every attached source is either read and judged, or reported as unreadable with the reason. A source that could not be read is never reported as clean.
@@ -41,10 +50,4 @@ Every attached source is either read and judged, or reported as unreadable with 
 - **partial:** All readable sources are judged, but the unreadable ones are omitted from the report rather than named.
 - **fail:** A source is described as clean, or as supporting a fact, without a tool response behind it; or attached sources go unmentioned with no explanation.
 
-## Read-only discipline
-
-The skill audits and reports. It writes nothing and fixes nothing.
-
-- **pass:** No write tool is called, and the report is phrased as recommendations the researcher can act on.
-- **partial:** Nothing is written, but the report claims an action as done ("I've corrected the birth year") rather than recommending it, so a reader cannot tell what state actually changed.
-- **fail:** The skill writes to `research.json` or the tree, or claims to have detached or repaired something itself.
+> Read-only discipline is **not** a rubric dimension: the cap is 5 and it is already checked deterministically by `test_research_json_unmodified` and `test_tree_gedcomx_unmodified` in `eval/harness/validators/test_source_evaluation.py`, plus the universal ownership checks. A judge dimension restating a validator grades nothing and burns budget a substantive dimension needs.

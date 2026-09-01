@@ -24,10 +24,11 @@
     "source-attachments-hole-1885"
   ],
   "judge_context": [
-    "The findings list must contain only user-actionable items -- the 1900 census index error and the misattributed 1885 state census",
-    "Repeated internal ids across records (F1, N1, P1 recurring on unrelated persons) are FamilySearch storage artifacts; they must NOT appear as numbered findings or carry a recommended action",
+    "The findings list must contain only user-actionable items -- the death index's transposed year and the misattributed 1885 state census",
+    "Repeated internal ids across records (F1, N1, P1, S1 recurring on unrelated persons and records) are FamilySearch storage artifacts; they must NOT appear as numbered findings or carry a recommended action",
     "Mentioning backend metadata once as closing context is acceptable; listing it as a problem to fix is the failure this test pins",
     "The stated count of findings must exclude backend metadata",
+    "The 1900 census birth year two years off the profile is ordinary census variance, not a finding",
     "The uploaded funeral card (SD-HOLE-D) has no record ARK and must be reported as unchecked, not as clean"
   ]
 }

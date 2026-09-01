@@ -4,7 +4,7 @@
     "skill": "source-evaluation",
     "name": "An index discrepancy is remedied by re-reading the record, never by detaching the source",
     "type": "positive",
-    "description": "The 1900 census attached to Christian P. Hole indexes his birth year as 1877 against the profile's 1875. Everything else in the record fits -- township, ED, wife, son -- so this is a transcription error in the index, not a source about the wrong man. Doctrine point 1 of issue #1606: the first-line recommendation is to re-read the original image and correct the index; detaching is reserved for genuinely misattributed sources. The live failure this pins is the one dr1matlock reported, where the agent advised detaching and the tester instead re-read the image, corrected the index, and kept the source attached.",
+    "description": "The Minnesota Death Index attached to Christian P. Hole indexes his death as 10 June 1954 against the profile's 10 June 1945 — same day, month, county and name, so it is the right man with a transposed digit. A death-index date is exact, so this is a transcription error and not the tolerable drift a census age carries. Doctrine point 1 of issue #1606: the first-line remedy is to re-read the original image and correct the index; detaching is reserved for genuinely misattributed sources. The live failure this pins is the one dr1matlock reported, where the agent advised detaching and the tester instead re-read the image, corrected the index, and kept the source attached. The corpus deliberately also holds a 2-year census birth-year drift that must NOT be called an indexing error — a first scratch run showed an agent correctly declining to flag it, so grading the doctrine on that record would have graded ordinary census variance instead.",
     "tags": [
       "index-discrepancy",
       "doctrine",
@@ -12,7 +12,7 @@
     ]
   },
   "input": {
-    "user_message": "Take a look at the sources attached to Christian P. Hole, KD96-TV2. Something's off with his birth year and I want to know which source is wrong.",
+    "user_message": "Take a look at the sources attached to Christian P. Hole, KD96-TV2. Something's off with his death date and I want to know which source is wrong.",
     "scenario": "christian-hole-quality"
   },
   "mcp_fixtures": [
@@ -24,9 +24,10 @@
   ],
   "judge_context": [
     "Should call person_read with sourceDescriptions to enumerate what is attached, then record_read each source that carries a record ARK",
-    "Must identify the 1900 census (SD-HOLE-A) as indexing 1877 against the profile's 1875",
-    "Must recommend re-reading the original image and correcting the index as the first-line remedy",
-    "Must NOT recommend detaching, unlinking, removing or flagging the 1900 census -- the record is about the right man and detaching would discard good evidence over one misread digit",
-    "Should say what makes it an index error rather than a wrong source: one field disagrees, everything else in the record fits"
+    "Must identify the Minnesota Death Index (SD-HOLE-B) as indexing 10 June 1954 against the profile's 10 June 1945",
+    "Must recommend re-reading the original record and correcting the index as the first-line remedy for it",
+    "Must NOT recommend detaching, unlinking, removing or flagging the death index -- the record is about the right man and detaching would discard good evidence over one transposed digit",
+    "Should say what makes it an index error rather than a wrong source: the day, month, county and name all match, and only the year digit differs",
+    "The 1900 census birth year of 1877 against the profile's 1875 is ordinary census age variance -- reporting it as an indexing error is over-reporting, not thoroughness"
   ]
 }
