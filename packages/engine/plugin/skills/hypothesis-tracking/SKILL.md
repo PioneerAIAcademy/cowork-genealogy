@@ -121,8 +121,7 @@ entity.
 ```
 active ──► supported ──► (to proof-conclusion)
   │
-  ├──► (assertions-only route also reaches proof-conclusion, bypassing
-  │     `supported` — for an indirect argument resting on a single source)
+  ├──► (or straight to proof-conclusion via assertions only, bypassing `supported`)
   │
   └──► ruled_out
 ```
@@ -138,11 +137,6 @@ active ──► supported ──► (to proof-conclusion)
   distinct `source_id` values
 - The evidence is consistent — no logical impossibilities (check-warnings) or
   geographic infeasibilities (timeline)
-
-**A hypothesis that cannot reach `supported` still concludes.**
-`proof-conclusion` accepts assertions and `person_evidence` for a question as
-an alternative to a supported hypothesis; an indirect argument resting on a
-single source takes that route.
 
 **Do NOT downgrade from `supported` to `active` for minor
 discrepancies.** Census age rounding (e.g., a 5-year birth year
@@ -166,10 +160,12 @@ it is genealogically reasonable.
 review.** When the user asks you to update or evaluate a hypothesis
 and the age arithmetic shows a candidate was 10 years old at the
 subject's birth, that is a biological impossibility — rule it out in
-this interaction. Do NOT defer to conflict-resolution or hedge on
-person_evidence confidence when the link is rated `confident`
-(match_score >= 0.80) — treat the identification as settled and apply
-the ruling. **Exception:** if the user explicitly asks for a read-only
+this interaction. Before applying the ruling, **query `person_evidence`
+(filtered by the relevant `assertion_id`) for the match confidence** — do
+not assume or dismiss a same-name identity link without checking it. Do
+NOT defer to conflict-resolution or hedge on person_evidence confidence
+when the link is rated `confident` (match_score >= 0.80) — treat the
+identification as settled and apply the ruling. **Exception:** if the user explicitly asks for a read-only
 summary/review, do NOT modify research.json — identify the issue in
 your response text but defer changes to a follow-up request.
 
@@ -197,7 +193,7 @@ accumulates — the GPS process of elimination.
 
 - **timeline:** Request a hypothesis-testing timeline to check event coherence.
 - **conflict-resolution:** When supporting and contradicting evidence exist, specific conflicts may need resolution.
-- **proof-conclusion:** When a hypothesis reaches `supported`, it's ready for a proof conclusion.
+- **proof-conclusion:** When a hypothesis reaches `supported`, it's ready for a proof conclusion. A hypothesis that cannot reach `supported` still concludes — `proof-conclusion` accepts assertions and `person_evidence` for a question as an alternative; an indirect argument resting on a single source takes that route.
 
 ## Present
 

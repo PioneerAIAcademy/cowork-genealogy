@@ -165,6 +165,34 @@ regresses back in.
 
 ---
 
+## F3 — `ut_hypothesis_tracking_006` shows a real (partially-mitigated) routing regression toward `project-status`
+
+Found running the required `make eval-skill` verification pass, not by inspection — recorded here because Step 2's rule applies to a live run just as much as a committed one: read the transcript, not the score.
+
+**Did:** the first full-suite run on this PR's `SKILL.md` failed `ut_hypothesis_tracking_006` — `output.activated: false`, `output.skills_invoked: ["project-status"]`. The skill delegated to `project-status` instead of handling a request squarely inside its own frontmatter's trigger list ("summarize hypothesis status", "where do hypotheses stand?"). Isolated the cause with a controlled A/B swap (same test, same environment, only `SKILL.md` swapped between this PR's version and the pre-fix `git show 90916e06:...` version, restored after each sample — confirmed zero diff afterward each time): **pre-fix content: 6/6 pass (4 historical + 2 fresh). This PR's original wording: 1/3 pass.** The two new additions the gate rewrite introduced — a second diagram branch naming `proof-conclusion` and a new standalone bolded paragraph on the same theme, both inside the main Status Transitions section — are the leading candidate cause: they make the section read more like it's about deciding overall proof/conclusion readiness, `project-status`'s own territory, than a plausible coincidence explains on their own, though the exact mechanism isn't provable from outside the model.
+
+**Should:** nothing in the issue's ruling required putting this content inside Status Transitions specifically — only that the fact be stated somewhere in the skill body (the flow diagram bypass, and the assertions-only-route sentence).
+
+**Gap:** lane 2 (grading/behavioral defect introduced by this PR's own wording, not the underlying gate rule). **Fixed:** relocated the "still concludes" sentence out of the standalone mid-section callout into the existing "Connect to downstream skills" `proof-conclusion` bullet (no fact dropped, only repositioned and de-duplicated), and trimmed the diagram branch to one line, one `proof-conclusion` mention instead of two. **Verified across three rounds of sampling, not one:** 3 fresh isolated samples immediately post-fix (3/3 pass, all genuinely self-activated); the next full official run still failed it once more (1 fail); the following full official run passed it clean. **Final tally: 4 of 5 post-mitigation samples pass** (up from 1 of 3 pre-mitigation, and 6 of 6 on the original pre-PR wording). A measured improvement, not a proven-eliminated regression — the residual rate is not distinguishable from the ordinary no-`temperature=0` sampling jitter this framework already documents (`eval/CLAUDE.md`, "Eval vs production parity"), but neither is it fully ruled out as a small residual real effect. Left as a known, named, quantified risk rather than claimed solved.
+
+`ut_hypothesis_tracking_015` (routes to `timeline`) also failed across the official runs. A/B-tested the same way as F3: **it fails under the pre-fix `SKILL.md` too**, both in a fresh isolated sample and in a full official run — a pre-existing flake, not introduced here, and out of this dive's scope (the boundary is with `timeline`, not anything this PR touched).
+
+---
+
+## F4 — `ut_hypothesis_tracking_009` was missing a required lookup, not just having a bad sample
+
+The lead pushed on this one directly ("how can we fix test 9, or is it the test's issue") rather than accepting F3's "probably noise" framing, and that push found a real, fixable, in-scope defect the first pass missed.
+
+**Did:** two independent failing samples of `ut_hypothesis_tracking_009` (one following a Bun runtime crash-retry, one clean) both show the same tool-call pattern: `project_context`, `research_query(hypotheses)`, `research_query(assertions)` — **never** `research_query(person_evidence)`. Both times the model then hedged on ruling out h_001 ("identity needs to be confirmed"), even though the fixture's `pe_005` entry (`assertion_id: a_006`, `person_id: I2`, `confidence: "confident"`, `match_score: 0.92`) already resolves the exact concern it raised — its own rationale text states the 5-year census/baptism discrepancy is normal for the period and concludes "this is the same Thomas Flynn." The model never saw this because it never asked.
+
+**Should:** SKILL.md's existing "Act on impossibilities immediately" rule (unedited by this PR — pre-existing since before issue #1644) says *"Do NOT... hedge on person_evidence confidence when the link is rated confident... treat the identification as settled"* — but never instructed the model to query `person_evidence` in the first place. The rule tells the model what conclusion to draw from a confidence score it was never told to go get.
+
+**Gap:** lane 4, but narrow and low-risk — a missing procedural step inside a rule this PR didn't otherwise touch, not a rewrite of the rule's substance. Confirmed `research_query(section: "person_evidence", assertionId: ...)` is a real, existing, filterable query (`research-query.ts`) — this needed an instruction, not a new capability. **Fixed:** added one sentence to the existing paragraph — *"Before applying the ruling, query `person_evidence` (filtered by the relevant `assertion_id`) for the match confidence — do not assume or dismiss a same-name identity link without checking it."* — directly before the existing "Do NOT... hedge" sentence it was already assuming.
+
+**Verified, not assumed:** 2 fresh isolated samples post-fix, both correctly queried `person_evidence(assertionId: "a_006")`, got the 0.92 confidence, and ruled out h_001 with a complete, accurate `ruled_out_reason` citing the match score by name. The following full official run passed it clean (`ut_hypothesis_tracking_009: pass`), and the one after that did too. Entirely inside `hypothesis-tracking`'s own file — no cross-skill scope growth, unlike F3.
+
+---
+
 ## Checked, and it holds — recorded because the check is what makes the fix trustworthy
 
 Three claims worth stating as measured rather than assumed, because a skill
@@ -206,9 +234,12 @@ those lanes to live).
 |---|---|---|---|
 | F1 | `supported` gate rejects a valid indirect-only proof | **4** | fixed, 7 sites |
 | F2 | no test ever exercises a live promotion to `supported` | 2 | fixed (new test, existing fixture) |
+| F3 | `ut_006` routing regression toward `project-status`, introduced by this PR's own wording | 2 | mitigated, not fully eliminated — see F3 |
+| F4 | `ut_009` missing a `person_evidence` lookup before ruling | 4 (narrow) | fixed, verified clean across 4 samples |
 | — | conflicts/questions/tree.gedcomx.json isolation | — | checked clean, validator requested anyway (V2) |
 | — | scope discipline | — | checked clean, no action |
 | — | routing reciprocity | — | checked clean, no action |
+| — | `ut_015` routing flake (→ `timeline`) | — | pre-existing, confirmed unrelated to this PR (F3) |
 
 ---
 
@@ -273,7 +304,13 @@ exists before writing anything new.
 ## Fixes made in this PR
 
 **Skill body** (`packages/engine/plugin/skills/hypothesis-tracking/SKILL.md`) —
-the `supported` gate and its flow diagram (F1).
+the `supported` gate and its flow diagram (F1); the routing-regression
+mitigation — relocated the "still concludes" sentence into the existing
+`proof-conclusion` downstream-skills bullet and trimmed the diagram — found
+and applied during verification, not planned up front (F3); one sentence
+added to the existing "Act on impossibilities immediately" paragraph
+instructing a `person_evidence` lookup before ruling on an identity-dependent
+impossibility, also found and applied during verification (F4).
 
 **Docs** — `docs/specs/research-schema-spec.md` §5.9, restated to the new gate
 (F1). `docs/skill-deep-dive-guide.md`'s worked example and
@@ -297,17 +334,38 @@ list.md`, new.
 
 ## Cost
 
-`eval/harness/validators/**` is not part of the run-log snapshot, so the new
-validator buys no paid run by itself. What does: one
-`make eval-skill SKILL=hypothesis-tracking` run, as the issue budgets (roughly
-$8–12, 45–65 minutes) — required regardless, because the skill body, rubric,
-and a test file all changed. The suite goes 16 tests → 17. **This run cannot
-confirm the fix by itself** — the corpus's own dimension scores have been
-flat for 70 runs, so a green run here is the status quo, not evidence; its
-job is to confirm `ut_hypothesis_tracking_017` actually exercises the new
-floor and comes back a genuine pass rather than an aborted or mis-scored run,
-and that the new validator runs clean against the live suite. Annotation is 5
-sampled tests per the current policy.
+Actual, not estimated: **four full `make eval-skill SKILL=hypothesis-tracking`
+runs** (~$3.01, $2.93, $3.02, $2.86 — roughly $11.8 total) plus around a dozen
+single-test diagnostic runs (`--test ut_hypothesis_tracking_006` / `_009` /
+`_015`, ~$0.11–0.25 each) used to isolate and verify F3 and F4 — **roughly $13
+total**, over the issue's original $8–12 estimate for the whole task. The
+overrun bought two real, verified fixes (F3, F4) that a single clean run would
+never have surfaced — the corpus's dimension scores had been flat for 70 runs
+specifically because nothing had ever exercised the failure modes these runs
+hit. Not treated as free money to spend: each additional run was justified by
+a specific, named diagnostic question (is this a regression? does the fix
+hold?), not by re-running hoping for a better number.
+
+The suite goes 16 tests → 17. **The active candidate run log is
+`eval/runlogs/unit/hypothesis-tracking/v1_2026-09-01_13-17-15.json`** — the
+final, post-F3-and-F4 run: **15 pass, 1 partial, 1 fail**. The partial
+(`ut_hypothesis_tracking_012`) is dragged down only by an unrelated,
+self-corrected tool-filter mistake (`research_query` with an unsupported
+`assertionId` filter — seen across 4 different tests in these runs, likely a
+tooling/docs clarity gap worth a lightweight follow-up, not filed without
+asking first). The one fail (`ut_hypothesis_tracking_015`) is F3's
+already-diagnosed pre-existing, out-of-scope flake. Three earlier candidate
+run logs from this session (`v1_2026-09-01_11-07-15.json`,
+`v1_2026-09-01_11-36-18.json`, and a third noisier run) were deleted rather
+than committed — each superseded by a later run before being pushed, per the
+harness's own newest-wins retention rule, not cherry-picked for looking
+better.
+
+Annotation is 5 sampled tests per the current policy — the active run log's
+sample is `ut_hypothesis_tracking_010, _011, _012, _014, _017`. Only `_012`
+has a non-pass dimension needing a comment; the rest are clean passes needing
+only agreement. I cannot write `.ann.json` myself under any circumstance —
+this is a genealogist's call in the CRUD UI (`eval/app`).
 
 ## Handback — not in this diff
 

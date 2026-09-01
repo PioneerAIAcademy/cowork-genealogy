@@ -2,8 +2,10 @@
 
 Built from `packages/engine/plugin/skills/hypothesis-tracking/SKILL.md` and
 `references/hypothesis-gps-guidance.md` as this PR leaves them (issue #1644,
-which also lands the `supported`-gate widening — rule 7 below is stated in its
-post-fix form). Every line is checkable by eye against a run-log transcript
+which also lands the `supported`-gate widening — rule 12 below is stated in
+its post-fix form — and rule 16, the `person_evidence` lookup requirement
+found during this PR's own eval verification (F4), which did not exist before
+this PR). Every line is checkable by eye against a run-log transcript
 (`output.text_response`, `output.tool_calls`, `output.file_changes`) or by a
 mechanical scan of `research.json`'s `hypotheses[]`/`conflicts[]` diff.
 
@@ -65,29 +67,32 @@ of rebuilding it.**
 15. On a non-read-only turn, an impossibility already visible in the project
     state is acted on immediately — not deferred to conflict-resolution, not
     hedged on a `person_evidence` link rated `confident` (`match_score >= 0.80`).
-16. `ruled_out_reason` is populated whenever `ruled_out: true`, and states the
+16. Before ruling on an identity-dependent impossibility, `person_evidence`
+    (filtered by the relevant `assertion_id`) is queried for the match
+    confidence — an identity link is never assumed or dismissed unchecked.
+17. `ruled_out_reason` is populated whenever `ruled_out: true`, and states the
     affirmative refutation — never a bare "insufficient evidence."
 
 ## E. Scope discipline
 
-17. Only the hypothesis (or hypotheses) the user asked about are modified in
+18. Only the hypothesis (or hypotheses) the user asked about are modified in
     that turn. A different hypothesis's status is never changed, even when its
     own notes or a related assertion make the correct status obvious — that
     observation goes in the text response, not into a write.
-18. `conflicts` is never modified by this skill.
-19. `questions` is never modified by this skill; `related_question_ids` on a
+19. `conflicts` is never modified by this skill.
+20. `questions` is never modified by this skill; `related_question_ids` on a
     new hypothesis is `[]` when no question exists yet.
-20. `tree.gedcomx.json` is never modified by this skill.
+21. `tree.gedcomx.json` is never modified by this skill.
 
 ## F. Evidence linkage
 
-21. Every assertion that conflicts with a hypothesis is recorded in
+22. Every assertion that conflicts with a hypothesis is recorded in
     `contradicting_assertion_ids` — recorded first, resolved later via
     conflict-resolution. It is never omitted because the researcher expects to
     explain it away.
 
 ## G. Re-invocation
 
-22. Updating an existing hypothesis about the same claim happens in place (or
+23. Updating an existing hypothesis about the same claim happens in place (or
     via `superseded_by`); a second `h_` entry for the same claim is never
     created.
