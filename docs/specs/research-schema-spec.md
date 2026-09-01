@@ -615,10 +615,10 @@ FAN findings are regular assertions about the subject's associates. There is no 
 **Why the indirect route exists.** Until 2026-08-31 `supported` required direct
 evidence, so a proof argument resting entirely on correlated indirect
 evidence — the standard form for a relationship no record states — could
-never be promoted; observed live in the `stribling-father-1821` debug run
-under issue #1413, where the agent assembled a guardianship bond, the
-mother's remarriage, a prior marriage and four equal co-heir shares,
-reasoned about them correctly, and held the hypothesis at `active`. Merely
+never be promoted; observed live in the `stribling-father-1821` debug run,
+where the agent assembled a guardianship bond, the mother's remarriage, a
+prior marriage and four equal co-heir shares, reasoned about them correctly,
+and held the hypothesis at `active`. Merely
 documenting `proof-conclusion`'s assertions-only route was rejected as
 insufficient; relaxing the gate to "a correlated set that survived
 conflict-resolution" was rejected as unassertable. The rule above reads only
