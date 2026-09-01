@@ -37,7 +37,7 @@ is `eval/JUNIOR-WALKTHROUGH.md` (first PR) and `eval/SENIOR-WALKTHROUGH.md`
 | Add a field to `research.json` · Add an enum value · Add a tree field | [§6](#if-youre-asked-to-3) |
 | Add a viewer feature · Change what the sandbox runs · Add a control-plane endpoint | [§7](#if-youre-asked-to-4) |
 | Change hosted agent config | [§8](#if-youre-asked-to-5) |
-| Verify a change · Debug a failing e2e run · Add a unit eval test · Write a spec | [§9](#if-youre-asked-to-6) |
+| Verify a change · Debug a failing e2e run · Add a unit eval test · Write a spec · **Write a rule that behaves differently under `--autonomous`** | [§9](#if-youre-asked-to-6) |
 
 > **Before you trust a green CI run, read [§9.4 — What nothing checks](#94-what-nothing-checks).**
 > Much of this system has no automated guard, and several of those gaps fail
@@ -1609,6 +1609,71 @@ changes how a correct change is made:
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
 
+### 9.5 An autonomous run must be able to reach what a production run can
+
+**Nothing here measures production — every figure in this repo is computed over the
+eval corpus (§9.4). The e2e tier is the closest proxy: live FamilySearch, the whole
+route end to end. It holds only so far as the run it measures can do what a user's
+run can do.** Every capability an autonomous run cannot reach is a capability the
+benchmark never exercises and never scores — so the gap is invisible in exactly the
+place you would look for it. A divergence here does not make the number noisy; it
+makes the number about the harness.
+
+This generalizes a rule `CLAUDE.md` already states narrowly for one dimension —
+"the eval harness emulates production's permission model," grant what production
+grants. Permissions were the first instance, not the whole rule. `CLAUDE.md` owns
+that statement and wins on conflict; this section is the general case and the
+reason it exists.
+
+**The test that separates a correct mode difference from a bug: does the rule
+remove a *pause*, or a *capability*?**
+
+Removing the pause is correct and is the established shape. `agents/proof-conclusion.md`
+states it for one gate — under `--autonomous`, route to the missing skill
+automatically instead of asking, because "autonomous mode changes who decides, not
+whether the gate runs." **Generalized: it changes who decides, not what the run can
+reach.** `question-selection` applies the same shape — with no user to answer, skip
+the ask and take the action. Production behaviour is preserved; only the prompt is
+gone.
+
+Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
+both green in CI for months:
+
+- **The plan freeze.** `search-records` tells an autonomous run it has no ad-hoc
+  searches, which closes the skill's self-initiated route back to `research-plan`. An
+  interactive researcher who notices the plan is wrong can get it revised; an
+  autonomous one cannot. `research-plan` compounds it by superseding a plan
+  "only when the user is explicitly re-planning" — never true with no user — so even
+  reaching the skill changes nothing. Measured consequence: across the
+  committed e2e corpus, 93% of question-plan pairs carry exactly one plan, and only
+  seven plans in the whole corpus were ever superseded.
+- **External-site captures.** `search-external-sites` marks a plan item `skipped`
+  under `--autonomous` because no user can click a paywalled link. Controlling for
+  fallback items, that produces a 76% skip rate on primary Ancestry items against
+  12% on FamilySearch — so corpus breadth on external repositories cannot be read as
+  production breadth.
+
+**When the divergence is genuinely forced, supply the input rather than removing the
+capability.** The second case above is not irreducible: `provided-documents/` in a
+fixture is copied into the workspace root where an uploaded capture would land, and
+named in the user message so the agent reads it instead of asking. The mechanism is
+built, spec'd and unit-tested; it is used by three of the fixtures. A headless run
+cannot click a link, but the fixture can hand it what clicking would have produced.
+
+**If you truly cannot supply it, label the outcome honestly.** The failure mode is
+reusing a status that already means something else: `skipped` is defined as "the
+search was determined to be unnecessary," while a deferred capture means "could not
+be attempted." Those are opposite claims to the exhaustiveness gate, whose own
+doctrine separates a pursued-and-unavailable source from an unsearched one. A
+forced divergence that is recorded as a judgement call is worse than one recorded
+as a limitation, because only the second can be measured later.
+
+**What nothing checks.** No test compares the capability set an autonomous run can
+reach against an interactive one's, and no fixture check asserts that a plan reaching
+an external repository ships the capture that repository requires. Both instances
+above were added to a skill body, in prose, with every suite green. Per §9.4, that
+absence belongs on the board under `nothing-checks` rather than in a table here.
+
 ### If you're asked to…
 
 **Verify a change.** Match the instrument to the layer: a tool → `make engine-test`
@@ -1619,6 +1684,15 @@ plus the annotation gate (§3); routing or anything cross-skill → a live
 run `make test-all`, which the PR template requires. **If you cannot name the
 check that would have caught your change, say so in the PR** rather than implying
 CI covered you (§9.4).
+
+**Write a rule that behaves differently under `--autonomous`.** Ask which of the two
+things it removes — a pause, or a capability (§9.5). Removing the pause is the
+established shape and is fine: decide instead of asking, and log the decision.
+Removing a capability makes the benchmark stop measuring production, silently, and
+is almost never what you want. If a headless run genuinely cannot perform the step,
+supply its input as a fixture rather than deleting the step, and if you cannot do
+even that, record the outcome as a limitation rather than reusing a status that
+means a judgement was made.
 
 **Debug a failing e2e run.** Check the two setup gates first — `make e2e-preflight`
 and `make e2e-login` (the FS token lasts ~24h, and its absence looks exactly like
