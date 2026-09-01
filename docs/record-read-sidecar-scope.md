@@ -86,9 +86,10 @@ backward-compatible):
 
 - Content (persons/facts/relationships) is **verified identical** → extraction
   loses nothing by sourcing it from the sidecar.
-- Place standardization: the staged result already has the **correct** standardized
-  place; the tool returns it as-is (a live read's own standardization is *less*
-  reliable — see Findings).
+- Place standardization: the staged result carries the search stage's standardized
+  place (for the facts the resolve reached); the tool returns it as-is. A live read
+  performs **no** resolver standardization at all (pure `toSimplified` since #614),
+  so there is nothing to be less reliable — see Findings.
 - If the sidecar carries citations → the win is large (sidecar for nearly
   everything). If it doesn't → the skill still triages from the sidecar and only
   reads live for records it **keeps**, killing the duplicate re-reads regardless.
