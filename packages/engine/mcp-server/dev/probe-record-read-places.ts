@@ -6,7 +6,8 @@
  * `toSimplified` (not `toSimplifiedStandardized`), so it fills `standard_place`
  * only from the record's own `normalized` values, never from the resolver —
  * whether recapi supplies a `normalized` value at all is one thing this probe
- * measures. The justification (record-read.ts:128-134) cites two
+ * measures. The justification (the "Use toSimplified, NOT toSimplifiedStandardized"
+ * block in record-read.ts) cites two
  * mis-resolutions observed 2026-07-08 — before two resolver fixes landed
  * (4823ffdf, 2026-07-22, phrase-quote the `name:` query; 1af50fab, 2026-07-31,
  * derive a `contextName` from the second comma-segment). This probe re-measures,
@@ -28,10 +29,11 @@
  * eval/fixtures/mcp/record-read-*.json, labelled by each fixture's FS collection
  * title. None are invented, but fixture-derived is not the same as captured-live:
  * only the Richardson pair (JMF4-CL9, NFCY-7VM) is marked CAPTURED LIVE in its
- * fixture; ackerman-1860 (M7QZ-8KD) and patrick-flynn (CFLT-9K2) are constructed
- * ("stocked to stop an ABORT" / "mirrors an embedded gedcomx"), so a run over
- * them settles less than a run over live-captured records. Adjust the list before
- * the live run for wider real coverage of the three record families.
+ * fixture; the other six ARKs are constructed or carry no live-capture note
+ * (ackerman-1860 / patrick-flynn "mirror an embedded gedcomx"; 68Q9-K34P,
+ * birkeland, anders, and urna claim no live capture), so a run over them settles
+ * less than a run over live-captured records. Adjust the list before the live run
+ * for wider real coverage of the three record families.
  */
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
@@ -73,7 +75,7 @@ const ARKS: Ark[] = [
 
 // Loose shape for the raw recapi gedcomx — only what this probe reads.
 interface RawFact {
-  place?: { original?: string; normalized?: unknown[] };
+  place?: { original?: string; normalized?: { value?: string }[] };
 }
 interface RawPerson {
   facts?: RawFact[];
@@ -130,10 +132,14 @@ function placesOf(body: RawGedcomX): { original: string; hasNormalized: boolean 
       const original = f.place?.original;
       if (typeof original === "string" && original.trim() !== "") {
         const normalized = f.place?.normalized;
-        out.push({
-          original,
-          hasNormalized: Array.isArray(normalized) && normalized.length > 0,
-        });
+        // Mirror record_read's own gate (pickNormalizedPlace in
+        // gedcomx-convert.ts): a normalized value counts only when some entry has
+        // a truthy `.value` — a non-empty array of value-less entries yields no
+        // standard_place in the tool, so it must not read as "supplied" here.
+        const hasNormalized =
+          Array.isArray(normalized) &&
+          normalized.some((n) => typeof n?.value === "string" && n.value !== "");
+        out.push({ original, hasNormalized });
       }
     }
   }

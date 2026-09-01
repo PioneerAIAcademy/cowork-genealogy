@@ -30,9 +30,10 @@ round-trips for content it already has staged on disk.
 
 - `record_search` stages its **`toSimplified`** output **after running
   `standardizePlaces`** (inside `record_search`, before it stages the results): persons,
-  relationships, facts each carrying a `standard_place` (FS-normalized where the
-  search response supplied a `normalized` value, resolver-derived otherwise), and
-  `sources` **if** the FS search response carried `sourceDescriptions`.
+  relationships, facts most of which carry a `standard_place` (FS-normalized where
+  the search response supplied a `normalized` value, resolver-derived otherwise —
+  a null resolve or soft-cap overflow leaves some empty), and `sources` **if** the
+  FS search response carried `sourceDescriptions`.
 - `record_read`'s live path uses pure **`toSimplified`** (it does **not** run
   `standardizePlaces` — see Findings), so it keeps only the record's own
   `normalized` places and never adds resolver-derived `standard_place`. Its
@@ -42,7 +43,8 @@ Two deltas were identified; delta 1 is now **settled** (see Findings), delta 2
 remains **unverified**:
 
 1. **Place standardization** — the staged data already carries the search stage's
-   `standard_place`. This was originally scoped as a delta "closable host-side by
+   `standard_place` for the facts the search-time resolve reached. This was
+   originally scoped as a delta "closable host-side by
    re-applying `standardizePlaces`", but the Findings settled it the other way:
    the staged place is more reliable, so the sidecar returns it **as-is** and the
    live path does not add resolver-derived standardization.
