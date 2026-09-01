@@ -59,33 +59,35 @@ objective copied into the title field) is a weakness.
 - **fail:** A required section is absent or malformed, the objective is
   missing/empty, or the file fails schema validation on init-written content.
 
-## Researcher-profile interview & normalization
+## Researcher-profile interview
 
-When the user supplies experience level and access, are they mapped
-to the correct `experience_level`, normalized to the canonical subscription
-enum, and stored with the verbatim `narration_guidance` for that level? When
-no answers are available (single-turn), is the documented default used? The
-research objective shares this same opening-turn, non-blocking shape (issue
-#1510): when unanswered, does the skill ask it alongside the profile
-questions, proceed in the same pass, and store the generic default rather
-than a hallucinated specific direction?
+When the user supplies an experience level, is it mapped to the correct
+`experience_level` and stored with the verbatim `narration_guidance` for that
+level? When no answer is available (single-turn), is the documented default
+used? The research objective shares this same opening-turn, non-blocking shape
+(issue #1510): when unanswered, does the skill ask it alongside the profile
+question, proceed in the same pass, and store the generic default rather than a
+hallucinated specific direction?
 
-- **pass:** `experience_level` correct; `subscriptions` normalized to the
-  canonical enum (case-folded, aliases mapped, deduped, `["none"]` when none);
-  `narration_guidance` is the verbatim table text for the level. Single-turn
-  with no answers → `intermediate` / `["none"]` default, noted as editable.
-  Objective defaulting: when no objective is stated, the agent asks in the
-  opening turn, does not block, and writes the stated generic default —
-  never a hallucinated specific direction — in the same single pass as the
-  profile defaults.
-- **partial:** Mapping correct but normalization imperfect (an un-mapped alias,
-  a missed dedupe) or `narration_guidance` paraphrased rather than verbatim.
-  Objective asked and defaulted correctly, but the summary doesn't clearly
-  state it was defaulted.
-- **fail:** Wrong experience level, subscriptions left as raw user text,
-  `narration_guidance` invented rather than drawn from the table, the
-  objective is invented/hallucinated from person data instead of using the
-  generic default, or any of the three questions is silently skipped
+Site access is no longer asked. `subscriptions` should be **absent** from the
+written profile — the question was dropped on 2026-08-31 and the field is left
+unwritten rather than defaulted, since `["none"]` asserts the researcher told us
+they have nothing. A volunteered access statement may still be recorded.
+
+- **pass:** `experience_level` correct; `narration_guidance` is the verbatim
+  table text for the level; `subscriptions` absent (or, if the user volunteered
+  access unprompted, recording it is equally correct). Single-turn with no
+  answers → `intermediate` default, noted as editable. Objective defaulting:
+  when no objective is stated, the agent asks in the opening turn, does not
+  block, and writes the stated generic default — never a hallucinated specific
+  direction — in the same single pass as the profile default.
+- **partial:** Mapping correct but `narration_guidance` paraphrased rather than
+  verbatim. Objective asked and defaulted correctly, but the summary doesn't
+  clearly state it was defaulted.
+- **fail:** Wrong experience level, `narration_guidance` invented rather than
+  drawn from the table, a `subscriptions` value written when the user never
+  mentioned access, the objective invented/hallucinated from person data
+  instead of using the generic default, or either question silently skipped
   (asked-and-then-blocked, or defaulted without being asked first).
 
 ## Place standardization

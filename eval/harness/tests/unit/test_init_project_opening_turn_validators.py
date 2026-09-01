@@ -83,11 +83,15 @@ def test_untagged_profile_test_is_skipped():
         check_profile(_research(), UNTAGGED)
 
 
-def test_both_defaults_present_passes():
-    check_profile(
-        _research({"experience_level": "intermediate", "subscriptions": ["none"]}),
-        PROFILE_TAGGED,
-    )
+def test_experience_default_present_passes():
+    check_profile(_research({"experience_level": "intermediate"}), PROFILE_TAGGED)
+
+
+def test_absent_subscriptions_passes():
+    """The site-access question was dropped on 2026-08-31, so the field is left
+    absent rather than defaulted. This is the shape the validator must accept —
+    it is the whole point of the ruling, not an omission."""
+    check_profile(_research({"experience_level": "intermediate"}), PROFILE_TAGGED)
 
 
 def test_absent_profile_fails():
@@ -98,16 +102,16 @@ def test_absent_profile_fails():
 def test_wrong_experience_level_fails():
     with pytest.raises(AssertionError, match="experience_level"):
         check_profile(
-            _research({"experience_level": "novice", "subscriptions": ["none"]}),
+            _research({"experience_level": "novice"}),
             PROFILE_TAGGED,
         )
 
 
-def test_wrong_subscriptions_fails():
-    with pytest.raises(AssertionError, match="subscriptions"):
-        check_profile(
-            _research(
-                {"experience_level": "intermediate", "subscriptions": ["ancestry"]}
-            ),
-            PROFILE_TAGGED,
-        )
+def test_volunteered_subscriptions_do_not_fail():
+    """A researcher can still volunteer access and it can still be recorded — the
+    ruling dropped the question, not the field. The validator must not reject a
+    profile that carries one."""
+    check_profile(
+        _research({"experience_level": "intermediate", "subscriptions": ["Ancestry"]}),
+        PROFILE_TAGGED,
+    )

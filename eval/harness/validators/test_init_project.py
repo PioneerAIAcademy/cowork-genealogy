@@ -73,11 +73,15 @@ def test_objective_default_verbatim(after_state, test):
 
 def test_profile_defaults_when_all_default(after_state, test):
     """Tag-gated on `opening-turn-all-defaults`: when the test's premise is
-    that the user answered none of the three opening-turn questions,
-    `researcher_profile.experience_level` and `.subscriptions` must hold
-    the documented defaults exactly -- `intermediate` and `["none"]` -- not
-    be left absent (the pre-#1510 dead-edge-case behavior) and not hold
-    anything else."""
+    that the user answered none of the opening-turn questions,
+    `researcher_profile.experience_level` must hold the documented default
+    exactly -- `intermediate` -- not be left absent (the pre-#1510
+    dead-edge-case behavior) and not hold anything else.
+
+    `subscriptions` is deliberately NOT checked. The site-access question was
+    dropped from the interview on 2026-08-31 and the field is now left absent
+    rather than defaulted: `["none"]` asserts the researcher told us they have
+    nothing, which is the opposite of the assumption that ruling makes."""
     if "opening-turn-all-defaults" not in test.get("tags", []):
         pytest.skip("not an all-defaults scenario")
     research = after_state.get("research_json")
@@ -92,10 +96,6 @@ def test_profile_defaults_when_all_default(after_state, test):
     assert profile.get("experience_level") == "intermediate", (
         f"experience_level should default to 'intermediate', got: "
         f"{profile.get('experience_level')!r}"
-    )
-    assert profile.get("subscriptions") == ["none"], (
-        f"subscriptions should default to ['none'], got: "
-        f"{profile.get('subscriptions')!r}"
     )
 
 
