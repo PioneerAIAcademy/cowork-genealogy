@@ -321,7 +321,7 @@ print("NOMARK" if len(mark) != 1 else ("SKIP" if mark[0].args[0] else "RUNS"))
 """
 
 
-def _gate_verdict(*, key: bool, flag: bool) -> str:
+def _gate_verdict(*, key: bool, flag: bool, prereqs: bool = False) -> str:
     """Import the module in a CHILD process under one key/flag combination and report
     what its skipif actually evaluates to. A child is required: the marker condition
     is evaluated once at import time, so the value in THIS process only reflects the
@@ -333,6 +333,18 @@ def _gate_verdict(*, key: bool, flag: bool) -> str:
         env["LIVE_ANTHROPIC_API_KEY"] = "sk-not-a-real-key"
     if flag:
         env["AGENT_TOOL_BIND"] = "1"
+    if prereqs:
+        # Both remaining prerequisites ARE conjurable, so the hazard cell can be
+        # evaluated rather than reasoned about: _ENGINE_BUILD reads ENGINE_MCP_BUILD
+        # (any existing file satisfies .exists()), and node only has to be findable
+        # on PATH. Without this the cell is environment-dependent — with no build a
+        # prerequisite-keyed gate skips too, and the assertion passes vacuously
+        # against the very bug it exists to catch.
+        stub = Path(tempfile.mkdtemp(prefix="agent-tool-bind-stub-"))
+        (stub / "node").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        (stub / "node").chmod(0o755)
+        env["ENGINE_MCP_BUILD"] = sys.executable
+        env["PATH"] = str(stub) + os.pathsep + env.get("PATH", "")
     out = subprocess.run(
         [
             sys.executable,
@@ -353,10 +365,12 @@ def test_the_billing_probe_is_gated_on_opt_in_not_on_prerequisites():
     live key with a built engine billed a turn on a plain `make server-test` or
     `make test-all` without asking.
 
-    The hazard cell is key present + engine built + node on PATH + flag absent, and a
-    test cannot conjure the middle two: `_ENGINE_BUILD` is a fixed repo path. So the
-    property is pinned on the gate's SOURCE, the way the #1741 window guard reads the
-    orchestrator's. Evaluating the marker instead does not work — with any
+    The hazard cell is key present + engine built + node on PATH + flag absent, and
+    both middle legs are conjurable — `_ENGINE_BUILD` honours `ENGINE_MCP_BUILD`, and
+    node need only be on PATH — so that cell is evaluated below. The property is ALSO
+    pinned on the gate's SOURCE, the way the #1741 window guard reads the
+    orchestrator's, because that assertion names the regression that actually happened
+    and gives the better failure message. Evaluating the marker instead does not work — with any
     prerequisite missing the old and new conditions agree, so a value comparison
     passes against the very bug it exists to catch (measured, twice)."""
     src = Path(__file__).read_text(encoding="utf-8")
@@ -375,6 +389,12 @@ def test_the_billing_probe_is_gated_on_opt_in_not_on_prerequisites():
     # Opt-in runs the body: with no key it reaches the pytest.fail remedy list rather
     # than skipping silently, which is what makes `make agent-tool-bind` loud.
     assert _gate_verdict(key=False, flag=True) == "RUNS"
+
+    # The hazard cell itself, EVALUATED rather than asserted about: every prerequisite
+    # present and the flag absent must still skip. This catches a gate that re-reads a
+    # prerequisite under a spelling that never names _missing_prerequisites — which the
+    # source assertion above cannot see, being a substring check.
+    assert _gate_verdict(key=True, flag=False, prereqs=True) == "SKIP"
 
 
 def test_every_matching_transcript_is_unioned_not_just_the_first(monkeypatch, tmp_path):
