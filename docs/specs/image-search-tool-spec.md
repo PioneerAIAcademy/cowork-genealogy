@@ -136,11 +136,17 @@ The tool therefore:
 1. keeps only values that are non-empty strings, so a defective value can never
    be returned as an image ID; and
 2. re-requests the group **once** when it sees a defective value, taking the
-   retry when it is better (fewer dropped, or more IDs). A retry is what
-   recovers the lost image; filtering alone would serve a list one page short
-   with no signal. If the retry is also defective, the surviving IDs are
-   returned rather than raising — a mostly-complete browse list is more useful
-   to the caller than an error.
+   retry only when it carries more usable IDs, or the same number with fewer
+   dropped, and never at the cost of failing outright when the retry errors.
+   A retry is what recovers the lost image; filtering alone would serve a list
+   one page short with no signal.
+
+   The re-request can only improve the result. Whether the retry is defective
+   too, or fails outright with a 500, a 401 or a timeout, the first attempt's
+   surviving IDs are returned rather than raised as an error — a
+   mostly-complete browse list is more useful to the caller than nothing. Making
+   usable IDs the primary comparison and `dropped` only a tie-break is what stops
+   a clean but shorter retry from displacing a longer defective one.
 
 **This covers only the defect shape the tool can detect.** A response that omits
 a child entirely — the 163-key case — is 163 valid strings and is

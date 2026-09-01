@@ -124,12 +124,23 @@ export async function imageSearchTool(
   // One re-request when the response was defective. The same group returned a
   // complete set on every other call, so a retry is what recovers the lost
   // image rather than silently serving a list one page short. Bounded to a
-  // single extra call: if the retry is defective too, serve what survived
-  // instead of failing a browse the caller can still mostly use.
+  // single extra call, and it can only ever improve the result: a retry that
+  // is defective too, or that fails outright with a 500/401/timeout, leaves
+  // `best` standing rather than failing a browse the caller can still mostly
+  // use. Usable IDs are the primary comparison and `dropped` only breaks a
+  // tie, so a clean-but-shorter retry can never displace a longer one.
   if (best.dropped > 0) {
-    const retry = usableImageIds(await fetchChildren(groupId, token));
-    if (retry.dropped < best.dropped || retry.imageIds.length > best.imageIds.length) {
-      best = retry;
+    try {
+      const retry = usableImageIds(await fetchChildren(groupId, token));
+      if (
+        retry.imageIds.length > best.imageIds.length ||
+        (retry.imageIds.length === best.imageIds.length &&
+          retry.dropped < best.dropped)
+      ) {
+        best = retry;
+      }
+    } catch {
+      // Keep `best` — a failed retry must not lose a usable browse list.
     }
   }
 

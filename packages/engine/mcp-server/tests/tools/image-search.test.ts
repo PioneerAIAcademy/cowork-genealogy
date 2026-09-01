@@ -269,3 +269,74 @@ it("returns the surviving IDs when the retry is also defective", async () => {
     "004514823_00673",
   ]);
 });
+
+// Test 16 — a retry that REJECTS must not lose the usable IDs from attempt one.
+// Reviewed catch on #1921: the re-request was unwrapped, so a 500/timeout/401 on
+// the second call threw and the caller got nothing — strictly worse than the
+// pre-filter behaviour, which at least returned the 163 survivors.
+it("keeps the surviving IDs when the retry rejects", async () => {
+  mockFetch
+    .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN))
+    .mockRejectedValueOnce(new Error("ECONNRESET"));
+
+  const result = await imageSearchTool({
+    imageGroupNumber: "004514823_003_M9SW-1CG",
+  });
+
+  expect(mockFetch).toHaveBeenCalledTimes(2);
+  expect(result.imageIds).toEqual([
+    "004514823_00671",
+    "004514823_00673",
+  ]);
+});
+
+// Test 17 — same guarantee when the retry is a non-OK HTTP response.
+it("keeps the surviving IDs when the retry returns a server error", async () => {
+  mockFetch
+    .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN))
+    .mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+    });
+
+  const result = await imageSearchTool({
+    imageGroupNumber: "004514823_003_M9SW-1CG",
+  });
+
+  expect(result.imageIds).toEqual([
+    "004514823_00671",
+    "004514823_00673",
+  ]);
+});
+
+// Test 18 — usable IDs win over a lower dropped count. A clean but shorter
+// retry must not displace a longer defective one: 2 clean IDs are worse than
+// 3 usable ones, whatever `dropped` says.
+it("does not let a clean but shorter retry displace more usable IDs", async () => {
+  mockFetch
+    .mockResolvedValueOnce(
+      okChildren({
+        "TH-A": "004514823_00671",
+        "TH-B": "004514823_00672",
+        "TH-C": "004514823_00673",
+        "TH-D": null,
+      } as unknown as Record<string, string>)
+    )
+    .mockResolvedValueOnce(
+      okChildren({
+        "TH-A": "004514823_00671",
+        "TH-B": "004514823_00672",
+      })
+    );
+
+  const result = await imageSearchTool({
+    imageGroupNumber: "004514823_003_M9SW-1CG",
+  });
+
+  expect(result.imageIds).toEqual([
+    "004514823_00671",
+    "004514823_00672",
+    "004514823_00673",
+  ]);
+});
