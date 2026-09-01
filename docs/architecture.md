@@ -441,8 +441,9 @@ member reported" beside an informant set to the enumerator. So a payload on a ca
 the agent already makes is not merely read, it is *authoritative*: it beats the
 body. **The consequence is a split, not a green light.** A rule that must hold
 belongs in the writer tool, where a later payload cannot override it; this channel
-carries only craft the body is silent on. Ledger row, thresholds and the licensing
-limits: ADR-0010.
+carries only craft the body is silent on. Ledger row and the licensing limits:
+ADR-0010; the pre-registered thresholds and every arm's result are on the issue
+that row cites.
 
 A skill can read its own sibling files; the failure is **across** skills. Claude
 Code's relative-path resolution from one SKILL.md into another skill's folder is
