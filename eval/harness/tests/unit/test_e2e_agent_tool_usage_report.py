@@ -293,8 +293,17 @@ def test_never_called_is_split_on_whether_the_body_asks_for_the_tool(tmp_path: P
 
     out = format_report(diffs, {}, s)
     assert "wiki_search" in out
-    # All three readings must be offered, and none may be presented as settled.
-    for reading in ("non-compliance", "binding gap", "unrouted branch"):
+    # All four readings must be offered, and none may be presented as settled.
+    # The fourth — a mention that BOUNDS the tool, where zero calls is the
+    # instruction working — is the one #1344 ended on: `gps-mentor`'s
+    # `wiki_place_page` is now fenced behind an only-if condition, so the report
+    # must stop implying that a mentioned-but-uncalled tool is a problem.
+    for reading in (
+        "non-compliance",
+        "binding gap",
+        "unrouted branch",
+        "bounded/last-resort",
+    ):
         assert reading in out, f"the mentioned-in-body action omits {reading!r}"
     assert "orphan_tool" in out and "candidate to drop from tools:" in out
 

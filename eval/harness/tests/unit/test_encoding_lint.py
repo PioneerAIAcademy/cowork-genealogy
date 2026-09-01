@@ -413,7 +413,7 @@ def _cp1252_unencodable(source: str) -> set[str]:
 
 def _needs_stdout_guard(source: str) -> set[str]:
     """The offending characters when *source* is a runnable module that prints
-    them without reconfiguring stdout; empty set when it is fine or in scope."""
+    them without reconfiguring stdout; empty set when it is fine or out of scope."""
     if "__main__" not in source:
         return set()
     if "reconfigure" in source:  # any spelling of the guard

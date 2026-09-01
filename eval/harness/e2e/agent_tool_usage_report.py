@@ -19,8 +19,8 @@ for it, which is what makes the finding actionable (Dallan, PR #1085 review):
 
 - **not mentioned in the body** — granted but never asked for; a candidate to
   drop from the agent's `tools:`.
-- **mentioned in the body** — the body tells the agent to call it, yet it never
-  does (`gps-mentor`'s two wiki tools). Three readings, not two, and this offline
+- **mentioned in the body** — the body names the tool, yet it is never called
+  (`gps-mentor`'s two wiki tools). Four readings, not two, and this offline
   report separates none of them:
   1. the body is not forcing enough — the agent read the instruction and did not
      comply;
@@ -36,9 +36,18 @@ for it, which is what makes the finding actionable (Dallan, PR #1085 review):
      `1bc84e58e`, PR #597) — so those three cannot fire, whatever the agent does.
      Reading 3 does **not** dispose of #1344: the surviving mode-agnostic site
      still applies under `proof-critique`, and its condition demonstrably obtains
-     (17 of the 30 focus-attributed `proof-critique` verdicts raise untried
-     record types or repository diversity) with the tool still uncalled. It
-     narrows which sites are live; it does not explain the zero.
+     — of the 30 focus-attributed `proof-critique` verdicts, 12 carry a
+     `standard` naming Standard 14, and 7 name topical breadth or repository
+     diversity specifically — with the tool still uncalled. It narrows which
+     sites are live; it does not explain the zero;
+  4. **the mention BOUNDS the tool rather than asking for it** — a last-resort
+     note, or an only-if-X condition — so zero calls is the instruction working,
+     not failing. Read the mention itself, not just its presence. Both of
+     `gps-mentor`'s wiki entries are now this case: `wiki_search` is marked
+     "Last-resort", and `wiki_place_page` is fenced behind "only when
+     `project_context` returned no locality for the jurisdiction" (#1344) —
+     which held in 0 of the 12 corpus cases that would have triggered it, every
+     one having a locality already, so zero is the expected count, not a gap.
 
 Adds NO instrumentation to a run (same posture as `corpus_report.py` /
 `guardrail_shadow_report.py` / `latency_report.py`): pure analysis over
@@ -401,7 +410,8 @@ def format_report(
                 if tool in mentioned:
                     action = (
                         "mentioned in body → non-compliance, a binding gap "
-                        "(#1084), or an unrouted branch — check which"
+                        "(#1084), an unrouted branch, or a bounded/last-resort "
+                        "mention where zero is correct — check which"
                     )
                 else:
                     action = "not in body → candidate to drop from tools:"
@@ -431,14 +441,17 @@ def format_report(
             "Limits (this is a report, not a gate):",
             "  - A never-called tool is a candidate, not a defect. `not in body` "
             "→ likely drop it",
-            "    from `tools:`; `mentioned in body` → one of three, and this "
+            "    from `tools:`; `mentioned in body` → one of four, and this "
             "report separates none:",
-            "    non-compliance, a binding gap (#1084), or an instruction in a "
+            "    non-compliance, a binding gap (#1084), an instruction in a "
             "branch the",
-            "    orchestrator no longer routes to — read the skill's routing "
-            "table before",
-            "    concluding non-compliance (worked example in the module "
-            "docstring).",
+            "    orchestrator no longer routes to, or a mention that BOUNDS the "
+            "tool (a",
+            "    last-resort or only-if note) where zero calls is the "
+            "instruction working —",
+            "    read the skill's routing table and the mention itself before "
+            "concluding",
+            "    non-compliance (worked example in the module docstring).",
             "    The body scan is a whole-word name match — it cannot tell a "
             "genuine call site",
             "    from a mere mention, nor a mode-agnostic instruction from one "
