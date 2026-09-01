@@ -56,6 +56,7 @@ from harness.skill_invocation import (
     check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
     find_citation_nulling_in_conclusions,
     find_citation_nulling_in_tree_sources,
+    find_conclusions_without_tree_encoding,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
@@ -278,11 +279,13 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
     return _bare_tool_name(tool_name) in blocked_tools
 
 
-# The two project files that must never be touched by raw Write/Edit — all
+# The project files that must never be touched by raw Write/Edit — all
 # writes go through the MCP writer tools (research_append, research_log_append,
 # tree_edit, tree_correct), which validate before persisting. See
-# docs/specs/guardrail-enforcement-spec.md §6.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+# docs/specs/guardrail-enforcement-spec.md §6. starting-tree.gedcomx.json is the
+# write-once baseline the tree-encoding gate diffs against (issue #1490);
+# overwriting it would defeat that gate.
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
 # The device-bridge writer, matched on the BARE TAIL because Cowork namespaces it
 # (`mcp__remote-devices__device_commit_files`) and the plugin cannot control the
 # prefix. This is the route that actually mattered: measured live 2026-08-15,
@@ -812,6 +815,11 @@ def build_workspace(
     target = Path(target)
     shutil.copy(fixture.starting_research_path, target / "research.json")
     shutil.copy(fixture.starting_tree_path, target / "tree.gedcomx.json")
+    # Also seed the write-once baseline the tree-encoding gate diffs against
+    # (issue #1490), matching what project_create writes in production. Without
+    # it the gate treats every seeded fact as new and manufactures the very
+    # mismatch it measures.
+    shutil.copy(fixture.starting_tree_path, target / "starting-tree.gedcomx.json")
 
     skills_target = target / ".claude" / "skills"
     skills_target.mkdir(parents=True, exist_ok=True)
@@ -2595,6 +2603,20 @@ async def run_e2e_test(
         if tree_citation_shadow:
             guardrail_shadow_violations = (
                 guardrail_shadow_violations + tree_citation_shadow
+            )
+
+        # The tree-encoding arm (issue #1490): a completed project reached a
+        # >=-probable conclusion but left it un-encoded in the tree. Wired here
+        # for the same reason as the citation arm above — this is the site that
+        # holds `final_research`, `final_tree` and `starting_tree` together.
+        # Shadow only; this live write is what makes the STORED fire rate in
+        # `scan_tree_encoding` accumulate rather than needing REPLAY.
+        tree_encoding_shadow = find_conclusions_without_tree_encoding(
+            final_research, final_tree, starting_tree=starting_tree
+        )
+        if tree_encoding_shadow:
+            guardrail_shadow_violations = (
+                guardrail_shadow_violations + tree_encoding_shadow
             )
 
         # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it
