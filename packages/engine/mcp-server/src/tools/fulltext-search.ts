@@ -12,7 +12,13 @@ import type {
   FSFulltextFacetItem,
 } from "../types/fulltext-search.js";
 
-import { stageSearchResults } from "../utils/results-staging.js";
+import {
+  stageSearchResults,
+  unloggedStagedSearches,
+  formatUnloggedRefs,
+  UNLOGGED_SEARCHES_NOTE,
+  NIL_SEARCH_NEEDS_LOG_NOTE,
+} from "../utils/results-staging.js";
 import { compactStagedFulltextSearch } from "../utils/staged-compaction.js";
 
 export type { FulltextSearchInput } from "../types/fulltext-search.js";
@@ -207,12 +213,38 @@ export async function fulltextSearchTool(
     .map(mapEntry)
     .filter((r): r is FulltextResult => r !== null);
 
+  // Read BEFORE this call stages its own response, or the count includes the search
+  // being answered now and fires on the first search of every session.
+  const unloggedStaged =
+    input.projectPath !== undefined
+      ? await unloggedStagedSearches(input.projectPath)
+      : [];
+
   const out: FulltextSearchResponse = {
     query: echoQuery(input),
     totalResults: data.results ?? 0,
     returned: results.length,
     offset: data.index ?? input.offset ?? 0,
     hasMore: data.links?.next?.href != null,
+    // Both notes precede `results` — a field after the largest one is the first
+    // thing a size bound drops. Contract: record-search-tool-spec-v2.md.
+    ...(unloggedStaged.length > 0
+      ? {
+          unloggedSearches: UNLOGGED_SEARCHES_NOTE.replace(
+            "{n}",
+            String(unloggedStaged.length),
+          ).replace("{refs}", formatUnloggedRefs(unloggedStaged.map((s) => s.ref))),
+        }
+      : {}),
+    // What separates this tool from external_links_search is only that no HOST
+    // FILTER narrows the inline copy. `results` is still the post-`mapEntry` set —
+    // `mapEntry` returns null on a missing `entry.id` and those nulls are filtered
+    // out above — so an empty `results` means nothing survived mapping, not that
+    // the search found nothing. `totalResults` (`data.results`) is independent, so
+    // gate on it: a `negative` entry for a query with matches is the worse error.
+    ...(input.projectPath !== undefined && results.length === 0 && (data.results ?? 0) === 0
+      ? { nilSearchNeedsLog: NIL_SEARCH_NEEDS_LOG_NOTE }
+      : {}),
     results,
   };
 
@@ -224,10 +256,19 @@ export async function fulltextSearchTool(
   // and best-effort: a staging failure never fails a successful search.
   if (input.projectPath !== undefined) {
     try {
+      // Both notes are withheld from what gets staged, as record_search withholds
+      // `rankingSkipped`: the sidecar records what the search RETURNED, and these
+      // are instructions to the model. Destructuring a copy leaves `out` — and so
+      // its key order — untouched.
+      const {
+        unloggedSearches: _backlog,
+        nilSearchNeedsLog: _nilNote,
+        ...persistable
+      } = out;
       out.staged = await stageSearchResults({
         projectPath: input.projectPath,
         tool: "fulltext_search",
-        response: out,
+        response: persistable,
       });
     } catch (error) {
       out.staged = null;
