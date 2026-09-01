@@ -172,11 +172,24 @@ Read `references/transcription-quirks.md` for HTR error patterns.
 
 ### 6. Triage results
 
-For each result, evaluate match quality:
-- Does the target name appear in the textDocument?
-- Is the name in the right context (witness, will clause, deed party)
-  or a false positive (cross-column alignment, place name matching)?
-- Is the place and approximate date consistent?
+Each staged result carries only flat stub fields — the full transcript
+(`textDocument`) is dropped from the response and no MCP tool reads it back. It
+is still on disk at `staged.resultsRef`, but reading it pulls the whole page
+(79–136 KB) back into context. Triage from the stubs first:
+- **Did your terms hit?** `highlightTerms` lists the matched terms and phrases
+  as bare strings (e.g. `["Patrick", "Flynn", "Flynn Patrick"]`) — they confirm
+  which query terms appear in the transcript, not where or in what role.
+- **Who and what?** `names` lists the persons the transcript mentions (the FAN
+  net — witnesses, neighbors, heirs); `title` and `recordType` give the
+  document kind.
+- **Where and when?** Check `recordPlace`/`places` and `recordDate`/`dates` —
+  is the place and approximate date consistent with your person?
+- **Right context, or a false positive?** Whether the name is a genuine mention
+  (witness, will clause, deed party) versus a false positive (cross-column
+  alignment, a place name matching a surname) cannot be judged from the stubs —
+  the terms are bare. Verify against the original image (see the verification
+  note above), or `Read` the single result you are chasing out of
+  `staged.resultsRef`.
 
 **Attachment check:** After narrowing to promising results, call
 `source_attachments({ uris: [ark1, ark2, ...] })` to check whether
@@ -191,7 +204,10 @@ attachment status. Let the user confirm which records to examine.
 ### 7. Retain results and write the log entry
 
 **Every search gets a log entry — no exceptions.** Call
-`research_log_append` once per search:
+`research_log_append` once per search. Record only a filter the call actually
+sent — even when an unsent filter matches the locality under research, and even
+when the response echoes one back. The tool echoes your own request; an echoed
+key you did not send is not a filter you applied:
 
 ```
 research_log_append({

@@ -461,26 +461,34 @@ describe("docs/ cite symbols, not line numbers", () => {
  * `fill-ready`, `CLAUDE.md`, and two in-file pointers) reads a ticket number —
  * they all ask for the gap and its consequence. The `Tracking` column went
  * first; on 2026-08-09 the §9.4 gap table and the §10 open-questions list went
- * too, both replaced by a live `gh issue list` query, which is what took this
- * file from 24 refs to 20. It is in scope like any other.
+ * too, both replaced by a live `gh issue list` query.
+ *
+ * **On 2026-09-01 it went to zero and its entry was deleted, by lead ruling:**
+ * the architecture guide is a stable description of the architecture, and a
+ * document that has to be edited every time a ticket closes is not that. GitHub
+ * is the one place work is tracked; the guide states the gap and its
+ * consequence, and where the reader needs the work it carries an inline
+ * `gh issue list --search` query. **Do not add a number back to that file** —
+ * with no entry here the allowance is 0 and any addition fails.
  *
  * A RATCHET, not a freeze: the count must match exactly, so removing a
  * reference fails until the number here comes down with it, and adding one
  * fails outright. Sweeping a file to zero deletes its entry. The first pass
- * took the two worst offenders from 34 -> 17 and 14 -> 7; what remains is
- * mostly evidence-shaped ("#702 measured that pattern"), where the citation
- * IS the fact and stays.
+ * took the two worst offenders from 34 -> 17 and 14 -> 7; what remains in the
+ * specs is mostly evidence-shaped ("#702 measured that pattern"), where the
+ * citation IS the fact and stays.
  *
  * One deliberate exception RAISES this ceiling rather than lowers it (#1639): a
- * census citation — #1341/#1732 in `CLAUDE.md` and `docs/architecture.md` — is
- * the reader's only check on an observation CI cannot reproduce (a live Cowork
- * session's registrar spelling), so the numbers stay and the baseline was raised
- * to match. That irreproducibility is the sole sanctioned reason to add a
- * reference; every other addition still fails outright.
+ * census citation — #1341/#1732 in `CLAUDE.md` — is the reader's only check on
+ * an observation CI cannot reproduce (a live Cowork session's registrar
+ * spelling), so those numbers stay and `CLAUDE.md`'s baseline covers them.
+ * `docs/architecture.md` carried the same two and swept them with the rest on
+ * 2026-09-01; its prose keeps the dates and the conclusion, which is the part
+ * the exception is protecting. That irreproducibility is the sole sanctioned
+ * reason to add a reference; every other addition still fails outright.
  */
 const ISSUE_REF_BASELINE: Record<string, number> = {
   "CLAUDE.md": 5,
-  "docs/architecture.md": 22,
   "docs/specs/e2e-test-spec.md": 10,
   "docs/specs/feedback-case-spec.md": 1,
   "docs/specs/fulltext-search-tool-spec.md": 1,
