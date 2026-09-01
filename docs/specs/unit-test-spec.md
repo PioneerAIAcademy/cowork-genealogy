@@ -177,18 +177,40 @@ A fixture's `args` block is **always required and non-empty.** It serves two pur
 
 **Predicated fixtures have no usage limit.** A fixture fires on every matching call. There's no "match once then fall through" semantic — if a test needs different responses across calls with identical args, model the difference in some other arg key and use distinct predicates.
 
-**Error fixtures.** To test how a skill handles error responses (auth failure, upstream 5xx, malformed response), set `response` to the error envelope the real MCP tool would return. The harness returns whatever object is in `response` verbatim — there is no separate "error" mode. Recommended shapes (match what the real MCP tools throw):
+**Error fixtures.** To test how a skill handles error responses (auth failure, upstream 5xx, malformed response), set `response` to the error envelope the real MCP tool would return. The harness returns whatever object is in `response` verbatim — there is no separate "error" mode.
+
+**The failure envelope is one key, `error`, holding the message string.** Every dispatch arm in `src/index.ts` catches identically and returns `{"error": <the thrown message>}`, and no arm produces any other shape for a THROWN error. A companion `message`, `status` or `code` key is therefore not a shape any tool can produce, and the fixture-shape check below rejects it. (The twelve tools in `OK_FALSE_IS_FAILURE` are a separate case: they report an *expected* failure by returning `{ok: false, reason, errors}`, which `src/tool-result.ts` turns into `isError`. They are not all writers, and most of them still re-throw an unexpected error into the envelope above. None is fixture-served, so no fixture should carry that shape either.) Note also that production sets `isError: true` alongside `{error}` and a fixture-served response never does, so an error fixture exercises the body and not the flag:
 
 ```json
 // auth failure
-{ "response": { "error": "auth_required", "message": "Token expired. Call the login tool." } }
+{ "response": { "error": "User is not logged in to FamilySearch. Call the login tool to authenticate." } }
 
 // upstream failure
-{ "response": { "error": "upstream_error", "status": 503, "message": "wiki-query-api unreachable" } }
-
-// empty results (legitimate negative result, not an error — log_outcome: negative)
-{ "response": { "results": [], "total": 0 } }
+{ "response": { "error": "wiki-query-api error: 503" } }
 ```
+
+**An empty result is not an error, and it still carries the tool's full envelope.** A nil search returns every field a hit-bearing search returns — only the counts and the array change. Copy the shape from a sibling fixture for the same tool rather than writing a short form; `record_search` reads:
+
+```json
+// no matches (legitimate negative result, not an error — log_outcome: negative)
+{ "response": {
+    "query": { "surname": "Flynn", "givenName": "Patrick" },
+    "totalMatches": 0, "paginationCappedAt": 4999, "returned": 0,
+    "offset": 0, "hasMore": false, "results": []
+} }
+```
+
+**A fixture's response shape is checked against its tool's real return type.** `packages/engine/mcp-server/tests/packaging/mcp-fixture-shape.test.ts` derives, per tool and from source, the top-level fields the handler's `Promise<T>` declares, and fails a fixture that invents a field or omits a required one. It reads nothing hand-maintained, so a new tool and a renamed field are both covered without editing it, and a tool whose return type it cannot resolve fails rather than being skipped.
+
+**What "no value check" does not cover.** A green run says nothing about whether a fixture's VALUES are ones its tool could emit. The known classes, deliberately without counts: a `url` no `candidateSlugsFor(section, placeName)` can build; a constant the tool emits unconditionally at a different value; values that contradict each other or the declared type; upstream data the hosted service holds no rows for; and an echoed `query` the tool's own input validator would refuse. The last of those classes IS checked: `mcp-fixture-queries.test.ts` runs each tool's own exported input validator over its fixtures' echoed `query`, for the two tools that export one (`record_search`, `person_search`). It found two fixtures echoing a query anchored only on `collectionId`, which `validateInput` refuses, and it guards the ten echoes repaired alongside it. The other classes above have no such validator to borrow and remain unchecked. `docs/architecture.md` §9.4 is explicit that a register of gaps lives on the `nothing-checks` LABEL and not in a doc, because a doc table cannot be kept honest — so the instance tallies briefly written here are removed, two of them having been wrong on the day they were written. The shape of each class is durable; the counts are not.
+
+One place it is currently stricter than a tool: `place_population` passes an upstream error body through as its *success* value, so a real response can be `{"error": …, "place_id": …}` — two keys, which the one-key failure envelope above rejects. No fixture uses that shape today, and a check failing on it is pointing at the tool's unchecked cast rather than at the fixture. Named here so the next author who hits it knows which end to fix.
+
+A third limit worth knowing per tool: `record_read` and `collection_read` resolve to types with **no required fields at all** (`RecordReadResult = SimplifiedGedcomX`, whose members are all optional), so for their 20 fixtures (19 `record_read`, 1 `collection_read`) the check can reject an invented key but can never report a missing one.
+
+Two things it deliberately does not do. It compares **top-level key names only**: a fixture whose `place` is a bare string passes while the type wants an object, and a value of the wrong type anywhere passes. And it says nothing about whether a value is *plausible* — `paginationCappedAt: 100` passes although the tool only ever emits 4999. So a green run means only that **no fixture's top-level key NAMES are impossible**. It does not mean the corpus is validated, and it does not mean a fixture is a response the tool could really have produced. Per-tool depth beyond key names belongs in `eval/harness/tests/unit/test_fixtures.py`, which holds the value-level checks for `person_read` (its top-level key set is asserted there by hand as well as derived here; the two agree today, and if an optional field is ever added to `PersonReadResult` the hand-written one is the copy to fix). Run it with `make harness-test`.
+
+When this check first ran it failed on 70 fixtures across 11 tools (69 on the shape rule, spanning 10 tools, and one more on the envelope rule above). 68 were corrected and 2 deleted (both referenced by no test), rather than frozen into a baseline list, because a baseline leaves live tests reading impossible shapes with nobody scheduled to burn the list down.
 
 Error-fixture coverage is **optional in v1.** Skills should handle errors gracefully in production, but exhaustive error-path testing is a Phase 2 push — the v1 focus is happy-path and negative-result behavior. The format is defined here so juniors who want to write an error-path test can.
 
