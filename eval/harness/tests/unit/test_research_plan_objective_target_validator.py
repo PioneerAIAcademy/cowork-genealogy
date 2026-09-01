@@ -1,4 +1,4 @@
-﻿"""Direct tests for `test_objective_target_leads_the_plan`.
+"""Direct tests for `test_objective_target_leads_the_plan`.
 
 Same reason as `test_convert_dates_validators.py`: `pyproject.toml` sets
 `testpaths = ["tests"]`, so nothing under `validators/` is collected by
@@ -62,7 +62,7 @@ def _item(seq, rtype, juris, **kw):
 # --- the state that must PASS -----------------------------------------
 
 def test_passes_when_the_target_leads():
-    """Baptism first, Trysil corroboration behind it â€” the shape SKILL.md
+    """Baptism first, Trysil corroboration behind it — the shape SKILL.md
     step 4 item 7 asks for."""
     after = _state([
         _item(1, "church", "Kongsberg, Buskerud, Norway"),
@@ -147,9 +147,35 @@ def test_target_is_recognised_under_either_record_type_spelling():
             check_target_leads({}, bad, TAGGED)
 
 
+def test_an_item_naming_both_places_cannot_be_the_target():
+    """One semicolon must not defeat the guard.
+
+    `jurisdiction` is free text and both halves of the check are substring
+    matches, so before the fix a single item satisfied the target test AND the
+    ahead-of-target test — relabelling the seq-1 death item made the identical
+    defect pass. Not a contrived string: `r3d`'s own run in
+    `v1_2026-08-28_19-50-30` wrote
+    "Trysil, Hedmark, Norway; Kongsberg, Buskerud, Norway" verbatim. Found by
+    @T-FEH in review of #2033."""
+    both = "Trysil, Hedmark, Norway; Kongsberg, Buskerud, Norway"
+
+    # The evasion: seq 1 is really the Trysil item, relabelled.
+    after = _state([
+        _item(1, "church", both),
+        _item(2, "church", "Kongsberg, Buskerud, Norway"),
+    ])
+    with pytest.raises(AssertionError, match="sequenced\\s+ahead of it"):
+        check_target_leads({}, after, TAGGED)
+
+    # And a multi-place item cannot stand in as the target on its own.
+    only_both = _state([_item(1, "church", both)])
+    with pytest.raises(AssertionError, match="no plan item targets the objective"):
+        check_target_leads({}, only_both, TAGGED)
+
+
 def test_kongsberg_census_does_not_satisfy_the_target():
     """The target is the requested RECORD TYPE in the named place, not merely
-    something in the named place â€” a Kongsberg census must not count as the
+    something in the named place — a Kongsberg census must not count as the
     baptism, or the guard could be satisfied without planning the record the
     objective asked for."""
     after = _state([

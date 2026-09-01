@@ -370,7 +370,9 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
 # and not a precondition for reaching it.
 #
 # Deliberately mechanical and judge-independent. The rubric's `Sequencing
-# logic` dimension scored 3 on all 65 runs audited in the 2026-08-24 dive
+# logic` dimension does not discriminate -- re-derived across the five committed
+# logs, 73 of 74 graded occurrences are 3, and the single 2 was corrected up to 3
+# by the annotator
 # ("worse than no" — it once cited a fabricated collection id as evidence),
 # and `rubric.md` is fenced by #1404/#1668, so the ordering this guards
 # cannot be enforced there. Origin: alpha feedback #1945.
@@ -417,11 +419,18 @@ def test_objective_target_leads_the_plan(before_state, after_state, test):
     def juris(item: dict) -> str:
         return str(item.get("jurisdiction") or "").lower()
 
+    # An item naming BOTH places cannot be the target. `jurisdiction` is free
+    # text and the skill really writes multi-place values -- `r3d`'s own run
+    # produced "Trysil, Hedmark, Norway; Kongsberg, Buskerud, Norway" -- so
+    # without this exclusion one item satisfies both the target test and the
+    # ahead-of-target test, and relabelling the seq-1 death item makes the
+    # identical defect pass. Found in review of #2033.
     target = next(
         (
             i
             for i in items
             if _TARGET_JURISDICTION in juris(i)
+            and _INDIRECT_JURISDICTION not in juris(i)
             and str(i.get("record_type") or "").lower() in _TARGET_RECORD_TYPES
         ),
         None,
