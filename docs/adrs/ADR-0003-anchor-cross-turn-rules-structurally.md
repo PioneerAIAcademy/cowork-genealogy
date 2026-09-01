@@ -184,10 +184,11 @@ the system, has never been audited.
 ## Enforcement
 
 **None — convention only.** No lint detects a cross-turn invariant written as
-prose. The check is review, and the honest signal is this: two gates identified
-as needing anchors — the **tree-encoding gate** and the **mentor gate** — are
-still prose today, and both are computable from files `research_append` already
-loads.
+prose. The check is review. Both gates once flagged here have since moved out of
+prose and into the tool: the **mentor gate** as a refusal (PR #1685), and the
+**tree-encoding gate** as a warning that diffs the final tree against a
+write-once opening-tree baseline (issue #1490) — warn-only, not a refusal, per
+the 2026-08-24 no-override ruling.
 
 The one instrument that measures the *effect* is the post-run compliance
 detector, and it cannot yet give a rate at all. It is uncalibrated (#999,

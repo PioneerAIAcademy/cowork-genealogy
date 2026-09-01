@@ -55,7 +55,11 @@ describe("project_create", () => {
 
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.filesWritten).toEqual(["tree.gedcomx.json", "research.json"]);
+    expect(r.filesWritten).toEqual([
+      "tree.gedcomx.json",
+      "research.json",
+      "starting-tree.gedcomx.json",
+    ]);
     expect(r.counts).toEqual({ persons: 1, relationships: 0, sources: 1 });
 
     const research = await readResearch();
@@ -70,6 +74,25 @@ describe("project_create", () => {
     const tree = await readTree();
     expect(tree.persons).toHaveLength(1);
     expect(tree.sources[0].id).toBe("S1");
+  });
+
+  it("writes a starting-tree.gedcomx.json baseline equal to the opening tree", async () => {
+    // The tree-encoding completion gate (issue #1490) diffs the final tree
+    // against this baseline. It must be written, and it must equal the opening
+    // tree byte-for-byte content — not a re-derived or empty document — or the
+    // gate would compare against the wrong starting point.
+    await projectCreate({
+      projectPath: dir,
+      objective: "Identify the parents of Patrick Flynn",
+      subjectPersonIds: ["I1"],
+      tree: { persons: [SUBJECT], relationships: [], sources: [TREE_SOURCE] },
+    });
+    expect(await exists("starting-tree.gedcomx.json")).toBe(true);
+    const baseline = JSON.parse(
+      await readFile(join(dir, "starting-tree.gedcomx.json"), "utf-8"),
+    );
+    const tree = await readTree();
+    expect(baseline).toEqual(tree);
   });
 
   it("starts every analytical section empty", async () => {

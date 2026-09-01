@@ -93,6 +93,13 @@ async def _walk_project(sandbox) -> list[tuple[str, bytes]]:
 
 
 TREE_FILENAME = "tree.gedcomx.json"
+STARTING_TREE_FILENAME = "starting-tree.gedcomx.json"
+# Both tree-shaped files a project folder can hold. starting-tree.gedcomx.json is
+# the write-once completion-gate baseline (issue #1490); it carries the same
+# living persons as tree.gedcomx.json and is bundled by the same non-media walk,
+# so it must be redacted too or a feedback bundle would ship living details
+# FamilySearch's terms forbid sharing.
+_REDACTED_TREE_FILENAMES = frozenset({TREE_FILENAME, STARTING_TREE_FILENAME})
 LIVING_GIVEN = "Living"
 LIVING_SURNAME_FALLBACK = "Unknown"
 
@@ -149,9 +156,16 @@ def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, byte
     out: list[tuple[str, bytes]] = []
     redacted = 0
     for rel, data in files:
-        if rel != TREE_FILENAME:
+        if rel not in _REDACTED_TREE_FILENAMES:
             out.append((rel, data))
             continue
+        # Count into a per-file tally and fold it into the total only once the
+        # file's rewrite has fully succeeded. _redact_person can raise partway
+        # through the person loop (a malformed `names` entry), and this file then
+        # ships UNTOUCHED via the except below — so a running counter would report
+        # living records protected in a file that leaked them. The count must
+        # describe the bytes actually written, not the persons visited.
+        file_redacted = 0
         try:
             tree = json.loads(data.decode("utf-8"))
             persons = tree.get("persons")
@@ -163,7 +177,7 @@ def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, byte
                 if isinstance(person, dict) and _is_living(person):
                     living_ids.add(person.get("id"))
                     new_persons.append(_redact_person(person))
-                    redacted += 1
+                    file_redacted += 1
                 else:
                     new_persons.append(person)
             tree["persons"] = new_persons
@@ -173,8 +187,12 @@ def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, byte
                 if {relationship.get("person1"), relationship.get("person2")} & living_ids:
                     relationship["facts"] = []
             data = json.dumps(tree, indent=2).encode("utf-8")
+            redacted += file_redacted  # only the fully-rewritten file counts
         except Exception:  # noqa: BLE001 — never block a submission on this
-            redacted = 0
+            # Pass this file through untouched, and contribute nothing to the
+            # count — file_redacted is discarded, so a file that failed partway
+            # never reports the persons it visited before raising.
+            pass
         out.append((rel, data))
     return out, redacted
 
@@ -387,7 +405,9 @@ def _feedback_markdown(
             "",
             "## Living people redacted",
             "",
-            f"{redacted_living} person(s) in `tree.gedcomx.json` are living or not "
+            f"{redacted_living} living-person record(s) across the project's tree "
+            "files (`tree.gedcomx.json` and, when present, `starting-tree.gedcomx.json`) "
+            "were living or not "
             "marked deceased, so their given names, dates and places were replaced "
             f"with `{LIVING_GIVEN} <Surname>` before this bundle was created. Their "
             "ids and relationships are intact, so the case still reproduces. This is "
