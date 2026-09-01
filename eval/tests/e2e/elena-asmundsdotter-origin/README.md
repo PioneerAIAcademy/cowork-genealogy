@@ -135,6 +135,39 @@ person-keyed tool, so neither the run nor the judge reads it. The §14
 fixture-validity run is still owed; it is not CI-gated, so this PID-less draft
 may land with the validity run outstanding.
 
+**2026-09-01 — re-probed on Gemini 3.7 Flash (#2044). The reading layer is no longer
+the blocker.** The 2026-08-25 note below is kept as the record but describes Qwen3-VL,
+which #2044 retired. Re-reading the same pinned pages:
+
+- **f1 `004514823_00347` — exact.** *"d. 23. april: dödde Jöns Jönssons Hustru Elna
+  Asmunds dotter, född i Henckelstorp, … fär 64. åhr gl."* Verbatim correct, `Henckelstorp`
+  and the age included. This is the entry that yields the birthplace, so the route into
+  Västra Karaby is now open.
+- **f2 `004523018_00033` — readable.** *"Kallat Boell hvars Moder är Asmontors doter af
+  Henckelstorp, Elena … Asmunds doter blef publice absolverat"*. "Asmund Tors dotter"
+  arrives as "Asmontors doter" — needs interpretation, carries the patronymic.
+- **f4 `004523018_00053` — readable, minus the farm name.** *"Fer: 4:ta Nativ: copulerades
+  drengen Jöns Jönson och Qwinfolcket Elena Asmunds doter."* Against Qwen's `Widus` /
+  `St. Davidsthofst` / `Enna de mans Sohn` on this same line, the identity fields are now
+  sound.
+- **f6 `004523018_00072` — not measured.** The FamilySearch download leg exceeded its 90s
+  budget on a degraded local link (~55 KB/s against a corpus maximum of 7.2s for that leg,
+  and 0 download-leg failures across 451 corpus image calls). Environmental, not a tool
+  defect.
+
+**`af Henckestorp` on f4's line defeats every model tried, and does not block the
+fixture.** Three Gemini reads of that page returned the farm token omitted, then
+`Henrikstorp`, then omitted-with-noise; person names, `Nativ:` and the date anchor were
+stable and correct in all three. Opus 5 on the same page also fails it, as
+`Grenhestarps[?] [illegible]` — but flags the doubt, where Gemini substitutes silently.
+So this is a hard page region rather than a model-selection defect, and it costs the
+fixture nothing: f4 needs the date, the parties and the parish, and both f1 and f2 carry
+`Henckelstorp` correctly on their own pages. Grade f4 on the entry, not on the farm name.
+
+**Grading note: do not trust `found`.** f2's page returned `NOT FOUND` while that same
+call's transcription contained the answer. The spec frames `found` as a locate hint only;
+read the transcription.
+
 **Caps: the fixture's overrides were removed, 2026-08-25.** It carried
 `wall_clock_seconds: 3600`, `tool_calls: 200`, `max_turns: 100` — half the `FixtureCaps`
 wall-clock default and below every other cap. They arrived with the four-fixture authoring
