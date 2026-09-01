@@ -1,17 +1,28 @@
 {
   "tool": "place_population",
-  "description": "place_population — Muhlenberg County, Kentucky population context.",
+  "description": "place_population — Muhlenberg County, Kentucky population context. Population context an earlier version of this fixture carried inline, kept here because `notes` is not a field the tool returns: rural western-Kentucky farming county; several extended Wilkins families resided there through the late 19th century.",
   "args": {
     "standardPlace": "~"
   },
   "response": {
-    "place": "Muhlenberg, Kentucky, United States",
-    "data": [
-      { "year": 1850, "population": 9809 },
-      { "year": 1860, "population": 10725 },
-      { "year": 1870, "population": 12638 },
-      { "year": 1880, "population": 15098 }
-    ],
-    "notes": "Rural western-Kentucky farming county; several extended Wilkins families resided there through the late 19th century."
+    "place": {
+      "place_id": "1554",
+      "name": "Muhlenberg",
+      "level": "county",
+      "parent": {
+        "place_id": "36",
+        "name": "Kentucky"
+      }
+    },
+    "population": {
+      "uscensus": {
+        "data": [
+          { "year": 1850, "population": 9809, "data_type": "census" },
+          { "year": 1860, "population": 10725, "data_type": "census" },
+          { "year": 1870, "population": 12638, "data_type": "census" },
+          { "year": 1880, "population": 15098, "data_type": "census" }
+        ]
+      }
+    }
   }
 }
