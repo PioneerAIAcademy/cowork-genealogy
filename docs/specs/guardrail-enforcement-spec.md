@@ -799,7 +799,7 @@ predicate rather than re-implementing it:
 | Plugin `PreToolUse` command hook | `packages/engine/plugin/hooks/{hooks.json,guard_project_files.py}` | Cowork, hosted, anywhere the plugin loads |
 | SDK `PreToolUse` hook | `apps/server/app/agent/real_agent.py` (`_pretool_hook`) | hosted only |
 | Harness hook (e2e) | `eval/harness/e2e/orchestrator.py` | e2e runs |
-| Harness hook (unit) | `eval/harness/harness/context_policy.py` (`protected_file_denial`, wired in `skill_runner.py`'s `pretool_hook`) — **imports** `guard_project_files.protected_target`, does not copy it | unit runs (all 25 skills) |
+| Harness hook (unit) | `eval/harness/harness/context_policy.py` (`protected_file_denial`, wired in `skill_runner.py`'s `pretool_hook`) — **imports** `guard_project_files.protected_target`, does not copy it | unit runs (all 26 skills) |
 
 The unit-tier row is deliberately not a fourth *copy*: it binds the live
 `protected_target` object out of the plugin hook (the only stdlib-only copy, so
