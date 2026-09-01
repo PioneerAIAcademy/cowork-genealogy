@@ -447,7 +447,7 @@ def main(argv: list[str] | None = None) -> int:
         # the skill from a one-row-per-skill report, hiding that it needs a re-run.
         sls.sort(key=lambda s: (s.stale_days is not None, s.skill))
         if args.since is not None:
-            print(describe_window(args.since, n_runs=len(sls), n_total=n_total))
+            print(describe_window(args.since, n_runs=len(sls), n_total=n_total, corpus="unit"))
         if (note := describe_stale(stale)):
             print(note)
             print()
