@@ -1,0 +1,284 @@
+"""Unit tests for scripts/branch_only_runlogs.py (issue #1444).
+
+`git` is always stubbed — never shelled out to. `eval-harness-tests.yml`
+checks out at the default (shallow) fetch depth, so `refs/remotes` is
+near-empty in CI and an assertion over the real repo's refs would pass
+vacuously (CLAUDE.md "A new lint must be proven to fail").
+"""
+
+from __future__ import annotations
+
+import importlib.util
+import subprocess
+from pathlib import Path
+
+_SPEC = importlib.util.spec_from_file_location(
+    "branch_only_runlogs",
+    Path(__file__).resolve().parents[2] / "scripts" / "branch_only_runlogs.py",
+)
+branch_only_runlogs = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(branch_only_runlogs)
+
+
+def _stub_git(monkeypatch, refs_output: str, ls_tree: dict[str, str]):
+    """`refs_output` answers `for-each-ref`; `ls_tree` maps a ref name to the
+    `ls-tree --name-only` output for that ref. A ref missing from `ls_tree`
+    raises CalledProcessError, simulating a gone/broken remote-tracking ref."""
+
+    def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
+        if cmd[1] == "for-each-ref":
+            return refs_output
+        assert cmd[1] == "ls-tree"
+        ref = cmd[4]
+        if ref not in ls_tree:
+            raise subprocess.CalledProcessError(128, cmd)
+        return ls_tree[ref]
+
+    monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
+
+
+def test_reports_a_path_present_on_a_ref_and_absent_from_head(monkeypatch):
+    _stub_git(
+        monkeypatch,
+        refs_output="refs/remotes/origin/resolve-katalin-horak-son\t2026-08-03\n",
+        ls_tree={
+            "HEAD": "eval/runlogs/e2e/other-fixture/run-2026-07-01_00-00-00.json\n",
+            "refs/remotes/origin/resolve-katalin-horak-son": (
+                "eval/runlogs/e2e/other-fixture/run-2026-07-01_00-00-00.json\n"
+                "eval/runlogs/e2e/katalin-horak-son/run-2026-08-03_21-26-35.json\n"
+            ),
+        },
+    )
+    found = branch_only_runlogs.branch_only()
+    assert list(found.keys()) == ["refs/remotes/origin/resolve-katalin-horak-son"]
+    tip_date, paths = found["refs/remotes/origin/resolve-katalin-horak-son"]
+    assert tip_date == "2026-08-03"
+    assert paths == ["eval/runlogs/e2e/katalin-horak-son/run-2026-08-03_21-26-35.json"]
+
+
+def test_a_ref_with_nothing_branch_only_is_not_reported(monkeypatch):
+    """A subset of HEAD's listing is omitted entirely -- not an empty group."""
+    _stub_git(
+        monkeypatch,
+        refs_output="refs/heads/some-old-branch\t2026-06-01\n",
+        ls_tree={
+            "HEAD": "eval/runlogs/e2e/fixture/run-2026-07-01_00-00-00.json\n",
+            "refs/heads/some-old-branch": "eval/runlogs/e2e/fixture/run-2026-07-01_00-00-00.json\n",
+        },
+    )
+    assert branch_only_runlogs.branch_only() == {}
+
+
+def test_for_each_ref_excludes_refs_already_merged_into_head(monkeypatch):
+    """A ref fully merged into HEAD cannot be carrying a run "HEAD is
+    missing" -- every commit on it, including whichever one added the run,
+    is already in HEAD's history. Without `--no-merged HEAD`, a run
+    deliberately deleted from HEAD after the ref merged (e.g. #627's fixture
+    cleanup) is misreported as branch-only, when it was removed on purpose
+    (live example: `pauline-shaver-death-burial` on the long-merged
+    `senior-shaunese-applegarth-family-1878`). The
+    filtering itself is git's job (`--no-merged`), so what this test pins is
+    that the flag is actually passed."""
+    captured_cmd: list[str] = []
+
+    def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
+        if cmd[1] == "for-each-ref":
+            captured_cmd.extend(cmd)
+            return ""
+        return ""
+
+    monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
+    branch_only_runlogs.branch_only()
+    assert "--no-merged" in captured_cmd
+    assert captured_cmd[captured_cmd.index("--no-merged") + 1] == "HEAD"
+
+
+def test_symbolic_head_ref_is_never_queried(monkeypatch):
+    """`refs/remotes/origin/HEAD` is a symbolic ref to another ref already in
+    the list, not a distinct branch -- querying it would double-report."""
+    queried: list[str] = []
+
+    def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
+        if cmd[1] == "for-each-ref":
+            return (
+                "refs/remotes/origin/HEAD\t2026-08-01\n"
+                "refs/remotes/origin/main\t2026-08-01\n"
+            )
+        queried.append(cmd[4])
+        return ""
+
+    monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
+    branch_only_runlogs.branch_only()
+    assert "refs/remotes/origin/HEAD" not in queried
+    assert "refs/remotes/origin/main" in queried
+
+
+def test_a_real_branch_literally_named_head_is_not_excluded(monkeypatch):
+    """The symbolic-ref skip is scoped to refs/remotes/*/HEAD specifically --
+    a real local branch that happens to end in /HEAD (e.g. team/HEAD) must
+    still be checked."""
+    queried: list[str] = []
+
+    def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
+        if cmd[1] == "for-each-ref":
+            return "refs/heads/team/HEAD\t2026-08-01\n"
+        queried.append(cmd[4])
+        return ""
+
+    monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
+    branch_only_runlogs.branch_only()
+    assert "refs/heads/team/HEAD" in queried
+
+
+def test_ann_and_final_siblings_are_not_reported_as_branch_only(monkeypatch):
+    """Only is_result_json paths count -- a .ann.json or .final-* sibling
+    present on a ref but absent from HEAD must not be reported."""
+    _stub_git(
+        monkeypatch,
+        refs_output="refs/heads/some-branch\t2026-08-01\n",
+        ls_tree={
+            "HEAD": "",
+            "refs/heads/some-branch": (
+                "eval/runlogs/e2e/fixture/run-2026-08-01_00-00-00.json\n"
+                "eval/runlogs/e2e/fixture/run-2026-08-01_00-00-00.ann.json\n"
+                "eval/runlogs/e2e/fixture/run-2026-08-01_00-00-00.final-tree.gedcomx.json\n"
+            ),
+        },
+    )
+    found = branch_only_runlogs.branch_only()
+    _, paths = found["refs/heads/some-branch"]
+    assert paths == ["eval/runlogs/e2e/fixture/run-2026-08-01_00-00-00.json"]
+
+
+def test_a_ref_whose_ls_tree_fails_is_skipped_not_fatal(monkeypatch):
+    """A gone/broken remote-tracking ref must not hide every other ref's
+    results -- this is a discovery aid, not a gate."""
+    _stub_git(
+        monkeypatch,
+        refs_output=(
+            "refs/remotes/origin/gone-branch\t2026-06-01\n"
+            "refs/heads/live-branch\t2026-08-01\n"
+        ),
+        ls_tree={
+            "HEAD": "",
+            # "refs/remotes/origin/gone-branch" deliberately absent -> raises
+            "refs/heads/live-branch": "eval/runlogs/e2e/fixture/run-2026-08-01_00-00-00.json\n",
+        },
+    )
+    found = branch_only_runlogs.branch_only()
+    assert list(found.keys()) == ["refs/heads/live-branch"]
+
+
+def test_a_ref_whose_ls_tree_output_is_not_valid_utf8_is_skipped_not_fatal(monkeypatch):
+    """`_git` decodes with `encoding=\"utf-8\"`, so a ref name or path with
+    non-UTF-8 bytes raises `UnicodeDecodeError`, not `CalledProcessError` --
+    a different exception type than the "gone ref" case above. Must degrade
+    the same way (skipped, not fatal), or a stray non-UTF-8 ref crashes the
+    whole crawl instead of being one skipped result among many."""
+    calls: list[str] = []
+
+    def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
+        if cmd[1] == "for-each-ref":
+            return "refs/heads/bad-ref\t2026-08-01\nrefs/heads/live-branch\t2026-08-01\n"
+        ref = cmd[4]
+        calls.append(ref)
+        if ref == "HEAD":
+            return ""
+        if ref == "refs/heads/bad-ref":
+            raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
+        return "eval/runlogs/e2e/fixture/run-2026-08-01_00-00-00.json\n"
+
+    monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
+    found = branch_only_runlogs.branch_only()
+    assert list(found.keys()) == ["refs/heads/live-branch"]
+    assert "refs/heads/bad-ref" in calls  # confirms the bad ref was actually attempted
+
+
+def test_format_report_does_not_double_count_a_path_on_two_refs(monkeypatch):
+    """A local branch and its remote-tracking twin (routine, not an edge
+    case) can carry the identical path -- the header must count unique runs,
+    not (ref, path) pairs, or a run present on 2 refs reads as 2 runs."""
+    found = {
+        "refs/heads/some-branch": branch_only_runlogs.RefEntry(
+            "2026-08-01", ["eval/runlogs/e2e/fixture/run-2026-08-01_00-00-00.json"]
+        ),
+        "refs/remotes/origin/some-branch": branch_only_runlogs.RefEntry(
+            "2026-08-01", ["eval/runlogs/e2e/fixture/run-2026-08-01_00-00-00.json"]
+        ),
+    }
+    out = branch_only_runlogs.format_report(found)
+    assert "1 run(s) across 2 ref(s):" in out
+
+
+def test_format_report_states_a_clean_result_as_a_real_result(monkeypatch):
+    assert "No graded run logs found" in branch_only_runlogs.format_report({})
+
+
+def test_main_fails_clearly_when_only_for_each_ref_fails(monkeypatch, capsys):
+    """Pins the ref-listing prerequisite on its own, not just the
+    both-raise case below: `branch_only()` reads HEAD's own tree FIRST
+    (before `_refs()`/`for-each-ref` ever runs -- see the call order in
+    `branch_only()`), so a test that only makes the HEAD read fail cannot be
+    told apart from the both-raise case ON CLEAN CODE -- `for-each-ref` is
+    never reached either way. It is still worth having: under a mutation
+    that swallows the HEAD read the two diverge, and clean-vs-mutant is what
+    a mutation test compares. Both prerequisites get their own test (see
+    `test_main_fails_clearly_when_only_the_head_read_fails` below). Making
+    just this call lenient must not leave the suite green (an earlier
+    version of this test claimed to pin the HEAD-alone case but never
+    actually exercised its own `for-each-ref` branch -- caught by a
+    line-by-line review). Raises `UnicodeDecodeError` rather than
+    `CalledProcessError` so `main()`'s except arm for that type is also
+    pinned at this level, not just inside `branch_only()`'s per-ref catch."""
+
+    def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
+        if cmd[1] == "ls-tree":
+            assert cmd[4] == "HEAD"
+            return ""
+        assert cmd[1] == "for-each-ref"
+        raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
+
+    monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
+    rc = branch_only_runlogs.main()
+    err = capsys.readouterr().err
+    assert rc == 1
+    assert "Could not list refs" in err
+
+
+def test_main_fails_clearly_when_only_the_head_read_fails(monkeypatch, capsys):
+    """Pins the HEAD-read prerequisite on its own. `for-each-ref` and the
+    per-ref `ls-tree` both succeed -- only the HEAD `ls-tree` fails. On clean
+    code this is indistinguishable from the both-raise case below; under a
+    mutation that swallows the HEAD read it is not, and that is the case that
+    matters: with no HEAD baseline every path on every ref reads as
+    branch-only, so main() exits 0 having printed a wholly wrong report."""
+
+    def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
+        if cmd[1] == "for-each-ref":
+            return "refs/heads/some-branch\t2026-08-01\n"
+        assert cmd[1] == "ls-tree"
+        if cmd[4] == "HEAD":
+            raise subprocess.CalledProcessError(128, cmd)
+        return "eval/runlogs/e2e/fixture/run-2026-08-01_00-00-00.json\n"
+
+    monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
+    rc = branch_only_runlogs.main()
+    err = capsys.readouterr().err
+    assert rc == 1
+    assert "Could not list refs or read HEAD" in err
+
+
+def test_main_fails_clearly_when_head_itself_cannot_be_read(monkeypatch, capsys):
+    """Unlike a per-ref ls-tree failure (skipped, not fatal), a failure
+    listing refs or reading HEAD's own tree is a hard prerequisite -- main()
+    must report it distinctly from "nothing found", not crash raw or print a
+    false-clean result."""
+
+    def fake_check_output(cmd, *, cwd=None, text=None, encoding=None):
+        raise subprocess.CalledProcessError(128, cmd)
+
+    monkeypatch.setattr(branch_only_runlogs.subprocess, "check_output", fake_check_output)
+    rc = branch_only_runlogs.main()
+    err = capsys.readouterr().err
+    assert rc == 1
+    assert "Could not list refs" in err

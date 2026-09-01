@@ -32,6 +32,9 @@ from harness.skill_invocation import (
     same_person_scored_ids,
     skill_name_if_skill_call,
     unguarded_new_person_evidence_links,
+    classify_question_type,
+    find_conclusions_without_tree_encoding,
+    unscoreable_person_evidence_links,
 )
 
 # Sentinel distinguishing "key absent entirely" (the historical tool_calls
@@ -1790,6 +1793,92 @@ def test_dedicated_agent_names_matches_the_shipped_agent_files():
     )
 
 
+# --- classify_question_type: the plural bug the lead flagged (issue #1490) ----
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        # The two exact cases from the issue body: a parentage question that also
+        # names a birth date must NOT be graded as a birth question. This is the
+        # plural bug: `\b(parent)\b` never matches "parents".
+        ("Who are the parents of William Henry Bottemiller, born 29 December 1862", "parentage"),
+        ("...identify as the parents of Adrian Zuñiga Rojas, born 8 September 1889?", "parentage"),
+        ("Who were the fathers of these children?", "parentage"),
+        ("Who did Mary Jones marry?", "marriage"),
+        ("Who was the spouse recorded?", "marriage"),
+        ("When and where did John Smith die?", "death"),
+        ("Where was he buried?", "death"),
+        # baptism / christening route to birth (the lead's explicit inclusion).
+        ("Where was the baptism recorded?", "birth"),
+        ("What was the christening date?", "birth"),
+        ("When was she born?", "birth"),
+        ("Something with no relation words at all", None),
+        (None, None),
+    ],
+)
+def test_classify_question_type_includes_plurals_and_orders_parentage_before_birth(text, expected):
+    assert classify_question_type(text) == expected
+
+
+def test_classify_question_type_plural_parents_is_not_singular_only():
+    # Direct guard on the exact defect: the singular matches, and so must the
+    # plural. A regression to `\b(parent)\b` fails the plural assertion here.
+    assert classify_question_type("the parent of X") == "parentage"
+    assert classify_question_type("the parents of X") == "parentage"
+
+
+def test_find_conclusions_without_tree_encoding_fires_and_is_silent_when_encoded():
+    research_base = {
+        "project": {"status": "completed", "subject_person_ids": ["I1"]},
+        "proof_summaries": [
+            {"id": "ps_001", "question_id": "q_001", "tier": "probable", "supporting_assertion_ids": ["a_001"]}
+        ],
+        "person_evidence": [{"assertion_id": "a_001", "person_id": "I1"}],
+        "questions": [{"id": "q_001", "question": "Who are the parents of I1?"}],
+    }
+    seed = {"persons": [{"id": "I1", "facts": []}], "relationships": []}
+
+    # Nothing new for I1 -> one violation, classified parentage.
+    unchanged = {"persons": [{"id": "I1", "facts": []}], "relationships": []}
+    hits = find_conclusions_without_tree_encoding(research_base, unchanged, starting_tree=seed)
+    assert len(hits) == 1
+    assert hits[0]["kind"] == "tree_encoding_missing"
+    assert hits[0]["question_type"] == "parentage"
+
+    # A new ParentChild edge touching I1 -> silent.
+    encoded = {
+        "persons": [{"id": "I1", "facts": []}, {"id": "I2", "facts": []}],
+        "relationships": [{"id": "R1", "type": "ParentChild", "parent": "I2", "child": "I1"}],
+    }
+    assert find_conclusions_without_tree_encoding(research_base, encoded, starting_tree=seed) == []
+
+
+def test_a_marriage_dated_onto_a_seeded_couple_is_not_flagged():
+    """The false-positive class the review caught: the couple is already in the
+    seed, so no relationship is added or removed — the session only dates the
+    Marriage fact onto it. Reading added/removed edges alone missed it and warned
+    on a proved marriage. _person_gained_structure must see the gained fact on a
+    relationship present in both trees."""
+    research = {
+        "project": {"status": "completed", "subject_person_ids": ["I1"]},
+        "proof_summaries": [
+            {"id": "ps_001", "question_id": "q_001", "tier": "proved", "supporting_assertion_ids": ["a_001"]}
+        ],
+        "person_evidence": [{"assertion_id": "a_001", "person_id": "I1"}],
+        "questions": [{"id": "q_001", "question": "Who did I1 marry?"}],
+    }
+    couple = lambda facts: {"id": "R1", "type": "Couple", "person1": "I1", "person2": "I2", "facts": facts}
+    seed = {"persons": [{"id": "I1"}, {"id": "I2"}], "relationships": [couple([])]}
+    final = {
+        "persons": [{"id": "I1"}, {"id": "I2"}],
+        "relationships": [couple([{"id": "mf", "type": "Marriage", "standard_date": "+1899"}])],
+    }
+    assert find_conclusions_without_tree_encoding(research, final, starting_tree=seed) == []
+    # And the control: no marriage encoded at all -> it still fires.
+    assert len(find_conclusions_without_tree_encoding(research, seed, starting_tree=seed)) == 1
+
+
 # --- find_citation_nulling_in_tree_sources (issue #1358, shadow) --------------
 #
 # The tree-side arm. Its research-side sibling above measures ZERO across the
@@ -1911,3 +2000,224 @@ def test_malformed_tree_input_does_not_raise():
     assert find_citation_nulling_in_tree_sources(
         _CONCLUDED, {"persons": ["not a dict"], "sources": [{"id": "S1", "citation": None}]}
     ) == []
+
+
+# --- §8 provenance narrowing (issue #1429) -----------------------------------
+# A link is exempt ONLY when its own provenance lane cannot yield a record
+# persona from what the run retained. These pin the rule from both sides: the exempt lanes must stop
+# firing, and the reachable ones must keep firing -- one set alone would pass
+# under a do-nothing change, the other under an over-broad one.
+
+
+def _research(tool, *, results_ref=None, persona=None, log_entry_id="log_001", n_links=1):
+    """A minimal project document: one assertion on one log entry, with
+    `n_links` person_evidence links to the new person I1."""
+    return {
+        "assertions": [
+            {
+                "id": "a_001",
+                "record_persona_id": persona,
+                "log_entry_id": log_entry_id,
+            }
+        ],
+        "log": [{"id": "log_001", "tool": tool, "results_ref": results_ref}],
+        "person_evidence": [
+            {"id": f"pe_{i:03d}", "assertion_id": "a_001", "person_id": "I1"}
+            for i in range(1, n_links + 1)
+        ],
+    }
+
+
+_TREE = {"persons": [{"id": "I1"}]}
+_NO_SEED = {"persons": []}
+
+
+def _flagged(research):
+    return find_person_evidence_missing_same_person([], research, _TREE, starting_tree=_NO_SEED)
+
+
+@pytest.mark.parametrize(
+    "tool,results_ref",
+    [
+        ("image_transcribe", None),
+        ("image_read", None),
+        ("image_search", None),
+        ("external_site", None),
+        ("record_search", None),        # a search whose sidecar was not retained
+        ("fulltext_search", None),
+        ("fulltext_search", "results/log_001.json"),  # FTS is exempt even WITH a sidecar
+    ],
+)
+def test_unscoreable_lane_is_not_flagged(tool, results_ref):
+    """No record persona can be reached, so `same_person` cannot run and the
+    detector must not demand it.
+
+    `fulltext_search` is exempt with a live `results_ref` too: an FTS result
+    carries transcript text, names and places but no GedcomX, and its ARK is a
+    `3:1:` image entry `record_read` cannot open."""
+    assert _flagged(_research(tool, results_ref=results_ref)) == []
+
+
+@pytest.mark.parametrize(
+    "label,research",
+    [
+        ("record_read", _research("record_read")),
+        ("search with a retained sidecar", _research("record_search", results_ref="results/log_001.json")),
+        ("non-null record_persona_id", _research("image_transcribe", persona="p_1")),
+        ("assertion has no log_entry_id", _research("record_search", log_entry_id=None)),
+        ("log entry does not resolve", _research("record_search", log_entry_id="log_missing")),
+    ],
+)
+def test_reachable_or_unknown_provenance_is_still_flagged(label, research):
+    """The regression half. `record_read` returns GedcomX with persons and a
+    retained sidecar carries it, so both are scoreable -- exempting them was the
+    refuted null-field rule. Unknown provenance keeps flagging too: exempting on
+    an ABSENT field would let an assertion written with no `log_entry_id` shed
+    the requirement entirely."""
+    violations = _flagged(research)
+    assert len(violations) == 1, label
+    assert "I1" in violations[0]
+
+
+def test_a_person_with_one_scoreable_link_is_still_flagged():
+    """The exemption is per LINK but the verdict is per PERSON: one reachable
+    persona anywhere on the person is enough to require the call."""
+    research = _research("image_transcribe", n_links=1)
+    research["assertions"].append(
+        {"id": "a_002", "record_persona_id": None, "log_entry_id": "log_002"}
+    )
+    research["log"].append(
+        {"id": "log_002", "tool": "record_read", "results_ref": None}
+    )
+    research["person_evidence"].append(
+        {"id": "pe_002", "assertion_id": "a_002", "person_id": "I1"}
+    )
+    assert len(_flagged(research)) == 1
+
+
+def test_person_evidence_with_no_assertion_id_is_still_flagged():
+    """Provenance that cannot be resolved at all is not proof of anything. This
+    is also the shape every pre-existing fixture in this file uses, so a
+    fail-open here would have turned those regression tests vacuous."""
+    research = {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]}
+    assert len(_flagged(research)) == 1
+
+
+def test_unscoreable_links_are_counted_for_the_labelled_bucket():
+    research = _research("image_transcribe", n_links=2)
+    assert unscoreable_person_evidence_links(research, _TREE, starting_tree=_NO_SEED) == [
+        "pe_001",
+        "pe_002",
+    ]
+
+
+def test_unscoreable_links_counts_only_brand_new_persons():
+    """Complement of the detector over the same population: a seed person is
+    never a new identity, so their links belong in neither number."""
+    research = _research("image_transcribe")
+    assert (
+        unscoreable_person_evidence_links(research, _TREE, starting_tree={"persons": [{"id": "I1"}]})
+        == []
+    )
+
+
+def test_unscoreable_links_excludes_a_reachable_link():
+    assert unscoreable_person_evidence_links(_research("record_read"), _TREE, starting_tree=_NO_SEED) == []
+
+
+# --- the same narrowing on the pre-write predicate ---------------------------
+
+
+def _pe_append_with_assertion(person_id, assertion_id):
+    return {
+        "section": "person_evidence",
+        "op": "append",
+        "entry": {"person_id": person_id, "assertion_id": assertion_id},
+    }
+
+
+def test_pending_link_on_an_unscoreable_assertion_is_not_flagged():
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        _pe_append_with_assertion("I1", "a_001"),
+        scored_ids=set(),
+        starting_ids=set(),
+        research=_research("image_transcribe"),
+    )
+    assert out == []
+
+
+def test_pending_link_on_a_record_read_assertion_is_still_flagged():
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        _pe_append_with_assertion("I1", "a_001"),
+        scored_ids=set(),
+        starting_ids=set(),
+        research=_research("record_read"),
+    )
+    assert out == ["I1"]
+
+
+def test_pending_link_without_research_narrows_nothing():
+    """`research=None` means "no provenance available", which must reproduce
+    today's un-narrowed behaviour -- NOT exempt everything. It is the fallback
+    the live hook and the replay both take when the document cannot be read, and
+    `_links_any_person_evidence` relies on it to keep meaning "does this call
+    link anyone at all"."""
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        _pe_append_with_assertion("I1", "a_001"),
+        scored_ids=set(),
+        starting_ids=set(),
+    )
+    assert out == ["I1"]
+
+
+def test_pending_link_with_an_unresolvable_assertion_id_is_still_flagged():
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        _pe_append_with_assertion("I1", "a_nope"),
+        scored_ids=set(),
+        starting_ids=set(),
+        research=_research("image_transcribe"),
+    )
+    assert out == ["I1"]
+
+
+def test_pending_batch_flags_a_person_whose_other_link_is_scoreable():
+    research = _research("image_transcribe")
+    research["assertions"].append({"id": "a_002", "log_entry_id": "log_002"})
+    research["log"].append({"id": "log_002", "tool": "record_read", "results_ref": None})
+    args = {
+        "ops": [
+            _pe_append_with_assertion("I1", "a_001"),  # exempt
+            _pe_append_with_assertion("I1", "a_002"),  # scoreable -> flags the person
+        ]
+    }
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        args,
+        scored_ids=set(),
+        starting_ids=set(),
+        research=research,
+    )
+    assert out == ["I1"]
+
+
+def test_a_plural_assertion_ids_op_is_not_treated_as_resolvable():
+    """103 committed ops carry a plural `assertion_ids` array, which is not a
+    schema field -- those are rejected writes, so reading one as a resolvable
+    id would exempt a link that never landed."""
+    op = {
+        "section": "person_evidence",
+        "op": "append",
+        "entry": {"person_id": "I1", "assertion_ids": ["a_001"]},
+    }
+    out = unguarded_new_person_evidence_links(
+        "mcp__genealogy__research_append",
+        op,
+        scored_ids=set(),
+        starting_ids=set(),
+        research=_research("image_transcribe"),
+    )
+    assert out == ["I1"]
