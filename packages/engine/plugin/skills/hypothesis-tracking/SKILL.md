@@ -120,18 +120,28 @@ entity.
 
 ```
 active ──► supported ──► (to proof-conclusion)
-  │
+  │            │
+  │            └──► (assertions-only route also reaches proof-conclusion,
+  │                  for an indirect argument resting on a single source)
   └──► ruled_out
 ```
 
 **`active`** — Evidence accumulating, no threshold crossed. Starting state.
 
 **`supported`** — Transition when ALL of these are true:
-- At least one line of direct evidence supports the claim (an
-  assertion with `evidence_type: "direct"` in the supporting list)
-- No unresolved contradictions remain (contradicting assertions have
-  been explained, resolved via conflict-resolution, or outweighed)
-- The evidence is consistent — no logical impossibilities (check-warnings) or geographic infeasibilities (timeline)
+- Every `conflicts[]` entry whose `competing_assertion_ids` overlap this
+  hypothesis's `supporting_assertion_ids` or `contradicting_assertion_ids`
+  has `status` of `resolved` or `moot`
+- Either at least one supporting assertion carries `evidence_type: "direct"`,
+  or at least two carry `evidence_type: "indirect"` and cite at least two
+  distinct `source_id` values
+- The evidence is consistent — no logical impossibilities (check-warnings) or
+  geographic infeasibilities (timeline)
+
+**A hypothesis that cannot reach `supported` still concludes.**
+`proof-conclusion` accepts assertions and `person_evidence` for a question as
+an alternative to a supported hypothesis; an indirect argument resting on a
+single source takes that route.
 
 **Do NOT downgrade from `supported` to `active` for minor
 discrepancies.** Census age rounding (e.g., a 5-year birth year
