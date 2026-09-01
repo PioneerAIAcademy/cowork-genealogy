@@ -46,6 +46,7 @@ import { resolveStandardPlace, countryConsistency } from "../utils/place-resolve
 export { countryConsistency };
 import { stdDate } from "../utils/date-standardize.js";
 import { MONTH_NUM } from "../utils/date-constants.js";
+import { treeDiff } from "./tree-diff.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
@@ -883,6 +884,66 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
     if (e instanceof NoProjectError) throw e;
     throw new ResearchAppendError(e instanceof Error ? e.message : String(e));
   }
+}
+
+/** Read the write-once starting-tree.gedcomx.json baseline, or null when it is
+ *  absent or unreadable. Fail-open by design: legacy projects created before the
+ *  baseline shipped have no such file, and a tree-encoding WARNING must never
+ *  block a completion for a project that simply predates it. */
+async function readStartingTree(projectPath: string): Promise<SimplifiedGedcomX | null> {
+  try {
+    const raw = await readFile(join(projectPath, "starting-tree.gedcomx.json"), "utf-8");
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? (parsed as SimplifiedGedcomX) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Tree-encoding completion check (issue #1490), shadow → WARNING.
+ *
+ * A tier->=-probable conclusion is expected to leave a trace in the tree. This
+ * warns — never refuses, per the 2026-08-24 no-override ruling — when a
+ * completed project holds such a conclusion but none of the tree persons its
+ * evidence touches gained any new fact or relationship since the opening tree.
+ *
+ * A SHAPE match, not a foreign key: a proof summary carries no tree reference, so
+ * "the conclusion's person" is the union of persons its supporting assertions have
+ * person_evidence for (person_evidence is the only link table). Deliberately
+ * broad — it warns only when NONE of those persons gained ANY structure — because
+ * the measured fire rate is low and a noisy warning on correct work is worse than
+ * a missed one. Fails open when the baseline is absent (legacy projects). */
+function treeEncodingCompletionWarnings(
+  research: any,
+  currentTree: SimplifiedGedcomX,
+  startingTree: SimplifiedGedcomX | null,
+): string[] {
+  if (startingTree === null) return [];
+  const gained = new Set(
+    treeDiff({ before: startingTree, after: currentTree }).personsWithNewStructure,
+  );
+  const personEvidence = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
+  const warnings: string[] = [];
+  for (const ps of Array.isArray(research?.proof_summaries) ? research.proof_summaries : []) {
+    if (!ps || (ps.tier !== "proved" && ps.tier !== "probable")) continue;
+    const supporting = new Set(
+      Array.isArray(ps.supporting_assertion_ids) ? ps.supporting_assertion_ids : [],
+    );
+    const personIds = new Set<string>(
+      personEvidence
+        .filter((e: any) => e && supporting.has(e.assertion_id) && typeof e.person_id === "string")
+        .map((e: any) => e.person_id as string),
+    );
+    if (personIds.size === 0) continue; // no evidence-linked person to check
+    if ([...personIds].some((p) => gained.has(p))) continue; // encoded — no warning
+    warnings.push(
+      `proof summary ${ps.id} (tier ${ps.tier}) concludes ${ps.question_id ?? "a question"}, ` +
+        "but no tree person it draws evidence from gained a new fact or relationship this " +
+        "session. Verify the conclusion is encoded in tree.gedcomx.json — a proved/probable " +
+        "finding is normally reflected as a fact or relationship on the person it is about.",
+    );
+  }
+  return warnings;
 }
 
 /** Next `<prefix>NNN` id (max + 1, zero-padded to 3) for a research section. */
@@ -2338,6 +2399,20 @@ export async function researchAppend(
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
     const anyMutation = applied.some((a) => !a.noop) || prep.treeMutated;
 
+    // Tree-encoding completion check (issue #1490), shadow → WARNING. Only when
+    // THIS call sets project.status = "completed" — the same trigger the mentor
+    // and conflict gates use — so it never re-warns on a later write to an
+    // already-completed project. Reads the write-once baseline; fails open (no
+    // warning) when the project predates it.
+    const completingNow = ops.some(
+      (o) => o.section === "project" && o.op === "update" && (o.fields as any)?.status === "completed",
+    );
+    let treeEncodingWarnings: string[] = [];
+    if (completingNow) {
+      const startingTree = await readStartingTree(projectPath);
+      treeEncodingWarnings = treeEncodingCompletionWarnings(research, tree, startingTree);
+    }
+
     // ─── Validate once, write once (both files when the tree changed) ────────
     let validationWarnings: string[] = [];
     let filesWritten: string[] = [];
@@ -2400,7 +2475,7 @@ export async function researchAppend(
     const persistenceWarning = anyMutation ? sourcesWithoutAssertionsWarning(research, applied) : null;
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...(persistenceWarning ? [persistenceWarning] : [])],
+      warnings: [...validationWarnings, ...opWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : [])],
     };
     const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;

@@ -258,14 +258,18 @@ those extensions.
 
 **Every rule names both senior teams, so a senior of either kind can approve
 any of it.** The team a rule names FIRST is the one whose judgment the path
-normally wants, and it is the one `senior-queue.yml` puts the PR's review
-label on — `.ts`/`.py`/`.json` and friends queue to `senior-developers`, the
+normally wants — `.ts`/`.py`/`.json` and friends to `senior-developers`, the
 skill, agent and eval trees to `senior-genealogists`. So the working split is
 still **genealogists review skills and runlogs; developers review
 infrastructure**; what the second team on each line buys is that a PR is never
 stuck waiting on one specific team when a senior is already reading it. By the
 time a senior looks at a PR everything mechanical should be settled, so their
 time goes to whether the approach is right.
+
+**Getting a senior to look is the author's job.** CODEOWNERS requests review
+from both senior teams when the PR opens, so it is already in their GitHub
+review-request queue; say when it is actually ready. There is no bot that
+labels a PR ready and no queue to wait in.
 
 **CODEOWNERS is the source of truth for which paths need a senior, not this
 paragraph.** Read the file rather than trusting a path list here — it can
@@ -278,9 +282,8 @@ findings resolved is what keeps that gate spent on judgment.
 **One senior approval covers a PR that spans both kinds of file.** GitHub
 resolves CODEOWNERS per file, not per PR, and a rule's owners are an OR — so
 a PR changing a `.ts` tool implementation alongside a `SKILL.md` is unblocked
-by one approval from either senior team. It will carry both queue labels,
-because each queue shows the paths it owns; that is a routing signal, not two
-outstanding requirements.
+by one approval from either senior team. GitHub will show both senior teams as
+requested reviewers; that is one requirement shown twice, not two.
 
 **Peer-only merges aren't reviewed by a senior zero times — they're sampled
 after merge, not before.** `/audit-merged-prs` is the lead's weekly pass
@@ -359,6 +362,11 @@ Three rules can each hold a green, approved PR. Check them in this order:
   sit showing a team that owns none of its files. Check the current file before
   believing the request, and clear a dead one with
   `gh api -X DELETE /repos/{owner}/{repo}/pulls/{n}/requested_reviewers -f 'team_reviewers[]=<team>'`.
+  This works only for a team the current file no longer claims. While
+  `require_code_owner_review` is on, the same call against a team CODEOWNERS
+  *does* still mandate returns HTTP 200 and does nothing — no error, and the team
+  is still listed on a fresh read (verified three ways, 2026-08-11). Re-read the
+  PR before believing the 200.
 
 ---
 
