@@ -73,6 +73,14 @@ move a rule that must hold into the writer tool *before* the prose moves, and
 fold verbatim then run once unchanged to get the pair's own baseline.
 
 
+**This phase ranks candidates by bypass rate, and that is the right instrument
+for the guardrail rationale only.** A second, cost-motivated pair track was
+opened on 2026-09-01 (issues #2115-#2123): it converts skills that have no
+bypass problem at all, to reach the `model:`/`effort:` pins and to keep the body
+out of the orchestrator's context. Those candidates are ranked by main-thread
+context cost instead, and none of them belongs in the table below. See
+`docs/skill-to-agent-pair-conversion.md`, "Two rationales reach a pair".
+
 **Ranked by measured traffic, not by tractability.** Across the e2e corpus only
 18 distinct skills are ever routed to; `timeline`, `hypothesis-tracking`,
 `citation`, `convert-dates` and `tree-edit` are invoked **zero** times.

@@ -80,24 +80,13 @@ if (unknown.length) {
 }
 
 const D = 'senior-developers', G = 'senior-genealogists';
-const SENIORS = [D, G];
 
-// 2. Every rule names BOTH senior teams. A rule's owners are an OR, so this is
-//    what lets a senior of either kind approve a PR that spans both. A line
-//    that drops one silently re-narrows who can unblock a merge, and nothing
-//    downstream would say so: the PR just sits at REVIEW_REQUIRED with the
-//    "wrong" senior's approval on it.
-{
-  const before = failures;
-  for (const r of rules) {
-    const missing = SENIORS.filter(t => !r.teams.includes(t));
-    if (missing.length) {
-      fail(`${r.pattern} names [${r.teams.join(', ')}] — every rule must name both ` +
-           `senior teams, missing ${missing.join(', ')}`);
-    }
-  }
-  if (failures === before) console.log(`ok    all ${rules.length} rules name both senior teams`);
-}
+// 2. Every rule names BOTH senior teams — NOT checked here. That rule is about
+//    who may MERGE, not which queue a PR lands in, so it must hold whether or
+//    not this workflow exists. It lives in codeowners-teams.test.mjs, which
+//    reads the file directly instead of through the parser lifted below. Do not
+//    re-add it here: two guards on one condition make both untestable, since
+//    neither can be shown to fail on its own.
 
 // 3. Which QUEUE each path lands in, stated as a table so a reordering that
 //    inverts last-match-wins fails here rather than in review. This is the

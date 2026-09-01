@@ -316,11 +316,13 @@ refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
 **Allow-lists are subtractive; hooks are not.** A per-agent `tools:` list can
 only narrow what the session already holds — the session's tool set is always a
 superset — so no allow-list can deny the *main thread* a tool one of its
-subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and a
-per-context policy already exists in the harness
-(`eval/harness/harness/context_policy.py`) — don't re-derive one. It is unported
-to the shipped `hooks/` hook, and ADR-0006 is where its portability problem and
-current blocker are recorded; read that before proposing the port.
+subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
+shipped hook already does it: it routes `research_append` by caller identity
+(`owner_denied`, `AGENT_WRITABLE_SECTIONS`) — don't re-derive that. The one arm
+that stayed harness-only is the tool-level one, which denies `image_read` when
+`agent_id` is absent (`eval/harness/harness/context_policy.py`); porting it was
+**declined by lead ruling 2026-08-17**, so it is not pending work. ADR-0006
+records why.
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and
