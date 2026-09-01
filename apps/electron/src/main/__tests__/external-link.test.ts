@@ -64,12 +64,18 @@ describe('resolveFamilySearchTarget — refuses everything else', () => {
   })
 
   it('refuses a protocol-relative URL', () => {
-    // The reason the implementation concatenates instead of using
-    // `new URL(value, FS_BASE)`: the URL constructor resolves this to a FOREIGN
-    // origin, so a base-relative implementation would open evil.example while
-    // looking careful.
+    // What rejects this is the `^` anchoring on ARK_RE / TREE_PERSON_PATH_RE —
+    // `//evil.example/x` matches none of the three patterns, so it never reaches
+    // a return site at all.
+    //
+    // NOT the concatenation, which an earlier version of this comment claimed.
+    // That claim also came with an assertion on `new URL(...).origin`, which
+    // tested the platform rather than this module and so could never fail. The
+    // concatenation is still the right call — see the module header — but the
+    // evidence for it is the `new URL` mutation reddening the ACCEPT tests
+    // below, not this one.
     expect(resolveFamilySearchTarget('//evil.example/x')).toBeNull()
-    expect(new URL('//evil.example/x', FS).origin).toBe('https://evil.example')
+    expect(resolveFamilySearchTarget('//www.familysearch.org/ark:/61903/1:1:M')).toBeNull()
   })
 
   it('refuses a non-https scheme on an otherwise valid host', () => {
