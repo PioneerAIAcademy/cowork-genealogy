@@ -60,6 +60,17 @@ describe('registerExternalLinkHandlers', () => {
     expect(openExternal).not.toHaveBeenCalled()
   })
 
+  it('does not reject when the OS cannot open the URL', async () => {
+    // The renderer calls this with `void`, so a rejection here is an unhandled
+    // promise rejection on every click — e.g. no default browser on a minimal
+    // Linux. The sibling `open-external` handler has always had this catch;
+    // removing mine left the whole suite green.
+    openExternal.mockRejectedValueOnce(new Error('no default browser'))
+    const ipc = fakeIpc()
+    registerExternalLinkHandlers(ipc as never)
+    await expect(ipc.handlers['open-familysearch']({}, '1:1:QPRC-WPBZ')).resolves.toBeUndefined()
+  })
+
   it('opens nothing for a non-string, and does not throw', async () => {
     const ipc = fakeIpc()
     registerExternalLinkHandlers(ipc as never)

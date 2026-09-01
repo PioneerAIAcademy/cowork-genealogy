@@ -132,4 +132,16 @@ describe('resolveFamilySearchTarget — refuses everything else', () => {
       expect(resolveFamilySearchTarget(input), input).toBeNull()
     }
   })
+  it('refuses a tree-person id that is not 4-3', () => {
+    // Every reference in the repo spells this 4-hyphen-3 — `ark.ts` ("the bare
+    // 8-character persona/tree id"), `check-warnings/SKILL.md`, and all ten
+    // `tree/person/` ids in the corpus. The pattern accepted 4-4 until the
+    // #2049 review; loosening it back is otherwise silent.
+    expect(
+      resolveFamilySearchTarget('https://www.familysearch.org/tree/person/KW7C-X9PZ')
+    ).toBeNull()
+    expect(
+      resolveFamilySearchTarget('https://www.familysearch.org/tree/person/KW7C-X9P')
+    ).not.toBeNull()
+  })
 })

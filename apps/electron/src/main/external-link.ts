@@ -95,6 +95,14 @@ export function resolveFamilySearchTarget(input: unknown): string | null {
  * module scope, and `index.ts` imports `icon.png?asset`, which the vitest config
  * has no plugin to resolve — so nothing can import that module in a test.
  */
+/**
+ * `Pick<IpcMain, 'handle'>` documents that this module needs one method and
+ * nothing else. It does NOT remove the `as never` casts in the tests, and was
+ * kept knowing that: a hand-written fake cannot satisfy Electron's listener
+ * signature (`IpcMainInvokeEvent`), so dropping the casts fails with TS2345 —
+ * measured, both with this Pick and with a bespoke interface. The narrowing is
+ * documentation; the casts stay because the alternative does not compile.
+ */
 export function registerExternalLinkHandlers(ipc: Pick<IpcMain, 'handle'>): void {
   ipc.handle('open-familysearch', async (_e, value: unknown) => {
     const target = resolveFamilySearchTarget(value)
