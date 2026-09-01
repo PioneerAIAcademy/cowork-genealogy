@@ -150,6 +150,7 @@ depends on another shipping first.
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
 | §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm) | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload) |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
+| below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 | §5 | Declaration/status agreement | engine (MCP tool) — so Cowork, hosted, both harnesses | `status: "exhaustive_declared"` on a question whose `exhaustive_declaration.declared` is not true, from either side of the pair | **enforcing** (since 2026-08-23; a zero-violation arm over 159 runs — a cheap invariant, not a gate with catches) |
 | §5 | Plan completeness before a declaration | engine (MCP tool) — so Cowork, hosted, both harnesses | `declared: true` while an item on the question's **active** plan is `in_progress` | **enforcing** (since 2026-08-23; 5 of 170 corpus declarations, classified **bookkeeping** not doctrine — it contradicts the project's own plan state, not a genealogical judgment, which is what lets it be scoped this tightly) |
@@ -1324,9 +1325,9 @@ this section before reopening one.
   whole doctrine inlined at 49,900 bytes — between `gps-mentor.md` (40,802) and
   `record-extractor.md` (58,541), so no new high-water mark. Both ends of that
   band moved during the work (the agent grew as rules landed, `record-extractor`
-  grew on main), which is the argument for measuring a ceiling rather than
-  quoting one. Both `references/` files were deleted rather than kept
-  beside it — an agent reading its own reference material on demand scored 6/19
+  grew on main), which is why that mark is precedent rather than a limit. Both
+  `references/` files were deleted rather than kept beside it — an agent reading
+  its own reference material on demand scored 6/19
   against a 12–14/19 baseline, and failed silently. What this bought beyond
   attribution: the agent emits a
   real `agent_id`, which is the thing the success gate below has never had. It
@@ -1358,15 +1359,16 @@ this section before reopening one.
   exactly as the conversion guide above prescribes. Two of the four are now
   converted, so the opening bullet reads as history — and all three of its
   figures have moved, `record-extractor` most of all. **The body-size objection
-  reverses on the unit, so quote the unit.** In bytes, `person-evidence` is
-  41,657 and `conflict-resolution` 26,091 against `record-extractor`'s 58,541,
+  falls whichever unit you quote, because there is no ceiling to clear.** In
+  bytes, `person-evidence` is 41,657 and `conflict-resolution` 26,091 against
+  `record-extractor`'s 58,541,
   and inlining their `references/` (9,403 and 22,540) leaves both **under** the
   high-water mark. In the lines the bullet used, both still clear it — 998 and
-  1,016 against `record-extractor`'s 986, which simply has longer lines. Bytes
-  is the unit this ceiling is about, because prompt cost is what it prices, so
-  the body-size objection falls — on that unit, and only stated with it. The
-  measured reference-reading regression survives either way. Re-measure before
-  quoting any of these figures.
+  1,016 against `record-extractor`'s 986, which simply has longer lines. Neither
+  reading blocks a candidate — see `docs/skill-to-agent-pair-conversion.md`,
+  "Folded size sizes the work; it does not disqualify". The measured
+  reference-reading regression survives either way. Re-measure before quoting
+  any of these figures.
 
   **This is the only route that reopens §7.** An agent is the one form a
   guardrail skill can take that emits a completion signal (`SubagentStop`) and
