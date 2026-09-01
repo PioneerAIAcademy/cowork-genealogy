@@ -2069,8 +2069,9 @@ async def _run_agent(
                     # Measured against this CLI (2026-08-04), which is why the
                     # classification is three-way and not a `!= "connected"`
                     # assert:
-                    #   - dead server  -> init at ~25s, status ALREADY "failed"
-                    #     (it settles in ~4s), so this aborts at ~25s.
+                    #   - dead server  -> init at ~0.3-1.0s, status ALREADY "failed",
+                    #     so this aborts in ~1s (re-measured 2026-08-27, CLI 2.1.248;
+                    #     was ~25s on 2026-08-04).
                     #   - healthy      -> init at ~11s, status still "pending"
                     #     (it settles at ~25s). A "not connected -> abort" test
                     #     would kill EVERY healthy run here.
