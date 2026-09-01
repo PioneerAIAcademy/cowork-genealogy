@@ -305,6 +305,15 @@ export interface UnloggedStagedSearch {
 export async function unloggedStagedSearches(
   projectPath: string,
 ): Promise<UnloggedStagedSearch[]> {
+  // An explicit `projectPath: null` reaches here: all three callers gate on
+  // `!== undefined`, and `join(null, …)` is a raw TypeError, which would turn an
+  // already-successful search into a failure — the one thing the docstring above
+  // promises cannot happen. Guarded here rather than at the three call sites so a
+  // fourth caller inherits it. `""` is folded in for the same reason
+  // `stageSearchResults` treats a bogus path as a staging failure rather than
+  // scaffolding one.
+  if (typeof projectPath !== "string" || projectPath === "") return [];
+
   const stagingDir = join(projectPath, STAGING_SUBDIR);
 
   let names: string[];
@@ -315,8 +324,12 @@ export async function unloggedStagedSearches(
   }
   if (names.length === 0) return [];
 
-  // Same cutoff pruneStale uses: a file past the TTL is about to be deleted and is
-  // not a backlog anyone can still act on.
+  // Same cutoff `pruneStale` uses, but do NOT read this as "about to be deleted":
+  // `pruneStale` is called from one place — inside `stageSearchResults`, AFTER its
+  // nil early-return — so a stale file survives any number of nil searches and is
+  // swept only by the next search that actually stages. The cutoff is here because
+  // a file past the TTL is past the window in which finalizing it is guaranteed to
+  // work, not because deletion is imminent.
   const cutoff = Date.now() - STAGING_TTL_MS;
   const staged: { ref: string; tool: string; retrieved: number; iso: string }[] = [];
   for (const n of names) {

@@ -331,8 +331,10 @@ export interface RecordSearchToolResponse {
   // and withheld from the staged payload: it is an instruction to the model, not a
   // record of what the search returned.
   unloggedSearches?: string;
-  // Set on a `projectPath`-carrying search that returned nothing. A nil search
-  // stages no file, so `unloggedSearches` structurally cannot see it.
+  // Set on a `projectPath`-carrying search whose upstream `totalMatches` is 0 —
+  // NOT merely an empty `results`, which is the post-`mapEntry` set and can be
+  // emptied by a page that fails mapping while matches exist. A nil search stages
+  // no file, so `unloggedSearches` structurally cannot see it.
   nilSearchNeedsLog?: string;
   // Present only when `projectPath` was supplied. The host-staged handle to pass
   // to research_log_append as `stagedResultsRef`; null for a nil search or when

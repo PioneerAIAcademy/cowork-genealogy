@@ -98,8 +98,9 @@ export interface FulltextSearchResponse {
   // log entry. Advisory — refuses nothing. Serialized before `results` and
   // withheld from the staged payload.
   unloggedSearches?: string;
-  // Set on a `projectPath` search that returned nothing — a nil search stages
-  // no file, so `unloggedSearches` structurally cannot see it.
+  // Set on a `projectPath` search whose upstream `totalResults` is 0 — NOT merely
+  // an empty `results`, which is the post-`mapEntry` set. A nil search stages no
+  // file, so `unloggedSearches` structurally cannot see it.
   nilSearchNeedsLog?: string;
   results: FulltextResult[];
   facets?: FulltextFacet[];

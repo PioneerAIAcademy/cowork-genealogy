@@ -325,6 +325,25 @@ UNLOGGED_SEARCHES_NOTE = (
 UNLOGGED_REFS_SHOWN = 5
 
 
+def _fixture_is_nil(response: dict[str, Any]) -> bool:
+    """Whether a fixture response represents a genuinely nil search.
+
+    Mirrors the production gate: an empty `results` AND a zero upstream total.
+    `record_search` reports that total as `totalMatches`, `fulltext_search` as
+    `totalResults`, and `external_links_search` as `totalForPlace`; a fixture that
+    omits its total is treated as 0, since a canned response with no total claims
+    no matches. Keyed on the total because `results` is the post-`mapEntry` set in
+    production, and a page that fails mapping empties it while the total does not.
+    """
+    if response.get("results"):
+        return False
+    for key in ("totalMatches", "totalResults", "totalForPlace"):
+        total = response.get(key)
+        if isinstance(total, (int, float)) and total > 0:
+            return False
+    return True
+
+
 def _format_unlogged_refs(refs: list[str]) -> str:
     shown = ", ".join(refs[:UNLOGGED_REFS_SHOWN])
     rest = len(refs) - UNLOGGED_REFS_SHOWN
@@ -424,13 +443,13 @@ def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
     Runs the compiled `unloggedStagedSearches` on its own. That is one node
     process where a nil search currently spawns none, so the per-call subprocess
     count does not rise — the concern behind #2025 was a SECOND process per call,
-    not a first. Returns 0 on any failure; this is advisory.
+    not a first. Returns [] on any failure; this is advisory.
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     if not stager_js.exists():
         return []
 
-    posix = str(stager_js).replace("\\", "/").replace("'", "\'")
+    posix = str(stager_js).replace("\\", "/").replace("'", "\\'")
     url = ("file:///" + posix) if sys.platform == "win32" else posix
     script = (
         f"import {{ unloggedStagedSearches }} from '{url}';"
@@ -631,12 +650,21 @@ def create_mock_server(
             # inserted in the same pre-`results` slot. All three staging tools carry
             # them, so this list is STAGING_SEARCH_TOOLS.
             #
-            # The nil condition differs from production by a knowable margin. The
-            # real external_links_search keys it on the PRE-FILTER link set, so a
-            # host filter that matches none does not claim a nil; the mock applies
-            # no host filter at all, so an empty fixture `results` is the closest
-            # available mirror. A fixture written to represent a host-filtered-to-
-            # zero search would therefore over-emit here.
+            # The nil condition mirrors production's on BOTH halves, and each half
+            # is a defect this PR was reviewed for:
+            #
+            # - Production requires the UPSTREAM total to be 0, not just an empty
+            #   `results`, because `results` is the post-`mapEntry` set and a page
+            #   that fails mapping empties it while `totalMatches`/`totalResults`
+            #   stays non-zero. A mock that fires where production does not makes
+            #   "the condition never held" and "the agent ignored it"
+            #   indistinguishable — in the plane whose whole job is telling those
+            #   apart. `_fixture_is_nil` reads whichever total the fixture carries.
+            # - The one remaining divergence is external_links_search: the real tool
+            #   keys on the PRE-FILTER link set, so a host filter matching none does
+            #   not claim a nil, while the mock applies no host filter at all. A
+            #   fixture written to represent a host-filtered-to-zero search would
+            #   still over-emit here.
             if (
                 _name in STAGING_SEARCH_TOOLS
                 and "error" not in response
@@ -650,7 +678,7 @@ def create_mock_server(
                         "{refs}",
                         _format_unlogged_refs([h.get("ref", "") for h in _unlogged_staged]),
                     )
-                if not response.get("results"):
+                if _fixture_is_nil(response):
                     _notes["nilSearchNeedsLog"] = NIL_SEARCH_NEEDS_LOG_NOTE
                 if _notes:
                     reordered = {}

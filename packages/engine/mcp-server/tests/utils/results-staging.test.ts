@@ -103,12 +103,12 @@ describe("results-staging", () => {
         response: { results: [{ recordId: "R1" }] },
       });
 
-    it("returns 0 with no staging directory at all", async () => {
+    it("returns [] with no staging directory at all", async () => {
       await writeResearch([]);
       expect(await unloggedStagedSearches(dir)).toHaveLength(0);
     });
 
-    it("counts staged files with an empty log", async () => {
+    it("returns one handle per staged file when the log is empty", async () => {
       await writeResearch([]);
       await stage();
       await stage();
@@ -212,7 +212,7 @@ describe("results-staging", () => {
       expect(await unloggedStagedSearches(dir)).toHaveLength(1);
     });
 
-    it("ignores a staged file past the TTL, which prune is about to delete", async () => {
+    it("ignores a staged file past the TTL, whether or not prune has swept it", async () => {
       await writeResearch([]);
       const handle = await stage();
       const stale = new Date(Date.now() - 25 * 60 * 60 * 1000);
@@ -220,7 +220,39 @@ describe("results-staging", () => {
       expect(await unloggedStagedSearches(dir)).toHaveLength(0);
     });
 
-    it("returns 0 rather than throwing when research.json is unreadable", async () => {
+    it("still ignores a stale file after a nil search, which never prunes", async () => {
+      // `pruneStale` runs inside `stageSearchResults` after its nil early-return, so
+      // a nil search sweeps nothing. The reader's TTL skip has to stand on its own
+      // rather than on the file being about to disappear.
+      await writeResearch([]);
+      const handle = await stage();
+      const stale = new Date(Date.now() - 25 * 60 * 60 * 1000);
+      await utimes(join(dir, handle!.resultsRef), stale, stale);
+
+      // A nil search: stages nothing, prunes nothing.
+      const nil = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { results: [] },
+      });
+      expect(nil).toBeNull();
+      await access(join(dir, handle!.resultsRef)); // still on disk
+
+      expect(await unloggedStagedSearches(dir)).toStrictEqual([]);
+    });
+
+    it("returns [] rather than throwing on an explicit null or empty projectPath", async () => {
+      // The callers gate on `!== undefined`, so a null gets through to here and
+      // `join(null, …)` is a TypeError — which would fail a search that already
+      // succeeded. The absent case is covered by the tool tests; this is the shape
+      // one over.
+      expect(
+        await unloggedStagedSearches(null as unknown as string),
+      ).toStrictEqual([]);
+      expect(await unloggedStagedSearches("")).toStrictEqual([]);
+    });
+
+    it("returns [] rather than throwing when research.json is unreadable", async () => {
       await stage();
       await writeFile(join(dir, "research.json"), "{ not json", "utf-8");
       expect(await unloggedStagedSearches(dir)).toHaveLength(0);

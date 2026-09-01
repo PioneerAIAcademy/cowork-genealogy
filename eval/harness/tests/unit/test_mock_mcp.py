@@ -16,10 +16,12 @@ import pytest
 from harness.fixtures import InvalidFixtureError
 from harness.mock_mcp import (
     LIVE_TOOLS,
+    UNLOGGED_REFS_SHOWN,
     NIL_SEARCH_NEEDS_LOG_NOTE,
     OK_FALSE_IS_FAILURE_LIVE,
     RANKING_SKIPPED_NOTE,
     UNLOGGED_SEARCHES_NOTE,
+    _fixture_is_nil,
     _tool_envelope,
     create_mock_server,
 )
@@ -312,6 +314,56 @@ def test_unlogged_search_notes_have_not_drifted_from_the_typescript_source():
         # The TS source escapes the inner quotes of `outcome: "negative"`; Python's
         # own literal does not, so unescape before comparing.
         assert ts_note.replace('\\"', '"') == expected
+
+
+def test_fixture_with_matches_but_no_mapped_results_is_not_nil():
+    """The mock's nil gate must match production's, which requires a zero total.
+
+    `results` is the post-`mapEntry` set in production, so a page that fails mapping
+    empties it while the upstream total stays non-zero. A mock that emitted the note
+    there would fire where production does not, and then a zero firing count could
+    not be read as "the condition never held".
+    """
+    assert _fixture_is_nil({"totalMatches": 0, "results": []})
+    assert _fixture_is_nil({"results": []})  # no total declared → claims no matches
+    assert not _fixture_is_nil({"totalMatches": 812, "results": []})
+    assert not _fixture_is_nil({"totalResults": 812, "results": []})
+    assert not _fixture_is_nil({"totalForPlace": 3, "results": []})
+    assert not _fixture_is_nil({"totalMatches": 0, "results": [{"id": "x"}]})
+
+
+def test_unlogged_refs_shown_has_not_drifted_from_the_typescript_source():
+    """The refs formatter is restated in Python; nothing else guards the two copies.
+
+    The pairing rule is called out of the compiled build precisely so it cannot
+    drift. This constant could, and the note's text would then differ from
+    production's at the boundary rather than obviously.
+    """
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/utils/results-staging.ts"
+    ).read_text(encoding="utf-8")
+    decl = re.search(r"const UNLOGGED_REFS_SHOWN = (\d+);", src)
+    assert decl, "UNLOGGED_REFS_SHOWN is gone from results-staging.ts"
+    assert int(decl.group(1)) == UNLOGGED_REFS_SHOWN
+
+
+def test_staging_tool_sets_agree_across_the_two_copies():
+    """`STAGING_SEARCH_TOOLS` here vs `STAGING_CAPABLE_TOOLS` in the engine.
+
+    The engine consolidated its own two copies for exactly this reason ("a second
+    copy would drift"); this is the third, and it lives in another language.
+    """
+    from harness.mock_mcp import STAGING_SEARCH_TOOLS
+
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/utils/results-staging.ts"
+    ).read_text(encoding="utf-8")
+    decl = re.search(
+        r"export const STAGING_CAPABLE_TOOLS = new Set\(\[(.*?)\]\)", src, re.DOTALL
+    )
+    assert decl, "STAGING_CAPABLE_TOOLS is gone from results-staging.ts"
+    ts_tools = set(re.findall(r'"([a-z_]+)"', decl.group(1)))
+    assert ts_tools == STAGING_SEARCH_TOOLS
 
 
 def test_nil_search_carries_the_negative_log_note(tmp_path):

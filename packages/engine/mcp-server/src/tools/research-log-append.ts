@@ -36,7 +36,6 @@ import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
 
-// Tools that can stage their raw response host-side (search-result-staging-spec.md).
 
 /** Fire the "logging without persistence" nudge once this many positive-outcome
  *  searches have been logged while the project still holds zero sources and zero
@@ -282,7 +281,13 @@ async function applyLogAppendOp(
     results_ref: null,
   };
   if (op.resultsAvailable !== undefined && op.resultsAvailable !== null) {
-    entry.results_available = op.resultsAvailable;
+    // Coerced the same way `ops` is: a model sending `"5"` otherwise lands a string
+    // in an integer-typed field that nothing rejects — `validator.ts` carries
+    // `results_available` in field-name allow-lists with no type check. The staged-
+    // backlog reader tests `typeof === "number"`, so a string entry never pairs and
+    // its staged file nags until the TTL. `coerceJsonArg` leaves a genuinely
+    // non-numeric value untouched rather than inventing one.
+    entry.results_available = coerceJsonArg(op.resultsAvailable) as number;
   }
   if (op.notes !== undefined && op.notes !== null) {
     entry.notes = op.notes;

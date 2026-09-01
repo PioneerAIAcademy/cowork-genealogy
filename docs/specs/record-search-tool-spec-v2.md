@@ -419,7 +419,7 @@ Strict surname + birth-place match:
 | `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). |
 | `rankingSkipped` | string \| undefined | Present **only** when `projectPath` was supplied and `subjectId` was not. Names the two features that therefore did not run, and how to get them. **Serialized before `results`** — see below. |
 | `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses with no `research.json` log entry. Advisory — the search still succeeded and nothing is refused. **Serialized before `results`** — see below. |
-| `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied and the search returned nothing. A nil search stages no file, so `unloggedSearches` structurally cannot see it. **Serialized before `results`.** |
+| `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied **and `totalMatches` is 0** — not merely when `results` is empty, which is the post-`mapEntry` set. A nil search stages no file, so `unloggedSearches` structurally cannot see it. **Serialized before `results`.** |
 | `results` | RecordSearchResult[] | The ranked results, best-scoring first. |
 | `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
 

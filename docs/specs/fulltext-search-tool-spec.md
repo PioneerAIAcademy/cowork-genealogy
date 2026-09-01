@@ -201,13 +201,12 @@ interface FulltextSearchResponse {
    *  non-zero. What distinguishes this tool from external_links_search is only
    *  that no host filter narrows the inline copy — the mapping path is shared. */
   nilSearchNeedsLog?: string;
-  results: FulltextSearchResult[];
-  facets?: {
-    collections?: FulltextFacet[];
-    places?: FulltextFacet[];
-    years?: FulltextFacet[];
-    recordTypes?: FulltextFacet[];
-  };
+  results: FulltextResult[];
+  facets?: FulltextFacet[];
+  /** Present only when `projectPath` was supplied. `null` if staging failed. */
+  staged?: { resultsRef: string; returnedCount: number } | null;
+  /** Present only when staging was attempted and threw. */
+  stagingError?: string;
 }
 ```
 
