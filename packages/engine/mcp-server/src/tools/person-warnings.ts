@@ -1021,7 +1021,7 @@ function checkHasEventBeforeBirth(mob: Mob): PersonWarning | null {
     // fact — so the examined set is every self fact.
     factIds: selfFactIds(mob, null),
     message:
-      "An event is dated more than 2 years before this person's earliest birth-like fact.",
+      "An event is dated more than 2 years before this person's latest birth-like fact.",
   };
 }
 
