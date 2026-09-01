@@ -429,6 +429,22 @@ writer tool (ADR-0011). §3.4's playbook result is an instance of this rather th
 a separate fact about agents: what was measured there was a per-record-type read
 with no manifest block to sit in.
 
+**The first of those two is now measured, and it lands harder than the block
+does.** A `craftNotes` payload returned from `project_context` — a call
+`record-extractor` makes on every spawn — was adopted on **289 of 289** eligible
+assertions across 12 of 12 census tests, against a baseline of **0 of 1,638 over
+six runs**, while honouring every carve-out the note declared (zero leak onto the
+record types it excluded). It was adopted **even though it contradicted the census
+informant table in the agent body**, and the model obeyed against its own stated
+reasoning — persisting notes that read "the enumerator recorded what a household
+member reported" beside an informant set to the enumerator. So a payload on a call
+the agent already makes is not merely read, it is *authoritative*: it beats the
+body. **The consequence is a split, not a green light.** A rule that must hold
+belongs in the writer tool, where a later payload cannot override it; this channel
+carries only craft the body is silent on. Ledger row and the licensing limits:
+ADR-0010; the pre-registered thresholds and every arm's result are on the issue
+that row cites.
+
 A skill can read its own sibling files; the failure is **across** skills. Claude
 Code's relative-path resolution from one SKILL.md into another skill's folder is
 unreliable (claude-code#17741). So guidance several skills must follow
