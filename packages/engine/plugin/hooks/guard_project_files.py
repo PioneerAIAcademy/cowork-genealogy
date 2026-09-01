@@ -96,7 +96,14 @@ _MAX_PATH_LEN = 4096
 # hook runs in the VM with no access to the repo — `cwd` is the sandbox and the
 # connected folder is not mounted there. Keeping the two in step is the
 # manifest's `hookCallers` field plus this comment, not a loader.
-OWNED_SECTIONS = {"proof_summaries": "proof-conclusion"}
+OWNED_SECTIONS = {
+    "proof_summaries": "proof-conclusion",
+    # person_evidence, 2026-09-01. One owner, and `extraction_append` does not
+    # accept the section, so a whole-section route fits -- no field is required
+    # on every question the way `exhaustive_declaration` is, so this needs none
+    # of OWNED_DECLARATIONS' field-scoped treatment.
+    "person_evidence": "person-evidence",
+}
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
 # truthy. Same plane and same manifest as OWNED_SECTIONS, different granularity.
@@ -140,6 +147,14 @@ AGENT_WRITABLE_SECTIONS = {
     # owns `plan_items`, not by this agent, so leaving `plans`/`plan_items` out
     # is what stops it clearing its own blocker (issue #1821).
     "research-exhaustiveness": frozenset({"questions"}),
+    # person-evidence writes identity links and nothing else in research.json.
+    # Its stub `persons` and `relationships` writes go to tree.gedcomx.json
+    # through tree_edit/materialize_facts, which carry no `section` for this
+    # check to read. Deliberately narrow for the same reason as the row above:
+    # a blocker it meets -- an unclassified assertion, a genuinely competing
+    # candidate -- is cleared by record-extraction or conflict-resolution, not
+    # by this agent editing those sections itself.
+    "person-evidence": frozenset({"person_evidence"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.

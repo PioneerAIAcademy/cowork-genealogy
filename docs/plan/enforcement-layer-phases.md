@@ -9,7 +9,7 @@
 | 1b — standalone (answer, don't error) | **landed** 2026-08-21. `classifyProjectPath` in `project-io.ts` decides five states from the directory rather than the file; twelve tools return `reason: "no_project"` with no `isError`, and the three harness detectors that read `is_error` to mean "never landed" mirror it |
 | 2 — device-bridge route closure | **landed** 2026-08-18. `device_commit_files` covered in all three lockdown copies *and* in the `hooks.json` matcher that decides whether the guard runs; `device_bash` deliberately not. Still unproven against a real bridge payload — only a live Cowork session can do that |
 | 3 — first skill-agent pair (proof summaries) | **landed** 2026-08-19. `proof-conclusion` folded into an agent; the plugin hook denies a `proof_summaries` write to any other caller. Unproven against a real Cowork payload — no CI job sees one |
-| 4 — remaining pairs | **first pair landed** 2026-08-23. `research-exhaustiveness` folded into an agent; the plugin hook routes the exhaustiveness CLAIM (`declared: true`) to it, field-scoped rather than section-scoped. Two writer-tool preconditions landed with it. Remaining: `conflict-resolution`, and `research/SKILL.md` itself |
+| 4 — remaining pairs | **first pair landed** 2026-08-23. `research-exhaustiveness` folded into an agent; the plugin hook routes the exhaustiveness CLAIM (`declared: true`) to it, field-scoped rather than section-scoped. Two writer-tool preconditions landed with it. **Second pair landed** 2026-09-01: `person-evidence` folded into an agent, section-scoped like proof summaries, with **no** writer-tool precondition — its candidate rule (issue #1731) is satisfiable by only 6.7% of reachable links and ships as a warning, which the conversion guide's step 3 sanctions ("there may be no such rule; say so and move on"). Remaining: `conflict-resolution`, and `research/SKILL.md` itself |
 | 5 — detectors + positive controls | **landed** 2026-08-23. The shadow report replays the post-hoc families and the §11 unnamed-delegate check over history rather than reading only what a run stored; citation-nulling has its positive control on the live path; the deny run happened (PR #1844) and the agent recovers. Also fixed the capture strip, which was destroying `replay.py`'s input |
 
 Three gates, the phase function, and the replay engine were built during the
@@ -99,7 +99,7 @@ fix a known-unsatisfiable gate in the body first.
 |---|---:|---|
 | ~~`research-exhaustiveness`~~ | 115 | **landed 2026-08-23** — folded to ~21 KB |
 | `conflict-resolution` | 9 | ~48 KB |
-| `person-evidence` | 149 | ~52 KB |
+| ~~`person-evidence`~~ | 154 | **landed 2026-09-01** — folded to 53,158 bytes / 1,036 lines |
 
 **There is no fold ceiling. `record-extractor.md`'s size is precedent, not a
 limit** — it is the largest agent body the team has shipped and lived with, and

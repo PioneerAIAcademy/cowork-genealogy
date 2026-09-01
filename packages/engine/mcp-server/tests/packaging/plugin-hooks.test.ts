@@ -402,6 +402,61 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
   });
 
+  // ── caller-routed sections: research_append + person_evidence (issue #1853) ──
+  //
+  // Same section-scoped shape as proof_summaries above. Mirrored rather than
+  // folded into the same it.each because the two arms fail differently: this
+  // section's owner holds the BROAD research_append and the lane check below is
+  // the only thing keeping it to one section.
+  const PE_OWNER = "genealogy-research:person-evidence";
+
+  it.each([
+    ["append, no agent_id (main thread)", { section: "person_evidence", op: "append", entry: {} }, {}],
+    ["update in place, no agent_id", { section: "person_evidence", op: "update", entryId: "pe_001", fields: {} }, {}],
+    ["agent_type present but agent_id absent", { section: "person_evidence", op: "append" }, { agent_type: PE_OWNER }],
+    ["a different agent", { section: "person_evidence", op: "append" }, { agent_id: "a1", agent_type: "record-extractor" }],
+  ])("denies research_append on person_evidence — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:person-evidence");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["namespaced agent_type, as production reports it", PE_OWNER],
+    ["bare agent_type", "person-evidence"],
+  ])("permits the person-evidence agent — %s", (_label, agent_type) => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "person_evidence", op: "append", entry: {} },
+      agent_id: "agent-1",
+      agent_type,
+    });
+    expect(out).toEqual({});
+  });
+
+  it("denies the person-evidence agent a section outside its own lane", () => {
+    // Without its AGENT_WRITABLE_SECTIONS row this agent's `writable` is None
+    // and the out-of-lane arm is skipped ENTIRELY — it could write any section
+    // unchecked. That is the 2026-08-19 proof-conclusion failure with a
+    // different actor, and nothing else in this suite would notice: removing
+    // the row leaves every other test green. This is that row's only guard.
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: {
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { status: "resolved" },
+      },
+      agent_id: "agent-1",
+      agent_type: PE_OWNER,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("person_evidence");
+  });
+
   it("permits the owning agent's real shape — summary + resolve in ONE batch", () => {
     // This is what the agent actually emits: the conclusion and its question
     // resolution as one all-or-nothing write. A permit proven only against the
