@@ -1822,6 +1822,24 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     assertions = research.get("assertions") if isinstance(research, dict) else None
 
     labelled: list[tuple[str, dict[str, Any]]] = []
+    if conflicts:
+        # Rendered FIRST, ahead of the source blocks. Same shape
+        # ({count, all_ids, detail}) as a sources block, so it flows through the
+        # id-section and the shared-budget detail loop below unchanged. Order is
+        # deliberate: the shared _BEFORE_STATE_MAX_CHARS budget is spent in list
+        # order, so putting conflicts first means their resolved preferred/
+        # competing values — the grounding evidence a "no conflict on file" claim
+        # turns on — win the budget over source-citation detail. Source *ids* stay
+        # complete in the id-section regardless (never clipped), so a dropped
+        # source keeps its existence check; only its heavy detail yields, and the
+        # omission note already reads correctly for that case.
+        labelled.append(
+            (
+                "research.json conflicts on file before this run (c_ ids; "
+                "preferred/competing assertions resolved to their values)",
+                _summarize_before_state_conflicts(conflicts, assertions),
+            )
+        )
     if research_sources:
         labelled.append(
             (
@@ -1835,18 +1853,6 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
                 "tree.gedcomx.json source descriptions on file before this run "
                 "(S ids)",
                 _summarize_before_state_sources(tree_sources),
-            )
-        )
-    if conflicts:
-        # Same shape ({count, all_ids, detail}) as a sources block, so it flows
-        # through the id-section and the shared-budget detail loop below
-        # unchanged — the conflicts detail is trimmed by the same
-        # _BEFORE_STATE_MAX_CHARS accounting, never before the sources.
-        labelled.append(
-            (
-                "research.json conflicts on file before this run (c_ ids; "
-                "preferred/competing assertions resolved to their values)",
-                _summarize_before_state_conflicts(conflicts, assertions),
             )
         )
     if not labelled:

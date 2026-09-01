@@ -320,3 +320,44 @@ def test_conflicts_non_list_and_empty_are_safe():
         "all_ids": [],
         "detail": [],
     }
+
+
+def test_conflict_values_win_the_budget_over_source_detail(monkeypatch):
+    """Conflicts are rendered before the source blocks, so under budget pressure
+    their resolved values survive while source *detail* (not ids) yields first.
+
+    This pins the ordering: the resolved conflict value is the grounding evidence
+    a 'no conflict on file' claim turns on, so it must not be the first thing a
+    tight prompt-size budget drops. One heavy source and a light conflict, with a
+    budget that holds the small conflict detail but not the fat source citation —
+    so if the ordering ever flips, the conflict value is what disappears."""
+    from harness import orchestrator
+
+    light_conflict = {
+        "id": "c_001",
+        "conflict_type": "fact",
+        "status": "resolved",
+        "disputed_attribute": "birthplace",
+        "preferred_assertion_id": "a_002",
+        "competing_assertion_ids": ["a_002", "a_009"],
+    }
+    # Source detail (~0.9KB) and conflict detail (~1.1KB) each fit the budget
+    # alone, but not together — so whichever is rendered first consumes the
+    # budget and the other's detail is dropped. That is what makes this test
+    # discriminate the ordering rather than just drop an oversized source.
+    heavy_source = [{"id": "src_001", "citation": "x" * 600, "notes": "y" * 200}]
+    monkeypatch.setattr(orchestrator, "_BEFORE_STATE_MAX_CHARS", 1620)
+    before = {
+        "research_json": {
+            "sources": heavy_source,
+            "conflicts": [light_conflict],
+            "assertions": _FLYNN_ASSERTIONS,
+        }
+    }
+    rendered = orchestrator._summarize_before_state(before)
+    # The conflict's resolved values survive the squeeze...
+    assert "Ireland" in rendered
+    assert "Pennsylvania" in rendered
+    # ...while the fat source detail is what yields (its id stays complete above).
+    assert "detail omitted for prompt size: src_001" in rendered
+    assert "src_001" in rendered  # id still present in the never-clipped id list
