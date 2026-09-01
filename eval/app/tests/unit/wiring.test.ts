@@ -43,9 +43,9 @@ describe('the control is actually wired', () => {
 
   it('Start.bat opens the address the binding actually serves', () => {
     // The pairing the .bat comment describes. 127.0.0.1 listens on IPv4 loopback
-    // only, and Windows resolves `localhost` to ::1 first — so a launcher opening
-    // `localhost` would present the fix as "the tool stopped working". Nothing
-    // enforced the pairing either.
+    // only — nothing listens on ::1. `localhost` may resolve to ::1 first, which
+    // is untested on Windows, so the launcher uses the address that cannot depend
+    // on the resolver. Nothing enforced the pairing either.
     const bat = fs.readFileSync(path.resolve(__dirname, '../../../Start.bat'), 'utf8')
     expect(bat).toContain('127.0.0.1:3000')
     expect(bat).not.toMatch(/start http:\/\/localhost:3000/)
