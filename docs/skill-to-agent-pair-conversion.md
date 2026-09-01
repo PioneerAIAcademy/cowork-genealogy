@@ -147,6 +147,26 @@ will spend runs chasing the fixture believing it is the skill.
 relationship — assert it in a validator, not in judge prose.** A validator names
 the defect in one line; a judge gives an opinion that moves between runs.
 
+## 5. Folded size sizes the work; it does not disqualify
+
+There is no size ceiling. `wc -c` on `record-extractor.md` gives the largest
+agent body shipped so far — precedent, not a limit — and it moves (53,845 bytes,
+then 58,541, then 57,229), so a candidate measured against it crosses in either
+direction without anyone touching the candidate. Nor do agent bodies only grow:
+roughly a quarter of that file's committed revisions shrank it.
+
+`docs/specs/unit-test-spec.md` carries the ruling — the variable is anchoring,
+not length, and plugin agents are exempt from the decay argument entirely
+because they run in fresh context per invocation. ADR-0003 says the same from
+the other side: reopen a size argument only on a measurement that body size
+costs something end to end, not on a byte count.
+
+Use the folded size to size the work — what moves, what stays skill-side, how
+much prose a reviewer has to read. What does bind is step 4 below: a fold
+deletes `references/`, so a candidate whose references carry content the body
+cannot absorb is blocked until that content has another home, whatever it
+measures.
+
 ## The process, in order
 
 1. Record the pre-conversion baseline from existing run logs.
