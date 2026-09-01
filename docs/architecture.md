@@ -212,7 +212,7 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 
 | Component | Count | Where | What it is for |
 |---|---|---|---|
-| **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | **47** | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
+| **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
 | **Plugin agents** — `packages/engine/plugin/agents/*.md` | **5** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
@@ -528,6 +528,12 @@ Architecturally:
   — your only real debugger when the MCP harness swallows errors),
   `tests/tools/<name>.test.ts`, `README.md`'s tool table, and — if a skill will
   call it — an `eval/fixtures/mcp/` fixture.
+- **Changing an existing tool's response type also breaks its fixtures**, in the
+  other direction: add or rename a required field and every fixture for that tool
+  is now a shape the tool cannot return.
+  `packages/engine/mcp-server/tests/packaging/mcp-fixture-shape.test.ts` derives
+  the field list from the handler's `Promise<T>` and fails on the mismatch, so
+  this one does tell you — top-level key names only, and blind to a wrong value.
 - **If it calls an external service:** the base URL/key is a field on `AppConfig`
   (`src/types/auth.ts`) plus a `get*` helper in `src/auth/config.ts`, read from
   `~/.familysearch-mcp/config.json`. **Never a `process.env` fallback** — the
@@ -767,26 +773,31 @@ in an agent's `tools:` — and in a `disallowedTools:`, if one ever comes back �
 
 ```yaml
 - mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
-- mcp__remote-devices__Genealogy_Research__record_read   # Cowork in the cloud (bridged)
-- mcp__Genealogy_Research__record_read                   # Cowork on the user's own computer
+- mcp__remote-devices__Genealogy_Research__record_read   # Cowork via the remote-device bridge
+- mcp__Genealogy_Research__record_read                   # Cowork, bare display_name spelling
 ```
 
 The MCP server's name belongs to whoever registers it, and the plugin — which
 ships into the VM — cannot control that choice. `.mcp.json`, both harnesses, and
-the hosted control plane register it under `genealogy`. Cowork uses
-`manifest.json`'s `display_name` (`Genealogy Research` → `Genealogy_Research`)
-**both** times, but namespaces it under `remote-devices` only when the task runs
-in the cloud and has to reach the host through the device bridge. A task running
-on the user's own computer reaches the `.mcpb` directly and gets the bare
-`display_name` segment. **Run mode is a per-task setting the plugin cannot see**,
-so all three must be present.
+the hosted control plane register it under `genealogy`. Both Cowork forms derive
+from `manifest.json`'s `display_name` (`Genealogy Research` → `Genealogy_Research`);
+only the bridged form is namespaced under `remote-devices`. **Which spelling a
+Cowork session exposes has been observed to move:** three censuses found every
+tool under the bridged `mcp__remote-devices__Genealogy_Research__` spelling with
+the bare `mcp__Genealogy_Research__` spelling absent — macOS and Windows on
+2026-08-15, and a second Windows session via #1732 on 2026-08-19 — yet #1341
+recorded the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the bridged
+spelling unrecognized. The registrar moved between those dates (or the configs
+differ in a way nobody has identified — same conclusion). **Run mode is a
+per-task setting the plugin cannot see, and the exposed spelling is not stable
+over time**, so all three must be present.
 
 Entries are matched **exactly** — no prefix fallback, no inherit-on-miss. When
 *every* entry misses, the runtime refuses to spawn the agent at all ("would be
 spawned with zero tools — refusing"). That is how #650/#698 broke all three
 then-existing agents in Cowork **while CI stayed green**: they were qualified
 against the harness's arbitrary dict key rather than the product's name. The
-on-computer registrar repeated the shape one registrar later — the on-computer spelling was missing,
+bare `display_name` registration repeated the shape one registrar later — that spelling was missing,
 `record-extractor` was refused outright with all 16 of its entries named
 unrecognized, and the lint agreed with the omission because it derived its expected
 prefixes from the two registrars we knew about. (`gps-mentor` is the exception: it
@@ -841,8 +852,8 @@ warn-only and does not block a build; the suppression mechanism it wants is
   — it would hand a read-only agent shell access to the host.
 - **Never hardcode a qualified name in a `ToolSearch` query.** Search by bare
   name (`query: "+research_append"`), which matches whatever prefix the session
-  exposes. `select:mcp__genealogy__…` resolves to nothing in either Cowork mode —
-  behind the bridge or on the user's own computer.
+  exposes. `select:mcp__genealogy__…` resolves to nothing under either Cowork
+  spelling — bridged or bare.
 
 Built-in tools (`Read`) stay **bare** in agent frontmatter. Skill
 `allowed-tools` stays **bare** everywhere.
@@ -1365,7 +1376,7 @@ Four environments run the engine, and they load the plugin differently.
 | Environment | Skills | Agents | Hooks | Permission mode | MCP server |
 |---|---|---|---|---|---|
 | **Cowork** (cloud) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` via the remote-device bridge |
-| **Cowork** (on this computer) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` **directly**, no bridge — `mcp__Genealogy_Research__*` |
+| **Cowork** (on this computer) | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` — exposed spelling has **moved**: bare `mcp__Genealogy_Research__*` live in #1341, but the 2026-08-15 censuses saw the bridged `mcp__remote-devices__Genealogy_Research__*` here too (§5.2) |
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — no plugin hooks, and **no write-lockdown rule at all** | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
@@ -1438,7 +1449,7 @@ skips silently**, which looks identical to passing.
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
 | **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names | whether a granted tool actually **binds**; skips silently with no API key |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
-| `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions, and `runs_per_test` is pinned to 1, so within-test flakiness is out of reach |
+| `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: `runs_per_test` is pinned to 1, so the harness's `flaky` flag is **dead by construction, not healthy**. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
 
 ### 9.2 The lint layer
@@ -1568,7 +1579,8 @@ changes how a correct change is made:
    call landed, off the `tool_result` rather than the agent's prose. It is a
    live, billed probe rather than a check — run it when the CLI or the SDK moves.
    And it answers the question only for the **hosted** options it builds; Cowork
-   in either run mode still has no instrument but a live session.
+   still has no instrument but a live session, and only for the spelling that
+   session exposes.
 2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
    not rebuild the `genealogy-agent` E2B image production runs the agent on, and
    both guards over it are advisory. Production can run weeks-old skills, agents,
@@ -1617,9 +1629,20 @@ a sub-skill regression rather than a routing one.
 format; `eval/README.md` is the workflow; `eval/tests/unit/<skill>/` is where it
 lives. A test is not just its definition: it usually needs a matching
 `eval/fixtures/mcp/` response, a dimension in that skill's `rubric.md`, and a
-check in `eval/harness/validators/`. `test.id` must be unique across the **whole**
+check in `eval/harness/validators/`. A fixture's `response` must be a shape its
+tool can actually return, checked per tool against the handler's declared return
+type; copy the envelope from a sibling fixture for the same tool rather than
+writing a short form, because a nil result still carries every field a hit
+carries. `test.id` must be unique across the **whole**
 corpus — a duplicate is a blocking CI failure — and `runs_per_test` is pinned to
-1 by policy. 87 of the 404 definitions are **negative** tests that exist to prove
+1 by policy. **The pin buys suite wall-clock, not permission to ship a test that
+flaps.** A test that does not pass every run is a defect — in the test, its
+fixture, its rubric, or the skill — and it gets diagnosed and fixed, never
+re-run until it comes back green (`docs/skill-lifecycle.md` carries the
+symptom-to-fix table). Because the pin also makes the `flaky` flag dead by
+construction, catching one is on you: re-run a suspect test with
+`run_tests.py --test <id> --runlogs-root <tmp>` and fix whatever differs.
+87 of the 404 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is

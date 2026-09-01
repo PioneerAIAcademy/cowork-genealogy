@@ -70,6 +70,7 @@ from e2e.runlog_selection import (
     REPO_ROOT,
     add_since_arg,
     all_result_jsons,
+    branch_scope_note,
     describe_window,
     filter_since,
     result_jsons_for,
@@ -826,6 +827,7 @@ def main(argv: list[str] | None = None) -> int:
         # hunting for a window bug that isn't there.
         where = f" on/after {cutoff.isoformat()}" if (cutoff and all_paths) else ""
         print(f"No committed runs found{where}.", file=sys.stderr)
+        print(branch_scope_note(), file=sys.stderr)
         return 1
 
     counts = tally(paths)

@@ -68,6 +68,7 @@ from e2e.result import axes_from_runlog
 from e2e.runlog_selection import (
     E2E_RUNLOGS,
     add_since_arg,
+    branch_scope_note,
     describe_window,
     filter_since,
     is_result_json as _is_result_json,
@@ -436,8 +437,12 @@ def main(argv: list[str] | None = None) -> int:
         r = latest_run_for(args.test)
         if not r:
             print(f"No committed run found for '{args.test}'.", file=sys.stderr)
+            print(branch_scope_note(), file=sys.stderr)
             return 1
         paths.append(r)
+        # --all gets the caveat via describe_window() below; --test does not
+        # go through that branch, so it must print it here or never see it.
+        print(branch_scope_note())
     if args.all:
         # The window applies to --all only. An explicit path or --test is a
         # deliberate request for that run; the cutoff guards *aggregate* reads,
