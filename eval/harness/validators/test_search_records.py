@@ -490,7 +490,7 @@ _GENERIC_PLACE_WORDS = frozenset({
 
 
 def _place_tokens(place):
-    """Matchable words from a free-text place string. Drops words of 3
+    """Matchable words from a free-text place string. Drops words of 2
     characters or fewer ("of", "Co") and the generic administrative-unit
     words every place name shares: "Yell County, Arkansas" and "Union
     County, South Carolina" both contain "County", so keeping it lets a
@@ -566,6 +566,12 @@ def test_jurisdiction_hints_followed(tool_calls, test):
     for c in next_calls:
         args = c.get("args") or {}
         for field in place_fields:
+            if field == "recordSubdivision" and not args.get("recordCountry"):
+                # record-search.ts throws on recordSubdivision without
+                # recordCountry (promise-emmanuel review, issue #1642 round
+                # 5) -- a call shaped like this is not one production would
+                # ever have accepted, so it cannot count as "followed."
+                continue
             value = args.get(field) or ""
             value_lower = value.lower()
             for t in tokens:

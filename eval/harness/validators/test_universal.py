@@ -1034,7 +1034,7 @@ _UNCERTAINTY_MARKERS = (
     r"needs?-?review",
     r"speculative",
     r"uncertain",
-    r"inferr",
+    r"infer",
     r"unconfirmed",
     r"possible\s+namesake",
     r"not\s+(?:yet\s+)?confirmed",

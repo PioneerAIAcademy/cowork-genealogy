@@ -97,6 +97,24 @@ def test_hint_followed_via_recordsubdivision_passes():
     check(calls, TAGGED)
 
 
+def test_hint_followed_via_recordsubdivision_without_recordcountry_fails():
+    """promise-emmanuel review (issue #1642, round 5): record-search.ts
+    throws when recordSubdivision is set without recordCountry alongside
+    it. A next-call that sets recordSubdivision alone is a call the real
+    tool would reject, so it cannot count as "followed the hint" even
+    though the string match on place_fields would otherwise accept it."""
+    calls = [
+        rs_call(
+            {"surname": "Neal", "recordCountry": "United States", "recordSubdivision": "South Carolina"},
+            hint_response("Yell County, Arkansas"),
+        ),
+        rs_call({"surname": "Neal", "recordSubdivision": "Arkansas"}),
+    ]
+    with pytest.raises(AssertionError) as e:
+        check(calls, TAGGED)
+    assert "Yell County, Arkansas" in str(e.value)
+
+
 def test_hint_ignored_reverting_to_shared_generic_word_place_fails():
     """promise-emmanuel review (issue #1642): the fixture's own strings --
     hint "Yell County, Arkansas", reverted-to "Union County, South

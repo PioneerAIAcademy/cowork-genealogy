@@ -9,7 +9,8 @@
     "query": {
       "surname": "Neal",
       "recordType": "marriage",
-      "recordSubdivision": "Yell County, Arkansas"
+      "recordCountry": "United States",
+      "recordSubdivision": "Arkansas"
     },
     "totalMatches": 1,
     "paginationCappedAt": 100,

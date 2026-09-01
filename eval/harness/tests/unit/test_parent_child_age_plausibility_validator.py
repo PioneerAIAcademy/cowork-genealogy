@@ -166,6 +166,21 @@ def test_malformed_run_together_date_is_not_misread_as_a_year():
     check(before, after)  # does NOT raise -- year is unparseable, so unchecked
 
 
+def test_bare_infer_note_is_recognized_not_just_inferred():
+    """promise-emmanuel review (issue #1642, round 5): _UNCERTAINTY_MARKERS'
+    pattern was r"inferr" (double-r only), which matches "inferred"/
+    "inferring" but not the single-r "infer"/"inference"/"inferential" --
+    a note reading "parentage is an inference from household proximity"
+    tripped no marker and this same implausible gap would have failed. The
+    widened r"infer" pattern is a superset (still matches "inferred"), so
+    this only adds coverage."""
+    before = tree([], [])
+    persons = [person("P1", "Female", 1841), person("P2", "Female", 1852)]
+    rels = [rel("R1", "P1", "P2", notes=["parentage is an inference from household proximity, not a stated relationship"])]
+    after = tree(persons, rels)
+    check(before, after)  # does NOT raise -- "inference" now satisfies the marker
+
+
 def test_dict_shaped_date_does_not_crash():
     """chesworthrm review (issue #1642): eval/runlogs/e2e/mckee-birth-1904/
     run-2026-07-09_11-43-28.final-tree.gedcomx.json has a real committed

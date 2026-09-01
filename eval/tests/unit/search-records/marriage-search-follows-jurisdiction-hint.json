@@ -25,7 +25,7 @@
   "judge_context": [
     "GENERAL RULE UNDER TEST: after a record_search response carries a non-empty jurisdictionHints, the next 1-2 record_search calls in the same plan-item sequence must try the top-ranked candidate's place (here, Yell County, Arkansas -- the subject's own Birth-fact place) before reverting to the originally-searched jurisdiction (Union County, South Carolina).",
     "This is graded here primarily by a deterministic validator (test_jurisdiction_hints_followed), which reads tool_calls directly -- it does not depend on the judge. Base dimensions still apply normally.",
-    "Compliant behavior: the first record_search nils on South Carolina and returns jurisdictionHints; one of the next two record_search calls sets a place field (recordCountry, residencePlace, birthPlace, or marriagePlace) to a value containing 'Arkansas' or 'Yell', and that call returns a positive match, which the skill logs and reports.",
+    "Compliant behavior: the first record_search nils on South Carolina and returns jurisdictionHints; one of the next two record_search calls sets marriagePlace or residencePlace -- or recordSubdivision together with recordCountry -- to a value containing 'Arkansas' or 'Yell', and that call returns a positive match, which the skill logs and reports.",
     "Non-compliant behavior: the skill re-runs South Carolina variants (spelling, date range, collection) after the nil, without ever trying the Arkansas candidate the hint named.",
     "Do not penalize the skill for also eventually returning to South Carolina after trying Arkansas -- the rule requires trying the hint within the next 1-2 calls, not abandoning the original jurisdiction forever."
   ],

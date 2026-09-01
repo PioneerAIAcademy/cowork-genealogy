@@ -503,11 +503,12 @@ candidates; you still confirm the top ones:
   discard. Before citing a number, check which array you read it from.
 - **Follow a returned `jurisdictionHints`.** When a `record_search` response
   carries a non-empty `jurisdictionHints`, the next 1–2 retries in this same
-  plan-item search sequence must set `recordSubdivision` (or `residencePlace`
-  / `marriagePlace`) to the top-ranked hint's place before reverting to a
-  jurisdiction used prior to the hint. The hint is host-scored from the
-  record's own supporting data — a jurisdiction you have not yet tried
-  outranks the one you happen to already be anchored on.
+  plan-item search sequence must set `marriagePlace` or `residencePlace` to
+  the top-ranked hint's place before reverting to a jurisdiction used prior
+  to the hint. `recordSubdivision` also works, but only with `recordCountry`
+  set alongside it — the tool rejects it on its own. The hint is host-scored
+  from the record's own supporting data — a jurisdiction you have not yet
+  tried outranks the one you happen to already be anchored on.
 - **Needs-review band.** A genuinely *different* same-name/same-place person can
   land inside the match band, and sparse/dateless records score unstably. When the
   top scores don't clearly separate, or a candidate is a thin/dateless stub, treat
