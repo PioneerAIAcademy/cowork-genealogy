@@ -41,16 +41,25 @@ describe('resolveFamilySearchTarget — web copy', () => {
   })
 
   it('never returns a URL outside the FamilySearch base', () => {
-    const inputs = [
+    const ACCEPTED = [
       'ark:/61903/1:1:MXYZ',
+    ]
+    const REJECTED = [
       'https://evil.example/x',
       '//evil.example/x',
       'https://familysearch.org.evil.com/ark:/61903/1:1:M',
-      'https://www.familysearch.org/redirect?to=https://evil.example'
+      'https://www.familysearch.org/redirect?to=https://evil.example',
     ]
-    for (const input of inputs) {
+    // Split accept/reject explicitly. The previous form looped both through
+    // `if (out !== null) expect(...)` — so for every REJECT input the assertion
+    // was silently skipped and the loop asserted nothing about them at all.
+    for (const input of ACCEPTED) {
       const out = resolveFamilySearchTarget(input)
-      if (out !== null) expect(out.startsWith(FS)).toBe(true)
+      expect(out, input).not.toBeNull()
+      expect(out!.startsWith(FS), input).toBe(true)
+    }
+    for (const input of REJECTED) {
+      expect(resolveFamilySearchTarget(input), input).toBeNull()
     }
   })
 })

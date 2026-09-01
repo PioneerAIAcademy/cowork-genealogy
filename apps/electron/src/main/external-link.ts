@@ -52,8 +52,15 @@ const BARE_PREFIXED_RE = /^\d:\d:[A-Za-z0-9.-]+$/
  */
 const FS_URL_PREFIX_RE = /^https?:\/\/(?:www\.)?familysearch\.org\//i
 
-/** A tree person id as it appears in `/tree/person/<pid>` (e.g. `KW7C-X9P`). */
-const TREE_PERSON_PATH_RE = /^tree\/person\/[A-Z0-9]{4}-[A-Z0-9]{3,4}$/
+/**
+ * A tree person id as it appears in `/tree/person/<pid>` (e.g. `KW7C-X9P`).
+ *
+ * 4-hyphen-3, not `{3,4}`: `ark.ts` calls it "the bare 8-character persona/tree id",
+ * `check-warnings/SKILL.md` spells it "four characters, a hyphen, three characters",
+ * and every fixture agrees. Not a host bypass either way — the host is rebuilt from
+ * `FS_BASE` regardless — but over-permissive against the documented format.
+ */
+const TREE_PERSON_PATH_RE = /^tree\/person\/[A-Z0-9]{4}-[A-Z0-9]{3}$/
 
 /**
  * The FamilySearch URL this input denotes, or `null` if it denotes none.
@@ -88,11 +95,18 @@ export function resolveFamilySearchTarget(input: unknown): string | null {
  * module scope, and `index.ts` imports `icon.png?asset`, which the vitest config
  * has no plugin to resolve — so nothing can import that module in a test.
  */
-export function registerExternalLinkHandlers(ipc: IpcMain): void {
+export function registerExternalLinkHandlers(ipc: Pick<IpcMain, 'handle'>): void {
   ipc.handle('open-familysearch', async (_e, value: unknown) => {
     const target = resolveFamilySearchTarget(value)
     // A refused value opens nothing and says nothing: the renderer cannot tell a
     // malformed id from a rejected host, which is the right amount to tell it.
-    if (target) await shell.openExternal(target)
+    if (!target) return
+    try {
+      await shell.openExternal(target)
+    } catch {
+      // Matches the sibling `open-external` handler. Without this, a rejection
+      // (no default browser on a minimal Linux, say) is an unhandled promise
+      // rejection on every click, since the renderer calls this with `void`.
+    }
   })
 }

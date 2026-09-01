@@ -31,8 +31,9 @@ const BARE_PREFIXED_RE = /^\d:\d:[A-Za-z0-9.-]+$/
  */
 const FS_URL_PREFIX_RE = /^https?:\/\/(?:www\.)?familysearch\.org\//i
 
-/** A tree person id as it appears in `/tree/person/<pid>` (e.g. `KW7C-X9P`). */
-const TREE_PERSON_PATH_RE = /^tree\/person\/[A-Z0-9]{4}-[A-Z0-9]{3,4}$/
+/** A tree person id as it appears in `/tree/person/<pid>` (e.g. `KW7C-X9P`).
+ *  4-hyphen-3 per `ark.ts` and `check-warnings/SKILL.md`; see the Electron copy. */
+const TREE_PERSON_PATH_RE = /^tree\/person\/[A-Z0-9]{4}-[A-Z0-9]{3}$/
 
 /**
  * The FamilySearch URL this input denotes, or `null` if it denotes none.
