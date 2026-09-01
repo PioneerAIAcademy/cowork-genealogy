@@ -17,6 +17,7 @@ from harness.since_window import add_since_arg, describe_stale
 from e2e.runlog_selection import (
     DEFAULT_SINCE_DAYS,
     all_result_jsons,
+    branch_scope_note,
     describe_window,
     filter_since,
     is_result_json,
@@ -90,10 +91,44 @@ def test_describe_window_names_the_sample():
     assert "2026-07-20" in line
     assert "75 of 134" in line
     assert "59 older" in line
+    # issue #1444: every e2e reader's line also carries the branch-scope caveat
+    assert "make e2e-branch-only" in line
 
 
 def test_describe_window_says_so_for_the_whole_corpus():
-    assert "entire corpus" in describe_window(None, n_runs=134, n_total=134)
+    line = describe_window(None, n_runs=134, n_total=134)
+    assert "entire corpus" in line
+    assert "make e2e-branch-only" in line
+
+
+# --- branch-scope caveat (issue #1444) --------------------------------------
+
+
+def test_branch_scope_note_e2e_names_the_crawl_script():
+    assert "make e2e-branch-only" in branch_scope_note(corpus="e2e")
+
+
+def test_branch_scope_note_unit_does_not_name_an_e2e_only_tool():
+    """A unit-corpus reader must not claim `make e2e-branch-only` covers it --
+    that script only crawls eval/runlogs/e2e/."""
+    note = branch_scope_note(corpus="unit")
+    assert "make e2e-branch-only" not in note
+    assert "e2e" not in note
+
+
+def test_branch_scope_note_rejects_an_unrecognized_corpus():
+    """No Python type-checking runs over this tree, so a typo'd corpus value
+    must fail loudly rather than silently drop (or wrongly add) the
+    make e2e-branch-only remedy line."""
+    with pytest.raises(ValueError, match="corpus"):
+        branch_scope_note(corpus="E2E")
+
+
+def test_describe_window_unit_corpus_caveat_has_no_e2e_tool_name():
+    line = describe_window(date(2026, 7, 20), n_runs=75, n_total=134, corpus="unit")
+    assert "75 of 134" in line
+    assert "Scoped to this checkout" in line
+    assert "make e2e-branch-only" not in line
 
 
 # --- discovery (moved here with the collectors) ---------------------------

@@ -110,6 +110,14 @@ export async function projectCreate(
 
     const researchPath = join(projectPath, "research.json");
     const treePath = join(projectPath, "tree.gedcomx.json");
+    // The opening tree, copied write-once alongside the two live documents. The
+    // tree-encoding completion gate (issue #1490) diffs the final tree against
+    // this baseline to tell a conclusion this session encoded from a fact that
+    // was already seeded. research_append loads only the CURRENT tree, so without
+    // a persisted baseline it cannot make that distinction. Written from the same
+    // caller-passed `tree`, in the same atomic write, so the baseline is the
+    // opening tree exactly and never diverges.
+    const startingTreePath = join(projectPath, "starting-tree.gedcomx.json");
 
     // Create, not upsert. Overwriting an existing project would destroy an
     // audit trail that cannot be reconstructed, and the caller that wants to
@@ -182,12 +190,13 @@ export async function projectCreate(
     await atomicWriteBoth([
       { path: treePath, data: tree },
       { path: researchPath, data: research },
+      { path: startingTreePath, data: tree },
     ]);
 
     return {
       ok: true,
       projectId: "rp_001",
-      filesWritten: ["tree.gedcomx.json", "research.json"],
+      filesWritten: ["tree.gedcomx.json", "research.json", "starting-tree.gedcomx.json"],
       counts: {
         persons: tree.persons.length,
         relationships: tree.relationships.length,
@@ -205,7 +214,8 @@ export const projectCreateSchema = {
   name: "project_create",
   description:
     "Create a new research project: writes research.json and tree.gedcomx.json together, " +
-    "validated against each other, in one atomic write. This is the ONLY way to bring a " +
+    "validated against each other, in one atomic write (plus a write-once " +
+    "starting-tree.gedcomx.json baseline of the opening tree). This is the ONLY way to bring a " +
     "project into being — the other writer tools all require the files to already exist, " +
     "and writing them directly is blocked.\n" +
     "\n" +
