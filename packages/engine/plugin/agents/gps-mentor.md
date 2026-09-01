@@ -8,14 +8,14 @@ description: >-
   invoked and recorded; its recommendation stays advisory, never forcing
   rework) — and on-demand when the user says "review my work", "is this
   defensible?", "mentor", "second opinion", "is this a good read",
-  "polish this for my family". Never modifies research.json
+  "polish this for my family". ALSO for a GPS review of an EXISTING proof
+  summary — "does my proof meet the GPS", "assess ps_NNN against the GPS
+  components", "review my existing proof summary" — which comes here
+  directly, not through proof-conclusion. Never modifies research.json
   (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for
   schema validation (use validate-schema), to execute new searches (use
-  search-records or search-external-sites), or to write proof conclusions
-  (use proof-conclusion). A user-driven GPS review of an existing proof
-  summary ("does my proof meet the GPS", "assess ps_NNN against the GPS
-  components") goes through the proof-conclusion skill, which invokes this
-  mentor.
+  search-records or search-external-sites), or to write a NEW proof
+  conclusion (use proof-conclusion).
 model: claude-sonnet-5
 tools:
   # Every MCP tool appears under ALL THREE server spellings — `genealogy` (the
