@@ -13,6 +13,7 @@ from pathlib import Path
 from harness.since_window import (  # noqa: F401  (re-exported for the e2e readers)
     DEFAULT_SINCE_DAYS,
     add_since_arg,
+    branch_scope_note,
     describe_window,
     filter_since,
     parse_since,
