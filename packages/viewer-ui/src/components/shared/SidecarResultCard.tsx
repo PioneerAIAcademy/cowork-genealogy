@@ -185,12 +185,24 @@ function FulltextSearchBody({ result }: { result: FulltextSearchResult }): React
           <span>{result.places.join(', ')}</span>
         </div>
       )}
-      {(result.recordDate || (result.dates && result.dates.length > 0)) && (
-        <div className={styles.metaRow}>
-          <span className={styles.metaLabel}>Dates</span>
-          <span>{result.recordDate ?? result.dates?.join(', ')}</span>
-        </div>
-      )}
+      {(() => {
+        // recordDate (the record's own canonical date) and dates (every date
+        // entity-extracted from the document text) are not redundant — a
+        // probate filing can carry a filing date plus an earlier death date
+        // in the body — so merge and dedupe rather than letting recordDate
+        // hide dates' other entries.
+        const allDates = Array.from(
+          new Set([result.recordDate, ...(result.dates ?? [])].filter(Boolean))
+        )
+        return (
+          allDates.length > 0 && (
+            <div className={styles.metaRow}>
+              <span className={styles.metaLabel}>Dates</span>
+              <span>{allDates.join(', ')}</span>
+            </div>
+          )
+        )
+      })()}
       {result.id && (
         <div className={styles.footerLink}>
           <button

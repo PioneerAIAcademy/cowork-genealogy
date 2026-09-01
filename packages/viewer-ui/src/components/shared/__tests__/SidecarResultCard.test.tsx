@@ -82,7 +82,10 @@ describe('SidecarResultCard — fulltext_search', () => {
     textDocument: 'Last Will of Thomas Flynn, naming sons Patrick and James as heirs.',
     names: ['Thomas Flynn', 'Patrick Flynn', 'James Flynn'],
     places: ['Schuylkill County, PA'],
-    dates: ['1849'],
+    // Deliberately distinct from recordDate (probate filed 1849, referencing
+    // an earlier 1846 death date in the body) so a test can tell "merged"
+    // apart from "recordDate silently hid dates' other entries".
+    dates: ['1849', '1846'],
     highlightTerms: ['Thomas', 'Patrick']
   }
 
@@ -140,9 +143,21 @@ describe('SidecarResultCard — fulltext_search', () => {
     expect(spy).toHaveBeenCalledWith('https://www.familysearch.org/ark:/61903/3:1:S3HT-XYZ')
   })
 
-  it('renders the record date', () => {
+  it('merges recordDate with dates rather than letting recordDate hide the rest', () => {
     render(
       <SidecarResultCard result={fulltextResult} tool="fulltext_search" defaultExpanded={true} />
+    )
+    // recordDate is '1849' and dates adds a distinct '1846' -- both must render.
+    expect(screen.getByText('1849, 1846')).toBeInTheDocument()
+  })
+
+  it('deduplicates when recordDate also appears in dates', () => {
+    render(
+      <SidecarResultCard
+        result={{ ...fulltextResult, dates: ['1849'] }}
+        tool="fulltext_search"
+        defaultExpanded={true}
+      />
     )
     expect(screen.getByText('1849')).toBeInTheDocument()
   })
