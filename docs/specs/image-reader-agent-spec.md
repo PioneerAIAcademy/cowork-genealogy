@@ -86,11 +86,12 @@ says so.
   optimization — left at `claude-sonnet-4-6` (the pre-spike default) for
   safety. Cowork honors the agent `model:` pin.
 - `tools: [image_transcribe]` — listed in the frontmatter under **all three**
-  server spellings (`mcp__genealogy__image_transcribe`,
-  `mcp__remote-devices__Genealogy_Research__image_transcribe` for cloud Cowork, and
-  `mcp__Genealogy_Research__image_transcribe` for on-computer Cowork), per the repo
-  convention (ADR-0004): the harnesses and each Cowork run mode register the MCP
-  server under different names and `tools:` is matched exactly — the agent's sole
+  server spellings (`mcp__genealogy__image_transcribe`, the bridged
+  `mcp__remote-devices__Genealogy_Research__image_transcribe`, and the bare
+  `mcp__Genealogy_Research__image_transcribe`), per the repo
+  convention (ADR-0004): the harnesses and Cowork register the MCP server under
+  different names, the spelling a Cowork session exposes has been observed to move
+  (ADR-0004), and `tools:` is matched exactly — the agent's sole
   reader.
   It does not
   write `research.json` / `tree.gedcomx.json`, create assertions/sources, or

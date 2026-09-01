@@ -152,7 +152,7 @@ Plus whatever you actually touched:
 |---|---|
 | An MCP tool | `npx tsx dev/try-<tool>.ts` from `packages/engine/mcp-server/` against the live API — write one if it doesn't exist, and run `dev/try-login.ts` first for an authenticated tool. Then read your implementation against `docs/specs/<tool>-tool-spec.md`, quoting both sides. |
 | Any file in a skill's run-log **snapshot** — `packages/engine/plugin/skills/<skill>/`, an agent it delegates to, `eval/tests/unit/<skill>/`, or a scenario/fixture it references | `make eval-skill SKILL=<name>`, and commit the run log **and its `.ann.json`**. `check-runlogs.yml` blocks merge otherwise — a comment or a typo counts, because the whole skill dir is in the snapshot. For a behaviour-neutral edit, ask a senior for the `eval-cosmetic-skip` label instead of burning a paid run. Rules and the exact snapshot set: [`eval/CLAUDE.md`](../eval/CLAUDE.md) § "Snapshot model" and § "GitHub Action rules". |
-| Plugin agent frontmatter, hooks, or tool binding | `make agent-smoke`. **It exits 0 when it skips**, so confirm the output lists resolved agents rather than `1 skipped` — that means no API key was reachable. |
+| Plugin agent frontmatter, hooks, tool binding, or the MCP-unavailable abort path | `make agent-smoke`. **It exits 0 when it skips**, so confirm the output lists resolved agents rather than `1 skipped` — that means no API key was reachable. |
 | An e2e fixture | `make e2e-validate TEST=<slug>` |
 | Anything user-facing | Run it. `make server` / `make web`, or the Claude Desktop install path. |
 | An HTTP route or `apps/server/` auth/allowlist code, anything that reads a token or writes to `~/.familysearch-mcp/`, or anything that renders user-supplied data in the viewer | `/security-review` |
@@ -257,14 +257,21 @@ those extensions.
 
 **Every rule names both senior teams, so a senior of either kind can approve
 any of it.** The team a rule names FIRST is the one whose judgment the path
-normally wants, and it is the one `senior-queue.yml` puts the PR's review
-label on — `.ts`/`.py`/`.json` and friends queue to `senior-developers`, the
+normally wants — `.ts`/`.py`/`.json` and friends to `senior-developers`, the
 skill, agent and eval trees to `senior-genealogists`. So the working split is
 still **genealogists review skills and runlogs; developers review
 infrastructure**; what the second team on each line buys is that a PR is never
 stuck waiting on one specific team when a senior is already reading it. By the
 time a senior looks at a PR everything mechanical should be settled, so their
 time goes to whether the approach is right.
+
+**A ready PR shows a `ready-for-senior-*` label.** `senior-queue.yml` adds it
+once CI is green, a peer has approved, and no review thread is outstanding —
+`ready-for-senior-developer` or `ready-for-senior-genealogist`, whichever team
+owns the changed paths. It is on the PR list itself, so a senior scanning
+`is:open is:pr` sees what is waiting for them without filtering for it. Saying
+when your PR is ready still helps; the label is what makes it visible without
+being told.
 
 **CODEOWNERS is the source of truth for which paths need a senior, not this
 paragraph.** Read the file rather than trusting a path list here — it can
@@ -358,6 +365,11 @@ Three rules can each hold a green, approved PR. Check them in this order:
   sit showing a team that owns none of its files. Check the current file before
   believing the request, and clear a dead one with
   `gh api -X DELETE /repos/{owner}/{repo}/pulls/{n}/requested_reviewers -f 'team_reviewers[]=<team>'`.
+  This works only for a team the current file no longer claims. While
+  `require_code_owner_review` is on, the same call against a team CODEOWNERS
+  *does* still mandate returns HTTP 200 and does nothing — no error, and the team
+  is still listed on a fresh read (verified three ways, 2026-08-11). Re-read the
+  PR before believing the 200.
 
 ---
 
@@ -398,7 +410,7 @@ git fetch origin && git checkout -b <branch> origin/main
 # 5. verify
 make test-all                        # everything; == scripts/test.sh
 make eval-skill SKILL=<name>         # anything in a skill's run-log snapshot
-make agent-smoke                     # plugin agent frontmatter / hooks / tool binding
+make agent-smoke                     # plugin agent frontmatter / hooks / tool binding / MCP abort
 make e2e-validate TEST=<slug>        # an e2e fixture changed
 /security-review                     # route, auth, token, or user state touched
 
