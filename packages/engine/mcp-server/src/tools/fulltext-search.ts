@@ -252,7 +252,7 @@ export async function fulltextSearchTool(
       }
       for (const hl of r.highlightTerms ?? []) {
         for (const word of hl.split(/\s+/)) {
-          const clean = word.replace(/[<>]/g, "").toLowerCase();
+          const clean = word.replace(/<[^>]+>/g, "").toLowerCase();
           if (allVariants.has(clean)) {
             matched.add(clean);
           }
