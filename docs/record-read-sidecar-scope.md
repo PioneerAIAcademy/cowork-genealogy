@@ -119,8 +119,9 @@ England death/burial). For **the person you searched** (the matched persona):
 - **Standardized place: the search result's is correct; a live `record_read`
   used to re-standardize it WRONGLY** (observed 2026-07-08; re-probe pending — issue
   #1908 Phase 1: `Southampton, NY → Southampton, England`;
-  `Rochdale, England → Rochdale, South Africa`). The sidecar is therefore *more*
-  reliable, and the sidecar tool returns the staged place **as-is** (no
+  `Rochdale, England → Rochdale, South Africa`). The sidecar is therefore more
+  reliable only for its FS-normalized share — its resolver-derived share came from
+  the same resolver — and the sidecar tool returns the staged place **as-is** (no
   `standardizePlaces` re-run). **The live `record_read` path is also fixed:** it
   now uses `toSimplified` instead of `toSimplifiedStandardized`, so it keeps
   whatever `standard_place` the record's own `normalized` value supplies and never
