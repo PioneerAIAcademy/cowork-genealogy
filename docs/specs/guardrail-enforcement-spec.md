@@ -1410,40 +1410,63 @@ this section before reopening one.
   `find_missing_mentor_verdicts` (reads `research.json` alone) are valid over a
   bundle; the adapter and report live in `eval/harness/e2e/`
   (`feedback_transcript_adapter.py`, `guardrail_shadow_report.py`).
-  **Three of `find_unguarded_protected_writes`' owner arms are blind over a
-  bundle, two of them completely — but only for bundles submitted after each
-  arm's split date, and the report decides that per bundle rather than
-  globally.** A bundle carries only the main session's `{sid}.jsonl`, never the
-  `subagents/agent-*.jsonl` beside it: `feedback.py` reads `{sid}.jsonl` and its
-  fallback loop skips anything `is_dir`, and `readSessionLog` does a
-  non-recursive `readdir`. Two arms have since moved their write inside an
-  agent — `proof_summaries` into `proof-conclusion` on 2026-08-21 (`73b3d98e`) and
-  `questions.exhaustive_declaration` into `research-exhaustiveness` on
-  2026-08-23 (`c78efb0b`), enforced by `OWNED_SECTIONS` and
-  `OWNED_DECLARATIONS` in `plugin/hooks/guard_project_files.py`.
+  **Two of `find_unguarded_protected_writes`' owner arms move their write
+  inside an agent, and whether that write is visible is decided per bundle and
+  per agent, never globally.** `proof_summaries` moved into `proof-conclusion`
+  on 2026-08-21 (`73b3d98e`) and `questions.exhaustive_declaration` into
+  `research-exhaustiveness` on 2026-08-23 (`c78efb0b`), enforced by
+  `OWNED_SECTIONS` and `OWNED_DECLARATIONS` in
+  `plugin/hooks/guard_project_files.py`.
 
-  **The date cuts both ways, and getting this wrong in either direction
-  falsifies the counts this scan reports.** For a bundle submitted BEFORE an
-  arm's split, that write came from the MAIN thread, was un-denied, and is in
-  the transcript — the count is a real measurement, and every bundle collected so
-  far (2026-08-05 onward; the newest is 2026-08-20) is on that side of both
-  dates. For a bundle submitted on or after, the write may
-  have happened inside the agent (invisible) and a main-thread attempt would be
-  denied and recorded as `is_error: true`, which the detector skips — so a 0
-  there is not evidence. "May", not "was": a deploy does not ship the sandbox
-  image (`docs/architecture.md` §9.4 point 2), so a post-split bundle can still
-  have run a pre-split plugin. The label is therefore **"plugin era unknown"**,
-  never a clean cutoff, and an undated bundle takes the same label rather than
-  being assumed live.
+  A bundle used to carry only the main session's `{sid}.jsonl`, so an
+  agent-owned write was in no file the scan could read while a main-thread
+  attempt was hook-denied and recorded `is_error: true` — which the detector
+  skips. Both routes closed, and those arms returned 0 by construction. **Both
+  producers now bundle the subagent transcripts** (`_feedback/subagents/`, and
+  `_feedback/sessions/<sid>/` for a session other than the newest), each with
+  the `agent-*.meta.json` that names the spawning `Agent` call.
 
-  The `tree_edit`/`tree_correct` arms are blind only to the agent route
-  regardless of date: the hook covers `research_append` alone, so a main-thread
-  `primary: true` or `ParentChild`/`Couple` write still fires. Recovering the
-  agent route means bundling the subagent transcripts, a change to
-  `apps/server/app/feedback.py`. Until that lands, two arms return 0
-  unconditionally for a post-split bundle, so no report can distinguish "no
-  bypasses" from "cannot see bypasses" — a gap carried in the `nothing-checks`
-  register rather than here.
+  **The consumer SPLICES, and that is the whole risk in reading them.** The
+  summons is a `Skill` call in the parent stream and the write happens in the
+  child's, so `adapt_bundle` inserts a child's calls at the index of the
+  `Agent`/`Task` call its meta names. Appending them instead would put the
+  write outside its own skill's `window` entries and report a violation that
+  never happened — a fabricated non-zero, worse than a known zero because it is
+  the number people act on. A transcript that cannot be anchored is excluded
+  and named (`unanchored_subagents`), never appended, and each session group is
+  scanned on its own so one session's summons cannot vouch for another's write.
+  Nothing is filtered by `agentType`: a silent fallback to a general-purpose
+  stand-in that binds none of the declared agent's tools is exactly the
+  transcript an allow-list of known agent names would drop.
+
+  **An arm reads `live` two ways, and getting either wrong falsifies the counts
+  this scan reports.** Either the bundle carries an anchored transcript owned by
+  **that** agent — matched per agent, since a bundle can carry one agent's
+  transcript and not another's — or it predates that arm's split, in which case
+  the write came from the main thread, was un-denied, and is in the parent
+  transcript. Every bundle collected before this landed (2026-08-05 onward;
+  newest 2026-08-20) is on the second side of both dates. Otherwise the arm is
+  `unknown`: the write may have happened inside an agent whose transcript is
+  not here. "May", not "was" — a deploy does not ship the sandbox image
+  (`docs/architecture.md` §9.4 point 2), so a post-split bundle can still have
+  run a pre-split plugin. An undated bundle takes the same label rather than
+  being assumed live, and **any** bundle whose `feedback.json` names a
+  `dropped_transcripts` entry holds every arm at `unknown` — a count read from
+  what is present cannot account for a file the producer had to leave out.
+
+  The `tree_edit`/`tree_correct` arms were blind only to the agent route: the
+  hook covers `research_append` alone, so a main-thread `primary: true` or
+  `ParentChild`/`Couple` write always fired. A bundle carrying subagent
+  transcripts closes that route too.
+
+  One limit stays, and it is measured rather than fixed: splicing puts a
+  subagent's own calls inside the window, so a subagent making more than
+  `window` calls before its protected write pushes the parent's `Skill` call
+  back out. The e2e harness already carries subagent calls in one flat list
+  (its hook stamps `agent_id`/`agent_type` onto each), so changing the window
+  for bundles alone would make the two corpora incomparable. Anchoring the window at the spawning call rather than the write
+  is a change to `skill_invocation.py` and belongs to whichever measurement
+  shows it is needed.
 
 ## 10. Residual risks
 
