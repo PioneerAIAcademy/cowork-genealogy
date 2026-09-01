@@ -99,9 +99,9 @@ grows all run, so a whole-file read costs more context every time.
 **At most one such call per invocation, and only when you are actually missing
 something.** Ask for `plans` — the plan item you are executing and its status —
 and nothing else; not `questions`, since the question is already in the plan item.
-Do not re-query between searches; the plan does not change while you are searching
-it. If the plan item arrived in your prompt, in a hand-off, or from
-`research-plan` earlier in this same run, issue no query at all.
+Do not re-query between searches in this invocation. If the plan item arrived
+in your prompt, in a hand-off, or from `research-plan` earlier in this same run,
+issue no query at all.
 
 **Planned or ad-hoc — decide before you search.** The line is *who chose the
 search*, not whether a plan exists.
@@ -110,12 +110,12 @@ search*, not whether a plan exists.
 |---|---|
 | A plan item | Execute. Full GPS, including the Step 8 escalation |
 | No plan item, but the **user named this search** | Execute as ad-hoc: log `plan_item_id: null`, note it was user-requested, and stop when done — no escalation, no plan edits |
-| No plan item, and **you** thought of the search | `Skill("research-plan")` and stop. If the user then says yes, it comes back as a plan item — not as ad-hoc |
+| No plan item, and **you** thought of the search | `Skill("research-plan")` and stop. It comes back as a plan item — not as ad-hoc |
 
 Refusing a researcher's own request is obstruction, not rigour; inventing a search
-nobody asked for is how a session drifts off its question. An autonomous
-`/research` run has no ad-hoc searches — the orchestrator only dispatches you when
-a plan item is waiting.
+nobody asked for is how a session drifts off its question. The third row applies
+under `--autonomous` too — `research-plan` decides in the user's place, so route the
+search through it rather than running it yourself.
 
 ### 2. Construct the search query
 

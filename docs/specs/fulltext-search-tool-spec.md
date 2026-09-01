@@ -189,6 +189,18 @@ interface FulltextSearchResponse {
   returned: number;
   offset: number;
   hasMore: boolean;
+  /** Present only when this project holds staged search responses that no
+   *  research.json log entry accounts for. Advisory — refuses nothing.
+   *  Serialized before `results` and withheld from the staged payload;
+   *  contract and rationale in record-search-tool-spec-v2.md. */
+  unloggedSearches?: string;
+  /** Present only when `projectPath` was supplied AND the upstream total
+   *  (`data.results`) is 0. Not keyed on `results.length` alone: that is the
+   *  post-`mapEntry` set, and `mapEntry` drops an entry with no `entry.id`, so
+   *  a page that fails mapping empties `results` while `totalResults` is
+   *  non-zero. What distinguishes this tool from external_links_search is only
+   *  that no host filter narrows the inline copy — the mapping path is shared. */
+  nilSearchNeedsLog?: string;
   results: FulltextResult[];
   facets?: FulltextFacet[];
   /** Present only when `projectPath` was supplied. `null` if staging failed. */
