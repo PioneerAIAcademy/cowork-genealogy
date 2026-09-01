@@ -17,7 +17,19 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const runLogId = id.map(decodeURIComponent).join('/');
   const found = await readRunLogById(runLogId);
   if (!found) return NextResponse.json({ error: 'not found' }, { status: 404 });
-  const annotation = await readAnnotation(runLogId);
+  let annotation;
+  try {
+    annotation = await readAnnotation(runLogId);
+  } catch (err) {
+    // The annotation file exists but is unparseable (e.g. a temp-name
+    // collision spliced two saves together). Surface it as a structured 422
+    // — mirroring the sibling annotation route — so the page can explain the
+    // corruption instead of dying with a bare 500 and no way back.
+    return NextResponse.json(
+      { error: 'invalid_annotation', message: (err as Error).message },
+      { status: 422 },
+    );
+  }
 
   // Used by the client to decide whether Delete is offered: only candidates
   // whose version is above the latest release are deletable from the UI.

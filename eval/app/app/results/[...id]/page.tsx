@@ -1179,6 +1179,22 @@ export default function RunLogDetailPage({
     queryKey: ['runlog', runLogId],
     queryFn: async () => {
       const res = await fetch(`/api/runlogs/${runLogId}`);
+      if (res.status === 422) {
+        // The annotation file is corrupt (temp-name collision spliced two
+        // saves together). The message already names the file's full path.
+        // There is no in-product repair — explain and give the recovery line,
+        // per the corrupt-annotation guard in eval-crud-ui-spec.md. No delete
+        // button: an unrecoverable destructive action on the annotator's
+        // written comments does not belong on the page where they are already
+        // confused.
+        const body = await res.json().catch(() => ({}));
+        const msg: string = body.message ?? 'Annotation file is corrupt.';
+        const filePath = msg.match(/Annotation file (.+?) is not valid JSON/)?.[1];
+        const recovery = filePath
+          ? `\n\nTo recover, delete the corrupt file and re-annotate from the start:\n\n    rm ${filePath}\n\n(Copy it somewhere first if you want to keep the partial content.)`
+          : '';
+        throw new Error(msg + recovery);
+      }
       if (!res.ok) throw new Error(`GET /api/runlogs/${runLogId} → ${res.status}`);
       return res.json();
     },
@@ -1361,7 +1377,11 @@ export default function RunLogDetailPage({
     return <Loader />;
   }
   if (query.isError || !query.data) {
-    return <Alert color="red">{(query.error as Error)?.message ?? 'failed to load'}</Alert>;
+    return (
+      <Alert color="red" style={{ whiteSpace: 'pre-wrap' }}>
+        {(query.error as Error)?.message ?? 'failed to load'}
+      </Alert>
+    );
   }
 
   const log = query.data.runLog;
