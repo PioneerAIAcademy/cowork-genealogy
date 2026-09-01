@@ -1,5 +1,5 @@
 {
-  "run_log": "v1_2026-08-31_16-49-17.json",
+  "run_log": "v1_2026-09-01_18-38-25.json",
   "annotator": "solomonbaidoo54@gmail.com",
   "corrections": [
     {
@@ -30,52 +30,172 @@
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Source independence analysis",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence weighing",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Resolution completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The skill correctly applied GPS reasoning by identifying that a_002 and a_009 likely come from the same informant source and should be treated as a single evidential unit, while recognizing a_012 as an independent informant. However, the explanation was not explicit enough about the informant chain or why the shared household informant reduces independence specifically for the birthplace claim. The reasoning was mostly correct, but the evidence analysis needed more detail and precision."
+      "comment": "Confirmed partial. The skill queried assertions by assertionId (an unsupported filter for that section), got a single validation rejection, then recovered with an unfiltered research_query; the final persisted state is correct. One rejection plus a clean recovery is a defensible partial under the retry policy. Unrelated to this PR's surname-order/OCR edits — it is a research_query filter-usage nuance, not conflict-resolution doctrine."
     },
     {
-      "test_id": "ut_conflict_resolution_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence weighing",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Resolution completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_003",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_003",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_003",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_003",
+      "test_id": "ut_conflict_resolution_008",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
       "llm_score": 3,
@@ -83,7 +203,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_003",
+      "test_id": "ut_conflict_resolution_008",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
       "llm_score": 3,
@@ -91,127 +211,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_conflict_resolution_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Resolution completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_002",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Source independence analysis",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence weighing",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Resolution completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_013",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The skill performed the wrong workflow. Instead of declining and routing the request to hypothesis-tracking, it executed conflict-resolution by creating a conflict entry and analyzing competing candidates. Although the output may have been well-structured, it failed the core requirement of the negative test because it should not have attempted to resolve or formalize the conflict. The routing decision was the expected behavior, and missing it is a major failure."
-    },
-    {
-      "test_id": "ut_conflict_resolution_013",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The skill failed the required behavior for the negative test. It should have declined to perform conflict-resolution and routed the request to hypothesis-tracking. Instead, it created a conflicts entry even though no conflict-resolution task was requested, which violated the test requirement. The response may have been polished, but it executed the wrong skill and introduced unsupported workflow state."
-    },
-    {
-      "test_id": "ut_conflict_resolution_013",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Source independence analysis",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence weighing",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
+      "test_id": "ut_conflict_resolution_008",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
       "llm_score": 3,

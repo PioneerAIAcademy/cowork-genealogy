@@ -357,14 +357,14 @@ parent) and the patronymics above — a candidate parent whose surname
 cannot produce the child's is disqualified on that ground alone — both
 parents under the Iberian system, the father only under a
 patronymic — before any record names the parents outright.
-**Surname order is country-specific: Spanish practice is paternal then
-maternal (*Juan García* + *María Ramos* → *García Ramos*), Portuguese
-and Brazilian practice is the reverse, maternal then paternal (*João
-Silva* + *Maria Costa* → *Costa Silva*). Confirm the convention for
-that country and era before reading position as parentage; until it is
-confirmed, disqualify a candidate only when *neither* of their
-surnames appears anywhere in the child's, and never on position
-alone.** Weigh this hardest against **indexed** parent fields: an
+**For the two-surname Iberian systems, surname *order* is
+country-specific — Spanish practice is paternal then maternal (*Juan
+García* + *María Ramos* → *García Ramos*), Portuguese and Brazilian the
+reverse, maternal then paternal (*João Silva* + *Maria Costa* → *Costa
+Silva*) — so treat position as non-load-bearing: disqualify an Iberian
+candidate only when *neither* of their two surnames appears anywhere in
+the child's, never on position alone.** Weigh this hardest against
+**indexed** parent fields: an
 index naming a parent whose surname is absent from the child's is
 likelier mis-indexed than correct, and the page image is what settles
 it. The chain is rebuttable — adoption, a natural child, a

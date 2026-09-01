@@ -72,8 +72,10 @@ Common explanations:
   transcription **first** — machine OCR mis-reads digits and letters more
   often than an enumerator or clerk erred, so do not posit an error in how
   the record was created until the OCR reading is ruled out. Corroborate it
-  against another record instance (other census years, the index); do not
-  re-read the same image (a second read is no more trustworthy than the first).
+  against another **original** record instance (another census year, a
+  different original record) — not an index or other derivative, which can
+  carry the same error — and do not re-read the same image (a second read is
+  no more trustworthy than the first).
 - The informant did not have firsthand knowledge
 - Memory degraded over the decades between event and recording
 - The informant had a motive to misstate (age fraud, pension, etc.)

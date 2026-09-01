@@ -127,9 +127,11 @@ the original is almost always correct.
 original's own voice.** So "the original is almost always correct" cuts
 *against* the OCR text, not for it: when an OCR reading conflicts with
 another record instance, the OCR is the derivative and the likelier
-error. Corroborate the value against other record instances (other census
-years, the index) rather than treating the OCR output as if it were the
-original.
+error. Corroborate the value against another **original** record instance
+(another census year, a different original record), not against another
+derivative — an index of the same record is not an independent check, it
+is the same source copied again — rather than treating the OCR output as
+if it were the original.
 
 ### Multiple informants per record
 
