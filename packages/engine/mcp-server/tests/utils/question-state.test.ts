@@ -151,7 +151,10 @@ describe("questionStates", () => {
     const d = {
       ...doc(),
       questions: [{ id: "q_001", status: "open" }, { id: "q_002", status: "open" }, { bad: true }],
-      plans: [{ id: "pl_1", question_id: "q_002", items: [] }],
+      // A one-item plan, because a plan with an empty `items` is invalid.
+      // `questionStates` never validates, so this fixture cannot fail on it —
+      // which is exactly why it is worth not teaching the shape here.
+      plans: [{ id: "pl_1", question_id: "q_002", items: [{ id: "pli_001" }] }],
     };
     const all = questionStates(d);
     expect(all.map((s) => s.id)).toEqual(["q_001", "q_002"]);

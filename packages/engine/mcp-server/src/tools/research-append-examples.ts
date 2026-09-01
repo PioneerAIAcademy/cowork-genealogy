@@ -97,11 +97,15 @@ const EXAMPLES: Record<string, string> = {
   }
 }`,
 
+  // No "items" here on purpose: it is REQUIRED and non-empty, and the
+  // `plan_items` ops in the same call are what create it. This example said
+  // `"items": []`, which is the shape a caller refused for a missing `items`
+  // then copied — and which validates in no schema. `exampleFor` renders this
+  // shell inside the batched call, never alone.
   plans: `{
   "question_id": "q_002",
   "status": "active",
-  "created": "2026-07-18",
-  "items": []
+  "created": "2026-07-18"
 }`,
 
   plan_items: `{
@@ -224,6 +228,40 @@ const PROJECT_EXAMPLE = `research_append({
 })`;
 
 /**
+ * The `plans` append, as the batched call `research-plan/SKILL.md` prescribes:
+ * the shell, then one `plan_items` op per item carrying the id the tool will
+ * assign the shell. Built from `EXAMPLES.plans` + `EXAMPLES.plan_items` rather
+ * than a third literal, so a schema drift in either is caught once.
+ */
+function plansBatchExample(): string {
+  const indent = (text: string, pad: string) => text.split("\n").join(`\n${pad}`);
+  return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  ops: [
+    // Op #1 — the plan shell. Omit "id" AND "items": the tool assigns the id,
+    // and the item ops below create the items. An EMPTY items array is not the
+    // way to satisfy a missing-items refusal — an itemless plan is invalid.
+    {
+      section: "plans",
+      op: "append",
+      entry: ${indent(EXAMPLES.plans, "      ")}
+    },
+    // Ops #2…N — one per plan item, in sequence order. planId is the id the
+    // tool assigns op #1: (highest existing pl_ in research.json) + 1,
+    // zero-padded to 3. Predict it — pl_001/pl_002 existing makes this pl_003.
+    // A hard-coded "pl_001" appends your items to another question's plan and
+    // leaves the plan you just created empty.
+    {
+      section: "plan_items",
+      op: "append",
+      planId: "pl_003",
+      entry: ${indent(EXAMPLES.plan_items, "      ")}
+    }
+  ]
+})`;
+}
+
+/**
  * A worked `research_append` call for `section`, or null when the section has
  * no example. `op` selects the call shape (`plan_items` needs a `planId`).
  */
@@ -242,12 +280,27 @@ export function exampleFor(
   fieldsNamed: readonly string[] = [],
 ): string | null {
   if (section === "project") return PROJECT_EXAMPLE;
+  // A `plans` append is never legal alone: `items` is required and non-empty,
+  // and the plan shell omits it, so the item ops that fill it belong in the
+  // SAME call. Rendering the shell on its own taught a call the tool refuses.
+  // Composed from the two registry entries so the packaging test still checks
+  // both halves against the schema.
+  if (section === "plans" && op === "append") return plansBatchExample();
   // hasOwn, not a bare index: `section` is LLM-supplied, and `constructor`
   // indexes out `Object`, which is truthy — so `!entry` lets it through and the
   // `entry.split` below throws a TypeError out of the rejection path.
   const entry = Object.hasOwn(EXAMPLES, section) ? EXAMPLES[section] : undefined;
   if (!entry) return null;
-  const planId = section === "plan_items" ? `\n  planId: "pl_001",` : "";
+  // `pl_001` was hard-coded here, which is the one literal
+  // `research-plan/SKILL.md` says never to hard-code: in an ongoing project it
+  // attaches the items to another question's plan. The append form teaches the
+  // prediction rule; the update form needs an id that already exists.
+  const planId =
+    section === "plan_items"
+      ? op === "update"
+        ? `\n  planId: "<the pl_ id of the plan holding this item>",`
+        : `\n  planId: "<the pl_ id of the plan this item belongs to — when the same call creates that plan, (highest existing pl_) + 1>",`
+      : "";
   // A source append must either reference an S entry that already exists in the
   // tree or create one in the same call. The composite form is the norm, so the
   // example teaches it rather than a bare id that would be rejected.

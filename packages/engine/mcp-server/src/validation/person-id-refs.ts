@@ -43,6 +43,11 @@ export interface PersonIdRef {
  * person_evidence keeps its original `if (person_id) …` guard (a falsy
  * person_id is skipped); the array fields check every element, as before.
  */
+/** An element this generator can read fields off without throwing. */
+function isObject(v: unknown): boolean {
+  return v !== null && typeof v === "object";
+}
+
 export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
   // person_evidence[].person_id — scalar; only a truthy id is referenced.
   const personEvidence = Array.isArray(research.person_evidence)
@@ -50,6 +55,11 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
     : [];
   for (let i = 0; i < personEvidence.length; i++) {
     const pe = personEvidence[i];
+    // A malformed element (null, or a primitive) yields no refs. The document
+    // validator reports its shape; this generator's job is only to find person
+    // ids, and dereferencing here threw instead — which took down the whole
+    // cross-file pass, and with it every writer tool, on one stray element.
+    if (!isObject(pe)) continue;
     const pid = pe.person_id;
     if (pid) {
       yield {
@@ -84,6 +94,7 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
   // timelines[].person_ids — array.
   const timelines = Array.isArray(research.timelines) ? research.timelines : [];
   for (let i = 0; i < timelines.length; i++) {
+    if (!isObject(timelines[i])) continue;
     const personIds = Array.isArray(timelines[i].person_ids)
       ? timelines[i].person_ids
       : [];
@@ -106,6 +117,7 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
     ? research.known_holdings
     : [];
   for (let i = 0; i < holdings.length; i++) {
+    if (!isObject(holdings[i])) continue;
     const personIds = Array.isArray(holdings[i].relates_to_person_ids)
       ? holdings[i].relates_to_person_ids
       : [];

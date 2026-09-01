@@ -168,9 +168,12 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   `op: "update"` setting `status: "superseded"` (preserves the id; never delete).
 
 ### 4.11 `research-plan` — Wave 2
-- **Step 5:** `research_append({ section: "plans", op: "append" })` for the plan
-  shell, then `research_append({ section: "plan_items", op: "append", planId })` per
-  item. **Re-plan (Step 6):** `op: "update"` on the old plan → `status: "superseded"`
+- **Step 5:** ONE batched `research_append({ ops: [...] })` — the plan shell
+  (`section: "plans"`, `items` omitted) followed by one
+  `{ section: "plan_items", op: "append", planId }` op per item, `planId` being
+  the `pl_` id the tool assigns the shell. Two calls do not work: a plan must
+  end its own call carrying at least one item, so the shell alone is refused.
+  **Re-plan (Step 6):** `op: "update"` on the old plan → `status: "superseded"`
   (at most one active plan per question — the tool enforces it).
 
 ### 4.12 `proof-conclusion` — BOTH waves (rewrite once)

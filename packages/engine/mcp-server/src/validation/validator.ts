@@ -30,6 +30,7 @@ import {
 } from "./tree-shape.js";
 import { iteratePersonIdRefs } from "./person-id-refs.js";
 import { arkToBareId } from "../utils/ark.js";
+import { noPersonaInSidecarError, stagesPersonas } from "./sidecar-producers.js";
 
 // Enum definitions (single source of truth, matching Python validator)
 const CLOSED_ENUMS = {
@@ -260,6 +261,49 @@ function checkRequired(
       addError(report, path, `required field '${field}' is null`);
     }
   }
+}
+
+/**
+ * A document array element that can be validated at all: an object.
+ *
+ * `checkRequired` tests `field in obj`, and `in` THROWS on null, undefined and
+ * every primitive — so a single stray `null` anywhere in one of these arrays
+ * (`plans: [null]`, a hand edit, a truncated write) took down `validateParsed`
+ * with `TypeError: Cannot use 'in' operator to search for 'id' in null` instead
+ * of reporting an error. That matters because every writer tool validates the
+ * whole document: one bad element made all of them fail with a message naming
+ * no field and no fix, and `validate_research_schema` crashed rather than
+ * telling the user what to repair.
+ *
+ * Arrays are deliberately NOT rejected here. `typeof [] === "object"` and `in`
+ * does not throw on one, so an array element keeps the behaviour it has today
+ * (its required fields report as missing) — this closes the crash, and does not
+ * quietly re-shape unrelated messages.
+ *
+ * Returns false when the caller should report-and-skip the element.
+ */
+/**
+ * A required-object FIELD holding something that is not an object.
+ *
+ * The three call sites below all opened with
+ * `if (typeof X === "object" && X !== null)`, which is correct about not
+ * crashing and silent about everything else: a primitive in the slot skipped
+ * the whole block, so `exhaustive_declaration: "yes"` validated clean while
+ * `research.schema.json` requires an object. Absent and null are left alone —
+ * `checkRequired` owns those and reports them already, and re-reporting here
+ * would double every message.
+ */
+function checkObjectField(value: unknown, path: string, field: string, report: ValidationReport): void {
+  if (value === undefined || value === null) return; // checkRequired's job
+  if (typeof value !== "object" || Array.isArray(value)) {
+    addError(report, path, `${field} must be an object — got ${Array.isArray(value) ? "array" : typeof value}`);
+  }
+}
+
+function isObjectEntry(value: unknown, path: string, report: ValidationReport): boolean {
+  if (value !== null && typeof value === "object") return true;
+  addError(report, path, `must be an object — got ${value === null ? "null" : typeof value}`);
+  return false;
 }
 
 function checkIdPrefix(
@@ -586,6 +630,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       for (let i = 0; i < holdings.length; i++) {
         const kh = holdings[i];
         const khPath = `${path}/known_holdings[${i}]`;
+        if (!isObjectEntry(kh, khPath, report)) continue;
         checkRequired(kh, [
           "id", "holding_type", "description", "confidence", "promoted", "created",
         ], khPath, report, NULLABLE_FIELDS);
@@ -616,6 +661,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
     const qp = `${path}/questions[${i}]`;
+    if (!isObjectEntry(q, qp, report)) continue;
     checkRequired(q, [
       "id", "question", "rationale", "selection_basis", "priority",
       "status", "depends_on", "unblocks", "created", "resolved",
@@ -641,6 +687,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
 
     // Exhaustive declaration
     const ed = q.exhaustive_declaration;
+    checkObjectField(ed, `${qp}/exhaustive_declaration`, "exhaustive_declaration", report);
     if (typeof ed === "object" && ed !== null) {
       checkRequired(ed, ["declared", "log_entry_ids"], `${qp}/exhaustive_declaration`, report, NULLABLE_FIELDS);
       checkAllowedKeys(ed, RESEARCH_SHAPES.exhaustive_declaration, "exhaustive_declaration objects", `${qp}/exhaustive_declaration`, report);
@@ -701,6 +748,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < plans.length; i++) {
     const pl = plans[i];
     const pp = `${path}/plans[${i}]`;
+    if (!isObjectEntry(pl, pp, report)) continue;
     checkRequired(pl, ["id", "question_id", "status", "created", "items"], pp, report, NULLABLE_FIELDS);
     checkAllowedKeys(pl, RESEARCH_SHAPES.plan, "plans", pp, report);
     if ("id" in pl) {
@@ -715,10 +763,44 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     checkIsoDate(pl, "created", pp, report);
 
+    // `items` is required (above), an ARRAY, and NON-EMPTY. Only the first of
+    // those three was enforced here, while `research.schema.json`
+    // (`$defs/plan.items`: `type: array`, `minItems: 1`), its `packages/schema`
+    // mirror, and `research-schema-spec.md` ("At least one plan item") all
+    // state the other two. The runtime enforcer was the one that had drifted,
+    // which is why only the eval harness's jsonschema pass ever saw an empty
+    // plan and production shipped it to the viewer unchecked.
+    //
+    // An empty plan is what the write path produced when a batch's plan_items
+    // ops named a DIFFERENT plan than the one the batch created: the items
+    // landed elsewhere and the new plan ended with nothing. `research_append`
+    // names that cause itself (`emptyCreatedPlanErrors`); this is the
+    // document-level backstop, and it is also what a hand edit hits.
+    // `pl.items !== null` only: `checkRequired` reports a null required field,
+    // so excluding null avoids a doubled complaint. An explicitly-`undefined`
+    // key is NOT excluded — `checkRequired` tests `field in obj` and then
+    // `=== null`, so a present-but-undefined `items` slipped both checks and
+    // reported nothing at all. Unreachable through JSON, reachable from code.
+    if ("items" in pl && pl.items !== null && !Array.isArray(pl.items)) {
+      addError(
+        report,
+        `${pp}/items`,
+        `must be an array of plan items — got ${typeof pl.items}.`,
+      );
+    } else if (Array.isArray(pl.items) && pl.items.length === 0) {
+      addError(
+        report,
+        `${pp}/items`,
+        "is empty — a plan carries at least one plan item. Append the items in the same call: " +
+          "one 'plan_items' op per item, each carrying this plan's id.",
+      );
+    }
+
     const items = Array.isArray(pl.items) ? pl.items : [];
     for (let j = 0; j < items.length; j++) {
       const item = items[j];
       const ip = `${pp}/items[${j}]`;
+      if (!isObjectEntry(item, ip, report)) continue;
       checkRequired(item, [
         "id", "sequence", "record_type", "jurisdiction",
         "date_range", "repository", "rationale", "fallback_for", "status",
@@ -739,6 +821,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < log.length; i++) {
     const entry = log[i];
     const lp = `${path}/log[${i}]`;
+    if (!isObjectEntry(entry, lp, report)) continue;
     checkRequired(entry, [
       "id", "plan_item_id", "performed", "tool", "query",
       "outcome", "results_examined", "external_site",
@@ -768,6 +851,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if (entry.tool === "external_site" && ext === null) {
       addError(report, lp, "tool is 'external_site' but external_site object is null");
     }
+    checkObjectField(ext, `${lp}/external_site`, "external_site", report);
     if (typeof ext === "object" && ext !== null) {
       checkRequired(ext, ["site", "url_generated", "capture_received"], `${lp}/external_site`, report, NULLABLE_FIELDS);
       checkAllowedKeys(ext, RESEARCH_SHAPES.external_site_detail, "external_site objects", `${lp}/external_site`, report);
@@ -782,6 +866,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < sources.length; i++) {
     const src = sources[i];
     const sp = `${path}/sources[${i}]`;
+    if (!isObjectEntry(src, sp, report)) continue;
     checkRequired(src, [
       "id", "gedcomx_source_description_id", "citation",
       "citation_detail", "source_classification", "repository",
@@ -801,6 +886,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
 
     const cd = src.citation_detail;
+    checkObjectField(cd, `${sp}/citation_detail`, "citation_detail", report);
     if (typeof cd === "object" && cd !== null) {
       checkRequired(cd, ["who", "what", "when_created", "when_accessed", "where", "where_within"],
                    `${sp}/citation_detail`, report, NULLABLE_FIELDS);
@@ -813,6 +899,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < assertions.length; i++) {
     const a = assertions[i];
     const ap = `${path}/assertions[${i}]`;
+    if (!isObjectEntry(a, ap, report)) continue;
     checkRequired(a, [
       "id", "source_id", "record_id", "record_role", "fact_type",
       "value", "information_quality", "informant", "informant_proximity",
@@ -856,6 +943,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < personEvidence.length; i++) {
     const pe = personEvidence[i];
     const pp = `${path}/person_evidence[${i}]`;
+    if (!isObjectEntry(pe, pp, report)) continue;
     checkRequired(pe, [
       "id", "assertion_id", "person_id", "confidence",
       "rationale", "created",
@@ -879,6 +967,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < conflicts.length; i++) {
     const c = conflicts[i];
     const cp = `${path}/conflicts[${i}]`;
+    if (!isObjectEntry(c, cp, report)) continue;
     checkRequired(c, [
       "id", "conflict_type", "description", "competing_assertion_ids",
       "status", "blocks_question_ids",
@@ -924,6 +1013,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < hypotheses.length; i++) {
     const h = hypotheses[i];
     const hp = `${path}/hypotheses[${i}]`;
+    if (!isObjectEntry(h, hp, report)) continue;
     checkRequired(h, [
       "id", "claim", "status", "supporting_assertion_ids",
       "contradicting_assertion_ids", "ruled_out", "related_question_ids",
@@ -946,6 +1036,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < timelines.length; i++) {
     const t = timelines[i];
     const tp = `${path}/timelines[${i}]`;
+    if (!isObjectEntry(t, tp, report)) continue;
     checkRequired(t, [
       "id", "label", "person_ids", "generated", "events", "gaps",
     ], tp, report, NULLABLE_FIELDS);
@@ -959,6 +1050,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     for (let j = 0; j < events.length; j++) {
       const ev = events[j];
       const ep = `${tp}/events[${j}]`;
+      if (!isObjectEntry(ev, ep, report)) continue;
       checkRequired(ev, ["date", "date_certainty", "event_type", "description", "assertion_ids"], ep, report, NULLABLE_FIELDS);
       checkAllowedKeys(ev, RESEARCH_SHAPES.timeline_event, "timeline events", ep, report);
       if ("date_certainty" in ev && !DATE_CERTAINTY_TIMELINE.has(ev.date_certainty)) {
@@ -971,6 +1063,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     for (let j = 0; j < gaps.length; j++) {
       const gap = gaps[j];
       const gp = `${tp}/gaps[${j}]`;
+      if (!isObjectEntry(gap, gp, report)) continue;
       checkRequired(gap, ["start", "end", "expected_events", "severity"], gp, report, NULLABLE_FIELDS);
       checkAllowedKeys(gap, RESEARCH_SHAPES.timeline_gap, "timeline gaps", gp, report);
       if ("severity" in gap) {
@@ -985,6 +1078,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < proofSummaries.length; i++) {
     const ps = proofSummaries[i];
     const psp = `${path}/proof_summaries[${i}]`;
+    if (!isObjectEntry(ps, psp, report)) continue;
     checkRequired(ps, [
       "id", "question_id", "tier", "vehicle",
       "supporting_assertion_ids", "resolved_conflict_ids",
@@ -1032,6 +1126,7 @@ function validateEvaluations(
   for (let i = 0; i < evaluations.length; i++) {
     const ev = evaluations[i];
     const ep = `${path}/evaluations[${i}]`;
+    if (!isObjectEntry(ev, ep, report)) continue;
 
     checkRequired(ev, [
       "id", "focus", "target_id", "target_type", "verdict",
@@ -1100,6 +1195,7 @@ function validateLocalities(
   for (let i = 0; i < localities.length; i++) {
     const loc = localities[i];
     const lp = `${path}/localities[${i}]`;
+    if (!isObjectEntry(loc, lp, report)) continue;
     checkRequired(
       loc,
       ["id", "place", "pages_read", "source", "created"],
@@ -1271,6 +1367,7 @@ export function validateGedcomx(
   for (let i = 0; i < sources.length; i++) {
     const src = sources[i];
     const sp = `${path}/sources[${i}]`;
+    if (!isObjectEntry(src, sp, report)) continue;
     checkRequired(src, ["id", "title"], sp, report, NULLABLE_FIELDS);
     if (src && typeof src === "object") {
       for (const key of Object.keys(src)) {
@@ -1296,6 +1393,7 @@ export function validateGedcomx(
   for (let i = 0; i < persons.length; i++) {
     const person = persons[i];
     const pp = `${path}/persons[${i}]`;
+    if (!isObjectEntry(person, pp, report)) continue;
     checkRequired(person, ["id", "gender", "names"], pp, report, NULLABLE_FIELDS);
     checkAllowedKeys(person, TREE_PERSON_FIELDS, "persons", pp, report);
     checkTreeStrings(person, ["ark"], pp, report);
@@ -1316,6 +1414,7 @@ export function validateGedcomx(
     for (let j = 0; j < names.length; j++) {
       const name = names[j];
       const np = `${pp}/names[${j}]`;
+      if (!isObjectEntry(name, np, report)) continue;
       checkRequired(name, ["id", "given", "surname"], np, report, NULLABLE_FIELDS);
       checkAllowedKeys(name, TREE_NAME_FIELDS, "names", np, report);
       checkTrueFlag(name, "preferred", np, report);
@@ -1338,6 +1437,7 @@ export function validateGedcomx(
   for (let i = 0; i < relationships.length; i++) {
     const rel = relationships[i];
     const rp = `${path}/relationships[${i}]`;
+    if (!isObjectEntry(rel, rp, report)) continue;
     checkRequired(rel, ["id", "type"], rp, report, NULLABLE_FIELDS);
     if ("type" in rel) {
       checkEnum(rel.type, "relationship_type", rp, report);
@@ -1469,6 +1569,10 @@ function validateCrossFile(
   const sources = Array.isArray(research.sources) ? research.sources : [];
   for (let i = 0; i < sources.length; i++) {
     const src = sources[i];
+    // A malformed element yields no cross-file ref: validateResearch already
+    // reported its shape, and dereferencing it here threw, taking the whole
+    // cross-file pass down with it.
+    if (src === null || typeof src !== "object") continue;
     const ref = src.gedcomx_source_description_id;
     if (ref && !gedcomxSourceIds.has(ref)) {
       addError(
@@ -1611,6 +1715,17 @@ async function validateSidecars(
     const payload = payloads.get(logId);
     if (!payload) {
       continue; // sidecar missing/unreadable — already reported above
+    }
+
+    // A sidecar staged by a producer that returns no GedcomX (full-text,
+    // external links) holds no persona to resolve against, and its results
+    // carry `id` rather than `recordId` — so the match below could never
+    // succeed and reported "does not match any result's recordId" with an empty
+    // list, naming the wrong thing. Say why instead. Shared with D2 in
+    // `research-append.ts` so the two messages cannot drift.
+    if (!stagesPersonas(entry.tool)) {
+      addError(report, ap, noPersonaInSidecarError(logId, entry.tool));
+      continue;
     }
 
     const recordId = a.record_id;

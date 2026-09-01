@@ -524,7 +524,23 @@ describe("Project Validator", () => {
             question_id: "q_001",
             status: "active",
             created: "July 2026",
-            items: [],
+            // One real item. This fixture asserts `valid === false` for the
+            // PROSE DATES it plants; an empty items array would add an
+            // unrelated error and let the test pass even with every date check
+            // removed.
+            items: [
+              {
+                id: "pli_001",
+                sequence: 1,
+                record_type: "census",
+                jurisdiction: "Schuylkill County, Pennsylvania",
+                date_range: "1850-1860",
+                repository: "FamilySearch",
+                rationale: "Household reconstruction",
+                fallback_for: null,
+                status: "planned",
+              },
+            ],
           },
         ],
         sources: [isoSource()],
@@ -597,7 +613,21 @@ describe("Project Validator", () => {
             question_id: "q_001",
             status: "active",
             created: "2026-07-13",
-            items: [],
+            // One real item: a plan carries at least one (research.schema.json
+            // `$defs/plan.items.minItems`), which the validator now enforces.
+            items: [
+              {
+                id: "pli_001",
+                sequence: 1,
+                record_type: "census",
+                jurisdiction: "Schuylkill County, Pennsylvania",
+                date_range: "1850-1860",
+                repository: "FamilySearch",
+                rationale: "Household reconstruction",
+                fallback_for: null,
+                status: "planned",
+              },
+            ],
           },
         ],
         sources: [isoSource()],
@@ -1303,6 +1333,110 @@ describe("Project Validator", () => {
           e.message.includes("does not resolve to a person in record")
         )
       ).toBe(true);
+    });
+
+    it("D5: an FTS-staged sidecar names the producer, not a missing recordId", async () => {
+      // `fulltext_search` stages a sidecar whose results carry `id`, never
+      // `recordId`, and no `gedcomx` — so the recordId match was empty for
+      // EVERY full-text-sourced assertion, and a supplied persona was refused
+      // by "does not match any result's recordId" with nothing to list. The
+      // outcome (refuse) is right; the reason was not stated.
+      const research = {
+        ...minimalResearch,
+        log: [
+          { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "fulltext_search", query: {}, outcome: "positive", results_examined: 1, results_ref: "results/log_001.json", external_site: null },
+        ],
+        sources: [
+          { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
+        ],
+        assertions: [
+          { id: "a_001", source_id: "src_001", record_id: "ark:/61903/3:1:FTXT-Q88", record_role: "principal", record_persona_id: "PERSON1", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", evidence_type: "direct", extracted_for_question_ids: [], log_entry_id: "log_001" },
+        ],
+      };
+      const sidecar = {
+        log_id: "log_001", tool: "fulltext_search", retrieved: "2026-01-01T00:00:00Z", returned_count: 1,
+        payload: { results: [{ id: "ark:/61903/3:1:FTXT-Q88", textDocument: "…transcript…" }] },
+      };
+      const tree = { ...minimalTree, sources: [{ id: "SD-001", title: "Test" }] };
+      await writeProject(research, tree);
+      await mkdir(join(testDir, "results"));
+      await writeFile(join(testDir, "results/log_001.json"), JSON.stringify(sidecar));
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      const msgs = result.errors.map((e) => e.message).join(" | ");
+      expect(msgs).toMatch(/record_persona_id must be null — log entry 'log_001' is fulltext_search-sourced/);
+      expect(msgs).toMatch(/no GedcomX personas/);
+      // The old message named the wrong thing; it must be gone, not merely
+      // joined by the new one.
+      expect(msgs).not.toMatch(/does not match any result's recordId/);
+    });
+
+    it("D5: an external_links_search sidecar gets the same named refusal", async () => {
+      const research = {
+        ...minimalResearch,
+        log: [
+          { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "external_links_search", query: {}, outcome: "positive", results_examined: 1, results_ref: "results/log_001.json", external_site: null },
+        ],
+        sources: [
+          { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
+        ],
+        assertions: [
+          { id: "a_001", source_id: "src_001", record_id: "https://example.org/parish-register", record_role: "principal", record_persona_id: "PERSON1", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", evidence_type: "direct", extracted_for_question_ids: [], log_entry_id: "log_001" },
+        ],
+      };
+      const sidecar = {
+        log_id: "log_001", tool: "external_links_search", retrieved: "2026-01-01T00:00:00Z", returned_count: 1,
+        payload: { results: [{ url: "https://example.org/parish-register", linkText: "Parish register" }] },
+      };
+      const tree = { ...minimalTree, sources: [{ id: "SD-001", title: "Test" }] };
+      await writeProject(research, tree);
+      await mkdir(join(testDir, "results"));
+      await writeFile(join(testDir, "results/log_001.json"), JSON.stringify(sidecar));
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      const msgs = result.errors.map((e) => e.message).join(" | ");
+      expect(msgs).toMatch(/is external_links_search-sourced/);
+      expect(msgs).toMatch(/only a url and link text/);
+    });
+
+    it("D5: an unclassified producer gets a refusal that is true of it", async () => {
+      // `record_read` is the trap: it DOES return a persons array, it just
+      // stages no sidecar, so a `results_ref` on such an entry is already out of
+      // contract. The generic tail must not claim its results carry no personas
+      // — it names what IS classified instead. Unreachable through the tools
+      // (`finalizeStagedResults` binds the envelope's tool to the search that
+      // staged it); reachable by hand-editing, which `validate_research_schema`
+      // reads.
+      const research = {
+        ...minimalResearch,
+        log: [
+          { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_read", query: {}, outcome: "positive", results_examined: 1, results_ref: "results/log_001.json", external_site: null },
+        ],
+        sources: [
+          { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
+        ],
+        assertions: [
+          { id: "a_001", source_id: "src_001", record_id: "ark:/61903/1:1:MXHY-TP4", record_role: "principal", record_persona_id: "PERSON1", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", evidence_type: "direct", extracted_for_question_ids: [], log_entry_id: "log_001" },
+        ],
+      };
+      const sidecar = {
+        log_id: "log_001", tool: "record_read", retrieved: "2026-01-01T00:00:00Z", returned_count: 1,
+        payload: { results: [{ recordId: "ark:/61903/1:1:MXHY-TP4", gedcomx: { persons: [{ id: "PERSON1" }] } }] },
+      };
+      const tree = { ...minimalTree, sources: [{ id: "SD-001", title: "Test" }] };
+      await writeProject(research, tree);
+      await mkdir(join(testDir, "results"));
+      await writeFile(join(testDir, "results/log_001.json"), JSON.stringify(sidecar));
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      const msgs = result.errors.map((e) => e.message).join(" | ");
+      expect(msgs).toMatch(/is record_read-sourced/);
+      expect(msgs).toMatch(/only 'record_search' stages sidecar results that carry GedcomX personas/);
+      // The false claim the first draft made about a tool that does return GedcomX.
+      expect(msgs).not.toMatch(/this tool's results carry no GedcomX personas/);
     });
 
     it("D5: matches record_id to recordId by canonical ARK form, not exact string", async () => {
@@ -2163,6 +2297,246 @@ describe("ISO_DATE_PATTERN mirrors the iso_date $def", () => {
 // ops put a string here, and 39 of the 154 persisted declared questions carry
 // one — 25% of the corpus holding a shape research.schema.json has always
 // forbidden, with nothing checking.
+describe("a malformed element is reported, never thrown", () => {
+  /**
+   * `checkRequired` tests `field in obj`, and `in` throws on null, undefined
+   * and every primitive. A single stray element anywhere in one of these arrays
+   * took `validateParsed` down with `TypeError: Cannot use 'in' operator to
+   * search for 'id' in null` — and because all nine writer tools validate the
+   * whole document, one bad element made every one of them fail with a message
+   * naming no field and no fix, while `validate_research_schema` crashed
+   * instead of telling the user what to repair. Reachable by hand edit, which
+   * is how the one invalid plan in the committed corpus got there.
+   */
+  const doc = () => ({
+    project: { id: "rp_001", objective: "o", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+    questions: [
+      {
+        id: "q_001", question: "Q?", rationale: "r", selection_basis: "timeline_gap", priority: "high",
+        status: "open", depends_on: [], unblocks: [], created: "2026-01-01", resolved: null,
+        resolution_assertion_ids: [],
+        exhaustive_declaration: { declared: false, log_entry_ids: [], justification: null, stop_criteria: null },
+      },
+    ],
+    plans: [], log: [], sources: [], assertions: [], person_evidence: [],
+    conflicts: [], hypotheses: [], timelines: [], proof_summaries: [], evaluations: [],
+  }) as any;
+  const bareTree = { persons: [], relationships: [], sources: [] } as any;
+
+  // Every research array that holds objects, plus both tree arrays. Listed
+  // rather than derived, so adding a section without a guard shows up here.
+  const ARRAYS = [
+    "questions", "plans", "log", "sources", "assertions", "person_evidence",
+    "conflicts", "hypotheses", "timelines", "proof_summaries", "evaluations",
+    "known_holdings", "localities",
+  ];
+
+  for (const section of ARRAYS) {
+    for (const [label, bad] of [["null", null], ["a string", "x"], ["a number", 7]] as Array<[string, unknown]>) {
+      it(`reports ${label} in ${section} instead of throwing`, async () => {
+        const research = doc();
+        research[section] = [bad];
+        const result = await validateParsed(research, bareTree); // must not throw
+        expect(result.valid).toBe(false);
+        const own = result.errors.filter((e) => e.path === `research.json/${section}[0]`);
+        expect(own.map((e) => e.message)).toEqual([
+          `must be an object — got ${bad === null ? "null" : typeof bad}`,
+        ]);
+      });
+    }
+  }
+
+  for (const section of ["persons", "relationships", "sources"]) {
+    it(`reports null in tree ${section} instead of throwing`, async () => {
+      const tree = { persons: [], relationships: [], sources: [] } as any;
+      tree[section] = [null];
+      const result = await validateParsed(doc(), tree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) => e.path === `tree.gedcomx.json/${section}[0]` && e.message.includes("must be an object"),
+        ),
+      ).toBe(true);
+    });
+  }
+
+  it("reports a nested plan item and timeline event too", async () => {
+    const research = doc();
+    research.plans = [
+      { id: "pl_001", question_id: "q_001", status: "active", created: "2026-01-01", items: [null] },
+    ];
+    research.timelines = [
+      { id: "tl_001", label: "L", person_ids: [], generated: "2026-01-01", events: ["x"], gaps: [] },
+    ];
+    const result = await validateParsed(research, bareTree);
+    expect(result.valid).toBe(false);
+    const paths = result.errors.map((e) => e.path);
+    expect(paths).toContain("research.json/plans[0]/items[0]");
+    expect(paths).toContain("research.json/timelines[0]/events[0]");
+  });
+
+  it("leaves an ARRAY element alone, keeping today's messages", async () => {
+    // typeof [] === "object" and `in` does not throw on one, so an array
+    // element was never part of the crash. Re-shaping its messages would be an
+    // unrelated behaviour change riding along on a crash fix.
+    const research = doc();
+    research.plans = [[]];
+    const result = await validateParsed(research, bareTree);
+    expect(result.errors.some((e) => e.message.includes("must be an object"))).toBe(false);
+    expect(result.errors.some((e) => e.message.includes("missing required field"))).toBe(true);
+  });
+
+  it("reports a required-object FIELD holding a primitive, which passed silently", async () => {
+    // The other half: `if (typeof X === "object" && X !== null)` skipped the
+    // whole block for a primitive, so this validated clean.
+    const research = doc();
+    research.questions[0].exhaustive_declaration = "yes";
+    const result = await validateParsed(research, bareTree);
+    expect(result.valid).toBe(false);
+    expect(
+      result.errors.some(
+        (e) =>
+          e.path === "research.json/questions[0]/exhaustive_declaration" &&
+          e.message === "exhaustive_declaration must be an object — got string",
+      ),
+    ).toBe(true);
+  });
+
+  it("does NOT double-report an absent or null object field", async () => {
+    // checkRequired owns those; re-reporting would double every message.
+    const research = doc();
+    research.questions[0].exhaustive_declaration = null;
+    const result = await validateParsed(research, bareTree);
+    const own = result.errors.filter((e) => e.path.includes("exhaustive_declaration"));
+    expect(own.filter((e) => e.message.includes("must be an object"))).toEqual([]);
+  });
+});
+
+describe("a plan carries at least one item", () => {
+  /**
+   * `research.schema.json` `$defs/plan.items` is `type: array, minItems: 1`, its
+   * `packages/schema` mirror says the same, and `research-schema-spec.md` says
+   * "At least one plan item". `validateResearch` required the KEY and iterated
+   * whatever was there, so an empty plan passed the runtime enforcer and failed
+   * only the eval harness's jsonschema pass — the write path persisted one and
+   * the viewer and `packages/schema` readers got it unchecked.
+   */
+  function researchWithPlanItems(items: unknown): any {
+    return {
+      project: {
+        id: "rp_001",
+        objective: "Find John Smith's parents",
+        status: "active",
+        created: "2026-01-01",
+        updated: "2026-01-02",
+      },
+      questions: [
+        {
+          id: "q_001",
+          question: "Who were the parents of John Smith?",
+          rationale: "Timeline gap before 1850",
+          selection_basis: "timeline_gap",
+          priority: "high",
+          status: "open",
+          depends_on: [],
+          unblocks: [],
+          created: "2026-01-01",
+          resolved: null,
+          resolution_assertion_ids: [],
+          exhaustive_declaration: {
+            declared: false,
+            log_entry_ids: [],
+            justification: null,
+            stop_criteria: null,
+          },
+        },
+      ],
+      plans: [{ id: "pl_001", question_id: "q_001", status: "active", created: "2026-01-01", items }],
+      log: [],
+      sources: [],
+      assertions: [],
+      person_evidence: [],
+      conflicts: [],
+      hypotheses: [],
+      timelines: [],
+      proof_summaries: [],
+      evaluations: [],
+    };
+  }
+  const tree = {
+    persons: [{ id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] }],
+    relationships: [],
+    sources: [],
+  };
+  const oneItem = () => [
+    {
+      id: "pli_001",
+      sequence: 1,
+      record_type: "census",
+      jurisdiction: "Schuylkill County, Pennsylvania",
+      date_range: "1850-1860",
+      repository: "FamilySearch",
+      rationale: "Household reconstruction",
+      fallback_for: null,
+      status: "planned",
+    },
+  ];
+  const itemsErrors = (r: { errors: Array<{ path: string; message: string }> }) =>
+    r.errors.filter((e) => e.path === "research.json/plans[0]/items");
+
+  it("rejects an empty items array — the shape research_append persisted", async () => {
+    const result = await validateParsed(researchWithPlanItems([]), tree);
+    expect(result.valid).toBe(false);
+    const errs = itemsErrors(result);
+    expect(errs).toHaveLength(1);
+    expect(errs[0].message).toMatch(/is empty — a plan carries at least one plan item/);
+    // The refusal names the call shape that satisfies it, so a caller reading
+    // only this string does not reach for `"items": []` again.
+    expect(errs[0].message).toMatch(/one 'plan_items' op per item, each carrying this plan's id/);
+  });
+
+  it("rejects a non-array items — `type: array` was unenforced on the same field", async () => {
+    const result = await validateParsed(researchWithPlanItems({ pli_001: "census" }), tree);
+    expect(result.valid).toBe(false);
+    const errs = itemsErrors(result);
+    expect(errs).toHaveLength(1);
+    expect(errs[0].message).toMatch(/must be an array of plan items — got object/);
+  });
+
+  it("reports a present-but-undefined items exactly once", async () => {
+    // `checkRequired` tests `field in obj` then `=== null`, so this shape
+    // reported NOTHING before: not missing, not null, not a bad type.
+    // Unreachable through JSON.parse, reachable from any code path that builds
+    // the entry in memory.
+    const research = researchWithPlanItems(undefined);
+    expect("items" in research.plans[0]).toBe(true);
+    const result = await validateParsed(research, tree);
+    expect(result.valid).toBe(false);
+    const errs = result.errors.filter((e) => e.path.startsWith("research.json/plans[0]"));
+    expect(errs).toHaveLength(1);
+    expect(errs[0].message).toMatch(/must be an array of plan items — got undefined/);
+  });
+
+  it("accepts a plan with one item (control)", async () => {
+    const result = await validateParsed(researchWithPlanItems(oneItem()), tree);
+    expect(itemsErrors(result)).toEqual([]);
+    expect(result.valid).toBe(true);
+  });
+
+  it("still reports a MISSING items key, and only once", async () => {
+    // The pre-existing `checkRequired` arm. Both corpus instances of the bug
+    // start here: `items` absent on the shell, refused with "missing required
+    // field", and the retry answers with `"items": []`.
+    const research = researchWithPlanItems([]);
+    delete research.plans[0].items;
+    const result = await validateParsed(research, tree);
+    expect(result.valid).toBe(false);
+    const missing = result.errors.filter((e) => e.message.includes("missing required field 'items'"));
+    expect(missing).toHaveLength(1);
+    expect(itemsErrors(result)).toEqual([]); // no doubled-up complaint
+  });
+});
+
 describe("stop_criteria type guard (#1834)", () => {
   function researchWithStopCriteria(stopCriteria: unknown): any {
     return {

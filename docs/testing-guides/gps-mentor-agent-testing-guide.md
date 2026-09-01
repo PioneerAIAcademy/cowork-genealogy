@@ -402,8 +402,16 @@ Expected: no diff. Anything other than `evaluations[]` is a violation.
 
 ### Verify the refusal path
 
-Edit `~/cowork-test-mentor/research.json` to make `q_001` have an
-empty plan (or set a plan item to `status: "in_progress"`), then ask:
+Edit `~/cowork-test-mentor/research.json` to set a plan item to
+`status: "in_progress"`, then ask:
+
+(An **empty** plan used to serve here too, and no longer does. A plan with an
+empty `items` array is invalid, so the hand edit leaves a project that
+`validate_research_schema` reports as invalid and that every writer tool answers
+with a "pre-existing schema error" warning. Writes still succeed — the
+introduced-error diff tolerates drift the call did not cause — so the hand edit
+does not block the test; it just adds a second failure to read past instead of
+the plan state this step is about.)
 
 > "Review q_001 before exhaustiveness."
 

@@ -21,6 +21,7 @@
 import { join } from "path";
 import { readFile, mkdir } from "fs/promises";
 import { validateIntroduced } from "../validation/introduced-errors.js";
+import { noPersonaInSidecarError, stagesPersonas } from "../validation/sidecar-producers.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
@@ -267,7 +268,11 @@ function personaReachable(entry: any, research: any): boolean {
   const logEntry = log.find((l: any) => l?.id === assertion.log_entry_id);
   if (!logEntry) return true; // no log entry — provenance unknown
   if (logEntry.tool === "record_read") return true;
-  if (logEntry.tool === "record_search" && logEntry.results_ref) return true;
+  // Same whitelist the D2/D5 refusal reads, not a second copy of it: a
+  // persona is reachable through a retained sidecar exactly when that
+  // sidecar's producer stages GedcomX. Held together by
+  // `sidecar-producers-drift.test.ts`.
+  if (stagesPersonas(logEntry.tool) && logEntry.results_ref) return true;
   return false;
 }
 
@@ -980,6 +985,103 @@ interface AppliedOp {
    *  document was not mutated, so the caller may skip the write. */
   noop?: boolean;
   warnings?: string[];
+}
+
+/**
+ * A plan this call CREATED that ends the call with no items, while the same
+ * call's `plan_items` ops wrote into a different plan — the misroute that
+ * persisted a schema-invalid `research.json`.
+ *
+ * Nine `plan_items` ops carrying a hard-coded `planId: "pl_001"` appended
+ * themselves to a pre-existing `completed` plan for another question, and the
+ * plan the same batch had just created ended with no `items` key. The document
+ * validator refused that with "missing required field 'items'", which names the
+ * symptom; the model's next call added `"items": []` to the shell, kept the
+ * wrong `planId`, and was accepted. The error string is what drives the next
+ * move, so it has to name the cause.
+ *
+ * This refuses nothing that was not already refused: a created plan with no
+ * items fails `checkRequired` when `items` is absent and the non-empty check
+ * when it is `[]`, both introduced by this call and neither demotable. What it
+ * changes is which sentence the model reads.
+ *
+ * Silent unless the created plan is EMPTY, so a batch that legitimately adds an
+ * item to an existing plan alongside a populated new one is untouched.
+ */
+function emptyCreatedPlanErrors(
+  ops: ResearchAppendOp[],
+  research: any,
+  applied: AppliedOp[],
+): Array<{ index: number; message: string }> {
+  const createdIds = applied
+    .filter((a) => a.section === "plans" && a.op === "append" && typeof a.entryId === "string")
+    .map((a) => a.entryId);
+  if (createdIds.length === 0) return [];
+  // APPENDS only. A `plan_items` update targets an item that already exists in
+  // the plan it names, so it is not a misdirected item and the prescription
+  // below ("re-issue with planId X") would make it fail on a missing entryId.
+  const itemPlanIds = ops
+    .filter((o) => o.section === "plan_items" && o.op === "append" && typeof o.planId === "string")
+    .map((o) => o.planId as string);
+  if (itemPlanIds.length === 0) return [];
+
+  // The k-th `plans` append op produced the k-th created plan id, in op order.
+  const planOpIndexes = ops
+    .map((o, i) => ({ o, i }))
+    .filter(({ o }) => o.section === "plans" && o.op === "append")
+    .map(({ i }) => i);
+  const plans = Array.isArray(research.plans) ? research.plans : [];
+  const byId = new Map<string, any>(
+    plans.filter((pl: any) => pl && typeof pl.id === "string").map((pl: any) => [pl.id, pl]),
+  );
+  const createdSet = new Set(createdIds);
+
+  const describe = (id: string): string => {
+    const other = byId.get(id);
+    const status = other && typeof other.status === "string" ? other.status : "unknown-status";
+    const q = other && typeof other.question_id === "string" ? other.question_id : "an unknown question";
+    return `'${id}' (${status} plan for ${q})`;
+  };
+
+  const out: Array<{ index: number; message: string }> = [];
+  for (let k = 0; k < createdIds.length; k++) {
+    const newId = createdIds[k];
+    const pl = byId.get(newId);
+    if (!pl) continue;
+    if (Array.isArray(pl.items) && pl.items.length > 0) continue; // the items landed here
+    // A present-but-non-array `items` gets its own type error from the document
+    // validator; calling that "ends this call with no items" would describe the
+    // document wrongly.
+    if ("items" in pl && pl.items !== null && !Array.isArray(pl.items)) continue;
+    const elsewhere = [...new Set(itemPlanIds.filter((id) => id !== newId))];
+    if (elsewhere.length === 0) continue;
+    // A call that creates two plans and feeds only one is a DIFFERENT mistake
+    // from one that feeds a plan it did not create: the second is the
+    // hard-coded-id misroute, the first is a forgotten plan. Prescribing the
+    // misroute fix for the first ("put newId on every item op") would empty the
+    // sibling plan and reproduce the loop with the two plans swapped.
+    const preExisting = elsewhere.filter((id) => !createdSet.has(id));
+    const alsoCreated = elsewhere.filter((id) => createdSet.has(id));
+    const forQuestion =
+      typeof pl.question_id === "string" ? ` for question '${pl.question_id}'` : "";
+    const cause =
+      preExisting.length > 0
+        ? `this call's plan_items ops wrote into ${preExisting.map(describe).join(", ")} instead — ` +
+          "the items went to a plan this call did not create. A plan_items op must carry the id the " +
+          `tool assigned the plan the item belongs to, which is '${newId}' for this one. Never a ` +
+          "hard-coded 'pl_001': in an ongoing project that is another question's plan."
+        : `this call's plan_items ops named only ${alsoCreated.map((id) => `'${id}'`).join(", ")}, ` +
+          "which this same call also created. Give every item op the id of the plan its item belongs " +
+          `to — '${newId}' for the items of this one.`;
+    out.push({
+      index: planOpIndexes[k] ?? 0,
+      message:
+        `plan '${newId}' was created${forQuestion} and ends this call with no items, which cannot be ` +
+        `persisted. ${cause} Do not add "items": [] to the plan shell instead; that is what makes the ` +
+        "document schema-invalid.",
+    });
+  }
+  return out;
 }
 
 /** Apply ONE mutation to the in-memory research document. Mutates `research` in
@@ -2067,7 +2169,31 @@ async function prepareOps(
         }
       } else if (typeof ref === "string") {
         const results = await readSidecarResults(ref);
-        if (results) {
+        if (results && !stagesPersonas(logEntry.tool)) {
+          // A sidecar whose producer returns no GedcomX. `FulltextResult`
+          // carries `id`, not `recordId`; `PlaceExternalLink` carries neither —
+          // so the `recordId` match below is unconditionally empty for these,
+          // and every FTS-sourced assertion took the no-match arm: a supplied
+          // persona was rejected by a message listing nothing, and an omitted
+          // one skipped the canonicalization silently. Handle them here, on the
+          // producer, and never attempt persona resolution: an FTS-sourced
+          // assertion carries a null record_persona_id by design.
+          if (entry.record_persona_id != null) {
+            errors.push(fmt(i, noPersonaInSidecarError(String(logId), logEntry.tool)));
+            continue;
+          }
+          // Canonicalize record_id to the sidecar's stored form — the one thing
+          // §3.5 says the match exists to do. `matchedRecord` deliberately
+          // stays null: there is no `gedcomx`, so the place-lever echo below
+          // has nothing to read (it read nothing today either).
+          const key = arkToBareId(String(entry.record_id ?? ""));
+          const hit = results.find(
+            (r) => r && typeof r === "object" && typeof r.id === "string" && arkToBareId(r.id) === key,
+          );
+          if (hit && entry.record_id !== hit.id) {
+            entry.record_id = hit.id;
+          }
+        } else if (results) {
           const key = arkToBareId(String(entry.record_id ?? ""));
           const matches = results.filter(
             (r) => r && typeof r === "object" && typeof r.recordId === "string" && arkToBareId(r.recordId) === key,
@@ -2394,6 +2520,18 @@ export async function researchAppend(
         }
         throw e;
       }
+    }
+
+    // A plan this call created that ends with no items, while the call's
+    // plan_items ops wrote elsewhere. Checked on POST-APPLY state (that is what
+    // "ends the call with no items" means) and before any write, so nothing is
+    // persisted. The `plans` hint teaches the batched shape that satisfies it.
+    const misrouted = emptyCreatedPlanErrors(ops, research, applied);
+    if (misrouted.length > 0) {
+      return fail(
+        misrouted.map((m) => fmt(m.index, m.message)),
+        [{ section: "plans", op: "append" }],
+      );
     }
 
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
