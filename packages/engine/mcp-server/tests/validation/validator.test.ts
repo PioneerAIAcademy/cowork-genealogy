@@ -2198,7 +2198,7 @@ describe("a malformed element is reported, never thrown", () => {
    * `checkRequired` tests `field in obj`, and `in` throws on null, undefined
    * and every primitive. A single stray element anywhere in one of these arrays
    * took `validateParsed` down with `TypeError: Cannot use 'in' operator to
-   * search for 'id' in null` — and because all nine writer tools validate the
+   * search for 'id' in null` — and because every writer tool validates the
    * whole document, one bad element made every one of them fail with a message
    * naming no field and no fix, while `validate_research_schema` crashed
    * instead of telling the user what to repair. Reachable by hand edit, which
@@ -2219,7 +2219,8 @@ describe("a malformed element is reported, never thrown", () => {
   }) as any;
   const bareTree = { persons: [], relationships: [], sources: [] } as any;
 
-  // Every research array that holds objects, plus both tree arrays. Listed
+  // Every research array that holds objects. The three tree arrays get their
+  // own loop below. Listed
   // rather than derived, so adding a section without a guard shows up here.
   const ARRAYS = [
     "questions", "plans", "log", "sources", "assertions", "person_evidence",
@@ -2280,6 +2281,35 @@ describe("a malformed element is reported, never thrown", () => {
     const result = await validateParsed(research, bareTree);
     expect(result.errors.some((e) => e.message.includes("must be an object"))).toBe(false);
     expect(result.errors.some((e) => e.message.includes("missing required field"))).toBe(true);
+  });
+
+  it("reports an ARRAY in a required-object field exactly once, not three times", async () => {
+    // `typeof [] === "object"` and `[] !== null`, so an array ENTERED the block
+    // and collected a missing-field error per required key on top of the type
+    // error. The helper's docstring excludes null and undefined to avoid
+    // doubling; arrays needed the same treatment.
+    const research = doc();
+    research.questions[0].exhaustive_declaration = [];
+    const result = await validateParsed(research, bareTree);
+    expect(result.valid).toBe(false);
+    const own = result.errors.filter((e) => e.path.includes("exhaustive_declaration"));
+    expect(own.map((e) => e.message)).toEqual([
+      "exhaustive_declaration must be an object — got array",
+    ]);
+  });
+
+  it("reports researcher_profile: [] — the fourth slot, which the array arm missed", async () => {
+    // This site opened `typeof rp !== "object"`, which catches a string and
+    // MISSES `[]`, so the schema-invalid array validated clean while the three
+    // sibling slots were being fixed one screen below.
+    const research = doc();
+    research.researcher_profile = [];
+    const result = await validateParsed(research, bareTree);
+    expect(result.valid).toBe(false);
+    const own = result.errors.filter((e) => e.path.endsWith("/researcher_profile"));
+    expect(own.map((e) => e.message)).toEqual([
+      "researcher_profile must be an object — got array",
+    ]);
   });
 
   it("reports a required-object FIELD holding a primitive, which passed silently", async () => {

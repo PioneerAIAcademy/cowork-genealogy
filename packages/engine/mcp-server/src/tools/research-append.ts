@@ -172,8 +172,13 @@ function conflictInvariants(entry: any): string[] {
 
 function planActiveInvariants(entry: any, research: any): string[] {
   if (entry.status !== "active") return [];
+  // `p &&`: a legacy `plans: [null]` made this throw
+  // `Cannot read properties of null`, so the writer crashed on the very shape
+  // the document validator now reports. A malformed neighbour is not this
+  // entry's problem — the validator reports it, and this call is not refused
+  // for it (the introduced-error diff demotes pre-existing drift).
   const conflicting = (research.plans ?? []).filter(
-    (p: any) => p !== entry && p.question_id === entry.question_id && p.status === "active",
+    (p: any) => p && p !== entry && p.question_id === entry.question_id && p.status === "active",
   );
   if (conflicting.length > 0) {
     return [
@@ -1038,6 +1043,15 @@ function emptyCreatedPlanErrors(
     return `'${id}' (${status} plan for ${q})`;
   };
 
+  // Which created plans end EMPTY. When more than one does, "put this id on
+  // every item op" is wrong for both of them: following either empties the
+  // other. That case gets a per-plan prescription instead.
+  const emptyCreated = createdIds.filter((id) => {
+    const pl = byId.get(id);
+    return pl && !(Array.isArray(pl.items) && pl.items.length > 0) &&
+      !("items" in pl && pl.items !== null && !Array.isArray(pl.items));
+  });
+
   const out: Array<{ index: number; message: string }> = [];
   for (let k = 0; k < createdIds.length; k++) {
     const newId = createdIds[k];
@@ -1050,24 +1064,42 @@ function emptyCreatedPlanErrors(
     if ("items" in pl && pl.items !== null && !Array.isArray(pl.items)) continue;
     const elsewhere = [...new Set(itemPlanIds.filter((id) => id !== newId))];
     if (elsewhere.length === 0) continue;
-    // A call that creates two plans and feeds only one is a DIFFERENT mistake
-    // from one that feeds a plan it did not create: the second is the
-    // hard-coded-id misroute, the first is a forgotten plan. Prescribing the
-    // misroute fix for the first ("put newId on every item op") would empty the
-    // sibling plan and reproduce the loop with the two plans swapped.
     const preExisting = elsewhere.filter((id) => !createdSet.has(id));
     const alsoCreated = elsewhere.filter((id) => createdSet.has(id));
     const forQuestion =
       typeof pl.question_id === "string" ? ` for question '${pl.question_id}'` : "";
-    const cause =
-      preExisting.length > 0
-        ? `this call's plan_items ops wrote into ${preExisting.map(describe).join(", ")} instead — ` +
-          "the items went to a plan this call did not create. A plan_items op must carry the id the " +
-          `tool assigned the plan the item belongs to, which is '${newId}' for this one. Never a ` +
-          "hard-coded 'pl_001': in an ongoing project that is another question's plan."
-        : `this call's plan_items ops named only ${alsoCreated.map((id) => `'${id}'`).join(", ")}, ` +
-          "which this same call also created. Give every item op the id of the plan its item belongs " +
-          `to — '${newId}' for the items of this one.`;
+
+    // Every clause below is conditional on the state that makes it TRUE. The
+    // first draft asserted all of them unconditionally, so it told a caller who
+    // wrote `pl_007` never to hard-code `pl_001`, and called a superseded plan
+    // for the SAME question "another question's plan".
+    const prescription =
+      emptyCreated.length > 1
+        ? `This call created ${emptyCreated.length} plans and ${emptyCreated.join(", ")} all end it empty, so there is no single id to add: give each plan_items op the id of the plan ITS item belongs to.`
+        : `A plan_items op must carry the id the tool assigned the plan the item belongs to, which is '${newId}' for this one.`;
+
+    let cause: string;
+    if (preExisting.length > 0) {
+      const named = preExisting.map(describe).join(", ");
+      const otherQuestion = preExisting.some((id) => {
+        const o = byId.get(id);
+        return o && typeof o.question_id === "string" && o.question_id !== pl.question_id;
+      });
+      const hardCoded = preExisting.includes("pl_001") && newId !== "pl_001";
+      const tail = hardCoded
+        ? " Never a hard-coded 'pl_001': in an ongoing project that is the first plan in the file, not yours."
+        : otherQuestion
+          ? " Note it belongs to a different question, so its audit trail is not yours to append to."
+          : "";
+      cause =
+        `this call's plan_items ops wrote into ${named} instead — the items went to a plan this ` +
+        `call did not create. ${prescription}${tail}`;
+    } else {
+      cause =
+        `this call's plan_items ops named only ${alsoCreated.map((id) => `'${id}'`).join(", ")}, ` +
+        `which this same call also created. ${prescription}`;
+    }
+
     out.push({
       index: planOpIndexes[k] ?? 0,
       message:

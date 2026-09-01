@@ -16,6 +16,7 @@ import {
   addError,
   addWarning,
   isValid,
+  isObject,
 } from "./types.js";
 import { isInsideProject } from "../utils/project-io.js";
 import {
@@ -263,6 +264,24 @@ function checkRequired(
 }
 
 /**
+ * A required-object FIELD holding something that is not an object.
+ *
+ * The three call sites below all opened with
+ * `if (typeof X === "object" && X !== null)`, which is correct about not
+ * crashing and silent about everything else: a primitive in the slot skipped
+ * the whole block, so `exhaustive_declaration: "yes"` validated clean while
+ * `research.schema.json` requires an object. Absent and null are left alone —
+ * `checkRequired` owns those and reports them already, and re-reporting here
+ * would double every message.
+ */
+function checkObjectField(value: unknown, path: string, field: string, report: ValidationReport): void {
+  if (value === undefined || value === null) return; // checkRequired's job
+  if (!isObject(value) || Array.isArray(value)) {
+    addError(report, path, `${field} must be an object — got ${Array.isArray(value) ? "array" : typeof value}`);
+  }
+}
+
+/**
  * A document array element that can be validated at all: an object.
  *
  * `checkRequired` tests `field in obj`, and `in` THROWS on null, undefined and
@@ -281,26 +300,8 @@ function checkRequired(
  *
  * Returns false when the caller should report-and-skip the element.
  */
-/**
- * A required-object FIELD holding something that is not an object.
- *
- * The three call sites below all opened with
- * `if (typeof X === "object" && X !== null)`, which is correct about not
- * crashing and silent about everything else: a primitive in the slot skipped
- * the whole block, so `exhaustive_declaration: "yes"` validated clean while
- * `research.schema.json` requires an object. Absent and null are left alone —
- * `checkRequired` owns those and reports them already, and re-reporting here
- * would double every message.
- */
-function checkObjectField(value: unknown, path: string, field: string, report: ValidationReport): void {
-  if (value === undefined || value === null) return; // checkRequired's job
-  if (typeof value !== "object" || Array.isArray(value)) {
-    addError(report, path, `${field} must be an object — got ${Array.isArray(value) ? "array" : typeof value}`);
-  }
-}
-
 function isObjectEntry(value: unknown, path: string, report: ValidationReport): boolean {
-  if (value !== null && typeof value === "object") return true;
+  if (isObject(value)) return true;
   addError(report, path, `must be an object — got ${value === null ? "null" : typeof value}`);
   return false;
 }
@@ -590,8 +591,15 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   const rp = data.researcher_profile;
   if (rp !== null && rp !== undefined) {
     const rpPath = `${path}/researcher_profile`;
-    if (typeof rp !== "object") {
-      addError(report, rpPath, "researcher_profile must be an object");
+    // `typeof rp !== "object"` catches a string or a number and MISSES `[]`,
+    // which is the array arm `checkObjectField` exists to add — the class this
+    // helper closes was still open at this one site.
+    if (!isObject(rp) || Array.isArray(rp)) {
+      addError(
+        report,
+        rpPath,
+        `researcher_profile must be an object — got ${Array.isArray(rp) ? "array" : typeof rp}`,
+      );
     } else {
       checkAllowedKeys(rp, RESEARCH_SHAPES.researcher_profile, "researcher_profile objects", rpPath, report);
       if ("experience_level" in rp && rp.experience_level !== null) {
@@ -687,7 +695,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // Exhaustive declaration
     const ed = q.exhaustive_declaration;
     checkObjectField(ed, `${qp}/exhaustive_declaration`, "exhaustive_declaration", report);
-    if (typeof ed === "object" && ed !== null) {
+    if (isObject(ed) && !Array.isArray(ed)) {
       checkRequired(ed, ["declared", "log_entry_ids"], `${qp}/exhaustive_declaration`, report, NULLABLE_FIELDS);
       checkAllowedKeys(ed, RESEARCH_SHAPES.exhaustive_declaration, "exhaustive_declaration objects", `${qp}/exhaustive_declaration`, report);
       if (ed.declared && (!ed.log_entry_ids || ed.log_entry_ids.length === 0)) {
@@ -766,7 +774,8 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // those three was enforced here, while `research.schema.json`
     // (`$defs/plan.items`: `type: array`, `minItems: 1`), its `packages/schema`
     // mirror, and `research-schema-spec.md` ("At least one plan item") all
-    // state the other two. The runtime enforcer was the one that had drifted,
+    // state the other two. TWO of the four enforcers had drifted: this one,
+    // and `packages/schema`'s TS mirror, which typed `items` as `PlanItem[]`,
     // which is why only the eval harness's jsonschema pass ever saw an empty
     // plan and production shipped it to the viewer unchecked.
     //
@@ -851,7 +860,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       addError(report, lp, "tool is 'external_site' but external_site object is null");
     }
     checkObjectField(ext, `${lp}/external_site`, "external_site", report);
-    if (typeof ext === "object" && ext !== null) {
+    if (isObject(ext) && !Array.isArray(ext)) {
       checkRequired(ext, ["site", "url_generated", "capture_received"], `${lp}/external_site`, report, NULLABLE_FIELDS);
       checkAllowedKeys(ext, RESEARCH_SHAPES.external_site_detail, "external_site objects", `${lp}/external_site`, report);
       if ("site" in ext && !EXTERNAL_SITE_VALUES.has(ext.site)) {
@@ -886,7 +895,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
 
     const cd = src.citation_detail;
     checkObjectField(cd, `${sp}/citation_detail`, "citation_detail", report);
-    if (typeof cd === "object" && cd !== null) {
+    if (isObject(cd) && !Array.isArray(cd)) {
       checkRequired(cd, ["who", "what", "when_created", "when_accessed", "where", "where_within"],
                    `${sp}/citation_detail`, report, NULLABLE_FIELDS);
       checkAllowedKeys(cd, RESEARCH_SHAPES.citation_detail, "citation_detail objects", `${sp}/citation_detail`, report);

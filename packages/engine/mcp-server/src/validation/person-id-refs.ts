@@ -1,3 +1,5 @@
+import { isObject } from "./types.js";
+
 // person-id-refs — the single source of truth for which research.json fields
 // reference tree.gedcomx.json person ids.
 //
@@ -43,11 +45,6 @@ export interface PersonIdRef {
  * person_evidence keeps its original `if (person_id) …` guard (a falsy
  * person_id is skipped); the array fields check every element, as before.
  */
-/** An element this generator can read fields off without throwing. */
-function isObject(v: unknown): boolean {
-  return v !== null && typeof v === "object";
-}
-
 export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
   // person_evidence[].person_id — scalar; only a truthy id is referenced.
   const personEvidence = Array.isArray(research.person_evidence)

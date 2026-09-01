@@ -228,6 +228,9 @@ describe("validateIntroduced", () => {
     const res = await validateIntroduced({ research: before, tree: t }, { research: after, tree: t });
     expect(res.errors).toEqual([]);
     expect(res.valid).toBe(true);
+    // The name says "demotes", so assert the demotion rather than only the
+    // silence: an empty error list is also what a check that never ran returns.
+    expect(res.warnings.some((w) => w.message.includes("pre-existing schema error"))).toBe(true);
   });
 
   it("is byte-identical to validateParsed on a project with no pre-existing drift", async () => {

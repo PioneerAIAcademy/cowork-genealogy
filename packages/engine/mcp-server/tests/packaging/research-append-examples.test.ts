@@ -204,6 +204,10 @@ function minItemsViolations(value: unknown, sub: any, path: string, out: string[
  *  own copy of the conditional descent, so deleting the descent from
  *  `minItemsViolations` left the count untouched and every test still green. */
 let minItemsChecked = 0;
+/** How many per-section example tests actually executed. The vacuity assertion
+ *  below is meaningless when a name filter skipped them all, and asserting
+ *  anyway made `vitest -t "<other name>"` fail on a healthy tree. */
+let sectionsWalked = 0;
 
 const EXAMPLES = __testing.EXAMPLES as Record<string, string>;
 
@@ -260,6 +264,7 @@ describe("research_append worked examples conform to the schema", () => {
           `are required and not tool-assigned`,
       ).toEqual({ unknown: [], missing: [] });
 
+      sectionsWalked += 1;
       const short: string[] = [];
       minItemsViolations(entry!, def, "", short);
       expect(
@@ -286,6 +291,7 @@ describe("the minItems walk is not vacuous", () => {
     // Ordering: vitest collects every `it` before running any, and this suite is
     // declared after the per-section loop, so the counter is populated by the
     // time this assertion runs.
+    if (sectionsWalked === 0) return; // a name filter skipped the per-section tests
     expect(
       minItemsChecked,
       "the minItems walk reached no constraint at all — it passes for the wrong " +
@@ -310,7 +316,11 @@ describe("the rendered plan examples teach a call the tool accepts", () => {
   const callOnly = (text: string) =>
     text
       .split("\n")
-      .map((line) => line.replace(/^\s*\/\/.*$/, ""))
+      // Whole-line AND trailing comments. Stripping only whole-line ones left a
+      // trap: a trailing `// never write "items": []` would be read as part of
+      // the call and false-flag the guard, which is the same confusion between
+      // prose and code that the first draft of this assertion made.
+      .map((line) => line.replace(/^\s*\/\/.*$/, "").replace(/\s*\/\/.*$/, ""))
       .join("\n");
 
   it("`plans` renders the batched call, not a standalone append", () => {

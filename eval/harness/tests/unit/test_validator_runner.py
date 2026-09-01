@@ -1498,18 +1498,55 @@ def test_full_validation_catches_cross_file_subject_person_id():
 
 
 @pytest.mark.requires_engine_build
-def test_validator_crash_is_not_reported_as_missing_build():
-    # #987 review finding 1: a node crash (non-zero exit, empty stdout) must NOT
-    # be reported as None ("build missing") and silently passed. A bare string in
-    # persons trips a TypeError in the TS validator — exactly the malformed tree
-    # this feature exists to catch.
+def test_validator_crash_is_not_reported_as_missing_build(monkeypatch):
+    # #987 review finding 1: a node crash (non-zero exit, no parseable stdout)
+    # must NOT be reported as None ("build missing") and silently passed.
+    #
+    # This used to induce the crash with `crash_tree = {"persons": ["I1"]}`, a
+    # bare string that tripped a TypeError in the TS validator. The validator no
+    # longer crashes on ANY malformed document — it reports the shape instead —
+    # so that fixture stopped reaching this branch and started passing on the
+    # SUCCESS path, green and covering nothing. Induce the crash at the boundary
+    # the branch is actually about: node ran, exited non-zero, and produced no
+    # parseable stdout. The guard no longer depends on the validator staying
+    # fragile, which is what made it silently rot in the first place.
+    from harness import ts_validator
+
+    class _CrashedProc:
+        returncode = 1
+        stdout = ""
+        stderr = "TypeError: Cannot read properties of undefined (reading 'x')"
+
+    monkeypatch.setattr(ts_validator.subprocess, "run", lambda *a, **k: _CrashedProc())
+
+    research = _empty_research_state()["research_json"]
+    result = ts_validator.validate_parsed(
+        research, {"persons": [], "relationships": [], "sources": []}
+    )
+    assert result is not None, "a crash must not be reported as missing-build (None)"
+    assert result, "a crash must surface a non-empty error"
+    assert any("bridge crashed" in e for e in result), result
+    assert any("Cannot read properties" in e for e in result), (
+        "node's stderr must reach the caller, or a crash is undiagnosable"
+    )
+
+
+@pytest.mark.requires_engine_build
+def test_malformed_tree_is_reported_not_crashed():
+    # The counterpart, and the reason the fixture above had to move: a bare
+    # string in `persons` is now REPORTED by the TS validator rather than
+    # crashing it. Asserting it here keeps the old fixture's value as a
+    # guarantee instead of leaving it as an assumption nothing checks.
     from harness.ts_validator import validate_parsed
 
     research = _empty_research_state()["research_json"]
-    crash_tree = {"persons": ["I1"], "relationships": [], "sources": []}
-    result = validate_parsed(research, crash_tree)
-    assert result is not None, "a crash must not be reported as missing-build (None)"
-    assert result, "a crash must surface a non-empty error"
+    malformed = {"persons": ["I1"], "relationships": [], "sources": []}
+    result = validate_parsed(research, malformed)
+    assert result is not None, "the build is present, so this must not be None"
+    assert any("must be an object" in e for e in result), result
+    assert not any("bridge crashed" in e for e in result), (
+        "a malformed document must not reach the crash branch any more"
+    )
 
 
 # --- V1: write-then-validate -------------------------------------------
