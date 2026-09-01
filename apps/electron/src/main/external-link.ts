@@ -94,8 +94,7 @@ export function resolveFamilySearchTarget(input: unknown): string | null {
  * reachable from a test: `setupIPC` is module-private, `app.whenReady()` runs at
  * module scope, and `index.ts` imports `icon.png?asset`, which the vitest config
  * has no plugin to resolve — so nothing can import that module in a test.
- */
-/**
+ *
  * `Pick<IpcMain, 'handle'>` documents that this module needs one method and
  * nothing else. It does NOT remove the `as never` casts in the tests, and was
  * kept knowing that: a hand-written fake cannot satisfy Electron's listener
