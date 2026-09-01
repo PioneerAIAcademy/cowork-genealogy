@@ -133,7 +133,16 @@ already hold.
 **The consequence is the part that costs something.** Anything a routing skill
 guaranteed must move into the agent body or into a writer-tool precondition, or
 be recorded as accepted-as-lost with the loss stated. It cannot be secured by
-requiring the route, because no plane sees the route.
+requiring the route, because no plane that binds in production sees the route.
+
+**One eval-only plane does see the route, and reads it backwards.** The harness's
+post-run bypass detector credits a guardrail skill only on a literal `Skill`
+call — `skill_name_if_skill_call` in `eval/harness/harness/skill_invocation.py`
+returns `None` for every other tool — so an e2e run taking the sanctioned route
+lands the violation "`proof-conclusion` was never successfully invoked", as both
+committed runs that spawn that agent directly already do. Read that as an
+artifact of the retired ruling rather than as evidence against this one, and do
+not restore the `Skill` call to clear it; issue #1851 carries the fix.
 
 **The thin skill still stays on disk, and neither reason is enforcement.** It is
 the **direct-user entry point** — a researcher who asks for a proof conclusion
@@ -314,7 +323,7 @@ measured rather than argued.
 | **Post-run detection only** — let it happen, catch it at grading | Catches it after the user has the wrong answer. The detectors also cannot yet yield a rate: no committed run resolves `pass`, and the universal validator's project-file check is coarse by design — one legitimate writer call legitimizes the session's raw edits | ADR-0003's enforcement note; issue #1493's read of `test_universal.py` |
 | **Ship the deny on the violation count alone**, and tune later | The count cannot distinguish an impossible gate from an achievable one the agent was never taught to satisfy. Both cases were measured here, and both look identical from the number | ADR-0009 constraint 6 (3 of 103); issue #1463 (52%, projecting to 132 of 145 runs failing) |
 | **Wait for a per-caller `PreToolUse` policy** to be ported to production before moving anything | Unported and not gated on anything currently moving; the writer-tool check needs none of it and reaches every environment today | ADR-0006's hook row; `eval/harness/harness/context_policy.py` |
-| **Require the spawn to go through the routing skill** — treat a direct `Agent` delegation to a paired agent as unsanctioned, and hold what the routing skill does by mandating the route (the ruling of 2026-08-23) | Retired 2026-08-31. **No plane can distinguish a Skill-routed spawn from a direct one.** A skill runs in the main thread's own context, so both produce byte-identical hook payloads and `owner_denied` derives the same caller from each; `research_append` never sees a caller at all. A route no plane sees is a rule only prose can state, which is the thing this ADR exists to stop. The one handle that could reach session history is `transcript_path` — available, unused, unprobed here, and subject to the hook's timeout — so "deny the direct route at the hook" is not a design to attempt on what is known today | Issue #1851, which enumerates the miss on every plane and carries the reproduction over `eval/runlogs/e2e/`: both committed runs in which a paired agent appears spawn it directly, four times, with the routing skill never invoked. `packages/engine/plugin/hooks/guard_project_files.py` (`owner_denied`); the live payload key list in `docs/specs/guardrail-enforcement-spec.md`, "What the `PreToolUse` payload actually carries" |
+| **Require the spawn to go through the routing skill** — treat a direct `Agent` delegation to a paired agent as unsanctioned, and hold what the routing skill does by mandating the route (the ruling of 2026-08-23) | Retired 2026-08-31. **No plane that can deny a spawn distinguishes a Skill-routed one from a direct one.** A skill runs in the main thread's own context, so the hook payload carries no key recording the route and `owner_denied` derives the same caller from each; `research_append` never sees a caller at all. A route no enforcing plane sees is a rule only prose can state, which is the thing this ADR exists to stop. The one handle that could reach session history is `transcript_path` — available, unused, unprobed here, and subject to the hook's timeout — so "deny the direct route at the hook" is not a design to attempt on what is known today | Issue #1851, which enumerates the miss on every plane and carries the reproduction over `eval/runlogs/e2e/`: both committed runs in which a paired agent appears spawn it directly, four times, with the routing skill never invoked. `packages/engine/plugin/hooks/guard_project_files.py` (`owner_denied`); the live payload key list in `docs/specs/guardrail-enforcement-spec.md`, "What the `PreToolUse` payload actually carries" |
 
 ## Consequences
 
