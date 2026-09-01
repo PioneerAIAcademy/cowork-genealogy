@@ -1241,7 +1241,17 @@ _COMMISSION_VALIDATORS = frozenset(
 #: the stored fixture, so `response_fixture` + `matched.index` cannot rebuild it
 #: — `staged.resultsRef` in particular comes from `randomUUID()` and exists in no
 #: commit.
-_MOCK_ENRICHED_KEYS = ("staged", "ranked", "rankingSkipped")
+_MOCK_ENRICHED_KEYS = (
+    "staged",
+    "ranked",
+    "rankingSkipped",
+    # A nil search carries none of the three above, so without these two the
+    # unlogged-search notes (#2056) would be stripped from every run log — and
+    # the measurement that decides whether the note becomes a deny reads the
+    # run log.
+    "unloggedSearches",
+    "nilSearchNeedsLog",
+)
 
 
 def _is_mock_enriched(response: Any) -> bool:
