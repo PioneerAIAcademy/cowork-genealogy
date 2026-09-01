@@ -408,8 +408,8 @@ def report_resolution_word_caps(before_state, after_state):
         if rationale:
             # competing_assertion_ids comes from the AFTER STATE, never from a
             # diff of changed fields. A run almost never writes that field --
-            # it is absent from changed_fields on 0 of the 32 over-cap writes in
-            # the corpus -- so reading it from a diff makes the three-or-more-way
+            # it appears in changed_fields on 0 of the 32 over-cap writes in the
+            # corpus -- so reading it from a diff makes the three-or-more-way
             # escape never apply and roughly doubles the finding, 17 -> 32.
             competing = c.get("competing_assertion_ids") or []
             n = len(rationale.split())

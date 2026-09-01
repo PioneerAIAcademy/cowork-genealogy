@@ -110,9 +110,24 @@ def test_v6_creating_an_already_resolved_conflict_counts():
     assert "c_003" in str(e.value)
 
 
-def test_v6_skips_without_research_json():
+def test_v6_zero_conflicts_modified_passes():
+    """The commonest real shape: a run that never touches conflict analysis.
+
+    `len(touched) <= 1` was exercised at 1 and at 2 but never at 0, so an
+    accidental `== 1` would have passed the suite while failing every run that
+    correctly did nothing.
+    """
+    before, after = _states([_conflict("c_001")], [_conflict("c_001")])
+    check_one_per_turn(before, after)
+
+def test_v6_skips_when_either_side_lacks_research_json():
+    """Split per side for the reason given on the V2 twin below: both-None cannot
+    tell `or` from `and`."""
+    good = {"research_json": {"conflicts": []}}
     with pytest.raises(pytest.skip.Exception):
-        check_one_per_turn({"research_json": None}, {"research_json": None})
+        check_one_per_turn({"research_json": None}, good)
+    with pytest.raises(pytest.skip.Exception):
+        check_one_per_turn(good, {"research_json": None})
 
 
 # --- V2 -----------------------------------------------------------------
@@ -148,7 +163,7 @@ def test_v2_three_way_conflict_escapes_the_rationale_cap():
 def test_v2_escape_reads_competing_ids_from_after_state_not_the_diff():
     """The 17-vs-32 regression.
 
-    A run almost never writes competing_assertion_ids -- it is absent from
+    A run almost never writes competing_assertion_ids -- it appears in
     changed_fields on 0 of the 32 over-cap writes in the corpus. An
     implementation that looks for it among the changed fields sees nothing,
     concludes "fewer than three", and the escape never applies. Here the field is
@@ -193,6 +208,17 @@ def _replay(validator):
 
     Run logs carry no after_state, so it is reconstructed the way issue #1972
     prescribes: the scenario fixture's conflicts overlaid with changed_fields.
+
+    Both `modified` AND `added` are replayed. `added` matters more than its corpus
+    count suggests: it is 0 of 37 conflict diff entries across the 5 committed run
+    logs today, but a created-then-resolved conflict is exactly the V6 bypass
+    `test_v6_creating_an_already_resolved_conflict_counts` pins, so a corpus that
+    grows one would otherwise be replayed blind at the one path the validator was
+    written for.
+
+    Note the two carry DIFFERENT shapes (`harness/diff.py:_diff_array`): a
+    `modified` entry is `{id, changed_fields}`, while an `added` entry is the whole
+    after-state object. Treating them alike is the easy mistake here.
     """
     fired = []
     for path in _CORPUS:
@@ -205,8 +231,10 @@ def _replay(validator):
             for r in t.get("runs", []):
                 diff = (((r.get("output") or {}).get("file_changes") or {})
                         .get("research.json") or {}).get("diff") or {}
-                modified = (diff.get("conflicts") or {}).get("modified") or []
-                if not modified:
+                conflicts_diff = diff.get("conflicts") or {}
+                modified = conflicts_diff.get("modified") or []
+                added = conflicts_diff.get("added") or []
+                if not modified and not added:
                     continue
                 before = {"research_json": {"conflicts": base}}
                 after_conflicts = [dict(c) for c in base]
@@ -217,6 +245,12 @@ def _replay(validator):
                         continue
                     for field, change in (m.get("changed_fields") or {}).items():
                         entry[field] = change.get("after")
+                # An `added` entry is the whole after-state object, so it is appended
+                # rather than overlaid. Guard on id: a fixture that already carries the
+                # id would otherwise be duplicated in the after state.
+                for a in added:
+                    if isinstance(a, dict) and a.get("id") not in by_id:
+                        after_conflicts.append(dict(a))
                 after = {"research_json": {"conflicts": after_conflicts}}
                 try:
                     validator(before, after)
@@ -252,3 +286,57 @@ def test_v2_reports_the_measured_counts_on_the_corpus():
     rationale = [ln for ln in lines if "resolution_rationale" in ln]
     assert len(weighing) == 7, f"expected 7 weighing observations, got {len(weighing)}"
     assert len(rationale) == 12, f"expected 12 rationale observations, got {len(rationale)}"
+
+
+def test_v2_weighing_at_exactly_the_band_is_not_observed():
+    """The band is a `>` comparison, so exactly 210 words must NOT fire. Flipping
+    it to `>=` is otherwise undetectable — the nearest tests sit at 260 and above."""
+    before, after = _states(
+        [_conflict("c_001")],
+        [_conflict("c_001", weighing_analysis=_words(210))],
+    )
+    check_word_caps(before, after)
+
+
+def test_v2_rationale_at_exactly_the_band_is_not_observed():
+    """Same boundary on the other field: exactly 300 words must not fire."""
+    before, after = _states(
+        [_conflict("c_001")],
+        [_conflict("c_001", resolution_rationale=_words(300))],
+    )
+    check_word_caps(before, after)
+
+
+def test_v2_skips_when_either_side_lacks_research_json():
+    """V6 had this guard tested; V2 had the same guard and did not.
+
+    Each side is asserted SEPARATELY on purpose. Passing None for both leaves an
+    `or` -> `and` typo undetected, because both-None satisfies either operator --
+    measured: that mutation left the whole suite green until this was split.
+    """
+    good = {"research_json": {"conflicts": []}}
+    with pytest.raises(pytest.skip.Exception):
+        check_word_caps({"research_json": None}, good)
+    with pytest.raises(pytest.skip.Exception):
+        check_word_caps(good, {"research_json": None})
+
+
+def test_v2_both_fields_over_cap_are_both_observed():
+    """The validator loops the two fields independently and appends to
+    `observations`. An accidental `elif` would report only the first, and no
+    existing test puts both over the cap on one conflict."""
+    before, after = _states(
+        [_conflict("c_001")],
+        [
+            _conflict(
+                "c_001",
+                weighing_analysis=_words(400),
+                resolution_rationale=_words(400),
+            )
+        ],
+    )
+    with pytest.raises(AssertionError) as e:
+        check_word_caps(before, after)
+    msg = str(e.value)
+    assert "weighing_analysis" in msg, msg
+    assert "resolution_rationale" in msg, msg

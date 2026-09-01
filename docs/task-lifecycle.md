@@ -362,10 +362,10 @@ Three rules can each hold a green, approved PR. Check them in this order:
   believing the request, and clear a dead one with
   `gh api -X DELETE /repos/{owner}/{repo}/pulls/{n}/requested_reviewers -f 'team_reviewers[]=<team>'`.
   This works only for a team the current file no longer claims. While
-  `require_code_owner_review` is on, the same call against a team CODEOWNERS
-  *does* still mandate returns HTTP 200 and does nothing — no error, and the team
-  is still listed on a fresh read (verified three ways, 2026-08-11). Re-read the
-  PR before believing the 200.
+  `require_code_owner_review` is on, the same call against a team **still
+  mandated by CODEOWNERS returns HTTP 200 and does nothing** — no error, and the
+  team is still listed on a fresh read (verified three ways, 2026-08-11). Re-read
+  the PR before believing the 200.
 
 ---
 
