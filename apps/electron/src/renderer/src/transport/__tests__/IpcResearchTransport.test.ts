@@ -100,3 +100,24 @@ describe('IpcResearchTransport', () => {
     expect(unwrapIpcError(new Error('plain failure'))).toBe('plain failure')
   })
 })
+
+describe('IpcResearchTransport — constrained FamilySearch channel', () => {
+  // The MIRROR of the gap review found on the web transport. `openFamilySearch`
+  // appeared in this file only as a stub property, so nothing asserted the
+  // method forwards to the constrained channel — routing it back to
+  // `open-external` would have left every test green on this platform while the
+  // web side was covered.
+  it('forwards to the constrained channel, not the generic one', () => {
+    installApiStub()
+    const fs = vi.fn()
+    const generic = vi.fn()
+    const api = (window as unknown as { api: Record<string, unknown> }).api
+    api.openFamilySearch = fs
+    api.openExternal = generic
+
+    new IpcResearchTransport().openFamilySearch('1:1:QPRC-WPBZ')
+
+    expect(fs).toHaveBeenCalledWith('1:1:QPRC-WPBZ')
+    expect(generic).not.toHaveBeenCalled()
+  })
+})
