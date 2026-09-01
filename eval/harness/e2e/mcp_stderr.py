@@ -79,13 +79,13 @@ def read_mcp_stderr_lines(
         dir_looked_in = " or ".join(str(d) for d in log_dirs)
 
         # Small bounded retry: the CLI's JSONL append can lag the moment its
-        # control protocol reports "failed" by up to a couple hundred ms
-        # (measured live, issue #1301 -- the very first end-to-end run of this
-        # feature missed the capture on attempt 1 and found it on attempt 2).
+        # control protocol reports "failed" by up to ~1s (re-measured
+        # 2026-08-27 on CLI 2.1.248: readable 0.96-0.97s after a 0.61s
+        # budget expired, 3/3 runs).
         # Still "best-effort" per rule 2: on the last attempt an empty result
         # is returned exactly as before, just after trying a little harder.
         lines: list[str] = []
-        for attempt in range(3):
+        for attempt in range(10):
             if attempt > 0:
                 time.sleep(0.3)
             log_dir = next((d for d in log_dirs if d.is_dir()), None)
