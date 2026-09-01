@@ -720,15 +720,12 @@ There **is** an orchestrator, and it is a skill:
    can be reversed by that section.
 3. **Two modes.** Interactive surfaces meaningful decisions to the user.
    `--autonomous` runs the loop in one continuous turn: no clarifying questions
-   and decisions logged to the audit-trail fields. Whether the router may ever
-   yield mid-loop is **not settled**: autonomous mode says yielding the turn to
-   announce a next step is a failure, while the `address_first` row of the
-   verdict table under `### Verdict handling protocol` tells it to
-   `Then end your turn — no further tool calls` — and a second, unheaded verdict
-   table (`| Verdict | Action |`) later in the same file says the opposite again
-   (`Do not block, re-open the resolved question, or force a remediation skill`).
-   Treat the sanctioned-yield question as open until the lead rules on which
-   verdict table is doctrine; do not write a test or a gate that assumes either.
+   and decisions logged to the audit-trail fields. **The router does not yield on
+   a mentor verdict.** The one verdict table in the file is advisory in both modes
+   — `address_first` is surfaced and recorded, and does not block, re-open a
+   resolved question, or force a remediation skill. A second, blocking table
+   said the opposite for seven weeks — a merge had restored text that an
+   earlier change deliberately deleted — and it was ruled out and removed.
 4. **Completion is gated twice.** Before `project.status = "completed"` is
    written via `research_append`: the **tree-encoding gate** — every
    tier-≥-probable conclusion must be encoded in `tree.gedcomx.json`; and the
@@ -762,11 +759,11 @@ record), and it never writes identity links or eliminations inline
 
 > **Direction.** `eval/tests/unit/research/` now exists: trigger
 > corpus (15 tests) plus stubbed routing tests covering rows 1–4 and the
-> shortcut guard. Rows 14 (post-verdict `address_first` handler) and 16
-> (`project.status = "completed"`) remain blocked on the two
-> contradictory verdict tables in the body (item 3 above). A live e2e run
-> is still the only instrument for routing-table rows the unit suite does
-> not yet cover.
+> shortcut guard. Row 14 (post-verdict `address_first` handler) is now
+> gradeable — the contradiction it was blocked on is gone (item 3 above).
+> Row 16 (`project.status = "completed"`) stays blocked, on who owns that
+> write rather than on a verdict table. A live e2e run is still the only
+> instrument for routing-table rows the unit suite does not yet cover.
 
 ### If you're asked to…
 
