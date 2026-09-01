@@ -977,6 +977,13 @@ The judge prompt template lives at `eval/harness/judge/prompt.md`. The system pr
 {tool_calls}                        — list of MCP calls with args + matched fixture
 ```
 
+Each call's `response_summary` renders **every** result, not a 3-item sample:
+a grounding rubric marks a correct citation of result 4+ as fabricated when the
+judge can only see results 1-3. Prompt size is bounded by the total-size
+guard (`_TOOL_CALLS_MAX_CHARS`), which drops whole oldest calls with a stated
+marker; per-string and depth caps still apply inside each result. A larger array
+cap was rejected — it only moves the cliff.
+
 `{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran.
 
 The template is versioned with the harness; its SHA-256 hash is recorded in the run log as `judge_prompt_hash`. The skill rubric's content hash is recorded as `rubric_hash`. A change to either invalidates apples-to-apples comparison with prior runs and forces a re-baseline.

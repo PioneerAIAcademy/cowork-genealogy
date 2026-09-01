@@ -19,6 +19,7 @@ import json
 from harness.judge import _RESPONSE_ARRAY_SAMPLE
 from harness.orchestrator import (
     _summarize_before_state,
+    _summarize_before_state_conflicts,
     _summarize_before_state_sources,
 )
 
@@ -187,3 +188,135 @@ def test_all_ids_survive_when_detail_blows_the_prompt_budget(monkeypatch):
         assert f"S{i:03d}" in rendered
     assert "per-source detail omitted for prompt size" in rendered
     assert "not evidence that they are missing or fabricated" in rendered
+
+
+# --- conflicts[] rendering (#1902 / #1956) -------------------------------------
+#
+# Before this fix, the judge saw only `sources` in the before-state block. A
+# skill could write "no conflicts on file, so encoding X is safe" while a
+# resolved conflict on file said the opposite, and the judge — grading against a
+# rubric that says "check conflicts[]" — could only repeat the skill's own
+# testimony back to itself, because conflicts[] never reached the prompt. These
+# tests pin that the conflicts and, critically, the *values* their preferred /
+# competing assertions carry are rendered, since the judge compares a URL
+# parameter (a place name) against a value, never against an assertion id.
+
+_FLYNN_CONFLICT = {
+    "id": "c_001",
+    "conflict_type": "fact",
+    "status": "resolved",
+    "disputed_attribute": "birthplace",
+    "identity_question": None,
+    "competing_assertion_ids": ["a_002", "a_009"],
+    "preferred_assertion_id": "a_002",
+    "weighing_analysis": "w" * 100,
+    "resolution_rationale": "r" * 100,
+}
+_FLYNN_ASSERTIONS = [
+    {
+        "id": "a_002",
+        "fact_type": "birth",
+        "value": "age 5",
+        "structured_value": {"year": 1845, "place": "Ireland"},
+        "place": "Ireland",
+        "date": "~1845",
+    },
+    {
+        "id": "a_009",
+        "fact_type": "birth",
+        "value": "born Pennsylvania",
+        "structured_value": {"year": 1845, "place": "Pennsylvania"},
+        "place": "Pennsylvania",
+        "date": "1845",
+    },
+]
+
+
+def test_conflicts_summary_resolves_assertion_values():
+    summary = _summarize_before_state_conflicts([_FLYNN_CONFLICT], _FLYNN_ASSERTIONS)
+    assert summary["count"] == 1
+    assert summary["all_ids"] == ["c_001"]
+    entry = summary["detail"][0]
+    assert entry["status"] == "resolved"
+    assert entry["disputed_attribute"] == "birthplace"
+    # The preferred assertion resolves to its VALUE, not just its id.
+    assert entry["preferred"]["place"] == "Ireland"
+    # Every competing assertion resolves too — both candidate places are present.
+    competing_places = {c.get("place") for c in entry["competing"]}
+    assert competing_places == {"Ireland", "Pennsylvania"}
+
+
+def test_before_state_renders_conflict_values_end_to_end():
+    """The exact mid-research-flynn shape: the judge must see c_001 AND both
+    candidate places, or it cannot check a 'no conflict on file' claim (#1956).
+    Fails on main — conflicts[] never reached the before-state block."""
+    before = {
+        "research_json": {
+            "sources": _sources("src_", 2),  # sources present regardless
+            "conflicts": [_FLYNN_CONFLICT],
+            "assertions": _FLYNN_ASSERTIONS,
+        }
+    }
+    rendered = _summarize_before_state(before)
+    assert "c_001" in rendered
+    assert "Ireland" in rendered
+    assert "Pennsylvania" in rendered
+
+
+def test_conflicts_render_even_without_sources():
+    """A project can carry conflicts but no sources. The old emptiness guard
+    (`if not labelled: return "(none)"`) fired before conflicts were considered,
+    so this would have returned the sentinel and hidden the conflict."""
+    before = {"research_json": {"conflicts": [_FLYNN_CONFLICT], "assertions": _FLYNN_ASSERTIONS}}
+    rendered = _summarize_before_state(before)
+    assert rendered != "(none)"
+    assert "c_001" in rendered
+    assert "Ireland" in rendered
+
+
+def test_conflict_dangling_assertion_ref_does_not_crash():
+    conflict = {
+        "id": "c_099",
+        "conflict_type": "fact",
+        "status": "unresolved",
+        "preferred_assertion_id": "a_missing",
+        "competing_assertion_ids": ["a_missing", "a_002"],
+    }
+    summary = _summarize_before_state_conflicts([conflict], _FLYNN_ASSERTIONS)
+    entry = summary["detail"][0]
+    assert entry["preferred"] == {"id": "a_missing", "_unresolved": True}
+    # The resolvable competing id still resolves alongside the dangling one.
+    assert {"id": "a_missing", "_unresolved": True} in entry["competing"]
+    assert any(c.get("place") == "Ireland" for c in entry["competing"])
+
+
+def test_identity_conflict_null_disputed_attribute_is_safe():
+    # Identity conflicts carry disputed_attribute:null and identity_question set.
+    # Rendering must not crash; #1933 owns the rule refinement, not this fix.
+    conflict = {
+        "id": "c_050",
+        "conflict_type": "identity",
+        "status": "moot",
+        "disputed_attribute": None,
+        "identity_question": "Are these two Patrick Flynns the same person?",
+        "competing_assertion_ids": ["a_002"],
+        "preferred_assertion_id": None,
+    }
+    summary = _summarize_before_state_conflicts([conflict], _FLYNN_ASSERTIONS)
+    entry = summary["detail"][0]
+    assert entry["identity_question"].startswith("Are these")
+    assert entry["preferred"] is None
+    assert entry["competing"][0]["place"] == "Ireland"
+
+
+def test_conflicts_non_list_and_empty_are_safe():
+    assert _summarize_before_state_conflicts([], []) == {
+        "count": 0,
+        "all_ids": [],
+        "detail": [],
+    }
+    assert _summarize_before_state_conflicts(None, None) == {
+        "count": 0,
+        "all_ids": [],
+        "detail": [],
+    }

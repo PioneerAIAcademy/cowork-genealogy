@@ -1691,6 +1691,93 @@ def _summarize_before_state_sources(sources: Any) -> dict[str, Any]:
     }
 
 
+def _resolve_assertion(
+    assertion_id: Any, index: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
+    """Resolve one assertion id to the compact value the judge needs.
+
+    A conflict stores ids; the judge grades a claim (a URL parameter, a
+    narrated place) against the *value* those ids carry, never against the id
+    itself. So resolve `preferred_assertion_id` / `competing_assertion_ids`
+    through `assertions[]` to the fields that decide a grade. A referenced id
+    absent from `assertions[]` (dangling ref — they exist in fixtures) renders
+    as `_unresolved` rather than crashing the whole before-state render.
+    """
+    a = index.get(assertion_id)
+    if a is None:
+        return {"id": assertion_id, "_unresolved": True}
+    return {
+        k: a[k]
+        for k in ("id", "fact_type", "value", "structured_value", "place", "date")
+        if k in a
+    }
+
+
+# Heavy per-conflict prose the prompt-size budget may drop (never the ids or
+# the resolved values, which are what make a "no conflict on file" claim
+# checkable).
+_CONFLICT_HEAVY_FIELDS = (
+    "independence_analysis",
+    "weighing_analysis",
+    "resolution_rationale",
+    "description",
+)
+
+
+def _summarize_before_state_conflicts(
+    conflicts: Any, assertions: Any
+) -> dict[str, Any]:
+    """Summarize the conflicts on file before the skill ran, resolving each
+    conflict's assertion references to their values.
+
+    Same discipline as `_summarize_before_state_sources`: the COMPLETE id list
+    is the ground truth for a "no conflict on file" existence check and is never
+    clipped; the per-conflict `detail` carries the resolved preferred/competing
+    values (what a grade actually turns on) plus the structural fields, and the
+    heavy prose (`_CONFLICT_HEAVY_FIELDS`) is what the caller's size budget trims.
+
+    Not the verdict: the resolved values are handed over and the rubric decides,
+    exactly as the sources block hands over ids without asserting groundedness.
+    A rendered conflict makes an "encoded X, no conflict on file" claim checkable
+    against what was actually contested (#1902 / #1956).
+    """
+    items = conflicts if isinstance(conflicts, list) else []
+    assertion_list = assertions if isinstance(assertions, list) else []
+    index = {
+        a["id"]: a
+        for a in assertion_list
+        if isinstance(a, dict) and a.get("id")
+    }
+    ids = [c["id"] for c in items if isinstance(c, dict) and c.get("id")]
+
+    detail: list[dict[str, Any]] = []
+    for c in items:
+        if not isinstance(c, dict):
+            continue
+        entry: dict[str, Any] = {
+            "id": c.get("id"),
+            "conflict_type": c.get("conflict_type"),
+            "status": c.get("status"),
+            "disputed_attribute": c.get("disputed_attribute"),
+            "identity_question": c.get("identity_question"),
+            "preferred": _resolve_assertion(c.get("preferred_assertion_id"), index)
+            if c.get("preferred_assertion_id")
+            else None,
+            "competing": [
+                _resolve_assertion(cid, index)
+                for cid in (c.get("competing_assertion_ids") or [])
+            ],
+        }
+        for k in _CONFLICT_HEAVY_FIELDS:
+            if c.get(k):
+                entry[k] = _summarize_response(
+                    c[k], string_max=_BEFORE_STATE_STRING_MAX
+                )
+        detail.append(entry)
+
+    return {"count": len(items), "all_ids": ids, "detail": detail}
+
+
 def _detail_ids(summary: dict[str, Any]) -> list[str]:
     """Ids positionally aligned with `summary["detail"]`, for naming drops.
 
@@ -1731,6 +1818,8 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     tree = before_snapshot.get("tree_gedcomx_json")
     research_sources = research.get("sources") if isinstance(research, dict) else None
     tree_sources = tree.get("sources") if isinstance(tree, dict) else None
+    conflicts = research.get("conflicts") if isinstance(research, dict) else None
+    assertions = research.get("assertions") if isinstance(research, dict) else None
 
     labelled: list[tuple[str, dict[str, Any]]] = []
     if research_sources:
@@ -1746,6 +1835,18 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
                 "tree.gedcomx.json source descriptions on file before this run "
                 "(S ids)",
                 _summarize_before_state_sources(tree_sources),
+            )
+        )
+    if conflicts:
+        # Same shape ({count, all_ids, detail}) as a sources block, so it flows
+        # through the id-section and the shared-budget detail loop below
+        # unchanged — the conflicts detail is trimmed by the same
+        # _BEFORE_STATE_MAX_CHARS accounting, never before the sources.
+        labelled.append(
+            (
+                "research.json conflicts on file before this run (c_ ids; "
+                "preferred/competing assertions resolved to their values)",
+                _summarize_before_state_conflicts(conflicts, assertions),
             )
         )
     if not labelled:
