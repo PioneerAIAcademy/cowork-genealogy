@@ -181,8 +181,8 @@ async function readFromSidecar(
   // avoid them. A live record_read (omit resultsRef) does not resolver-standardize
   // at all: it uses pure toSimplified (see the comment above), keeping only the
   // record's own normalized places — never resolving an ambiguous place NAME and
-  // mis-placing it (observed 2026-07-08: "Southampton, NY" -> "Southampton,
-  // England"; "Rochdale, England" -> "Rochdale, South Africa").
+  // mis-placing it (see the toSimplified comment above for the observed
+  // mis-resolutions).
   return match.gedcomx as SimplifiedGedcomX;
 }
 

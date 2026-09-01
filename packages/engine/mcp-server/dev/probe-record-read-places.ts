@@ -2,17 +2,21 @@
  * Probe: what place string does a live `record_read` hand the resolver, and does
  * the resolver place it correctly TODAY?
  *
- * Evidence for issue #1908 (phase 1). `record_read`'s live path calls
- * `toSimplified` (not `toSimplifiedStandardized`), so it fills `standard_place`
- * only from the record's own `normalized` values, never from the resolver —
- * whether recapi supplies a `normalized` value at all is one thing this probe
- * measures. The justification (the "Use toSimplified, NOT toSimplifiedStandardized"
- * block in record-read.ts) cites two
- * mis-resolutions observed 2026-07-08 — before two resolver fixes landed
- * (4823ffdf, 2026-07-22, phrase-quote the `name:` query; 1af50fab, 2026-07-31,
- * derive a `contextName` from the second comma-segment). This probe re-measures,
- * per place string, what the resolver returns NOW, so a human can judge whether
- * the blanket skip is still warranted. It changes NO behaviour and writes nothing.
+ * Evidence for issue #1908 (phase 1). This probe calls the real `recordReadTool`
+ * and reads its output with `collectFacts` — it measures what `record_read`
+ * actually returns, it does not reconstruct it. `record_read`'s live path calls
+ * `toSimplified` (not `toSimplifiedStandardized`), so a fact carries a
+ * `standard_place` only when the record's own `normalized` value supplied one
+ * (via `pickNormalizedPlace`); the resolver is never consulted. How often that
+ * happens is the `standard_place` column / headline count below. The
+ * justification (the "Use toSimplified, NOT toSimplifiedStandardized" block in
+ * record-read.ts) cites two mis-resolutions observed 2026-07-08 — before two
+ * resolver fixes landed (4823ffdf, 2026-07-22, phrase-quote the `name:` query;
+ * 1af50fab, 2026-07-31, derive a `contextName` from the second comma-segment).
+ * This probe re-measures, per place string, what `resolveStandardPlace` returns
+ * NOW (the counterfactual: what a live standardization *would* produce), so a
+ * human can judge whether the blanket skip is still warranted. It changes NO
+ * behaviour and writes nothing.
  *
  * Requires a live FamilySearch session (run `make e2e-login` first). Not shipped
  * in any artifact.
@@ -35,20 +39,17 @@
  * less than a run over live-captured records. Adjust the list before the live run
  * for wider real coverage of the three record families.
  */
-import { getValidToken } from "../src/auth/refresh.js";
-import { BROWSER_USER_AGENT } from "../src/constants.js";
-import { fetchWithTimeout } from "../src/utils/http.js";
-import { extractEntityId } from "../src/tools/record-read.js";
+import { recordReadTool } from "../src/tools/record-read.js";
+import { collectFacts } from "../src/utils/gedcomx-convert.js";
 import {
   resolveStandardPlace,
   countryConsistency,
   deriveContextName,
+  placeSegments,
+  mapWithConcurrency,
 } from "../src/utils/place-resolver.js";
 
-// Mirrors RECAPI_BASE in src/tools/record-read.ts (not exported there); the
-// fetch below reproduces record_read's live call exactly.
-const RECAPI_BASE =
-  "https://sg30p0.familysearch.org/service/cds/recapi/records/persona";
+const CONCURRENCY = 6;
 
 type Category =
   | "US census"
@@ -73,113 +74,80 @@ const ARKS: Ark[] = [
   { id: "9XKT-M2P", category: "Scandinavian church book", note: "Norway, Church Books, 1815-1930 (Anders)" },
 ];
 
-// Loose shape for the raw recapi gedcomx — only what this probe reads.
-interface RawFact {
-  place?: { original?: string; normalized?: { value?: string }[] };
-}
-interface RawPerson {
-  facts?: RawFact[];
-}
-interface RawRelationship {
-  facts?: RawFact[];
-}
-interface RawGedcomX {
-  persons?: RawPerson[];
-  relationships?: RawRelationship[];
-}
+type Consistency = "ok" | "contradiction" | "unverifiable" | "no-resolve";
 
 interface PlaceObs {
   ark: string;
+  note: string;
   category: Category;
   original: string;
-  hasNormalized: boolean;
+  hasStandardPlace: boolean; // record_read's output carried a standard_place
   segments: number;
   contextName: string | undefined;
-  resolved: string | null;
-  consistency: "ok" | "contradiction" | "unverifiable" | "no-resolve";
+  resolved: string | null; // what a live standardization WOULD produce, today
+  consistency: Consistency;
 }
 
-async function fetchRecord(entityId: string, token: string): Promise<RawGedcomX> {
-  const url = `${RECAPI_BASE}/${encodeURIComponent(entityId)}.json`;
-  const res = await fetchWithTimeout(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-      "Accept-Language": "en",
-      "User-Agent": BROWSER_USER_AGENT,
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`recapi ${res.status} for ${entityId}`);
-  }
-  return (await res.json()) as RawGedcomX;
-}
-
-// Walk every fact's place — the same places record_read returns verbatim.
-// record_read returns toSimplified(body), which surfaces BOTH person facts and
-// relationship (e.g. a Couple Marriage) facts — see collectFacts in
-// gedcomx-convert.ts ("Gather every fact (person + relationship)"). Walk both so
-// the probe measures every place record_read hands back, not just person-fact
-// places.
-function placesOf(body: RawGedcomX): { original: string; hasNormalized: boolean }[] {
-  const out: { original: string; hasNormalized: boolean }[] = [];
-  const factLists: (RawFact[] | undefined)[] = [
-    ...(body.persons ?? []).map((p) => p.facts),
-    ...(body.relationships ?? []).map((r) => r.facts),
-  ];
-  for (const facts of factLists) {
-    for (const f of facts ?? []) {
-      const original = f.place?.original;
-      if (typeof original === "string" && original.trim() !== "") {
-        const normalized = f.place?.normalized;
-        // Mirror record_read's own gate (pickNormalizedPlace in
-        // gedcomx-convert.ts): a normalized value counts only when some entry has
-        // a truthy `.value` — a non-empty array of value-less entries yields no
-        // standard_place in the tool, so it must not read as "supplied" here.
-        const hasNormalized =
-          Array.isArray(normalized) &&
-          normalized.some((n) => typeof n?.value === "string" && n.value !== "");
-        out.push({ original, hasNormalized });
-      }
-    }
-  }
-  return out;
+interface ArkRead {
+  ark: Ark;
+  facts: ReturnType<typeof collectFacts>;
+  error?: string;
 }
 
 async function main(): Promise<void> {
-  const token = await getValidToken();
-  const rows: PlaceObs[] = [];
-  const seen = new Set<string>();
-  const skippedArks: string[] = [];
-
-  for (const ark of ARKS) {
-    const entityId = extractEntityId(ark.id);
-    let body: RawGedcomX;
+  // Read each record through the actual tool (parallel; the tool handles auth,
+  // the recapi fetch, and toSimplified). collectFacts then gives exactly the
+  // facts record_read returns — person + relationship, after toSimplified's
+  // ParentChild subtype lift — so the probe measures the tool's output, not a
+  // reconstruction of it.
+  const reads: ArkRead[] = await mapWithConcurrency(ARKS, CONCURRENCY, async (ark) => {
     try {
-      body = await fetchRecord(entityId, token);
+      const result = await recordReadTool({ recordId: ark.id });
+      return { ark, facts: collectFacts(result) };
     } catch (e) {
-      console.error(`SKIP ${ark.id} (${ark.category}): ${(e as Error).message}`);
-      skippedArks.push(ark.id);
-      continue;
+      return { ark, facts: [], error: (e as Error).message };
     }
-    for (const { original, hasNormalized } of placesOf(body)) {
-      const dedupeKey = `${ark.id}::${original}`;
-      if (seen.has(dedupeKey)) continue;
-      seen.add(dedupeKey);
-      const resolved = await resolveStandardPlace(original);
-      rows.push({
-        ark: ark.id,
-        category: ark.category,
-        original,
-        hasNormalized,
-        segments: original.split(",").length,
-        contextName: deriveContextName(original),
-        resolved,
-        consistency:
-          resolved === null ? "no-resolve" : countryConsistency(original, resolved),
-      });
+  });
+
+  const skipped = reads.filter((r) => r.error);
+  for (const s of skipped) {
+    console.error(`SKIP ${s.ark.id} (${s.ark.category}): ${s.error}`);
+  }
+
+  // Flatten to distinct (ark, place text, standard_place-present) observations —
+  // the dedup key includes hasStandardPlace so two facts with the same text but
+  // different normalization state are both kept (a real FS data inconsistency).
+  const seen = new Set<string>();
+  const pending: { ark: Ark; original: string; hasStandardPlace: boolean }[] = [];
+  for (const { ark, facts } of reads) {
+    for (const fact of facts) {
+      const original = fact.place;
+      if (typeof original !== "string" || original.trim() === "") continue;
+      const hasStandardPlace =
+        typeof fact.standard_place === "string" && fact.standard_place !== "";
+      const key = `${ark.id}::${original}::${hasStandardPlace}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      pending.push({ ark, original, hasStandardPlace });
     }
   }
+
+  // Resolve each place string (parallel; resolveStandardPlace memoizes, so this
+  // is safe and mapWithConcurrency preserves input order for a stable table).
+  const rows: PlaceObs[] = await mapWithConcurrency(pending, CONCURRENCY, async (p) => {
+    const resolved = await resolveStandardPlace(p.original);
+    return {
+      ark: p.ark.id,
+      note: p.ark.note,
+      category: p.ark.category,
+      original: p.original,
+      hasStandardPlace: p.hasStandardPlace,
+      segments: placeSegments(p.original).length,
+      contextName: deriveContextName(p.original),
+      resolved,
+      consistency: resolved === null ? "no-resolve" : countryConsistency(p.original, resolved),
+    };
+  });
 
   console.log("\n=== per-place observations ===");
   for (const r of rows) {
@@ -188,38 +156,55 @@ async function main(): Promise<void> {
         r.ark,
         `[${r.category}]`,
         `orig=${JSON.stringify(r.original)}`,
-        `norm=${r.hasNormalized ? "yes" : "no"}`,
+        `std=${r.hasStandardPlace ? "yes" : "no"}`,
         `seg=${r.segments}`,
         `ctx=${r.contextName ?? "undefined"}`,
         `resolved=${r.resolved === null ? "null" : JSON.stringify(r.resolved)}`,
         `consistency=${r.consistency}`,
+        `(${r.note})`,
       ].join("  "),
     );
   }
 
   const total = rows.length;
   const single = rows.filter((r) => r.segments === 1).length;
-  const normalizedSupplied = rows.filter((r) => r.hasNormalized).length;
-  const byConsistency = {
-    ok: rows.filter((r) => r.consistency === "ok").length,
-    contradiction: rows.filter((r) => r.consistency === "contradiction").length,
-    unverifiable: rows.filter((r) => r.consistency === "unverifiable").length,
-    noResolve: rows.filter((r) => r.consistency === "no-resolve").length,
+  const withStandardPlace = rows.filter((r) => r.hasStandardPlace).length;
+
+  // Keyed reduction rather than one .filter() per bucket, plus a sum check — so a
+  // future countryConsistency return value cannot silently vanish from the tally.
+  const byConsistency: Record<Consistency, number> = {
+    ok: 0,
+    contradiction: 0,
+    unverifiable: 0,
+    "no-resolve": 0,
   };
+  for (const r of rows) byConsistency[r.consistency] += 1;
+  const bucketSum = Object.values(byConsistency).reduce((a, b) => a + b, 0);
+  if (bucketSum !== total) {
+    throw new Error(
+      `consistency buckets sum to ${bucketSum} but there are ${total} rows — an ` +
+        "unaccounted countryConsistency value slipped through; add it to byConsistency.",
+    );
+  }
 
   console.log("\n=== summary ===");
   console.log(
-    `ARKs: ${ARKS.length} requested, ${ARKS.length - skippedArks.length} fetched, ` +
-      `${skippedArks.length} skipped${skippedArks.length ? ` (${skippedArks.join(", ")})` : ""}`,
+    `ARKs: ${ARKS.length} requested, ${ARKS.length - skipped.length} fetched, ` +
+      `${skipped.length} skipped${skipped.length ? ` (${skipped.map((s) => s.ark.id).join(", ")})` : ""}`,
   );
   console.log(`places observed: ${total}`);
   console.log(
     `single-segment: ${single} (${total ? Math.round((single / total) * 100) : 0}%)`,
   );
-  console.log(`recapi supplied place.normalized: ${normalizedSupplied}/${total}`);
   console.log(
-    `countryConsistency: ok=${byConsistency.ok} contradiction=${byConsistency.contradiction} ` +
-      `unverifiable=${byConsistency.unverifiable} no-resolve=${byConsistency.noResolve}`,
+    `record_read output carried standard_place: ${withStandardPlace}/${total} ` +
+      "(what pickNormalizedPlace produced from recapi's own normalized values)",
+  );
+  console.log(
+    "countryConsistency: " +
+      (Object.entries(byConsistency) as [Consistency, number][])
+        .map(([k, v]) => `${k}=${v}`)
+        .join(" "),
   );
   console.log(
     "\nCORRECT vs WRONG is a human read: compare each `resolved` against the " +
