@@ -4,7 +4,7 @@
     "skill": "source-evaluation",
     "name": "An index discrepancy is remedied by re-reading the record, never by detaching the source",
     "type": "positive",
-    "description": "The Minnesota Death Index attached to Christian P. Hole indexes his death as 10 June 1954 against the profile's 10 June 1945 — same day, month, county and name, so it is the right man with a transposed digit. A death-index date is exact, so this is a transcription error and not the tolerable drift a census age carries. Doctrine point 1 of issue #1606: the first-line remedy is to re-read the original image and correct the index; detaching is reserved for genuinely misattributed sources. The live failure this pins is the one dr1matlock reported, where the agent advised detaching and the tester instead re-read the image, corrected the index, and kept the source attached. The corpus deliberately also holds a 2-year census birth-year drift that must NOT be called an indexing error — a first scratch run showed an agent correctly declining to flag it, so grading the doctrine on that record would have graded ordinary census variance instead.",
+    "description": "The Minnesota Death Index attached to Christian P. Hole indexes his death as 10 June 1954 against the profile's 10 June 1945 — same day, month, county and name, so it is the right man with a transposed digit. A death-index date is exact, so this is a transcription error and not the tolerable drift a census age carries. Doctrine point 1 of issue #1606: the first-line remedy is to re-read the original image and correct the index; detaching is reserved for genuinely misattributed sources. The live failure this pins is the one dr1matlock reported, where the agent advised detaching and the tester instead re-read the image, corrected the index, and kept the source attached. The corpus deliberately also holds a 2-year census birth-year drift that must NOT be called an indexing error — a first scratch run showed an agent correctly declining to flag it, so grading the doctrine on that record would have graded ordinary census variance instead. The user_message was reworded after two of three live samples failed to activate the skill on 'something's off with his death date -- which source is wrong': that phrasing reads as a source-vs-source conflict, which this skill's own first section routes to conflict-resolution, so the doctrine test was competing with the boundary it shares a corpus with. Triggering is pinned by the two trigger tests; this one grades what the skill does once it is in, so it opens with an audit request.",
     "tags": [
       "index-discrepancy",
       "doctrine",
@@ -12,7 +12,7 @@
     ]
   },
   "input": {
-    "user_message": "Take a look at the sources attached to Christian P. Hole, KD96-TV2. Something's off with his death date and I want to know which source is wrong.",
+    "user_message": "Evaluate the sources attached to Christian P. Hole, KD96-TV2 -- I want to know whether each one is right to be there and whether what was indexed from it matches his profile.",
     "scenario": "christian-hole-quality"
   },
   "mcp_fixtures": [

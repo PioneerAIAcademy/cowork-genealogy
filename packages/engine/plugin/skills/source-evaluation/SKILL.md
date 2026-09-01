@@ -64,6 +64,8 @@ Three kinds, and the recommendation follows the kind:
 
 **Recommend re-reading the original image and correcting the index. Never recommend detaching for this kind.** The source is good evidence with one bad field, and detaching it loses the evidence while leaving the bad field in the index for the next researcher.
 
+**Not every disagreement is an error.** A census age or birth year within a couple of years of the profile is ordinary variance — ages were estimated, reported by whoever answered the door, and rounded. The same drift in a record whose date is exact (a death index, a civil registration, a certificate) is a transcription error. Judge by the record type, and do not report tolerable drift as a finding: a list padded with non-findings is the same failure as a list padded with backend metadata.
+
 **(b) Genuinely misattributed source — the only case where detaching is right.** The record is about a different person: a same-name individual, a different generation, a different family. Cues: multiple fields disagree, not one; the record's own internal relationships name people who are not this person's family; the dates place it outside this person's lifetime altogether. Before concluding this, call `source_attachments({ uris: [<the ARK>] })` — if the source is also attached to other tree persons, say which, because that is often where it actually belongs.
 
 **Recommend detaching only here, and say why the record belongs to someone else** rather than merely asserting that it does not belong here.
