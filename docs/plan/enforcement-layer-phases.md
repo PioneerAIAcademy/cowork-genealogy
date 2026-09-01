@@ -1,6 +1,6 @@
 # Enforcement layer — the phase programme
 
-**Status, 2026-08-21.**
+**Status, 2026-09-01.**
 
 | Phase | State |
 |---|---|
@@ -97,9 +97,9 @@ fix a known-unsatisfiable gate in the body first.
 
 | Candidate | e2e invocations | Folded size |
 |---|---:|---|
-| ~~`research-exhaustiveness`~~ | 115 | **landed 2026-08-23** — folded to 21,632 bytes |
-| `conflict-resolution` | 9 | 48,513 bytes |
-| `person-evidence` | 149 | 49,473 bytes |
+| ~~`research-exhaustiveness`~~ | 115 | **landed 2026-08-23** — folded to ~21 KB |
+| `conflict-resolution` | 9 | ~48 KB |
+| `person-evidence` | 149 | ~52 KB |
 
 **There is no fold ceiling. `record-extractor.md`'s size is precedent, not a
 limit** — it is the largest agent body the team has shipped and lived with, and
@@ -127,8 +127,8 @@ the references leaves the body at 56,244 bytes, which "clears" any
 record-extractor-derived ceiling by about 2%, i.e. inside the meaningless
 window — another reason not to run this decision through a threshold.
 
-**Agent bodies do not only grow.** Across the 38 committed revisions of
-`record-extractor.md`, 28 grew it and **9 shrank it**, including recent ones.
+**Agent bodies do not only grow.** Of the committed revisions of
+`record-extractor.md`, roughly a quarter shrank it, including recent ones.
 The direction of that file is not evidence about any other.
 
 **Do not split references back out.** Measured and reverted: on-demand `Read`
