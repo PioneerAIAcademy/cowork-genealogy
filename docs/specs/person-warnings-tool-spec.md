@@ -29,11 +29,11 @@ mob."
   report on a relationship between the anchor and a one-hop relative.
 
 **Single-person warnings run on the anchor *and* its one-hop relatives,
-not the anchor alone.** Each self-check has a relative-mob variant
+not the anchor alone.** 27 of the 47 self-checks have a relative-mob variant
 (`relatives*`, `maleRelatives*`, `femaleRelatives*`) that fires the same
 condition on a parent, spouse, or child; the flagged relative is named in
-the warning's `personId`/`personName`. The relative-variant tags in
-§ Warning Definitions are the evidence.
+the warning's `personId`/`personName`. The other 20 run on the anchor only.
+The relative-variant tags in § Warning Definitions are the evidence.
 
 ---
 
@@ -188,9 +188,9 @@ helpers.
 All warnings are evaluated relative to the **anchor person** (the
 required `personId`) and its one-hop relatives. Single-person checks
 read the anchor's own facts; relationship checks consider relationships
-in which the anchor participates (as parent, spouse, or child); and each
-self-check has a `relatives*`/`maleRelatives*`/`femaleRelatives*` variant
-that fires the same condition on a one-hop relative.
+in which the anchor participates (as parent, spouse, or child); and 27 of
+the 47 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
+variant that fires the same condition on a one-hop relative.
 
 The full catalogue of the **74 tags** the tool emits in `issueType` is
 the § Tag Catalogue below. It is the source of truth an implementation is
@@ -426,16 +426,16 @@ imprecise dates are widened per § Date Parsing Rules.
 
 | Tag | Severity | Rule | Cause |
 |-----|----------|------|-------|
-| `hasEventBeforeBirth365_2` | contradiction | An event is dated more than 2 years before the person's earliest birth-like fact | Wrong birth date, wrong event attribution, or identity confusion |
+| `hasEventBeforeBirth365_2` | contradiction | The person's earliest fact of any type is dated more than 2 years before their latest birth-like fact | Wrong birth date, wrong event attribution, or identity confusion |
 | `hasEventAfterDeath1` | contradiction | An event is dated more than 1 year after the person's latest death-like fact (the nine-type death-like family raises the anchor; see the `hasEventAfterDeath1` section above) | A same-name person's records merged in, a wrong death date, or a posthumous mention typed outside the death-like family |
-| `hasAgeRangeGreaterThan120` | contradiction | Latest possible death year minus latest possible birth year is greater than 120 | Wrong birth or death date, or two people merged |
+| `hasAgeRangeGreaterThan120` | contradiction | Earliest death-like year minus latest birth-like year is greater than 120 | Wrong birth or death date, or two people merged |
 | `hasChristeningBeforeBirth` | contradiction | The latest Christening day is strictly before the earliest Birth day (year-only dates get a year of slack each side) | Data-entry error or wrong attribution |
-| `hasEventBeforeChristening365_3` | contradiction | A non-Birth event is dated more than 3 years before the latest Christening | Wrong event attribution or two persons merged |
-| `hasBurialBeforeDeath` | contradiction | Every recorded burial day precedes every recorded death day (both must be exact day-month-year) | Data error or transcription mistake |
-| `hasDeathBeforeChildBirth30_10` | contradiction | Male anchor: the father's latest exact Death day is more than 300 days before a child's exact Birth day | Wrong death date or wrong child attribution |
+| `hasEventBeforeChristening365_3` | contradiction | An event other than a Birth or event registration is dated more than 3 years before the latest Christening or Baptism | Wrong event attribution or two persons merged |
+| `hasBurialBeforeDeath` | contradiction | Every recorded burial precedes every recorded death — compared on exact day-month-year dates when both sides have them, otherwise on years | Data error or transcription mistake |
+| `hasDeathBeforeChildBirth30_10` | contradiction | Male anchor: the father's latest Death day is more than 300 days before a child's earliest Birth day (exact Death and Birth fact types, not the death-like/birth-like families; day-level, not restricted to full day-month-year dates) | Wrong death date or wrong child attribution |
 | `hasDeathBeforeChildBirth365_2` | contradiction | Male anchor: the father's latest death-like fact is more than 2 years before a child's earliest birth-like fact (looser family-level variant) | Wrong death date or wrong parent-child link |
 | `hasDeathBeforeChildBirthFemale365` | contradiction | Female anchor: the mother's latest death-like fact is more than 1 year before a child's earliest birth-like fact | Wrong death date or wrong mother attribution |
-| `hasDeathBeforeChildBirthFemale2` | contradiction | Female anchor: the mother's latest exact Death day is more than 2 days before a child's exact Birth day (a mother may die the day of birth, not 2+ days before) | Data error or wrong mother attribution |
+| `hasDeathBeforeChildBirthFemale2` | contradiction | Female anchor: the mother's latest Death day is more than 2 days before a child's earliest Birth day (exact Death and Birth fact types, not the death-like/birth-like families; a mother may die the day of birth, not 2+ days before) | Data error or wrong mother attribution |
 | `hasEventsOutsideLifespanFar` | contradiction | Merge-mode only: merging places an event far outside the other record's lifespan (before its birth or after its death) | The two records are not the same person |
 | `hasSameCensus` | contradiction | Merge-mode only: both records cite the same census collection (a census enumerates each person once) | The two records are distinct people captured in one enumeration |
 
@@ -443,8 +443,8 @@ imprecise dates are widened per § Date Parsing Rules.
 
 | Tag | Severity | Rule | Cause |
 |-----|----------|------|-------|
-| `earliestChildBirthToBirth12` | implausible | The person had a child before age 12 | Wrong birth date on person or child, or wrong parent-child link |
-| `earliestChildBirthToBirthMale14` | implausible | Father had a child before age 14 | As above, male-gated |
+| `earliestChildBirthToBirth12` | implausible | The person had a child at age 12 or younger | Wrong birth date on person or child, or wrong parent-child link |
+| `earliestChildBirthToBirthMale14` | implausible | Father had a child at age 14 or younger | As above, male-gated |
 | `latestChildBirthToBirth80` | implausible | A child was born 80 or more years after this person's birth | Wrong date or a generation skipped in the link |
 | `latestChildBirthToBirthFemale45` | implausible | Mother was age 45 or older at a child's birth | Wrong date or wrong mother attribution |
 | `earliestChildMarriageToBirth30` | implausible | A child married before this person reached age 30 | Very young parenthood, or a wrong date/link |
@@ -489,16 +489,17 @@ imprecise dates are widened per § Date Parsing Rules.
 | `tooManyFathers2` | implausible | Two or more male parents (only one biological father is possible) | A step/adoptive father recorded as biological, or a wrong link |
 | `tooManyMothers2` | implausible | Two or more female parents | As above |
 | `missingFactsAndRelatives` | implausible | Empty stub: no facts other than `GenderChange`, and no relatives | An unfinished record |
-| `hasBlankName` | implausible | No given name or no surname on the record | An incomplete record |
+| `hasBlankName` | implausible | A name entry carries a blank (empty-string) given name or surname part — distinct from a name part that is simply absent (see `missingSurnames`/`missingGivenNamesWithoutExactBirthLikeDate`) | An incomplete record |
 | `hasDiffSurnameMale` | implausible | Male anchor has surnames that do not match each other (similarity ≤ 0.5) | Records from two same-given-name men merged |
 | `missingSurnames` | implausible | No recorded surname | Incomplete record; hard to distinguish from same-given-name persons |
 | `missingGivenNamesWithoutExactBirthLikeDate` | implausible | No recorded given name AND no exact birth-like date | Record too sparse to identify |
 
 #### Relative-mob mirrors (`implausible`)
 
-Each self-check above has a relative-mob variant that fires the same
-condition on a one-hop relative (parent, spouse, or child) instead of the
-anchor. They are **always `implausible`** regardless of the self-check's
+27 of the 47 self-checks above have a relative-mob variant that fires the
+same condition on a one-hop relative (parent, spouse, or child) instead of
+the anchor; the other 20 run on the anchor only. They are **always
+`implausible`** regardless of the self-check's
 severity — the anchor's own data isn't necessarily wrong; the issue is in
 the relationship — and the flagged relative is named in the warning's
 `personId`/`personName`. Prefix conventions: `relatives*` = any relative,
