@@ -123,6 +123,14 @@ misread as "1", or a name misspelled by a clerk who could not read
 the original handwriting. When a derivative contradicts an original,
 the original is almost always correct.
 
+**Our own `image_transcribe` OCR is a derivative of the image, not the
+original's own voice.** So "the original is almost always correct" cuts
+*against* the OCR text, not for it: when an OCR reading conflicts with
+another record instance, the OCR is the derivative and the likelier
+error. Corroborate the value against other record instances (other census
+years, the index) rather than treating the OCR output as if it were the
+original.
+
 ### Multiple informants per record
 
 Many records have multiple informants contributing different facts.

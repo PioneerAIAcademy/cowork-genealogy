@@ -352,19 +352,25 @@ and name the record that would decide it.
 
 **An inherited surname is parentage evidence.** Where the naming
 system passes a parent's surname to the child — Spanish and
-Portuguese compound surnames (paternal first, then maternal:
-children of *Juan García* and *María Ramos* are *García Ramos*), and
-the patronymics above — a candidate parent whose surname cannot
-produce the child's is disqualified on that ground alone — both
+Portuguese two-surname names (the child carries one surname from each
+parent) and the patronymics above — a candidate parent whose surname
+cannot produce the child's is disqualified on that ground alone — both
 parents under the Iberian system, the father only under a
-patronymic — before any record names the parents outright. Weigh
-this hardest against **indexed** parent fields: an index naming a
-parent whose surname is absent from the child's is likelier
-mis-indexed than correct, and the page image is what settles it.
-The chain is rebuttable —
-adoption, a natural child, a stepfather's name in use, a woman
-recorded under a married surname — so name the convention you are
-applying and confirm it held in that place and era.
+patronymic — before any record names the parents outright.
+**Surname order is country-specific: Spanish practice is paternal then
+maternal (*Juan García* + *María Ramos* → *García Ramos*), Portuguese
+and Brazilian practice is the reverse, maternal then paternal (*João
+Silva* + *Maria Costa* → *Costa Silva*). Confirm the convention for
+that country and era before reading position as parentage; until it is
+confirmed, disqualify a candidate only when *neither* of their
+surnames appears anywhere in the child's, and never on position
+alone.** Weigh this hardest against **indexed** parent fields: an
+index naming a parent whose surname is absent from the child's is
+likelier mis-indexed than correct, and the page image is what settles
+it. The chain is rebuttable — adoption, a natural child, a
+stepfather's name in use, a woman recorded under a married surname —
+so name the convention you are applying and confirm it held in that
+place and era.
 
 **Resolution of identity conflicts** (record only the `conflicts`
 section here; recommend the owning skill for any person/link work):
