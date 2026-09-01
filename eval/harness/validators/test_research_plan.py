@@ -582,7 +582,14 @@ _TRACEABLE_ID_TOOLS = {"collections_search", "volume_search", "external_links_se
 # unioned onto candidate_identifiers so grounding stays a strict SUPERSET —
 # permissive grounding can only remove a false fabrication, never add one. The
 # CITED side keeps candidate_identifiers, matching make provenance-report.
-_GROUNDED_NUM_RE = re.compile(r"(?<![\w.:/])\d{5,}(?![\w.])")
+# The lookbehind must NOT exclude '/': external_links_search is in
+# _TRACEABLE_ID_TOOLS because it returns collection ids, and it returns them
+# only as URL path segments ("ancestry.com/search/collections/61749/"), so
+# excluding a slash-preceded run made every id that tool serves ungroundable
+# — 22 of the 40 across its 16 fixtures — and turned a correct citation into
+# a fabrication flag (ut_research_plan_r3d, v1_2026-09-01_07-35-31). Widening
+# grounding can only clear a false positive, per the invariant above.
+_GROUNDED_NUM_RE = re.compile(r"(?<![\w.:])\d{5,}(?![\w.])")
 
 
 def _grounded_identifiers(text: str) -> set[str]:
