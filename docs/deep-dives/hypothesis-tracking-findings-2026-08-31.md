@@ -24,31 +24,46 @@ justification is the piece this PR rewrites (see F1) — the branch shape itself
 was sound, its content was about to go stale.
 
 **Dimensions that never discriminate — worse than the issue's headline number,
-measured across all 70 recorded test-runs in the five-log corpus:**
+measured across all 70 recorded test-runs in the five-log corpus. `n` is the
+count of graded instances, not test-runs — one run never reached the judge at
+all (below), so base dimensions have `n=69` and rubric dimensions, which the
+3 near-miss routing tests never carry, have `n=64`:**
 
 | dimension | scores ever seen | n |
 |---|---|---|
-| base / **Tool Arguments** | `3` or `null` only | 70 |
-| rubric / **Claim clarity** | `3` or `null` only | 70 |
-| rubric / **Evidence linkage** | `3` only | 70 |
-| rubric / **Status transitions** | `3` only | 70 |
-| base / **Correctness** | `3` (68), `2` (1), `1` (1) | 70 |
-| base / **Completeness** | `3` (68), `2` (1), `1` (1) | 70 |
+| base / **Tool Arguments** | `3` (64) or `null` (5) | 69 |
+| rubric / **Claim clarity** | `3` (63) or `null` (1) | 64 |
+| rubric / **Evidence linkage** | `3` only | 64 |
+| rubric / **Status transitions** | `3` only | 64 |
+| base / **Correctness** | `3` (67), `2` (1), `1` (1) | 69 |
+| base / **Completeness** | `3` (67), `2` (1), `1` (1) | 69 |
 
-**The single most important number in this dive: of 70 test-runs ever
-committed, 68 scored a flat `3` on every dimension the run produced, and the
-other 2 are the *same* test** (`ut_hypothesis_tracking_014`, a near-miss
-routing test whose empty `text_response` the base judge scores 1/1 by design —
-the harness overrides its `test.outcome` to `pass` because it correctly
-delegated via the `Skill` tool, exactly as `eval/CLAUDE.md`'s
-`routing_negative_judge_fail` advisory describes). **No graded instance of
-actual skill behavior has ever scored anything but a perfect 3 across five
-committed run logs and three suite expansions.** `Status transitions` and
-`Evidence linkage` — the two dimensions this repair most needs to be able to
-fail — have *never* taken a value other than 3, not even once, in 70 runs.
-That is the real reason a live defect (the `supported` gate below) sat in a
-green suite for as long as it did: the suite could not have shown red for it,
-because nothing in the corpus ever asked it to.
+**The one run that never reached the judge:**
+`ut_hypothesis_tracking_010` in `v1_2026-08-16_19-22-07.json` failed
+`test_project_file_changes_route_through_writer_tools` (a universal validator,
+not one of this skill's own) — "research.json modified with no writer-tool
+call." The judge is suppressed for the whole run when a gating validator
+fails, so this instance carries zero dimension scores rather than a bad one.
+This is the validator working as designed, not a hypothesis-tracking defect:
+the same test's transcript in the newest run log (read in full above, under
+Step 2) writes its update via `research_append` correctly, so whatever
+produced the direct write was specific to that one earlier candidate and is
+not present in the skill's current behavior.
+
+**The single most important number in this dive: of 69 graded test-runs, 67
+scored a flat `3` on every dimension the run produced, and the other 2 are the
+*same* test** (`ut_hypothesis_tracking_014`, a near-miss routing test whose
+empty `text_response` the base judge scores 1/1 by design — the harness
+overrides its `test.outcome` to `pass` because it correctly delegated via the
+`Skill` tool, exactly as `eval/CLAUDE.md`'s `routing_negative_judge_fail`
+advisory describes). **No graded instance of actual skill behavior has ever
+scored anything but a perfect 3 across five committed run logs and three
+suite expansions.** `Status transitions` and `Evidence linkage` — the two
+dimensions this repair most needs to be able to fail — have *never* taken a
+value other than 3, not even once, in 64 graded instances. That is the real
+reason a live defect (the `supported` gate below) sat in a green suite for as
+long as it did: the suite could not have shown red for it, because nothing in
+the corpus ever asked it to.
 
 ---
 

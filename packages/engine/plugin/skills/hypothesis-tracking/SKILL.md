@@ -120,9 +120,10 @@ entity.
 
 ```
 active ──► supported ──► (to proof-conclusion)
-  │            │
-  │            └──► (assertions-only route also reaches proof-conclusion,
-  │                  for an indirect argument resting on a single source)
+  │
+  ├──► (assertions-only route also reaches proof-conclusion, bypassing
+  │     `supported` — for an indirect argument resting on a single source)
+  │
   └──► ruled_out
 ```
 
