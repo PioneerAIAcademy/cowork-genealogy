@@ -8,7 +8,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09
-- **Last updated:** 2026-08-25 (the per-agent `effort` row's research came back)
+- **Last updated:** 2026-09-01 (the `craftNotes` probe's research came back)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -145,6 +145,7 @@ depend on a manual step at the end of a long session.
 | 2026-08-23 | Production telemetry as one bet across four issues | deferred | | |
 | 2026-08-23 | Replay the guardrail detectors over feedback-bundle session logs | accepted | Yields production examples, not rates — the half of ADR-0009's satisfiability constraint that binds | |
 | 2026-08-23 | Delete the dead `flaky` field and settle the six warn-only checks | set aside (magnitude) | Direction right, but the first scoping undercounted: `flaky` has TypeScript consumers in `eval/app/` (`lib/types.ts` declares it **required**, plus `lib/compare.ts` and the results page's badge), so removing it crosses a package boundary and that app's own CI job. Not a harness-only edit | |
+| 2026-09-01 | Deliver per-record-type craft on a call the extractor already makes, instead of a file it cannot read | accepted | **Researched 2026-09-01 by one paid probe ($9.37, 28 tests) — the channel is authoritative, not merely reliable.** A `craftNotes` array on `project_context` overrode the census informant table on 289 of 289 eligible assertions, against a baseline of 0 of 1,638 over six runs. The delivery arm **missed** its pre-registered ≥25-test gate at 24, one test having aborted on a harness error. So the split, not the channel, is the result: what must hold goes in a writer-tool precondition (ADR-0011), because a later payload overrides the body completely; this channel carries only craft the body is silent on. Arms, thresholds and limits: #2153 |
 
 ## Alternatives considered
 
