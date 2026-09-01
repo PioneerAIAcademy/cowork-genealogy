@@ -582,3 +582,51 @@ def test_gps_review_leaves_the_reviewed_narrative_intact(before_state, after_sta
     assert after.get("narrative_markdown") == before.get("narrative_markdown"), (
         "ps_001.narrative_markdown was rewritten during a REVIEW request"
     )
+
+
+# --- Classification requests write no conclusion (issue #1861 PR) -----
+
+def test_classification_request_writes_no_conclusion(before_state, after_state, test):
+    """A request to re-evaluate an assertion's informant classification is GPS
+    Step 3, owned by record-extraction. proof-conclusion consumes
+    classifications; it does not assign them, and it must not answer such a
+    request by writing a conclusion.
+
+    Mirrors test_conflict_resolution.py::test_creates_no_new_conflict, which
+    covers the same prompt from the neighbouring boundary. Both replace a
+    routing-gated verdict with a state one, because the routing gate is
+    unwinnable here: measured 2026-09-01, the model answered in-body with
+    activated false, skills_invoked [], file_changes [] and two read-only
+    calls, so record-extraction never fired and `correct_skill` could not be
+    satisfied by a run that did no harm at all.
+
+    Scoped to proof_summaries rather than to the whole of research.json on
+    purpose. A run that genuinely routes to record-extraction may let it
+    re-classify a_013, which changes research.json legitimately; the harm this
+    boundary can do is writing a conclusion, not touching the file.
+    """
+    if "no-classification-conclusion" not in test.get("tags", []):
+        pytest.skip("not a classification-boundary scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    before_by_id = {p.get("id"): p for p in before.get("proof_summaries", [])}
+    added = [
+        p.get("id") for p in after.get("proof_summaries", [])
+        if p.get("id") not in before_by_id
+    ]
+    assert not added, (
+        f"a classification request produced proof_summaries {added} — "
+        f"re-classification belongs to record-extraction"
+    )
+
+    changed = [
+        p.get("id") for p in after.get("proof_summaries", [])
+        if p.get("id") in before_by_id and p != before_by_id[p.get("id")]
+    ]
+    assert not changed, (
+        f"a classification request modified proof_summaries {changed} — "
+        f"this boundary may read a conclusion, never rewrite one"
+    )
