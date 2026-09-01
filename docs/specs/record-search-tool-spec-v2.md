@@ -446,13 +446,39 @@ Subtracting the two populations is wrong and was rejected: the unattached set al
 contains searches made with no `projectPath` at all, which stage nothing, so
 subtraction silently zeroes a real backlog.
 
-The count is read **before** this call stages its own response. A count taken after
-would include the search being answered and fire on the first search of every
+The backlog is read **before** this call stages its own response. A count taken
+after would include the search being answered and fire on the first search of every
 session.
 
-**`nilSearchNeedsLog` is args-only**, keyed on `projectPath` plus an empty result
-set, because a nil search stages nothing for the other note to find — and a nil
-result is the case a reasonably exhaustive search is most obliged to record.
+**It hands back refs, not a number.** The backlog exists because the session lost
+track of its handles, so a note saying "pass the `staged.resultsRef` that search
+returned" asks for something the agent no longer has. Its cheapest escape is then to
+log without the ref and hand-transcribe `query` — an error-prone transcription, and
+an entry of exactly the shape the pairing above tolerates, so the count would fall
+to zero while the raw response was lost for good. Naming the refs makes the
+obligation satisfiable from disk, and `research_log_append` fills `query` from the
+staged payload verbatim. The note also tells the model to log each search as it
+goes, matching `search-records/SKILL.md`'s rule against batching log calls.
+
+**`nilSearchNeedsLog` is keyed on the UPSTREAM total**, not on `results.length`.
+`results` is the post-`mapEntry` set, and `mapEntry` drops an entry with no
+represented person or no `entry.id`, so a page whose entries all fail mapping
+empties `results` while `totalMatches` is non-zero — and `staged` is null there too,
+which reads as corroboration. The note fires only when `data.results` is also 0.
+Ordering an `outcome: "negative"` entry for a query that has matches is the
+asymmetric error: a missing entry loses evidence, a false negative *adds* a claim,
+the log is append-only, and later reasoning leans hardest on negatives.
+
+One path is deliberately left unverified: `offset` is validated against the 4999
+pagination cap only, never against `totalMatches`, and no probe here records whether
+FamilySearch answers an offset past the last page with an empty `entries` or an
+error. Gating on `data.results` covers both readings, so the question does not need
+settling for this note to be correct.
+
+**The nil note's wording is load-bearing.** `negative` records what the search
+returned, never that the record is absent — this spec's own consumers say so at
+`search-records/SKILL.md:223`, `:72` and `:593` — and the note reaches an agent that
+by construction has read none of them.
 
 Both are advisory: no deny, no error, no changed exit path. Both are withheld from
 the staged payload, for the same reason `rankingSkipped` is — the sidecar records

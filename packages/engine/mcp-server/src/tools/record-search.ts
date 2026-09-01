@@ -38,7 +38,8 @@ import {
 import { toArk } from "../utils/ark.js";
 import {
   stageSearchResults,
-  countUnloggedStagedSearches,
+  unloggedStagedSearches,
+  formatUnloggedRefs,
   UNLOGGED_SEARCHES_NOTE,
   NIL_SEARCH_NEEDS_LOG_NOTE,
 } from "../utils/results-staging.js";
@@ -1003,8 +1004,8 @@ export async function recordSearchTool(
   // failure, and refuses nothing.
   const unloggedStaged =
     input.projectPath !== undefined
-      ? await countUnloggedStagedSearches(input.projectPath)
-      : 0;
+      ? await unloggedStagedSearches(input.projectPath)
+      : [];
 
   const out: RecordSearchToolResponse = {
     query: echoQuery(input),
@@ -1048,10 +1049,23 @@ export async function recordSearchTool(
     // Both model-facing notes sit in the same pre-`results` slot as
     // `rankingSkipped`, for the same reason: a field after `results` is the first
     // thing a size bound drops (spec § Key order).
-    ...(unloggedStaged > 0
-      ? { unloggedSearches: UNLOGGED_SEARCHES_NOTE.replace("{n}", String(unloggedStaged)) }
+    ...(unloggedStaged.length > 0
+      ? {
+          unloggedSearches: UNLOGGED_SEARCHES_NOTE.replace(
+            "{n}",
+            String(unloggedStaged.length),
+          ).replace("{refs}", formatUnloggedRefs(unloggedStaged.map((s) => s.ref))),
+        }
       : {}),
-    ...(input.projectPath !== undefined && results.length === 0
+    // `results` is the POST-`mapEntry` set: `mapEntry` returns null on a missing
+    // represented person or a missing `entry.id`, and those nulls are filtered out
+    // above. So an empty `results` does NOT mean the search found nothing — a page
+    // whose entries all fail mapping empties it while `data.results` is non-zero,
+    // and `staged` is null too, which reads as corroboration. Gate on the upstream
+    // total, which is what "the search found nothing" actually means. Ordering a
+    // `negative` log entry for a query that has matches is the asymmetric error:
+    // the log is append-only, and later reasoning leans hardest on negatives.
+    ...(input.projectPath !== undefined && results.length === 0 && (data.results ?? 0) === 0
       ? { nilSearchNeedsLog: NIL_SEARCH_NEEDS_LOG_NOTE }
       : {}),
     results,

@@ -15,7 +15,7 @@ vi.mock("../../src/utils/results-staging.js", async (importOriginal) => {
   return {
     ...actual,
     stageSearchResults: vi.fn(),
-    countUnloggedStagedSearches: vi.fn(),
+    unloggedStagedSearches: vi.fn(),
   };
 });
 
@@ -23,7 +23,7 @@ import { fulltextSearchTool } from "../../src/tools/fulltext-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import {
   stageSearchResults,
-  countUnloggedStagedSearches,
+  unloggedStagedSearches,
   NIL_SEARCH_NEEDS_LOG_NOTE,
 } from "../../src/utils/results-staging.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
@@ -34,7 +34,7 @@ import type {
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockedStage = vi.mocked(stageSearchResults);
-const mockedUnloggedCount = vi.mocked(countUnloggedStagedSearches);
+const mockedUnlogged = vi.mocked(unloggedStagedSearches);
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
@@ -43,8 +43,8 @@ beforeEach(() => {
   mockedGetValidToken.mockReset();
   mockedGetValidToken.mockResolvedValue("test-token");
   mockedStage.mockReset();
-  mockedUnloggedCount.mockReset();
-  mockedUnloggedCount.mockResolvedValue(0);
+  mockedUnlogged.mockReset();
+  mockedUnlogged.mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -617,7 +617,11 @@ describe("fulltextSearchTool result staging", () => {
 
 describe("fulltextSearchTool request headers", () => {
   it("38. carries the unlogged-search note, ordered before results", async () => {
-    mockedUnloggedCount.mockResolvedValue(3);
+    mockedUnlogged.mockResolvedValue([
+      { ref: "results/.staging/stale0.json", tool: "fulltext_search", retrieved: new Date().toISOString() },
+      { ref: "results/.staging/stale1.json", tool: "fulltext_search", retrieved: new Date().toISOString() },
+      { ref: "results/.staging/stale2.json", tool: "fulltext_search", retrieved: new Date().toISOString() },
+    ]);
     mockFetch.mockResolvedValueOnce(
       makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
     );
@@ -651,8 +655,28 @@ describe("fulltextSearchTool request headers", () => {
     expect(noProject.nilSearchNeedsLog).toBeUndefined();
   });
 
+  it("41. no negative-log note when entries failed mapping but matches exist", async () => {
+    // `mapEntry` returns null on a missing `entry.id`. An empty `results` then
+    // means nothing survived mapping, not that the search found nothing —
+    // `totalResults` is independent and non-zero here.
+    mockFetch.mockResolvedValueOnce(
+      makeOk({ results: 812, index: 0, entries: [{} as FSFulltextEntry] })
+    );
+
+    const result = await fulltextSearchTool({
+      keywords: "Flynn",
+      projectPath: "/tmp/project",
+    });
+
+    expect(result.results).toHaveLength(0);
+    expect(result.totalResults).toBe(812);
+    expect(result.nilSearchNeedsLog).toBeUndefined();
+  });
+
   it("40. withholds both notes from the staged payload", async () => {
-    mockedUnloggedCount.mockResolvedValue(1);
+    mockedUnlogged.mockResolvedValue([
+      { ref: "results/.staging/stale0.json", tool: "fulltext_search", retrieved: new Date().toISOString() },
+    ]);
     mockFetch.mockResolvedValueOnce(
       makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
     );

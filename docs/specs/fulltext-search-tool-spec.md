@@ -173,10 +173,12 @@ interface FulltextSearchResponse {
    *  Serialized before `results` and withheld from the staged payload;
    *  contract and rationale in record-search-tool-spec-v2.md. */
   unloggedSearches?: string;
-  /** Present only when `projectPath` was supplied and the search returned
-   *  nothing. A nil search stages no file, so the note above cannot see it.
-   *  Safe to key on `results` here, unlike external_links_search: nothing
-   *  narrows the inline copy before staging. */
+  /** Present only when `projectPath` was supplied AND the upstream total
+   *  (`data.results`) is 0. Not keyed on `results.length` alone: that is the
+   *  post-`mapEntry` set, and `mapEntry` drops an entry with no `entry.id`, so
+   *  a page that fails mapping empties `results` while `totalResults` is
+   *  non-zero. What distinguishes this tool from external_links_search is only
+   *  that no host filter narrows the inline copy — the mapping path is shared. */
   nilSearchNeedsLog?: string;
   results: FulltextSearchResult[];
   facets?: {

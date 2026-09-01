@@ -5,7 +5,7 @@ import { tmpdir } from "os";
 import {
   stageSearchResults,
   finalizeStagedResults,
-  countUnloggedStagedSearches,
+  unloggedStagedSearches,
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
 
@@ -90,7 +90,7 @@ describe("results-staging", () => {
     });
   });
 
-  describe("countUnloggedStagedSearches", () => {
+  describe("unloggedStagedSearches", () => {
     // A project the reader will accept: classifyProjectPath wants research.json
     // present before it will read anything out of the folder.
     const writeResearch = async (log: unknown[]) =>
@@ -105,20 +105,41 @@ describe("results-staging", () => {
 
     it("returns 0 with no staging directory at all", async () => {
       await writeResearch([]);
-      expect(await countUnloggedStagedSearches(dir)).toBe(0);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(0);
     });
 
     it("counts staged files with an empty log", async () => {
       await writeResearch([]);
       await stage();
       await stage();
-      expect(await countUnloggedStagedSearches(dir)).toBe(2);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(2);
+    });
+
+    it("returns handles the model can hand straight back as stagedResultsRef", async () => {
+      // A bare count is unusable to the session that lost the ref, which is the
+      // session this note exists for. The ref must come back with it.
+      await writeResearch([]);
+      const handle = await stage();
+      const [unlogged] = await unloggedStagedSearches(dir);
+
+      expect(unlogged.ref).toBe(handle!.resultsRef);
+      expect(unlogged.tool).toBe("record_search");
+      expect(Date.parse(unlogged.retrieved)).not.toBeNaN();
+
+      // And it is a ref finalizeStagedResults actually accepts.
+      await finalizeStagedResults({
+        projectPath: dir,
+        stagedResultsRef: unlogged.ref,
+        logId: "log_009",
+        expectedTool: unlogged.tool,
+      });
+      expect(await unloggedStagedSearches(dir)).toHaveLength(0);
     });
 
     it("stops counting a staged file once its search is logged", async () => {
       await writeResearch([]);
       const handle = await stage();
-      expect(await countUnloggedStagedSearches(dir)).toBe(1);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(1);
 
       // The real path: research_log_append finalizes, which unlinks the staged file.
       await finalizeStagedResults({
@@ -127,7 +148,7 @@ describe("results-staging", () => {
         logId: "log_001",
         expectedTool: "record_search",
       });
-      expect(await countUnloggedStagedSearches(dir)).toBe(0);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(0);
     });
 
     it("does not count a staged file whose search was logged without a sidecar", async () => {
@@ -143,7 +164,7 @@ describe("results-staging", () => {
           results_ref: null,
         },
       ]);
-      expect(await countUnloggedStagedSearches(dir)).toBe(0);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(0);
     });
 
     it("still counts an unlogged staged file when the project also holds an older logged-without-sidecar entry", async () => {
@@ -159,7 +180,7 @@ describe("results-staging", () => {
           results_ref: null,
         },
       ]);
-      expect(await countUnloggedStagedSearches(dir)).toBe(1);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(1);
     });
 
     it("pairs at most one staged file per unattached entry", async () => {
@@ -174,7 +195,7 @@ describe("results-staging", () => {
           results_ref: null,
         },
       ]);
-      expect(await countUnloggedStagedSearches(dir)).toBe(1);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(1);
     });
 
     it("does not pair across tools", async () => {
@@ -188,7 +209,7 @@ describe("results-staging", () => {
           results_ref: null,
         },
       ]);
-      expect(await countUnloggedStagedSearches(dir)).toBe(1);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(1);
     });
 
     it("ignores a staged file past the TTL, which prune is about to delete", async () => {
@@ -196,13 +217,13 @@ describe("results-staging", () => {
       const handle = await stage();
       const stale = new Date(Date.now() - 25 * 60 * 60 * 1000);
       await utimes(join(dir, handle!.resultsRef), stale, stale);
-      expect(await countUnloggedStagedSearches(dir)).toBe(0);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(0);
     });
 
     it("returns 0 rather than throwing when research.json is unreadable", async () => {
       await stage();
       await writeFile(join(dir, "research.json"), "{ not json", "utf-8");
-      expect(await countUnloggedStagedSearches(dir)).toBe(0);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(0);
     });
   });
 

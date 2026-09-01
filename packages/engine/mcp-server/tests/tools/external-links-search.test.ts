@@ -3,7 +3,7 @@ import { externalLinksSearchTool } from "../../src/tools/external-links-search.j
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import {
   stageSearchResults,
-  countUnloggedStagedSearches,
+  unloggedStagedSearches,
 } from "../../src/utils/results-staging.js";
 
 const mockFetch = vi.fn();
@@ -24,11 +24,11 @@ vi.mock("../../src/utils/results-staging.js", async (importOriginal) => {
   return {
     ...actual,
     stageSearchResults: vi.fn(),
-    countUnloggedStagedSearches: vi.fn(),
+    unloggedStagedSearches: vi.fn(),
   };
 });
 const mockedStage = vi.mocked(stageSearchResults);
-const mockedUnloggedCount = vi.mocked(countUnloggedStagedSearches);
+const mockedUnlogged = vi.mocked(unloggedStagedSearches);
 
 // Runs before every test (in addition to the per-describe fetch resets);
 // default the resolver to a successful placeId so existing cases reach fetch.
@@ -36,8 +36,8 @@ beforeEach(() => {
   mockStandardPlaceToPlaceId.mockReset();
   mockStandardPlaceToPlaceId.mockResolvedValue("1927089");
   mockedStage.mockReset();
-  mockedUnloggedCount.mockReset();
-  mockedUnloggedCount.mockResolvedValue(0);
+  mockedUnlogged.mockReset();
+  mockedUnlogged.mockResolvedValue([]);
 });
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -421,7 +421,10 @@ describe("externalLinksSearchTool — staging, host filter, and inline cap", () 
   });
 
   it("carries the unlogged-search note when the project holds an unlogged staged search", async () => {
-    mockedUnloggedCount.mockResolvedValue(2);
+    mockedUnlogged.mockResolvedValue([
+      { ref: "results/.staging/stale0.json", tool: "external_links_search", retrieved: new Date().toISOString() },
+      { ref: "results/.staging/stale1.json", tool: "external_links_search", retrieved: new Date().toISOString() },
+    ]);
     mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
     mockedStage.mockResolvedValueOnce({
       resultsRef: "results/.staging/abc.json",

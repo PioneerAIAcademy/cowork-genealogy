@@ -3,7 +3,8 @@ import { fetchWithTimeout } from "../utils/http.js";
 import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
 import {
   stageSearchResults,
-  countUnloggedStagedSearches,
+  unloggedStagedSearches,
+  formatUnloggedRefs,
   UNLOGGED_SEARCHES_NOTE,
   NIL_SEARCH_NEEDS_LOG_NOTE,
 } from "../utils/results-staging.js";
@@ -190,8 +191,8 @@ export async function externalLinksSearchTool(
   // being answered right now. Advisory: never throws, 0 on any failure.
   const unloggedStaged =
     input.projectPath !== undefined
-      ? await countUnloggedStagedSearches(input.projectPath)
-      : 0;
+      ? await unloggedStagedSearches(input.projectPath)
+      : [];
 
   const out: ExternalLinksSearchResult = {
     query,
@@ -200,8 +201,13 @@ export async function externalLinksSearchTool(
     // Both notes are declared here, ahead of `results`, for the same reason
     // record_search orders them so: a field after the largest field is the first
     // thing a size bound drops.
-    ...(unloggedStaged > 0
-      ? { unloggedSearches: UNLOGGED_SEARCHES_NOTE.replace("{n}", String(unloggedStaged)) }
+    ...(unloggedStaged.length > 0
+      ? {
+          unloggedSearches: UNLOGGED_SEARCHES_NOTE.replace(
+            "{n}",
+            String(unloggedStaged.length),
+          ).replace("{refs}", formatUnloggedRefs(unloggedStaged.map((s) => s.ref))),
+        }
       : {}),
     // Keyed on the PRE-FILTER set. `results` below is host-filtered and capped, so a
     // `host:` search against a place whose links are all on other hosts returns an

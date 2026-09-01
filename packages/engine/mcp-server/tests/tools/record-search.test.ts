@@ -918,6 +918,27 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
       expect(out.nilSearchNeedsLog).toContain('outcome: "negative"');
     });
 
+    it("does not ask for a negative log entry when entries failed mapping but matches exist", async () => {
+      // `mapEntry` returns null on a missing represented person or a missing
+      // `entry.id`, so a page can map to zero results while the corpus holds 812
+      // matches. Keying the note on `results.length` alone would order an
+      // `outcome: "negative"` entry for a query that has hits — and the log is
+      // append-only, so a wrong negative can only be corrected by a later append.
+      await writeResearch([]);
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({
+          results: 812,
+          index: 0,
+          entries: [{ id: undefined } as unknown as FSSearchEntry],
+        }),
+      );
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+      expect(out.results).toHaveLength(0);
+      expect(out.totalMatches).toBe(812);
+      expect(out.nilSearchNeedsLog).toBeUndefined();
+    });
+
     it("says nothing about logging when no projectPath was supplied", async () => {
       mockFetch.mockResolvedValueOnce(
         makeOkResponse({ results: 0, index: 0, entries: [] }),
