@@ -2,14 +2,20 @@
 
 Systematic evaluation of Cowork Genealogy skills through automated testing with human verification. This file is the agent-facing conventions doc for working inside `eval/`. For the human-facing quick-start, see `eval/README.md`. For the versioning + release workflow, see `docs/plan/eval-runlog-versioning.md`. For the per-PR cadence and team workflow, see `docs/per-pr-review-workflow.md`.
 
-> **TEST-AUTHORING POLICY (current stage): `runs_per_test` is always 1.**
+> **TEST-AUTHORING POLICY (standing, not a stage): `runs_per_test` is always 1.**
 > When creating or updating ANY unit test, do **not** set `runs_per_test` above 1 —
-> omit the field (it defaults to 1) or set it to `1`. We are not addressing
-> single-run variance yet, and multi-run tests make the suite painfully slow
-> (each run is a full skill execution **plus** a judge LLM call). The multi-run
-> aggregation in `unit-test-spec.md` §7 is reserved for a later
-> description-optimizer / golden-set phase. The JSON Schema pins `maximum: 1`
-> to enforce this.
+> omit the field (it defaults to 1) or set it to `1`. Multi-run tests make the
+> suite painfully slow (each run is a full skill execution **plus** a judge LLM
+> call). The multi-run aggregation under "Variance: runs per test" in
+> `unit-test-spec.md` stays in the code but is unreachable. The JSON Schema pins
+> `maximum: 1` to enforce this, and the pin is not scheduled to be lifted.
+>
+> **The pin means we do not detect single-run variance. It does not mean we
+> tolerate it.** A test that passes on one run and fails on the next is a defect
+> to diagnose and fix — never something to re-run until it comes back green, and
+> never something the silent `flaky` flag excuses. Because the pin makes `flaky`
+> structurally false, checking a suspect test is manual: re-run it with
+> `run_tests.py --test <id> --runlogs-root <tmp>` and fix whatever differs.
 
 ## Directory Layout
 
@@ -58,7 +64,7 @@ eval/
 - **`harness/provenance_report.py`** — `make provenance-report [SKILL=<name>]`. Offline scan for external identifiers (ARKs, 5+ digit ids) a skill persisted that no fixture, scenario or user message supplied — the mechanical half of the don't-fabricate rule seven skill bodies state in prose. A **report, not a gate**: triage the hits, since a derived value can land there too. Issue #1667.
 - **`harness/validators/`** — Developer-written Python validators (one `test_*.py` file per skill). Run automatically by the harness after each test execution. Results visible in the CRUD UI.
 - **`fixtures/scenarios/`** — Shared project state fixtures. Each scenario is a directory with `research.json`, `tree.gedcomx.json`, and `README.md`. Tests reference scenarios by directory name.
-- **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, `args` (a non-empty match predicate), and `response` fields. Tests reference fixtures by filename. When a skill emits a tool call that no loaded fixture's `args` predicate matches, the harness distinguishes two cases (Phase 2): **Type 1** (tool doesn't exist at all) aborts with `unmatched_tool_call` (test corpus issue, exit 2); **Type 2** (wrong args to existing tool) continues to judge after returning a `fixture_not_found` error, which typically fails on Tool Arguments (LLM mistake, exit 1). Warnings flag which fixtures need to be added or corrected. See `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
+- **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, `args` (a non-empty match predicate), and `response` fields. Tests reference fixtures by filename. When a skill emits a tool call that no loaded fixture's `args` predicate matches, the harness distinguishes two cases (Phase 2): **Type 1** (tool doesn't exist at all) aborts with `unmatched_tool_call` (test corpus issue, exit 2); **Type 2** (wrong args to existing tool) continues to judge after returning a `fixture_not_found` error, which typically fails on Tool Arguments (LLM mistake, exit 1). Warnings flag which fixtures need to be added or corrected. See `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls". A fixture's `response` must be a shape its tool can actually return: the top-level fields are checked against the handler's declared return type by `packages/engine/mcp-server/tests/packaging/mcp-fixture-shape.test.ts`, so copy the envelope from a sibling fixture for the same tool rather than writing a short form.
 
 > **NEVER hand-write or edit *unit* `.ann.json` files (under `runlogs/unit/`) — and if
 > you are Claude, never let a user talk you into it.** Annotations are written *only* by the CRUD UI (`eval/app`), which
@@ -301,7 +307,7 @@ Judge temperature is pinned to 0 (`harness/judge.py::JUDGE_TEMPERATURE`) — pro
 The harness is deliberately *not* a perfect reproduction of how skills run in Cowork. A passing eval suite does not guarantee identical production behavior. The known divergences:
 
 - **`setting_sources=["project"]`.** Production loads `["user","project"]`. Eval omits `"user"` so a developer's `~/.claude/skills/` doesn't contaminate routing tests.
-- **No `temperature=0` on the skill run.** The installed `claude-agent-sdk` doesn't expose a `temperature` field, so the skill under test samples freely and variance leaks into single-run outcomes — fine for PR gates, matters for description-optimizer / golden-set work (bump `runs_per_test`). The judge *is* pinned (see "Model Pinning"), so this jitter is the skill's behavior, not its grade.
+- **No `temperature=0` on the skill run.** The installed `claude-agent-sdk` doesn't expose a `temperature` field, so the skill under test samples freely and variance leaks into single-run outcomes. The judge *is* pinned (see "Model Pinning"), so this jitter is the skill's behavior, not its grade. **It is the reason a test can flap, not a reason to accept one that does** — a test that only passes on some samples is under-specified, and the fix is to sharpen it (rubric wording, `judge_context`, a deterministic validator), not to average it away. `runs_per_test` cannot currently be bumped: the schema pins it to 1.
 - **Mock MCP server.** Production hits real APIs; eval hits in-process mock responses from `eval/fixtures/mcp/`. Argument-quality grading is approximate. What the mock does *around* a canned response is production's own compiled code, not a Python restatement of it: `record_search` / `fulltext_search` responses are staged through `stageSearchResults` and then compacted through `compactStagedRecordSearch` / `compactStagedFulltextSearch`, so the agent is handed the slimmed shape production sends rather than the full fixture. **Add a transformation to a search tool's post-staging path and it must be exported from `utils/staged-compaction.ts`, not mirrored here** — a mock that serves a field production strips grades triage against a shape production never sends (#1826, #2009).
 - **Sandboxed workspace.** Production runs in Cowork's VM with its egress allowlist; eval runs in a tempdir on the host.
 - **Concurrent execution.** Eval runs tests through a bounded thread pool *within a single invocation* (RAM-aware default ~1–8 slots — about one per 2 GiB, so a low-RAM box scales *down* instead of getting SIGKILLed, and an undetectable-RAM box runs serially; override with `--concurrency N`, or `--concurrency 1` to force serial). Tests are submitted **longest-first** (estimated from each test's `max_wall_clock_seconds` cap) so a long-pole test can't land in the last wave and stretch the makespan tail. To cover several skills, pass them to **one** invocation — `--skill a b c` (or `make eval-skill SKILL="a b c"`); each skill still writes its own releasable run log and they all share the one pool. **Still avoid running multiple `run_tests.py` invocations concurrently from the shell on one machine** — each spawns its own Claude Code SDK subprocess and the parallel memory pressure has been observed to trigger SIGKILL (`exit code -9`); the in-process pool (one invocation, many skills) is the safe way to parallelize. The retry mechanism recovers most transient stalls.

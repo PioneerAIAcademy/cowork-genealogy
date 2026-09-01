@@ -211,6 +211,24 @@ describe("performLogin", () => {
     expect(httpState.listenCalls).toHaveLength(1);
   });
 
+  it("HTML-escapes error parameters in the callback response", async () => {
+    await performLogin();
+    await flushMicrotasks();
+
+    const req = {
+      url: `/callback?error=bad&error_description=${encodeURIComponent("<script>alert(1)</script>")}`,
+    } as IncomingMessage;
+    const res = {
+      writeHead: vi.fn().mockReturnThis(),
+      end: vi.fn(),
+    } as unknown as ServerResponse;
+    httpState.handler!(req, res);
+
+    const html = (res.end as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;script&gt;");
+  });
+
   it("clears the in-flight flow after the login window times out", async () => {
     vi.useFakeTimers();
 
