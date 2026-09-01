@@ -341,7 +341,7 @@ still *supports* those focuses **on-demand** — see below.)
 | Trigger | Focus | Target |
 |---------|-------|--------|
 | `proof-conclusion` just wrote `<ps_id>` | `proof-critique` | `<ps_id>` |
-| User asks "review my work", "is this defensible?", "critique my proof", "am I ready to conclude?", "second opinion", "mentor", "does my proof meet the GPS", "assess ps_NNN against the GPS components", "review my existing proof summary" | `on-demand` | most recent question / proof summary / `"project"` |
+| User asks "review my work", "is this defensible?", "critique my proof", "am I ready to conclude?", "second opinion", "mentor" | `on-demand` | most recent question / proof summary / `"project"` |
 
 For the `proof-critique` gate, first check `evaluations/` for an existing
 `proof-critique-<ps_id>-*.json` newer than the last edit to that proof
@@ -362,13 +362,10 @@ and target_id.
 ### On-demand invocation
 
 When the user says "review my work", "is this defensible?", "what
-would a senior genealogist say?", "mentor", "second opinion", or asks
-for a GPS review of an existing proof summary ("does my proof meet the
-GPS", "assess ps_NNN against the GPS components", "review my existing
-proof summary"), or any equivalent, invoke `@plugin:gps-mentor` with
-`focus: on-demand` and `target_id` set to the most recent question,
-proof summary, or the literal string `"project"` if no specific target
-is implied.
+would a senior genealogist say?", "mentor", "second opinion", or
+any equivalent, invoke `@plugin:gps-mentor` with `focus: on-demand`
+and `target_id` set to the most recent question, proof summary, or
+the literal string `"project"` if no specific target is implied.
 
 ### Verdict handling protocol
 
