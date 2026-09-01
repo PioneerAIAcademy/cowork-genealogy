@@ -143,6 +143,34 @@ describe('SidecarResultCard — fulltext_search', () => {
     expect(spy).toHaveBeenCalledWith('https://www.familysearch.org/ark:/61903/3:1:S3HT-XYZ')
   })
 
+  it('derives the FamilySearch URL from the bare ARK id when sourceUrl is an empty string', async () => {
+    // A producer setting sourceUrl to "" (not absent) must not be treated as
+    // "present" -- `??` alone would substitute nothing and openExternal
+    // would then silently no-op on the empty string.
+    const spy = vi.fn()
+    setOpenExternal(spy)
+    render(
+      <SidecarResultCard
+        result={{ ...fulltextResult, sourceUrl: '' }}
+        tool="fulltext_search"
+        defaultExpanded={true}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    expect(spy).toHaveBeenCalledWith('https://www.familysearch.org/ark:/61903/3:1:S3HT-XYZ')
+  })
+
+  it('falls back past an empty-string title to recordType', () => {
+    render(
+      <SidecarResultCard
+        result={{ ...fulltextResult, title: '' }}
+        tool="fulltext_search"
+        defaultExpanded={false}
+      />
+    )
+    expect(screen.getByRole('heading', { name: 'Will' })).toBeInTheDocument()
+  })
+
   it('merges recordDate with dates rather than letting recordDate hide the rest', () => {
     render(
       <SidecarResultCard result={fulltextResult} tool="fulltext_search" defaultExpanded={true} />

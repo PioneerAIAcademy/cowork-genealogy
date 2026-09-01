@@ -154,6 +154,14 @@ function FulltextSearchBody({ result }: { result: FulltextSearchResult }): React
   const text = result.textDocument ?? ''
   const terms = result.highlightTerms ?? []
   let rendered: React.ReactNode = text
+  // recordDate (the record's own canonical date) and dates (every date
+  // entity-extracted from the document text) are not redundant — a probate
+  // filing can carry a filing date plus an earlier death date in the body —
+  // so merge and dedupe rather than letting recordDate hide dates' other
+  // entries.
+  const allDates = Array.from(
+    new Set([result.recordDate, ...(result.dates ?? [])].filter(Boolean))
+  )
   if (terms.length > 0 && text) {
     const escaped = terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).filter(Boolean)
     if (escaped.length > 0) {
@@ -185,31 +193,19 @@ function FulltextSearchBody({ result }: { result: FulltextSearchResult }): React
           <span>{result.places.join(', ')}</span>
         </div>
       )}
-      {(() => {
-        // recordDate (the record's own canonical date) and dates (every date
-        // entity-extracted from the document text) are not redundant — a
-        // probate filing can carry a filing date plus an earlier death date
-        // in the body — so merge and dedupe rather than letting recordDate
-        // hide dates' other entries.
-        const allDates = Array.from(
-          new Set([result.recordDate, ...(result.dates ?? [])].filter(Boolean))
-        )
-        return (
-          allDates.length > 0 && (
-            <div className={styles.metaRow}>
-              <span className={styles.metaLabel}>Dates</span>
-              <span>{allDates.join(', ')}</span>
-            </div>
-          )
-        )
-      })()}
+      {allDates.length > 0 && (
+        <div className={styles.metaRow}>
+          <span className={styles.metaLabel}>Dates</span>
+          <span>{allDates.join(', ')}</span>
+        </div>
+      )}
       {result.id && (
         <div className={styles.footerLink}>
           <button
             type="button"
             className={styles.externalLink}
             onClick={() =>
-              openExternal(result.sourceUrl ?? `https://www.familysearch.org/${result.id}`)
+              openExternal(result.sourceUrl || `https://www.familysearch.org/${result.id}`)
             }
           >
             Open in FamilySearch →
@@ -229,12 +225,10 @@ export default function SidecarResultCard({
   const [expanded, setExpanded] = useState(defaultExpanded)
 
   const isRS = isRecordSearch(result, tool)
+  const ft = result as FulltextSearchResult
   const title = isRS
     ? (result.recordTitle ?? result.collectionTitle ?? 'Untitled record')
-    : ((result as FulltextSearchResult).title ??
-      (result as FulltextSearchResult).recordType ??
-      (result as FulltextSearchResult).collectionTitle ??
-      'Untitled record')
+    : (ft.title || ft.recordType || ft.collectionTitle || 'Untitled record')
   const score = isRS ? result.score : undefined
 
   return (
