@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_c5n",
+    "skill": "source-evaluation",
+    "name": "Two sources disagreeing about the same fact routes to conflict-resolution",
+    "type": "negative",
+    "description": "Boundary against conflict-resolution. The user describes two sources giving different answers for one fact -- that is a conflict to be weighed, not a defect in a source to be classified. source-evaluation asks whether a source belongs here and whether it was indexed correctly; conflict-resolution asks which of two sources to believe. Reciprocal of the existing ut_check_warnings_011, which pins the same boundary from the warnings side.",
+    "tags": [
+      "negative",
+      "boundary",
+      "conflict-resolution"
+    ]
+  },
+  "input": {
+    "user_message": "The 1900 census says Christian was born in 1875 and the 1885 state census says 1852 -- which one should I go with?",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885"
+  ],
+  "negative": {
+    "correct_skill": [
+      "conflict-resolution"
+    ],
+    "explanation": "The user is not asking whether the sources belong on the profile or whether they were indexed correctly -- they are asking which of two disagreeing sources to believe. That is independence analysis and the preponderance hierarchy, which conflict-resolution owns. source-evaluation's own body routes this case away in its first section."
+  },
+  "judge_context": [
+    "Should route to conflict-resolution and produce no audit of its own",
+    "Should not call person_read, record_read or source_attachments",
+    "The handoff is silent -- source-evaluation writes no reply of its own"
+  ]
+}

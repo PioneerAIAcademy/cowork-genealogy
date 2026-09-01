@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_w7d",
+    "skill": "source-evaluation",
+    "name": "Triggers on an audit request phrased as a question about support",
+    "type": "positive",
+    "description": "Second trigger positive, on the issue title's framing rather than the tester's verbatim words. 'Do these sources actually back up what is on his profile' is the same flow asked differently, and a description that fires on only one wording is a description that will miss the next tester.",
+    "tags": [
+      "trigger"
+    ]
+  },
+  "input": {
+    "user_message": "Do the sources attached to KD96-TV2 actually back up what's recorded on his profile?",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885"
+  ],
+  "judge_context": [
+    "The source-evaluation skill must activate",
+    "Should read the attached sources and compare each against the recorded facts rather than answering from the tree alone"
+  ]
+}

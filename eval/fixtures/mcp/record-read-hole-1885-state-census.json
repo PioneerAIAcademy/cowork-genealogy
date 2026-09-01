@@ -1,0 +1,102 @@
+{
+  "tool": "record_read",
+  "description": "The 1885 Minnesota State Census record attached to Christian P. Hole (KD96-TV2) as SD-HOLE-C — and it is about a different man. Multiple fields disagree at once, which is what separates a misattributed source from a mis-indexed one: born 1852 against the profile's 1875, resident in Otter Tail County rather than Polk, with a wife Bergit and three children who appear nowhere in this family. This is the only classification for which detaching is the right recommendation.",
+  "args": {
+    "recordId": "~HOLE-003"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Christian",
+            "surname": "Hole",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": "1852",
+            "place": "Norway"
+          },
+          {
+            "id": "F2",
+            "type": "Residence",
+            "date": "1885",
+            "place": "Aurdal, Otter Tail, Minnesota, United States"
+          }
+        ],
+        "ark": "ark:/61903/1:1:HOLE-003",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Minnesota State Census, 1885"
+          }
+        ]
+      },
+      {
+        "id": "P2",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N2",
+            "preferred": true,
+            "given": "Bergit",
+            "surname": "Hole",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F3",
+            "type": "Birth",
+            "date": "1856",
+            "place": "Norway"
+          }
+        ]
+      },
+      {
+        "id": "P3",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N3",
+            "preferred": true,
+            "given": "Nils",
+            "surname": "Hole",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F4",
+            "type": "Birth",
+            "date": "1879",
+            "place": "Minnesota, United States"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "Couple",
+        "person1": "P1",
+        "person2": "P2"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "P1",
+        "child": "P3"
+      }
+    ],
+    "collection": {
+      "title": "Minnesota State Census, 1885"
+    }
+  }
+}

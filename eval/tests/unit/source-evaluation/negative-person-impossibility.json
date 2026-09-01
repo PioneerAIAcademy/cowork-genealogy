@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_h3t",
+    "skill": "source-evaluation",
+    "name": "A single person's impossible dates route to check-warnings",
+    "type": "negative",
+    "description": "Boundary against check-warnings. An event dated after a person's death is an impossibility in that person's own data -- it needs no source read at all, and check-warnings' person_warnings tool answers it deterministically. Reciprocal of the negative added under eval/tests/unit/check-warnings/ in the same change.",
+    "tags": [
+      "negative",
+      "boundary",
+      "check-warnings"
+    ]
+  },
+  "input": {
+    "user_message": "Ole C. Hole has a residence recorded in 1975 but he died in 1960. Can you check him for problems like that?",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885"
+  ],
+  "negative": {
+    "correct_skill": [
+      "check-warnings"
+    ],
+    "explanation": "An event after death is a contradiction in one person's own recorded data, which person_warnings detects offline without reading a single source. source-evaluation audits attached sources; it does not run impossibility checks, and its body routes this case to check-warnings before making any tool call."
+  },
+  "judge_context": [
+    "Should route to check-warnings",
+    "Should not enumerate or read the person's attached sources -- the question does not turn on what any source says"
+  ]
+}

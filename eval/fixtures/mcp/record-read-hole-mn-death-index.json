@@ -1,0 +1,49 @@
+{
+  "tool": "record_read",
+  "description": "The Minnesota Death Index record attached to Christian P. Hole (KD96-TV2) as SD-HOLE-B. It agrees with the profile throughout — same name, same death date, same county. Present so the source-evaluation corpus contains a source with no finding at all: a skill that reports a problem on every source it reads has not evaluated anything.",
+  "args": {
+    "recordId": "~HOLE-002"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Christian P.",
+            "surname": "Hole",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Death",
+            "date": "10 June 1945",
+            "place": "Erskine, Polk, Minnesota, United States"
+          },
+          {
+            "id": "F2",
+            "type": "Birth",
+            "date": "1875",
+            "place": "Norway"
+          }
+        ],
+        "ark": "ark:/61903/1:1:HOLE-002",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Minnesota Death Index, 1908-2002"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "collection": {
+      "title": "Minnesota Death Index, 1908-2002"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_m8q",
+    "skill": "source-evaluation",
+    "name": "Backend metadata is not presented as a to-do",
+    "type": "positive",
+    "description": "Doctrine point 2 of issue #1606. The tester's report: 'Having the metadata errors brought to my attention was not helpful.' The agent had surfaced FamilySearch backend artifacts -- repeated internal fact ids across persons -- as if they were user-fixable errors. The fixture records carry exactly that shape: every record_read response reuses the ids F1/F2/N1/P1 across unrelated persons, because that is how the tool numbers them. The skill must not count those among the findings or recommend any action for them, while still reporting the two real findings.",
+    "tags": [
+      "index-discrepancy",
+      "doctrine",
+      "backend-metadata",
+      "signal-vs-noise"
+    ]
+  },
+  "input": {
+    "user_message": "Evaluate the sources on Christian P. Hole (KD96-TV2) and list everything you find wrong, worst first.",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885"
+  ],
+  "judge_context": [
+    "The findings list must contain only user-actionable items -- the 1900 census index error and the misattributed 1885 state census",
+    "Repeated internal ids across records (F1, N1, P1 recurring on unrelated persons) are FamilySearch storage artifacts; they must NOT appear as numbered findings or carry a recommended action",
+    "Mentioning backend metadata once as closing context is acceptable; listing it as a problem to fix is the failure this test pins",
+    "The stated count of findings must exclude backend metadata",
+    "The uploaded funeral card (SD-HOLE-D) has no record ARK and must be reported as unchecked, not as clean"
+  ]
+}

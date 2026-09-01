@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_r4k",
+    "skill": "source-evaluation",
+    "name": "An index discrepancy is remedied by re-reading the record, never by detaching the source",
+    "type": "positive",
+    "description": "The 1900 census attached to Christian P. Hole indexes his birth year as 1877 against the profile's 1875. Everything else in the record fits -- township, ED, wife, son -- so this is a transcription error in the index, not a source about the wrong man. Doctrine point 1 of issue #1606: the first-line recommendation is to re-read the original image and correct the index; detaching is reserved for genuinely misattributed sources. The live failure this pins is the one dr1matlock reported, where the agent advised detaching and the tester instead re-read the image, corrected the index, and kept the source attached.",
+    "tags": [
+      "index-discrepancy",
+      "doctrine",
+      "re-read-before-detach"
+    ]
+  },
+  "input": {
+    "user_message": "Take a look at the sources attached to Christian P. Hole, KD96-TV2. Something's off with his birth year and I want to know which source is wrong.",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885"
+  ],
+  "judge_context": [
+    "Should call person_read with sourceDescriptions to enumerate what is attached, then record_read each source that carries a record ARK",
+    "Must identify the 1900 census (SD-HOLE-A) as indexing 1877 against the profile's 1875",
+    "Must recommend re-reading the original image and correcting the index as the first-line remedy",
+    "Must NOT recommend detaching, unlinking, removing or flagging the 1900 census -- the record is about the right man and detaching would discard good evidence over one misread digit",
+    "Should say what makes it an index error rather than a wrong source: one field disagrees, everything else in the record fits"
+  ]
+}

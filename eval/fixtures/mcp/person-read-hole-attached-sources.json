@@ -1,0 +1,83 @@
+{
+  "tool": "person_read",
+  "description": "FamilySearch tree person read for Christian P. Hole (KD96-TV2) WITH source descriptions, for the source-evaluation skill. The four attached sources are authored to span exactly the three classifications the skill must tell apart, plus one it cannot check: HOLE-001 (1900 census) is right about the man but indexes his birth year as 1877 against the profile's 1875 — a single-field indexing error whose remedy is a re-read, never a detach; HOLE-002 (Minnesota death index) agrees with the profile throughout; HOLE-003 (1885 Minnesota state census) is about a different Christian Hole entirely — born 1852, in Otter Tail County, with a wife and children who are not this family's; and the fourth is a user-uploaded memory with no record ARK, so it cannot be read and must be reported unchecked rather than clean. Scenario: christian-hole-quality.",
+  "args": {
+    "personId": "KD96-TV2",
+    "sourceDescriptions": true
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "KD96-TV2",
+        "gender": "Male",
+        "living": false,
+        "names": [
+          {
+            "given": "Christian P.",
+            "surname": "Hole"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1875",
+            "standard_date": "1875",
+            "place": "Norway",
+            "standard_place": "Norway"
+          },
+          {
+            "type": "Marriage",
+            "date": "1 May 1898",
+            "standard_date": "1 May 1898",
+            "place": "Polk, Minnesota, United States",
+            "standard_place": "Polk, Minnesota, United States"
+          },
+          {
+            "type": "Residence",
+            "date": "1900",
+            "standard_date": "1900",
+            "place": "Fairview, Polk, Minnesota, United States",
+            "standard_place": "Fairview, Polk, Minnesota, United States"
+          },
+          {
+            "type": "Death",
+            "date": "10 June 1945",
+            "standard_date": "10 Jun 1945",
+            "place": "Erskine, Polk, Minnesota, United States",
+            "standard_place": "Erskine, Polk, Minnesota, United States"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "SD-HOLE-A",
+        "title": "Christian P. Hole, \"United States Census, 1900\"",
+        "citation": "\"United States Census, 1900\", database with images, FamilySearch, entry for Christian P. Hole, Fairview Township, Polk County, Minnesota, ED 112, sheet 4B.",
+        "url": "https://familysearch.org/ark:/61903/1:1:HOLE-001"
+      },
+      {
+        "id": "SD-HOLE-B",
+        "title": "Christian P. Hole, \"Minnesota Death Index, 1908-2002\"",
+        "citation": "\"Minnesota Death Index, 1908-2002\", database, FamilySearch, entry for Christian P. Hole, died 10 June 1945, Polk County, Minnesota.",
+        "url": "https://familysearch.org/ark:/61903/1:1:HOLE-002"
+      },
+      {
+        "id": "SD-HOLE-C",
+        "title": "Christian Hole, \"Minnesota State Census, 1885\"",
+        "citation": "\"Minnesota State Census, 1885\", database, FamilySearch, entry for Christian Hole, Otter Tail County, Minnesota.",
+        "url": "https://familysearch.org/ark:/61903/1:1:HOLE-003"
+      },
+      {
+        "id": "SD-HOLE-D",
+        "title": "Hole family photograph and funeral card (uploaded memory)",
+        "citation": "Funeral card for Christian P. Hole, Erskine, Minnesota, 1945; digital image uploaded by a FamilySearch contributor.",
+        "url": "https://ancestors.familysearch.org/en/KD96-TV2/memories",
+        "notes": [
+          "Contributor upload; no indexed record behind it."
+        ]
+      }
+    ]
+  }
+}
