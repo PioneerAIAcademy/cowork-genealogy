@@ -465,9 +465,13 @@ agents.**
 > surface, the share of work that *can* be routed to another model is the share
 > that runs inside one: `Agent` is **3.8% of all tool calls** across the 145
 > committed e2e runs, and **5.2%** in the 14 runs since 2026-07-31. A model swap
-> on an agent moves a few percent of the session, not the session. Anything that
-> needs to move the bulk of the work has to change what the *main thread* runs on,
-> which no per-step mechanism in this repo can do.
+> on an agent moves a few percent of the session, not the session.
+>
+> **That ceiling is a property of which steps are agents today, not a law.** It
+> rises when a skill becomes a skill-agent pair, which is the one mechanism here
+> that moves a step's work — and its body — off the main thread. Read the figure
+> as the current population, and re-measure it rather than quoting it at a
+> proposal that would change it.
 
 ### 3.6 The lane rule — classify a finding before you edit prose
 
