@@ -585,3 +585,42 @@ def test_unstaged_record_search_is_not_compacted(tmp_path):
     assert any("gedcomx" in row for row in body["results"]), (
         "an un-staged search keeps full fidelity inline"
     )
+
+
+def test_mapping_failure_response_does_not_get_the_negative_log_note(tmp_path):
+    """The WIRING, not the predicate.
+
+    `_fixture_is_nil`'s own unit tests prove the predicate; nothing proved the
+    call site uses it. Reverting that call site to `not response.get("results")`
+    leaves the whole suite green, because the only committed fixture routed
+    through dispatch has `totalMatches: 0`, where both conditions agree. The
+    discriminating shape is built here rather than committed: it exists to
+    exercise this branch, not to describe a real search.
+    """
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    (fixtures / "unmappable-page.json").write_text(
+        json.dumps(
+            {
+                "tool": "record_search",
+                "args": {"surname": "Flynn"},
+                "response": {"query": {"surname": "Flynn"}, "totalMatches": 812, "results": []},
+            }
+        ),
+        encoding="utf-8",
+    )
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    server, call_log, tools_by_name = create_mock_server(
+        ["unmappable-page"], fixtures, workspace=workspace
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "projectPath": str(workspace)},
+        )
+    )
+    assert body["totalMatches"] == 812
+    assert body["results"] == []
+    assert "nilSearchNeedsLog" not in body

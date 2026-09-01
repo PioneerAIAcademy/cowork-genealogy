@@ -660,11 +660,14 @@ def create_mock_server(
             #   "the condition never held" and "the agent ignored it"
             #   indistinguishable — in the plane whose whole job is telling those
             #   apart. `_fixture_is_nil` reads whichever total the fixture carries.
-            # - The one remaining divergence is external_links_search: the real tool
-            #   keys on the PRE-FILTER link set, so a host filter matching none does
-            #   not claim a nil, while the mock applies no host filter at all. A
-            #   fixture written to represent a host-filtered-to-zero search would
-            #   still over-emit here.
+            # - external_links_search stays approximate in BOTH directions, and
+            #   structurally so: production keys on `allLinks`, the year-filtered set
+            #   before host filtering, which a fixture never carries. `totalForPlace`
+            #   sits before the year filter and `results` after the host filter, so
+            #   `allLinks` lies between the only two numbers available here. A fixture
+            #   omitting its total over-emits; one whose year filter emptied a non-zero
+            #   total under-emits. Stated structurally on purpose — the enumerated-case
+            #   version of this note went stale twice.
             if (
                 _name in STAGING_SEARCH_TOOLS
                 and "error" not in response
