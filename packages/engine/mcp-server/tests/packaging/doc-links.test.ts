@@ -472,11 +472,13 @@ describe("docs/ cite symbols, not line numbers", () => {
  * IS the fact and stays.
  *
  * One deliberate exception RAISES this ceiling rather than lowers it (#1639): a
- * census citation — #1341/#1732 in `CLAUDE.md` and `docs/architecture.md` — is
- * the reader's only check on an observation CI cannot reproduce (a live Cowork
- * session's registrar spelling), so the numbers stay and the baseline was raised
- * to match. That irreproducibility is the sole sanctioned reason to add a
- * reference; every other addition still fails outright.
+ * census citation — #1341/#1732 in `CLAUDE.md` — is the reader's only check on
+ * an observation CI cannot reproduce (a live Cowork session's registrar
+ * spelling), so those numbers stay and `CLAUDE.md`'s baseline covers them.
+ * `docs/architecture.md` carried the same two and swept them with the rest on
+ * 2026-09-01; its prose keeps the dates and the conclusion, which is the part
+ * the exception is protecting. That irreproducibility is the sole sanctioned
+ * reason to add a reference; every other addition still fails outright.
  */
 const ISSUE_REF_BASELINE: Record<string, number> = {
   "CLAUDE.md": 5,
