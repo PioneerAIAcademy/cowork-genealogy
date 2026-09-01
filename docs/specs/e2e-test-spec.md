@@ -590,7 +590,9 @@ the `max_cost_usd` note in §6 step 5.
    error and exits non-zero (`2`, matching the other "this run never happened"
    exits, not `1` = "a test failed"). None of §8's artifacts is written, no
    `E2eResult` is constructed, and **the judge is never called**. "This run never
-   happened."
+   happened." The init-message abort is command-proved by `make agent-smoke`'s
+   dead-stub arm; the ToolSearch backstop and the `run_e2e_test`
+   fallback remain hand-proved only. `make agent-smoke` runs in no CI workflow.
 
    **The printed error can now name the server's own cause.** The
    SDK's `stderr:` callback never receives the MCP child's output — verified
