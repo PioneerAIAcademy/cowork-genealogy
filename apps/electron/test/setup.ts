@@ -22,7 +22,7 @@ const apiStub: AppAPI = {
   openFile: () => Promise.resolve(null),
   getVersion: () => Promise.resolve('test'),
   submitFeedback: () => Promise.resolve({ ok: true }),
-  getSessionLog: () => Promise.resolve({ entries: [], sizeBytes: 0 }),
+  getSessionLog: () => Promise.resolve({ hasSessionLog: false, sizeBytes: 0 }),
   getState: () =>
     Promise.resolve({ folderPath: null, research: null, gedcomx: null, notice: null }),
   selectFolder: () => Promise.resolve(null),

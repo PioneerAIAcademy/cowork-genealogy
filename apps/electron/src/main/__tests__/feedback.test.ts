@@ -10,6 +10,7 @@ import {
   FEEDBACK_SCHEMA_VERSION,
   MAX_FIELD_CHARS,
   NOT_PROVIDED,
+  readSessionLog,
   type FeedbackOptions
 } from '../feedback'
 
@@ -520,6 +521,79 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
       expect(md).toContain('## Session log')
       expect(md).toContain('See `_feedback/session-log.jsonl`')
       expect(zip.file('_feedback/session-log.jsonl')).not.toBeNull()
+    } finally {
+      if (homeSaved === undefined) delete process.env.HOME
+      else process.env.HOME = homeSaved
+      if (profileSaved === undefined) delete process.env.USERPROFILE
+      else process.env.USERPROFILE = profileSaved
+      await rm(fakeHome, { recursive: true, force: true })
+    }
+  })
+
+  // Issue #1880. Two guardrail owner arms do their protected write from inside a
+  // subagent, whose transcript is a separate file one level down. While the
+  // bundle carried only the main session's log, those writes were invisible and
+  // the arms returned 0 for any post-split bundle by construction.
+  it('bundles subagent transcripts, their meta, and counts their bytes', async () => {
+    const homeSaved = process.env.HOME
+    const profileSaved = process.env.USERPROFILE
+    const fakeHome = await mkdtemp(join(tmpdir(), 'feedback-home-'))
+    try {
+      const projectHash = folder.replace(/[^a-zA-Z0-9-]/g, '-')
+      const projectDir = join(fakeHome, '.claude', 'projects', projectHash)
+      const subagents = join(projectDir, 'session', 'subagents')
+      await mkdir(subagents, { recursive: true })
+      await writeFile(
+        join(projectDir, 'session.jsonl'),
+        '{"type":"assistant","message":{"role":"assistant","content":"PARENT"}}\n',
+        'utf8'
+      )
+      // cwd is a SUBFOLDER of the project. An equality test drops every line,
+      // the file filters to empty, and the transcript vanishes unnamed.
+      await writeFile(
+        join(subagents, 'agent-abc.jsonl'),
+        `{"type":"assistant","cwd":${JSON.stringify(join(folder, 'results'))},` +
+          '"message":{"role":"assistant","content":"CHILD"}}\n',
+        'utf8'
+      )
+      await writeFile(
+        join(subagents, 'agent-abc.meta.json'),
+        '{"agentType":"proof-conclusion","description":"conclude q_001",' +
+          '"toolUseId":"toolu_01","spawnDepth":1}\n',
+        'utf8'
+      )
+      process.env.HOME = fakeHome
+      process.env.USERPROFILE = fakeHome
+
+      const log = await readSessionLog(folder)
+      const opts = { ...makeOptions(folder), includeSessionLog: true }
+      const zip = await JSZip.loadAsync(
+        Buffer.from((await buildFeedbackZip(opts)).zipBase64, 'base64')
+      )
+
+      const child = zip.file('_feedback/subagents/agent-abc.jsonl')
+      expect(child).not.toBeNull()
+      expect(await child!.async('string')).toContain('CHILD')
+      // The meta names the parent Agent call that spawned this child — the
+      // anchor the consumer splices at, so appending cannot be mistaken for it.
+      const meta = zip.file('_feedback/subagents/agent-abc.meta.json')
+      expect(meta).not.toBeNull()
+      expect(JSON.parse(await meta!.async('string')).toolUseId).toBe('toolu_01')
+
+      // The reporter is shown this number next to the toggle. Ship bytes it does
+      // not count and they consent to one figure while a larger bundle leaves.
+      let written = 0
+      for (const name of Object.keys(zip.files)) {
+        if (zip.files[name].dir) continue
+        if (
+          name === '_feedback/session-log.jsonl' ||
+          name.startsWith('_feedback/subagents/') ||
+          name.startsWith('_feedback/sessions/')
+        ) {
+          written += Buffer.byteLength(await zip.file(name)!.async('string'))
+        }
+      }
+      expect(log.sizeBytes).toBe(written)
     } finally {
       if (homeSaved === undefined) delete process.env.HOME
       else process.env.HOME = homeSaved

@@ -224,12 +224,26 @@ def _select_files(
     return kept, dropped
 
 
-def _filter_transcript(raw: bytes) -> bytes | None:
+def _filter_transcript(
+    raw: bytes, *, cap: int = _SESSION_LOG_CAP_BYTES, allow_subdirs: bool = False
+) -> bytes | None:
     """Reduce a raw Claude Code transcript to the conversation: user + assistant
     entries scoped to PROJECT_DIR. Thinking blocks are **kept** — the agent's
     reasoning is the highest-value signal for triage, and it exists nowhere in the
     persisted /project files. Returns filtered JSONL bytes, or None if nothing
-    qualifies."""
+    qualifies.
+
+    `cap` is passed in rather than read from the module constant because the whole
+    transcript SET now shares one budget (see `_session_log`) — a per-file cap
+    times N files is unbounded, and the overflow lands as a 502 that costs the
+    tester their submission.
+
+    `allow_subdirs` accepts an entry whose `cwd` is BENEATH PROJECT_DIR, not only
+    equal to it. A subagent sent to work in a subfolder stamps every line with
+    that folder; under equality every line fails, the file filters to empty, and
+    the transcript vanishes — measured, 1 of 12 local subagent transcripts. The
+    parent keeps the strict test: it is the file whose scoping keeps a sibling
+    project out of the bundle."""
     kept: list[bytes] = []
     for line in raw.splitlines():
         if not line.strip():
@@ -242,19 +256,20 @@ def _filter_transcript(raw: bytes) -> bytes | None:
             continue  # drop ai-title / last-prompt / attachment / queue-operation / system / summary
         cwd = entry.get("cwd")
         if cwd and cwd != PROJECT_DIR:
-            continue
+            if not (allow_subdirs and cwd.startswith(PROJECT_DIR + "/")):
+                continue
         kept.append(line)
     if not kept:
         return None
     out = b"\n".join(kept) + b"\n"
-    if len(out) <= _SESSION_LOG_CAP_BYTES:
+    if len(out) <= cap:
         return out
     # Over cap: keep the most recent entries that fit, with a (valid-JSON) marker
     # line that downstream user/assistant filters harmlessly ignore.
     tail: list[bytes] = []
     size = 0
     for line in reversed(kept):
-        if size + len(line) + 1 > _SESSION_LOG_CAP_BYTES:
+        if size + len(line) + 1 > cap:
             break
         tail.append(line)
         size += len(line) + 1
@@ -263,36 +278,156 @@ def _filter_transcript(raw: bytes) -> bytes | None:
         {
             "type": "_truncation_note",
             "dropped_leading_entries": len(kept) - len(tail),
-            "reason": f"session log exceeded {_SESSION_LOG_CAP_BYTES} bytes; kept newest {len(tail)} entries",
+            "reason": f"session log exceeded {cap} bytes; kept newest {len(tail)} entries",
         }
     ).encode("utf-8")
     return note + b"\n" + b"\n".join(tail) + b"\n"
 
 
-async def _session_log(sandbox) -> bytes | None:
-    """The Claude Code conversation transcript for the agent's most recent session,
-    filtered for the bundle (see `_filter_transcript`). Prefers the exact session
-    id the agent resumes from (`PROJECT_DIR/.agent_session`), falling back to the
-    newest `*.jsonl` in the projects dir. Returns None when no transcript exists
-    (e.g. mock-mode local runs, or a session that never started the agent)."""
-    raw: bytes | None = None
+PARENT_LOG_ENTRY = "_feedback/session-log.jsonl"
+
+
+def _group_prefix(sid: str, *, active: bool) -> str:
+    """Where one session's transcripts live inside the zip.
+
+    The active session keeps the historical names so every existing consumer
+    (`docs/specs/feedback-case-spec.md` §2.2, the triage skills, the guardrail
+    report) keeps working untouched. Any OTHER session ships as its own group,
+    parent included — a subagent transcript is only usable beside the parent
+    holding the `Agent` call that spawned it, because that call's id is the
+    anchor the consumer splices at. A child with no parent in the bundle is
+    ballast: it costs the tester bytes they consented to and the reader
+    discards it.
+    """
+    return "_feedback/" if active else f"_feedback/sessions/{sid}/"
+
+
+async def _read_group(sandbox, sid: str) -> tuple[bytes | None, list[tuple[str, bytes, bytes | None, float]]]:
+    """`(raw parent bytes, [(name, raw transcript, raw meta, mtime), ...])` for
+    one session id. Unfiltered and uncapped — the caller owns the budget."""
+    parent = await sandbox.read_file(f"{_CLAUDE_PROJECTS_DIR}/{sid}.jsonl")
+    subdir = f"{_CLAUDE_PROJECTS_DIR}/{sid}/subagents"
+    children: list[tuple[str, bytes, bytes | None, float]] = []
+    for entry in await sandbox.list_dir(subdir):
+        if entry.is_dir or not entry.name.endswith(".jsonl"):
+            continue
+        raw = await sandbox.read_file(entry.path)
+        if raw is None:
+            continue
+        name = entry.name[: -len(".jsonl")]
+        meta = await sandbox.read_file(f"{subdir}/{name}.meta.json")
+        children.append((name, raw, meta, await sandbox.file_mtime(entry.path) or 0.0))
+    return parent, children
+
+
+async def _session_log(
+    sandbox, *, cap: int = _SESSION_LOG_CAP_BYTES
+) -> tuple[list[tuple[str, bytes]], list[str]]:
+    """`(entries, dropped)` — every Claude Code transcript this bundle carries,
+    as `(zip relpath, bytes)`, plus the names of the ones that did not make it.
+
+    Returns the whole SET rather than one blob so `feedback_context` and
+    `submit_feedback` cannot disagree about what leaves the machine. Subagent
+    transcripts are the reason: they live one level down at
+    `{projects_dir}/{sid}/subagents/agent-*.jsonl` with a small
+    `agent-*.meta.json` beside each, and two guardrail owner arms
+    (`proof_summaries`, `questions.exhaustive_declaration`) do their protected
+    write from inside one — invisible while a bundle carried only `{sid}.jsonl`
+    (issue #1880).
+
+    Every session directory is enumerated, not just the one `.agent_session`
+    names: the SDK can hand back a different session id on resume and
+    `agent/real_agent.py::_remember_session` persists it, so after a runner
+    restart the transcripts sit under the OLD id. Reading one id there ships
+    nothing, which looks exactly like a session that used no subagents.
+
+    Nothing is filtered by `agentType`. The failure this evidence is most needed
+    for is the model silently falling back to a general-purpose stand-in that
+    binds none of the agent's declared tools (issue #939), and an allow-list
+    drops precisely that transcript.
+
+    Everything shares ONE `cap`, spent parent-first then newest-first, and
+    anything dropped is NAMED — an unnamed drop reads downstream as "we looked
+    and found nothing", which is the same invisible zero this all exists to
+    kill.
+    """
     sid_raw = await sandbox.read_file(f"{PROJECT_DIR}/.agent_session")
-    sid = sid_raw.decode("utf-8", "replace").strip() if sid_raw else ""
-    if sid:
-        raw = await sandbox.read_file(f"{_CLAUDE_PROJECTS_DIR}/{sid}.jsonl")
-    if raw is None:
-        newest_mtime, newest_path = -1.0, None
-        for entry in await sandbox.list_dir(_CLAUDE_PROJECTS_DIR):
-            if entry.is_dir or not entry.name.endswith(".jsonl"):
-                continue
+    active = sid_raw.decode("utf-8", "replace").strip() if sid_raw else ""
+    if active and await sandbox.read_file(f"{_CLAUDE_PROJECTS_DIR}/{active}.jsonl") is None:
+        active = ""
+
+    session_ids: list[str] = []
+    newest_mtime, newest_sid = -1.0, ""
+    for entry in await sandbox.list_dir(_CLAUDE_PROJECTS_DIR):
+        if entry.is_dir:
+            session_ids.append(entry.name)
+        elif entry.name.endswith(".jsonl"):
+            sid = entry.name[: -len(".jsonl")]
+            session_ids.append(sid)
             mt = await sandbox.file_mtime(entry.path) or 0.0
             if mt > newest_mtime:
-                newest_mtime, newest_path = mt, entry.path
-        if newest_path is not None:
-            raw = await sandbox.read_file(newest_path)
-    if not raw:
-        return None
-    return _filter_transcript(raw)
+                newest_mtime, newest_sid = mt, sid
+    if not active:
+        active = newest_sid
+    if active and active not in session_ids:
+        session_ids.append(active)
+
+    entries: list[tuple[str, bytes]] = []
+    dropped: list[str] = []
+    spent = 0
+
+    def admit(relpath: str, data: bytes) -> bool:
+        nonlocal spent
+        if spent + len(data) > cap:
+            return False
+        entries.append((relpath, data))
+        spent += len(data)
+        return True
+
+    # Filtered parents, keyed by sid. The active one is admitted immediately —
+    # it is the routing narrative, and without it nothing else is interpretable.
+    parents: dict[str, bytes] = {}
+    children: list[tuple[str, str, bytes, bytes | None, float]] = []
+    for sid in dict.fromkeys(session_ids):
+        raw_parent, raw_children = await _read_group(sandbox, sid)
+        filtered = _filter_transcript(raw_parent, cap=cap) if raw_parent else None
+        if filtered is not None:
+            parents[sid] = filtered
+        for name, raw, meta, mtime in raw_children:
+            children.append((sid, name, raw, meta, mtime))
+
+    if active in parents and not admit(PARENT_LOG_ENTRY, parents[active]):
+        dropped.append(f"{PARENT_LOG_ENTRY} (over the transcript size budget)")
+
+    # Newest first: a tester's most recent work is the part their report is about.
+    admitted_parents = {active} if any(r == PARENT_LOG_ENTRY for r, _ in entries) else set()
+    for sid, name, raw, meta, _mtime in sorted(children, key=lambda c: (-c[4], c[0], c[1])):
+        prefix = _group_prefix(sid, active=(sid == active))
+        label = f"{prefix}subagents/{name}.jsonl"
+        filtered = _filter_transcript(raw, cap=cap, allow_subdirs=True)
+        if filtered is None:
+            dropped.append(f"{label} (no conversation entries)")
+            continue
+        if sid not in admitted_parents:
+            # A child is only anchorable beside its own parent, so the parent is
+            # charged to the budget with it, and the pair fails or lands together.
+            if sid not in parents:
+                dropped.append(f"{label} (its session's parent transcript is missing)")
+                continue
+            if not admit(f"{prefix}session-log.jsonl", parents[sid]):
+                dropped.append(f"{label} (over the transcript size budget)")
+                continue
+            admitted_parents.add(sid)
+        if not admit(label, filtered):
+            dropped.append(f"{label} (over the transcript size budget)")
+            continue
+        if meta is not None:
+            # Tiny (four keys), and `toolUseId` is the id of the parent `Agent`
+            # call — the anchor the consumer splices at. Shipped unfiltered: it
+            # is metadata, not a transcript.
+            admit(f"{prefix}subagents/{name}.meta.json", meta)
+
+    return entries, dropped
 
 
 class FeedbackBody(BaseModel):
@@ -334,8 +469,19 @@ async def feedback_context(
         }
         for rel, data in await _walk_project(sandbox)
     ]
-    log = await _session_log(sandbox)
-    return {"files": files, "sessionLogSize": len(log) if log else 0, "hasSessionLog": bool(log)}
+    log_entries, _dropped = await _session_log(sandbox)
+    # Every byte that will be written under `_feedback/` counts, meta files
+    # included: this figure is rendered next to the "include session log" toggle
+    # (`packages/viewer-ui/.../FeedbackDialog.tsx`), so it must cover what
+    # actually leaves the machine, not a subset of it. `hasSessionLog` is
+    # likewise "the SET is non-empty" — a disabled toggle submits its default
+    # `true` anyway, so a parent-only flag would print "(none found)" while the
+    # subagent transcripts shipped.
+    return {
+        "files": files,
+        "sessionLogSize": sum(len(data) for _rel, data in log_entries),
+        "hasSessionLog": bool(log_entries),
+    }
 
 
 def _norm(v: str) -> str:
@@ -366,6 +512,7 @@ def _feedback_markdown(
     worked_as_expected: bool,
     dropped: list[str] | None = None,
     redacted_living: int = 0,
+    dropped_transcripts: list[str] | None = None,
 ) -> str:
     parts = [
         "# Feedback",
@@ -399,6 +546,22 @@ def _feedback_markdown(
             "",
             "See `_feedback/session-log.jsonl` — the full Claude Code conversation "
             "transcript (user turns, tool calls, results, and the agent's reasoning).",
+            "",
+            "Work the agent delegated to a subagent has its own transcript under "
+            "`_feedback/subagents/`, one `.jsonl` per subagent with a small "
+            "`.meta.json` beside it naming the parent `Agent` call that spawned "
+            "it. A session other than the most recent one ships the same pair "
+            "under `_feedback/sessions/<session-id>/`.",
+        ]
+    if dropped_transcripts:
+        parts += [
+            "",
+            "## Transcripts not included",
+            "",
+            "Left out of this bundle. A count of zero read from what IS here "
+            "cannot account for these:",
+            "",
+            *[f"- `{name}`" for name in dropped_transcripts],
         ]
     if redacted_living:
         parts += [
@@ -447,7 +610,9 @@ async def submit_feedback(
 
     # The Claude Code conversation transcript (narration + full tool I/O + the
     # agent's reasoning). None when the agent never ran or in mock-mode local runs.
-    session_log = (await _session_log(sandbox)) if body.includeSessionLog else None
+    session_log, dropped_transcripts = (
+        await _session_log(sandbox) if body.includeSessionLog else ([], [])
+    )
 
     settings = get_settings()
     # Human-readable date first — a triager reading a stack of cases dates one at
@@ -469,6 +634,15 @@ async def submit_feedback(
         "agent_should_have": fields["agentShouldHave"],
         "correct_answer": fields["correctAnswer"],
         "notes": fields["notes"],
+        # Transcripts the producer could not include, in a field a PROGRAM can
+        # read. FEEDBACK.md names them too, but that is prose no consumer opens,
+        # and a dropped transcript that reads downstream as "we looked and found
+        # nothing" is the invisible zero this whole change exists to remove: the
+        # guardrail report must hold its owner arms at "unknown" when this is
+        # non-empty. An ADDED optional field bumps no schema_version (see
+        # apps/electron/docs/feedback-json-spec.md §5 — removals, renames and
+        # re-meanings only).
+        "dropped_transcripts": dropped_transcripts,
     }
 
     redacted_files, redacted_living = _redact_living(await _walk_project(sandbox))
@@ -489,11 +663,12 @@ async def submit_feedback(
                 body.workedAsExpected,
                 dropped,
                 redacted_living,
+                dropped_transcripts,
             ),
         )
         zf.writestr("_feedback/feedback.json", json.dumps(feedback_json, indent=2) + "\n")
-        if session_log:
-            zf.writestr("_feedback/session-log.jsonl", session_log)
+        for rel, data in session_log:
+            zf.writestr(rel, data)
 
     filename = f"feedback-{submitted_at.replace(':', '-').replace('.', '-')}.zip"
     envelope = {

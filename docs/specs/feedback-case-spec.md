@@ -88,6 +88,16 @@ The bundle carries the Claude Code session JSONL at
 agent's reasoning that the persisted project files do not — for diagnosing
 *why* the agent did something, it is the highest-value file in the bundle.
 
+Work the agent delegated to a subagent is **not** in that file. Claude Code
+writes each subagent its own transcript, and the bundle carries them at
+`_feedback/subagents/agent-*.jsonl`, each with an `agent-*.meta.json` naming
+the parent `Agent` call that spawned it; a session other than the newest ships
+under `_feedback/sessions/<session-id>/` with its own parent log beside it. Two
+guardrail owner arms do their protected write from inside a subagent, so a
+consumer reading only the main log cannot tell a clean session from an unseen
+one. Layout, the rejected merge, and the no-`agentType`-filter rule:
+`apps/electron/docs/feedback-json-spec.md` §6.
+
 ## 3. The case directory contract
 
 Produced by `scripts/setup-feedback-case.sh` (and its `.bat` counterpart),

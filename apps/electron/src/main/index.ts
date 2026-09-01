@@ -180,9 +180,15 @@ function setupIPC(): void {
   })
 
   ipcMain.handle('session:get-log', async () => {
+    // A summary, not the transcripts. The renderer only asks "is there anything,
+    // and how big" — shipping every subagent transcript across the IPC boundary
+    // to answer that would serialize megabytes for two numbers.
     const state = getCurrentState()
-    if (!state.folderPath) return { entries: [], sizeBytes: 0 }
-    return readSessionLog(state.folderPath)
+    if (!state.folderPath) return { hasSessionLog: false, sizeBytes: 0 }
+    const log = await readSessionLog(state.folderPath)
+    // The SET, not just the main log: the dialog disables its toggle off this
+    // and prints "(none found)", while the value it submits stays true.
+    return { hasSessionLog: log.files.length > 0, sizeBytes: log.sizeBytes }
   })
 
   ipcMain.handle('project:get-state', () => {

@@ -46,6 +46,12 @@ readable form. The viewer must produce both; the workflow reads
   _feedback/
     feedback.json            ← THIS SPEC
     session-log.jsonl        ← optional; see §6
+    subagents/               ← optional; see §6
+      agent-<id>.jsonl       ← one transcript per subagent
+      agent-<id>.meta.json   ← names the parent Agent call that spawned it
+    sessions/<session-id>/   ← optional; any session other than the newest,
+      session-log.jsonl        shipped with its own subagents/ beneath it
+      subagents/…
 ```
 
 The `_feedback/` directory exists to keep feedback-specific files
@@ -236,6 +242,41 @@ consuming skills can rely on it:
   `claude-opus-4-7`). `feedback.json` does not duplicate this
   field — the model can vary per turn within a session, so a
   single top-level value would be misleading.
+
+### Subagent transcripts (separate files, not merged)
+
+Work the agent delegates to a subagent is written by Claude Code to its **own**
+transcript, one level down at `<session-id>/subagents/agent-*.jsonl`, with a
+four-key `agent-*.meta.json` (`agentType`, `description`, `toolUseId`,
+`spawnDepth`) beside each. The viewer includes them under
+`_feedback/subagents/`, and any session other than the newest under
+`_feedback/sessions/<session-id>/` with its own parent log, since a subagent
+transcript is only usable beside the parent holding the `Agent` call that
+spawned it — `toolUseId` is that call's id.
+
+Three decisions worth recording, because the obvious alternatives are all
+wrong:
+
+- **They are separate optional files, and `schema_version` does not move.**
+  §5 bumps on a removed, renamed or re-meaning `feedback.json` field, and a
+  bump is a paired change across two repos.
+- **Merging the sidechain entries into `session-log.jsonl` was rejected.** It
+  breaks that file's shape contract above (entries limited to `user` and
+  `assistant`, filtered to the submitting project's `cwd`) and would therefore
+  force the bump. It is also wrong on the merits: a consumer must splice a
+  subagent's calls in at the index of the `Agent` call that spawned them, not
+  concatenate them, or a protected write lands hundreds of calls from its own
+  skill invocation and reads as a violation that never happened.
+- **No `agentType` filter.** Every subagent transcript ships, including
+  general-purpose stand-ins. The failure this evidence is most needed for is
+  the model silently falling back to a general-purpose subagent that binds
+  none of the declared agent's tools (issue #939) — an allow-list of known
+  agent names drops exactly that transcript.
+
+A transcript the viewer leaves out (size budget, or it filtered to no
+conversation entries) is named in `FEEDBACK.md` **and** in `feedback.json`'s
+optional `dropped_transcripts` array, so a consumer counting findings can tell
+"nothing happened" from "we could not see".
 
 ### Omission policy
 

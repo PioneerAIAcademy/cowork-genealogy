@@ -23,7 +23,7 @@ function installApiStub(): void {
     submitFeedback: async () => ({ ok: true }),
     selectFolder: async () => null,
     listProjectFiles: async () => [],
-    getSessionLog: async () => ({ entries: [], sizeBytes: 0 }),
+    getSessionLog: async () => ({ hasSessionLog: false, sizeBytes: 0 }),
     openFile: async () => null,
     getVersion: async () => 'test'
   }

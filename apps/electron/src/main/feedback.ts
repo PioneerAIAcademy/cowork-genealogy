@@ -188,7 +188,21 @@ export async function walkProject(folder: string): Promise<ProjectFile[]> {
   return out
 }
 
-export type SessionLog = { entries: unknown[]; sizeBytes: number }
+/** One transcript as it will be written into the zip. */
+export type TranscriptFile = { path: string; text: string }
+
+export type SessionLog = {
+  /** The active session's conversation entries. Kept for the renderer, which
+   *  only asks "is there anything at all". */
+  entries: unknown[]
+  /** Every transcript the bundle will carry, already capped and serialized. */
+  files: TranscriptFile[]
+  /** Transcripts left out, named so a zero downstream is not read as "clean". */
+  dropped: string[]
+  /** Bytes of `files` — exactly what gets written, which is what the reporter
+   *  is shown next to the "include session log" toggle. */
+  sizeBytes: number
+}
 
 // Why `_feedback/session-log.jsonl` is or isn't in the bundle. Surfaced in
 // FEEDBACK.md (issue #1481) so triage isn't left hunting for a file that was
@@ -196,51 +210,190 @@ export type SessionLog = { entries: unknown[]; sizeBytes: number }
 // (the agent runs in Cowork's VM), which is expected, not missing.
 type SessionLogStatus = 'included' | 'not-requested' | 'requested-but-empty'
 
+/** Conversation entries from one raw transcript.
+ *
+ * `allowSubdirs` accepts an entry whose `cwd` is BENEATH the project, not only
+ * equal to it. A subagent sent to work in a subfolder stamps every line with
+ * that folder; under equality every line fails, the file filters to empty, and
+ * the transcript is discarded — measured, 1 of 12 local subagent transcripts.
+ * The parent keeps the strict test: its scoping is what keeps a sibling
+ * project's turns out of the bundle. Mirrors `_filter_transcript` in
+ * apps/server/app/feedback.py.
+ */
+function conversationEntries(raw: string, folderPath: string, allowSubdirs: boolean): unknown[] {
+  const entries: unknown[] = []
+  for (const line of raw.split('\n')) {
+    if (!line.trim()) continue
+    try {
+      const entry = JSON.parse(line)
+      if (entry.type !== 'user' && entry.type !== 'assistant') continue
+      if (entry.cwd && entry.cwd !== folderPath) {
+        if (!allowSubdirs || !String(entry.cwd).startsWith(folderPath + path.sep)) continue
+      }
+      // Retain thinking blocks: the agent's reasoning is the highest-value
+      // signal for triage and exists nowhere in the persisted project files.
+      // (Web bundler keeps it too — apps/server/app/feedback.py.)
+      entries.push(entry)
+    } catch {
+      // Skip malformed lines
+    }
+  }
+  return entries
+}
+
+/**
+ * Every Claude Code transcript this bundle will carry.
+ *
+ * Subagent transcripts are the reason this returns a set rather than one log:
+ * they live one level down at `<session-id>/subagents/agent-*.jsonl` with a
+ * small `agent-*.meta.json` beside each, and two guardrail owner arms
+ * (`proof_summaries`, `questions.exhaustive_declaration`) do their protected
+ * write from inside one. While a bundle carried only the main log, those writes
+ * were invisible and a zero could not be told apart from "we cannot see"
+ * (issue #1880).
+ *
+ * Every session directory is walked, not just the newest: a resumed session can
+ * be renumbered, leaving the real work under an older id. Each session ships as
+ * its own group WITH its parent — a subagent transcript is only usable beside
+ * the parent holding the `Agent` call that spawned it, because that call's id
+ * is the anchor the consumer splices at.
+ *
+ * Nothing is filtered by `agentType`: the failure this evidence is most needed
+ * for is a silent fallback to a general-purpose stand-in (issue #939), and an
+ * allow-list drops precisely that transcript.
+ */
 export async function readSessionLog(folderPath: string): Promise<SessionLog> {
   // Claude Code stores sessions in ~/.claude/projects/<path-with-dashes>/
   // Replace every non-alphanumeric-non-hyphen char with '-'.
-  // On macOS /Users/joe/project → -Users-joe-project (leading / becomes -).
-  // On Windows C:\Users\joe\project → C--Users-joe-project (: and \ become -).
+  // On macOS /Users/joe/project -> -Users-joe-project (leading / becomes -).
+  // On Windows C:\Users\joe\project -> C--Users-joe-project (: and \ become -).
   const projectHash = folderPath.replace(/[^a-zA-Z0-9-]/g, '-')
   const claudeProjectDir = path.join(os.homedir(), '.claude', 'projects', projectHash)
+  const empty: SessionLog = { entries: [], files: [], dropped: [], sizeBytes: 0 }
 
   try {
-    const files = await fs.readdir(claudeProjectDir)
-    const jsonlFiles = files.filter((f) => f.endsWith('.jsonl'))
-    if (jsonlFiles.length === 0) return { entries: [], sizeBytes: 0 }
+    const dirents = await fs.readdir(claudeProjectDir, { withFileTypes: true })
+    const jsonlFiles = dirents.filter((d) => d.isFile() && d.name.endsWith('.jsonl'))
+    if (jsonlFiles.length === 0) return empty
 
     const stats = await Promise.all(
-      jsonlFiles.map(async (f) => {
-        const filePath = path.join(claudeProjectDir, f)
-        const stat = await fs.stat(filePath)
-        return { filePath, mtime: stat.mtimeMs }
+      jsonlFiles.map(async (d) => {
+        const filePath = path.join(claudeProjectDir, d.name)
+        return {
+          sid: d.name.slice(0, -'.jsonl'.length),
+          filePath,
+          mtime: (await fs.stat(filePath)).mtimeMs
+        }
       })
     )
     stats.sort((a, b) => b.mtime - a.mtime)
-    const activeFile = stats[0].filePath
+    const activeSid = stats[0].sid
 
-    const raw = await fs.readFile(activeFile, 'utf8')
-    const lines = raw.split('\n').filter((l) => l.trim())
+    const parents = new Map<string, unknown[]>()
+    for (const s of stats) {
+      const parsed = conversationEntries(await fs.readFile(s.filePath, 'utf8'), folderPath, false)
+      if (parsed.length > 0) parents.set(s.sid, parsed)
+    }
 
-    const entries: unknown[] = []
-    for (const line of lines) {
+    type Child = {
+      sid: string
+      name: string
+      entries: unknown[]
+      meta: string | null
+      mtime: number
+    }
+    const children: Child[] = []
+    for (const s of stats) {
+      const dir = path.join(claudeProjectDir, s.sid, 'subagents')
+      let names: string[]
       try {
-        const entry = JSON.parse(line)
-        if (entry.type !== 'user' && entry.type !== 'assistant') continue
-        if (entry.cwd && entry.cwd !== folderPath) continue
-        // Retain thinking blocks: the agent's reasoning is the highest-value
-        // signal for triage and exists nowhere in the persisted project files.
-        // (Web bundler keeps it too — apps/server/app/feedback.py.)
-        entries.push(entry)
+        names = (await fs.readdir(dir)).filter((f) => f.endsWith('.jsonl'))
       } catch {
-        // Skip malformed lines
+        continue // no subagents for this session
+      }
+      for (const file of names) {
+        const full = path.join(dir, file)
+        const base = file.slice(0, -'.jsonl'.length)
+        let meta: string | null = null
+        try {
+          meta = await fs.readFile(path.join(dir, `${base}.meta.json`), 'utf8')
+        } catch {
+          meta = null
+        }
+        children.push({
+          sid: s.sid,
+          name: base,
+          entries: conversationEntries(await fs.readFile(full, 'utf8'), folderPath, true),
+          meta,
+          mtime: (await fs.stat(full)).mtimeMs
+        })
       }
     }
 
-    const sizeBytes = new TextEncoder().encode(JSON.stringify(entries)).length
-    return { entries, sizeBytes }
+    // One shared budget across the whole set. A per-file cap times N files is
+    // unbounded, and the overflow costs the tester their submission.
+    const files: TranscriptFile[] = []
+    const dropped: string[] = []
+    let spent = 0
+    const admit = (p: string, text: string): boolean => {
+      const size = Buffer.byteLength(text)
+      if (spent + size > SESSION_LOG_CAP_BYTES) return false
+      files.push({ path: p, text })
+      spent += size
+      return true
+    }
+    // The active session keeps the historical names so every existing consumer
+    // reads it unchanged; any other session ships under _feedback/sessions/<id>/.
+    const prefix = (sid: string): string =>
+      sid === activeSid ? '_feedback/' : `_feedback/sessions/${sid}/`
+
+    const activeEntries = parents.get(activeSid) ?? []
+    const admittedParents = new Set<string>()
+    if (activeEntries.length > 0) {
+      // Parent first: it is the routing narrative, and nothing else is
+      // interpretable without it.
+      if (admit('_feedback/session-log.jsonl', capSessionLog(activeEntries))) {
+        admittedParents.add(activeSid)
+      } else {
+        dropped.push('_feedback/session-log.jsonl (over the transcript size budget)')
+      }
+    }
+
+    children.sort(
+      (a, b) => b.mtime - a.mtime || a.sid.localeCompare(b.sid) || a.name.localeCompare(b.name)
+    )
+    for (const c of children) {
+      const label = `${prefix(c.sid)}subagents/${c.name}.jsonl`
+      if (c.entries.length === 0) {
+        dropped.push(`${label} (no conversation entries)`)
+        continue
+      }
+      if (!admittedParents.has(c.sid)) {
+        const parentEntries = parents.get(c.sid)
+        if (!parentEntries) {
+          dropped.push(`${label} (its session's parent transcript is missing)`)
+          continue
+        }
+        if (!admit(`${prefix(c.sid)}session-log.jsonl`, capSessionLog(parentEntries))) {
+          dropped.push(`${label} (over the transcript size budget)`)
+          continue
+        }
+        admittedParents.add(c.sid)
+      }
+      if (!admit(label, capSessionLog(c.entries))) {
+        dropped.push(`${label} (over the transcript size budget)`)
+        continue
+      }
+      if (c.meta !== null) {
+        // Four keys, and `toolUseId` is the id of the parent `Agent` call — the
+        // anchor the consumer splices at. Shipped as-is: metadata, not a log.
+        admit(`${prefix(c.sid)}subagents/${c.name}.meta.json`, c.meta)
+      }
+    }
+
+    return { entries: activeEntries, files, dropped, sizeBytes: spent }
   } catch {
-    return { entries: [], sizeBytes: 0 }
+    return empty
   }
 }
 
@@ -395,12 +548,15 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
   let sessionLogStatus: SessionLogStatus = 'not-requested'
   if (includeSessionLog) {
     const sessionLog = await readSessionLog(folderResolved)
-    if (sessionLog.entries.length > 0) {
-      zip.file('_feedback/session-log.jsonl', capSessionLog(sessionLog.entries))
-      sessionLogStatus = 'included'
-    } else {
-      sessionLogStatus = 'requested-but-empty'
-    }
+    for (const f of sessionLog.files) zip.file(f.path, f.text)
+    // "Is there anything at all", not "is the MAIN log there". The dialog
+    // disables its toggle off this and prints "(none found)", but the value it
+    // submits stays true (a disabled input fires no onChange), so a parent-only
+    // answer would tell the reporter the opposite of what the bundle carries.
+    sessionLogStatus = sessionLog.files.length > 0 ? 'included' : 'requested-but-empty'
+    // A dropped transcript that goes unnamed reads downstream as "we looked and
+    // found nothing" — the same invisible zero this change exists to remove.
+    for (const name of sessionLog.dropped) skipped.push(`${name}`)
   }
 
   zip.file(
