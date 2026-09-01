@@ -2392,7 +2392,7 @@ describe("research_append (batch ops)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     const joined = r.errors.join(" ");
-    expect(joined).toMatch(/created 2 plans and pl_002, pl_003 all end it empty/);
+    expect(joined).toMatch(/2 of the plans this call created \(pl_002, pl_003\) end it with no items/);
     expect(joined).toMatch(/give each plan_items op the id of the plan ITS item belongs to/);
     // The contradiction: neither message may prescribe a single id.
     expect(joined).not.toMatch(/which is 'pl_002' for this one/);
@@ -2451,6 +2451,58 @@ describe("research_append (batch ops)", () => {
     expect(msg).toMatch(/wrote into 'pl_001' \(superseded plan for q_001\)/);
     expect(msg).not.toMatch(/different question/);
     expect(msg).not.toMatch(/another question/);
+  });
+
+  it("(d2-misroute) reports the EMPTY count, not the created count", async () => {
+    // The first draft rendered emptyCreated.length as "This call created N
+    // plans", so three created plans with two left empty read "created 2".
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002"), validQuestion("q_003")];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("a", "q_001", "active")) }, // → pl_001, empty
+        { section: "plans", op: "append", entry: { ...noId(validPlan("b", "q_002", "active")), question_id: "q_002" } as any }, // → pl_002, empty
+        { section: "plans", op: "append", entry: { ...noId(validPlan("c", "q_003", "active")), question_id: "q_003" } as any }, // → pl_003, filled
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_003" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const joined = r.errors.join(" ");
+    expect(joined).toMatch(/2 of the plans this call created \(pl_001, pl_002\) end it with no items/);
+    expect(joined).not.toMatch(/created 2 plans/); // the miscount
+  });
+
+  it("(d2-misroute) does not call a MIXED target list all-different-question", async () => {
+    // One same-question and one different-question target. A `.some()` gate
+    // printed a singular "it belongs to a different question" over both.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_002", "q_001", "superseded", [seededPlanItem("pli_002")]) },
+    ] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_003 for q_001
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }, // q_002
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" }, // q_001, SAME question
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors[0];
+    expect(msg).toMatch(/wrote into 'pl_001' \(completed plan for q_002\), 'pl_002' \(superseded plan for q_001\)/);
+    expect(msg).not.toMatch(/different question/); // not all of them are
+    expect(msg).not.toMatch(/None of them belongs to this question/);
   });
 
   it("(d2-misroute) leaves a NON-ARRAY items to its own type error", async () => {

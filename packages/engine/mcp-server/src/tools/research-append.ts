@@ -1075,13 +1075,16 @@ function emptyCreatedPlanErrors(
     // for the SAME question "another question's plan".
     const prescription =
       emptyCreated.length > 1
-        ? `This call created ${emptyCreated.length} plans and ${emptyCreated.join(", ")} all end it empty, so there is no single id to add: give each plan_items op the id of the plan ITS item belongs to.`
+        ? `${emptyCreated.length} of the plans this call created (${emptyCreated.join(", ")}) end it with no items, so there is no single id to add: give each plan_items op the id of the plan ITS item belongs to.`
         : `A plan_items op must carry the id the tool assigned the plan the item belongs to, which is '${newId}' for this one.`;
 
     let cause: string;
     if (preExisting.length > 0) {
       const named = preExisting.map(describe).join(", ");
-      const otherQuestion = preExisting.some((id) => {
+      // EVERY named plan, not `.some()`: with one same-question and one
+      // different-question target, a `.some()` gate printed a singular "it
+      // belongs to a different question" over a list where one of them does not.
+      const otherQuestion = preExisting.every((id) => {
         const o = byId.get(id);
         return o && typeof o.question_id === "string" && o.question_id !== pl.question_id;
       });
@@ -1089,7 +1092,9 @@ function emptyCreatedPlanErrors(
       const tail = hardCoded
         ? " Never a hard-coded 'pl_001': in an ongoing project that is the first plan in the file, not yours."
         : otherQuestion
-          ? " Note it belongs to a different question, so its audit trail is not yours to append to."
+          ? (preExisting.length === 1
+              ? " It belongs to a different question, so its audit trail is not yours to append to."
+              : " None of them belongs to this question, so their audit trails are not yours to append to.")
           : "";
       cause =
         `this call's plan_items ops wrote into ${named} instead — the items went to a plan this ` +

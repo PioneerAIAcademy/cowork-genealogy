@@ -1580,7 +1580,7 @@ function validateCrossFile(
     // A malformed element yields no cross-file ref: validateResearch already
     // reported its shape, and dereferencing it here threw, taking the whole
     // cross-file pass down with it.
-    if (src === null || typeof src !== "object") continue;
+    if (!isObject(src)) continue;
     const ref = src.gedcomx_source_description_id;
     if (ref && !gedcomxSourceIds.has(ref)) {
       addError(
