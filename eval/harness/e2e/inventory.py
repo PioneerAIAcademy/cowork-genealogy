@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 
-from e2e.runlog_selection import REPO_ROOT, all_result_jsons
+from e2e.runlog_selection import REPO_ROOT, all_result_jsons, branch_scope_note
 
 UNIT_TESTS = REPO_ROOT / "eval" / "tests" / "unit"
 E2E_FIXTURES = REPO_ROOT / "eval" / "tests" / "e2e"
@@ -65,6 +65,7 @@ def main() -> int:
     print("Eval corpus inventory (each count by its predicate):")
     for n, predicate in counts():
         print(f"  {n:>5}  {predicate}")
+    print(branch_scope_note())
     return 0
 
 
