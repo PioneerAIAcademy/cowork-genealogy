@@ -278,11 +278,14 @@ how to word it:
 | for one delegated agent | **that agent's `tools:`** — omit the capability — or a narrowed tool (§5.3) | `extraction_append` |
 | within a single skill invocation | **skill prose** — this is what prose is *for* | "consult the stop criteria before draining the plan" |
 
-> **Direction.** Two gates are still prose that this same law
-> says will decay — the **tree-encoding gate** and the **mentor gate** (§4). Both
-> are computable from files `research_append` already loads and are being moved
-> into the tool. **If you are adding a new cross-turn invariant, do not add it as
-> prose.** If it cannot be anchored, say so in the PR and explain why.
+> **Direction.** Both gates the §4 law named have moved into the tool: the
+> **mentor gate** as a refusal, and the **tree-encoding gate** as a warning on
+> `opWarnings` — it diffs the final tree against a write-once
+> `starting-tree.gedcomx.json` baseline, and ships warn-only rather than as a
+> refusal per the 2026-08-24 no-override ruling (a shape-match gate cannot
+> hard-block correct work when a wrong refusal has no override). **If you are
+> adding a new cross-turn invariant, do not add it as prose.** If it cannot be
+> anchored, say so in the PR and explain why.
 
 ### 3.2 How a session enters a skill: `description` is product surface
 
@@ -1427,9 +1430,10 @@ Other environment differences that bite:
 ### If you're asked to…
 
 **Change how the hosted agent session is configured.** Run **`make agent-smoke`**.
-It is the only check that reads what the hosted runtime actually *resolved* — the
-SDK init handshake's agent list, no model call, bills nothing — and **no CI job
-runs it.** It needs `ANTHROPIC_API_KEY` or an `eval/.env` entry; **without one it
+Its first arm reads what the hosted runtime actually *resolved* — the SDK init
+handshake's agent list (no model call); its second arm runs `run_e2e` against a
+dead MCP stub and asserts the abort text (~8s, one billed session start). **No
+CI job runs it.** It needs `ANTHROPIC_API_KEY` or an `eval/.env` entry; **without one it
 skips silently**, which looks identical to passing.
 
 ---
@@ -1447,7 +1451,7 @@ skips silently**, which looks identical to passing.
 | `make harness-test` | `eval/harness` (pytest) — including the **`packages/schema/schemas/` JSON mirror** (`test_schema_mirrors.py`) and the three write-lockdown copies' parity | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug. **Not** the TS half of the `packages/schema` mirror — that is `make test-js` |
 | `make typecheck` | the whole JS workspace (turbo) | Python; and it is not the only viewer gate — `make test-js` runs viewer-ui's vitest suite (including `schema-interface-drift.test.ts`), and `make engine-test` runs `field-render-drift.test.ts` against the viewer's section components |
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
-| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names | whether a granted tool actually **binds**; skips silently with no API key |
+| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names (arm 1), and that a dead MCP server triggers the init-message abort with captured stderr and no files written (arm 2) | whether a granted tool actually **binds**; the ToolSearch backstop and `run_e2e_test` fallback abort paths; skips silently with no API key |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: `runs_per_test` is pinned to 1, so the harness's `flaky` flag is **dead by construction, not healthy**. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
