@@ -240,6 +240,7 @@ those lanes to live).
 | — | scope discipline | — | checked clean, no action |
 | — | routing reciprocity | — | checked clean, no action |
 | — | `ut_015` routing flake (→ `timeline`) | — | pre-existing, confirmed unrelated to this PR (F3) |
+| — | `ut_012` pass → partial, `assertionId` filter mistake on 3/17 tests | — | tool-ergonomics gap, not a skill defect — see Cost |
 
 ---
 
@@ -349,11 +350,17 @@ hold?), not by re-running hoping for a better number.
 The suite goes 16 tests → 17. **The active candidate run log is
 `eval/runlogs/unit/hypothesis-tracking/v1_2026-09-01_13-17-15.json`** — the
 final, post-F3-and-F4 run: **15 pass, 1 partial, 1 fail**. The partial
-(`ut_hypothesis_tracking_012`) is dragged down only by an unrelated,
-self-corrected tool-filter mistake (`research_query` with an unsupported
-`assertionId` filter — seen across 4 different tests in these runs, likely a
-tooling/docs clarity gap worth a lightweight follow-up, not filed without
-asking first). The one fail (`ut_hypothesis_tracking_015`) is F3's
+(`ut_hypothesis_tracking_012`) is dragged down by a tool-usage mistake:
+`research_query` called with `assertionId` on `section: "assertions"`,
+where it's unsupported — though it's a valid filter on four other sections
+(`person_evidence`, `conflicts`, `hypotheses`, `proof_summaries`), so the
+model reasonably pattern-matched a filter that works everywhere else. It
+occurred in 3 of the 17 tests in this committed run log (`ut_009`, `ut_011`,
+`ut_012`) — self-corrected without grading impact in two of the three; in
+the third (`ut_012`) it's the specific reason that test is "partial" rather
+than a clean pass. Looks like a tool-ergonomics gap rather than a skill
+problem, but it's a different area of code — flagging for visibility, not
+filed without discussing first. The one fail (`ut_hypothesis_tracking_015`) is F3's
 already-diagnosed pre-existing, out-of-scope flake. Three earlier candidate
 run logs from this session (`v1_2026-09-01_11-07-15.json`,
 `v1_2026-09-01_11-36-18.json`, and a third noisier run) were deleted rather
