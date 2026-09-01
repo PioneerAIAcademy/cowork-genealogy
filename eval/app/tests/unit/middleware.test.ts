@@ -72,9 +72,10 @@ describe('middleware — cross-origin state-changing requests', () => {
   })
 
   it('lets GET through', () => {
-    // Read routes are guarded by path containment instead: a cross-site GET
-    // from <script>/<img> carries no Origin, so a check here would either break
-    // the app's own page loads or pass anyway.
+    // A cross-site GET from <script>/<img> carries no Origin, so a check here
+    // would either break the app's own page loads or pass anyway. Read routes
+    // have no containment guard today; PR #2000 adds one at every filesystem
+    // sink.
     const res = middleware(req('GET', { host: '127.0.0.1:3000' }))
     expect(res.status).toBe(200)
   })
