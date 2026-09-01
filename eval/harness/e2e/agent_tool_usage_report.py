@@ -75,6 +75,7 @@ from typing import Any, NamedTuple
 from e2e.runlog_selection import (
     add_since_arg,
     all_result_jsons,
+    branch_scope_note,
     describe_window,
     filter_since,
     result_jsons_for,
@@ -455,6 +456,7 @@ def main(argv: list[str] | None = None) -> int:
     if not paths:
         where = f" on/after {cutoff.isoformat()}" if (cutoff and all_paths) else ""
         print(f"No committed runs found{where}.", file=sys.stderr)
+        print(branch_scope_note(), file=sys.stderr)
         return 1
 
     scan_result = scan(paths)
