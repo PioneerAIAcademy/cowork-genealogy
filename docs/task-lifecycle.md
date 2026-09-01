@@ -265,10 +265,13 @@ stuck waiting on one specific team when a senior is already reading it. By the
 time a senior looks at a PR everything mechanical should be settled, so their
 time goes to whether the approach is right.
 
-**Getting a senior to look is the author's job.** CODEOWNERS requests review
-from both senior teams when the PR opens, so it is already in their GitHub
-review-request queue; say when it is actually ready. There is no bot that
-labels a PR ready and no queue to wait in.
+**A ready PR shows a `ready-for-senior-*` label.** `senior-queue.yml` adds it
+once CI is green, a peer has approved, and no review thread is outstanding —
+`ready-for-senior-developer` or `ready-for-senior-genealogist`, whichever team
+owns the changed paths. It is on the PR list itself, so a senior scanning
+`is:open is:pr` sees what is waiting for them without filtering for it. Saying
+when your PR is ready still helps; the label is what makes it visible without
+being told.
 
 **CODEOWNERS is the source of truth for which paths need a senior, not this
 paragraph.** Read the file rather than trusting a path list here — it can
@@ -281,8 +284,9 @@ findings resolved is what keeps that gate spent on judgment.
 **One senior approval covers a PR that spans both kinds of file.** GitHub
 resolves CODEOWNERS per file, not per PR, and a rule's owners are an OR — so
 a PR changing a `.ts` tool implementation alongside a `SKILL.md` is unblocked
-by one approval from either senior team. GitHub will show both senior teams as
-requested reviewers; that is one requirement shown twice, not two.
+by one approval from either senior team. It will carry both queue labels,
+because each queue shows the paths it owns; that is a routing signal, not two
+outstanding requirements.
 
 **Peer-only merges aren't reviewed by a senior zero times — they're sampled
 after merge, not before.** `/audit-merged-prs` is the lead's weekly pass
