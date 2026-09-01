@@ -41,9 +41,14 @@
         ]
       }
     ],
+    "places": [],
     "relationships": [],
-    "collection": {
-      "title": "Minnesota Death Index, 1908-2002"
-    }
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Minnesota Death Index, 1908-2002",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-002"
+      }
+    ]
   }
 }

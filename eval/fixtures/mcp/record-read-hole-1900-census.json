@@ -83,6 +83,7 @@
         ]
       }
     ],
+    "places": [],
     "relationships": [
       {
         "type": "Couple",
@@ -95,9 +96,12 @@
         "child": "P3"
       }
     ],
-    "collection": {
-      "title": "United States Census, 1900",
-      "imageId": "004022578_00190"
-    }
+    "sources": [
+      {
+        "id": "S1",
+        "title": "United States Census, 1900",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-001"
+      }
+    ]
   }
 }
