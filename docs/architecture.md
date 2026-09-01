@@ -368,6 +368,67 @@ something it cannot open. One is exempt — `project-status` names
 file has never existed in this repo. Writing it decides what the skill outputs,
 which is a content call owing a paid eval run rather than a mechanical fix.
 
+**Reachable is not read, and what gates it is the skill's reference-manifest
+block — not the file, and not the strength of the wording.** A file listed in the
+block a `SKILL.md` uses to enumerate its references gets read; a file named
+anywhere else in the same body is read almost never, however imperative and
+however unconditional. Measured over the committed e2e and unit run logs — the
+unit logs record built-in calls in `builtin_tool_calls`, the e2e logs in
+`tool_calls` beside the MCP calls, both including calls made inside a subagent,
+so a skipped `Read` does leave a trace:
+
+| how the `SKILL.md` names it | file | read |
+|---|---|---|
+| `**Load reference files before proceeding:**` + list | `question-selection/question-formulation.md` | 10/10 |
+| a `## Reference files` table, row reading "Always" | `historical-context/historical-broad-context.md` | 11/11 |
+| `Reference files in references/:` block | `conflict-resolution/weighing-evidence.md` | 7/7 |
+| an imperative trailing a paragraph about something else | `person-evidence/evidence-standards.md` | **0/18** |
+| a bare noun phrase, not an instruction | `check-warnings/warning-checks.md` | **0/16** |
+| point-of-use, gated on "for that year" | `search-records/census-field-availability.md` | **0/25** |
+
+Positive unit fixtures only — a negative fixture is a skill correctly declining,
+which loads nothing, and including them understates every row.
+
+**The effect is per-skill, and one file controls for everything else.** In the
+three skills with no manifest block, 14 of their 15 reference files sit at zero
+across 59 positive runs. `places-guidance.md` is the control: `historical-context`
+and `conflict-resolution` name it in the same sentence word for word — "**Places:**
+When resolving or writing places, follow `references/places-guidance.md`" — and
+name it *above* their manifest blocks. It reads 0/11 and 0/7 while the files
+listed below it read 11/11 and 7/7. Same file, named earlier in the body than the
+block that beats it — block membership is the whole difference. The 15th file is the ceiling
+wording alone buys — `search-records` marks `collection-quirks.md` bold and
+"Required, not optional", and it reaches 4/25.
+
+**Conditionality is the second-order effect, and it operates inside the block.**
+`historical-context`'s three rows run "Always" 11/11, "When interpreting
+relationship terms" 7/11, "When place discrepancies or date conflicts arise"
+4/11. The same gradient shows on tool calls: `locality-guide`'s Step 3 mandates a
+single-turn parallel batch and ends "Do not drop any call — parallelize, don't
+prune." Its unconditional members — `wiki_search`, `collections_search`,
+`volume_search`, `external_links_search` and all four `wiki_place_page` sections —
+run at 96–97% across 73 e2e segments. `wiki_read` is named in the *same sentence*,
+as the one exception, because it needs a URL from `wiki_search` first: 24/73, and
+still only 24/69 once you condition on `wiki_search` having returned non-error.
+Tool type, framing, position and skill are all held constant. (Not airtight — the
+logs cannot confirm a *usable* URL came back every time.)
+
+**Transport is not the axis.** Across 187 e2e `research-plan` segments its two
+instructed `Read`s run at 72% and 67% — above five of that body's six instructed
+MCP tools, beaten only by `research_append` at 97%. (The unit tier for the same
+skill inverts this; cite the e2e figure.) Do not justify a design on Reads being
+less salient than tool calls.
+
+What follows for design: **a file named outside the manifest block will not be
+read, at any wording** — and moving one into the block buys the read by paying its
+tokens on every invocation, whether the case arises or not. A bolded point-of-use
+imperative was added to `census-field-availability.md`; it stayed at zero.
+Per-case guidance — this record type, this collection, this jurisdiction — has to
+arrive on a call the agent is already making, or become a precondition in the
+writer tool (ADR-0011). §3.4's playbook result is an instance of this rather than
+a separate fact about agents: what was measured there was a per-record-type read
+with no manifest block to sit in.
+
 A skill can read its own sibling files; the failure is **across** skills. Claude
 Code's relative-path resolution from one SKILL.md into another skill's folder is
 unreliable (claude-code#17741). So guidance several skills must follow
@@ -421,11 +482,17 @@ reference files read at runtime, no build-time assembly.** Both alternatives
 were measured on `record-extractor` and reverted.
 *(Imperative owned by `CLAUDE.md` § "No playbook/reference files for agents".)*
 
-- **On-demand `Read` fails silently, in three modes.** With the files provably
-  reachable, the agent read the playbook on some tests, ignored it on others, and
+- **On-demand `Read` failed in three modes.** With the files provably reachable,
+  the agent read the playbook on some tests, ignored it on others, and
   over-applied it on others — 6/19 against a 12–14/19 baseline. No error is
-  raised, and the unit harness records only MCP calls, so a skipped `Read` leaves
-  **no trace at all.**
+  raised on a skipped read. It is no longer *invisible*, though:
+  `builtin_call_record` (`eval/harness/harness/skill_runner.py`) records built-in
+  calls off the `PreToolUse` hook — the one site that sees calls made inside a
+  Task-spawned subagent — and the e2e orchestrator records them in its own
+  `tool_calls` list, so both tiers now show whether a reference was read.
+  Older statements that a skipped `Read` "leaves no trace" predate it.
+  The playbook was a per-record-type read with no manifest block to sit in, so
+  §3.3's rule covers it.
 - **Build-time assembly** works mechanically but splits the reviewed artifact
   from the executed one. Here the prompt *is* the product: whoever edits a
   fragment must see the whole body it lands in, and seeing the real size is the
