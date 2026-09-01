@@ -131,7 +131,7 @@ VIOLATION_ARMS: tuple[tuple[str, str], ...] = (
 # registering it there would be false and leaving it unregistered would trip
 # that test's "no unregistered copy" rule. Kept in step with the real constant
 # by `test_the_census_watches_the_files_the_lockdown_protects`.
-WATCHED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+WATCHED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
 
 _PROTECTED_RE = "|".join(re.escape(f) for f in WATCHED_PROJECT_FILES)
 
