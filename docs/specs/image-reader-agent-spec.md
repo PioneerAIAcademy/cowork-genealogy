@@ -23,7 +23,7 @@ each ≤458 KB raw (~5.4 MB of base64 total), and crashed with
 image was near `image_read`'s 700 KB ceiling — the *pile* was the problem,
 so lowering the ceiling does not fix it.
 
-The `image-reader` subagent's reader is `image_transcribe` (host-side Qwen3-VL
+The `image-reader` subagent's reader is `image_transcribe` (host-side Gemini Flash
 OCR), which returns **text** — so no base64 ever enters the caller's context,
 the read is ~10× cheaper/faster, and it handles scans of any size (the old
 "downscale large scans so they aren't refused" ticket is moot). Because the
@@ -80,17 +80,18 @@ says so.
 
 - `name: image-reader`
 - `model: claude-sonnet-4-6` — the subagent does **no** vision itself
-  (Qwen3-VL does the OCR host-side via `image_transcribe`); its own model only
+  (Gemini Flash does the OCR host-side via `image_transcribe`); its own model only
   relays/formats the returned text and extracts a short facts list. A cheaper
   text model (e.g. `claude-haiku-4-5`) would suffice and is a candidate cost
   optimization — left at `claude-sonnet-4-6` (the pre-spike default) for
   safety. Cowork honors the agent `model:` pin.
 - `tools: [image_transcribe]` — listed in the frontmatter under **all three**
-  server spellings (`mcp__genealogy__image_transcribe`,
-  `mcp__remote-devices__Genealogy_Research__image_transcribe` for cloud Cowork, and
-  `mcp__Genealogy_Research__image_transcribe` for on-computer Cowork), per the repo
-  convention (ADR-0004): the harnesses and each Cowork run mode register the MCP
-  server under different names and `tools:` is matched exactly — the agent's sole
+  server spellings (`mcp__genealogy__image_transcribe`, the bridged
+  `mcp__remote-devices__Genealogy_Research__image_transcribe`, and the bare
+  `mcp__Genealogy_Research__image_transcribe`), per the repo
+  convention (ADR-0004): the harnesses and Cowork register the MCP server under
+  different names, the spelling a Cowork session exposes has been observed to move
+  (ADR-0004), and `tools:` is matched exactly — the agent's sole
   reader.
   It does not
   write `research.json` / `tree.gedcomx.json`, create assertions/sources, or
@@ -126,10 +127,8 @@ browse doesn't accumulate ten full transcriptions in the caller's context.
 judge relevance and shorten its output was found to encourage hallucination,
 whereas this agent's contract is faithful full OCR that never slants toward an
 asked-for answer (§5, and the `looking_for` row in §3.1). Raised again
-independently while designing `image-reader-opus` (2026-07-29) and rejected
-again for the same reason. It binds both agents: `image-reader-opus-agent-spec.md`
-§6 inherits this protocol, and its anti-slant charter is weaker (no tool-side
-prompt backstop), so the risk is higher there.
+independently while designing the (since-retired) `image-reader-opus`
+(2026-07-29) and rejected again for the same reason.
 
 **One candidate distinction is unresolved, and is the only thing worth reopening
 on:** gate the caller-facing *relay* on `image_transcribe`'s own `FOUND` /
@@ -144,7 +143,7 @@ investigated**. It needs the same genealogist scrutiny that produced the
 
 ## 6. Failure Behavior
 
-The agent's only reader is `image_transcribe` (host-side Qwen3-VL OCR, any
+The agent's only reader is `image_transcribe` (host-side Gemini Flash OCR, any
 size, text out). A **genuine** failure is when it errors — an unreachable
 image, or no OpenRouter key configured. On a genuine failure the agent **must
 not** produce a transcription; a fabricated read is worse than a visible miss.

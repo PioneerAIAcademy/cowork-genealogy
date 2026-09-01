@@ -1487,6 +1487,7 @@ def test_summary_ignores_non_judge_warning_kinds():
         "unread_skill_call",
         "missing_tool_usage_dimension",
         "uncovered_tool_call",
+        "prose_observation",  # tier-2 report_* findings (issue #1749)
     }
     judge_side = emitted - harness_side
     assert judge_side <= run_tests._JUDGE_WARNING_KINDS, (

@@ -177,18 +177,40 @@ A fixture's `args` block is **always required and non-empty.** It serves two pur
 
 **Predicated fixtures have no usage limit.** A fixture fires on every matching call. There's no "match once then fall through" semantic — if a test needs different responses across calls with identical args, model the difference in some other arg key and use distinct predicates.
 
-**Error fixtures.** To test how a skill handles error responses (auth failure, upstream 5xx, malformed response), set `response` to the error envelope the real MCP tool would return. The harness returns whatever object is in `response` verbatim — there is no separate "error" mode. Recommended shapes (match what the real MCP tools throw):
+**Error fixtures.** To test how a skill handles error responses (auth failure, upstream 5xx, malformed response), set `response` to the error envelope the real MCP tool would return. The harness returns whatever object is in `response` verbatim — there is no separate "error" mode.
+
+**The failure envelope is one key, `error`, holding the message string.** Every dispatch arm in `src/index.ts` catches identically and returns `{"error": <the thrown message>}`, and no arm produces any other shape for a THROWN error. A companion `message`, `status` or `code` key is therefore not a shape any tool can produce, and the fixture-shape check below rejects it. (The twelve tools in `OK_FALSE_IS_FAILURE` are a separate case: they report an *expected* failure by returning `{ok: false, reason, errors}`, which `src/tool-result.ts` turns into `isError`. They are not all writers, and most of them still re-throw an unexpected error into the envelope above. None is fixture-served, so no fixture should carry that shape either.) Note also that production sets `isError: true` alongside `{error}` and a fixture-served response never does, so an error fixture exercises the body and not the flag:
 
 ```json
 // auth failure
-{ "response": { "error": "auth_required", "message": "Token expired. Call the login tool." } }
+{ "response": { "error": "User is not logged in to FamilySearch. Call the login tool to authenticate." } }
 
 // upstream failure
-{ "response": { "error": "upstream_error", "status": 503, "message": "wiki-query-api unreachable" } }
-
-// empty results (legitimate negative result, not an error — log_outcome: negative)
-{ "response": { "results": [], "total": 0 } }
+{ "response": { "error": "wiki-query-api error: 503" } }
 ```
+
+**An empty result is not an error, and it still carries the tool's full envelope.** A nil search returns every field a hit-bearing search returns — only the counts and the array change. Copy the shape from a sibling fixture for the same tool rather than writing a short form; `record_search` reads:
+
+```json
+// no matches (legitimate negative result, not an error — log_outcome: negative)
+{ "response": {
+    "query": { "surname": "Flynn", "givenName": "Patrick" },
+    "totalMatches": 0, "paginationCappedAt": 4999, "returned": 0,
+    "offset": 0, "hasMore": false, "results": []
+} }
+```
+
+**A fixture's response shape is checked against its tool's real return type.** `packages/engine/mcp-server/tests/packaging/mcp-fixture-shape.test.ts` derives, per tool and from source, the top-level fields the handler's `Promise<T>` declares, and fails a fixture that invents a field or omits a required one. It reads nothing hand-maintained, so a new tool and a renamed field are both covered without editing it, and a tool whose return type it cannot resolve fails rather than being skipped.
+
+**What "no value check" does not cover.** A green run says nothing about whether a fixture's VALUES are ones its tool could emit. The known classes, deliberately without counts: a `url` no `candidateSlugsFor(section, placeName)` can build; a constant the tool emits unconditionally at a different value; values that contradict each other or the declared type; upstream data the hosted service holds no rows for; and an echoed `query` the tool's own input validator would refuse. The last of those classes IS checked: `mcp-fixture-queries.test.ts` runs each tool's own exported input validator over its fixtures' echoed `query`, for the two tools that export one (`record_search`, `person_search`). It found two fixtures echoing a query anchored only on `collectionId`, which `validateInput` refuses, and it guards the ten echoes repaired alongside it. The other classes above have no such validator to borrow and remain unchecked. `docs/architecture.md` §9.4 is explicit that a register of gaps lives on the `nothing-checks` LABEL and not in a doc, because a doc table cannot be kept honest — so the instance tallies briefly written here are removed, two of them having been wrong on the day they were written. The shape of each class is durable; the counts are not.
+
+One place it is currently stricter than a tool: `place_population` passes an upstream error body through as its *success* value, so a real response can be `{"error": …, "place_id": …}` — two keys, which the one-key failure envelope above rejects. No fixture uses that shape today, and a check failing on it is pointing at the tool's unchecked cast rather than at the fixture. Named here so the next author who hits it knows which end to fix.
+
+A third limit worth knowing per tool: `record_read` and `collection_read` resolve to types with **no required fields at all** (`RecordReadResult = SimplifiedGedcomX`, whose members are all optional), so for their 20 fixtures (19 `record_read`, 1 `collection_read`) the check can reject an invented key but can never report a missing one.
+
+Two things it deliberately does not do. It compares **top-level key names only**: a fixture whose `place` is a bare string passes while the type wants an object, and a value of the wrong type anywhere passes. And it says nothing about whether a value is *plausible* — `paginationCappedAt: 100` passes although the tool only ever emits 4999. So a green run means only that **no fixture's top-level key NAMES are impossible**. It does not mean the corpus is validated, and it does not mean a fixture is a response the tool could really have produced. Per-tool depth beyond key names belongs in `eval/harness/tests/unit/test_fixtures.py`, which holds the value-level checks for `person_read` (its top-level key set is asserted there by hand as well as derived here; the two agree today, and if an optional field is ever added to `PersonReadResult` the hand-written one is the copy to fix). Run it with `make harness-test`.
+
+When this check first ran it failed on 70 fixtures across 11 tools (69 on the shape rule, spanning 10 tools, and one more on the envelope rule above). 68 were corrected and 2 deleted (both referenced by no test), rather than frozen into a baseline list, because a baseline leaves live tests reading impossible shapes with nobody scheduled to burn the list down.
 
 Error-fixture coverage is **optional in v1.** Skills should handle errors gracefully in production, but exhaustive error-path testing is a Phase 2 push — the v1 focus is happy-path and negative-result behavior. The format is defined here so juniors who want to write an error-path test can.
 
@@ -444,7 +466,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
       "type": "integer",
       "minimum": 1,
       "maximum": 1,
-      "description": "POLICY (current stage): ALWAYS 1. Do not set above 1 when authoring a test. See Section 5.6 and Section 7, Variance: runs per test."
+      "description": "POLICY: ALWAYS 1 (standing policy, not a stage). Do not set above 1 when authoring a test. The pin means variance is not detected, never that a flapping test is tolerated. See Section 5.6 and Section 7, Variance: runs per test."
     },
     "intentionally_invalid": {
       "type": "boolean",
@@ -603,9 +625,11 @@ Only present when `test.type` is `"negative"`.
 
 ### 5.6 `runs_per_test`
 
-**POLICY (current stage): always 1. When creating or updating a test, do not set `runs_per_test` above 1** — omit the field (it defaults to 1) or set it to `1`. We are deliberately not addressing single-run variance yet; every test runs exactly once. Multi-run tests multiply suite wall-time (each run is a full skill execution **plus** a judge LLM call) for no benefit at this stage.
+**POLICY: always 1. When creating or updating a test, do not set `runs_per_test` above 1** — omit the field (it defaults to 1) or set it to `1`. Multi-run tests multiply suite wall-time (each run is a full skill execution **plus** a judge LLM call), and that budget goes on covering more tests rather than on re-running the same one. **This is standing policy, not a stage** — do not plan around it being lifted.
 
-The multi-run aggregation machinery described in Section 7 ("Variance: runs per test") is retained for a *future* phase — description-optimizer passes and golden-set calibration, where variance detection matters. Until the project explicitly enters that phase, treat `runs_per_test > 1` as a mistake. The JSON Schema currently pins `maximum: 1` to enforce this.
+**The pin decides what the harness measures, not what the suite tolerates.** We deliberately do not *detect* single-run variance. We do not accept it either. A test that passes on one run and fails on the next is a defect — an ambiguous rubric dimension, a thin `judge_context`, a missing fixture, or genuine skill inconsistency — and every one of those is fixable (`docs/skill-lifecycle.md`, "Improve the skill", carries the symptom-to-fix table). Diagnose and fix a flapping test. Never re-run one until it happens to come back green, and never read the absent `flaky` flag as evidence that a test is stable.
+
+The multi-run aggregation machinery described in Section 7 ("Variance: runs per test") stays in the code but is unreachable under this policy. Treat `runs_per_test > 1` as a mistake. The JSON Schema pins `maximum: 1` to enforce it.
 
 ### 5.7 `execution`
 
@@ -1005,8 +1029,8 @@ Each individual run of a test resolves to one of four outcomes:
 |---------|------|
 | `pass` | All deterministic validators passed AND (for positive tests) every judge dimension scored `3` (pass) AND `output.activated` matches the test type: `true` for positive with the skill under test in `output.skills_invoked`; `false` for negative AND the `negative.correct_skill` array match rule (Section 6) is satisfied |
 | `partial` | All validators passed AND any judge dimension scored `2` (partial) but none scored `1` (fail). For positive tests only — negative tests don't have rubric dimensions, so partial doesn't apply |
-| `fail` | Any validator failed, OR any judge dimension scored `1` (fail), OR a positive test invoked the wrong skill, OR a negative test invoked the skill under test |
-| `aborted` | Execution exceeded a budget guardrail (Section 15). The judge is not run. Not a fail — flagged separately so it doesn't count as a quality regression |
+| `fail` | Any validator failed, OR any judge dimension scored `1` (fail), OR a positive test invoked the wrong skill, OR a negative test invoked the skill under test. **A validator failure also dominates a deterministic-cap abort** (`max_wall_clock_seconds`, `max_turns`, `max_tool_calls`): a run that failed a validator and then hit one of those caps is `fail`, not `aborted` — the defect is real and must not be filed under a timeout |
+| `aborted` | Execution exceeded a budget guardrail (Section 15) **and no validator failed** (a concurrent validator failure demotes the three deterministic caps to `fail`, per the `fail` row). The judge is not run. Not a fail — flagged separately so it doesn't count as a quality regression. `aborted_reason` is still recorded on the run even when the outcome is demoted to `fail` |
 
 `expected_outcome: xfail` (Section 5.1) reframes the outcome to match pytest convention: an xfail-marked test that resolves to `fail` is reported as `xfail` (expected failure — does not count as a regression on the dashboard), and one that resolves to `pass` is reported as `xpass` (unexpected pass — investigate whether the bug is fixed and the marker can be removed).
 
@@ -1018,12 +1042,12 @@ Models are nondeterministic even at `temperature=0` — tool-selection and struc
 
 **Default: N=1 run per test.** Combined with `temperature=0` (Section 15), this gives stable, low-cost regression catching for day-to-day iteration. A single run is the right grain for PR gating, dev-time iteration, and the suite-level dashboard.
 
-**N=3 (or higher) is recommended for two specific cases:**
+**N=3 (or higher) would serve two specific cases** — both ruled out by the standing pin ("Overrides" below), and recorded here only so the aggregation rules that follow have a stated purpose:
 
-- **Description-optimizer passes.** When the optimizer compares two SKILL.md descriptions, it relies on pass-rate deltas across the test set (e.g., 60% → 70%). At N=1 those deltas are dominated by sampling noise. Bump `runs_per_test: 3` on the tests being scored against during an optimization pass; revert to N=1 afterward for routine runs.
+- **Description-optimizer passes.** When the optimizer compares two SKILL.md descriptions, it relies on pass-rate deltas across the test set (e.g., 60% → 70%). At N=1 those deltas are dominated by sampling noise, so `runs_per_test: 3` on the tests being scored would be the right instrument for an optimization pass, reverting to N=1 afterward.
 - **Golden-set calibration.** Tests under active senior-genealogist calibration benefit from variance detection (`flaky: true` signals an unstable test) to identify rubric items that need tightening.
 
-For everything else, N=1 is the right choice — the cost saving is ~2.5x and the lost signal (flakiness detection) is recoverable by re-running the test manually when something looks off.
+For everything else, N=1 is the right choice — the cost saving is ~2.5x, and what is lost is flakiness *detection*, not the obligation to fix flakiness. Re-run a suspect test yourself (`run_tests.py --test <id> --runlogs-root <tmp>`, twice or more) and fix whatever differs between the runs before trusting it again.
 
 The harness executes the test N times (one for N=1, three for N=3, etc.) and stores every run in the run log (Section 10).
 
@@ -1041,7 +1065,7 @@ The harness executes the test N times (one for N=1, three for N=3, etc.) and sto
 **Why these tie-break rules:**
 
 - **3-way splits collapse down.** When N=3 produces three different outcomes, there is no genuine signal of correctness — the skill is unstable on this test. Collapsing to `fail` matches how engineers actually treat flapping tests: assume the worst case and investigate. The `flaky: true` flag (always set in this case) preserves the underlying instability signal for anyone reading the dashboard.
-- **`aborted` dominates rather than being averaged out.** An abort means the skill hit a hard limit (max_turns, max_tool_calls, etc.) — failing to converge is itself a failure mode worth flagging, not infrastructure noise to discount. If real infrastructure noise becomes a problem (rate limit hits, network blips), the right fix is a new `aborted_reason` category that aggregates separately, not relaxing this rule.
+- **`aborted` dominates rather than being averaged out.** An abort means the skill hit a hard limit (max_turns, max_tool_calls, etc.) — failing to converge is itself a failure mode worth flagging, not infrastructure noise to discount. If real infrastructure noise becomes a problem (rate limit hits, network blips), the right fix is a new `aborted_reason` category that aggregates separately, not relaxing this rule. This aggregation operates on the per-run outcomes *after* the validator-dominates-cap-abort demotion in the `fail` row above: a run that failed a validator under a deterministic cap is already `fail` here, so it never lands in the `aborted` bucket, and the two computations agree by construction.
 
 **`flaky` is a boolean flag, not an outcome.** It's true when the per-run outcomes are not unanimous. It composes orthogonally with `outcome`:
 
@@ -1052,28 +1076,28 @@ The harness executes the test N times (one for N=1, three for N=3, etc.) and sto
 This composition cleanly handles all edge cases:
 
 - **xfail tests:** xfail reframes `outcome` (a `fail` becomes `xfail`, a `pass` becomes `xpass`) but does not affect `flaky`. An xfail test that's also flaky stays flaky.
-- **Dashboard semantics:** "pass rate" excludes flaky tests by default (they aren't a stable signal either way); "flake rate" is reported alongside. Treat `flaky: true` like a yellow caution light, regardless of which color the outcome shows.
+- **Dashboard semantics:** "pass rate" excludes flaky tests by default (they aren't a stable signal either way); "flake rate" is reported alongside. **`flaky: true` is a defect to fix, not a caution light to read past.** A flaky test is not a weaker pass; it is a test that has stopped answering the question it was written to ask. Fix it or retire it — a suite with a nonzero flake rate is not green, whatever its pass rate says.
 
 **Per-run aggregation of judge dimensions.** Within a single run, the judge produces one integer score per dimension. Across N runs the aggregated dimension score is the modal value (most common); ties resolve toward the lower score (`1` < `2` < `3`). The aggregated rationale is the rationale from the modal run. Dimension aggregation and outcome aggregation are independent — a `flaky: true, outcome: pass` test can have all-`3` aggregated dimensions, because flaky measures run-to-run *stability* and dimensions measure *per-run consensus on individual rubric items*. The reviewer-facing display should show both: "this test passed 2/3 runs; the dimensions that fired all scored `3`."
 
-**Overrides.** The schema's optional `runs_per_test` field (Section 4) bumps the count above the default of 1 in these specific cases:
+**There are no overrides.** The schema pins `runs_per_test` to `maximum: 1` and the loader rejects anything higher (`InvalidTestError`, "maximum of 1"), so neither multi-run case below can be requested from a test definition. The pin is standing policy — do not propose lifting it as the fix for a flaky test:
 
 - `runs_per_test: 3` — description-optimizer passes (so pass-rate deltas aren't dominated by sampling noise) and golden-set calibration during rubric tuning.
 - `runs_per_test: 5+` — only when calibrating a high-variance rubric dimension and you specifically need a tighter estimate of per-dimension stability.
 
-Because the default is N=1, `flaky` only ever fires during these optimization and calibration runs; routine regression dashboards will not surface borderline cases on their own — re-run a suspect test manually with `runs_per_test: 3` when something looks off.
+So `flaky` never fires and no dashboard surfaces a flapping test. **That is the instrument being permanently blind, not the suite being stable** — do not cite a silent `flaky` column as evidence that a test is consistent. Manual re-running is therefore not a stopgap; it is the mechanism. To check a test you suspect, re-run it yourself: `run_tests.py --test <id> --runlogs-root <tmp>`, twice or more, comparing the outcome and the per-dimension scores. Treat any disagreement between those runs as a bug to fix before the test is trusted again.
 
 **Cost impact.** Running N=3 triples skill-execution cost and (when validators pass) judge cost. Prompt caching mitigates the skill-execution side — only the test-specific tail re-runs uncached. Budget impact is roughly 2.5x rather than 3x for batched skill runs. Because N=1 is the default, this cost only applies during optimization passes and calibration work.
 
-### Stability floor (TBD)
+### Stability floor — ruled out
 
-At `temperature=0`, Sonnet is documented as not fully deterministic — tool selection and structured output sampling produce run-to-run variation. The spec does not yet pin a "regression threshold" (e.g., "pass rate drop > X% on a skill counts as a regression vs noise") because it cannot be set without empirical baseline data. After the first golden-set run with N=5 produces a noise characterization, this section gets filled in with:
+At `temperature=0`, Sonnet is documented as not fully deterministic — tool selection and structured output sampling produce run-to-run variation.
 
-- A per-skill pass-rate noise band (the expected variation when nothing has changed).
-- A regression threshold (pass-rate drop exceeding the noise band).
-- A monthly "stability run" cadence — N=5 on the golden set against the current pinned model + harness_version + rubric_hash + judge_prompt_hash, to recalibrate the noise band as those inputs evolve.
+**That variation is the cause of a flaky test. It is not an excuse for one.** A test that only passes on some samples is under-specified, and the fix is to remove the ambiguity the sampling is exposing — sharpen the rubric dimensions that admit two readings, widen thin `judge_context`, and replace judged assertions with deterministic validators wherever the correct behaviour is a no-op.
 
-Until then, treat any single pass-rate drop as a signal worth investigating manually rather than auto-classifying as regression vs noise.
+**No regression threshold will be pinned, and none is coming.** Setting one (e.g. "pass rate drop > X% on a skill counts as a regression vs noise") needs an empirical noise characterization, which needs repeated golden-set passes. Nothing prevents running those by hand — the `runs_per_test` pin constrains a test definition, not how often you invoke the suite — and that is exactly why this is a cost decision rather than a mechanical one: five golden-set passes is a standing bill nobody is going to pay for a number that changes with every model, rubric and harness bump. The three things this section once promised — a per-skill pass-rate noise band, a regression threshold derived from it, and a monthly N=5 stability run — are not coming, and should not be planned for.
+
+What that leaves is the rule already in force: **treat any pass-rate drop as a signal to investigate manually.** There is no band to fall inside of, so "probably noise" is never an available conclusion — either you found a real regression, or you found a test that flaps, and both get fixed.
 
 ---
 
@@ -1115,47 +1139,59 @@ One file per skill in `eval/harness/validators/`, following pytest naming (`test
 - **Tool allowlist (advisory)** — warns when the skill called MCP tools not listed in its SKILL.md `allowed-tools` frontmatter. Does not fail the test — the session grants all tools. Operates on the tool calls list.
 - **Skill structural rules** — requirements from SKILL.md that are deterministically checkable (e.g., "every conflict must have ≥2 competing_assertion_ids"). Operates on the diff.
 
+### Three tiers
+
+Validators are split into three tiers:
+
+- **Tier 1 (gating):** `test_*` prefix. Failure = test fail, judge is skipped. The validator's function name appears in the judge prompt under "Deterministic validators that FAILED".
+- **Tier 2 (reporting):** `report_*` prefix. An `AssertionError` is a finding: it is fed to the judge as anonymous text under "Harness observations on the response text" and never gates the test outcome. The function name goes only to the run log (`output.warnings[]` with `kind: "prose_observation"`) for traceability. Use this tier when the harness can detect a pattern but cannot decide whether it is wrong — that decision belongs to the judge.
+  - **A broken tier-2 validator gates like tier 1.** A validator that declares an argument the harness does not supply, or raises anything other than `AssertionError`, is a bug in the validator rather than a finding about the run, so it fails the test and is recorded in the run log like any tier-1 failure. Its error text never reaches the judge — a harness diagnostic is not an observation about the response, and the judge is instructed to weigh whatever appears in that section.
+- **Advisory:** Existing `warnings.warn()` pattern inside `test_*` functions (e.g. `test_tool_allowlist`). Not surfaced to the judge.
+
 ### Conventions
 
 - Universal validators live in `eval/harness/validators/test_universal.py`
 - Skill-specific validators live in `eval/harness/validators/test_<skill>.py`, one file per skill
-- Validators are plain Python functions with the signature `def test_<name>(before_state, after_state, tool_calls)` and raise `AssertionError` on failure
+- Tier-1 validators are plain Python functions with the `test_` prefix; tier-2 validators use the `report_` prefix. Both raise `AssertionError` to signal a finding and take arguments from the same pool.
 - The harness calls validators as direct function calls (not via pytest subprocess) for speed and reliability
-- Developers can also run validators standalone with `pytest eval/harness/validators/ -v` for debugging — pytest invokes them with fixtures the harness provides; see `eval/harness/validators/conftest.py`
+- Developers can also run validators standalone with `pytest eval/harness/validators/ -v` for debugging — pytest invokes them with fixtures the harness provides; see `eval/harness/validators/conftest.py`. Both tiers are collected: `python_functions` in `eval/harness/pyproject.toml` lists `report_*` alongside `test_*`, without which every tier-2 validator is silently skipped by that command.
 
 ### Validator signature
 
-Validators declare whichever subset of the available arguments they need. The harness inspects each function's signature and passes only the requested parameters — validators that don't need an argument simply omit it:
+Validators declare whichever subset of the available arguments they need. The harness introspects each function's signature and injects only the declared arguments. A validator that does not need an argument simply omits it from the signature.
 
 ```python
 def test_log_append_only(before_state, after_state, tool_calls):
-    """Universal: log entries never modified or deleted."""
+    """Tier 1 (gating): log entries never modified or deleted."""
     before_log = before_state["research_json"]["log"]
     after_log = after_state["research_json"]["log"]
     for entry in before_log:
         assert entry in after_log, f"log entry {entry['id']} was modified or removed"
 
-def test_tool_allowlist(tool_calls, skill_frontmatter, test):
-    """Advisory: warns when undeclared tools were called."""
-    import warnings
-    allowed = (skill_frontmatter or {}).get("allowed-tools", [])
-    bad = [c["tool"].split("__")[-1] for c in tool_calls
-           if c["tool"].split("__")[-1] not in allowed]
-    if bad:
-        warnings.warn(f"undeclared tools called: {sorted(set(bad))}")
+def report_example_pattern(text_response):
+    """Tier 2 (reporting): fires when a pattern is found in the response.
+    The assertion message becomes the observation text the judge sees."""
+    assert "bad pattern" not in text_response, (
+        "Response contains 'bad pattern' — the record shows X but the text says Y"
+    )
 ```
 
-**Available arguments** (a validator declares whichever subset it needs):
+**Available arguments** (the full pool from `validator_runner.py::available_args`):
 
 - `before_state` (dict) — `{"research_json": {...}, "tree_gedcomx_json": {...}, "files": {<path>: <content>}, "skill_frontmatter": {...}}`. Files present in the temp dir before the skill ran. `research_json` and `tree_gedcomx_json` are convenience aliases for the parsed contents of those files; absent if the test is stateless. `skill_frontmatter` is the parsed YAML frontmatter of the skill under test's SKILL.md.
 - `after_state` (dict) — same shape as `before_state`, snapshotting state after the skill ran. Files created during the run appear here with no `before` counterpart.
 - `tool_calls` (list) — every MCP tool call made by the skill, with the shape `{"tool": "mcp__genealogy__record_search", "args": {...}, "matched": {...}, "response_fixture": "...", "response": {...}}` (Section 10). `response` is present for `live` and unmatched (`none`) calls, and for a fixture-matched response the mock enriched — see Section 10.
 - `skill_frontmatter` (dict) — the parsed YAML frontmatter of the skill under test's SKILL.md (also available inside `before_state`/`after_state`).
 - `test` (dict) — the parsed test JSON dict, including `test.type`, `test.tags`, and any validator-facing blocks the orchestrator threads in.
-- `skills_invoked` (list) — skills invoked via the SDK `Skill` tool, captured by the PreToolUse hook.
-- `blocked_context_calls` (list) — main-thread calls to subagent-only tools that the PreToolUse hook denied.
-- `blocked_protected_writes` (list) — raw Write/Edit calls to a protected project file that the hook denied.
+- `skills_invoked` (list[str]) — every skill invoked through the SDK's `Skill` tool, in call order.
+- `blocked_context_calls` (list) — main-thread calls to subagent-only tools denied by the PreToolUse hook.
+- `blocked_protected_writes` (list) — raw writes to protected project files denied by the hook.
+- `attempted_mcp_calls` (list) — MCP calls the model emitted that never reached a fixture match.
 - `text_response` (str) — every assistant text block concatenated, no separator: narration and closing reply in one string, not the final reply alone (`"".join(text_chunks)` in `skill_runner.run_skill`). Empty when the run produced no assistant text. Use it for a **literal** property of the text — a phrase that must never appear, an identifier that must be named — and **not** to re-grade prose quality, which is a rubric dimension's job. A validator that tries to score how well the reply reads becomes a dimension nobody can tune. The case it exists for: a reply-shape rule a skill body states outright ("One sentence only", "do not restate the article content") is graded unevenly by a judge — on `search-wikipedia`'s run `v1_2026-08-22_10-20-08` the `Reply economy` dimension caught a narrating reply on one test and scored a byte-identical shape 3 on another, quoting a reply it had not been given.
+- `activated` (bool | None) — whether the skill activated (derived by `derive_activated`). `None` = unknown (e.g. abort before derivation).
+- `num_turns` (int) — SDK-reported turn count. 0 when absent or on early abort.
+- `output_tokens` (int) — SDK-reported output token count. 0 when absent or on early abort.
+- `aborted_reason` (str | None) — abort reason if the run was aborted (e.g. `"max_wall_clock_seconds"`, `"sdk_stream_silence"`, `"error"`). `None` when the run completed normally.
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.
 

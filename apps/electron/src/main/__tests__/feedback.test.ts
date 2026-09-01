@@ -9,6 +9,7 @@ import {
   capSessionLog,
   FEEDBACK_SCHEMA_VERSION,
   MAX_FIELD_CHARS,
+  NOT_PROVIDED,
   type FeedbackOptions
 } from '../feedback'
 
@@ -358,7 +359,30 @@ describe('buildFeedbackZip — living-person redaction', () => {
     )
     const md = await zip.file('FEEDBACK.md')!.async('string')
     expect(md).toContain('Living people redacted')
-    expect(md).toContain('2 person(s)')
+    expect(md).toContain('2 living-person record(s)')
+  })
+
+  it('redacts the completion-gate baseline too, not just tree.gedcomx.json', async () => {
+    // starting-tree.gedcomx.json is the write-once baseline (issue #1490). It
+    // carries the same living persons and is bundled by the same walkProject, so
+    // a bundle that redacted only tree.gedcomx.json still leaked living details.
+    await writeFile(join(folder, 'starting-tree.gedcomx.json'), JSON.stringify(TREE), 'utf8')
+    const zip = await JSZip.loadAsync(
+      Buffer.from((await buildFeedbackZip(makeOptions(folder))).zipBase64, 'base64')
+    )
+
+    const baselineRaw = await zip.file('starting-tree.gedcomx.json')!.async('string')
+    const baseline = JSON.parse(baselineRaw) as GedcomxData
+    const b2 = person(baseline, 'P2')
+    expect(b2.names[0].given).toBe('Living')
+    expect(b2.ark).toBeUndefined()
+    for (const leak of ['Jane Marie', 'Bobby', '3 March 1985', 'Riverside, CA', 'SECRET']) {
+      expect(baselineRaw).not.toContain(leak)
+    }
+
+    // Both files' living persons counted: 2 in each.
+    const md = await zip.file('FEEDBACK.md')!.async('string')
+    expect(md).toContain('4 living-person record(s)')
   })
 
   it('passes an unparseable tree through rather than failing the send', async () => {
@@ -368,6 +392,55 @@ describe('buildFeedbackZip — living-person redaction', () => {
     )
     expect(await zip.file('tree.gedcomx.json')!.async('string')).toBe('not json')
     expect(await zip.file('FEEDBACK.md')!.async('string')).not.toContain('Living people redacted')
+  })
+})
+
+describe('buildFeedbackZip — FEEDBACK.md on a blank prompt or did', () => {
+  let folder: string
+
+  beforeEach(async () => {
+    folder = await mkdtemp(join(tmpdir(), 'feedback-test-'))
+    await writeFile(join(folder, 'research.json'), '{}', 'utf8')
+  })
+
+  afterEach(async () => {
+    await rm(folder, { recursive: true, force: true })
+  })
+
+  async function markdownFor(overrides: Partial<FeedbackOptions['report']>): Promise<string> {
+    const result = await buildFeedbackZip(makeOptions(folder, overrides))
+    const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
+    return zip.file('FEEDBACK.md')!.async('string')
+  }
+
+  // Both are optional at the dialog (#1919). A heading with nothing under it
+  // reads like the bundler dropped the field; say it was left blank instead.
+  // The literal must match NOT_PROVIDED in apps/server/app/feedback.py, so a
+  // triager reading either producer's bundle sees the same thing.
+  it('says the field was left blank rather than printing an empty section', async () => {
+    const md = await markdownFor({ userPrompt: '', agentDid: '   ' })
+    expect(md).toContain(`## What I asked\n\n${NOT_PROVIDED}`)
+    expect(md).toContain(`## What the agent did\n\n${NOT_PROVIDED}`)
+  })
+
+  // Asserted as a LITERAL, not via the imported constant: the point of the
+  // comment above is cross-producer agreement, and a test that reads the same
+  // constant it is checking moves with it and can never catch the drift.
+  it('spells the placeholder exactly as apps/server/app/feedback.py does', () => {
+    expect(NOT_PROVIDED).toBe('_(not provided)_')
+  })
+
+  it('says so for a blank email too, not just the two text sections', async () => {
+    const md = await markdownFor({ email: '' })
+    expect(md).toContain(`- **From:** ${NOT_PROVIDED}`)
+    expect(md).not.toContain('- **From:** \n')
+  })
+
+  it('leaves a supplied prompt and did untouched', async () => {
+    const md = await markdownFor({ userPrompt: 'Find John Smith.', agentDid: 'It stopped.' })
+    expect(md).not.toContain(NOT_PROVIDED)
+    expect(md).toContain('## What I asked\n\nFind John Smith.')
+    expect(md).toContain('## What the agent did\n\nIt stopped.')
   })
 })
 

@@ -220,7 +220,7 @@
       "source_classification": "original",
       "repository": "FamilySearch",
       "access_date": "2026-05-04",
-      "url": "https://www.familysearch.org/ark:/61903/1:1:FTXT-Q88",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:FTXT-Q88",
       "url_archived": null,
       "notes": "Full-text search hit; the snippet names Patrick as a son but carries no structured GedcomX persona.",
       "transcription": null,
@@ -301,7 +301,7 @@
     {
       "id": "a_004",
       "source_id": "src_004",
-      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FTXT-Q88",
+      "record_id": "https://www.familysearch.org/ark:/61903/3:1:FTXT-Q88",
       "record_role": "heir_1",
       "record_persona_id": null,
       "fact_type": "relationship",

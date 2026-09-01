@@ -4,7 +4,7 @@ import {
   fetchFsImageBytes,
 } from "../utils/fs-image-fetch.js";
 import { saveSourceImage } from "../utils/image-store.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithTimeout, isFetchTimeout } from "../utils/http.js";
 import { expandLookingFor } from "../utils/name-variants.js";
 import type {
   ImageTranscribeInput,
@@ -45,7 +45,7 @@ export function __clearBrowseBudgetForTests(): void {
  */
 function recordBrowseAndCheckBudget(
   imageId: string | undefined,
-  projectPath: string | undefined
+  projectPath: string | undefined,
 ): ImageTranscribeResult["browseBudget"] {
   if (!imageId) return undefined;
   const imageGroup = imageId.split("_")[0];
@@ -81,6 +81,18 @@ function recordBrowseAndCheckBudget(
 // this value. Whether the desktop `.mcpb` is bridged too has not been measured;
 // see docs/architecture.md "Other environment differences that bite".
 const OCR_TIMEOUT_MS = 180_000;
+
+// One retry, transport failures only. Measured over the committed e2e corpus,
+// 24 of 175 classifiable calls (14%) died at the transport with no socket code
+// and 6 timed out; on one run two consecutive losses led the agent to declare
+// the OCR route "network-unreachable in this environment" and abandon images
+// for the rest of the run, concluding from an indexed namesake instead. Probes
+// on both sides found the path healthy minutes later (70/70, then 46/46), so
+// the failures are intermittent — which is what a single retry is for. Whether
+// the transience is host-side or provider-side is still unclassified, and does
+// not change this: a bounded retry is the right response either way.
+const OCR_TRANSPORT_RETRIES = 1;
+const OCR_TRANSPORT_RETRY_DELAY_MS = 1_000;
 
 // OpenRouter attribution headers (recommended, not required). Stable app id.
 const APP_REFERER = "https://github.com/PioneerAIAcademy/cowork-genealogy";
@@ -131,7 +143,11 @@ function describeFetchError(error: unknown): string {
       : e.message;
   };
   let current: unknown = error;
-  for (let depth = 0; depth < 6 && current != null && !seen.has(current); depth++) {
+  for (
+    let depth = 0;
+    depth < 6 && current != null && !seen.has(current);
+    depth++
+  ) {
     seen.add(current);
     push(labelOf(current));
     const agg = (current as { errors?: unknown }).errors;
@@ -157,16 +173,16 @@ function parseFound(text: string): "FOUND" | "NOT FOUND" | undefined {
 
 /**
  * OCR a FamilySearch page scan via a hosted VLM (OpenRouter, default
- * Qwen-VL) and return the transcription as text. The image bytes go
+ * Gemini Flash) and return the transcription as text. The image bytes go
  * host-side → OpenRouter and never cross the MCP transport, so there is no
  * size cap (unlike image_read). See docs/specs/image-transcribe-tool-spec.md.
  */
 export async function imageTranscribeTool(
-  input: ImageTranscribeInput
+  input: ImageTranscribeInput,
 ): Promise<ImageTranscribeResult> {
   const { url, label, fallbackUrl } = resolveFsImageInput(
     input,
-    "image_transcribe"
+    "image_transcribe",
   );
 
   // Resolve credentials/config BEFORE fetching the image: a missing key
@@ -177,7 +193,7 @@ export async function imageTranscribeTool(
 
   const { bytes, contentType, sizeBytes } = await fetchFsImageBytes(
     url,
-    fallbackUrl
+    fallbackUrl,
   );
   const dataUrl = `data:${contentType};base64,${Buffer.from(bytes).toString("base64")}`;
   // Expand recognized given names in lookingFor with historical diminutives
@@ -188,39 +204,61 @@ export async function imageTranscribeTool(
     : input.lookingFor;
   const prompt = buildOcrPrompt(expandedLookingFor);
 
-  let response: Response;
-  try {
-    response = await fetchWithTimeout(
-      OPENROUTER_URL,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": APP_REFERER,
-          "X-Title": APP_TITLE,
+  let response!: Response;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      response = await fetchWithTimeout(
+        OPENROUTER_URL,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": APP_REFERER,
+            "X-Title": APP_TITLE,
+          },
+          body: JSON.stringify({
+            model,
+            temperature: 0,
+            // Privacy: FamilySearch scans are PII — do not let the provider
+            // retain prompts for training. See spec §11.
+            provider: { data_collection: "deny" },
+            messages: [
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: prompt },
+                  { type: "image_url", image_url: { url: dataUrl } },
+                ],
+              },
+            ],
+          }),
         },
-        body: JSON.stringify({
-          model,
-          temperature: 0,
-          // Privacy: FamilySearch scans are PII — do not let the provider
-          // retain prompts for training. See spec §11.
-          provider: { data_collection: "deny" },
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: prompt },
-                { type: "image_url", image_url: { url: dataUrl } },
-              ],
-            },
-          ],
-        }),
-      },
-      OCR_TIMEOUT_MS
-    );
-  } catch (error) {
-    throw new Error(`Could not reach OpenRouter. (${describeFetchError(error)})`);
+        OCR_TIMEOUT_MS,
+      );
+      break;
+    } catch (error) {
+      // Retry a TRANSPORT failure once; never a timeout. A timeout has already
+      // spent OCR_TIMEOUT_MS, so a second attempt doubles the worst case — the
+      // objection that kept a retry out until now. The transport branch is the
+      // cheaper one to re-attempt, but only USUALLY: it catches every non-timeout
+      // fetch rejection, which includes a reset after the request was sent and
+      // inference may already have been billed. The corpus cannot separate those
+      // — 0 of 30 recorded failures carry a socket cause code — so this is a
+      // reasoned default, not a measured one. Re-check it once coded failures
+      // accumulate.
+      if (attempt >= OCR_TRANSPORT_RETRIES || isFetchTimeout(error)) {
+        throw new Error(
+          `Could not reach OpenRouter${attempt > 0 ? " (2 attempts)" : ""}. ` +
+            `(${describeFetchError(error)})` +
+            (attempt > 0
+              ? " A retry already failed, so this is more than one transient blip" +
+                " — but it is still one image, not a verdict on the network."
+              : ""),
+        );
+      }
+      await new Promise((r) => setTimeout(r, OCR_TRANSPORT_RETRY_DELAY_MS));
+    }
   }
 
   // Auth failures are LLM-actionable — the key needs re-entering. Transient
@@ -228,13 +266,13 @@ export async function imageTranscribeTool(
   if (response.status === 401) {
     throw new Error(
       "The OpenRouter API key was rejected (401). Ask the user for a current " +
-        "key and call configure_openrouter."
+        "key and call configure_openrouter.",
     );
   }
   if (response.status === 402) {
     throw new Error(
       "OpenRouter reports the account is out of credits (402). Ask the user " +
-        "to add credits at https://openrouter.ai."
+        "to add credits at https://openrouter.ai.",
     );
   }
   if (!response.ok) {
@@ -246,7 +284,7 @@ export async function imageTranscribeTool(
     }
     throw new Error(
       `OpenRouter OCR failed: ${response.status} ${response.statusText}` +
-        (body ? ` — ${body}` : "")
+        (body ? ` — ${body}` : ""),
     );
   }
 
@@ -255,7 +293,7 @@ export async function imageTranscribeTool(
   if (transcription.length === 0) {
     throw new Error(
       "OpenRouter returned an empty transcription. Do not fabricate a read — " +
-        "pivot to the indexed record for this image (record_read / record_search)."
+        "pivot to the indexed record for this image (record_read / record_search).",
     );
   }
 
@@ -278,7 +316,7 @@ export async function imageTranscribeTool(
 
   const browseBudget = recordBrowseAndCheckBudget(
     input.imageId,
-    input.projectPath
+    input.projectPath,
   );
 
   const key = input.lookingFor?.trim();

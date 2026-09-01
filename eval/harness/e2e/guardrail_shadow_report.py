@@ -46,6 +46,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -54,6 +55,7 @@ from typing import Any
 from e2e.runlog_selection import (
     add_since_arg,
     all_result_jsons,
+    branch_scope_note,
     describe_window,
     filter_since,
     is_result_json as _is_result_json,
@@ -67,6 +69,7 @@ from harness.skill_invocation import (
     did_not_land,
     find_citation_nulling_in_conclusions,
     find_citation_nulling_in_tree_sources,
+    find_conclusions_without_tree_encoding,
     find_missing_mentor_verdicts,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
@@ -75,6 +78,7 @@ from harness.skill_invocation import (
     PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
     skill_name_if_skill_call,
+    TREE_ENCODING_KIND,
     unguarded_new_person_evidence_links,
     WARNINGS_UNCHECKED_KIND,
 )
@@ -249,6 +253,18 @@ def scan_warnings_unchecked(paths: list[Path]) -> list[dict[str, Any]]:
     return _scan_stored(paths, lambda v: v.get("kind") == WARNINGS_UNCHECKED_KIND)
 
 
+def scan_tree_encoding(paths: list[Path]) -> list[dict[str, Any]]:
+    """The issue-#1490 tree-encoding shadow entries STORED in each run's
+    `guardrail_shadow_violations` (a tier->=-probable conclusion whose evidence
+    persons gained no new tree structure). Identified by
+    `kind == TREE_ENCODING_KIND`. Reads 0 over every run captured before the
+    detector was wired into the live orchestrator; runs made after it store the
+    check live, so this line accumulates the fire rate. REPLAY still covers the
+    older runs.
+    """
+    return _scan_stored(paths, lambda v: v.get("kind") == TREE_ENCODING_KIND)
+
+
 @dataclass
 class UnnamedDelegateScan:
     """The §11 unnamed-delegate detector's output across a corpus.
@@ -400,6 +416,25 @@ class RunInputs:
         ]
         return ", ".join(absent) or None
 
+    def missing_for_tree_encoding(self) -> str | None:
+        """Why `find_conclusions_without_tree_encoding` cannot read this run, or
+        None. It needs the final research (proof_summaries, evidence, questions),
+        the final tree, and the seed tree — the seed is required for the same
+        reason warnings needs it: without it every fact reads as new and a
+        conclusion never looks un-encoded, hiding the very thing being measured.
+        It does NOT read the run log's tool_calls, so an unreadable log alone does
+        not skip it."""
+        absent = [
+            name
+            for name, value in (
+                ("no readable final-research.json sidecar", self.final_research),
+                ("no readable final-tree.gedcomx.json sidecar", self.final_tree),
+                ("no readable starting-tree.gedcomx.json", self.seed_tree),
+            )
+            if value is None
+        ]
+        return ", ".join(absent) or None
+
 
 def _load_json(path: Path) -> dict[str, Any] | None:
     """Parse one JSON file, or None if it cannot be read as a JSON OBJECT.
@@ -427,15 +462,15 @@ def load_run_inputs(path: Path, *, fixtures_root: Path = E2E_FIXTURES) -> RunInp
     faithful: the orchestrator writes them from the same post-run reads the live
     detectors saw.
 
-    Serves `replay_post_hoc`. **`replay_provenance` deliberately does not use it**,
-    though the plan for this change said it would. Two reasons found on contact:
-    that function needs only the run log and the seed — routing it through a
-    four-input loader would parse ~19 MB of final-state sidecars it never reads,
-    twice over, since `--replay` now runs both replays — and its skip message
-    carries the exception type (`unreadable run log (JSONDecodeError)`) plus a
-    stderr note, which this loader does not preserve. Merging them would trade a
-    real diagnostic for a cosmetic de-duplication. They are two loaders because
-    they load two different things.
+    Serves `replay_post_hoc`. **`replay_provenance` deliberately does not use it.**
+    It now reads one final-state sidecar (`final-research.json`, for the §8
+    provenance join) but still not the other, and routing it through a
+    four-input loader would parse every `final-tree` it never touches, twice
+    over, since `--replay` runs both replays. Its skip message also carries the
+    exception type (`unreadable run log (JSONDecodeError)`) plus a stderr note,
+    which this loader does not preserve, and its missing-sidecar path is a
+    *counter* rather than a skip. They are two loaders because they load two
+    different things.
 
     The near-identical copies in `e2e/corpus_report.py` (`recompute_tally`) and
     `e2e/detector_before_after_report.py` are left alone for a separate reason:
@@ -498,6 +533,7 @@ class PostHocReplay:
     conflict: CheckReplay = field(default_factory=CheckReplay)
     warnings: CheckReplay = field(default_factory=CheckReplay)
     tree_citation: CheckReplay = field(default_factory=CheckReplay)
+    tree_encoding: CheckReplay = field(default_factory=CheckReplay)
 
 
 def _record(
@@ -608,6 +644,18 @@ def replay_post_hoc(
                 ),
                 inputs,
             )
+
+        tree_encoding_skip = inputs.missing_for_tree_encoding()
+        if tree_encoding_skip:
+            out.tree_encoding.skipped.append(f"{where}: {tree_encoding_skip}")
+        else:
+            _record(
+                out.tree_encoding,
+                find_conclusions_without_tree_encoding(
+                    inputs.final_research, inputs.final_tree, starting_tree=inputs.seed_tree
+                ),
+                inputs,
+            )
     return out
 
 
@@ -624,6 +672,17 @@ class ProvenanceReplay:
     skipped: list[str] = field(default_factory=list)
     runs_scanned: int = 0
     runs_linking: int = 0
+    #: Runs measured with NO provenance join, because no committed
+    #: `run-<ts>.final-research.json` could be read. Those runs are replayed
+    #: un-narrowed (today's behaviour) rather than skipped, so they still
+    #: contribute — but the count is printed, because a replay that silently
+    #: measured a different rule on part of its corpus is exactly the shape
+    #: this module refuses elsewhere. 0 on today's corpus.
+    runs_without_provenance: int = 0
+    #: Links the narrowing skipped — the *unscoreable by design* population,
+    #: printed as a number beside the rate so the exemption is never a silent
+    #: subtraction from it.
+    exempted_links: int = 0
 
 
 def _links_any_person_evidence(tool: str, args: dict[str, Any] | None) -> bool:
@@ -667,12 +726,29 @@ def replay_provenance(
 
     **The corpus is branch-scoped.** This reads `eval/runlogs/e2e/` as it exists
     in the CURRENT checkout, so a graded run committed on an unmerged branch is
-    invisible — it is not skipped, it is never seen, and nothing here can say so.
-    Two are known: `katalin-horak-son` and `heinrich-dewus-children-death`, both
-    on `land-heinrich-dewus-children-fixture`, and the latter is the first run
-    ever to store live entries for this check. Read any rate off an up-to-date
-    `main` with in-flight fixture PRs merged, or it is biased at exactly the
-    moment it is used.
+    invisible — it is not skipped, it is never seen (issue #1444).
+    `describe_window()`'s printed line says so on every run of this report;
+    `make e2e-branch-only` names what another ref carries that this one
+    doesn't. Read any rate off an up-to-date `main` with in-flight fixture PRs
+    merged, or it is biased at exactly the moment it is used.
+
+    **The provenance join reads the run's FINAL research.json**, since the
+    narrowed rule (spec §8) skips a link whose provenance lane cannot yield a
+    persona from what the run retained and only the project document can answer that. This is loaded with
+    the module's own `_load_json` on that one sidecar rather than through
+    `load_run_inputs`, for the reasons that loader documents. A run with no
+    readable sidecar is replayed with `research=None` — un-narrowed, today's
+    behaviour — and counted in `runs_without_provenance`, NOT skipped: every
+    `replay_provenance` unit test builds a run log with no sidecar, so skipping
+    would turn the whole suite into vacuous passes.
+
+    That join introduces one asymmetry worth stating, because it runs opposite to
+    the lower-bound caveat above: the document is the run's FINAL state, so an
+    assertion written AFTER the link that cites it is visible to the replay and
+    was not on disk when the hook ran. The replay therefore under-flags the hook
+    on that shape. It is measured, not hypothetical — 17 landed `research_append`
+    calls across 9 runs write `assertions` and `person_evidence` ops together,
+    covering 66 ops.
 
     A run whose fixture has no committed `starting-tree.gedcomx.json` is NAMED in
     `skipped` and excluded from both counts, never silently dropped — with no
@@ -707,6 +783,11 @@ def replay_provenance(
         persons = seed.get("persons") if isinstance(seed.get("persons"), list) else []
         starting = {p["id"] for p in persons if isinstance(p, dict) and isinstance(p.get("id"), str)}
         tool_calls = data.get("tool_calls") or []
+        # The provenance join. Absent sidecar => replay un-narrowed (None) and
+        # count it, rather than skip: see this function's docstring.
+        research = _load_json(path.with_name(f"{path.stem}.final-research.json"))
+        if research is None:
+            out.runs_without_provenance += 1
 
         out.runs_scanned += 1
         try:
@@ -735,11 +816,26 @@ def replay_provenance(
             if not _links_any_person_evidence(tool, args):
                 continue
             links = True
+            scored_so_far = same_person_scored_ids(tool_calls[:i])
             unguarded = unguarded_new_person_evidence_links(
                 tool,
                 args,
-                scored_ids=same_person_scored_ids(tool_calls[:i]),
+                scored_ids=scored_so_far,
                 starting_ids=starting,
+                research=research,
+            )
+            # What the narrowing skipped on this call: the ids the UN-narrowed
+            # predicate would have flagged, minus the ones it still does. Counted
+            # so the exemption is a number beside the rate rather than a silent
+            # subtraction from it.
+            out.exempted_links += max(
+                0,
+                len(
+                    unguarded_new_person_evidence_links(
+                        tool, args, scored_ids=scored_so_far, starting_ids=starting
+                    )
+                )
+                - len(unguarded),
             )
             for pid in unguarded:
                 out.violations.append(
@@ -773,6 +869,13 @@ def format_provenance_replay(replay: ProvenanceReplay) -> str:
         f"{affected_runs} of {replay.runs_linking} run(s) that link a person have "
         f"≥1 gap ({len(replay.violations)} link(s), {affected_fixtures} fixture(s)).",
         "  A lower bound: the live hook may not see a same-turn same_person; the replay always does.",
+        f"  {replay.exempted_links} link(s) NOT counted: their provenance lane cannot "
+        "yield a persona from what the run retained (spec §8).",
+        # Both numbers print unconditionally, including at 0. A count that appears
+        # only when non-zero reads identically to one nobody computed, which is
+        # the inference this module refuses everywhere else.
+        f"  {replay.runs_without_provenance} run(s) had no readable final-research.json "
+        "and were replayed UN-NARROWED (no provenance join).",
     ]
     if replay.skipped:
         lines.append(f"  Skipped {len(replay.skipped)} run(s) with no committed seed tree:")
@@ -800,6 +903,7 @@ def format_post_hoc_replay(replay: PostHocReplay) -> str:
         ("tree citation-nulling", "uploaded tree source(s) with a null/empty citation string", False, replay.tree_citation),
         ("conflict-unpersisted", "concluded question(s) relying on an unpersisted conflict resolution", False, replay.conflict),
         ("warnings-unchecked", "run(s) that wrote a new ParentChild/Couple relationship without calling person_warnings", True, replay.warnings),
+        ("tree-encoding", "tier->=-probable conclusion(s) that added no new tree structure — a gate would refuse/warn", False, replay.tree_encoding),
     ):
         affected = len({v["file"] for v in check.violations})
         headline = affected if per_run else len(check.violations)
@@ -882,6 +986,28 @@ def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
         "\n§7 warnings-unchecked check (issue #1193, shadow): "
         f"{len(violations)} run(s) wrote a new ParentChild/Couple relationship "
         f"without calling person_warnings, across {affected} run(s)."
+    )
+
+
+def format_tree_encoding(violations: list[dict[str, Any]]) -> str:
+    """The §11.5 tree-encoding count with its per-type breakdown (issue #1490,
+    shadow — reported, never a gate per the 2026-08-24 no-override ruling).
+
+    The count IS the refusal count: each violation is one tier->=-probable
+    conclusion a shipped gate would refuse or warn on, so this line doubles as the
+    calibration signal the ruling asks a shipped gate to produce — how often it
+    would fire, and on which question types, before a researcher has to tell us it
+    is wrong. Per-type because the fire rate is not uniform (parentage dominated
+    the 2026-08-20 measurement), and a rate that looks acceptable in aggregate can
+    hide a type that is mostly false flags."""
+    affected = len({v["file"] for v in violations})
+    by_type: Counter[str] = Counter(v.get("question_type") or "unclassified" for v in violations)
+    breakdown = ", ".join(f"{t}: {n}" for t, n in sorted(by_type.items())) or "none"
+    return (
+        "\n§11.5 tree-encoding check (issue #1490, shadow): "
+        f"{len(violations)} tier->=-probable conclusion(s) that added no new tree "
+        f"structure for any evidence person — what a completion gate would refuse "
+        f"or warn on — across {affected} run(s). By question type: {breakdown}."
     )
 
 
@@ -1394,6 +1520,7 @@ def main(argv: list[str] | None = None) -> int:
     paths = filter_since(all_paths, cutoff)
     if not paths:
         print("No committed runs found.", file=sys.stderr)
+        print(branch_scope_note(), file=sys.stderr)
         return 1
 
     by_window = scan_corpus(paths, windows=windows)
@@ -1418,6 +1545,9 @@ def main(argv: list[str] | None = None) -> int:
 
     warnings_unchecked = scan_warnings_unchecked(paths)
     print(format_warnings_unchecked(warnings_unchecked))
+
+    tree_encoding = scan_tree_encoding(paths)
+    print(format_tree_encoding(tree_encoding))
 
     unnamed_delegate = scan_unnamed_delegate(paths, replay=args.replay)
     print(format_unnamed_delegate(unnamed_delegate, replay=args.replay))
@@ -1456,6 +1586,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {v['fixture']:<35} {v['detail']}")
         print(f"\nWarnings unchecked (issue #1193), {len(warnings_unchecked)}:")
         for v in warnings_unchecked:
+            print(f"  {v['fixture']:<35} {v['detail']}")
+        print(f"\nTree encoding (issue #1490), {len(tree_encoding)}:")
+        for v in tree_encoding:
             print(f"  {v['fixture']:<35} {v['detail']}")
         print(f"\nUnnamed delegate (issue #980), {len(unnamed_delegate.stored)}:")
         for v in unnamed_delegate.stored:
