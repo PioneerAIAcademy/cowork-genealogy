@@ -1603,6 +1603,7 @@ changes how a correct change is made:
    the success gate can and cannot see"). `make e2e-corpus` deliberately reports
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
+
 ### 9.5 An autonomous run must be able to reach what a production run can
 
 **The e2e tier is the only instrument that answers "is this getting better for a
@@ -1632,12 +1633,12 @@ gone.
 Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
 both green in CI for months:
 
-- **The plan freeze.** `search-records` told an autonomous run it had no ad-hoc
-  searches, which dead-ended the skill's one route back to `research-plan`. An
-  interactive researcher who noticed the plan was wrong could get it revised; an
-  autonomous one could not. `research-plan` compounded it by superseding a plan
+- **The plan freeze.** `search-records` tells an autonomous run it has no ad-hoc
+  searches, which closes the skill's self-initiated route back to `research-plan`. An
+  interactive researcher who notices the plan is wrong can get it revised; an
+  autonomous one cannot. `research-plan` compounds it by superseding a plan
   "only when the user is explicitly re-planning" — never true with no user — so even
-  reaching the skill would have changed nothing. Measured consequence: across the
+  reaching the skill changes nothing. Measured consequence: across the
   committed e2e corpus, 93% of question-plan pairs carry exactly one plan, and only
   seven plans in the whole corpus were ever superseded.
 - **External-site captures.** `search-external-sites` marks a plan item `skipped`
