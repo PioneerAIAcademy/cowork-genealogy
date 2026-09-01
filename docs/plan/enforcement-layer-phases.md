@@ -1,6 +1,6 @@
 # Enforcement layer — the phase programme
 
-**Status, 2026-08-21.**
+**Status, 2026-09-01.**
 
 | Phase | State |
 |---|---|
@@ -97,18 +97,22 @@ fix a known-unsatisfiable gate in the body first.
 
 | Candidate | e2e invocations | Folded size |
 |---|---:|---|
-| ~~`research-exhaustiveness`~~ | 115 | **landed 2026-08-23** — folded to 21,632 bytes |
-| `conflict-resolution` | 9 | 48,513 bytes |
-| `person-evidence` | 149 | 49,473 bytes |
+| ~~`research-exhaustiveness`~~ | 115 | **landed 2026-08-23** — folded to ~21 KB |
+| `conflict-resolution` | 9 | ~48 KB |
+| `person-evidence` | 149 | ~52 KB |
 
-**The fold ceiling is whatever `record-extractor.md` currently measures** — 58,541
-bytes as of 2026-08-21, up from the 53,845 this line used to quote, which is why
-it says "measure it" rather than naming a number. `wc -c` on that file is the
-check —
-the only agent body the team has shipped and lived with. `search-records` folds
-to 142,746 bytes and is disqualified on size before anything else. Agent bodies
-only grow: `record-extractor` went 32,042 → 58,541 in under two months, because an
-agent cannot offload to `references/`.
+**There is no fold ceiling** — see `docs/skill-to-agent-pair-conversion.md`,
+"Folded size sizes the work; it does not disqualify". Do not rank or disqualify
+a candidate in the table above on `wc -c`.
+
+**`search-records` is the largest candidate by a wide margin and it is
+genuinely blocked, but not by a byte count.** It folds to roughly 143 KB, of
+which about 87 KB is `references/` — and an agent cannot keep a `references/`
+directory. That is the real constraint, and issue #2123 is its prerequisite:
+whether `wiki_search` can serve that reference layer. Note also that stripping
+the references leaves the body at 56,244 bytes — within 2% of
+`record-extractor.md`, and well inside the range that file has moved through
+on its own. One more reason not to run this decision through a threshold.
 
 **Do not split references back out.** Measured and reverted: on-demand `Read`
 inside an agent scored 6/19 against a 12–14/19 baseline, and the external

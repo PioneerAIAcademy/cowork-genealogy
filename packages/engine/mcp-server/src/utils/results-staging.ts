@@ -10,7 +10,7 @@
 import { writeFile, readFile, readdir, stat, unlink, mkdir } from "fs/promises";
 import { join, resolve, dirname } from "path";
 import { randomUUID } from "node:crypto";
-import { isInsideProject, assertInsideProject } from "./project-io.js";
+import { isInsideProject, assertInsideProject, readProjectJson } from "./project-io.js";
 
 /** The mandatory staging subdirectory. Invisible to the validator orphan check
  *  (which scans results/ non-recursively for top-level *.json). */
@@ -18,6 +18,19 @@ export const STAGING_SUBDIR = "results/.staging";
 
 /** Un-finalized staging files older than this are pruned opportunistically. */
 const STAGING_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * The tools that stage, and therefore the only tools whose log entries can carry
+ * a `results_ref`. Lives here rather than in `research-log-append.ts` because
+ * `unloggedStagedSearches` below needs the same predicate, and a
+ * `utils/` → `tools/` import is against CLAUDE.md's no-util→tool rule. The log
+ * appender imports it from here; a second copy would drift.
+ */
+export const STAGING_CAPABLE_TOOLS = new Set([
+  "record_search",
+  "fulltext_search",
+  "external_links_search",
+]);
 
 export interface StagedHandle {
   resultsRef: string;
@@ -196,6 +209,185 @@ export async function finalizeStagedResults(args: {
   }
 
   return { resultsRef, returnedCount, payloadQuery };
+}
+
+/**
+ * Emitted when this project holds staged search responses with no `research.json`
+ * log entry behind them (issue #2056). `{n}` is substituted host-side.
+ *
+ * Mirrored byte-for-byte in `eval/harness/harness/mock_mcp.py` — grep
+ * UNLOGGED_SEARCHES_NOTE to find both copies when editing either.
+ */
+export const UNLOGGED_SEARCHES_NOTE =
+  "{n} earlier staged search response(s) in this project have no research.json log " +
+  "entry: {refs}. Call `research_log_append` for each, passing that ref as " +
+  "`stagedResultsRef` — the staged file holds the search's own query, so the entry " +
+  "is filled in host-side and needs no reconstruction from memory. Log each as you " +
+  "go rather than batching them at the end. A search with no log entry is a search " +
+  "that did not happen, and the staged response is deleted 24h after it was made.";
+
+/** How many refs the note names before it summarises the remainder. */
+const UNLOGGED_REFS_SHOWN = 5;
+
+/**
+ * Render the `{refs}` slot. Mirrored in `mock_mcp.py` — a trivial join, unlike the
+ * pairing rule, which the harness calls out of the compiled build rather than
+ * restating.
+ */
+export function formatUnloggedRefs(refs: string[]): string {
+  const shown = refs.slice(0, UNLOGGED_REFS_SHOWN).join(", ");
+  const rest = refs.length - UNLOGGED_REFS_SHOWN;
+  return rest > 0 ? `${shown}, and ${rest} more` : shown;
+}
+
+/**
+ * Emitted on a `projectPath`-carrying search that returned nothing. A nil search
+ * stages no file, so the note above can never see it — this is the only signal for
+ * the case a reasonably exhaustive search is most obliged to record.
+ *
+ * The wording is load-bearing and was corrected in review. `negative` records what
+ * the search RETURNED, never that the record is absent: `search-records/SKILL.md`
+ * says so at `:223`, `:72` and `:593`, and this note reaches an agent that by
+ * construction has not read any of them. The nils behind the motivating case were
+ * an index-coverage gap (`:593`), which is exactly the reading the earlier "a nil
+ * result is evidence" phrasing invited.
+ *
+ * Mirrored byte-for-byte in `eval/harness/harness/mock_mcp.py` — grep
+ * NIL_SEARCH_NEEDS_LOG_NOTE to find both copies when editing either.
+ */
+export const NIL_SEARCH_NEEDS_LOG_NOTE =
+  "Nothing returned, and nothing staged. A nil search is a finding and must be " +
+  "recorded: log it with `research_log_append`, `outcome: \"negative\"` — which " +
+  "records what the search returned, not that the record is absent — the exact " +
+  "parameters used, and no `stagedResultsRef`.";
+
+/**
+ * How many staged search responses in this project have no log entry behind them
+ * (issue #2056). Advisory only — the callers surface it as a model-facing note and
+ * refuse nothing.
+ *
+ * **A leftover staged file is a candidate, not proof.** `research_log_append` only
+ * WARNS when a staging-capable tool logs `results_available > 0` with no
+ * `stagedResultsRef` (research-log-append.ts), so `finalizeStagedResults` never runs
+ * for that entry and its staged file survives the full TTL though the search was
+ * logged. Measured over the committed corpus, that is ~10% of non-nil staging-capable
+ * entries — high enough that a raw file count is a nag, not a signal.
+ *
+ * So each staged file consumes at most one *unattached* log entry of the same tool
+ * whose `performed` is at or after the file's `retrieved`; only unpaired files count.
+ * Count subtraction is wrong here and was the first design: the unattached population
+ * also contains searches that ran with no `projectPath` at all, which stage nothing,
+ * so subtracting the whole set silently zeroes a real backlog.
+ *
+ * **Returns the unpaired handles, not a count.** The backlog exists precisely
+ * because the session lost track of its refs, so a note that says "pass the
+ * `staged.resultsRef` that search returned" asks for something the agent no longer
+ * has. Its cheapest escape then is to log WITHOUT the ref and hand-transcribe
+ * `query` — a 20%-failure-rate transcription (`research-log-append.ts`), and an
+ * entry of exactly the shape the pairing below tolerates, so the count would drop
+ * to zero while the raw response was lost for good. Handing back the refs makes the
+ * obligation satisfiable from disk, and `research_log_append` then fills `query`
+ * from the staged payload verbatim.
+ *
+ * Never throws, and returns an empty array on any failure — a missing project,
+ * unreadable research.json, corrupt envelope. This runs inside a successful search;
+ * a project-state read that cannot complete must not turn that search into an error
+ * (same reasoning as record-search.ts's silent tree read).
+ */
+export interface UnloggedStagedSearch {
+  /** Project-relative ref, ready to pass back as `stagedResultsRef`. */
+  ref: string;
+  tool: string;
+  /** ISO timestamp from the staged envelope. */
+  retrieved: string;
+}
+
+export async function unloggedStagedSearches(
+  projectPath: string,
+): Promise<UnloggedStagedSearch[]> {
+  // An explicit `projectPath: null` reaches here: all three callers gate on
+  // `!== undefined`, and `join(null, …)` is a raw TypeError, which would turn an
+  // already-successful search into a failure — the one thing the docstring above
+  // promises cannot happen. Guarded here rather than at the three call sites so a
+  // fourth caller inherits it. `""` is folded in for the same reason
+  // `stageSearchResults` treats a bogus path as a staging failure rather than
+  // scaffolding one.
+  if (typeof projectPath !== "string" || projectPath === "") return [];
+
+  const stagingDir = join(projectPath, STAGING_SUBDIR);
+
+  let names: string[];
+  try {
+    names = (await readdir(stagingDir)).filter((n) => n.endsWith(".json"));
+  } catch {
+    return []; // no staging dir yet — nothing staged, nothing owed
+  }
+  if (names.length === 0) return [];
+
+  // Same cutoff `pruneStale` uses, but do NOT read this as "about to be deleted":
+  // `pruneStale` is called from one place — inside `stageSearchResults`, AFTER its
+  // nil early-return — so a stale file survives any number of nil searches and is
+  // swept only by the next search that actually stages. The cutoff is here because
+  // a file past the TTL is past the window in which finalizing it is guaranteed to
+  // work, not because deletion is imminent.
+  const cutoff = Date.now() - STAGING_TTL_MS;
+  const staged: { ref: string; tool: string; retrieved: number; iso: string }[] = [];
+  for (const n of names) {
+    const p = resolve(stagingDir, n);
+    try {
+      const s = await stat(p);
+      if (s.mtimeMs < cutoff) continue;
+      const envelope = JSON.parse(await readFile(p, "utf-8")) as StagingEnvelope;
+      const parsed = Date.parse(envelope.retrieved);
+      const fallback = Number.isNaN(parsed);
+      staged.push({
+        ref: `${STAGING_SUBDIR}/${n}`,
+        tool: typeof envelope.tool === "string" ? envelope.tool : "",
+        // mtime is the fallback for an envelope whose `retrieved` is missing or
+        // unparseable: it is the same clock, one write later.
+        retrieved: fallback ? s.mtimeMs : parsed,
+        iso: fallback ? new Date(s.mtimeMs).toISOString() : envelope.retrieved,
+      });
+    } catch {
+      continue; // unreadable or corrupt: not counted, never fatal
+    }
+  }
+  if (staged.length === 0) return [];
+
+  let research: unknown;
+  try {
+    research = await readProjectJson(projectPath, "research.json");
+  } catch {
+    return [];
+  }
+  const log = (research as { log?: unknown })?.log;
+  const unattached = (Array.isArray(log) ? log : [])
+    .filter(
+      (e): e is { tool: string; performed: string } =>
+        !!e &&
+        typeof e === "object" &&
+        STAGING_CAPABLE_TOOLS.has((e as { tool?: unknown }).tool as string) &&
+        typeof (e as { results_available?: unknown }).results_available === "number" &&
+        ((e as { results_available: number }).results_available as number) > 0 &&
+        !(e as { results_ref?: unknown }).results_ref,
+    )
+    .map((e) => ({ tool: e.tool, performed: Date.parse(e.performed) }))
+    .filter((e) => !Number.isNaN(e.performed))
+    .sort((a, b) => a.performed - b.performed);
+
+  // Oldest file first against oldest eligible entry, so one late entry cannot
+  // absorb the pairing an earlier file had a better claim to.
+  staged.sort((a, b) => a.retrieved - b.retrieved);
+  const consumed = new Array<boolean>(unattached.length).fill(false);
+  const unpaired: UnloggedStagedSearch[] = [];
+  for (const file of staged) {
+    const i = unattached.findIndex(
+      (e, idx) => !consumed[idx] && e.tool === file.tool && e.performed >= file.retrieved,
+    );
+    if (i === -1) unpaired.push({ ref: file.ref, tool: file.tool, retrieved: file.iso });
+    else consumed[i] = true;
+  }
+  return unpaired;
 }
 
 async function pruneStale(stagingDir: string): Promise<void> {
