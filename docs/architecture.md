@@ -1606,12 +1606,13 @@ changes how a correct change is made:
 
 ### 9.5 An autonomous run must be able to reach what a production run can
 
-**The e2e tier is the only instrument that answers "is this getting better for a
-real user?" It answers that question only to the extent the run it measures can do
-what a user's run can do.** Every capability an autonomous run cannot reach is a
-capability the benchmark never exercises and never scores — so the gap is invisible
-in exactly the place you would look for it. A divergence here does not make the
-number noisy; it makes the number about the harness.
+**Nothing here measures production — every figure in this repo is computed over the
+eval corpus (§9.4). The e2e tier is the closest proxy: live FamilySearch, the whole
+route end to end. It holds only so far as the run it measures can do what a user's
+run can do.** Every capability an autonomous run cannot reach is a capability the
+benchmark never exercises and never scores — so the gap is invisible in exactly the
+place you would look for it. A divergence here does not make the number noisy; it
+makes the number about the harness.
 
 This generalizes a rule `CLAUDE.md` already states narrowly for one dimension —
 "the eval harness emulates production's permission model," grant what production
