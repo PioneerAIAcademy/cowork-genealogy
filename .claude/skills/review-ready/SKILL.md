@@ -1,6 +1,6 @@
 ---
 name: review-ready
-description: Use when the lead wants tasks vetted before juniors start them — "vet these before I hand them out", "are these tasks still a good idea", "is this safe for a junior", "review the fill-ready shortlist", "check the junior queue", or a bare "/review-ready". The gate between fill-ready (which ranks and promotes) and standup (which hands work out); covers both unassigned pools, developer and genealogist, with `--developer-only` to narrow it. Fans out one read-only task-reviewer agent per candidate issue, in parallel, each in fresh context — every agent reads the issue's cited code, the matching docs/architecture.md "If you're asked to…" block, the board's what-nothing-checks issues, and the relevant ADRs, then returns a verdict, the exact body text to add, and any decision only the lead can make. Collates the verdicts and writes each open question into its issue for `/make-decisions` to answer; applies the rest only when approved. Do NOT use to choose what the team works on, to rank the Backlog, or to move anything on the board — that is fill-ready, which calls this skill on its shortlist. Never starts the work.
+description: Use when the lead wants tasks vetted before juniors start them — "vet these before I hand them out", "are these tasks still a good idea", "is this safe for a junior", "review the fill-ready shortlist", "check the junior queue", or a bare "/review-ready". The gate between fill-ready (which ranks and promotes) and standup (which hands work out); covers all three unassigned pools — developer, genealogist and senior — with `--developer-only` to narrow it. Fans out one read-only task-reviewer agent per candidate issue, in parallel, each in fresh context — every agent reads the issue's cited code, the matching docs/architecture.md "If you're asked to…" block, the board's what-nothing-checks issues, and the relevant ADRs, then returns a verdict, the exact body text to add, and any decision only the lead can make. Collates the verdicts and writes each open question into its issue for `/make-decisions` to answer; applies the rest only when approved. Do NOT use to choose what the team works on, to rank the Backlog, or to move anything on the board — that is fill-ready, which calls this skill on its shortlist. Never starts the work.
 allowed-tools:
   - Agent
   - Bash
@@ -37,16 +37,25 @@ gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
 ## 1. Pick the candidates
 
 **The normal case is `fill-ready`'s shortlist, before it promotes.** Its verdicts
-feed that decision: a `senior` or `needs-a-decision` item never enters the
-unassigned pool, so it is never promoted and then swapped back out. Reviewing
-after promotion costs the same issue two deep reads — see the spec, §2.
+feed that decision: a `senior` or `needs-a-decision` item never enters a junior
+pool, so it is never promoted there and then swapped back out. Reviewing after
+promotion costs the same issue two deep reads — see the spec, §2.
+
+**A `senior` verdict re-routes rather than parks.** The item is re-ranked into
+the senior pool, which is also in Ready, and a `senior` verdict is itself the
+`reviewed` stamp that pool requires — so your verdict is what makes it eligible,
+not what shelves it. `needs-a-decision` does park: it waits in Backlog for
+`/make-decisions`.
 
 Other entry points:
 
 - **Issue numbers as arguments** (`/review-ready 945 1031 1094`) — review exactly
   those, in any column. This is also how a re-review is asked for.
-- **Bare `/review-ready`** — the standing pool: unassigned items in Ready, **both
-  pools**, `developer` and `genealogist`. A first run, or a run after a gap.
+- **Bare `/review-ready`** — the standing pool: unassigned items in Ready, **all
+  three pools** — `developer`, `genealogist` and `senior`. A first run, or a run
+  after a gap. A `senior` card already carries `reviewed` (that is how it earned
+  the pool), so in practice it is re-reviewed here only on a substantive body
+  edit, under the same rule as everything else.
 - **`--developer-only`** — the old default, kept for a cheap pass when you know
   the genealogist half was gated this week. Halves the token cost and halves the
   coverage.
@@ -63,7 +72,8 @@ other Backlog item: triage retitles it, writes the instructions and the
 below needs no special case — if you are seeing the label, it has not been
 triaged yet.
 
-**Why both pools, since this was developer-only until 2026-08-19.** A stale
+**Why the genealogist half too, since this was developer-only until
+2026-08-19.** A stale
 premise is not a developer-shaped defect. The run that changed it gated six
 developer issues and zero genealogist ones, and four of the six came back
 not-pickable — two carrying checks that would have shipped green and inert. The
@@ -140,9 +150,11 @@ Read every report. Then, in your own voice:
 - **Do not re-argue a verdict you have not checked.** If one looks wrong, spend
   the two minutes to verify it and say what you found — do not soften it.
 - **Count the routing damage, split by remedy.** How many unassigned `developer`
-  items in Ready turned out to be `senior`, and how many `needs-a-decision`? That
-  pair is the report's headline: it is how much of the junior pool was not
-  actually pickable, and the split says whether the fix is people or answers. A
+  items **in a junior pool** turned out to be `senior`, and how many
+  `needs-a-decision`? That pair is the report's headline: it is how much of the
+  junior pool was not actually pickable, and the split says whether the fix is
+  people or answers. Count only mis-pooled items — a `senior` card sitting in
+  the senior pool is correctly routed and is not damage. A
   pool that is mostly `needs-a-decision` is cheap to unblock and is the strongest
   thing you can put in front of the lead.
 
@@ -278,8 +290,10 @@ Rules on the writes:
   `CLAUDE.md` keeps settled tradeoffs out of issue bodies for a reason.
 - **Board moves are `fill-ready`'s.** On the normal path a `senior` or
   `needs-a-decision` verdict comes back before promotion, so there is nothing to
-  move — you label it and it stays in Backlog, out of the junior pool. On a
-  standing-pool run the item is already in Ready; report it for the swap.
+  move — you label it and `fill-ready` routes it: `needs-a-decision` to Backlog,
+  `senior` to the senior pool. On a standing-pool run the item is already in
+  Ready; report it for the swap between pools, not for a return to Backlog
+  unless it is `needs-a-decision`.
 - **Never answer a fork yourself, and never record one as answered.** Every
   surviving question gets written down and labelled `needs-decision`.
   `/make-decisions` is the only place a ruling is taken and applied.

@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: every developer takes from the junior pool, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, and the work behind it is often junior), `senior` (hard regardless, assigned to a senior in the developer or genealogist lane), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every issue it moves through review-ready before promoting — both pools. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at three standing depths — ~10 unassigned developer tasks, ~10 unassigned genealogist tasks, and ~10 unassigned senior tasks across both lanes — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: seniority picks the pool, importance ranks within it, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, so it waits in Backlog and the work behind it is often junior), `senior` (hard regardless, promoted to its own Ready pool once reviewed, picked up by a senior in the developer or genealogist lane), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every issue it moves through review-ready before promoting — all three pools. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -104,13 +104,20 @@ and do not rewrite the label to match the person.
 ## 1. Measure Ready depth before you rank anything
 
 Ready is a **self-serve menu held at a fixed depth**, not a queue sized to who
-happens to be free today. Developers and genealogists pick from it. Two pools,
-two standing targets:
+happens to be free today. Developers, genealogists and seniors pick from it.
+Three pools, three standing targets:
 
 | Pool | Target |
 |---|---|
-| Unassigned **`developer`** items in Ready | **~10** |
-| Unassigned **`genealogist`** items in Ready | **~10** |
+| Unassigned **`developer`** items in Ready, **not `senior`** | **~10** |
+| Unassigned **`genealogist`** items in Ready, **not `senior`** | **~10** |
+| Unassigned **`senior`** items in Ready, either lane | **~10** |
+
+**The rows partition — a `senior` item counts once, in the senior pool.** Every
+senior issue also carries `developer` or `genealogist` (that label picks its lane
+and its reviewer, not its pool), so a row that read "unassigned `developer`"
+without the exclusion would count it twice and inflate the junior pool with work
+no junior can take.
 
 ```sh
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
@@ -118,16 +125,17 @@ gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
 
 Count each pool **separately** — an item's label decides which target it counts
 against, and a pool at 16 while the other sits at 8 is invisible in a combined
-total. Assigned items do not count toward either target; someone is already on
-them.
+total. Assigned items do not count toward any of the three targets; someone is
+already on them.
 
-**There is no third pool for the lead.** He takes no issues — his job is coaching
+**None of the three is the lead's.** He takes no issues — his job is coaching
 juniors into seniors — so nothing is ever assigned to `DallanQ` and no target
-covers him. Structural bets go to `/find-big-wins`; decisions get
-`needs-decision`, which `/make-decisions` drains daily.
+covers him. The senior pool is not his: it is the two senior teams'. Structural
+bets go to `/find-big-wins`; decisions get `needs-decision`, which
+`/make-decisions` drains daily.
 
-**`cross-cutting` items are outside both targets** — see "Cross-cutting items are
-the lead's direct assignments" below. Subtract them before you compute a pool.
+**`cross-cutting` items are outside all three targets** — see "Cross-cutting items
+are the lead's direct assignments" below. Subtract them before you compute a pool.
 
 **Do not size promotions to free people.** Busy people finish, and the menu has
 to be stocked when they do — how many people are idle right now is not the
@@ -146,11 +154,18 @@ Below target, promote freely up to the target, best-first.
 Over target with nothing better in Backlog, the whole day's move is draining
 back down. State the arithmetic either way so the lead can overrule it:
 
-> Ready holds 11 unassigned `developer` (target 10) and 16 unassigned
-> `genealogist` (target 10). Promoting 2 developer and 1 genealogist; returning
-> 4 developer and 7 genealogist — net −8, both pools land on 10.
+> Ready holds 11 unassigned `developer` (target 10), 16 unassigned `genealogist`
+> (target 10) and 4 unassigned `senior` (target 10). Promoting 3 developer, 1
+> genealogist and 6 senior; returning 4 developer and 7 genealogist — net −1,
+> and all three pools land on 10.
 
-**Promoting zero is a valid answer** when both pools are at target and nothing in
+**Check the example adds up before you copy its shape**: each pool's
+start + promoted − returned must equal its target, and the net must equal total
+promoted − total returned. The version of this example that shipped until
+2026-09-01 did not — it returned one developer too many and still claimed the
+pool landed on target.
+
+**Promoting zero is a valid answer** when every pool is at target and nothing in
 Backlog outranks what is there. Say so plainly rather than padding to a number.
 
 ### What loses a swap
@@ -178,14 +193,20 @@ returns it.
 
 ### Seniority routes the item before priority does
 
-**Anything that needs a senior developer is assigned to nobody and stays in
-Backlog under the `senior` label — never into the unassigned pool.** Every
-developer takes from the junior pool and works with Claude Code. The roster's
-`Senior` column is **review authority, not an assignment tier**: it says whose
-approval can unblock a code PR, not who can be handed senior work.
-The unassigned `developer` pool is therefore a **junior** pool by definition, and
-a senior-required item sitting in it is worse than one sitting in Backlog: it
-looks pickable, and whoever picks it produces a green, plausible, wrong change.
+**Anything that needs a senior developer is assigned to nobody and carries the
+`senior` label — it goes to the senior pool, never a junior one.** Every
+developer takes from the junior pool and works with Claude Code, so the
+unassigned `developer` and `genealogist` pools are **junior** pools by
+definition, and a senior-required item sitting in one is the failure this
+routing exists to prevent: it looks pickable by anyone, and whoever picks it
+produces a green, plausible, wrong change. The `senior` label is what keeps the
+two apart on a shared column — the same way `developer` and `genealogist` do,
+and people already self-serve on those.
+
+The roster's `Senior` column is **review authority and the senior pool's
+membership**: it says whose approval can unblock a code PR, and who can take a
+`senior` card off Ready. It is not a promotion out of the junior pool — a senior
+still takes junior work, which is why all three pools sit in one column.
 
 **The lead is not the fallback.** He takes no issues, so "route it to him" is no
 longer an option.
@@ -195,14 +216,16 @@ it hard, or is it merely undecided?** Most items that fail the junior test fail 
 for the second reason — an open design fork, an unanswered doctrine call, a blast
 radius nobody wrote down. Those get `needs-decision`, and the work behind them is
 often junior once the answer exists. Only what would still be hard after every
-question is answered gets `senior`, and a `senior` item is assigned to a senior in
-its lane. "Above the junior pools" below is the whole rule; get the two apart
-before you label, because `senior` on an undecided item makes a sentence look
-like a scarce skill.
+question is answered gets `senior`, and a `senior` item goes to the senior pool
+in its lane's colours. "Above the junior pools" below is the whole rule; get the
+two apart before you label, because `senior` on an undecided item makes a
+sentence look like a scarce skill.
 
-Decide seniority **first**, then rank. A high-priority senior item does not win a
-place in the unassigned pool by being important; being important is what moves it
-up the conversion queue.
+Decide seniority **first**, then rank — seniority picks the pool, importance
+ranks within it. Importance also moves a senior item up the **conversion
+queue**, and converting one is still worth more than promoting it: it grows the
+junior pool instead of relocating a card. Promoting is the fallback for what
+cannot be converted, not the cheaper alternative to trying.
 
 **Junior-safe with Claude Code** — all of these, not most:
 
@@ -229,12 +252,14 @@ up the conversion queue.
   measurement says so — someone has to design past it.
 
 That list is the repo's existing **`senior` label** description. Apply `senior` or
-`needs-decision` whenever an item fails the junior test — a label is now the
-*only* thing marking it, since there is no longer an assignee to make the routing
-visible, and an unlabelled one is indistinguishable from a junior item nobody has
-picked. `task-reviewer`'s `senior` and `needs-a-decision` verdicts are the
-authoritative version of this same split — yours is the cheap pre-filter that
-decides what reaches it.
+`needs-decision` whenever an item fails the junior test — the label is the *only*
+thing marking it, since nothing is assigned here and an unlabelled item is
+indistinguishable from a junior one nobody has picked. **That matters more now
+that the senior pool shares the Ready column**: the label is what tells a junior
+scanning the menu which cards are not theirs, so a mislabelled item is picked by
+the wrong person rather than merely mis-ranked. `task-reviewer`'s `senior` and
+`needs-a-decision` verdicts are the authoritative version of this same split —
+yours is the cheap pre-filter that decides what reaches it.
 
 **Report the mix every time.** Count the Backlog's developer-oriented issues into
 *junior-safe and unblocked*, *junior-safe but blocked*, *junior after one decision
@@ -560,6 +585,15 @@ Then say it in your report as well, so the lead can hand both to one person.
 column at a time** — Ready, In Progress, or Review. If one is already there, the
 next one is not Ready — leave it in Backlog and name the holder.
 
+**An unstarted `senior` card yields its slot to a junior one.** The gate keys on
+the column because a Ready card is normally picked up within days; a senior card
+can sit for weeks, and a slot held by one that nobody has started blocks junior
+work that could ship this week. So when the holder is an unassigned `senior`
+item and the challenger is junior, swap them: the senior item goes back to
+Backlog, keeps its place in the senior pool's ranking, and returns when the slot
+frees. Never the reverse — an *assigned* or in-progress holder of either kind
+keeps the slot, because there the paid run is genuinely at stake.
+
 **Only an open issue in one of those three columns holds a slot.** Never test
 "outside Backlog" — that is wrong in both terminal directions, since Done and Not
 planned are outside Backlog too. A closed issue holds nothing: whatever it was
@@ -760,9 +794,10 @@ it to Not planned or to Backlog, dropping the `feedback` label on the way. It
 reaches you as an ordinary issue and is promoted with this move like any other.)
 
 **Gate every issue you are moving into Ready through `/review-ready` before you
-promote it — both pools, not just `developer`, and not just the ones you rank as
-junior.** Your seniority test above is a pre-filter read off the issue body; that
-skill fans out one agent per item to check the same call against the cited code,
+promote it — all three pools, not just `developer`, and not just the ones you
+rank as junior.** Your seniority test above is a pre-filter read off the issue
+body; that skill fans out one agent per item to check the same call against the
+cited code,
 the architecture guide's site list, and the board's what-nothing-checks issues —
 which is where a "junior-safe" item turns out to hide an open API decision, or a
 body's central claim turns out to have no instances behind it.
@@ -798,11 +833,21 @@ junior.
 
 Promote what comes back `ready` or `ready-after-edit`. A `senior` or
 `needs-a-decision` verdict on an item you had ranked junior is a seniority miss
-caught in time — it stays in Backlog and never enters the junior pool. **The two
-get different labels** (`senior` vs `needs-decision`), and the verdict tells you
-which: `needs-a-decision` means one answer unblocks it, `senior` means it is hard
-regardless. Running the gate after promotion instead works, but pays for the same
-deep read twice.
+caught in time — it never enters the junior pool. **The two get different labels**
+(`senior` vs `needs-decision`) and different destinations, and the verdict tells
+you which: `needs-a-decision` means one answer unblocks it, so it stays in
+Backlog until `/make-decisions` drains it; `senior` means it is hard regardless,
+so it is re-ranked into the senior pool and promoted there if it earns a place.
+Running the gate after promotion instead works, but pays for the same deep read
+twice.
+
+**Senior-pool eligibility is narrower than the junior pools'.** An item enters it
+only when it carries `reviewed`, does **not** carry `needs-decision`, and is not
+`icebox`. The first is the same gate everything else passes; the second is the
+whole point of the split, since a card blocked on an answer is not startable by
+anyone; the third belongs to `/review-icebox`. An unreviewed `senior` item is not
+ineligible forever — it is one `/review-ready` pass away, at the usual ~110k
+tokens.
 
 ## 6. Above the junior pools — three states, not one
 
@@ -810,14 +855,21 @@ deep read twice.
 is no pool assigned to him, nothing here ever adds `DallanQ` as an assignee, and
 "route it to the lead" is not an available move.
 
-Work above the junior pools is **three states that look identical on a board and
-behave completely differently**, and telling them apart decides who can start.
+Work above the junior pools is **three states that look alike in a Backlog list
+and behave completely differently**, and telling them apart decides who can start
+— and now also decides which column the item ends up in.
 
-| State | Label | Blocked on | Who takes it |
-|---|---|---|---|
-| **Decision-blocked** | `needs-decision` | The lead answering one question. Usually *not hard* — just undecided | Nobody, until he answers. Then it ranks in a junior pool like anything else |
-| **Genuinely hard** | `senior` | Nothing. It is difficult | A senior in its lane — see below |
-| **Logistics** | *neither* | An access handover, a scope confirmation, a file someone has to send | Anyone, the moment it is cleared |
+| State | Label | Blocked on | Who takes it | Where it goes |
+|---|---|---|---|---|
+| **Decision-blocked** | `needs-decision` | The lead answering one question. Usually *not hard* — just undecided | Nobody, until he answers. Then it ranks in a junior pool like anything else | Backlog, until `/make-decisions` drains it |
+| **Genuinely hard** | `senior` | Nothing. It is difficult | A senior in its lane — see below | The senior pool in Ready, once `reviewed` |
+| **Logistics** | *neither* | An access handover, a scope confirmation, a file someone has to send | Anyone, the moment it is cleared | A junior pool, once cleared |
+
+**`needs-decision` is the one state that is never promoted.** The other two are,
+once they are startable — `senior` into its own pool, logistics into a junior
+one. A `needs-decision` card in Ready would be a card nobody can pick up for a
+reason the card does not show, which is the failure the labels exist to prevent.
+Carrying both labels puts an item in neither state; see "Do not label both" below.
 
 **`needs-decision` is a distinct verdict, not a softer `senior`.** It is the
 label form of `task-reviewer`'s `needs-a-decision` verdict. An item that is
@@ -841,6 +893,12 @@ across drifted skill copies, deciding whether a compliance rate is acceptable,
 settling what a proof bar means — these are judgment nothing checks, which is the
 same test that makes a developer item senior. Check both lanes' queues when you
 report; the genealogist one is newer and easier to forget.
+
+**The pool is one, the lanes are two.** Both lanes share a single ~10 target
+rather than getting ~10 each: the senior population is small and lopsided, so
+splitting it would leave one lane permanently near-empty and hold slots nobody
+can fill. Report the lane mix inside the pool — that is what says which senior
+team is the bottleneck — but rank and swap against the single target.
 
 ### Reporting — your job is the arithmetic, not the routing
 
@@ -882,18 +940,26 @@ Report each separately — they have different remedies:
   ruling's date and hand them over. It is a **defect** only for an item still
   `ANSWERED` after a `/make-decisions` run has been through, because that one
   survived the drain.
-- **`senior` size, trend, and how many are unassigned.** This queue is worked. A
-  growing `senior` queue with seniors idle is a routing problem; a growing one
-  with every senior busy is a capacity problem. Say which.
+- **`senior` size and trend, split by column.** How many are in the senior pool
+  in Ready, how many are still in Backlog, and why each of the latter is held —
+  unreviewed, `needs-decision`, `icebox`, or outranked at target. Unassigned is
+  the normal state for a senior card in Ready and is **not** a finding; what is
+  a finding is a full pool with seniors idle (a pickup problem) against an empty
+  one with Backlog full (a conversion or review-gate problem). Say which.
 - **The oldest three in each, with idle days.** Neither queue has an owner to
-  chase, so age is the only signal it emits.
+  chase, so age is the only signal it emits. A senior card that has sat in Ready
+  for three weeks is the signal that promotion did not solve what conversion
+  would have — name it and propose the conversion.
 - **Ruled but still in Backlog** — a `**Ruling:**` comment, no `needs-decision`
   label, not promoted, with days since the ruling. Nothing else in the loop can
   see an answer that bought nothing, because the item leaves every decision-queue
   query the moment the label comes off.
 - **Which of either gate a milestone**, and how long they have sat.
 
-You do not rank these queues and you do not assign from them.
+You do not assign from either queue. You **do** rank the `senior` one — it feeds
+a pool with a target, so it ranks and swaps like the other two. The
+`needs-decision` queue you neither rank nor assign; it is `/make-decisions`' to
+drain.
 
 ### The milestones depend on both queues moving
 
@@ -1028,7 +1094,7 @@ list it does not appear in. Add state when it matters.
    move for a second consecutive fill, or a long-lead item is inside its lead time
    and not converted, that sentence goes here and nowhere else — it is the reason
    the report exists on a week when the promotions are routine.
-1. **Ready depth** — the two pools against their targets, and the net move for
+1. **Ready depth** — the three pools against their targets, and the net move for
    each. Show the arithmetic.
 1b. **Seniority mix** — the Backlog's developer issues split junior-unblocked /
    junior-blocked / junior-after-a-decision / senior, and whether the junior pool

@@ -42,7 +42,7 @@ a verdict the caller cannot act on is a verdict that silently does nothing.
 | `ready` | A junior can land it today | The `reviewed` label. Nothing else. |
 | `ready-after-edit` | Ready once the body carries the agent's text | Prepend the text; `reviewed`. |
 | `needs-a-decision` | An open fork only the lead can settle | Label `needs-decision` and `reviewed`; **no assignee**, and never alongside `senior`. Write the `## Decision needed` block into the body; `/make-decisions` splices the chosen option's pre-written text once it is answered. The work behind the fork is frequently junior, so this is a request for one answer, not for a scarce person. |
-| `senior` | Any trigger in the agent's `senior` list — green-and-wrong risk, cross-subsystem, inverts a mechanism, commits money or doctrine, or touches schema / credentials / a plugin-agent binding / an MCP tool contract / an ADR / anything hard to undo — **and still hard once every open question is answered** | Label `senior` and `reviewed`, keeping the `developer`/`genealogist` label that picks the lane; **no assignee** — the lead takes no issues and assigns seniors himself. Report to `fill-ready` for the swap out of the junior pool. |
+| `senior` | Any trigger in the agent's `senior` list — green-and-wrong risk, cross-subsystem, inverts a mechanism, commits money or doctrine, or touches schema / credentials / a plugin-agent binding / an MCP tool contract / an ADR / anything hard to undo — **and still hard once every open question is answered** | Label `senior` and `reviewed`, keeping the `developer`/`genealogist` label that picks the lane; **no assignee** — the lead takes no issues and nobody is assigned here; seniors self-serve. Report to `fill-ready` for the move out of the junior pool and into the senior one. |
 | `stale-rewrite` | The premise moved; the issue asks for the wrong thing | **Replace** the ask with the agent's rewrite, keeping the original under `## Original issue`; `reviewed`. |
 | `close` | No longer needed, already done, or refuted | `gh issue close --reason "not planned"` with the evidence. No label. |
 
@@ -55,7 +55,9 @@ junior's plan in a draft PR before code. It was retired in favour of this verdic
 
 1. **This gate makes the same call earlier, with more information, and acts on
    it harder.** A `senior` verdict removes the task from the junior pool; the
-   tier only gated a plan the junior had already been handed.
+   tier only gated a plan the junior had already been handed. (It re-routes
+   rather than parks — the item lands in the senior pool, which is also in
+   Ready.)
 2. **The tier asked the least-informed person to make it.** Its tie-break —
    "when in doubt, Risky" — converted junior uncertainty into a lead interrupt,
    which is the cost this gate exists to remove (§1).
@@ -149,10 +151,11 @@ reader, not state for a machine.
 
 Re-review is explicit: `/review-ready <N>`.
 
-## 6. Scope: both unassigned pools
+## 6. Scope: every unassigned pool
 
-The candidate set is **every unassigned item in Ready** — `developer` and
-`genealogist` alike. `--developer-only` narrows it to the old default.
+The candidate set is **every unassigned item in Ready** — `developer`,
+`genealogist` and `senior` alike. `--developer-only` narrows it to the old
+default.
 
 This reversed on 2026-08-19. The prior scope was developer-only, on the argument
 that the three passes are developer-shaped: blast radius from
