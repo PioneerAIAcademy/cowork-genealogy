@@ -4,6 +4,7 @@ import { ResearchDataProvider } from '../ResearchDataProvider'
 import { useResearchData, type ResearchDataState } from '../ResearchDataContext'
 import type { SidecarFile } from '../../lib/schema'
 import type { ResearchTransport } from '../../transport'
+import { openFamilySearch } from '../../lib/external'
 
 // ============================================================
 // Test harness
@@ -60,6 +61,7 @@ function makeMockTransport(): ResearchTransport {
     },
     readSidecar: (logId: string) => currentReadSidecar(logId),
     openExternal: () => {},
+    openFamilySearch: () => {},
     submitFeedback: async () => ({ ok: true })
   }
 }
@@ -455,5 +457,24 @@ describe('ResearchDataProvider — folder notice', () => {
     h.render()
     await waitFor(() => expect(h.ctx().research).toBeNull())
     expect(h.ctx().notice).toBeNull()
+  })
+})
+
+describe('ResearchDataProvider — outbound channel wiring', () => {
+  // The PR body named this as the silent-no-op hazard and stopped there.
+  // Removing the binding leaves all 8 turbo tasks and all 440 tests green while
+  // every "Open in FamilySearch" and "View on FamilySearch" link in BOTH apps
+  // does nothing — `openFamilySearch` fails closed by design, which is right,
+  // and is exactly what makes the breakage invisible.
+  it('wires openFamilySearch to the transport', () => {
+    const spy = vi.fn()
+    const transport = { ...makeMockTransport(), openFamilySearch: spy }
+    render(
+      <ResearchDataProvider transport={transport}>
+        <div />
+      </ResearchDataProvider>
+    )
+    openFamilySearch('ark:/61903/1:1:QPRC-WPBZ')
+    expect(spy).toHaveBeenCalledWith('ark:/61903/1:1:QPRC-WPBZ')
   })
 })
