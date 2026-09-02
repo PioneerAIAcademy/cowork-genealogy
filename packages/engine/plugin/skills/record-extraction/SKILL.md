@@ -167,7 +167,8 @@ a delegation message carrying:
 - open research question ids this record bears on
 - flags when applicable: "user asked to check FamilySearch matches",
   "the <element> is a suspect transcription — record it tentative
-  pending image confirmation"
+  pending image confirmation", "the date is Old Style — <the reading
+  convert-dates returned>; record it with that qualification"
 
 Frame delegations neutrally — describe the record and the project state;
 NEVER frame the task as "fix" or "correct" the existing tree (corrective
@@ -194,6 +195,34 @@ to check FamilySearch matches, relay it as the flag above — never call
 `record_person_matches` / `record_record_matches` yourself (they are
 not in this skill's allowed-tools, and the persona `id` they key on
 lives with the agent's extraction).
+
+**Check the calendar before delegating, not after.** When a record's
+date may fall before its jurisdiction adopted the Gregorian calendar,
+invoke `convert-dates` on that date **before** you delegate, and carry
+its reading in the flag above. Never decide from memory which
+jurisdiction changed when — `convert-dates` owns the country cutoffs,
+and a half-remembered one is how a date gets "corrected" that needed
+nothing. If the date is early enough that the question arises, ask.
+
+You hold the record content and the place at this point; the agent does
+not, and cannot get it — `record-extractor` grants neither `Skill` nor
+`Task`, and agents cannot nest — so a calendar question you do not
+resolve here is recorded as written and never revisited.
+
+What this prevents is a wrong **year**, not a wrong day. A January,
+February or March date in an English colony before 1752 sits inside the
+Old Style year-start window, so a register's "18 March 1750" is 1751 by
+modern reckoning — an error that shifts an event across a year boundary
+and survives into every conclusion built on it.
+
+**Do not do the arithmetic yourself.** `convert-dates` also owns the
+Quaker numbered months and double-dated years ("1749/50"). Where the
+record leaves the jurisdiction undetermined — a transition-era Dutch
+record naming no province — hand it over rather than picking a province.
+
+**Skip it** when that jurisdiction had already adopted the Gregorian
+calendar by the record's date, or when the record gives a year only — a
+year-only date carries no day or month for a correction to act on.
 
 **Classification refinement requests route the same way.** "Reclassify
 these evidence types", "is this informant primary or secondary?" — find
