@@ -250,12 +250,11 @@ current state and your notes and sends them to us privately, the same as it
 would for any project folder.
 
 > **Before you send: living people.** A member of our team will open and read
-> your research log, your notes, and your session transcript in order to
-> reproduce what went wrong. Living people are stripped from your family tree
-> automatically, but those three are sent exactly as you wrote them. **If any of
-> them holds information about a living person, take it out first — or don't
-> send feedback on that research.** A report is never worth someone else's
-> privacy, and we would rather lose the report.
+> your research log, your notes, and your full session transcript in order to
+> reproduce what went wrong. Most projects reach back four or five generations
+> and never touch a living person. **If yours does, please don't send feedback
+> on it.** A report is never worth someone else's privacy, and we would rather
+> lose the report.
 
 1. **What you asked the agent to do.** Optional, but please fill it in. A Cowork
    session has no Claude Code session log to attach (see the checkbox note

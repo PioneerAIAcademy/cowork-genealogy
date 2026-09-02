@@ -83,17 +83,19 @@ one, so the cost of a leak is measured in how long it stays unreported.
 
 ### 2. Personal information about living people
 
-Alpha testers submit feedback containing their own genealogical research,
-which concerns **living people** who have not agreed to anything and who
-are not our users.
+Most genealogy projects reach back four or five generations and never
+touch a **living person**, and users are asked not to send feedback on
+research that does. So most bundles you open will contain none.
 
-The feedback tooling removes living people from the tree files
-automatically before a bundle is sent, and treats a person as living
-unless the record says otherwise. Do not rely on it. It deliberately
+Treat the exceptions as the thing this section exists for. That ask is
+unenforceable — nothing stops a user sending anyway, and they may not
+realise their research qualifies. The tooling removes living people from
+the tree files automatically and treats a person as living unless the
+record says otherwise, but do not rely on it either: it deliberately
 passes a malformed tree through untouched rather than block a report, and
-it does not reach the parts of a bundle where living people are most
-often named: the session transcript, the free-text feedback fields, and
-`research.json`. Assume any bundle you open may contain them.
+it does not reach the session transcript, the free-text feedback fields,
+or `research.json`. Assume any bundle you open may contain a living
+person, and act accordingly the moment one does.
 
 This is the most sensitive information on the project. You agree to:
 

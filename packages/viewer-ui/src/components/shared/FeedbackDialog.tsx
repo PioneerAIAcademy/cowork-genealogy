@@ -317,10 +317,8 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
 
           <p className={styles.notice}>
             <strong>A team member will read what you send</strong> &mdash; your research
-            log, your notes, and your session transcript. Living people are removed from
-            your family tree automatically, but those three are sent exactly as written.
-            If any of them holds information about a living person, edit it out or don't
-            send this report.
+            log, your notes, and your full session transcript. If your research involves
+            living people, please don't send this report.
           </p>
 
           <div className={styles.field}>
