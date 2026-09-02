@@ -54,9 +54,10 @@ junior's plan in a draft PR before code. It was retired in favour of this verdic
 (ADR-0007 §2). Three reasons, in order of weight:
 
 1. **This gate makes the same call earlier, with more information, and acts on
-   it harder.** A `senior` verdict removes the task from the junior pool; the
-   tier only gated a plan the junior had already been handed. (It re-routes
-   rather than parks — the item stays in Ready, ranked in its lane's pool.)
+   it harder.** A `senior` verdict marks the task before anyone picks it up;
+   the tier only gated a plan the junior had already been handed. It re-routes
+   rather than parks — the item stays in Ready, ranked in its lane's pool, and
+   the label is what tells a junior the card is not theirs.
 2. **The tier asked the least-informed person to make it.** Its tie-break —
    "when in doubt, Risky" — converted junior uncertainty into a lead interrupt,
    which is the cost this gate exists to remove (§1).

@@ -269,10 +269,9 @@ report — it is more actionable than the promotion list.
 ### Cross-cutting items are the lead's direct assignments
 
 An issue labelled **`cross-cutting`** comes out of `/find-big-wins` — a
-structural bet the lead has already decided on, researched with Claude, and
-handed to a named person. It is the one thing on this board that arrives
-pre-assigned, and it exists because a structural bet is senior by definition and
-there is now no senior pool for it to sit in.
+structural bet the lead has already decided on and researched with Claude. It is
+the one thing on this board that arrives pre-assigned, because he hands it to a
+named person rather than leaving it on the menu for whoever gets there first.
 
 ```sh
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 100 \
