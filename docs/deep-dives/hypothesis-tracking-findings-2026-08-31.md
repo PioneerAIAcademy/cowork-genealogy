@@ -12,16 +12,22 @@ newest log before any score, per Step 2. **All 16 tests pass clean in the
 newest run**, so per Step 3 the whole suite is a quiet pass and got most of the
 time.
 
-**The grep the issue prescribed returns 2 files, as stated:**
-`ut_hypothesis_tracking_011.json` and `ut_hypothesis_tracking_012.json`. Both
-read clean, not leaky. `_011`'s branches ("refuse outright" vs. "partially push
-back but still change the status") both name a `score 1`/`score 2` outcome the
-skill could actually produce — its transcript shows an outright refusal that
-also performs the *correct* alternative write (ruling out h_002), which the
-`judge_context` explicitly anticipates as acceptable. `_012`'s branches are
-about *why* h_001 stays `supported`, not about whether it does, and its own
-justification is the piece this PR rewrites (see F1) — the branch shape itself
-was sound, its content was about to go stale.
+**The grep the issue prescribed returns 3 files as of this PR** (2 at the time
+this was first written, before this PR's own new test was added — corrected
+here): `ut_hypothesis_tracking_011.json`, `ut_hypothesis_tracking_012.json`,
+and `ut_hypothesis_tracking_017.json`. All three read clean, not leaky. `_011`'s
+branches ("refuse outright" vs. "partially push back but still change the
+status") both name a `score 1`/`score 2` outcome the skill could actually
+produce — its transcript shows an outright refusal that also performs the
+*correct* alternative write (ruling out h_002), which the `judge_context`
+explicitly anticipates as acceptable. `_012`'s branches are about *why* h_001
+stays `supported`, not about whether it does, and its own justification is the
+piece this PR rewrites (see F1) — the branch shape itself was sound, its
+content was about to go stale. `_017` is this PR's own new test (see F2); its
+one named branch is the failure mode (`score 1` if Claude refuses to promote
+for lack of direct evidence — the superseded rule), stated alongside the
+floor's own derivation from the spec, not a scored pair of outcomes — it reads
+as calibration reasoning, not a leaked answer.
 
 **Dimensions that never discriminate — worse than the issue's headline number,
 measured across all 70 recorded test-runs in the five-log corpus. `n` is the
