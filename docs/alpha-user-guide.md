@@ -143,6 +143,14 @@ surprises you. (It counts from when the page loaded, so a refresh restarts it.)
 Click **Send Feedback** in the viewer header. It bundles the project state and
 your notes and sends them to us privately.
 
+> **Before you send: living people.** A member of our team will open and read
+> your research log, your notes, and your session transcript in order to
+> reproduce what went wrong. Living people are stripped from your family tree
+> automatically, but those three are sent exactly as you wrote them. **If any of
+> them holds information about a living person, take it out first — or don't
+> send feedback on that research.** A report is never worth someone else's
+> privacy, and we would rather lose the report.
+
 1. **What you asked the agent to do.** Optional when the session log goes with
    the bundle, since that usually carries your prompt verbatim. Fill it in if you
    untick that box, if the form says no log was found, or if it was a long
@@ -223,7 +231,9 @@ wrong report.
 ## What happens to your feedback
 
 We unpack your case, open your project, and **continue the research from exactly
-where you submitted the feedback** so we can watch the same thing happen. 
+where you submitted the feedback** so we can watch the same thing happen. That
+means a person on our team reads your research log and your session transcript —
+which is why the note above asks you to keep living people out of them. 
 Then we fix the cause and
 write a regression test so it can't come back silently. That test is the durable
 result of your report — which is why "what it should have done" matters so much.

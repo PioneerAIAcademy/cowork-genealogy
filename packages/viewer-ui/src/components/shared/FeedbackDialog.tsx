@@ -315,6 +315,14 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
             details in your comments.
           </p>
 
+          <p className={styles.notice}>
+            <strong>A team member will read what you send</strong> &mdash; your research
+            log, your notes, and your session transcript. Living people are removed from
+            your family tree automatically, but those three are sent exactly as written.
+            If any of them holds information about a living person, edit it out or don't
+            send this report.
+          </p>
+
           <div className={styles.field}>
             <label className={styles.fieldLabel} htmlFor="feedback-email">
               Your email <span className={styles.optional}>(optional)</span>
