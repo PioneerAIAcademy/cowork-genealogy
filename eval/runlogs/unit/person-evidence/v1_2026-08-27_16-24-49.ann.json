@@ -1,0 +1,454 @@
+{
+  "run_log": "v1_2026-08-27_16-24-49.json",
+  "annotator": "edmondoware70@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Marking up to 3. The judge is wrong on the data and contradicts itself inside this run. a_001 is fact_type \"name\" with value \"Patrick Flynn\" in role child_1. It carries no relationship claim. The relationship assertion in this scenario is a_004, \"Named as my son Patrick Flynn in the will of Thomas Flynn\", which this test does not ask about. On _010, which links the same a_001 in the same scenario, the judge wrote \"a_001 is a name assertion, not a relationship assertion, so it does not imply a relationship requiring dual person_evidence links\" and scored 3. Creating the entry the judge asks for would assert that the person named Patrick Flynn in role child_1 is Thomas Flynn, which is wrong and would have to be superseded."
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirming 3 only because the UI offers no N/A here. Same position as _013. The record is MXHY TP4, whose sidecar holds P1 Patrick, P2 Thomas and P3 Mary, and all three are already in the tree as I1, I2 and I3. There was no unmatched persona and no absent household member, so the dimension does not apply. The judge marked it N/A on _010, which uses the same record and the same scenario. Read this as not applicable rather than as a pass."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Confirming 2, but not for the reason given. The judge says the finding (downgrade to probable) is correct and the reasoning muddled. It is the other way round. research-schema-spec.md 5.7 defines person_evidence as the identity resolution step and confidence as confidence in the link, meaning: is the person in role X of record Y the same as tree person Z. It does not measure how reliable the informant was about the content of the assertion; that is already carried on a_013 as information_quality secondary and informant_proximity family_not_present. The identity of the deceased on certificate 4521 is settled by name, county, year and the corroboration from pe_001 and pe_004, so confident is right and the recommended downgrade is wrong. The skill's own text says so: it writes that the identity is \"far better established by a_011 and by the cross record consistency with pe_001 and pe_004\", then downgrades the field that measures that. Three subsidiary findings are correct and useful (missing I2 link, unexplained null match_score, unaddressed birthplace conflict), and the write was gated behind authorisation, which is why this is 2 and not 1. Generalised, the skill's rule would depress identity confidence on every link sourced from a secondary informant, which would corrupt the identity layer that correlation and proof both rest on."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Confirming 2 as \"off by one tier\", which is the rubric's partial band, but the tier that is wrong is the proposed one, not the existing one. confident on pe_005 is correct and probable is the error. See my Correctness comment for why identity confidence and informant reliability are different fields. The discount the skill applied does have a home: it belongs on the a_013 to I2 link that the skill correctly noticed is missing. That link asks whether the Thomas Flynn named as father on this certificate is our I2, and it rests on a name plus a son in law's hearsay, so probable at best. Right instinct, wrong side of the relationship."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Confirming 2. pe_005's rationale is genuinely thin: \"Names match, death location matches known residence\" cites attributes but does no disambiguation, which is the rubric's own partial band, and the skill was right to say so. Its three proposed additions are concrete and worth making. What it misses is the one that matters most: a corrected rationale should separate the identity of the deceased (name, county, 1908, no plausible alternative, therefore confident) from the parentage claim carried in the assertion (secondary informant, therefore weighed separately and belonging to the I2 link). Because the skill did not make that separation, its proposed rewrite would have justified the wrong tier."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Marking up to 3. The rubric's pass text covers this case explicitly: \"In a review/audit request (where no writes should be made), correctly flagging that a relationship assertion is missing its other side link, and asking before creating it, satisfies this dimension.\" The user asked for a review of pe_005. The skill identified that a_013 names both Patrick and Thomas, confirmed by query that only pe_005 exists, called it a cardinality gap and asked for authorisation. That is the pass condition as written. The judge's own rationale concedes the point (\"the skill's instructions are to review pe_005, not to perform writes without confirmation\") and then deducts anyway. This is the strongest single finding in the review: the skill's identification of the missing I2 link is correct and is the most useful thing in its output."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirming 3, and recording why so this reads as an exercised pass rather than an unexercised one. a_013 has no record_persona_id, its log entry log_005 retained no sidecar, and mid-research-flynn has no results directory, so no persona is reachable under any of the three routes and a null match_score is correct. The skill went further and asked that the rationale explain the null, which is what the new rule wants. Worth noting the record is a 1:1: ARK that record_read might open; the PR deliberately leaves that exempt and I agree with that call here."
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirming 3: a_010 has record_persona_id null, log_004 retained no sidecar and the source was record_search rather than record_read, so no persona is reachable and a null match_score is correct. The reason the skill gives is the concern. It wrote \"No same_person score obtained: Thomas is the other party in a child_2 assertion, not a directly scored persona.\" That states a rule the PR is specifically abolishing. A second party is scoreable whenever its own persona is reachable, which is exactly what n7v demonstrates with F1 to I1 and M1 to I2. The outcome is right here only because nothing was reachable at all. If the same reasoning meets a retained sidecar it will skip a score the new rule requires, and the rubric's own fail band already anticipates the neighbouring error of reusing the first party's persona. Worth a line in SKILL.md tying the skip to reachability rather than to party position."
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirming 3 only because the UI offers no N/A here. This dimension should not have been scored at all. The rubric grades it \"only when the scenario has an unmatched persona or household members absent from the tree\". The variant record's sidecar (results/log_003.json) holds VP1 Patrick Flinn and VP2 Thomas Flinn, and both already exist in the tree as I1 and I2. Nothing was minted because nothing needed minting, and no connecting edge was owed either. The judge marked this same dimension N/A on _010, which runs on the same scenario against the same tree, so the 3 here is an inconsistency rather than a judgement. Read it as not applicable, not as a pass. Counting it as a pass inflates a dimension that no test in this sample actually exercises."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Marking down to 2 under the rubric's partial band, \"lets a high score nudge confidence up despite a noted conflict\". The retrieval half is right and is what this PR bought: the skill re-opened the record with record_read, extracted BP1, called same_person against I1, and persisted 0.71. Worth recording that it did this only on the second pass. Its first append wrote match_score null with the reason \"record_persona_id is null on this assertion\", which is precisely the escape this PR closes, and it corrected itself afterwards. So the gate works as a catch rather than as prevention, which supports the PR's own finding that the tool rule binds where the prose did not. The deduction is for what happened next: 0.71 is cited as \"confirming a strong match\" in the same sentence as an unreconciled 13 year date conflict, and the confidence stays confident. Compare n7v in this same run, where the skill correctly held a given name only match at 0.58 to probable. It applied the right standard there and not here."
+    },
+    {
+      "test_id": "ut_person_evidence_n7v",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_n7v",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_n7v",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_n7v",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_n7v",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_n7v",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_n7v",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_n7v",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirming 3, and this is the strongest evidence in the run for the change. Both personas were reachable through the retained sidecar and both were scored against their own tree candidate, F1 to I1 at 0.58 and M1 to I2 at 0.89, with no reuse of the first party's persona for the second, which is the failure the rubric's fail band names. The tiering tracks the evidence rather than the number: Bridget Sheehy is an exact match on a distinctive surname and goes to confident at 0.89, while the father is only \"Thomas [surname not indexed]\" with Flynn merely implied by the groom's surname, so it stays probable at 0.58 and the rationale says why. One thing worth carrying into the spec: the skill declined to score I3 at all because I3 had just been minted from that same persona, calling the comparison circular. That is correct and it is a fourth legitimate reason for a null score that the reachability rule does not currently name, alongside full text, image and external site."
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Marking down to 2. The task was to link a baptism retrieved to answer q_001, who was Patrick Flynn's mother. The skill built the household correctly, minted I3 with sourced facts, covered both parties, and rightly left the ParentChild edge to proof conclusion. The defect is the identity conclusion underneath all of it. The christening is 12 March 1858 and the tree carries an estimated birth of ~1845, and the skill's own rationale concedes the record \"may be the wrong estimate or a different person\". It then proceeds as though the identification holds, and every downstream write in this test rests on it, including the mother link that the question was asked to establish. Flagging a 13 year gap as a reconciliation note is not the same as resolving it, and where the answer to the research question depends on the identification, the identification has to be settled first or the work has to be held. See my Confidence calibration comment for why the father overlap does not settle it.\n"
+    },
+    {
+      "test_id": "ut_person_evidence_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Marking down to 2, off by one tier. The link is recorded confident while its own rationale says the christening of 12 March 1858 sits 13 years from the tree's estimated birth of ~1845 and that this \"may be the wrong estimate or a different person\". An Irish Catholic baptism follows birth within days, so an 1858 christening means born about 1858. That is not census age rounding, it is a different birth year. The stated tie breaker, the father Thomas Flynn appearing in both the baptism and the tree, cannot break it: a Thomas Flynn with a son baptised in 1858 is exactly what a younger sibling of the man born ~1845 would look like, or a forename reused after an infant death, so the overlap fits both readings equally and discriminates nothing. Probable is the ceiling here, with an identity conflict logged. Noting a discrepancy is not the same as resolving it, and this record was retrieved to answer who Patrick's mother was, so a wrong identification carries a wrong mother into the tree. Compare n7v in this same run, where the skill held a given name only match to probable at 0.58 while reserving confident for the distinctive full name Bridget Sheehy at 0.89. That is the right standard, applied there and not here."
+    }
+  ]
+}

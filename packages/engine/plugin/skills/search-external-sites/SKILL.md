@@ -111,9 +111,14 @@ the same search would be captured normally.
 **Newspapers: try the free archive first.** For any `record_type: newspaper`
 item, generate the free-archive URL (Chronicling America, and the state/regional
 archive for the place) *before or alongside* a Newspapers.com URL — never
-instead of it if the user named Newspapers.com. A user without a subscription
-otherwise gets a link they cannot use. `locality-guide` output for the place
-often already names the right regional archive; read it before guessing.
+instead of it if the user named Newspapers.com. Not because the paid link
+might be unusable — a researcher with no subscription may still reach it
+through `FamilySearch-Partner` or `LibraryAccess`, so do not assume otherwise
+— but because the archives hold *different papers*. A title digitised only by
+a state archive is absent from Newspapers.com no matter whose subscription is
+in play, so a paid-only search can return a confident nil on a paper that was
+never there to find. `locality-guide` output for the place often already names
+the right regional archive; read it before guessing.
 
 **Check access.** Read `researcher_profile.subscriptions` in
 `research.json` — the researcher's access, whether by paid subscription,
@@ -127,8 +132,17 @@ account. Use it as a tie-breaker, never as a gate.
 | FindMyPast.com | `FindMyPast` |
 | FindAGrave.com | free to search; `FindAGrave-Plus` adds features |
 | Newspapers.com | `Newspapers.com` |
-| Chronicling America | free — no subscription, never gate on one |
-| Utah Digital Newspapers and other state/regional archives | free — no subscription, never gate on one |
+| any of the above | `FamilySearch-Partner`, `LibraryAccess` — may cover it |
+| Chronicling America | free — no subscription, and no access route needed |
+| Utah Digital Newspapers and other state/regional archives | free — no subscription, and no access route needed |
+
+`FamilySearch-Partner` and `LibraryAccess` are access *routes*, not
+sites: which sites each unlocks varies by institution and changes. Treat
+neither as access to a named site, and neither as `none`. Generate the
+URL and note the route instead of flagging a paywall the researcher may
+not hit — "a family history centre often carries [SITE]; worth checking
+before you pay." The two free archives are outside all of this: they need
+no subscription and no route, so never raise access for them at all.
 
 - If a plan item is repository-agnostic, prefer a site the researcher
   has access to — that search is immediately actionable.
@@ -154,7 +168,7 @@ titles mislead about scope and completeness.
 | MyHeritage.com | `myheritage.com/research?action=query&params` | Independent indexing. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
 | FindMyPast.com | `findmypast.com/search/results?params` | Strong UK/Ireland coverage. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
 | FindAGrave.com | `findagrave.com/memorial/search?params` | Cemetery records. Free. User-contributed — treat as compiled source |
-| Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription |
+| Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
 | Chronicling America | `loc.gov/collections/chronicling-america/?dl=page&params` | US digitised newspaper pages 1798–1963, Library of Congress. **Free.** Bot-protected — capture required |
 | State/regional digital newspaper archives | varies — see below | e.g. Utah Digital Newspapers, California Digital Newspaper Collection. **Free.** Bot-protected — capture required |
 

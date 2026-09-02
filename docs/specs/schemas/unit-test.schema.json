@@ -173,7 +173,7 @@
       "type": "integer",
       "minimum": 1,
       "maximum": 1,
-      "description": "POLICY (current stage): ALWAYS 1. Do not set this above 1 when creating or updating a test. We are not addressing single-run variance yet, and multi-run tests make the suite painfully slow (each run is a full skill execution + judge call). The multi-run aggregation machinery (unit-test-spec.md Section 7) exists for future description-optimizer / golden-set work only; until that stage, omit this field (it defaults to 1) or set it to 1."
+      "description": "POLICY: ALWAYS 1. Do not set this above 1 when creating or updating a test — omit the field (it defaults to 1) or set it to 1. Multi-run tests make the suite painfully slow (each run is a full skill execution + judge call). The pin is standing policy, not a stage: it means single-run variance is not DETECTED, never that a flapping test is tolerated. A test that passes on one run and fails on the next is a defect to fix; re-run a suspect test manually (run_tests.py --test <id> --runlogs-root <tmp>) and fix whatever differs. See unit-test-spec.md, 'runs_per_test' and 'Variance: runs per test'."
     },
     "intentionally_invalid": {
       "type": "boolean",

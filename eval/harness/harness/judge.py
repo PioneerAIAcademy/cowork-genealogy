@@ -394,7 +394,15 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
                     "args": c["args"],
                     "expected_args": c.get("expected_args"),
                     "matched": c["matched"],
-                    "response_summary": _summarize_response(c.get("response")),
+                    # array_sample=None: render EVERY result, not the first 3.
+                    # The default (3) suits argument-quality grading, but a
+                    # grounding rubric marks a correct citation of result 4+ as
+                    # fabricated when the judge can only see results 1-3 (#1902).
+                    # The prompt-size bound is _TOOL_CALLS_MAX_CHARS below, which
+                    # drops whole oldest calls with a stated marker.
+                    "response_summary": _summarize_response(
+                        c.get("response"), array_sample=None
+                    ),
                 }
                 for c in calls
             ],

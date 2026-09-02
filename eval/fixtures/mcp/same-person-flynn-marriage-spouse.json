@@ -1,0 +1,17 @@
+{
+  "tool": "same_person",
+  "description": "same_person — the 1843 marriage record's personas scored against the tree. Issue #1429: a_005 is record_search-sourced with a RETAINED sidecar (results/log_005.json carries a gedcomx with persons MP1 Thomas and MP2 Mary), so a persona is reachable even though record_persona_id is null, and the link must be scored. Both `primaryId` predicates use the `~` any-match form: the record side because the two links score against MP1 and MP2 respectively, and the tree side because one of them is a stub the agent mints itself. This test's subject is lane discipline, not the score, so one fixture serving both calls is correct here.",
+  "args": {
+    "primaryId1": "~",
+    "primaryId2": "~"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 7,
+    "score": 0.79,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:MARR-8T3",
+    "candidateArk": null,
+    "apiTitle": "Matches for ark:/61903/1:1:MARR-8T3",
+    "updated": "2026-05-21T00:00:00Z"
+  }
+}

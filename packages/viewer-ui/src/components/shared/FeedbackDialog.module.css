@@ -236,6 +236,14 @@
   color: var(--text-tertiary);
 }
 
+/* Standing notice above every field. A shade more prominent than .fieldHint —
+   it is the one thing in this dialog a tester must read before typing. */
+.notice {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
 .input {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);

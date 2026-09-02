@@ -250,7 +250,7 @@
       "enum": ["novice", "intermediate", "experienced", "professional"]
     },
     "subscription": {
-      "description": "A paid genealogy site the researcher can access; guides search-external-sites prioritization. Site brand names, not the lowercase_with_underscores used elsewhere.",
+      "description": "One way the researcher can reach a pay-walled genealogy site; guides search-external-sites prioritization. Mostly site brand names, not the lowercase_with_underscores used elsewhere. Free access counts: 'FamilySearch-Partner' is a partner subscription granted through a FamilySearch account, and 'LibraryAccess' is a public library, family history centre, or FamilySearch affiliate library. Neither names which sites it unlocks, because that varies by institution and changes over time — treat both as 'ask before assuming a paywall blocks them'. A plain FamilySearch account is the product's baseline and is never stored here; someone with only that has 'none'.",
       "enum": [
         "Ancestry",
         "MyHeritage",
@@ -258,6 +258,8 @@
         "Newspapers.com",
         "GenealogyBank",
         "FindAGrave-Plus",
+        "FamilySearch-Partner",
+        "LibraryAccess",
         "other",
         "none"
       ]

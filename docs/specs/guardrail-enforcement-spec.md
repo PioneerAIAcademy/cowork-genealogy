@@ -150,6 +150,7 @@ depends on another shipping first.
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
 | §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm) | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload) |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
+| below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 | §5 | Declaration/status agreement | engine (MCP tool) — so Cowork, hosted, both harnesses | `status: "exhaustive_declared"` on a question whose `exhaustive_declaration.declared` is not true, from either side of the pair | **enforcing** (since 2026-08-23; a zero-violation arm over 159 runs — a cheap invariant, not a gate with catches) |
 | §5 | Plan completeness before a declaration | engine (MCP tool) — so Cowork, hosted, both harnesses | `declared: true` while an item on the question's **active** plan is `in_progress` | **enforcing** (since 2026-08-23; 5 of 170 corpus declarations, classified **bookkeeping** not doctrine — it contradicts the project's own plan state, not a genealogical judgment, which is what lets it be scoped this tightly) |
@@ -320,7 +321,7 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | Check | Stored | Replayed | Status |
 |---|---:|---:|---|
 | §7 caller-attributed recency | 823 (window 40), 130 runs | n/a — windowed replay, see the table above | **retired permanently**, not queued |
-| §8 live `same_person` provenance | 12, across 7 runs | 120 of 147 runs that link a person | the graduation candidate with the largest sample |
+| §8 live `same_person` provenance | 12, across 7 runs | 115 of 149 runs that link a person | the graduation candidate with the largest sample |
 | §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
 | §7.5 citation-nulling, TREE side (`find_citation_nulling_in_tree_sources`) | **0**, 0 runs — arm added 2026-08-25, no run has carried it yet | **111 source(s), across 50 runs**, of 159 scanned | shadow, reported; **deliberately not graduated** — see below |
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **0**, 0 runs | **4 runs**, of 159 scanned | behaviour confirmed; live store path never exercised |
@@ -467,10 +468,54 @@ to understand before reading either:
 - Both counts are **branch-scoped** — they read `eval/runlogs/e2e/` in the
   current checkout, so a graded run committed on an unmerged branch is not
   skipped, it is never seen. Read a count off an up-to-date `main` with in-flight
-  fixture PRs merged, or it is biased at the moment it is used.
-- The **replayed** counts read the whole corpus. `same_person` provenance: **120
-  of the 147 runs that link a person have ≥1 gap (788 links, 79 fixtures)**, with
-  one run skipped and named for having no committed seed tree. It is a **lower
+  fixture PRs merged, or it is biased at the moment it is used. Every **e2e**
+  corpus reader now states this itself, every time it runs — `describe_window()`
+  (`harness/since_window.py`) appends a fixed caveat naming the branch-scope
+  limitation to its own printed line when the reader found runs, and each
+  reader also prints `branch_scope_note()` directly on its empty-corpus path
+  (a bare "No committed runs found" never reaches `describe_window()`, and an
+  empty read is exactly the case a reader cannot rule out "the run exists on
+  another branch" — see `test_e2e_branch_scope_caveat.py`). The three **unit**-corpus readers
+  (`eval-timings`, `judge-report`, `skill-latency`) share the same function
+  but only print its line — caveat included — under a `SINCE=` that resolves
+  to a cutoff (`SINCE=all` is explicit and prints nothing); bare, they show
+  every skill unfiltered and print no window line at all, so there is nothing
+  for the caveat to attach to by default.
+- **The remedy is a caveat plus an on-demand crawl, not an exact count.**
+  Considered and rejected: crawling remote branches inside every reader
+  (real engineering cost for speculative value — measured 2026-08-25 at 23
+  stale-branch result JSONs against 0 runs behind an open PR, so an
+  embedded crawl would add that cost and noise to every invocation for no
+  live gain that day), and warning when an open PR touches
+  `eval/runlogs/e2e/` (needs network access in a module deliberately kept
+  pure-analysis). What shipped instead: `make e2e-branch-only`
+  (`eval/harness/scripts/branch_only_runlogs.py`) diffs `git ls-tree` between
+  HEAD and every local/remote-tracking ref already known to the checkout, and
+  excludes any ref already merged into HEAD — a merged-then-deliberately-deleted
+  run is not a run HEAD is missing, only a run HEAD chose to drop; without the
+  exclusion, a prior fixture-authoring cleanup that removed two runs from
+  `main` on purpose still reported them as branch-only on the long-merged
+  ref they were authored on.
+
+  The module itself makes no network call; the Makefile target fetches
+  (`--prune`) first, since a branch nobody has locally fetched is invisible
+  to it regardless of how in-flight its work is. That is not a theoretical
+  gap: the "0 runs behind an open PR" figure above was contradicted by a
+  genuinely in-flight graded run within about a day of being measured, and a
+  crawl run without fetching first missed it for exactly that reason — the
+  tool is weakest precisely where this issue is strongest. Re-measured
+  2026-08-27 with the fetch-first fix in place, then cross-checked by hand
+  against `gh pr list --state open`: 21 result JSONs across 16 refs, of which
+  1 ref is behind a currently-open PR — nonzero, confirming the fix closes
+  the gap the counterexample found, and still a small minority, which is why
+  the crawl leaves the GitHub-side cross-reference to the human rather than
+  querying it itself. A human runs the target and triages the result only
+  when a decision is actually about to be taken off one of these counts.
+- The **replayed** counts read the whole corpus. `same_person` provenance: **115
+  of the 149 runs that link a person have ≥1 gap (699 links, 76 fixtures)**, with
+  one run skipped and named for having no committed seed tree. Before the
+  persona-reachability narrowing the same replay read 120 of 149 and 788 links;
+  the difference is links whose provenance lane cannot yield a persona from what the run retained. It is a **lower
   bound** — the live hook may not yet see a `same_person` issued in the same turn
   as the write, while the replay always sees the full prefix. Its second job is
   scoring a candidate *narrowing* of the rule against history before that
@@ -494,14 +539,85 @@ runs. The reason text now names that shape, says the **entire batch** is
 rejected (a `PreToolUse` deny is all-or-nothing, and these batches run to a
 median of 17 ops), and states the escape below.
 
-**One class of write genuinely cannot satisfy the gate — and one that looks like
-it can't, does.** `person-evidence/SKILL.md` scopes scoring to
-`record_search`-sourced assertions only ("Match scoring works **only** for
-`record_search`-sourced assertions"): an FTS-, image- or PDF-sourced assertion
-has a null `record_persona_id`, so there is no record persona to compare
-against. That case is real, and the reason's stated escape — record in the link's
-`rationale` that no score was obtainable, and proceed — is what keeps it
-satisfiable.
+**One class of write genuinely cannot satisfy the gate — but it is about a tenth
+the size it was long described as.** The check now narrows on whether a **record
+persona is reachable**, not on whether `record_persona_id` is null.
+
+`same_person` takes two GedcomX documents plus a focus id inside each. It never
+reads `record_persona_id`; that field is a pointer into a retained search
+sidecar, so a null value proves only that no sidecar was kept. What decides
+reachability is the tool that produced the assertion:
+
+| provenance | reachable? | why |
+|---|---|---|
+| non-null `record_persona_id` | yes | `research_append` verified it against the record's `gedcomx.persons[]` on write |
+| `record_read` | yes | returns a `SimplifiedGedcomX` with a persons array — the persona was in hand |
+| `record_search` with a retained `results_ref` | yes | the sidecar result carries the record's `gedcomx` |
+| `fulltext_search` | **no** | an FTS result carries transcript text, names and places but no GedcomX, and its ARK is a `3:1:`/`3:2:` image entry `record_read` (which takes a `1:1:` record-persona ARK) cannot open |
+| image, external site, PDF | **no** | unstructured; no persons array |
+| a search whose sidecar was not retained | **no** | nothing to read the persona out of |
+| provenance that cannot be resolved | **flagged anyway** | unknown is not proof; exempting on an absent field would let an assertion written with no `log_entry_id` shed the requirement |
+
+**A fourth legitimate null the predicate cannot see.** Scoring a record persona
+against a tree person *minted from that same persona* is circular — it can only
+confirm itself — so a null `match_score` is correct there and the skill says so.
+The detector cannot detect it: by the time the link is written the stub is an
+ordinary tree person, indistinguishable from one that has been in the tree for
+months. So it is named in the doctrine and in `research_append`'s warning text
+rather than encoded in `_persona_reachable`.
+
+Observed working, and the before/after is the sharpest evidence in this change.
+In the two committed runs preceding it (`v1_2026-08-24_18-17-08` and
+`v1_2026-08-24_22-05-46`) `ut_person_evidence_n7v` made **zero** `same_person`
+calls and wrote every `match_score` null — including for `I1` and `I2`, which are
+pre-existing scenario persons, not minted stubs — and failed both times. Its
+stated reason was the refuted claim itself: *"same_person scoring skipped — I1 and
+I2 are local stubs with no FamilySearch ARK, so any score would be degenerate
+(uninformative)."* In `v1_2026-08-27_16-24-49` the same test scores both
+reachable pairings (`F1`→`I1` at 0.58, `M1`→`I2` at 0.89), lets the distinctive
+surname carry `confident` while the given-name-only match stays `probable`, and
+declines exactly one — the persona it had just minted a stub from. So the skill
+went from skipping every score on a refuted excuse to scoring what is scoreable
+and declining only what is circular.
+
+**The exemption is counted, not silent.** `make e2e-corpus RECOMPUTE=1` prints an
+*unscoreable by design (links)* line beside the violation arms, from
+`unscoreable_person_evidence_links`. A population dropped with no number attached
+cannot be watched if it grows, and gives a revisit trigger nothing to fire on.
+The stored-field path prints it as unknown rather than zero.
+
+**The question is "what did the run retain", not "what could be fetched".** The
+table above reads the provenance lane, which is what a sidecar on disk or an
+already-returned `record_read` document can answer offline. It deliberately does
+not decide whether a *fresh* fetch would produce a persona. Measured: **48 of the
+306 exempted links** carry a `record_id` that is a `1:1:` FamilySearch record ARK
+(29 sidecar-less `record_search`, 19 `image_transcribe`), so a `record_read` might
+reach a persona for them. They stay exempt, because the detector cannot verify
+offline that the fetch resolves, and flagging on an unproven capability is exactly
+the error corrected in the `fulltext_search` lane above.
+
+**Revisit trigger, and its price.** A committed run where one of those 48 produced
+a wrong identity conclusion. Tightening the rule to flag a `1:1:` ARK is a real
+option rather than an oversight, but it is not a one-line change: it also obliges
+`person-evidence` to reach for `record_read` on a sidecar-less search, and roughly
+eleven of its unit tests exercise that shape while stocking no `record_read` or
+`same_person` fixture, so each would abort on an unregistered tool. Cost it with
+that included.
+
+Two further limits, both pushing toward flagging, so neither can manufacture a
+`compliance: pass`: the detector cannot read sidecars (they live in the run's
+workspace), so a `record_id` that is legally outside its sidecar is over-flagged;
+and it cannot see whether a relationship assertion's **second** party has a
+persona in the record at all.
+
+**Superseded.** Two 2026-08-09 rulings on this check exempted `record_read`-,
+FTS-, image- and PDF-sourced links together, "by schema design", on the reading
+that a null `record_persona_id` made them unscoreable. The `record_read` half of
+that is wrong and is no longer in force; the counter those rulings asked for is
+kept and is described above. The reason text's old escape — record in the
+`rationale` that no score was obtainable, and proceed — is gone with it: no
+flagged link is that case any more. A narrower exit survives for provenance the
+check could not resolve, which is a different thing.
 
 The same skill also says a locally-minted stub returns a degenerate score to be
 treated as "no score available". **That guidance is stale, and acting on it would
@@ -684,7 +800,7 @@ predicate rather than re-implementing it:
 | Plugin `PreToolUse` command hook | `packages/engine/plugin/hooks/{hooks.json,guard_project_files.py}` | Cowork, hosted, anywhere the plugin loads |
 | SDK `PreToolUse` hook | `apps/server/app/agent/real_agent.py` (`_pretool_hook`) | hosted only |
 | Harness hook (e2e) | `eval/harness/e2e/orchestrator.py` | e2e runs |
-| Harness hook (unit) | `eval/harness/harness/context_policy.py` (`protected_file_denial`, wired in `skill_runner.py`'s `pretool_hook`) — **imports** `guard_project_files.protected_target`, does not copy it | unit runs (all 25 skills) |
+| Harness hook (unit) | `eval/harness/harness/context_policy.py` (`protected_file_denial`, wired in `skill_runner.py`'s `pretool_hook`) — **imports** `guard_project_files.protected_target`, does not copy it | unit runs (all 26 skills) |
 
 The unit-tier row is deliberately not a fourth *copy*: it binds the live
 `protected_target` object out of the plugin hook (the only stdlib-only copy, so
@@ -1176,7 +1292,10 @@ Two properties worth keeping in view here:
   and why both layers are needed.
 - **A required-tool fingerprint beats a proximity heuristic where one exists.**
   Check 3 works because `same_person` is a *required call*, so "was it called
-  for this person" is a fact. None of the other three guardrail skills has an
+  for this person" is a fact — but only where the call is possible. It skips a
+  link whose own provenance lane cannot yield a record persona from what the run retained, and counts
+  what it skipped (§4, "One class of write genuinely cannot satisfy the gate").
+  A person drops out only when EVERY link to them is unscoreable. None of the other three guardrail skills has an
   equally unambiguous fingerprint, which is why they stay on §7's windowed path.
 
 Porting these to production is a **retention** problem first: the hosted path
@@ -1203,9 +1322,9 @@ this section before reopening one.
   whole doctrine inlined at 49,900 bytes — between `gps-mentor.md` (40,802) and
   `record-extractor.md` (58,541), so no new high-water mark. Both ends of that
   band moved during the work (the agent grew as rules landed, `record-extractor`
-  grew on main), which is the argument for measuring a ceiling rather than
-  quoting one. Both `references/` files were deleted rather than kept
-  beside it — an agent reading its own reference material on demand scored 6/19
+  grew on main), which is why that mark is precedent rather than a limit. Both
+  `references/` files were deleted rather than kept beside it — an agent reading
+  its own reference material on demand scored 6/19
   against a 12–14/19 baseline, and failed silently. What this bought beyond
   attribution: the agent emits a
   real `agent_id`, which is the thing the success gate below has never had. It
@@ -1230,6 +1349,24 @@ this section before reopening one.
   from the one participant that cannot see the evidence. A thin caller needs to
   be thin in capability, not just in wording.
 
+  **`research-exhaustiveness` followed, 2026-08-23, and the ceiling argument has
+  moved — re-measured 2026-08-30.** It is a pair on the same shape: a 63-line
+  routing skill plus `agents/research-exhaustiveness.md` at 21,852 bytes, with
+  the rules that must hold moved into `research_append` *before* the prose moved,
+  exactly as the conversion guide above prescribes. Two of the four are now
+  converted, so the opening bullet reads as history — and all three of its
+  figures have moved, `record-extractor` most of all. **The body-size objection
+  falls whichever unit you quote, because there is no ceiling to clear.** In
+  bytes, `person-evidence` is 41,657 and `conflict-resolution` 26,091 against
+  `record-extractor`'s 58,541,
+  and inlining their `references/` (9,403 and 22,540) leaves both **under** the
+  high-water mark. In the lines the bullet used, both still clear it — 998 and
+  1,016 against `record-extractor`'s 986, which simply has longer lines. Neither
+  reading blocks a candidate — see `docs/skill-to-agent-pair-conversion.md`,
+  "Folded size sizes the work; it does not disqualify". The measured
+  reference-reading regression survives either way. Re-measure before quoting
+  any of these figures.
+
   **This is the only route that reopens §7.** An agent is the one form a
   guardrail skill can take that emits a completion signal (`SubagentStop`) and
   carries an `agent_id`, which is what §7's success gate has never had. Weigh
@@ -1246,8 +1383,9 @@ this section before reopening one.
   (`proof_conclusion_append`, `exhaustiveness_declare`, …, mirroring
   `extraction_append`). Attributes nothing on its own: a split tool is exactly
   as callable by the router as a section branch is. It is a multiplier on
-  agent conversion — `disallowedTools` binds even under `bypassPermissions` but
-  is tool-name-granular only — not a substitute for any layer here.
+  agent conversion — an agent's `tools:` binds even under `bypassPermissions`
+  (measured 2026-08-30) but is tool-name-granular only — not a substitute for
+  any layer here.
 - **Per-turn scoping for a production detector** — proposed for #1054 and dead.
   Three of `find_effects_without_invocation`'s arms read whole-document state
   with no baseline — research-exhaustiveness, conflict-resolution, and

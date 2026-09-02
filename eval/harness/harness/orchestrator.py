@@ -661,6 +661,9 @@ async def _execute_single_run(
     outcome = _compute_outcome(
         spec=spec,
         validators_passed=validators_passed,
+        failed_validators=frozenset(
+            r.name for r in validator_results if not r.passed
+        ),
         judge_dimensions=judge_result.dimensions,
         aborted_reason=result.aborted_reason,
         activated=activated,
@@ -1182,12 +1185,73 @@ def flag_routing_negative_judge_fail(
     return dimensions
 
 
+# Deterministic execution-cap aborts that a validator FAILURE dominates in the
+# recorded outcome (issue #1866 V7). A run that wrote a section it doesn't own
+# and then hit its wall-clock cap is a skill defect, not a timeout — recording
+# it `aborted` tells every reader (eval/CLAUDE.md "Reading an `aborted` row")
+# that it "says nothing about the skill", which is how ut_research_plan_016's
+# two failed validators stayed invisible.
+#
+# Only these three are dominated. `unmatched_tool_call` is a test-corpus problem
+# (exit 2) and the two transient reasons (`error`, `sdk_stream_silence`) drive
+# the exit-code split and the suite breaker (`_TRANSIENT_ABORT_REASONS`,
+# run_tests.py) — demoting either would report an environment failure as a skill
+# regression. `not_runnable` never reaches this function (`_aborted_entry`).
+# `max_input_tokens_per_turn` is a fourth deterministic cap of the same class,
+# left out and staying out: now that a demotion is gated on a failed COMMISSION
+# validator (below), which cap fired no longer carries the classification weight,
+# so the fourth cap adds nothing here (johnmarkpeterbrown's ruling, #1866).
+_VALIDATOR_DOMINATED_ABORTS = frozenset(
+    {"max_wall_clock_seconds", "max_turns", "max_tool_calls"}
+)
+
+
+# Validators whose FAILURE means the run actively DID something wrong — wrote to a
+# section it does not own, or bypassed the writer tools to touch a protected file.
+# A deterministic execution cap (`_VALIDATOR_DOMINATED_ABORTS`) truncates a run
+# mid-write: it can only make the run FAIL TO DO something (an omission), never make
+# it DO something wrong (a commission). So only a failed commission validator proves
+# a defect the timeout cannot explain, and only then is an abort demoted to `fail`
+# (issue #1866 V7, johnmarkpeterbrown's ruling).
+#
+# An ALLOW-LIST, deliberately: it fails in the safe direction. A validator nobody
+# has classified is absent here, so its failure under a cap leaves the run `aborted`
+# — the pre-V7 behaviour — rather than risking a real regression being filed against
+# a run the clock killed. That is the exact mis-file (pointed the other way) V7 exists
+# to prevent: on the committed corpus the blanket rule demoted 3 of 4 cap-aborts whose
+# only failing validators were omissions (record_extraction_018/020's "no new
+# assertion…", person_evidence_022's "never invoked check-warnings"). Membership is
+# intentionally minimal — the universal forbidden-write checks, which a timeout cannot
+# trip; extend it as validators are classified, never by complementing the omission set.
+#
+# `test_commission_validators_are_all_collected` fails if a name here stops matching a
+# real validator: a silent rename would quietly stop demoting it (the lead's condition).
+_COMMISSION_VALIDATORS = frozenset(
+    {
+        "test_ownership_table",
+        "test_tree_ownership_table",
+        "test_no_raw_writes_to_protected_files",
+        "test_project_file_changes_route_through_writer_tools",
+    }
+)
+
+
 #: Keys the mock adds to a fixture's response AFTER matching and BEFORE logging
 #: (`mock_mcp.py` ~461/477/501). Their presence means the logged response is not
 #: the stored fixture, so `response_fixture` + `matched.index` cannot rebuild it
 #: — `staged.resultsRef` in particular comes from `randomUUID()` and exists in no
 #: commit.
-_MOCK_ENRICHED_KEYS = ("staged", "ranked", "rankingSkipped")
+_MOCK_ENRICHED_KEYS = (
+    "staged",
+    "ranked",
+    "rankingSkipped",
+    # A nil search carries none of the three above, so without these two the
+    # unlogged-search notes (#2056) would be stripped from every run log — and
+    # the measurement that decides whether the note becomes a deny reads the
+    # run log.
+    "unloggedSearches",
+    "nilSearchNeedsLog",
+)
 
 
 def _is_mock_enriched(response: Any) -> bool:
@@ -1292,6 +1356,7 @@ def _compute_outcome(
     *,
     spec: TestSpec,
     validators_passed: bool,
+    failed_validators: frozenset[str] = frozenset(),
     judge_dimensions: list[dict[str, Any]],
     aborted_reason: str | None,
     activated: bool,
@@ -1309,8 +1374,23 @@ def _compute_outcome(
     determined (see the negative branch), so a skipped judge doesn't gate
     them; out-of-scope negatives (`correct_skill: []`) have no routing
     signal and are judge-gated, so a skipped judge fails them too.
+
+    A COMMISSION-validator failure dominates a deterministic execution-cap abort
+    (issue #1866 V7): `aborted` normally short-circuits, but a run that failed a
+    validator in `_COMMISSION_VALIDATORS` AND hit one of
+    `_VALIDATOR_DOMINATED_ABORTS` is recorded `fail`, so a real defect isn't filed
+    under a timeout. Scoped to commission validators, not any failed validator: a
+    cap truncates a run mid-write, so an omission-only failure ("expected X, got
+    none") is the timeout's doing, not the skill's, and stays `aborted`. The
+    `aborted_reason` field stays populated on the SingleRun either way — only
+    `outcome` changes.
     """
     if aborted_reason:
+        if (
+            failed_validators & _COMMISSION_VALIDATORS
+            and aborted_reason in _VALIDATOR_DOMINATED_ABORTS
+        ):
+            return "fail"
         return "aborted"
     if not validators_passed:
         return "fail"
@@ -1621,6 +1701,93 @@ def _summarize_before_state_sources(sources: Any) -> dict[str, Any]:
     }
 
 
+def _resolve_assertion(
+    assertion_id: Any, index: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
+    """Resolve one assertion id to the compact value the judge needs.
+
+    A conflict stores ids; the judge grades a claim (a URL parameter, a
+    narrated place) against the *value* those ids carry, never against the id
+    itself. So resolve `preferred_assertion_id` / `competing_assertion_ids`
+    through `assertions[]` to the fields that decide a grade. A referenced id
+    absent from `assertions[]` (dangling ref — they exist in fixtures) renders
+    as `_unresolved` rather than crashing the whole before-state render.
+    """
+    a = index.get(assertion_id)
+    if a is None:
+        return {"id": assertion_id, "_unresolved": True}
+    return {
+        k: a[k]
+        for k in ("id", "fact_type", "value", "structured_value", "place", "date")
+        if k in a
+    }
+
+
+# Heavy per-conflict prose the prompt-size budget may drop (never the ids or
+# the resolved values, which are what make a "no conflict on file" claim
+# checkable).
+_CONFLICT_HEAVY_FIELDS = (
+    "independence_analysis",
+    "weighing_analysis",
+    "resolution_rationale",
+    "description",
+)
+
+
+def _summarize_before_state_conflicts(
+    conflicts: Any, assertions: Any
+) -> dict[str, Any]:
+    """Summarize the conflicts on file before the skill ran, resolving each
+    conflict's assertion references to their values.
+
+    Same discipline as `_summarize_before_state_sources`: the COMPLETE id list
+    is the ground truth for a "no conflict on file" existence check and is never
+    clipped; the per-conflict `detail` carries the resolved preferred/competing
+    values (what a grade actually turns on) plus the structural fields, and the
+    heavy prose (`_CONFLICT_HEAVY_FIELDS`) is what the caller's size budget trims.
+
+    Not the verdict: the resolved values are handed over and the rubric decides,
+    exactly as the sources block hands over ids without asserting groundedness.
+    A rendered conflict makes an "encoded X, no conflict on file" claim checkable
+    against what was actually contested (#1902 / #1956).
+    """
+    items = conflicts if isinstance(conflicts, list) else []
+    assertion_list = assertions if isinstance(assertions, list) else []
+    index = {
+        a["id"]: a
+        for a in assertion_list
+        if isinstance(a, dict) and a.get("id")
+    }
+    ids = [c["id"] for c in items if isinstance(c, dict) and c.get("id")]
+
+    detail: list[dict[str, Any]] = []
+    for c in items:
+        if not isinstance(c, dict):
+            continue
+        entry: dict[str, Any] = {
+            "id": c.get("id"),
+            "conflict_type": c.get("conflict_type"),
+            "status": c.get("status"),
+            "disputed_attribute": c.get("disputed_attribute"),
+            "identity_question": c.get("identity_question"),
+            "preferred": _resolve_assertion(c.get("preferred_assertion_id"), index)
+            if c.get("preferred_assertion_id")
+            else None,
+            "competing": [
+                _resolve_assertion(cid, index)
+                for cid in (c.get("competing_assertion_ids") or [])
+            ],
+        }
+        for k in _CONFLICT_HEAVY_FIELDS:
+            if c.get(k):
+                entry[k] = _summarize_response(
+                    c[k], string_max=_BEFORE_STATE_STRING_MAX
+                )
+        detail.append(entry)
+
+    return {"count": len(items), "all_ids": ids, "detail": detail}
+
+
 def _detail_ids(summary: dict[str, Any]) -> list[str]:
     """Ids positionally aligned with `summary["detail"]`, for naming drops.
 
@@ -1637,8 +1804,8 @@ def _detail_ids(summary: dict[str, Any]) -> list[str]:
 
 
 def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
-    """Render the source entries that existed BEFORE the skill ran, so the
-    judge can mechanically check "not on file" / "fabricated" claims.
+    """Render the sources and conflicts that existed BEFORE the skill ran, so
+    the judge can mechanically check "not on file" / "fabricated" claims.
 
     The judge has produced fabrication-class citation failures — asserting
     that on-file source text was absent or invented — when it had no view of
@@ -1661,8 +1828,28 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     tree = before_snapshot.get("tree_gedcomx_json")
     research_sources = research.get("sources") if isinstance(research, dict) else None
     tree_sources = tree.get("sources") if isinstance(tree, dict) else None
+    conflicts = research.get("conflicts") if isinstance(research, dict) else None
+    assertions = research.get("assertions") if isinstance(research, dict) else None
 
     labelled: list[tuple[str, dict[str, Any]]] = []
+    if conflicts:
+        # Rendered FIRST, ahead of the source blocks. Same shape
+        # ({count, all_ids, detail}) as a sources block, so it flows through the
+        # id-section and the shared-budget detail loop below unchanged. Order is
+        # deliberate: the shared _BEFORE_STATE_MAX_CHARS budget is spent in list
+        # order, so putting conflicts first means their resolved preferred/
+        # competing values — the grounding evidence a "no conflict on file" claim
+        # turns on — win the budget over source-citation detail. Source *ids* stay
+        # complete in the id-section regardless (never clipped), so a dropped
+        # source keeps its existence check; only its heavy detail yields, and the
+        # omission note already reads correctly for that case.
+        labelled.append(
+            (
+                "research.json conflicts on file before this run (c_ ids; "
+                "preferred/competing assertions resolved to their values)",
+                _summarize_before_state_conflicts(conflicts, assertions),
+            )
+        )
     if research_sources:
         labelled.append(
             (
@@ -1693,7 +1880,7 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     ]
     id_section = "\n\n".join(id_blocks)
 
-    # heavy per-source detail after — this is what the prompt-size cap trims.
+    # heavy per-entry detail after — this is what the prompt-size cap trims.
     #
     # Drop whole sources rather than slicing the rendered string. A raw
     # `[:budget]` cut lands mid-object, so the last source renders half-written
@@ -1718,7 +1905,7 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     dropped: list[str] = []
     remaining = budget
     for label, summary in labelled:
-        header = f"{label} — per-source detail (heavy fields truncated):\n"
+        header = f"{label} — per-entry detail (heavy fields truncated):\n"
         kept: list[Any] = []
         for entry, sid in zip(summary["detail"], _detail_ids(summary)):
             candidate = json.dumps(kept + [entry], ensure_ascii=False, indent=2)
@@ -1733,7 +1920,7 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     detail_section = "\n\n".join(detail_blocks)
     if dropped:
         detail_section += (
-            f"\n\n[per-source detail omitted for prompt size: "
+            f"\n\n[per-entry detail omitted for prompt size: "
             f"{', '.join(dropped)}. Their ids ARE listed above and they WERE on "
             f"file — the absence of their detail here is a harness size limit, "
             f"not evidence that they are missing or fabricated.]"
