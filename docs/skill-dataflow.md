@@ -30,8 +30,9 @@ is what lets the `PreToolUse` hook route a section's writes to exactly one calle
 
 **Monolithic skill.** Reads state, does the work, writes its own section. Most skills.
 
-**Leaf agent.** Called by a skill, calls nothing (agents cannot nest agents), returns
-text. `image-reader`, `gps-mentor`.
+**Leaf agent.** Called by a skill, calls nothing, returns text. `image-reader`,
+`gps-mentor`. They call nothing because no agent here grants `Agent`/`Task`, not
+because the runtime forbids it — a subagent may spawn subagents three layers deep.
 
 ---
 
