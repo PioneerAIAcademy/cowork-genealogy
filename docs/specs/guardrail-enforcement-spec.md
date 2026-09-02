@@ -1370,9 +1370,9 @@ this section before reopening one.
   **`person-evidence` followed, 2026-09-01, and it is the first of the four
   converted as an experiment rather than to stop a bypass.** A 72-line routing
   skill plus `agents/person-evidence.md` at 53,158 bytes / 1,036 lines, against
-  `record-extractor`'s 57,229 / 963 on the day — **under the ceiling on bytes,
-  over it on lines**, which is exactly the split the paragraph above resolves in
-  favour of bytes, and the lead accepted the line-count figure on 2026-08-25.
+  `record-extractor`'s 57,229 / 963 on the day — **the largest agent body so far
+  on lines but not on bytes**, which the paragraph above says decides nothing
+  either way, and the lead accepted the line-count figure on 2026-08-25.
   Unlike the first two, **no rule moved into the writer tool first**: the
   candidate precondition — that a link cite a computed `same_person` score — is satisfiable by 437 of 6,550 reachable links — 6.7%
   — so it ships as a warning on the `opWarnings` channel
