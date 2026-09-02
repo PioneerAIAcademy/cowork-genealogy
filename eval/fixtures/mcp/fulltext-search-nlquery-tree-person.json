@@ -28,6 +28,7 @@
     }
   },
   "response": {
+    "query": { "nlQuery": "KWCJ-RN4" },
     "totalResults": 2,
     "returned": 2,
     "offset": 0,

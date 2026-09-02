@@ -195,16 +195,21 @@ If an override seems wrong to you, follow it and say so in your
 rationale. The rationale is where disagreement belongs; the score is not.
 
 ────────────────────────────────────────
-# Before-state — source entries on file BEFORE this skill ran
+# Before-state — sources and conflicts on file BEFORE this skill ran
 
-This is the project's source material as it existed *before* the skill
-executed. Use it to mechanically check any claim that on-file text was
-"not on file", "absent", "fabricated", or "invented": if a source or its
-text appears below, that text WAS on file and such a claim is unfounded —
-do not deduct for it. `(none)` means the project had no prior sources
-(e.g. an empty-project scenario), so nothing pre-existing could have been
-altered or removed. Sources and assertions the skill ADDS this run appear
-under "File changes summary" below, not here — do not confuse the two.
+This is the project's material as it existed *before* the skill executed:
+its sources and its conflicts. Use it to mechanically check any claim that
+on-file content was "not on file", "absent", "fabricated", or "invented":
+if a source or its text appears below, that text WAS on file and such a
+claim is unfounded — do not deduct for it. Likewise for conflicts: each
+conflict on file is shown with its status and the resolved values of its
+preferred and competing assertions, so a claim like "no conflict on file
+for X, so encoding X is safe" is checkable — if a conflict over X appears
+below, that claim is contradicted by the record. `(none)` means the
+project had no prior sources or conflicts (e.g. an empty-project
+scenario), so nothing pre-existing could have been altered or removed.
+Sources, conflicts and assertions the skill ADDS this run appear under
+"File changes summary" below, not here — do not confuse the two.
 
 {before_state}
 

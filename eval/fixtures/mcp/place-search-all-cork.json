@@ -5,8 +5,6 @@
     "placeName": "~Cork"
   },
   "response": {
-    "query": "County Cork, Ireland",
-    "totalResults": 2,
     "results": [
       {
         "id": "C1001",

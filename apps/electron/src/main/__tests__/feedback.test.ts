@@ -359,7 +359,30 @@ describe('buildFeedbackZip — living-person redaction', () => {
     )
     const md = await zip.file('FEEDBACK.md')!.async('string')
     expect(md).toContain('Living people redacted')
-    expect(md).toContain('2 person(s)')
+    expect(md).toContain('2 living-person record(s)')
+  })
+
+  it('redacts the completion-gate baseline too, not just tree.gedcomx.json', async () => {
+    // starting-tree.gedcomx.json is the write-once baseline (issue #1490). It
+    // carries the same living persons and is bundled by the same walkProject, so
+    // a bundle that redacted only tree.gedcomx.json still leaked living details.
+    await writeFile(join(folder, 'starting-tree.gedcomx.json'), JSON.stringify(TREE), 'utf8')
+    const zip = await JSZip.loadAsync(
+      Buffer.from((await buildFeedbackZip(makeOptions(folder))).zipBase64, 'base64')
+    )
+
+    const baselineRaw = await zip.file('starting-tree.gedcomx.json')!.async('string')
+    const baseline = JSON.parse(baselineRaw) as GedcomxData
+    const b2 = person(baseline, 'P2')
+    expect(b2.names[0].given).toBe('Living')
+    expect(b2.ark).toBeUndefined()
+    for (const leak of ['Jane Marie', 'Bobby', '3 March 1985', 'Riverside, CA', 'SECRET']) {
+      expect(baselineRaw).not.toContain(leak)
+    }
+
+    // Both files' living persons counted: 2 in each.
+    const md = await zip.file('FEEDBACK.md')!.async('string')
+    expect(md).toContain('4 living-person record(s)')
   })
 
   it('passes an unparseable tree through rather than failing the send', async () => {

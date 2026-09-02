@@ -113,8 +113,11 @@ This repo is also a pnpm + turborepo monorepo for the hosted web product —
 `apps/server`. Two rules bind when you touch it:
 
 - **Keep the engine out of the pnpm workspace.** `pnpm-workspace.yaml` carries a
-  `!packages/engine/**` negation; the engine stays npm-managed so the
-  `.mcpb`/plugin release pipeline is unaffected.
+  `!packages/engine/**` negation. Both shipped artifacts install their production
+  tree with `npm ci --omit=dev` from
+  `packages/engine/mcp-server/package-lock.json`, and no CI job builds either
+  one, so that lockfile has to stay npm's — a break surfaces at release time,
+  not in a green PR.
 - **The web side depends on `packages/schema`, never on the engine.**
 
 What each package is and how they bind: `docs/architecture.md`, "The hosted web
@@ -238,20 +241,28 @@ comes back — every MCP tool **must** be listed **three times**, once under eac
 server spelling:
 
     - mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
-    - mcp__remote-devices__Genealogy_Research__record_read   # Cowork in the cloud
-    - mcp__Genealogy_Research__record_read                   # Cowork on the user's own computer
+    - mcp__remote-devices__Genealogy_Research__record_read   # Cowork via the remote-device bridge
+    - mcp__Genealogy_Research__record_read                   # Cowork, bare display_name spelling
 
 Bare names do not work (they leave the subagent toolless in the
 unit-harness SDK path), but neither does a single qualified name. The MCP
 server's name is chosen by whoever registers it, and the plugin — which
 ships into the VM — cannot control that choice. `.mcp.json`, both
 harnesses, and the hosted web control plane register it under the key
-`genealogy`. Cowork uses `manifest.json`'s `display_name` both times, but
-namespaces it under `remote-devices` only when the task runs **in the
-cloud** and reaches the host through the device bridge; a task running **on
-the user's own computer** reaches the `.mcpb` directly and gets the bare
-`display_name` segment. **Run mode is a per-task setting nothing in the
-plugin can see.** No single spelling resolves everywhere.
+`genealogy`. Both Cowork spellings derive from `manifest.json`'s
+`display_name`; only the bridged form is namespaced under `remote-devices`.
+Which spelling a Cowork session exposes has been **observed to move**: three
+censuses found every genealogy tool under
+`mcp__remote-devices__Genealogy_Research__…` ("via your device") with the
+bare `mcp__Genealogy_Research__…` spelling absent — macOS and Windows on
+2026-08-15, and a second Windows session via issue #1732 on 2026-08-19 — yet
+issue #1341 recorded the bare spelling live on 2026-08-04/05, refusing `record-extractor` with the
+bridged spelling among its *unrecognized* entries. The registrar moved
+between those dates (or the configurations differ in a way nobody has
+identified — same conclusion). **Run mode is a per-task setting nothing in
+the plugin can see, and the spelling exposed is not stable over time.** No
+single spelling resolves everywhere; listing all three is insurance against a
+moving target, not defensive redundancy.
 
 Entries are matched **exactly** — no prefix fallback, no inherit-on-miss.
 When every `tools:` entry misses, the runtime refuses to spawn the agent at
@@ -305,11 +316,13 @@ refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
 **Allow-lists are subtractive; hooks are not.** A per-agent `tools:` list can
 only narrow what the session already holds — the session's tool set is always a
 superset — so no allow-list can deny the *main thread* a tool one of its
-subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and a
-per-context policy already exists in the harness
-(`eval/harness/harness/context_policy.py`) — don't re-derive one. It is unported
-to the shipped `hooks/` hook, and ADR-0006 is where its portability problem and
-current blocker are recorded; read that before proposing the port.
+subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
+shipped hook already does it: it routes `research_append` by caller identity
+(`owner_denied`, `AGENT_WRITABLE_SECTIONS`) — don't re-derive that. The one arm
+that stayed harness-only is the tool-level one, which denies `image_read` when
+`agent_id` is absent (`eval/harness/harness/context_policy.py`); porting it was
+**declined by lead ruling 2026-08-17**, so it is not pending work. ADR-0006
+records why.
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and
@@ -325,8 +338,9 @@ loudly in CI instead of silently in production, and throws on an unrecognized
 prefix rather than slicing it against another prefix's length.
 
 **No CI job can verify that a granted tool actually binds.** Only a
-live Cowork session can, and only in the run mode being tested — a cloud-mode
-check would have passed while on-computer was broken.
+live Cowork session can, and only for the spelling that session exposes — the
+bare form was live in #1341 but absent in the later censuses, so a green check
+proves binding for one spelling at one moment, not in general.
 
 **Never hardcode a qualified name in a ToolSearch query.** Cowork defers the
 genealogy tool schemas above a size threshold and offers no control over it, so
