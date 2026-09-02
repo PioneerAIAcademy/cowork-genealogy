@@ -8,7 +8,6 @@ import type {
   FulltextSearchResponse,
   FulltextResult,
   FulltextFacet,
-  NameExpansionInfo,
   FSFulltextResponse,
   FSFulltextEntry,
   FSFulltextFacetItem,
@@ -230,6 +229,45 @@ export async function fulltextSearchTool(
       ? await unloggedStagedSearches(input.projectPath)
       : [];
 
+  // Detect which expanded variants appear in results — must run before
+  // compaction strips textDocument. Scans names, highlights, and the full
+  // transcript (the tool's "mentioned anywhere in the document" case).
+  function detectVariantsInResults(): string[] {
+    if (!expansion) return [];
+    const allVariants = new Set<string>();
+    for (const variants of Object.values(expansion.expansions)) {
+      for (const v of variants) {
+        allVariants.add(v.toLowerCase());
+      }
+    }
+    const matched = new Set<string>();
+    for (const r of results) {
+      for (const name of r.names ?? []) {
+        for (const word of name.split(/\s+/)) {
+          if (allVariants.has(word.toLowerCase())) {
+            matched.add(word);
+          }
+        }
+      }
+      for (const hl of r.highlightTerms ?? []) {
+        for (const word of hl.split(/\s+/)) {
+          if (allVariants.has(word.toLowerCase())) {
+            matched.add(word);
+          }
+        }
+      }
+      if (r.textDocument) {
+        for (const word of r.textDocument.split(/\s+/)) {
+          const clean = word.replace(/[^a-zA-Z]/g, "").toLowerCase();
+          if (clean && allVariants.has(clean)) {
+            matched.add(clean);
+          }
+        }
+      }
+    }
+    return [...matched];
+  }
+
   const out: FulltextSearchResponse = {
     query: echoQuery(input),
     totalResults: data.results ?? 0,
@@ -255,49 +293,23 @@ export async function fulltextSearchTool(
     ...(input.projectPath !== undefined && results.length === 0 && (data.results ?? 0) === 0
       ? { nilSearchNeedsLog: NIL_SEARCH_NEEDS_LOG_NOTE }
       : {}),
+    // nameExpansion precedes results so it survives a size-bound trim —
+    // the field after the largest payload is the first thing dropped.
+    ...(expansion && input.name
+      ? {
+          nameExpansion: {
+            original: input.name,
+            expanded: expansion.expanded,
+            expansions: expansion.expansions,
+            variantsInResults: detectVariantsInResults(),
+          },
+        }
+      : {}),
     results,
   };
 
   if (input.includeFacets && data.facets) {
     out.facets = mapFacets(data.facets);
-  }
-
-  // Populate nameExpansion when the name was expanded with diminutives.
-  if (expansion && input.name) {
-    // Collect all variant forms (lowercased) that were added by expansion.
-    const allVariants = new Set<string>();
-    for (const variants of Object.values(expansion.expansions)) {
-      for (const v of variants) {
-        allVariants.add(v.toLowerCase());
-      }
-    }
-
-    // Detect which variants actually appear in result names or highlights.
-    const matched = new Set<string>();
-    for (const r of results) {
-      for (const name of r.names ?? []) {
-        for (const word of name.split(/\s+/)) {
-          if (allVariants.has(word.toLowerCase())) {
-            matched.add(word);
-          }
-        }
-      }
-      for (const hl of r.highlightTerms ?? []) {
-        for (const word of hl.split(/\s+/)) {
-          const clean = word.replace(/<[^>]+>/g, "").toLowerCase();
-          if (allVariants.has(clean)) {
-            matched.add(clean);
-          }
-        }
-      }
-    }
-
-    out.nameExpansion = {
-      original: input.name,
-      expanded: expansion.expanded,
-      expansions: expansion.expansions,
-      variantsInResults: [...matched],
-    };
   }
 
   // Host-side result staging (search-result-staging-spec.md). Purely additive

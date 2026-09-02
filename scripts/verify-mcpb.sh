@@ -38,6 +38,7 @@ require manifest.json
 require package.json
 require build/index.js
 require config/familysearch.json
+require config/given-name-variants.json
 require node_modules/@modelcontextprotocol/sdk
 
 forbid src

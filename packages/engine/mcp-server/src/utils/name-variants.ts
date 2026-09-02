@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeString } from "./string-similarity.js";
 
 // Path resolves to mcp-server/config/given-name-variants.json in both dev
 // (tsx/vitest running from src/) and prod (compiled JS in build/) — same
@@ -28,12 +29,12 @@ interface VariantTable {
   [lang: string]: Record<string, FormalEntry> | Record<string, unknown>;
 }
 
-export interface NameFamily {
+interface NameFamily {
   formal: string;
   allForms: string[];
 }
 
-export interface NameExpansionResult {
+interface NameExpansionResult {
   expanded: string;
   expansions: Record<string, string[]>;
 }
@@ -45,10 +46,21 @@ let lookupMap: Map<string, NameFamily> | null = null;
 
 function ensureLoaded(): Map<string, NameFamily> {
   if (lookupMap) return lookupMap;
-
-  const raw = readFileSync(VARIANTS_PATH, "utf-8");
-  const table: VariantTable = JSON.parse(raw);
   lookupMap = new Map();
+
+  let raw: string;
+  try {
+    raw = readFileSync(VARIANTS_PATH, "utf-8");
+  } catch {
+    return lookupMap; // table missing or unreadable — degrade to no expansion
+  }
+
+  let table: VariantTable;
+  try {
+    table = JSON.parse(raw);
+  } catch {
+    return lookupMap; // corrupt JSON — degrade to no expansion
+  }
 
   const en = table.en as Record<string, FormalEntry> | undefined;
   if (!en) return lookupMap;
@@ -102,7 +114,7 @@ function ensureLoaded(): Map<string, NameFamily> {
     const allForms = [...family.forms];
     const entry: NameFamily = { formal: family.formal, allForms };
     for (const form of allForms) {
-      lookupMap.set(form.toLowerCase(), entry);
+      lookupMap.set(normalizeString(form), entry);
     }
   }
 
@@ -120,7 +132,7 @@ export function __clearVariantCacheForTests(): void {
  */
 export function lookupNameFamily(name: string): NameFamily | null {
   const map = ensureLoaded();
-  return map.get(name.toLowerCase()) ?? null;
+  return map.get(normalizeString(name)) ?? null;
 }
 
 // Tokens that start with an operator or contain special Lucene syntax
@@ -175,15 +187,15 @@ export function expandNameForFulltext(name: string): NameExpansionResult | null 
     }
 
     // Put the original token first in the group, then the rest.
-    const originalLower = token.toLowerCase();
+    const originalNorm = normalizeString(token);
     const ordered = [
       token,
-      ...forms.filter((f) => f.toLowerCase() !== originalLower),
+      ...forms.filter((f) => normalizeString(f) !== originalNorm),
     ];
 
     expandedTokens.push(`(${ordered.join(" OR ")})`);
     expansions[family.formal] = forms.filter(
-      (f) => f.toLowerCase() !== originalLower
+      (f) => normalizeString(f) !== originalNorm
     );
     anyExpanded = true;
   }
@@ -212,12 +224,17 @@ export function expandLookingFor(lookingFor: string): NameExpansionResult | null
   const expansions: Record<string, string[]> = {};
 
   for (const token of tokens) {
+    // Only expand tokens that look like proper names (start with uppercase).
+    // Lowercase words like "will", "may" match the table but are ordinary
+    // English — expanding them corrupts the VLM prompt.
+    if (token.length > 0 && token.charAt(0) === token.charAt(0).toLowerCase()) continue;
+
     const family = lookupNameFamily(token);
     if (!family) continue;
 
-    const originalLower = token.toLowerCase();
+    const originalNorm = normalizeString(token);
     const others = family.allForms.filter(
-      (f) => f.toLowerCase() !== originalLower
+      (f) => normalizeString(f) !== originalNorm
     );
     if (others.length === 0) continue;
 

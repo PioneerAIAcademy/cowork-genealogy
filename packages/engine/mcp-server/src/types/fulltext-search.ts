@@ -113,11 +113,11 @@ export interface FulltextSearchResponse {
   // an empty `results`, which is the post-`mapEntry` set. A nil search stages no
   // file, so `unloggedSearches` structurally cannot see it.
   nilSearchNeedsLog?: string;
-  results: FulltextResult[];
-  facets?: FulltextFacet[];
   /** Present when the name input contained a recognized given name and was
    *  expanded with historical diminutives/variants. */
   nameExpansion?: NameExpansionInfo;
+  results: FulltextResult[];
+  facets?: FulltextFacet[];
   // Present only when `projectPath` was supplied — see RecordSearchToolResponse.
   staged?: { resultsRef: string; returnedCount: number } | null;
   stagingError?: string;

@@ -790,25 +790,33 @@ describe("fulltextSearchTool given-name expansion (issue #607)", () => {
     expect(fullNameParam).toBe("+Elizabeth +Martin");
   });
 
-  it("45. variantsInResults strips HTML tags from highlight terms", async () => {
-    // FamilySearch wraps matching terms in <em> tags, e.g. "<em>Betty</em> Martin".
-    // The stripping regex must remove full tags, not individual < and > characters.
-    const entryWithHtmlHighlights: FSFulltextEntry = {
+  it("45. variantsInResults detects variants in textDocument", async () => {
+    // The tool's "mentioned anywhere in the document" case — textDocument
+    // is scanned for variant forms before compaction strips it.
+    const entryWithTextDoc: FSFulltextEntry = {
       id: "3:1:3Q9M-XXXX-YYYY-Z",
       collectionId: "1234567",
       content: {
         title: "Christening Record",
-        entities: [{ type: "NAME", value: "B Martin" }],
-        highlightTexts: ["<em>Betty</em> Martin"],
+        entities: [{ type: "NAME", value: "E Martin" }],
+        textDocument: "Baptized this day: Betty Martin, daughter of ...",
       },
     };
     mockFetch.mockResolvedValueOnce(
-      makeOk({ results: 1, index: 0, entries: [entryWithHtmlHighlights] })
+      makeOk({ results: 1, index: 0, entries: [entryWithTextDoc] })
     );
     const result = await fulltextSearchTool({ name: "Elizabeth Martin" });
     expect(result.nameExpansion).toBeDefined();
-    // "betty" should be detected from the highlight term despite the <em> tags
     expect(result.nameExpansion!.variantsInResults).toContain("betty");
+  });
+
+  it("45b. nameExpansion appears before results in JSON key order", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOk({ results: 1, index: 0, entries: [bettyEntry()] })
+    );
+    const result = await fulltextSearchTool({ name: "Elizabeth Martin" });
+    const keys = Object.keys(result);
+    expect(keys.indexOf("nameExpansion")).toBeLessThan(keys.indexOf("results"));
   });
 
   it("46. expansion does not interfere with other parameters", async () => {

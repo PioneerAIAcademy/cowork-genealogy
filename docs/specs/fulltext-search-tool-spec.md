@@ -41,7 +41,7 @@ descriptions distinct so Claude picks the right one.
     },
     "name": {
       "type": "string",
-      "description": "Search within name fields only. Same operator syntax as keywords. Use when searching for a person by name without matching body text."
+      "description": "Search within name fields only. Same operator syntax as keywords. Recognized English given names are automatically expanded with historical diminutives (e.g. Elizabeth also matches Betty, Bess, Eliza). The response includes a nameExpansion field showing what was expanded and which variants matched."
     },
     "place": {
       "type": "string",
@@ -201,6 +201,15 @@ interface FulltextSearchResponse {
    *  non-zero. What distinguishes this tool from external_links_search is only
    *  that no host filter narrows the inline copy — the mapping path is shared. */
   nilSearchNeedsLog?: string;
+  /** Present when the name input contained a recognized given name and was
+   *  expanded with historical diminutives/variants. Precedes `results` so
+   *  it survives a size-bound trim. */
+  nameExpansion?: {
+    original: string;
+    expanded: string;
+    expansions: Record<string, string[]>;
+    variantsInResults: string[];
+  };
   results: FulltextResult[];
   facets?: FulltextFacet[];
   /** Present only when `projectPath` was supplied. `null` if staging failed. */
@@ -210,7 +219,7 @@ interface FulltextSearchResponse {
 }
 ```
 
-## Given-name diminutive expansion (issue #607)
+## Given-name diminutive expansion
 
 When the `name` parameter contains a recognized English given name (formal
 or variant), the tool automatically expands it with historical diminutives
@@ -262,7 +271,7 @@ expansion metadata lives separately in `nameExpansion`.
 
 ### Scope
 
-English only. The variant table covers 22 formal names with diminutives
+English only. The variant table covers 21 formal names with diminutives
 and scribal abbreviations, seeded from
 `search-records/references/name-search-mechanics.md` and
 `search-full-text/references/search-strategies.md`. Three pairs are

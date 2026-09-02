@@ -185,6 +185,18 @@ describe("expandLookingFor", () => {
     expect(result!.expanded).toContain("Elizabeth");
   });
 
+  it("skips lowercase tokens that match common words", () => {
+    // "will" and "may" are in the table but are ordinary English words
+    expect(expandLookingFor("the last will and testament")).toBeNull();
+    expect(expandLookingFor("marked in may")).toBeNull();
+  });
+
+  it("expands capitalized tokens that match", () => {
+    const result = expandLookingFor("Will Smith");
+    expect(result).not.toBeNull();
+    expect(result!.expanded).toContain("William");
+  });
+
   it("deduplicates variant forms across multiple matches", () => {
     // Catherine and Katherine share Kate — merged family means no dups
     const result = expandLookingFor("Kate");

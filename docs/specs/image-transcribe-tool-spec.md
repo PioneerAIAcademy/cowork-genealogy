@@ -370,7 +370,7 @@ consistent across schema, manifest, and skill.)*
   and just get text.
 - All input is camelCase (MCP wire convention).
 
-### 5.3.1 Given-name expansion in `lookingFor` (issue #607)
+### 5.3.1 Given-name expansion in `lookingFor`
 
 When `lookingFor` contains a recognized English given name (formal or
 variant), the tool automatically expands it with historical diminutives
