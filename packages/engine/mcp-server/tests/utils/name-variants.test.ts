@@ -73,22 +73,28 @@ describe("lookupNameFamily", () => {
 });
 
 describe("expandNameForFulltext", () => {
-  it("builds a Lucene OR group for a recognized given name", () => {
+  it("builds quoted phrases for a recognized given name", () => {
     const result = expandNameForFulltext("Elizabeth Martin");
     expect(result).not.toBeNull();
-    // The expanded string should have an OR group for Elizabeth and keep Martin
-    expect(result!.expanded).toMatch(/^\(Elizabeth OR .+\) Martin$/);
-    expect(result!.expanded).toContain("Betty");
-    expect(result!.expanded).toContain("Bess");
+    // Each variant is combined with the surname as a quoted phrase
+    expect(result!.expanded).toContain('"Elizabeth Martin"');
+    expect(result!.expanded).toContain('"Betty Martin"');
+    expect(result!.expanded).toContain('"Bess Martin"');
+    // No parentheses or OR keywords
+    expect(result!.expanded).not.toContain("(");
+    expect(result!.expanded).not.toContain(" OR ");
     expect(result!.expansions).toHaveProperty("Elizabeth");
   });
 
-  it("preserves non-matching tokens as-is", () => {
+  it("preserves non-matching tokens in each phrase", () => {
     const result = expandNameForFulltext("Elizabeth Martin");
     expect(result).not.toBeNull();
-    expect(result!.expanded).toMatch(/Martin$/);
-    // Martin should not be in an OR group
-    expect(result!.expanded).not.toMatch(/Martin OR/);
+    // Every quoted phrase should contain Martin
+    const phrases = result!.expanded.match(/"[^"]+"/g) ?? [];
+    expect(phrases.length).toBeGreaterThan(1);
+    for (const phrase of phrases) {
+      expect(phrase).toContain("Martin");
+    }
   });
 
   it("returns null when no expansion applies", () => {
@@ -116,43 +122,63 @@ describe("expandNameForFulltext", () => {
     expect(result).toBeNull();
   });
 
-  it("handles single-word names", () => {
+  it("handles single-word names with unquoted variants", () => {
     const result = expandNameForFulltext("Elizabeth");
     expect(result).not.toBeNull();
-    expect(result!.expanded).toMatch(/^\(Elizabeth OR .+\)$/);
+    // Single token — space-separated variants, no quotes
+    expect(result!.expanded).not.toContain('"');
+    expect(result!.expanded).toMatch(/^Elizabeth /);
+    expect(result!.expanded).toContain("Betty");
+    expect(result!.expanded).toContain("Bess");
   });
 
   it("expands from a variant form too (bidirectional)", () => {
     const result = expandNameForFulltext("Betty Martin");
     expect(result).not.toBeNull();
-    // Betty should be expanded to include Elizabeth and other variants
-    expect(result!.expanded).toContain("Elizabeth");
-    expect(result!.expanded).toMatch(/^\(Betty OR .+\) Martin$/);
+    // Betty should be first, Elizabeth should be included
+    expect(result!.expanded).toContain('"Betty Martin"');
+    expect(result!.expanded).toContain('"Elizabeth Martin"');
+    // Betty's phrase should come first
+    expect(result!.expanded).toMatch(/^"Betty Martin"/);
   });
 
-  it("excludes period-containing forms from the OR group", () => {
+  it("excludes period-containing forms from the phrases", () => {
     const result = expandNameForFulltext("Elizabeth Martin");
     expect(result).not.toBeNull();
     // Eliz. and Elizth. should not appear in the fulltext expansion
     expect(result!.expanded).not.toContain("Eliz.");
     expect(result!.expanded).not.toContain("Elizth.");
     // But Eliz (without period) should be present
-    expect(result!.expanded).toContain(" Eliz)") ;
+    expect(result!.expanded).toContain('"Eliz Martin"');
   });
 
-  it("puts the original token first in the OR group", () => {
+  it("puts the original token's phrase first", () => {
     const result = expandNameForFulltext("Elizabeth Martin");
     expect(result).not.toBeNull();
-    expect(result!.expanded).toMatch(/^\(Elizabeth OR /);
+    expect(result!.expanded).toMatch(/^"Elizabeth Martin"/);
   });
 
-  it("expands multiple given names in a single string", () => {
+  it("expands only the first recognized given name", () => {
     const result = expandNameForFulltext("Elizabeth Mary");
     expect(result).not.toBeNull();
-    // Both should be expanded
-    expect(result!.expanded).toMatch(/^\(.+\) \(.+\)$/);
+    // Only Elizabeth should be expanded; Mary stays fixed in each phrase
     expect(result!.expansions).toHaveProperty("Elizabeth");
-    expect(result!.expansions).toHaveProperty("Mary");
+    expect(result!.expansions).not.toHaveProperty("Mary");
+    // Every phrase should contain Mary
+    const phrases = result!.expanded.match(/"[^"]+"/g) ?? [];
+    for (const phrase of phrases) {
+      expect(phrase).toContain("Mary");
+    }
+  });
+
+  it("keys expansions by original token, not formal name", () => {
+    const result = expandNameForFulltext("Betty Martin");
+    expect(result).not.toBeNull();
+    // Key should be "Betty" (the caller's token), not "Elizabeth" (formal)
+    expect(result!.expansions).toHaveProperty("Betty");
+    expect(result!.expansions).not.toHaveProperty("Elizabeth");
+    // But Elizabeth should be IN the expansion list
+    expect(result!.expansions.Betty).toContain("Elizabeth");
   });
 });
 

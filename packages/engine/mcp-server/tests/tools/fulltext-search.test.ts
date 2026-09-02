@@ -724,19 +724,28 @@ describe("fulltextSearchTool given-name expansion (issue #607)", () => {
     };
   }
 
-  it("38. expands a recognized given name in the URL using an OR group", async () => {
+  it("38. expands a recognized given name in the URL using quoted phrases", async () => {
     mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
     await fulltextSearchTool({ name: "Elizabeth Martin" });
     const url = mockFetch.mock.calls[0][0] as string;
-    // q.fullName should contain the OR group, not the bare name
+    // q.fullName should contain quoted phrases, not OR groups
     const fullNameParam = decodeURIComponent(
       url.match(/q\.fullName=([^&]+)/)?.[1] ?? ""
     );
-    expect(fullNameParam).toContain("(Elizabeth OR");
-    expect(fullNameParam).toContain("Betty");
-    expect(fullNameParam).toContain("Martin");
-    // Martin should NOT be in an OR group
-    expect(fullNameParam).not.toMatch(/Martin OR/);
+    expect(fullNameParam).toContain('"Elizabeth Martin"');
+    expect(fullNameParam).toContain('"Betty Martin"');
+    // No parentheses or OR keywords
+    expect(fullNameParam).not.toContain("(");
+    expect(fullNameParam).not.toContain(" OR ");
+    // m.queryRequireDefault should be absent when expanded
+    expect(url).not.toContain("m.queryRequireDefault");
+  });
+
+  it("38b. non-expanded search still sends m.queryRequireDefault=on", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    await fulltextSearchTool({ name: "Patrick Flynn" });
+    const url = mockFetch.mock.calls[0][0] as string;
+    expect(url).toContain("m.queryRequireDefault=on");
   });
 
   it("39. nameExpansion is present when expansion happens", async () => {
@@ -746,7 +755,8 @@ describe("fulltextSearchTool given-name expansion (issue #607)", () => {
     const result = await fulltextSearchTool({ name: "Elizabeth Martin" });
     expect(result.nameExpansion).toBeDefined();
     expect(result.nameExpansion!.original).toBe("Elizabeth Martin");
-    expect(result.nameExpansion!.expanded).toContain("(Elizabeth OR");
+    expect(result.nameExpansion!.expanded).toContain('"Elizabeth Martin"');
+    expect(result.nameExpansion!.expanded).toContain('"Betty Martin"');
     expect(result.nameExpansion!.expansions).toHaveProperty("Elizabeth");
   });
 
@@ -832,10 +842,11 @@ describe("fulltextSearchTool given-name expansion (issue #607)", () => {
     expect(url).toContain("q.text=will%20testament");
     expect(url).toContain("q.recordPlace=Tipperary");
     expect(url).toContain("f.collectionId=2221234");
-    // Name is still expanded
+    // Name is still expanded with quoted phrases
     const fullNameParam = decodeURIComponent(
       url.match(/q\.fullName=([^&]+)/)?.[1] ?? ""
     );
-    expect(fullNameParam).toContain("(Elizabeth OR");
+    expect(fullNameParam).toContain('"Elizabeth Martin"');
+    expect(fullNameParam).toContain('"Betty Martin"');
   });
 });

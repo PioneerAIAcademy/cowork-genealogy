@@ -230,13 +230,15 @@ as "Betty Martin" because every term is required.
 
 ### Mechanism
 
-Each recognized given name token is replaced with a Lucene OR group:
+Each recognized given name token generates a set of quoted full-name
+phrases, one per variant:
 
 - Input: `name: "Elizabeth Martin"`
-- Sent to API: `q.fullName=(Elizabeth OR Betty OR Betsy OR Beth OR Liz OR Lizzy OR Eliza OR Lisa OR Bess OR Eliz) Martin`
+- Sent to API: `q.fullName="Elizabeth Martin" "Betty Martin" "Bess Martin" ...`
 
-The OR group is required as a whole (any member matching satisfies it)
-while `m.queryRequireDefault=on` keeps the remaining tokens required.
+When expansion is active, `m.queryRequireDefault` is omitted so the
+phrases are OR within the field (any variant matching satisfies the
+name constraint). Cross-field semantics remain AND.
 
 ### Bidirectional
 
@@ -249,9 +251,12 @@ variant table is keyed by formal name but lookup works from any member.
 - Tokens starting with `+`, `-`, or containing `"` / `*` (explicit
   operator syntax — do not interfere).
 - Period-containing scribal abbreviations (e.g. `Eliz.`, `Thos.`) are
-  excluded from the Lucene OR group because periods risk field-access
+  excluded from the fulltext phrases because periods risk Lucene
   parse errors. They are included in `image_transcribe`'s VLM prompt
   expansion, where the context is natural language.
+- Only the first recognized given-name token is expanded — expanding
+  surname-position tokens dissolves the discriminating half of the
+  query.
 
 ### Response field
 
@@ -260,8 +265,8 @@ When expansion occurs, the response includes `nameExpansion`:
 ```typescript
 nameExpansion?: {
   original: string;            // the caller's input.name
-  expanded: string;            // the Lucene query actually sent
-  expansions: Record<string, string[]>;  // formal name → variant forms added
+  expanded: string;            // the query actually sent (quoted-phrase variants)
+  expansions: Record<string, string[]>;  // original token → variant forms added
   variantsInResults: string[]; // variant forms found in result names/highlights
 };
 ```

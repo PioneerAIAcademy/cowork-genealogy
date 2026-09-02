@@ -57,15 +57,16 @@ function validateInput(input: FulltextSearchInput): void {
   }
 }
 
-function buildUrl(input: FulltextSearchInput, nameOverride?: string): string {
+function buildUrl(input: FulltextSearchInput, nameOverride?: string, nameExpanded?: boolean): string {
   const params: string[] = [];
   const add = (key: string, value: string | number): void => {
     params.push(`${key}=${encodeURIComponent(String(value))}`);
   };
 
   if (input.keywords) add("q.text", input.keywords);
-  // When a name expansion is active, nameOverride carries the Lucene OR-group
-  // query; input.name stays untouched so echoQuery and staging see the original.
+  // When a name expansion is active, nameOverride carries the quoted-phrase
+  // expansion; input.name stays untouched so echoQuery and staging see the
+  // caller's original value.
   const nameValue = nameOverride ?? input.name;
   if (nameValue) add("q.fullName", nameValue);
   if (input.place) add("q.recordPlace", input.place);
@@ -82,7 +83,14 @@ function buildUrl(input: FulltextSearchInput, nameOverride?: string): string {
 
   add("count", input.count ?? 5);
   add("offset", input.offset ?? 0);
-  add("m.queryRequireDefault", "on");
+
+  // m.queryRequireDefault=on makes every term required within each field.
+  // When name expansion is active the expanded phrases must be OR (any
+  // variant matching satisfies the field), so we omit it. Cross-field
+  // semantics remain AND regardless of this setting.
+  if (!nameExpanded) {
+    add("m.queryRequireDefault", "on");
+  }
 
   if (input.includeFacets) {
     add("m.defaultFacets", "on");
@@ -174,7 +182,7 @@ export async function fulltextSearchTool(
   const expansion = input.name ? expandNameForFulltext(input.name) : null;
 
   const token = await getValidToken();
-  const url = buildUrl(input, expansion?.expanded);
+  const url = buildUrl(input, expansion?.expanded, expansion != null);
 
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,

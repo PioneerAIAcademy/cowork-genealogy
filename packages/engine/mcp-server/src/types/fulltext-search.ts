@@ -91,7 +91,7 @@ export interface FulltextFacet {
 export interface NameExpansionInfo {
   /** The caller's original name input. */
   original: string;
-  /** The Lucene query actually sent (with OR groups). */
+  /** The query actually sent (quoted-phrase variants). */
   expanded: string;
   /** Which formal names were expanded and to which variant forms. */
   expansions: Record<string, string[]>;
