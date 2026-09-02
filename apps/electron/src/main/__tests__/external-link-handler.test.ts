@@ -81,3 +81,39 @@ describe('registerExternalLinkHandlers', () => {
     expect(openExternal).not.toHaveBeenCalled()
   })
 })
+
+/**
+ * The fourth instance of the shape this file's header describes: the handler is
+ * tested, and the line that installs it was not (#2049 review).
+ *
+ * Deleting `registerExternalLinkHandlers(ipcMain)` from `main/index.ts` — along
+ * with its import, which is how anyone would actually revert it — left electron
+ * 131/131 and `npm run typecheck` clean, while every "Open in FamilySearch"
+ * click in the desktop app became an unhandled rejection against a channel no
+ * one registered. Deleting only the call trips TS6133, but that is not a guard:
+ * it disappears with the line.
+ *
+ * Source text rather than an import, for the reason `external-link.ts` exists at
+ * all: nothing can import `main/index.ts` in a test (module-scope
+ * `app.whenReady()`, an unresolvable `?asset` import).
+ */
+describe('the handler is actually registered', () => {
+  it('main/index.ts calls registerExternalLinkHandlers', async () => {
+    const { readFileSync } = await import('node:fs')
+    const { fileURLToPath } = await import('node:url')
+    const { dirname, join } = await import('node:path')
+    const here = dirname(fileURLToPath(import.meta.url))
+    const src = readFileSync(join(here, '..', 'index.ts'), 'utf8')
+
+    expect(
+      /registerExternalLinkHandlers\s*\(/.test(src),
+      'main/index.ts must call registerExternalLinkHandlers — without it the ' +
+        'open-familysearch channel is never registered and every constrained ' +
+        'link rejects at runtime, with nothing else failing'
+    ).toBe(true)
+    expect(
+      /from\s+['"]\.\/external-link(\.js)?['"]/.test(src),
+      'main/index.ts must import from ./external-link'
+    ).toBe(true)
+  })
+})

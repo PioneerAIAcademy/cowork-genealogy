@@ -1,5 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { setOpenExternal, setOpenFamilySearch } from '../../../lib/external'
 import PersonCard from '../PersonCard'
 import type { GedcomxPerson } from '../../../lib/schema'
 
@@ -45,5 +47,37 @@ describe('PersonCard — FamilySearch link visibility', () => {
   it('shows no link at all when the person has no ark', () => {
     render(<PersonCard person={person()} />)
     expect(screen.queryByRole('button', { name: /FamilySearch/i })).toBeNull()
+  })
+})
+
+/**
+ * WHICH channel the click reaches (#2049 review).
+ *
+ * `link-channel-routing.test.ts` reads the component source and counts
+ * `openFamilySearch(` occurrences. That is a spelling, and one aliased import
+ * satisfies it while routing everything to the unconstrained channel:
+ *
+ *     import { openExternal as openFamilySearch } from '../../lib/external'
+ *
+ * Applied to both constrained components, all 313 tests stayed green and
+ * typecheck was clean. This asserts the behaviour instead: the constrained
+ * implementation fires and the generic one does not.
+ */
+describe('PersonCard — link channel', () => {
+  const fs = vi.fn()
+  const generic = vi.fn()
+
+  beforeEach(() => {
+    fs.mockClear()
+    generic.mockClear()
+    setOpenFamilySearch(fs)
+    setOpenExternal(generic)
+  })
+
+  it('routes the FamilySearch link through the constrained channel', async () => {
+    render(<PersonCard person={person('ark:/61903/1:1:MXYZ-9QP')} />)
+    await userEvent.click(screen.getByRole('button', { name: /FamilySearch/i }))
+    expect(fs).toHaveBeenCalledTimes(1)
+    expect(generic).not.toHaveBeenCalled()
   })
 })

@@ -144,4 +144,16 @@ describe('resolveFamilySearchTarget — refuses everything else', () => {
       resolveFamilySearchTarget('https://www.familysearch.org/tree/person/KW7C-X9P')
     ).not.toBeNull()
   })
+  it('refuses a path or query appended to an otherwise valid id', () => {
+    // The `$` half of the grammar. Every other rejection here attacks the host
+    // (`^`, the trailing slash, prefix/suffix confusion); nothing attacked the
+    // tail, and both BARE branches build the URL from FS_BASE, so a suffix that
+    // survives the match rides along into the opened URL. That is the invariant
+    // the module header names — an open redirect on familysearch.org would
+    // otherwise be reachable as a hop (#2049 review).
+    expect(resolveFamilySearchTarget('ark:/61903/1:1:MXYZ?to=https://evil.example')).toBeNull()
+    expect(resolveFamilySearchTarget('ark:/61903/1:1:MXYZ/../../en/tree')).toBeNull()
+    expect(resolveFamilySearchTarget('1:1:MXYZ/../../redirect?to=https://evil.example')).toBeNull()
+    expect(resolveFamilySearchTarget('1:1:MXYZ#frag')).toBeNull()
+  })
 })

@@ -9,6 +9,7 @@ import type {
 import { getPreferredName, getPrimaryFact } from '../../lib/schema'
 import { orderPersons, relationshipFromPerspective } from '../../lib/relationship-label'
 import { openFamilySearch } from '../../lib/external'
+import { resolveFamilySearchTarget } from '../../lib/familysearch-url'
 import Pill from './Pill'
 import styles from './SidecarResultCard.module.css'
 
@@ -116,7 +117,10 @@ function RecordSearchBody({
                     <code className={styles.treeId}>{tm.treeId}</code>
                   </>
                 )}
-                {tm.ark && (
+                {/* Gated on RESOLVABILITY, not truthiness — matching PersonCard. A value
+                    the policy refuses renders a button that opens nothing, which
+                    PersonCard's own test calls worse than no button (#2049 review). */}
+                {tm.ark && resolveFamilySearchTarget(tm.ark) && (
                   <>
                     {' · '}
                     <button
@@ -134,7 +138,7 @@ function RecordSearchBody({
         </div>
       )}
 
-      {result.arkUrl && (
+      {result.arkUrl && resolveFamilySearchTarget(result.arkUrl) && (
         <div className={styles.footerLink}>
           <button
             type="button"
@@ -185,7 +189,7 @@ function FulltextSearchBody({ result }: { result: FulltextSearchResult }): React
           <span>{result.places.join(', ')}</span>
         </div>
       )}
-      {result.id && (
+      {result.id && resolveFamilySearchTarget(result.id) && (
         <div className={styles.footerLink}>
           <button
             type="button"
