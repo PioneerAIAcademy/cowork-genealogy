@@ -151,7 +151,10 @@ describe('path containment at each sink', () => {
     process.env.EVAL_DIR = handle.root
     try {
       const name = UP + path.join(outside, 'outside').replace(/^\//, '')
-      await expect(readSkill(name)).rejects.toThrow()
+      // Null, not a throw — reads keep their not-found contract (review of
+      // #2000). The mutation property is unaffected: without the guard this
+      // returns a populated SkillInfo carrying the outside file's description.
+      expect(await readSkill(name)).toBeNull()
     } finally {
       delete process.env.EVAL_DIR
       await handle.cleanup()
