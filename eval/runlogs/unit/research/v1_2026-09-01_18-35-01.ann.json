@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-08-25_20-14-29.json",
-  "annotator": "edesonchristopher@gmail.com",
+  "run_log": "v1_2026-09-01_18-35-01.json",
+  "annotator": "dallan@quass.org",
   "corrections": [
     {
-      "test_id": "ut_research_009",
+      "test_id": "ut_research_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_009",
+      "test_id": "ut_research_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_009",
+      "test_id": "ut_research_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -27,7 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_010",
+      "test_id": "ut_research_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -35,79 +35,55 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_010",
+      "test_id": "ut_research_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "someone should review these tests"
     },
     {
-      "test_id": "ut_research_010",
+      "test_id": "ut_research_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_006",
+      "test_id": "ut_research_012",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
+      "llm_score": 1,
       "corrected_score": 1,
-      "comment": "no skill invocation"
+      "comment": "someone should review these tests"
     },
     {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 1,
-      "comment": "no skill invocation"
-    },
-    {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_007",
+      "test_id": "ut_research_012",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "someone should review these tests"
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_007",
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "someone should review these tests"
+    },
+    {
+      "test_id": "ut_research_013",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -115,11 +91,35 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_007",
+      "test_id": "ut_research_013",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "someone should review these tests"
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "someone should review these tests"
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     }
   ]
