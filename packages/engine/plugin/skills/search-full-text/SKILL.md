@@ -183,23 +183,24 @@ Read `references/transcription-quirks.md` for HTR error patterns.
 
 ### 6. Triage results
 
-**Every logged search stages its results, and staging strips the full
-transcript (`textDocument`) from every result — once `staged` is set it is
-not present here.**
-Triage from the fields that do survive:
-- `highlightTerms` — the bare terms the query actually matched in this
-  record (e.g. `["Flynn", "witness"]`, not a marked-up excerpt).
-- `names`/`places`/`dates` — every name, place, and date the record's own
-  entity extraction found. Cross-check against the target's known
-  associates, locality, and date range.
-- `title`, `recordType`, `recordPlace` — is this the right kind of record,
-  in the right place, for the research question?
-
-**What this cannot tell you: whether the name appears in the right
-*context*** (witness, will clause, deed party — vs. a false positive from
-cross-column alignment or a place name coincidence). Use the attachment
-check below to prioritize, and `record-extraction` (step 11) to read
-context from the record image.
+Each staged result carries only flat stub fields — the full transcript
+(`textDocument`) is dropped from the response and no MCP tool reads it back. It
+is still on disk at `staged.resultsRef`, but reading it pulls the whole page
+(79–136 KB) back into context. Triage from the stubs first:
+- **Did your terms hit?** `highlightTerms` lists the matched terms and phrases
+  as bare strings (e.g. `["Patrick", "Flynn", "Flynn Patrick"]`) — they confirm
+  which query terms appear in the transcript, not where or in what role.
+- **Who and what?** `names` lists the persons the transcript mentions (the FAN
+  net — witnesses, neighbors, heirs); `title` and `recordType` give the
+  document kind.
+- **Where and when?** Check `recordPlace`/`places` and `recordDate`/`dates` —
+  is the place and approximate date consistent with your person?
+- **Right context, or a false positive?** Whether the name is a genuine mention
+  (witness, will clause, deed party) versus a false positive (cross-column
+  alignment, a place name matching a surname) cannot be judged from the stubs —
+  the terms are bare. Verify against the original image (see the verification
+  note above), or `Read` the single result you are chasing out of
+  `staged.resultsRef`.
 
 **Attachment check:** After narrowing to promising results, call
 `source_attachments({ uris: [ark1, ark2, ...] })` to check whether
@@ -215,10 +216,13 @@ attachment status. Let the user confirm which records to examine.
 
 **Every search gets a log entry — no exceptions.** Call
 `research_log_append` once per search. **`query` must mirror exactly the
-arguments the `fulltext_search` call actually sent — never add a filter
-the call itself omitted, even one the user mentioned or that a later call
-will add.** An unscoped first call (step 4) logs an unscoped `query`; a
-filter only appears once it is actually sent in a call:
+arguments the `fulltext_search` call actually sent.** Record only a filter
+the call actually sent — never add one the call itself omitted, even one
+the user mentioned, one a later call will add, or one that matches the
+locality under research; and never one merely because the response echoes
+it back — the tool echoes your own request, so an echoed key you did not
+send is not a filter you applied. An unscoped first call (step 4) logs an
+unscoped `query`; a filter only appears once it is actually sent in a call:
 
 ```
 research_log_append({

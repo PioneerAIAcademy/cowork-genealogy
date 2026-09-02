@@ -78,15 +78,16 @@ So the question when writing a new rule is *where it goes*:
 |---|---|
 | across hours, past compaction | a tool contract — validate and reject |
 | for the main thread, which no allow-list can narrow | a `PreToolUse` hook (ADR-0005) |
-| for one delegated agent | that agent's `tools:`/`disallowedTools:`, or a narrowed tool (ADR-0006) |
+| for one delegated agent | that agent's `tools:` — omit the capability — or a narrowed tool (ADR-0006) |
 | within a single invocation | skill prose — this is what prose is *for* |
 
 ## Alternatives considered
 
-| Option | Why rejected | Evidence |
+| Option | Verdict | Evidence |
 |---|---|---|
 | **Reinforce the prose** — repeat the rule, bold it, add a "hard rules" section | This is what the 3% rule already had. Restating a rule does not survive the eviction of the text doing the restating | §5.3 audit; the ranking doctrine was already emphatic |
-| **Shorten skill bodies** so less gets evicted | Attacks the wrong variable, and the unit suite cannot gate it — the suite grades a single invocation in fresh context and will happily bless a cut that removes something only a multi-hour session needs. **Declined outright in 2026-08**, not merely set aside: the cost rationale this row used to carry (prompt size is a per-turn cost; the five largest bodies are ~215 KB between them) was never converted into a measurement. The one trim that was measured, `proof-conclusion`, showed −44% output tokens at the unit level and its e2e effect was never confirmed, so the benefit is unquantified while the one controlled split we ran made things worse (6/19 against a 12–14/19 baseline; CLAUDE.md, reverted). Reopen only on a measurement showing body size costs something material end to end — not on a byte count | `docs/architecture.md` §9.2, the `prompt-budget.test.ts` row — it reports growth and never fails; issues #1153 / #1154, closed not-planned |
+| **Shorten skill bodies** so less gets evicted | Attacks the wrong variable, and the unit suite cannot gate it — the suite grades a single invocation in fresh context and will happily bless a cut that removes something only a multi-hour session needs. **Cutting prose stays declined** (2026-08): the cost rationale this row used to carry (prompt size is a per-turn cost; the five largest bodies are ~215 KB between them) was never converted into a measurement, and the one trim that was measured, `proof-conclusion`, showed −44% output tokens at the unit level with its e2e effect never confirmed. Reopen only on a measurement showing body size costs something material end to end — not on a byte count. **This row does not decline moving a body into a paired agent**, which cuts nothing and is a different decision — see the row below | `docs/architecture.md` §9.2, the `prompt-budget.test.ts` row — it reports growth and never fails; issues #1153 / #1154, closed 2026-08-17 without the retention gate they were blocked on |
+| **Move the body into a paired agent** so it loads in a subagent instead of the orchestrator | **Not rejected — this is now a live programme**, on a rationale this ADR did not consider: an agent is the only surface that honours a `model:` or `effort:` pin (`docs/architecture.md` §3.5), and the body stops occupying the main thread. Distinct from the row above, which cuts text; a fold moves it intact. The 6/19 result is **not** evidence against it — that measured an agent reading its own sibling `references/` files on demand, which a fold explicitly forbids | `docs/architecture.md` §3.4 and §3.5; `docs/skill-to-agent-pair-conversion.md`; issues #2115–#2123 |
 | **Split the rule into a dedicated per-skill write tool** so the tool name carries the doctrine | Rejected earlier and independently, for a reason that generalises: *"a split tool is exactly as callable by the router as a section branch is."* Splitting names does not constrain a caller | `docs/specs/guardrail-enforcement-spec.md` §9 |
 | **A read-only advisory tool** the model calls each turn to be told the next step | "Call the advisory every turn" is itself unanchored prose. Our own data disconfirms it: `project_context`, built for exactly this, is called ~3 times per run against `Read`'s ~19. It also adds a serial tool call — a turn — per routing decision | The 2026-07-30 row-by-row routing analysis; `docs/adrs/ADR-0009-refuted-agent-design-claims.md`, first row |
 | **Post-run detection** — let it happen, catch it in grading | Catches it after the user has the wrong answer, and the detectors themselves currently have two open defects and an unquantified false-positive rate | #999, #1006 |
@@ -184,10 +185,11 @@ the system, has never been audited.
 ## Enforcement
 
 **None — convention only.** No lint detects a cross-turn invariant written as
-prose. The check is review, and the honest signal is this: two gates identified
-as needing anchors — the **tree-encoding gate** and the **mentor gate** — are
-still prose today, and both are computable from files `research_append` already
-loads.
+prose. The check is review. Both gates once flagged here have since moved out of
+prose and into the tool: the **mentor gate** as a refusal (PR #1685), and the
+**tree-encoding gate** as a warning that diffs the final tree against a
+write-once opening-tree baseline (issue #1490) — warn-only, not a refusal, per
+the 2026-08-24 no-override ruling.
 
 The one instrument that measures the *effect* is the post-run compliance
 detector, and it cannot yet give a rate at all. It is uncalibrated (#999,

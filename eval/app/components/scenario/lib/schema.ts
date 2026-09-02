@@ -56,6 +56,8 @@ export type Subscription =
   | 'Newspapers.com'
   | 'GenealogyBank'
   | 'FindAGrave-Plus'
+  | 'FamilySearch-Partner'
+  | 'LibraryAccess'
   | 'other'
   | 'none'
 

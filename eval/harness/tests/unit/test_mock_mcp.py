@@ -16,8 +16,12 @@ import pytest
 from harness.fixtures import InvalidFixtureError
 from harness.mock_mcp import (
     LIVE_TOOLS,
+    UNLOGGED_REFS_SHOWN,
+    NIL_SEARCH_NEEDS_LOG_NOTE,
     OK_FALSE_IS_FAILURE_LIVE,
     RANKING_SKIPPED_NOTE,
+    UNLOGGED_SEARCHES_NOTE,
+    _fixture_is_nil,
     _tool_envelope,
     create_mock_server,
 )
@@ -25,6 +29,9 @@ from harness.mock_mcp import (
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 FIXTURES_DIR = REPO_ROOT / "eval/fixtures/mcp"
+COMPACTOR_JS = (
+    REPO_ROOT / "packages/engine/mcp-server/build/utils/staged-compaction.js"
+)
 
 
 def _extract_response_dict(handler_result):
@@ -286,6 +293,109 @@ def test_ranking_skipped_note_has_not_drifted_from_the_typescript_source():
     assert ts_note == RANKING_SKIPPED_NOTE
 
 
+def test_unlogged_search_notes_have_not_drifted_from_the_typescript_source():
+    """Both #2056 notes must stay byte-identical to the compiled source.
+
+    Same rule as the ranking note above, and the same silent failure mode: a stale
+    copy grades the skill against wording production no longer sends. These two live
+    in the staging util rather than the tool, because both search tools emit them.
+    """
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/utils/results-staging.ts"
+    ).read_text(encoding="utf-8")
+    for name, expected in (
+        ("UNLOGGED_SEARCHES_NOTE", UNLOGGED_SEARCHES_NOTE),
+        ("NIL_SEARCH_NEEDS_LOG_NOTE", NIL_SEARCH_NEEDS_LOG_NOTE),
+    ):
+        decl = re.search(rf"const {name} =(.*?);\n", src, re.DOTALL)
+        assert decl, f"{name} is gone from results-staging.ts"
+        ts_note = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', decl.group(1)))
+        assert ts_note, f"parsed an empty note for {name} — the declaration shape changed"
+        # The TS source escapes the inner quotes of `outcome: "negative"`; Python's
+        # own literal does not, so unescape before comparing.
+        assert ts_note.replace('\\"', '"') == expected
+
+
+def test_fixture_with_matches_but_no_mapped_results_is_not_nil():
+    """The mock's nil gate must match production's, which requires a zero total.
+
+    `results` is the post-`mapEntry` set in production, so a page that fails mapping
+    empties it while the upstream total stays non-zero. A mock that emitted the note
+    there would fire where production does not, and then a zero firing count could
+    not be read as "the condition never held".
+    """
+    assert _fixture_is_nil({"totalMatches": 0, "results": []})
+    assert _fixture_is_nil({"results": []})  # no total declared → claims no matches
+    assert not _fixture_is_nil({"totalMatches": 812, "results": []})
+    assert not _fixture_is_nil({"totalResults": 812, "results": []})
+    assert not _fixture_is_nil({"totalForPlace": 3, "results": []})
+    assert not _fixture_is_nil({"totalMatches": 0, "results": [{"id": "x"}]})
+
+
+def test_unlogged_refs_shown_has_not_drifted_from_the_typescript_source():
+    """The refs formatter is restated in Python; nothing else guards the two copies.
+
+    The pairing rule is called out of the compiled build precisely so it cannot
+    drift. This constant could, and the note's text would then differ from
+    production's at the boundary rather than obviously.
+    """
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/utils/results-staging.ts"
+    ).read_text(encoding="utf-8")
+    decl = re.search(r"const UNLOGGED_REFS_SHOWN = (\d+);", src)
+    assert decl, "UNLOGGED_REFS_SHOWN is gone from results-staging.ts"
+    assert int(decl.group(1)) == UNLOGGED_REFS_SHOWN
+
+
+def test_staging_tool_sets_agree_across_the_two_copies():
+    """`STAGING_SEARCH_TOOLS` here vs `STAGING_CAPABLE_TOOLS` in the engine.
+
+    The engine consolidated its own two copies for exactly this reason ("a second
+    copy would drift"); this is the third, and it lives in another language.
+    """
+    from harness.mock_mcp import STAGING_SEARCH_TOOLS
+
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/utils/results-staging.ts"
+    ).read_text(encoding="utf-8")
+    decl = re.search(
+        r"export const STAGING_CAPABLE_TOOLS = new Set\(\[(.*?)\]\)", src, re.DOTALL
+    )
+    assert decl, "STAGING_CAPABLE_TOOLS is gone from results-staging.ts"
+    ts_tools = set(re.findall(r'"([a-z_]+)"', decl.group(1)))
+    assert ts_tools == STAGING_SEARCH_TOOLS
+
+
+def test_nil_search_carries_the_negative_log_note(tmp_path):
+    """The emission CONDITION, not the text — a text-only test passes on a wrong gate."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-patrick-flynn-no-results"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+        )
+    )
+    assert body["nilSearchNeedsLog"] == NIL_SEARCH_NEEDS_LOG_NOTE
+    # Ordered ahead of `results`, like every other model-facing note.
+    keys = list(body)
+    assert keys.index("nilSearchNeedsLog") < keys.index("results")
+
+
+def test_no_log_note_without_a_project_path(tmp_path):
+    """Neither note fires when the caller passed no projectPath — nothing is owed."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-patrick-flynn-no-results"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_search", {"surname": "Flynn", "givenName": "Patrick"})
+    )
+    assert "nilSearchNeedsLog" not in body
+    assert "unloggedSearches" not in body
+
+
 def test_record_search_omits_ranked_when_test_declares_no_rank_fixture(tmp_path):
     """A fabricated ranking would be worse than none — the absence is honest."""
     server, call_log, tools_by_name = create_mock_server(
@@ -443,3 +553,113 @@ def test_ordinary_returned_failure_is_still_marked_is_error():
     stopped marking anything at all."""
     envelope = _tool_envelope("research_append", {"ok": False, "errors": ["bad"]})
     assert envelope["is_error"] is True
+
+
+def test_record_search_response_is_compacted_once_staged(tmp_path):
+    """The mock must apply the SAME post-staging compaction the real tool does.
+
+    Without it the agent is handed `gedcomx`, `collectionUrl` and a per-row
+    `collectionTitle` that production deletes, and every unit test grading
+    triage or tool usage is scored against a shape production never sends
+    (#2009 — the same class as #1826's `textDocument`). The mock runs the
+    compiled `compactStagedRecordSearch` rather than restating it in Python,
+    so there is no second copy to drift.
+
+    Skips only when the compiled module is absent — an environmental reason.
+    It must NOT skip on `staged` being falsy: a compactor name that no longer
+    resolves in the build makes the node import throw, the staging helper
+    swallows it, and staging silently stops. Keying the skip on that symptom
+    would mute this test on exactly the failure it exists to catch.
+    """
+    fixture = json.loads(
+        (FIXTURES_DIR / "record-search-1850-census-flynn.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw_rows = (fixture.get("response") or fixture).get("results") or []
+    # Guards the assertions below against silently passing on a fixture that
+    # was already written in the compacted shape — then this test would prove
+    # nothing. If this trips, point it at a fixture that still carries them.
+    assert any(
+        "gedcomx" in row or "collectionTitle" in row for row in raw_rows
+    ), "fixture no longer carries the fields production strips"
+
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+    )
+    if not COMPACTOR_JS.exists():
+        pytest.skip("compiled MCP build absent")
+    body = _extract_response_dict(result)
+    assert body.get("staged"), (
+        "the compiled module is present but nothing staged — compaction never ran"
+    )
+
+    for row in body["results"]:
+        assert "gedcomx" not in row
+        assert "collectionUrl" not in row
+        assert "collectionTitle" not in row, "hoisted into response-level collections"
+        assert row.get("treeMatches") != [], "empty treeMatches is dropped"
+    # The hoist landed, and the field the re-ranker needs survived.
+    assert body["collections"], "per-row titles hoist into one response-level map"
+    assert all(row.get("primaryId") for row in body["results"])
+
+
+def test_unstaged_record_search_is_not_compacted(tmp_path):
+    """The other half. Compaction is only correct once the sidecar holds the
+    full payload — an exploratory search with no `projectPath` retains nothing,
+    so stripping its inline results would destroy the only copy."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(
+        tools_by_name, "record_search", {"surname": "Flynn", "givenName": "Patrick"}
+    )
+    body = _extract_response_dict(result)
+    assert not body.get("staged")
+    assert any("gedcomx" in row for row in body["results"]), (
+        "an un-staged search keeps full fidelity inline"
+    )
+
+
+def test_mapping_failure_response_does_not_get_the_negative_log_note(tmp_path):
+    """The WIRING, not the predicate.
+
+    `_fixture_is_nil`'s own unit tests prove the predicate; nothing proved the
+    call site uses it. Reverting that call site to `not response.get("results")`
+    leaves the whole suite green, because the only committed fixture routed
+    through dispatch has `totalMatches: 0`, where both conditions agree. The
+    discriminating shape is built here rather than committed: it exists to
+    exercise this branch, not to describe a real search.
+    """
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    (fixtures / "unmappable-page.json").write_text(
+        json.dumps(
+            {
+                "tool": "record_search",
+                "args": {"surname": "Flynn"},
+                "response": {"query": {"surname": "Flynn"}, "totalMatches": 812, "results": []},
+            }
+        ),
+        encoding="utf-8",
+    )
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    server, call_log, tools_by_name = create_mock_server(
+        ["unmappable-page"], fixtures, workspace=workspace
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "projectPath": str(workspace)},
+        )
+    )
+    assert body["totalMatches"] == 812
+    assert body["results"] == []
+    assert "nilSearchNeedsLog" not in body

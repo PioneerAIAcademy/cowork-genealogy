@@ -4,16 +4,20 @@
 > sentence · decide where a new "this must always hold" rule lives · design a
 > completion gate, a write invariant, or a lockdown · argue a boundary check
 > would be too strict to ship · widen a gate that already exists · convert a
-> skill into a skill-agent pair.
+> skill into a skill-agent pair · route the orchestrator to a paired agent ·
+> decide whether a thin routing skill is an enforcement layer.
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09 (on the fourth independent re-derivation in one week)
-- **Last updated:** 2026-08-24 (the override tier is retired — gates ship without one until a false deny is observed)
+- **Last updated:** 2026-08-31 (a direct `Agent` spawn of a paired agent is the
+  sanctioned in-loop route; the 2026-08-23 ruling that required the routing skill
+  is retired to an alternatives row. Previously 2026-08-24, when the override
+  tier was retired — gates ship without one until a false deny is observed)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
 - **Applies to:** `packages/engine/mcp-server/src/tools/research-append.ts`, `packages/engine/mcp-server/src/tools/image-transcribe.ts`, `packages/engine/plugin/hooks`, `packages/engine/plugin/skills`, `scripts/claude-hooks`, `docs/specs/guardrail-enforcement-spec.md` — *linted; keep current*
-- **Related:** ADR-0003, ADR-0005, ADR-0006, ADR-0009; PR #1029; issues #1335, #1463, #1490, #1492, #1493, #1499, #1509, #1081, #1273, #1399
+- **Related:** ADR-0003, ADR-0005, ADR-0006, ADR-0009; PR #1029; issues #1335, #1463, #1490, #1493, #1499, #1509, #1081, #1273, #1399
 
 ## Context
 
@@ -54,10 +58,11 @@ The refusal did not block correct work; it redirected the agent into doing it.
 **And the same reasoning keeps being re-derived from scratch.** Four independent
 issues in one week: issue #1490 (move the two completion gates out of
 `research/SKILL.md` and into the tool — "reinforced prose did not survive one
-day"); issue #1492's second ruling (the question of who writes
+day"); issue #1335's second ruling (the question of who writes
 `project.status = "completed"`, where the body enumerates five disagreeing sites,
 names a sixth, and its analysis note counts seven — one option on the table being
-to move the write into `research_append` as a computed gate); issue #1493 (the
+to move the write into `research_append` as a computed gate; ruled 2026-08-25 to
+the `proof-conclusion` agent, leaving the computed-gate option to issue #1490); issue #1493 (the
 raw-write lockdown exists in three implementations and the unit eval harness,
 the tier that runs the most sessions, is not one of them); and issues #1499 and
 #1509 (the lockdown has a hole — `device_bash` wrote both protected files past it,
@@ -90,7 +95,7 @@ Concretely, this is a placement question with six answers — **the layer map**:
 | **Writer tool** (precondition) | a value or a state transition in `research.json` / `tree.gedcomx.json`; every MUST; every completion gate; every foreign key | *"Can this be decided by reading the documents alone?"* If yes it goes here and nowhere else. **The only substrate that binds in all five environments.** |
 | **Schema validator** | document *shape* — types, closed enums, required fields, id patterns, referential integrity | *"Would violating this make the document malformed, rather than merely wrong?"* This is the **integrity tier**: violating it yields a document no writer tool will accept. |
 | **`PreToolUse` hook** | a route no writer tool owns (raw `Write`/`Edit`, the shell, the device bridge), and any rule that turns on **who** is calling | *"Does this depend on the caller?"* Only substrate that can restrain the main thread (ADR-0005). **Fails open** — never the sole guarantee for anything that matters. **First production caller rule: 2026-08-19**, `proof_summaries` to the `proof-conclusion` agent. It is not the sole guarantee there — the writer tool's own content invariants (the mentor gate, `proofSummaryInvariants`) sit underneath it and do not fail open. **A second on 2026-08-23, and of a different KIND:** `exhaustive_declaration.declared: true` is routed to the `research-exhaustiveness` agent by FIELD rather than by section, because the schema makes that field required on every question — so routing the section would deny question creation itself, 197 of 392 corpus ops. Route the claim, not the field. |
-| **Agent frontmatter** | what one delegated agent may touch | tool identity plus a `disallowedTools:` deny (ADR-0006). Binds under `bypassPermissions`; a missing deny fails open **silently**. |
+| **Agent frontmatter** | what one delegated agent may touch | tool identity — omit the tool from the agent's `tools:` (ADR-0006). Binds under `bypassPermissions`, measured 2026-08-30. `disallowedTools:` also binds, but every deny we shipped restated an omission, so all five blocks were deleted. |
 | **Tool description** | what the model must know *at the moment of the call* but that no predicate can enforce — paging, argument choice, budget notices | *"Does the model need this to choose correctly, and is it advice rather than a constraint?"* Reloaded after compaction; **strength unmeasured** — two rules already in `record_search`'s schema decay anyway. Includes the advisory-field shape for a read-tool resource budget. |
 | **Harness validator** | rules judgeable only over a **whole run** — bypass detection, episode analysis, compliance axes | *"Does evaluating this need the whole run?"* **Eval-only; never reaches production** — say so wherever one is added. |
 | **Prose** | judgment exercised inside a single invocation | *"Is this a matter of judgment no predicate can express?"* **Not an enforcement layer.** State the rule; label it guidance. |
@@ -103,6 +108,47 @@ Concretely, this is a placement question with six answers — **the layer map**:
 4. Only judgeable over a whole run? → **harness validator**, labelled eval-only.
 5. Needed at call time but unenforceable? → **tool description**.
 6. Otherwise → **prose, labelled as guidance rather than as a rule.**
+
+### Reaching a paired agent: the route is free, the guarantee is not
+
+A skill-agent pair is a thin routing skill plus an agent of the same name — today
+`proof-conclusion` and `research-exhaustiveness` — so `Skill{skill: "…"}` and
+`Agent{subagent_type: "…"}` differ by the tool alone. **A direct `Agent` spawn of
+a paired agent is the sanctioned in-loop route from the `/research`
+orchestrator** (lead ruling, 2026-08-31). It reverses the ruling of 2026-08-23,
+which held that a Skill-less delegation straight to a paired agent was not
+sanctioned; that option is now a row in `Alternatives considered` below.
+
+This is the table above applied to the route rather than a convenience. The
+plugin hook is **route-blind**: `owner_denied` in
+`packages/engine/plugin/hooks/guard_project_files.py` derives its caller from the
+stamped `agent_type`/`agent_id` and nothing else, and neither key records how the
+agent was reached — so it returns an identical verdict whichever way the spawn
+happened. `research_append`'s preconditions are caller-agnostic in the same
+sense: they read the project documents and the call's own ops, never who is
+calling. So a thin routing skill is **prose**. It is not one of the substrates
+above, and mandating it as the in-loop route buys nothing the layer map does not
+already hold.
+
+**The consequence is the part that costs something.** Anything a routing skill
+guaranteed must move into the agent body or into a writer-tool precondition, or
+be recorded as accepted-as-lost with the loss stated. It cannot be secured by
+requiring the route, because no plane that binds in production sees the route.
+
+**One eval-only plane does see the route, and reads it backwards.** The harness's
+post-run bypass detector credits a guardrail skill only on a literal `Skill`
+call — `skill_name_if_skill_call` in `eval/harness/harness/skill_invocation.py`
+returns `None` for every other tool — so an e2e run taking the sanctioned route
+lands the violation "`proof-conclusion` was never successfully invoked", as both
+committed runs that spawn that agent directly already do. Read that as an
+artifact of the retired ruling rather than as evidence against this one, and do
+not restore the `Skill` call to clear it; issue #1851 carries the fix.
+
+**The thin skill still stays on disk, and neither reason is enforcement.** It is
+the **direct-user entry point** — a researcher who asks for a proof conclusion
+reaches the pair through the skill's own description. And it is the **unit-eval
+entry point**: a unit suite is keyed to a skill directory, and no harness path
+can invoke an agent directly (issue #1253, open).
 
 ### Writing a caller rule — the identifier is not what you expect
 
@@ -247,11 +293,13 @@ measured rather than argued.
    writes** — 1,451 protected pairs across 140 runs — which projects to failing
    132 of 145 runs. A check that fails almost every run is a constant, not a
    guardrail, and each of those runs costs $7–25.
-3. **A deny binds even under `bypassPermissions`, but only by exact tool name.**
-   That is what makes `disallowedTools:` the last line of defence for a
-   delegated agent (see the plugin-agents section of `CLAUDE.md`) — and it is
-   also the limit: the matcher decides whether the hook runs at all, so a name
-   it omits is a hole the script behind it can never close. `device_bash` is
+3. **Agent frontmatter binds even under `bypassPermissions`, but only by exact
+   tool name.** A tool omitted from an agent's `tools:` is absent from it
+   (measured 2026-08-30, `make probe-agent-binding`). This entry used to call
+   `disallowedTools:` "the last line of defence"; the omission already was, and
+   the denies have since been deleted. The exact-name matching is the limit that
+   matters here: the matcher decides whether the hook runs at all, so a name it
+   omits is a hole the script behind it can never close. `device_bash` is
    omitted deliberately and the write landed (issue #1509);
    `device_commit_files` was omitted by accident, which left the route open
    after all three predicate copies had been taught to deny it. The matcher is
@@ -275,6 +323,7 @@ measured rather than argued.
 | **Post-run detection only** — let it happen, catch it at grading | Catches it after the user has the wrong answer. The detectors also cannot yet yield a rate: no committed run resolves `pass`, and the universal validator's project-file check is coarse by design — one legitimate writer call legitimizes the session's raw edits | ADR-0003's enforcement note; issue #1493's read of `test_universal.py` |
 | **Ship the deny on the violation count alone**, and tune later | The count cannot distinguish an impossible gate from an achievable one the agent was never taught to satisfy. Both cases were measured here, and both look identical from the number | ADR-0009 constraint 6 (3 of 103); issue #1463 (52%, projecting to 132 of 145 runs failing) |
 | **Wait for a per-caller `PreToolUse` policy** to be ported to production before moving anything | Unported and not gated on anything currently moving; the writer-tool check needs none of it and reaches every environment today | ADR-0006's hook row; `eval/harness/harness/context_policy.py` |
+| **Require the spawn to go through the routing skill** — treat a direct `Agent` delegation to a paired agent as unsanctioned, and hold what the routing skill does by mandating the route (the ruling of 2026-08-23) | Retired 2026-08-31. **No plane that can deny a spawn distinguishes a Skill-routed one from a direct one.** A skill runs in the main thread's own context, so the hook payload carries no key recording the route and `owner_denied` derives the same caller from each; `research_append` never sees a caller at all. A route no enforcing plane sees is a rule only prose can state, which is the thing this ADR exists to stop. The one handle that could reach session history is `transcript_path` — available, unused, unprobed here, and subject to the hook's timeout — so "deny the direct route at the hook" is not a design to attempt on what is known today | Issue #1851, which enumerates the miss on every plane and carries the reproduction over `eval/runlogs/e2e/`: both committed runs in which a paired agent appears spawn it directly, four times, with the routing skill never invoked. `packages/engine/plugin/hooks/guard_project_files.py` (`owner_denied`); the live payload key list in `docs/specs/guardrail-enforcement-spec.md`, "What the `PreToolUse` payload actually carries" |
 
 ## Consequences
 
@@ -302,7 +351,15 @@ them carry `needs-decision`.
 3. **The prose does not go away.** Issue #1490 is explicit that the tool becomes
    the enforcement while the prose stays as guidance, which leaves two artifacts
    that must keep saying the same thing.
-4. **Coverage stays partial and the gaps are silent.** `device_bash` walked past
+4. **A thin routing skill guarantees nothing about the in-loop route** — which
+   sanctioning the direct spawn makes explicit rather than new, since no plane
+   ever held it. The bill lands per conversion: every step the routing skill
+   performed now owes a written disposition — moved into the agent body, moved
+   into a writer-tool precondition, or accepted as lost with the loss stated —
+   and some of those steps have no plane that can hold them, so the honest
+   answer for them is the third one. Issue #1851 holds that register for the two
+   pairs that exist.
+5. **Coverage stays partial and the gaps are silent.** `device_bash` walked past
    the lockdown in the shipping product on 2026-08-09; the unit tier has no
    protected-file rule, so it cannot distinguish "the skill complied" from
    "nothing was checking," and 0 of 1,845 committed unit run records carry a
@@ -312,9 +369,11 @@ them carry `needs-decision`.
 constant that denies correct work at $7–25 a run — the failure ADR-0009's sixth
 constraint exists to prevent, and the one issue #1463 caught before it shipped.
 In the other direction, nothing mechanical flags a "must hold" rule that is still
-a sentence: two gates identified as needing anchors, the tree-encoding gate and
-the mentor gate, are still prose today even though both are computable from files
-`research_append` already loads.
+a sentence — though the two that were prose here have since moved into the tool:
+the mentor gate as a refusal (PR #1685), and the tree-encoding gate as a warning
+that diffs the final tree against a write-once opening-tree baseline (issue
+#1490). The tree-encoding half ships warn-only, not as a refusal, per the
+2026-08-24 no-override ruling.
 
 ## Enforcement
 

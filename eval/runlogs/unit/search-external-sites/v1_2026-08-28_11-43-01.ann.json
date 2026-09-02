@@ -1,0 +1,286 @@
+{
+  "run_log": "v1_2026-08-28_11-43-01.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_005`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified that no FindAGrave-curated link existed for Pennsylvania in the 1880–1920 window, properly fell back to the site-wide template, and generated a syntactically valid URL with correct parameters (firstname=Patrick, lastname=Flynn, birthyear=1845, deathyear=1908, location=Schuylkill+County%2C+Pennsylvania). The death year 1908 is the known fact from the project objective, not a fabrication. The compiled-source caution about user-contributed memorials and verification against original records is accurate. Two research-log entries were correctly written (log_006 for the curated-links fetch, log_007 for the in-flight search). No factual errors or unsupported claims.\n\nJunior: (Pass - The skill’s response is factually correct, methodologically sound, and properly logged.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_005`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: resolved Pennsylvania as a place, fetched curated links, correctly identified the fallback case, generated the URL with all relevant parameters (name, location, death year), provided clear capture instructions, included the compiled-source caution, and logged both the curated-links fetch and the search itself. The user's request to search for Patrick Flynn's grave was fully addressed with no silent omissions.\n\nJunior: (Pass - Every required element was addressed — no omissions, no skipped steps. The search request was fully executed and documented.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_005`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching the fixture's expected_args semantically. place_search received 'Pennsylvania' (matches ~); external_links_search received standardPlace='Pennsylvania, United States' (returned by place_search), startYear=1880, endYear=1920, host='findagrave.com' (all correct); research_log_append received properly structured ops with correct tool names, planItemId=null, query details, outcome values, and notes. No critical identifiers were wrong, no calls landed in fixture_not_found, and no arguments were fabricated.\n\nJunior: (Pass - The tool arguments were precise, valid, and semantically matched the fixture’s expected values.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_005`** — `rubric` / `URL generation`\nLLM: 3 → Junior: 3\n\n> Generated URL targets findagrave.com/memorial/search with all required parameters: firstname=Patrick, lastname=Flynn, birthyear=1845, deathyear=1908, location=Schuylkill+County%2C+Pennsylvania. The death year 1908 is the known fact from the project objective (not a fabrication), and the location is correctly narrowed to Schuylkill County per the objective. URL is syntactically valid and properly encoded.\n\nJunior: (Pass - The URL generation is accurate, valid, and aligned with both the user’s request and the known project objective.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_005`** — `rubric` / `Capture guidance`\nLLM: 3 → Junior: 3\n\n> Instructions clearly name what to look for (Patrick Flynn memorials), how to save results (Ctrl+P / Cmd+P to print to PDF), and how to return the capture (upload the PDF). Instructions also include a fallback strategy (widen by dropping birth year, loosening death year, or broadening location) if results come back empty. Guidance is specific and actionable, not generic.\n\nJunior: (Pass - The guidance is precise, complete, and aligned with rubric expectations.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_005`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> No capture was provided in this turn — the skill correctly deferred triage without fabricating results. The skill signaled what it will evaluate once the capture arrives (matching name, age/birth-year, jurisdiction) and noted that FindAGrave memorials are user-contributed leads requiring verification against original records. Deferral is clean and appropriate for a no-capture turn.\n\nJunior: (Pass - The triage response is accurate, cautious, and correctly deferred in the absence of a capture.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_005`** — `rubric` / `Tool selection`\nLLM: 3 → Junior: 3\n\n> Correct tool flow for a search-generation turn: place_search ran first and returned standardPlace='Pennsylvania, United States', which fed external_links_search with the correct year window (1880–1920). The response was consumed correctly: the skill identified that the 2 returned links were both Ancestry entries (wrong site, wrong record type), correctly applied Case B fallback to the site-wide template, and logged the curated-links fetch via research_log_append. The search itself was persisted via research_log_append with outcome='partial' and capture_received=false.\n\nJunior: (Pass - The tool selection sequence was accurate, followed the expected flow, and correctly handled the fallback case.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_005`** — `rubric` / `Log entry`\nLLM: 3 → Junior: 3\n\n> Two log entries were correctly written in the same turn the URL was generated: log_006 (curated-links fetch, outcome='positive', notes the 0 FindAGrave matches and fallback to site-wide template) and log_007 (in-flight search, outcome='partial', capture_received=false, notes the search parameters and compiled-source caution). Both entries name the site (findagrave), person (Patrick Flynn), place (Schuylkill County, Pennsylvania), and year/range (1908 death, ~1845 birth). No plan_item_id was written (correctly null, as the search matches no specific plan item). Status is not applicable here since no plan item was targeted.\n\nJunior: (Pass - Both log entries were complete, accurate, and properly persisted in the same turn as URL generation. )"
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_004`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified that no curated FindMyPast links exist for Ireland 1840–1850, properly invoked the fallback to the site-wide FindMyPast template, and generated a syntactically valid search URL with appropriate parameters (firstname=Patrick, lastname=Flynn, yearofbirth=1845, yearofbirth_offset=5, keywordsplace=Ireland, fatherfirstname=Thomas). The birthplace conflict c_001 was correctly resolved in favour of Ireland per the project state. The father's name addition is supported by hypothesis h_001 and assertion a_013. All tool calls succeeded without fixture_not_found errors. The research log entries (log_006 and log_007) were correctly persisted with accurate metadata.\n\nJunior: (Pass -The skill’s response is factually accurate, methodologically sound, and properly logged.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_004`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: resolved the place (Ireland), checked for curated links (none found), checked FamilySearch collections (none found), fell back to site-wide template, generated a pre-filled URL with all relevant search parameters, provided clear capture-workflow instructions (scroll, print to PDF, save, upload), noted the login requirement for a paid site, and wrote the research log entry in the same turn with outcome 'partial' and capture_received false. No required steps were omitted.\n\nJunior: (Every required step was executed — no omissions, no skipped elements.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_004`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All four tool calls passed arguments matching the fixture's expected_args semantically. place_search received 'Ireland' (matches ~Ireland). external_links_search received standardPlace='Ireland', startYear=1840, endYear=1850, host='findmypast.com' (all match expected predicates). collections_search received standardPlace='Ireland', startYear=1840, endYear=1850 (matches expected). research_log_append received two valid log operations with correct structure and metadata. No critical identifiers were wrong, no fixture_not_found errors occurred, and no extraneous noise was added.\n\nJunior: (Pass - The tool arguments were precise, semantically correct, and matched the fixture’s expected values.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "URL Generation Rating: Pass\nJustification: \nThe FindMyPast search URL was generated correctly and meets all requirements:  \n\n- Target site: Points to the correct FindMyPast search endpoint (`findmypast.com/search/results`).  \n- Parameters included:\n  - `firstname=Patrick`  \n  - `lastname=Flynn`  \n  - `yearofbirth=1845`  \n  - `yearofbirth_offset=5` (±5 years for circa birth date)  \n  - `keywordsplace=Ireland`  \n  - `fatherfirstname=Thomas` (reasonable narrowing addition supported by hypothesis h_001 and death‑certificate assertion a_013).  \n- Conflict resolution: Birthplace conflict (c_001) was resolved in favor of Ireland, so encoding Ireland is correct and supported by the project state.  \n- Syntax: URL is syntactically valid and properly encoded.  \n\nPass : The generated URL is accurate, complete, and aligned with both the project objective and conflict resolution. "
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_004`** — `rubric` / `Capture guidance`\nLLM: 3 → Junior: 3\n\n> Clear, specific instructions provided: scroll to bottom and back to top (to force lazy-loading), press Cmd+P or Ctrl+P, select 'Save as PDF', save and upload. The skill explicitly noted that FindMyPast may require login and instructed the user to log in first if needed. Instructions name the action (save as PDF) and the return method (upload here). No generic language; workflow is concrete and actionable.\n\nJunior: (Pass - The capture guidance is precise, complete, and aligned with rubric expectations.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_004`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> No capture was provided in this turn — the skill correctly deferred triage without fabricating results. The skill stated 'Once you upload the PDF I'll triage the results' and named the criteria it will apply: 'rating each match as strong, possible, or no match against Patrick's known attributes (male, born ~1845, Ireland, father named Thomas Flynn).' This is a clean deferral with clear triage criteria named, which is the correct behavior when no capture exists yet.\n\nJunior: (Pass - The triage response is accurate, cautious, and correctly deferred in the absence of a capture.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_004`** — `rubric` / `Tool selection`\nLLM: 3 → Junior: 3\n\n> Correct tool flow for a search-generation turn: place_search ran first and returned standardPlace='Ireland', which was then fed to external_links_search with the plan item's year window (1840–1850). The response was consumed correctly: no curated link matched, so the skill fell back to the site-wide FindMyPast template (findmypast.com/search/results) as documented. The search was persisted via research_log_append with outcome='partial' and capture_received=false. No tools were skipped, and no fabricated arguments were used.\n\nJunior: (Pass - The tool selection sequence was accurate, followed the expected flow, and correctly handled the fallback case)"
+    },
+    {
+      "test_id": "ut_search_external_sites_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_004`** — `rubric` / `Log entry`\nLLM: 3 → Junior: 3\n\n> Two log entries were written in the same turn the URL was generated: log_006 (external_links_search outcome='negative', noting no curated links and no FamilySearch collections, with fallback rationale) and log_007 (external_site outcome='partial', capture_received=false, with full query parameters and notes on hypothesis/conflict resolution). Both entries name the site (findmypast), person (Patrick Flynn), place (Ireland), and year/range (1845±5). No plan_item_id was written (correctly null, since this is an ad-hoc search). Status was not written because no plan item was targeted, which is correct per the rubric.\n\nJunior: (Pass - The log entries were properly structured, complete, and persisted in the same turn as URL generation.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_007`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill generated a factually correct pre-filled Ancestry URL with appropriate search parameters (name, birth year 1845, birthplace Ireland per resolved conflict c_001, residence 1880 Schuylkill County PA, father Thomas Flynn). The place resolution via place_search returned the correct standardPlace. The skill correctly identified that no curated Ancestry link matched the 1880 census and appropriately fell back to the site-wide search template. The log entries accurately document the curated-links fetch and the in-flight search with correct outcome/status values. No fabricated material or unsupported claims.\n\nJunior: (Pass - The skill’s response is factually accurate, methodologically sound, and correctly logged.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_007`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: resolved the place (Schuylkill County), checked for curated Ancestry links, generated a pre-filled search URL with all relevant parameters from the plan context (name, birth year, birthplace, residence, father), provided clear capture instructions, and appended the research-log entry in the same turn with outcome 'partial' and capture_received false. The log query captures the search parameters (Patrick Flynn, 1880 census, Schuylkill County, Pennsylvania). No required work was omitted.\n\nJunior: (Pass - The skill’s response is thorough, methodologically sound, and complete.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_007`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All four MCP tool calls passed arguments matching the fixture's expected_args semantically. place_search received placeName 'Schuylkill County' (matches ~Schuylkill). collections_search received standardPlace from place_search result. external_links_search received the correct standardPlace, year window (1880–1880), and host 'ancestry.com'. research_log_append received two well-formed log operations with correct structure, outcome values, and query details. No critical identifiers were wrong, no fixture_not_found errors occurred, and no arguments were fabricated.\n\nJunior: (Pass - The tool arguments were precise, semantically correct, and aligned with the fixture’s expected values.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The generated URL is accurate, complete, and aligned with the project context. PASS for URL generation."
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_007`** — `rubric` / `Capture guidance`\nLLM: 3 → Junior: 3\n\n> The skill provided clear, specific capture instructions: (1) open the link in authenticated Ancestry session, (2) scroll to bottom and back to top to force lazy-loaded results into view, (3) press Ctrl+P/Cmd+P and save as PDF, (4) upload the PDF. The skill also named what to look for (Patrick Flynn records in 1880 census) and provided helpful context about the common name and suggested narrowing strategies if needed. Instructions are concrete and actionable.\n\nJunior: (Pass -  The capture guidance is precise, complete, and aligned with rubric expectations.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_007`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> No capture was provided in this turn — the skill correctly deferred triage without fabricating results. The skill signaled what it will evaluate once the capture arrives (matching on name, age/birth-year, jurisdiction) and stated 'Once you upload the PDF, I'll triage the results for you.' This is the correct deferral behavior for a no-capture turn; waiting for the capture is exactly what the workflow requires.\n\nJunior: ( Pass - The triage response was cautious, transparent, and correctly deferred in the absence of a capture.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_007`** — `rubric` / `Tool selection`\nLLM: 3 → Junior: 3\n\n> The skill correctly executed the search-generation flow: place_search ran first and returned standardPlace 'Schuylkill, Pennsylvania, United States', which fed external_links_search with the 1880 year window. The skill consumed the response correctly — kept no links (both returned links were wrong record type/year), confirmed the fallback to site-wide template was appropriate, and persisted the search via research_log_append with correct structure. No curated link was skipped when a matching one existed; the fallback was the correct, expected behavior.\n\nJunior: (Pass - The tool selection sequence was accurate, complete, and correctly handled the fallback case.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_007`** — `rubric` / `Log entry`\nLLM: 3 → Junior: 3\n\n> The skill wrote two log entries in the same turn the URL was generated: log_006 (curated-links fetch, outcome 'positive', resultsExamined 2, notes on why links were rejected) and log_007 (in-flight search, outcome 'partial', capture_received false, results_examined 0, URL recorded in external_site.urlGenerated). The query field captures search parameters (name, birth_year, birth_place, residence_year, residence_place, father, record_type, census_year). No plan_item_id was written (correctly null, as no plan item exists for this search). Status is not applicable here since no plan item was named.\n\nJunior: (Pass - The log entries were properly structured, complete, and persisted in the same turn as URL generation.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_002`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> The skill encoded birth_place as 'Pennsylvania' in the MyHeritage URL, but research.json contains a resolved conflict (c_001) where the preferred_assertion_id (a_002) specifies Ireland as the correct birthplace, not Pennsylvania. The competing Pennsylvania value was explicitly rejected. Encoding a rejected conflict value is a fail per the rubric's conflicts[] rule.\n\nJunior: (Correctness Rating: FAIL\nJustification: The generated MyHeritage search URL encoded the birthplace as Pennsylvania, but the project state (research.json) contains a resolved conflict (c_001) where the preferred assertion (a_002) specifies Ireland as the correct birthplace. The competing Pennsylvania value was explicitly rejected.\n•\tConflict handling: The rubric requires that encoded parameters respect resolved conflicts. Using a rejected value (Pennsylvania) violates the conflicts[] rule.\n•\tTemplate compliance: While the URL correctly used MyHeritage’s parameter naming conventions (first, last, birth_year, birth_place) and avoided adding unsupported county/jurisdiction fields, the birthplace parameter was factually incorrect.\n•\tLogging: The research log entry documented the query with birth_place=Pennsylvania, which again contradicts the resolved conflict state.\n•\tAccuracy: No fabricated material was introduced, but the birthplace encoding error is a critical correctness issue.\nBecause the birthplace was encoded with a rejected conflict value, the URL fails the correctness rubric. FAIL for correctness.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_002`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the user's request to generate a MyHeritage search URL for Patrick Flynn in the 1860 census for Schuylkill County. It resolved the place, fetched curated links, built the URL from the site-wide template (correctly applying Case B fallback), provided capture instructions, and logged both the curated-link fetch and the generated search. No required elements were omitted.\n\nJunior: (Pass -  All required elements — place resolution, curated link check, fallback, URL generation, capture instructions, and logging — were completed. )"
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_002`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching the fixture's expected_args semantically. place_search received 'Schuylkill County' (matches ~Schuylkill), external_links_search received the standardPlace returned by place_search with correct year window (1860–1860) and host (myheritage.com), collections_search received the same standardPlace with matching year range, and research_log_append persisted both log entries with valid schema. No fixture_not_found errors occurred.\n\nJunior: (Pass - The tool arguments were precise, semantically correct, and aligned with the fixture’s expected values.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_search_external_sites_002`** — `rubric` / `URL generation`\nLLM: 1 → Junior: 1\n\n> The URL encodes birth_place=Pennsylvania, but research.json contains a resolved conflict (c_001, status: 'resolved', preferred_assertion_id: a_002) where Ireland is the correct birthplace and Pennsylvania was rejected. Per the rubric's conflicts[] rule, encoding a value that resolution rejected is a fail. The skill should have either omitted the field (correct when contested) or encoded Ireland (correct when resolved to that value).\n\nJunior: ( URL Generation Rating: FAIL\nJustification: The MyHeritage search URL was generated with birth_place=Pennsylvania, but this contradicts the resolved conflict state in research.json:\n•\tConflict resolution: Conflict c_001 was marked resolved with preferred_assertion_id a_002, which specifies Ireland as Patrick Flynn’s birthplace. The competing Pennsylvania value was explicitly rejected.\n•\tRubric requirement: Per the rubric’s conflicts[] rule, encoding a rejected value is a failure. The skill should have either:\no\tEncoded Ireland (the resolved value), or\no\tOmitted the birthplace field entirely if contested.\n•\tTemplate compliance: While the URL correctly used MyHeritage’s parameter conventions (first, last, birth_year, birth_place) and avoided unsupported county/jurisdiction fields, the birthplace parameter was factually incorrect.\n•\tLogging: The research log also recorded birth_place=Pennsylvania, compounding the error by persisting a rejected value.\nBecause the birthplace was encoded with a rejected conflict value, the URL fails the rubric’s correctness requirement. FAIL for URL generation.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_002`** — `rubric` / `Capture guidance`\nLLM: 3 → Junior: 3\n\n> The skill provided clear, step-by-step capture instructions: (1) apply the '1860 United States Federal Census' filter on the results page, (2) scroll to load lazy-loaded results, (3) press Ctrl+P/Cmd+P to open print dialog, (4) select 'Save as PDF', (5) save and upload. It also named what to look for (1860 census records for Patrick Flynn) and included a note about logging in if prompted. Instructions are specific and actionable.\n\nJunior: ( Pass - The capture guidance is specific, actionable, and tailored to the MyHeritage workflow.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_002`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> No capture was provided in this turn — the skill correctly deferred triage. It stated 'Once you upload the PDF, I'll triage the results — rating each hit as Strong, Possible, or No match — and walk you through selecting a record to examine fully.' This is a clean deferral without fabricating matches, naming the criteria it will apply. Deferral on a no-capture turn is a pass.\n\nJunior: (Pass - The triage response was cautious, transparent, and correctly deferred in the absence of a capture.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_002`** — `rubric` / `Tool selection`\nLLM: 3 → Junior: 3\n\n> The skill correctly used the documented flow: place_search resolved 'Schuylkill County' to standardPlace, external_links_search consumed that standardPlace with the year window (1860–1860) and host (myheritage.com), collections_search checked FamilySearch holdings, and research_log_append persisted both the curated-link fetch and the generated search. When no MyHeritage-curated link matched, the skill correctly fell back to the site-wide template (Case B). All tool responses were consumed per the rules.\n\nJunior: (Pass - All tool responses were consumed per the rules, the fallback was correctly applied, and the logging was complete.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_002`** — `rubric` / `Log entry`\nLLM: 3 → Junior: 3\n\n> The skill wrote two log entries: log_006 (curated-link fetch, outcome: 'positive', notes coverage and fallback rationale) and log_007 (generated search, outcome: 'partial', capture_received: false, notes parameters and rationale). Both entries name the site (MyHeritage), person (Patrick Flynn), place (Schuylkill County), and year (1860). Status 'partial' is correct for a URL handed over with no capture back. No plan_item_id was written (correctly null, as the search matches no specific plan item).\n\nJunior: ( The log entries were properly structured, complete, and persisted in the same turn as URL generation.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_003`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> This is a negative test. The skill correctly declined to perform its own task (search-external-sites) and routed the user to search-records instead. The routing decision is accurate and appropriate: the user asked to search FamilySearch for Patrick Flynn in the 1850 census, which is a record search task that search-records handles, not a task for search-external-sites (which generates manual FamilySearch URLs). The skill made the correct determination.\n\nJunior: (Pass - The routing was accurate, the refusal to perform its own task was correct, and the redirection to the proper skill was appropriate.)"
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_external_sites_003`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> This is a negative test. Completeness is graded on the quality of the decline/routing decision, not on whether the skill performed its own task. The skill correctly identified that the request should be routed to search-records and did so. No substantive output was produced by search-external-sites, which is the correct outcome. The routing was complete and appropriate.\n\nJunior: (Pass - The completeness of the decline/routing decision was accurate and sufficient.) "
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_search_external_sites_003`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the skill under test (search-external-sites). The skill correctly declined and routed rather than invoking tools. Tool Arguments is N/A when zero MCP tool calls occur.\n\nJunior: (N/A - Tool arguments are not applicable in this case, and the skill’s handling was correct.)"
+    }
+  ]
+}

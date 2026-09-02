@@ -620,12 +620,127 @@ def _person_id_from_pe_op(op: dict[str, Any]) -> str | None:
     return op.get("person_id") if isinstance(op.get("person_id"), str) else None
 
 
+def _assertion_id_from_pe_op(op: dict[str, Any]) -> str | None:
+    """The `assertion_id` a `person_evidence` append op cites, mirroring
+    `_person_id_from_pe_op`'s container walk.
+
+    Reads ONLY the singular key. 103 committed ops carry a plural
+    `assertion_ids` array, which is not a schema field (`person_evidence_entry`
+    is `additionalProperties: false` with `assertion_id` required), so those
+    ops are rejected writes; treating one as resolvable would exempt a link
+    that never landed."""
+    for container in ("entry", "fields"):
+        c = op.get(container)
+        if isinstance(c, dict) and isinstance(c.get("assertion_id"), str):
+            return c["assertion_id"]
+    return op.get("assertion_id") if isinstance(op.get("assertion_id"), str) else None
+
+
+def _provenance_index(
+    research: dict[str, Any] | None,
+) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+    """`(assertions_by_id, log_entries_by_id)` for the persona-reachability
+    join. Tolerates a missing or non-list section, like every other reader
+    here."""
+    research = research or {}
+    assertions = research.get("assertions")
+    log = research.get("log")
+    by_assertion = {
+        a["id"]: a
+        for a in (assertions if isinstance(assertions, list) else [])
+        if isinstance(a, dict) and isinstance(a.get("id"), str)
+    }
+    by_log = {
+        entry["id"]: entry
+        for entry in (log if isinstance(log, list) else [])
+        if isinstance(entry, dict) and isinstance(entry.get("id"), str)
+    }
+    return by_assertion, by_log
+
+
+def _lookup_assertion(
+    assertions_by_id: dict[str, dict[str, Any]], assertion_id: Any
+) -> dict[str, Any] | None:
+    """The assertion an id names, or None when the id is absent or not a string.
+
+    A `person_evidence` entry's `assertion_id` is unvalidated here, and a
+    non-string value (a list, say) raises `TypeError: unhashable type` from a
+    bare `.get()`. This module never raises."""
+    return assertions_by_id.get(assertion_id) if isinstance(assertion_id, str) else None
+
+
+def _persona_reachable(
+    assertion: dict[str, Any] | None, log_entries_by_id: dict[str, dict[str, Any]]
+) -> bool:
+    """Whether a record persona `same_person` could score against is reachable
+    for this assertion — the discriminator the §8 provenance checks narrow on.
+
+    `same_person` takes two GedcomX documents plus a focus id inside each. It
+    never reads `record_persona_id`; that field is a pointer into a retained
+    search sidecar, so a null value proves only that no sidecar was kept. What
+    decides reachability is the tool that produced the assertion:
+
+    - a non-null `record_persona_id` — `research_append` verified it against
+      the record's `gedcomx.persons[]` on write, so the persona exists;
+    - `record_read` — it returns a `SimplifiedGedcomX` with a persons array,
+      so a persona was in hand when the assertion was extracted;
+    - `record_search` with a retained `results_ref` — the sidecar result
+      carries the record's `gedcomx`.
+
+    Everything else is unreachable: image-, external-site- and PDF-sourced
+    assertions, a search whose sidecar was not retained, and **every**
+    `fulltext_search` hit — an FTS result carries transcript text, names and
+    places but no GedcomX, and its ARK is a `3:1:`/`3:2:` image entry that
+    `record_read` (which takes a `1:1:` record-persona ARK) cannot open.
+
+    UNKNOWN provenance counts as reachable, i.e. keeps flagging. Exempting on
+    an absent field is the shape this narrowing exists to reject: it would let
+    an assertion written with no `log_entry_id` shed the scoring requirement
+    entirely. Flagging there is also never worse than the un-narrowed check.
+
+    **What this deliberately does NOT decide: whether a fresh fetch would
+    work.** The question asked is "could a persona be got out of what the run
+    RETAINED" — the sidecar on disk, or the document `record_read` already
+    returned. It is not "is there any call that might produce one". 48 of the
+    306 links it exempts on today's corpus carry a `record_id` that is a `1:1:`
+    FamilySearch record ARK (29 sidecar-less `record_search`, 19
+    `image_transcribe`), so `record_read` might reach a persona for them. That
+    is left exempt on purpose: the detector cannot verify offline that such a
+    fetch resolves, and flagging on an unproven capability is the error this
+    change corrected in the `fulltext_search` lane. Tightening it is a real
+    option, not an oversight — it would also require `person-evidence` to reach
+    for `record_read` on a sidecar-less search, which needs new fixtures on
+    roughly eleven unit tests that stock none today. See
+    `docs/specs/guardrail-enforcement-spec.md` §4 for the revisit trigger.
+    """
+    if not isinstance(assertion, dict):
+        return True  # unresolvable assertion — provenance unknown, not proven unscoreable
+    if assertion.get("record_persona_id"):
+        return True
+    # `isinstance(..., str)` before the lookup, not decoration: a malformed
+    # `log_entry_id` holding a list or dict raises `TypeError: unhashable type`
+    # inside `.get()`, and this module never raises — a raise here would kill
+    # the whole run's post-run result computation. 103 committed ops already
+    # carry a plural `assertion_ids` array, so malformed id fields are real.
+    log_entry_id = assertion.get("log_entry_id")
+    entry = log_entries_by_id.get(log_entry_id) if isinstance(log_entry_id, str) else None
+    if not isinstance(entry, dict):
+        return True  # no log entry — provenance unknown
+    tool = entry.get("tool")
+    if tool == "record_read":
+        return True
+    if tool == "record_search" and entry.get("results_ref"):
+        return True
+    return False
+
+
 def unguarded_new_person_evidence_links(
     tool: str,
     args: dict[str, Any] | None,
     *,
     scored_ids: set[str],
     starting_ids: set[str],
+    research: dict[str, Any] | None = None,
 ) -> list[str]:
     """Pre-write check (issue #963, spec §8): the NEW tree person id(s) this
     pending `research_append` would link via `person_evidence` that have NOT
@@ -635,7 +750,18 @@ def unguarded_new_person_evidence_links(
     count:
     - a person id already in the starting (seed) tree is never flagged
       (linking an assertion to a pre-existing person isn't a new identity);
-    - a person id already scored by a prior successful `same_person` passes.
+    - a person id already scored by a prior successful `same_person` passes;
+    - a link whose provenance lane cannot yield a record persona is skipped
+      (`_persona_reachable`), so a person all of whose pending links are
+      unscoreable drops out. That needs the project document to join through,
+      which is what `research` supplies.
+
+    `research=None` means "no provenance available, narrow nothing" — today's
+    un-narrowed behaviour, NOT "exempt everything". A guardrail that silently
+    disables itself on an unreadable file is the worse failure, and
+    `guardrail_shadow_report._links_any_person_evidence` relies on this
+    parameter defaulting to "no narrowing" to keep meaning "does this call link
+    anyone at all".
 
     But it asks a STRICTER question than that post-run detector, and the two
     are not equivalent. The post-run form is whole-run: a `same_person`
@@ -663,6 +789,7 @@ def unguarded_new_person_evidence_links(
     args = args or {}
     if bare_tool_name(tool) != "research_append":
         return []
+    assertions_by_id, log_entries_by_id = _provenance_index(research)
     out: list[str] = []
     seen: set[str] = set()
     for op in _iter_ops(args):
@@ -670,6 +797,10 @@ def unguarded_new_person_evidence_links(
             continue
         pid = _person_id_from_pe_op(op)
         if not pid or pid in starting_ids or pid in scored_ids or pid in seen:
+            continue
+        if research is not None and not _persona_reachable(
+            assertions_by_id.get(_assertion_id_from_pe_op(op)), log_entries_by_id
+        ):
             continue
         seen.add(pid)
         out.append(pid)
@@ -684,10 +815,24 @@ def find_person_evidence_missing_same_person(
     starting_tree: dict[str, Any] | None = None,
 ) -> list[str]:
     """Every BRAND-NEW tree person (not present in `starting_tree`) that
-    receives a `person_evidence` link must have been the subject of at least
-    one `same_person` call somewhere in the run — research/SKILL.md's own
-    doctrine ("scores every cross-record link with `same_person` before it
-    links").
+    receives a **scoreable** `person_evidence` link must have been the subject
+    of at least one `same_person` call somewhere in the run.
+
+    The authority is `person-evidence/SKILL.md`, the skill that owns the
+    identity decision — not `research/SKILL.md`'s one-line orchestrator
+    paraphrase ("scores every cross-record link with `same_person` before it
+    links"), which this docstring used to cite. The narrower owning contract
+    wins on conflict, and citing the paraphrase is how the broad rule kept
+    being re-derived.
+
+    "Scoreable" is `_persona_reachable`: a link is skipped only when its
+    assertion's own provenance lane cannot yield a record persona —
+    image-, external-site- and PDF-sourced assertions, every `fulltext_search`
+    hit, and searches whose sidecar was not retained. A `record_read`-sourced
+    link and a sidecar-backed search link both stay flagged; so does unknown
+    provenance, since exempting on an absent field would be a bypass. A person
+    drops out only when EVERY link to them is unscoreable;
+    `unscoreable_person_evidence_links` counts what that skips.
 
     This is a deliberately different, narrower question than
     `find_effects_without_invocation`'s "was `person-evidence` invoked
@@ -727,10 +872,15 @@ def find_person_evidence_missing_same_person(
     new_person_ids = {p.get("id") for p in persons if isinstance(p, dict) and p.get("id") not in starting_ids}
 
     person_evidence = research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
+    assertions_by_id, log_entries_by_id = _provenance_index(research)
     linked_new_person_ids = {
         pe.get("person_id")
         for pe in person_evidence
-        if isinstance(pe, dict) and pe.get("person_id") in new_person_ids
+        if isinstance(pe, dict)
+        and pe.get("person_id") in new_person_ids
+        and _persona_reachable(
+            _lookup_assertion(assertions_by_id, pe.get("assertion_id")), log_entries_by_id
+        )
     }
     if not linked_new_person_ids:
         return []
@@ -742,6 +892,56 @@ def find_person_evidence_missing_same_person(
         f"tree person '{pid}' is new this run and has a person_evidence link, but 'same_person' "
         "was never called for it anywhere in the run — the identity was asserted, never scored"
         for pid in missing
+    ]
+
+
+def unscoreable_person_evidence_links(
+    research: dict[str, Any] | None,
+    tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[str]:
+    """The `person_evidence` ids on brand-new tree persons whose assertion
+    lane cannot yield a record persona — the *unscoreable by design*
+    population `find_person_evidence_missing_same_person` deliberately does not
+    flag.
+
+    A COUNT, never a violation. The lead asked (2026-08-09) for the exemption
+    to be visible rather than silent: a population that is dropped without a
+    number attached cannot be watched if it grows, and gives a revisit trigger
+    nothing to fire on. It deliberately gets no `VIOLATION_ARMS` entry in
+    `e2e.corpus_report` — that map is checked for set equality against the
+    messages the detectors actually emit, so an arm nothing emits fails the
+    test.
+
+    Scoped exactly like the detector on WHICH PERSONS count — brand-new persons
+    only, and with no `starting_tree` every current person reads as new (the
+    same best-effort convention `find_effects_without_invocation` documents).
+
+    But the two numbers are **not** complements and must not be subtracted from
+    one another: this counts exempted LINKS, while the detector emits one
+    violation per flagged PERSON. Same population of persons, different unit.
+    """
+    research = research or {}
+    tree = tree or {}
+    persons = tree.get("persons") if isinstance(tree.get("persons"), list) else []
+    starting_persons = (
+        (starting_tree or {}).get("persons") if isinstance((starting_tree or {}).get("persons"), list) else []
+    )
+    starting_ids = {p.get("id") for p in starting_persons if isinstance(p, dict)}
+    new_person_ids = {p.get("id") for p in persons if isinstance(p, dict) and p.get("id") not in starting_ids}
+
+    person_evidence = research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
+    assertions_by_id, log_entries_by_id = _provenance_index(research)
+    return [
+        pe["id"]
+        for pe in person_evidence
+        if isinstance(pe, dict)
+        and isinstance(pe.get("id"), str)
+        and pe.get("person_id") in new_person_ids
+        and not _persona_reachable(
+            _lookup_assertion(assertions_by_id, pe.get("assertion_id")), log_entries_by_id
+        )
     ]
 
 
@@ -815,7 +1015,6 @@ DEDICATED_AGENT_NAMES = frozenset(
     {
         "record-extractor",
         "image-reader",
-        "image-reader-opus",
         "gps-mentor",
         # Added when proof_summaries moved behind the hook's caller check: the
         # owning skill now delegates the write, so EVERY legitimate proof
@@ -1608,3 +1807,179 @@ def find_relationship_writes_without_warnings_check(
             ),
         }
     ]
+
+
+# ─── §11.5 tree-encoding shadow measurement (issue #1490) ────────────────────
+
+# Shares the guardrail_shadow_violations bucket, keyed on this kind.
+TREE_ENCODING_KIND = "tree_encoding_missing"
+
+# Tiers a conclusion is expected to encode into the tree. possible / not_proved /
+# disproved warrant no tree write, so they are never flagged.
+_ENCODABLE_TIERS = ("proved", "probable")
+
+# Question-type classifier. Deliberately INCLUDES PLURALS and baptism/christening:
+# a first pass used `\b(parent|father|...)\b`, which does not match "parents"
+# (there is no word boundary between `t` and `s`), so a parentage question reading
+# "the parents of X, born <date>" fell through to the birth branch and was graded
+# against a seeded Birth fact — the exact miscount that produced a bogus "70% pass"
+# (issue #1490). Order matters: parentage/marriage/death are tested BEFORE birth,
+# because a parentage question routinely names a birth date to identify its subject
+# and must not be read as a birth question.
+_QUESTION_TYPE_PATTERNS: list[tuple[str, "re.Pattern[str]"]] = [
+    ("parentage", re.compile(r"\b(parents?|father|fathers|mother|mothers|parentage)\b", re.IGNORECASE)),
+    ("marriage", re.compile(r"\b(marriages?|married|marry|spouses?|wife|wives|husbands?|wedding)\b", re.IGNORECASE)),
+    ("death", re.compile(r"\b(deaths?|died|die|burials?|buried|obituar)\b", re.IGNORECASE)),
+    ("birth", re.compile(r"\b(births?|born|baptism|baptis(?:ed|m|ms)|christen(?:ed|ing|ings)?)\b", re.IGNORECASE)),
+]
+
+
+def classify_question_type(text: str | None) -> str | None:
+    """Coarse type for a research question, from its prose. Returns
+    parentage / marriage / death / birth, or None when nothing matches.
+
+    See `_QUESTION_TYPE_PATTERNS` for the plural inclusion and the ordering — both
+    are the corrections the lead flagged (issue #1490)."""
+    if not isinstance(text, str):
+        return None
+    for label, pattern in _QUESTION_TYPE_PATTERNS:
+        if pattern.search(text):
+            return label
+    return None
+
+
+def _person_ids_for_conclusion(
+    proof_summary: dict[str, Any],
+    person_evidence: list[dict[str, Any]],
+) -> set[str]:
+    """The tree persons a conclusion's evidence touches, joined through the only
+    path that exists: a proof_summary carries no tree foreign key, so go
+    `supporting_assertion_ids` → `person_evidence[].assertion_id` →
+    `person_evidence[].person_id`. person_evidence is the link table."""
+    supporting = set(proof_summary.get("supporting_assertion_ids") or [])
+    return {
+        e.get("person_id")
+        for e in person_evidence
+        if isinstance(e, dict)
+        and e.get("assertion_id") in supporting
+        and isinstance(e.get("person_id"), str)
+    }
+
+
+def _person_gained_structure(
+    person_id: str,
+    final_tree: dict[str, Any],
+    starting_tree: dict[str, Any] | None,
+) -> bool:
+    """Whether `person_id` gained any new fact or relationship structure between
+    the starting tree and the final tree. Person facts diff on their normalized
+    signature (`_fact_signatures`); relationships on the endpoint tuple
+    (`_relationship_key`), never on `id`, so a re-pointed PID-TODO placeholder
+    counts as new. A relationship present in BOTH trees still counts if it gained
+    a fact — a Marriage dated onto an already-seeded Couple is new structure for
+    both spouses, and reading only added/removed edges would miss it and warn on
+    correct work. When no starting tree is given, treats everything as new
+    (best-effort), matching the other post-hoc detectors."""
+    final_persons = {
+        p.get("id"): p for p in (final_tree.get("persons") or []) if isinstance(p, dict)
+    }
+    start_persons = {
+        p.get("id"): p
+        for p in ((starting_tree or {}).get("persons") or [])
+        if isinstance(p, dict)
+    }
+    fp = final_persons.get(person_id)
+    if fp is None:
+        return False
+    new_facts = _fact_signatures(fp) - _fact_signatures(start_persons.get(person_id) or {})
+    if new_facts:
+        return True
+
+    start_rels_by_key = {
+        _relationship_key(r): r
+        for r in ((starting_tree or {}).get("relationships") or [])
+        if isinstance(r, dict)
+    }
+    for r in final_tree.get("relationships") or []:
+        if not isinstance(r, dict):
+            continue
+        if person_id not in (r.get("parent"), r.get("child"), r.get("person1"), r.get("person2")):
+            continue
+        if starting_tree is None:
+            return True
+        start_rel = start_rels_by_key.get(_relationship_key(r))
+        if start_rel is None:
+            return True  # a new relationship edge touching this person
+        # Present in both — a fact gained on it (e.g. a Marriage date) is new
+        # structure. _fact_signatures reads `.facts`, so it works on a relationship.
+        if _fact_signatures(r) - _fact_signatures(start_rel):
+            return True
+    return False
+
+
+def find_conclusions_without_tree_encoding(
+    final_research: dict[str, Any] | None,
+    final_tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Shadow-mode post-hoc detector (issue #1490): a completed project holds a
+    tier->=-probable conclusion, but none of the tree persons its evidence touches
+    gained any new fact or relationship this run — the conclusion was reached and
+    left un-encoded in the tree.
+
+    A SHAPE match, not a foreign key. A proof_summary carries no tree reference, so
+    "the conclusion's person" is approximated by the union of persons its supporting
+    assertions have evidence for (`_person_ids_for_conclusion`). This is deliberately
+    broad — it flags only when NONE of those persons gained ANY structure — because a
+    wrong flag on a shipped gate hard-blocks correct work with no override (the 2026
+    ruling): prefer a false allow over a false deny.
+
+    Fires only on `project.status == "completed"`; an in-progress project has not
+    reached the completion gate this measures. Returns violation records shaped like
+    the other shadow sources (int `index`, string `tool`, `kind == TREE_ENCODING_KIND`),
+    carrying the classified `question_type` for the per-type breakdown. Never fails a
+    run."""
+    research = final_research or {}
+    project = research.get("project")
+    status = project.get("status") if isinstance(project, dict) else None
+    if status != "completed":
+        return []
+
+    tree = final_tree or {}
+    person_evidence = [e for e in (research.get("person_evidence") or []) if isinstance(e, dict)]
+    questions_by_id = {
+        q.get("id"): q for q in (research.get("questions") or []) if isinstance(q, dict)
+    }
+
+    out: list[dict[str, Any]] = []
+    for ps in research.get("proof_summaries") or []:
+        if not isinstance(ps, dict) or ps.get("tier") not in _ENCODABLE_TIERS:
+            continue
+        person_ids = _person_ids_for_conclusion(ps, person_evidence)
+        if not person_ids:
+            # No evidence-linked person to check against — unclassifiable, not a
+            # violation. Counted in the denominator by the scan, never flagged.
+            continue
+        if any(_person_gained_structure(pid, tree, starting_tree) for pid in person_ids):
+            continue
+        q = questions_by_id.get(ps.get("question_id")) or {}
+        question_type = classify_question_type(q.get("question"))
+        out.append(
+            {
+                "index": -1,
+                "tool": "tree.gedcomx.json",
+                "required_skill": "proof-conclusion",
+                "question_id": ps.get("question_id"),
+                "kind": TREE_ENCODING_KIND,
+                "question_type": question_type,
+                "proof_summary_id": ps.get("id"),
+                "tier": ps.get("tier"),
+                "detail": (
+                    f"proof summary {ps.get('id')} (tier {ps.get('tier')}, "
+                    f"{question_type or 'unclassified'}) added no new tree structure "
+                    f"for any of its evidence persons"
+                ),
+            }
+        )
+    return out

@@ -139,7 +139,7 @@ def test_xfail_with_reason_loads():
 
 
 def test_runs_per_test_one_is_accepted():
-    # Policy (current stage): runs_per_test is pinned to 1. An explicit 1 is
+    # Standing policy: runs_per_test is pinned to 1. An explicit 1 is
     # valid; omitting the field defaults to 1 (covered elsewhere).
     data = _minimal_positive()
     data["runs_per_test"] = 1
@@ -148,9 +148,10 @@ def test_runs_per_test_one_is_accepted():
 
 
 def test_runs_per_test_above_one_is_rejected():
-    # The schema pins maximum: 1 to enforce the "always run a test once at
-    # this stage" policy — multi-run tests make the suite painfully slow for
-    # no benefit until the description-optimizer / golden-set phase.
+    # The schema pins maximum: 1 to enforce the standing "always run a test
+    # once" policy — multi-run tests make the suite painfully slow. The pin
+    # means variance is not DETECTED, never that a flapping test is
+    # tolerated: see unit-test-spec.md, "Variance: runs per test".
     data = _minimal_positive()
     data["runs_per_test"] = 3
     with pytest.raises(InvalidTestError, match="maximum of 1"):

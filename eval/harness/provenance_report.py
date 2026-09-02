@@ -18,11 +18,15 @@ Two findings from measuring it against the committed corpus first — the repo's
 rule is that a check has to be proven to fail before it is trusted, and this one
 had to be proven not to fire on everything:
 
-1. **A validator cannot see tool responses.** `tool_calls` records `{tool, args}`
-   only (`skill_runner.py`), so "did this id come back from a call?" is not
-   answerable at validator time. The mocked responses *are* on disk, so this
-   reads the test's declared `mcp_fixtures[]` instead — which is sound for the
-   unit harness and would not be for a live run.
+1. **This report reads fixtures because it scans run logs at rest.** A live
+   validator *can* see tool responses: the runner passes the served body
+   through as `tool_calls[].response` (`mock_mcp.py`, contract in
+   `validators/test_universal.py`), which is how issue #1866's V1 answers "did
+   this id come back from a call?" at validator time. This offline report has
+   no such run in hand — the persisted run log keeps only `response_fixture`,
+   the fixture stem, not the body — so it reads the test's declared
+   `mcp_fixtures[]` instead. That is a property of scanning committed logs, not
+   a limit on validators; do not build a fixture-file loader into a validator.
 2. **Years swamp a naive check.** Requiring every 4+ digit number to trace gave
    442 hits across 89 test-pairs, almost all of them genealogical years the skill
    legitimately derived (1844, 1865, 1868…). Restricting to ARKs and 5+ digit

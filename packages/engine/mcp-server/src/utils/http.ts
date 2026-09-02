@@ -30,6 +30,30 @@ function isTimeout(err: unknown): boolean {
   return err instanceof Error && err.name === "TimeoutError";
 }
 
+// Both throw sites below replace the underlying `TimeoutError` with a readable
+// message, which drops the `name` a caller could have discriminated on. This
+// marker puts that back, because the difference decides whether retrying is
+// cheap: a transport failure never reached the upstream and costs nothing to
+// re-attempt, while a timeout has already spent the entire budget and a second
+// attempt doubles the worst case. `Symbol.for` so the check still holds if two
+// copies of this module are ever loaded.
+const TIMED_OUT = Symbol.for("cowork-genealogy.fetchWithTimeout.timedOut");
+
+/** True for the timeout errors this module throws — not for transport failures. */
+export function isFetchTimeout(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    (err as Record<symbol, unknown>)[TIMED_OUT] === true
+  );
+}
+
+function timeoutError(message: string): Error {
+  const err = new Error(message);
+  (err as unknown as Record<symbol, unknown>)[TIMED_OUT] = true;
+  return err;
+}
+
 /**
  * Shadow the response's body-reading methods with versions that translate the
  * abort into the same readable message the fetch itself produces. Mutates the
@@ -56,7 +80,7 @@ function guardBodyReads(
           );
         } catch (err) {
           if (isTimeout(err)) {
-            throw new Error(
+            throw timeoutError(
               `Request to ${url} timed out after ${timeoutMs}ms while reading the response body.`
             );
           }
@@ -84,7 +108,7 @@ export async function fetchWithTimeout(
     });
   } catch (err) {
     if (isTimeout(err)) {
-      throw new Error(`Request to ${url} timed out after ${timeoutMs}ms.`);
+      throw timeoutError(`Request to ${url} timed out after ${timeoutMs}ms.`);
     }
     throw err;
   }

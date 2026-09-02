@@ -9,8 +9,10 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09
-- **Last updated:** 2026-08-09 (promoted from `docs/agentic-system-critique.md`
-  §9, which was retired; constraint 6 added)
+- **Last updated:** 2026-08-30 (the compliance-rate row's anachronism clause
+  withdrawn; constraint 6's fire-rate figure annotated with the deny-mode run
+  that met it. Previously 2026-08-09, promoted from
+  `docs/agentic-system-critique.md` §9, which was retired; constraint 6 added)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -60,7 +62,7 @@ failure rather than into a vacuum.
 | "The single largest unanchored rule we own" | Unmeasured. `docs/plan/research-performance-2026-07-27.md` scopes its audit to `search-records` and says the per-skill audit "should not be assumed" |
 | "35 successful `Edit` calls to research.json" | **33** (12 / 13 / 8). The extra two were `settings.json` writes, **both denied** |
 | The POSIX-only path split is why those writes landed | All three runs made **zero MCP calls** (#941). The agent had no writer tool. The guard was a no-op *and* irrelevant to the outcome |
-| The 8/25 compliance rate stated as settled fact | #1006 and its siblings are open defects in the instrument; 16 of the 25 violations come from the arm #1006 says cannot be separated from its own introduction date |
+| The 8/25 compliance rate stated as settled fact | Every measurement here is computed over the eval corpus and the detectors are uncalibrated, so the rate answers no production question — `docs/architecture.md`'s "What nothing checks" now says outright not to quote a violation rate or graduate a gate on one. **Half of the original refutation is withdrawn, 2026-08-30:** it also argued that 16 of the 25 violations came from an arm that "cannot be separated from its own introduction date." Issue #1006 closed COMPLETED on 2026-08-17 settling the opposite — a doctrine gap, not an anachronistic check — so those 16 are real violations. The claim stays refuted on the calibration argument alone |
 | 26 skill `model:` pins are an eval/production fidelity gap | All 26 pin `claude-sonnet-4-6`, which **is** `DEFAULT_MODEL`; only the unit harness reads them. They are dead lines, not a gap. Delete them |
 | `gps-mentor 1` listed among skill invocations without qualification | It ran **25× as an Agent** in the same window, including in every failing run. The mentor gate is not being skipped |
 | "Adds no cost" framing for a new routing tool | A tool call is a turn, and turns are the cost |
@@ -72,7 +74,7 @@ failure rather than into a vacuum.
 | `research_query` "**silently** truncates" | The response has carried `truncated` + a pre-cap `count` since the tool shipped on 2026-07-26 (`packages/engine/mcp-server/src/tools/research-query.ts`), five days before rev. 2. The defect is missing pagination and an ignored flag, not silence |
 | "A suite built today would **deny** the router `research_append`" | Backwards: `compute_allowed_tools` (`eval/harness/harness/allowed_tools.py`) unions `@plugin:gps-mentor`'s `tools:` into the router's allowlist, so a suite would *grant* it — and nothing denies the router using it inline. The real gap is held-only-for-the-subagent tools; #1012 is the inverse — a `Skill()` callee runs toolless |
 | The ferber agent escalated permissions and "**only then**" wrote raw | The first raw `Edit` (idx 33) precedes every denied settings attempt (idx 46, 102); 9 of 13 writes precede the last one. Escalation was interleaved with the writes, not a prelude — a tidier story than the log supports, the same failure mode this ledger exists to catch |
-| "46 MCP tools" / "all 26 skills with suites" | 47 (`allToolSchemas`, unchanged since 2026-07-26) and 25 (27 skills − `research` − `forget-and-rederive`) |
+| "46 MCP tools" / "all 26 skills with suites" | 48 (`allToolSchemas`) and 25 (27 skills − `research` − `forget-and-rederive`) |
 | "a tool call is a turn," stated as law | The cited plan's own data: ~2.1 calls/turn, with parallel calls amortizing. Direction right, arithmetic wrong |
 | The unconditional `same_person` gate (P0) and the 16-violation arm read as pure doctrine gap | The owning skill's contract exempts FTS-/image-/PDF-sourced links (`packages/engine/plugin/skills/person-evidence/SKILL.md`, its `match_score` typing) and the no-candidate stub path; the detector enforces the router's broader paraphrase. Conditions added in rev. 3's P0; the canonical-doctrine decision moved into the calibration exit |
 
@@ -136,8 +138,21 @@ a graduation, must satisfy all six:
    ones, while `same_person` scores `primaryId1`/`primaryId2` *inside the
    caller's own gedcomx documents*, so the one satisfying shape is to pass the
    tree side as `gedcomx2` with `primaryId2: "I1"` — **which agents produced in 3
-   of 103 corpus runs.** A deny shipped on the fire rate alone would therefore
-   have rejected essentially every run that links a new person, at $7–25 a run.
+   of 103 corpus runs.** A deny shipped on the fire rate alone, with the reason
+   text as it stood, would therefore have rejected essentially every run that
+   links a new person, at $7–25 a run.
+
+   **Do not read that number as "a deny cannot ship" — it has since been tried
+   and the agent recovered inside the run (2026-08-30).** With the reason
+   rewritten to name the satisfying shape, `hannah-earnest-children`'s
+   2026-08-23 run at `PERSON_EVIDENCE_GUARD=deny` took **two** denials (both
+   `valve_released: false`, so the gate genuinely blocked them) and then issued
+   **eight `same_person` calls, six of them in the satisfying
+   `primaryId2: "I<n>"` shape**. The run did fail, on unrelated
+   `proof-conclusion` and `conflict-resolution` bypasses — not on a wedge, and
+   not on the loop valve. One run is not a graduation case, but it is a direct
+   observation of the mechanism this constraint predicted: the fire rate priced
+   an agent that had not been told the shape, and teaching it is the lever.
 
    **What makes this a constraint and not just a bug:** the gate is *achievable*
    — a live probe scored a minted, ARK-less tree person at 0.9999484 against a

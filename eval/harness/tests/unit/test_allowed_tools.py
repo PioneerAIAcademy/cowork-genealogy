@@ -135,25 +135,28 @@ def test_referenced_but_missing_agent_is_ignored(tmp_path):
     assert not any(t == "mcp__genealogy__ghost" for t in tools)
 
 
-# --- image-reader-opus: the union must actually pick up the real files -----
+# --- image_read is no longer unioned into any skill ------------------------
 #
-# The image-reader-opus design's first draft put the
-# discoverability pointer in agents/image-reader.md (an agent body), which
-# compute_allowed_tools never scans — only a SKILL.md is scanned for
-# @plugin:<name> references. That placement bug would have made
-# image-reader-opus's image_read grant unreachable in the unit harness while
-# looking correct on a read-through. These tests exercise the union against
-# the real repo files rather than trusting the placement was right.
+# `image-reader-opus` was the only holder of `image_read`, and it was retired
+# with the switch to Gemini (issue #2013): the escalation it existed to serve
+# was unreachable in practice, and the new default reads hard hands well enough
+# that there is nothing to escalate to. These assert the grant is GONE, so a
+# re-added `@plugin:` pointer to an image_read holder fails here rather than
+# silently restoring a 700 KB-capped path.
 
 
-def test_record_extraction_unions_image_reader_opus_image_read():
+def test_record_extraction_does_not_union_image_read():
     tools = compute_allowed_tools("record-extraction", PLUGIN_SKILLS)
-    assert "mcp__genealogy__image_read" in tools
+    # Non-vacuity: the union must have actually run and picked up the surviving
+    # reader, or `not in` below would pass on an empty set.
+    assert "mcp__genealogy__image_transcribe" in tools
+    assert "mcp__genealogy__image_read" not in tools
 
 
-def test_search_images_unions_image_reader_opus_image_read():
+def test_search_images_does_not_union_image_read():
     tools = compute_allowed_tools("search-images", PLUGIN_SKILLS)
-    assert "mcp__genealogy__image_read" in tools
+    assert "mcp__genealogy__image_transcribe" in tools
+    assert "mcp__genealogy__image_read" not in tools
 
 
 # --- Sub-skill union (issue #1012) -----------------------------------------

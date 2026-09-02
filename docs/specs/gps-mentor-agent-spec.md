@@ -189,13 +189,15 @@ phrase, not a new sentence.
 Every MCP tool **must** appear under **all three** server spellings. Bare names
 leave the subagent toolless in the unit-harness SDK path, but a single
 qualified name is equally wrong: `mcp__genealogy__*` resolves under
-`.mcp.json`, both harnesses, and hosted web; Cowork in the **cloud** reaches the
-host-installed `.mcpb` through a remote-device bridge as
-`mcp__remote-devices__Genealogy_Research__*`; Cowork **on the user's own
-computer** reaches it directly as `mcp__Genealogy_Research__*`. Entries are
-matched exactly with no fallback, and an agent whose entries all miss is refused a
-spawn outright — which is what happened to `record-extractor` in on-computer mode
-before the third spelling was added. Unrecognized entries are ignored so long as one
+`.mcp.json`, both harnesses, and hosted web; Cowork reaches the host-installed
+`.mcpb` either through a remote-device bridge as
+`mcp__remote-devices__Genealogy_Research__*` or under the bare `display_name` as
+`mcp__Genealogy_Research__*` — and the spelling a Cowork session exposes has been
+observed to move (bare live in #1341 on 2026-08-04/05, absent in the 2026-08-15
+censuses; see ADR-0004). Entries are matched exactly with no fallback, and an
+agent whose entries all miss is refused a spawn outright — which is what happened
+to `record-extractor` when its entries missed the live spelling, before
+the third spelling was added. Unrecognized entries are ignored so long as one
 resolves, so
 listing all three is safe. Enforced by
 `tests/packaging/agent-tool-names.test.ts`. `Read` is a built-in Cowork

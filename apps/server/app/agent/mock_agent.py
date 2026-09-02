@@ -25,6 +25,12 @@ _SUBSCRIPTIONS = [
     "Ancestry", "MyHeritage", "FindMyPast", "Newspapers.com",
     "GenealogyBank", "FindAGrave-Plus",
 ]
+# The two access routes are never typed verbatim, so they match on the
+# phrasing a researcher actually uses rather than on the enum value.
+_ACCESS_ROUTES = {
+    "FamilySearch-Partner": ("familysearch partner", "partner subscription"),
+    "LibraryAccess": ("library", "family history cent", "affiliate"),
+}
 _NARRATION = {
     "novice": "Narrate why each step matters; define genealogy terms on first use.",
     "intermediate": "One-line preamble per step; assume standard record-type familiarity.",
@@ -137,6 +143,11 @@ class MockAgent:
     async def _await_subscriptions(self, text: str) -> AsyncIterator[dict]:
         low = text.lower()
         subs = [s for s in _SUBSCRIPTIONS if s.lower() in low]
+        subs += [
+            value
+            for value, phrases in _ACCESS_ROUTES.items()
+            if any(phrase in low for phrase in phrases)
+        ]
         self.state["subscriptions"] = subs
         shown = ", ".join(subs) if subs else "none"
         yield _event("text", text=(

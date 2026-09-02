@@ -5,8 +5,11 @@
     "standardPlace": "~"
   },
   "response": {
-    "standardPlace": "",
+    "query": {
+      "standardPlace": ""
+    },
     "totalForPlace": 6,
+    "returned": 6,
     "results": [
       {
         "url": "https://www.ancestry.com/search/collections/census/",

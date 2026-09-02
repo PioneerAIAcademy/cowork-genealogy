@@ -980,6 +980,18 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     await atomicWriteJson(join(projectPath, "tree.gedcomx.json"), tree);
 
     result.filesWritten = ["tree.gedcomx.json"];
+
+    // Rewind the completion-gate baseline to the forgotten state too (issue
+    // #1490). It is the point re-derivation is measured against; left at the
+    // pre-forget tree, a fact the agent re-derives would read as "no new
+    // structure" and the tree-encoding gate would false-flag the conclusion.
+    // Only when a baseline already exists — tree_forget never creates one.
+    const baselinePath = join(projectPath, "starting-tree.gedcomx.json");
+    if (await fileExists(baselinePath)) {
+      await atomicWriteJson(baselinePath, tree);
+      result.filesWritten.push("starting-tree.gedcomx.json");
+    }
+
     result.restoreFile = RESTORE_FILE;
     return result;
   } catch (e) {
