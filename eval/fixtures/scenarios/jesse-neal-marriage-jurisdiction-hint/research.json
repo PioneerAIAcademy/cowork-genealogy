@@ -1,0 +1,63 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Locate Jesse Neal's marriage record",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-06-01",
+    "updated": "2026-06-01"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Jesse Neal marry?",
+      "rationale": "No marriage record is yet in the project. A plan is active with one item targeting the South Carolina residence already on record.",
+      "selection_basis": "hypothesis_test",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-06-01"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-06-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "marriage",
+          "jurisdiction": "Union County, South Carolina",
+          "date_range": "1875-1885",
+          "repository": "FamilySearch",
+          "rationale": "Jesse Neal's tree shows a South Carolina residence by 1885 with no marriage record yet located; searching that jurisdiction first is the obvious starting point.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
