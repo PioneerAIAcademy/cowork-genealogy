@@ -975,7 +975,19 @@ The judge prompt template lives at `eval/harness/judge/prompt.md`. The system pr
 {text_response}                     — Claude's full output text (or sidecar ref)
 {file_changes_summary}              — pre-rendered diff summary, ~500 tokens max
 {tool_calls}                        — list of MCP calls with args + matched fixture
+{before_state}                      — sources and conflicts on file BEFORE the run
 ```
+
+`{before_state}` renders the project's `sources` and `conflicts` as they existed
+*before* the skill ran, so the judge can mechanically check "not on file" /
+"fabricated" claims against the record. Each block renders its complete
+`count` + `all_ids` first (never clipped — that is the existence-check ground
+truth), then a heavy `detail` sample trimmed under `_BEFORE_STATE_MAX_CHARS`;
+conflicts render first so their preferred/competing assertion **values**
+(resolved from `assertions[]`) win the budget over source-citation detail. A
+dropped entry is named in an omission note, and `(none)` means the project had
+no prior sources or conflicts. Added-this-run material appears under
+`{file_changes_summary}`, not here.
 
 Each call's `response_summary` renders **every** result, not a 3-item sample:
 a grounding rubric marks a correct citation of result 4+ as fabricated when the

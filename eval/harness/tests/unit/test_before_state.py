@@ -134,7 +134,7 @@ def test_ids_render_before_detail():
     before = {"research_json": {"sources": _sources("src_", 4)}}
     rendered = _summarize_before_state(before)
     # The complete id list must come before the (clippable) heavy detail.
-    assert rendered.index("all_ids") < rendered.index("per-source detail")
+    assert rendered.index("all_ids") < rendered.index("per-entry detail")
 
 
 def test_over_budget_drops_whole_sources_and_names_them(monkeypatch):
@@ -157,12 +157,12 @@ def test_over_budget_drops_whole_sources_and_names_them(monkeypatch):
     for i in range(1, 13):
         assert f"src_{i:03d}" in rendered
 
-    assert "per-source detail omitted for prompt size" in rendered
+    assert "per-entry detail omitted for prompt size" in rendered
     assert "not evidence that they are missing or fabricated" in rendered
 
     # The detail that survived is parseable JSON, i.e. no mid-object slice.
-    body = rendered.split("per-source detail (heavy fields truncated):\n", 1)[1]
-    body = body.split("\n\n[per-source detail omitted", 1)[0]
+    body = rendered.split("per-entry detail (heavy fields truncated):\n", 1)[1]
+    body = body.split("\n\n[per-entry detail omitted", 1)[0]
     kept = json.loads(body)
     assert isinstance(kept, list)
     assert len(kept) < 12, "nothing was dropped; the budget did not bite"
@@ -186,7 +186,7 @@ def test_all_ids_survive_when_detail_blows_the_prompt_budget(monkeypatch):
     for i in range(1, 11):
         assert f"src_{i:03d}" in rendered
         assert f"S{i:03d}" in rendered
-    assert "per-source detail omitted for prompt size" in rendered
+    assert "per-entry detail omitted for prompt size" in rendered
     assert "not evidence that they are missing or fabricated" in rendered
 
 

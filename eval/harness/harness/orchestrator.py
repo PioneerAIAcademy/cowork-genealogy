@@ -1804,8 +1804,8 @@ def _detail_ids(summary: dict[str, Any]) -> list[str]:
 
 
 def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
-    """Render the source entries that existed BEFORE the skill ran, so the
-    judge can mechanically check "not on file" / "fabricated" claims.
+    """Render the sources and conflicts that existed BEFORE the skill ran, so
+    the judge can mechanically check "not on file" / "fabricated" claims.
 
     The judge has produced fabrication-class citation failures — asserting
     that on-file source text was absent or invented — when it had no view of
@@ -1880,7 +1880,7 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     ]
     id_section = "\n\n".join(id_blocks)
 
-    # heavy per-source detail after — this is what the prompt-size cap trims.
+    # heavy per-entry detail after — this is what the prompt-size cap trims.
     #
     # Drop whole sources rather than slicing the rendered string. A raw
     # `[:budget]` cut lands mid-object, so the last source renders half-written
@@ -1905,7 +1905,7 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     dropped: list[str] = []
     remaining = budget
     for label, summary in labelled:
-        header = f"{label} — per-source detail (heavy fields truncated):\n"
+        header = f"{label} — per-entry detail (heavy fields truncated):\n"
         kept: list[Any] = []
         for entry, sid in zip(summary["detail"], _detail_ids(summary)):
             candidate = json.dumps(kept + [entry], ensure_ascii=False, indent=2)
@@ -1920,7 +1920,7 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     detail_section = "\n\n".join(detail_blocks)
     if dropped:
         detail_section += (
-            f"\n\n[per-source detail omitted for prompt size: "
+            f"\n\n[per-entry detail omitted for prompt size: "
             f"{', '.join(dropped)}. Their ids ARE listed above and they WERE on "
             f"file — the absence of their detail here is a harness size limit, "
             f"not evidence that they are missing or fabricated.]"
