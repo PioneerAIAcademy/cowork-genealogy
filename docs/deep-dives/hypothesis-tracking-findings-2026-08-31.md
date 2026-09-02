@@ -105,21 +105,21 @@ rejected by the lead — documenting the assertions-only route without touching
 the gate (leaves the standard form of an indirect proof permanently
 unpromotable), and relaxing the gate to "a correlated set that survived
 conflict-resolution" (every term is a judgment call, so nothing could check
-it). The lead named seven sites; **five are landed here**:
+it). The lead named seven sites; **all seven are landed**:
 `SKILL.md` (gate + flow diagram), `research-schema-spec.md` §5.9,
-`rubric.md`'s Status transitions dimension, and
+`rubric.md`'s Status transitions dimension,
 `ut_hypothesis_tracking_012.json`'s `judge_context` (justification only — the
-verdict was already right).
+verdict was already right), `skill-deep-dive-guide.md`'s canonical example
+(line 171), and `gps-research-flow.md`'s "Tracking hypotheses" paragraph.
 
-**Two of the seven are deliberately not touched in this PR:**
-`skill-deep-dive-guide.md`'s canonical example (line 171) and
-`gps-research-flow.md`'s "Tracking hypotheses" paragraph. Both live outside
-this skill's own directory — one is the process doc every future deep dive
-reads, the other is the architecture-level doctrine doc every new reader is
-sent to — and whether a genealogist deep dive on one skill should edit
-cross-cutting docs like these is not this dive's call to make unilaterally.
-Left as-is pending that decision; both still describe the pre-fix rule until
-someone makes it, which is a known, named gap rather than a silent one.
+The last two were initially left out under the belief that a single-skill
+deep dive shouldn't unilaterally edit cross-cutting docs outside the skill's
+own directory. That reasoning didn't hold up: the ruling names both files
+with exact line numbers and exact replacement text under "The seven sites,
+one PR — nothing catches a partial edit," and says outright "Writing this is
+part of the task, not a follow-up." There was no open call left for this PR
+to make — both are applied verbatim to the ruling's text, per review
+feedback from florencemashipei and Gennecis.
 
 **Independently re-verified rather than trusted:** grepped the whole repo for
 the old rule's literal phrasing ("at least one.*direct", "direct evidence.*
@@ -321,8 +321,8 @@ impossibility, also found and applied during verification (F4).
 
 **Docs** — `docs/specs/research-schema-spec.md` §5.9, restated to the new gate
 (F1). `docs/skill-deep-dive-guide.md`'s worked example and
-`docs/gps-research-flow.md`'s "Tracking hypotheses" paragraph are **not**
-touched here — see F1's handback note above.
+`docs/gps-research-flow.md`'s "Tracking hypotheses" paragraph, also restated
+(F1) — see the corrected handback note above.
 
 **Tests** (`eval/tests/unit/hypothesis-tracking/`) —
 `rubric.md`'s Status transitions dimension rewritten to the new floor (F1);
@@ -382,15 +382,22 @@ this is a genealogist's call in the CRUD UI (`eval/app`).
 
 ## Handback — not in this diff
 
-1. **`docs/skill-deep-dive-guide.md`'s canonical example and
-   `docs/gps-research-flow.md`'s "Tracking hypotheses" paragraph.** Both still
-   describe the pre-fix, direct-evidence-only rule. Left untouched — see F1 —
-   pending a decision on whether a single-skill deep dive should edit
-   cross-cutting docs outside the skill's own directory, or whether that
-   belongs to whoever next touches either doc for its own reasons.
+1. **Should the widened `supported` floor also become a `research_append`
+   write-boundary precondition, not just an eval-only validator?** Raised in
+   the original validator request and never a call this dive can make —
+   ADR-0011's "read before you" list names widening an existing gate as
+   exactly this kind of decision, and the same fork is already open on
+   #2030. Tracked on the reopened
+   [#2086](https://github.com/PioneerAIAcademy/cowork-genealogy/issues/2086),
+   labeled `needs-decision`, for @DallanQ.
 
-Otherwise, nothing. The validator work that would normally be handed off as a
-separate developer issue is implemented directly in this PR instead, per the
-lead's instruction. No record-type craft gap, no tool defect, and every
-"checked and needing no edit" claim in the issue's own ruling was
-independently re-verified against the current repo rather than trusted.
+Otherwise, nothing. Two validator ideas came up while writing the rule above;
+both went through issue #2086 rather than being decided unilaterally in this
+PR. One (a hypothesis-tracking-specific validator isolating `conflicts`,
+`questions`, and `tree.gedcomx.json` writes) turned out to already be
+enforced generically by `test_ownership_table`/`test_tree_ownership_table`
+against `docs/specs/schemas/ownership.json`, so it wasn't built — building it
+anyway would have duplicated an existing guard. The other is item 1 above. No
+record-type craft gap, no tool defect, and every "checked and needing no
+edit" claim in the issue's own ruling was independently re-verified against
+the current repo rather than trusted.

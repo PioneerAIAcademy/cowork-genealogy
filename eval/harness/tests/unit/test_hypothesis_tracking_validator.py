@@ -102,6 +102,38 @@ def test_rejects_an_unresolved_conflict_naming_a_supporting_assertion():
         check({}, _after([h], assertions, conflicts))
 
 
+def test_rejects_an_unresolved_conflict_naming_a_contradicting_assertion():
+    """Pins `contradicting_assertion_ids` into the conflict-overlap check —
+    not a duplicate of the supporting-assertion case above. Without this,
+    dropping `contradicting` from the overlap match (`linked = set(supporting)`)
+    is an undetected mutation."""
+    h = _hyp(supporting=["a_001"], contradicting=["a_002"])
+    assertions = [
+        _assertion("a_001", "direct"),
+        _assertion("a_002", "direct", source_id="src_002"),
+    ]
+    conflicts = [
+        {
+            "id": "c_002",
+            "status": "unresolved",
+            "competing_assertion_ids": ["a_002"],
+        }
+    ]
+    with pytest.raises(AssertionError, match="c_002.*unresolved"):
+        check({}, _after([h], assertions, conflicts))
+
+
+def test_contradicting_assertions_do_not_count_toward_the_floor():
+    h = _hyp(supporting=["a_001"], contradicting=["a_002", "a_003"])
+    assertions = [
+        _assertion("a_001", "indirect", source_id="src_001"),
+        _assertion("a_002", "indirect", source_id="src_002"),
+        _assertion("a_003", "indirect", source_id="src_003"),
+    ]
+    with pytest.raises(AssertionError, match="1 distinct"):
+        check({}, _after([h], assertions))
+
+
 @pytest.mark.parametrize("status", ["resolved", "moot"])
 def test_accepts_a_resolved_or_moot_conflict_naming_an_assertion(status):
     h = _hyp(supporting=["a_001"])
