@@ -1,0 +1,326 @@
+{
+  "run_log": "v1_2026-09-02_16-26-24.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_plan_h4k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the factual claims against the fixtures and the scenario. Diocese of\nScranton 1868 is grounded -- loc_001 carries both the diocese and the date.\nSchuylkill County 1811 from Berks and Northampton, and PA statewide civil\nregistration from 1906, are not in any fixture but are historically correct, so\nthey are model knowledge rather than fabrication. Ten items, all record types\npresent in the collections_search and volume_search responses. Nothing cites an\nidentifier the run was not served.\n"
+    },
+    {
+      "test_id": "ut_research_plan_h4k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "First plan for q_001 with nothing to supersede, 10 items, fallbacks encoded, and\nthe name-variant point is real rather than asserted -- \"Sheehan\" appears 5 times\nin what was written alongside \"Sheahan\", and \"variant\" 5 times. Request was for\na first plan and a first plan is what it produced.\n"
+    },
+    {
+      "test_id": "ut_research_plan_h4k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Seven calls, all matched a fixture, none returned fixture_not_found. One\ncorrection to the judge's wording: place_search was called with\nplaceName=\"Schuylkill County\" plus contextName=\"Pennsylvania\", not \"Schuylkill\"\n-- it still matches the fixture predicate, so the score is right and only the\ndescription is loose. collections_search, volume_search and\nexternal_links_search all used standardPlace \"Schuylkill, Pennsylvania, United\nStates\" with 1870-1910.\n"
+    },
+    {
+      "test_id": "ut_research_plan_h4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "pli_006 is typed `immigration`, but it is a naturalization record. Its own\nrationale says so: \"Schuylkill County naturalization declarations and\ncertificates (image group 007936750...) often record the immigrant's county of\norigin in Ireland, US arrival date, and county of residence\". `naturalization`\nis a recommended value in enums.schema.json, so a more precise type existed and\nwas not used. This is not cosmetic: search-records reads record_type to choose\ncollections, and an immigration-typed item points at passenger lists rather than\ncounty naturalization dockets.\n\nThe judge scored this 3 and described the item as \"Naturalization (pli_006)\" --\nreading the rationale rather than the record_type field, so it never compared the\ntwo.\n\npli_009 (directories) and pli_010 (mining reports) are typed `other`, which I\nchecked and is correct -- neither has a recommended value in the enum. Only\npli_006 is mis-typed.\n"
+    },
+    {
+      "test_id": "ut_research_plan_h4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every rationale ties back to Michael Sheahan's relocation or employment. No item\nchases a relative's record as an end in itself.\n"
+    },
+    {
+      "test_id": "ut_research_plan_h4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified all three fallback chains against the data, not the prose: seq 3\nfallback_for pli_002, seq 5 fallback_for pli_004, seq 8 fallback_for pli_007.\nFree and indexed sources lead, paid and browse-only follow. Worth noting given\n007 in the last run scored 3 with nine null fallback_for fields -- here the field\nis genuinely populated.\n"
+    },
+    {
+      "test_id": "ut_research_plan_h4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Schuylkill County 1811-present, Diocese of Scranton from 1868 per loc_001, US\nports appropriate for Irish arrivals 1870-1895. No pre-1811 parent county is\nsearched for post-1811 records, which is the error this dimension exists to\ncatch.\n"
+    },
+    {
+      "test_id": "ut_research_plan_h4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed from the response rather than the judge's summary: research_query\nreturned {\"ok\": true, \"section\": \"plans\", \"count\": 0, \"items\": []}, so there was\ngenuinely no prior plan. One research_append with 11 ops -- one plan at status\n\"active\" plus 10 items. No prior plan's status touched, because none existed.\n"
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "judge_context[2] says do NOT penalize the plan for the Wood-census item's\nrationale not repeating the caveat, as long as the caveat appears somewhere in\nthe plan. It does: \"Assertion a_003 explicitly flags that 'Wood' is unconfirmed\nas a birth surname.\" The judge admits the caution section exists, then marks it\ndown anyway. No false statement is identified, and no validator failed.\n"
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Ten items; judge_context[0]'s direct-parentage requirement met by pli_002,\npli_003, pli_007, pli_008.\n"
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Types match the information need. pli_010 as `other` is right — church, cemetery\nand local history have no recommended enum value.\n"
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "pli_009 corroborates the parents' identity rather than chasing siblings for\ntheir own sake.\n"
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the fields, not the prose: pli_003 fallback_for pli_002, pli_006\nfallback_for pli_005. Free and indexed lead.\n"
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Smith County TX for 1869–70, Blount County AL for 1840–80. Nothing anachronistic.\n"
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "First plan for q_002, created active, one research_append, no prior plan touched.\n"
+    },
+    {
+      "test_id": "ut_research_plan_q7m",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the collection ids against the responses. 1999196 is cited as \"indexed,\n~893K records\" and the run's collections_search hit standardPlace=\"Pennsylvania,\nUnited States\", whose fixture serves that collection with personCount=893214. So\nthe claim matches a response it actually received, and the availability validator\ncorrectly passed.\n\nWorth recording: the same collection is served with personCount=0 by\ncollections-search-schuylkill.json. That inconsistency between two fixtures is\nwhy 006 fails this dimension's validator and q7m doesn't — it depends only on\nwhich place the skill searched.\n"
+    },
+    {
+      "test_id": "ut_research_plan_q7m",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nine items, and every required field present on all nine — checked sequence,\nrecord_type, jurisdiction, date_range, repository, rationale, fallback_for,\nstatus. research_query returned count: 0, so first-plan was correct. Execution\ncontinued as authorized: skills_invoked = ['research-plan', 'search-records',\n'search-external-sites'].\n"
+    },
+    {
+      "test_id": "ut_research_plan_q7m",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Five calls, zero fixture_not_found. collections_search and external_links_search\nboth used standardPlace=\"Pennsylvania, United States\" with 1838-1910.\n"
+    },
+    {
+      "test_id": "ut_research_plan_q7m",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Types match the information need, and each rationale names what the type yields.\n"
+    },
+    {
+      "test_id": "ut_research_plan_q7m",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The FAN items state what they reveal about the Doyle children rather than\npursuing Ellen or Bridget for their own sake.\n"
+    },
+    {
+      "test_id": "ut_research_plan_q7m",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One fallback chain, on item 8, and fallback_for is genuinely populated rather\nthan described in prose only. Free and indexed lead, external last.\n"
+    },
+    {
+      "test_id": "ut_research_plan_q7m",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Schuylkill County correct for 1838-1968; pre-1906 births routed to church\nrecords, which is the right consequence of no civil registration.\n"
+    },
+    {
+      "test_id": "ut_research_plan_q7m",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "research_query returned {\"count\": 0, \"items\": []}, so nothing to supersede. One\nplan created active for q_001.\n"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked every identifier against the declared fixtures, not the judge's summary:\n1417491 / 1804888 / 1875188 in collections-search-kentucky, 007991103 / 007834412\nin volume-search-muhlenberg, Ancestry 1222 in external-links-search-kentucky. All\nsix are grounded. Note the run log alone cannot show this — fixture-served calls\npersist response=None and record only the fixture name, so verification means\nreading the fixture files.\n"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Six items, all status \"planned\". Probate (pli_005) present, which is this test's\nrequirement, and the era mismatch is flagged — certificates begin 1911, subject\nlast documented 1870.\n"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Seven calls, no fixture_not_found, every call matched a declared fixture.\n"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Four vital_record, one probate, one cemetery. Probate as the pre-1911 alternative\nis the point of the scenario and it is there.\n"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All six items target Elijah Wilkins. No FAN items, so no scope question arises.\n"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the fields: seq 3 and seq 4 both fallback_for pli_002 — two independent\nfallbacks on one item, which is correct here (browse-only images and a paid index\nare alternatives to each other). Indexed before unindexed, free before paid.\n"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both dates are grounded: 1792 in place-search-kentucky-catchall, 1798 in\nplace-search-muhlenberg. Correct for an 1870s–90s death.\n"
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "First plan for q_001, one plan active, six items planned, nothing pre-existing\ntouched. test_research_plan_new_plan_for_q_001 passed — this is the test that had\nbeen failing since 2026-08-24, and it passes on its own merits.\n"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The supersede is real, not described: research_append{section: \"plans\", op:\n\"update\", entryId: \"pl_002\", fields: {status: \"superseded\"}} returned ok with\nresearch.json written. Then a second call appended pl_003 active plus five items.\ntest_pli_006_status_unchanged passed, so the in-progress item was left intact.\n"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Five items, all status \"planned\", full metadata. Audit trail preserved —\nplans_no_deletions, no_entries_deleted and log_append_only all passed.\n"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "collections_search used standardPlace \"Schuylkill, Pennsylvania, United States\"\nwith 1860-1870, matching the corrected window. No fixture_not_found. One\ncorrection to the judge's wording: this was two research_append calls, not a\nsingle batch — an update for pl_002 then an append for pl_003. That is the right\nshape, since a status change and a new plan are different operations.\n"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Probate, church burial, two military, one marriage. Church burial as the primary\n1865 death record is right given no PA civil registration until 1906.\n"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Thomas's and Mary's records are pursued for what they say about Patrick's\nparentage, not for their own sake.\n"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the field: seq 4 carries fallback_for pli_009. Free and indexed before\nthe paid Ancestry fallback.\n"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "County-level for probate and church, state-level for Civil War regiments. The\n1906 death and 1885 marriage registration dates are both correct for\nPennsylvania and are what justify the church searches.\n"
+    },
+    {
+      "test_id": "ut_research_plan_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Supersede mode was correct: pl_002 was active with pli_006 targeting 1870-1890,\ninvalidated by the ~1865 death reference. pl_002 set superseded before pl_003\nwas created, exactly one plan now active, prior items untouched.\n"
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The arguments were correct; the fixture is missing. contextName is a declared\nparameter (place-search.ts:41), and the second call used the exact shape that\nsucceeded twice in this run (\"Blount County, Alabama\", \"Smith County, Texas\").\nNo place-search Georgia fixture exists, though the test declares\ncollections-search-georgia. That is a corpus gap being charged to the model.\n"
+    }
+  ]
+}
