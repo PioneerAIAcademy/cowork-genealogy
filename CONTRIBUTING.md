@@ -9,16 +9,20 @@ Everyone who contributes signs the
 contributors and maintainers alike. You keep the copyright in what you
 write; the agreement gives the project permission to use it.
 
-Signing takes one pull request that adds a row to
-[SIGNERS.md](./SIGNERS.md). Instructions are in that file. Do it once,
-before or alongside your first contribution.
+Signing means adding one row to [SIGNERS.md](./SIGNERS.md). If you are
+contributing from outside the team, **add that row in the same pull
+request as your contribution** — there is no separate signing step to
+wait on. You do this once; later pull requests need nothing.
 
 If you are on the team — organization membership, repository write
-access, or access to project credentials or alpha-tester data — you also
-sign the [Team Agreement](./TEAM-AGREEMENT.md), which covers
-confidentiality, API keys, and handling the personal data of living
-people that alpha testers send us. Outside contributors do not sign that
-one.
+access, or access to project credentials or alpha-tester data — you sign
+a second agreement as well, the [Team Agreement](./TEAM-AGREEMENT.md),
+covering confidentiality, API keys, and the personal data of living
+people in alpha-tester feedback. That one is signed during onboarding,
+before your access is granted, rather than alongside a contribution.
+Outside contributors do not sign it at all.
+
+Full instructions for both paths are in [SIGNERS.md](./SIGNERS.md).
 
 ## Skill contributions (the common case)
 

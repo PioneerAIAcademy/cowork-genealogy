@@ -10,29 +10,58 @@ This file records who has signed the project's contributor agreements.
   membership, repository write access, or access to project credentials
   or alpha-tester data.
 
-If you are on the team, you sign both. If you are an outside contributor
-opening a pull request, you sign the CLA only.
+There are two paths. Find yours below.
+
+One rule covers both: the pull request adding your row must come **from
+your own GitHub account**. Do not add a row for anyone else, and do not
+ask anyone to add one for you. The pull request is the record of your
+agreement, so it has to be your own act.
 
 ---
 
 ## How to sign
 
-1. Read the agreement you are signing, in full.
-2. Open a pull request **from your own GitHub account** that adds one row
-   to the appropriate table below. Do not add a row for anyone else, and
-   do not ask anyone to add one for you — the pull request is the record
-   of your agreement, so it has to come from you.
-3. Title the pull request `Sign CLA: <your name>`, or
-   `Sign CLA and Team Agreement: <your name>`.
-4. In the pull request description, write:
+### Path 1 — outside contributors
 
-   > I have read and agree to the Individual Contributor License
-   > Agreement at the version recorded in my row.
+You are contributing without organization membership, write access, or
+project credentials. **You sign the CLA only.** One row, in the
+"CLA signers" table.
 
-   Name both agreements if you are signing both.
+**Add the row in the same pull request as your contribution.** You do not
+need a separate signing pull request and you do not need to wait for
+anything to be merged first — put your code and your row in one branch.
+If you would rather sign before you start work, a standalone pull request
+is fine too.
 
-Your row goes at the bottom of the table. Use your full legal name, not a
-nickname or handle.
+In the pull request description, include this line:
+
+> I have read and agree to the Individual Contributor License Agreement
+> at the version recorded in my row.
+
+A maintainer will not merge a contribution until your row is present.
+
+### Path 2 — team members
+
+You have, or are about to receive, organization membership, repository
+write access, or project credentials. **You sign both agreements** — two
+rows, one in each table, in a single pull request.
+
+**Sign before your access is granted, not before your first commit.**
+This is the difference between the two paths: for an outside contributor
+the CLA gates a merge, and for you the Team Agreement gates the keys. So
+this is a standalone pull request, opened during onboarding, whether or
+not you are contributing code that week.
+
+Title it `Sign CLA and Team Agreement: <your name>`, and in the
+description include:
+
+> I have read and agree to the Individual Contributor License Agreement
+> and to the Team Agreement, at the versions recorded in my rows.
+
+### Both paths
+
+Read what you are signing, in full, first. Your row goes at the bottom of
+the table. Use your full legal name, not a nickname or handle.
 
 **Row format:**
 
@@ -78,10 +107,21 @@ must also appear in the CLA table above.
 
 ## For maintainers
 
-**Before granting access.** A person should appear in the Team Agreement
-table before they receive organization membership, repository write
-access, or any project credential. When that ordering slips, get the
+**Two enforcement points, one per path.**
+
+*Before merging an outside contribution*, check that the author has a row
+in the CLA signers table — in this pull request or an earlier one. This
+is the only gate on that path, so nothing else will catch a missing
+signature.
+
+*Before granting access*, check that the person has a row in the Team
+Agreement table. Organization membership, repository write access, and
+project credentials all wait on it. When that ordering slips, get the
 signature and rotate anything already issued.
+
+A team member who somehow has no CLA row is a gap on both paths — the
+Team Agreement covers what they are trusted with, not the rights in what
+they write. Everyone in the second table belongs in the first.
 
 **When an agreement changes.** Publish the new version with a new version
 number in its header, then ask current signers to add a fresh row.
