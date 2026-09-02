@@ -343,7 +343,7 @@ for material too long to sit in the skill body.
 
 **A reference is loaded only if its own `SKILL.md` names it** — or if a
 reference the body names links on to it. Nothing lists a `references/` folder at
-runtime, so a file neither route reaches is unreachable: it costs no prompt
+runtime, so a file neither route reaches is never loaded deliberately: it costs no prompt
 tokens and carries every byte of the drift risk.
 
 `tests/packaging/skill-reference-reachability.test.ts` enforces that, and is
@@ -407,7 +407,8 @@ lists, and the test asserts that too.
 > `validation-protocol.md` largely restates rules `research_append`'s error
 > contract already enforces at write time, and a rule the tool rejects can be one
 > sentence. **Before adding a copy, say why in the PR — and name it in the
-> `SKILL.md`, or you are shipping a file nothing can read.**
+> `SKILL.md`, or you are shipping a file nothing loads on purpose — and that a
+> globbing model can still read, unreviewed.**
 
 ### 3.4 Agent bodies are self-contained — do not split them
 
