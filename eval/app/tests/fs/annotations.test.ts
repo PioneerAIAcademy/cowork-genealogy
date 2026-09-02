@@ -230,8 +230,8 @@ describe('annotations — review sampling', () => {
   });
 
   it('completeness counts only sampled dimensions', () => {
-    // Without this the annotator sees "10/40 reviewed" on a sample of 5 and the
-    // Release button never enables, while CI is green.
+    // Without this the annotator sees "10/40 reviewed" on a small sample and
+    // the Release button never enables, while CI is green.
     const sampled = ['ut_000', 'ut_001', 'ut_002', 'ut_003', 'ut_004'];
     const log = buildLog(20, { tests: sampled, cursor: sampled, seed: 0 });
     expect(isAnnotationComplete(log, annFor(sampled))).toBe(true);

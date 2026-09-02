@@ -125,7 +125,8 @@ rebuilding it.**
     record that would decide it (:341–351).
 39. An inherited surname is parentage evidence — name the convention being applied and
     confirm it held in that place and era; weigh it hardest against **indexed** parent
-    fields (:353–367).
+    fields, and read surname *order* as country-specific (never disqualify on position
+    alone) (:353–373).
 
 ## G. One conflict per turn
 
