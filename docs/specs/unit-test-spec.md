@@ -789,7 +789,7 @@ For each confusable pair, create tests from both directions: a test in skill A's
 
 **Why both directions, and what enforces it.** Routing is a graph, and a negative test pins one edge of it in one direction. The DO-NOT clause that stops A over-triggering is exactly the edit that can start B under-triggering, so a one-directional pair lets a routing fix ship a routing regression with the whole suite green. That has happened: after DO-NOT clauses separated `search-familysearch-wiki` from `locality-guide`, Pennsylvania Quaker questions began routing to the wrong skill, and it was found by hand rather than by the corpus. The reciprocal test that closed it, `ut_locality_guide_025`, asserts that a generic how-to question routes *to* `search-familysearch-wiki` — note that it pins the opposite direction from the request that regressed, which is the whole point of a reciprocal.
 
-`eval/harness/scripts/check_negative_reciprocity.py` reports every edge that is still pinned from one side only. It is **warn-only, with no baseline file and no count threshold** — 45 of the corpus's 79 routing edges are one-directional and the check exits 0 anyway. That is deliberate, and both alternatives were rejected rather than deferred:
+`eval/harness/scripts/check_negative_reciprocity.py` reports every edge that is still pinned from one side only. It is **warn-only, with no baseline file and no count threshold** — 49 of the corpus's 89 routing edges are one-directional and the check exits 0 anyway. That is deliberate, and both alternatives were rejected rather than deferred:
 
 - An **allowlist** would tax the behaviour the rule exists to encourage. Backfilling a reciprocal touches a second skill's test directory, which invalidates that skill's run-log snapshot and so costs a full re-run plus a fresh annotation. Requiring it of every description-widening PR prices routine routing work out of reach.
 - A **count threshold** — "the number may only fall" — is silently wrong. Remove one edge and add another and the total is unchanged, so the graph can rot while CI stays green. Any future promotion to blocking must therefore compare the edge **set**, never its size, and should follow a triage of which unbacked edges are deliberate one-directional near-misses rather than precede one.
@@ -975,7 +975,26 @@ The judge prompt template lives at `eval/harness/judge/prompt.md`. The system pr
 {text_response}                     — Claude's full output text (or sidecar ref)
 {file_changes_summary}              — pre-rendered diff summary, ~500 tokens max
 {tool_calls}                        — list of MCP calls with args + matched fixture
+{before_state}                      — sources and conflicts on file BEFORE the run
 ```
+
+`{before_state}` renders the project's `sources` and `conflicts` as they existed
+*before* the skill ran, so the judge can mechanically check "not on file" /
+"fabricated" claims against the record. Each block renders its complete
+`count` + `all_ids` first (never clipped — that is the existence-check ground
+truth), then a heavy `detail` sample trimmed under `_BEFORE_STATE_MAX_CHARS`;
+conflicts render first so their preferred/competing assertion **values**
+(resolved from `assertions[]`) win the budget over source-citation detail. A
+dropped entry is named in an omission note, and `(none)` means the project had
+no prior sources or conflicts. Added-this-run material appears under
+`{file_changes_summary}`, not here.
+
+Each call's `response_summary` renders **every** result, not a 3-item sample:
+a grounding rubric marks a correct citation of result 4+ as fabricated when the
+judge can only see results 1-3. Prompt size is bounded by the total-size
+guard (`_TOOL_CALLS_MAX_CHARS`), which drops whole oldest calls with a stated
+marker; per-string and depth caps still apply inside each result. A larger array
+cap was rejected — it only moves the cliff.
 
 `{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran.
 
