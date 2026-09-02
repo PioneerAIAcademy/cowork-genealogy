@@ -45,13 +45,16 @@ summary and the terms disagree, the terms win.
 
 ### 1. Credentials and secrets
 
-You may be issued credentials for project services, including OpenRouter
-API keys, FamilySearch OAuth credentials, and access to hosted
-infrastructure. These are issued to you individually. You agree to:
+You will be given access to project credentials — the OpenRouter API
+key, FamilySearch OAuth credentials, and hosted infrastructure. **Some
+are shared across the whole team.** The OpenRouter key is one key that
+everyone uses; your FamilySearch credentials are your own. You agree
+to:
 
-**(a) Not share them.** Do not give a credential to anyone else,
-including another team member. If someone needs access, ask a maintainer
-to issue their own.
+**(a) Keep them inside the team.** Never pass a project credential to
+anyone outside the team — not a friend, not a contractor, not someone who
+says a maintainer sent them. Whether an outsider gets access is a
+maintainer's decision, never yours.
 
 **(b) Not commit or publish them.** Never place a credential in a
 repository, pull request, issue, comment, screenshot, screen recording,
@@ -73,6 +76,10 @@ unsure about — tell a maintainer as soon as you notice, before you try to
 fix it yourself. The damage from a leaked key comes from the delay in
 rotating it, not from the mistake. Reporting promptly is expected
 behaviour and is not itself a violation of this agreement.
+
+This matters more with a shared key than it would with your own. Rotating
+the OpenRouter key cuts off the whole team until everyone has the new
+one, so the cost of a leak is measured in how long it stays unreported.
 
 ### 2. Personal information about living people
 
