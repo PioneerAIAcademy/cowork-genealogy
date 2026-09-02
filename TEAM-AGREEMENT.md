@@ -17,7 +17,7 @@ If you contribute code, you sign **both** this and the
 [CLA](./CLA.md). They cover different things: the CLA covers the rights
 in what you write, this covers what you are trusted with.
 
-To sign, see [SIGNERS.md](./SIGNERS.md).
+To sign, see [TEAM-SIGNERS.md](./TEAM-SIGNERS.md).
 
 ---
 
@@ -223,12 +223,13 @@ regard to its conflict of law provisions.
 
 GeneFun may publish a new version of this agreement and ask you to sign
 it as a condition of continued access. The version recorded next to your
-name in [SIGNERS.md](./SIGNERS.md) is the one that binds you until you
+name in [TEAM-SIGNERS.md](./TEAM-SIGNERS.md) is the one that binds you until you
 sign a newer one.
 
 ---
 
 ## How to sign
 
-Add your row to [SIGNERS.md](./SIGNERS.md) in a pull request opened from
-your own GitHub account. Signing instructions are in that file.
+Add your row to [TEAM-SIGNERS.md](./TEAM-SIGNERS.md), and one to
+[CLA-SIGNERS.md](./CLA-SIGNERS.md), in a single pull request opened from
+your own GitHub account. Signing instructions are in those files.

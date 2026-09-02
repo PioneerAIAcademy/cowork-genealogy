@@ -1,5 +1,6 @@
 - [ ] I have signed the [CLA](../CLA.md) — my name is in
-      [SIGNERS.md](../SIGNERS.md). One row, one time; skip this box on
+      [CLA-SIGNERS.md](../CLA-SIGNERS.md). Contributing from outside the
+      team? Add the row in this PR. One row, one time; skip this box on
       later PRs.
 
 ## Summary

@@ -7,7 +7,7 @@ business as **Pioneer AI Academy** ("GeneFun", "we", "us"). It covers any
 contribution you make to this project.
 
 Everyone who contributes signs this, including maintainers. To sign, see
-[SIGNERS.md](./SIGNERS.md).
+[CLA-SIGNERS.md](./CLA-SIGNERS.md).
 
 ---
 
@@ -163,15 +163,15 @@ Contributions, and it replaces any earlier understanding on the subject.
 
 GeneFun may publish a new version of this agreement. A new version
 applies only to Contributions made after you sign it. The version you
-signed, recorded in [SIGNERS.md](./SIGNERS.md), governs everything you
+signed, recorded in [CLA-SIGNERS.md](./CLA-SIGNERS.md), governs everything you
 contributed before that.
 
 ---
 
 ## How to sign
 
-Add your row to [SIGNERS.md](./SIGNERS.md) in a pull request opened from
-your own GitHub account. Signing instructions are in that file.
+Add your row to [CLA-SIGNERS.md](./CLA-SIGNERS.md) in a pull request opened
+from your own GitHub account. Signing instructions are in that file.
 
 *This document is adapted from the Apache Software Foundation Individual
 Contributor License Agreement v2.0.*
