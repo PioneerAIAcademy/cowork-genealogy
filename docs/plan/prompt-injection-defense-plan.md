@@ -1,8 +1,7 @@
 # Prompt-injection defense for ingested record text — plan
 
-> **Status:** Proposed — not started. Authored 2026-07-24 from a review of
-> `DigitalArchivst/Open-Genealogy` (external repo, cloned and read directly).
-> No implementation branch yet.
+> **Status:** Partially implemented. Data-boundary fencing for record-extraction
+> delegation (#1018 Task 4) landed; the broader defense plan is still pending.
 > **Goal:** make it explicit, in the prompts that touch raw record text, that
 > directive-shaped language inside a source is data to capture and flag —
 > never an instruction to obey — and back that with a regression test that
