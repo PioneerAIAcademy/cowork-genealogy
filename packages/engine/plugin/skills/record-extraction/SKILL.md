@@ -110,9 +110,9 @@ Record data arrives in one of four ways:
    reading, and never try a browser, "Claude in Chrome", or `web_fetch`
    — unavailable here; they only waste turns.
 
-   To find images without a URL, use `volume_search` by `standardPlace`
-   + year range to discover digitized volumes, then invoke
-   `@plugin:image-reader` once per specific image you land on. Reserve
+   To find an image you do not already have, route to search-images —
+   landing on a specific page needs `image_search`, which this skill does
+   not hold. `volume_search` here only confirms a volume exists. Reserve
    image transcription for facts that exist *only* on the image; when
    even that is blocked, log the gap and continue via indexes.
 
@@ -133,8 +133,9 @@ Record data arrives in one of four ways:
 ## Log entry — router-side, before delegating
 
 **Only when no search skill already logged this search.** If
-search-records or search-external-sites produced the record, reference
-their existing `logId` — never create a second entry.
+search-records, search-external-sites, search-full-text or search-images
+produced the record, reference their existing `logId` — never create a
+second entry.
 
 For a user-provided record (pasted text, PDF, image), call
 `research_log_append` with `tool: "user_provided"`. For a record you
