@@ -32,12 +32,17 @@ else:
 
 def init_db() -> None:
     SQLModel.metadata.create_all(_engine)
-    # Seed the allowlist from config (idempotent).
+    # Sync the allowlist from config: add new entries AND remove stale ones,
+    # so removing an email from ALLOWED_EMAILS actually revokes access.
     with Session(_engine) as session:
         existing = {e.email for e in session.exec(select(AllowedEmail)).all()}
         for email in _settings.allowlist:
             if email not in existing:
                 session.add(AllowedEmail(email=email))
+        for stale in existing - _settings.allowlist:
+            row = session.get(AllowedEmail, stale)
+            if row is not None:
+                session.delete(row)
         session.commit()
 
 
