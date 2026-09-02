@@ -5,10 +5,10 @@ Explained compliance, Replication test, Source vs information
 distinction) are pure GPS craft and stay graded by the LLM judge.
 
 This file holds structural invariants: the append-only source-section
-check, creator-vs-custody slot validation (V5), informant-not-in-who
-(V10), invented-locator detection (V3), example-value leak (V4),
-negative-search fidelity (V11), and framework-walkthrough detection
-(V12). Tool-allowlist and write-then-validate enforcement are delegated
+check, creator-vs-custody slot validation (V5), unknown-marker
+vocabulary (V6), informant-not-in-who (V10), invented-locator
+detection (V3), example-value leak (V4), negative-search fidelity
+(V11), and framework-walkthrough detection (V12). Tool-allowlist and write-then-validate enforcement are delegated
 to universal validators.
 
 See test_universal.py module docstring for the validator function-
@@ -176,6 +176,86 @@ def test_creator_not_in_custody(before_state, after_state, test):
         + "\n  ".join(violations)
     )
 
+
+# --- V6: Unknown markers must name framework elements only ---------------
+
+# Custody / physical-media keywords — a marker whose content contains any
+# of these names a `where` layer (access point → medium → original custodian),
+# not a required framework element.  Such markers belong in `notes`.
+_CUSTODY_KEYWORDS = frozenset({
+    "repository", "physical", "archive", "microfilm", "microfiche",
+    "fhl", "catalog", "accession", "call number", "custody",
+})
+
+_MARKER_RE = re.compile(r'\[([^\]]+?)\s+NOT\s+RECORDED\]', re.IGNORECASE)
+
+
+def test_unknown_markers_framework_only(before_state, after_state, test):
+    """[... NOT RECORDED] markers must name Who/What/When/Where/Wherein elements.
+
+    Two checks:
+    1. Position — no marker is sanctioned in `citation_detail.where` at all.
+       Under "cite what you see" the access point is always known, so `where`
+       can never be genuinely unrecorded (SKILL.md §75–82).
+    2. Content — a marker whose text contains a custody / physical-media
+       keyword (repository, archive, microfilm, …) names a `where` layer,
+       not a required element.  It belongs in `notes`.
+
+    Tier 1 — gates.  Reads persisted citation / citation_detail fields only.
+    """
+    if test.get("type") == "negative":
+        pytest.skip("negative test")
+    before_rj = before_state.get("research_json")
+    after_rj = after_state.get("research_json")
+    if before_rj is None or after_rj is None:
+        pytest.skip("missing research.json")
+
+    before_sources = {s["id"]: s for s in before_rj.get("sources", [])}
+    violations = []
+
+    for src in after_rj.get("sources", []):
+        sid = src.get("id")
+        if sid not in before_sources:
+            continue
+
+        # Check citation string
+        citation = src.get("citation") or ""
+        for m in _MARKER_RE.finditer(citation):
+            marker_content = m.group(1).strip()
+            if any(kw in marker_content.lower() for kw in _CUSTODY_KEYWORDS):
+                violations.append(
+                    f"{sid}.citation: marker [{marker_content} NOT RECORDED] "
+                    f"names a custody/location element; use `notes` instead"
+                )
+
+        # Check citation_detail fields
+        cd = src.get("citation_detail") or {}
+        for field in ("who", "what", "when_created", "when_accessed",
+                      "where", "where_within"):
+            val = cd.get(field) or ""
+            for m in _MARKER_RE.finditer(val):
+                marker_content = m.group(1).strip()
+                if field == "where":
+                    # No marker is sanctioned in `where` — the access point
+                    # is always known under "cite what you see".
+                    violations.append(
+                        f"{sid}.citation_detail.where: marker "
+                        f"[{marker_content} NOT RECORDED] — no marker is "
+                        f"sanctioned in `where`"
+                    )
+                elif any(kw in marker_content.lower()
+                         for kw in _CUSTODY_KEYWORDS):
+                    violations.append(
+                        f"{sid}.citation_detail.{field}: marker "
+                        f"[{marker_content} NOT RECORDED] names a "
+                        f"custody/location element; use `notes` instead"
+                    )
+
+    assert not violations, (
+        "unknown-markers must name Who/What/When/Where/Wherein framework "
+        "elements only; custody chains and physical-location detail belong "
+        "in notes:\n  " + "\n  ".join(violations)
+    )
 
 
 # --- V10: Informant never reaches `who` (literal half) -----------------

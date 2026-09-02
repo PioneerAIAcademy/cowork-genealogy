@@ -2146,8 +2146,8 @@ Eight fixtures in `eval/fixtures/mcp/`:
 
 Validators in `eval/harness/validators/` fall into three tiers:
 
-- **Gating** — failure prevents the LLM judge from running (saves cost). All universal validators except `test_tool_allowlist` are gating. All citation-specific validators (V5, V10) are gating.
-- **Reporting** (not yet built) — checks that are regexes over Claude's prose response. Their findings are handed to the LLM judge as observations it weighs alongside the response, recorded in the run log, but they do not touch `validators_passed`. The mechanism is tracked as Group M of the citation deep-dive validators.
+- **Gating** — failure prevents the LLM judge from running (saves cost). All universal validators except `test_tool_allowlist` are gating. All citation-specific validators (V5, V6, V10) are gating.
+- **Reporting** — checks that are regexes over Claude's prose response. Their findings are handed to the LLM judge as observations it weighs alongside the response, recorded in the run log, but they do not touch `validators_passed`. A reporting-only check is a `report_*` function (not `test_*`); the runner tags its result with `reporting_only=True`. Observations reach the judge via the `{harness_observations}` prompt section and are recorded in `output.warnings[]` as `prose_observation` entries.
 - **Advisory** — emits a warning but does not fail the test. `test_tool_allowlist` is advisory: it warns when a skill calls undeclared tools, but the session grants all tools regardless.
 
 This three-tier system was decided against two alternatives: making every check gate (brittle — a prose regex reds a correct run and the judge never sees it), and dropping prose checks entirely (loses the finding). Only structured-field checks may gate.
@@ -2155,7 +2155,7 @@ This three-tier system was decided against two alternatives: making every check 
 | Validator | Path | Scope |
 |-----------|------|-------|
 | Universal | `eval/harness/validators/test_universal.py` | All skills. Checks: schema structure, enum values, ID prefixes, ID referential integrity, full reference integrity (dangling/cross-file/cycles, via the compiled TS `validateParsed`), duplicate tree IDs, append-only log, no-delete enforcement, write-then-validate (V1 — skills declaring `validate_research_schema`), tool allowlist (advisory). |
-| Citation | `eval/harness/validators/test_citation.py` | One skill. Checks: no new source entries, source classification preservation, creator-not-in-custody (V5), informant-not-in-who (V10). |
+| Citation | `eval/harness/validators/test_citation.py` | One skill. Checks: no new source entries, source classification preservation, creator-not-in-custody (V5), unknown-marker vocabulary (V6), informant-not-in-who (V10). |
 | Conflict-resolution | `eval/harness/validators/test_conflict_resolution.py` | One skill. Checks: fact conflicts have ≥2 competing assertions, resolved conflicts have required fields, preferred assertion is in competing list. |
 
 The table is illustrative, not exhaustive — most skills have a `test_<skill>.py` file with skill-specific validators. Use the existing files as templates when writing validators for other skills.

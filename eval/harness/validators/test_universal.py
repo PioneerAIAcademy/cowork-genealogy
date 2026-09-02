@@ -804,20 +804,29 @@ def test_activated_run_produces_response(
 ):
     """An activated run that produced no output is a dead run — fail it.
 
-    Gate on six conditions: activated is True, not aborted, no skills
-    invoked, num_turns == 0, output_tokens == 0, AND text_response shorter
-    than 200 characters. The skills_invoked check is the strongest signal —
-    a run that invoked a skill did real work even when telemetry reports zero
-    (343 of 1945 committed runs report zero telemetry normally). The 200-char
-    floor avoids flagging telemetry-only dropouts where a real response
-    exists.
+    Gate on five conditions: activated is True, not aborted, not a
+    routing short-circuit, num_turns == 0, output_tokens == 0, AND
+    text_response shorter than 200 characters. The 200-char floor
+    avoids flagging telemetry-only dropouts where a real response exists.
+
+    The previous guard (``if skills_invoked: return``) was unreachable:
+    ``derive_activated`` (runlog.py) only returns True when the skill
+    under test is in ``skills_invoked``, so ``activated is True`` already
+    implied non-empty ``skills_invoked``.  Measured over 2,070 committed
+    runs (2026-09-02): 0 with activated True and empty skills_invoked.
+    Replaced with a narrower check keyed on the routing short-circuit
+    (issue #1749, DallanQ 2026-09-02).
     """
     if activated is not True:
         pytest.skip("skill did not activate")
     if aborted_reason is not None:
         pytest.skip("run was aborted — already flagged separately")
-    if skills_invoked:
-        return  # a run that invoked a skill is not a dead run
+    # On a negative test, the routing short-circuit deliberately stops the
+    # run the moment skills_invoked intersects correct_skill.  Zero telemetry
+    # is the signature of that intentional stop, not a dead run.
+    correct_skill = (test.get("negative") or {}).get("correct_skill", [])
+    if correct_skill and set(skills_invoked) & set(correct_skill):
+        return
     if num_turns != 0 or output_tokens != 0:
         return  # telemetry shows work happened
     if len(text_response or "") >= 200:
