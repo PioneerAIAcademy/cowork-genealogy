@@ -325,3 +325,92 @@ def test_one_undecodable_run_log_does_not_take_the_whole_corpus_down(
         "the readable suite was dropped along with the unreadable one — the exact "
         "failure the guard exists to prevent"
     )
+
+
+def test_the_selection_split_separates_failing_tests_from_clean_ones():
+    """The mandatory slot over-samples low-scored cells, and direction is one-way
+    per score — a judge-1 cell can only disagree upward. Without this split the
+    harsher/softer numbers shift from SELECTION and read as miscalibration.
+
+    Pins that the split counts only the failing test, and — just as important —
+    that it leaves the existing counters alone, so a dimension that meets
+    `systematic_divergence` today still meets it.
+    """
+    runlog = _runlog({"Dim": [3, 3]})
+    runlog["tests"][0]["outcome"] = "fail"   # mandatory
+    runlog["tests"][1]["outcome"] = "pass"   # clean
+    dims = collect_dimensions(runlog, "demo")
+    annotation = {
+        "corrections": [
+            {"test_id": "ut_demo_000", "dimension_source": "rubric",
+             "dimension_name": "Dim", "llm_score": 3, "corrected_score": 2},
+            {"test_id": "ut_demo_001", "dimension_source": "rubric",
+             "dimension_name": "Dim", "llm_score": 3, "corrected_score": 2},
+        ]
+    }
+    apply_annotation(dims, annotation, frozenset({"ut_demo_000"}))
+    dim = next(d for d in dims if d.name == "Dim")
+
+    assert dim.reviewed_on_failing == 1
+    assert dim.disagreements_on_failing == 1
+    # unchanged by the split
+    assert dim.reviewed == 2
+    assert dim.judge_softer == 2
+    assert dim.agreements == 0
+
+
+def test_an_agreement_on_a_failing_test_is_reviewed_but_not_a_disagreement():
+    """Guards the `continue` after the agreement branch: an agreed cell must
+    count toward `reviewed_on_failing` and NOT toward the disagreement half."""
+    runlog = _runlog({"Dim": [3]})
+    runlog["tests"][0]["outcome"] = "fail"
+    dims = collect_dimensions(runlog, "demo")
+    apply_annotation(
+        dims,
+        {"corrections": [
+            {"test_id": "ut_demo_000", "dimension_source": "rubric",
+             "dimension_name": "Dim", "llm_score": 3, "corrected_score": 3},
+        ]},
+        frozenset({"ut_demo_000"}),
+    )
+    dim = next(d for d in dims if d.name == "Dim")
+    assert (dim.reviewed_on_failing, dim.disagreements_on_failing) == (1, 0)
+    assert dim.agreements == 1
+
+
+def test_build_skill_report_derives_the_mandatory_set_from_the_run_log(tmp_path):
+    """The production wiring, which the two tests above do NOT reach.
+
+    They hand `apply_annotation` a hard-coded frozenset, so the derivation in
+    `build_skill_report` — the only path by which these counters are ever
+    non-zero in the real report — was dark: deleting it left the whole harness
+    suite green, and the `outcome` lines in those tests were inert.
+
+    ut_demo_000 fails and ut_demo_001 passes, so a correct derivation splits the
+    two corrections and a broken one attributes neither.
+    """
+    log = _runlog({"Dim": [3, 3]})
+    log["tests"][0]["outcome"] = "fail"
+    log["tests"][1]["outcome"] = "pass"
+
+    log_path = tmp_path / "v1_2026-01-01_00-00-00.json"
+    log_path.write_text(json.dumps(log), encoding="utf-8")
+    (tmp_path / "v1_2026-01-01_00-00-00.ann.json").write_text(
+        json.dumps({
+            "run_log": log_path.name,
+            "annotator": "t",
+            "corrections": [
+                {"test_id": "ut_demo_000", "dimension_source": "rubric",
+                 "dimension_name": "Dim", "llm_score": 3, "corrected_score": 2},
+                {"test_id": "ut_demo_001", "dimension_source": "rubric",
+                 "dimension_name": "Dim", "llm_score": 3, "corrected_score": 2},
+            ],
+        }),
+        encoding="utf-8",
+    )
+    report = judge_report.build_skill_report("demo", log_path)
+
+    dim = next(d for d in report.dimensions if d.name == "Dim")
+    assert dim.reviewed == 2
+    assert dim.reviewed_on_failing == 1
+    assert dim.disagreements_on_failing == 1
