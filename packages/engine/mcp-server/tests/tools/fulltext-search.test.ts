@@ -737,14 +737,7 @@ describe("fulltextSearchTool given-name expansion (issue #607)", () => {
     // No parentheses or OR keywords
     expect(fullNameParam).not.toContain("(");
     expect(fullNameParam).not.toContain(" OR ");
-    // m.queryRequireDefault should be absent when expanded
-    expect(url).not.toContain("m.queryRequireDefault");
-  });
-
-  it("38b. non-expanded search still sends m.queryRequireDefault=on", async () => {
-    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
-    await fulltextSearchTool({ name: "Patrick Flynn" });
-    const url = mockFetch.mock.calls[0][0] as string;
+    // m.queryRequireDefault=on stays on — it requires at least one phrase to match
     expect(url).toContain("m.queryRequireDefault=on");
   });
 

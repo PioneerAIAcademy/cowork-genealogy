@@ -57,7 +57,7 @@ function validateInput(input: FulltextSearchInput): void {
   }
 }
 
-function buildUrl(input: FulltextSearchInput, nameOverride?: string, nameExpanded?: boolean): string {
+function buildUrl(input: FulltextSearchInput, nameOverride?: string): string {
   const params: string[] = [];
   const add = (key: string, value: string | number): void => {
     params.push(`${key}=${encodeURIComponent(String(value))}`);
@@ -84,13 +84,10 @@ function buildUrl(input: FulltextSearchInput, nameOverride?: string, nameExpande
   add("count", input.count ?? 5);
   add("offset", input.offset ?? 0);
 
-  // m.queryRequireDefault=on makes every term required within each field.
-  // When name expansion is active the expanded phrases must be OR (any
-  // variant matching satisfies the field), so we omit it. Cross-field
-  // semantics remain AND regardless of this setting.
-  if (!nameExpanded) {
-    add("m.queryRequireDefault", "on");
-  }
+  // m.queryRequireDefault=on requires at least one of the listed terms/phrases
+  // to appear in the document. With quoted-phrase expansion this gives the
+  // desired OR behaviour: any variant matching satisfies the name field.
+  add("m.queryRequireDefault", "on");
 
   if (input.includeFacets) {
     add("m.defaultFacets", "on");
@@ -182,7 +179,7 @@ export async function fulltextSearchTool(
   const expansion = input.name ? expandNameForFulltext(input.name) : null;
 
   const token = await getValidToken();
-  const url = buildUrl(input, expansion?.expanded, expansion != null);
+  const url = buildUrl(input, expansion?.expanded);
 
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,

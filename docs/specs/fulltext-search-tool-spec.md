@@ -236,9 +236,9 @@ phrases, one per variant:
 - Input: `name: "Elizabeth Martin"`
 - Sent to API: `q.fullName="Elizabeth Martin" "Betty Martin" "Bess Martin" ...`
 
-When expansion is active, `m.queryRequireDefault` is omitted so the
-phrases are OR within the field (any variant matching satisfies the
-name constraint). Cross-field semantics remain AND.
+`m.queryRequireDefault=on` stays on: it requires at least one of the
+listed phrases to appear in the document, giving the desired OR
+behaviour (any variant matching satisfies the name field).
 
 ### Bidirectional
 
