@@ -382,7 +382,7 @@ function canonicalCountry(segment: string): string | null {
   return Object.hasOwn(COUNTRY_ALIASES, norm) ? COUNTRY_ALIASES[norm] : null;
 }
 
-function placeSegments(place: string): string[] {
+export function placeSegments(place: string): string[] {
   return place
     .split(",")
     .map((s) => s.trim())
