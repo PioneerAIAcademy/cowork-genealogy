@@ -318,8 +318,12 @@ Two consequences for a conversion:
   check, and the matcher are all unverified against a live session; no CI job
   reaches that runtime.
 - **Nothing enforces the routing-skill contents list.** A routing skill that grows a
-  gate back fails no test, and the acceptance check is applied by a reader. The
-  two pairs that exist were both written before the rule and both violate it.
+  gate back fails no test, and the acceptance check is applied by a reader. Both
+  *thin-routing* pairs — `proof-conclusion` and `research-exhaustiveness` — were
+  written before the rule and both violate it. `record-extraction` is the third
+  pair and is not one of these: it acquires, triages and logs before batching one
+  extractor per record, so the list above does not describe it and the
+  orchestrator still routes it as a skill.
 - **The direct route is measured on two runs.** Whether the orchestrator reaches
   every paired agent that way, or only the ones it has a strong prior about, is
   not known.
