@@ -27,10 +27,9 @@ promotion out of that pool.
 all, so senior-required work goes to a senior in its own lane — a
 `developer`+`senior` issue to a `senior-developers` member, a
 `genealogist`+`senior` issue to a `senior-genealogists` member. `fill-ready`
-labels those and promotes the reviewed ones into the **senior pool in Ready**, a
-third standing depth of ~10 alongside the two junior pools. It sets no assignee
-on anything: seniors self-serve from that pool the way everyone self-serves from
-the junior ones, and the lead can still hand one out at standup.
+labels those and promotes the reviewed ones into its lane's Ready pool alongside
+the junior work. It sets no assignee on anything: seniors self-serve the way
+everyone else does, and the lead can still hand one out at standup.
 
 Everyone in this table is expected to post a standup update, seniors included —
 the two who are not are listed under "Does not post standup" below.
