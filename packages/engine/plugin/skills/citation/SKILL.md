@@ -238,7 +238,9 @@ beats a complete-looking citation with invented detail:
    covers record data (locators, family numbers, places), not custody
    chains. Mention the inferred repository in `notes` or flag it
    needs-verification; never write it into the citation as
-   established fact.
+   established fact. The creator never doubles as the custodian: a
+   name in `who` — including a `tree.gedcomx.json` `author` — must
+   never be repeated in the custody parenthetical of `where`.
 
 ### Review path is read-only
 
@@ -285,14 +287,19 @@ FamilySearch.org, accessed 1 May 2026.
 #### Vital records (death certificate)
 ```
 [STATE] Department of Health, death certificate no. [NUMBER]
-([YEAR]), [PERSON NAME]; [ARCHIVES], [CITY]; digital image,
-[REPOSITORY], accessed [DATE].
+([YEAR]), [PERSON NAME], died [DATE OF DEATH], [PLACE OF DEATH];
+[ARCHIVES], [CITY]; digital image, [REPOSITORY], accessed [DATE].
 ```
+Take the death date and place from the assertion or tree fact for
+that record, never from `when_created` — that is the filing date.
+Mark either with an unknown-marker when the project documents do
+not carry it.
 Example:
 ```
 Pennsylvania Department of Health, death certificate no. 4521
-(1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg;
-digital image, FamilySearch.org, accessed 3 May 2026.
+(1908), Patrick Flynn, died 12 March 1908, Schuylkill County,
+Pennsylvania; Pennsylvania State Archives, Harrisburg; digital
+image, FamilySearch.org, accessed 3 May 2026.
 ```
 
 #### Vital records (birth certificate)
@@ -425,11 +432,13 @@ nothing more.
 **Scope rule — use the `query` field, not notes context:** The
 log's `query` field (surname, given name, birth year, birth place)
 defines the actual search parameters. Use these for `where_within`.
-Notes may describe outcomes ("site may not have this collection
-indexed") or verbatim scope phrases ("broadened to all Pennsylvania —
-still no match") and may be included when they directly state the
-search scope. However: a note saying "no results for [NAME] in
-[COUNTY]" means the researcher found nothing matching that profile —
+Notes may describe outcomes or carry a scope phrase, and may be
+included when they directly state the search scope. Quote such a
+phrase only by copying it character-for-character out of the note
+you just read; never reword it, and never reproduce a phrase printed
+in this file — the examples here are shapes, not data, and a
+near-miss presented as the log's wording is a fabricated quotation.
+However: a note saying "no results for [NAME] in [COUNTY]" means the researcher found nothing matching that profile —
 it does NOT mean [COUNTY] was the search scope. Do not infer a
 multi-step or narrower search from geographic context in the notes;
 the query field is the authoritative source for search parameters.
