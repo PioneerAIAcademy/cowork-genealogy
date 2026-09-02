@@ -53,8 +53,6 @@ One invocation per request.
 
 Relay the agent's returned outcome as-is. Do not re-run the match threshold, re-argue a confidence, or re-state the correlation.
 
-**Then run the warnings pass.** If the agent wrote anything — any `pe_` link, any stub person — invoke `check-warnings` on every person id it listed, and surface what comes back. The agent holds no tool that can run this and cannot invoke a skill, so this step exists nowhere else: skip it and the plausibility check the persistence tools do not perform is simply not performed. Nothing to relay from the agent means nothing was written and nothing to check.
-
 Then recommend the next step: links written → proof-conclusion, or record-extraction for the next record; a conflict where multiple candidates genuinely compete → conflict-resolution; a blocker the agent named → the skill it named.
 
 ## Re-invocation behavior

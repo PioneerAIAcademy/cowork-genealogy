@@ -121,6 +121,37 @@ the agent's ownership, and a null `match_score`).
 to another skill loses that delegation when folded, and nothing in CI catches it —
 it cost one paid run to find here.
 
+**And the router cannot cover for it — the first fix was wrong (lead review,
+2026-09-02).** Moving the step into the routing skill looked like the answer and
+is not one: ADR-0011 now sanctions `/research` spawning a paired agent directly,
+so a step parked in the router is guaranteed by nothing. That is the ADR's own
+cost item — *anything a routing skill guaranteed must move into the agent body or
+a writer-tool precondition, because no plane sees the route* — violated by the
+PR that cited it. The step is now in the agent, which calls `person_warnings`
+itself; the agent's `tools:` gained `person_warnings` and `person_quality`, a
+deliberate widening past what the monolith held, because the monolith reached
+them by invoking a SKILL and an agent cannot.
+
+**The eval keyed on the wrong thing too.** `test_check_warnings_runs_after_a_write`
+asserted `"check-warnings" in skills_invoked`, so the correct fix would have
+turned 4 tagged tests red for taking the better route. It now accepts either the
+tool call or the skill invocation. **A validator that names a mechanism rather
+than an outcome breaks on the next conversion of that mechanism** — worth
+checking the other guardrail validators for the same shape before the remaining
+folds.
+
+**What the audit of the router found.** Of its seven instruction blocks, five are
+safe to skip because the agent body carries them verbatim from the fold (the
+wrong-skill guard, mode identification, re-invocation) or because they are
+instructions to the router itself (read-nothing, relay). The load-bearing one on
+the `Never` list — never write `research.json` yourself — is held by the hook's
+`OWNED_SECTIONS`, a plane rather than prose. Two remain route-dependent and are
+recorded rather than fixed: the delegation framing (*ask for the evaluation, not
+the artifact*), covered in substance because the agent's match thresholds are in
+its own body; and two `timeline` hand-offs inherited from the monolith, which an
+agent cannot execute but which function as recommendations its caller relays, and
+which target a skill with zero invocations across the corpus.
+
 ## Result 5 — the per-model ledger still does not separate the agent
 
 Both arms report the same two keys in `model_usage`

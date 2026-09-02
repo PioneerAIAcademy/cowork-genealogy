@@ -513,13 +513,20 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // plugin PreToolUse hook denies that section to everyone else. Like
   // proof-conclusion it holds the BROAD research_append, and the hook's caller
   // check plus AGENT_WRITABLE_SECTIONS — not this list — is what keeps it to the
-  // one section. The grant is exactly the folded skill's own former
-  // allowed-tools, unwidened: no `Read`, no `project_context`, because the body
-  // reaches project state through research_query and never named either.
+  // one section. The grant is the folded skill's own former allowed-tools plus
+  // `person_warnings`/`person_quality`, which the monolith reached by invoking
+  // the check-warnings SKILL — a route an agent does not have. Widened
+  // deliberately (lead review, 2026-09-02) because the warnings pass cannot sit
+  // in the routing skill: `/research` may spawn this agent directly, so no
+  // plane guarantees the router runs at all. Still no `Read` and no
+  // `project_context` — the body reaches project state through research_query
+  // and never named either.
   "person-evidence.md": {
     tools: [
       "materialize_facts",
       "merge_warnings",
+      "person_quality",
+      "person_warnings",
       "record_read",
       "research_append",
       "research_query",

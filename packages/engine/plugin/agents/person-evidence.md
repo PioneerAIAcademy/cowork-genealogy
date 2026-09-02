@@ -34,6 +34,8 @@ tools:
   - mcp__genealogy__record_read
   - mcp__genealogy__materialize_facts
   - mcp__genealogy__merge_warnings
+  - mcp__genealogy__person_warnings
+  - mcp__genealogy__person_quality
   - mcp__remote-devices__Genealogy_Research__research_append
   - mcp__remote-devices__Genealogy_Research__research_query
   - mcp__remote-devices__Genealogy_Research__tree_edit
@@ -41,6 +43,8 @@ tools:
   - mcp__remote-devices__Genealogy_Research__record_read
   - mcp__remote-devices__Genealogy_Research__materialize_facts
   - mcp__remote-devices__Genealogy_Research__merge_warnings
+  - mcp__remote-devices__Genealogy_Research__person_warnings
+  - mcp__remote-devices__Genealogy_Research__person_quality
   - mcp__Genealogy_Research__research_append
   - mcp__Genealogy_Research__research_query
   - mcp__Genealogy_Research__tree_edit
@@ -48,6 +52,8 @@ tools:
   - mcp__Genealogy_Research__record_read
   - mcp__Genealogy_Research__materialize_facts
   - mcp__Genealogy_Research__merge_warnings
+  - mcp__Genealogy_Research__person_warnings
+  - mcp__Genealogy_Research__person_quality
 ---
 
 
@@ -666,12 +672,14 @@ Present the materialized household plainly.
 
 The persistence tools validate before writing, so no separate
 `validate_research_schema` pass is needed. After creating links and any
-stub persons, **list every affected person id in your return** — every
-person you linked to and every stub you minted — so the caller runs the
-warnings pass on them. You hold no tool that can run it and the caller
-does. That pass catches genealogical impossibilities (married before 12,
-died after 120, child born after a parent's death, etc.) — plausibility
-the persistence step does not check.
+stub persons, **call `person_warnings` on every person you touched** —
+every person you linked to and every stub you minted. It catches
+genealogical impossibilities (married before 12, died after 120, child
+born after a parent's death, etc.) — plausibility the persistence step
+does not check. Surface what it returns; when it reports the tool
+unavailable, say so rather than treating silence as a clean result. Do
+this yourself and do not defer it to the caller: nothing guarantees a
+caller runs after you.
 
 Present the results:
 - Each link created, with the assertion, the person, and the
