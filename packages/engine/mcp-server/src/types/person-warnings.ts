@@ -29,7 +29,14 @@ export interface PersonWarning {
   mobRole?: "target" | "candidate" | "merged" | "relative";
 }
 
-export interface PersonWarningsResult {
+export interface PersonWarningsFound {
   warningCount: number;
   warnings: PersonWarning[];
 }
+
+/** Unlike every other tool here this one has no `ok` field on success, so the
+ *  no-project answer is a genuine second arm rather than an optional field.
+ *  Discriminate with `"ok" in result`. */
+export type PersonWarningsResult =
+  | PersonWarningsFound
+  | { ok: false; reason: "no_project"; errors: string[] };

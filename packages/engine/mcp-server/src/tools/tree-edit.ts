@@ -28,7 +28,15 @@ import type {
 } from "../types/gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import { atomicWriteJson, backupIfExists, readProjectJson, formatIssues } from "../utils/project-io.js";
+import {
+  atomicWriteJson,
+  backupIfExists,
+  readProjectJson,
+  formatIssues,
+  withProjectLock,
+  NoProjectError,
+  noProjectResult,
+} from "../utils/project-io.js";
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
 import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
@@ -140,7 +148,10 @@ export type TreeEditResult =
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
     }
-  | { ok: false; errors: string[] };
+  // `reason: "no_project"` marks the one ok:false that is an answer rather than
+  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
+  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
+  | { ok: false; errors: string[]; reason?: "no_project" };
 
 class TreeEditError extends Error {}
 
@@ -156,6 +167,9 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
+    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
+    // outer catch can return noProjectResult().
+    if (e instanceof NoProjectError) throw e;
     throw new TreeEditError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -618,6 +632,9 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
   input.relationship = coerceJsonArg(input.relationship) as SimplifiedRelationship | undefined;
   input.source = coerceJsonArg(input.source) as SimplifiedSourceDescription | undefined;
 
+  // Serialize the read-modify-write against every other writer on this project
+  // (issue #1715). Wraps tree_correct too, which routes here via executeTreeOps.
+  return withProjectLock(projectPath, async () => {
   try {
     // Heal legacy shapes before anything touches the document: the closed
     // shapes below would otherwise refuse every write on a pre-tightening
@@ -705,9 +722,11 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
     if (Object.keys(assignedIds).length > 0) result.assignedIds = assignedIds;
     return result;
   } catch (e) {
+    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof TreeEditError) return { ok: false, errors: [e.message] };
     throw e;
   }
+  });
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────

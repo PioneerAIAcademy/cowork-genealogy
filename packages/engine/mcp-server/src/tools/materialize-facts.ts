@@ -42,7 +42,15 @@ import type {
 } from "../types/materialize-facts.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import { atomicWriteJson, backupIfExists, readProjectJson, formatIssues } from "../utils/project-io.js";
+import {
+  atomicWriteJson,
+  backupIfExists,
+  readProjectJson,
+  formatIssues,
+  withProjectLock,
+  NoProjectError,
+  noProjectResult,
+} from "../utils/project-io.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { factsEquivalent, VITAL_PRIMARY_TYPES } from "../utils/merge-gedcomx.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
@@ -76,12 +84,21 @@ const NAME_TYPES: ReadonlySet<string> = new Set(["name"]);
 const GENDER_TYPES: ReadonlySet<string> = new Set(["gender", "sex"]);
 const SKIP_TYPES: ReadonlySet<string> = new Set(["relationship", "age", "marriage"]);
 
+/** Couple-relationship event types, broken out so tree-forget.ts can import
+ *  the set and sweep all of them without maintaining a parallel list. */
+export const COUPLE_EVENT_TYPES: ReadonlySet<string> = new Set([
+  "Marriage", "Divorce", "Annulment", "Engagement", "MarriageBanns", "Separation",
+]);
+
 /** Tree fact types whose `value` is null (events + place/duration attributes) —
  *  the qualifier `value` field is meaningful only for value-bearing types
- *  (Occupation, Race, Religion, Nationality, …). */
-const EVENT_TREE_TYPES: ReadonlySet<string> = new Set([
+ *  (Occupation, Race, Religion, Nationality, …). Exported so
+ *  tests/packaging/tree-forget-sweep-drift.test.ts (#1549) can cross-reference
+ *  its couple-event members against tree-forget.ts's swept set without
+ *  re-declaring this list. */
+export const EVENT_TREE_TYPES: ReadonlySet<string> = new Set([
   "Birth", "Death", "Christening", "Burial", "Baptism", "Cremation",
-  "Marriage", "Divorce", "Annulment", "Engagement", "MarriageBanns",
+  ...COUPLE_EVENT_TYPES,
   "Residence", "Census", "MunicipalCensus", "Immigration", "Emigration",
   "Naturalization", "Will", "Probate", "Adoption",
 ]);
@@ -103,6 +120,9 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
+    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
+    // outer catch can return noProjectResult().
+    if (e instanceof NoProjectError) throw e;
     throw new MaterializeFactsError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -434,6 +454,10 @@ export async function materializeFacts(
   // pushes a model toward stringifying it.
   input.ops = coerceJsonArg(input.ops) as MaterializeFactsOp[] | undefined;
 
+  // Serialize the read-modify-write against every other writer on this project
+  // (issue #1715) — this one writes tree.gedcomx.json, which research_append's
+  // composite path also writes, so the same per-project lock covers both.
+  return withProjectLock(projectPath, async () => {
   try {
     // Heal legacy tree shapes in memory, then read research.json (assertions
     // live there). Single-file write path — research.json is read, never written.
@@ -505,9 +529,11 @@ export async function materializeFacts(
       },
     };
   } catch (e) {
+    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof MaterializeFactsError) return { ok: false, errors: [e.message] };
     throw e;
   }
+  });
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────

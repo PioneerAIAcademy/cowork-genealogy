@@ -23,12 +23,16 @@ export class WsResearchTransport implements ResearchTransport {
 
   async getProjectState(): Promise<ProjectStateSnapshot> {
     const res = await fetch(`/api/sessions/${this.sessionId}/state`, { credentials: 'include' })
-    if (!res.ok) return { research: null, gedcomx: null, label: null }
+    if (!res.ok) return { research: null, gedcomx: null, label: null, notice: null }
     const s = await res.json()
     return {
       research: (s.research as ResearchData | null) ?? null,
       gedcomx: (s.gedcomx as GedcomxData | null) ?? null,
-      label: s.label ?? null
+      label: s.label ?? null,
+      // Always null: the hosted path pins the project to `/project`, so no
+      // folder notice is ever fired and the control plane has none to serve
+      // (issue #1899, and the onNotice comment below).
+      notice: null
     }
   }
 
@@ -47,7 +51,10 @@ export class WsResearchTransport implements ResearchTransport {
         case 'error':
           handlers.onError(msg.message as string)
           break
-        // status / agent_event are consumed by the chat UI, not the viewer.
+        // No 'notice' case: the folder-notice (research.json in a subfolder) is
+        // an on-computer concern. The hosted path pins the project to /project,
+        // so `handlers.onNotice` is never fired here. status / agent_event are
+        // consumed by the chat UI, not the viewer.
       }
     })
   }
@@ -81,7 +88,10 @@ export class WsResearchTransport implements ResearchTransport {
     const res = await fetch(`/api/feedback/context?sessionId=${this.sessionId}`, {
       credentials: 'include'
     })
-    if (!res.ok) return { files: [], sessionLogSize: 0, hasSessionLog: false }
+    // Do NOT resolve empty here: the dialog cannot tell that apart from "the folder
+    // is empty", and it would then display "(none found)" while the bundle still
+    // carries the media and the session log. Let the caller see the failure.
+    if (!res.ok) throw new Error(`Failed to read feedback context (${res.status})`)
     return (await res.json()) as FeedbackContext
   }
 

@@ -8,6 +8,7 @@ from harness.orchestrator import (
     _summarize_before_state_sources,
     _build_warnings,
     _compute_outcome,
+    _COMMISSION_VALIDATORS,
     _negative_judge_context,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
@@ -286,22 +287,41 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     # Monkey-patch the skill runner to return a successful stub (no SDK
     # call). Also write the expected output file so the search-wikipedia
     # validators (test_wrote_one_markdown_file +
-    # test_slug_schuylkill_county_pennsylvania) pass — otherwise this
-    # test would exercise the validator-failed branch instead of the
-    # judge-error branch it is meant to cover.
+    # test_slug_schuylkill_county_pennsylvania +
+    # test_saved_file_matches_template) pass — otherwise this test would
+    # exercise the validator-failed branch instead of the judge-error
+    # branch it is meant to cover.
+    #
+    # The stubbed file and the stubbed tool response have to agree: the
+    # saved-file validator compares one against the other byte-for-byte,
+    # so a response of {"title": "X"} beside a Schuylkill County file
+    # fails the run before the judge is ever reached.
+    stub_response = {
+        "title": "Schuylkill County, Pennsylvania",
+        "extract": "stub extract",
+        "url": "https://en.wikipedia.org/wiki/Schuylkill_County,_Pennsylvania",
+    }
+
     async def fake_run_skill(**kwargs):
         from harness.skill_runner import SkillRunResult
         workspace = kwargs["workspace"]
         (workspace / "schuylkill-county-pennsylvania.md").write_text(
-            "# Schuylkill County, Pennsylvania\n\nstub extract\n\nhttps://example/\n", encoding="utf-8"
+            f"# {stub_response['title']}\n\n{stub_response['extract']}\n\n"
+            f"---\n[Source]({stub_response['url']})\n",
+            encoding="utf-8",
         )
         return SkillRunResult(
             text_response="I saved the file.",
             skills_invoked=["search-wikipedia"],
             tool_calls=[
+                # LIVE, so this test also covers the production wiring of
+                # #1000's two new fields — the retention rule keeps a live
+                # response, and reverting either call site in
+                # `_run_one_test_async` must fail something.
                 {"tool": "mcp__genealogy__wikipedia_search", "args": {"query": "X"},
-                 "matched": {"kind": "predicate", "index": None},
-                 "response_fixture": None, "response": {"title": "X"}}
+                 "matched": {"kind": "live", "index": None},
+                 "response_fixture": "live:wikipedia_search",
+                 "response": stub_response},
             ],
             duration_ms=10.0,
             usage={"total_cost_usd": 0.01, "usage": {"input_tokens": 100,
@@ -333,6 +353,24 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
     # v1.7 fix: outcome must be "fail" — empty judge_dimensions can't
     # silently satisfy "every dimension scored pass" (spec §7).
     assert entry["outcome"] == "fail"
+
+    # --- #1000: the PRODUCTION WIRING, not the helpers -----------------------
+    #
+    # Every other test for these fields drives a helper directly, so reverting
+    # either call site in `_run_one_test_async` — the path that wrote all 1,945
+    # committed entries — left the whole suite green. Only the aborted path (11
+    # entries) was pinned. These four assertions close that, and they belong in
+    # this test because it is the one that already drives the real function end
+    # to end.
+    #
+    # It matters here specifically because ABSENT means "predates #1000": a
+    # refactor dropping either line yields fresh run logs that misrepresent
+    # themselves as old ones, with CI green.
+    assert entry["grading_mode"] == "dimensions"
+    assert entry["dimensions_gate_outcome"] is True
+    live = entry["runs"][0]["output"]["tool_calls"][0]
+    assert live["matched"]["kind"] == "live"
+    assert live["response"] == stub_response, "a live response survives the projection"
 
 
 def test_uncovered_tool_call_continues_to_judge(tmp_path, monkeypatch):
@@ -1059,6 +1097,105 @@ def test_error_aborted_reason_treated_as_aborted():
     ) == "aborted"
 
 
+# --- V7 (#1866): a COMMISSION-validator failure dominates a deterministic-cap
+# abort. The demotion is scoped to `_COMMISSION_VALIDATORS` (johnmarkpeterbrown's
+# ruling): a cap truncates a run mid-write, so an OMISSION-only failure ("expected
+# X, got none") is the timeout's doing and must stay `aborted`, while a commission
+# failure (wrote something it shouldn't) is a real defect a timeout cannot explain.
+# Proof-of-failure: without the demotion, the first parametrisation reads "aborted"
+# and a real defect hides behind a timeout (ut_research_plan_016's ownership-table
+# failure); without the commission SCOPING, the omission-only case below reds a
+# timeout as a skill regression (record_extraction_018/020, person_evidence_022).
+# The rest pin the scope so the demotion cannot over-fire. Nothing in CI mutates a
+# run to red a gating check (CLAUDE.md, "a new lint must be proven to fail"), so
+# these assertions are that proof.
+
+_A_COMMISSION_VALIDATOR = "test_ownership_table"  # a member of _COMMISSION_VALIDATORS
+_AN_OMISSION_VALIDATOR = "test_research_plan_new_plan_for_q_001"  # not a member
+
+
+@pytest.mark.parametrize("cap", ["max_wall_clock_seconds", "max_turns", "max_tool_calls"])
+def test_commission_validator_failure_demotes_deterministic_cap_abort_to_fail(cap):
+    spec = _positive_spec()
+    assert _compute_outcome(
+        spec=spec, validators_passed=False,
+        failed_validators=frozenset({_A_COMMISSION_VALIDATOR}),
+        judge_dimensions=[], aborted_reason=cap, activated=True,
+        skills_invoked=["search-wikipedia"],
+    ) == "fail"
+
+
+@pytest.mark.parametrize("cap", ["max_wall_clock_seconds", "max_turns", "max_tool_calls"])
+def test_omission_only_validator_failure_under_cap_stays_aborted(cap):
+    """The scoping half of the ruling, and the case nothing caught before: a run
+    the clock killed before it wrote its plan fails only an OMISSION validator
+    ("expected exactly one new plan; got []"). That is the timeout's doing, not a
+    regression, so it must stay `aborted` — the exact mis-file (pointed the other
+    way) V7 exists to prevent. Reds if the demotion ever keys on `validators_passed`
+    instead of the commission set."""
+    spec = _positive_spec()
+    assert _compute_outcome(
+        spec=spec, validators_passed=False,
+        failed_validators=frozenset({_AN_OMISSION_VALIDATOR}),
+        judge_dimensions=[], aborted_reason=cap, activated=True,
+        skills_invoked=["search-wikipedia"],
+    ) == "aborted"
+
+
+@pytest.mark.parametrize("cap", ["max_wall_clock_seconds", "max_turns", "max_tool_calls"])
+def test_clean_deterministic_cap_abort_stays_aborted(cap):
+    """The demotion must not over-fire: a cap abort with validators PASSING (no
+    failed validators at all) is still a genuine no-gradeable-result abort."""
+    spec = _positive_spec()
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, failed_validators=frozenset(),
+        judge_dimensions=[], aborted_reason=cap, activated=True,
+        skills_invoked=["search-wikipedia"],
+    ) == "aborted"
+
+
+@pytest.mark.parametrize("reason", ["error", "sdk_stream_silence", "unmatched_tool_call"])
+def test_commission_failure_does_not_demote_non_cap_abort(reason):
+    """Only the three deterministic caps are dominated, even with a commission
+    failure. `error` and `sdk_stream_silence` feed the suite breaker and exit-code
+    split; `unmatched_tool_call` is a test-corpus (exit 2) problem. Demoting any of
+    them would report an environment/corpus failure as a skill regression."""
+    spec = _positive_spec()
+    assert _compute_outcome(
+        spec=spec, validators_passed=False,
+        failed_validators=frozenset({_A_COMMISSION_VALIDATOR}),
+        judge_dimensions=[], aborted_reason=reason, activated=True,
+        skills_invoked=["search-wikipedia"],
+    ) == "aborted"
+
+
+def test_commission_validators_are_all_collected():
+    """The lead's condition (#1866): a silent rename must not drop a name out of
+    `_COMMISSION_VALIDATORS` and quietly stop demoting it. Every name in the set
+    must match a real validator `def test_*` in the validators dir. Prove it by
+    renaming any of the four members (or its collector) and watching this red."""
+    import ast
+
+    validators_dir = Path(__file__).resolve().parents[2] / "validators"
+    collected: set[str] = set()
+    for path in validators_dir.glob("test_*.py"):
+        module = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(module):
+            if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
+                collected.add(node.name)
+    # Guard the guard: an empty/misdirected scan would make the subset check vacuous.
+    assert "test_ownership_table" in collected, (
+        f"validator collection found nothing at {validators_dir} — fix this test's "
+        f"discovery, do not delete it"
+    )
+    missing = _COMMISSION_VALIDATORS - collected
+    assert not missing, (
+        f"_COMMISSION_VALIDATORS names validators no longer collected: "
+        f"{sorted(missing)}. A validator was renamed — update the set, or its "
+        f"failure under a cap silently stops demoting to fail."
+    )
+
+
 # --- Phase 2: unmatched tool calls (Type 1 vs Type 2) ----------------------
 
 
@@ -1266,6 +1403,7 @@ from harness.orchestrator import (
 class _FakeValidator:
     name: str
     passed: bool
+    reporting_only: bool = False
 
 
 def test_compute_validators_passed_all_pass():
@@ -1382,3 +1520,54 @@ def test_before_state_path_is_unchanged_by_the_artifact_fix():
     from harness.judge import _summarize_response
 
     assert _summarize_response(sources)["_summary_truncated"] is True
+
+
+def test_orchestrator_passes_text_response_to_validators(tmp_path, monkeypatch):
+    """The reply reaches run_validators (#1662).
+
+    Pinned behaviourally, not by grepping orchestrator source: the string
+    `text_response=result.text_response` appears three times in that module
+    (derive_activated, run_validators, grade), so a source assertion stays
+    green when the run_validators one specifically is dropped. And the
+    breakage is otherwise invisible — a validator that reads the reply
+    guards with "no reply, nothing to check", so losing the argument turns it
+    into a silent pass rather than an error.
+    """
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    reply = "Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`."
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response=reply,
+            skills_invoked=["search-wikipedia"],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    captured = {}
+
+    def fake_run_validators(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", fake_run_validators)
+    monkeypatch.setattr(orchestrator, "grade", lambda **kw: (_ for _ in ()).throw(
+        JudgeError("not under test")
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-08-22_00-00-00",
+    ))
+
+    assert "text_response" in captured, (
+        "orchestrator did not pass text_response into run_validators; every "
+        "validator that reads the reply is now inert"
+    )
+    assert captured["text_response"] == reply

@@ -207,6 +207,19 @@ class LocalProvider(SandboxProvider):
             "AGENT_MODE": settings.agent_mode,
             "MODEL": model,
             "PYTHONPATH": str(SERVER_ROOT),  # so `-m app.sandbox_server` resolves
+            # The agent's own summaries carry non-ASCII (mock_agent's
+            # "1 match -> logged as ..." uses U+2192), and sandbox_server prints
+            # them to a stdout redirected into ws.log below: under cp1252 that
+            # raises UnicodeEncodeError, killing the _pump task mid-relay so
+            # broadcast() never runs and the client hangs.
+            # PYTHONUTF8 rather than PYTHONIOENCODING because it also sets the
+            # default for any text pipe or bare open() in either child, not just
+            # stdio. (agent_runner's own pipe is already explicit since #1822.)
+            # This env reaches both children: sandbox_server passes
+            # os.environ.copy() to agent_runner. No-op on Linux/macOS, where the
+            # default is already UTF-8 -- which is why CI stays green while every
+            # Windows run hangs.
+            "PYTHONUTF8": "1",
             # LocalProvider maps sandbox-absolute paths under a per-sandbox dir
             # on the dev host, so the agent can't read the literal SECRETS_PATH
             # (/run/secrets/... belongs to the real machine). Point it at where
@@ -227,7 +240,15 @@ class LocalProvider(SandboxProvider):
     async def _kill_server(self, proc: subprocess.Popen) -> None:
         if proc.poll() is None:
             try:
-                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)  # kills server + agent (new session)
+                if hasattr(os, "killpg"):
+                    # kills server + agent (new session)
+                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                else:
+                    # Windows has no process groups here. terminate() reaches the
+                    # direct child only, so the agent grandchild sandbox_server
+                    # spawns is orphaned rather than killed — strictly better than
+                    # the AttributeError this replaces, but not equivalent.
+                    proc.terminate()
             except (ProcessLookupError, PermissionError):
                 proc.terminate()
         try:

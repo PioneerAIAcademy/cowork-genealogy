@@ -96,6 +96,22 @@ EXEMPT_TOOLS: dict[str, str] = {
         "rejection when an op strays outside the lane. No fixture needed; it "
         "is always available."
     ),
+    "convert_calendar": (
+        "registered as a LIVE_TOOL in mock_mcp.py (#1654) — pure calendar "
+        "arithmetic, so a fixture would have to hard-code the very answer the "
+        "test exists to measure, which is the one way of mocking this tool "
+        "that is worse than not mocking it. It calls the real compiled "
+        "implementation, deriving the Julian/Gregorian offset by JDN round-"
+        "trip. No fixture needed; it is always available. conflict-resolution "
+        "declares the same tool, so this exemption drops convert_calendar from "
+        "that skill's missing list too — it does NOT silence that skill, which "
+        "still warns for place_search_all, an unrelated pre-existing gap. "
+        "Before the "
+        "live registration this warning was true and unactioned for two "
+        "months, because the remedies it named — add a fixture, or drop the "
+        "tool — were both wrong here; the warning now had to stop firing or it "
+        "would assert something false about a tool 11 of 16 tests exercise."
+    ),
 }
 
 
@@ -206,10 +222,10 @@ def main() -> int:
             )
 
         # Reverse: a test references a fixture for a tool the skill's
-        # allowed-tools does not grant. If the skill makes that call it is
-        # denied and the run aborts (unmatched_tool_call); at best the
-        # fixture is dead weight. This is the static catch for the
-        # "allowed-tools contradicts the test corpus" class of bug.
+        # allowed-tools does not declare. The session grants the tool
+        # (issue #1748), so the call succeeds, but the fixture suggests
+        # the skill should declare the tool — otherwise the advisory
+        # test_tool_allowlist validator will warn.
         for tool in sorted(refs):
             if tool in declared:
                 continue
@@ -218,10 +234,11 @@ def main() -> int:
                 gh_warning(
                     f"test `{test_name}` (skill `{skill}`) references an "
                     f"mcp_fixture for `{tool}`, but `{tool}` is not in "
-                    f"`{skill}`'s allowed-tools {declared or '[]'}. The skill "
-                    f"cannot call it — the call would be denied and the run "
-                    f"would abort. Inline the data into the test, or move "
-                    f"the test to a skill that declares `{tool}`.",
+                    f"`{skill}`'s allowed-tools {declared or '[]'}. The call "
+                    f"succeeds (all MCP tools are granted), but the advisory "
+                    f"validator will warn. Either add `{tool}` to the skill's "
+                    f"allowed-tools, or move the test to a skill that "
+                    f"declares it.",
                     file=f"eval/tests/unit/{skill}/{test_name}",
                 )
 

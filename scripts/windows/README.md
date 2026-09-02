@@ -28,6 +28,7 @@ there.
 | `make web` | `scripts\windows\web.bat` | Web client for `server` |
 | `make db-reset` | `scripts\windows\db-reset.bat` | Wipe the local SQLite DB and sandbox dirs |
 | `make test-all` | `scripts\windows\test-all.bat` | **The pre-PR gate** — every suite, all failures reported together |
+| `make lint` | `scripts\windows\lint.bat` | ESLint (apps/electron, eval/app) |
 | `make test-js` | `scripts\windows\test-js.bat` | JS workspace tests (turbo) |
 | `make typecheck` | `scripts\windows\typecheck.bat` | TypeScript typecheck (turbo) |
 | `make server-test` | `scripts\windows\server-test.bat` | Control-plane tests (pytest) |
@@ -36,7 +37,7 @@ there.
 | `make judge-report` | `scripts\windows\judge-report.bat` | Non-discrimination scan of the unit eval judge over committed run logs (no API calls) |
 | `make harness-test` | `scripts\windows\harness-test.bat` | Eval harness tests (pytest) |
 | `make harness-lint` | `scripts\windows\harness-lint.bat` | Harness ruff check |
-| `make agent-smoke` | `scripts\windows\agent-smoke.bat` | Plugin agent registration smoke test |
+| `make agent-smoke` | `scripts\windows\agent-smoke.bat` | Plugin agent registration + dead-stub abort smoke test |
 | `make deploy-status` | `scripts\windows\deploy-status.bat` | Health-check the deployed control plane |
 
 Pass parameters as environment variables, the same names the make targets use:
@@ -82,3 +83,9 @@ Two rules the guard enforces, because breaking either fails silently:
   `npm ci` is skipped with no error.
 - Call a sibling wrapper by its own location — `call "%~dp0install.bat"`, not
   `call scripts\install.bat`, which breaks the moment the directory moves.
+
+### Why there is no `windows-latest` CI job
+
+Adding one was considered and declined: it would arrive red on every pre-existing
+Windows-only failure and pull unrelated noise into every PR. The workaround is
+manual: `scripts\windows\test-all.bat` on the branch, output pasted in the PR.

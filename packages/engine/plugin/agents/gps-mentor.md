@@ -20,7 +20,7 @@ model: claude-sonnet-5
 tools:
   # Every MCP tool appears under ALL THREE server spellings — `genealogy` (the
   # harnesses, .mcp.json, hosted web), `remote-devices__Genealogy_Research`
-  # (cloud Cowork), and `Genealogy_Research` (on-computer Cowork). Matched
+  # (bridged), and `Genealogy_Research` (bare display_name). Matched
   # exactly with no prefix fallback, and the plugin cannot control which name
   # the host registers. See record-extractor.md for the full rationale;
   # guarded by tests/packaging/agent-tool-names.test.ts.
@@ -55,21 +55,6 @@ tools:
   - mcp__Genealogy_Research__external_links_search
   - mcp__Genealogy_Research__wiki_place_page
   - mcp__Genealogy_Research__wiki_search
-# This agent evaluates evidence already gathered; it does not gather new
-# evidence itself (see "You do NOT have search tools" below). The deny is
-# enforced even under `bypassPermissions`, which the hosted path runs
-# (issue #695), and must carry all three server spellings for the same
-# reason the allow-list above does.
-disallowedTools:
-  - mcp__genealogy__record_search
-  - mcp__remote-devices__Genealogy_Research__record_search
-  - mcp__Genealogy_Research__record_search
-  - mcp__genealogy__fulltext_search
-  - mcp__remote-devices__Genealogy_Research__fulltext_search
-  - mcp__Genealogy_Research__fulltext_search
-  - mcp__genealogy__person_read
-  - mcp__remote-devices__Genealogy_Research__person_read
-  - mcp__Genealogy_Research__person_read
 ---
 
 # GPS Mentor
@@ -125,7 +110,8 @@ deliberately:**
    which is a schema problem to surface instead.)*
 2. **Watch for truncation.** `research_query` caps `items` at 50 and reports
    `count` as the true total. If `count > 50`, you are seeing part of the set —
-   narrow the filter, and never describe a partial set as complete.
+   page with `offset` (50, then 100) until you hold `count` items, and never
+   describe a partial set as complete.
 
 `Read` remains available for the rare body no projection carries — a verdict
 file under `evaluations/`, or a specific entry you have already located by id.
@@ -461,7 +447,7 @@ plan that was too narrow to begin with.
    already-identified person are advisory, not blockers.
    A classification failure, or a relied-upon *person* with no linked
    identity assertion, is a `must_address`: cite the specific assertion IDs
-   and set `suggested_skill` to `assertion-classification` or
+   and set `suggested_skill` to `record-extraction` or
    `person-evidence`. Do not proceed to checks 1–5 below until this passes;
    they assume classified evidence with the relevant persons identified.
 

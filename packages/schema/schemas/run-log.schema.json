@@ -119,6 +119,15 @@
           "enum": ["pass", "partial", "fail", "aborted", "xfail", "xpass"]
         },
         "flaky": { "type": "boolean" },
+        "grading_mode": {
+          "type": "string",
+          "enum": ["dimensions", "invariant", "routing"],
+          "description": "What decided this test's outcome. \"invariant\": a grade_on_invariant negative, passed on its tag-gated validator alone. \"routing\": a negative with a non-empty correct_skill, decided by which skill fired. \"dimensions\": a positive test, or an out-of-scope negative (correct_skill: []), where the judge dimensions gate. Optional — absent on run logs written before this field existed."
+        },
+        "dimensions_gate_outcome": {
+          "type": "boolean",
+          "description": "Whether the judge dimensions could change this outcome for a test that RAN TO COMPLETION. It describes the test's grading design, so on an \"aborted\" entry it says how the test would have been graded, not what decided it — an abort carries zero dimensions, and the abort is what decided the outcome. False on \"invariant\" and \"routing\" tests, where they are diagnostic only — so a dimension scored 1 beside outcome \"pass\" is designed, not a defect. Optional — absent on run logs written before this field existed."
+        },
         "outcome_summary": {
           "type": "object",
           "required": ["per_run_outcomes", "aggregated_dimensions"],
@@ -165,6 +174,7 @@
         "wall_clock_ms": { "type": "number", "minimum": 0, "description": "True elapsed span max(ended_at)-min(started_at) — over this test's runs (test_totals) or all runs in the envelope (totals). Reflects real makespan under concurrency, unlike the summed duration_ms. Optional." },
         "input_tokens": { "type": "integer", "minimum": 0 },
         "cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "cache_creation_input_tokens": { "type": "integer", "minimum": 0 },
         "output_tokens": { "type": "integer", "minimum": 0 },
         "judge_input_tokens": { "type": "integer", "minimum": 0 },
         "judge_cached_input_tokens": { "type": "integer", "minimum": 0 },
@@ -197,6 +207,7 @@
         "wall_clock_ms": { "type": "number", "minimum": 0, "description": "True elapsed span max(ended_at)-min(started_at) — over this test's runs (test_totals) or all runs in the envelope (totals). Reflects real makespan under concurrency, unlike the summed duration_ms. Optional." },
         "input_tokens": { "type": "integer", "minimum": 0 },
         "cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "cache_creation_input_tokens": { "type": "integer", "minimum": 0 },
         "output_tokens": { "type": "integer", "minimum": 0 },
         "judge_input_tokens": { "type": "integer", "minimum": 0 },
         "judge_cached_input_tokens": { "type": "integer", "minimum": 0 },
@@ -252,7 +263,13 @@
         "ended_at": { "type": "number", "minimum": 0, "description": "Epoch seconds at run end. Omitted for runs that never executed. Optional." },
         "input_tokens": { "type": "integer", "minimum": 0 },
         "cached_input_tokens": { "type": "integer", "minimum": 0 },
+        "cache_creation_input_tokens": { "type": "integer", "minimum": 0 },
         "output_tokens": { "type": "integer", "minimum": 0 },
+        "model_usage": {
+          "type": "object",
+          "additionalProperties": { "type": "object" },
+          "description": "The SDK's per-model token ledger for this run, keyed by model id, verbatim (inputTokens / outputTokens / cacheReadInputTokens / cacheCreationInputTokens per entry). The run's own token fields are its column sums. More than one key means the run delegated to a plugin agent on its own model: pin — the only record of what that pin cost. Optional: absent on the abort path and in logs written before it was captured."
+        },
         "skill_cost_usd": { "type": "number", "minimum": 0 },
         "output": { "$ref": "#/$defs/run_output" },
         "validators": { "$ref": "#/$defs/validator_results" },
@@ -386,7 +403,10 @@
             "index": { "type": ["integer", "null"], "minimum": 0 }
           }
         },
-        "response_fixture": { "type": ["string", "null"] }
+        "response_fixture": { "type": ["string", "null"] },
+        "response": {
+          "description": "What the mock returned. Present when the content exists nowhere else: matched.kind of \"live\" or \"none\", OR a fixture-matched response the mock enriched after selecting it (a `staged`/`ranked`/`rankingSkipped` key — mock_mcp.py rewrites the response before logging it, and staged.resultsRef comes from randomUUID(), so no commit can rebuild it). Omitted for a plain predicate match, recoverable from response_fixture + matched.index at that commit. Optional: absent on run logs written before this field existed."
+        }
       },
       "allOf": [
         {

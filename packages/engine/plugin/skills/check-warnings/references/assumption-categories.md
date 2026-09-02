@@ -37,7 +37,7 @@ documented evidence. They are reasonable defaults that should be
 assumed true until proven otherwise.
 
 Examples relevant to the tool's checks:
-- Mothers conceive children between approximately ages 12 and 55
+- Mothers conceive children between approximately ages 12 and 45
 - Fathers conceive children between approximately ages 14 and the
   late decades
 - Marriage occurs between approximately ages 14 and 90
@@ -50,7 +50,7 @@ Examples relevant to the tool's checks:
   ~40 years between oldest and youngest)
 
 **Tool emission:** `severity: "implausible"`. Note and recommend
-corroboration. A 55-year-old mother is rare but documented; a
+corroboration. A 45-year-old mother is rare but documented; a
 13-year-old bride is unusual by modern standards but occurred in
 some historical contexts.
 
@@ -70,6 +70,25 @@ Examples:
 - A man's widow was the mother of all his children
 - Migrants followed the most popular route to their destination
 - A bride's surname is the same as her parents' surname
+  - **The record may name her parents outright.** Many marriage
+    records carry a parental-names field for both parties. When it is
+    filled, no surname inference is needed -- the parents are stated,
+    and direct evidence outranks inference. Read it before reasoning
+    from the surname at all.
+  - **Marriage order settles whether the surname is a prior
+    husband's.** A designation of "second marriage", "previously
+    married", "widow", or a marital-status column reading anything
+    other than single means her recorded surname may be a former
+    husband's rather than her parents'.
+  - **A consent signature identifies a signer, not necessarily a
+    father.** Where consent is signed for an underage bride, a signer
+    whose surname differs from hers is evidence of a stepfather or
+    guardian -- never assert her father from a consent signature
+    alone.
+  - **That signature is usually on the reverse of the license and
+    usually absent from the index.** Look for it on the image. When
+    it is not there, that is absence of evidence -- never read
+    silence as evidence that her parents shared her surname.
 - A child listed in a household is the biological child of the
   household head
 - The informant on a death record had accurate knowledge of the

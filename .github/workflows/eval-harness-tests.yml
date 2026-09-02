@@ -22,7 +22,11 @@ name: Eval harness tests
 #
 # Every test in this suite is offline and free. CI has no API key and must
 # never bill the Anthropic API, so nothing here may call a model — the same
-# invariant scripts/test.sh holds for the pre-PR gate.
+# invariant scripts/test.sh holds for the pre-PR gate. The one exception is
+# the "E2E preflight smoke" step (issue #1301): it spawns the bundled Claude
+# Code CLI (~10s) against a dead MCP stub, which calls no model — check 5's
+# whole design is a spawn-and-ask, never a prompt — but it is not a bare
+# pytest invocation like everything else here, so it's called out separately.
 #
 # The CLI tests (test_cli.py) import run_tests.py, which refuses to run
 # against a missing/stale packages/engine/mcp-server/build/ (run_tests.py
@@ -85,7 +89,13 @@ jobs:
           # with this check green. All apps/ Python lives under apps/server/, so
           # ^apps/server/ (not the broader ^apps/) is exact coverage -- apps/web and
           # apps/electron hold no .py.
-          PATTERNS: '^eval/harness/|^eval/runlogs/|^packages/engine/plugin/skills/|^packages/engine/plugin/hooks/|^apps/server/|^eval/triggering/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/schema/schemas/|^packages/engine/mcp-server/|^\.github/workflows/eval-harness-tests\.yml$'
+          #
+          # `^scripts/` (issue #1776): test_setup_feedback_case.py shells out to
+          # scripts/setup-feedback-case.sh, and the encoding lint above AST-scans
+          # scripts/claude-hooks/*.py — the only scanned .py outside the trees
+          # already matched here. Without it a scripts/-only diff reported success
+          # without running either check.
+          PATTERNS: '^eval/harness/|^eval/runlogs/|^packages/engine/plugin/skills/|^packages/engine/plugin/hooks/|^apps/server/|^eval/triggering/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/schema/schemas/|^packages/engine/mcp-server/|^scripts/|^\.github/workflows/eval-harness-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -130,7 +140,12 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         uses: astral-sh/setup-uv@v7
         with:
-          python-version: '3.11'
+          # Must match apps/server/.python-version (currently 3.12). The
+          # encoding lint AST-parses every .py in the repo, and a 3.11
+          # ast cannot parse 3.12-only syntax (feature_version only
+          # restricts to older grammars). A version mismatch silently
+          # skips files the lint exists to scan.
+          python-version: '3.12'
           enable-cache: true
           cache-dependency-glob: 'eval/harness/uv.lock'
 
@@ -156,3 +171,30 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         working-directory: eval/harness
         run: uv run --frozen pytest
+
+      # A dead-stub smoke test for issue #1301: check 5 must FAIL against a
+      # server that never starts, and its FAIL detail must carry the stub's
+      # own stderr line. The exit code is NOT load-bearing here (Promise's
+      # review): CI has no ~/.familysearch-mcp/tokens.json, so check 1
+      # (FamilySearch login) FAILs unconditionally on every runner regardless
+      # of what check 5 does, and preflight's overall exit is 1 whenever ANY
+      # check FAILs — so the RC is always 1 in this job and can never prove
+      # check 5 specifically failed. Proved live: forcing check 5 to WARN
+      # still leaves RC=1. What actually proves check 5 failed is grepping
+      # its own line for the literal FAIL status.
+      - name: E2E preflight smoke (dead MCP stub)
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: eval/harness
+        run: |
+          set +e
+          OUTPUT=$(ANTHROPIC_API_KEY=sk-ant-not-a-real-key uv run --frozen python -m e2e.preflight \
+            --mcp-server-entry tests/fixtures/dead-stub.js 2>&1)
+          echo "$OUTPUT"
+          if ! echo "$OUTPUT" | grep -q "^\[FAIL\] MCP server connects:"; then
+            echo "::error::check 5 did not FAIL against a dead stub — it degraded to WARN/SKIP, or never ran"
+            exit 1
+          fi
+          if ! echo "$OUTPUT" | grep -q "STUB-MARKER: refused to start"; then
+            echo "::error::dead-stub marker missing from preflight output — the FAIL detail lost the captured stderr"
+            exit 1
+          fi

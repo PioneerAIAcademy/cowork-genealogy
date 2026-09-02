@@ -1,0 +1,8 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia search for a fictional, sparsely-documented hamlet — mirrors the real tool's actual 404 error message, used to test the error handling path for historical-context",
+  "args": { "query": "~Hollow Creek" },
+  "response": {
+    "error": "No Wikipedia article found for 'Hollow Creek Settlement'"
+  }
+}

@@ -18,18 +18,10 @@ from __future__ import annotations
 
 import pytest
 
-
-# --- Helpers ----------------------------------------------------------
-
-def _new_log_entries(before_state, after_state) -> list[dict]:
-    """Return log entries added between before and after, keyed by id."""
-    before = before_state.get("research_json") or {}
-    after = after_state.get("research_json") or {}
-    before_ids = {e.get("id") for e in before.get("log", []) if isinstance(e, dict)}
-    return [
-        e for e in after.get("log", [])
-        if isinstance(e, dict) and e.get("id") not in before_ids
-    ]
+from validators_lib import new_log_entries as _new_log_entries
+from validators_lib import (
+    assert_capture_pending_item_not_terminal as _assert_capture_pending_item_not_terminal,
+)
 
 
 # --- Structural rules from SKILL.md -----------------------------------
@@ -89,35 +81,48 @@ def test_url_generation_log_entry_shape(before_state, after_state, test):
 
 # --- Tag-gated no-harm invariant (grade_on_invariant negatives) ------
 
-def test_no_external_search_on_planning_request(
+def test_no_external_search_or_log_on_routeaway_negative(
     before_state, after_state, tool_calls, test
 ):
     """Tag-gated (no-search-no-write): the search-external-sites no-harm
-    invariant for a planning/strategy request that should route to
-    research-plan.
+    invariant for any negative whose correct answer is to route away.
 
     search-external-sites executes a chosen external-site search — it
-    generates a pre-filled URL and logs the step to research.json. A pure
-    planning question ("what external sites should I search next?") must
-    not cause a search to be EXECUTED or logged. This is the deterministic
-    gate for the grade_on_invariant negative ut_search_external_sites_011:
-    the decline phrasing (and whether the model routes to research-plan
-    via the Skill tool or just declines in text) varies run to run, but
-    the state-harm invariant always holds and is what we assert. See
-    docs/specs/unit-test-spec.md and the sibling
-    test_search_records.py::test_no_search_or_writes_on_planning_request.
+    generates a pre-filled URL and logs the step to research.json. A request
+    that belongs to another skill must not cause a search to be EXECUTED or
+    logged. This is the deterministic gate for two grade_on_invariant
+    negatives:
+
+      - `ut_search_external_sites_011` — a planning question that belongs to
+        research-plan.
+      - `ut_search_external_sites_012` — a single record already in hand,
+        which belongs to record-extraction (issue #1519).
+
+    Both were flaky for the same reason: the decline is correct every run, but
+    its phrasing and length vary, and a longer decline that names the right
+    skill was read by the activation heuristic as substantive output. Under
+    grade_on_invariant the phrasing no longer decides the outcome; only
+    executing or logging a search does. See docs/specs/unit-test-spec.md and
+    the sibling test_search_records.py::test_no_search_or_writes_on_planning_request.
 
     Fails iff the run:
-      - made an `external_links_search` MCP call (a search was executed),
-        or
-      - appended a new `log` entry (search-external-sites records every
-        search it runs; research-plan — the acceptable route — never
-        writes `log`, so any new log entry means a search skill actually
-        ran).
+      - made an `external_links_search` MCP call (a search was executed), or
+      - appended a new **`external_site`** `log` entry (this skill records
+        every external-site search it runs).
+
+    **The log check narrows only for 012, via `route-away-writes-own-log`.**
+    011's accepted route is research-plan, which never writes `log` at all, so
+    ANY new entry there means a search skill ran and the strict form is the
+    real gate. 012's accepted route is record-extraction, which holds
+    `research_log_append` and may legitimately write a non-`external_site`
+    entry for the record it was handed — flagging that would fail 012 for
+    routing correctly. Narrowing both would have silently dropped 011's gate
+    (issue #1519), so the loosening is carried
+    by a tag on 012 alone rather than by the shared `no-search-no-write` gate.
 
     Deliberately does NOT flag other research.json writes: routing to
-    research-plan legitimately writes `plans`/`questions`, which is correct
-    behavior, not harm.
+    research-plan legitimately writes `plans`/`questions`, and record-extraction
+    legitimately writes `sources`/`assertions`. Both are correct behavior.
     """
     if "no-search-no-write" not in test.get("tags", []):
         pytest.skip("not a no-search-no-write scenario")
@@ -128,16 +133,24 @@ def test_no_external_search_on_planning_request(
         if c.get("tool", "").split("__")[-1] == "external_links_search"
     ]
     assert not searched, (
-        "planning request must not execute an external-site search; got "
+        "a route-away request must not execute an external-site search; got "
         f"external_links_search call(s) with args: "
         f"{[c.get('args') for c in searched]}"
     )
 
-    # 2. No new search log entry (research-plan never writes `log`).
+    # 2. No new search log entry. Which entries count depends on what the
+    #    accepted route is allowed to write, so the narrowing is opt-in per
+    #    test rather than applied to both.
     new_entries = _new_log_entries(before_state, after_state)
-    assert not new_entries, (
-        "planning request must not append a search log entry; new log "
-        f"ids: {[e.get('id') for e in new_entries]}"
+    if "route-away-writes-own-log" in test.get("tags", []):
+        offending = [e for e in new_entries if e.get("tool") == "external_site"]
+        detail = "external_site search log entry"
+    else:
+        offending = new_entries
+        detail = "search log entry"
+    assert not offending, (
+        f"a route-away request must not append a {detail}; new log ids: "
+        f"{[e.get('id') for e in offending]}"
     )
 
 
@@ -211,3 +224,10 @@ def test_log_site_newspapers(before_state, after_state, test):
     assert "newspapers" in sites, (
         f"expected an external_site log entry with site='newspapers'; got sites={sites}"
     )
+
+
+def test_capture_pending_item_not_terminal(before_state, after_state, test):
+    """Issue #1226 — a plan item awaiting an external-site capture must not be
+    `completed`/`skipped`. Shared with the other suite that can reach this
+    state; the assertion lives in validators_lib."""
+    _assert_capture_pending_item_not_terminal(before_state, after_state, test)

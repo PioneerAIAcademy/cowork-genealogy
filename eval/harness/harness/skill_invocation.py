@@ -177,6 +177,43 @@ def recently_succeeded(
     return False
 
 
+def did_not_land(entry: dict[str, Any]) -> bool:
+    """True when this tool call changed nothing on disk.
+
+    Two ways that happens. `is_error` is the old one. The other is the
+    no-project answer (issue #1695): the user was not in a research project, so
+    the writer tool wrote nothing and returned `reason: "no_project"` —
+    deliberately WITHOUT `is_error`, because it is an answer rather than a
+    failure. Every detector that skips a call because it never landed must skip
+    this one too, or a write that did not happen is counted as a landed
+    protected write and manufactures a violation in paid e2e grading.
+
+    Matched as a substring rather than by parsing: `response_summary` arrives
+    single-encoded, double-encoded, and truncated across the committed corpus,
+    so a parse fails on shapes a substring handles.
+
+    MATCH THE BARE NAME, never `'"no_project"'`. `_summarize_tool_response` in
+    `e2e/orchestrator.py` passes any response under 500 chars through VERBATIM as
+    the raw MCP envelope, where the tool's document is an escaped string —
+    `[{"type": "text", "text": "{\\"reason\\": \\"no_project\\"}"}]`. The quoted
+    key does not occur in that, because a backslash sits where the closing quote
+    would be. The no-project envelope measures 236 chars, or 248 for the read
+    variant, against `_RUNLOG_VERBATIM_MAX` of 500 — so it ALWAYS takes the
+    verbatim path, and the envelope shape outnumbers the unwrapped one in every
+    committed run. A quoted-key match therefore never fires in production while
+    passing every hand-built test. That orchestrator docstring says this
+    outright: "grep the bare name, which matches both."
+
+    The bare name survives the other branch too: past the threshold the
+    summarizer unwraps the document and keeps every dict key, so `reason` lands
+    as a real JSON key and matches there as well. Nothing rests on the message
+    staying short.
+    """
+    if entry.get("is_error") is True:
+        return True
+    return "no_project" in str(entry.get("response_summary") or "")
+
+
 def find_unguarded_protected_writes(
     tool_calls: list[dict[str, Any]],
     *,
@@ -189,7 +226,7 @@ def find_unguarded_protected_writes(
     rate is measured)."""
     violations: list[dict[str, Any]] = []
     for i, entry in enumerate(tool_calls):
-        if entry.get("is_error") is True:
+        if did_not_land(entry):
             continue
         tool = entry.get("tool", "")
         args = entry.get("args") or {}
@@ -583,12 +620,127 @@ def _person_id_from_pe_op(op: dict[str, Any]) -> str | None:
     return op.get("person_id") if isinstance(op.get("person_id"), str) else None
 
 
+def _assertion_id_from_pe_op(op: dict[str, Any]) -> str | None:
+    """The `assertion_id` a `person_evidence` append op cites, mirroring
+    `_person_id_from_pe_op`'s container walk.
+
+    Reads ONLY the singular key. 103 committed ops carry a plural
+    `assertion_ids` array, which is not a schema field (`person_evidence_entry`
+    is `additionalProperties: false` with `assertion_id` required), so those
+    ops are rejected writes; treating one as resolvable would exempt a link
+    that never landed."""
+    for container in ("entry", "fields"):
+        c = op.get(container)
+        if isinstance(c, dict) and isinstance(c.get("assertion_id"), str):
+            return c["assertion_id"]
+    return op.get("assertion_id") if isinstance(op.get("assertion_id"), str) else None
+
+
+def _provenance_index(
+    research: dict[str, Any] | None,
+) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+    """`(assertions_by_id, log_entries_by_id)` for the persona-reachability
+    join. Tolerates a missing or non-list section, like every other reader
+    here."""
+    research = research or {}
+    assertions = research.get("assertions")
+    log = research.get("log")
+    by_assertion = {
+        a["id"]: a
+        for a in (assertions if isinstance(assertions, list) else [])
+        if isinstance(a, dict) and isinstance(a.get("id"), str)
+    }
+    by_log = {
+        entry["id"]: entry
+        for entry in (log if isinstance(log, list) else [])
+        if isinstance(entry, dict) and isinstance(entry.get("id"), str)
+    }
+    return by_assertion, by_log
+
+
+def _lookup_assertion(
+    assertions_by_id: dict[str, dict[str, Any]], assertion_id: Any
+) -> dict[str, Any] | None:
+    """The assertion an id names, or None when the id is absent or not a string.
+
+    A `person_evidence` entry's `assertion_id` is unvalidated here, and a
+    non-string value (a list, say) raises `TypeError: unhashable type` from a
+    bare `.get()`. This module never raises."""
+    return assertions_by_id.get(assertion_id) if isinstance(assertion_id, str) else None
+
+
+def _persona_reachable(
+    assertion: dict[str, Any] | None, log_entries_by_id: dict[str, dict[str, Any]]
+) -> bool:
+    """Whether a record persona `same_person` could score against is reachable
+    for this assertion — the discriminator the §8 provenance checks narrow on.
+
+    `same_person` takes two GedcomX documents plus a focus id inside each. It
+    never reads `record_persona_id`; that field is a pointer into a retained
+    search sidecar, so a null value proves only that no sidecar was kept. What
+    decides reachability is the tool that produced the assertion:
+
+    - a non-null `record_persona_id` — `research_append` verified it against
+      the record's `gedcomx.persons[]` on write, so the persona exists;
+    - `record_read` — it returns a `SimplifiedGedcomX` with a persons array,
+      so a persona was in hand when the assertion was extracted;
+    - `record_search` with a retained `results_ref` — the sidecar result
+      carries the record's `gedcomx`.
+
+    Everything else is unreachable: image-, external-site- and PDF-sourced
+    assertions, a search whose sidecar was not retained, and **every**
+    `fulltext_search` hit — an FTS result carries transcript text, names and
+    places but no GedcomX, and its ARK is a `3:1:`/`3:2:` image entry that
+    `record_read` (which takes a `1:1:` record-persona ARK) cannot open.
+
+    UNKNOWN provenance counts as reachable, i.e. keeps flagging. Exempting on
+    an absent field is the shape this narrowing exists to reject: it would let
+    an assertion written with no `log_entry_id` shed the scoring requirement
+    entirely. Flagging there is also never worse than the un-narrowed check.
+
+    **What this deliberately does NOT decide: whether a fresh fetch would
+    work.** The question asked is "could a persona be got out of what the run
+    RETAINED" — the sidecar on disk, or the document `record_read` already
+    returned. It is not "is there any call that might produce one". 48 of the
+    306 links it exempts on today's corpus carry a `record_id` that is a `1:1:`
+    FamilySearch record ARK (29 sidecar-less `record_search`, 19
+    `image_transcribe`), so `record_read` might reach a persona for them. That
+    is left exempt on purpose: the detector cannot verify offline that such a
+    fetch resolves, and flagging on an unproven capability is the error this
+    change corrected in the `fulltext_search` lane. Tightening it is a real
+    option, not an oversight — it would also require `person-evidence` to reach
+    for `record_read` on a sidecar-less search, which needs new fixtures on
+    roughly eleven unit tests that stock none today. See
+    `docs/specs/guardrail-enforcement-spec.md` §4 for the revisit trigger.
+    """
+    if not isinstance(assertion, dict):
+        return True  # unresolvable assertion — provenance unknown, not proven unscoreable
+    if assertion.get("record_persona_id"):
+        return True
+    # `isinstance(..., str)` before the lookup, not decoration: a malformed
+    # `log_entry_id` holding a list or dict raises `TypeError: unhashable type`
+    # inside `.get()`, and this module never raises — a raise here would kill
+    # the whole run's post-run result computation. 103 committed ops already
+    # carry a plural `assertion_ids` array, so malformed id fields are real.
+    log_entry_id = assertion.get("log_entry_id")
+    entry = log_entries_by_id.get(log_entry_id) if isinstance(log_entry_id, str) else None
+    if not isinstance(entry, dict):
+        return True  # no log entry — provenance unknown
+    tool = entry.get("tool")
+    if tool == "record_read":
+        return True
+    if tool == "record_search" and entry.get("results_ref"):
+        return True
+    return False
+
+
 def unguarded_new_person_evidence_links(
     tool: str,
     args: dict[str, Any] | None,
     *,
     scored_ids: set[str],
     starting_ids: set[str],
+    research: dict[str, Any] | None = None,
 ) -> list[str]:
     """Pre-write check (issue #963, spec §8): the NEW tree person id(s) this
     pending `research_append` would link via `person_evidence` that have NOT
@@ -598,7 +750,18 @@ def unguarded_new_person_evidence_links(
     count:
     - a person id already in the starting (seed) tree is never flagged
       (linking an assertion to a pre-existing person isn't a new identity);
-    - a person id already scored by a prior successful `same_person` passes.
+    - a person id already scored by a prior successful `same_person` passes;
+    - a link whose provenance lane cannot yield a record persona is skipped
+      (`_persona_reachable`), so a person all of whose pending links are
+      unscoreable drops out. That needs the project document to join through,
+      which is what `research` supplies.
+
+    `research=None` means "no provenance available, narrow nothing" — today's
+    un-narrowed behaviour, NOT "exempt everything". A guardrail that silently
+    disables itself on an unreadable file is the worse failure, and
+    `guardrail_shadow_report._links_any_person_evidence` relies on this
+    parameter defaulting to "no narrowing" to keep meaning "does this call link
+    anyone at all".
 
     But it asks a STRICTER question than that post-run detector, and the two
     are not equivalent. The post-run form is whole-run: a `same_person`
@@ -626,6 +789,7 @@ def unguarded_new_person_evidence_links(
     args = args or {}
     if bare_tool_name(tool) != "research_append":
         return []
+    assertions_by_id, log_entries_by_id = _provenance_index(research)
     out: list[str] = []
     seen: set[str] = set()
     for op in _iter_ops(args):
@@ -633,6 +797,10 @@ def unguarded_new_person_evidence_links(
             continue
         pid = _person_id_from_pe_op(op)
         if not pid or pid in starting_ids or pid in scored_ids or pid in seen:
+            continue
+        if research is not None and not _persona_reachable(
+            assertions_by_id.get(_assertion_id_from_pe_op(op)), log_entries_by_id
+        ):
             continue
         seen.add(pid)
         out.append(pid)
@@ -647,10 +815,24 @@ def find_person_evidence_missing_same_person(
     starting_tree: dict[str, Any] | None = None,
 ) -> list[str]:
     """Every BRAND-NEW tree person (not present in `starting_tree`) that
-    receives a `person_evidence` link must have been the subject of at least
-    one `same_person` call somewhere in the run — research/SKILL.md's own
-    doctrine ("scores every cross-record link with `same_person` before it
-    links").
+    receives a **scoreable** `person_evidence` link must have been the subject
+    of at least one `same_person` call somewhere in the run.
+
+    The authority is `person-evidence/SKILL.md`, the skill that owns the
+    identity decision — not `research/SKILL.md`'s one-line orchestrator
+    paraphrase ("scores every cross-record link with `same_person` before it
+    links"), which this docstring used to cite. The narrower owning contract
+    wins on conflict, and citing the paraphrase is how the broad rule kept
+    being re-derived.
+
+    "Scoreable" is `_persona_reachable`: a link is skipped only when its
+    assertion's own provenance lane cannot yield a record persona —
+    image-, external-site- and PDF-sourced assertions, every `fulltext_search`
+    hit, and searches whose sidecar was not retained. A `record_read`-sourced
+    link and a sidecar-backed search link both stay flagged; so does unknown
+    provenance, since exempting on an absent field would be a bypass. A person
+    drops out only when EVERY link to them is unscoreable;
+    `unscoreable_person_evidence_links` counts what that skips.
 
     This is a deliberately different, narrower question than
     `find_effects_without_invocation`'s "was `person-evidence` invoked
@@ -690,10 +872,15 @@ def find_person_evidence_missing_same_person(
     new_person_ids = {p.get("id") for p in persons if isinstance(p, dict) and p.get("id") not in starting_ids}
 
     person_evidence = research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
+    assertions_by_id, log_entries_by_id = _provenance_index(research)
     linked_new_person_ids = {
         pe.get("person_id")
         for pe in person_evidence
-        if isinstance(pe, dict) and pe.get("person_id") in new_person_ids
+        if isinstance(pe, dict)
+        and pe.get("person_id") in new_person_ids
+        and _persona_reachable(
+            _lookup_assertion(assertions_by_id, pe.get("assertion_id")), log_entries_by_id
+        )
     }
     if not linked_new_person_ids:
         return []
@@ -708,19 +895,158 @@ def find_person_evidence_missing_same_person(
     ]
 
 
-# The four dedicated Cowork agents under packages/engine/plugin/agents/*.md —
-# each carries its own self-contained, baked-in doctrine (per CLAUDE.md's "No
+def unscoreable_person_evidence_links(
+    research: dict[str, Any] | None,
+    tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[str]:
+    """The `person_evidence` ids on brand-new tree persons whose assertion
+    lane cannot yield a record persona — the *unscoreable by design*
+    population `find_person_evidence_missing_same_person` deliberately does not
+    flag.
+
+    A COUNT, never a violation. The lead asked (2026-08-09) for the exemption
+    to be visible rather than silent: a population that is dropped without a
+    number attached cannot be watched if it grows, and gives a revisit trigger
+    nothing to fire on. It deliberately gets no `VIOLATION_ARMS` entry in
+    `e2e.corpus_report` — that map is checked for set equality against the
+    messages the detectors actually emit, so an arm nothing emits fails the
+    test.
+
+    Scoped exactly like the detector on WHICH PERSONS count — brand-new persons
+    only, and with no `starting_tree` every current person reads as new (the
+    same best-effort convention `find_effects_without_invocation` documents).
+
+    But the two numbers are **not** complements and must not be subtracted from
+    one another: this counts exempted LINKS, while the detector emits one
+    violation per flagged PERSON. Same population of persons, different unit.
+    """
+    research = research or {}
+    tree = tree or {}
+    persons = tree.get("persons") if isinstance(tree.get("persons"), list) else []
+    starting_persons = (
+        (starting_tree or {}).get("persons") if isinstance((starting_tree or {}).get("persons"), list) else []
+    )
+    starting_ids = {p.get("id") for p in starting_persons if isinstance(p, dict)}
+    new_person_ids = {p.get("id") for p in persons if isinstance(p, dict) and p.get("id") not in starting_ids}
+
+    person_evidence = research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
+    assertions_by_id, log_entries_by_id = _provenance_index(research)
+    return [
+        pe["id"]
+        for pe in person_evidence
+        if isinstance(pe, dict)
+        and isinstance(pe.get("id"), str)
+        and pe.get("person_id") in new_person_ids
+        and not _persona_reachable(
+            _lookup_assertion(assertions_by_id, pe.get("assertion_id")), log_entries_by_id
+        )
+    ]
+
+
+def check_guardrail_compliance(
+    tool_calls: list[dict[str, Any]],
+    final_research: dict[str, Any] | None,
+    final_tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[str]:
+    """The §8 HARD guardrail detector — every non-windowed check, in one call.
+
+    docs/specs/guardrail-enforcement-spec.md §8. A guardrail skill's
+    effect present in the FINAL project state with no matching successful
+    invocation anywhere in the run, or a resolved question's proof_summary
+    missing its mandatory gps-mentor proof-critique verdict. Mirrors the unit
+    harness's `test_positive_fails_when_skill_not_in_skills_invoked`, which
+    had no e2e equivalent. Unlike §4.1's shadow-mode recency check, this only
+    asks whether the skill ran AT ALL across the whole run, so it is far less
+    prone to false positives and was safe to hard-fail on immediately rather
+    than rolling out in shadow mode first.
+
+    `find_person_evidence_missing_same_person` is a separate, also-hard,
+    also-non-windowed check added after the first real run of
+    bagley-father-1884 showed the gap in "invoked anywhere": that run linked a
+    brand-new person across 13 person_evidence entries with zero same_person
+    calls in the whole run, while person-evidence ITSELF was invoked 52 tool
+    calls later for unrelated work — passing the "invoked anywhere" bar while
+    still skipping the identity-scoring doctrine entirely. It checks the
+    specific required tool for the specific person instead of the skill's mere
+    presence in the run.
+
+    Note this is NOT vacuous on a treeless run: `find_missing_mentor_verdicts`
+    takes no tree at all, and the exhaustiveness arm reads only
+    `research["questions"]`. That is why compliance is always a real result
+    and never "not checked" for a run this harness performed.
+
+    Lives here beside the three detectors it composes so `e2e.corpus_report`
+    can import it without dragging `claude_agent_sdk` into its pure-analysis
+    posture (issue #1484); `e2e.orchestrator` re-exports it so `run_e2e_test`
+    and the `monkeypatch.setattr(orchestrator, ...)` tests keep resolving it as
+    a module global unchanged. Originally extracted from `run_e2e_test` (issue
+    #972) to be unit-testable away from the 1200-line async function.
+    """
+    return (
+        find_effects_without_invocation(
+            tool_calls, final_research, final_tree, starting_tree=starting_tree
+        )
+        + find_missing_mentor_verdicts(final_research)
+        + find_person_evidence_missing_same_person(
+            tool_calls, final_research, final_tree, starting_tree=starting_tree
+        )
+    )
+
+
+# The dedicated Cowork agents under packages/engine/plugin/agents/*.md — each
+# carries its own self-contained, baked-in doctrine (per CLAUDE.md's "No
 # playbook/reference files for agents": the agent body IS the doctrine), so a
 # protected write made by one of these is trusted without further doctrine
 # checks. `general-purpose` (the SDK's own blank-slate fallback) and any
 # other subagent_type are NOT in this set and start with no doctrine of their
 # own. Hand-maintained: no existing code enumerates this list (build_workspace
-# globs the directory but never hardcodes names), so adding a 5th agent file
+# globs the directory but never hardcodes names), so adding an agent file
 # without updating this set makes find_protected_writes_by_unnamed_delegate
 # under-flag (fail toward false-negative, not false-positive).
+#
+# The count is derivable — `ls packages/engine/plugin/agents/*.md` — so this
+# comment does not state one. It said "four" over a set of five for the four
+# days after proof-conclusion was added.
 DEDICATED_AGENT_NAMES = frozenset(
-    {"record-extractor", "image-reader", "image-reader-opus", "gps-mentor"}
+    {
+        "record-extractor",
+        "image-reader",
+        "gps-mentor",
+        # Added when proof_summaries moved behind the hook's caller check: the
+        # owning skill now delegates the write, so EVERY legitimate proof
+        # summary arrives from this agent. Without the name here each one reads
+        # as an unnamed-delegate bypass — the detector would fire hardest on
+        # exactly the runs that did the right thing.
+        "proof-conclusion",
+        # Same shape, for the exhaustiveness claim (issue #1335, Phase 4): the
+        # hook routes `exhaustive_declaration.declared: true` to this agent, so
+        # every legitimate declaration now arrives from it.
+        "research-exhaustiveness",
+    }
 )
+
+
+def strip_agent_namespace(agent_type: Any) -> str | None:
+    """The bare agent name for comparison, from a hook-stamped ``agent_type``.
+
+    Cowork logs a plugin-namespaced spelling ("genealogy-research:record-extractor")
+    while the harness reports bare names; strip a leading "<plugin>:" segment so an
+    equality/membership test that is green in CI is not dead the moment it sees
+    production data — the #650/#698/#939 failure shape (a live 2026-08-15 Cowork
+    probe logged "genealogy-research:image-reader"). One segment only: a double
+    namespace ("a:b:record-extractor") over-flags rather than over-exempts, the safe
+    direction for a shadow-only report. A non-str (never stamped by the SDK, which
+    emits str|None) maps to ``None`` so a ``in DEDICATED_AGENT_NAMES`` membership
+    test cannot raise ``TypeError`` on an unhashable value under a corpus-wide
+    replay; ``None`` flags, the same safe over-flag direction. Callers keep the RAW
+    ``agent_type`` for violation messages. Shared by the live detector below and its
+    lane-check replica (``e2e/detector_before_after_report.py::_lane_check_old``) so
+    the two cannot drift on the strip (#1856)."""
+    return agent_type.split(":", 1)[-1] if isinstance(agent_type, str) else None
 
 
 def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) -> list[str]:
@@ -765,7 +1091,7 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     bypass) — NOT a claim that the record-extraction router may do the
     extraction itself. It may not: a main-thread `extraction_append` is
     hard-denied upstream at PreToolUse by the #942 guard
-    (`e2e/orchestrator.py::is_main_thread_extraction_append` in e2e,
+    (`e2e/orchestrator.py::is_main_thread_subagent_only_tool` in e2e,
     `context_policy.subagent_only_violation` in the unit harness; e2e-test-spec
     §6.1.1), so it never executes. The attempt still reaches this function —
     `tool_calls` is appended before the PreToolUse decision — but it exits at
@@ -819,19 +1145,27 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     empty) — the same structural reason `find_effects_without_invocation`
     never needed a gps-mentor special case either.
 
-    Known gap, not yet exercised in the corpus: this treats ANY of
-    `DEDICATED_AGENT_NAMES` as sufficient for a `GUARDRAIL_SKILLS`-owned
-    write, unlike `extraction_append`'s tighter single-name check. That is
-    currently a no-op in practice — `record-extractor` explicitly disallows
-    `research_append` and never declares `materialize_facts`/`tree_edit`,
-    `image-reader`/`image-reader-opus` hold no writer tool at all, and
-    `gps-mentor`'s only writer tool is structurally exempted via the
-    `evaluations[]` carve-out above — but that's enforced by each agent's
-    own `tools:`/`disallowedTools` declaration, not by this function. A
-    future agent-file edit that gave any dedicated agent a legitimate-but-
-    narrow reason to touch a `GUARDRAIL_SKILLS`-owned section would make
-    this check silently accept it — see the identical caution already on
-    `DEDICATED_AGENT_NAMES` above about a 5th agent file.
+    Known gap, and it is LIVE — this paragraph used to say it was not.
+
+    This treats ANY of `DEDICATED_AGENT_NAMES` as sufficient for a
+    `GUARDRAIL_SKILLS`-owned write, unlike `extraction_append`'s tighter
+    single-name check. It was a no-op while the set held only agents that
+    could not reach such a section: `record-extractor` disallows
+    `research_append` and never declares `materialize_facts`/`tree_edit`, the
+    two image readers hold no writer tool at all, and `gps-mentor`'s only
+    writer tool is structurally exempted via the `evaluations[]` carve-out
+    above.
+
+    Two agents since have exactly the shape the old text warned a future edit
+    would create, and both are in `GUARDRAIL_SKILLS` above: `proof-conclusion`
+    holds `research_append` and writes `proof_summaries`, and
+    `research-exhaustiveness` holds it and writes `questions`. So a
+    `proof_summaries` write attributed to the exhaustiveness agent — or a
+    declaration attributed to proof-conclusion — is accepted here today. What
+    actually stops it is the plugin hook's per-agent lane
+    (`AGENT_WRITABLE_SECTIONS`), which does not reach either harness. Closing
+    it here means keying the exemption on (agent, section) rather than on
+    agent alone, which is the same map the hook already carries.
 
     Ships in shadow mode only (`e2e/orchestrator.py`'s
     `protected_writes_by_unnamed_delegate`, logged, never denied): historical
@@ -848,9 +1182,13 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
         args = entry.get("args") or {}
         agent_id = entry.get("agent_id")
         agent_type = entry.get("agent_type")
+        # Compare on the namespace-stripped name (Cowork logs "<plugin>:record-extractor";
+        # the harness logs bare) but keep the RAW agent_type in the messages below. See
+        # strip_agent_namespace for the #650/#698/#939 rationale and the over-flag safety.
+        bare_agent_type = strip_agent_namespace(agent_type)
 
         if bare_tool_name(tool) == "extraction_append":
-            if agent_id is None or agent_type == "record-extractor":
+            if agent_id is None or bare_agent_type == "record-extractor":
                 continue
             violations.append(
                 f"tool_calls[{i}] extraction_append was made by agent_type="
@@ -859,8 +1197,42 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
             )
             continue
 
+        if bare_tool_name(tool) == "research_append":
+            # #1273 Item 4: research_append to `sources`/`assertions` is the same
+            # protected write extraction_append is denied for. record-extraction
+            # creates these and citation refines `sources` (ownership.json); because
+            # owning_skills does not attribute those sections, without this branch an
+            # unnamed delegate writes them through the broad tool unflagged. The
+            # legitimate callers are exactly the sibling extraction_append arm's: the
+            # main thread (agent_id None; citation refines `sources` there, exempt for
+            # free) and the `record-extractor` agent alone — NOT every dedicated
+            # agent, because sources/assertions are not owning_skills sections, so a
+            # gps-mentor/proof-conclusion/research-exhaustiveness delegate writing
+            # them is out of lane exactly as it is for extraction_append (which uses
+            # the same tight `== record-extractor`). Uses `bare_agent_type` (the
+            # shared namespace strip #1856 added) so the namespaced spelling of
+            # record-extractor is exempt too. Shadow only. No `continue`: a batch may
+            # ALSO touch an owning_skills section, still checked below. One violation
+            # per offending CALL (not per op), matching the sibling arms' granularity
+            # so a batch does not inflate the shadow signal.
+            if agent_id is not None and bare_agent_type != "record-extractor":
+                sections = sorted(
+                    {
+                        op.get("section")
+                        for op in _iter_ops(args)
+                        if op.get("section") in ("sources", "assertions")
+                    }
+                )
+                if sections:
+                    violations.append(
+                        f"tool_calls[{i}] research_append to {'/'.join(sections)} was "
+                        f"made by agent_type={agent_type!r} (agent_id={agent_id!r}) — "
+                        "this is record-extraction/citation's protected write, made "
+                        "by neither the main thread nor the record-extractor agent"
+                    )
+
         owners = owning_skills(tool, args)
-        if not owners or agent_id is None or agent_type in DEDICATED_AGENT_NAMES:
+        if not owners or agent_id is None or bare_agent_type in DEDICATED_AGENT_NAMES:
             continue
         for owner in owners:
             violations.append(
@@ -997,6 +1369,147 @@ def find_citation_nulling_in_conclusions(
                     "detail": (
                         f"concluded source {sid} (via assertion {aid}, "
                         f"proof_summary {ps_id}) has a null/empty citation string"
+                    ),
+                }
+            )
+    return violations
+
+
+# Marks a #1358 tree-side citation-nulling shadow entry in the shared
+# `guardrail_shadow_violations` list. Distinct from CITATION_NULLING_KIND so the
+# report counts the two arms separately: the research-side arm reads
+# `research.json` (where the citation is AUTHORED) and the tree-side arm reads
+# `tree.gedcomx.json` (where `proof-conclusion` COPIES it at upload). They fire
+# on opposite sides of the same seam and their rates differ by two orders of
+# magnitude, so folding them into one bucket would hide that.
+TREE_CITATION_NULLING_KIND = "tree_citation_nulling"
+
+
+def find_citation_nulling_in_tree_sources(
+    research: dict[str, Any] | None,
+    tree: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Shadow-mode post-hoc detector (issue #1358): a tree ``sources[]`` entry
+    that an UPLOADED conclusion rests on carries a null or empty ``citation``.
+
+    The tree-side half of the #1133 citation-nulling class. Its sibling
+    ``find_citation_nulling_in_conclusions`` reads ``research.json``, where the
+    citation is authored, and measures **zero** across the committed corpus —
+    1,884 concluded sources over 141 runs, all cited. That zero is a real
+    invariant worth pinning, but it is not this class: the failure the class was
+    built for lives on the other side of the seam, where ``proof-conclusion``
+    copies the string onto the tree S-entry.
+
+    THE OBLIGATION, quoted from the site that states it. Not
+    ``proof-conclusion/SKILL.md`` — that body moved to the delegated agent when
+    the skill became a skill-agent pair — but
+    ``packages/engine/plugin/agents/proof-conclusion.md`` step 3, "Source entries
+    (upload-time citation + conclusion-gated upload)":
+
+        copy the finalized ``research.json`` ``sources[].citation`` string into
+        the **``citation``** field … **Upload is conclusion-gated:** the working
+        tree carries *all* sourced evidence facts (materialized at link time by
+        person-evidence), but **only ``primary``/proof-backed facts upload to
+        FamilySearch** — un-concluded evidence stays out.
+
+    THE GATE IS THAT SENTENCE, both clauses. A tree source is held to a citation
+    only when (1) the run wrote a ``proof_summaries`` entry, and (2) the source is
+    referenced by a ``primary`` fact or by a relationship — i.e. by content that
+    actually uploads. Without clause (2) this would flag every evidence fact
+    person-evidence materialized during honest research, which the same sentence
+    says is *supposed* to be citation-less until a conclusion promotes it. That
+    is why this ships in shadow with a gate rather than as a fail:
+    ``docs/specs/simplified-gedcomx-spec.md`` makes the tree citation
+    upload-populated by design, so some fraction of any count here is
+    legitimately-not-yet-uploaded and only a human can price it.
+
+    SHADOW MODE ONLY, and this card deliberately does not graduate it. The
+    research-side arm's zero is *not* a licence to graduate — per
+    ``docs/specs/guardrail-enforcement-spec.md``, "zero is not 'low enough', it
+    is nobody has seen this detector fire." Detect before teaching: a skill edit
+    costs a paid eval run and there is no baseline to measure it against until
+    this arm has been in the corpus for a few runs.
+    """
+    research = research or {}
+    tree = tree or {}
+
+    proof_summaries = (
+        research.get("proof_summaries")
+        if isinstance(research.get("proof_summaries"), list)
+        else []
+    )
+    if not proof_summaries:
+        return []  # clause 1: no written conclusion, so nothing has uploaded
+
+    sources = tree.get("sources") if isinstance(tree.get("sources"), list) else []
+    sources_by_id = {s.get("id"): s for s in sources if isinstance(s, dict)}
+    if not sources_by_id:
+        return []
+
+    def _refs(container: Any) -> list[Any]:
+        """Source ids named by one fact/relationship.
+
+        Two spellings live in the committed corpus: ``sources: [{"ref": "S3"}]``
+        (the common one) and a bare ``source_ids: ["S3"]``. Reading only the
+        first silently under-counts, which on a detector whose whole job is a
+        rate would look like the problem being smaller than it is.
+        """
+        if not isinstance(container, dict):
+            return []
+        out: list[Any] = []
+        for entry in container.get("sources") or []:
+            if isinstance(entry, dict) and entry.get("ref"):
+                out.append(entry["ref"])
+            elif isinstance(entry, str):
+                out.append(entry)
+        for sid in container.get("source_ids") or []:
+            if isinstance(sid, str):
+                out.append(sid)
+        return out
+
+    # clause 2: only content that UPLOADS holds a source to a citation.
+    uploading: list[tuple[str, Any, list[Any]]] = []
+    for person in tree.get("persons") or []:
+        if not isinstance(person, dict):
+            continue
+        for fact in person.get("facts") or []:
+            if not isinstance(fact, dict) or not fact.get("primary"):
+                continue
+            uploading.append(("primary fact", fact.get("id"), _refs(fact)))
+    for rel in tree.get("relationships") or []:
+        if not isinstance(rel, dict):
+            continue
+        uploading.append(("relationship", rel.get("id"), _refs(rel)))
+        for fact in rel.get("facts") or []:
+            if isinstance(fact, dict) and fact.get("primary"):
+                uploading.append(("relationship fact", fact.get("id"), _refs(fact)))
+
+    def _citation_is_empty(src: dict[str, Any]) -> bool:
+        c = src.get("citation")
+        return c is None or (isinstance(c, str) and c.strip() == "")
+
+    violations: list[dict[str, Any]] = []
+    seen: set[Any] = set()  # one entry per source, however many facts cite it
+    for what, holder_id, refs in uploading:
+        for sid in refs:
+            if sid in seen:
+                continue
+            src = sources_by_id.get(sid)
+            if not isinstance(src, dict):
+                continue  # dangling ref — a schema concern, not this detector's
+            if not _citation_is_empty(src):
+                continue
+            seen.add(sid)
+            violations.append(
+                {
+                    "index": -1,  # post-hoc final-state read; no tool-call index
+                    "tool": "tree.gedcomx.json",
+                    "required_skill": "proof-conclusion",
+                    "question_id": None,
+                    "kind": TREE_CITATION_NULLING_KIND,
+                    "detail": (
+                        f"uploaded tree source {sid} (referenced by {what} "
+                        f"{holder_id}) has a null/empty citation string"
                     ),
                 }
             )
@@ -1265,10 +1778,16 @@ def find_relationship_writes_without_warnings_check(
     if not new_relationship:
         return []  # the gate: nothing was written that a warnings check should have preceded
 
+    # NOTE the polarity: unlike every other `is_error` gate in this module, this
+    # one CREDITS a call rather than skipping it — a successful person_warnings
+    # means the tree was checked. So the no-project answer has to be excluded
+    # from `consulted`, not added to a skip. Get it backwards and a warnings
+    # check that never ran is credited as done, which is a MISSED violation and
+    # therefore silent (issue #1695).
     consulted = any(
         isinstance(call, dict)
         and bare_tool_name(call.get("tool") or "") == "person_warnings"
-        and not call.get("is_error")
+        and not did_not_land(call)
         for call in (tool_calls or [])
     )
     if consulted:
@@ -1288,3 +1807,179 @@ def find_relationship_writes_without_warnings_check(
             ),
         }
     ]
+
+
+# ─── §11.5 tree-encoding shadow measurement (issue #1490) ────────────────────
+
+# Shares the guardrail_shadow_violations bucket, keyed on this kind.
+TREE_ENCODING_KIND = "tree_encoding_missing"
+
+# Tiers a conclusion is expected to encode into the tree. possible / not_proved /
+# disproved warrant no tree write, so they are never flagged.
+_ENCODABLE_TIERS = ("proved", "probable")
+
+# Question-type classifier. Deliberately INCLUDES PLURALS and baptism/christening:
+# a first pass used `\b(parent|father|...)\b`, which does not match "parents"
+# (there is no word boundary between `t` and `s`), so a parentage question reading
+# "the parents of X, born <date>" fell through to the birth branch and was graded
+# against a seeded Birth fact — the exact miscount that produced a bogus "70% pass"
+# (issue #1490). Order matters: parentage/marriage/death are tested BEFORE birth,
+# because a parentage question routinely names a birth date to identify its subject
+# and must not be read as a birth question.
+_QUESTION_TYPE_PATTERNS: list[tuple[str, "re.Pattern[str]"]] = [
+    ("parentage", re.compile(r"\b(parents?|father|fathers|mother|mothers|parentage)\b", re.IGNORECASE)),
+    ("marriage", re.compile(r"\b(marriages?|married|marry|spouses?|wife|wives|husbands?|wedding)\b", re.IGNORECASE)),
+    ("death", re.compile(r"\b(deaths?|died|die|burials?|buried|obituar)\b", re.IGNORECASE)),
+    ("birth", re.compile(r"\b(births?|born|baptism|baptis(?:ed|m|ms)|christen(?:ed|ing|ings)?)\b", re.IGNORECASE)),
+]
+
+
+def classify_question_type(text: str | None) -> str | None:
+    """Coarse type for a research question, from its prose. Returns
+    parentage / marriage / death / birth, or None when nothing matches.
+
+    See `_QUESTION_TYPE_PATTERNS` for the plural inclusion and the ordering — both
+    are the corrections the lead flagged (issue #1490)."""
+    if not isinstance(text, str):
+        return None
+    for label, pattern in _QUESTION_TYPE_PATTERNS:
+        if pattern.search(text):
+            return label
+    return None
+
+
+def _person_ids_for_conclusion(
+    proof_summary: dict[str, Any],
+    person_evidence: list[dict[str, Any]],
+) -> set[str]:
+    """The tree persons a conclusion's evidence touches, joined through the only
+    path that exists: a proof_summary carries no tree foreign key, so go
+    `supporting_assertion_ids` → `person_evidence[].assertion_id` →
+    `person_evidence[].person_id`. person_evidence is the link table."""
+    supporting = set(proof_summary.get("supporting_assertion_ids") or [])
+    return {
+        e.get("person_id")
+        for e in person_evidence
+        if isinstance(e, dict)
+        and e.get("assertion_id") in supporting
+        and isinstance(e.get("person_id"), str)
+    }
+
+
+def _person_gained_structure(
+    person_id: str,
+    final_tree: dict[str, Any],
+    starting_tree: dict[str, Any] | None,
+) -> bool:
+    """Whether `person_id` gained any new fact or relationship structure between
+    the starting tree and the final tree. Person facts diff on their normalized
+    signature (`_fact_signatures`); relationships on the endpoint tuple
+    (`_relationship_key`), never on `id`, so a re-pointed PID-TODO placeholder
+    counts as new. A relationship present in BOTH trees still counts if it gained
+    a fact — a Marriage dated onto an already-seeded Couple is new structure for
+    both spouses, and reading only added/removed edges would miss it and warn on
+    correct work. When no starting tree is given, treats everything as new
+    (best-effort), matching the other post-hoc detectors."""
+    final_persons = {
+        p.get("id"): p for p in (final_tree.get("persons") or []) if isinstance(p, dict)
+    }
+    start_persons = {
+        p.get("id"): p
+        for p in ((starting_tree or {}).get("persons") or [])
+        if isinstance(p, dict)
+    }
+    fp = final_persons.get(person_id)
+    if fp is None:
+        return False
+    new_facts = _fact_signatures(fp) - _fact_signatures(start_persons.get(person_id) or {})
+    if new_facts:
+        return True
+
+    start_rels_by_key = {
+        _relationship_key(r): r
+        for r in ((starting_tree or {}).get("relationships") or [])
+        if isinstance(r, dict)
+    }
+    for r in final_tree.get("relationships") or []:
+        if not isinstance(r, dict):
+            continue
+        if person_id not in (r.get("parent"), r.get("child"), r.get("person1"), r.get("person2")):
+            continue
+        if starting_tree is None:
+            return True
+        start_rel = start_rels_by_key.get(_relationship_key(r))
+        if start_rel is None:
+            return True  # a new relationship edge touching this person
+        # Present in both — a fact gained on it (e.g. a Marriage date) is new
+        # structure. _fact_signatures reads `.facts`, so it works on a relationship.
+        if _fact_signatures(r) - _fact_signatures(start_rel):
+            return True
+    return False
+
+
+def find_conclusions_without_tree_encoding(
+    final_research: dict[str, Any] | None,
+    final_tree: dict[str, Any] | None,
+    *,
+    starting_tree: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Shadow-mode post-hoc detector (issue #1490): a completed project holds a
+    tier->=-probable conclusion, but none of the tree persons its evidence touches
+    gained any new fact or relationship this run — the conclusion was reached and
+    left un-encoded in the tree.
+
+    A SHAPE match, not a foreign key. A proof_summary carries no tree reference, so
+    "the conclusion's person" is approximated by the union of persons its supporting
+    assertions have evidence for (`_person_ids_for_conclusion`). This is deliberately
+    broad — it flags only when NONE of those persons gained ANY structure — because a
+    wrong flag on a shipped gate hard-blocks correct work with no override (the 2026
+    ruling): prefer a false allow over a false deny.
+
+    Fires only on `project.status == "completed"`; an in-progress project has not
+    reached the completion gate this measures. Returns violation records shaped like
+    the other shadow sources (int `index`, string `tool`, `kind == TREE_ENCODING_KIND`),
+    carrying the classified `question_type` for the per-type breakdown. Never fails a
+    run."""
+    research = final_research or {}
+    project = research.get("project")
+    status = project.get("status") if isinstance(project, dict) else None
+    if status != "completed":
+        return []
+
+    tree = final_tree or {}
+    person_evidence = [e for e in (research.get("person_evidence") or []) if isinstance(e, dict)]
+    questions_by_id = {
+        q.get("id"): q for q in (research.get("questions") or []) if isinstance(q, dict)
+    }
+
+    out: list[dict[str, Any]] = []
+    for ps in research.get("proof_summaries") or []:
+        if not isinstance(ps, dict) or ps.get("tier") not in _ENCODABLE_TIERS:
+            continue
+        person_ids = _person_ids_for_conclusion(ps, person_evidence)
+        if not person_ids:
+            # No evidence-linked person to check against — unclassifiable, not a
+            # violation. Counted in the denominator by the scan, never flagged.
+            continue
+        if any(_person_gained_structure(pid, tree, starting_tree) for pid in person_ids):
+            continue
+        q = questions_by_id.get(ps.get("question_id")) or {}
+        question_type = classify_question_type(q.get("question"))
+        out.append(
+            {
+                "index": -1,
+                "tool": "tree.gedcomx.json",
+                "required_skill": "proof-conclusion",
+                "question_id": ps.get("question_id"),
+                "kind": TREE_ENCODING_KIND,
+                "question_type": question_type,
+                "proof_summary_id": ps.get("id"),
+                "tier": ps.get("tier"),
+                "detail": (
+                    f"proof summary {ps.get('id')} (tier {ps.get('tier')}, "
+                    f"{question_type or 'unclassified'}) added no new tree structure "
+                    f"for any of its evidence persons"
+                ),
+            }
+        )
+    return out

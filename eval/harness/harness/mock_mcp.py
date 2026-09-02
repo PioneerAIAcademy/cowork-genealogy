@@ -68,7 +68,6 @@ Current live tools:
 
 from __future__ import annotations
 
-import functools
 import json
 import subprocess
 import sys
@@ -105,6 +104,17 @@ LIVE_TOOLS: set[str] = {
     # uncovered call here aborts the test outright (Type 1), wasting the whole
     # paid run.
     "project_create",
+    # Pure arithmetic, and the one case where a fixture would be dishonest in the
+    # opposite direction from the rest of this list: it depends on no workspace
+    # state at all, but a canned response would supply the computed answer the
+    # test exists to measure. convert-dates declares it as its ONLY tool and its
+    # body forbids hand arithmetic ("Do not fall back to hand arithmetic"), yet
+    # across four committed run logs / 56 runs it was never called once - it was
+    # registered nowhere, so it never appeared in the model's tool list and every
+    # conversion was done by hand and graded a pass. Tool Arguments is N/A
+    # whenever tool_calls is empty, so the defect switched off the dimension that
+    # covers it. conflict-resolution declares it too. Issue #1654 (deep dive).
+    "convert_calendar",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
@@ -119,8 +129,8 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 # read as an error in production and a SUCCESS in every unit eval run.
 #
 # This is `OK_FALSE_IS_FAILURE` from `src/tool-result.ts` intersected with
-# LIVE_TOOLS — the three that are not live here (`merge_tree_persons`,
-# `tree_forget`, `convert_calendar`) have no handler to mirror. The drift lint in
+# LIVE_TOOLS — the two that are not live here (`merge_tree_persons`,
+# `tree_forget`) have no handler to mirror. The drift lint in
 # tests/unit/test_mock_mcp.py pins that intersection, so a twelfth tool added on
 # the TypeScript side fails here rather than silently going unmirrored.
 #
@@ -137,6 +147,11 @@ OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     "project_context",
     "research_query",
     "project_create",
+    # Its `ok: false` means the requested correction could not be applied (an
+    # impossible date, a doubleYear inconsistent with the year, a quakerMonth
+    # ordinal out of range, or julianToGregorianDay before 1582-10-15) - a real
+    # failure the agent must see as one, not a verdict like merge_warnings' dry run.
+    "convert_calendar",
 }
 
 
@@ -148,11 +163,20 @@ def _tool_envelope(tool_name: str, response: dict[str, Any]) -> dict[str, Any]:
     successes (every one of these returns `ok: true` when it works), and gating
     on `ok` alone would flip `merge_warnings`, which shares the compiled-tool
     builder and whose `ok: false` is a legitimate answer.
+
+    `reason == "no_project"` is exempt, mirroring `writerToolResult` in
+    `src/tool-result.ts`: the user is not in a research project, so nothing was
+    asked of a project that exists. Without this mirror the unit tier would show
+    an error where production shows an answer.
     """
     envelope: dict[str, Any] = {
         "content": [{"type": "text", "text": json.dumps(response)}]
     }
-    if tool_name in OK_FALSE_IS_FAILURE_LIVE and response.get("ok") is False:
+    if (
+        tool_name in OK_FALSE_IS_FAILURE_LIVE
+        and response.get("ok") is False
+        and response.get("reason") != "no_project"
+    ):
         envelope["is_error"] = True
     return envelope
 
@@ -169,7 +193,34 @@ _PERMISSIVE_SCHEMA: dict[str, Any] = {
 }
 
 
-@functools.lru_cache(maxsize=1)
+def _run_node_eval(
+    script: str, input_str: str | None = None, timeout: int = 30
+) -> subprocess.CompletedProcess[str]:
+    """Run a Node ESM ``--eval`` script and return the completed process.
+
+    The single choke point for every ``node --input-type=module --eval``
+    invocation in this file (six call sites as of 2026-08-18, three separate
+    code-review passes flagged the hand-duplicated ``subprocess.run(...,
+    capture_output=True, text=True, encoding="utf-8", timeout=...)`` shape).
+    ``encoding="utf-8"`` is load-bearing, not cosmetic: without it, ``text=True``
+    decodes with the platform default -- cp1252 on Windows -- and crashes on
+    any non-ASCII byte Node writes to stdout (issue #1399 follow-on). Callers
+    keep their own try/except and response-shaping, which differ per tool;
+    only the subprocess invocation itself is shared.
+    """
+    return subprocess.run(
+        ["node", "--input-type=module", "--eval", script],
+        input=input_str,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=timeout,
+    )
+
+
+_build_tool_catalog_cache: dict[str, dict[str, Any]] | None = None
+
+
 def _load_build_tool_catalog() -> dict[str, dict[str, Any]]:
     """Load ``{tool_name: {"description", "inputSchema"}}`` from the compiled
     MCP server build (``allToolSchemas`` in ``build/tool-schemas.js``) — the
@@ -190,8 +241,22 @@ def _load_build_tool_catalog() -> dict[str, dict[str, Any]]:
     to permissive schemas / stub descriptions rather than aborting the run.
 
     Cached at module level so ``node`` is spawned once per process, not once
-    per test. The returned structures are treated as read-only.
+    per test — but only a successful catalog is cached. A transient failure
+    (a slow disk tripping the timeout, a stray decode error) must not poison
+    every remaining test in the process with permissive schemas; it retries
+    node on the next call instead. The returned structures are treated as
+    read-only.
     """
+    global _build_tool_catalog_cache
+    if _build_tool_catalog_cache is not None:
+        return _build_tool_catalog_cache
+    catalog = _load_build_tool_catalog_uncached()
+    if catalog:
+        _build_tool_catalog_cache = catalog
+    return catalog
+
+
+def _load_build_tool_catalog_uncached() -> dict[str, dict[str, Any]]:
     schemas_js = _MCP_BUILD / "tool-schemas.js"
     if not schemas_js.exists():
         return {}
@@ -205,12 +270,7 @@ def _load_build_tool_catalog() -> dict[str, dict[str, Any]]:
         " process.stdout.write(JSON.stringify(out));"
     )
     try:
-        proc = subprocess.run(
-            ["node", "--input-type=module", "--eval", script],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
+        proc = _run_node_eval(script)
         out = proc.stdout.strip()
         if not out:
             return {}
@@ -244,47 +304,168 @@ RANKING_SKIPPED_NOTE = (
     "broad survey, or a person not yet in the tree."
 )
 
+# Verbatim copies of UNLOGGED_SEARCHES_NOTE and NIL_SEARCH_NEEDS_LOG_NOTE in
+# packages/engine/mcp-server/src/utils/results-staging.ts, same rule as above:
+# grep the constant name to find both copies when editing either. The COUNT is
+# never computed here — `unloggedStagedSearches` is called out of the
+# compiled build (see `_stage_and_compact_search_results`), because a Python
+# restatement of the pairing rule is a second implementation the drift test
+# cannot see.
+UNLOGGED_SEARCHES_NOTE = (
+    "{n} earlier staged search response(s) in this project have no research.json log "
+    "entry: {refs}. Call `research_log_append` for each, passing that ref as "
+    "`stagedResultsRef` — the staged file holds the search's own query, so the entry "
+    "is filled in host-side and needs no reconstruction from memory. Log each as you "
+    "go rather than batching them at the end. A search with no log entry is a search "
+    "that did not happen, and the staged response is deleted 24h after it was made."
+)
 
-def _stage_search_results(
+#: Mirrors UNLOGGED_REFS_SHOWN / formatUnloggedRefs in results-staging.ts. A join is
+#: safe to restate here; the PAIRING rule is not, and is called out of the build.
+UNLOGGED_REFS_SHOWN = 5
+
+
+def _fixture_is_nil(response: dict[str, Any]) -> bool:
+    """Whether a fixture response represents a genuinely nil search.
+
+    Mirrors the production gate: an empty `results` AND a zero upstream total.
+    `record_search` reports that total as `totalMatches`, `fulltext_search` as
+    `totalResults`, and `external_links_search` as `totalForPlace`; a fixture that
+    omits its total is treated as 0, since a canned response with no total claims
+    no matches. Keyed on the total because `results` is the post-`mapEntry` set in
+    production, and a page that fails mapping empties it while the total does not.
+    """
+    if response.get("results"):
+        return False
+    for key in ("totalMatches", "totalResults", "totalForPlace"):
+        total = response.get(key)
+        if isinstance(total, (int, float)) and total > 0:
+            return False
+    return True
+
+
+def _format_unlogged_refs(refs: list[str]) -> str:
+    shown = ", ".join(refs[:UNLOGGED_REFS_SHOWN])
+    rest = len(refs) - UNLOGGED_REFS_SHOWN
+    return f"{shown}, and {rest} more" if rest > 0 else shown
+
+NIL_SEARCH_NEEDS_LOG_NOTE = (
+    "Nothing returned, and nothing staged. A nil search is a finding and must be "
+    "recorded: log it with `research_log_append`, `outcome: \"negative\"` — which "
+    "records what the search returned, not that the record is absent — the exact "
+    "parameters used, and no `stagedResultsRef`."
+)
+
+
+# Compaction the real search tool applies to its INLINE results once they are
+# staged, per tool. Both are exported from the compiled build so this harness
+# runs the production function rather than a Python restatement of it: a mock
+# that hands the agent a field production strips grades tool-usage and triage
+# against a shape production never sends (#1826, #2009). `external_links_search`
+# stages but compacts nothing, so it is absent here by design.
+_STAGED_COMPACTORS: dict[str, str] = {
+    "record_search": "compactStagedRecordSearch",
+    "fulltext_search": "compactStagedFulltextSearch",
+}
+
+
+def _stage_and_compact_search_results(
     workspace: Path, tool_name: str, response: dict[str, Any]
-) -> dict[str, Any] | None:
-    """Materialize a staged file for a mocked search response by calling the
-    compiled `stageSearchResults`, mirroring what the real search tool does.
+) -> tuple[dict[str, Any] | None, dict[str, Any], list[dict[str, Any]]]:
+    """Stage a mocked search response and apply the tool's own post-staging
+    compaction, both by calling the compiled build.
 
-    Returns the StagedHandle ({"resultsRef", "returnedCount"}) or None on a nil
-    search / staging failure (in which case the caller leaves `staged` null).
+    Mirrors the real search tool's order: stage the full-fidelity payload to the
+    sidecar first, then slim the inline copy. Doing both in ONE node process is
+    deliberate — a second subprocess per search call would widen the mock's
+    existing 30s-cap flakiness under concurrency (#2025).
+
+    Returns `(staged_handle, response, unlogged_count)`. `staged_handle` is None on
+    a nil search or a staging failure, and in that case `response` comes back
+    untouched — compaction is only ever correct once the sidecar holds the full
+    payload. The compaction functions are idempotent, so a fixture already written
+    in the compacted shape passes through unchanged. The third element is the staged
+    backlog read before this call staged anything — handles, not a count, because
+    the note names the refs (empty when unavailable).
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
     if not stager_js.exists():
-        return None
-    sjs_posix = str(stager_js).replace("\\", "/").replace("'", "\\'")
-    stager_url = ("file:///" + sjs_posix) if sys.platform == "win32" else sjs_posix
+        return None, response, []
+
+    def _url(p: Path) -> str:
+        posix = str(p).replace("\\", "/").replace("'", "\\'")
+        return ("file:///" + posix) if sys.platform == "win32" else posix
+
+    compactor = _STAGED_COMPACTORS.get(tool_name)
+    if compactor and compactor_js.exists():
+        compact_import = f"import {{ {compactor} }} from '{_url(compactor_js)}';"
+        compact_call = f" if (r) {compactor}(input.response);"
+    else:
+        compact_import = ""
+        compact_call = ""
+
     input_obj = {
         "projectPath": str(workspace).replace("\\", "/"),
         "tool": tool_name,
         "response": response,
     }
     script = (
-        f"import {{ stageSearchResults }} from '{stager_url}';"
+        f"import {{ stageSearchResults, unloggedStagedSearches }} from '{_url(stager_js)}';"
+        f"{compact_import}"
         " import { readFileSync } from 'node:fs';"
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        # Counted BEFORE staging, exactly as the real tools order it: a count taken
+        # after would include the call being answered and fire on every first search.
+        " const unlogged = await unloggedStagedSearches(input.projectPath);"
         " const r = await stageSearchResults(input);"
-        " process.stdout.write(JSON.stringify(r));"
+        f"{compact_call}"
+        " process.stdout.write(JSON.stringify({ staged: r, unlogged, response: input.response }));"
     )
     try:
-        proc = subprocess.run(
-            ["node", "--input-type=module", "--eval", script],
-            input=json.dumps(input_obj),
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
+        proc = _run_node_eval(script, json.dumps(input_obj))
         out = proc.stdout.strip()
         if not out:
-            return None
-        return json.loads(out)  # StagedHandle, or null -> None
+            return None, response, []
+        parsed = json.loads(out)
+        unlogged = parsed.get("unlogged") or []
+        staged = parsed.get("staged")  # StagedHandle, or null -> None
+        if staged is None:
+            return None, response, unlogged
+        return staged, parsed.get("response", response), unlogged
     except Exception:
-        return None
+        return None, response, []
+
+
+def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
+    """The staged backlog for a call that stages nothing (a nil search).
+
+    Runs the compiled `unloggedStagedSearches` on its own. That is one node
+    process where a nil search currently spawns none, so the per-call subprocess
+    count does not rise — the concern behind #2025 was a SECOND process per call,
+    not a first. Returns [] on any failure; this is advisory.
+    """
+    stager_js = _MCP_BUILD / "utils" / "results-staging.js"
+    if not stager_js.exists():
+        return []
+
+    posix = str(stager_js).replace("\\", "/").replace("'", "\\'")
+    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    script = (
+        f"import {{ unloggedStagedSearches }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify("
+        " { unlogged: await unloggedStagedSearches(input.projectPath) }));"
+    )
+    try:
+        proc = _run_node_eval(
+            script, json.dumps({"projectPath": str(workspace).replace("\\", "/")})
+        )
+        out = proc.stdout.strip()
+        return list(json.loads(out).get("unlogged") or []) if out else []
+    except Exception:
+        return []
 
 
 def create_mock_server(
@@ -392,8 +573,11 @@ def create_mock_server(
 
             # Stage the canned payload for search tools so the live
             # research_log_append can finalize the sidecar (mirrors the real
-            # tool returning staged.resultsRef). Only when projectPath was
-            # passed and results came back; nil searches retain nothing.
+            # tool returning staged.resultsRef), then apply the compaction the
+            # real tool applies to its inline results once staged — both by
+            # calling the compiled build, so the agent is graded on the shape
+            # production actually sends. Only when projectPath was passed and
+            # results came back; nil searches retain nothing and compact nothing.
             if (
                 _name in STAGING_SEARCH_TOOLS
                 and _workspace is not None
@@ -402,9 +586,22 @@ def create_mock_server(
                 and isinstance(response.get("results"), list)
                 and response.get("results")
             ):
-                staged = _stage_search_results(_workspace, _name, response)
+                staged, response, _unlogged_staged = _stage_and_compact_search_results(
+                    _workspace, _name, response
+                )
                 if staged is not None:
                     response = {**response, "staged": staged}
+            elif (
+                _name in STAGING_SEARCH_TOOLS
+                and _workspace is not None
+                and "error" not in response
+                and args.get("projectPath")
+            ):
+                # Nil search: nothing staged, so the combined helper above never
+                # ran and the backlog still has to be read for the note below.
+                _unlogged_staged = _unlogged_staged_handles(_workspace)
+            else:
+                _unlogged_staged = []
 
             # Fold in the ranking the real record_search performs when the
             # caller names a subject. Matched against the test's own
@@ -448,6 +645,53 @@ def create_mock_server(
                     reordered[_key] = _value
                 reordered.setdefault("rankingSkipped", RANKING_SKIPPED_NOTE)
                 response = reordered
+
+            # The unlogged-search notes (#2056), mirrored for the same reason and
+            # inserted in the same pre-`results` slot. All three staging tools carry
+            # them, so this list is STAGING_SEARCH_TOOLS.
+            #
+            # The nil condition mirrors production's on BOTH halves, and each half
+            # is a defect this PR was reviewed for:
+            #
+            # - Production requires the UPSTREAM total to be 0, not just an empty
+            #   `results`, because `results` is the post-`mapEntry` set and a page
+            #   that fails mapping empties it while `totalMatches`/`totalResults`
+            #   stays non-zero. A mock that fires where production does not makes
+            #   "the condition never held" and "the agent ignored it"
+            #   indistinguishable — in the plane whose whole job is telling those
+            #   apart. `_fixture_is_nil` reads whichever total the fixture carries.
+            # - external_links_search stays approximate in BOTH directions, and
+            #   structurally so: production keys on `allLinks`, the year-filtered set
+            #   before host filtering, which a fixture never carries. `totalForPlace`
+            #   sits before the year filter and `results` after the host filter, so
+            #   `allLinks` lies between the only two numbers available here. A fixture
+            #   omitting its total over-emits; one whose year filter emptied a non-zero
+            #   total under-emits. Stated structurally on purpose — the enumerated-case
+            #   version of this note went stale twice.
+            if (
+                _name in STAGING_SEARCH_TOOLS
+                and "error" not in response
+                and args.get("projectPath")
+            ):
+                _notes: dict[str, str] = {}
+                if _unlogged_staged:
+                    _notes["unloggedSearches"] = UNLOGGED_SEARCHES_NOTE.replace(
+                        "{n}", str(len(_unlogged_staged))
+                    ).replace(
+                        "{refs}",
+                        _format_unlogged_refs([h.get("ref", "") for h in _unlogged_staged]),
+                    )
+                if _fixture_is_nil(response):
+                    _notes["nilSearchNeedsLog"] = NIL_SEARCH_NEEDS_LOG_NOTE
+                if _notes:
+                    reordered = {}
+                    for _key, _value in response.items():
+                        if _key == "results":
+                            reordered.update(_notes)
+                        reordered[_key] = _value
+                    for _key, _value in _notes.items():
+                        reordered.setdefault(_key, _value)
+                    response = reordered
 
             entry["response"] = response
             entry["response_fixture"] = source_name
@@ -534,6 +778,12 @@ def _make_live_handler(
         return _make_compiled_tool_handler(
             "project_create", "project-create.js", "projectCreate", workspace, call_log
         )
+    if tool_name == "convert_calendar":
+        # Takes no projectPath; the generic handler injects one and convertCalendar
+        # reads only `date` and `corrections`, so the extra key is inert.
+        return _make_compiled_tool_handler(
+            "convert_calendar", "convert-calendar.js", "convertCalendar", workspace, call_log
+        )
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
@@ -569,10 +819,7 @@ def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
-                proc = subprocess.run(
-                    ["node", "--input-type=module", "--eval", script],
-                    capture_output=True, text=True, timeout=30,
-                )
+                proc = _run_node_eval(script)
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)
                 else:
@@ -641,11 +888,7 @@ def _make_log_append_handler(workspace: Path | None, call_log: list[dict[str, An
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
-                proc = subprocess.run(
-                    ["node", "--input-type=module", "--eval", script],
-                    input=json.dumps(input_obj),
-                    capture_output=True, text=True, timeout=30,
-                )
+                proc = _run_node_eval(script, json.dumps(input_obj))
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)
                 else:
@@ -710,11 +953,7 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
-                proc = subprocess.run(
-                    ["node", "--input-type=module", "--eval", script],
-                    input=json.dumps(input_obj),
-                    capture_output=True, text=True, timeout=30,
-                )
+                proc = _run_node_eval(script, json.dumps(input_obj))
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)
                 else:
@@ -787,11 +1026,7 @@ def _make_compiled_tool_handler(
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
-                proc = subprocess.run(
-                    ["node", "--input-type=module", "--eval", script],
-                    input=json.dumps(input_obj),
-                    capture_output=True, text=True, timeout=30,
-                )
+                proc = _run_node_eval(script, json.dumps(input_obj))
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)
                 else:

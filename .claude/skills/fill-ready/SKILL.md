@@ -41,12 +41,12 @@ state only when `.github/workflows/project-status-sync.yml` gets to it — so a
 just-closed card can still read `Review` for a while. Ready / In Progress /
 Review are the three active columns; **Done and Not planned are the terminal
 ones, and "outside Backlog" is never the test for anything**, because it counts
-them too.
+them too. **Feedback is none of the three** — it is an untriaged inbox that
+`/triage-feedback` owns and this skill never reads.
 
 **Re-read the board immediately before you apply anything.** The lead edits it
-while you work — in one session nine items moved to Ready and 23 assignments
-were cleared between the opening read and the write-back. A snapshot taken at
-the start of a long analysis is stale by the end of it.
+while you work, so a snapshot taken at the start of a long analysis is stale by
+the end of it.
 
 Two labels carry the routing:
 
@@ -55,30 +55,28 @@ Two labels carry the routing:
 | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
 | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose, prepared doctrine questions |
 
-**`feedback` items are fixed in Ready, and they displace.** An issue labelled
-`feedback` is a user's bug report, filed automatically into Ready by
-`add-to-project.yml`. It counts toward the ~10 unassigned `genealogist` target
-exactly like any other `genealogist` item, and you never move it — never promote
-one from Backlog, never return one to Backlog, never unassign one. **Anyone on
-the roster may claim a `feedback` item**, so a developer holding one is not a
-mis-route.
+**The `feedback` label means untriaged, and nothing else.** An issue labelled
+`feedback` is a raw user bug report, filed automatically into the **Feedback**
+column by `add-to-project.yml`. `/triage-feedback` owns that column: it works
+each case and either moves it to Not planned, or moves it to Backlog **and drops
+the `feedback` label**. So the label and the column always agree, and a triaged
+item arrives in your Backlog as an ordinary `developer` or `genealogist` issue.
 
-Because a `feedback` item cannot be the loser of a swap, **every return to
-Backlog comes from the non-`feedback` members of the pool.** Over target, return
-the lowest-ranked non-`feedback` genealogist items until the pool is at target —
-and when `feedback` alone reaches ~10, that means all of them. Ten feedback items
-and four `test <slug>` items in Ready is fourteen against a target of ten: the
-four go back. Name them and say why, as with any swap.
+That is what makes the rest of this skill apply to it unchanged. It ranks on the
+same criteria, gates through `/review-ready` like anything else, counts toward
+its pool once promoted, and can lose a swap back to Backlog. **Do not give it
+standing weight for having come from a user** — by the time you see it, triage
+has already made that judgment, and the body is the evidence.
 
-**Under target, nothing about `feedback` changes how you promote.** Six feedback
-items in Ready is a pool of six against a target of ten, so promote the best four
-genealogist items out of Backlog as usual. A quiet feedback week is when the rest
-of the genealogist queue moves.
+**While an item is in the Feedback column, do nothing with it.** Do not rank it,
+promote it, count it toward any target, or propose closing it. Deciding a
+submission is a duplicate, doesn't reproduce, or is junk is triage's call, made
+by working the case — not a ranking judgment available from the board.
 
-§7 may close a `feedback` item — a duplicate submission, one that doesn't
-reproduce, junk — and that is the only way one leaves Ready. Never propose
-closing one on age or body length; a four-line body and a Drive link is what
-every one of them looks like.
+**A `feedback`-labelled item sitting outside the Feedback column is a triage
+slip, not a candidate.** Report it and leave it; promoting it would put an
+un-worked bundle into someone's queue. **Anyone on the roster may claim work that
+came from feedback**, so a developer holding one is not a mis-route.
 
 **Exclude `label:icebox` from the Backlog when ranking.** Those are candidates
 with no decision behind them, filed there deliberately; `/review-icebox` owns
@@ -93,15 +91,15 @@ re-litigate it; just know the label is doing two jobs.
 **Label only. Never set an assignee — on anyone, including the lead.** People
 self-serve from Ready and the lead hands work out at standup. This skill adds no
 assignee at all; the only pre-assigned items on the board are `cross-cutting`
-ones, and `/find-big-wins` assigns those at filing time (§1).
+ones, and `/find-big-wins` assigns those at filing time.
 
 **And never remove one either — a role/label mismatch is not a mis-route.** The
 lead is deliberately teaching the developers to be simple genealogists and the
 genealogists to be simple developers; they reach out to each other as needed. A
-developer holding a `genealogist` issue is the point, not a defect (ruled
-2026-08-14). So the roster's role column tells you which *pool target* an item
-counts against, and nothing else: do not report a mismatch as a finding, do not
-propose unassigning, and do not rewrite the label to match the person.
+developer holding a `genealogist` issue is the point, not a defect. So the
+roster's role column tells you which *pool target* an item counts against, and
+nothing else: do not report a mismatch as a finding, do not propose unassigning,
+and do not rewrite the label to match the person.
 
 ## 1. Measure Ready depth before you rank anything
 
@@ -125,17 +123,16 @@ them.
 
 **There is no third pool for the lead.** He takes no issues — his job is coaching
 juniors into seniors — so nothing is ever assigned to `DallanQ` and no target
-covers him. What used to go there now goes to `/find-big-wins` (§6).
+covers him. Structural bets go to `/find-big-wins`; decisions get
+`needs-decision`, which `/make-decisions` drains daily.
 
 **`cross-cutting` items are outside both targets** — see "Cross-cutting items are
 the lead's direct assignments" below. Subtract them before you compute a pool.
 
-**Do not size promotions to free people.** An earlier version of this skill
-targeted "free people plus a buffer" and concluded that 19-of-21 busy meant
-promote zero. That is wrong: busy people finish, and the menu has to be stocked
-when they do. How many people are idle right now is not the question. Report
-In Progress / Review counts if they are interesting, but never let them set the
-number.
+**Do not size promotions to free people.** Busy people finish, and the menu has
+to be stocked when they do — how many people are idle right now is not the
+question. Report In Progress / Review counts if they are interesting, but never
+let them set the number.
 
 ### Promotion is a swap, not an addition
 
@@ -158,13 +155,14 @@ Backlog outranks what is there. Say so plainly rather than padding to a number.
 
 ### What loses a swap
 
-Rank the unassigned Ready items with the same §2 heuristics you rank Backlog
-with. What tends to lose:
+Rank the unassigned Ready items with the same heuristics you rank Backlog with.
+What tends to lose:
 
 - An item whose body is a bare pointer to a plan doc — it cannot be chosen off a
   menu without opening something else.
 - An item that is really a question, not a task ("I'm not sure if this is an
-  issue… worth an investigation") — that is Gate 2, and it belongs to the lead.
+  issue… worth an investigation") — that is the unanswered-question gate, and it
+  belongs to the lead.
 - Surplus from a **homogeneous pool**. When one batch supplies many
   interchangeable tasks (the 32 record-hint `test <slug>` adjudications), keep
   enough for real choice — about half a pool's target — and return the rest.
@@ -198,8 +196,9 @@ for the second reason — an open design fork, an unanswered doctrine call, a bl
 radius nobody wrote down. Those get `needs-decision`, and the work behind them is
 often junior once the answer exists. Only what would still be hard after every
 question is answered gets `senior`, and a `senior` item is assigned to a senior in
-its lane. §6 is the whole rule; get the two apart before you label, because
-`senior` on an undecided item makes a sentence look like a scarce skill.
+its lane. "Above the junior pools" below is the whole rule; get the two apart
+before you label, because `senior` on an undecided item makes a sentence look
+like a scarce skill.
 
 Decide seniority **first**, then rank. A high-priority senior item does not win a
 place in the unassigned pool by being important; being important is what moves it
@@ -287,9 +286,8 @@ both, every run, over the last four weeks:
 
 **Do not count with `--search "created:$a..$b"` per week.** GitHub's range is
 inclusive at *both* ends, so consecutive windows both claim the boundary day and
-every week is inflated — on 2026-08-14 that reported 239 filed for a week that
-saw 221, and 92 for one that saw 85. Pull the dates once and bucket them
-locally with a half-open range instead:
+every week is inflated. Pull the dates once and bucket them locally with a
+half-open range instead:
 
 ```sh
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state all --limit 2000 \
@@ -307,11 +305,6 @@ for w in range(4, 0, -1):
 print('open now:', sum(1 for i in a if i['state'] == 'OPEN'))
 PY
 ```
-
-Baseline measured 2026-08-01, for comparison only — recompute, never quote it:
-the board ran at equilibrium (~17 filed / ~17 closed per week) through late July,
-then an audit wave pushed open issues to 118 with ~90% of them filed in two
-weeks. Median cycle time was 7 days, p90 37.
 
 When arrival exceeds closure for **three consecutive weeks**, say so at the top
 of the report with the arithmetic, and name the three levers plainly, because
@@ -331,7 +324,7 @@ full (`docs/sponsor-status-update.html`, slide 11):
 | Milestone | When | What changes |
 |---|---|---|
 | **Beta** — wider in-house users, all roles and skill levels | **Oct–Nov 2026** | People outside the senior-genealogist alpha use it without an expert watching |
-| **Public rollout** at RootsTech | **2027-03-04** — a fixed conference date, confirmed by the lead 2026-08-01. It cannot slip a week to absorb an overrun | Strangers use it, including the Temple open-house helpers |
+| **Public rollout** at RootsTech | **2027-03-04** — a fixed conference date. It cannot slip a week to absorb an overrun | Strangers use it, including the Temple open-house helpers |
 
 Compute the slack at the top of every run — urgency has to be live, not a
 number frozen into this file:
@@ -343,8 +336,8 @@ python3 -c "import datetime;d=datetime.date.today();print('beta slack:',(datetim
 ### Which items gate a milestone
 
 **Re-derive membership every run; never trust a list of issue numbers, including
-the one below.** This repo's issues go stale in days (§8), and a gating set
-copied forward becomes wrong exactly when it matters. Derive it by asking the
+the one below.** This repo's issues go stale in days, and a gating set copied
+forward becomes wrong exactly when it matters. Derive it by asking the
 milestone's own question:
 
 - **Beta gate** — *would a non-expert user hit this, or would we be unable to
@@ -361,19 +354,16 @@ milestone's own question:
   defense (issue #847, unstarted), the production tool-call ledger (issue
   #1054), and judge calibration (issue #1090).
 
-There is no standing "what to do next" document to rank from — the one that
-existed was retired 2026-08-09 because its priorities went stale faster than
-anyone re-read them. Rank from repo state instead: the board itself — which is
-now also where the what-nothing-checks and open-questions registers live, since
-`docs/architecture.md` §9.4 and §10 were reduced to pointers into it on
-2026-08-09 — and `docs/adrs/ADR-0009-refuted-agent-design-claims.md`, which tells
-you which proposals have already been argued and disproved.
+**There is no standing "what to do next" document, and do not create one.** Rank
+from repo state: the board itself, which is also where the what-nothing-checks
+and open-questions registers live, plus
+`docs/adrs/ADR-0009-refuted-agent-design-claims.md`, which tells you which
+proposals have already been argued and disproved.
 
 **Instrument before fix.** An item that restores a broken measurement outranks
-the fixes that measurement is supposed to evaluate — that is already heuristic 2
-below, and it is doubly true against a deadline: quality work done while the
-quality signal is uncalibrated cannot be shown to have worked, so it buys a date
-nothing.
+the fixes that measurement is supposed to evaluate — heuristic 2 below, and
+doubly true against a deadline: quality work done while the quality signal is
+uncalibrated cannot be shown to have worked, so it buys a date nothing.
 
 Read every Backlog title. Read the **bodies** only of the plausible candidates —
 usually 10–20 of them. Ranking heuristics, in order:
@@ -408,25 +398,18 @@ report says which higher-ranked item it displaced.
 
 **Long-lead work starts a milestone early, not when it becomes urgent.** The
 standing example is prompt-injection defense (issue #847): it gates the public
-rollout, not beta, so it loses every impact ranking today — and its junior half
-cannot begin until a senior settles the doctrine, which means an item that
-"isn't due until March" has to be converted out of the senior queue (§6) in the
-fall or it will not land at all. A pure impact-ranker promotes it the week it is
-already too late. When you find one of these, say so in the escalation line, not
-in a footnote.
+rollout, not beta, so it loses every impact ranking today, and its junior half
+cannot begin until a senior settles the doctrine. An item that "isn't due until
+March" has to be converted out of the senior queue in the fall or it will not
+land at all, and a pure impact-ranker promotes it the week it is already too
+late. When you find one of these, say so in the escalation line, not in a
+footnote.
 
 **Cheapness is a tiebreaker, not a rank.** An issue that names the file, the
 line and the change is worth more than its size suggests — *between two items of
 comparable impact*. It never promotes a low-impact item over a high-impact one.
 Unblocked-and-high-impact usually wins; cheap-and-unblocked is fine every once in
 a while, so cap it at **one** such item per fill and say that is why it is there.
-
-This was rank 3 until 2026-08-01, and the failure it produced is the one to
-watch for: a lint-hardening item (#1014, a loose substring matcher in a lint that
-had shipped the day before) was promoted over #945 and #1085 purely for being
-cheap, unblocked and independent of an open policy call. Zero research or
-performance impact. The correction the lead gave, verbatim: *"I'm ok with cheap
-and unblocked every once in a while, but unblocked and high-impact usually wins."*
 
 **Say the impact out loud for every promotion.** One clause naming what it makes
 better — a right answer reached, a wrong one prevented, wall-clock or spend
@@ -467,10 +450,10 @@ alone clears nothing. Do **not** test whether the sha is an ancestor of `main`:
 this repo squash-merges, so a merged branch's commits never are, and that test
 holds every cleared blocker shut.
 
-Also check *why* it closed. One issue was closed in a sweep as "low value,
-nobody has hit it since July" while a newer issue documented the same root cause
-producing silent data corruption. A closed blocker whose closing rationale is
-contradicted by newer evidence is not a cleared blocker — it is a finding.
+Also check *why* it closed. A closed blocker whose closing rationale is
+contradicted by newer evidence — a sweep closed it as low-value while a newer
+issue documents the same root cause causing real harm — is not a cleared blocker.
+It is a finding.
 
 **A hard blocker disqualifies the item.** Leave it in Backlog and name the
 blocker in your report.
@@ -482,10 +465,10 @@ designs without choosing, is **not Ready** regardless of its dependencies. A
 junior handed it either guesses at a decision that was the lead's, or stalls.
 
 These are not blocked on a task — they are blocked on a decision only the lead
-can make. **Label them `needs-decision`, not `senior`** (§6): the work behind the
-fork is frequently junior, and calling it senior sends a sentence looking for a
-scarce person. Leave them in Backlog and name, in your report, the decision and
-the Ready-able task it unblocks. That pairing is the highest-value line you
+can make. **Label them `needs-decision`, not `senior`**: the work behind the fork
+is frequently junior, and calling it senior sends a sentence looking for a scarce
+person. Leave them in Backlog and name, in your report, the decision and the
+Ready-able task it unblocks. That pairing is the highest-value line you
 produce — one answer turns a stuck item into a junior task.
 
 ### Gate 3 — soft collision (does *not* disqualify)
@@ -496,6 +479,55 @@ pick them up will never read your report.
 
 **Contention over a skill's eval snapshot is the exception and is Gate 4** — that
 one is hard, because the second item cannot land without paying for a second run.
+
+#### Finding them
+
+The Gate 4 map below keys on snapshot paths by construction, so a collision
+anywhere else — engine source, the harness, a spec — is invisible to it. Run this
+detector as well.
+
+**The half nothing else can cover is issue-against-issue.** `/review-ready` fans
+out one agent per issue and those agents do check open PRs, so the
+issue-against-PR half is largely covered. But each agent sees exactly one issue,
+so a pair of issues that edit the same file is invisible to all of them.
+
+Run it over `Ready,In Progress,Review` for the issue-against-issue half, and over
+the promotion shortlist for the issue-against-PR half. It reads `**Touches:**`
+lines, so it is only ever as good as they are — a missing line means an item
+simply does not appear.
+
+```sh
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 > /tmp/board.json
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
+  --json number,title,body > /tmp/open.json
+gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
+  --json number,title,files > /tmp/prs.json
+python3 .claude/skills/fill-ready/collisions.py \
+  /tmp/board.json /tmp/open.json /tmp/prs.json "Ready,In Progress,Review"
+```
+
+**Three guards keep it from firing on almost everything. Do not remove one
+without re-measuring.**
+
+| Guard | What it means |
+|---|---|
+| A concrete file never implies its directory | Two files in `src/tools/` are not a collision |
+| A bare directory pairs only if it is a snapshot path or a **unit dir** — never an ordinary container | Naming `src/tools/` means "I add a file here", not "I edit all 47". A skill dir, a scenario, an e2e fixture *is* the unit, so naming it does mean all of it |
+| A file named by more than 3 candidates is a hub, reported once | `docs/architecture.md` is the repo's map; everyone edits it, in different sections |
+
+**Do not swap the unit/container test back for a size threshold.** Size is a
+proxy that misses in both directions: `apps/server/app/sandbox` is 5 files and a
+container, `eval/runlogs/unit/<skill>` is 11 and a unit.
+
+**A parenthetical that narrows a directory is not read.** `apps/server/app/sandbox/
+(LocalProvider WS path)` names one file, and the extractor drops the parenthetical
+as punctuation. That is why the "too broad to pair" list exists and says *read
+these by hand* — it is the honest bucket, not a failure.
+
+The verdict it prints is advisory: a shared **snapshot** path means Gate 4 and is
+hard, anything else is Gate 3 and only needs the notes below. Read the pairs, do
+not paste them — the script cannot tell "both edit this file" from "one deletes
+what the other adds".
 
 **Write a reciprocal note at the top of both bodies** — below a `> **Reviewed …**`
 marker if `/review-ready` already left one — in the lead's own form:
@@ -528,11 +560,11 @@ Then say it in your report as well, so the lead can hand both to one person.
 column at a time** — Ready, In Progress, or Review. If one is already there, the
 next one is not Ready — leave it in Backlog and name the holder.
 
-**Only an open issue in one of those three columns holds a slot.** Never
-"outside Backlog", which is what this rule used to say and which is wrong in
-both terminal directions: Done and Not planned are outside Backlog too. A closed
-issue holds nothing. Whatever it was going to change, it is not going to change
-it, so nothing is waiting on it and the next item can go.
+**Only an open issue in one of those three columns holds a slot.** Never test
+"outside Backlog" — that is wrong in both terminal directions, since Done and Not
+planned are outside Backlog too. A closed issue holds nothing: whatever it was
+going to change, it is not going to change it, so nothing is waiting on it and
+the next item can go.
 
 **When the column and the issue's state disagree, the state wins.** Closing an
 issue does not move its card — `.github/workflows/project-status-sync.yml` does,
@@ -546,13 +578,12 @@ gh issue view <holder> --repo PioneerAIAcademy/cowork-genealogy \
   --json number,state,stateReason,title
 ```
 
-*Why it is hard rather than soft.* A skill's run log goes inactive the moment any
-file under its snapshot changes, so two such items cannot share a run however they
-are sequenced: each pays its own `make eval-skill` **plus a fresh `.ann.json` with
-a correction entry for every dimension of every test** — 27 tests for
-`record-extraction`. The second item also invalidates the first's run log if it
-lands first, so promoting both produces rework, not parallelism. PRs #929 and #924
-both edited `search-records/SKILL.md` concurrently; that is the failure.
+It is hard rather than soft because a skill's run log goes inactive the moment
+any file under its snapshot changes. Two such items cannot share a run however
+they are sequenced: each pays its own `make eval-skill` **plus a fresh
+`.ann.json` with a correction entry for every dimension of every test** — 27
+tests for `record-extraction` — and whichever lands first invalidates the
+other's run log. Promoting both produces rework, not parallelism.
 
 **The snapshot set — an item takes the slot only if it changes one of these:**
 
@@ -562,33 +593,90 @@ both edited `search-records/SKILL.md` concurrently; that is the failure.
   `@plugin:` — that gates **every** skill naming it, so check the fan-out:
   `grep -rl "@plugin:<agent>" packages/engine/plugin/skills/*/SKILL.md`
 
-**Key it on paths, not on the skill's name in the title.** PR #1017 and PR #1196
-are both titled `record-extraction:`; only #1017 touches the snapshot. PR #1073's
-own DoD says *not* to edit `search-records/SKILL.md` — a tool fix does not take
-the skill's slot.
+**Key it on paths, not on the skill's name in the title.** Two PRs can both be
+titled `record-extraction:` while only one touches the snapshot, and a tool fix
+whose own DoD says *not* to edit the SKILL.md does not take the skill's slot.
 
-**The open PRs' changed paths are the primary read** — the only input here that is
-not self-reported. Run this *first*, before any issue body:
+**Build the whole map in one pass, before you rank anything.** A per-skill query only
+answers about the skill you thought to ask about, and the slot you miss is the one whose
+holder's title never mentions it. Two inputs, and you need both: the changed paths of
+every open PR (the only input here that is not self-reported), and the `**Touches:**`
+line of every open issue in **Ready, In Progress or Review** — not Review and PRs alone.
 
 ```sh
-gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open \
-  --json number,title,files \
-  --jq '.[] | select(any(.files[].path; test("plugin/skills/<skill>/|tests/unit/<skill>/"))) | "#\(.number)\t\(.title)"'
-gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open \
-  --search "<skill> -label:icebox" --json number,title,assignees
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 > /tmp/board.json
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
+  --json number,title,body > /tmp/open.json
+gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
+  --json number,title,files > /tmp/prs.json
+python3 - <<'PY'
+import json, re, collections
+board  = json.load(open('/tmp/board.json', encoding='utf-8'))['items']
+issues = {i['number']: i for i in json.load(open('/tmp/open.json', encoding='utf-8'))}
+prs    = json.load(open('/tmp/prs.json', encoding='utf-8'))
+
+skill_re = re.compile(r'plugin/skills/([a-z0-9-]+)/')
+unit_re  = re.compile(r'eval/tests/unit/([a-z0-9-]+)/')
+agent_re = re.compile(r'plugin/agents/([a-z0-9-]+)\.md')
+
+holders = collections.defaultdict(list)
+for it in board:
+    n = (it.get('content') or {}).get('number')
+    if n not in issues or it.get('status') not in ('Ready', 'In Progress', 'Review'):
+        continue                      # closed issues and Backlog hold nothing
+    body = issues[n].get('body') or ''
+    m = re.search(r'\*\*Touches:\*\*(.*?)(?:\n\n|\Z)', body, re.S)
+    scope = m.group(1) if m else body  # no Touches line means UNKNOWN, not empty
+    hits = set(skill_re.findall(scope)) | set(unit_re.findall(scope))
+    hits |= {'AGENT:' + a for a in agent_re.findall(scope)}
+    for h in hits:
+        holders[h].append((n, it['status'], 'Touches' if m else 'body-fallback'))
+
+pr_hold = collections.defaultdict(list)
+for p in prs:
+    for f in p['files']:
+        for rgx, pre in ((skill_re, ''), (unit_re, ''), (agent_re, 'AGENT:')):
+            for g in rgx.findall(f['path']):
+                pr_hold[pre + g].append(p['number'])
+
+for s in sorted(set(holders) | set(pr_hold)):
+    iss = holders.get(s, []); pr = sorted(set(pr_hold.get(s, [])))
+    print(f"{s:26} issues={iss} prs={pr}")
+PY
 ```
 
-**A `**Touches:**` line is a hint, not the input. A missing one means unknown, not
-empty** — fall back to the body's file citations, and to the changed paths of any
-PR the issue already has. Where a `Touches:` line and real paths disagree, the
-paths win: PR #1577 added ten lines to `init-project/SKILL.md` for an issue whose
-`Touches:` named three other skills. Discount a `Touches:` line inherited from an
-issue since closed `not planned` (issue #1322 carried issue #1447's).
+**Read a `body-fallback` row as "unverified", never as "held".** It means the issue has
+no `Touches:` line and the skill name merely appears somewhere in its prose — open it and
+decide. An issue that cites a SKILL.md as *evidence* and edits none of its files is not a
+holder, and treating it as one blocks a free slot. An `AGENT:` row gates **every** skill
+naming that agent via `@plugin:` — check the fan-out with the grep above.
+
+**Neither shortcut works, and they fail in opposite directions.** Keying on the title
+misses a holder whose title names none of its skills — one issue's `Touches:` line held
+three slots that no title match could see. Keying on any body mention does the reverse
+and manufactures the false positive above. Only the `Touches:` line, with the body as a
+flagged fallback, gets both right.
+
+**Scanning only open PRs and Review misses In Progress**, so a PR-only read reports a
+slot free the day after the deep dive holding it merged, and the next card in is
+un-startable.
+
+**A `**Touches:**` line is a hint, not proof. Where it and real paths disagree, the paths
+win.** Discount a `Touches:` line inherited from an issue since closed `not planned`.
+
+**The map is a snapshot.** It is right for the pass that produced it and stale by the next
+one — re-run it before you write anything to the board, and tell a junior to re-check the
+slot before opening a PR rather than trusting a table in an issue body.
+
+**This map only sees snapshot paths, and that is correct — but it is not the whole
+collision picture.** `build_snapshot` deliberately excludes
+`packages/engine/mcp-server/src/**`, so two items rewriting one engine file collide
+without ever appearing here. That is Gate 3's detector, above; run both.
 
 **Reclaim a stalled slot.** A holder that has not moved in ~10 days is blocking a
 whole skill. Say so in your report with the assignee and the idle count, and
-propose returning it to Backlog so the next item can go. Do not reclaim silently —
-it is the lead's call, and today's board carries several week-old cards.
+propose returning it to Backlog so the next item can go. Do not reclaim
+silently — it is the lead's call.
 
 **A queue three or more deep is a finding, not a schedule.** Report it. The fix is
 to merge those issues into fewer, larger ones so one run carries what would have
@@ -599,14 +687,6 @@ been three — that happens in `/audit-board`, not here. Note it and move on.
 A Ready item should be one person's task, start to finish. If it has two halves
 that different people would do — or a cheap measurement that decides whether the
 expensive half is needed at all — split it **before** promoting.
-
-The worked case: one issue asked for (1) verify on a Windows box whether Ctrl-C
-kills in-flight processes, and (2) if it doesn't, re-architect the harness onto
-owned subprocesses. Step 1 is thirty minutes on a machine only the genealogist
-team has. Step 2 inverts how interrupts work and the issue itself warned it was
-not a beginner task. Combined, it was assignable to nobody. Split, step 1 became
-a same-day genealogist task whose *outcome decides whether step 2 is ever
-funded*.
 
 Split when any of these holds:
 
@@ -626,10 +706,11 @@ task; splitting it triples the review and merge cost for nothing.
 run in parallel, and landing them sequentially buys a second paid run plus a
 second full annotation pass for work that would have shared one. Split only when
 **at most one half touches the snapshot** — which is usually what the criteria
-above already select for. #1004 is the model: its doctrine question ("is a census
-residence fact primary or indeterminate?") touches nothing and is answerable by a
-genealogist today, while its mechanical half — adding the matchers once the answer
-exists — merges into whichever record-extraction item next takes the slot.
+above already select for. The model is an item whose doctrine question ("is a
+census residence fact primary or indeterminate?") touches no snapshot and is
+answerable by a genealogist today, while its mechanical half — adding the
+matchers once the answer exists — merges into whichever item next takes the
+skill's slot.
 
 How:
 
@@ -660,9 +741,9 @@ gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label developer
 ```
 
 **Leave it unlabeled when it is genuinely both or genuinely contested**, and say
-why in one line. One issue's fix could have been skill prose or a harness change
-and a second open issue disputed which — labeling it would have picked a side
-the board had not picked. Unlabeled with a reason beats a confident wrong label.
+why in one line — where the fix could be skill prose or a harness change and
+another open issue disputes which, labeling picks a side the board has not.
+Unlabeled with a reason beats a confident wrong label.
 
 Then move it:
 
@@ -673,23 +754,23 @@ gh project item-edit --id "$ITEM_ID" --project-id "$PROJ_ID" \
 
 Verify with a fresh `gh project item-list`. New issues land in Backlog via an
 auto-add workflow that sets nothing else — a freshly filed issue that belongs in
-Ready still needs this move. (The exception is a `feedback` item, which the same
-workflow files directly into Ready and which you never move at all.)
+Ready still needs this move. (A raw feedback submission is the exception: the
+same workflow files it into the Feedback column, where `/triage-feedback` moves
+it to Not planned or to Backlog, dropping the `feedback` label on the way. It
+reaches you as an ordinary issue and is promoted with this move like any other.)
 
 **Gate every issue you are moving into Ready through `/review-ready` before you
 promote it — both pools, not just `developer`, and not just the ones you rank as
-junior.** Your seniority test (§1) is a pre-filter read off the issue body; that
+junior.** Your seniority test above is a pre-filter read off the issue body; that
 skill fans out one agent per item to check the same call against the cited code,
 the architecture guide's site list, and the board's what-nothing-checks issues —
 which is where a "junior-safe" item turns out to hide an open API decision, or a
 body's central claim turns out to have no instances behind it.
 
-**The genealogist half was ungated until 2026-08-19, and that was wrong.** A
-stale premise is not a developer-shaped defect, and the genealogist half is the
-more expensive one to get wrong: a bad developer premise reds a test, a bad
-genealogist premise surfaces inside a paid `make eval-skill` run or not at all.
-The reversal and what refuted the old scope are in
-`docs/specs/task-review-spec.md` §6 — do not re-argue it here.
+**Gating the genealogist half is not optional, and do not re-argue its scope**
+(`docs/specs/task-review-spec.md`). A bad developer premise reds a test; a bad
+genealogist premise surfaces inside a paid `make eval-skill` run, or not at
+all.
 
 **Budget for it.** The gate costs ~110k tokens per issue, so a full fill of both
 pools is roughly 2M. That is cheap against a junior's wasted week and it is not
@@ -699,16 +780,26 @@ is the escape.
 **"Every" means every one you move, including a `senior`-labeled item.** A senior
 item's body is stale in exactly the ways a junior item's is, and it is the more
 expensive one to hand out wrong. The only issue that skips the gate is one that
-already carries the `reviewed` label from a previous pass **and** has not been
-edited since — check `updatedAt` against the reviewed marker's date. Re-running
-the gate on an unchanged issue pays for the same deep read twice
-(`docs/specs/task-review-spec.md` §2); skipping it on a changed one is how a
-refuted premise reaches a junior.
+already carries the `reviewed` label from a previous pass **and** has had no
+substantive body edit since.
+
+**A recorded ruling is not a substantive edit.** What `/make-decisions` splices
+in is `review-ready`'s own pre-written option text, vetted by the review that
+asked the question, so a `**Ruling:**` comment and its splice leave `reviewed`
+intact — and an item whose only change is the answer it was waiting for must not
+buy a second ~110k-token read. Do not test `updatedAt` against the marker date
+for this: a ruling makes three writes, and any later comment by anyone pushes
+`updatedAt` past the marker again. An item carrying no `reviewed` label gates
+normally, ruled or not.
+
+Re-running the gate on an unchanged issue pays for the same deep read twice;
+skipping it on a genuinely changed one is how a refuted premise reaches a
+junior.
 
 Promote what comes back `ready` or `ready-after-edit`. A `senior` or
-`needs-a-decision` verdict on an item you had ranked junior is a §1 miss caught
-in time — it stays in Backlog and never enters the junior pool. **The two get
-different labels** (`senior` vs `needs-decision`, §6), and the verdict tells you
+`needs-a-decision` verdict on an item you had ranked junior is a seniority miss
+caught in time — it stays in Backlog and never enters the junior pool. **The two
+get different labels** (`senior` vs `needs-decision`), and the verdict tells you
 which: `needs-a-decision` means one answer unblocks it, `senior` means it is hard
 regardless. Running the gate after promotion instead works, but pays for the same
 deep read twice.
@@ -719,10 +810,8 @@ deep read twice.
 is no pool assigned to him, nothing here ever adds `DallanQ` as an assignee, and
 "route it to the lead" is not an available move.
 
-What used to go to him is not one queue. It is **three states that look identical
-on a board and behave completely differently**, and telling them apart is most of
-this section's value. When they were all his, the distinction did not matter — he
-absorbed it. Now it decides who can start.
+Work above the junior pools is **three states that look identical on a board and
+behave completely differently**, and telling them apart decides who can start.
 
 | State | Label | Blocked on | Who takes it |
 |---|---|---|---|
@@ -730,11 +819,10 @@ absorbed it. Now it decides who can start.
 | **Genuinely hard** | `senior` | Nothing. It is difficult | A senior in its lane — see below |
 | **Logistics** | *neither* | An access handover, a scope confirmation, a file someone has to send | Anyone, the moment it is cleared |
 
-**`needs-decision` is a distinct verdict, not a softer `senior`.** It is the label
-form of `task-reviewer`'s existing `needs-a-decision` verdict, which until now
-died in a report because nothing on the board carried it. An item that is merely
-undecided, labelled `senior`, is the worst case: it looks like it needs a rare
-person when it needs a sentence.
+**`needs-decision` is a distinct verdict, not a softer `senior`.** It is the
+label form of `task-reviewer`'s `needs-a-decision` verdict. An item that is
+merely undecided, labelled `senior`, is the worst case: it looks like it needs a
+rare person when it needs a sentence.
 
 **Do not label both.** If the decision is the only thing in the way, it is
 `needs-decision` — the work behind it may well be junior. Reach for `senior` only
@@ -759,19 +847,15 @@ report; the genealogist one is newer and easier to forget.
 ```sh
 # `needs-decision`, split by whether a ruling has been recorded.
 #
-# MATCH BOTH WORDS, AND BOTH MARKUPS. We are instructed to write `**Ruling:**`,
-# but this query does not read what we wrote — it reads what the LEAD wrote, and
-# he writes `## Decision:` and `**Decision (lead, <date>)`. A `**Ruling`-only
-# test called two answered items WAITING on 2026-08-13 (issues #1331 and #1394,
-# both ruled that afternoon), which is the exact inverse of the defect this
-# split exists to catch: it hides a dropped item by reporting the lead as the
-# bottleneck. Bold marker or ATX heading, "Ruling" or "Decision".
+# MATCH BOTH WORDS AND BOTH MARKUPS. This query reads what the LEAD wrote, not
+# what we are instructed to write: bold marker or ATX heading, "Ruling" or
+# "Decision". A `**Ruling`-only test reports answered items as WAITING, which
+# hides a dropped item by naming the lead as the bottleneck.
 #
-# Match anywhere in the body, not at character zero: real ruling comments put a
-# heading above the marker and number it (`## Lead rulings` … `**Ruling 1 — …`),
-# which an exact-prefix test misses.
+# Match anywhere in the body, not at character zero — real ruling comments put a
+# heading above the marker and number it (`## Lead rulings` … `**Ruling 1 — …`).
 #
-# Prove it before trusting a change to this pattern — run it against a known
+# Prove it before trusting a change to this pattern: run it against a known
 # answered issue and a known waiting one and watch the two land in different
 # buckets. A pattern that matches nothing reports a clean board forever.
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
@@ -787,31 +871,36 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 
 
 Report each separately — they have different remedies:
 
-- **`needs-decision`, split `WAITING` / `ANSWERED`.** A growing **`WAITING`**
-  count means the lead is the bottleneck and no amount of assigning helps — that
-  line goes at the top of the report.
+- **`needs-decision`, split `WAITING` / `ANSWERED`.** Report each item's time in
+  queue from when the label went on, not from when the issue was filed. `WAITING` items older than a couple of drains mean
+  `/make-decisions` is not keeping up with what the board queues, and no amount of
+  assigning helps — that line goes at the top of the report.
 
-  **`ANSWERED` should always be zero.** Whichever session puts a decision to him
-  closes it out in the same turn — comment, splice, drop the label. So a
-  non-zero count is not a workload, it is **a defect**: a session heard an answer
-  and walked away, and the work has been sitting unblocked with nobody knowing.
-  Name the issues, and say plainly that they were dropped rather than queued —
-  the fix is upstream in whichever skill let go of them, not in draining a list.
+  **`ANSWERED` is normally non-zero, and it is not yours.** It is
+  `/make-decisions`' input queue: a ruling arrived through a channel with no apply
+  step — standup, a bare comment — and waits for the next drain. List them with the
+  ruling's date and hand them over. It is a **defect** only for an item still
+  `ANSWERED` after a `/make-decisions` run has been through, because that one
+  survived the drain.
 - **`senior` size, trend, and how many are unassigned.** This queue is worked. A
   growing `senior` queue with seniors idle is a routing problem; a growing one
   with every senior busy is a capacity problem. Say which.
 - **The oldest three in each, with idle days.** Neither queue has an owner to
   chase, so age is the only signal it emits.
+- **Ruled but still in Backlog** — a `**Ruling:**` comment, no `needs-decision`
+  label, not promoted, with days since the ruling. Nothing else in the loop can
+  see an answer that bought nothing, because the item leaves every decision-queue
+  query the moment the label comes off.
 - **Which of either gate a milestone**, and how long they have sat.
 
 You do not rank these queues and you do not assign from them.
 
 ### The milestones depend on both queues moving
 
-**Nearly every milestone-gating item is above the junior pools by §1's test** — a
-doctrine call, a gate that is worse wrong than absent, a design spanning harness
-and hosted server — while the junior pools do alpha content work that cannot stop
-and does not burn these down.
+**Nearly every milestone-gating item is above the junior pools** — a doctrine
+call, a gate that is worse wrong than absent, a design spanning harness and
+hosted server — while the junior pools do alpha content work that cannot stop and
+does not burn these down.
 
 Three failure modes to name out loud when you see them:
 
@@ -819,10 +908,9 @@ Three failure modes to name out loud when you see them:
   The loudest line in the report. Say which item has sat, for how long, and
   whether it is waiting on an answer or on a person — the two have opposite fixes.
 - **A long-lead item inside its lead time and still queued.** Prompt-injection
-  defense (issue #847) is the standing example: it gates the public rollout, so it
-  loses every impact ranking today, and nothing can begin until the doctrine is
-  settled. An item that "isn't due until March" has to move in the fall or it will
-  not land at all.
+  defense (issue #847) is the standing example: it gates the public rollout, so
+  it loses every impact ranking today, and nothing can begin until the doctrine
+  is settled.
 - **`needs-decision` growing while the junior pool runs dry.** The cheapest fix on
   this board is almost always the lead answering three questions, because each one
   converts a stuck item into a junior task. Name the three.
@@ -830,15 +918,15 @@ Three failure modes to name out loud when you see them:
 One thing that does **not** belong in the senior queue: an issue with an empty or
 one-line body. It is unactionable in a fresh session no matter who owns it, and
 labelling it `senior` makes it look researched. Leave it in Backlog and ask for a
-scope line — that is §7's `rewrite` verdict.
+scope line — that is the grooming `rewrite` verdict below.
 
 ## 7. Grooming
 
 Same read, nearly free. Cap it at about **eight** proposals — a grooming list
 longer than the promotion list means the day's output was grooming.
 
-**The cap lifts when §1's "Arrival vs. closure" shows arrival leading for three
-consecutive weeks.** Then grooming *is* the day's output: propose as many closes
+**The cap lifts when the arrival-vs-closure measurement shows arrival leading
+for three consecutive weeks.** Then grooming *is* the day's output: propose as many closes
 and merges as the read supports, and say that is what you did.
 
 Candidates: empty-bodied issues months old; issues superseded by a newer, better
@@ -859,21 +947,12 @@ issue.** Never batch a delete under a general approval, and never infer one from
 
 ## 8. Verify before you repeat anything
 
-Inherited from `triage-standup` §2, and it earns its cost here too. An issue
-body is **a claim written on a particular day**, not current repo state. The
-sharpest findings in a real run were both stale issue bodies:
-
-- An issue proposed a fix "also fixes #609" — #609 had been closed hours
-  earlier, on reasoning the proposing issue's own evidence contradicted.
-- A retention issue measured "147MB tracked"; `du -sh` said **269MB**. It had
-  nearly doubled in twelve days, which changes the priority, not just the number.
+An issue body is **a claim written on a particular day**, not current repo
+state. A cross-referenced issue closes; a measured size doubles; a cited symbol
+is deleted — and the stale half is normally the part the recommendation rests on.
 
 **Read the code behind every issue you form a view on** — not just the ones you
-are promoting. This repo moves fast enough that an issue body is usually written
-against code that has since changed, and the stale half is normally the part the
-recommendation rests on. Standing instruction from the lead, 2026-08-01: *"A lot
-of code has changed since the issues were originally written. They are likely
-based on old assumptions or code."*
+are promoting.
 
 That is a real cost, so spend it where it changes an answer: the promotion
 candidates, and **any issue you are about to recommend a disposition for**
@@ -892,32 +971,23 @@ git log --diff-filter=D --all -- '<cited path>'          # was it deliberately d
 rests on a population ("N files drifted", "users hit this", "the shape is in the
 field") and the body names no number, measure it *before* proposing any
 disposition. That is the shape which survives every other check: it reads as a
-real problem, its reasoning is sound, and there is nothing behind it. One request
-wanted a six-way genealogical adjudication to heal drifted `research.json` keys;
-the drift appears in **0 of 90** committed documents and no write path can create
-it. It closed `not planned` in one command.
+real problem, its reasoning is sound, and there is nothing behind it.
 
-**Count the way the data is shaped, not the way it greps.** On that same request a
-bare `grep` for the six key names returned 50–70 files — `person_id` is a correct
-key on `person_evidence[]`, `record_id` is correct on assertions, `notes` is
-correct on sources. The grep was counting valid data. Walk the objects that would
-actually hold the field.
-
-Do not repeat this for the shortlist you are about to gate — `/review-ready`'s
-agents now count the premise per issue in fresh context (`docs/specs/task-review-spec.md`
-§7). Spend it here on what the gate never sees: the items you are about to close,
-consolidate, split, or route to the lead.
+**Count the way the data is shaped, not the way it greps.** A bare `grep` for a
+field name counts every valid use of it too — `person_id` is a correct key on
+`person_evidence[]`, `record_id` is correct on assertions. Walk the objects that
+would actually hold the field.
 
 **Read the mechanism the issue proposes to build, before agreeing it needs
 building.** A near-miss extension of something that exists is a different,
 smaller, safer task than a new mechanism, and finding that out changes the
 disposition rather than a detail. Worked cases:
-`docs/specs/task-review-spec.md` §7.
+`docs/specs/task-review-spec.md`.
 
-**Do not repeat this read for the shortlist you are about to gate.**
-`/review-ready` (§5) does it per issue in fresh context, which is the point of
-the fan-out. Spend §8 here on what the gate never sees: the items you are about
-to close, consolidate, split, or route to the lead.
+**Do not repeat any of this for the shortlist you are about to gate.**
+`/review-ready` does it per issue in fresh context, which is the point of the
+fan-out. Spend it on what the gate never sees: the items you are about to close,
+consolidate, split, or route to the lead.
 
 Cite so the lead can re-check in seconds: `file:line`, an issue number, a
 command and its output. When a check refutes something you already said, correct
@@ -966,15 +1036,15 @@ list it does not appear in. Add state when it matters.
    flagged if arrival has led for three.
 2. **Splits** — anything you broke in two, and which half is going to Ready. Skip
    the heading if you split nothing.
-3. **Promote to Ready** — a table: issue, the **impact clause** from §2 (what
-   right answer it wins, what wrong one it prevents, what wall-clock or spend it
+3. **Promote to Ready** — a table: issue, the **impact clause** (what right
+   answer it wins, what wrong one it prevents, what wall-clock or spend it
    recovers), the milestone it gates (or `—`), `developer`/`genealogist`, what it
    displaced (if the pool was at target), and any soft-collision partner. Most
    consequential first — and if any row's impact clause reduces to "small and
    unblocked", it is the one cheap slot, or it should not be in the table.
 4. **Return to Backlog** — what lost each swap, with the one-line reason.
 5. **Above the junior pools** — the `needs-decision` and `senior` queues
-   separately (§6): size, trend since the last fill, oldest three with idle days,
+   separately: size, trend since the last fill, oldest three with idle days,
    which gate a milestone, and for `senior` how many are unassigned and in which
    lane. A growing `needs-decision` queue moves to section 0 — it means the
    bottleneck is answers, not people. You do not rank or assign from either.

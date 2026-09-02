@@ -97,9 +97,9 @@ grows all run, so a whole-file read costs more context every time.
 **At most one such call per invocation, and only when you are actually missing
 something.** Ask for `plans` — the plan item you are executing and its status —
 and nothing else; not `questions`, since the question is already in the plan item.
-Do not re-query between searches; the plan does not change while you are searching
-it. If the plan item arrived in your prompt, in a hand-off, or from
-`research-plan` earlier in this same run, issue no query at all.
+Do not re-query between searches in this invocation. If the plan item arrived
+in your prompt, in a hand-off, or from `research-plan` earlier in this same run,
+issue no query at all.
 
 **Planned or ad-hoc — decide before you search.** The line is *who chose the
 search*, not whether a plan exists.
@@ -108,12 +108,12 @@ search*, not whether a plan exists.
 |---|---|
 | A plan item | Execute. Full GPS, including the Step 8 escalation |
 | No plan item, but the **user named this search** | Execute as ad-hoc: log `plan_item_id: null`, note it was user-requested, and stop when done — no escalation, no plan edits |
-| No plan item, and **you** thought of the search | `Skill("research-plan")` and stop. If the user then says yes, it comes back as a plan item — not as ad-hoc |
+| No plan item, and **you** thought of the search | `Skill("research-plan")` and stop. It comes back as a plan item — not as ad-hoc |
 
 Refusing a researcher's own request is obstruction, not rigour; inventing a search
-nobody asked for is how a session drifts off its question. An autonomous
-`/research` run has no ad-hoc searches — the orchestrator only dispatches you when
-a plan item is waiting.
+nobody asked for is how a session drifts off its question. The third row applies
+under `--autonomous` too — `research-plan` decides in the user's place, so route the
+search through it rather than running it yourself.
 
 ### 2. Construct the search query
 
@@ -194,12 +194,14 @@ spouse families; other fields follow the same pattern.
   discriminates — a *wrong* county can return nearly the same total as the right
   one. Set it when you are about to record `results_available` or argue a search
   was reasonably exhaustive; leave it unset while still looking.
-- **`<event>YearExact` narrows hard.** It is meant to remove the fuzz around the
-  range bounds, but that fuzz is only weakly evidenced. What it does to records
-  carrying **no indexed year** is **not established**, and neither is whether an
-  unqualified range keeps them — so do not use a year range, set or unset, to
-  include or exclude undated records. Whether it drops in-range approximate dates
-  is also not established. Use it only with a firm date from a vital record.
+- **`<event>YearExact` keeps only in-range indexed dates.** An unqualified range
+  also matches records whose *estimated* date range overlaps it — a record with no
+  year of its own carries an estimated range (from others on the record), so there
+  are no year-silent records a range keeps regardless. `.exact` drops those
+  estimate-overlap matches, so a range reliably includes them and `.exact` reliably
+  excludes them — for birth, death and marriage. Record-index residence is collection-dependent: `.exact` changes nothing where every row is already dated, but drops a real share where records are dated only through others, so it behaves like the rest there. A cohort that is not always small carries no indexed date at all and is reached by no range — read the results back rather than trust a range to gather them.
+  Whether `.exact` also drops in-range approximate dates is unmeasured. Use it only
+  with a firm date from a vital record.
 - **Wildcards survive exactness; variant spellings do not.** `Sm?th` plus
   `surnameExact` still returns both `Smith` and `Smyth`, while the same query
   without the wildcard drops `Smyth`. A wildcard plus exactness controls the
@@ -207,12 +209,16 @@ spouse families; other fields follow the same pattern.
 
 **There is no "required" toggle, and this changes how you read a nil.** Every
 term you supply is already required in one sense: a record must not *contradict*
-it. A record simply **silent** about a *name* field is kept — measured for the
-father and spouse names. (How a *year range* treats a record with no indexed year
-is **not established** in either direction, so do not assume a range either keeps
-or excludes undated records.) For the searched person's own name, which the index
-virtually always holds, that collapses to "must match" — a consequence of the
-index, not a separate measurement. So **a nil result means one of the terms on the person
+it. A record simply **silent** about a *name* field is kept — enumerated for the
+father, spouse, mother and parent names. (A *year range* matches records dated into it by estimate too, so an unqualified
+range keeps records with no year of their own and `.exact` drops them — see the
+year lever below.) The searched person's own two name fields behave
+OPPOSITELY, measured 2026-08-20: an unqualified `givenName` keeps records with no
+indexed given name, but an unqualified `surname` drops records with no indexed
+surname outright — a record indexed with a given name only (infant burials,
+foundlings, enslaved people, patronymic entries) cannot be reached by ANY query
+carrying a surname; to reach one, drop `surname` and anchor on `recordCountry` or
+`batchNumber` instead. So **a nil result means one of the terms on the person
 you searched did not match.** Drop or loosen one of *those* to recover; adding
 more criteria cannot help. A nil is *not* evidence that some relative was absent
 from the records.
@@ -226,9 +232,8 @@ and on how often that relative is indexed in the records you are searching:
 
 - **An unmatchable relative name keeps exactly the records silent about that
   relative, and drops every record naming a different one.** Enumerated for
-  `father*` and `spouse*` only, in marriage records; `mother*`, `parent*` and
-  `other*` are assumed to follow, not measured — so a mother-anchored nil is
-  weaker evidence than a father-anchored one.
+  `father*`, `spouse*`, `mother*` and `parent*` in marriage records; `other*` is
+  not measured, so an `other`-anchored nil is the weak one.
 - **So the narrowing you get is the share of records that name that relative at
   all.** Where parents are rarely indexed, a parent name barely narrows and a
   parent-anchored nil is weak evidence. Where spouses are almost always indexed
@@ -452,8 +457,9 @@ candidates; you still confirm the top ones:
   signals. Write the listing and mark the family structure inferred — not "head
   Daniel + wife Margaret + daughter Hannah" but "Daniel, Margaret, Hannah in one
   dwelling; family structure inferred from surname, ages and order, not stated."
-  Same caution for any field that year didn't collect:
-  `references/census-field-availability.md`.
+  **Before summarizing any census household, read
+  `references/census-field-availability.md` for that year** — same caution for
+  any field that year didn't collect.
 - **Cite `matchScore`, never `results[].score` — they are different numbers.** A
   raw search stub's `score` (and `confidence`) is FamilySearch's own *search
   relevance*, the unreliable ordering the match-ranker exists to replace;

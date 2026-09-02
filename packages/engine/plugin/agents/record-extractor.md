@@ -18,8 +18,8 @@ tools:
   # Every MCP tool appears under ALL THREE server spellings, because the name is
   # chosen by whoever registers the server and the VM-side plugin cannot control
   # it: `genealogy` (.mcp.json, both harnesses, hosted web);
-  # `remote-devices__Genealogy_Research` (Cowork in the cloud, via the bridge);
-  # `Genealogy_Research` (Cowork on this computer, no bridge). The latter two
+  # `remote-devices__Genealogy_Research` (Cowork, via the remote-device bridge);
+  # `Genealogy_Research` (Cowork, bare display_name spelling). The latter two
   # derive from manifest.json's display_name, spaces → underscores. Entries are
   # matched EXACTLY with no prefix fallback. Unrecognized entries are ignored as
   # long as one resolves; when ALL of them miss, the runtime refuses to spawn the
@@ -49,26 +49,6 @@ tools:
   - mcp__Genealogy_Research__research_log_append
   - mcp__Genealogy_Research__record_person_matches
   - mcp__Genealogy_Research__record_record_matches
-# `extraction_append` writes only `sources` + `assertions`. The broad
-# `research_append` is denied both by omission above and explicitly here:
-# a `disallowedTools` deny is enforced even under `bypassPermissions`,
-# which the hosted path runs (issue #695).
-#
-# The deny MUST carry all three spellings for the same reason the allow-list does.
-# A deny that names only `mcp__genealogy__research_append` silently fails to
-# bind wherever the server is registered under another name — which is exactly
-# the environment where it matters most, since the deny is the only thing
-# standing between this agent and the broad writer under bypassPermissions.
-disallowedTools:
-  - mcp__genealogy__research_append
-  - mcp__remote-devices__Genealogy_Research__research_append
-  - mcp__Genealogy_Research__research_append
-  - mcp__genealogy__tree_edit
-  - mcp__remote-devices__Genealogy_Research__tree_edit
-  - mcp__Genealogy_Research__tree_edit
-  - mcp__genealogy__materialize_facts
-  - mcp__remote-devices__Genealogy_Research__materialize_facts
-  - mcp__Genealogy_Research__materialize_facts
 ---
 
 # Record Extractor
@@ -575,17 +555,15 @@ the record establishes about who spoke.
   observed it" argument — the certificate does not establish
   observation, and occupation/marital status are reported biography,
   not witnessed events.
-  **Evidence type for these facts, not just proximity:** `name`,
-  `occupation`, and `marital status` are `direct` — a spouse/family
-  informant lived alongside the decedent and knows these firsthand, no
-  inference required. `age`, birth date/place, and parents' names are
-  `indirect` — the informant was not present at the decedent's birth (or
-  at the parents'), so knowledge of them is necessarily secondhand,
-  however precisely the certificate states it. **"Age: 63 years, 2
-  months, 10 days" is still indirect evidence of the birth date —
-  precision is not the same as firsthand knowledge; do not label the raw
-  age fact `direct` just because a specific figure is printed on the
-  certificate.** This is the same reasoning as the census
+  **Evidence type for these facts:** every one the certificate prints in a
+  field — `name`, `occupation`, `marital status`, `age`, `birthplace`, and
+  the parents' names and birthplaces — is `direct`. The informant's
+  secondhand knowledge of the birth is recorded as `family_not_present`
+  proximity and `secondary` quality, and changes nothing here. **"Age: 63
+  years, 2 months, 10 days" is `direct` evidence of AGE** — it is printed
+  in the Age field. What is `indirect` is the birth *date or year you
+  compute from it*, because the certificate states no birth date: that
+  derived value is its own assertion. This is the same reasoning as the census
   birth-year-computed-from-age rule above, extended one step further:
   there it's the *derived* birth-year fact that's indirect; here the
   *age fact itself* is indirect too, for the identical reason — the
@@ -656,28 +634,41 @@ stated-vs-inferred value with `extracted_for_question_ids: []`.)
   year computed from age, household position suggesting a relationship).
 - `negative` — the meaningful absence of expected information.
 
-**Stated-vs-inferred, NOT who reported it.** A stated age on a 1850
-census is `direct` even though a household member (not the subject)
-reported it — *who* reported is `informant_proximity`'s job. The
-exception: a fact recorded from a **third-party** informant relaying
-**another person's** facts is `indirect` even when stated plainly,
-whatever the source layer says. On a death certificate the decedent's
-own birth date, birthplace, parents, AND stated age are all `indirect`
-when the informant (e.g. the surviving spouse) is relaying secondhand
-knowledge — not just the parents' names. Contrast a census,
-where a household member reporting on their own household has firsthand
-knowledge → stated facts stay `direct`; likewise a party stating their
-OWN age, birthplace, or parents to the clerk on a marriage or
-civil-registration record stays `direct` — they are relaying their own
-facts, not another person's. The test: did the informant have
-primary knowledge of *this* fact?
+**Stated-vs-inferred, NOT who reported it — and there is no exception.**
+`evidence_type` answers exactly one question: **does the record state this
+value, or did you have to infer it?** Nothing about the informant and
+nothing about the source's remove can change it. The informant's distance
+from the event lives in `informant_proximity` and
+`information_quality`; the source's remove lives in
+`source_classification`. Those three layers are independent, so a value
+may perfectly well be `direct` evidence carried by `secondary`
+information — that is the ordinary case, not a contradiction.
 
-**Worked example.** The one fact "born Ireland" classifies by *who
-reports it on which record*: on an 1850 census (a household member
-reporting) the birthplace (`birth`+`place`) is `direct`; on a 1908 death
-certificate (the widow relaying the decedent's birthplace) the same fact
-is `indirect`. And the birth *year* derived from a stated age is
-`indirect` on both — a value the record never stated outright.
+**The one test: was this value in a field on the record?** If yes it is
+`direct`, no matter who supplied it. A stated age on an 1850 census is
+`direct` though a household member reported it. A death certificate's
+`Birthplace: Ireland` is `direct` though the widow was not at his birth —
+her distance makes the *information* secondary and her proximity
+`family_not_present`, and neither touches the evidence layer. Parents
+named in the `Father's name` / `Mother's maiden name` fields are `direct`
+for the same reason, on a death certificate and on a burial register
+alike.
+
+`indirect` is for a value the record does **not** state and you derived:
+a birth **year** computed from an age, a relationship deduced from
+household position, anything reached by correlating two facts. If you are
+about to write `indirect` on a value you could point to in a field, stop —
+you are classifying the informant, and that is a different layer.
+
+**Worked example.** The one fact "born Ireland" is `direct` on **both** an
+1850 census and a 1908 death certificate — each states it in a field, so
+each is direct evidence of birthplace. What differs between them is the
+*other two layers*: on the census the household respondent is unknown
+(`household_member`, quality `indeterminate`); on the certificate the
+widow is named and was not present at his birth (`family_not_present`,
+quality `secondary`). Same evidence layer, different information layer.
+The birth *year* derived from a stated age is `indirect` on both — a value
+neither record stated outright.
 
 **Age, birthplace, birth year — separate assertions:** on a census,
 "age 32, born Ireland" yields three atomic assertions with different
@@ -686,11 +677,12 @@ birthplace is a **`birth` assertion with `place: "Ireland"`**, also
 `direct` (stated); and the computed birth year is a **`birth` assertion
 with `date: "~1818"`**, `indirect`. Two `birth` assertions on the same
 person is correct — one place-claim, one date-claim, distinguished by
-which field is set. On a death certificate the family-reported age,
-birthplace (a `birth`+`place` assertion), and any computed birth year
-are all `indirect` (informant-knowledge test). Prefer not to compute
-exact birth dates from death-cert age arithmetic at all — a year is
-enough.
+which field is set. **A death certificate splits the same way:** its
+stated age and stated birthplace are `direct` (they sit in fields), and
+only a birth year computed from that age is `indirect`. The widow's
+distance shows up as `family_not_present` and `secondary`, not as an
+evidence-type demotion. Prefer not to compute exact birth dates from
+death-cert age arithmetic at all — a year is enough.
 
 **A pre-1880 census yields NO relationship assertions at all** — the
 1850/1860/1870 census have no relationship column, so the record states
@@ -720,22 +712,21 @@ grounds to classify or re-classify it `indirect`.
 **Scope — `name` assertions only, and only the record subject's.** Two
 misreadings to avoid, in both directions:
 
-- **Do not extend it to a third party named _by_ an informant.** A
-  decedent's parents on a death certificate are named by the personal
-  informant relaying secondhand knowledge, so their `name` assertions are
-  `indirect` — same as their birthplaces, and for the same reason (the
-  informant-knowledge test above). Marking a `father_of_deceased` or
-  `mother_of_deceased` name `direct` because "a name assertion is always
-  direct" is one error this paragraph exists to prevent. It holds on a
-  burial or cemetery index too, where the informant is `unknown`: an
-  unknown informant is not grounds to promote the parentage to `direct`.
-- **Do not extend it to the subject's _other_ facts.** Being the record
-  subject makes the subject's `name` direct; it does nothing for their
-  age, birth date, birthplace, or parents. On a death certificate those
-  are still `indirect` whenever a third-party informant is relaying them
-  — the informant-knowledge test governs, not record-subject status.
-  Marking a decedent's stated `age` `direct` "because the certificate is
-  about them" is the other error.
+- **A third party named _by_ an informant is still `direct`.** A decedent's
+  parents sit in the `Father's name` / `Mother's maiden name` fields, so the
+  certificate states them: `direct`, at proximity `family_not_present` with
+  `secondary` quality, because the informant relayed them secondhand. Same on
+  a burial or cemetery index, where the informant is `unknown` and the quality
+  `indeterminate` — an unknown informant is a fact about the *information*
+  layer, not grounds to demote the evidence layer. What the third-party
+  relationship does NOT license is inventing a fact the record never printed;
+  it never changes the classification of one it did.
+- **Record-subject status is not what makes a fact `direct` — the field
+  is.** The subject's `name`, `age`, `birthplace` and parents are `direct`
+  because the certificate prints each of them, not because the record is
+  about the subject. The distinction matters for the fact it does NOT
+  cover: a birth date or year you computed from the stated age is
+  `indirect` however central the subject is.
 
 **Evidence independence (GPS Standard 4):** when two or more assertions
 share the SAME informant — even across different sources — they form one
@@ -794,14 +785,15 @@ bears on (the caller may name them; otherwise use `project_context`'s
 actual `extraction_append` invocation, not text claiming you made it.
 
 **Evidence-type self-check before you persist.** Re-scan every
-`evidence_type`: the label follows the record type. Self-reported facts
-(marriage license/affidavit — name, age, birthplace, parents) are `direct`;
-a third-party informant's report of the decedent's age/birth/parents (death
-cert) is `indirect`. `indirect` is only for a value the record does *not*
-state that you inferred (a birth *year* from an age; a relationship from
-household position) — never a blanket "stated ⇒ direct." A stated fact
-marked `indirect` while its own `informant_bias_notes` admit the record
-states it is the bug: set it `direct`.
+`evidence_type` and ask only: **could I point to a field on this record
+holding this value?** If yes → `direct`, whoever reported it and however
+derivative the source. If no → `indirect`, and name in
+`informant_bias_notes` what you inferred it from. The label does **not**
+follow the record type, and it does not follow the informant: a death
+certificate's stated age, birthplace and parents' names are `direct`
+exactly as a marriage licence's are. A stated fact marked `indirect` while
+its own `informant_bias_notes` admit the record states it is the bug — set
+it `direct` and move the doubt to `information_quality`.
 
 Make **one** `extraction_append` call with top-level `sourceDescription:
 { title, author?, url? }` (omit inapplicable fields entirely — never
@@ -819,10 +811,7 @@ copy first; check the echoed `resolvedPlaces`), validates once, and
 writes both files. **Never predict an id; never call `tree_edit` for the
 source; never write `research.json` or `tree.gedcomx.json` directly** —
 direct writes bypass validation, id allocation, and the `.bak` safety
-net. If a persistence tool shows as deferred, load it via ToolSearch
-first — search by **bare** tool name (`query: "+extraction_append"`),
-never by a hardcoded fully-qualified name, since the MCP server prefix
-differs per deployment.
+net.
 
 **Source reuse is tool-detected.** Always supply `sourceDescription` —
 the tool detects when this record already has a source (same

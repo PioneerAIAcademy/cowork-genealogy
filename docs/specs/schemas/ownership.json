@@ -2,10 +2,10 @@
   "$comment": "Who may write each section of research.json and tree.gedcomx.json. Keyed on the union of both schemas' top-level properties plus the `plan_items` pseudo-section research_append's `section` enum defines, so neither vocabulary can leave a hole. One row per (artifact, section). Contract and adjudication record: docs/specs/research-schema-spec.md section 4 and docs/specs/guardrail-enforcement-spec.md. Shape and exhaustiveness are checked by packages/engine/mcp-server/tests/packaging/ownership-manifest.test.ts; the enforced writer sets are frozen by eval/harness/tests/unit/test_ownership_manifest.py.",
   "version": 1,
   "enforcementPlanes": {
-    "unit": "eval/harness/validators/test_universal.py — diffs before/after project state against the calling skill's SKILL.md frontmatter name. Cannot see an agent caller, and runs only inside a paid per-skill eval run.",
-    "e2e": "eval/harness/e2e — whole-run detectors. Eval-only; never reaches production.",
-    "tool": "a writer-tool precondition in packages/engine/mcp-server/src/tools. The only plane that binds in every environment. Nothing keys on this manifest yet.",
-    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Nothing keys on this manifest yet."
+    "unit": "eval/harness/validators/test_universal.py \u2014 diffs before/after project state against the calling skill's SKILL.md frontmatter name. Cannot see an agent caller, and runs only inside a paid per-skill eval run.",
+    "e2e": "eval/harness/e2e \u2014 whole-run detectors. Eval-only; never reaches production.",
+    "tool": "a writer-tool precondition in packages/engine/mcp-server/src/tools. The only plane that binds in every environment, and the only one that is caller-agnostic \u2014 it constrains the WRITE, never who made it. Claimed by the questions row since 2026-08-23 (two exhaustiveness preconditions in research_append). Nothing reads this manifest at runtime: a row claiming this plane is a pointer to a hand-written check, kept in step by review.",
+    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19) and by questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23). Nothing reads this manifest at runtime \u2014 the hook runs in the VM with no repo access \u2014 so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
   },
   "rows": [
     {
@@ -23,7 +23,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "init-project creates the object; proof-conclusion sets `status` and `updated` when a project completes. `updated` alone is a per-session activity ping any successful writer may refresh — a diff confined to that field is not a violation.",
+      "requires": "init-project creates the object; proof-conclusion sets `status` and `updated` when a project completes. `updated` alone is a per-session activity ping any successful writer may refresh \u2014 a diff confined to that field is not a violation.",
       "failure": "A skill rewrites the objective, subject persons, or status mid-project, and every later skill plans against a changed goal it never agreed to.",
       "remedy": "Route a status change through proof-conclusion; route an objective change through init-project.",
       "override": "none"
@@ -56,8 +56,8 @@
         "research_append"
       ],
       "enforceableAt": [],
-      "notes": "Recorded as unowned while the only writer was init-project's raw file write, on a measurement taken over the e2e corpus — where init-project never runs, because every fixture starts from an existing project. The unit corpus does exercise it. Now routed through `research_append` with the rest of project creation. Not enforceable on the unit plane: the section is outside the diff set that plane iterates.",
-      "requires": "init-project surveys what the researcher already holds at project creation and writes one entry per reported item, after the tree ops — `relates_to_person_ids` names tree persons, and the validator rejects a reference to a person that does not exist yet.",
+      "notes": "Recorded as unowned while the only writer was init-project's raw file write, on a measurement taken over the e2e corpus \u2014 where init-project never runs, because every fixture starts from an existing project. The unit corpus does exercise it. Now routed through `research_append` with the rest of project creation. Not enforceable on the unit plane: the section is outside the diff set that plane iterates.",
+      "requires": "init-project surveys what the researcher already holds at project creation and writes one entry per reported item, after the tree ops \u2014 `relates_to_person_ids` names tree persons, and the validator rejects a reference to a person that does not exist yet.",
       "failure": "The survey is what stops the first research plan re-finding records the researcher already has. Written before the tree persons exist, every entry's person references dangle and the write is rejected outright.",
       "remedy": "Write it through `research_append` after the tree batch. Whether anything downstream should also set the `promoted` flag is an open question, tracked separately.",
       "override": "none"
@@ -75,9 +75,15 @@
         "research_append"
       ],
       "enforceableAt": [
-        "unit"
+        "unit",
+        "hook",
+        "tool"
       ],
-      "requires": "question-selection mints questions and owns their structure; research-exhaustiveness advances `status` to `exhaustive_declared` and writes `exhaustive_declaration`; proof-conclusion advances `status` to `resolved` and writes `resolved` and `resolution_assertion_ids` for the question it concluded. A `resolved` write additionally requires a proof summary referencing the question — a writer-tool precondition, not an ownership rule.",
+      "hookCallers": [
+        "agent:research-exhaustiveness"
+      ],
+      "notes": "Enforced at the hook plane since 2026-08-23, but FIELD-scoped rather than section-scoped \u2014 the only row of that shape. `exhaustive_declaration` is a REQUIRED property of every question, so question-selection writes it on every creation from the main thread; 197 of the 392 corpus ops carrying the field are exactly those, and a section route or a presence-keyed field route denies all of them. The hook therefore keys on the CLAIM \u2014 an op setting `exhaustive_declaration.declared` to true \u2014 and lives in the guard's `OWNED_DECLARATIONS`, not `OWNED_SECTIONS`. A `declared: false` write claims nothing and is not routed: that is both question creation and the owning skill's own honest early-termination path. 47 of the 131 corpus runs that declared a question exhaustive never invoked the skill that owns it. `callers` stays skill-only and the agent lives in `hookCallers`, per the proof_summaries row: the unit plane keys on the calling skill's frontmatter name and cannot see an agent.",
+      "requires": "question-selection mints questions and owns their structure; research-exhaustiveness advances `status` to `exhaustive_declared` and writes `exhaustive_declaration`; proof-conclusion advances `status` to `resolved` and writes `resolved` and `resolution_assertion_ids` for the question it concluded. A `resolved` write additionally requires a proof summary referencing the question \u2014 a writer-tool precondition, not an ownership rule. Two further preconditions on the same plane, also not ownership rules: `status: \"exhaustive_declared\"` requires `exhaustive_declaration.declared === true` (read live \u2014 the same author's own step), and `declared: true` is refused while a plan item for that question is `in_progress` (read from the pre-call snapshot \u2014 plan-item completion is the search work's step, and this skill is not a permitted writer of `plan_items`). Items still `planned` do NOT block: the orchestrator routes here before the plan is drained.",
       "failure": "`status: \"resolved\"` is the orchestrator's stop condition. A skill that flips it without concluding the question ends the project on an unanswered question.",
       "remedy": "Conclude the question through proof-conclusion, which writes the proof summary carrying `question_id` and then resolves it.",
       "override": "none"
@@ -121,7 +127,7 @@
         "research_append"
       ],
       "enforceableAt": [],
-      "notes": "A pseudo-section: it exists in `research_append`'s `section` enum, not as a top-level property of research.json — it addresses `plans[].items[]`. The unit check diffs top-level sections, so a plan-item write already shows up under `plans`; this row exists so a tool- or hook-plane check has something to key on and so the tool's vocabulary leaves no hole. Absent from the ownership table, it was the single largest source of false denials when the table was replayed as a tool-boundary deny.",
+      "notes": "A pseudo-section: it exists in `research_append`'s `section` enum, not as a top-level property of research.json \u2014 it addresses `plans[].items[]`. The unit check diffs top-level sections, so a plan-item write already shows up under `plans`; this row exists so a tool- or hook-plane check has something to key on and so the tool's vocabulary leaves no hole. Absent from the ownership table, it was the single largest source of false denials when the table was replayed as a tool-boundary deny.",
       "requires": "Same writers as `plans`, with the same split: research-plan owns item structure, the executing skills update `status`.",
       "failure": "A deny on this section refuses the status flip that the plans row explicitly blesses.",
       "remedy": "Same as `plans`.",
@@ -143,9 +149,11 @@
         "research_log_append"
       ],
       "enforceableAt": [
-        "unit"
+        "unit",
+        "tool"
       ],
-      "requires": "Append only. Existing entries are never modified or deleted — checked separately by the append-only validator, which this row does not duplicate.",
+      "notes": "Enforced at the tool plane since 2026-08-31, and the claim is narrower than the plane's definition: `record_search`, `fulltext_search` and `external_links_search` carry an ADVISORY note naming staged search responses that have no log entry, and refuse nothing. The plane's own text describes a writer-tool precondition that constrains the write; this constrains nothing, so read the row as coverage of DETECTION only. The unit plane cannot see the failure it addresses: it grades a single skill's own run, and the reported alpha-feedback case answered a research question with 11 record_search calls while invoking no skill at all. The hook plane cannot take it either: this section's callers are five SKILLS, which run on the main thread with no `agent_id`, and that is the hook's only discriminator. Measured over all 362 committed research.json files (fixtures plus eval/runlogs/e2e final states): of 1242 non-nil staging-capable entries, 126 logged results with no `results_ref`, so their staged file outlives the entry documenting it, which is why the check pairs each staged file against at most one such entry instead of subtracting counts. A nil search stages nothing and is invisible to the pairing; that half is a separate note, gated on the search's upstream total rather than its returned rows for `record_search` and `fulltext_search`, and on the pre-host-filter link set for `external_links_search`, whose shape has no upstream total to read, and is not detection either. What the notes hand back is the unpaired staged refs, not a bare count, so the obligation is satisfiable by a session that has lost them.",
+      "requires": "Append only. Existing entries are never modified or deleted \u2014 checked separately by the append-only validator, which this row does not duplicate.",
       "failure": "The log is what makes a search reconstructible, including nil results. A skill that rewrites entries destroys the one record that says what was already tried.",
       "remedy": "Append a new entry. Correct a wrong one by appending the correction, never by editing in place.",
       "override": "none"
@@ -185,9 +193,9 @@
       "enforceableAt": [
         "unit"
       ],
-      "notes": "convert-dates held this section in the table this manifest replaced, and the grant was dead: its only tool is `convert_calendar`, it holds no writer tool, and its own body says it writes nothing. Dropped rather than recorded — a declared writer that cannot write reads as coverage in exactly the way an invented owner does. Free: none of the skill's 14 unit tests names `research_append` or `assertions`.",
+      "notes": "convert-dates held this section in the table this manifest replaced, and the grant was dead: its only tool is `convert_calendar`, it holds no writer tool, and its own body says it writes nothing. Dropped rather than recorded \u2014 a declared writer that cannot write reads as coverage in exactly the way an invented owner does. Free: none of the skill's 14 unit tests names `research_append` or `assertions`.",
       "requires": "record-extraction writes the atomic assertions and their three-layer classifications, first and final. No later pass refines them.",
-      "failure": "An assertion written outside extraction carries no source, no classification, and no persona link — and the GPS analysis layer treats it as evidence anyway.",
+      "failure": "An assertion written outside extraction carries no source, no classification, and no persona link \u2014 and the GPS analysis layer treats it as evidence anyway.",
       "remedy": "Extract through record-extraction, which owns classification. Reclassify by re-invoking it on the same record.",
       "override": "none"
     },
@@ -205,7 +213,7 @@
         "unit"
       ],
       "requires": "Only person-evidence links a persona to a tree person. The record-extraction lane is held off this section by tool identity: `extraction_append` does not accept it.",
-      "failure": "A skill writing an identity link asserts a `match_score` no tool computed — the exact failure that produced the narrower extraction tool.",
+      "failure": "A skill writing an identity link asserts a `match_score` no tool computed \u2014 the exact failure that produced the narrower extraction tool.",
       "remedy": "Route the identity link through person-evidence.",
       "override": "none"
     },
@@ -240,7 +248,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "notes": "hypothesis-tracking is invoked zero times across the committed e2e corpus, so on that plane the row is paper — it was the third-largest source of false denials when the table was replayed as a tool-boundary deny. It stays enforced because the unit corpus does exercise the skill.",
+      "notes": "hypothesis-tracking is invoked zero times across the committed e2e corpus, so on that plane the row is paper \u2014 it was the third-largest source of false denials when the table was replayed as a tool-boundary deny. It stays enforced because the unit corpus does exercise the skill.",
       "requires": "Only hypothesis-tracking states a hypothesis or rules one out.",
       "failure": "A ruled-out hypothesis rewritten by another skill loses the reasoning that ruled it out, and the same line gets re-researched.",
       "remedy": "Route through hypothesis-tracking.",
@@ -259,7 +267,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "notes": "Zero writes across the committed e2e corpus — the section is regenerated wholesale when it is written at all, and no e2e run has ever routed to the skill. Enforced on the unit plane, where the skill has a suite.",
+      "notes": "Zero writes across the committed e2e corpus \u2014 the section is regenerated wholesale when it is written at all, and no e2e run has ever routed to the skill. Enforced on the unit plane, where the skill has a suite.",
       "requires": "Only timeline regenerates the section; it is replaced wholesale, not edited entry by entry.",
       "failure": "A partially-edited timeline reads as a complete one, and the gaps it exists to expose are hidden.",
       "remedy": "Regenerate through timeline.",
@@ -276,13 +284,17 @@
         "research_append"
       ],
       "enforceableAt": [
-        "unit"
+        "unit",
+        "hook"
       ],
-      "notes": "The highest measured bypass rate of any artifact: 47 of 133 committed e2e runs wrote a proof summary without ever launching the skill that owns it. The unit plane cannot see that, because it grades a single skill's own run.",
+      "notes": "The highest measured bypass rate of any artifact: 47 of 133 committed e2e runs wrote a proof summary without ever launching the skill that owns it. The unit plane cannot see that, because it grades a single skill's own run. Enforced at the hook plane since 2026-08-19: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the proof-conclusion AGENT. `callers` stays skill-only and `writerTools` stays research_append on purpose -- the unit plane keys on the calling skill's frontmatter name and cannot see an agent, so naming an agent there raises OwnershipManifestError. The agent caller lives in `hookCallers`, which is the per-plane field a later phase should read.",
       "requires": "Only proof-conclusion writes a conclusion, and never more than one summary per `question_id`.",
       "failure": "A summary written outside the skill skips the tier decision rules and the conflict preconditions, and the tree is then encoded from it.",
       "remedy": "Conclude through proof-conclusion.",
-      "override": "none"
+      "override": "none",
+      "hookCallers": [
+        "agent:proof-conclusion"
+      ]
     },
     {
       "artifact": "research.json",
@@ -295,7 +307,7 @@
         "research_append"
       ],
       "enforceableAt": [],
-      "notes": "The owner is an agent, and the unit ownership check keys on the calling skill's SKILL.md frontmatter name — it cannot express an agent owner, which is why this row is unenforceable on that plane rather than merely unenforced. Measured over the committed e2e corpus: 230 write ops across 114 of 154 runs, with 32 of 34 attributable writes made by gps-mentor.",
+      "notes": "The owner is an agent, and the unit ownership check keys on the calling skill's SKILL.md frontmatter name \u2014 it cannot express an agent owner, which is why this row is unenforceable on that plane rather than merely unenforced. Measured over the committed e2e corpus: 230 write ops across 114 of 154 runs, with 32 of 34 attributable writes made by gps-mentor.",
       "requires": "Only the gps-mentor agent appends an evaluation. A superseded evaluation is retired by pointing `superseded_by` at its replacement, never by deletion.",
       "failure": "A skill appending its own evaluation grades its own work, and the mandatory proof critique becomes self-issued.",
       "remedy": "Invoke gps-mentor and let it write the entry.",
@@ -314,7 +326,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "notes": "Declared an owner since the section shipped and never once evaluated — the section was missing from the list the unit check iterates. This promotion is what first enforces it.",
+      "notes": "Declared an owner since the section shipped and never once evaluated \u2014 the section was missing from the list the unit check iterates. This promotion is what first enforces it.",
       "requires": "Only locality-guide surveys a place. A re-survey refreshes the existing `loc_` entry in place; there is no status field to supersede.",
       "failure": "research-plan plans from these facts. A locality entry written by a skill that did not survey the place produces plan items for record sets that do not exist for that jurisdiction or era.",
       "remedy": "Survey through locality-guide.",
@@ -342,7 +354,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "A minted person arrives with its first sourced evidence facts, never as a name-only stub. Only proof-conclusion sets `primary`/`proof_tier` — materialization adds sourced evidence and nothing else.",
+      "requires": "A minted person arrives with its first sourced evidence facts, never as a name-only stub. Only proof-conclusion sets `primary`/`proof_tier` \u2014 materialization adds sourced evidence and nothing else.",
       "failure": "This file is the upload target. An unsourced person written here is uploaded to FamilySearch as fact.",
       "remedy": "Mint through person-evidence with the record's facts attached; correct through tree-edit; conclude through proof-conclusion.",
       "override": "none"
@@ -351,7 +363,7 @@
       "artifact": "tree.gedcomx.json",
       "section": "relationships",
       "owner": null,
-      "reason": "The same four writers as `persons`, for the same reason — a relationship edge is written by whichever of them established it, and no one of them owns the section's structure.",
+      "reason": "The same four writers as `persons`, for the same reason \u2014 a relationship edge is written by whichever of them established it, and no one of them owns the section's structure.",
       "callers": [
         "skill:init-project",
         "skill:tree-edit",

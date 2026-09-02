@@ -28,7 +28,7 @@ import {
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-const MODEL = "qwen/qwen3-vl-235b-a22b-instruct";
+const MODEL = "google/gemini-3.7-flash";
 
 function mockOpenRouterOk(content: string, finishReason = "stop") {
   mockFetch.mockResolvedValueOnce({
@@ -269,10 +269,74 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
   });
 
   it("throws a friendly error when OpenRouter is unreachable", async () => {
-    mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+    mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
     await expect(
       imageTranscribeTool({ imageId: "004884748_02613" })
     ).rejects.toThrow(/Could not reach OpenRouter/);
+  });
+
+  // #1594: one bounded retry on a TRANSPORT failure. On the run that motivated
+  // it, two consecutive losses led the agent to declare the OCR route
+  // "network-unreachable in this environment", abandon images for the rest of
+  // the run, and conclude from an indexed namesake instead.
+  it("retries a transport failure once and returns the retry's transcription", async () => {
+    mockFetch.mockRejectedValueOnce(new TypeError("fetch failed"));
+    mockOpenRouterOk("Anno 1762, Henckelstorp");
+
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+
+    expect(result.transcription).toBe("Anno 1762, Henckelstorp");
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries at most once, and says so when the retry also fails", async () => {
+    mockFetch.mockRejectedValue(new TypeError("fetch failed"));
+    await expect(
+      imageTranscribeTool({ imageId: "004884748_02613" })
+    ).rejects.toThrow(/Could not reach OpenRouter \(2 attempts\)/);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  // The budget objection that kept a retry out until now: a timeout has already
+  // spent OCR_TIMEOUT_MS, so re-attempting doubles the worst case. A transport
+  // failure never reached OpenRouter and costs nothing. Only the latter retries.
+  it("does NOT retry a timeout — that would double the worst-case budget", async () => {
+    const timeout = new Error("The operation was aborted due to timeout");
+    timeout.name = "TimeoutError";
+    mockFetch.mockRejectedValue(timeout);
+
+    await expect(
+      imageTranscribeTool({ imageId: "004884748_02613" })
+    ).rejects.toThrow(/timed out after 180000ms/);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  // #1594: Node's `fetch failed` hides the socket code on `error.cause`; the
+  // bare `.message` classifies nothing. The thrown message must carry the code.
+  it("surfaces the socket-level cause code hidden on error.cause (#1594)", async () => {
+    const cause = Object.assign(new Error("read ECONNRESET"), {
+      code: "ECONNRESET",
+    });
+    const fetchFailed = Object.assign(new TypeError("fetch failed"), { cause });
+    // Both attempts: the code must survive the retry into the final message, or
+    // the classification this carries is lost exactly when it is needed.
+    mockFetch.mockRejectedValue(fetchFailed);
+    await expect(
+      imageTranscribeTool({ imageId: "004884748_02613" })
+    ).rejects.toThrow(/Could not reach OpenRouter.*ECONNRESET/s);
+  });
+
+  // A DNS failure arrives as an AggregateError whose member carries the code.
+  it("flattens an AggregateError cause to surface ENOTFOUND (#1594)", async () => {
+    const member = Object.assign(new Error("getaddrinfo ENOTFOUND openrouter.ai"), {
+      code: "ENOTFOUND",
+    });
+    const cause = new AggregateError([member], "");
+    const fetchFailed = Object.assign(new TypeError("fetch failed"), { cause });
+    mockFetch.mockRejectedValue(fetchFailed);
+    await expect(
+      imageTranscribeTool({ imageId: "004884748_02613" })
+    ).rejects.toThrow(/Could not reach OpenRouter.*ENOTFOUND/s);
   });
 
   it("throws rather than fabricate on empty OCR content", async () => {

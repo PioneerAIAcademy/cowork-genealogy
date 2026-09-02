@@ -15,20 +15,14 @@ signature contract. The `test` argument is the parsed test JSON dict
 from __future__ import annotations
 
 import json
+import re
 
 import pytest
 
-
-# --- Helpers ----------------------------------------------------------
-
-def _new_log_entries(before_state, after_state) -> list[dict]:
-    before = before_state.get("research_json") or {}
-    after = after_state.get("research_json") or {}
-    before_ids = {e.get("id") for e in before.get("log", []) if isinstance(e, dict)}
-    return [
-        e for e in after.get("log", [])
-        if isinstance(e, dict) and e.get("id") not in before_ids
-    ]
+from validators_lib import new_log_entries as _new_log_entries
+from validators_lib import (
+    assert_capture_pending_item_not_terminal as _assert_capture_pending_item_not_terminal,
+)
 
 
 # --- Structural rules from SKILL.md -----------------------------------
@@ -84,6 +78,174 @@ def test_log_outcome_honest_no_match(before_state, after_state, test):
     assert any(o in ("negative", "partial", "error") for o in outcomes), (
         f"expected a new log entry with outcome in (negative, partial, error); "
         f"got outcomes={outcomes}"
+    )
+
+
+# --- Pre-1880 census: family structure must be marked inferred --------
+
+# Words a log note uses when it is describing the household around the hit,
+# rather than the hit alone. The rule below only applies once the note starts
+# describing the household — a note that reports the focus person and nothing
+# else has no family structure to qualify.
+_HOUSEHOLD_MENTIONS = (
+    "household",
+    "dwelling",
+    "co-resident",
+    "coresident",
+    "enumerated with",
+    "living with",
+)
+
+# Role assertions that can only be read off a relationship column. Bare role
+# words are deliberately NOT listed: a note may legitimately name a tree-side
+# relative ("searched for George's wife Catherine", where Catherine turns out
+# to be absent from the record), and that is not a claim about what the census
+# stated. These forms are — "head of household", "X as father" — so they
+# trigger the requirement even when the word "household" never appears.
+_ROLE_ASSERTIONS = (
+    r"head\s+of\s+household",
+    r"household\s+head",
+    r"\bas\s+[\"'“‘]?(?:his|her|the)?\s*[\"'“‘]?"
+    r"(?:head|wife|husband|son|daughter|father|mother)\b",
+)
+
+# Possessive kinship claims about a specific named person found in the
+# record — "Amos's children", "Doss's son" — a second phrasing of the same
+# claim _ROLE_ASSERTIONS's "as ROLE" form catches, which "as" alone misses.
+# Scoped to a capitalized name's possessive for the same reason
+# _ROLE_ASSERTIONS avoids bare role words above: a bare pronoun ("his son")
+# is common in a legitimate tree-side reference. This does not exclude every
+# tree-side mention -- "George's wife Catherine" matches -- which is accepted:
+# a pre-1880 note naming a kinship relation with no hedge anywhere is worth
+# flagging either way.
+_POSSESSIVE_KINSHIP_ASSERTIONS = (
+    r"\b(?-i:[A-Z])[a-zA-Z]*'s\s+(?:son|daughter|child|children|wife|husband)\b",
+)
+
+# A plural kinship noun immediately followed by a capitalised word, which in
+# a census note is nearly always a name being introduced — "plus sons Thos
+# T McElwee and Stephen McElwee" — the exact phrasing behind issue #1912's
+# production report. Scoped to the PLURAL forms only (never bare
+# "son"/"daughter"/"wife"/"husband"): a search routinely names a single
+# already-known tree-side relative this way ("anchored on his wife
+# Catherine"), which is not a claim about the record; introducing multiple
+# same-role people by a plural noun is not that pattern. Punctuation
+# (comma, colon, dash) between the noun and the name is treated as
+# adjacent; a sentence boundary is not.
+_PLURAL_KINSHIP_INTRODUCING_NAME = (
+    r"\b(?:sons|daughters|children)\b[\s,:;\u2013\u2014-]+(?-i:[A-Z])",
+)
+
+_CLAIM_PATTERNS = (
+    _ROLE_ASSERTIONS
+    + _POSSESSIVE_KINSHIP_ASSERTIONS
+    + _PLURAL_KINSHIP_INTRODUCING_NAME
+)
+
+# Any of these in the note satisfies the rule. The skill does not have to use
+# SKILL.md's exact sentence — it has to say, in some form, that the structure
+# is an inference rather than something the record stated.
+_INFERENCE_MARKERS = (
+    r"inferr",            # inferred, inferring, indexer-inferred
+    r"inference",         # inference, inferences
+    r"\bnot\s+(?:a\s+)?stated\b",
+    r"\bunstated\b",
+    r"\bimplied\b",
+    r"\bpresumed\b",
+    r"no\s+relationship\s+(?:to\s+head\s+)?column",
+    r"relationship\s+column[^.]{0,40}\b(?:does\s+not|did\s+not|is\s+not|"
+    r"was\s+not|never|absent)\b",
+)
+
+
+def test_pre1880_census_structure_marked_inferred(
+    before_state, after_state, test
+):
+    """Tag-gated (pre-1880-census-household): a log note that describes a
+    pre-1880 US census household must mark the family structure inferred.
+
+    SKILL.md's Step 4 rule: 1850/1860/1870 carry no "relationship to head"
+    column, so every "head"/"wife"/"son" read off such a household — and the
+    record's own `ParentChild`/`Couple` edges, which are the indexer's
+    inference from the same signals — is an inference. The body prescribes
+    the output: "Daniel, Margaret, Hannah in one dwelling; family structure
+    inferred from surname, ages and order, not stated", *not* "head Daniel +
+    wife Margaret + daughter Hannah".
+
+    Deterministic rather than judged because compliance is genuinely
+    inconsistent, not because the judge misreads it. See issue #1284.
+
+    Re-measured for PR #1946 (superseding this docstring's earlier figure —
+    "17 of 32 ... and all 32 passed" — which the review caught silently
+    dropped rather than updated): across the 5 committed run logs as of this
+    PR, the 9 `pre-1880-census-household`-tagged tests produced 44 logged
+    searches. The marker appears in 26 of 44; outcome is 23 pass / 21 fail.
+    Unlike the earlier figure, marker presence and pass no longer coincide —
+    3 of the 26 marker-present runs still failed (`ut_search_records_014`
+    once, `ut_search_records_h4k` twice), because this validator's own gate
+    is now live and the judge separately reads whether a marker actually
+    qualifies its claim. Re-derive by scanning `research_log_append` notes in
+    `eval/runlogs/unit/search-records/v1_*.json` for the tagged test ids --
+    a call there is sometimes a single entry, sometimes a batched `ops`
+    array of several; count each op with `outcome` in (positive, partial)
+    as one logged search, matching `_new_log_entries`'s own unit of work.
+
+    Requirement: if `notes` describes a household at all (`_HOUSEHOLD_MENTIONS`)
+    or makes a relationship/kinship claim (`_CLAIM_PATTERNS`), an inference
+    marker (`_INFERENCE_MARKERS`) must appear somewhere in the note. This is
+    the original #1284 rule — what catches a bare listing with no hedge
+    anywhere ("...in household of Thomas Flynn and Mary Flynn.", no marker
+    at all) or a flat, unhedged claim ("plus sons Thos T McElwee and Stephen
+    McElwee", issue #1912's actual production text, no marker anywhere in
+    that log entry).
+
+    `_CLAIM_PATTERNS` covers three shapes the same underlying rule reads off:
+    `_ROLE_ASSERTIONS` ("as father", "household head"), a possessive kinship
+    claim naming a specific person ("Amos's children"), and a plural kinship
+    noun bare-introducing named individuals ("sons Thos T McElwee and
+    Stephen McElwee").
+
+    PR #1946 review (issue #1912): a per-sentence variant of this check was
+    tried, to catch a marker present elsewhere in the note that never
+    actually qualifies a specific claim (e.g. "...likely Amos's children.
+    Pre-1880 census — no relationship column; family structure inferred
+    ..."). Withdrawn: `ut_search_records_015`'s own committed, correctly-
+    hedged output ("...household headed by William Mullen ... Indexer-
+    inferred ParentChild/Couple relationships — 1860 census carries no
+    relationship column ...") has the identical two-sentence shape —
+    claim, then the SKILL.md-prescribed hedge as its own following sentence
+    — and no reliable mechanical signal separates the two. Note-wide is the
+    right precision for what a validator (rather than the judge, who reads
+    the whole note as a person would) can safely automate; confirmed against
+    every note in every committed `search-records` run log to date (168
+    notes, tag forced on all of them) with zero false positives.
+    """
+    if "pre-1880-census-household" not in test.get("tags", []):
+        pytest.skip("not a pre-1880 census household scenario")
+
+    offenders = []
+    for e in _new_log_entries(before_state, after_state):
+        if e.get("tool") != "record_search":
+            continue
+        if e.get("outcome") not in ("positive", "partial"):
+            continue  # a nil found no household to describe
+        notes = e.get("notes") or ""
+
+        describes_household = any(
+            m in notes.lower() for m in _HOUSEHOLD_MENTIONS
+        ) or any(re.search(p, notes, re.IGNORECASE) for p in _CLAIM_PATTERNS)
+        if not describes_household:
+            continue
+        if any(re.search(p, notes, re.IGNORECASE) for p in _INFERENCE_MARKERS):
+            continue
+        offenders.append((e.get("id"), notes))
+
+    assert not offenders, (
+        "a pre-1880 US census has no relationship column, so a log note that "
+        "describes the household must say the family structure is inferred "
+        "rather than stated (SKILL.md Step 4). These entries describe the "
+        "household and assert its structure flat: "
+        + "; ".join(f"{eid}: {notes!r}" for eid, notes in offenders)
     )
 
 
@@ -276,3 +438,10 @@ def test_live_callee_used_its_own_tools(tool_calls, skills_invoked, test):
         "third-party collection links. Absent, the skill can only have "
         f"invented any URLs it presented. tools called: {sorted(called)}"
     )
+
+
+def test_capture_pending_item_not_terminal(before_state, after_state, test):
+    """Issue #1226 — a plan item awaiting an external-site capture must not be
+    `completed`/`skipped`. Shared with the other suite that can reach this
+    state; the assertion lives in validators_lib."""
+    _assert_capture_pending_item_not_terminal(before_state, after_state, test)

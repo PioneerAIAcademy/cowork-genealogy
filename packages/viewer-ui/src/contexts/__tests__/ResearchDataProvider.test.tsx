@@ -10,7 +10,7 @@ import type { ResearchTransport } from '../../transport'
 // ============================================================
 
 // Capture the context value so each test can inspect / drive it.
-function makeHarness(): {
+function makeHarness(transport?: ResearchTransport): {
   ctx: () => ResearchDataState
   render: () => void
 } {
@@ -26,7 +26,7 @@ function makeHarness(): {
     },
     render: () => {
       render(
-        <ResearchDataProvider transport={makeMockTransport()}>
+        <ResearchDataProvider transport={transport ?? makeMockTransport()}>
           <Probe />
         </ResearchDataProvider>
       )
@@ -37,6 +37,8 @@ function makeHarness(): {
 // Capture the transport's onSidecar callback so tests can fire fake events,
 // and the readSidecar fn the current test installed.
 let sidecarUpdatedHandler: ((e: { logId: string; mtime: number }) => void) | null = null
+let noticeHandler: ((message: string) => void) | null = null
+let researchHandler: ((data: unknown) => void) | null = null
 let currentReadSidecar: ReturnType<typeof vi.fn> = vi.fn()
 
 function installApiMock(readSidecar: ReturnType<typeof vi.fn>): void {
@@ -49,9 +51,11 @@ function installApiMock(readSidecar: ReturnType<typeof vi.fn>): void {
 // readSidecar delegates to whatever the test installed.
 function makeMockTransport(): ResearchTransport {
   return {
-    getProjectState: async () => ({ research: null, gedcomx: null, label: null }),
+    getProjectState: async () => ({ research: null, gedcomx: null, label: null, notice: null }),
     subscribe: (handlers) => {
       sidecarUpdatedHandler = handlers.onSidecar
+      noticeHandler = handlers.onNotice
+      researchHandler = handlers.onResearch as (d: unknown) => void
       return () => {}
     },
     readSidecar: (logId: string) => currentReadSidecar(logId),
@@ -370,5 +374,86 @@ describe('ResearchDataProvider — closeSidecar cancellation', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+  })
+})
+
+// ============================================================
+// Folder notice (issue #1317 bug 2) — a heads-up that a research load must NOT clear
+// ============================================================
+
+const emptyResearch = {
+  known_holdings: [],
+  questions: [],
+  plans: [],
+  log: [],
+  sources: [],
+  assertions: [],
+  person_evidence: [],
+  conflicts: [],
+  hypotheses: [],
+  timelines: [],
+  proof_summaries: [],
+  evaluations: []
+}
+
+// A transport whose hydration snapshot already carries a notice and which never
+// fires `onNotice`. That is the reload shape: the send happened before this
+// renderer existed, so the only route left is the snapshot (issue #1899).
+function makeHydratingTransport(notice: string | null): ResearchTransport {
+  return {
+    ...makeMockTransport(),
+    getProjectState: async () => ({ research: null, gedcomx: null, label: '/p', notice })
+  }
+}
+
+describe('ResearchDataProvider — folder notice', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('surfaces onNotice, keeps it across a research load, and clears only on dismiss', () => {
+    installApiMock(vi.fn())
+    const h = makeHarness()
+    h.render()
+
+    expect(h.ctx().notice).toBeNull()
+
+    act(() => noticeHandler!('research.json is in a subfolder — wrong folder level'))
+    expect(h.ctx().notice).toBe('research.json is in a subfolder — wrong folder level')
+
+    // The #1317 regression: a research load previously wiped the notice. It must not.
+    act(() => researchHandler!(emptyResearch))
+    expect(h.ctx().notice).toBe('research.json is in a subfolder — wrong folder level')
+
+    // Only an explicit dismiss clears it.
+    act(() => h.ctx().clearNotice())
+    expect(h.ctx().notice).toBeNull()
+  })
+
+  // #1899: the notice is push-delivered, and `--project-dir` sends it before the
+  // renderer mounts. Every later reload has the same shape. Replaying it from
+  // the hydration snapshot is the only thing that can reach such a renderer, so
+  // this asserts it arrives with NO onNotice event fired at all.
+  it('replays a notice from the hydration snapshot with no onNotice fired', async () => {
+    installApiMock(vi.fn())
+    noticeHandler = null
+    const h = makeHarness(makeHydratingTransport('research.json is in a subfolder — reloaded'))
+    h.render()
+
+    // The notice's only source here is the hydration snapshot (getProjectState);
+    // the test never fires onNotice. So this waitFor IS the guard — deleting the
+    // hydrate line in ResearchDataProvider fails it and nothing else.
+    await waitFor(() =>
+      expect(h.ctx().notice).toBe('research.json is in a subfolder — reloaded')
+    )
+
+    act(() => h.ctx().clearNotice())
+    expect(h.ctx().notice).toBeNull()
+  })
+
+  it('leaves the notice null when the hydration snapshot carries none', async () => {
+    installApiMock(vi.fn())
+    const h = makeHarness(makeHydratingTransport(null))
+    h.render()
+    await waitFor(() => expect(h.ctx().research).toBeNull())
+    expect(h.ctx().notice).toBeNull()
   })
 })

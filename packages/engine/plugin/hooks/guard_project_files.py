@@ -41,7 +41,10 @@ import json
 import sys
 
 # Matched on the basename, so an absolute or relative path is caught alike.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+# starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
+# diffs against (issue #1490); a raw overwrite of it would defeat the gate the
+# same way a raw tree.gedcomx.json write defeats the write-boundary invariants.
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
 
 # The raw file-write tools. Their `file_path` is unambiguously a destination —
 # there is no reading of `Write(file_path=...)` where that file is an input.
@@ -79,6 +82,96 @@ DEVICE_WRITE_TOOLS = ("device_commit_files",)
 # by vectors in test_write_lockdown_parity.py — deleting either bound, or
 # restoring 400, now fails.
 _MAX_PATH_LEN = 4096
+
+# research.json sections whose owner is enforced by caller identity, mapped to
+# the BARE agent name that owns each. Rows come from
+# `docs/specs/schemas/ownership.json`; a row reaches this map only when its
+# `enforceableAt` names the `hook` plane, it declares a `hookCallers` agent, AND
+# the whole section is routed. A row that satisfies the first two but routes only
+# one FIELD lands in OWNED_DECLARATIONS below instead — `questions` is that
+# shape, and adding it here would deny `question-selection` its own 197 corpus
+# question creations.
+#
+# The section name is hardcoded rather than read from the manifest because a
+# hook runs in the VM with no access to the repo — `cwd` is the sandbox and the
+# connected folder is not mounted there. Keeping the two in step is the
+# manifest's `hookCallers` field plus this comment, not a loader.
+OWNED_SECTIONS = {"proof_summaries": "proof-conclusion"}
+
+# Field-scoped routing: (section, field) -> the BARE agent name that may set it
+# truthy. Same plane and same manifest as OWNED_SECTIONS, different granularity.
+#
+# `proof_summaries` is a whole section with one owner, so a section rule fits it.
+# `exhaustive_declaration` is not: it is a REQUIRED property of every question
+# (`research.schema.json`, `$defs.question.required`), so `question-selection`
+# writes it on every question it creates, from the main thread, with no
+# `agent_id`. Measured over 159 committed e2e runs, 197 of the 392 ops carrying
+# the field are exactly those creations — a presence-keyed rule denies every one.
+#
+# So the rule keys on the CLAIM, not the field: an op setting
+# `exhaustive_declaration.declared` to true. A question being created carries
+# `declared: false` and passes; so does an honest early termination, which is the
+# same skill's own `declared: false` path and claims nothing. What is routed is
+# the assertion that GPS Component 1 is satisfied, which is the artifact 47 of
+# 131 corpus runs wrote without ever invoking the skill that owns it.
+OWNED_DECLARATIONS = {("questions", "exhaustive_declaration"): "research-exhaustiveness"}
+
+# The reverse direction: the sections each named agent MAY write. Rows come from
+# the same manifest -- every section whose `callers` names that agent's skill.
+#
+# This is a SECOND rule, not a restatement of the one above, and it catches a
+# different failure. OWNED_SECTIONS stops everyone else reaching a section; this
+# stops the owner reaching everything else. Measured 2026-08-19: blocked from
+# concluding by an unresolved conflict, the proof-conclusion agent wrote
+# `status: "resolved"` onto that conflict itself -- with weighing and
+# independence analysis -- and then concluded. It needed no tool it lacked; it
+# used the broad writer it legitimately holds, on a section it does not own.
+# `disallowedTools:` cannot express that: the granularity there is the tool, and
+# the tool was the right one. Only a section-level check reaches it.
+#
+# A section owned by a SKILL cannot be enforced through OWNED_SECTIONS -- there
+# is no agent to permit, so a permit-the-owner rule would deny the owning
+# skill's own write. `conflicts` is that shape, which is why it is covered here.
+AGENT_WRITABLE_SECTIONS = {
+    "proof-conclusion": frozenset({"proof_summaries", "questions", "project"}),
+    # research-exhaustiveness writes one field on one question and nothing else.
+    # Narrower than proof-conclusion's set deliberately: the refusal it meets
+    # when a plan item is still in flight is satisfied by the SEARCH skill that
+    # owns `plan_items`, not by this agent, so leaving `plans`/`plan_items` out
+    # is what stops it clearing its own blocker (issue #1821).
+    "research-exhaustiveness": frozenset({"questions"}),
+}
+
+# The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.
+# A refusal with no working alternative is what produced the bypass this whole
+# guardrail exists to stop: agents told to use a door that was locked went
+# through the wall instead. If a bare-name delegation ever fails and the model
+# retries as a general-purpose stand-in, this message is what turns the refusal
+# into a recoverable in-turn pivot rather than an unwritable artifact.
+OWNER_REASON = (
+    "Writing research.json's `{section}` from here is disabled — that section is "
+    "owned by the {agent} agent, which applies the tier and citation rules the "
+    "section depends on. Delegate the write: invoke `@plugin:{agent}` and let it "
+    "make the research_append call. Everything else in research_append is "
+    "unaffected; only this section is routed."
+)
+
+DECLARATION_REASON = (
+    "Declaring a question exhaustive from here is disabled — `{field}` with "
+    "`declared: true` is owned by the {agent} agent, which applies the five "
+    "threshold questions and the 7-point stop criteria this claim rests on. "
+    "Delegate it: invoke `@plugin:{agent}` and let it make the research_append "
+    "call. Only the claim is routed — creating a question with "
+    "`declared: false`, and recording an honest `declared: false` termination, "
+    "are both unaffected, as is everything else in `{section}`."
+)
+
+OUT_OF_LANE_REASON = (
+    "Writing research.json's `{section}` is outside your lane — you may write "
+    "{allowed} and nothing else. The skill that owns `{section}` applies rules "
+    "you are not running. Report what you found and hand off to it; do not "
+    "resolve it yourself so that your own work can proceed."
+)
 
 REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json "
@@ -157,13 +250,125 @@ def protected_target(tool_name: str, tool_input: dict) -> str | None:
     return None
 
 
+def _ops(tool_input: dict):
+    """Every op in a `research_append` call, batch or single.
+
+    A batch puts them in `ops`; a single call carries `section` at the top
+    level. Both shapes reach the same sections, so both are walked.
+    """
+    ops = (tool_input or {}).get("ops")
+    if isinstance(ops, list):
+        for op in ops:
+            if isinstance(op, dict):
+                yield op
+    elif tool_input:
+        yield tool_input
+
+
+def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | None:
+    """`(section, rule, caller)` for a denied write, or None to allow.
+
+    Two rules, both keyed on the caller and both returning the offending
+    section: `routed` — a section reserved to an owning agent, reached by
+    someone else; `out_of_lane` — a known agent reaching outside the sections
+    its own skill is a declared caller for.
+
+    `proof_summaries` is owned by `proof-conclusion`
+    (`docs/specs/schemas/ownership.json`). Measured over the committed corpus,
+    52 of the 142 runs that wrote a proof summary never launched the skill that
+    owns it. Prose did not hold it — see ADR-0011 — so the caller is checked
+    here, which is the only plane that can see who is calling.
+
+    **Both caller keys are required.** `agent_id` is absent as a KEY on the main
+    thread (test membership, never truthiness), and `agent_type` alone is not
+    sufficient because it is also present on the main thread of a session
+    started with `--agent`, which an `agent_type`-only rule would misread as a
+    subagent (`eval/harness/harness/context_policy.py`). The tail comparison
+    accepts both `proof-conclusion` and the namespaced
+    `genealogy-research:proof-conclusion`, which is what production actually
+    reports — a bare equality never fires there, and under `deny unless ==` that
+    denies every caller including the owner.
+
+    Covers `op: "update"` as well as `"append"`: the skill updates an existing
+    `ps_NNN` in place on every re-conclusion, and a rule that saw only appends
+    would leave that path denied in production with its fixture still green.
+    """
+    if _basename(tool_name.replace("__", "/")) != "research_append":
+        return None
+    caller = ""
+    if "agent_id" in payload:
+        caller = str(payload.get("agent_type") or "").rsplit(":", 1)[-1]
+    writable = AGENT_WRITABLE_SECTIONS.get(caller)
+    for op in _ops(tool_input):
+        section = op.get("section")
+        if not isinstance(section, str):
+            continue
+        # A routed section, reached by anyone but its owning agent.
+        if section in OWNED_SECTIONS and caller != OWNED_SECTIONS[section]:
+            return (section, "routed", caller)
+        # A routed CLAIM, reached by anyone but its owning agent. Read from the
+        # op's own payload — `fields` on an update, `entry` on an append — and
+        # only when the op sets the claim TRUE. A `declared: false` write claims
+        # nothing: it is either a question being created (197 of 392 corpus ops)
+        # or an honest early termination, and both are the owning skill's own
+        # sanctioned path.
+        for (owned_section, field), owner in OWNED_DECLARATIONS.items():
+            if section != owned_section or caller == owner:
+                continue
+            # BOTH keys, never one-or-the-other. `research_append`'s op schema
+            # declares `entry` and `fields`, and nothing stops a caller sending
+            # both — `applyOne` simply ignores `fields` on an append. Reading
+            # `fields` first and falling back only when it is not a dict let
+            # `{op: "append", entry: {…declared: true…}, fields: {}}` through:
+            # the empty dict is a dict, so the fallback never fired and the
+            # declaration landed. This is the only plane that binds in Cowork,
+            # and a missing deny here fails open silently.
+            for key in ("fields", "entry"):
+                payload_obj = op.get(key)
+                if not isinstance(payload_obj, dict):
+                    continue
+                value = payload_obj.get(field)
+                if isinstance(value, dict) and value.get("declared") is True:
+                    return (f"{section}.{field}", "declaration", caller)
+        # A known agent reaching outside its own set.
+        if writable is not None and section not in writable:
+            return (section, "out_of_lane", caller)
+    return None
+
+
 def decision(payload: dict) -> dict:
     """The hook's stdout payload: a deny, or `{}` for no opinion."""
     tool_input = payload.get("tool_input")
-    name = protected_target(
-        str(payload.get("tool_name") or ""),
-        tool_input if isinstance(tool_input, dict) else {},
-    )
+    tool_input = tool_input if isinstance(tool_input, dict) else {}
+    tool_name = str(payload.get("tool_name") or "")
+
+    denied = owner_denied(tool_name, tool_input, payload)
+    if denied is not None:
+        section, rule, caller = denied
+        # Branch on `rule`, never on the shape of `section` — a "declaration"
+        # return carries a dotted `section.field`, which is a key in neither
+        # OWNED_SECTIONS nor AGENT_WRITABLE_SECTIONS.
+        if rule == "routed":
+            reason = OWNER_REASON.format(section=section, agent=OWNED_SECTIONS[section])
+        elif rule == "declaration":
+            owned_section, _, field = section.partition(".")
+            reason = DECLARATION_REASON.format(
+                section=owned_section,
+                field=field,
+                agent=OWNED_DECLARATIONS[(owned_section, field)],
+            )
+        else:
+            allowed = ", ".join(f"`{s}`" for s in sorted(AGENT_WRITABLE_SECTIONS[caller]))
+            reason = OUT_OF_LANE_REASON.format(section=section, allowed=allowed)
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": reason,
+            },
+        }
+
+    name = protected_target(tool_name, tool_input)
     if name is None:
         return {}
     return {

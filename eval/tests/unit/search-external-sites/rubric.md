@@ -8,9 +8,15 @@ Grading dimensions for search-external-sites unit tests. Evaluated by the LLM ju
 
 Did the skill generate a correctly pre-filled search URL for the target site (Ancestry, MyHeritage, etc.)? The URL should include the search parameters from the plan item.
 
+**An encoded value must match the project's own resolution of that fact.** These sites *filter* on place and date parameters, so a wrong value returns nothing and the skill then logs that nothing as a negative — false absence evidence in the GPS audit trail. Before grading a place or date parameter, check `conflicts[]` in the scenario's `research.json` for an entry whose `disputed_attribute` names that field:
+
+- **`status: "resolved"`** → the value from `preferred_assertion_id` is the correct one to encode, and encoding it is never an unsupported claim. Encoding a value that resolution **rejected** (a `competing_assertion_ids` entry that is not the preferred one) is a **fail** on this dimension — even when that value appears elsewhere in the project, including in the research objective text, which may still echo a superseded value.
+- **any other status** → the fact is still contested. **Omitting the field is correct**, and naming the candidate values in one line is a **pass**. Silently picking a side is a **partial**.
+- **no `conflicts[]` entry naming the field** → grade it as an ordinary parameter.
+
 - **pass:** Generated URL targets the correct site's search endpoint, includes all relevant search parameters from the plan item (name, date range, place), and is syntactically valid.
 - **partial:** URL targets the right site but is missing a search parameter the plan item specified, or uses a less-effective query encoding.
-- **fail:** URL targets the wrong site, has malformed query parameters, or omits the core search terms entirely.
+- **fail:** URL targets the wrong site, has malformed query parameters, omits the core search terms entirely, or encodes a value a resolved conflict rejected.
 
 ## Capture guidance
 
@@ -42,6 +48,8 @@ This dimension grades a turn that **generates** a search. When the turn instead 
 
 Did the skill write the research-log entry for the search — at URL-generation time, and for nil results?
 
-- **pass:** A new `log[]` entry names the site, person, place, and year/range (in `query`/`notes`), written in the same turn the URL is generated (`outcome: "partial"`, `capture_received: false`). A reported zero-match search is logged with `outcome: "negative"` and notes on coverage limitations — never skipped because "there was nothing to record".
-- **partial:** Entry present but incomplete or vague (e.g. "searched records" without site/year), or written only after results came back instead of at URL generation.
-- **fail:** No log entry, or a misleading one (wrong site, claims results that were not received).
+**This dimension covers both records of what happened: the `log[]` entry and the plan item's `status`.** A capture-required search is not finished until the capture arrives — handing over a URL is not a search. Status applies only when the turn names or unambiguously targets a plan item; when the search matches no plan item (`plan_item_id` null), no status may be written and the restraint is what is graded.
+
+- **pass:** A new `log[]` entry names the site, person, place, and year/range (in `query`/`notes`), written in the same turn the URL is generated (`outcome: "partial"`, `capture_received: false`). A reported zero-match search is logged with `outcome: "negative"` and notes on coverage limitations — never skipped because "there was nothing to record". **And the plan-item status matches the ending:** `in_progress` when a URL was handed over with no capture back, when a capture arrived unusable (login page, truncated), when the user reported a nil without capturing the empty page, or when the site is inaccessible and the user has not decided; `completed` only once a capture was triaged — including a captured empty results page, which is a conclusive nil; `skipped` only when the user explicitly asked to skip an inaccessible site, or under `--autonomous`, where no user can ever capture.
+- **partial:** Entry present but incomplete or vague (e.g. "searched records" without site/year), or written only after results came back instead of at URL generation. Or the status choice is right but the narration contradicts it — reporting the search as complete while correctly writing `in_progress`, or leaving the user unclear that a capture is still owed.
+- **fail:** No log entry, or a misleading one (wrong site, claims results that were not received). Or `completed`/`skipped` while a capture is outstanding (issue #1226 — this is what lets `research-exhaustiveness` declare a question exhaustively researched on the strength of a link nobody clicked), `skipped` inferred from an access failure the user never asked to skip, a status written for a search matching no plan item, or no status written at all on a turn that named one.

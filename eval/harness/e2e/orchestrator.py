@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import shutil
 import sys
@@ -22,6 +23,7 @@ import tempfile
 import time
 from dataclasses import dataclass, replace
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any
 
 from claude_agent_sdk import (
@@ -37,18 +39,24 @@ from claude_agent_sdk import (
     query,
 )
 
+from e2e.mcp_stderr import read_mcp_stderr_lines
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
+    OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
+    OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
     is_subagent_call,
+    owned_section_denial,
+    owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
     subagent_only_denial,
+    SUBAGENT_ONLY_TOOLS,
 )
 from harness.judge import _summarize_response
 from harness.skill_invocation import (
+    check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
     find_citation_nulling_in_conclusions,
-    find_effects_without_invocation,
-    find_missing_mentor_verdicts,
-    find_person_evidence_missing_same_person,
+    find_citation_nulling_in_tree_sources,
+    find_conclusions_without_tree_encoding,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
@@ -58,9 +66,11 @@ from harness.skill_invocation import (
     unguarded_new_person_evidence_links,
 )
 
+from e2e import pricing
 from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
+    GENEALOGY_SERVER_NAME,
     backstop_fired,
     classify_server_status,
     find_server_entry,
@@ -101,7 +111,6 @@ DEFAULT_RUNLOG_ROOT = REPO_ROOT / "eval" / "runlogs" / "e2e"
 DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
 DEFAULT_PLUGIN_SKILLS = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 DEFAULT_PLUGIN_AGENTS = REPO_ROOT / "packages" / "engine" / "plugin" / "agents"
-
 
 # Tools always allowed alongside MCP tools. See e2e-test-spec.md §6.
 # "Task" lets the /research orchestrator delegate to the gps-mentor
@@ -191,30 +200,27 @@ def is_blocked_tree_tool(tool_name: str) -> bool:
     return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
 
 
-def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
-    """Whether this is `extraction_append` on the main thread — the #942 bug.
+def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
+    """Whether this is a main-thread call to a `SUBAGENT_ONLY_TOOLS` member.
 
-    `extraction_append` is the record-extractor subagent's private writer: it is
-    declared by NO skill's `allowed-tools` and lives only on
-    `agents/record-extractor.md`. So the only legitimate caller is the
-    Task-spawned subagent, whose PreToolUse firing carries `agent_id`; a call on
-    the main thread (no `agent_id`) is the router substituting for a failed
-    spawn and doing the extraction itself.
+    Both members are declared by NO skill's `allowed-tools`: `extraction_append`
+    lives only on `agents/record-extractor.md` (the #942 case), and `image_read`
+    is declared by no agent at all since `image-reader-opus` was retired (issue
+    #2013) — the deny is kept regardless, because it is what keeps inline base64
+    off the main thread. A call on the main thread (no `agent_id`) is the router
+    substituting for a failed spawn and doing the work itself.
 
-    The policy binds in e2e for this tool because `agent_id` presence alone is a
+    The policy binds in e2e for both because `agent_id` presence alone is a
     sufficient discriminator — which is all e2e can see, since its sub-skills run
     in the same session via the `Skill` tool with no `agent_id` to attribute them
     (see `harness.context_policy` docstring). We deny the bare tool directly
-    rather than routing through `subagent_only_violation`, which guards the whole
-    set and takes a `declared_tools` argument e2e cannot supply; keeping the check
-    tool-specific also means a future skill that legitimately declares a guarded
-    tool is not denied here.
-
-    `image_read`, the set's other member, satisfies the same condition today — no
-    skill has declared it since `search-images` moved to `@plugin:image-reader`
-    (2026-07-17), and it lives only on `agents/image-reader-opus.md` — so it is
-    equally enforceable here and simply is not yet: that is outside #942's blast
-    radius, tracked as issue #1273.
+    rather than routing through `subagent_only_violation`, which takes a
+    `declared_tools` argument e2e cannot supply. The consequence is that e2e has no
+    declared-tools exemption at all: a future skill that legitimately declares a
+    guarded tool WOULD be denied here, and closing that needs this predicate
+    widened by hand. Membership in `SUBAGENT_ONLY_TOOLS` is what
+    generalizes it: a third guarded tool is covered here the moment it joins that
+    set (pinned by a per-member test).
     """
     # `or ""` rather than a get() default: a present-but-None `tool_name` would
     # raise AttributeError here, and a raising hook fails a call the agent was
@@ -222,8 +228,41 @@ def is_main_thread_extraction_append(input_data: dict[str, Any]) -> bool:
     if not (input_data.get("tool_name") or "").startswith("mcp__"):
         return False
     return (
-        _bare_tool_name(input_data["tool_name"]) == "extraction_append"
+        _bare_tool_name(input_data["tool_name"]) in SUBAGENT_ONLY_TOOLS
         and not is_subagent_call(input_data)
+    )
+
+
+def main_thread_owned_section(input_data: dict[str, Any]) -> tuple[str, str, str] | None:
+    """The ownership denial this call earns, as the SHIPPED hook computes it.
+
+    Returns `owner_denied`'s `(section, rule, caller)` triple, or None to allow.
+
+    **This is a thin adapter, not a second implementation, and it used to be
+    one.** The predicate lived here in full — keyed on tool and section, walking
+    `ops` itself — while `context_policy` imported the hook's *map* and *reason
+    text*. So the map was single-sourced and the rule was not, which is the
+    shape that lets two planes drift while looking synchronised. Phase 4 would
+    have written its declaration rule twice.
+
+    Two consequences of delegating to `owner_denied`, both deliberate:
+
+      * It brings the hook's **out-of-lane** arm into e2e for the first time.
+        The re-implementation had no such arm, so a dedicated agent writing
+        outside its own section set was allowed here while Cowork denied it.
+        That is a widening, and no pre-existing vector could have caught it —
+        they were written against a predicate that could not produce the rule.
+      * The return is a triple rather than a section name, because an
+        out-of-lane or declaration denial carries a `rule` the caller must
+        branch on. A declaration denial's first element is a dotted
+        `section.field`, which is a key in neither owner map.
+    """
+    if not (input_data.get("tool_name") or "").startswith("mcp__"):
+        return None
+    return owner_denied(
+        input_data["tool_name"],
+        input_data.get("tool_input") or {},
+        input_data,
     )
 
 
@@ -240,11 +279,13 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
     return _bare_tool_name(tool_name) in blocked_tools
 
 
-# The two project files that must never be touched by raw Write/Edit — all
+# The project files that must never be touched by raw Write/Edit — all
 # writes go through the MCP writer tools (research_append, research_log_append,
 # tree_edit, tree_correct), which validate before persisting. See
-# docs/specs/guardrail-enforcement-spec.md §6.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+# docs/specs/guardrail-enforcement-spec.md §6. starting-tree.gedcomx.json is the
+# write-once baseline the tree-encoding gate diffs against (issue #1490);
+# overwriting it would defeat that gate.
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
 # The device-bridge writer, matched on the BARE TAIL because Cowork namespaces it
 # (`mcp__remote-devices__device_commit_files`) and the plugin cannot control the
 # prefix. This is the route that actually mattered: measured live 2026-08-15,
@@ -393,6 +434,7 @@ def person_evidence_provenance_gap(
     *,
     tool_calls: list[dict[str, Any]],
     starting_person_ids: set[str],
+    research: dict[str, Any] | None = None,
 ) -> str | None:
     """The issue-#963 provenance gap for a pending `research_append` that links
     a brand-new, unscored tree person via `person_evidence`, or None if clean.
@@ -402,7 +444,17 @@ def person_evidence_provenance_gap(
     numbers this produces.
 
     Pure decision logic, extracted from `pretool_hook` so the clean, fail-open,
-    and gap paths are unit-testable without spinning up the SDK.
+    and gap paths are unit-testable without spinning up the SDK. `pretool_hook`
+    does not route through this function — it calls
+    `unguarded_new_person_evidence_links` directly so it can reuse the flagged
+    ids for the deny valve's key — so the two must be kept equivalent, which is
+    why `research` is threaded here too.
+
+    `research` is the run's workspace `research.json`, needed to join a pending
+    link through `assertion_id -> assertions[].id -> log_entry_id -> log[]` and
+    skip a link whose provenance lane cannot yield a persona from what the run retained. `None` means
+    "narrow nothing", i.e. today's un-narrowed behaviour — NOT "exempt
+    everything"; see `unguarded_new_person_evidence_links`.
 
     Scoring is read from `tool_calls` alone. There is deliberately no
     `pending_tool_uses` argument: `pretool_hook` runs from a spawned control-
@@ -427,7 +479,11 @@ def person_evidence_provenance_gap(
     """
     scored = same_person_scored_ids(tool_calls)
     unguarded = unguarded_new_person_evidence_links(
-        tool_name, tool_input, scored_ids=scored, starting_ids=starting_person_ids
+        tool_name,
+        tool_input,
+        scored_ids=scored,
+        starting_ids=starting_person_ids,
+        research=research,
     )
     if not unguarded:
         return None
@@ -450,7 +506,11 @@ def person_evidence_gap_reason(unguarded: list[str]) -> str:
     return (
         f"person_evidence link written for new tree person(s) {shown} with no "
         "prior same_person call: a brand-new identity should be scored before it "
-        "is asserted (research/SKILL.md doctrine; issue #963). "
+        # person-evidence/SKILL.md owns the identity decision; research/SKILL.md's
+        # "scores every cross-record link" is the orchestrator's paraphrase, and
+        # the narrower owning contract wins on conflict (lead ruling 2026-08-09).
+        # This string is what the AGENT reads, so the citation matters here too.
+        "is asserted (person-evidence/SKILL.md doctrine; issue #963). "
         # Issue #1231 prereq 2. The text above alone is unactionable — replayed
         # over the corpus it would have denied 100 of 103 runs that link a new
         # person, and the agent believes it DID call same_person. The cause is an
@@ -468,11 +528,37 @@ def person_evidence_gap_reason(unguarded: list[str]) -> str:
         "If this call was denied, the entire batch was rejected — including any "
         "ops in other sections — and must be re-issued after the same_person "
         "call. "
-        # The one real escape: scoring needs a record persona to compare
-        # against, and a non-record_search assertion has no record_persona_id.
+        # The old escape ("not record_search-sourced, so no record_persona_id")
+        # is gone: the check no longer flags a link whose provenance lane cannot
+        # yield a persona from what the run retained, so no flagged link is that case. What replaces
+        # it is the retrieval recipe, because the reason has to tell the agent
+        # HOW to get the persona it is being asked to score.
         #
+        # Branch on the LOG ENTRY'S TOOL, not on record_persona_id being null:
+        # a sidecar-backed search with a null persona already has its gedcomx in
+        # `results/<log_id>.json`, so branching on nullity would send the agent
+        # to record_read for a document it is holding.
+        "Get the record persona and score it: from the log entry's sidecar "
+        "(`results/<log_id>.json`) when the entry has a `results_ref`, or by "
+        "re-opening the record with `record_read({ recordId })` when the "
+        "assertion came from `record_read`. `primaryId1` is the persona for the "
+        "person THIS link is about: `record_persona_id` when it is set AND the "
+        "link is about the assertion's own `record_role` party, otherwise the "
+        "`persons[].id` matching that party's name — a relationship assertion "
+        "names two parties and gets a link for each, and reusing the first "
+        "party's persona for the second is how a near-zero score gets "
+        "manufactured and then explained away. "
+        # The narrower exit that survives. NOT the refuted escape: that one
+        # excused a REACHABLE persona. This one covers the only case the check
+        # still flags without one — provenance it could not resolve at all —
+        # which the predicate deliberately does not exempt, because exempting on
+        # an absent field would let an assertion written with no log_entry_id
+        # shed the requirement entirely.
+        "If the assertion or its log entry cannot be resolved at all, say so in "
+        "the link's `rationale` and proceed — the gap is still recorded; the "
+        "rationale is the record of why, not a waiver. "
         # There is deliberately NO escape for "the id is a locally-minted stub".
-        # person-evidence/SKILL.md says such an id returns a degenerate score to
+        # person-evidence/SKILL.md said such an id returns a degenerate score to
         # be treated as "no score available", but that guidance (2026-07-02)
         # predates the match-engine mint-hardening (2026-07-07) and is stale.
         # Probed live against the API (dev/probe-same-person-local-id.ts): with
@@ -481,10 +567,8 @@ def person_evidence_gap_reason(unguarded: list[str]) -> str:
         # minting a fresh id each call. FS scores document CONTENT, so a minted
         # person IS scorable, and telling the agent otherwise would hand it a
         # documented way to skip a call that works.
-        "If no score is obtainable — the assertion is not record_search-sourced, "
-        "so it has no record_persona_id to compare against — say so in the "
-        "link's `rationale` and proceed. A locally-minted tree id is NOT such a "
-        "case: it scores on document content and must be scored."
+        "A locally-minted tree id is NOT such a case: it scores on document "
+        "content and must be scored."
     )
 
 
@@ -731,6 +815,11 @@ def build_workspace(
     target = Path(target)
     shutil.copy(fixture.starting_research_path, target / "research.json")
     shutil.copy(fixture.starting_tree_path, target / "tree.gedcomx.json")
+    # Also seed the write-once baseline the tree-encoding gate diffs against
+    # (issue #1490), matching what project_create writes in production. Without
+    # it the gate treats every seeded fact as new and manufactures the very
+    # mismatch it measures.
+    shutil.copy(fixture.starting_tree_path, target / "starting-tree.gedcomx.json")
 
     skills_target = target / ".claude" / "skills"
     skills_target.mkdir(parents=True, exist_ok=True)
@@ -763,7 +852,9 @@ def build_workspace(
     # route is kept because it is the one that provably reaches subagents; the
     # SDK option's subagent propagation is unverified. Do not restate this as
     # "the only lever" — that claim shaped a spend decision before it was
-    # checked. Session-wide (parent + every subagent). Left unset, the
+    # checked. Session-wide (parent + every subagent that does not pin its own
+    # `effort:` — agent frontmatter overrides this, verified live in Cowork and
+    # Claude Code on 2026-08-25; no agent pins one today). Left unset, the
     # run uses the CLI's bare default, which for sonnet-5 resolves to 'high' —
     # deep enough that the record-extractor subagent can spend its whole output
     # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
@@ -1000,12 +1091,10 @@ def _timeline_tool_label(tool: str, args: dict | None) -> str:
     return _bare_tool_name(tool)
 
 
-_USAGE_FIELDS = (
-    "input_tokens",
-    "output_tokens",
-    "cache_read_input_tokens",
-    "cache_creation_input_tokens",
-)
+# The token fields `_accumulate_usage` sums, and the presence test the estimator
+# uses — one definition (`pricing.PRICED_FIELDS`), so `_fallback_usage`'s emitted
+# block and the estimator that prices it can never silently diverge (#1484).
+_USAGE_FIELDS = pricing.PRICED_FIELDS
 
 
 def _accumulate_usage(acc: dict[str, dict[str, int]], message: Any) -> None:
@@ -1059,6 +1148,9 @@ def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str
     `duration_api_ms` is absent for the same reason: only the SDK knows the
     API/local split, and a monotonic clock can't recover it.
     """
+    usage_tokens = {
+        field: sum(m[field] for m in acc.values()) for field in _USAGE_FIELDS
+    }
     return {
         "duration_ms": elapsed_ms,
         "duration_api_ms": None,
@@ -1067,9 +1159,13 @@ def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str
         "is_error": True,
         "stop_reason": None,
         "total_cost_usd": None,
-        "usage": {
-            field: sum(m[field] for m in acc.values()) for field in _USAGE_FIELDS
-        },
+        # A separate, clearly-approximate field (#1484). `total_cost_usd` stays
+        # null on purpose (see the docstring above); this flat-rate estimate is
+        # what keeps abort-path spend from reading as zero. Report-time
+        # estimation in corpus_report covers the runs already committed with a
+        # null cost; this only ever fills a FUTURE aborted run.
+        "total_cost_usd_estimated": pricing.estimate_cost_usd(usage_tokens),
+        "usage": usage_tokens,
     }
 
 
@@ -1131,6 +1227,10 @@ async def _run_agent(
     # per-key counter cannot, since a batch differing by one op mints a new key.
     pe_deny_repeat_counts: dict[frozenset[str], int] = {}
     pe_denied_total = {"n": 0}
+    # One-shot latch for the "could not read research.json" warning below. The
+    # hook re-reads the document on every research_append, so without this a
+    # broken workspace would print the same line dozens of times per run.
+    pe_provenance_warned = {"n": 0}
 
     # docs/specs/guardrail-enforcement-spec.md §11, "Step 0" — every
     # tool_use_id's (agent_id, agent_type) as PreToolUse saw it, joined onto
@@ -1181,6 +1281,10 @@ async def _run_agent(
     mcp_state: dict[str, Any] = {"unavailable": False, "misses": 0, "queries": []}
 
     run_started = time.monotonic()
+    # Wall-clock companion to the monotonic clock above (issue #1301) —
+    # time.monotonic() has no relationship to file mtimes, so a "since this
+    # check started" log-file filter needs its own real-clock timestamp.
+    run_started_wall = time.time()
 
     # Per-message timeline for forensics: [elapsed_seconds, kind, tool_names].
     # Lets a later analysis split a run into structural vs stall time, pinpoint
@@ -1272,19 +1376,15 @@ async def _run_agent(
         if not tool_name.startswith("mcp__"):
             return {}
 
-        # NOTE: the per-context tool policy (harness/context_policy.py) is only
-        # PARTIALLY enforced here — see that module's docstring.
-        #   - `extraction_append` IS enforced (below). No skill declares it, so
-        #     its only legitimate caller is the Task-spawned record-extractor,
-        #     which carries `agent_id`; a main-thread call is the #942 router
-        #     substitution. `agent_id` presence alone discriminates, which is all
-        #     e2e can see — sub-skills run in this same session via the Skill
-        #     tool with no `agent_id` to attribute them, so the full per-skill
-        #     check (`subagent_only_violation`) has no `declared_tools` to take.
-        #   - `image_read`, the set's other member, is NOT enforced here yet. It
-        #     meets the same condition today (no skill declares it; it lives only
-        #     on agents/image-reader-opus.md) — issue #1273.
-        if is_main_thread_extraction_append(input_data):
+        # The per-context tool policy (harness/context_policy.py): a main-thread
+        # call to any SUBAGENT_ONLY_TOOLS member is the router substituting for a
+        # failed subagent spawn. Both members are enforced here — `extraction_append`
+        # (#942) and `image_read` — since neither is declared by any skill and
+        # `agent_id` presence alone discriminates, which is all e2e can see (its
+        # sub-skills run in this same session via the Skill tool with no `agent_id`).
+        # We deny the bare tool directly rather than through `subagent_only_violation`,
+        # which takes a `declared_tools` argument e2e cannot supply.
+        if is_main_thread_subagent_only_tool(input_data):
             bare = _bare_tool_name(tool_name)
             blocked_context_calls.append(
                 {
@@ -1293,19 +1393,79 @@ async def _run_agent(
                     "blocked_by": "context",
                 }
             )
+            # Per-tool recovery target (issue #1273 Item 1 asks for per-tool
+            # guidance), mirroring each `_DENIAL_REASONS` entry, which
+            # `blocked_context_calls` does not store — so a runlog reader can act on
+            # this line alone. For image_read the recovery is the transcription
+            # plugin @plugin:image-reader, which is now also the only image reader
+            # (image-reader-opus retired, issue #2013).
+            # The fallback covers a future third guarded tool.
+            recovery = {
+                "extraction_append": "@plugin:record-extractor",
+                "image_read": "@plugin:image-reader",
+            }.get(bare, "the owning subagent")
             narration.append(
                 {
                     "tool_calls_before": len(tool_calls),
                     "kind": "blocked",
                     "text": (
-                        f"`{bare}` denied on the main thread — writing extracted "
-                        "assertions is the record-extractor subagent's job. If it "
-                        "failed to spawn, report the failure and stop (#942)."
+                        f"`{bare}` denied on the main thread — it is a subagent-only "
+                        f"tool; delegate to {recovery} rather than doing the work here."
                     ),
                 }
             )
-            _emit(f"[blocked context call] {bare} (main-thread extraction_append)")
+            _emit(f"[blocked context call] {bare} (main-thread subagent-only tool)")
             return subagent_only_denial(bare)
+
+        # An owned SECTION, not an owned tool — a separate arm on purpose. The
+        # block above says the whole tool is reserved for a subagent, which is
+        # true of extraction_append and false of research_append: that one is
+        # the general writer, called from the main thread constantly for plans,
+        # questions, conflicts and the log. Sharing the branch handed the agent
+        # a deny telling it the tool was off-limits, and a narration naming the
+        # wrong agent and the wrong artifact.
+        if (denied := main_thread_owned_section(input_data)) is not None:
+            owned, rule, _caller = denied
+            bare = _bare_tool_name(tool_name)
+            blocked_context_calls.append(
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "context",
+                }
+            )
+            # Branch on `rule` — `OWNED_SECTION_OWNERS[owned]` is only defined
+            # for the `routed` arm. A `declaration` denial names a dotted
+            # `section.field` and an `out_of_lane` one names a section the map
+            # deliberately does not hold, so an unconditional lookup raises on
+            # the two arms this was widened to serve.
+            if rule == "routed":
+                text = (
+                    f"`{bare}` denied on `{owned}` — that section is routed to the "
+                    f"{OWNED_SECTION_OWNERS[owned]} agent. Everything else in "
+                    f"`{bare}` is unaffected; delegate this write rather than "
+                    "making it here."
+                )
+            elif rule == "declaration":
+                owned_section, _, field = owned.partition(".")
+                agent = OWNED_DECLARATION_OWNERS[(owned_section, field)]
+                text = (
+                    f"`{bare}` denied on `{owned_section}` — declaring a question "
+                    f"exhaustive is routed to the {agent} agent. Creating a question "
+                    "and recording an honest `declared: false` termination are both "
+                    "unaffected; delegate the claim rather than making it here."
+                )
+            else:
+                text = (
+                    f"`{bare}` denied on `{owned}` — that section is outside this "
+                    "agent's lane. Report what you found and hand off to the skill "
+                    "that owns it."
+                )
+            narration.append(
+                {"tool_calls_before": len(tool_calls), "kind": "blocked", "text": text}
+            )
+            _emit(f"[blocked context call] {bare} ({rule}: {owned})")
+            return owned_section_denial(denied)
 
         # Block tree-reading tools BEFORE counting toward the cap — a denied
         # call never runs, so it shouldn't consume the budget. The run
@@ -1401,16 +1561,63 @@ async def _run_agent(
         # research_append tool, so it's safe either way. Decision logic lives in
         # that helper so it's unit-testable without the SDK.
         if bare == "research_append" and starting_person_ids is not None:
-            # Scanned ONCE. The flagged ids are needed twice — for the reason
-            # text and for the deny valve's per-id-set key — so they are computed
-            # here rather than via person_evidence_provenance_gap, which would
-            # re-walk the whole tool_calls list to rebuild the same list.
+            # Scanned ONCE and reused. The flagged ids are needed twice — for
+            # the reason text and for the deny valve's per-id-set key — so they
+            # are computed here rather than via person_evidence_provenance_gap,
+            # which would re-walk the whole tool_calls list to rebuild them; and
+            # `pe_scored_ids` is that single scan, reused by the narrowing pass.
+            pe_scored_ids = same_person_scored_ids(tool_calls)
             unguarded_ids = unguarded_new_person_evidence_links(
                 tool_name,
                 input_data.get("tool_input") or {},
-                scored_ids=same_person_scored_ids(tool_calls),
+                scored_ids=pe_scored_ids,
                 starting_ids=starting_person_ids,
             )
+            if unguarded_ids:
+                # Narrow only once there is something to narrow. Most
+                # research_append calls write no person_evidence at all, and the
+                # un-narrowed pass is a walk over the pending ops while this is a
+                # file read — narrowing can only REMOVE ids, never add one, so
+                # running it second is identical and skips the read on the
+                # majority of calls. Only the workspace document can answer
+                # the question — `assertion_id -> assertions[].id ->
+                # log_entry_id -> log[].tool/results_ref`.
+                #
+                # On an unreadable/missing file, pass None = "narrow nothing",
+                # i.e. today's un-narrowed behaviour. Deliberately NOT "skip the
+                # check" (a guardrail that disables itself on an IO hiccup) and
+                # NOT "exempt everything" (the bypass the narrowing exists to
+                # reject). Warned once so the fallback is never silent.
+                #
+                # NOTE the workspace document is the state BEFORE this call
+                # lands, so an assertion created by this very batch is not in it
+                # and its link reads as unresolvable provenance — which flags,
+                # the safe direction. Measured: 17 landed calls across 9 runs
+                # write `assertions` and `person_evidence` ops together (66 ops).
+                # `replay_provenance` reads the run's FINAL document and so
+                # RESOLVES those, meaning hook and replay genuinely differ on
+                # this shape. Both docstrings say so; #1231 reads the replay's
+                # rate, so the divergence has to be visible, not discovered.
+                pe_research = read_research_json(workspace)
+                if pe_research is None:
+                    if not pe_provenance_warned["n"]:
+                        pe_provenance_warned["n"] = 1
+                        print(
+                            "  [warn] could not read research.json in the workspace — "
+                            "the issue-#963 same_person check runs UN-NARROWED for "
+                            "this run (no provenance join): it still flags, it just "
+                            "cannot skip links nothing could score.",
+                            file=sys.stderr,
+                            flush=True,
+                        )
+                else:
+                    unguarded_ids = unguarded_new_person_evidence_links(
+                        tool_name,
+                        input_data.get("tool_input") or {},
+                        scored_ids=pe_scored_ids,
+                        starting_ids=starting_person_ids,
+                        research=pe_research,
+                    )
             provenance_gap = person_evidence_gap_reason(unguarded_ids) if unguarded_ids else None
             if provenance_gap:
                 # Shaped to match find_unguarded_protected_writes' entries so
@@ -1649,7 +1856,28 @@ async def _run_agent(
             nonlocal aborted_reason, error
             mcp_state["unavailable"] = True
             aborted_reason = "mcp_unavailable"
-            error = unavailable_message(entry, backstop=backstop, queries=queries)
+            # Best-effort stderr capture (issue #1301) — this fires on an abort
+            # path that must never itself crash, so a failure here degrades to
+            # no lines rather than propagating.
+            try:
+                server_stderr, looked_in = read_mcp_stderr_lines(
+                    cwd=workspace, server_name=GENEALOGY_SERVER_NAME,
+                    since=run_started_wall,
+                )
+            except Exception:  # noqa: BLE001 — see comment above
+                server_stderr, looked_in = [], "(unresolved)"
+            error = unavailable_message(
+                entry, backstop=backstop, queries=queries,
+                server_stderr=server_stderr or None,
+            )
+            if not server_stderr:
+                # Rule 2 (issue #1301): an empty capture must never read as
+                # "the server said nothing" -- without this, the message here
+                # is byte-identical to the pre-#1301 text, so a genealogist
+                # has no hint a capture was even attempted, let alone where it
+                # looked (this silence is exactly what hid the macOS cwd-slug
+                # bug from a live run, chesworthrm's review).
+                error += f"\n(No server stderr captured; looked in {looked_in}.)"
             # Recorded like every other harness-side event even though THIS path
             # never persists it (the run writes no files at all — see
             # run_e2e_test). Kept so the in-memory trace is complete and so a
@@ -1841,8 +2069,9 @@ async def _run_agent(
                     # Measured against this CLI (2026-08-04), which is why the
                     # classification is three-way and not a `!= "connected"`
                     # assert:
-                    #   - dead server  -> init at ~25s, status ALREADY "failed"
-                    #     (it settles in ~4s), so this aborts at ~25s.
+                    #   - dead server  -> init at ~0.3-1.0s, status ALREADY "failed",
+                    #     so this aborts in ~1s (re-measured 2026-08-27, CLI 2.1.248;
+                    #     was ~25s on 2026-08-04).
                     #   - healthy      -> init at ~11s, status still "pending"
                     #     (it settles at ~25s). A "not connected -> abort" test
                     #     would kill EVERY healthy run here.
@@ -2077,45 +2306,9 @@ async def _run_agent(
             "made by neither the main thread nor a dedicated agent (shadow mode — not denied)"
         )
 
-    # SHADOW MODE ONLY (issue #1133) — a post-hoc read of the FINAL research.json,
-    # not a tool_calls scan: a source that BACKS A WRITTEN CONCLUSION carries an
-    # empty ESM citation string (the provenance-nulling half the engine's
-    # write-seam ref guard deliberately disowns; see
-    # find_citation_nulling_in_conclusions). Folded into the same already-plumbed
-    # `guardrail_shadow_violations` field, discriminated by its `kind` key so the
-    # shadow report counts it in its own bucket. Logs; never fails the run.
-    # Graduating to a hard 4th §7.5 compliance check is gated on measuring this
-    # fire rate across the corpus (issue #1358; see the spec's §7.5 note).
-    final_research_for_shadow = read_research_json(workspace)
-    citation_nulling_shadow = find_citation_nulling_in_conclusions(
-        final_research_for_shadow
+    guardrail_shadow_violations = guardrail_shadow_violations + collect_post_hoc_shadow(
+        workspace, emit=_emit
     )
-    if citation_nulling_shadow:
-        guardrail_shadow_violations = guardrail_shadow_violations + citation_nulling_shadow
-        _emit(
-            f"[guardrail-shadow] {len(citation_nulling_shadow)} concluded source(s) "
-            "with a null/empty citation string (shadow mode — not failed)"
-        )
-
-    # SHADOW MODE ONLY (issue #1317) — the conflict-side sibling of the citation
-    # detector above: a written conclusion asserts a resolved conflict (in its
-    # exhaustive_declaration.stop_criteria.conflict_resolution) that no structured
-    # conflicts[] entry backs, so the resolution lives only in prose and the
-    # viewer's Conflicts section stays blank. Same already-plumbed field,
-    # discriminated by `kind`. Logs; never fails the run. Promotion to a hard gate
-    # is gated on measuring this fire rate across the corpus.
-    conflict_unpersisted_shadow = find_unpersisted_conflict_resolutions(
-        final_research_for_shadow
-    )
-    if conflict_unpersisted_shadow:
-        guardrail_shadow_violations = (
-            guardrail_shadow_violations + conflict_unpersisted_shadow
-        )
-        _emit(
-            f"[guardrail-shadow] {len(conflict_unpersisted_shadow)} concluded "
-            "question(s) relying on an unpersisted conflict resolution "
-            "(shadow mode — not failed)"
-        )
 
     return (
         tool_calls,
@@ -2128,6 +2321,58 @@ async def _run_agent(
         guardrail_shadow_violations,
         unnamed_delegate_violations,
     )
+
+
+def collect_post_hoc_shadow(
+    workspace: Path, *, emit: Callable[[str], None] | None = None
+) -> list[dict[str, Any]]:
+    """The two SHADOW-MODE post-hoc checks that read the FINAL research.json,
+    rather than scanning `tool_calls`. Returns entries for
+    `guardrail_shadow_violations`; never fails a run.
+
+    - **citation-nulling** (issue #1133): a source that BACKS A WRITTEN CONCLUSION
+      carries an empty ESM citation string — the provenance-nulling half the
+      engine's write-seam ref guard deliberately disowns.
+    - **conflict-unpersisted** (issue #1317): a written conclusion asserts a
+      resolved conflict that no structured `conflicts[]` entry backs, so the
+      resolution lives only in prose and the viewer's Conflicts section stays
+      blank.
+
+    Both share `guardrail_shadow_violations`, discriminated by `kind` so the
+    shadow report counts each in its own bucket.
+
+    **Extracted from `_run_agent` so it can be tested at all.** Inline, this ran
+    only inside a coroutine that needs the Claude Agent SDK and a live model, so
+    nothing offline could reach it — and `read_research_json` returns None on a
+    missing or unparseable file while both detectors return `[]` on None, which
+    means a broken workspace read is indistinguishable from a clean project. That
+    is exactly the "is the behaviour absent or is the detector broken" ambiguity
+    this phase exists to remove, sitting in the one path no test covered. The
+    citation-nulling check has never fired on the corpus, so this is its only
+    positive control.
+    """
+    research = read_research_json(workspace)
+    out: list[dict[str, Any]] = []
+
+    citation_nulling = find_citation_nulling_in_conclusions(research)
+    if citation_nulling:
+        out.extend(citation_nulling)
+        if emit:
+            emit(
+                f"[guardrail-shadow] {len(citation_nulling)} concluded source(s) "
+                "with a null/empty citation string (shadow mode — not failed)"
+            )
+
+    conflict_unpersisted = find_unpersisted_conflict_resolutions(research)
+    if conflict_unpersisted:
+        out.extend(conflict_unpersisted)
+        if emit:
+            emit(
+                f"[guardrail-shadow] {len(conflict_unpersisted)} concluded "
+                "question(s) relying on an unpersisted conflict resolution "
+                "(shadow mode — not failed)"
+            )
+    return out
 
 
 def _find_session_transcript(workspace: Path) -> Path | None:
@@ -2158,55 +2403,6 @@ def _find_session_transcript(workspace: Path) -> Path | None:
     if not candidates:
         return None
     return max(candidates, key=lambda p: p.stat().st_mtime)
-
-
-def check_guardrail_compliance(
-    tool_calls: list[dict[str, Any]],
-    final_research: dict[str, Any] | None,
-    final_tree: dict[str, Any] | None,
-    *,
-    starting_tree: dict[str, Any] | None = None,
-) -> list[str]:
-    """The §8 HARD guardrail detector — every non-windowed check, in one call.
-
-    docs/specs/guardrail-enforcement-spec.md §8. A guardrail skill's
-    effect present in the FINAL project state with no matching successful
-    invocation anywhere in the run, or a resolved question's proof_summary
-    missing its mandatory gps-mentor proof-critique verdict. Mirrors the unit
-    harness's `test_positive_fails_when_skill_not_in_skills_invoked`, which
-    had no e2e equivalent. Unlike §4.1's shadow-mode recency check, this only
-    asks whether the skill ran AT ALL across the whole run, so it is far less
-    prone to false positives and was safe to hard-fail on immediately rather
-    than rolling out in shadow mode first.
-
-    `find_person_evidence_missing_same_person` is a separate, also-hard,
-    also-non-windowed check added after the first real run of
-    bagley-father-1884 showed the gap in "invoked anywhere": that run linked a
-    brand-new person across 13 person_evidence entries with zero same_person
-    calls in the whole run, while person-evidence ITSELF was invoked 52 tool
-    calls later for unrelated work — passing the "invoked anywhere" bar while
-    still skipping the identity-scoring doctrine entirely. It checks the
-    specific required tool for the specific person instead of the skill's mere
-    presence in the run.
-
-    Note this is NOT vacuous on a treeless run: `find_missing_mentor_verdicts`
-    takes no tree at all, and the exhaustiveness arm reads only
-    `research["questions"]`. That is why compliance is always a real result
-    and never "not checked" for a run this harness performed.
-
-    Extracted from `run_e2e_test` so it is unit-testable — the fused-verdict
-    bug this replaced (issue #972) lived in an assembly statement buried in a
-    1200-line async function that needs the SDK and a live FamilySearch session.
-    """
-    return (
-        find_effects_without_invocation(
-            tool_calls, final_research, final_tree, starting_tree=starting_tree
-        )
-        + find_missing_mentor_verdicts(final_research)
-        + find_person_evidence_missing_same_person(
-            tool_calls, final_research, final_tree, starting_tree=starting_tree
-        )
-    )
 
 
 async def run_e2e_test(
@@ -2305,9 +2501,28 @@ async def run_e2e_test(
         # reached, so no run-log files exist and no E2eResult is ever built.
         # "This run never happened" — print the error, exit non-zero.
         if stop_reason == "mcp_unavailable":
-            raise McpUnavailableError(
-                error or unavailable_message(None)
-            )
+            if error:
+                fallback_message = error
+            else:
+                # Rare defensive arm: aborted_reason latched but `error` is
+                # somehow falsy. Best-effort capture, same as the primary abort
+                # path (issue #1301) — must not itself crash this raise.
+                try:
+                    fallback_stderr, fallback_looked_in = read_mcp_stderr_lines(
+                        cwd=workspace, server_name=GENEALOGY_SERVER_NAME,
+                        since=started_at,
+                    )
+                except Exception:  # noqa: BLE001 — see comment above
+                    fallback_stderr, fallback_looked_in = [], "(unresolved)"
+                fallback_message = unavailable_message(
+                    None, server_stderr=fallback_stderr or None
+                )
+                if not fallback_stderr:
+                    # Same rule-2 guard as the primary abort path above.
+                    fallback_message += (
+                        f"\n(No server stderr captured; looked in {fallback_looked_in}.)"
+                    )
+            raise McpUnavailableError(fallback_message)
 
         judge_seconds = 0.0
         if skip_judge or final_tree is None:
@@ -2367,6 +2582,41 @@ async def run_e2e_test(
         if warnings_unchecked_shadow:
             guardrail_shadow_violations = (
                 guardrail_shadow_violations + warnings_unchecked_shadow
+            )
+
+        # The TREE-side citation-nulling arm (issue #1358). Wired here, not beside
+        # the research-side call above, because that site has no tree in scope —
+        # this one has `final_research`, `final_tree` and `starting_tree`
+        # together, which is what the gate needs.
+        #
+        # Shadow only, and deliberately not graduated by this card. Its sibling
+        # measures ZERO across the corpus (1,884 concluded sources, all cited),
+        # and a zero is not a licence to graduate — per the shadow-to-graduate
+        # rules it means nobody has seen the detector fire. This arm is where the
+        # class actually lives: 111 of 171 uploaded sources carry no citation,
+        # across 50 of 159 concluded runs. Some fraction of that is
+        # legitimately-not-yet-uploaded, which only a human can price, so it
+        # detects and reports rather than failing anything.
+        tree_citation_shadow = find_citation_nulling_in_tree_sources(
+            final_research, final_tree
+        )
+        if tree_citation_shadow:
+            guardrail_shadow_violations = (
+                guardrail_shadow_violations + tree_citation_shadow
+            )
+
+        # The tree-encoding arm (issue #1490): a completed project reached a
+        # >=-probable conclusion but left it un-encoded in the tree. Wired here
+        # for the same reason as the citation arm above — this is the site that
+        # holds `final_research`, `final_tree` and `starting_tree` together.
+        # Shadow only; this live write is what makes the STORED fire rate in
+        # `scan_tree_encoding` accumulate rather than needing REPLAY.
+        tree_encoding_shadow = find_conclusions_without_tree_encoding(
+            final_research, final_tree, starting_tree=starting_tree
+        )
+        if tree_encoding_shadow:
+            guardrail_shadow_violations = (
+                guardrail_shadow_violations + tree_encoding_shadow
             )
 
         # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it

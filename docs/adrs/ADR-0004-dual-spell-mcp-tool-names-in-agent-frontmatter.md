@@ -9,7 +9,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-18 (#742, repairing #650/#698)
-- **Last updated:** 2026-08-09 (a critique §9 citation repointed at ADR-0009)
+- **Last updated:** 2026-08-30 (the deny's justification was measured and half of it was false, and grant/deny overlap is now a lint; #1639 corrected the registrar rationale — the observed registrar moves, all three spellings kept as insurance, not redundancy)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -19,20 +19,29 @@
 ## Context
 
 An MCP server's name is chosen by **whoever registers it**, not by the server.
-The plugin ships into the VM and cannot control that choice. In practice the same
-47 tools appear under three different prefixes:
+The plugin ships into the VM and cannot control that choice. In practice every
+tool in `allToolSchemas` appears under three different prefixes:
 
 | Registrar | Prefix |
 |---|---|
 | `.mcp.json`, both eval harnesses, the hosted control plane | `mcp__genealogy__<tool>` |
-| Cowork **in the cloud**, reaching the host `.mcpb` through its remote-device bridge | `mcp__remote-devices__Genealogy_Research__<tool>` |
-| Cowork **on the user's own computer**, reaching the same `.mcpb` directly | `mcp__Genealogy_Research__<tool>` |
+| Cowork reaching the host `.mcpb` through its remote-device bridge | `mcp__remote-devices__Genealogy_Research__<tool>` |
+| Cowork exposing the bare `display_name` (observed live in #1341; see the census note below) | `mcp__Genealogy_Research__<tool>` |
 
 Both Cowork forms derive the segment from `manifest.json`'s `display_name`
 ("Genealogy Research" → `Genealogy_Research`), which is a *product* string —
-chosen for the install dialog, not for us. Only the cloud form is namespaced,
-because only it has a bridge to traverse. **Run mode is a per-task setting**, so
-which of the two is live is not a property of the install.
+chosen for the install dialog, not for us. Only the bridged form is namespaced,
+because only it has a bridge to traverse. **Which spelling a Cowork session
+exposes has been observed to move.** Three censuses found every genealogy tool
+under the bridged `mcp__remote-devices__Genealogy_Research__` spelling ("via
+your device") with the bare `mcp__Genealogy_Research__` spelling absent — macOS
+and Windows on 2026-08-15, and a second Windows session via issue #1732 on
+2026-08-19; issue #1341 recorded the opposite live on 2026-08-04/05, refusing `record-extractor`
+with the bridged spelling among its *unrecognized* entries (see the reversal
+table below). The registrar moved between those dates — or the two
+configurations differ in a way nobody has identified; either reading lands in
+the same place. Run mode is a per-task setting the install cannot see, and the
+exposed spelling is not stable over time.
 
 Agent frontmatter entries are matched **exactly**: no prefix fallback, no
 inherit-on-miss. And the failure when every entry misses is not a degraded agent
@@ -48,7 +57,7 @@ That is not hypothetical, and the history is worth reading precisely — the usu
 | **#657** (07-15) | moved to **bare** names, on the reasoning that "the `mcp__genealogy__` prefix breaks in Cowork" |
 | **#698** (07-17) | moved back to qualified — bare leaves the subagent toolless in the SDK path |
 | **#742** (07-18) | **both spellings** — correct for the two registrars known at the time |
-| **#1341** (08-05) | **all three** — Cowork on the user's own computer is a third registrar; `record-extractor` was refused there, and the three agents whose entries are all MCP follow by the same rule |
+| **#1341** (08-05) | **all three** — the bare `display_name` spelling is a third registrar, observed live here; `record-extractor` was refused, and the three agents whose entries are all MCP follow by the same rule |
 
 Two full reversals before the answer stuck, and **every test passed at every
 step**. That is the argument for the lint, not the anecdote.
@@ -61,27 +70,55 @@ zero-tools refusal above is the documented runtime rule, but the blast radius of
 #650 specifically rests on a small number of live sessions rather than a
 systematic sweep.
 
-The deny side is sharper still. `disallowedTools:` binds **even under
-`bypassPermissions`**, which is the hosted path's mode (#695), making it the last
-line keeping `record-extractor` off the broad `research_append`. A deny naming
-one spelling binds *nothing* wherever the server carries another name — and
-unlike a missing grant, a missing deny fails open and silently.
+The deny side needs the same treatment, though **for a weaker reason than this
+ADR originally gave.** It said `disallowedTools:` binds even under
+`bypassPermissions` while an omission alone does not, making the deny "the last
+line" keeping `record-extractor` off the broad `research_append`. The first half
+is true; the second is false. Probed 2026-08-30 against Claude Code 2.1.251 /
+SDK 0.2.128 (`make probe-agent-binding`, reproduced twice): under
+`bypassPermissions` a tool merely **omitted** from `tools:` is absent from the
+agent, exactly as a denied one is. The omission is the load-bearing half; the
+deny restates it.
+
+The claim spread to `CLAUDE.md`, `docs/architecture.md`, ADR-0006, ADR-0011, two
+specs, the packaging test and three agent bodies, and seven of those cited issue
+#695 for it. That issue is the birkeland lane breach and says nothing about
+`bypassPermissions`, denies, or omissions — a citation chain that never
+terminated in evidence.
+
+**So all five deny blocks were deleted in the same change.** Each named a tool
+already absent from its agent's `tools:`, so each was a restatement — 83 lines of
+triple-spelled YAML a reader has to check against the list above it. The
+regression a deny insured against, someone later adding the tool back, is caught
+by the permission snapshot in `agent-tool-names.test.ts`, which fails on any
+change to an agent's list.
+
+The spelling rule below still governs a deny, because one may return for a reason
+the omission cannot serve. It just has nothing to govern today.
+
+**One thing the probe found that changes an instruction: never name a tool in
+both lists.** The deny is applied *before* the zero-tools spawn check. A probe
+agent granting one tool under all three spellings plus `ToolSearch`, and denying
+that same tool, was refused outright — "would be spawned with zero tools —
+refusing. Its tools list resolved to nothing: unrecognized [ToolSearch]" — with
+the three MCP entries not named, because the deny had already removed them.
 
 ## Decision
 
-**Every MCP tool in an agent's `tools:` — and in `disallowedTools:` — is listed
-three times, once under each live server spelling:**
+**Every MCP tool in an agent's `tools:` is listed three times, once under each
+live server spelling — as would every entry of a `disallowedTools:` block, if one
+ever returned:**
 
 ```yaml
 - mcp__genealogy__record_read                            # harnesses, .mcp.json, hosted web
-- mcp__remote-devices__Genealogy_Research__record_read   # Cowork in the cloud (bridged)
-- mcp__Genealogy_Research__record_read                   # Cowork on the user's own computer
+- mcp__remote-devices__Genealogy_Research__record_read   # Cowork via the remote-device bridge
+- mcp__Genealogy_Research__record_read                   # Cowork, bare display_name spelling
 ```
 
 The last two both derive from `manifest.json`'s `display_name`; only the bridged
-one is namespaced under `remote-devices`. **Which one is live depends on where the
-Cowork task runs**, which is a per-task setting the plugin cannot see, so an agent
-needs all three.
+one is namespaced under `remote-devices`. **Which one a Cowork session exposes has
+moved between censuses** (see Context), so an agent needs all three regardless of
+run mode.
 
 This is safe because unrecognized entries are ignored so long as at least one
 resolves.
@@ -95,7 +132,8 @@ Three corollaries:
   name (`query: "+research_append"`), which matches whatever prefix the session
   exposes. Cowork defers tool schemas past a size threshold and offers no control
   over it, so `ToolSearch` is the real load path there — and
-  `select:mcp__genealogy__…` resolves to nothing in either Cowork mode.
+  `select:mcp__genealogy__…` resolves to nothing under either Cowork spelling —
+  bridged or bare.
 - **Built-in tools (`Read`) stay bare**, and skill `allowed-tools` stays bare
   everywhere — it is not an exact-match spawn filter.
 
@@ -103,7 +141,7 @@ Three corollaries:
 
 | Option | Why rejected | Evidence |
 |---|---|---|
-| **Two spellings** (harness + bridge), the original form of this ADR | Missed Cowork's on-computer registration, which uses `display_name` with no `remote-devices` segment. `record-extractor` was refused outright — "would be spawned with zero tools — refusing", naming all 16 declared entries as unrecognized — in the mode that reaches the host extension directly. Three of the four agents declare only MCP tools, so the same applies to them; `gps-mentor` declares a bare `Read`, so it would spawn holding that alone | #1341 |
+| **Two spellings** (harness + bridge), the original form of this ADR | Missed the bare `display_name` registration (no `remote-devices` segment), which Cowork exposed live in #1341: `record-extractor` was refused outright — "would be spawned with zero tools — refusing", naming all 16 declared entries as unrecognized. Three of the four agents declare only MCP tools, so the same applies to them; `gps-mentor` declares a bare `Read`, so it would spawn holding that alone | #1341 |
 | **One qualified name** (whichever prefix the author happens to know) | The exact failure of #650/#698. Whichever one you pick is wrong in some environment, and CI — which registers under `genealogy` — cannot see it | #650/#698; all three agents broken in Cowork, CI green |
 | **Bare names only** | Leaves the subagent toolless in the SDK path used by the unit harness. Bare works for skills' `allowed-tools` but not for the agent spawn filter | `CLAUDE.md` § "Dual-spelled tool names" |
 | **Grant the server-level prefix** `mcp__remote-devices` and let everything through | That namespace carries `device_bash`, `device_commit_files`, `project_memory_write`. A read-only critique agent would get host shell access | `agent-tool-names.test.ts` header comment |
@@ -142,7 +180,12 @@ reason.)
    the omission and stayed green. A fourth would do the same. `bareName()` now
    throws on an unrecognized prefix instead of slicing it against another prefix's
    length, which turns the next instance from a wrong bare name into a named
-   failure.
+   failure. And the set does not only *grow*: the spelling a Cowork session
+   exposes has been observed to **move** between dates — the bare form live in
+   #1341 (2026-08-04/05), absent in three later censuses (macOS and Windows on
+   2026-08-15, and a second Windows session via #1732 on 2026-08-19) that found
+   only the bridged form. So the third spelling is insurance against a
+   moving target, not dead weight to be cleaned up on the strength of one census.
 
 **Risks.** The lint verifies *spelling*, not *binding*. An agent can be perfectly
 declared under every name, pass every check, and still not hold the tool at
@@ -158,14 +201,24 @@ general-purpose stand-in that binds none of the deny list (#939).
 > `disallowedTools:`; **derives** both `display_name`-based prefixes from
 > `manifest.json`, so renaming the extension fails in CI; asserts all five
 > registration sites still agree on the `genealogy` key; throws rather than
-> mis-slicing on an unrecognized prefix; and fails any `select:mcp__…` in a
-> plugin body.
+> mis-slicing on an unrecognized prefix; fails any `select:mcp__…` in a
+> plugin body; and fails any agent that names a tool in **both** `tools:` and
+> `disallowedTools:`, which can make the runtime refuse the agent outright.
 
-What it does **not** catch: whether a granted tool actually binds at runtime
+> `make probe-agent-binding` (`apps/server/dev/probe_agent_binding.py`) — a
+> live, billed probe rather than a check: spawns a probe agent under the exact
+> hosted options and reads whether a real tool call landed, off the
+> `tool_result` rather than the agent's prose. Six arms — granted, granted **and**
+> denied, omitted — each with tool search off and on. Run it when the CLI or the
+> SDK moves, or before adding a deny on the strength of it binding.
+
+What no CI job catches: whether a granted tool actually binds at runtime
 (#1084/#1085); whether the agent's body ever tells it to call the tool; and a
-**fourth** prefix nobody has registered yet. No CI job can see any of these. Only a
-live Cowork session can, and only in the run mode being tested — a cloud-mode check
-would have passed throughout #1341.
+**fourth** prefix nobody has registered yet. Only a live Cowork session can, and
+only for the spelling that session exposes — the bare form was live in #1341 but
+absent in the later censuses, so a green check proves binding for one spelling at
+one moment, not in general. The probe above closes the first of these for the
+**hosted** options only; Cowork still has no instrument but a live session.
 
 ## Revisit when
 

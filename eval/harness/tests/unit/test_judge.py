@@ -1284,7 +1284,84 @@ def test_summarize_response_default_still_caps():
     assert out["_first_n"] == [0, 1, 2]
 
 
-def test_render_prompt_uses_summarized_responses(sample_rubric):
+def test_render_prompt_renders_every_result_not_a_sample(sample_rubric):
+    """Rewritten for #1902. The old assertion (`_summary_truncated` /
+    `_full_length` must reach the prompt for a 50-element response) was WRONG:
+    it encoded the very bug this issue fixes. A grounding rubric marks a correct
+    citation of result 4+ as fabricated when the judge only sees results 1-3, so
+    the tool-response path now renders every element (`array_sample=None` at the
+    single call site) instead of sampling at 3.
+
+    A single tool call cannot exercise the total-size guard (it only drops while
+    `len(calls) > 1`), so this test keeps each element small and distinctly
+    identified, and asserts every id survives with no truncation envelope. The
+    size-guard bounding behaviour is pinned separately by
+    test_tool_calls_size_guard_drops_oldest_when_over_cap.
+    """
+    prompt = judge.render_prompt(
+        rubric=sample_rubric,
+        judge_context=[],
+        scenario_readme="",
+        user_message="x",
+        skills_invoked=[],
+        text_response="",
+        file_changes_summary="",
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__collections_search",
+                "args": {"q": "Alabama"},
+                "matched": {"kind": "predicate", "index": None},
+                # 8 results, each a distinct id — well past the old cap of 3.
+                "response": {
+                    "results": [{"id": f"coll_{i}"} for i in range(1, 9)]
+                },
+            }
+        ],
+    )
+    # Every result id reaches the judge — including the 4th+, which the sampler
+    # used to drop and which is the exact class of citation #1902 misgraded.
+    for i in range(1, 9):
+        assert f"coll_{i}" in prompt
+    # No sampling envelope — the whole list is rendered, not summarized away.
+    assert "_summary_truncated" not in prompt
+    assert "_full_length" not in prompt
+
+
+def test_render_prompt_shows_fourth_collection_id(sample_rubric):
+    """Prove-it-fails-first for #1902. The Alabama `collections_search` misgrade:
+    a 4-item response whose 4th collection (1986396) was invisible to the judge,
+    so a grounded citation of it read as fabricated. On `main` this id is dropped
+    at the default `array_sample=3`; after the fix it survives."""
+    prompt = judge.render_prompt(
+        rubric=sample_rubric,
+        judge_context=[],
+        scenario_readme="",
+        user_message="x",
+        skills_invoked=[],
+        text_response="",
+        file_changes_summary="",
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__collections_search",
+                "args": {"q": "Alabama"},
+                "matched": {"kind": "predicate", "index": None},
+                "response": {
+                    "results": [
+                        {"id": "1", "title": "Alabama Marriages"},
+                        {"id": "2", "title": "Alabama Probate"},
+                        {"id": "3", "title": "Alabama Census Index"},
+                        {"id": "1986396", "title": "Alabama, Church Records, 1803-1950"},
+                    ]
+                },
+            }
+        ],
+    )
+    assert "1986396" in prompt
+
+
+def test_render_prompt_still_truncates_long_strings(sample_rubric):
+    """`array_sample=None` lifts only the list cap; the per-string 2000-char cap
+    still bounds an individual pathological value."""
     prompt = judge.render_prompt(
         rubric=sample_rubric,
         judge_context=[],
@@ -1298,14 +1375,10 @@ def test_render_prompt_uses_summarized_responses(sample_rubric):
                 "tool": "mcp__genealogy__record_search",
                 "args": {"q": "Flynn"},
                 "matched": {"kind": "predicate", "index": None},
-                "response": {"results": ["A" * 5000] * 50},  # huge
+                "response": {"note": "A" * 5000},
             }
         ],
     )
-    # The 50-element array should be condensed with an explicit marker.
-    assert "_summary_truncated" in prompt
-    assert "_full_length" in prompt
-    # The 5000-char string inside should also be flagged truncated.
     assert "truncated by harness" in prompt
 
 
@@ -1353,6 +1426,7 @@ def _prompt_parts_kwargs(sample_rubric):
         text_response="text",
         file_changes_summary="changes",
         tool_calls=[],
+        harness_observations=["sample observation"],
     )
 
 
@@ -1726,3 +1800,27 @@ def test_only_the_named_failures_reach_the_prompt():
     out = _minimal_prompt(validator_failures=["test_that_failed"])
     assert "test_that_failed" in out
     assert "test_that_passed" not in out
+
+
+# --- harness observations in the prompt (issue #1749) ---------------------
+
+
+def test_harness_observations_appear_in_the_prompt():
+    out = _minimal_prompt(harness_observations=["found pattern X in response"])
+    assert "found pattern X in response" in out
+
+
+def test_no_observations_renders_a_neutral_marker():
+    out = _minimal_prompt(harness_observations=[])
+    assert "(no observations)" in out
+
+
+def test_only_fired_observations_reach_the_prompt():
+    """Only observations that fired appear — the function name does NOT appear,
+    since passing r.error (observation text) rather than r.name (verdict) is
+    the anti-bias design from issue #1749."""
+    out = _minimal_prompt(harness_observations=["pattern matched in text"])
+    assert "pattern matched in text" in out
+    # The function name (e.g. "report_example_check") should NOT be in the
+    # judge prompt — it goes only to the run log via _build_warnings.
+    assert "report_" not in out

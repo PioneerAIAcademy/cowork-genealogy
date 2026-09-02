@@ -22,17 +22,20 @@ import { unlink } from "fs/promises";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import { atomicWriteJson, readProjectJson, formatIssues } from "../utils/project-io.js";
-import { finalizeStagedResults } from "../utils/results-staging.js";
+import {
+  atomicWriteJson,
+  readProjectJson,
+  formatIssues,
+  withProjectLock,
+  NoProjectError,
+  noProjectResult,
+} from "../utils/project-io.js";
+import { finalizeStagedResults, STAGING_CAPABLE_TOOLS } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
 
-// Tools that can stage their raw response host-side (search-result-staging-spec.md).
-// Keep in sync with the `stageSearchResults` callers: record-search.ts,
-// fulltext-search.ts, external-links-search.ts.
-const STAGING_CAPABLE_TOOLS = new Set(["record_search", "fulltext_search", "external_links_search"]);
 
 /** Fire the "logging without persistence" nudge once this many positive-outcome
  *  searches have been logged while the project still holds zero sources and zero
@@ -116,7 +119,10 @@ export type ResearchLogAppendResult =
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
     }
-  | { ok: false; errors: string[] };
+  // `reason: "no_project"` marks the one ok:false that is an answer rather than
+  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
+  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
+  | { ok: false; errors: string[]; reason?: "no_project" };
 
 /** Raised for expected input problems; turned into `{ ok: false }`. */
 class LogAppendError extends Error {}
@@ -149,6 +155,9 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
+    // NoProjectError is an ANSWER, not a failure — re-raised unchanged so the
+    // outer catch can return noProjectResult().
+    if (e instanceof NoProjectError) throw e;
     throw new LogAppendError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -271,8 +280,21 @@ async function applyLogAppendOp(
       : null,
     results_ref: null,
   };
+  const resultsAvailableCoerced = coerceJsonArg(op.resultsAvailable);
   if (op.resultsAvailable !== undefined && op.resultsAvailable !== null) {
-    entry.results_available = op.resultsAvailable;
+    // Coerced the same way `ops` is: a model sending `"5"` otherwise lands a string
+    // in an integer-typed field that nothing rejects — `validator.ts` carries
+    // `results_available` in field-name allow-lists with no type check. The staged-
+    // backlog reader tests `typeof === "number"`, so a string entry never pairs and
+    // its staged file nags until the TTL. `coerceJsonArg` leaves a genuinely
+    // non-numeric value untouched rather than inventing one. Coerced ONCE, into a
+    // local that BOTH consumers read: this persisted field and the retained-none
+    // warning below, which otherwise gates on the raw argument and stays silent for
+    // exactly the input this coercion exists for. `replay.py`'s `_LOG_FIELD_RENAMES`
+    // rebuilds the entry from arguments and does NOT coerce, by its own renames-only
+    // contract, so a replayed entry differs from a live one for a stringly-typed
+    // value. Left that way deliberately: the replay contract is a harness decision.
+    entry.results_available = resultsAvailableCoerced as number;
   }
   if (op.notes !== undefined && op.notes !== null) {
     entry.notes = op.notes;
@@ -326,11 +348,11 @@ async function applyLogAppendOp(
   if (
     STAGING_CAPABLE_TOOLS.has(op.tool) &&
     (op.stagedResultsRef === undefined || op.stagedResultsRef === null) &&
-    typeof op.resultsAvailable === "number" &&
-    op.resultsAvailable > 0
+    Number.isFinite(resultsAvailableCoerced) &&
+    (resultsAvailableCoerced as number) > 0
   ) {
     warnings.push(
-      `${logId}: ${op.tool} reported ${op.resultsAvailable} available result(s) but ` +
+      `${logId}: ${op.tool} reported ${resultsAvailableCoerced} available result(s) but ` +
         `retained none — no results/${logId}.json sidecar was written, and the raw ` +
         `response is unrecoverable. Pass \`projectPath\` to ${op.tool} so it stages ` +
         `its response, then hand the returned \`staged.resultsRef\` back here as ` +
@@ -369,6 +391,9 @@ export async function researchLogAppend(
   // coerceJsonArg) before any shape checks.
   input.ops = coerceJsonArg(input.ops) as ResearchLogAppendOp[] | undefined;
 
+  // Serialize the read-modify-write against every other writer on this project
+  // (issue #1715).
+  return withProjectLock(projectPath, async () => {
   try {
     // Read project files once (research mutated in memory only; tree read for
     // cross-file checks during validation).
@@ -470,9 +495,11 @@ export async function researchLogAppend(
       },
     };
   } catch (e) {
+    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof LogAppendError) return { ok: false, errors: [e.message] };
     throw e;
   }
+  });
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────

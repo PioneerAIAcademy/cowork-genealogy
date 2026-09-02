@@ -92,12 +92,18 @@ matching `corrections` key.
 
 ### Julian vs. Gregorian → `julianToGregorianDay: true`
 
-| Jurisdiction | Gregorian adoption | Offset | Notes |
+| Jurisdiction | Gregorian adoption | Offset at adoption | Notes |
 |---|---|---|---|
 | Catholic Europe (Spain, Portugal, Italy, Poland) | Oct 1582 | 10 days | Oct 4 → Oct 15 |
 | France | Dec 1582 | 10 days | |
 | Catholic German states | 1583–1585 | 10 days | Varied by state |
 | Protestant German states | 1700 | 10→11 days | Feb 18 → Mar 1 |
+| Zeeland, Brabant | Dec 1582 | 10 days | Dec 14 → Dec 25 |
+| Holland | Jan 1583 | 10 days | Adopted at the turn of the year, after Zeeland and Brabant |
+| Gelderland | Jul 1700 | 11 days | Jun 30 → Jul 12. A 1700 date up to Jun 30 is still Old Style |
+| Utrecht, Overijssel | Dec 1700 | 11 days | Nov 30 → Dec 12. A 1700 date up to Nov 30 is still Old Style |
+| Friesland, Groningen | Dec 1700 | 11 days | Dec 31 1700 → Jan 12 1701. Groningen used Gregorian 1583–1594, then reverted to Julian |
+| Drenthe | Apr 1701 | 11 days | Apr 30 → May 12 1701. A 1701 date up to Apr 30 is still Old Style |
 | Denmark/Norway | 1700 | 10→11 days | |
 | Great Britain & colonies | Sep 1752 | 11 days | Sep 2 → Sep 14 |
 | Sweden | 1753 | 11 days (post-1753); 1700–1753 used a unique "Swedish calendar" 1 day ahead of Julian / 10 days behind Gregorian | Failed gradual transition; Feb 30, 1712 is a real Swedish date (added to revert to Julian). Swedish 30 Feb 1712 = Julian 29 Feb 1712 = Gregorian 11 Mar 1712 |
@@ -105,9 +111,11 @@ matching `corrections` key.
 | Russia | Feb 1918 | 13 days | Jan 31 → Feb 14 |
 | Greece | 1923 | 13 days | |
 
-Offset grows by 1 day at each Julian leap year the Gregorian calendar
-skipped: before 1700 → 10 days; 1700–1799 → 11; 1800–1899 → 12;
-1900+ → 13.
+Offset grows by 1 day the day after each Julian Feb 29 the Gregorian
+calendar skipped — the threshold is 1 March (Julian), not New Year:
+10 days before 1 Mar 1700; 11 from 1 Mar 1700; 12 from 1 Mar 1800;
+13 from 1 Mar 1900. A Julian Jan–Feb date in 1700, 1800 or 1900 keeps
+the previous century's offset (Julian 14 Feb 1900 → +12, not +13).
 
 ### Old Style / New Style year → `osNsYear: true`
 
@@ -117,9 +125,12 @@ March 24 are in the "previous" year by modern reckoning:
 
 ### Double-dated years → `doubleDatedYear: true`
 
-Records often show both years: "25 March 1750/1" means 1750 OS but
-1751 NS. Pass `date: { year: 1750, doubleYear: 1 }` — the tool
-returns the later (New Style) year.
+Records often show both years: "6 January 1745/6" means 1745 OS but
+1746 NS. Pass `date: { year: 1745, doubleYear: 6 }` — the tool
+returns the later (New Style) year. Double dates belong to Jan 1 –
+Mar 24 only. On 25 March the two years are the same, so a slash on
+that date is anomalous: flag it and check where the year turns over in
+the surrounding register entries. Do not resolve it to the later year.
 
 ### Quaker numbered months → `quakerMonth: { era }`
 

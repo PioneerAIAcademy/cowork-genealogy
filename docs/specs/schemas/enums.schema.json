@@ -245,6 +245,47 @@
     "holding_confidence": {
       "enum": ["confident", "unsure"]
     },
+    "experience_level": {
+      "description": "Researcher's genealogy experience, set by init-project. Drives narration density via researcher_profile.narration_guidance.",
+      "enum": ["novice", "intermediate", "experienced", "professional"]
+    },
+    "subscription": {
+      "description": "One way the researcher can reach a pay-walled genealogy site; guides search-external-sites prioritization. Mostly site brand names, not the lowercase_with_underscores used elsewhere. Free access counts: 'FamilySearch-Partner' is a partner subscription granted through a FamilySearch account, and 'LibraryAccess' is a public library, family history centre, or FamilySearch affiliate library. Neither names which sites it unlocks, because that varies by institution and changes over time — treat both as 'ask before assuming a paywall blocks them'. A plain FamilySearch account is the product's baseline and is never stored here; someone with only that has 'none'.",
+      "enum": [
+        "Ancestry",
+        "MyHeritage",
+        "FindMyPast",
+        "Newspapers.com",
+        "GenealogyBank",
+        "FindAGrave-Plus",
+        "FamilySearch-Partner",
+        "LibraryAccess",
+        "other",
+        "none"
+      ]
+    },
+    "evaluation_focus": {
+      "description": "What an evaluation entry examined (evaluations section). Hyphenated, unlike the other closed enums.",
+      "enum": [
+        "pre-exhaustiveness",
+        "conclusion-readiness",
+        "proof-critique",
+        "on-demand"
+      ]
+    },
+    "evaluation_target_type": {
+      "description": "What kind of thing an evaluation entry targets.",
+      "enum": ["question", "proof_summary", "project"]
+    },
+    "evaluation_verdict": {
+      "description": "An evaluation entry's verdict.",
+      "enum": [
+        "looks_solid",
+        "consider_addressing",
+        "address_first",
+        "refused"
+      ]
+    },
     "iso_date": {
       "description": "ISO 8601 date (YYYY-MM-DD).",
       "type": "string",

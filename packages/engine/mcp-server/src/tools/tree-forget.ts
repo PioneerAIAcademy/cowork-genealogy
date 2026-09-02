@@ -34,10 +34,19 @@ import type {
 } from "../types/gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
-import { atomicWriteJson, readProjectJson, fileExists, formatIssues } from "../utils/project-io.js";
+import {
+  atomicWriteJson,
+  readProjectJson,
+  fileExists,
+  formatIssues,
+  withProjectLock,
+  NoProjectError,
+  noProjectResult,
+} from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "../utils/date-helpers.js";
+import { COUPLE_EVENT_TYPES } from "./materialize-facts.js";
 
 /** The pre-removal snapshot. Dot-prefixed on purpose — it still holds the
  *  answer, and both the agent's file browsing and the feedback bundler skip
@@ -79,18 +88,12 @@ const SELECTOR_KINDS: ReadonlySet<string> = new Set<ForgetSelectorKind>([
 // only the structure leaks the answer as a fact (and the fact can be the SOLE
 // carrier when the relatives were never added as tree persons).
 //
-// These lists are a DELIBERATE, EVIDENCE-BACKED SUBSET, not the full couple/parent
-// fact family. Add a type here only after confirming FS actually echoes it
-// person-level in real data — never on assumption. (#1314's `Parents` matcher
-// was nearly merged targeting an "undefined" type until a `person_read` RESULT
-// in the feedback-2026-08-03 session log confirmed FS emits it — an upstream
-// fact with an FS-native UUID id, not a value the agent wrote; do not repeat
-// that in reverse by adding unverified types.) `materialize-facts.ts`'s
-// `EVENT_TREE_TYPES` lists further
-// couple-event types (`Engagement`, `MarriageBanns`, …) whose person-level echo
-// is NOT yet confirmed — see issue #1549 before extending this set.
-const SWEPT_SPOUSE_FACT_TYPES = ["Marriage", "Divorce", "Annulment"] as const; // #1417, confirmed: 90 person-level Marriage facts across committed snapshot trees (2026-08-14); Divorce/Annulment have no corpus evidence yet — see #1549
-const SWEPT_PARENT_FACT_TYPES = ["Parents"] as const; // #1314, confirmed FS-native: a person_read result in the feedback-2026-08-03 session log returned type:"Parents" facts with FS UUID ids on GRNX-DFF ("Geo… Wilcox - Caroline E Woodruff") and GRN6-4MQ
+// `SWEPT_SPOUSE_FACT_TYPES` is the full set of couple-event types from
+// `COUPLE_EVENT_TYPES` in `materialize-facts.ts`, per the lead's 2026-08-24
+// ruling: sweep all couple events. `SWEPT_PARENT_FACT_TYPES` remains a
+// narrower, evidence-confirmed set (#1314).
+export const SWEPT_SPOUSE_FACT_TYPES: readonly string[] = [...COUPLE_EVENT_TYPES];
+export const SWEPT_PARENT_FACT_TYPES = ["Parents"] as const;
 
 export interface ForgetSelector {
   selector: ForgetSelectorKind;
@@ -128,18 +131,24 @@ export type TreeForgetResult =
       restoreFile: string | null;
       validation: { valid: true; warnings: string[] };
     }
-  | { ok: false; errors: string[] };
+  // `reason: "no_project"` marks the one ok:false that is an answer rather than
+  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
+  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
+  | { ok: false; errors: string[]; reason?: "no_project" };
 
 /** A user-correctable problem: bad selector, unknown id, nothing to remove,
  *  or an unreadable project file. Anything else propagates. */
 class TreeForgetError extends Error {}
 
-/** readProjectJson's two expected failures, mapped onto the user-correctable
- *  class so they surface as `{ ok: false, errors }` rather than as a throw. */
+/** readProjectJson's expected failures, mapped onto the user-correctable class
+ *  so they surface as `{ ok: false, errors }` rather than as a throw. The one
+ *  exception is NoProjectError, which is an ANSWER rather than a failure and is
+ *  re-raised unchanged for the outer catch to turn into noProjectResult(). */
 async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
+    if (e instanceof NoProjectError) throw e;
     throw new TreeForgetError(e instanceof Error ? e.message : String(e));
   }
 }
@@ -230,6 +239,54 @@ function factIdsOfTypes(
     factIdsOfType(tree, personId, factType).forEach((id) => ids.add(id));
   }
   return ids;
+}
+
+/** Leading token of a fact type, `+`/space-normalized: `"Marriage+bond"` and
+ *  `"Marriage Registration"` both yield `"Marriage"`. FS emits couple/parent
+ *  conclusions as free-text custom types that share this prefix with the
+ *  canonical swept type without being an exact match (#1549). */
+function leadingToken(factType: string): string {
+  return factType.replace(/\+/g, " ").trim().split(/\s+/)[0] ?? "";
+}
+
+interface LeftBehindCheck {
+  personId: string;
+  kind: "parents-of" | "spouses-of";
+}
+
+/**
+ * Resolved AFTER all selectors have removed their targets (the same timing
+ * as `resolveFactSharingNotices`), so a fact removed by a later selector in
+ * the same call is not falsely reported as "left in the tree". Picks the
+ * swept set from `kind`; checks the post-removal tree directly.
+ */
+function leftBehindCoupleFactWarnings(
+  tree: SimplifiedGedcomX,
+  checks: LeftBehindCheck[],
+): string[] {
+  const seen = new Set<string>();
+  const warnings: string[] = [];
+  for (const { personId, kind } of checks) {
+    const sweptTypes = kind === "parents-of" ? SWEPT_PARENT_FACT_TYPES : SWEPT_SPOUSE_FACT_TYPES;
+    const sweptLower = new Set(sweptTypes.map((t: string) => t.toLowerCase()));
+    const canonByLower = new Map(sweptTypes.map((t: string) => [t.toLowerCase(), t]));
+    const person = persons(tree).find((p) => p.id === personId);
+    for (const f of person?.facts ?? []) {
+      if (!f.id || !f.type) continue;
+      if (sweptLower.has(f.type.toLowerCase())) continue;
+      const token = leadingToken(f.type).toLowerCase();
+      if (!sweptLower.has(token)) continue;
+      const canonical = canonByLower.get(token) ?? leadingToken(f.type);
+      const msg =
+        `A ${canonical}-prefixed fact '${f.id}' on ${personId} was left in the tree — its type is not ` +
+        `an exact match for the ${kind} sweep, so it was not removed. Confirm it does not ` +
+        `duplicate the forgotten conclusion.`;
+      if (seen.has(msg)) continue;
+      seen.add(msg);
+      warnings.push(msg);
+    }
+  }
+  return warnings;
 }
 
 function personOwnsFact(tree: SimplifiedGedcomX, personId: string, factId: string): boolean {
@@ -484,6 +541,10 @@ interface Targets {
   /** Advisory strings already final at the point they're added (e.g. the
    *  skipped-date count) — these need no later resolution. */
   factSharingNotices: string[];
+  /** Deferred left-behind-fact checks, resolved post-removal like
+   *  pendingFactNotices — a fact removed by a later selector in the same
+   *  call must not be falsely reported as "left in the tree". */
+  leftBehindChecks: LeftBehindCheck[];
 }
 
 /**
@@ -541,6 +602,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
     relationships: new Set(),
     pendingFactNotices: [],
     factSharingNotices: [],
+    leftBehindChecks: [],
   };
 
   for (let i = 0; i < forget.length; i++) {
@@ -589,10 +651,12 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
         rels.forEach((r) => t.relationships.add(r));
         redundantFactIds.forEach((f) => t.facts.add(factKey("person", pid, f)));
         // Same heads-up as birth-of/death-of/facts-of (#1574): a swept
-        // Parents/Marriage/Divorce/Annulment fact id is not guaranteed
-        // unique to this person either.
-        const redundantLabel = kind === "parents-of" ? "Parents" : "Marriage/Divorce/Annulment";
+        // couple-event fact id is not guaranteed unique to this person either.
+        const redundantLabel = kind === "parents-of" ? "Parents" : "couple-event";
         t.pendingFactNotices.push(...pendingFactNoticesForIds(pid, redundantFactIds, redundantLabel));
+        if (kind === "parents-of" || kind === "spouses-of") {
+          t.leftBehindChecks.push({ personId: pid, kind });
+        }
         break;
       }
       case "birth-of":
@@ -827,6 +891,7 @@ function applyForget(tree: SimplifiedGedcomX, t: Targets): ApplyForgetResult {
   const factSharingNotices = [
     ...resolveFactSharingNotices(tree, t.pendingFactNotices),
     ...t.factSharingNotices,
+    ...leftBehindCoupleFactWarnings(tree, t.leftBehindChecks),
   ];
 
   return {
@@ -850,6 +915,10 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
   // before any shape check, so a correct-but-stringified payload isn't rejected.
   const forget = coerceJsonArg(input.forget) as ForgetSelector[] | undefined;
 
+  // Serialize the read-modify-write against every other writer on this project
+  // (issue #1715). A dryRun only reads, but holding the lock briefly for it is
+  // harmless and keeps the entry shape uniform with the other writers.
+  return withProjectLock(projectPath, async () => {
   try {
     if (!Array.isArray(forget) || forget.length === 0) {
       return { ok: false, errors: ["`forget` must be a non-empty array of selectors"] };
@@ -911,12 +980,26 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     await atomicWriteJson(join(projectPath, "tree.gedcomx.json"), tree);
 
     result.filesWritten = ["tree.gedcomx.json"];
+
+    // Rewind the completion-gate baseline to the forgotten state too (issue
+    // #1490). It is the point re-derivation is measured against; left at the
+    // pre-forget tree, a fact the agent re-derives would read as "no new
+    // structure" and the tree-encoding gate would false-flag the conclusion.
+    // Only when a baseline already exists — tree_forget never creates one.
+    const baselinePath = join(projectPath, "starting-tree.gedcomx.json");
+    if (await fileExists(baselinePath)) {
+      await atomicWriteJson(baselinePath, tree);
+      result.filesWritten.push("starting-tree.gedcomx.json");
+    }
+
     result.restoreFile = RESTORE_FILE;
     return result;
   } catch (e) {
+    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof TreeForgetError) return { ok: false, errors: [e.message] };
     throw e;
   }
+  });
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -953,6 +1036,11 @@ export const treeForgetSchema = {
     "but if a resolved fact's id ALSO exists on a different owner not being " +
     "touched, `validation.warnings` says so (ids only, never a value). Not " +
     "an error; just tell the researcher.\n" +
+    "\n" +
+    "`parents-of`/`spouses-of` also WARNS (never removes) about a left-behind " +
+    "fact whose type starts with the same word as a swept type but isn't an " +
+    "exact match (e.g. `Marriage Registration`) — it may be a distinct " +
+    "documentary record, not an echo of the forgotten conclusion.\n" +
     "\n" +
     "For a date-bounded request ('forget everything before 1850'), use " +
     "facts-before/facts-after/facts-between with a year, NOT your own reading " +
@@ -1006,7 +1094,8 @@ export const treeForgetSchema = {
                 "parents-of/children-of/spouses-of: the person's relatives AND the links to " +
                 "them (cascades). parents-of ALSO removes the person's own `Parents` " +
                 "documentary facts, and spouses-of ALSO removes the person's own " +
-                "`Marriage`/`Divorce`/`Annulment` facts, so the forgotten conclusion does not " +
+                "couple-event facts (`Marriage`, `Divorce`, `Annulment`, `Engagement`, " +
+                "`MarriageBanns`, `Separation`), so the forgotten conclusion does not " +
                 "survive as a fact on the subject. birth-of/death-of: that person's Birth/Death " +
                 "facts. facts-of: that person's facts of one type (needs factType). " +
                 "facts-before/facts-after: that person's facts confidently before/after a " +

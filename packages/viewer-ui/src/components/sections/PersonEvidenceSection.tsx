@@ -50,7 +50,7 @@ export default function PersonEvidenceSection(): React.JSX.Element {
             }
           >
             <div className={styles.body}>
-              {pe.match_score !== null && (
+              {pe.match_score != null && (
                 <div className={styles.detail}>
                   <span className={styles.label}>Match:</span> {Math.round(pe.match_score * 100)}%
                 </div>

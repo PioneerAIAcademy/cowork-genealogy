@@ -195,16 +195,21 @@ If an override seems wrong to you, follow it and say so in your
 rationale. The rationale is where disagreement belongs; the score is not.
 
 ────────────────────────────────────────
-# Before-state — source entries on file BEFORE this skill ran
+# Before-state — sources and conflicts on file BEFORE this skill ran
 
-This is the project's source material as it existed *before* the skill
-executed. Use it to mechanically check any claim that on-file text was
-"not on file", "absent", "fabricated", or "invented": if a source or its
-text appears below, that text WAS on file and such a claim is unfounded —
-do not deduct for it. `(none)` means the project had no prior sources
-(e.g. an empty-project scenario), so nothing pre-existing could have been
-altered or removed. Sources and assertions the skill ADDS this run appear
-under "File changes summary" below, not here — do not confuse the two.
+This is the project's material as it existed *before* the skill executed:
+its sources and its conflicts. Use it to mechanically check any claim that
+on-file content was "not on file", "absent", "fabricated", or "invented":
+if a source or its text appears below, that text WAS on file and such a
+claim is unfounded — do not deduct for it. Likewise for conflicts: each
+conflict on file is shown with its status and the resolved values of its
+preferred and competing assertions, so a claim like "no conflict on file
+for X, so encoding X is safe" is checkable — if a conflict over X appears
+below, that claim is contradicted by the record. `(none)` means the
+project had no prior sources or conflicts (e.g. an empty-project
+scenario), so nothing pre-existing could have been altered or removed.
+Sources, conflicts and assertions the skill ADDS this run appear under
+"File changes summary" below, not here — do not confuse the two.
 
 {before_state}
 
@@ -254,6 +259,20 @@ if a validator says the skill deleted an entry it may not delete, that is a
 Correctness problem whatever the prose looks like. If a failure is unrelated to
 the dimension you are scoring, ignore it.
 
+## Harness observations on the response text
+
+{harness_observations}
+
+These are pattern matches the harness ran over Claude's text response. They are
+observations, not verdicts: a match says a pattern was present, not that the
+response is wrong, and a pattern can match correct text. **Only matches appear
+here** — a check that found nothing is deliberately not listed.
+
+Weigh each against the response and the tool calls you already have above, the
+same way you would weigh anything you noticed yourself. A match does not require
+a deduction of any size, and none of them names a dimension or a score. If a
+match is unrelated to the dimension you are scoring, ignore it.
+
 ────────────────────────────────────────
 # Critical: Negative tests (decline / routing / non-activation)
 
@@ -291,20 +310,32 @@ happens to appear:
 ────────────────────────────────────────
 # Per-test context
 
-The notes below describe what the test author expected the skill to do.
-Use them as background to ground your rationales for the base and
-rubric dimensions. **Do not emit separate dimensions for them.**
-Deterministic checks (filename format, schema validity, exact tool
-call counts) are verified separately by validators — focus your
-grading on the narrative quality the base + rubric dimensions
-measure.
+The notes below are this test's **per-test overrides** — the narrowest
+and highest-priority instruction that reaches you (see "Which rule
+wins"). They are **binding on the scores you give.** What they are not
+is a dimension list. **Do not emit separate dimensions for them.**
+Grade what they require inside the base and rubric dimensions you were
+given. Deterministic checks (filename format, schema validity, exact
+tool call counts) are verified separately by validators — focus your
+grading on the narrative quality those dimensions measure.
 
 A note here may be written as a bulleted list of requirements — "the
-plan **must** include…", "each item's rationale **must**…". That is
-still background. It reads like a rubric and is not one: grade what it
-describes inside the dimensions you were given, and **never add a
-dimension named after one of these bullets.** The dimension list is
-fixed by the "How to report" section below.
+plan **must** include…", "each item's rationale **must**…". That
+governs **where** it is graded, not **whether**: it reads like a rubric
+and is not one, so grade what it describes inside the dimensions you
+were given, and **never add a dimension named after one of these
+bullets.** The dimension list is fixed by the "How to report" section
+below. But a requirement the response did not meet **is a deduction**
+in whichever dimension covers it. Naming that concrete omission is
+exactly what a 2 asks for; scoring 3 because the response was strong
+elsewhere is an error.
+
+A note that asserts a **fact** — that a date is genuine, that a
+jurisdiction used a given calendar, that a record type exists — is
+**established for this test.** Do not contradict it in your rationale,
+and do not mark the response down for stating it. If you believe it is
+wrong, follow it and say so in the rationale, exactly as "Which rule
+wins" directs.
 
 Where a note overrides a rule stated earlier in this prompt, the note
 wins — see "Which rule wins" above.

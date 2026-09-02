@@ -24,6 +24,23 @@ describe("writerToolResult", () => {
     expect("isError" in out).toBe(false);
   });
 
+  it("leaves isError unset on the no-project answer (issue #1695)", () => {
+    // The ONE ok:false exemption. The user is not in a research project, so
+    // nothing was asked of a project that exists — marking it would tell the
+    // model its work failed when only the record of it is missing. Mirrored by
+    // `_tool_envelope` in eval/harness/harness/mock_mcp.py.
+    const result = { ok: false, reason: "no_project", errors: ["not a project"] };
+    const out = writerToolResult(result);
+    expect(out.isError).toBeUndefined();
+    expect("isError" in out).toBe(false);
+  });
+
+  it("still sets isError on a failure carrying an unrelated reason", () => {
+    // Guards the discriminator against being read as "any reason exempts".
+    const result = { ok: false, reason: "validation", errors: ["bad"] };
+    expect(writerToolResult(result).isError).toBe(true);
+  });
+
   it("carries the tool's payload through verbatim", () => {
     const result = { ok: false, errors: ["nope"], opsReceived: 2 };
     const out = writerToolResult(result);

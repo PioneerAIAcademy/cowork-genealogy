@@ -3,11 +3,13 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, isAbsolute } from 'node:path'
 import JSZip from 'jszip'
+import type { GedcomxCoupleRelationship, GedcomxData, GedcomxPerson } from '@genealogy/schema'
 import {
   buildFeedbackZip,
   capSessionLog,
   FEEDBACK_SCHEMA_VERSION,
   MAX_FIELD_CHARS,
+  NOT_PROVIDED,
   type FeedbackOptions
 } from '../feedback'
 
@@ -18,7 +20,10 @@ async function readFeedbackJson(zipBase64: string): Promise<Record<string, unkno
   return JSON.parse(await file.async('string'))
 }
 
-function makeOptions(folder: string, overrides: Partial<FeedbackOptions['report']> = {}): FeedbackOptions {
+function makeOptions(
+  folder: string,
+  overrides: Partial<FeedbackOptions['report']> = {}
+): FeedbackOptions {
   return {
     folderPath: folder,
     includeMedia: false,
@@ -188,8 +193,10 @@ describe('buildFeedbackZip — size budgets follow the server convention', () =>
     // clean tree for anyone running the full gate while passing in isolation.
     // The 45 MB is load-bearing (3 x 15 MB against the 35 MB budget), so the
     // budget to raise is the clock's. DEFLATE dominates the cost, not the
-    // fixture: generating the noise is only ~340ms of it.
-  }, 30_000)
+    // fixture: generating the noise is only ~340ms of it. The per-test
+    // 30_000 that used to sit here is redundant now that this package's
+    // vitest.config.ts raises testTimeout for the whole suite.
+  })
 
   it('keeps a bundle that fits entirely intact', async () => {
     await writeFile(join(folder, 'small.bin'), noise(1024))
@@ -269,11 +276,29 @@ describe('buildFeedbackZip — living-person redaction', () => {
     sources: []
   }
 
-  async function readTree(zipBase64: string): Promise<Record<string, any>> {
+  async function readTree(zipBase64: string): Promise<GedcomxData> {
     const zip = await JSZip.loadAsync(Buffer.from(zipBase64, 'base64'))
     const file = zip.file('tree.gedcomx.json')
     if (!file) throw new Error('tree.gedcomx.json missing from zip')
     return JSON.parse(await file.async('string'))
+  }
+
+  // These narrow rather than assert-non-null, so a person or relationship that
+  // the redaction dropped entirely fails as "P2 missing from the bundled tree"
+  // instead of a TypeError on `.names` several lines later. `facts` lives only
+  // on the Couple arm of GedcomxRelationship, so the type check is real and not
+  // ceremony.
+  function person(tree: GedcomxData, id: string): GedcomxPerson {
+    const found = tree.persons.find((p) => p.id === id)
+    if (!found) throw new Error(`person ${id} missing from the bundled tree`)
+    return found
+  }
+
+  function couple(tree: GedcomxData, id: string): GedcomxCoupleRelationship {
+    const found = (tree.relationships ?? []).find((r) => r.id === id)
+    if (!found) throw new Error(`relationship ${id} missing from the bundled tree`)
+    if (found.type !== 'Couple') throw new Error(`relationship ${id} is ${found.type}, not Couple`)
+    return found
   }
 
   beforeEach(async () => {
@@ -288,14 +313,14 @@ describe('buildFeedbackZip — living-person redaction', () => {
 
   it('leaves a person explicitly marked deceased untouched', async () => {
     const tree = await readTree((await buildFeedbackZip(makeOptions(folder))).zipBase64)
-    const p1 = tree.persons.find((p: any) => p.id === 'P1')
+    const p1 = person(tree, 'P1')
     expect(p1.names[0].given).toBe('Reuben Spencer')
     expect(p1.facts).toHaveLength(1)
   })
 
   it('redacts a living person: no given name, facts, or ark; id and surname kept', async () => {
     const tree = await readTree((await buildFeedbackZip(makeOptions(folder))).zipBase64)
-    const p2 = tree.persons.find((p: any) => p.id === 'P2')
+    const p2 = person(tree, 'P2')
     expect(p2.names[0].given).toBe('Living')
     expect(p2.names[0].surname).toBe('Spriggs')
     expect(p2.facts).toEqual([])
@@ -306,7 +331,7 @@ describe('buildFeedbackZip — living-person redaction', () => {
 
   it('treats a MISSING living flag as living — absent is not deceased', async () => {
     const tree = await readTree((await buildFeedbackZip(makeOptions(folder))).zipBase64)
-    const p3 = tree.persons.find((p: any) => p.id === 'P3')
+    const p3 = person(tree, 'P3')
     expect(p3.names[0].given).toBe('Living')
     expect(p3.facts).toEqual([])
   })
@@ -324,8 +349,8 @@ describe('buildFeedbackZip — living-person redaction', () => {
 
   it('clears Couple facts touching a living person, keeps the rest', async () => {
     const tree = await readTree((await buildFeedbackZip(makeOptions(folder))).zipBase64)
-    expect(tree.relationships.find((r: any) => r.id === 'r1').facts).toEqual([])
-    expect(tree.relationships.find((r: any) => r.id === 'r2').facts).toHaveLength(1)
+    expect(couple(tree, 'r1').facts).toEqual([])
+    expect(couple(tree, 'r2').facts).toHaveLength(1)
   })
 
   it('records the redaction in FEEDBACK.md so a triager reads it as intentional', async () => {
@@ -334,7 +359,30 @@ describe('buildFeedbackZip — living-person redaction', () => {
     )
     const md = await zip.file('FEEDBACK.md')!.async('string')
     expect(md).toContain('Living people redacted')
-    expect(md).toContain('2 person(s)')
+    expect(md).toContain('2 living-person record(s)')
+  })
+
+  it('redacts the completion-gate baseline too, not just tree.gedcomx.json', async () => {
+    // starting-tree.gedcomx.json is the write-once baseline (issue #1490). It
+    // carries the same living persons and is bundled by the same walkProject, so
+    // a bundle that redacted only tree.gedcomx.json still leaked living details.
+    await writeFile(join(folder, 'starting-tree.gedcomx.json'), JSON.stringify(TREE), 'utf8')
+    const zip = await JSZip.loadAsync(
+      Buffer.from((await buildFeedbackZip(makeOptions(folder))).zipBase64, 'base64')
+    )
+
+    const baselineRaw = await zip.file('starting-tree.gedcomx.json')!.async('string')
+    const baseline = JSON.parse(baselineRaw) as GedcomxData
+    const b2 = person(baseline, 'P2')
+    expect(b2.names[0].given).toBe('Living')
+    expect(b2.ark).toBeUndefined()
+    for (const leak of ['Jane Marie', 'Bobby', '3 March 1985', 'Riverside, CA', 'SECRET']) {
+      expect(baselineRaw).not.toContain(leak)
+    }
+
+    // Both files' living persons counted: 2 in each.
+    const md = await zip.file('FEEDBACK.md')!.async('string')
+    expect(md).toContain('4 living-person record(s)')
   })
 
   it('passes an unparseable tree through rather than failing the send', async () => {
@@ -347,6 +395,55 @@ describe('buildFeedbackZip — living-person redaction', () => {
   })
 })
 
+describe('buildFeedbackZip — FEEDBACK.md on a blank prompt or did', () => {
+  let folder: string
+
+  beforeEach(async () => {
+    folder = await mkdtemp(join(tmpdir(), 'feedback-test-'))
+    await writeFile(join(folder, 'research.json'), '{}', 'utf8')
+  })
+
+  afterEach(async () => {
+    await rm(folder, { recursive: true, force: true })
+  })
+
+  async function markdownFor(overrides: Partial<FeedbackOptions['report']>): Promise<string> {
+    const result = await buildFeedbackZip(makeOptions(folder, overrides))
+    const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
+    return zip.file('FEEDBACK.md')!.async('string')
+  }
+
+  // Both are optional at the dialog (#1919). A heading with nothing under it
+  // reads like the bundler dropped the field; say it was left blank instead.
+  // The literal must match NOT_PROVIDED in apps/server/app/feedback.py, so a
+  // triager reading either producer's bundle sees the same thing.
+  it('says the field was left blank rather than printing an empty section', async () => {
+    const md = await markdownFor({ userPrompt: '', agentDid: '   ' })
+    expect(md).toContain(`## What I asked\n\n${NOT_PROVIDED}`)
+    expect(md).toContain(`## What the agent did\n\n${NOT_PROVIDED}`)
+  })
+
+  // Asserted as a LITERAL, not via the imported constant: the point of the
+  // comment above is cross-producer agreement, and a test that reads the same
+  // constant it is checking moves with it and can never catch the drift.
+  it('spells the placeholder exactly as apps/server/app/feedback.py does', () => {
+    expect(NOT_PROVIDED).toBe('_(not provided)_')
+  })
+
+  it('says so for a blank email too, not just the two text sections', async () => {
+    const md = await markdownFor({ email: '' })
+    expect(md).toContain(`- **From:** ${NOT_PROVIDED}`)
+    expect(md).not.toContain('- **From:** \n')
+  })
+
+  it('leaves a supplied prompt and did untouched', async () => {
+    const md = await markdownFor({ userPrompt: 'Find John Smith.', agentDid: 'It stopped.' })
+    expect(md).not.toContain(NOT_PROVIDED)
+    expect(md).toContain('## What I asked\n\nFind John Smith.')
+    expect(md).toContain('## What the agent did\n\nIt stopped.')
+  })
+})
+
 // The "## Session log" section must always render and say why the transcript
 // is or isn't there — so a Cowork bundle's missing log reads as expected, not
 // missing (issue #1481).
@@ -354,7 +451,11 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
   let folder: string
 
   beforeEach(async () => {
-    folder = await mkdtemp(join(tmpdir(), 'feedback-slog-'))
+    // Underscore on purpose. Claude Code replaces EVERY non-alphanumeric char
+    // with '-', not just path separators, so an all-alphanumeric temp name is
+    // derived identically by the old (separators-only) and new rules — with
+    // 'feedback-slog-' this suite passed against the broken derivation too.
+    folder = await mkdtemp(join(tmpdir(), 'feedback_slog-'))
     await writeFile(join(folder, 'research.json'), '{}', 'utf8')
   })
 
@@ -363,7 +464,9 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
   })
 
   async function feedbackMarkdown(options: FeedbackOptions): Promise<string> {
-    const zip = await JSZip.loadAsync(Buffer.from((await buildFeedbackZip(options)).zipBase64, 'base64'))
+    const zip = await JSZip.loadAsync(
+      Buffer.from((await buildFeedbackZip(options)).zipBase64, 'base64')
+    )
     return zip.file('FEEDBACK.md')!.async('string')
   }
 
@@ -397,8 +500,8 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
     const profileSaved = process.env.USERPROFILE
     const fakeHome = await mkdtemp(join(tmpdir(), 'feedback-home-'))
     try {
-      const projectHash = folder.replace(/^\//, '').replace(/\//g, '-')
-      const projectDir = join(fakeHome, '.claude', 'projects', `-${projectHash}`)
+      const projectHash = folder.replace(/[^a-zA-Z0-9-]/g, '-')
+      const projectDir = join(fakeHome, '.claude', 'projects', projectHash)
       await mkdir(projectDir, { recursive: true })
       await writeFile(
         join(projectDir, 'session.jsonl'),
@@ -410,7 +513,9 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
       process.env.USERPROFILE = fakeHome
 
       const opts = { ...makeOptions(folder), includeSessionLog: true }
-      const zip = await JSZip.loadAsync(Buffer.from((await buildFeedbackZip(opts)).zipBase64, 'base64'))
+      const zip = await JSZip.loadAsync(
+        Buffer.from((await buildFeedbackZip(opts)).zipBase64, 'base64')
+      )
       const md = await zip.file('FEEDBACK.md')!.async('string')
       expect(md).toContain('## Session log')
       expect(md).toContain('See `_feedback/session-log.jsonl`')

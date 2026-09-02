@@ -99,8 +99,7 @@ def main() -> int:
     # on the negative side ONLY (hypothesis-tracking 13/0, validate-schema 11/1,
     # init-project 9/2, locality-guide 26/2, search-wikipedia 11/2, translation
     # 11/2) and optimize usefully today. Hard-failing those would break a command
-    # that works for them. Only `research` and `forget-and-rederive` (0/0) are
-    # unmeasurable.
+    # that works for them. Only `forget-and-rederive` (0/0) is unmeasurable.
     if not items or pos == 0:
         print(f"ERROR: unmeasurable set ({pos} positive / {neg} negative) — nothing to "
               f"optimize against. run_loop would report `all_passed` on iteration 1 "

@@ -8,17 +8,17 @@ allowed-tools:
   - convert_calendar
 description: >-
   Identifies and resolves conflicting genealogical evidence — both fact-level
-  conflicts (three different birthplaces) and identity-level conflicts where
-  multiple candidate persons or records genuinely compete (e.g. two same-named
-  people in one county). Performs source independence analysis, applies the
-  GPS preponderance hierarchy, and writes defensible resolution rationale. GPS
-  Step 4 — Resolution of Conflicting Evidence. Use when the user says "these
-  sources disagree", "resolve this conflict", "which source is right?", "why
-  do these records conflict?", "are there two people with this name?", when
-  conflicting assertions exist in research.json, or when timeline
-  impossibilities suggest an identity conflict. Do NOT use for
-  confidence-calibration review or auditing existing person_evidence links
-  (that's person-evidence's territory). Do NOT use to classify evidence (use
+  conflicts and identity-level conflicts where multiple candidate persons or
+  records genuinely compete (e.g. two same-named people in one county).
+  Performs source-independence analysis, applies the GPS preponderance
+  hierarchy, and writes the rationale. GPS Step 4 — Resolution of Conflicting
+  Evidence. Use when the user says "these sources disagree", "resolve this
+  conflict", "which source is right?", "why do these records conflict?", "are
+  there two people with this name?", when conflicting assertions exist in
+  research.json, or when timeline impossibilities suggest an identity
+  conflict. Do NOT use to add or track candidates when no decision is asked
+  for (use hypothesis-tracking), to audit existing person_evidence links or
+  review their confidence (use person-evidence), to classify evidence (use
   record-extraction, which owns classification), build a timeline (use
   timeline), or write a conclusion (use proof-conclusion).
 ---
@@ -336,7 +336,7 @@ resolution patterns:
    name, so two records giving the "same" person different patronymics
    name different fathers — treat that as evidence of distinct people,
    not a surname variant to smooth over. (The Americanized/farm surname
-   an emigrant later adopts is separate from, and does not resolve, the patronymic. Iberian naming — Spanish and Portuguese two-surname systems — follows different rules and variation there does not carry the same implication.)
+   an emigrant later adopts is separate from, and does not resolve, the patronymic. Iberian naming — Spanish and Portuguese two-surname systems — follows different rules: the two surnames are reordered or one is dropped, and on emigration the maternal surname often becomes a middle name, so variation there does not carry the same implication.)
 
 **Do not confirm identity by the absence of an alternative.** Not
 finding a competing same-name candidate in a later record is not

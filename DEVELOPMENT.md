@@ -44,6 +44,13 @@ scripts\windows\test-all.bat    REM == make test-all, the pre-PR gate
 ```
 
 [`scripts/windows/README.md`](./scripts/windows/README.md) lists all of them.
+
+> **Do not clone the repo under a syncing folder** (OneDrive, Dropbox, Google
+> Drive, iCloud Drive). The sync client's filesystem hooks conflict with build
+> tools — `uv` fails on hardlinks, Next.js never writes `routes-manifest.json`,
+> and transient ENOENT/EINVAL errors appear under `.next/` and `node_modules/`.
+> Clone to a plain local path instead (e.g. `C:\src\`).
+
 Running e2e fixtures, skill evals, and building the shipped artifacts go
 through the double-clickable scripts in `eval\` instead — see
 [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) and
@@ -63,6 +70,16 @@ Once per clone (opt-in, per-clone), run `make install-hooks` — or on Windows,
 double-click **`eval\InstallHooks.bat`**. Both install `post-checkout`, which
 sets up new worktrees: it links the shared files and installs the pnpm
 workspace.
+
+On Windows, also do this once after pulling the `* text=auto eol=lf` rule —
+commit anything in progress first, because `reset --hard` discards
+uncommitted work:
+
+    git rm --cached -r . && git reset --hard
+
+A pull does not re-check-out files, so an existing clone keeps its CRLF copy
+of `scripts/git-hooks/post-checkout` and the hook goes on failing silently.
+`git status` stays clean either way, so nothing tells you.
 
 What gets installed into `.git/hooks/` is a stub (`scripts/git-hooks/shim.sh`)
 that re-runs the tracked hook, so editing anything under `scripts/git-hooks/`
@@ -131,10 +148,20 @@ a skill. Before the PR, read the implementation against its
 `docs/specs/<tool>-tool-spec.md` and quote both sides on any drift.
 
 (The `mcp-tool-scaffolder`, `cowork-skill-builder`, and `spec-review` subagents
-did these jobs until 2026-08-02, when all three were deleted as stale — see
-`CLAUDE.md` § "Subagents" and issue #1161.)
+did these jobs until 2026-08-02, when all three were deleted as stale — issue
+#1161.)
 
 ### Follow-on work you find along the way
+
+**Never write "does not close #N" in a PR body.** GitHub's closing-keyword
+parser matches the substring `close #N` and has no notion of negation, so a
+sentence disclaiming an issue closes it on merge. To say an issue is *not*
+addressed, name it without the keyword — "issue #N stays open". This is not
+hypothetical: PR #1696's body carried "Does NOT close #1499", and issue #1499
+closed one second after that PR merged. It carries `nothing-checks`, so while
+closed it was also invisible in the register `docs/architecture.md` points
+readers at.
+
 
 Implementing one task almost always turns up others — a stale doc, a missing
 test, a defect you're not fixing here. The rest of this section is about
@@ -187,11 +214,12 @@ gh issue create --label developer|genealogist [--label icebox] \
   so an unlabelled gap is invisible to everyone who goes looking there.
 - **Creating the issue is all you do — the board takes care of itself.** A CI
   workflow (`add-to-project.yml`) adds the card to Backlog the moment the issue
-  opens — the one exception is the `feedback` label, which routes to Ready — and
-  the lead's `/fill-ready` pass moves it from there. Don't run
-  `gh project` commands to place it yourself: a `gh` token without the `project`
-  scope (the default from `gh auth login`) fails a board write *while still
-  creating the issue*, which looks like it worked.
+  opens — the one exception is the `feedback` label, which routes to the
+  Feedback column for `/triage-feedback` — and the lead's `/fill-ready` pass
+  moves it from there. Don't run `gh project` commands to place it yourself: a
+  `gh` token without the `project` scope (the default from `gh auth login`)
+  fails a board write *while still creating the issue*, which looks like it
+  worked.
 - **Keep the body short and put the reasoning elsewhere.** Say what the work is
   and enough of why it's still open to stop the next person re-opening a settled
   question. A settled tradeoff, a rejected alternative, or a measurement belongs

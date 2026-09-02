@@ -20,6 +20,7 @@ allowed-tools:
   - research_query
   - tree_edit
   - same_person
+  - record_read
   - materialize_facts
   - merge_warnings
 ---
@@ -224,18 +225,41 @@ core identifier conflicts. Make the assessment auditable with the
 correlation techniques above (side-by-side chart,
 agreement/disagreement list).
 
-**Score the match with `same_person`** when the assertion is
-`record_search`-sourced — i.e. it has a non-null `record_persona_id`.
-The tool returns a name + date + place similarity score (0.0–1.0) that
-*informs* the correlation analysis; it never replaces it (see step 3).
-For each serious candidate tree person:
+**Score the match with `same_person`** whenever a record persona is
+reachable for the assertion **and** the candidate is a tree person that
+exists independently of this record. Do **not** score a stub you minted
+from the persona you would be scoring: comparing a record persona to a
+person created out of it is circular and can only confirm itself. Leave
+`match_score` null there and say so in the rationale. A person minted
+from an *earlier* record is a normal candidate — score it. The tool
+returns a name + date + place similarity score (0.0–1.0) that *informs*
+the correlation analysis; it never replaces it (see step 3). For each
+serious candidate tree person:
 
-1. **Resolve the record.** The assertion carries `log_entry_id`,
-   `record_id`, and `record_persona_id`. Open the log entry's sidecar
-   (`results/<log_id>.json`, from the log entry's `results_ref`) and
-   find the `RecordSearchResult` in `payload.results` whose `recordId`
-   (the canonical ARK) matches `record_id`. That result's `gedcomx` is
-   `gedcomx1`; the assertion's `record_persona_id` is `primaryId1`.
+1. **Resolve the record and its persona.** The assertion carries
+   `log_entry_id`, `record_id`, and `record_persona_id`; `log_entry_id`
+   resolves against `research.json`'s `log[]`. When it came from a
+   `record_search` whose log entry has a `results_ref`, open that sidecar
+   (`results/<log_id>.json`) and find the `RecordSearchResult` in
+   `payload.results` whose `recordId` (the canonical ARK) matches
+   `record_id`; that result's `gedcomx` is `gedcomx1`. When it came from
+   `record_read` there is no sidecar — call
+   `record_read({ recordId: <the record_id> })` again; it returns
+   simplified GedcomX, and that document is `gedcomx1`. A full-text
+   entry has a `results_ref` too, but its sidecar holds transcript text
+   and no `gedcomx`: there is nothing to open and no score.
+   `primaryId1` is the `persons[].id` in `gedcomx1` for **the person
+   this link is about** — `record_persona_id` only when the link is
+   about the assertion's own `record_role` party. A relationship
+   assertion names two parties and gets a link for each; for the other
+   party, or when `record_persona_id` is null, find the persona by the
+   name the assertion gives that party (in `structured_value` for a
+   relationship assertion), or from step 2.4's `matchRelatives` mapping
+   on a household record. Never reuse the first party's
+   `record_persona_id` for the second, and never use the sidecar
+   result's top-level `primaryId`: both name only the searched persona.
+   If the record holds no persona for that party, leave `match_score`
+   null and say so in the rationale.
 2. **Build the tree side (the matching mob).** Construct a *subset*
    simplified-GedcomX of `tree.gedcomx.json` containing the candidate
    person plus its **matching mob** — focus + parents + spouses +
@@ -281,11 +305,13 @@ For each serious candidate tree person:
    the threshold policy (step 3) exactly as you do the focus score, and
    carry the `matches` into the cross-person consistency check (step 7).
 
-Match scoring works **only** for `record_search`-sourced assertions.
-FTS-, image-, and PDF-sourced assertions have a null
-`record_persona_id`, and a search that predates result retention has
-`results_ref: null` — in all those cases no score is available and
-correlation analysis stands alone.
+No score is available when no record persona can be reached: a
+full-text hit (its sidecar holds the transcript text, not GedcomX —
+there is no indexed persona to score against), an image-,
+external-site- or PDF-sourced assertion, a search whose `results_ref`
+is null, a record carrying no persona for the party this link is
+about, or an assertion whose provenance cannot be resolved at all.
+Then correlation analysis stands alone.
 
 ### 3. Apply the match threshold policy
 
@@ -336,9 +362,9 @@ score should pull a tentative Strong back to Moderate. But:
   reason past it to a link. Refuse the confident link and surface the
   mismatch; adjudicating a hard patronymic conflict is
   conflict-resolution's job, not something to smooth over in the match.
-- When **no score is available** (FTS-, image-, PDF-sourced
-  assertions, or a search with no sidecar), correlation analysis stands
-  alone — the table above applies unchanged.
+- When **no score is available** (no record persona is reachable — see
+  step 2), correlation analysis stands alone — the table above applies
+  unchanged.
 
 **Autonomous mode (no user to pause with).** This resolution applies
 **only** to an autonomous run where no user can ever confirm (an
@@ -403,10 +429,22 @@ than retrying blindly.
   identification: name match, age compatibility, location match,
   household composition, relationship fit. This is the audit trail
   for identity resolution.
-- `match_score`: The `same_person` `score` (0.0–1.0) when the
-  assertion was `record_search`-sourced and scored; null for FTS-,
-  image-, and PDF-sourced assertions, searches with no sidecar, and any
-  link where no score was obtained (an input to Step 3, not the verdict).
+- `match_score`: The `same_person` `score` (0.0–1.0) when a record
+  persona was reachable and scored; null when none is reachable, when
+  the candidate was minted from the persona itself (step 2), and for
+  any link where no score was obtained (an input to Step 3, not the
+  verdict).
+
+**Materialize each linked persona onto its person.** Once the `pe_` links
+land, write the persona's assertions onto the tree person as sourced facts and
+names via `materialize_facts({ personId, recordId, recordRole })` — for a
+persona matched to an **existing** person as well as a newly minted one, and on
+a **single-person record** (a death certificate, a baptism) as well as a
+household. Batch one record's personas into a single `materialize_facts({ ops:
+[...] })` call. Skip a persona whose assertions are entirely `relationship`,
+`marriage`, or `age`: the tool skips those fact_types, so there is nothing to
+write. The facts you land here are what the next search reads off the tree
+person.
 
 ### 5. Handle new persons (stub creation)
 
@@ -423,6 +461,17 @@ shell that a later step fills in. The tool allocates the synthetic
 `primary`/`preferred` (concluding the preferred value stays
 proof-conclusion's job). **Never use FamilySearch IDs for a new person** —
 those belong to persons already in the tree.
+
+**A persona with nothing to materialize from.** When an unmatched person is
+named only *inside* another persona's `relationship` or `marriage` assertion —
+a bride named in the groom's marriage register — she carries no persona role
+and no name assertion of her own, so `materialize_facts` has nothing to mint
+from. Create her with `tree_edit add_person` (gender plus the name the record
+gives), then link per Step 4. This is the **only** case where `tree_edit
+add_person` is correct; a persona that has its own `record_role` always goes
+through `materialize_facts`. The person takes `gender` and
+`names: [{ given, surname, type }]` — the simplified shape, **not** GedcomX's
+`nameForms`.
 
 **Stub person rules:**
 - Then create the `pe_` entry (Step 4) linking the assertion to the
@@ -555,7 +604,10 @@ hands a merge set to proof-conclusion to fold. For a household record:
    spouse-spouse relationships this record establishes and issue a single
    `tree_edit({ ops: [...] })` call — one
    `{ operation: "add_relationship", relationship: {...}, sourceAssertionId }`
-   entry per edge — rather than one `tree_edit` call per edge. Pass
+   entry per edge — rather than one `tree_edit` call per edge. `relationship.type`
+   is the bare `ParentChild` or `Couple`, **not** the `http://gedcomx.org/…`
+   URI; endpoints are `parent`/`child` for ParentChild and `person1`/`person2`
+   for Couple. Pass
    **`sourceAssertionId`** (the `id` of the `relationship`-type assertion
    this edge comes from) — do **not** hand-walk `assertion.source_id →
    research source → tree S-entry` and supply a literal
@@ -659,13 +711,6 @@ When multiple candidates share the same name in the same area:
   from a different record matches the same person, still evaluate it
   independently. Consistency across records strengthens the case, but
   each link needs its own rationale.
-- **Degenerate `same_person` score on an unresolvable id:** When the tree
-  candidate is a local stub, or a tree id `same_person` cannot resolve to a
-  full FamilySearch ARK, the tool may return a near-zero score (e.g. `0.005`)
-  that reflects the missing ARK, not a real mismatch. Treat that as **no
-  score available** — fall back to qualitative correlation (Step 3), and do
-  not let the degenerate number drop a match the identifiers otherwise
-  support. Note in the rationale that the score was uninformative and why.
 
 ## Important rules
 

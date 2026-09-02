@@ -4,11 +4,12 @@
 > generate step to a build · wonder why `packages/schema` generates its enums but
 > the engine doesn't · wonder why an app's `dev` script starts with a generate ·
 > propose defining the schema in Zod and emitting JSON Schema · add a fifth copy ·
-> write "run `npm run generate` after editing the schema" in a doc.
+> write "run `npm run generate` after editing the schema" in a doc · type a field
+> the schema does not require as `foo: T | null` rather than `foo?: T | null`.
 
 - **Status:** Accepted
 - **Decided:** 2026-08-04
-- **Last updated:** 2026-08-05 (#1351)
+- **Last updated:** 2026-08-31
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -27,7 +28,8 @@ schemas.
 **Nothing can import its way out of this.** Four dependency islands: the pnpm
 workspace (`packages/schema`, `packages/viewer-ui`, `apps/web`, `apps/electron`);
 the engine, excluded by the `!packages/engine/**` negation in
-`pnpm-workspace.yaml` so the `.mcpb` pipeline stays npm-managed; `eval/app`, with
+`pnpm-workspace.yaml` so its shipped artifacts keep installing from its own npm
+lockfile; `eval/app`, with
 its own `package-lock.json` and not a workspace member; and Python
 (`eval/harness`, `apps/server`). No TS import crosses a boundary.
 
@@ -68,6 +70,16 @@ one of them.**
 A generate step that a human must remember to run is worse than a lint, because
 a lint fails loudly and a forgotten regenerate ships silently.
 
+**Scope: `research.json` and `tree.gedcomx.json` only.** This ADR governs the
+copies of `enums.schema.json` and `research.schema.json`, and the corollary that
+anything JSON Schema can express belongs in the schema — a closed enum the
+validator checks with no schema `$def` behind it is a bug, not a category, which
+is why `VALIDATOR_ONLY` in `enum-drift.test.ts` stays empty (#1015). The
+eval-harness schemas (`run-log.schema.json`, `unit-test.schema.json`,
+`ann.schema.json`) are out: their closed-set copies are string literals scattered
+through the Python harness rather than a single `Set` a cheap lint could diff, so
+extending the policy there would write a rule nothing enforces.
+
 **"No entry point can forget it" has to be enumerated, because two mechanisms
 cover most of them and neither covers all.** turbo's `dependsOn: ["^build"]`
 carries `build`, `typecheck`, and `test` for every consumer of
@@ -100,8 +112,11 @@ explicit `&&` — a `prebuild` hook would silently never fire.
 | Invert the master: define in Zod/TypeBox, emit JSON Schema | The JSON Schema files are reviewed spec artifacts carrying prose `description`s and `examples`-based **open** enums (`*_recommended`); zod-emitted schema is not reviewable as a spec and loses that structure. Two of four islands (Python, the engine) consume the JSON directly | `enums.schema.json` — 10 of 35 `$defs` are open `*_recommended`/`iso_*`; `eval/harness/harness/schema_validator.py` |
 | Runtime schema loading; derive the value sets at startup and drop the TS copies | Runtime data cannot produce compile-time types, so the unions stay generated or hand-written either way. It reaches only the `Set`-shaped copies, which are already the best-guarded | `validator.ts`; argued, not measured |
 | One shared TS module every consumer imports | No import crosses the island boundaries: the engine is out of the pnpm workspace for `.mcpb` reasons, `eval/app` has its own lockfile, and two consumers are Python | `pnpm-workspace.yaml`, `eval/app/package-lock.json` |
-| Leave the copies unguarded and rely on the multi-site edit lists in `CLAUDE.md` | Measured failure: `packages/schema/src/index.ts` had two interface fields silently drifted, and five closed enums had no TS union at all | #1165; `date_certainty` typed `string` at `packages/schema/src/index.ts:269`; missing — `date_certainty_timeline`, `severity`, `external_site`, `gender`, `relationship_type` |
+| Leave the copies unguarded and rely on the multi-site edit lists in `CLAUDE.md` | Measured failure: `packages/schema/src/index.ts` had two interface fields silently drifted, and five closed enums had no TS union at all | #1165; `date_certainty` typed `string` in `packages/schema/src/index.ts`; missing — `date_certainty_timeline`, `severity`, `external_site`, `gender`, `relationship_type` |
 | `--ignore-scripts` on the shipping builds makes engine codegen impossible | **Factually wrong**, recorded so it is not re-derived: those installs run against an already-compiled tree; the engine's own `npm run build` runs earlier with scripts enabled | `scripts/build-mcpb.mjs:26-27`, `apps/server/sandbox/build-image.sh:41` |
+| Lint single-value prose mentions (`` `evidence_type: indirect` ``) alongside the full value lists | Guards a failure mode that has never occurred: replaying all 16 commits that have touched `enums.schema.json`, a closed-enum value has been removed or renamed **zero** times. Both changes ever were additions, which the full-list lint already covers, and the asymmetry is the point — an addition bites silently, while a rename is a deliberate act by someone already holding the old string. The scan also cannot be made clean: 16 of its 18 failures are the one `severity` collision, and clearing it means renaming a tool output field the model reads across two tools, their type file, three test files, two specs and five plugin bodies — a product-visible change made for a lint's benefit. One line in the schema-change rules requiring a repo-wide grep on removal catches the same failure at the only moment it can be caught | #1013, #1015; 38 single-value mentions, 20 correct, 18 failing, 16 of those the check-warnings tool's `error`/`warning` against the schema's `high` / `medium` / `low`; the rule as landed in `CLAUDE.md` § "New value on a closed enum" and `docs/specs/research-schema-spec.md` |
+| A retired-values list in `enums.schema.json` plus a lint that fails on any mention of a dead value | Inverts the search so the name collisions stop mattering, and costs nothing until the first removal. But it still depends on the author populating the list, so it fires exactly when the grep rule would have and buys no independent coverage. Cheaper to revisit than to build now | #1015; argued, not measured — revisit if a first value removal ever happens |
+| Encode a schema-optional field as required-but-nullable (`foo: T \| null`, present-but-`null`) rather than optional (`foo?: T \| null`) | Rejected 2026-08-21 (lead ruling, #1165). The required encoding is a type false about most real assertions: most of the 25 such keys are absent from committed documents tens of thousands of times (re-derive rather than quoting a figure: three independent counts of the same corpus returned 17, 19 and 19 keys, which is why the number belongs in a command and not in prose — issue #1165 carries the script), and nothing normalizes the wire payload before it is cast to `ResearchData`, so the type asserts a key two thirds of assertions omit. Schema-optional is now TypeScript-optional, and `schema-interface-drift.test.ts` guards it both directions with no exemption list | #1165; the 32,794-across-358-files corpus count (re-run, it moves as run logs land); `apps/web/src/transport/WsResearchTransport.ts` casts raw JSON straight to `ResearchData` |
 
 ## Consequences
 
@@ -110,9 +125,11 @@ sync path asks a human to run a command. The engine keeps its hand-written
 validator and its LLM-actionable error text, and gains no build step. Adding a
 guard elsewhere costs a test file, not a pipeline change.
 
-**Costs, knowingly accepted.** Field-name checking is not type checking — the
-interface lint reads names out of the source with a regex, so a field typed
-`string` where a union exists still passes. Two mechanisms instead of one: a contributor
+**Costs, knowingly accepted.** The interface lint checks field names and
+optionality via the TypeScript compiler API (#1219, #1165), not value types, so
+a field typed `string` where a union exists still passes. It reaches the `$defs`
+and the two document roots; the three interfaces mirroring inline `items`
+objects under `locality` are checked by neither half. Two mechanisms instead of one: a contributor
 editing a closed enum regenerates automatically on the pnpm side but still
 hand-edits `validator.ts` and the prose tables, so the three-case edit table in
 `CLAUDE.md` stays. The pnpm side now has a build-order dependency that did not
@@ -149,7 +166,9 @@ will be re-argued; the test is "can a human forget it," not "is it convenient."
 > `packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts` — the
 > hand-written interfaces in `packages/schema/src/index.ts` against
 > **both** `research.schema.json` and `tree-gedcomx.schema.json`. Field
-> **names** only.
+> **names and optionality**, both directions, for the `$defs` and the two
+> document roots; objects defined inline (an array's `items`) are not
+> reached by either check.
 > `packages/engine/mcp-server/tests/packaging/research-append-examples.test.ts` —
 > the worked payloads the model is shown on a rejection: field names against
 > the `$def`, enum **values** against the enum each field is bound to, and one
@@ -171,11 +190,14 @@ guard that had stopped working — `gen-enums-guards.test.ts`. And its **entry
 points**: the tier's whole claim is that none can forget, which is a property of
 the callers, not of the generator, and is what broke — `dev-scripts-generate.test.ts`.
 
-What this does **not** catch: interface **types** — optionality, `| null`, and
-`date_certainty: string` in `packages/schema/src/index.ts` — which need the
-TypeScript compiler API (#1165); the enum tables in
+What this does **not** catch: interface **value types** — `| null` nullability
+and a closed enum typed as bare `string` in `packages/schema/src/index.ts`
+(optionality is now checked via the compiler API, #1165); interfaces mirroring
+inline `items` objects rather than a `$def`, which no half of the lint reaches;
+the enum tables in
 `docs/specs/research-schema-spec.md`, whose markdown-table format needs its own
-parser; the sixth inline enum `locality.pages_read[].section`, re-typed in
+parser; the one closed enum still defined inline rather than in
+`enums.schema.json` — `locality.pages_read[].section`, re-typed in
 `packages/engine/mcp-server/src/tools/wiki-place-page.ts` and bound to no
 validator entry to collapse into (#1270); and the `eval/app` fork.
 

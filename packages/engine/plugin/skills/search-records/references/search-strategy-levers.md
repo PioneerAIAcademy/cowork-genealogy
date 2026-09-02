@@ -154,7 +154,7 @@ tool**: `surnameExact`, `givenNameExact`, `birthPlaceExact`,
 | `surnameExact` | **Usually wrong** — fuzzy is what bridges an index misspelling, so this can drop the target outright |
 | `givenNameExact` | Excludes the variants fuzzy reaches. One real use: an initials search |
 | `<event>PlaceExact` | Cuts the count hard; not a finding lever |
-| `<event>YearExact` | Only with a firm date — what it does to undated records is not established |
+| `<event>YearExact` | Keeps only records whose indexed date is inside the range; unqualified, a range also admits ones dated into it by estimate |
 | relative `*Exact` | Requires that relative to be indexed, so it drops the silent records the unqualified term keeps |
 | `recordCountry`, `recordSubdivision` | Already strict — no qualifier exists and none is needed |
 
@@ -210,45 +210,48 @@ be defensible, not to find a record.
 
 ### `<event>YearExact`
 
-Fuzz around the range bounds is **weakly** evidenced: the few records seen
-outside an unqualified range carried *approximate* dates, and on a pool read to
-the end the single out-of-range row survived `.exact` too.
+An unqualified range matches by estimate overlap. A record with no year of its
+own is not year-silent — the index carries an *estimated* date range for it, from
+the dated facts of others on the record, and an unqualified range returns it
+whenever that estimate overlaps the range. Measured on the record index for birth, death and marriage; record-index residence is collection-dependent — `.exact` changes nothing where every row is already dated, but drops a real share where records are dated only through others, behaving like the rest there. Reproduced for all four
+families on the tree endpoint; the `any` family was never tested.
 
-Whether an unqualified range requires an indexed year is **not established** — no
-direction was measured, so do not assume a range either keeps or excludes undated
-records, and do not quote a share. The `any` family was never tested at all.
-
-Setting it is *meant* to exclude records whose indexed year sits just outside the
-range — where seen, that was the age-reported population — but an out-of-range
-row was observed surviving it, so the exclusion is not reliably complete. Whether
-it also drops records carrying no year, or in-range *approximate* dates, is
-**not established**. Use only with a firm date.
+`<event>YearExact` keeps only records whose indexed date falls inside the range,
+dropping the estimate-overlap matches — so `.exact` reliably *excludes* records
+that only estimate into the range, and an unqualified range reliably *includes*
+them. Still unmeasured: whether `.exact` also drops *in-range approximate* dates.
+A cohort that is not always small carries no indexed date in the swept span at
+all and no bounded range reaches it, so to gather every year-less record read the
+results rather than relying on a range. Use `<event>YearExact` with a firm date.
 
 ### relative `*Exact` (`fatherGivenNameExact`, `spouseSurnameExact`, …)
 
 Unqualified, a relative name keeps records where that relative was **never
 indexed**, while still excluding a different one. **How much it narrows depends
 on WHICH relative, and the spread is large.** Measured by reading whole result
-sets to the end, on two marriage populations and on the **father** and **spouse**
-names only: an unmatchable *father* name returned about 70-93% of the baseline,
-an unmatchable *spouse* name 10% in one population and 81% in the other — in each
-case matching the share of records silent about that relative.
+sets to the end, on two marriage populations and on the **father**, **spouse**,
+**mother** and **parent** names: an unmatchable *father* name returned about
+70-93% of the baseline, a *mother* name about 70-99%, a *parent* name about
+70-93%, an unmatchable *spouse* name 10% in one population and 81% in the other —
+in each case matching the share of records silent about that relative.
 
 So a father-anchored nil is weak evidence wherever fathers are thinly indexed,
 and a spouse-anchored one is stronger wherever spouses are not. **The difference
 is exactly how often that relative is indexed:** an unmatchable name keeps the
 records silent about that relative and drops every record naming a different one,
 so retention matches the baseline's silent share to within about a point. Nothing
-is special about the parameter. Mother, parent and other names were not
-enumerated.
+is special about the parameter. `other` names were not enumerated.
 
 Setting `*Exact` requires the relative to be indexed **and** the spelling to
 match, so it drops the silent population as well as variant forms the fuzzy
-search did reach (both sets read in full). Measured on the **father** and
-**spouse** names — for spouse, across two marriage populations read to the end,
-every spouse-silent record is absent from the exact set while a spouse-bearing
-control survives. Mother, parent and other were not tested, so do not assume the
-size of the effect carries across families. Whether it drops indexed
+search did reach (both sets read in full). Enumerated on the **father**,
+**spouse**, **mother** and **parent** names, across two marriage populations read
+to the end: every relative-silent record is absent from the exact set while a
+relative-bearing control survives — the one exception being `mother` in England,
+whose pool indexes no mother given name to serve as a control, so the presence
+requirement is confirmed for `mother` on the Brazil population alone. `other` was
+not tested, so do not assume the size of the effect carries across families.
+Whether it drops indexed
 abbreviations (`Wm` for `William`) specifically is **not** measured — the
 enumerated set held none to drop. Set it only with a confirmed indexed spelling
 of the relative's name.

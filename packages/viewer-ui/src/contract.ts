@@ -21,6 +21,10 @@ export async function assertTransportContract(transport: ResearchTransport): Pro
     state.label === null || typeof state.label === 'string',
     'state.label must be string | null'
   )
+  assert(
+    state.notice === null || typeof state.notice === 'string',
+    'state.notice must be string | null'
+  )
 
   // subscribe returns an unsubscribe function that is safe to call.
   assert(typeof transport.subscribe === 'function', 'subscribe must be a function')
@@ -28,7 +32,8 @@ export async function assertTransportContract(transport: ResearchTransport): Pro
     onResearch: () => {},
     onGedcomx: () => {},
     onSidecar: () => {},
-    onError: () => {}
+    onError: () => {},
+    onNotice: () => {}
   })
   assert(typeof unsubscribe === 'function', 'subscribe must return an unsubscribe function')
   unsubscribe() // must not throw

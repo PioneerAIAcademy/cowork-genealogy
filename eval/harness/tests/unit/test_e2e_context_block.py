@@ -6,11 +6,11 @@ spawn and doing the extraction itself (observed in production). The e2e
 orchestrator denies it there, mirroring the tree-read block, while leaving the
 subagent's own call (which carries `agent_id`) untouched.
 
-This is the one member of `context_policy.SUBAGENT_ONLY_TOOLS` e2e enforces
-today. `image_read`, the other member, is equally enforceable here — no skill
-has declared it since `search-images` moved to `@plugin:image-reader`
-(2026-07-17) — and is simply outside #942's scope, tracked as issue #1273. See
-`e2e-test-spec.md` §6.1.1.
+Both members of `context_policy.SUBAGENT_ONLY_TOOLS` are enforced in e2e:
+`extraction_append` (the #942 case) and `image_read` (#1273) — neither is
+declared by any skill (`image_read` since `search-images` moved to
+`@plugin:image-reader`, 2026-07-17), so `agent_id` presence alone discriminates.
+See `e2e-test-spec.md` §6.1.1.
 """
 
 from __future__ import annotations
@@ -26,9 +26,11 @@ from claude_agent_sdk import ResultMessage, SystemMessage
 from e2e import orchestrator
 from e2e.orchestrator import (
     _run_agent,
-    is_main_thread_extraction_append,
+    is_main_thread_subagent_only_tool,
+    main_thread_owned_section,
     load_fixture,
 )
+from harness.context_policy import SUBAGENT_ONLY_TOOLS
 
 
 def _main(tool_name: str) -> dict:
@@ -43,7 +45,7 @@ def _sub(tool_name: str) -> dict:
 
 def test_main_thread_extraction_append_is_blocked():
     assert (
-        is_main_thread_extraction_append(_main("mcp__genealogy__extraction_append"))
+        is_main_thread_subagent_only_tool(_main("mcp__genealogy__extraction_append"))
         is True
     )
 
@@ -51,7 +53,7 @@ def test_main_thread_extraction_append_is_blocked():
 def test_subagent_extraction_append_is_not_blocked():
     """The record-extractor's own call carries `agent_id` — the legitimate path."""
     assert (
-        is_main_thread_extraction_append(_sub("mcp__genealogy__extraction_append"))
+        is_main_thread_subagent_only_tool(_sub("mcp__genealogy__extraction_append"))
         is False
     )
 
@@ -59,7 +61,7 @@ def test_subagent_extraction_append_is_not_blocked():
 def test_remote_devices_spelling_is_also_blocked_on_main():
     """Discriminate on the bare name, so the bridge spelling is caught too."""
     assert (
-        is_main_thread_extraction_append(
+        is_main_thread_subagent_only_tool(
             _main("mcp__remote-devices__Genealogy_Research__extraction_append")
         )
         is True
@@ -67,15 +69,24 @@ def test_remote_devices_spelling_is_also_blocked_on_main():
 
 
 def test_other_mcp_tools_on_main_are_not_blocked():
-    """Only extraction_append is guarded here — image_read stays unit-only, and
-    ordinary research tools must pass through untouched."""
+    """Ordinary research tools must pass through untouched. image_read and
+    extraction_append are the guarded set — see the per-member test below."""
     for name in (
-        "mcp__genealogy__image_read",
         "mcp__genealogy__record_read",
         "mcp__genealogy__research_append",
         "mcp__genealogy__record_search",
     ):
-        assert is_main_thread_extraction_append(_main(name)) is False
+        assert is_main_thread_subagent_only_tool(_main(name)) is False
+
+
+@pytest.mark.parametrize("tool", sorted(SUBAGENT_ONLY_TOOLS))
+def test_every_subagent_only_tool_is_blocked_on_main(tool):
+    """Every member of SUBAGENT_ONLY_TOOLS is enforced on the main thread, not just
+    extraction_append. This is Asimi's acceptance addition (#1295, folded into
+    #1273): a future third guarded tool cannot ship unenforced in e2e, because the
+    check keys on set membership and this exercises each member. Break-test:
+    hardcode the check to only "extraction_append" and the image_read param reddens."""
+    assert is_main_thread_subagent_only_tool(_main(f"mcp__genealogy__{tool}")) is True
 
 
 def test_non_mcp_tools_are_never_blocked():
@@ -84,7 +95,7 @@ def test_non_mcp_tools_are_never_blocked():
     means a name without a server prefix is never matched — only the genuine
     `mcp__…__extraction_append` call the router would actually emit is blocked."""
     for name in ("Read", "Skill", "Task", "extraction_append"):
-        assert is_main_thread_extraction_append(_main(name)) is False
+        assert is_main_thread_subagent_only_tool(_main(name)) is False
 
 
 @pytest.mark.parametrize("malformed", [{}, {"tool_name": None}, {"tool_name": ""}])
@@ -96,7 +107,7 @@ def test_malformed_tool_name_does_not_raise(malformed):
     would raise on None. A raising PreToolUse hook fails a call the agent was
     entitled to make.
     """
-    assert is_main_thread_extraction_append(malformed) is False
+    assert is_main_thread_subagent_only_tool(malformed) is False
 
 
 # --- integration: the recording path through the real hook closure ----------
@@ -251,3 +262,317 @@ def _result(session="S1"):
         num_turns=1,
         session_id=session,
     )
+
+
+# ── agent-owned sections: research_append + proof_summaries ──
+#
+# Keyed on tool AND section, unlike the extraction_append block above: that one
+# can key on the tool alone because no skill declares it, whereas research_append
+# is the general writer and only its owned sections are routed. Keyed on
+# agent_type as well as agent_id, because agent_id alone would permit the
+# general-purpose stand-in the model falls back to when a delegation misses.
+
+
+def _owned(
+    section=None,
+    ops=None,
+    agent_id=None,
+    agent_type=None,
+    tool="research_append",
+    op=None,
+    fields=None,
+    entry=None,
+):
+    """A PreToolUse payload.
+
+    `fields` / `entry` / `op` exist for the field-scoped declaration rule, which
+    reads the op's own payload rather than the section alone — a section-only
+    vector cannot distinguish `declared: true` from `declared: false`, and that
+    distinction is the whole rule.
+    """
+    payload = {"tool_name": f"mcp__genealogy__{tool}", "tool_input": {}}
+    if ops is not None:
+        payload["tool_input"]["ops"] = ops
+    elif section is not None:
+        payload["tool_input"]["section"] = section
+        if op is not None:
+            payload["tool_input"]["op"] = op
+        if fields is not None:
+            payload["tool_input"]["fields"] = fields
+        if entry is not None:
+            payload["tool_input"]["entry"] = entry
+    if agent_id is not None:
+        payload["agent_id"] = agent_id
+    if agent_type is not None:
+        payload["agent_type"] = agent_type
+    return payload
+
+
+@pytest.mark.parametrize(
+    "payload,label",
+    [
+        (_owned(section="proof_summaries"), "main thread"),
+        (
+            _owned(ops=[{"section": "questions"}, {"section": "proof_summaries"}]),
+            "batched with another section",
+        ),
+        (
+            _owned(section="proof_summaries", agent_id="a1", agent_type="general-purpose"),
+            "a general-purpose stand-in, which agent_id alone would permit",
+        ),
+        (
+            _owned(section="proof_summaries", agent_type="genealogy-research:proof-conclusion"),
+            "agent_type without agent_id -- the --agent main thread",
+        ),
+    ],
+)
+def test_owned_section_write_is_blocked(payload, label):
+    # The predicate returns the SHIPPED hook's (section, rule, caller) triple
+    # since 2026-08-23, when the harness stopped carrying its own copy of the
+    # rule. A bare section name is no longer the shape.
+    denied = main_thread_owned_section(payload)
+    assert denied is not None, label
+    assert denied[0] == "proof_summaries", label
+    assert denied[1] == "routed", label
+
+
+@pytest.mark.parametrize(
+    "payload,label",
+    [
+        (
+            _owned(
+                section="proof_summaries",
+                agent_id="a1",
+                agent_type="genealogy-research:proof-conclusion",
+            ),
+            "the owner, namespaced as production reports it",
+        ),
+        (
+            _owned(section="proof_summaries", agent_id="a1", agent_type="proof-conclusion"),
+            "the owner, bare",
+        ),
+        (_owned(section="assertions"), "an unowned section on the main thread"),
+        (_owned(ops=[{"section": "questions"}]), "a batch with no owned section"),
+        (_owned(section="proof_summaries", tool="research_query"), "a different tool"),
+        ({"tool_name": "Write", "tool_input": {"section": "proof_summaries"}}, "not an MCP tool"),
+    ],
+)
+def test_owned_section_write_is_allowed(payload, label):
+    assert main_thread_owned_section(payload) is None, label
+
+
+# ── the deny TEXT, not just the decision ──
+
+
+def test_owned_section_deny_uses_the_shipped_hooks_own_words():
+    """The harness must deny with the text the agent meets in Cowork.
+
+    This arm previously shared a branch with the extraction_append block and so
+    reused its denial, which told the agent `research_append may not be called
+    from the main session — it is reserved for a delegated subagent`. That is
+    true of extraction_append and flatly false of research_append: it is the
+    general writer, used from the main thread constantly for plans, questions,
+    conflicts and the log. An agent that believed it would stop writing all of
+    them — in the plane that measures whether this guardrail works.
+    """
+    from harness.context_policy import owned_section_denial
+
+    reason = owned_section_denial(("proof_summaries", "routed", ""))["hookSpecificOutput"][
+        "permissionDecisionReason"
+    ]
+    assert "proof_summaries" in reason
+    assert "proof-conclusion" in reason
+    # The load-bearing half: the rest of the tool is still available.
+    assert "unaffected" in reason
+    # The sentence that made the old text dangerous must not reappear.
+    assert "may not be called from the main session" not in reason
+
+
+def test_owned_sections_is_the_shipped_hooks_map_not_a_copy():
+    """One definition, reached through the plugin hook module.
+
+    Three places state this fact — the hook, the harness, and the ownership
+    manifest's hook-plane rows. The harness reads the hook's rather than
+    restating it, so only the manifest is left to keep in step, and the
+    packaging test does that.
+    """
+    from harness import context_policy
+
+    assert context_policy.OWNED_SECTIONS is context_policy._guard.OWNED_SECTIONS
+
+
+# ── the declaration arm: field-scoped routing (issue #1335, Phase 4) ──
+#
+# `exhaustive_declaration` is a REQUIRED property of every question, so
+# question-selection writes it on every creation from the main thread. Routing
+# the SECTION, or the field's mere presence, denies all 197 of those in the
+# corpus. The rule keys on the CLAIM — `declared: true` — and these vectors are
+# what pin that apart.
+
+_DECLARE = {"declared": True, "log_entry_ids": ["log_001"]}
+_EXH_OWNER = "genealogy-research:research-exhaustiveness"
+
+
+@pytest.mark.parametrize(
+    "payload,label",
+    [
+        (
+            _owned(section="questions", fields={"exhaustive_declaration": _DECLARE}),
+            "main thread",
+        ),
+        (
+            _owned(
+                ops=[
+                    {"section": "plan_items", "op": "update"},
+                    {
+                        "section": "questions",
+                        "op": "update",
+                        "fields": {"exhaustive_declaration": _DECLARE},
+                    },
+                ]
+            ),
+            "batched behind another section",
+        ),
+        (
+            _owned(
+                section="questions",
+                fields={"exhaustive_declaration": _DECLARE},
+                agent_id="a1",
+                agent_type="general-purpose",
+            ),
+            "a general-purpose stand-in",
+        ),
+        (
+            _owned(
+                section="questions",
+                fields={"exhaustive_declaration": _DECLARE},
+                agent_id="a1",
+                agent_type="genealogy-research:proof-conclusion",
+            ),
+            "another owning agent -- proof-conclusion may write questions, not the claim",
+        ),
+    ],
+)
+def test_exhaustive_declaration_claim_is_blocked(payload, label):
+    denied = main_thread_owned_section(payload)
+    assert denied is not None, label
+    assert denied[0] == "questions.exhaustive_declaration", label
+    assert denied[1] == "declaration", label
+
+
+@pytest.mark.parametrize(
+    "payload,label",
+    [
+        (
+            _owned(
+                section="questions",
+                fields={"exhaustive_declaration": _DECLARE},
+                agent_id="a1",
+                agent_type=_EXH_OWNER,
+            ),
+            "the owner, namespaced as production reports it",
+        ),
+        (
+            _owned(
+                section="questions",
+                fields={"exhaustive_declaration": _DECLARE},
+                agent_id="a1",
+                agent_type="research-exhaustiveness",
+            ),
+            "the owner, bare",
+        ),
+        # The vector a section-scoped route breaks, and a presence-keyed field
+        # route breaks too: question-selection creating a question. The schema
+        # makes the field required, so EVERY creation carries it.
+        (
+            _owned(
+                section="questions",
+                op="append",
+                entry={
+                    "question": "Who were the parents?",
+                    "exhaustive_declaration": {"declared": False, "log_entry_ids": []},
+                },
+            ),
+            "question-selection creating a question (declared: false)",
+        ),
+        # The owning skill's own honest early-termination path. It claims
+        # nothing, so it is not routed.
+        (
+            _owned(
+                section="questions",
+                fields={"exhaustive_declaration": {"declared": False, "log_entry_ids": ["log_001"]}},
+            ),
+            "an honest early termination (declared: false)",
+        ),
+    ],
+)
+def test_exhaustive_declaration_claim_is_allowed(payload, label):
+    assert main_thread_owned_section(payload) is None, label
+
+
+def test_declaration_deny_uses_the_shipped_hooks_own_words():
+    from harness.context_policy import owned_section_denial
+
+    reason = owned_section_denial(
+        ("questions.exhaustive_declaration", "declaration", "")
+    )["hookSpecificOutput"]["permissionDecisionReason"]
+    assert "@plugin:research-exhaustiveness" in reason
+    # It must say what is NOT routed, or a reader concludes the whole section is.
+    assert "declared: false" in reason
+
+
+# ── the out-of-lane arm, which the harness gained on 2026-08-23 ──
+
+
+def test_out_of_lane_write_by_a_dedicated_agent_is_blocked():
+    """The arm the harness did NOT have while it carried its own predicate.
+
+    `main_thread_owned_section` used to walk `ops` itself and could only produce
+    the `routed` rule, so a dedicated agent writing outside its own section set
+    was denied in Cowork and allowed here. Delegating to the shipped
+    `owner_denied` brings it across — a widening, and no pre-existing vector
+    could have caught it.
+
+    This is also the specific deny that stops the exhaustiveness agent clearing
+    its own blocker: refused for an in-flight plan item, it cannot flip that
+    item, because `plan_items` is outside its lane (issue #1821).
+    """
+    denied = main_thread_owned_section(
+        _owned(
+            section="plan_items",
+            fields={"status": "completed"},
+            agent_id="a1",
+            agent_type=_EXH_OWNER,
+        )
+    )
+    assert denied is not None
+    assert denied[0] == "plan_items"
+    assert denied[1] == "out_of_lane"
+
+    from harness.context_policy import owned_section_denial
+
+    reason = owned_section_denial(denied)["hookSpecificOutput"]["permissionDecisionReason"]
+    assert "`questions`" in reason
+
+
+def test_out_of_lane_write_by_proof_conclusion_is_blocked():
+    """The widening this PR causes for an agent that already existed.
+
+    Importing the shipped `owner_denied` brings the hook's out-of-lane arm into
+    e2e for the first time, and `proof-conclusion` — which has shipped since
+    Phase 3 — is the agent it newly binds: it may write
+    {proof_summaries, questions, project} and nothing else. The sibling test
+    above covers the same arm for the agent this PR adds, which cannot regress
+    anything because it did not exist before. This one can.
+    """
+    denied = main_thread_owned_section(
+        _owned(
+            section="conflicts",
+            fields={"status": "resolved"},
+            agent_id="a1",
+            agent_type="genealogy-research:proof-conclusion",
+        )
+    )
+    assert denied is not None
+    assert denied[0] == "conflicts"
+    assert denied[1] == "out_of_lane"

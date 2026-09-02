@@ -22,7 +22,7 @@ Did the skill make only the requested change without modifying unrelated data? E
 
 For person merges, did the skill rewrite ALL references to the deprecated person across BOTH project files, and remove the deprecated person from `tree.gedcomx.json` `persons[]`? A missed reference creates a broken foreign key that propagates silently until a downstream reader trips over it.
 
-The full rewrite scope is enumerated in SKILL.md §"Person merging" Step 3:
+SKILL.md §"Person merging" describes this as one call — `merge_tree_persons` does the full rewrite atomically. The exact scope (verified against `remapResearchPersonIds` in `merge-shared.ts` and the tool's own schema description) is:
 
 | File | Field |
 |---|---|
@@ -30,6 +30,7 @@ The full rewrite scope is enumerated in SKILL.md §"Person merging" Step 3:
 | `research.json` | `project.subject_person_ids` |
 | `research.json` | `person_evidence[].person_id` |
 | `research.json` | `timelines[].person_ids` |
+| `research.json` | `known_holdings[].relates_to_person_ids` |
 
 After the rewrite, the deprecated person must be deleted from `tree.gedcomx.json` `persons[]`, and both project files must be left structurally valid. `merge_tree_persons` validates before persisting, so a separate `validate_research_schema` call is neither required nor available to this skill (SKILL.md § Validation).
 

@@ -313,8 +313,9 @@ and electron share code" requires).
 > - **`/packages/engine` split in two** — `packages/engine/mcp-server` (the TS MCP
 >   server) and `packages/engine/plugin` (the Cowork skills + agents). `engine`
 >   itself is a bare container with no `package.json`, deliberately excluded from
->   the pnpm workspace (`!packages/engine/**` in `pnpm-workspace.yaml`) so the
->   `.mcpb` release pipeline stays npm-managed.
+>   the pnpm workspace (`!packages/engine/**` in `pnpm-workspace.yaml`) because
+>   both shipped artifacts install from the engine's own npm lockfile and no CI
+>   job builds either one — see `docs/architecture.md`, "Two products, one repo".
 > - **The counts have moved:** **27** skills (not 28) and **47** MCP tools in
 >   `allToolSchemas`/`manifest.json` (not 30).
 > - **`viewer-ui` holds 13 section components**, not 11 — see the note under
@@ -368,10 +369,13 @@ later, so the package holds **13** today.
 > (`packages/viewer-ui/src/transport.ts`), with an Electron IPC adapter
 > (`apps/electron/src/renderer/src/transport/IpcResearchTransport.ts`) and a web
 > WebSocket adapter (`apps/web/src/transport/WsResearchTransport.ts`), exactly as
-> described. Three additions since: `getProjectState` also returns a `label`
-> (folder path in Electron, session title on the web), and three **optional**
-> methods were added rather than dropped — `selectFolder?`, `getFeedbackContext?`,
-> `getSourceImage?` — each optional precisely because one host cannot serve it.
+> described. Additions since: `getProjectState` also returns a `label` (folder
+> path in Electron, session title on the web) and a **required** `notice` (the
+> folder-in-subfolder heads-up, replayed to a late-mounting renderer through the
+> hydration snapshot); a `SubscriptionHandlers.onNotice` handler carries that
+> same heads-up as a push; and three **optional** methods were added rather than
+> dropped — `selectFolder?`, `getFeedbackContext?`, `getSourceImage?` — each
+> optional precisely because one host cannot serve it.
 >
 > **The "11 sections" above is correct and must not be changed to 13.** Exactly
 > 11 section components existed when this was written, and exactly those 11 moved

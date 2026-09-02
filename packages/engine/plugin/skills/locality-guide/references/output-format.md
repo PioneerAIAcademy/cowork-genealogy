@@ -2,8 +2,13 @@
 
 Use this structure when compiling the final guide. Fill in every
 section with specific data from MCP tool results. Omit sections only
-when the record type is clearly inapplicable (e.g., immigration
-records for an inland area with no immigration activity).
+when the record type is clearly inapplicable (e.g., international
+border-crossing manifests for a locality far from any land border or
+port of entry — only border crossings and ports of entry are
+geographically bound). Do **not** omit immigration records for an
+inland area: declarations of intention, naturalizations, affidavits
+filed by relatives, and alien registrations were all generated inland,
+far from any port.
 
 ```markdown
 # Locality Guide: [Place] ([Time Period])
@@ -25,6 +30,13 @@ records for an inland area with no immigration activity).
 
 ## Available record types
 
+For each record type below, note the jurisdictional level it is held at
+— city/town, county, or state. Do not assume a default level: it varies by
+place and era (e.g. town/parish in early New England, county in many states
+once civil registration begins), so state the level from the tools/wiki per
+SKILL.md's registration-level rule rather than a default. The holding level
+is what tells the researcher where to route the search.
+
 ### Vital records (civil registration)
 - **Start date:** [when civil registration began]
 - **What exists:** [births, marriages, deaths — with date ranges]
@@ -45,13 +57,17 @@ records for an inland area with no immigration activity).
 - **Access:** [which are indexed, which are browse-only]
 
 ### Probate and court records
-- **Types:** [wills, administrations, guardianships, inventories]
+- **Types:** [wills, administrations, guardianships, inventories, petitions]
+- **Testate or intestate:** [whether the person left a will (testate → look
+  for wills) or died without one (intestate → look for administrations) —
+  this decides which probate series to search]
 - **Date range:** [from formation or earlier if inherited]
 - **Where held:** [courthouse, state archives, digitized?]
 
 ### Land records
-- **System:** [metes and bounds, rectangular survey, other]
-- **Types:** [deeds, grants, patents, mortgages, tax records]
+- **Survey system:** [metes and bounds, rectangular survey, other]
+- **Land-distribution jurisdiction:** [state-land or federal-land — decides whether grants/patents are held by the state land office or the federal GLO/BLM]
+- **Types:** [deeds, grants, patents, mortgages, tax records, bounties, land acts (e.g., the Homestead Act)]
 - **Date range:** [earliest available]
 - **Where held:** [recorder of deeds, state land office, online?]
 
@@ -120,7 +136,7 @@ any substitute sources that partially compensate.]
 
 ## Research tips
 - [Jurisdiction-specific advice from wiki articles — cite the source page URL
-  inline per the SKILL.md rule "Cite the wiki page, not just its title", e.g.
+  inline per the SKILL.md rule "Cite the FamilySearch Wiki page, not just its title", e.g.
   "Town clerks recorded vital records from 1639 ([Massachusetts Vital
   Records](https://www.familysearch.org/en/wiki/Massachusetts_Vital_Records))"]
 - [Naming conventions or spelling patterns for this area]

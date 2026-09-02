@@ -25,6 +25,12 @@ before_state/after_state.**
       tools that the PreToolUse hook denied, with shape
       {"tool": "image_read", "args": dict}. Empty = healthy. These calls
       were blocked, so they never appear in `tool_calls`.
+  - `text_response` (str): every assistant text block concatenated, not
+      the final reply alone — the same string the run log stores as
+      `output.text_response`. Empty when the run produced no assistant
+      text. For a LITERAL property of the text (a phrase that must never
+      appear, an identifier that must be named); not for re-grading prose
+      quality, which is the judge's job.
 
 A validator can take any subset of these. Functions are plain pytest
 test functions (raise AssertionError on failure). pytest.skip("...") is
@@ -529,13 +535,13 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
         )
 
 
-def test_tool_allowlist(tool_calls, skill_frontmatter, test):
-    """Universal: every MCP tool call must be in the skill's allowed-tools.
+def test_tool_allowlist(tool_calls, skill_frontmatter, test, attempted_mcp_calls=None):
+    """Advisory: warns when MCP tool calls are not in the skill's allowed-tools.
 
-    Per unit-test-spec.md §15 the SDK enforces this at call time when the
-    harness derives the allowlist from frontmatter; this validator catches
-    drift between the frontmatter and what the skill actually called (e.g.,
-    a fixture was loaded for a tool the skill shouldn't be using).
+    The session grants every registered MCP tool (issue #1748), so this
+    validator no longer gates. Undeclared calls are surfaced as Python
+    warnings for the reviewer. See unit-test-spec.md §15,
+    "Deriving allowed_tools per skill".
 
     The declared set is widened with the frontmatter `tools:` of every
     plugin agent the skill's SKILL.md references via `@plugin:<name>` —
@@ -547,12 +553,24 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
     not the skill under test, so checking against the skill under test's
     allowed-tools would be a false positive.
     """
+    import warnings as _warnings
+
     if test.get("type") == "negative":
         pytest.skip(
             "allowlist is not checked on negative tests — tool calls "
             "belong to the routed-to skill, not the skill under test"
         )
-    if not tool_calls:
+    # Union tool_calls with attempted_mcp_calls: the latter captures MCP calls
+    # that the model emitted but that never reached a fixture match (denied by
+    # policy, caps, or aborts). Without this, a skill that tried a tool its
+    # frontmatter doesn't declare — but was denied before the mock could serve
+    # it — slips past this check entirely (issue #1748).
+    _attempted = [
+        c for c in (attempted_mcp_calls or [])
+        if c.get("tool", "").startswith("mcp__")
+    ]
+    all_calls = list(tool_calls) + _attempted
+    if not all_calls:
         return
     declared = set((skill_frontmatter or {}).get("allowed-tools", []) or [])
 
@@ -603,19 +621,54 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
                 declared.add(_bare)
 
     if not declared:
-        # Skill declared no MCP tools but called some — that's a violation.
-        bare = [c["tool"].split("__")[-1] for c in tool_calls]
-        assert not bare, (
-            f"skill called MCP tools but declared none in allowed-tools: {bare}"
-        )
+        bare = [c["tool"].split("__")[-1] for c in all_calls]
+        if bare:
+            _warnings.warn(
+                f"skill called MCP tools but declared none in allowed-tools: "
+                f"{bare} (advisory — session grants all tools; issue #1748)"
+            )
         return
     bad = []
-    for call in tool_calls:
+    for call in all_calls:
         bare = call["tool"].split("__")[-1]
         if bare not in declared:
             bad.append(bare)
-    assert not bad, (
-        f"skill called MCP tools not in allowed-tools frontmatter: {sorted(set(bad))}"
+    if bad:
+        _warnings.warn(
+            f"skill called MCP tools not in allowed-tools frontmatter: "
+            f"{sorted(set(bad))} (advisory — session grants all tools; "
+            f"issue #1748)"
+        )
+
+
+# --- Write-then-validate (V1) ----------------------------------------
+#
+# If research.json was modified, validate_research_schema must appear in
+# tool_calls. Scoped to skills that declare validate_research_schema in
+# their allowed-tools frontmatter. Universal because the rule applies to
+# any skill that holds the tool, not just citation.
+
+def test_write_then_validate(before_state, after_state, tool_calls, skill_frontmatter, test):
+    """If research.json was modified, validate_research_schema must have been called."""
+    if test.get("type") == "negative":
+        pytest.skip("negative test — tool calls belong to the routed-to skill")
+    allowed = (skill_frontmatter or {}).get("allowed-tools", []) or []
+    if "validate_research_schema" not in allowed:
+        pytest.skip("skill does not declare validate_research_schema")
+    before_rj = before_state.get("research_json")
+    after_rj = after_state.get("research_json")
+    if before_rj is None or after_rj is None:
+        pytest.skip("missing research.json")
+    import json as _json
+    if _json.dumps(before_rj, sort_keys=True) == _json.dumps(after_rj, sort_keys=True):
+        pytest.skip("research.json was not modified")
+    validate_calls = [
+        c for c in tool_calls
+        if c.get("tool", "").split("__")[-1] == "validate_research_schema"
+    ]
+    assert validate_calls, (
+        "research.json was modified but validate_research_schema was never "
+        "called — the skill must validate after every write"
     )
 
 
@@ -740,6 +793,176 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
         f"({len(blocked_context_calls)} call(s), denied by the hook). "
         f"Delegate to the owning subagent — {fixes}."
     )
+
+
+# --- V8: Activated run must produce a response --------------------------
+
+def test_activated_run_produces_response(
+    activated, aborted_reason, num_turns, output_tokens, text_response, test,
+    skills_invoked,
+):
+    """An activated run that produced no output is a dead run — fail it.
+
+    Gate on six conditions: activated is True, not aborted, no skills
+    invoked, num_turns == 0, output_tokens == 0, AND text_response shorter
+    than 200 characters. The skills_invoked check is the strongest signal —
+    a run that invoked a skill did real work even when telemetry reports zero
+    (343 of 1945 committed runs report zero telemetry normally). The 200-char
+    floor avoids flagging telemetry-only dropouts where a real response
+    exists.
+    """
+    if activated is not True:
+        pytest.skip("skill did not activate")
+    if aborted_reason is not None:
+        pytest.skip("run was aborted — already flagged separately")
+    if skills_invoked:
+        return  # a run that invoked a skill is not a dead run
+    if num_turns != 0 or output_tokens != 0:
+        return  # telemetry shows work happened
+    if len(text_response or "") >= 200:
+        return  # substantial response present despite missing telemetry
+    assert False, (
+        f"activated run produced no meaningful output: num_turns=0, "
+        f"output_tokens=0, text_response length={len(text_response or '')} "
+        f"(< 200 chars) — the run did not happen"
+    )
+
+
+# --- V7: In-body decline actually declines ------------------------------
+
+def test_decline_response_nonempty(activated, text_response, test):
+    """V7(a): an activated negative-test run must produce a non-empty response.
+
+    Tier 1 — gates. If the skill activated on an out-of-scope request but
+    produced no response, the test is vacuously passing on no evidence.
+    Skips grade_on_invariant tests (those deliberately bypass routing checks).
+    """
+    if test.get("type") != "negative":
+        pytest.skip("positive test")
+    if test.get("negative", {}).get("grade_on_invariant"):
+        pytest.skip("grade_on_invariant test — routing is not gated")
+    if activated is not True:
+        pytest.skip("skill did not activate")
+    assert (text_response or "").strip(), (
+        "activated negative test produced an empty response — cannot evaluate "
+        "whether the skill declined the out-of-scope request"
+    )
+
+
+def report_decline_names_routed_skill(activated, text_response, test, skills_invoked):
+    """V7(b): the decline response should name the skill it routes to.
+
+    Tier 2 — reports, never gates. The structured signal (skills_invoked)
+    already covers routing correctness in _compute_outcome; this is the
+    prose-level complement. Skips grade_on_invariant tests per the lead's
+    ruling (issue #1749).
+    """
+    if test.get("type") != "negative":
+        pytest.skip("positive test")
+    if test.get("negative", {}).get("grade_on_invariant"):
+        pytest.skip("grade_on_invariant test — routing is not gated")
+    if activated is not True:
+        pytest.skip("skill did not activate")
+    correct_skills = test.get("negative", {}).get("correct_skill", [])
+    if not correct_skills:
+        pytest.skip("no correct_skill declared in test")
+    response_lower = (text_response or "").lower()
+    # Check if any of the correct skills are named in the response
+    # (skill names use hyphens; check both hyphenated and space-separated)
+    for skill_name in correct_skills:
+        if skill_name.lower() in response_lower:
+            return
+        if skill_name.replace("-", " ").lower() in response_lower:
+            return
+    raise AssertionError(
+        f"the decline response does not name any of the expected skills "
+        f"{correct_skills}; the response text contains none of those skill "
+        f"names (hyphenated or space-separated)"
+    )
+
+
+def report_decline_no_first_person_commitment(activated, text_response, test):
+    """V7(c): no first-person commitment to perform the out-of-scope act.
+
+    Tier 2 — reports. Flags "I'll"/"I will"/"let me"/"I can" followed in
+    the same sentence by add/create/extract/format plus source/record.
+    """
+    import re as _re
+
+    if test.get("type") != "negative":
+        pytest.skip("positive test")
+    if test.get("negative", {}).get("grade_on_invariant"):
+        pytest.skip("grade_on_invariant test — routing is not gated")
+    if activated is not True:
+        pytest.skip("skill did not activate")
+    response = text_response or ""
+    # Split into sentences (rough: period/exclamation/question + space/end)
+    sentences = _re.split(r'(?<=[.!?])\s+', response)
+    commitment_re = _re.compile(
+        r"(?:I'?ll|I will|let me|I can)\s+"
+        r"(?:(?!\bnot\b|\bnever\b|\bcannot\b|n't).)*?(?:add|create|extract|format)"
+        r".*?(?:source|record)",
+        _re.IGNORECASE,
+    )
+    matches = []
+    for sent in sentences:
+        if commitment_re.search(sent):
+            matches.append(sent.strip()[:120])
+    if matches:
+        raise AssertionError(
+            "the decline response contains a first-person commitment to "
+            "perform the out-of-scope act: "
+            + "; ".join(f'"{m}"' for m in matches)
+        )
+
+
+# --- V2: No unbacked validation claim -----------------------------------
+
+def report_unbacked_validation_claim(text_response, tool_calls, test):
+    """V2: text must not assert validation ran unless the tool was called.
+
+    Tier 2 — reports, never gates. Matches case-insensitively on
+    'validated', 'validation', 'schema check', 'no warnings' in the same
+    sentence as a persistence claim. Cross-skill.
+
+    Observation text is neutral per anti-bias design: states what was
+    matched and what the tool ledger holds, nothing else.
+    """
+    import re as _re
+
+    if test.get("type") == "negative":
+        pytest.skip("negative test — tool calls belong to the routed-to skill")
+    response = text_response or ""
+    if not response.strip():
+        pytest.skip("no response text to check")
+    validate_calls = [
+        c for c in (tool_calls or [])
+        if (c.get("tool") or "").split("__")[-1] == "validate_research_schema"
+    ]
+    if validate_calls:
+        return  # validation actually ran — no claim is unbacked
+
+    # Split into sentences and look for validation language near persistence
+    sentences = _re.split(r'(?<=[.!?✓✗])\s+|(?<=\n)', response)
+    validation_re = _re.compile(
+        r'\b(?:validated|validation|schema\s+check|no\s+warnings)\b',
+        _re.IGNORECASE,
+    )
+    persistence_re = _re.compile(
+        r'\b(?:writ(?:ten|e|ing)|persist|sav(?:ed|ing)|append|research\.json)\b',
+        _re.IGNORECASE,
+    )
+    matches = []
+    for sent in sentences:
+        if validation_re.search(sent) and persistence_re.search(sent):
+            matches.append(sent.strip()[:150])
+    if matches:
+        raise AssertionError(
+            "the response contains "
+            + "; ".join(f"'{m}'" for m in matches[:3])
+            + " — a validation/persistence claim in the same sentence; "
+            "no validate_research_schema call appears in the tool ledger"
+        )
 
 
 def test_no_raw_writes_to_protected_files(blocked_protected_writes):

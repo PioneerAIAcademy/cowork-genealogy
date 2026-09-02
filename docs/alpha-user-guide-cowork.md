@@ -206,7 +206,10 @@ Whichever path you take, include these two up front:
 - **Your experience level** — just starting out / some research / experienced /
   professional.
 - **Your subscriptions** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
-  GenealogyBank, FindAGrave-Plus, or none.
+  GenealogyBank, FindAGrave-Plus, or none. Free access counts, so say so if you
+  get partner subscriptions through your FamilySearch account or use a library
+  or family history centre — both are recorded, and neither is "none". A plain
+  FamilySearch account is the baseline, so there's no need to mention it.
 
 Skip them and it quietly assumes "intermediate" and "none", which changes how much
 it explains as it works. You can correct it later by just telling it, or by
@@ -246,11 +249,15 @@ which has no feedback UI of its own. The Viewer bundles your project's
 current state and your notes and sends them to us privately, the same as it
 would for any project folder.
 
-1. **What you asked the agent to do.**
-2. **What the agent did.** What actually happened.
-3. **Did it work as expected? Yes or No.** Required. Answer **Yes** and you're
-   done — a report about something that went well is worth sending, and there is
-   nothing more to fill in.
+1. **What you asked the agent to do.** Optional, but please fill it in. A Cowork
+   session has no Claude Code session log to attach (see the checkbox note
+   below), so this box is usually the only record of what you asked.
+2. **What the agent did.** What actually happened. Also optional, and worth the
+   same care for the same reason: it is the fastest pointer to the moment that
+   went wrong.
+3. **Did it work as expected? Yes or No.** The one required answer. Answer
+   **Yes** and you're done — a report about something that went well is worth
+   sending, and there is nothing more to fill in.
 4. **What it should have done.** Appears when you answer **No**, and it's
    optional — leave it blank if you aren't sure what the right behavior was.
 5. **If it reached a wrong conclusion: the correct answer and its evidence.**
@@ -259,8 +266,9 @@ would for any project folder.
    case without coming back to ask you. Leave it blank when the problem was how
    it worked, not what it concluded.
 
-There's also your email, and a free-text **Notes** box for anything that
-doesn't fit the boxes above.
+There's also your email — optional, and used only to follow up on your report,
+so leave it blank to submit anonymously — and a free-text **Notes** box for
+anything that doesn't fit the boxes above.
 
 **Send feedback while it's fresh**, right after it happened, from the Viewer
 open on that same project folder — the bundle captures that folder's current
@@ -315,6 +323,7 @@ Being straight with you, so you don't waste time:
 | It's slow | Real research is genuinely slow — it reads records one at a time. Minutes is normal. |
 | It asks who you want to research after you already said | It missed your first message. Repeat it with the details. |
 | The agent says a tool isn't available, or improvises a workaround for a missing tool | Your MCP extension is older than the plugin. Pull the latest code (`git pull` or GitHub Desktop's **Fetch origin** / **Pull origin**), rebuild the `.mcpb` (step 3), and reinstall it (step 4). |
+| The agent loses connection to its tools mid-session, or you see a tool `timed out after 60s` | Cowork's link between your computer and the tools — not anything you did. Say "continue"; it usually picks up on its own. If it keeps interrupting, fully quit and reopen Claude Desktop, then say "continue". If instead the **same** tool is missing every single time, that is the stale-extension case in the row above and rebuilding is the fix. But if the same tool keeps *timing out* on one large image or page, that scan may be too slow for the current limit — ask the agent to skip it and note it rather than rebuild. **The interrupted step's result is thrown away**, so a record or image the agent was reading when it dropped may not have been retried, whether it said so or just moved on to indexed records — name that record or image and ask it to try again. Please report it whenever it happens, and say what it was doing at the time. |
 | Something looks wrong genealogically | **That's the point — submit feedback.** |
 
 Anything else, or anything alarming: send feedback and describe it. There is no

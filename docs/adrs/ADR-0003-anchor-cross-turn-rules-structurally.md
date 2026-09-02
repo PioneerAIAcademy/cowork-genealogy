@@ -78,15 +78,16 @@ So the question when writing a new rule is *where it goes*:
 |---|---|
 | across hours, past compaction | a tool contract — validate and reject |
 | for the main thread, which no allow-list can narrow | a `PreToolUse` hook (ADR-0005) |
-| for one delegated agent | that agent's `tools:`/`disallowedTools:`, or a narrowed tool (ADR-0006) |
+| for one delegated agent | that agent's `tools:` — omit the capability — or a narrowed tool (ADR-0006) |
 | within a single invocation | skill prose — this is what prose is *for* |
 
 ## Alternatives considered
 
-| Option | Why rejected | Evidence |
+| Option | Verdict | Evidence |
 |---|---|---|
 | **Reinforce the prose** — repeat the rule, bold it, add a "hard rules" section | This is what the 3% rule already had. Restating a rule does not survive the eviction of the text doing the restating | §5.3 audit; the ranking doctrine was already emphatic |
-| **Shorten skill bodies** so less gets evicted | Attacks the wrong variable, and the unit suite cannot gate it — the suite grades a single invocation in fresh context and will happily bless a cut that removes something only a multi-hour session needs. **Declined outright in 2026-08**, not merely set aside: the cost rationale this row used to carry (prompt size is a per-turn cost; the five largest bodies are ~215 KB between them) was never converted into a measurement. The one trim that was measured, `proof-conclusion`, showed −44% output tokens at the unit level and its e2e effect was never confirmed, so the benefit is unquantified while the one controlled split we ran made things worse (6/19 against a 12–14/19 baseline; CLAUDE.md, reverted). Reopen only on a measurement showing body size costs something material end to end — not on a byte count | `docs/architecture.md` §9.2, the `prompt-budget.test.ts` row — it reports growth and never fails; issues #1153 / #1154, closed not-planned |
+| **Shorten skill bodies** so less gets evicted | Attacks the wrong variable, and the unit suite cannot gate it — the suite grades a single invocation in fresh context and will happily bless a cut that removes something only a multi-hour session needs. **Cutting prose stays declined** (2026-08): the cost rationale this row used to carry (prompt size is a per-turn cost; the five largest bodies are ~215 KB between them) was never converted into a measurement, and the one trim that was measured, `proof-conclusion`, showed −44% output tokens at the unit level with its e2e effect never confirmed. Reopen only on a measurement showing body size costs something material end to end — not on a byte count. **This row does not decline moving a body into a paired agent**, which cuts nothing and is a different decision — see the row below | `docs/architecture.md` §9.2, the `prompt-budget.test.ts` row — it reports growth and never fails; issues #1153 / #1154, closed 2026-08-17 without the retention gate they were blocked on |
+| **Move the body into a paired agent** so it loads in a subagent instead of the orchestrator | **Not rejected — this is now a live programme**, on a rationale this ADR did not consider: an agent is the only surface that honours a `model:` or `effort:` pin (`docs/architecture.md` §3.5), and the body stops occupying the main thread. Distinct from the row above, which cuts text; a fold moves it intact. The 6/19 result is **not** evidence against it — that measured an agent reading its own sibling `references/` files on demand, which a fold explicitly forbids | `docs/architecture.md` §3.4 and §3.5; `docs/skill-to-agent-pair-conversion.md`; issues #2115–#2123 |
 | **Split the rule into a dedicated per-skill write tool** so the tool name carries the doctrine | Rejected earlier and independently, for a reason that generalises: *"a split tool is exactly as callable by the router as a section branch is."* Splitting names does not constrain a caller | `docs/specs/guardrail-enforcement-spec.md` §9 |
 | **A read-only advisory tool** the model calls each turn to be told the next step | "Call the advisory every turn" is itself unanchored prose. Our own data disconfirms it: `project_context`, built for exactly this, is called ~3 times per run against `Read`'s ~19. It also adds a serial tool call — a turn — per routing decision | The 2026-07-30 row-by-row routing analysis; `docs/adrs/ADR-0009-refuted-agent-design-claims.md`, first row |
 | **Post-run detection** — let it happen, catch it in grading | Catches it after the user has the wrong answer, and the detectors themselves currently have two open defects and an unquantified false-positive rate | #999, #1006 |
@@ -99,10 +100,69 @@ default and the ranking fold, both now in `record-search.ts`, and both pinned by
 requests the deep pool and returns `ranked`; without one, `count` stays at 20).
 The committed e2e corpus agrees: 21 of the 22 searches eligible to be ranked — a
 `subjectId` given *and* at least one match — came back with a `ranked` block.
-Every invariant moved
-into `research_append` holds regardless of context
+Every invariant moved into `research_append` holds regardless of context
 state, model, or how long the session has run — and holds identically in Cowork,
 the hosted path, and both harnesses, which prose never does.
+
+**The fold's remaining prose-only step shows a raw supply gap, mostly not
+decay — and smaller and less uniform than an aggregate read suggests.**
+Supplying `subjectId` itself, from `search-records/SKILL.md`, was left
+unmeasured under compaction. A compaction-segment audit of `search-records`
+via a different signal (`subjectId` supply rather than ranking-call rate;
+`make e2e-compaction`, issue #1155 — **not** the "second skill body" audit
+the "Revisit when" clause below names, since this re-checks the same skill)
+found early-segment (0–2) supply higher than late-segment (3+) in aggregate
+— but not segment by segment, and not by a wide margin before the nudge
+shipped. Per segment, post-nudge (`make e2e-compaction` prints this row
+unconditionally): 64.0% / 43.8% / 69.4% / 48.1% / 0.0% for segments 0–4.
+Segment 1 (43.8%) sits *below* segment 3 (48.1%), so supply is not monotone
+across segments, and segment 2 (69.4%) is the single highest of the five. The
+aggregate gap does not rest on segment 2 alone, though: dropping it leaves
+early at 53.0% (87/164) against the same late 44.8% — an 8.2-point gap where
+the full one is 13.2. Review this per-segment row rather than the two-bucket
+aggregate before drawing a conclusion from it.
+Both `--since` windows are cumulative — a later cutoff is a subset of an
+earlier one, not a disjoint slice — so the pre-nudge-only row below is not
+one command's output; it is `--since 2026-07-27` minus `--since 2026-08-04`,
+call by call: 45.8% vs. 43.6% before `rankingSkipped` shipped
+(2026-07-27..08-03, 312 early-segment calls / 101 late-segment calls, 34
+segmentable runs) — a 2.2-point gap, not a marked one — against 58.1% vs.
+44.8% after (`--since 2026-08-04` itself, 2026-08-04+, 16 runs / 29
+late-segment calls, as measured 2026-08-24). The "after" count moves as the
+corpus grows — a later run of the exact same command printing a different
+number is the corpus growing, not a contradiction to chase down; reproduce
+both with the commands in `docs/e2e-testing-guide.md`. The post-nudge late
+figure is also sensitive to a single run: `victoriano-macatangay-parents`
+contributes 13 of those 29 late-segment calls, all at 0%; excluding it,
+late-segment supply is 81.2% (13/16) — see the per-run table
+`make e2e-compaction` prints. Comparing the two **disjoint** windows:
+early-segment supply rose about 12 points after `rankingSkipped`
+(45.8% → 58.1%) while late-segment supply moved barely at all
+(43.6% → 44.8%).
+
+The published 58.1%/44.8% comparison is also between-run, and diluted by
+runs that never compact at all: of the 15 post-nudge runs with any
+`record_search` call, only 5 have both an early- and a late-segment call.
+Restricted to those 5 — the **paired**, within-run comparison
+`make e2e-compaction` also prints — EARLY is 79/94 = 84.0% against the same
+LATE 13/29 = 44.8% (every late-segment call in this window comes from a
+paired run, so LATE is unchanged; EARLY rises once the 10 non-compacting
+runs are excluded). The within-run gap is larger, not smaller, than the
+published headline — the direction holds and strengthens, but 58.1% is not
+the decay effect size.
+
+That raw gap is not, on inspection, mostly the decay it looks like. The
+tool's own schema permits omitting `subjectId` when the search "is not about
+a specific tree person yet," and a call-by-call read of the two runs
+carrying most of the post-nudge late-segment sample found that is what most
+of those omissions are — searches for a not-yet-tree child or an unconfirmed
+parent, the exact population a research session accumulates more of as it
+progresses. Only a couple of the late-segment omissions in those runs were
+the agent's already-established subject searched without its known
+`subjectId` — the narrower case the nudge actually targets, and the one this
+measurement does not yet isolate. `compaction_report.py` prints this caveat
+with every non-empty report; treat the raw percentages as a starting point
+for call-by-call reading, not a decay verdict on their own.
 
 **Costs, knowingly accepted.**
 
@@ -125,10 +185,11 @@ the system, has never been audited.
 ## Enforcement
 
 **None — convention only.** No lint detects a cross-turn invariant written as
-prose. The check is review, and the honest signal is this: two gates identified
-as needing anchors — the **tree-encoding gate** and the **mentor gate** — are
-still prose today, and both are computable from files `research_append` already
-loads.
+prose. The check is review. Both gates once flagged here have since moved out of
+prose and into the tool: the **mentor gate** as a refusal (PR #1685), and the
+**tree-encoding gate** as a warning that diffs the final tree against a
+write-once opening-tree baseline (issue #1490) — warn-only, not a refusal, per
+the 2026-08-24 no-override ruling.
 
 The one instrument that measures the *effect* is the post-run compliance
 detector, and it cannot yet give a rate at all. It is uncalibrated (#999,

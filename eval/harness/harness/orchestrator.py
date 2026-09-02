@@ -50,7 +50,7 @@ from harness.skill_runner import (
     SkillRunResult,
     run_skill,
 )
-from harness.validator_runner import as_dicts, run_validators
+from harness.validator_runner import as_dicts, run_validators, split_observations
 from harness.workspace import build_workspace, cleanup_session_store, snapshot_files
 
 
@@ -124,16 +124,18 @@ FILE_VALIDITY_VALIDATORS = frozenset(
 
 
 def compute_validators_passed(validator_results, *, intentionally_invalid: bool) -> bool:
-    """True when no validator failed.
+    """True when no gating validator failed.
 
-    When the test's scenario is intentionally invalid, the file-validity
-    validators are expected to fail and are ignored; every other validator
-    still counts.
+    Tier-2 (reporting_only) results are observations, never gates — they are
+    skipped here. When the test's scenario is intentionally invalid, the
+    file-validity validators are expected to fail and are also ignored; every
+    other gating validator still counts.
     """
     return all(
         r.passed
         for r in validator_results
-        if not (intentionally_invalid and r.name in FILE_VALIDITY_VALIDATORS)
+        if not r.reporting_only  # tier-2 never gates (issue #1749)
+        and not (intentionally_invalid and r.name in FILE_VALIDITY_VALIDATORS)
     )
 
 
@@ -294,6 +296,7 @@ async def _run_one_test_async(
                 flush=True,
             )
 
+    mode, gates = grading_mode_for(spec)
     return assemble_test_entry(
         test_id=spec.id,
         test_type=spec.type,
@@ -302,6 +305,8 @@ async def _run_one_test_async(
         mcp_fixtures=spec.mcp_fixtures,
         runs=runs,
         timestamp_for_run_id=timestamp,
+        grading_mode=mode,
+        dimensions_gate_outcome=gates,
     )
 
 
@@ -330,6 +335,70 @@ def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
     the judge, which reads a transcript and can misread it.
     """
     return parse_stub_skills(spec.execution) or None
+
+
+# Field names inside one `modelUsage` entry, as the CLI emits them.
+_MODEL_USAGE_FIELDS = (
+    "inputTokens",
+    "cacheReadInputTokens",
+    "cacheCreationInputTokens",
+    "outputTokens",
+)
+
+
+def _skill_tokens(usage: dict[str, Any]) -> tuple[int, int, int, int, dict[str, Any]]:
+    """Token counts for one skill run: (input, cache_read, cache_write, output, per-model).
+
+    Read from `model_usage` — the SDK's per-model ledger — and NOT from
+    `usage`, which the CLI documents as possibly carrying a per-turn main-loop
+    value rather than a session total. The two disagree by however much work a
+    plugin agent did: a subagent runs on its own `model:` pin and gets its own
+    `model_usage` key, while `usage` reports only the thread that spawned it.
+    `total_cost_usd` covers the same calls as `model_usage`, so this is also the
+    only reading that reconciles with the cost the run log already records.
+
+    Measured before this existed: pricing each committed run log's own tokens
+    against its own cost put the 21 skills whose runs spawned no agent between
+    1.50x and 2.53x (median 1.78x; the spread is the uncaptured cache writes),
+    while every skill that did spawn one sat above that range —
+    `record-extraction` 3.90x, `research-exhaustiveness` 4.91x (against 1.75x on
+    the same fixtures one run earlier, before it became a skill-agent pair) and
+    `proof-conclusion` 6.58x. The jump is the agent's tokens, billed and
+    uncounted. Read a single ratio with the spread in mind: only a value clear
+    of 2.53x says anything on its own.
+
+    The e2e harness does NOT have this defect and must not be "fixed" to match:
+    all 78 committed e2e runs carrying a usable cost spawned an agent, and they
+    price at median 0.90x of recorded — pricing.py's own calibration figure —
+    where a main-thread-only count would put them near the 0.15-0.20x the unit
+    harness's paired skills show. Its `usage` block is already a session total.
+
+    Falls back to `usage` when `model_usage` is absent — an older CLI, or the
+    abort path where no ResultMessage arrived. The fallback cannot report cache
+    writes (that key is not in `usage` at all), so it returns 0 for them rather
+    than inventing a number.
+    """
+    per_model = usage.get("model_usage")
+    if isinstance(per_model, dict) and per_model:
+        totals = []
+        for field in _MODEL_USAGE_FIELDS:
+            total = 0
+            for entry in per_model.values():
+                if isinstance(entry, dict):
+                    raw = entry.get(field)
+                    if isinstance(raw, int) and not isinstance(raw, bool):
+                        total += raw
+            totals.append(total)
+        return (*totals, per_model)
+
+    sdk_usage = usage.get("usage") or {}
+    return (
+        int(sdk_usage.get("input_tokens") or 0),
+        int(sdk_usage.get("cache_read_input_tokens") or 0),
+        0,
+        int(sdk_usage.get("output_tokens") or 0),
+        {},
+    )
 
 
 async def _execute_single_run(
@@ -439,10 +508,19 @@ async def _execute_single_run(
         other_skill_names=other_skill_names,
     )
 
+    # --- Extract usage early — validators may need num_turns / output_tokens
+    # (tier-2 reporting, issue #1749). Previously extracted after validators
+    # at the run-log assembly step; moved here so both sites use the same
+    # locals. _skill_tokens is pure so calling it twice would also work.
+    _usage = result.usage or {}
+    _num_turns = int(_usage.get("num_turns") or 0)
+    _, _, _, _output_tokens, _ = _skill_tokens(_usage)
+
     # --- Validators -----------------------------------------------------
     validator_results = run_validators(
         skill=spec.skill,
         validators_dir=paths.validators_dir,
+        text_response=result.text_response or "",
         before_state={
             "research_json": before_snapshot["research_json"],
             "tree_gedcomx_json": before_snapshot["tree_gedcomx_json"],
@@ -460,8 +538,13 @@ async def _execute_single_run(
         tool_calls=result.tool_calls,
         blocked_context_calls=result.blocked_context_calls,
         blocked_protected_writes=result.blocked_protected_writes,
+        attempted_mcp_calls=result.attempted_mcp_calls,
         skill_frontmatter=skill_frontmatter,
         skills_invoked=result.skills_invoked,
+        activated=activated,
+        num_turns=_num_turns,
+        output_tokens=_output_tokens,
+        aborted_reason=result.aborted_reason,
         test={
             **spec.raw.get("test", {}),
             # Top-level validator-facing block threaded in alongside the
@@ -483,6 +566,23 @@ async def _execute_single_run(
         validator_results, intentionally_invalid=spec.intentionally_invalid
     )
 
+    # --- Split gating vs reporting validator results (issue #1749) --------
+    # Gating failures (tier 1, test_*): pass r.name — existing behavior.
+    validator_failures = [
+        r.name for r in validator_results
+        if not r.passed and not r.reporting_only
+    ]
+    # Reporting observations (tier 2, report_*): pass r.error (the
+    # observation text), NOT r.name (which is a verdict). The function name
+    # goes only to the run log for traceability, never the judge.
+    harness_observations = split_observations(validator_results)
+    # For _build_warnings: (name, observation) tuples so the run log records
+    # which report_* function fired.
+    _harness_observation_pairs = [
+        (r.name, r.error) for r in validator_results
+        if r.reporting_only and not r.passed and r.error
+    ]
+
     # --- Judge ----------------------------------------------------------
     # Advisories from _extract_dimensions (a dropped unknown/duplicate
     # dimension, #1361) — populated only on the successful branch below.
@@ -497,9 +597,8 @@ async def _execute_single_run(
             judge_output = _run_judge(
                 # Failures only — a passing list is a conclusion, and the judge
                 # grades a conclusion by agreeing with it.
-                validator_failures=[
-                    r.name for r in validator_results if not r.passed
-                ],
+                validator_failures=validator_failures,
+                harness_observations=harness_observations,
                 spec=spec,
                 rubric=rubric,
                 scenario_readme=scenario_readme,
@@ -562,6 +661,9 @@ async def _execute_single_run(
     outcome = _compute_outcome(
         spec=spec,
         validators_passed=validators_passed,
+        failed_validators=frozenset(
+            r.name for r in validator_results if not r.passed
+        ),
         judge_dimensions=judge_result.dimensions,
         aborted_reason=result.aborted_reason,
         activated=activated,
@@ -569,15 +671,13 @@ async def _execute_single_run(
         judge_skipped=judge_result.skipped,
     )
 
-    usage = result.usage or {}
-    sdk_usage = usage.get("usage") or {}
-    skill_input = int(sdk_usage.get("input_tokens") or 0)
-    skill_cached = int(sdk_usage.get("cache_read_input_tokens") or 0)
-    skill_output = int(sdk_usage.get("output_tokens") or 0)
+    skill_input, skill_cached, skill_cache_write, skill_output, per_model = (
+        _skill_tokens(_usage)
+    )
     # SDK timing (present only when a ResultMessage arrived — i.e. not on a
     # wall-clock / stream-silence abort, where these stay 0).
-    skill_duration_api_ms = float(usage.get("duration_api_ms") or 0.0)
-    skill_num_turns = int(usage.get("num_turns") or 0)
+    skill_duration_api_ms = float(_usage.get("duration_api_ms") or 0.0)
+    skill_num_turns = _num_turns
     _ended_at = time.time()
 
     return SingleRun(
@@ -589,29 +689,24 @@ async def _execute_single_run(
         started_at=_started_at,
         ended_at=_ended_at,
         skill_attempts=result.attempts,
-        # Run-level tokens are SKILL ONLY. Judge tokens live on the
-        # judge block so the spec's cache-hit-rate diagnostic —
-        # cached / (cached + input) on the skill side — stays meaningful.
-        # The two counts are disjoint (input excludes cache reads), so the
-        # rate is a share of their sum; see unit-test-spec.md § Run Log Format.
+        # Run-level tokens are SKILL ONLY, and cover every model the run
+        # touched — the main thread plus any plugin agent it delegated to.
+        # Judge tokens live on the judge block so the spec's cache-hit-rate
+        # diagnostic — cached / (cached + input) on the skill side — stays
+        # meaningful. Those two counts are disjoint (input excludes cache
+        # reads), so the rate is a share of their sum; see unit-test-spec.md
+        # § Run Log Format.
         input_tokens=skill_input,
         cached_input_tokens=skill_cached,
+        cache_creation_input_tokens=skill_cache_write,
         output_tokens=skill_output,
-        skill_cost_usd=float(usage.get("total_cost_usd") or 0.0),
+        model_usage=per_model,
+        skill_cost_usd=float(_usage.get("total_cost_usd") or 0.0),
         output={
             "text_response": result.text_response,
             "activated": activated,
             "skills_invoked": result.skills_invoked,
-            "tool_calls": [
-                {
-                    "tool": c["tool"],
-                    "args": c["args"],
-                    "expected_args": c.get("expected_args"),
-                    "matched": c["matched"],
-                    "response_fixture": c.get("response_fixture"),
-                }
-                for c in result.tool_calls
-            ],
+            "tool_calls": [_tool_call_entry(c) for c in result.tool_calls],
             "files_created": files_created,
             # Omitted when empty so a run that called no built-in tool writes
             # the same run_output it always has — this field appearing is
@@ -631,6 +726,7 @@ async def _execute_single_run(
                     attempted_mcp_calls=result.attempted_mcp_calls,
                     unread_skill_calls=result.unread_skill_calls,
                     judge_warnings=judge_dimension_warnings,
+                    harness_observations=_harness_observation_pairs,
                 ))
                 else {}
             ),
@@ -857,6 +953,7 @@ def _build_warnings(
     attempted_mcp_calls: list[dict[str, Any]] | None = None,
     unread_skill_calls: list[list[str]] | None = None,
     judge_warnings: list[dict[str, Any]] | None = None,
+    harness_observations: list[tuple[str, str]] | None = None,
 ) -> list[dict[str, Any]]:
     """Surface run-time advisories the judge / reviewer should see.
 
@@ -935,6 +1032,18 @@ def _build_warnings(
                 "an mcp_fixture whose args match the call."
             ),
             "attempted": attempted,
+        })
+
+    # Tier-2 reporting observations (issue #1749). The function name goes in
+    # the run log for traceability ("check"); the observation text goes to
+    # the reviewer. Neither the name nor the text reaches the judge — only
+    # harness_observations (the anonymous text list) is passed to the judge
+    # prompt, and that happens in _run_judge, not here.
+    for check_name, obs_text in (harness_observations or []):
+        warnings.append({
+            "kind": "prose_observation",
+            "check": check_name,
+            "observation": obs_text,
         })
 
     return warnings
@@ -1076,10 +1185,178 @@ def flag_routing_negative_judge_fail(
     return dimensions
 
 
+# Deterministic execution-cap aborts that a validator FAILURE dominates in the
+# recorded outcome (issue #1866 V7). A run that wrote a section it doesn't own
+# and then hit its wall-clock cap is a skill defect, not a timeout — recording
+# it `aborted` tells every reader (eval/CLAUDE.md "Reading an `aborted` row")
+# that it "says nothing about the skill", which is how ut_research_plan_016's
+# two failed validators stayed invisible.
+#
+# Only these three are dominated. `unmatched_tool_call` is a test-corpus problem
+# (exit 2) and the two transient reasons (`error`, `sdk_stream_silence`) drive
+# the exit-code split and the suite breaker (`_TRANSIENT_ABORT_REASONS`,
+# run_tests.py) — demoting either would report an environment failure as a skill
+# regression. `not_runnable` never reaches this function (`_aborted_entry`).
+# `max_input_tokens_per_turn` is a fourth deterministic cap of the same class,
+# left out and staying out: now that a demotion is gated on a failed COMMISSION
+# validator (below), which cap fired no longer carries the classification weight,
+# so the fourth cap adds nothing here (johnmarkpeterbrown's ruling, #1866).
+_VALIDATOR_DOMINATED_ABORTS = frozenset(
+    {"max_wall_clock_seconds", "max_turns", "max_tool_calls"}
+)
+
+
+# Validators whose FAILURE means the run actively DID something wrong — wrote to a
+# section it does not own, or bypassed the writer tools to touch a protected file.
+# A deterministic execution cap (`_VALIDATOR_DOMINATED_ABORTS`) truncates a run
+# mid-write: it can only make the run FAIL TO DO something (an omission), never make
+# it DO something wrong (a commission). So only a failed commission validator proves
+# a defect the timeout cannot explain, and only then is an abort demoted to `fail`
+# (issue #1866 V7, johnmarkpeterbrown's ruling).
+#
+# An ALLOW-LIST, deliberately: it fails in the safe direction. A validator nobody
+# has classified is absent here, so its failure under a cap leaves the run `aborted`
+# — the pre-V7 behaviour — rather than risking a real regression being filed against
+# a run the clock killed. That is the exact mis-file (pointed the other way) V7 exists
+# to prevent: on the committed corpus the blanket rule demoted 3 of 4 cap-aborts whose
+# only failing validators were omissions (record_extraction_018/020's "no new
+# assertion…", person_evidence_022's "never invoked check-warnings"). Membership is
+# intentionally minimal — the universal forbidden-write checks, which a timeout cannot
+# trip; extend it as validators are classified, never by complementing the omission set.
+#
+# `test_commission_validators_are_all_collected` fails if a name here stops matching a
+# real validator: a silent rename would quietly stop demoting it (the lead's condition).
+_COMMISSION_VALIDATORS = frozenset(
+    {
+        "test_ownership_table",
+        "test_tree_ownership_table",
+        "test_no_raw_writes_to_protected_files",
+        "test_project_file_changes_route_through_writer_tools",
+    }
+)
+
+
+#: Keys the mock adds to a fixture's response AFTER matching and BEFORE logging
+#: (`mock_mcp.py` ~461/477/501). Their presence means the logged response is not
+#: the stored fixture, so `response_fixture` + `matched.index` cannot rebuild it
+#: — `staged.resultsRef` in particular comes from `randomUUID()` and exists in no
+#: commit.
+_MOCK_ENRICHED_KEYS = (
+    "staged",
+    "ranked",
+    "rankingSkipped",
+    # A nil search carries none of the three above, so without these two the
+    # unlogged-search notes (#2056) would be stripped from every run log — and
+    # the measurement that decides whether the note becomes a deny reads the
+    # run log.
+    "unloggedSearches",
+    "nilSearchNeedsLog",
+)
+
+
+def _is_mock_enriched(response: Any) -> bool:
+    """Whether the mock rewrote this response after choosing its fixture."""
+    return isinstance(response, dict) and any(
+        k in response for k in _MOCK_ENRICHED_KEYS
+    )
+
+
+def _tool_call_entry(c: dict[str, Any]) -> dict[str, Any]:
+    """One `output.tool_calls` entry, keeping the response the mock already captured.
+
+    The mock has always recorded it — `mock_mcp.py`'s call-log docstring lists
+    `"response"` as a key and all five `call_log.append` sites set it — and this
+    projection dropped it on the way into the run log. So no post-hoc analysis
+    of a committed run log could answer "what did the skill actually see?", and
+    the warn-only `person_evidence` guardrail (#1550) could not be calibrated
+    from the unit tier at all. Measured 2026-08-24: 2,812 tool calls across the
+    August-2x run logs, zero carrying a response.
+
+    **Kept where the content exists nowhere else** (lead, 2026-08-24): most
+    `predicate` matches are recoverable from `response_fixture` plus
+    `matched.index` at that commit, so re-storing those bytes duplicates what git
+    already holds — and shrinking run logs is why `schema_version` 3 exists.
+    `live` and `none` calls have no such source, and `live` is the case the named
+    use (`research_append`) needs.
+
+    **But "recoverable" is not true of every predicate match, so it is tested
+    rather than assumed.** The mock ENRICHES a matched fixture response after
+    selecting it and before logging it (`mock_mcp.py`: `staged` ~461, `ranked`
+    ~477, `rankingSkipped` ~501, all above `entry["response"] = response` at
+    ~506). An enriched response is therefore NOT the stored fixture, and
+    `staged.resultsRef` is not reconstructable at all — `results-staging.ts`
+    builds it from `randomUUID()`, so no commit holds that value. Up to 420 committed
+    predicate calls are in this state — the ones passing a `projectPath`, which
+    all three enrichment paths require (`staged` gates on it directly,
+    `rankingSkipped` on its presence, `ranked` on `staged`). Eligibility, not
+    confirmed enrichment, so it is a tight upper bound; the other 167
+    `external_links_search` calls pass none and are the plain-predicate case the
+    rule correctly omits.
+
+    So the rule keys on the RESPONSE, not on `matched.kind` alone: an enriched
+    response is kept whatever its kind. Keyed on the enrichment markers rather
+    than on a list of the three tools that have them today, so a fourth tool
+    gaining staging is covered without editing this function — a tool list would
+    silently drop it.
+    """
+    entry = {
+        "tool": c["tool"],
+        "args": c["args"],
+        "expected_args": c.get("expected_args"),
+        "matched": c["matched"],
+        "response_fixture": c.get("response_fixture"),
+    }
+    response = c.get("response")
+    kind = (c.get("matched") or {}).get("kind")
+    if kind in ("live", "none") or _is_mock_enriched(response):
+        entry["response"] = response
+    return entry
+
+
+def grading_mode_for(spec: TestSpec) -> tuple[str, bool]:
+    """What decides this test's outcome, and whether the judge dimensions do.
+
+    Returns `(grading_mode, dimensions_gate_outcome)` for the run log, so a
+    reader of the raw JSON can tell a designed contradiction from a broken one.
+
+    This is the defect issue #1000 was filed on: `ut_search_records_005`
+    reported `outcome: "pass"` beside `Correctness = 1` with a rationale
+    describing an outright routing failure, and a reviewer concluded from the
+    run log that the harness miscomputes negative outcomes — a confident,
+    incorrect correctness claim inside a PR approval. The outcome was right; the
+    run log simply never said the dimensions were diagnostic. It renders them
+    identically to a positive test's, where a 1 genuinely does force a fail.
+
+    The three modes mirror `_compute_outcome`'s branches exactly, and must keep
+    mirroring them — `test_grading_mode_matches_what_compute_outcome_does`
+    drives the real function with a dimension scored 1 and asserts the outcome
+    flips iff `dimensions_gate_outcome` is True, so this cannot drift into a
+    comfortable lie without a test going red:
+
+    - `"invariant"` — `negative.grade_on_invariant`. `_compute_outcome` returns
+      `pass` on the tag-gated validator alone. Dimensions never gate.
+    - `"routing"` — a negative with a non-empty `correct_skill`. The verdict is
+      the routing decision; the judge runs base-only and diagnostically.
+    - `"dimensions"` — positive tests, and out-of-scope negatives
+      (`correct_skill: []`), where "no skill fired" holds whether the model
+      cleanly declined or answered the request itself, so the base dimensions
+      are the only thing telling those apart and they DO gate.
+    """
+    if spec.type == "positive":
+        return "dimensions", True
+    negative = spec.negative or {}
+    if negative.get("grade_on_invariant"):
+        return "invariant", False
+    if negative.get("correct_skill", []) == []:
+        return "dimensions", True
+    return "routing", False
+
+
 def _compute_outcome(
     *,
     spec: TestSpec,
     validators_passed: bool,
+    failed_validators: frozenset[str] = frozenset(),
     judge_dimensions: list[dict[str, Any]],
     aborted_reason: str | None,
     activated: bool,
@@ -1097,8 +1374,23 @@ def _compute_outcome(
     determined (see the negative branch), so a skipped judge doesn't gate
     them; out-of-scope negatives (`correct_skill: []`) have no routing
     signal and are judge-gated, so a skipped judge fails them too.
+
+    A COMMISSION-validator failure dominates a deterministic execution-cap abort
+    (issue #1866 V7): `aborted` normally short-circuits, but a run that failed a
+    validator in `_COMMISSION_VALIDATORS` AND hit one of
+    `_VALIDATOR_DOMINATED_ABORTS` is recorded `fail`, so a real defect isn't filed
+    under a timeout. Scoped to commission validators, not any failed validator: a
+    cap truncates a run mid-write, so an omission-only failure ("expected X, got
+    none") is the timeout's doing, not the skill's, and stays `aborted`. The
+    `aborted_reason` field stays populated on the SingleRun either way — only
+    `outcome` changes.
     """
     if aborted_reason:
+        if (
+            failed_validators & _COMMISSION_VALIDATORS
+            and aborted_reason in _VALIDATOR_DOMINATED_ABORTS
+        ):
+            return "fail"
         return "aborted"
     if not validators_passed:
         return "fail"
@@ -1215,6 +1507,7 @@ def _run_judge(
     auth: AuthConfig,
     judge_model: str,
     validator_failures: list[str] | None = None,
+    harness_observations: list[str] | None = None,
 ) -> JudgeOutput:
     # Negative tests: the skill correctly declines, so there is no craft
     # output to grade against the skill's rubric. Spec §7 — "negative
@@ -1245,6 +1538,7 @@ def _run_judge(
         model=judge_model,
         before_state=_summarize_before_state(before_snapshot),
         validator_failures=validator_failures,
+        harness_observations=harness_observations,
     )
 
 
@@ -1407,6 +1701,93 @@ def _summarize_before_state_sources(sources: Any) -> dict[str, Any]:
     }
 
 
+def _resolve_assertion(
+    assertion_id: Any, index: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
+    """Resolve one assertion id to the compact value the judge needs.
+
+    A conflict stores ids; the judge grades a claim (a URL parameter, a
+    narrated place) against the *value* those ids carry, never against the id
+    itself. So resolve `preferred_assertion_id` / `competing_assertion_ids`
+    through `assertions[]` to the fields that decide a grade. A referenced id
+    absent from `assertions[]` (dangling ref — they exist in fixtures) renders
+    as `_unresolved` rather than crashing the whole before-state render.
+    """
+    a = index.get(assertion_id)
+    if a is None:
+        return {"id": assertion_id, "_unresolved": True}
+    return {
+        k: a[k]
+        for k in ("id", "fact_type", "value", "structured_value", "place", "date")
+        if k in a
+    }
+
+
+# Heavy per-conflict prose the prompt-size budget may drop (never the ids or
+# the resolved values, which are what make a "no conflict on file" claim
+# checkable).
+_CONFLICT_HEAVY_FIELDS = (
+    "independence_analysis",
+    "weighing_analysis",
+    "resolution_rationale",
+    "description",
+)
+
+
+def _summarize_before_state_conflicts(
+    conflicts: Any, assertions: Any
+) -> dict[str, Any]:
+    """Summarize the conflicts on file before the skill ran, resolving each
+    conflict's assertion references to their values.
+
+    Same discipline as `_summarize_before_state_sources`: the COMPLETE id list
+    is the ground truth for a "no conflict on file" existence check and is never
+    clipped; the per-conflict `detail` carries the resolved preferred/competing
+    values (what a grade actually turns on) plus the structural fields, and the
+    heavy prose (`_CONFLICT_HEAVY_FIELDS`) is what the caller's size budget trims.
+
+    Not the verdict: the resolved values are handed over and the rubric decides,
+    exactly as the sources block hands over ids without asserting groundedness.
+    A rendered conflict makes an "encoded X, no conflict on file" claim checkable
+    against what was actually contested (#1902 / #1956).
+    """
+    items = conflicts if isinstance(conflicts, list) else []
+    assertion_list = assertions if isinstance(assertions, list) else []
+    index = {
+        a["id"]: a
+        for a in assertion_list
+        if isinstance(a, dict) and a.get("id")
+    }
+    ids = [c["id"] for c in items if isinstance(c, dict) and c.get("id")]
+
+    detail: list[dict[str, Any]] = []
+    for c in items:
+        if not isinstance(c, dict):
+            continue
+        entry: dict[str, Any] = {
+            "id": c.get("id"),
+            "conflict_type": c.get("conflict_type"),
+            "status": c.get("status"),
+            "disputed_attribute": c.get("disputed_attribute"),
+            "identity_question": c.get("identity_question"),
+            "preferred": _resolve_assertion(c.get("preferred_assertion_id"), index)
+            if c.get("preferred_assertion_id")
+            else None,
+            "competing": [
+                _resolve_assertion(cid, index)
+                for cid in (c.get("competing_assertion_ids") or [])
+            ],
+        }
+        for k in _CONFLICT_HEAVY_FIELDS:
+            if c.get(k):
+                entry[k] = _summarize_response(
+                    c[k], string_max=_BEFORE_STATE_STRING_MAX
+                )
+        detail.append(entry)
+
+    return {"count": len(items), "all_ids": ids, "detail": detail}
+
+
 def _detail_ids(summary: dict[str, Any]) -> list[str]:
     """Ids positionally aligned with `summary["detail"]`, for naming drops.
 
@@ -1423,8 +1804,8 @@ def _detail_ids(summary: dict[str, Any]) -> list[str]:
 
 
 def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
-    """Render the source entries that existed BEFORE the skill ran, so the
-    judge can mechanically check "not on file" / "fabricated" claims.
+    """Render the sources and conflicts that existed BEFORE the skill ran, so
+    the judge can mechanically check "not on file" / "fabricated" claims.
 
     The judge has produced fabrication-class citation failures — asserting
     that on-file source text was absent or invented — when it had no view of
@@ -1447,8 +1828,28 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     tree = before_snapshot.get("tree_gedcomx_json")
     research_sources = research.get("sources") if isinstance(research, dict) else None
     tree_sources = tree.get("sources") if isinstance(tree, dict) else None
+    conflicts = research.get("conflicts") if isinstance(research, dict) else None
+    assertions = research.get("assertions") if isinstance(research, dict) else None
 
     labelled: list[tuple[str, dict[str, Any]]] = []
+    if conflicts:
+        # Rendered FIRST, ahead of the source blocks. Same shape
+        # ({count, all_ids, detail}) as a sources block, so it flows through the
+        # id-section and the shared-budget detail loop below unchanged. Order is
+        # deliberate: the shared _BEFORE_STATE_MAX_CHARS budget is spent in list
+        # order, so putting conflicts first means their resolved preferred/
+        # competing values — the grounding evidence a "no conflict on file" claim
+        # turns on — win the budget over source-citation detail. Source *ids* stay
+        # complete in the id-section regardless (never clipped), so a dropped
+        # source keeps its existence check; only its heavy detail yields, and the
+        # omission note already reads correctly for that case.
+        labelled.append(
+            (
+                "research.json conflicts on file before this run (c_ ids; "
+                "preferred/competing assertions resolved to their values)",
+                _summarize_before_state_conflicts(conflicts, assertions),
+            )
+        )
     if research_sources:
         labelled.append(
             (
@@ -1479,7 +1880,7 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     ]
     id_section = "\n\n".join(id_blocks)
 
-    # heavy per-source detail after — this is what the prompt-size cap trims.
+    # heavy per-entry detail after — this is what the prompt-size cap trims.
     #
     # Drop whole sources rather than slicing the rendered string. A raw
     # `[:budget]` cut lands mid-object, so the last source renders half-written
@@ -1504,7 +1905,7 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     dropped: list[str] = []
     remaining = budget
     for label, summary in labelled:
-        header = f"{label} — per-source detail (heavy fields truncated):\n"
+        header = f"{label} — per-entry detail (heavy fields truncated):\n"
         kept: list[Any] = []
         for entry, sid in zip(summary["detail"], _detail_ids(summary)):
             candidate = json.dumps(kept + [entry], ensure_ascii=False, indent=2)
@@ -1519,7 +1920,7 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     detail_section = "\n\n".join(detail_blocks)
     if dropped:
         detail_section += (
-            f"\n\n[per-source detail omitted for prompt size: "
+            f"\n\n[per-entry detail omitted for prompt size: "
             f"{', '.join(dropped)}. Their ids ARE listed above and they WERE on "
             f"file — the absence of their detail here is a harness size limit, "
             f"not evidence that they are missing or fabricated.]"
@@ -1567,6 +1968,12 @@ def _aborted_entry(
         validators=ValidatorResult(passed=None, results=[]),
         judge=JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0),
     )
+    # The aborted path carries the two grading fields too. `spec` is in hand, and
+    # by this PR's own semantics an ABSENT `grading_mode` means "this run log
+    # predates the field" — so omitting it here would make a fresh run log
+    # misrepresent its aborted tests as old ones. 11 aborted entries across 6
+    # committed logs, so the path is live, not theoretical.
+    mode, gates = grading_mode_for(spec)
     return assemble_test_entry(
         test_id=spec.id,
         test_type=spec.type,
@@ -1575,4 +1982,6 @@ def _aborted_entry(
         mcp_fixtures=spec.mcp_fixtures,
         runs=[single_run],
         timestamp_for_run_id=timestamp,
+        grading_mode=mode,
+        dimensions_gate_outcome=gates,
     )

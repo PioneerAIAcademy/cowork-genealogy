@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_research_002",
+    "skill": "research",
+    "name": "/research slash command triggers the orchestrator",
+    "type": "positive",
+    "description": "The /research [question] form is an explicit trigger listed in the skill description. The user is handing off a specific research question to be driven through the full GPS workflow.",
+    "tags": ["core-trigger", "slash-command"],
+    "expected_outcome": "xfail",
+    "xfail_reason": "Slash-command entry records no Skill call, so skills_invoked never holds `research` and the positive-test activation check fails it. The marker only binds when the run reaches that check — an aborted run is not remapped. Remove this marker when the harness records slash entry."
+  },
+  "input": {
+    "user_message": "/research When and where did Patrick Flynn die?",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "The /research prefix is an explicit skill trigger",
+    "Should drive the question through the GPS workflow, not just answer it conversationally"
+  ],
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 1200,
+    "stub_skills": [
+      "question-selection", "locality-guide", "research-plan",
+      "search-records", "record-extraction", "person-evidence",
+      "research-exhaustiveness", "proof-conclusion"
+    ]
+  }
+}

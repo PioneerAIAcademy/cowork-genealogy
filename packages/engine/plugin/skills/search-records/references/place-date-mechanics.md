@@ -49,13 +49,13 @@ matching.
   places within 3 jurisdiction levels above it. `q.birthLikePlace=
   Lehi, Utah County, Utah` returns records in Lehi, Utah County,
   and Utah — but not all of USA.
-- **With `.exact=on`:** Still descends to child localities, but does
-  NOT expand upward. `q.birthLikePlace=Utah County, Utah` with
-  `.exact=on` finds Lehi, Provo, etc. but excludes records indexed
-  only as "Utah, USA."
+- **With `.exact=on`:** Does NOT expand upward — `q.birthLikePlace=Utah County,
+  Utah` with `.exact=on` excludes records indexed only as "Utah, USA." Whether it
+  still descends to child localities (Lehi, Provo) is recorded by no verdict —
+  treat it as unverified.
 
-**Key insight:** Exact place does NOT prevent matching child
-localities — it prevents matching parent localities.
+**Key insight:** Exact place stops matching parent localities. Do not assume it
+keeps child localities; that half is unmeasured.
 
 ### What place expansion actually costs — measured 2026-08-04
 
@@ -144,37 +144,34 @@ accepted but discarded for matching.
 With `.exact=on` on a date parameter (`<event>YearExact` on the tool),
 the range is matched hard instead of with the usual fuzz around its
 bounds. Like the place qualifier this narrows the count; its effect on the
-order of what it keeps was not measured. Measured 2026-08-08 on the birth
-family, with the enumerated legs re-done 2026-08-10/11 — the `any`
-family was never tested (qualifier probe, sections H, N and Y — host-side):
+order of what it keeps was not measured. Measured by the disjoint-band instrument on the record index for the birth, death and marriage families — record-index
+**residence** is collection-dependent (`.exact` changes nothing where every row
+is already dated, but drops a real share where records are dated only through
+others, behaving like the rest there) — and reproduced for all four families on the
+tree endpoint (qualifier probe, sections H, Q and P — host-side; the `any` family
+was never tested):
 
-- **The fuzz is real but only WEAKLY evidenced.** An unqualified single-year
-  range returned a handful of sampled records dated outside it — and every one
-  carried an *approximate* date (an "about" year); precise dates did not leak.
-  On a pool small enough to read to the end, only one classifiable row fell
-  outside the range, **and it survived `.exact` as well**, which is not the
-  shape of fuzz. Treat the fuzz as unconfirmed rather than measured, and do not
-  read either count as its size.
-- **`.exact=on` narrows hard:** nothing outside the range in the same sample,
-  and the total fell by about two orders of magnitude.
-- **How a year range treats a record with NO indexed year is NOT established.**
-  Neither direction is measured: not that an unqualified range keeps such
-  records, and not that `.exact` drops them. The test behind both could not tell
-  a record with no indexed year from one whose year the result payload simply
-  does not show, so both readings were withdrawn rather than
-  reversed. **Do not quote a share of tolerated silence, and do not quote a
-  year-less rate** — a relevance-ranked sample of a vanishing fraction of a
-  multi-million-record pool was read as a population figure twice before, each
-  time producing a confident wrong answer. Practically: a year range, set or
-  unset, is not a reliable way to include or exclude undated records. If that
-  distinction matters to your search, check the records you get back rather than
-  the count.
+- **An unqualified range matches by estimate overlap.** A record with no year of
+  its own on the searched event is not year-silent — the index carries an
+  *estimated* date range for it, derived from the dated facts of others on the
+  record (a parent, spouse or child). An unqualified `<event>Year` range returns
+  that record whenever the estimate overlaps the range, so a range reaches records
+  dated only through a relative or only approximately, not just ones dated squarely
+  inside it. No record is kept by a range regardless of where the range sits:
+  every record the index returns for a range is placed in time.
+- **`<event>YearExact` keeps only records whose indexed date is inside the
+  range.** It drops the estimate-overlap matches an unqualified range admits — so
+  `.exact` reliably *excludes* records that merely estimate into the range, and an
+  unqualified range reliably *includes* them.
+- **Two things stay unmeasured:** whether `.exact` also drops *in-range
+  approximate* dates, and the `any*Year` family (never tested). And a cohort that
+  is not always small carries no indexed date in the swept span at all, so no bounded range reaches it
+  — if you need every year-less record, read the results back rather than trusting
+  a range to gather them.
 
-Reasonable when you hold a date from a vital record. Note what it costs: the
-out-of-range records it removes were, where seen, *approximate* dates — the
-population where a record reported an age rather than a date, though that leg is
-weakly evidenced. Whether it also drops records with no indexed year, or in-range
-approximate dates, was **not** established.
+Reasonable when you hold a date from a vital record: it removes the records whose
+indexed date — exact or estimated — falls outside the range, keeping only those
+dated inside it.
 
 ### Event types
 
@@ -221,11 +218,13 @@ Each name field independently supports wildcards and `.exact=on`.
   relative-name bullet below, and getting it backwards will make you
   misread every nil result:
 
-  - For a field the index virtually always carries — the searched person's
-    **own** given name and surname — there is nothing to be silent about,
-    so required collapses to *must match*. One term that does not match
-    collapses the result set — measured, a few hundred results fell to
-    single digits on a gibberish given name.
+  - For the searched person's **own** surname, required collapses to *must
+    match*: measured 2026-08-20, an unqualified `surname` DROPS records with
+    no indexed surname. But its own given name does NOT — an unqualified
+    `givenName` KEEPS records with no indexed given name, so it behaves like
+    the relative fields below. One term that does not match still collapses
+    the result set — measured, a few hundred results fell to single digits on
+    a gibberish given name.
   - For a field a record can simply **omit**, silence is not a
     contradiction, so those records are kept. A father term that nothing
     could match still returned about **97%** of its baseline: only the
@@ -271,12 +270,13 @@ Each name field independently supports wildcards and `.exact=on`.
   drop, and the 300-result `fatherGivenName=William` survey that once stood
   here is a sample of a pool too large to read to the end.
 - **How much a relative name narrows depends on WHICH relative — the spread is
-  wide enough to change what a nil means.** Measured on two marriage
-  populations, for the **father** and **spouse** names only, every pool read to
-  the end: an unmatchable *father* name returned about 70-93% of the baseline,
-  while an unmatchable *spouse* name returned 10% in one population and 81% in
-  the other — the spread tracking how often each relative is indexed there.
-  Mother, parent and other names were not enumerated.
+  wide enough to change what a nil means.** Enumerated on two marriage
+  populations, for the **father**, **spouse**, **mother** and **parent** names,
+  every pool read to the end: an unmatchable *father* name returned about 70-93%
+  of the baseline, an unmatchable *mother* name about 70-99%, an unmatchable
+  *parent* name about 70-93%, while an unmatchable *spouse* name returned 10% in
+  one population and 81% in the other — the spread tracking how often each
+  relative is indexed there. `other` names were not enumerated.
   A father-anchored nil is therefore weak evidence that no record exists; a
   spouse-anchored one can be stronger, though it varies too much to lean on
   alone.

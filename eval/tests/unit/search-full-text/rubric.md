@@ -4,13 +4,13 @@ Grading dimensions for search-full-text unit tests. Evaluated by the LLM judge a
 
 ## Query construction
 
-Did the skill construct effective full-text search queries using appropriate operators? Queries should use the right operators for FTS (which does not auto-expand abbreviations or apply phonetic matching) and be scoped to plausible jurisdictions where the prompt supplies one.
+Did the skill construct effective full-text search queries using appropriate operators? Queries should use the right operators for FTS (which does not auto-expand abbreviations or apply phonetic matching). Jurisdiction/date/record-type scope, when the prompt or research state supplies it, belongs on a second-or-later call, applied only after an unfiltered first call reveals the hit count — never baked into the first call for a topic.
 
 This dimension grades the queries the skill *actually executed*, not a wishlist of variants it could have tried. Spelling variants and abbreviation forms (Flinn, Wm, Thos) are valuable but only required when the prompt or initial results signal that a variant is plausible.
 
-- **pass:** Queries use the search engine's operators correctly (phrase quoting, `+`/`-`, `?`/`*` wildcards), are scoped to plausible jurisdictions/collections when supplied, and use the right field (Name vs. Keywords) for the query intent. A canonical-spelling query that returns the expected record is acceptable.
-- **partial:** Queries are effective but mishandle an obvious operator or scoping decision (e.g., use OR-default by omitting `+`, put place in the query field instead of using filters), OR the prompt explicitly suggests a variant is needed and the skill omits it.
-- **fail:** Queries are bare strings with no operators; the genealogist would have to re-search from scratch to get useful coverage.
+- **pass:** Queries use the search engine's operators correctly (phrase quoting, `+`/`-`, `?`/`*` wildcards), leave the first call for a topic unscoped and apply jurisdiction/date/record-type scope only afterward as post-search filters, and use the right field (Name vs. Keywords) for the query intent. A canonical-spelling query that returns the expected record is acceptable.
+- **partial:** Queries are effective but mishandle an obvious operator or scoping decision (e.g., use OR-default by omitting `+`, put place in the query field instead of using filters, or send `recordPlace*`/`yearFrom`/`yearTo`/`recordType` on the FIRST `fulltext_search` call for a plan item before any unfiltered hit count has been observed — those are post-search filters per SKILL.md and query-syntax.md and must wait for a second call), OR the prompt explicitly suggests a variant is needed and the skill omits it.
+- **fail:** Queries are bare strings with no operators; the genealogist would have to re-search from scratch to get useful coverage; OR the research-log entry's `query` object records a place/date/record-type/collection filter that the `fulltext_search` tool call visible in the call log never actually sent — check the executed args, not just the narrated summary.
 
 ## FAN awareness
 
@@ -29,3 +29,13 @@ Did the skill log negative results with enough detail to support exhaustiveness 
 - **pass:** Either (a) all executed searches returned results (nothing to grade), OR (b) the negative log entries capture the collections searched, the queries used, and what was examined (e.g., "0 results for 'Flynn' in the 1900 census Pennsylvania state-wide index, plus a 100-result browse of Schuylkill County images").
 - **partial:** At least one search returned zero results AND the negative entry captures the query but not the breadth of the search (no mention of how many results were examined, or which collections were skipped).
 - **fail:** At least one search returned zero results AND the negative entry is bare ("nothing found") with no detail that would support a future exhaustive-search declaration.
+
+## Result triage
+
+Did the skill triage returned results using the fields the tool actually returns, and correctly recognize what a staged result can and cannot tell it? A staged fulltext result carries only flat stubs — `names`, `places`, `dates`, `highlightTerms` (the matched terms as bare strings), `title`, `recordType`, `recordPlace`, `recordDate`; the full transcript (`textDocument`) is stripped from the tool response and no MCP tool reads it back, though it remains on disk at `staged.resultsRef`.
+
+**This dimension fires only when at least one executed search returned results. When every search was nil, there is nothing to triage — score `pass`.**
+
+- **pass:** For returned results, the skill assesses match quality from the stub fields (is the target in `names`/`highlightTerms`; are `recordPlace`/`recordDate`/`places`/`dates` consistent with the person) and, for the "genuine mention vs. false positive" judgment, defers to verifying against the original image rather than claiming to settle context from the staged result. It does not instruct reading a `textDocument` that staging has removed.
+- **partial:** Triage is broadly right but leans on a field the staged result does not carry (e.g. reasons about transcript context as though `textDocument` were present), or omits the place/date consistency check when the results warranted it.
+- **fail:** No triage of match quality at all (results passed through undifferentiated), or the stated method is premised on the stripped `textDocument` or on a relevance score the tool does not return — so it cannot actually be executed. Reading the transcript back from `staged.resultsRef` is not a fail.

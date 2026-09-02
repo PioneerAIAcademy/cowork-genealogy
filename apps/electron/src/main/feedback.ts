@@ -31,6 +31,13 @@ const SESSION_LOG_CAP_BYTES = 20 * 1024 * 1024
 // (`_redact_living`) so a bundle built here and one built in the hosted app
 // contain the same thing.
 const TREE_FILENAME = 'tree.gedcomx.json'
+const STARTING_TREE_FILENAME = 'starting-tree.gedcomx.json'
+// Both tree-shaped files a project folder can hold. starting-tree.gedcomx.json
+// is the write-once completion-gate baseline (issue #1490); it carries the same
+// living persons as tree.gedcomx.json and is bundled by the same walkProject, so
+// it must be redacted too or a bundle ships living details FamilySearch's terms
+// forbid sharing. Mirror of apps/server/app/feedback.py's _REDACTED_TREE_FILENAMES.
+const REDACTED_TREE_FILENAMES = [TREE_FILENAME, STARTING_TREE_FILENAME]
 const LIVING_GIVEN = 'Living'
 const LIVING_SURNAME_FALLBACK = 'Unknown'
 
@@ -90,8 +97,19 @@ function redactPerson(person: Record<string, unknown>): Record<string, unknown> 
  * report fails to send.
  */
 function redactLivingPersons(selected: { relativePath: string; buf: Buffer }[]): number {
-  const entry = selected.find((s) => s.relativePath === TREE_FILENAME)
-  if (!entry) return 0
+  let total = 0
+  for (const name of REDACTED_TREE_FILENAMES) {
+    const entry = selected.find((s) => s.relativePath === name)
+    if (entry) total += redactOneTree(entry)
+  }
+  return total
+}
+
+/** Redact one tree file in place, returning the number of persons redacted. A
+ *  parse failure or unexpected shape leaves the file untouched and returns 0, so
+ *  a file that fails partway never contributes a count for bytes it did not
+ *  rewrite. */
+function redactOneTree(entry: { relativePath: string; buf: Buffer }): number {
   try {
     const tree = JSON.parse(entry.buf.toString('utf-8')) as Record<string, unknown>
     const persons = tree.persons
@@ -124,6 +142,15 @@ function redactLivingPersons(selected: { relativePath: string; buf: Buffer }[]):
 }
 
 export const MAX_FIELD_CHARS = 10_000
+
+// Email, "what you asked" and "what the agent did" are all optional at the dialog
+// (issue #1919), so any of the three can arrive empty. Say so rather than printing
+// a heading or a bullet with nothing after it — a triager cannot otherwise tell
+// "the reporter left it blank" from "the bundler lost it".
+// Mirrored verbatim in apps/server/app/feedback.py.
+export const NOT_PROVIDED = '_(not provided)_'
+
+const orBlank = (value: string): string => (value.trim() ? value : NOT_PROVIDED)
 export const FEEDBACK_SCHEMA_VERSION = 1
 
 export type ProjectFile = {
@@ -171,8 +198,11 @@ type SessionLogStatus = 'included' | 'not-requested' | 'requested-but-empty'
 
 export async function readSessionLog(folderPath: string): Promise<SessionLog> {
   // Claude Code stores sessions in ~/.claude/projects/<path-with-dashes>/
-  const projectHash = folderPath.replace(/^\//, '').replace(/\//g, '-')
-  const claudeProjectDir = path.join(os.homedir(), '.claude', 'projects', `-${projectHash}`)
+  // Replace every non-alphanumeric-non-hyphen char with '-'.
+  // On macOS /Users/joe/project → -Users-joe-project (leading / becomes -).
+  // On Windows C:\Users\joe\project → C--Users-joe-project (: and \ become -).
+  const projectHash = folderPath.replace(/[^a-zA-Z0-9-]/g, '-')
+  const claudeProjectDir = path.join(os.homedir(), '.claude', 'projects', projectHash)
 
   try {
     const files = await fs.readdir(claudeProjectDir)
@@ -464,7 +494,7 @@ function renderFeedbackMarkdown(args: {
   const sections = [
     '# Feedback',
     '',
-    `- **From:** ${fields.email}`,
+    `- **From:** ${orBlank(fields.email)}`,
     `- **When:** ${timestamp}`,
     `- **Viewer version:** ${viewerVersion}`,
     `- **Project folder:** ${projectFolder}`,
@@ -472,11 +502,11 @@ function renderFeedbackMarkdown(args: {
     '',
     '## What I asked',
     '',
-    fields.userPrompt,
+    orBlank(fields.userPrompt),
     '',
     '## What the agent did',
     '',
-    fields.agentDid
+    orBlank(fields.agentDid)
   ]
 
   // Omitted on a positive report and when a bug reporter didn't know the ideal
@@ -526,7 +556,9 @@ function renderFeedbackMarkdown(args: {
       '',
       '## Living people redacted',
       '',
-      `${redactedLiving} person(s) in \`${TREE_FILENAME}\` are living or not marked ` +
+      `${redactedLiving} living-person record(s) across the project's tree files ` +
+        `(\`${TREE_FILENAME}\` and, when present, \`${STARTING_TREE_FILENAME}\`) are living ` +
+        `or not marked ` +
         `deceased, so their given names, dates and places were replaced with ` +
         `\`${LIVING_GIVEN} <Surname>\` before this bundle was created. Their ids and ` +
         `relationships are intact, so the case still reproduces. This is expected — ` +

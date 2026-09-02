@@ -51,17 +51,16 @@ would silently diverge:
   script only enforces.
 - An edge whose target has no `eval/tests/unit/<target>/` directory is
   SKIPPED, not flagged. A reciprocal cannot be written into a suite that does
-  not exist. Today `research` and `forget-and-rederive` are the only two
-  skills without one and neither is a target, but a future one must not be
-  asked for a test that has nowhere to live.
+  not exist. Today `forget-and-rederive` is the only skill without one
+  (`research` gained a suite in #1494), but a future one must not be asked
+  for a test that has nowhere to live.
 - Malformed JSON, or a test missing `test.skill`, contributes nothing rather
   than raising: a lint that cannot run is worse than one that under-reports.
-  Be aware this is a genuine blind spot rather than a deferral -- NO CI job
-  validates `eval/tests/unit/**` against unit-test.schema.json today. The
-  schema is enforced at harness load time (harness/loader.py) and by the CRUD
-  UI's generated Zod types, neither of which runs on a PR, and
-  check_runlogs.py rule 4 checks only `test.id` uniqueness. So a malformed
-  test file is silently absent from this graph, and nothing else will say so.
+  This is no longer a blind spot. `tests/unit/test_unit_test_corpus.py` runs
+  every committed file under `eval/tests/unit/` through `loader.load_test` on
+  any PR touching that tree, so a file this script silently skips fails there
+  instead -- for a schema violation and for unparseable JSON alike. What is
+  skipped here is therefore already reported, by name, somewhere that blocks.
 
 WARN-ONLY, AND UNCONDITIONALLY SO -- this always exits 0.
 

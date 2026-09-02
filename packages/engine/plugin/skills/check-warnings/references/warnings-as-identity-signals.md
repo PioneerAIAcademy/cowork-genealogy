@@ -36,10 +36,24 @@ Example pattern:
 - Census record 1860 listing this person as living
   (warning: `hasEventAfterDeath1`)
 
-The 1860 census record may belong to a different same-name
-individual. The split point is the death in 1850 -- records dated
-before belong to one person, records dated after belong to
-another.
+Two explanations fit these facts, and the warning alone does not
+rank them: the 1860 record belongs to a different same-name
+individual, or the 1850 death record is wrong. Additional evidence
+is needed to determine which one fits.
+
+The death is where the investigation starts, not where the timeline
+gets cut. Work outward from it in both directions and compare
+household continuity across the records -- a consistent spouse,
+the same children, the same residence and occupation, the same
+neighbors and associates, and an age progression that adds up
+generally support a single continuing identity; significant changes
+across those support a split. No single factor decides it; weigh
+the cluster.
+
+This matters most when several individuals share a name and have
+similar ages, similar locations, or parents with similar names --
+the cases most likely to produce both a mistaken merge and a
+mistaken split.
 
 ### Exception -- posthumous mentions are NOT identity signals
 
@@ -54,7 +68,14 @@ without describing actions by them. Examples:
   parent (the certificate's own date is after the deceased's
   death).
 - An estate, probate, or guardianship record naming the deceased
-  as a prior owner, testator, or parent of a minor heir.
+  as a prior owner, testator, or parent of a minor heir. Probate
+  and estate administration routinely run years after the death --
+  intestate administration especially -- and an heir petitioning
+  a will can reopen the file later still.
+- A death notice, which is a distinct record from an obituary and
+  is often indexed separately.
+- A city directory listing the household at the deceased's former
+  address.
 
 If a source of this type is attached to the deceased's profile as
 a Residence-style fact (rather than as a reference), the tool
@@ -86,15 +107,18 @@ already organized around them:
 
 ### Date sequence logic
 - Birth must precede every other event (`hasEventBeforeBirth365_2`)
-- Death must follow every other event (`hasEventAfterDeath1`)
+- Death must follow every other event, except facts in the
+  death-like family, which raise the death anchor rather than
+  violate it: Burial, Cremation, Funeral, Obituary, Probate, Will,
+  DeathRegistration, BurialRegistration (`hasEventAfterDeath1`)
 - Burial must follow death (`hasBurialBeforeDeath`)
 - Christening must follow birth (`hasChristeningBeforeBirth`)
 - Each event date should be plausible given the others
 
 ### Reasonable age differences
-- Parent-child age gap: typically 12-55 years for mothers, 14+ for
+- Parent-child age gap: typically 12-45 years for mothers, 14+ for
   fathers -- covered by `earliestChildBirthToBirth12`,
-  `earliestChildBirthToBirthMale14`, `latestChildBirthToBirthFemale55`,
+  `earliestChildBirthToBirthMale14`, `latestChildBirthToBirthFemale45`,
   `latestChildBirthToBirth80`
 - Marriage age: typically 14-90 -- covered by `hasEarlyMarriage14`
   and `hasLateMarriage90`
@@ -154,8 +178,24 @@ Escalation guidance:
 - 1 `contradiction` on its own: investigate the specific condition
 - 1 `contradiction` + 1+ `implausible`s: likely identity confusion; recommend
   timeline review
-- 2+ `contradiction`s: almost certainly two people merged; recommend
-  splitting the profile and rebuilding person_evidence links
+- 2+ `contradiction`s: first ask whether one wrong fact would produce
+  all of them, and settle it from the `factIds` the tool returned --
+  contradictions citing overlapping facts are two symptoms of one
+  wrong fact rather than two people; disjoint `factIds` mean no single
+  fact explains them. One tag cannot take part in that test:
+  `hasEventAfterDeath1` builds its `factIds` from `selfFactIds(mob,
+  null)`, every typed fact the person has, so it overlaps every other
+  warning by construction. Read disjointness off the narrower-scope
+  contradictions -- `hasChristeningBeforeBirth` (Christening, Birth)
+  and `hasBurialBeforeDeath` (Burial, Death) are disjoint families. Do not infer a shared cause from which
+  direction of date error would fire which tag: `hasEventAfterDeath1`
+  measures `latest(any fact) - latest(death-like fact)` and
+  `hasAgeRangeGreaterThan120` measures `earliestDeath - latestBirth`,
+  so a death date moved earlier fires the first and suppresses the
+  second. If one error explains the cluster,
+  verify that fact against its original source first. If no single
+  error explains it, two people merged is the stronger reading;
+  recommend splitting the profile and rebuilding person_evidence links
 - Any `contradiction` involving the death-vs-event sequence
   (`hasEventAfterDeath1`, `hasEventBeforeBirth365_2`): stop and
   investigate immediately regardless of other warning count

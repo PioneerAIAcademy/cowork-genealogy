@@ -152,7 +152,7 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Run runlog discipline checks
         if: steps.scope.outputs.relevant == 'true'
@@ -162,8 +162,12 @@ jobs:
           COSMETIC_SKIP: ${{ steps.cosmetic.outputs.skip }}
         run: python eval/harness/scripts/check_runlogs.py
 
+      # `!cancelled()` here and on every step below: an `if:` with no
+      # status-check function carries an implicit `success()`, so a failure in
+      # the gate above skipped all four lints. A step added below inherits this
+      # — check_negative_reciprocity.py was added without it.
       - name: Check skill tool-coverage drift (warn-only)
-        if: steps.scope.outputs.relevant == 'true'
+        if: ${{ !cancelled() && steps.scope.outputs.relevant == 'true' }}
         run: python eval/harness/scripts/check_tool_coverage.py
 
       # The inverse of the check above: a tool name in a skill's rubric.md,
@@ -172,7 +176,7 @@ jobs:
       # the architecture no longer lets it make. Caught same_person and
       # source_attachments in search-records' rubric two contracts late.
       - name: Check rubric/judge_context/agent tool-mention drift (warn-only)
-        if: steps.scope.outputs.relevant == 'true'
+        if: ${{ !cancelled() && steps.scope.outputs.relevant == 'true' }}
         run: python eval/harness/scripts/check_rubric_tool_drift.py
 
       # Blocking on hard rules (bad/mismatched name, or a description that
@@ -181,7 +185,7 @@ jobs:
       # they catch a long or `<bracketed>` value on a continuation line. Soft
       # rules (unknown key, unresolvable tool) only warn. The corpus passes today.
       - name: Lint skill + agent frontmatter
-        if: steps.scope.outputs.relevant == 'true'
+        if: ${{ !cancelled() && steps.scope.outputs.relevant == 'true' }}
         run: python eval/harness/scripts/check_skill_frontmatter.py
 
       # A negative routing test pins one direction of an edge only, so a
@@ -193,5 +197,5 @@ jobs:
       # this to blocking should wait on triaging which unbacked edges are
       # deliberate. Rationale in full: the script's docstring.
       - name: Check negative routing reciprocity (warn-only)
-        if: steps.scope.outputs.relevant == 'true'
+        if: ${{ !cancelled() && steps.scope.outputs.relevant == 'true' }}
         run: python eval/harness/scripts/check_negative_reciprocity.py

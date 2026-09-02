@@ -18,7 +18,7 @@ gates' agreement. **Never use the JSON Schema alone as a validity gate.**
 
 ## 1. Overview
 
-`tree.gedcomx.json` contains resolved persons, relationships, facts, and source descriptions in a simplified GedcomX format. It is the file that eventually uploads to FamilySearch. MCP tools handle conversion between full GedcomX (from FamilySearch APIs) and this simplified format.
+`tree.gedcomx.json` contains persons, relationships, facts, and source descriptions in a simplified GedcomX format. It is the project's **working tree**: the place persons and relationships are held as research concludes them, including tentative conclusions and hypotheses that are not yet proven. It is therefore a **superset** of what could be uploaded to FamilySearch, not the upload payload itself — upload is conclusion-gated (see "Relationship to `research.json`" below), so only the concluded subset would ever leave it. MCP tools handle conversion between full GedcomX (from FamilySearch APIs) and this simplified format.
 
 ### Design goals
 
@@ -350,7 +350,10 @@ The `Parent` suffix is dropped in the simplified format because the parent-child
 | `Christening` | yes | GedcomX-only — no lowercase equivalent in research.json (use `birth` assertions for baptism-related claims) |
 | `Marriage` | yes | Used on Couple relationship facts |
 | `Divorce` | yes | Used on Couple relationship facts. GedcomX-only — no research.json equivalent in v1 |
-| `Annulment` | yes | Used on Couple relationship facts, and echoed as a person-level fact (see `Parents` note). Swept by `tree_forget` `spouses-of` alongside `Marriage`/`Divorce` |
+| `Annulment` | yes | Used on Couple relationship facts. Person-level echo unverified (0 corpus occurrences as of 2026-08-20), but swept by `tree_forget` `spouses-of` per the 2026-08-24 ruling (all couple-event types are swept). |
+| `Engagement` | yes | Couple relationship event. 0 person-level corpus occurrences as of 2026-08-20; swept by `tree_forget` `spouses-of` per the 2026-08-24 ruling. |
+| `MarriageBanns` | yes | Couple relationship event. 0 person-level corpus occurrences as of 2026-08-20; swept by `tree_forget` `spouses-of` per the 2026-08-24 ruling. |
+| `Separation` | yes | Couple relationship event (GedcomX type). 0 person-level corpus occurrences as of 2026-08-20; swept by `tree_forget` `spouses-of` per the 2026-08-24 ruling. |
 | `Residence` | yes | |
 | `Census` | **no** | Extension. Standard GedcomX records census appearances as `Residence`. The conversion function maps `Census` → `Residence` with a qualifier at upload. Use `Census` in the simplified format for clarity |
 | `Immigration` | yes | |

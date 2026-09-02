@@ -273,6 +273,18 @@ electron: $(JS_DEPS) ## Run the Electron viewer (consumes the shared viewer-ui)
 typecheck: $(JS_DEPS) ## Typecheck the whole JS workspace (turbo)
 	pnpm typecheck
 
+.PHONY: lint
+lint: $(JS_DEPS) $(EVAL_APP_DEPS) ## ESLint — the two workspaces that have a config (apps/electron, eval/app)
+	# Not `pnpm -r lint`: only these two declare a lint script, and `-r` would
+	# report success for every workspace that simply has none. Named explicitly
+	# so adding a third config is a visible edit here rather than a silent
+	# no-op.
+	pnpm --filter @genealogy/electron lint
+	# eval/app is NOT a pnpm workspace member (same carve-out as the engine), so
+	# it is reached with npm from its own directory — exactly as eval-ui-test
+	# does. `pnpm --filter` matches no project here and exits non-zero.
+	cd eval/app && npm run lint
+
 .PHONY: test-all
 test-all: ## Run EVERY check before a PR: typecheck + JS + server + engine + CRUD UI + eval harness. Alias for scripts/test.sh
 	# One command, one contract. scripts/test.sh owns the implementation
@@ -308,22 +320,58 @@ hooks-test: ## Repo-tooling hooks — scripts/claude-hooks (stdlib python3, no v
 	python3 scripts/claude-hooks/test-gate-issue-create.py
 
 .PHONY: agent-smoke
-agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the plugin agents under their bare names (issue #939; no model call, bills nothing)
-	# The one thing no offline test can see: what the RUNTIME resolves the
-	# hosted options to. It reads the SDK init handshake's agent list — no
-	# query, so it costs nothing but a CLI process start. The key comes from
+agent-smoke: $(ENGINE_BUILD) ## Live agent-registration check (issue #939) + dead-stub MCP abort check (issue #1743)
+	# Arm 1 — agent registration (issue #939). Reads the SDK init
+	# handshake's agent list — no query, no model call. The key comes from
 	# $$ANTHROPIC_API_KEY, else this repo's eval/.env, and is passed under a
 	# distinct name because tests/conftest.py blanks ANTHROPIC_API_KEY.
+	# AGENT_SMOKE=1 turns the live test's skips into hard errors.
 	#
-	# AGENT_SMOKE=1 is what turns the live test's skips into hard errors. The
-	# test skips by design under a plain `make server-test`, so a contributor
-	# with no key still gets a green suite — but it made THIS target report
-	# "passed, 1 skipped" and read as if the check had run. Only the caller
-	# knows which of the two it is, so the caller says.
+	# Arm 2 — dead-stub e2e abort (issue #1743). A real run_e2e against a
+	# server that dies at startup; asserts the init-message abort text and
+	# the retention rule (no files written). Bills one session start (~8s).
+	#
+	# Both arms are hand-run; issue #1142 is what would make them CI.
 	cd apps/server && \
 	  AGENT_SMOKE=1 \
 	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run pytest tests/test_plugin_agents.py -q -rs
+	# Arm 2 — dead-stub e2e abort (issue #1743).
+	cd eval/harness && \
+	  SMOKE_RUNLOG=$$(mktemp -d) && SMOKE_OUT=$$(mktemp -d) && \
+	  uv run --frozen python -m e2e.run_e2e \
+	    --test kenneth-quass-death \
+	    --mcp-server-entry "$(CURDIR)/eval/harness/tests/fixtures/dead-stub.js" \
+	    --runlog-root "$$SMOKE_RUNLOG" \
+	    --skip-judge > "$$SMOKE_OUT/capture.txt" 2>&1; rc=$$?; \
+	  [ "$$rc" = 2 ] || \
+	    { echo "FAIL: expected exit 2, got $$rc" >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  echo "--- Asserting dead-stub arm ---"; \
+	  grep -q "MCP UNAVAILABLE" "$$SMOKE_OUT/capture.txt" || \
+	    { echo "FAIL: output missing 'MCP UNAVAILABLE'" >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  grep -q "the 'genealogy' MCP server reported 'failed'" "$$SMOKE_OUT/capture.txt" || \
+	    { echo "FAIL: output missing server-reported-failed text" >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  grep -q "STUB-MARKER" "$$SMOKE_OUT/capture.txt" || \
+	    { echo "FAIL: output missing stub stderr (STUB-MARKER)" >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  [ -z "$$(find "$$SMOKE_RUNLOG" -type f 2>/dev/null | head -1)" ] || \
+	    { echo "FAIL: runlog-root should hold no files but found:" >&2; find "$$SMOKE_RUNLOG" -type f >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; \
+	  echo "Dead-stub arm: PASS"
+
+.PHONY: probe-agent-binding
+probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallowedTools: actually bind under bypassPermissions? (6 short sessions, ~13k tokens)
+	# agent-smoke above reads what the runtime RESOLVED; this reads what it
+	# BOUND, which is the gap issue #1084 names. Six arms — granted, granted
+	# AND denied, omitted — each with tool search off and on, spawn a probe
+	# agent and check whether a harmless tool call actually landed, read off
+	# the tool_result rather than the agent's own prose.
+	#
+	# Answered 2026-08-30 (Claude Code 2.1.251, SDK 0.2.128): BOTH bind, so a
+	# deny is redundant with omitting the tool. Re-run when the CLI or the SDK
+	# moves, or before adding a deny on the strength of it binding.
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python dev/probe_agent_binding.py
 
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
@@ -354,8 +402,14 @@ harness-lint: ## Undefined-name check for eval/harness (ruff F821 — catches a 
 replay-check: ## Acceptance check for the write-replay engine: reconstruct every committed e2e run and compare against its final-state sidecar
 	# Offline and free — no API key, no live calls. Reports reconstruction
 	# fidelity per section; it is a REPORT, not a gate (the corpus grows weekly
-	# and the rate moves with it). Baseline 2026-08-15: 136/154 (88%) exact id
-	# match on all 12 sections. Run after any change to harness/replay.py.
+	# and the rate moves with it). Measured 2026-08-23: 21/157 (13%) exact id
+	# match on all 12 sections, down from 136/154 (88%) recorded 2026-08-15.
+	# CAUSE: the e2e capture strip, not harness/replay.py, which is
+	# byte-identical across the drop — the strip dropped the response_summary
+	# this engine reads its ids out of. Fixed forward, so the strip now keeps a
+	# remnant; the runs already stripped are not recoverable, so the rate returns
+	# only as new runs age in. Read the current number from a run, not from this
+	# comment. Run after any change to harness/replay.py.
 	cd eval/harness && uv run python scripts/check_replay_fidelity.py
 
 .PHONY: eval-skill
@@ -378,9 +432,9 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
 
 .PHONY: gate-skill
-gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test + holdout (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
+gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
 	# The verify step of the skill-improvement loop (docs/skill-lifecycle.md §6).
-	# Runs the mined motivating test + the skill's holdout tests on your working-tree
+	# Runs the mined motivating test on your working-tree
 	# candidate (one side, mock-backed) and compares to the incumbent scores from the
 	# skill's most recent run-log — the pre-edit `make eval-skill` run you did at
 	# step 4, with human .ann corrections overlaid. Prints a per-dimension comparison
@@ -418,12 +472,16 @@ prune-runlogs: ## Maintenance sweep over the committed run logs: make prune-runl
 	# value is the same normalized string build_snapshot hashes, so no re-run
 	# is needed and no skill's active state changes.
 	#
-	# STRIP=1 drops response_summary from e2e run logs older than 14 days
-	# (STRIP=N for a different window), keeping tool / args / is_error. Unlike
-	# the unit corpus this is keyed on age and strips rather than deletes — e2e
-	# has no per-skill run-log invariant to protect, and response_summary is the
-	# only field with no programmatic reader. The .ann.json / .final-tree /
-	# .final-research calibration triple is never touched at any age.
+	# STRIP=1 reduces response_summary to its replay remnant in e2e run logs
+	# older than 14 days (STRIP=N for a different window), keeping tool / args /
+	# is_error plus the ids harness/replay.py reads back. Unlike the unit corpus
+	# this is keyed on age and strips rather than deletes — e2e has no per-skill
+	# run-log invariant to protect. It is NOT a field nothing reads: replay.py
+	# takes entryIds out of it, did_not_land reads the no-project marker, and
+	# test_e2e_mcp_health replays four exempt runs through it. Believing
+	# otherwise is what cost the replay engine 88% of its fidelity. The
+	# .ann.json / .final-tree / .final-research calibration triple is never
+	# touched at any age.
 	cd eval/harness && uv run python -m scripts.prune_runlogs \
 	  $(if $(REHASH),--rehash,) \
 	  $(if $(PRUNE),--prune-unit $(if $(filter-out 1,$(PRUNE)),$(PRUNE),),) \
@@ -443,7 +501,7 @@ optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger q
 	cd eval/triggering && uv run python -m scripts.run_loop \
 	  --eval-set eval_sets/$(SKILL).json \
 	  --skill-path ../../packages/engine/plugin/skills/$(SKILL) \
-	  --model "$${MODEL:-claude-sonnet-4-6}" --results-dir ../runlogs/optimizer --verbose
+	  --model "$(if $(MODEL),$(MODEL),claude-sonnet-4-6)" --results-dir ../runlogs/optimizer --verbose
 
 .PHONY: e2e-preflight
 e2e-preflight: ## Check a machine is ready to run e2e tests (FS login, built server, API key, deps, live MCP connection ~30s)
@@ -524,7 +582,7 @@ e2e-author: ## Fixture-authoring script, for developers: make e2e-author ARGS="s
 
 .PHONY: e2e-validate
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
-	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
+	cd eval/harness && uv run python -m e2e.validate_fixture $(if $(TEST),$(TEST),--all)
 
 .PHONY: judge-report
 judge-report: ## Non-discrimination scan of the UNIT judge over committed run logs: make judge-report | SKILL=<name>. Reads committed JSON only — no API calls, no cost.
@@ -538,7 +596,7 @@ e2e-calibrate: ## Run judge calibration against committed run annotations (maint
 	cd eval/harness && uv run python -m e2e.calibrate_judge
 
 .PHONY: e2e-corpus
-e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: make e2e-corpus | TEST=<slug> | SINCE=all|N|YYYY-MM-DD | RECOMPUTE=1 | CALIBRATE=1
 	# Pure analysis over committed run JSONs — no live run, no API.
 	#
 	# Defaults to the last 14 days and prints the window it used: the repo
@@ -554,7 +612,19 @@ e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: mak
 	# so pre-#972 runs whose verdict was overwritten by a guardrail bypass show
 	# their real genealogical verdict. Runs with unknown compliance are reported
 	# as `not_checked` and never counted as clean.
-	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+	#
+	# RECOMPUTE=1 also re-derives violations from tool_calls + committed sidecars
+	# (the stored field is a floor; pre-detector runs record none) and prints a
+	# spend line (recorded / estimated / unrecoverable, never blended). CALIBRATE=1
+	# reports the estimate's measured accuracy over runs carrying both (issue #1484).
+	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),) $(if $(RECOMPUTE),--recompute,) $(if $(CALIBRATE),--calibrate-cost,)
+
+.PHONY: eval-inventory
+eval-inventory: ## Six corpus counts (unit tests/suites, e2e fixtures/runs/costed, specs), each by its predicate: make eval-inventory
+	# Pure analysis over committed files — no live run, no API. Reproduces the
+	# counts that drift in docs/architecture.md §9.1/§9.3, each defined by a
+	# printed predicate rather than a hand count (issue #1484 c).
+	cd eval/harness && uv run python -m e2e.inventory
 
 .PHONY: e2e-agent-tools
 e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over committed e2e runs (issue #1085): make e2e-agent-tools | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
@@ -570,19 +640,30 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-guardrail-shadow
-e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 stored shadow families over committed runs: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1
+e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc + §11 unnamed-delegate shadow families over committed runs, stored and recomputed: make e2e-guardrail-shadow | TEST=<slug> | WINDOWS=10,40 | SINCE=all|N|YYYY-MM-DD | REPLAY=1 | FEEDBACK_DIR=~/feedback PLATFORMS=<dir>=web,<dir>=darwin
 	# Also pure analysis, no API. Windowed to 14 days like every other reader;
+	# FEEDBACK_DIR= is the exception -- it scans hosted feedback bundles outside
+	# the repo, is NOT windowed, and ignores TEST/WINDOWS/SINCE/REPLAY (#1558).
 	# SINCE=all for a maximum-sample replay.
 	# NOT a calibration tool: §7 is shadow-only permanently (its success gate
 	# cannot see skill completion — see guardrail-enforcement-spec.md §7 and
 	# `make e2e-skill-episodes`), so WINDOWS= compares are for reading the
 	# signal, not for choosing a value to ship.
-	# REPLAY=1 additionally RECOMPUTES the §8 person_evidence provenance check
-	# from tool_calls + each fixture's committed seed tree (issue #1231). The
-	# stored-entry count above only covers runs made after #1178 merged; the
-	# replay is what makes the pre-hook corpus readable, and what lets a
-	# candidate narrowing of the rule be scored before it ships.
-	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),) $(if $(REPLAY),--replay,)
+	# REPLAY=1 additionally RECOMPUTES the shadow families instead of only reading
+	# what runs stored: the four post-hoc families (the §8 person_evidence
+	# provenance check from tool_calls + each fixture's committed seed tree, and the
+	# three §7/§7.5 checks from each run's committed final-research / final-tree
+	# sidecars) and the §11 unnamed-delegate check (issue #980) from tool_calls,
+	# which is the only half that reflects a later detector change such as the
+	# namespaced-agent_type tolerance. The §11 count always prints its attribution
+	# denominator — how many runs carry any caller attribution to fire on at all.
+	# READ THE REPLAY BEFORE CONCLUDING A CHECK NEVER FIRES. The stored counts
+	# above only cover runs made after each check shipped -- all three post-hoc
+	# checks landed in August against a corpus that is 84% July, so their zeros
+	# measured the corpus's age, not the behaviour. Replaying turns two of the
+	# three into real counts. Counts, never rates: this is behaviour presence over
+	# the corpus, not a per-run compliance score.
+	cd eval/harness && uv run python -m e2e.guardrail_shadow_report $(if $(FEEDBACK_DIR),--feedback-dir $(FEEDBACK_DIR),) $(if $(PLATFORMS),--platforms $(PLATFORMS),) $(if $(TEST),--test $(TEST),) $(if $(WINDOWS),--windows $(WINDOWS),) $(if $(SINCE),--since $(SINCE),) $(if $(REPLAY),--replay,)
 
 .PHONY: e2e-skill-episodes
 e2e-skill-episodes: ## Per-skill episode fingerprint over committed runs (issue #1463): make e2e-skill-episodes | TEST=<slug> | ALL_SKILLS=1 | SINCE=all|N|YYYY-MM-DD
@@ -602,6 +683,20 @@ e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #
 	# transcript in #1238, so today it covers 2 of 145 runs while the transcripts
 	# hold 20 of the 23 events. Reading only one silently reports a fraction.
 	cd eval/harness && uv run python -m e2e.nudge_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-transcribe-failures
+e2e-transcribe-failures: ## How often image_transcribe fails to REACH OpenRouter, over committed e2e runs (issue #1594): make e2e-transcribe-failures | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. Replaces the shell snippet
+	# in issue #1594, which counted stripped calls in its denominator and could
+	# never match them in its numerator — so re-running it made a 9.7% rate print
+	# as 7.6% and read as the problem receding. Every rate here carries the
+	# denominator it was taken over, the stripped tally is a first-class line, and
+	# the by-author split states in words whether the corpus can actually separate
+	# a bad machine from a bad service (today it cannot). Same 14-day horizon as
+	# e2e-wiki-failures and for the same reason: it reads response_summary.
+	cd eval/harness && uv run python -m e2e.image_transcribe_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
@@ -634,6 +729,36 @@ e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latenc
 	# BY_SKILL needs a run committed after 2026-07-26 (timeline tool-name tagging);
 	# older runs report "no skill-phase data" rather than crashing.
 	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-compaction
+e2e-compaction: ## record_search subjectId supply by compaction segment, over committed e2e runs (issue #1155): make e2e-compaction | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs' usage.timeline +
+	# tool_calls. A run is segmentable only from a run committed after
+	# 2026-07-26 (#895, timeline tool-name tagging) -- older runs are excluded
+	# and the count is reported, not silently dropped. Segments 0-2 are
+	# "early", 3+ is "late" (issue #1155's split). The bare command's 14-day
+	# SINCE default is too narrow for this report's own question: both windows
+	# issue #1155 asks to compare are already past it as of writing --
+	# SINCE=2026-07-27 (the ranking fold) and SINCE=2026-08-04 (the
+	# rankingSkipped note) are the two invocations that answer it.
+	cd eval/harness && uv run python -m e2e.compaction_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-branch-only
+e2e-branch-only: ## Graded e2e runs that exist on another ref but not HEAD (issue #1444): make e2e-branch-only
+	# On-demand crawl, not embedded in any reader (measured 2026-08-25: 23
+	# stale-branch hits against 0 in-flight runs that day -- a reader-embedded
+	# version would add that noise to every invocation; see the module
+	# docstring for why that count is a dated snapshot, not a standing
+	# property). The module itself makes no network call; this recipe fetches
+	# first (--prune, so a deleted remote branch doesn't linger as a stale
+	# local ref either) so a branch nobody has locally yet isn't invisible to
+	# it -- an in-flight graded run was once missed by the crawl only because
+	# it had never been fetched here. Does not distinguish in-flight work
+	# from abandoned; triage by hand.
+	git fetch --prune origin
+	cd eval/harness && uv run python -m scripts.branch_only_runlogs
 
 .PHONY: provenance-report
 provenance-report: ## Identifiers a skill persisted that no input supplied: make provenance-report [SKILL=<name>]

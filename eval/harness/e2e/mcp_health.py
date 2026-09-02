@@ -105,8 +105,8 @@ _UNAVAILABLE_STATUSES = frozenset({"failed", "needs-auth", "disabled"})
 # That is not a precaution; it is measured. Against this CLI (2026-08-04) the
 # init message for a HEALTHY genealogy server arrives at ~11s carrying
 # "pending" (it settles to "connected"/47 tools at ~25s), while a server that
-# died at startup has already settled to "failed" by the time its init arrives
-# at ~25s. So a `status != "connected"` abort would have killed EVERY healthy
+# died at startup has already settled to "failed" by the time its init
+# arrives (~0.3-1.0s, re-measured 2026-08-27 on CLI 2.1.248; was ~25s on 2026-08-04). So a `status != "connected"` abort would have killed EVERY healthy
 # e2e run, and the three-way split is what makes the init check safe. A
 # `pending` that never resolves — or a dead server that settles late — produces
 # exactly the zero-`mcp__`-calls signature the backstop watches for.
@@ -292,6 +292,7 @@ def unavailable_cause(
     *,
     backstop: bool = False,
     queries: list[str] | None = None,
+    server_stderr: list[str] | None = None,
 ) -> str:
     """Why the surface is judged absent — the half both callers share.
 
@@ -305,6 +306,12 @@ def unavailable_cause(
     `NotRequired` on the SDK type and documented as present only when the
     status is `failed` — and in the entry-absent arm there is no entry at all —
     so the text degrades to naming the absence rather than rendering `None`.
+
+    `server_stderr` (issue #1301) is the bounded list of `Server stderr: `
+    lines a caller read from the CLI's own per-server JSONL log — the SDK's
+    `stderr` callback never receives the MCP child's output, so this is the
+    only route to the server's own diagnostic text. Optional and additive:
+    `None`/empty leaves this function's output identical to before #1301.
     """
     if backstop:
         cause = (
@@ -330,6 +337,9 @@ def unavailable_cause(
         detail = entry.get("error")
         if detail:
             cause += f": {detail}"
+    if server_stderr:
+        shown = "\n".join(server_stderr)
+        cause += f"\nCaptured server stderr:\n{shown}"
     return cause
 
 
@@ -338,6 +348,7 @@ def unavailable_message(
     *,
     backstop: bool = False,
     queries: list[str] | None = None,
+    server_stderr: list[str] | None = None,
 ) -> str:
     """What a genealogist reads when a RUN is aborted. Criterion 4 is these words.
 
@@ -346,14 +357,24 @@ def unavailable_message(
     copy is ever seen — that run writes no files — so these words are the whole
     artifact. Their job is to stop someone re-researching a case that was never
     actually attempted.
+
+    `server_stderr` (issue #1301): when present, the closing line pointing the
+    reader at `make e2e-preflight` for "the server's own error text" is dropped
+    — that text is already printed above, in `unavailable_cause`'s own output,
+    so repeating the pointer would send the reader to re-run something for
+    information they already have in front of them.
     """
+    closing = (
+        "" if server_stderr
+        else "\nTo see the server's own error text, run `make e2e-preflight`."
+    )
     return (
         "MCP UNAVAILABLE — "
-        f"{unavailable_cause(entry, backstop=backstop, queries=queries)}.\n"
+        f"{unavailable_cause(entry, backstop=backstop, queries=queries, server_stderr=server_stderr)}.\n"
         "The genealogy tools were absent from this session, so no research was "
         "possible and nothing about this run reflects the fixture or the "
         "records.\n"
         "This is an ENVIRONMENT failure: RE-RUN the test. Do NOT re-research "
-        "the case, and do not read this as a research result.\n"
-        "To see the server's own error text, run `make e2e-preflight`."
+        "the case, and do not read this as a research result."
+        f"{closing}"
     )

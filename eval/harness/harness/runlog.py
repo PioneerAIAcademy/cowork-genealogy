@@ -21,9 +21,10 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import re
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -105,6 +106,19 @@ class SingleRun:
     # Skill-execution attempts (1 = clean first try; >1 = transient
     # stall/error retries). The per-run stall-tax signal.
     skill_attempts: int = 1
+    # Cache WRITES. Priced separately from cache reads and 20x them at the
+    # 1-hour rate the repo's table uses (e2e/pricing.py, which measured the
+    # 5-minute rate at 12.5x and rejected it), so a run log without this
+    # cannot be reconciled against its own `skill_cost_usd` — which is what
+    # let a paired skill's tokens read as a 72% saving that was really the
+    # subagent's usage going uncounted.
+    cache_creation_input_tokens: int = 0
+    # The SDK's per-model ledger for this run, keyed by model id, verbatim.
+    # The token fields above are its column sums. Two keys here means the
+    # run delegated to a plugin agent on its own `model:` pin — the only
+    # record of what the pin actually cost. `{}` on the abort path and on
+    # any CLI old enough not to emit `modelUsage`.
+    model_usage: dict[str, Any] = field(default_factory=dict)
 
 
 # ---- Timing helpers ------------------------------------------------------
@@ -147,7 +161,15 @@ _DIMENSION_RANK = {1: 1, 2: 2, 3: 3, None: 4}
 
 
 def aggregate_per_run_outcome(per_run: list[str]) -> str:
-    """Aggregate per-run outcomes per unit-test-spec.md §7."""
+    """Aggregate per-run outcomes per unit-test-spec.md §7.
+
+    Operates on the strings `_compute_outcome` already produced, so the
+    validator-dominates-cap-abort demotion (issue #1866 V7) is baked in
+    upstream: a run that failed a validator under a deterministic cap
+    arrives here as "fail", never "aborted". This abort-precedence branch
+    therefore only fires on a genuinely ungradeable run, and the two sites
+    agree by construction.
+    """
     if not per_run:
         raise RunlogAssemblyError("no per-run outcomes to aggregate")
     if "aborted" in per_run:
@@ -294,6 +316,8 @@ def assemble_test_entry(
     mcp_fixtures: list[str],
     runs: list[SingleRun],
     timestamp_for_run_id: str,
+    grading_mode: str | None = None,
+    dimensions_gate_outcome: bool | None = None,
 ) -> dict[str, Any]:
     """Build a per-test entry for the multi-test run log envelope.
 
@@ -301,6 +325,18 @@ def assemble_test_entry(
     each run's `run_id` for traceability. Does not include any envelope
     metadata (skill, model, harness_version, etc.) — those go on the
     envelope, not duplicated per test.
+
+    `grading_mode` / `dimensions_gate_outcome` come from
+    `orchestrator.grading_mode_for` and say what decided this outcome. Both are
+    optional and omitted when None, so every run log committed before #1000 —
+    and every caller that does not supply them — still validates; they are not
+    in the schema's `required` list for the same reason.
+
+    Without them a reader cannot tell a designed contradiction from a broken
+    one: a `grade_on_invariant` negative renders `outcome: "pass"` beside a
+    dimension scored 1 exactly as a positive test would, where that 1 forces a
+    fail. That ambiguity produced an incorrect correctness claim inside a PR
+    approval (#1000).
     """
     if not runs:
         raise RunlogAssemblyError("at least one run required")
@@ -326,6 +362,9 @@ def assemble_test_entry(
         "num_turns": sum(r.num_turns for r in runs),
         "input_tokens": sum(r.input_tokens for r in runs),
         "cached_input_tokens": sum(r.cached_input_tokens for r in runs),
+        "cache_creation_input_tokens": sum(
+            r.cache_creation_input_tokens for r in runs
+        ),
         "output_tokens": sum(r.output_tokens for r in runs),
         "judge_input_tokens": sum(r.judge.input_tokens for r in runs),
         "judge_cached_input_tokens": sum(r.judge.cached_input_tokens for r in runs),
@@ -350,7 +389,9 @@ def assemble_test_entry(
             "skill_attempts": r.skill_attempts,
             "input_tokens": r.input_tokens,
             "cached_input_tokens": r.cached_input_tokens,
+            "cache_creation_input_tokens": r.cache_creation_input_tokens,
             "output_tokens": r.output_tokens,
+            "model_usage": r.model_usage,
             "skill_cost_usd": r.skill_cost_usd,
             "output": r.output,
             "validators": {
@@ -376,7 +417,7 @@ def assemble_test_entry(
             run_entry["ended_at"] = r.ended_at
         runs_block.append(run_entry)
 
-    return {
+    entry: dict[str, Any] = {
         "test_id": test_id,
         "test_type": test_type,
         "expected_outcome": expected_outcome,
@@ -391,6 +432,14 @@ def assemble_test_entry(
         "totals": totals,
         "runs": runs_block,
     }
+    # Omitted rather than written as null: `null` would assert "this test has no
+    # grading mode", which is false for every test. Absent means "this run log
+    # predates #1000", which is what a reader needs to know.
+    if grading_mode is not None:
+        entry["grading_mode"] = grading_mode
+    if dimensions_gate_outcome is not None:
+        entry["dimensions_gate_outcome"] = dimensions_gate_outcome
+    return entry
 
 
 # ---- Run-log envelope -----------------------------------------------------
@@ -406,6 +455,7 @@ _TOTALS_KEYS = (
     "num_turns",
     "input_tokens",
     "cached_input_tokens",
+    "cache_creation_input_tokens",
     "output_tokens",
     "judge_input_tokens",
     "judge_cached_input_tokens",
@@ -616,6 +666,39 @@ def _sidecar_refs(runlog: Path, skill_dir: Path) -> list[Path]:
     return out
 
 
+def _replace_with_retry(src: Path, dst: Path, *, attempts: int = 8) -> None:
+    """`os.replace`, retried on a Windows sharing violation.
+
+    On Windows a rename fails with PermissionError (WinError 5/32) whenever
+    ANOTHER process holds a handle to either path — an on-access antivirus
+    scan of the just-written temp file is the common one, and the file is
+    typically released within a few hundred milliseconds. POSIX has no
+    equivalent: the rename succeeds regardless of open handles, so this loop
+    is a no-op there and costs one successful call.
+
+    This is not hypothetical. A full init-project run (14 tests, ~$2.50)
+    aborted on this exact call — `.partial_<ts>.json.tmp` -> `.partial_<ts>.json`
+    with WinError 5 — after every test had already completed. The run was
+    demoted to a `scratch_` log, which is gitignored and cannot satisfy the
+    runlog CI gate, so the whole run had to be paid for again. Retrying is
+    cheaper than re-running by three orders of magnitude.
+
+    Deliberately re-raises after the last attempt rather than falling back to
+    a copy: a silent non-atomic write is how a half-written run log would get
+    read as a real one.
+    """
+    delay = 0.05
+    for attempt in range(attempts):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(delay)
+            delay = min(delay * 2, 1.0)
+
+
 # ---- Partial (in-progress) run logs ---------------------------------------
 #
 # When the harness is stopped part-way (Ctrl-C) or crashes, the completed
@@ -658,7 +741,7 @@ def write_partial_runlog(
     validate_run_log(log)
     tmp = out.parent / (out.name + ".tmp")
     tmp.write_text(json.dumps(log, indent=2), encoding="utf-8")
-    os.replace(tmp, out)
+    _replace_with_retry(tmp, out)
     return out
 
 
@@ -670,5 +753,5 @@ def promote_partial_to_scratch(partial_path: Path, *, timestamp: str) -> Path:
     log the CRUD UI can read.
     """
     scratch = partial_path.parent / f"scratch_{timestamp}.json"
-    os.replace(partial_path, scratch)
+    _replace_with_retry(partial_path, scratch)
     return scratch

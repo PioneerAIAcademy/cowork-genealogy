@@ -53,7 +53,7 @@ the e2e benchmark; see
 
 ## Prerequisites
 
-- **Python 3.11+** with [uv](https://github.com/astral-sh/uv) (`pip install uv` or `brew install uv`).
+- **Python 3.12+** with [uv](https://github.com/astral-sh/uv) (`pip install uv` or `brew install uv`).
 - **Node.js 20+** with npm.
 - **Claude Code CLI** — required. The harness drives the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-python), which spawns the `claude` CLI as a subprocess. Install once:
   ```
@@ -278,6 +278,11 @@ gh label create eval-cosmetic-skip \
 Seniors need **Triage** or **Write** access on the repo to apply labels.
 
 ## Windows users
+
+> **Do not clone the repo under a syncing folder** (OneDrive, Dropbox, Google
+> Drive, iCloud Drive) — including `Documents` and `Desktop`, which Windows 11
+> usually syncs to OneDrive. Setup will fail partway through, with errors that
+> change each time you retry. Clone to a plain local path such as `C:\src\`.
 
 `Setup.bat` performs the one-time setup. Then `Start.bat` launches the CRUD UI and `RunTests.bat` runs the harness against the current corpus.
 

@@ -12,11 +12,17 @@ export interface AppAPI {
   onResearchUpdated: (callback: (data: unknown) => void) => void
   onGedcomxUpdated: (callback: (data: unknown) => void) => void
   onWatchError: (callback: (error: string) => void) => void
+  onFolderNotice: (callback: (message: string) => void) => void
   onSidecarUpdated: (callback: (event: { logId: string; mtime: number }) => void) => void
   removeAllWatchListeners: () => void
   getSessionLog: () => Promise<{ entries: unknown[]; sizeBytes: number }>
   selectFolder: () => Promise<string | null>
-  getState: () => Promise<{ folderPath: string | null; research: unknown; gedcomx: unknown }>
+  getState: () => Promise<{
+    folderPath: string | null
+    research: unknown
+    gedcomx: unknown
+    notice: string | null
+  }>
   listProjectFiles: () => Promise<ProjectFile[]>
   submitFeedback: (payload: {
     includeMedia: boolean

@@ -545,6 +545,63 @@ Mirrors `research_log_append` minus the sidecar:
      commit order. The healed (sanitized) tree is what persists, as with any tree
      writer.
 
+### 4.1 Concurrency — one write lock per project
+
+Steps 1–6 are a read-modify-write, and step 3's id allocation is "highest
+existing + 1" from what step 1 read. Two writers running concurrently against
+one project both read the pre-write state, both allocate the same next id, and
+the losing write is **silently lost** — the losing caller still gets a success
+naming ids that ended up on the other writer's record, and validation passes
+afterward because a lost update leaves a consistent file that merely omits a
+record. `/research` and `record-extraction` actively encourage batching across
+records with parallel subagents, so this is reached by following the skills'
+own guidance.
+
+The whole tool body — from the first read to the last write — is therefore
+serialized behind an **in-process async mutex keyed on the canonical (realpath)
+project path** (`withProjectLock` in `src/utils/project-io.ts`), falling back to
+`resolve(projectPath)` before the directory exists. Canonicalizing is what makes
+the key genuinely one-per-project: two callers naming the same project through
+different symlinks — on macOS `/tmp` is itself a symlink to `/private/tmp` — or
+through case-variant spellings on Windows would otherwise get separate mutexes
+and silently unlock the race. **One lock per project, not per file:**
+`materialize_facts` writes the tree while the composite path here writes tree +
+research together, so a per-file lock would still lose one of them. The mutex wraps the six writer entry points — `research_append`,
+`research_log_append`, `tree_edit`'s `executeTreeOps`, `materialize_facts`,
+`merge_tree_persons`, `tree_forget` — at the shared-core function only;
+`extraction_append` (→ `researchAppend`) and `tree_correct` (→ `executeTreeOps`)
+lock through their core and are **not** wrapped again, since the mutex is not
+reentrant. A same-project re-acquire — a locked writer calling another locked
+writer for the same project, the deadlock this non-reentrancy invites — is
+**rejected synchronously** with an error naming the key (tracked via an
+`AsyncLocalStorage` of held keys), so the trap surfaces as a thrown error at the
+call site instead of a silent hang. Nested locks on *different* projects remain
+allowed.
+
+**This beat compare-and-swap** (capture a hash at read, reject on change, return
+a retryable error). CAS changes the error contract of all six tools, and
+`record-extractor.md`'s "fix ONLY the ops named in `errors`" / "never retry
+blindly" instructions mean a conflict error — which names no op — only works if
+that agent body and `record-extraction/SKILL.md` are edited too, flipping the
+record-extraction run log inactive and buying a fresh paid eval + annotation.
+Serialization needs no skill or agent edit. Prose-only ("delegate serially") was
+also rejected as unenforceable and leaves the gap on the `nothing-checks`
+register.
+
+**Two residuals, recorded rather than designed around:**
+
+- The mutex binds only **within one MCP server process**. Every deployment we
+  run is one server per session (hosted: one sandbox per session; harness: one
+  stdio server per run), so it holds there. Whether two Cowork desktop sessions
+  on the same project folder share one `.mcpb` process is **unverified**; if they
+  do not, the lock does not bind across them. The change is strictly better than
+  today either way.
+- Under contention the queued call now **waits** instead of losing its write. A
+  bridged Cowork MCP call is killed at 60s (a limit imposed by the
+  bridge, not settable from our side), so a call queued behind a slow composite
+  append can be killed there — a **visible** failure replacing a silent loss. Do
+  not add a timeout or retry to work around it.
+
 ---
 
 ## 5. State-coupling invariants enforced as preconditions
@@ -567,12 +624,14 @@ audit's recommendation #5):
 | `project` update → `status: "completed"` | **every proof summary backing a resolved question carries a gps-mentor verdict** — reject while any `proof_summaries[]` entry whose `question_id` names a question that is resolved — by `status: "resolved"` **or** by a truthy `resolved` date, the same pair the row above gates — has no `evaluations[]` entry with `focus: "proof-critique"`, a matching `target_id`, and a null `superseded_by`. The critique set is snapshotted **before any op in the call applies**, so a batch cannot append its own verdict and consume it in the same call. A resolved question with **no** proof summary still passes vacuously, but that state is no longer reachable through this tool (the row above refuses the transition) — the vacuous pass now covers only documents seeded that way, so a gate on a transition does not retroactively invalidate a document that predates it | The same rule stated in the research orchestrator's prose did not hold: **23% of completed runs in the committed e2e corpus reach `completed` with at least one uncritiqued summary** — measured 2026-08-15 over 154 runs, corroborated to within 2 runs by an independent count. ADR-0011 |
 | `person_evidence` append/update → `confident` | rejected when the linked assertion's `value` carries an uncertain reading (`[?]`) **and** no other live `person_evidence` row ties that `person_id` to a distinct record. Conjunctive on purpose: a `confident` link off a single *clean* record is the ordinary case and stays legal | audit theme 8; `record-extractor.md` epistemic cap |
 | `proof_summaries` append/update setting `tier: proved`/`disproved` | the referenced question must already carry `exhaustive_declaration.declared === true` **as of the start of this call** | `guardrail-enforcement-spec.md` §5; `proofSummaryInvariants` |
+| `questions` append/update touching **either** `status` or `exhaustive_declaration` | `status: "exhaustive_declared"` requires `exhaustive_declaration.declared === true`. Checked on the post-merge entry (**live**, not snapshotted): the declaration and the status are two halves of one author's own step, and 123 of 125 corpus ops set both in the same op. Gated on EITHER field, because the invariant couples two and an op touching one can break it without naming the other — the agent's own re-invocation path lowers `declared` to false and leaves `status` alone | A zero-violation arm: **0 of 125** corpus ops refused. The converse (declared ⇒ status) has been asserted by the unit validator since it shipped and nothing asserted this direction, which is the one that leaves a question looking finished with no declaration behind it. ADR-0011 |
+| `questions` append/update setting `exhaustive_declaration.declared: true` | **no item on the question's ACTIVE plan is `in_progress`.** Read from the **pre-call snapshot**: plan-item completion is the search work's step, not this writer's — `ownership.json` lists six permitted writers of `plan_items` and `research-exhaustiveness` is not among them — so ADR-0011's snapshot condition applies. Read live it is self-satisfying: three corpus calls batch the item flips ahead of the declaration in one op list. Only `active` plans block, because `research-plan` supersedes by flipping `plans.status` alone and then forbids touching that plan again, so a stale `in_progress` item on a superseded plan would make the declaration permanently unwritable. Items still `planned` do **not** block — the orchestrator routes here before the plan is drained | **5 of 170** corpus declarations refused, one of them `antonio-lucas-spouse`, the run whose bypass opened this phase. Classified **bookkeeping**, not doctrine (lead ruling 2026-08-23) — it contradicts the project's own plan state rather than a genealogical judgment, which is what lets it be scoped this tightly. No gate carries an override in any case (ADR-0011, 2026-08-24); what a blocked researcher lacks here is a route to move the item out of `in_progress`, which no skill can do on the FamilySearch path today |
 | any section | `entry` for `append` must NOT carry an `id`; `update` must NOT change the `id` or the entry's prefix | `research-schema-spec.md:101` |
 
 The LLM still makes every substantive decision and supplies the fields — the tool
 only refuses to persist a structurally incoherent combination.
 
-**One of these is checked against pre-call state, not final state.** The batch
+**Six of these are checked against pre-call state, not final state** — the tier gate, the mentor gate, the completion conflict gate, the disputed-source tier rule, the resolved-question conflict gate, and plan completeness. (This sentence said "One" until 2026-08-23, having been written when the tier gate was the only one; count them in `research-append.ts` rather than trusting a number here.) The batch
 form mutates a single in-memory document across `ops[]` and validates the result
 once (§3.3), so an invariant evaluated at the end can be satisfied by a value
 written earlier *in the same call*. For the tier gate that is a live hole, not a
@@ -589,21 +648,41 @@ flagged but not audited (`guardrail-enforcement-spec.md` §10).
 table above, `research_append` also surfaces non-blocking advisories on the
 successful response's `validation.warnings`. One is the `person_evidence`
 **match_score** advisory (the other is §5.1's sources-without-assertions nudge,
-which shipped first): a link claiming `confidence: "confident"` that
-records no numeric `match_score` is warned, not rejected. `same_person` returns
-the 0–1 identity score and `match_score` is the field meant to carry it, yet ~94%
-of historical `person_evidence` writes leave it unset — identity asserted, never
-scored. A hard reject on day one would break ~94% of runs and the hosted path at
-once, so this ships warn-only and is measured on live runs first; graduating it to
-a reject is a separate decision (needs `@DallanQ`), the same shadow-then-graduate
-discipline as `guardrail-enforcement-spec.md` §7. It is gated on `confidence:
-"confident"` — the stateless narrowing (a write cannot see the tree, so it cannot
-tell a brand-new person from a seeded one, but the confidence claim it *can* see)
-and the narrowest claim a stateless write can check. It is not an escape hatch:
-a link that genuinely cannot be scored keeps `match_score: null` and the confidence
-its correlation analysis supports (person-evidence/SKILL.md §3). Downgrading
-confidence to silence this warning also slips the link past the confident-gated
-epistemic reject above. `personEvidenceScoreWarnings` in `research-append.ts`.
+which shipped first): a link that records no numeric `match_score` **where a
+record persona was reachable for its assertion** is warned, not rejected.
+`same_person` returns the 0–1 identity score and `match_score` is the field meant
+to carry it, yet ~94% of historical `person_evidence` writes leave it unset —
+identity asserted, never scored. A hard reject on day one would break ~94% of runs
+and the hosted path at once, so this ships warn-only and is measured on live runs
+first; graduating it to a reject is a separate decision (needs `@DallanQ`), the
+same shadow-then-graduate discipline as `guardrail-enforcement-spec.md` §7 — and
+it must answer ADR-0009 constraint 2, since `match_score` is caller-fabricable and
+a rejection therefore buys a number rather than a call.
+
+**The gate is reachability, at any confidence.** It was `confidence:
+"confident"` on the reasoning that a stateless write cannot see the
+tree but can see the confidence claim. Two things were wrong with that. It said
+nothing about a `probable` link, which is where a skipped score actually hides;
+and knowing nothing about provenance it fired on image- and full-text-sourced
+links nothing could ever score, while its escape text — "if no comparable
+FamilySearch persona exists to score against, leave `match_score` null" — invited
+the agent to read a null `record_persona_id` as that case. It is not: `same_person`
+takes two GedcomX documents plus a focus id inside each and never reads that
+field. Reachability *is* knowable statelessly — the join is
+`assertion_id → assertions[].id → log_entry_id → log[].tool/results_ref`, all
+inside the document being written — so the narrowing costs nothing in
+statelessness and buys precision. `personaReachable` in `research-append.ts`
+mirrors `_persona_reachable` in `eval/harness/harness/skill_invocation.py`;
+`guardrail-enforcement-spec.md` §4 owns the criterion.
+
+It is not an escape hatch: a link that genuinely cannot be scored keeps
+`match_score: null` and the confidence its correlation analysis supports
+(person-evidence/SKILL.md §3), and the warning stays silent there. Two nulls are
+legitimate and the warning names both — no reachable persona, and a candidate
+minted from the very persona being scored, which is circular. Downgrading
+confidence no longer silences this warning, though it still slips the link past
+the confident-gated epistemic reject above. `personEvidenceScoreWarnings` in
+`research-append.ts`.
 
 ### 5.1 Sources-without-assertions nudge (warning, not a precondition)
 
@@ -636,6 +715,48 @@ that did nothing.
 - **Warnings can be rationalized away.** This surfaces the imbalance; it does not
   compel extraction (`guardrail-enforcement-spec.md` §2). It is the proportionate
   first lever, not the last word.
+
+### 5.2 Tree-encoding completion advisory (warning, not a precondition)
+
+A **warning** — never a rejection — emitted on the successful write that sets
+`project.status: "completed"`, when the completed project holds a
+tier-≥-`probable` proof summary but **none** of the tree persons its evidence
+touches gained any new fact or relationship since the project's opening tree. It
+rides `validation.warnings` and never touches `ok`. Implemented as
+`treeEncodingCompletionWarnings` in `research-append.ts`, using the `tree_diff`
+tool against the write-once `starting-tree.gedcomx.json` baseline.
+
+- **Why a baseline file.** `research_append` loads only the *current* tree, so it
+  cannot tell a conclusion this session encoded from a fact already seeded. The
+  baseline is the opening tree, copied write-once at project creation; the diff
+  against it is what isolates this session's work.
+- **A shape match, not a foreign key — so warn, not deny.** A proof summary
+  carries no machine-readable tree reference. The subject is approximated as the
+  union of persons the summary's `supporting_assertion_ids` have `person_evidence`
+  for (`person_evidence` is the only link table). That approximation is why this
+  is advisory: it cannot certify *which* conclusion a given tree edit encodes,
+  only that *some* structure appeared for *some* evidence person. Deliberately
+  broad — it warns only when NONE of those persons gained ANY structure.
+- **Why warn and not refuse (lead ruling, 2026-08-24).** Gates ship with no
+  override mechanism until one is observed refusing correct work in the field. A
+  wrong refusal then hard-blocks a researcher from finishing correct work with no
+  route out — worse on the hosted path, where the sandbox has no text-editor
+  escape. A shape-match gate cannot clear that bar, so it ships warn-only.
+- **The fire rate, measured before shipping.** Over the committed e2e corpus
+  (`make e2e-guardrail-shadow REPLAY=1 SINCE=all`, the §11.5 shadow family), 3
+  tier-≥-probable conclusions — in 3 of the 158 committed runs scanned — added no
+  new tree structure. The gate keys facts on a content signature (type, date,
+  place, value), so filling in a date or narrowing a place on a seeded fact reads
+  as new structure rather than a false fire; on standardized data this matches
+  the shadow signature the figure is measured from. The diff also counts a fact
+  gained on a relationship present in both trees — a Marriage dated onto an
+  already-seeded Couple — so a proved marriage on a pre-existing couple is not a
+  false fire. This re-measurement corrected a first-pass 32/22% that had
+  mis-classified parentage questions naming a birth date as birth questions.
+- **Fails open on a missing baseline.** A project created before the baseline
+  shipped has no `starting-tree.gedcomx.json`; the check returns no warning rather
+  than treating every fact as new. Fires only on the call that *sets* `completed`,
+  so it never re-warns on a later write to an already-completed project.
 
 ---
 
@@ -702,6 +823,7 @@ plain entry write fits here, the computed build may warrant its own tool),
 | `record_id` matching no sidecar result while a persona is claimed (§3.5) | op-indexed hard error naming the sidecar's recordIds; write nothing |
 | resolved/supplied `standard_place` country contradicts the place text (§3.6) | op-indexed hard error; write nothing |
 | `resolveStandardPlace` network call fails | best-effort: leave `standard_place` unset, add a warning; never fail the op |
+| `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting documents carry a **call-introduced** `validateParsed` error | write nothing (neither file); `{ ok: false, errors, opsReceived? }`. A pre-existing error the call did not introduce rides as a warning and does not block |
 
 ---
@@ -794,10 +916,17 @@ Three ways to express a lane, and only one holds:
 | A parameter on the tool input | **No** — the caller supplies the input, so it can widen its own lane |
 | Tool identity | **Yes** — the agent's `tools:` frontmatter omits the broad writer, so there is no call it can emit |
 
-The lane is therefore the *tool*, and the extractor's frontmatter omits
-`research_append` and additionally names it in `disallowedTools` (a deny is
-enforced even under `permission_mode="bypassPermissions"`, which the hosted path
-runs; an omission alone is not).
+The lane is therefore the *tool*, and the extractor's frontmatter simply omits
+`research_append`. **The omission is the whole mechanism.** This spec used to say
+the opposite — that a deny is enforced under
+`permission_mode="bypassPermissions"` and "an omission alone is not." Probed
+2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128 (`make
+probe-agent-binding`, reproduced twice): under `bypassPermissions` both bind, and
+a tool merely omitted from `tools:` is absent from the agent exactly as a denied
+one is. The agent carried a `disallowedTools:` deny alongside the omission for
+six weeks; it restated it and has been deleted. What catches someone adding
+`research_append` back to `tools:` is the permission snapshot in
+`agent-tool-names.test.ts`, which fails on any change to an agent's list.
 
 **Enforcement evidence.** A subagent declared `tools: Read, Grep, Glob, Bash`,
 told its caller had authorized overriding its convention, then instructed to
@@ -818,18 +947,20 @@ denial mechanism this section depends on is real in Cowork.
 deployment-dependent: `mcp__genealogy__*` is the arbitrary `mcp_servers` dict
 key the harnesses, `.mcp.json`, and the hosted web control plane chose, while
 Cowork exposes the host-installed `.mcpb` under `manifest.json`'s `display_name`
-either way, but namespaces it through a remote-device *bridge*
-(`mcp__remote-devices__Genealogy_Research__*`) only when the task runs in the cloud;
-a task running on the user's own computer reaches it directly as
-`mcp__Genealogy_Research__*`. No single spelling resolves everywhere, so every agent
-lists each MCP tool under **all three** — in `tools:` and in `disallowedTools:`
-alike. The latter matters most here: a deny naming only the
-unresolvable spelling denies nothing, which would have left this section's
-belt-and-braces layer inert in Cowork exactly where `bypassPermissions` makes
-it load-bearing. Enforced by `tests/packaging/agent-tool-names.test.ts`.
+either way — namespaced through a remote-device *bridge*
+(`mcp__remote-devices__Genealogy_Research__*`) or bare
+(`mcp__Genealogy_Research__*`), and the spelling a Cowork session exposes has been
+observed to move (bare live in #1341 on 2026-08-04/05, absent in the 2026-08-15
+censuses; see ADR-0004). No single spelling resolves everywhere, so every agent
+lists each MCP tool under **all three** in `tools:` (and would in a
+`disallowedTools:`, if one ever returned). It matters on the `tools:` side: an
+entry naming no spelling the session recognizes grants nothing, and when *every*
+entry misses the runtime refuses the agent outright. The deny needs the same
+spellings for the weaker reason that a deny naming only an unresolvable spelling
+denies nothing. Enforced by `tests/packaging/agent-tool-names.test.ts`.
 
 With that in place, this section's guarantee holds in every environment. It did **not**
-hold for an on-computer Cowork task until the third spelling was added: the deny
+hold until the third spelling was added: the deny
 named no spelling that session recognized, so it denied nothing.
 `CLAUDE.md`'s superseded claim that a single qualified spelling makes an agent
 "behave identically" across them has been corrected accordingly. The one residual
@@ -911,9 +1042,11 @@ why its message names no write tool.
 
 `match_score` also remains fabricable by `person-evidence` itself. It is not
 derivable at the tool boundary: `same_person`'s tree side is a hand-curated
-"record-sized" slice, and a local stub returns a degenerate near-zero score the
-skill must interpret as *no score*. The *value* therefore cannot be validated
-here; what can be is its **presence**, which is the warn-only advisory
+"record-sized" slice, and a *thin* subject — a stub carrying little more than a
+name — scores near zero against everything, since the match engine scores on
+document content. (That is a content signal, not an id artifact: an ARK-less or
+locally-minted person is scorable, measured at `0.9999484` against a `0.999967`
+control.) The *value* therefore cannot be validated here; what can be is its **presence**, which is the warn-only advisory
 `personEvidenceScoreWarnings` (alongside `personEvidenceInvariants`) decided in
 issue #1006 (2026-08-01). That decision
 supersedes an earlier reading of this paragraph as "the lever is eval/rubric,

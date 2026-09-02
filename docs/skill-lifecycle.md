@@ -102,6 +102,14 @@ Then **fully quit and reopen Claude Desktop.** Cowork runs the uploaded `.zip`,
 not your working tree — skip the rebuild and your fix will look like it did
 nothing.
 
+After reinstalling the plugin, ask the Cowork session: *"List every tool
+available to you, with names spelled exactly as you see them."* If the genealogy
+tools carry a prefix that appears in no agent's `tools:` list, stop — every
+plugin agent is being refused a spawn and every `disallowedTools:` deny is open —
+and file an issue with `--label nothing-checks`. This one prompt is the only known
+detector that the Cowork MCP registrar has moved (ADR-0004); nothing in CI reaches
+Cowork in any run mode.
+
 ---
 
 ## The steps
@@ -299,11 +307,9 @@ has nothing to compare to.
 > open each in the grading UI, and flip the **"Hold out from the
 > skill-improver"** switch on. Leave them set.
 >
-> Why it matters: step 6's gate re-runs your hold-outs to check nothing broke.
-> **If the skill has no hold-outs, that check silently does nothing** and a
-> "LOOKS GOOD" means less than it looks. Setting or changing a hold-out also
-> changes how the run is graded, so doing it *after* a run invalidates that
-> run — if you've already run, set them and run again.
+> Setting or changing a hold-out changes how the run is graded, so doing it
+> *after* a run invalidates that run — if you've already run, set them and run
+> again.
 
 Now read the **sampled** tests and correct the judge. The sidebar marks the
 rest `not sampled` — five tests per run get reviewed, not all of them, and the
@@ -405,8 +411,28 @@ held. Place every finding first:
    `Read` was measured to skip silently (`docs/architecture.md` §3.4). Sending an
    agent finding to a `references/` file creates a file the agent will never
    read.
-4. **Core doctrine** (a genuine cross-record-type behavior change) → a
-   SKILL.md edit, gated by the unit suite.
+4. **Core doctrine** (a genuine cross-record-type behavior change) → **first
+   ask whether it can be a tool rule; only then a SKILL.md edit**, gated by the
+   unit suite.
+
+   **Lane 4 is not "write prose" — it is "prose is the last resort."** Before
+   editing the body, apply ADR-0011's first question: *can this be decided by
+   reading the project documents alone?* If yes it belongs in the writer tool
+   as a precondition, where it binds in every environment and cannot be argued
+   with. Prose is for judgement a predicate cannot express.
+
+   **The evidence is not close.** Converting `proof-conclusion` to a
+   skill-agent pair, five separate behaviours on a single test fixture were
+   each written correctly in the body, read by the agent, and not followed —
+   the tier a disputed source permits, whether to update or append a summary,
+   whether a blocked conclusion closes its question, and two more. Each took
+   between one and five rewordings without holding. Each held on the first run
+   after it moved into `research_append`. Several of the rewordings also broke
+   a neighbouring test, because a prompt has no scope: a sentence added to a
+   gate section changed tier selection three sections away.
+
+   So the question to ask of a doctrine finding is not "how should this be
+   worded" but "why is this being enforced by asking nicely?" 
 
 Lanes 1–3 merge conflict-free and in parallel; only lane 4 touches the
 contended prompt. When you're torn between 2 and 4, check the transcript: if
@@ -505,14 +531,18 @@ make gate-skill SKILL=<skill> TEST=<test-id>
 **Windows:** double-click `eval\GateSkill.bat` — it asks for the skill and the
 test id.
 
-The gate re-runs just the test you mined plus the skill's hold-outs, and
-compares them against **your corrected grades** from step 4 — human judgment,
-not judge-versus-judge. It's fast and cheap, so iterate here rather than
-re-running the whole suite. It prints one of:
+The gate re-runs just the test you mined and compares it against **your
+corrected grades** from step 4 — human judgment, not judge-versus-judge. It's
+fast and cheap, so iterate here rather than re-running the whole suite. It checks
+the motivating test only; a regression elsewhere in the suite is caught by the
+full `make eval-skill` run you must land before the PR can merge, not here. It
+prints one of:
 
-- **LOOKS GOOD** — the failing dimension passes and nothing else broke.
-- **NEEDS YOUR EYES** — the fix didn't land, or a hold-out got worse. Read the
-  table, adjust your edit, run it again. Don't open the PR yet.
+- **LOOKS GOOD** — the failing dimension passes and nothing else in that test
+  broke.
+- **NEEDS YOUR EYES** — the fix didn't land, or another dimension of that test
+  got worse. Read the table, adjust your edit, run it again. Don't open the PR
+  yet.
 - **INCONCLUSIVE** — the bug never showed up on the *old* skill, so nothing was
   proven either way. Usually the test is too weak. Grading isn't perfectly
   repeatable, so run it once more before going back to step 3 for a sharper

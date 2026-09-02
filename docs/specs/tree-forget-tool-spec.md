@@ -65,8 +65,12 @@ tree_forget({
 })
 ```
 
-Writes **only** `tree.gedcomx.json` (plus the restore file, §5). Never touches
-`research.json`, the log, or the `results/` sidecars.
+Writes `tree.gedcomx.json` (plus the restore file, §5), and — when the project
+holds a completion-gate baseline (`starting-tree.gedcomx.json`) — rewinds that
+baseline to the same forgotten tree, so a later re-derivation reads
+as new structure against it rather than as a no-op. It never *creates* a
+baseline where none exists. Never touches `research.json`, the log, or the
+`results/` sidecars.
 
 ### 2.1 Selectors
 
@@ -77,7 +81,7 @@ the `{ operation, ...fields }` shape `tree_edit` takes:
 |---|---|---|
 | `parents-of` | `personId` | the person's parents, the ParentChild links to them, **and the person's own `Parents` documentary facts** (see §2.1.1) |
 | `children-of` | `personId` | the person's children, and the ParentChild links to them |
-| `spouses-of` | `personId` | the person's spouses, the couple relationships, **and the person's own `Marriage`/`Divorce`/`Annulment` documentary facts** (see §2.1.1) |
+| `spouses-of` | `personId` | the person's spouses, the couple relationships, **and the person's own couple-event documentary facts** (`Marriage`, `Divorce`, `Annulment`, `Engagement`, `MarriageBanns`, `Separation`; see §2.1.1) |
 | `birth-of` | `personId` | that person's Birth facts |
 | `death-of` | `personId` | that person's Death facts |
 | `facts-of` | `personId`, `factType` | that person's facts of one type (e.g. `Marriage`); `factType` matches case-insensitively |
@@ -113,12 +117,36 @@ rather than erroring. Reported as `factsByType`, a kind not a value.
 
 - **`parents-of`** strips the subject's `Parents`-type fact (a fact whose
   `value` names the parents, e.g. `"Geo… Wilcox - Caroline E Woodruff"`).
-- **`spouses-of`** strips the subject's `Marriage`/`Divorce`/`Annulment`-type
-  facts, the person-level echo of the conclusion the `Couple` relationship also
-  carries as its own facts.
+- **`spouses-of`** strips the subject's couple-event facts (`Marriage`,
+  `Divorce`, `Annulment`, `Engagement`, `MarriageBanns`, `Separation`), the
+  person-level echo of the conclusion the `Couple` relationship also carries
+  as its own facts.
 
 `children-of` needs no such sweep: the redundant `Parents` fact lives on the
 child, whom `children-of` removes wholesale.
+
+**Left-behind facts that share a type prefix are warned about, not swept.**
+FamilySearch also emits free-text custom fact types built on
+a canonical prefix — `Marriage Registration`, `Marriage+bond`, `Marriage
+Notice` — that are real, distinct documentary events (a marriage bond, a
+civil registration, a banns notice), not redundant echoes of the couple
+conclusion. Exact-match is deliberate: pattern-matching the prefix to delete
+these would destroy evidence on an irreversible tool. Instead, after a
+`parents-of`/`spouses-of` sweep, one `validation.warnings` entry is emitted
+per left-behind person-level fact whose type's leading token (`+` normalized
+to a space, e.g. `Marriage+bond` → `Marriage`) matches a swept type without
+being an exact match — ids and canonical type prefixes only, never the fact's
+full type string or `value` (free-text custom types can contain names):
+
+> `A ${prefix}-prefixed fact '${id}' on ${personId} was left in the tree — its
+> type is not an exact match for the ${selector} sweep, so it was not removed.
+> Confirm it does not duplicate the forgotten conclusion.`
+
+This does not generalize to every leak: a fact whose type string is free text
+naming the spouse directly (not a canonical-prefix variant) isn't caught by
+this check at all, because the warning's token set is drawn from the swept
+types and a free-text sentence type may share no prefix. Widening that set is
+mechanically possible; whether it should widen is a separate question.
 
 **Blast radius of the `spouses-of` sweep.** The fact match changes real behavior
 at scale: measured over committed snapshot trees (2026-08-14, scanning
@@ -289,13 +317,21 @@ identifier-casing rule).
     factsByType: { [factType: string]: number },
   },
   remaining: { persons: number, relationships: number },
-  filesWritten: string[],           // [] under dryRun, else ["tree.gedcomx.json"]
+  filesWritten: string[],           // [] under dryRun, else ["tree.gedcomx.json"],
+                                    // plus "starting-tree.gedcomx.json" when a baseline exists
   restoreFile: string | null,       // the restore file's name, or null under dryRun
   validation: { valid: true, warnings: string[] },
 }
 ```
 
 On failure: `{ ok: false, errors: string[] }`, with nothing written.
+
+When `projectPath` is a real directory holding **neither** project file, the
+result is `{ ok: false, reason: "no_project", errors }` and is **not** marked
+`isError` — the user is not in a research project, which is an answer rather
+than a failure. A directory holding exactly one of the two files is a *broken*
+project and stays loud. See the write-boundary invariants in
+`guardrail-enforcement-spec.md`.
 
 ### 3.1 The redaction contract
 

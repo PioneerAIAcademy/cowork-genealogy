@@ -305,6 +305,16 @@ child's data is what typically needs correction), with the father as
 
 ### W3: `EVENT_AFTER_DEATH`
 
+> **SUPERSEDED — this section describes a design that was never
+> shipped.** The tool emits `hasEventAfterDeath1`, not
+> `EVENT_AFTER_DEATH`, and it uses a death-like *family* rather than the
+> exclusion list below. See "How `hasEventAfterDeath1` actually decides"
+> immediately after this section for the shipped behaviour. The
+> placeholder note at the top of this file anticipated the move to
+> FamilySearch tags; that migration happened and these definitions were
+> not updated with it. Kept here as the record of the original design,
+> not as a description of current behaviour.
+
 **Severity:** `contradiction`
 
 **Condition:** The anchor has a Death fact with a parseable year, and
@@ -344,6 +354,57 @@ for each fact in anchor.facts:
 
 ---
 
+### How `hasEventAfterDeath1` actually decides
+
+This is the shipped behaviour, and it lives nowhere else in prose — only
+in the docstring on `hasEventAfterDeath` in `src/tools/person-warnings.ts`.
+Recorded here
+because three separate pieces of skill doctrine were written against a
+mental model this contradicts.
+
+**There is no exclusion list.** The tag fires on
+
+```
+latest(every fact) - latest(death-like fact) > 365 days
+```
+
+(`hasEventAfterDeath` in `src/tools/person-warnings.ts`, via the predicate
+`factDaysDiffLatestLatest` in `src/utils/fact-helpers.ts`.)
+
+**"Death-like" is a family of nine fact types** (`DEATHLIKE_FACT_TYPES` in
+`src/utils/mob.ts`):
+
+`Death`, `Burial`, `Cremation`, `Funeral`, `Obituary`, `Probate`, `Will`,
+`DeathRegistration`, `BurialRegistration`
+
+Family membership *is* the mechanism. A fact of any of those nine types
+raises the death-side anchor, so it can never fire the tag on its own —
+however long after the death it is dated. That is why no exclusion list is
+needed, and why adding one would be a behaviour change rather than a
+tidy-up.
+
+Three consequences a reader has to hold:
+
+1. **A probate twenty years after death is silent.** It moves the anchor
+   forward instead of tripping the check.
+2. **The fact type is the trigger, not the date.** The same estate file is
+   silent attached as a `Probate` fact and fires attached as a
+   `Residence` fact. A posthumous record raises the tag only when it was
+   typed outside the death-like family.
+3. **A wrong date does damage in both directions.** A transcription or
+   digitization date recorded as the event date, on a death-like fact,
+   pushes the anchor *forward* and hides genuine post-death events (and
+   inflates `hasAgeRangeGreaterThan120`). The same wrong date on any other
+   fact type manufactures a post-death event that never happened.
+
+Note the divergences from the superseded W3 above, since a reader
+checking implementation against spec will hit them: the shipped code
+requires no `Death` fact specifically, compares at 365-day tolerance
+rather than year granularity, and has no `Estate` type anywhere in the
+tool.
+
+---
+
 ## Error Handling
 
 ### Why data-level conditions now throw
@@ -379,7 +440,9 @@ is worth recording so it isn't "fixed" back later by mistake:
 | `projectPath` not provided | Throw: `"projectPath is required"` |
 | `personId` not provided | Throw: `"personId is required"` |
 | `tree.gedcomx.json` is invalid JSON | Throw: `"Failed to parse tree.gedcomx.json: {parseError}"` |
-| `tree.gedcomx.json` not found at path | Throw: `"tree.gedcomx.json not found at {projectPath}. Run person_read first to populate the tree file."` |
+| `projectPath` is a real directory holding **neither** project file | **Return**, do not throw: `{ ok: false, reason: "no_project", errors }`. The user is not in a research project, which is an answer rather than a failure. This is the one tool that owes this answer without reading through `readProjectJson`, so it calls `classifyProjectPath` itself. Discriminate the result with `"ok" in result` — the success shape has no `ok` field. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
+| `projectPath` is not an existing directory | Throw: `"projectPath does not exist: {projectPath}"` |
+| `tree.gedcomx.json` not found at path, in a folder that *does* hold `research.json` | Throw: `"tree.gedcomx.json not found at {projectPath}. Run person_read first to populate the tree file."` — a broken project stays loud, and this message is the more useful one |
 | `personId` not found | Throw: `"Person '{personId}' not found in tree.gedcomx.json."` |
 | File has no `persons` array | Throw: `"No persons found in tree.gedcomx.json."` |
 | Date is unparseable | `extractYear()` returns `null`, warning check skips silently |
@@ -547,7 +610,6 @@ These are not included in v1 but are good candidates for extension:
 | Warning ID | Severity | Description |
 |-----------|----------|-------------|
 | `MOTHER_TOO_YOUNG` | `warning` | Mother's age at child's birth < 12 |
-| `MOTHER_TOO_OLD` | `warning` | Mother's age at child's birth > 50 |
 | `FATHER_TOO_OLD` | `warning` | Father's age at child's birth > 75 |
 | `LIVED_TOO_LONG` | `warning` | Age at death > 120 years |
 | `BORN_TOO_EARLY` | `warning` | Birth year < 1000 |
@@ -562,6 +624,18 @@ These are not included in v1 but are good candidates for extension:
 > record, so it isn't a problem (Richard). Some candidates above —
 > notably mother/father child-spacing checks — need **full-date**
 > precision, not year-only; see the date-parsing note.
+>
+> **`MOTHER_TOO_OLD` struck — built:** shipped as
+> `latestChildBirthToBirthFemale45` (`person-warnings.ts`), female-gated,
+> on a >= cutoff (not the `> 50` this table listed). Cutoff is 45, lowered
+> from an original 55; severity unchanged (`implausible`, not promoted — the
+> check fired 0 times at 55 across the e2e corpus, so promotion would be
+> an unmeasured doctrine commitment). Two alternatives were rejected: a
+> gender-neutral 45 (flags 31 people vs. 6, 25 of them men — a 45-74 gap
+> is unremarkable for a father, unlike a mother); and keeping 55 plus a
+> second check banded to [50, 55) (superseded once both bands share one
+> severity, since two checks on one predicate double-fire on a single fact
+> and double-count in the check-warnings cluster rule).
 
 ---
 

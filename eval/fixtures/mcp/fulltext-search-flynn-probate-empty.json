@@ -76,6 +76,7 @@
     }
   },
   "response": {
+    "query": { "keywords": "Flynn" },
     "totalResults": 0,
     "returned": 0,
     "offset": 0,

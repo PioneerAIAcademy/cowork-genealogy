@@ -29,6 +29,9 @@ import {
   isInsideProject,
   readProjectJson,
   formatIssues,
+  withProjectLock,
+  NoProjectError,
+  noProjectResult,
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { exampleHints } from "./research-append-examples.js";
@@ -43,6 +46,7 @@ import { resolveStandardPlace, countryConsistency } from "../utils/place-resolve
 export { countryConsistency };
 import { stdDate } from "../utils/date-standardize.js";
 import { MONTH_NUM } from "../utils/date-constants.js";
+import { treeDiff } from "./tree-diff.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
@@ -229,20 +233,106 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
   ];
 }
 
-/** Warn — NOT reject — a `confident` person_evidence link that records no numeric
- *  `match_score` (#1006). `same_person` returns a 0–1 float and `match_score` is
- *  the field meant to carry it, yet 94% of historical person_evidence writes leave
- *  it unset: identity is asserted, never scored. This ships WARN-ONLY — the fault
+/** Whether a record persona `same_person` could score against is reachable for
+ *  this assertion — decidable from the project documents alone, which is what
+ *  makes it a tool-side question rather than a prose one.
+ *
+ *  `same_person` takes two GedcomX documents plus a focus id inside each. It
+ *  never reads `record_persona_id`; that field points into a retained search
+ *  sidecar, so a null value proves only that no sidecar was kept. What decides
+ *  reachability is the tool that produced the assertion:
+ *
+ *   - non-null `record_persona_id` — verified against the record's
+ *     `gedcomx.persons[]` at write time (§3.5), so the persona exists;
+ *   - `record_read` — returns a SimplifiedGedcomX with a persons array, so the
+ *     record can be re-opened from its `record_id`;
+ *   - `record_search` with a retained `results_ref` — the sidecar result carries
+ *     the record's `gedcomx`.
+ *
+ *  Everything else cannot: image-, external-site- and PDF-sourced assertions, a
+ *  search whose sidecar was not retained, and every `fulltext_search` hit (an FTS
+ *  result carries transcript text, names and places but no GedcomX, and its ARK
+ *  is a `3:1:`/`3:2:` image entry `record_read` cannot open). Unresolvable
+ *  provenance counts as reachable, so an assertion written with no `log_entry_id`
+ *  cannot shed the requirement by omission.
+ *
+ *  Kept in step with `_persona_reachable` in `eval/harness/harness/
+ *  skill_invocation.py`, which is the same predicate on the eval side. */
+function personaReachable(entry: any, research: any): boolean {
+  const assertions: any[] = research.assertions ?? [];
+  const assertion = assertions.find((a: any) => a?.id === entry.assertion_id);
+  if (!assertion) return true; // unresolvable — provenance unknown, not proof
+  if (assertion.record_persona_id) return true;
+  const log: any[] = research.log ?? [];
+  const logEntry = log.find((l: any) => l?.id === assertion.log_entry_id);
+  if (!logEntry) return true; // no log entry — provenance unknown
+  if (logEntry.tool === "record_read") return true;
+  if (logEntry.tool === "record_search" && logEntry.results_ref) return true;
+  return false;
+}
+
+/** The retrieval route for a reachable persona, named so the warning tells the
+ *  agent what to DO rather than only what is missing. */
+function personaRoute(entry: any, research: any): string {
+  const assertions: any[] = research.assertions ?? [];
+  const assertion = assertions.find((a: any) => a?.id === entry.assertion_id);
+  if (assertion?.record_persona_id) {
+    return (
+      `assertion '${entry.assertion_id}' carries record_persona_id ` +
+      `'${assertion.record_persona_id}' — use it as primaryId1 with that record's gedcomx`
+    );
+  }
+  const log: any[] = research.log ?? [];
+  const logEntry = log.find((l: any) => l?.id === assertion?.log_entry_id);
+  if (logEntry?.tool === "record_read") {
+    return (
+      `assertion '${entry.assertion_id}' came from record_read — call ` +
+      `record_read({ recordId: '${assertion?.record_id}' }) again; it returns simplified ` +
+      `GedcomX, and primaryId1 is the persons[].id for the party this link is about`
+    );
+  }
+  if (logEntry?.results_ref) {
+    return (
+      `log entry '${logEntry.id}' retained a sidecar — take the persona from ` +
+      `'${logEntry.results_ref}'; primaryId1 is the persons[].id for the party this link ` +
+      `is about, not the result's top-level primaryId`
+    );
+  }
+  return `resolve the persona for assertion '${entry.assertion_id}' before linking`;
+}
+
+/** Warn — NOT reject — a person_evidence link that records no numeric
+ *  `match_score` when a record persona was REACHABLE for it (#1006, re-pointed
+ *  by #1429). `same_person` returns a 0–1 float and `match_score` is the field
+ *  meant to carry it, yet 94% of historical person_evidence writes leave it
+ *  unset: identity is asserted, never scored. This ships WARN-ONLY — the fault
  *  text rides the response's `validation.warnings` and the write still succeeds —
  *  because a hard reject on day one would break ~94% of runs and the hosted path
  *  at once. Graduating it to a rejection is a separate decision (needs @DallanQ),
- *  the same shadow-then-graduate discipline as guardrail-enforcement-spec.md §7.
+ *  the same shadow-then-graduate discipline as guardrail-enforcement-spec.md §7,
+ *  and it has to answer ADR-0009 constraint 2: `match_score` is caller-fabricable,
+ *  so a rejection buys a number rather than a call unless something persists the
+ *  `same_person` result.
  *
- *  Gated on `confidence === "confident"`, mirroring `personEvidenceInvariants`:
- *  `research_append` is a stateless write that cannot see the tree or the session,
- *  so "brand-new tree person" is not knowable here, but the confidence claim is —
- *  and a confident identity is exactly the one that should carry the score behind
- *  it. The correct response is to call `same_person` on the pairing and record its
+ *  **Two things #1429 changed, both measured.** It used to gate on
+ *  `confidence === "confident"` and to know nothing about provenance, so it
+ *  (a) said nothing at all about a `probable` link and (b) fired on image- and
+ *  full-text-sourced links nothing could ever score. Worse, its escape read "if
+ *  no comparable FamilySearch persona exists to score against, leave match_score
+ *  null" — and a null `record_persona_id` is not that case. Observed in
+ *  `v1_2026-08-27_11-28-52`: on both `ut_person_evidence_022` and `_024` the
+ *  agent wrote a confident link with a null score and said "no indexed GedcomX
+ *  persona", taking an escape the tool had offered it for a record it could have
+ *  re-opened. So the gate is now reachability, at any confidence, and the text
+ *  names the retrieval route instead of excusing the omission.
+ *
+ *  Gated on REACHABILITY at any confidence, not on `confidence === "confident"`.
+ *  The old gate reasoned that a stateless write cannot see the tree but can see
+ *  the confidence claim. Reachability is knowable statelessly too — the join runs
+ *  entirely inside the document being written — and it is the better question:
+ *  the confidence gate said nothing about the `probable` links where a skipped
+ *  score hides, and fired on links nothing could ever score.
+ *  The correct response is to call `same_person` on the pairing and record its
  *  score — NOT to lower the confidence to silence the warning. Confidence is the
  *  correlation judgment; `match_score` is the number behind it, and downgrading the
  *  first to escape a warning about the second games a genealogical claim (and can
@@ -253,18 +343,36 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
  *  itself takes — but only a real 0–1 score clears the warning: a number outside the
  *  range does not, since the runtime validator (`validator.ts`, which does not load
  *  the JSON Schema) leaves the schema's 0–1 bound unenforced at the write. */
-function personEvidenceScoreWarnings(entry: any): string[] {
-  if (entry.confidence !== "confident") return [];
+function personEvidenceScoreWarnings(entry: any, research: any): string[] {
   const score = entry.match_score;
+  // A real 0–1 score clears it. A number outside the range does not: the runtime
+  // validator does not load the JSON Schema, so the schema's 0–1 bound is
+  // unenforced at the write.
   if (typeof score === "number" && score >= 0 && score <= 1) return [];
+  // Gated on REACHABILITY, not on confidence. Silent where nothing could be
+  // scored, so the warning means something when it does fire.
+  if (!personaReachable(entry, research)) return [];
   return [
     `person_evidence link for person '${entry.person_id}' (assertion '${entry.assertion_id}') ` +
-      `claims confidence 'confident' but records no usable match_score (got ` +
-      `${JSON.stringify(entry.match_score)} — expected a number 0–1). A confident identity should ` +
-      `carry the same_person score behind it (a number 0–1). Call same_person on this pairing ` +
-      `and record its score. If no comparable FamilySearch persona exists to score against, ` +
-      `leave match_score null and keep the confidence your correlation analysis supports — do ` +
-      `not lower it to silence this. The link was still written — this is a warning, not a rejection.`,
+      `records no usable match_score (got ${JSON.stringify(entry.match_score)} — expected a ` +
+      `number 0–1), but a record persona IS reachable for it: ${personaRoute(entry, research)}. ` +
+      `Score the pairing with same_person and record its score. A null record_persona_id is ` +
+      `NOT a reason to skip — same_person takes two gedcomx documents plus a focus id inside ` +
+      `each and never reads that field; a null value means only that no search sidecar was ` +
+      `retained. A locally-minted tree id is not a reason either: it scores on document ` +
+      // The one legitimate null this warning must NOT badger the agent out of.
+      // Scoring a persona against a person minted FROM that persona is circular
+      // — it can only confirm itself. The tool cannot detect the case: by the
+      // time the link is written the stub already exists in the tree and looks
+      // no different from one that has been there for months. So it is named
+      // here as a sanctioned exception rather than suppressed. Observed live:
+      // in v1_2026-08-27_12-36-32 this warning drove ut_person_evidence_n7v to
+      // score the groom persona G1 against the John Flynn stub it had just
+      // minted from G1, a third call that matched no fixture and cost the test
+      // its Tool Arguments score.
+      `content. If the tree person was minted from the very persona you would be ` +
+      `scoring, the comparison IS circular — leave match_score null and say so in the ` +
+      `rationale. The link was still written — this is a warning, not a rejection.`,
   ];
 }
 
@@ -353,10 +461,59 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
  * one) and non-empty `resolution_assertion_ids` (9 of 150 are empty). Both are
  * surfaced advisorily by `project_context`'s `questionStatuses` instead.
  */
-function questionResolvedInvariants(entry: any, research: any): string[] {
+function questionResolvedInvariants(
+  entry: any,
+  research: any,
+  beforeResearch?: any,
+): string[] {
   const resolving = entry?.status === "resolved" || Boolean(entry?.resolved);
   if (!resolving) return [];
   const summaries = Array.isArray(research?.proof_summaries) ? research.proof_summaries : [];
+
+  // A conclusion blocked by an unresolved conflict does not close its question.
+  //
+  // `not_proved` legitimately resolves a question that was researched and came
+  // back empty — the message below says so. What it must not do is close a
+  // question the researcher was PREVENTED from concluding: there the work is
+  // unfinished, not finished-with-nothing. The two are told apart by the same
+  // test the tier rule uses — does an open conflict dispute a source this
+  // conclusion leans on. Conflicts read from the pre-call snapshot so a batch
+  // cannot resolve one and spend it here; summaries read live so a summary
+  // written earlier in the same batch counts.
+  //
+  // Observed 2026-08-21: correctly refused `probable`, correctly recorded
+  // `not_proved`, correctly wrote no tree — and then marked the question
+  // resolved anyway, closing a question whose evidence had never been
+  // correlated.
+  if (beforeResearch) {
+    const disputed = disputedSourceIds(beforeResearch);
+    if (disputed.size > 0) {
+      const assertionSource = new Map<string, string>();
+      for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
+        if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+      }
+      const blocking = new Set<string>();
+      for (const ps of summaries) {
+        if (ps?.question_id !== entry?.id) continue;
+        for (const aid of Array.isArray(ps?.supporting_assertion_ids) ? ps.supporting_assertion_ids : []) {
+          const src = assertionSource.get(aid);
+          for (const cid of (src ? disputed.get(src) : undefined) ?? []) blocking.add(cid);
+        }
+      }
+      if (blocking.size > 0) {
+        return [
+          `question ${entry?.id ?? "(no id)"} cannot be marked resolved while ` +
+            `${[...blocking].sort().join(", ")} ${blocking.size === 1 ? "is" : "are"} ` +
+            "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
+            "sources behind it have never been correlated. This is not the same as a question " +
+            "researched and found empty, which `not_proved` does close — here the work is " +
+            "unfinished rather than finished with nothing. Leave the question open, record the " +
+            "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
+        ];
+      }
+    }
+  }
+
   if (summaries.some((s: any) => s?.question_id === entry?.id)) return [];
   return [
     `question ${entry?.id ?? "(no id)"} cannot be marked resolved (via \`status\` or the ` +
@@ -365,6 +522,229 @@ function questionResolvedInvariants(entry: any, research: any): string[] {
       "question_id. A question closed with nothing found is still concluded: write a " +
       "`not_proved` summary saying so. If you are writing both in one batch, order the " +
       "proof_summaries append BEFORE this update.",
+  ];
+}
+
+/** Sources an unresolved conflict disputes, from the PRE-CALL project state.
+ *
+ *  A conflict names the assertions that compete; each assertion names the
+ *  source it came from. Those sources are the ones whose reliability is
+ *  currently in question. */
+function disputedSourceIds(research: any): Map<string, string[]> {
+  const assertionSource = new Map<string, string>();
+  for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
+    if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+  }
+  const bySource = new Map<string, string[]>();
+  for (const c of Array.isArray(research?.conflicts) ? research.conflicts : []) {
+    if (!c || c.status === "resolved") continue;
+    for (const aid of Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []) {
+      const src = assertionSource.get(aid);
+      if (!src) continue;
+      const seen = bySource.get(src) ?? [];
+      if (!seen.includes(c.id)) seen.push(c.id);
+      bySource.set(src, seen);
+    }
+  }
+  return bySource;
+}
+
+/** A conclusion may not out-tier the reliability of the sources it rests on.
+ *
+ *  **Correlation presupposes identity** (lead ruling, 2026-08-19). When an
+ *  unresolved conflict disputes an assertion drawn from a source the summary
+ *  also relies on, the sources have not been established as describing the
+ *  same person — so they cannot be correlated at ANY tier above `not_proved`.
+ *  Tiering down does not repair it, because tiering happens *after* identity
+ *  is settled, not instead of it.
+ *
+ *  The worked case: a birthplace conflict on a parentage question reads as
+ *  "collateral" — different fact, so seemingly harmless. But the death
+ *  certificate disputing the birthplace was also the only DIRECT evidence of
+ *  parentage, so the dispute impeached the very correlation the conclusion
+ *  rested on. Prose could not hold this: told in its own body that birthplace
+ *  is an identifying attribute, the agent still recorded the conflict
+ *  "non-blocking — it doesn't touch identity" and concluded at `probable`,
+ *  across five successive wordings.
+ *
+ *  Read from the PRE-CALL snapshot, the same discipline the exhaustiveness
+ *  gate uses: a batch may not resolve a conflict and spend that resolution on
+ *  a tier in the same call. `not_proved` is always available — recording the
+ *  blocked attempt is the sanctioned move, not silence. */
+function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
+  const tier = entry?.tier;
+  if (typeof tier !== "string" || tier === "not_proved" || tier === "disproved") return [];
+  const disputed = disputedSourceIds(beforeResearch);
+  if (disputed.size === 0) return [];
+
+  const assertionSource = new Map<string, string>();
+  for (const a of Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : []) {
+    if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+  }
+  const supporting = Array.isArray(entry?.supporting_assertion_ids)
+    ? entry.supporting_assertion_ids
+    : [];
+  const hits = new Map<string, string[]>();
+  for (const aid of supporting) {
+    const src = assertionSource.get(aid);
+    const conflicts = src ? disputed.get(src) : undefined;
+    if (src && conflicts) hits.set(src, conflicts);
+  }
+  if (hits.size === 0) return [];
+
+  const shared = [...hits.keys()].sort();
+  const blocking = [...new Set([...hits.values()].flat())].sort();
+  return [
+    `tier '${tier}' is not available while ${blocking.join(", ")} ` +
+      `${blocking.length === 1 ? "is" : "are"} unresolved: ` +
+      `${blocking.length === 1 ? "that conflict disputes" : "those conflicts dispute"} ` +
+      `evidence from ${shared.join(", ")}, which this conclusion also relies on. ` +
+      "Correlating sources assumes they describe the same person, and that is " +
+      "what the open conflict puts in question — so no tier above `not_proved` " +
+      "is reachable, and tiering down to `possible` does not repair it. Record " +
+      "the attempt at `not_proved`, naming the conflict and what would settle " +
+      "it, then invoke conflict-resolution. Re-conclude by updating that same " +
+      "summary once the conflict is resolved.",
+  ];
+}
+
+/** One conclusion per question — the manifest's own rule, now enforced.
+ *
+ *  `docs/specs/schemas/ownership.json` has required this since the manifest
+ *  landed ("never more than one summary per `question_id`") and nothing checked
+ *  it. Observed 2026-08-20: told by another precondition that it could not
+ *  conclude at `probable`, the agent recorded a correct `not_proved` summary —
+ *  by APPENDING it, leaving the stale `probable` entry beside it. The project
+ *  then carried two contradictory conclusions for one question, and the newer,
+ *  correct one did not win: every reader that scans `proof_summaries` for a
+ *  question sees both.
+ *
+ *  Re-concluding is legitimate and common; it is an `update` of the existing
+ *  `ps_NNN`, never a second append. The message names the id so the caller can
+ *  retry as an update without a lookup. */
+function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | undefined): string[] {
+  const qid = entry?.question_id;
+  if (typeof qid !== "string" || qid === "") return [];
+  const existing = (Array.isArray(research?.proof_summaries) ? research.proof_summaries : []).filter(
+    (ps: any) => ps?.question_id === qid && ps?.id !== appendedId,
+  );
+  if (existing.length === 0) return [];
+  const ids = existing.map((ps: any) => ps?.id).filter(Boolean);
+  return [
+    `question '${qid}' already has a proof summary (${ids.join(", ")}), and a question may ` +
+      "carry only one. Re-concluding is an UPDATE of that entry, not a second append: retry " +
+      `with { section: "proof_summaries", op: "update", entryId: "${ids[0]}", fields: { … } }, ` +
+      "passing only the fields that changed. Appending here would leave two contradictory " +
+      "conclusions on one question, with nothing to say which is current.",
+  ];
+}
+
+/** A question's `status` may not claim an exhaustiveness that its declaration
+ *  does not carry.
+ *
+ *  **Why both spellings need gating.** `status: "exhaustive_declared"` is what
+ *  every downstream reader treats as "GPS Component 1 is satisfied", and
+ *  `exhaustive_declaration.declared` is the record that is supposed to back it.
+ *  The harness has asserted one direction since the validator shipped —
+ *  `test_declared_implies_exhaustive_declared_status`, declared ⟹ status — and
+ *  nothing has ever asserted the other, which is the direction that leaves a
+ *  question looking finished with no declaration behind it.
+ *
+ *  **Reads the MERGED entry, deliberately.** `applyOne` shallow-merges `fields`
+ *  before invariants run, so `entry.exhaustive_declaration` is "set by this op,
+ *  or already true from an earlier call" — exactly the live read ADR-0011
+ *  prescribes when the precondition is the same author's own prior step. A
+ *  pre-call snapshot would refuse the 123 corpus writes that declare and set the
+ *  status in one op, which is the common and correct shape.
+ *
+ *  **A zero-violation arm, and named as one.** Replayed over 157 committed e2e
+ *  runs: 125 ops set this status and none of them would be refused. It ships as
+ *  a cheap invariant closing a reachable hole — `exhaustive_declaration` is a
+ *  required question property so it is always present, and 219 corpus writes set
+ *  `declared: false` — not as a gate with demonstrated catches. Its test vector
+ *  is synthetic for that reason. */
+function declarationStatusInvariants(entry: any): string[] {
+  if (entry?.status !== "exhaustive_declared") return [];
+  if (entry?.exhaustive_declaration?.declared === true) return [];
+  return [
+    `status 'exhaustive_declared' requires exhaustive_declaration.declared === true on ` +
+      `question '${entry?.id}', and it is ` +
+      `${entry?.exhaustive_declaration === undefined ? "absent" : JSON.stringify(entry?.exhaustive_declaration?.declared)}. ` +
+      "That status is what every later reader treats as GPS Component 1 satisfied, so it may " +
+      "not stand without the declaration that backs it. Set both in this call, or leave the " +
+      "status alone: an honest early termination writes `declared: false` and keeps " +
+      "`status: \"in_progress\"`.",
+  ];
+}
+
+/** Exhaustiveness may not be declared while the question's own plan says a
+ *  search is still running.
+ *
+ *  **A bookkeeping gate, not a doctrine one** (lead ruling, 2026-08-23). It
+ *  second-guesses no genealogical judgment — it only refuses a declaration that
+ *  contradicts the project's own plan state, which is why it can be scoped this
+ *  tightly. The classification no longer buys an exemption from anything:
+ *  ADR-0011 retired the overridable-doctrine tier on 2026-08-24 and NO gate
+ *  carries an override. What still bites is the route: measured 2026-08-23, no
+ *  skill can move a plan item out of `in_progress` on the FamilySearch path, so
+ *  a researcher who believes the search is done has no way to say so. Issue
+ *  #1821 owns that fix.
+ *
+ *  **`planned` does NOT block, and that is load-bearing.** `research/SKILL.md`
+ *  routes here deliberately before the plan is drained — "even with plan items
+ *  still `planned` → research-exhaustiveness (consult the stop criteria before
+ *  draining the rest of the plan)" — and 122 corpus items sit at `planned`
+ *  across 31 declarations that are all correct. The skill body's opening
+ *  sentence is stricter than its own operative rule; the operative rule and the
+ *  orchestrator agree, and this follows them.
+ *
+ *  **Reads the PRE-CALL snapshot, unlike the sibling above, and the asymmetry is
+ *  the whole gate.** Plan-item completion is the search work's step, not this
+ *  writer's: `docs/specs/schemas/ownership.json` lists six permitted writers of
+ *  `plan_items` and `research-exhaustiveness` is not among them. So the
+ *  precondition must be satisfied by someone else, which is exactly ADR-0011's
+ *  snapshot condition. Read live it would be self-satisfying — measured, three
+ *  corpus calls batch the item flips ahead of the declaration in one op list,
+ *  including `antonio-lucas-spouse`, the run issue #1335 was filed from. Live,
+ *  this refuses 2 of 170; snapshotted, 5.
+ *
+ *  Matching is on `plans[].question_id`; a plan attached to another question is
+ *  not evidence about this one. All 205 corpus plans carry the field, so the
+ *  looser reading that also counts unattached plans is indistinguishable today —
+ *  it is pinned here and by a synthetic test rather than by the corpus. */
+function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
+  if (entry?.exhaustive_declaration?.declared !== true) return [];
+  const qid = entry?.id;
+  if (typeof qid !== "string" || qid === "") return [];
+  const inFlight: string[] = [];
+  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
+    if (!plan || plan.question_id !== qid) continue;
+    // ONLY the active plan blocks, and this is what keeps the gate escapable.
+    // `research-plan` supersedes a plan by flipping `plans.status` alone — its
+    // items keep whatever status they held — and then forbids touching it ever
+    // again ("Never modify a superseded plan — it is part of the audit trail").
+    // So a question re-planned while one item sat `in_progress` carries that
+    // item forever. Blocking on it would make the declaration permanently
+    // unwritable: the exhaustiveness agent may not reach `plan_items`, the
+    // search skills may not edit a superseded plan, and no other route exists.
+    // That is the unrecoverable false deny ADR-0011's first limit exists to
+    // prevent, and it costs nothing to avoid — a superseded or completed plan
+    // is not the plan the question is being worked from.
+    if (plan.status !== "active") continue;
+    for (const item of Array.isArray(plan.items) ? plan.items : []) {
+      if (item?.status === "in_progress" && typeof item?.id === "string") inFlight.push(item.id);
+    }
+  }
+  if (inFlight.length === 0) return [];
+  const ids = inFlight.sort().join(", ");
+  return [
+    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
+      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
+      "search has not finished, so the declaration would rest on work still running. " +
+      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
+      "the search finish; declaring is available on the next call once the plan reflects it. " +
+      "Items still at `planned` do not block — consulting the stop criteria before draining " +
+      "the plan is the sanctioned path.",
   ];
 }
 
@@ -478,7 +858,10 @@ interface BatchSuccess {
 export type ResearchAppendResult =
   | SingleSuccess
   | BatchSuccess
-  | { ok: false; errors: string[]; opsReceived?: number };
+  // `reason: "no_project"` marks the one ok:false that is an answer rather than
+  // a failure (see noProjectResult). Optional field on the existing arm, NOT a
+  // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
+  | { ok: false; errors: string[]; opsReceived?: number; reason?: "no_project" };
 
 /** Carries one or more user-facing messages: the single form echoes them
  *  verbatim; the batch form prefixes each with `ops[i]:`. */
@@ -495,8 +878,72 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   try {
     return await readProjectJson(projectPath, filename);
   } catch (e) {
+    // NoProjectError is an ANSWER, not a failure — the outer catch turns it into
+    // noProjectResult(). Flattening it into ResearchAppendError here would lose
+    // the `reason` discriminator and ship it with isError.
+    if (e instanceof NoProjectError) throw e;
     throw new ResearchAppendError(e instanceof Error ? e.message : String(e));
   }
+}
+
+/** Read the write-once starting-tree.gedcomx.json baseline, or null when it is
+ *  absent or unreadable. Fail-open by design: legacy projects created before the
+ *  baseline shipped have no such file, and a tree-encoding WARNING must never
+ *  block a completion for a project that simply predates it. */
+async function readStartingTree(projectPath: string): Promise<SimplifiedGedcomX | null> {
+  try {
+    const raw = await readFile(join(projectPath, "starting-tree.gedcomx.json"), "utf-8");
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? (parsed as SimplifiedGedcomX) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Tree-encoding completion check (issue #1490), shadow → WARNING.
+ *
+ * A tier->=-probable conclusion is expected to leave a trace in the tree. This
+ * warns — never refuses, per the 2026-08-24 no-override ruling — when a
+ * completed project holds such a conclusion but none of the tree persons its
+ * evidence touches gained any new fact or relationship since the opening tree.
+ *
+ * A SHAPE match, not a foreign key: a proof summary carries no tree reference, so
+ * "the conclusion's person" is the union of persons its supporting assertions have
+ * person_evidence for (person_evidence is the only link table). Deliberately
+ * broad — it warns only when NONE of those persons gained ANY structure — because
+ * the measured fire rate is low and a noisy warning on correct work is worse than
+ * a missed one. Fails open when the baseline is absent (legacy projects). */
+function treeEncodingCompletionWarnings(
+  research: any,
+  currentTree: SimplifiedGedcomX,
+  startingTree: SimplifiedGedcomX | null,
+): string[] {
+  if (startingTree === null) return [];
+  const gained = new Set(
+    treeDiff({ before: startingTree, after: currentTree }).personsWithNewStructure,
+  );
+  const personEvidence = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
+  const warnings: string[] = [];
+  for (const ps of Array.isArray(research?.proof_summaries) ? research.proof_summaries : []) {
+    if (!ps || (ps.tier !== "proved" && ps.tier !== "probable")) continue;
+    const supporting = new Set(
+      Array.isArray(ps.supporting_assertion_ids) ? ps.supporting_assertion_ids : [],
+    );
+    const personIds = new Set<string>(
+      personEvidence
+        .filter((e: any) => e && supporting.has(e.assertion_id) && typeof e.person_id === "string")
+        .map((e: any) => e.person_id as string),
+    );
+    if (personIds.size === 0) continue; // no evidence-linked person to check
+    if ([...personIds].some((p) => gained.has(p))) continue; // encoded — no warning
+    warnings.push(
+      `proof summary ${ps.id} (tier ${ps.tier}) concludes ${ps.question_id ?? "a question"}, ` +
+        "but no tree person it draws evidence from gained a new fact or relationship this " +
+        "session. Verify the conclusion is encoded in tree.gedcomx.json — a proved/probable " +
+        "finding is normally reflected as a fact or relationship on the person it is about.",
+    );
+  }
+  return warnings;
 }
 
 /** Next `<prefix>NNN` id (max + 1, zero-padded to 3) for a research section. */
@@ -752,6 +1199,7 @@ function applyOne(
   preCallExhaustiveDeclared?: Map<string, boolean>,
   preCallCritiquedSummaryIds?: Set<string>,
   preCallBlockingConflicts?: any[],
+  preCallResearch?: any,
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -1086,7 +1534,30 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(fields, "status") ||
       Object.prototype.hasOwnProperty.call(fields, "resolved");
     if (resolutionTouchedThisOp) {
-      invariantErrors.push(...questionResolvedInvariants(resultEntry, research));
+      invariantErrors.push(...questionResolvedInvariants(resultEntry, research, preCallResearch));
+    }
+    // Both exhaustiveness gates run only when THIS op touches the field they
+    // govern, the same discipline as the block above: an unrelated update to a
+    // question that was legitimately declared in an earlier call must not
+    // re-trigger either. `append` always sets both.
+    const declarationTouchedThisOp =
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(fields, "exhaustive_declaration");
+    if (declarationTouchedThisOp) {
+      invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
+    }
+    const statusTouchedThisOp =
+      op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
+    // EITHER side, because the invariant couples two fields and an op that
+    // touches one can break it without naming the other. Gating on `status`
+    // alone left the mirror-image hole open: an update lowering
+    // `exhaustive_declaration.declared` to false on a question already sitting
+    // at `status: "exhaustive_declared"` never ran the check and persisted
+    // exactly the state it forbids. That is not hypothetical — it is the
+    // agent's own documented re-invocation path, which writes `declared: false`
+    // and is told to leave `status` alone.
+    if (statusTouchedThisOp || declarationTouchedThisOp) {
+      invariantErrors.push(...declarationStatusInvariants(resultEntry));
     }
   }
   if (section === "conflicts") invariantErrors.push(...conflictInvariants(resultEntry));
@@ -1099,9 +1570,10 @@ function applyOne(
   // to "confident"; the helper no-ops for every other confidence value.
   if (section === "person_evidence") {
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
-    // Warn-only: a confident link that records no match_score (#1006). Rides the
-    // response warnings; does not block the write.
-    opWarnings.push(...personEvidenceScoreWarnings(resultEntry));
+    // Warn-only: a link that records no match_score where a persona was
+    // reachable (#1006, re-pointed by #1429). Rides the response warnings; does
+    // not block the write.
+    opWarnings.push(...personEvidenceScoreWarnings(resultEntry, research));
   }
   // Only when THIS op is the one setting/changing tier — append always sets it;
   // update only when `fields` names it. An unrelated update to an entry already
@@ -1112,6 +1584,30 @@ function applyOne(
     if (tierTouchedThisOp) {
       invariantErrors.push(...proofSummaryInvariants(resultEntry, preCallExhaustiveDeclared));
     }
+    // NOT gated on `tierTouchedThisOp`, unlike the exhaustiveness check above.
+    // That gate asks "is this op setting the tier"; this rule asks "does the
+    // entry STAND at a tier the open conflict forbids", which an op can reach
+    // without naming `tier` at all. Observed 2026-08-21: the agent updated a
+    // summary's narrative and left the stale `probable` in place, and the rule
+    // never ran. The tier had not been touched — it did not need to be, because
+    // it was already wrong.
+    //
+    // The cost is that any edit to such an entry is refused until its tier
+    // comes down, which is the rule applied consistently rather than a
+    // side effect: a conclusion standing above `not_proved` on a disputed
+    // source is invalid whether or not this call put it there. Lowering the
+    // tier in the same update satisfies it, so the deny stays satisfiable.
+    invariantErrors.push(...conflictedSourceInvariants(resultEntry, preCallResearch));
+    // Reads LIVE research, not the pre-call snapshot: two appends inside one
+    // batch must collide with each other, not just with what was already there.
+    //
+    // NOT gated on `op.op === "append"`, and for the same reason the rule above
+    // is not gated on `tierTouchedThisOp`: the question is "does this question
+    // end up with two summaries", which an UPDATE reaches by setting
+    // `question_id`. The gate asked about the op instead of the outcome and an
+    // update walked past it. `oneSummaryPerQuestion` excludes the entry by id,
+    // so an ordinary update of an existing summary still passes.
+    invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);
@@ -1756,12 +2252,15 @@ export async function researchAppend(
    *  depending on the right SKILL.md having been loaded. */
   const fail = (
     errors: string[],
-    hint?: Array<{ section: string; op: "append" | "update" }>,
+    hint?: Array<{ section: string; op: "append" | "update"; fields?: readonly string[] }>,
   ): ResearchAppendResult => {
     const all = hint && hint.length > 0 ? [...errors, ...exampleHints(hint)] : errors;
     return opsReceived !== undefined ? { ok: false, errors: all, opsReceived } : { ok: false, errors: all };
   };
 
+  // Serialize the whole read-modify-write against every other writer on this
+  // project (issue #1715). Wraps extraction_append too, which routes here.
+  return withProjectLock(projectPath, async () => {
   try {
     const research = await readJson(projectPath, "research.json");
     // Snapshot BEFORE any op in this call/batch applies — see
@@ -1875,6 +2374,7 @@ export async function researchAppend(
             preCallExhaustiveDeclared,
             preCallCritiquedSummaryIds,
             preCallBlockingConflicts,
+            beforeResearch,
           ),
         );
       } catch (e) {
@@ -1882,7 +2382,14 @@ export async function researchAppend(
           // Identify the failing op; nothing has been written.
           return fail(
             e.errors.map((m) => fmt(i, m)),
-            [{ section: String(ops[i].section), op: ops[i].op === "update" ? "update" : "append" }],
+            [{
+              section: String(ops[i].section),
+              op: ops[i].op === "update" ? "update" : "append",
+              // The field names the failing op actually set. The worked example
+              // is keyed on these so a caller refused on one field is not handed
+              // a payload for another — see exampleFor.
+              fields: Object.keys(ops[i].fields ?? ops[i].entry ?? {}),
+            }],
           );
         }
         throw e;
@@ -1891,6 +2398,20 @@ export async function researchAppend(
 
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
     const anyMutation = applied.some((a) => !a.noop) || prep.treeMutated;
+
+    // Tree-encoding completion check (issue #1490), shadow → WARNING. Only when
+    // THIS call sets project.status = "completed" — the same trigger the mentor
+    // and conflict gates use — so it never re-warns on a later write to an
+    // already-completed project. Reads the write-once baseline; fails open (no
+    // warning) when the project predates it.
+    const completingNow = ops.some(
+      (o) => o.section === "project" && o.op === "update" && (o.fields as any)?.status === "completed",
+    );
+    let treeEncodingWarnings: string[] = [];
+    if (completingNow) {
+      const startingTree = await readStartingTree(projectPath);
+      treeEncodingWarnings = treeEncodingCompletionWarnings(research, tree, startingTree);
+    }
 
     // ─── Validate once, write once (both files when the tree changed) ────────
     let validationWarnings: string[] = [];
@@ -1954,7 +2475,7 @@ export async function researchAppend(
     const persistenceWarning = anyMutation ? sourcesWithoutAssertionsWarning(research, applied) : null;
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...(persistenceWarning ? [persistenceWarning] : [])],
+      warnings: [...validationWarnings, ...opWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : [])],
     };
     const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
@@ -1980,6 +2501,7 @@ export async function researchAppend(
       validation: validationBlock,
     };
   } catch (e) {
+    if (e instanceof NoProjectError) return noProjectResult();
     if (e instanceof ResearchAppendError) {
       // Single-op path (and pre-pass throws): the section is only known when
       // the caller used the non-batch form.
@@ -1990,6 +2512,7 @@ export async function researchAppend(
     }
     throw e;
   }
+  });
 }
 
 /** Best-effort mapping of whole-document validation errors back to the batch op

@@ -202,8 +202,8 @@ than the events they come from.
   records.
 
 **How to determine expected events:**
-- Census: Every 10 years (1850, 1860, 1870, 1880, 1890, 1900, 1910,
-  1920). Note: 1890 census was mostly destroyed by fire.
+- Census: Every 10 years — 1850, 1860, 1870, 1880, 1900, 1910, 1920.
+  Never 1890, and never 1890 in `expected_events`.
 - Marriage: If children exist, a marriage event is expected before
   the first child's birth.
 - Death/burial: If the person is known to have died, both death
@@ -237,9 +237,13 @@ Do **not** detect or record those contradictions here.
   does not do geography. When two place-bound events sit close together in
   time, use `distance_from_previous_km` (Step 3.5) and the era's travel speed
   (`references/timeline-analysis-guide.md`) to judge whether one person could
-  have been at both — including the same person enumerated in two different
-  states in one census year. Report an infeasible pair **in your reply** as a
-  coherence signal (this identity-coherence finding has no persisted field).
+  have been at both; for a household appearing twice in one census year,
+  measure from the enumeration dates written on the pages rather than the
+  census year, and treat it as a legitimate double enumeration rather than
+  two people only when the family composition is identical and the dated
+  pages leave time to travel. Report an infeasible pair **in your reply** as
+  a coherence signal (this identity-coherence finding has no persisted
+  field).
 
 Identity uncertainty ("which Patrick Flynn is this?"), source disagreement
 ("informant said X, another said Y"), and any other non-chronological dispute
@@ -249,8 +253,10 @@ entries, reference them from the affected event via its `conflict_ids` /
 
 ### 6. Identity-testing analysis
 
-When building a hypothesis-testing timeline (Mode B), evaluate
-coherence and report one of three results:
+When building a hypothesis-testing timeline (Mode B) whose hypothesis is
+an identity question — are these records one life, or two people? —
+evaluate coherence and report one of three results. A parentage,
+marriage or other relationship hypothesis gets no verdict here:
 
 - **Pass:** No contradictions. Ages progress correctly, locations are
   geographically plausible (Step 5), and identifying details (occupation,
@@ -354,7 +360,9 @@ research_append({
 ```
 
 Timelines are regeneratable — cached analysis, not primary data — so
-never leave a stale duplicate for the same candidate.
+never leave a stale duplicate for the same candidate. Name in your reply
+any event the prior timeline held that this one drops — a shorter
+timeline deletes it.
 
 ### 8. Present
 
@@ -383,8 +391,10 @@ Report:
   (Step 5); and, if a record falls outside the person's recorded
   lifespan, one line noting it and recommending a data-integrity check
   (check-warnings) rather than flagging it here. Omit if none.
-- **Coherence** (Mode B hypothesis test): the Pass / Fail /
-  Inconclusive verdict with a one-sentence rationale.
+- **Coherence** (Mode B, and only where the hypothesis is an identity
+  question): the Pass / Fail / Inconclusive verdict with a one-sentence
+  rationale. Omit it for a parentage, marriage or other relationship
+  hypothesis — chronology cannot settle those.
 - **Recommended next step** (see Handoff rules below).
 
 Do NOT re-render every event row or the distance ladder in chat — the
