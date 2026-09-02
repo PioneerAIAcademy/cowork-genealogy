@@ -1807,16 +1807,18 @@ the ask and take the action. Production behaviour is preserved; only the prompt 
 gone.
 
 Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
-both green in CI for months:
+both green in CI for months. The first is fixed; the second stands:
 
-- **The plan freeze.** `search-records` tells an autonomous run it has no ad-hoc
-  searches, which closes the skill's self-initiated route back to `research-plan`. An
-  interactive researcher who notices the plan is wrong can get it revised; an
-  autonomous one cannot. `research-plan` compounds it by superseding a plan
-  "only when the user is explicitly re-planning" — never true with no user — so even
-  reaching the skill changes nothing. Measured consequence: across the
-  committed e2e corpus, 93% of question-plan pairs carry exactly one plan, and only
-  seven plans in the whole corpus were ever superseded.
+- **The plan freeze — fixed 2026-09-01.** `search-records` told an autonomous run it
+  had no ad-hoc searches, which closed the skill's self-initiated route back to
+  `research-plan`, and `research-plan` compounded it by superseding a plan "only when
+  the user is explicitly re-planning" — never true with no user — so even reaching the
+  skill changed nothing. Both sentences are gone: the routed row and the supersede
+  condition now read the same in either mode. Measured consequence while it stood:
+  across the committed e2e corpus, 93% of question-plan pairs carried exactly one
+  plan, and only seven plans in the whole corpus were ever superseded. The fix carries
+  a second half — the orchestrator's dispatch row is now scoped to the **active** plan,
+  because a revision leaves unexecuted items behind on the plan it retired.
 - **External-site captures.** `search-external-sites` marks a plan item `skipped`
   under `--autonomous` because no user can click a paywalled link. Controlling for
   fallback items, that produces a 76% skip rate on primary Ancestry items against

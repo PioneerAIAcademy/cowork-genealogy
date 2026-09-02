@@ -975,7 +975,26 @@ The judge prompt template lives at `eval/harness/judge/prompt.md`. The system pr
 {text_response}                     — Claude's full output text (or sidecar ref)
 {file_changes_summary}              — pre-rendered diff summary, ~500 tokens max
 {tool_calls}                        — list of MCP calls with args + matched fixture
+{before_state}                      — sources and conflicts on file BEFORE the run
 ```
+
+`{before_state}` renders the project's `sources` and `conflicts` as they existed
+*before* the skill ran, so the judge can mechanically check "not on file" /
+"fabricated" claims against the record. Each block renders its complete
+`count` + `all_ids` first (never clipped — that is the existence-check ground
+truth), then a heavy `detail` sample trimmed under `_BEFORE_STATE_MAX_CHARS`;
+conflicts render first so their preferred/competing assertion **values**
+(resolved from `assertions[]`) win the budget over source-citation detail. A
+dropped entry is named in an omission note, and `(none)` means the project had
+no prior sources or conflicts. Added-this-run material appears under
+`{file_changes_summary}`, not here.
+
+Each call's `response_summary` renders **every** result, not a 3-item sample:
+a grounding rubric marks a correct citation of result 4+ as fabricated when the
+judge can only see results 1-3. Prompt size is bounded by the total-size
+guard (`_TOOL_CALLS_MAX_CHARS`), which drops whole oldest calls with a stated
+marker; per-string and depth caps still apply inside each result. A larger array
+cap was rejected — it only moves the cliff.
 
 `{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran.
 
