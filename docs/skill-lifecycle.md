@@ -314,8 +314,8 @@ has nothing to compare to.
 Now read the **sampled** tests and correct the judge. The sidebar marks the
 rest `not sampled` — a handful of tests per run get reviewed, not all of them,
 and the Release button only waits on those. Five are chosen for you, and **every
-test that failed is added**, so a clean run is five and a run with failures is
-more. The UI pre-fills every dimension with
+test that failed — or scored a 1 or 2 on any dimension — is added**, so a run
+with a low score anywhere is more than five. The UI pre-fills every dimension with
 the judge's score, so there are two separate things to do:
 
 - **Change the score** only on dimensions you actually **disagree** with.

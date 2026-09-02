@@ -191,7 +191,7 @@ def select_review_sample(
     #
     # `_outcome_disagrees` was the fifth, deleted when the mandatory slot landed
     # because that slot subsumes it **structurally**. `expected_outcome` is only
-    # `pass` or `xfail`, and `build_test_entry` normalizes an xfail run to
+    # `pass` or `xfail`, and `assemble_test_entry` normalizes an xfail run to
     # `xfail`/`xpass`, so a disagreement can only ever be `partial`, `fail`,
     # `aborted` or `xpass` — and `is_mandatory` takes all four. It was a strict
     # subset: across the corpus it matched 170 tests, every one already
@@ -244,8 +244,21 @@ def select_review_sample(
     # 25 suites pinning one test on 20 of 20 chained runs. Falling back to any
     # unpicked test keeps the slot from ever being empty, so the sample size
     # stays what the docstring, the CI error message and the behaviour all say.
+    #
+    # Skip tests the mandatory slot is about to take: spending this slot on one
+    # costs a distinct test for nothing, which is the same waste that got
+    # `_outcome_disagrees` deleted. Measured at 8 of the 80 runs where this path
+    # fires. The last-resort list below is deliberately NOT filtered — if every
+    # unpicked test is mandatory there is nothing distinct left to find, and the
+    # sample is identical either way.
     if n_targeted and not targeted:
-        spare = [tid for tid in ids if tid not in picked and tid not in cursor]
+        spare = [
+            tid
+            for tid in ids
+            if tid not in picked
+            and tid not in cursor
+            and not is_mandatory(by_id[tid])
+        ]
         if not spare:
             spare = [tid for tid in ids if tid not in picked]
         targeted = spare[:n_targeted]
@@ -269,9 +282,10 @@ def select_review_sample(
     # its own bullet claims it is.
     #
     # Uncapped, because the rule is "always". Replaying this sampler over the
-    # 102 committed run logs: sample 5 -> median 6, mean 6.6, max 11; cells per
-    # run 30.5 -> 36.5 median (1.28x across the corpus); comments owed median
-    # 1 -> 3, mean 1.6 -> 4.0. Those are LOWER bounds — committed run logs are
+    # 102 committed run logs (2026-09-01): sample 5 -> median 6, mean 6.7,
+    # max 11; cells per run 30.5 -> 38.0 median (1.29x across the corpus);
+    # comments owed median 1 -> 3, mean 1.6 -> 4.0, and about a third of runs
+    # owe more than five. Those are LOWER bounds — committed run logs are
     # converged states, so the failing intermediate runs are not in the corpus
     # they came from. The cost therefore scales with how red a run is, which is
     # the intended incentive: a run that expensive to annotate should not be

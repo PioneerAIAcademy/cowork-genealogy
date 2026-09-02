@@ -84,8 +84,9 @@ export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
 /**
  * The tests a run log's annotation must cover, or `null` for "all of them".
  *
- * Variable length: five chosen picks plus every test that failed or scored a 1 or 2 on any dimension, so a clean run
- * is 5 and a run with failures is more. Never assume a fixed size here.
+ * Variable length: five chosen picks plus every test that failed or scored a 1 or
+ * 2 on any dimension, so a run with a low score anywhere exceeds 5. Never assume
+ * a fixed size here.
  *
  * A run log written before sampling shipped — every committed one today — has
  * no `review_sample` and keeps the original every-dimension rule. Keep this the
@@ -304,8 +305,8 @@ export type RunInvocation = 'skill' | 'test' | 'tag';
  * candidate pruning destroys the annotation history it would otherwise be
  * derived from.
  *
- * `tests` has no fixed length — the harness adds every failed test to the five
- * it chooses.
+ * `tests` has no fixed length — the harness adds every test that failed or
+ * scored a 1 or 2 on any dimension to the five it chooses.
  */
 export interface ReviewSample {
   tests: string[];

@@ -453,3 +453,27 @@ def test_mandatory_picks_count_toward_the_sweep_cursor():
     assert len(fresh) >= 3, (
         f"the sweep did not advance: only {sorted(fresh)} were uncovered before"
     )
+
+
+def test_the_targeted_degradation_skips_a_test_the_mandatory_slot_takes():
+    """The degraded slot must buy a DISTINCT test, not shadow a mandatory one.
+
+    Spending it on a test the mandatory slot is about to append costs a distinct
+    test for nothing — the same waste that got `_outcome_disagrees` deleted.
+    Observable as sample size: unfiltered the slot picks ut_003 and the mandatory
+    append then skips it (5 tests); filtered it picks ut_004 and ut_003 still
+    arrives (6).
+
+    No rubric nulls anywhere, so the targeted rule matches nothing and the
+    degradation is what runs.
+    """
+    suite = _suite(15)
+    entry = next(t for t in suite if t["test_id"] == "ut_003")
+    entry["outcome"] = "partial"
+    entry["expected_outcome"] = "partial"
+    entry["outcome_summary"]["aggregated_dimensions"] = [_dim(score=2)]
+
+    got = select_review_sample(tests=suite, seed=0)["tests"]
+    assert "ut_003" in got, "the mandatory slot must still take it"
+    assert "ut_004" in got, "the degraded slot must spend on a non-mandatory test"
+    assert len(got) == 6

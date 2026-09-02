@@ -70,7 +70,7 @@
         "tests": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "test_ids whose every dimension needs a correction entry in the .ann.json. Four chosen slots (3 rotation, 1 targeted, 1 random) plus every gradeable test that failed, so the length varies by run."
+          "description": "test_ids whose every dimension needs a correction entry in the .ann.json. Five chosen picks (3 rotation, 1 targeted, 1 random) plus every gradeable test that failed or scored a 1 or 2 on any dimension, so the length varies by run."
         },
         "cursor": {
           "type": "array",
