@@ -1,0 +1,129 @@
+name: Stale-base guard
+
+# Guards hand-maintained files against clean-but-wrong merges from a stale
+# base (issue #977). When a PR and main both edit the same prose file, git's
+# line-level merge happily interleaves both edits — producing a result neither
+# author wrote and neither reviewer saw. This already happened: PR #1238
+# deleted 134 .transcript.md files, but 11 re-landed on main via PRs whose
+# branches were cut before that deletion (issue #1342).
+#
+# Fires only when BOTH conditions are true:
+#   1. The PR modifies a file on the watched list.
+#   2. Main has also modified that file since the PR's merge-base.
+#
+# Runs on EVERY pull request — no `paths:` filter — so this check always
+# reports a conclusion and can be required by branch protection.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  stale-base:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Does this PR touch a watched file?
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          # Hand-maintained curated-whole files where a clean merge can
+          # produce semantically wrong content that no test catches.
+          # Keep short — add only files that meet BOTH criteria above.
+          # Tested by .github/tests/stale-base-guard.test.mjs (every
+          # entry must exist on disk).
+          WATCHED=(
+            "docs/architecture.md"
+            "CLAUDE.md"
+            "eval/CLAUDE.md"
+            "Makefile"
+            "docs/specs/schemas/unit-test.schema.json"
+            "packages/schema/schemas/unit-test.schema.json"
+          )
+
+          files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
+                     --paginate --jq '.[].filename')"
+
+          touched=""
+          for w in "${WATCHED[@]}"; do
+            if printf '%s\n' "$files" | grep -qxF "$w"; then
+              touched="${touched:+${touched} }${w}"
+            fi
+          done
+
+          if [ -z "$touched" ]; then
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::PR does not touch any watched file; reporting success."
+          else
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+            echo "touched=${touched}" >> "$GITHUB_OUTPUT"
+            echo "PR touches watched file(s): ${touched}"
+          fi
+
+      # Checkout the PR's actual head commit — NOT the default merge commit
+      # (refs/pull/N/merge). The merge commit has the base branch as a parent,
+      # so git merge-base would return the base tip itself and the diff would
+      # always be empty, making the guard silently pass on every PR.
+      - name: Check out PR head with full history
+        if: steps.scope.outputs.relevant == 'true'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Fetch base branch ref
+        if: steps.scope.outputs.relevant == 'true'
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          git fetch origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}" --depth=1 2>/dev/null || true
+
+      - name: Check for stale-base contention
+        if: steps.scope.outputs.relevant == 'true'
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          TOUCHED: ${{ steps.scope.outputs.touched }}
+        run: |
+          set -euo pipefail
+
+          MERGE_BASE="$(git merge-base "origin/${BASE_REF}" HEAD)"
+          echo "Merge-base: ${MERGE_BASE}"
+
+          contended=""
+          for file in ${TOUCHED}; do
+            if git diff --quiet "${MERGE_BASE}" "origin/${BASE_REF}" -- "${file}" 2>/dev/null; then
+              echo "  ${file}: unchanged on ${BASE_REF} since merge-base — OK"
+            else
+              echo "  ${file}: changed on ${BASE_REF} since merge-base — STALE"
+              contended="${contended:+${contended} }${file}"
+            fi
+          done
+
+          if [ -n "${contended}" ]; then
+            echo ""
+            echo "::error::Stale-base contention on watched file(s): ${contended}"
+            echo ""
+            echo "These files changed on ${BASE_REF} since this branch was cut."
+            echo "Git merged them cleanly, but a clean merge of hand-maintained"
+            echo "files can silently produce wrong content — re-introducing"
+            echo "deleted sections, duplicating entries, or interleaving"
+            echo "incompatible edits."
+            echo ""
+            echo "Fix: click 'Update branch' on the PR page to merge ${BASE_REF}"
+            echo "into this branch. Then verify the watched file(s) read correctly"
+            echo "and push."
+            echo ""
+            echo "Contended files:"
+            for f in ${contended}; do
+              echo "  - ${f}"
+              echo "::error file=${f}::Changed on ${BASE_REF} since this branch forked. Click 'Update branch' to incorporate the latest ${BASE_REF} and resolve."
+            done
+            exit 1
+          fi
+
+          echo "No stale-base contention on watched files."
