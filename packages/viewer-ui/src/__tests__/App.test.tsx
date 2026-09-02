@@ -20,7 +20,8 @@ const stubTransport: ResearchTransport = {
   subscribe: () => () => {},
   readSidecar: async () => null,
   submitFeedback: async () => ({ ok: true }),
-  openExternal: () => {}
+  openExternal: () => {},
+  openFamilySearch: () => {}
 }
 
 // Pins that App MOUNTS the banner, in both AppContent branches. FolderNotice.test.tsx
