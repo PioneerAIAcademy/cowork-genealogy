@@ -27,6 +27,13 @@ function findTranscriptFiles(): string[] {
 }
 
 describe(".transcript.md files must not exist (issue #1342)", () => {
+  it("eval/runlogs/e2e/ directory exists", () => {
+    expect(
+      existsSync(e2eRunlogs),
+      "eval/runlogs/e2e/ not found — test cannot scan",
+    ).toBe(true);
+  });
+
   it("no .transcript.md files under eval/runlogs/e2e/", () => {
     const files = findTranscriptFiles();
     expect(
