@@ -450,16 +450,19 @@ def test_objective_target_leads_the_plan(before_state, after_state, test):
     )
 
     target_seq = target.get("sequence") or 0
-    ahead = [
-        i
-        for i in items
-        if _INDIRECT_JURISDICTION in juris(i)
-        and (i.get("sequence") or 0) < target_seq
-    ]
+    # ANY earlier item, not just an indirect-jurisdiction one. Keying this on
+    # `_INDIRECT_JURISDICTION` made it a place-name substring match: `jurisdiction`
+    # is free text and the skill routinely writes a bare county or country, so a
+    # leading item labelled "Norway" — an actual value in this scenario's own run —
+    # slipped past while the identical defect labelled "Trysil, Hedmark, Norway"
+    # was caught. Same evasion class as the combined-jurisdiction one, one field
+    # over (#2033 review). The rule the objective states is that the target LEADS;
+    # what precedes it is not the point.
+    ahead = [i for i in items if (i.get("sequence") or 0) < target_seq]
     assert not ahead, (
         f"the objective asks for a baptism record in "
         f"{_TARGET_JURISDICTION.title()} and supplies the place, but "
-        f"{len(ahead)} {_INDIRECT_JURISDICTION.title()} item(s) are sequenced "
+        f"{len(ahead)} item(s) are sequenced "
         f"ahead of it (target is seq {target_seq}):\n  - "
         + "\n  - ".join(
             f"seq {i.get('sequence')} {i.get('record_type')} — "
