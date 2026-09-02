@@ -645,6 +645,10 @@ genealogical impossibilities (married before 12, died after 120, child
 born after a parent's death, etc.) — plausibility the persistence step
 does not check. Surface any warnings to the user.
 
+Whether the sources already on a person are right — each one's fit, anything
+mis-indexed — is `source-evaluation`, not this step. Name it; never audit them
+here.
+
 Present the results:
 - Each link created, with the assertion, the person, and the
   confidence level
