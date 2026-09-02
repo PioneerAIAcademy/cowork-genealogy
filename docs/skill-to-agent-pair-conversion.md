@@ -6,9 +6,26 @@ two conversions (`proof-conclusion`, 2026-08-19/20; `research-exhaustiveness`,
 runs; most of that was avoidable, and this document exists so the next one does
 not repeat it.
 
-Pairs are still the right instrument. Only an agent carries an `agent_id`, and
-attribution is what the whole enforcement programme is built on. Nothing below
-argues against pairing — it argues about *what to move, in what order*.
+Pairs are still the right instrument. Nothing below argues against pairing — it
+argues about *what to move, in what order*.
+
+**Two rationales reach a pair, and they buy different work.** This document was
+written for the first:
+
+- **Attribution.** Only an agent carries an `agent_id`, which is what the whole
+  guardrail programme is built on — the hook routes a protected write to the
+  agent that owns it. This is what PR #1819 and PR #1847 bought, and it is what
+  ADR-0011 and step 3 below are about.
+- **Cost and context.** An agent is the only surface that honours a `model:` or
+  `effort:` pin (`docs/architecture.md` §3.5), and a folded body stops occupying
+  the orchestrator's context. This buys no attribution and needs none.
+
+A cost-motivated conversion is the cheaper build: **no hook route, no ownership
+row, and no writer-tool precondition.** `AGENT_WRITABLE_SECTIONS.get(caller)` in
+`guard_project_files.py` returns `None` for an unlisted agent, so the
+out-of-lane check never fires, and the only routed targets are `proof_summaries`
+and `questions.exhaustive_declaration`. Everything else here — the fold order,
+the baseline, the fixture audit — applies to both.
 
 **The general rule this is a worked instance of is ADR-0011**
 (`docs/adrs/ADR-0011-put-guardrails-at-the-write-boundary.md`), and it applies
@@ -233,7 +250,27 @@ will spend runs chasing the fixture believing it is the skill.
 relationship — assert it in a validator, not in judge prose.** A validator names
 the defect in one line; a judge gives an opinion that moves between runs.
 
-## 5. A unit suite exercises the doorway the orchestrator does not use
+## 5. Folded size sizes the work; it does not disqualify
+
+There is no size ceiling. `wc -c` on `record-extractor.md` gives the largest
+agent body shipped so far — precedent, not a limit — and it moves (53,845 bytes,
+then 58,541, then 57,229), so a candidate measured against it crosses in either
+direction without anyone touching the candidate. Nor do agent bodies only grow:
+roughly a quarter of that file's committed revisions shrank it.
+
+`docs/specs/unit-test-spec.md` carries the ruling — the variable is anchoring,
+not length, and plugin agents are exempt from the decay argument entirely
+because they run in fresh context per invocation. ADR-0003 says the same from
+the other side: reopen a size argument only on a measurement that body size
+costs something end to end, not on a byte count.
+
+Use the folded size to size the work — what moves, what stays skill-side, how
+much prose a reviewer has to read. What does bind is step 4 below: a fold
+deletes `references/`, so a candidate whose references carry content the body
+cannot absorb is blocked until that content has another home, whatever it
+measures.
+
+## 6. A unit suite exercises the doorway the orchestrator does not use
 
 The unit harness reaches an agent only by invoking its routing skill, so a
 paired skill's suite grades the skill-then-agent path. Production research
@@ -254,16 +291,17 @@ Two consequences for a conversion:
 1. Record the pre-conversion baseline from existing run logs.
 2. Audit that skill's fixtures for self-contradiction and unsatisfiability.
 3. Move any rule that must *hold* into the writer tool. Prove it fails first.
+   On a cost-motivated conversion there may be no such rule; say so and move on
+   rather than inventing one.
 4. Fold the prose verbatim. Delete `references/` — an agent reading its own
    reference files is measured unreliable and silent.
 5. Give the routing skill only the tools it needs to route.
 6. Put everything load-bearing in the **agent**, including the resolution of its
    own arguments and its refusal to be steered by the delegation. The routing
    skill keeps only the five items listed under "Everything load-bearing goes in
-   the agent". The delegation message
-   now comes from the orchestrator, which the conversion does not own — so the
-   agent must be correct under a delegation that names the artifact and
-   pre-states the answer, not merely under a well-phrased one.
+   the agent". The delegation message now comes from the orchestrator, which the
+   conversion does not own — so the agent must be correct under a delegation that
+   names the artifact and pre-states the answer, not merely a well-phrased one.
 7. Apply the delete-the-skill acceptance check: delete the routing skill and read
    the agent as the orchestrator will reach it. Anything that changes goes into
    the agent before you run.
