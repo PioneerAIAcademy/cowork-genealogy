@@ -15,6 +15,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pluginSkillsDir, testsUnitDir } from './paths';
+import { resolveWithin } from './fs/safe-path';
 import type { SkillInfo, SkillRubricDimension } from './types';
 
 interface SkillFrontmatter {
@@ -248,7 +249,14 @@ export async function listSkills(): Promise<SkillInfo[]> {
 }
 
 export async function readSkill(name: string): Promise<SkillInfo | null> {
-  const dir = path.join(pluginSkillsDir(), name);
+  // The one sink in this file that takes caller input. `readSkillMd` and
+  // `readRubricFor` below build paths from a name too, but they are private and
+  // have exactly two callers: this function, which contains the name here before
+  // passing it on, and `listSkills`, which passes readdir entry names off disk.
+  // Guarding them as well would add two checks no test could ever red — the
+  // resolve here throws first on every reachable path — and this PR's own
+  // doctrine is that a guard which cannot fail reads as coverage.
+  const dir = resolveWithin(pluginSkillsDir(), name);
   const stat = await fs.stat(dir).catch(() => null);
   if (!stat?.isDirectory()) return null;
   const parsed = await readSkillMd(name);

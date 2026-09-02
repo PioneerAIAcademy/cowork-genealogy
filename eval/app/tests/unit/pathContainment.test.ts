@@ -12,6 +12,7 @@ import { writeTest, nextTestId } from '../../lib/fs/tests'
 import { readScenario } from '../../lib/fs/scenarios'
 import { makeFixtureTree, buildRunLog } from '../helpers/fixtureTree'
 import { listRunLogsForSkill } from '../../lib/fs/runlogs'
+import { readSkill } from '../../lib/skills'
 
 /**
  * One test per sink, not one test for the helper.
@@ -133,6 +134,54 @@ describe('path containment at each sink', () => {
   it('deleteCandidate refuses to remove a file outside the runlogs directory', async () => {
     // The one that leaves nothing to diagnose from if it gets through.
     await expect(deleteCandidate(`${UP}tmp/containment-escape/x`)).rejects.toThrow()
+  })
+
+  it('readSkill does not read a SKILL.md outside the plugin skills directory', async () => {
+    // The only sink in lib/skills.ts that takes caller input. Uncontained,
+    // `path.join` normalises the traversal away and the frontmatter of a
+    // SKILL.md outside the base is returned to the caller as a real skill.
+    const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'containment-skill-'))
+    await fs.mkdir(path.join(outside, 'outside'), { recursive: true })
+    await fs.writeFile(
+      path.join(outside, 'outside', 'SKILL.md'),
+      '---\nname: outside\ndescription: LEAKED FROM OUTSIDE THE BASE\n---\nbody\n',
+      'utf8',
+    )
+    const handle = await makeFixtureTree({ skills: [{ name: 'citation' }] })
+    process.env.EVAL_DIR = handle.root
+    try {
+      const name = UP + path.join(outside, 'outside').replace(/^\//, '')
+      await expect(readSkill(name)).rejects.toThrow()
+    } finally {
+      delete process.env.EVAL_DIR
+      await handle.cleanup()
+      await fs.rm(outside, { recursive: true, force: true })
+    }
+  })
+
+  it('deleteCandidate refuses a traversing SKILL on its own guard', async () => {
+    // Isolates release.ts:113. Neither sibling above reaches it: both put the
+    // traversal somewhere the FILENAME guard on the next line catches first, so
+    // 113 is never the deciding check and its removal changes nothing the suite
+    // can see. The shape that isolates it is a single-segment skill of `..` with
+    // a filename that still classifies as a candidate — then 113 is the only
+    // thing between this call and an fs.rm one level above runlogs/unit.
+    //
+    // 114 cannot cover it: resolveWithin(dir, filename) proves the filename
+    // stayed inside whatever `dir` already is, and confirms containment inside
+    // an escaped dir just as happily.
+    const handle = await makeFixtureTree({ runlogs: [] })
+    process.env.EVAL_DIR = handle.root
+    const victim = path.join(handle.root, 'runlogs', 'v9_2026-05-18_10-30-00.json')
+    await fs.mkdir(path.dirname(victim), { recursive: true })
+    await fs.writeFile(victim, '{"keep":true}', 'utf8')
+    try {
+      await expect(deleteCandidate('../v9_2026-05-18_10-30-00')).rejects.toThrow()
+      await expect(fs.access(victim)).resolves.toBeUndefined()
+    } finally {
+      delete process.env.EVAL_DIR
+      await handle.cleanup()
+    }
   })
 
   it('deleteCandidate refuses a traversing FILENAME, not just a traversing skill', async () => {
