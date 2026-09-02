@@ -101,7 +101,8 @@ Record data arrives in one of four ways:
    **If the reader returns `NOT READ`** (unreachable image, or no OpenRouter
    key configured for the OCR model), it includes the verbatim error and a
    pivot recommendation. If the cause is a **missing/rejected OpenRouter
-   key**, that is fixable — set one with `configure_openrouter` and retry,
+   key**, that is fixable — tell the user to add `openRouterApiKey` to
+   `~/.familysearch-mcp/config.json` and retry,
    rather than pivoting away. Otherwise do not treat NOT READ as evidence and
    do not retry the image — pivot to **indexes** that carry the same facts: the
    record's own indexed persona fields (`record_read`), a broader

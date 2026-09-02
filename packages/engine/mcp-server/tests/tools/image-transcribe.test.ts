@@ -192,15 +192,15 @@ describe("imageTranscribeTool — lookingFor", () => {
 });
 
 describe("imageTranscribeTool — key / auth errors", () => {
-  it("throws the configure_openrouter instruction and calls neither fetch when no key", async () => {
+  it("throws the no-key error and calls neither fetch when no key", async () => {
     getOpenRouterApiKeyMock.mockRejectedValueOnce(
       new Error(
-        "No OpenRouter API key is configured. Ask the user ... call configure_openrouter"
+        "No OpenRouter API key is configured. Tell the user to add their key to config.json."
       )
     );
     await expect(
       imageTranscribeTool({ imageId: "004884748_02613" })
-    ).rejects.toThrow(/configure_openrouter/);
+    ).rejects.toThrow(/No OpenRouter API key/);
     expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
     expect(mockFetch).not.toHaveBeenCalled();
   });

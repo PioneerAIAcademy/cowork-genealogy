@@ -258,8 +258,9 @@ export async function imageTranscribeTool(
   // failures (429/5xx) are not; they surface as retryable, not a re-prompt.
   if (response.status === 401) {
     throw new Error(
-      "The OpenRouter API key was rejected (401). Ask the user for a current " +
-        "key and call configure_openrouter.",
+      "The OpenRouter API key was rejected (401). Tell the user to update the " +
+        "\"openRouterApiKey\" field in ~/.familysearch-mcp/config.json with a " +
+        "current key from https://openrouter.ai/keys.",
     );
   }
   if (response.status === 402) {
@@ -334,8 +335,8 @@ export const imageTranscribeToolSchema = {
     "this for large scans that image_read refuses (over its inline size cap): " +
     "the image is OCR'd host-side and never enters the conversation, so there " +
     "is no size limit. Provide exactly one of imageId or ark. Requires " +
-    "FamilySearch auth (call login) and an OpenRouter API key (call " +
-    "configure_openrouter if it reports no key).",
+    "FamilySearch auth (call login) and an OpenRouter API key (set in " +
+    "~/.familysearch-mcp/config.json if it reports no key).",
   inputSchema: {
     type: "object" as const,
     properties: {

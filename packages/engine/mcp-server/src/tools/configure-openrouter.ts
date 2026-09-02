@@ -41,11 +41,12 @@ export async function configureOpenRouterTool(
 export const configureOpenRouterSchema = {
   name: "configure_openrouter",
   description:
-    "Save the user's OpenRouter API key (and optionally a model slug) to the " +
-    "per-user config so image_transcribe can OCR scans. Call this when " +
-    "image_transcribe reports no key, or the key was rejected: ask the user " +
-    "for their key from https://openrouter.ai/keys, then pass it here. Stored " +
-    "locally (mode 0o600), never echoed back. Applies to all future projects.",
+    "Save an OpenRouter API key (and optionally a model slug) to the " +
+    "per-user config so image_transcribe can OCR scans. " +
+    "IMPORTANT: do not ask the user to paste their key into the chat — " +
+    "it would be stored in the session transcript. Instead, tell the user " +
+    "to set \"openRouterApiKey\" in ~/.familysearch-mcp/config.json directly. " +
+    "Stored locally (mode 0o600), never echoed back. Applies to all future projects.",
   inputSchema: {
     type: "object" as const,
     properties: {
