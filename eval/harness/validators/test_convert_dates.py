@@ -158,3 +158,36 @@ def test_refusal_to_convert_makes_no_call(tool_calls, test):
         "this test's correct answer is that no conversion is needed, so "
         f"convert_calendar should not have been called: {converted}"
     )
+
+
+# --- VR-5: a no-gregorian-equivalent test must be rejected by the tool -
+
+def test_no_gregorian_equivalent_gets_tool_rejection(tool_calls, test):
+    """A positive test tagged `no-gregorian-equivalent` must call
+    convert_calendar with julianToGregorianDay, and the tool must
+    actually reject it (issue #2098).
+
+    This tag marks a Julian date before 15 October 1582, where the
+    Gregorian calendar did not yet exist anywhere and the tool refuses
+    the day-offset by design. Whether the skill's *narration* correctly
+    withholds a "Gregorian date" field for that rejection is genealogical
+    judgment the judge grades (rubric: Genealogical presentation, Tool
+    response interpretation) -- this validator only guards the mechanical
+    half: that a rejection genuinely happened, deterministically, rather
+    than the judge crediting a narration that never called the tool or
+    that got lucky on a call the tool actually accepted.
+    """
+    if "no-gregorian-equivalent" not in (test.get("tags") or []):
+        pytest.skip("only applies to tests tagged no-gregorian-equivalent")
+    calls = _calendar_calls(tool_calls)
+    assert calls, (
+        "this test's date precedes the Gregorian calendar's existence, so "
+        "convert_calendar must be called to surface the tool's rejection "
+        "rather than assumed by narration alone"
+    )
+    accepted = [tc for tc in calls if (tc.get("response") or {}).get("ok")]
+    assert not accepted, (
+        "this test's date is before 1582-10-15, so every convert_calendar "
+        f"call must return ok: false; at least one returned ok: true: "
+        f"{accepted}"
+    )
