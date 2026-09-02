@@ -46,8 +46,9 @@ def _suite(n, **kw):
 def test_zero_dimension_tests_are_not_sampled():
     """A test whose judge was skipped has no dimensions, so rule 3 would demand
     zero corrections for it — sampling one wastes a slot. All such tests in the
-    corpus also match `_outcome_disagrees` (outcome != expected), so without this the
-    targeted slot is biased toward tests with nothing to annotate."""
+    corpus failed or aborted, which is what `is_mandatory` matches, so without
+    this filter the mandatory slot is biased toward tests with nothing to
+    annotate."""
     tests = _suite(4)
     tests.append(
         _test_entry("ut_empty", dims=[], outcome="aborted", expected_outcome="pass")
@@ -145,15 +146,18 @@ def test_targeted_falls_through_when_all_null_tests_recently_sampled():
 
     Simulation over the committed corpus showed the un-guarded version pinning
     one test on 20 of 20 chained runs in 10 of 25 suites. Here ut_000-ut_002
-    carry a null and are already swept, so rule 1 has no fresh candidate and the
-    slot falls through to ut_003, which carries no null but does have an
-    outcome disagreeing with its expectation."""
+    carry a null and are already swept, so the rule has no fresh candidate and
+    the slot degrades to the one unswept test, ut_003 — rather than re-picking a
+    swept match, which would buy no coverage.
+
+    ut_003 is left a clean pass on purpose: were it failing, the mandatory slot
+    would sample it and the assertion would hold without the targeted slot doing
+    anything."""
     tests = _suite(4)
     for t in tests[:3]:
         t["outcome_summary"]["aggregated_dimensions"] = [
             _dim(), _dim(name="Tier justification", score=None, source="rubric")
         ]
-    tests[3]["outcome"] = "fail"
     prior = {"cursor": ["ut_000", "ut_001", "ut_002"]}
     out = select_review_sample(
         tests=tests, prior_sample=prior, n_rotation=0, n_random=0
@@ -163,8 +167,17 @@ def test_targeted_falls_through_when_all_null_tests_recently_sampled():
 
 def test_targeted_prefers_a_test_the_sweep_has_not_covered():
     """Within a matched rule, order by not-yet-covered first. Otherwise a
-    lowest-test_id implementation re-picks one test forever."""
-    tests = _suite(4, outcome="fail")  # all match _outcome_disagrees
+    lowest-test_id implementation re-picks one test forever.
+
+    Built on rubric nulls, not on `outcome="fail"`: a failing outcome is now
+    mandatory, so such a fixture would put every test in the sample and isolate
+    nothing — see `is_mandatory`.
+    """
+    tests = _suite(4)
+    for entry in tests:  # all four match _has_rubric_null_on_positive
+        entry["outcome_summary"]["aggregated_dimensions"] = [
+            _dim(), _dim(name="Tier justification", score=None, source="rubric")
+        ]
     prior = {"cursor": ["ut_000", "ut_001"]}
     out = select_review_sample(
         tests=tests, prior_sample=prior, n_rotation=0, n_random=0
@@ -181,7 +194,7 @@ def test_targeted_pick_is_distinct_from_rotation():
     the targeted slot from re-picking a rotation pick. On a larger suite both
     mechanisms protect the same case and the test cannot fail.
     """
-    tests = _suite(3, outcome="fail")  # every test matches _outcome_disagrees
+    tests = _suite(3, outcome="fail")  # every test is mandatory
     out = select_review_sample(tests=tests, n_random=0)
     assert out["tests"] == ["ut_000", "ut_001", "ut_002"]
     assert len(set(out["tests"])) == len(out["tests"])
@@ -307,3 +320,136 @@ def test_released_runlog_outranks_a_superseded_candidate(tmp_path):
 
     got = _newest_releasable_runlog(d)
     assert got["review_sample"]["cursor"] == ["released"]
+
+
+# --- Mandatory slot -----------------------------------------------------
+#
+# These four are the only coverage the mandatory slot has. Every test above
+# stays green under it, because `_dim()` defaults to score 3 and no fixture in
+# this file scores 1 or 2 — so without these the slot would ship untested.
+#
+# The shared fixture is load-bearing. Both suites use the SAME 15 ids, so the
+# four non-mandatory slots pick identically and only the scores differ. Varying
+# the suite SIZE instead would move the random slot's draw (`rng.sample` over 11
+# candidates lands elsewhere than over 6) and the two runs would differ for a
+# reason unrelated to this feature.
+#
+# At seed 0 the five chosen picks are ut_000..ut_003 and ut_010, so every mandatory id
+# below is chosen to sit outside that set — otherwise the case passes today and
+# proves nothing.
+
+_MANDATORY_IDS = ("ut_004", "ut_005", "ut_006", "ut_007", "ut_008")
+_FREE_ID = "ut_011"  # outside the five chosen picks at seed 0
+
+
+def _clean_15():
+    return _suite(15)
+
+
+def _failing_15():
+    """ut_004..ut_007 partial, ut_008 fail. Outcomes match the scores."""
+    suite = _suite(15)
+    for entry in suite:
+        if entry["test_id"] not in _MANDATORY_IDS:
+            continue
+        fail = entry["test_id"] == "ut_008"
+        entry["outcome"] = "fail" if fail else "partial"
+        entry["expected_outcome"] = entry["outcome"]
+        entry["outcome_summary"]["aggregated_dimensions"] = [_dim(score=1 if fail else 2)]
+    return suite
+
+
+def test_every_failing_test_is_sampled_however_many():
+    got = select_review_sample(tests=_failing_15(), seed=0)["tests"]
+    assert set(_MANDATORY_IDS) <= set(got)
+    assert len(got) == 10
+    assert len(got) == len(set(got))
+
+
+def test_mandatory_does_not_consume_the_other_five_slots():
+    """The additive property — this is what protects false-green detection.
+
+    The five chosen picks must be the same tests whether or not the suite has
+    failures, so the mandatory slot ADDS to coverage instead of eating it.
+    """
+    clean = select_review_sample(tests=_clean_15(), seed=0)["tests"]
+    failing = select_review_sample(tests=_failing_15(), seed=0)["tests"]
+    assert set(clean) <= set(failing)
+    assert set(failing) - set(clean) == set(_MANDATORY_IDS)
+
+
+def test_a_non_gating_failing_dimension_is_still_mandatory():
+    """Pins the ruling that a routing negative's diagnostic 1 is reviewed.
+
+    Those cells carry the highest correction rate in the corpus (17.28%), which
+    is why keying the slot on `dimensions_gate_outcome` was rejected.
+    """
+    suite = _clean_15()
+    entry = next(t for t in suite if t["test_id"] == _FREE_ID)
+    entry["test_type"] = "negative"
+    entry["dimensions_gate_outcome"] = False
+    entry["outcome"] = entry["expected_outcome"] = "pass"
+    entry["outcome_summary"]["aggregated_dimensions"] = [_dim(score=1)]
+    assert _FREE_ID in select_review_sample(tests=suite, seed=0)["tests"]
+
+
+def test_a_failed_test_with_clean_dimensions_is_mandatory():
+    """A routing or activation failure the judge saw nothing wrong with.
+
+    The outcome trigger is the only thing that reaches this: every dimension is
+    a 3, so the score trigger is blind to it.
+    """
+    suite = _clean_15()
+    entry = next(t for t in suite if t["test_id"] == _FREE_ID)
+    entry["outcome"] = "fail"
+    del entry["expected_outcome"]
+    assert all(d["score"] == 3 for d in entry["outcome_summary"]["aggregated_dimensions"])
+    assert _FREE_ID in select_review_sample(tests=suite, seed=0)["tests"]
+
+
+def test_a_declared_xfail_is_not_mandatory_but_an_xpass_is():
+    """Pins both halves of `_NON_FAILING_OUTCOMES` against each other.
+
+    `xfail` is a failure someone declared in advance, so it must NOT be
+    mandatory — otherwise every suite carrying one pays for it on every run
+    forever, and the slot is uncapped. `xpass` is the same test unexpectedly
+    passing, which must be. Narrowing the set to `{"pass"}` — or rewriting the
+    check as `outcome != "pass"`, which looks like a simplification — breaks the
+    first half, and nothing else in the suite notices.
+    """
+    suite = _clean_15()
+    entry = next(t for t in suite if t["test_id"] == _FREE_ID)
+    entry["expected_outcome"] = "xfail"
+
+    entry["outcome"] = "xfail"
+    assert _FREE_ID not in select_review_sample(tests=suite, seed=0)["tests"]
+
+    entry["outcome"] = "xpass"
+    assert _FREE_ID in select_review_sample(tests=suite, seed=0)["tests"]
+
+
+def test_mandatory_picks_count_toward_the_sweep_cursor():
+    """Pins the rejected alternative: a second, rotation-only cursor.
+
+    The comment above `covered` argues that mandatory picks fold into the sweep
+    like any other — so a chronically failing test completes the sweep sooner and
+    the wrap fires sooner. Excluding them (i.e. building the rotation-only cursor
+    that was considered and rejected) changed no test, so the whole argument was
+    unguarded. Since the wrap is what the ceil(T/3) coverage guarantee rests on,
+    that alternative could have been reintroduced with CI green.
+    """
+    first = select_review_sample(tests=_failing_15(), seed=0)
+    assert set(_MANDATORY_IDS) <= set(first["cursor"]), (
+        "mandatory picks must count as covered — they were reviewed"
+    )
+
+    # And the sweep advances because of them: with 10 of 15 covered, rotation's
+    # next three come from the five the first run did not reach. Asserting the
+    # rotation picks are all fresh, rather than that the whole sample is, keeps
+    # the random slot — which draws from every unpicked id, covered or not —
+    # from making this flaky.
+    second = select_review_sample(tests=_failing_15(), prior_sample=first, seed=0)
+    fresh = set(second["tests"]) - set(first["cursor"])
+    assert len(fresh) >= 3, (
+        f"the sweep did not advance: only {sorted(fresh)} were uncovered before"
+    )
