@@ -17,11 +17,15 @@ import type { NextRequest } from 'next/server'
  * `Origin` is sent by every browser on exactly the requests that matter and
  * cannot be forged by page script.
  *
- * GET is deliberately not covered: a same-origin `GET` is also how the app's
- * own pages load, and a `<script>`/`<img>` cross-site GET carries no `Origin`
- * at all — so a check here would either break the app or pass anyway. Read
- * routes have no containment guard today; PR #2000 adds one
- * (`lib/fs/safe-path.ts`) at every filesystem sink.
+ * The two halves apply to different surfaces, and the difference matters. The
+ * `Origin` comparison covers state-changing methods only: a same-origin `GET` is
+ * how the app's own pages load, and a `<script>`/`<img>` cross-site GET carries
+ * no `Origin` at all, so comparing it would either break the app or pass anyway.
+ * The loopback pin has no such limit — it needs no `Origin`, and the operator's
+ * own requests always satisfy it — so it runs on EVERY method. Scoping it to
+ * writes, as this originally did, closed rebinding for writes and left every
+ * read open: a rebound page could `GET /api/runlogs` and read the whole
+ * annotation corpus. Reported and reproduced in review (#1999).
  *
  * The other half of this control is the loopback binding in `package.json`.
  * `Origin` reasoning only covers a browser; binding is what keeps the app off
@@ -51,6 +55,16 @@ function isLoopbackHost(hostHeader: string): boolean {
 const STATE_CHANGING = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
 export function middleware(request: NextRequest): NextResponse {
+  // Before the method gate, deliberately. This is the half that does not need
+  // `Origin`, so there is no reason to spend it only on writes — and a read is
+  // exactly what a rebound page wants. Every legitimate request already carries
+  // a loopback `Host`, which is the same set of spellings the write path below
+  // accepts, so nothing the app does can fail here.
+  const host = request.headers.get('host')
+  if (host === null || !isLoopbackHost(host)) {
+    return NextResponse.json({ error: 'Request Host is not loopback' }, { status: 403 })
+  }
+
   if (!STATE_CHANGING.has(request.method)) return NextResponse.next()
 
   const origin = request.headers.get('origin')
@@ -76,9 +90,9 @@ export function middleware(request: NextRequest): NextResponse {
 
   // Compared against the Host this request actually arrived on, not a compiled-in
   // constant: the app is reached as both 127.0.0.1:3000 and localhost:3000, and
-  // pinning one would reject the operator's own tab on the other.
-  const host = request.headers.get('host')
-  if (host === null || originHost !== host || !isLoopbackHost(host)) {
+  // pinning one would reject the operator's own tab on the other. `host` is
+  // already known non-null and loopback by the gate at the top.
+  if (originHost !== host) {
     return NextResponse.json(
       { error: 'Cross-origin state-changing request refused' },
       { status: 403 },

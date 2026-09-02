@@ -72,12 +72,35 @@ describe('middleware — cross-origin state-changing requests', () => {
   })
 
   it('lets GET through', () => {
-    // A cross-site GET from <script>/<img> carries no Origin, so a check here
-    // would either break the app's own page loads or pass anyway. Read routes
-    // have no containment guard today; PR #2000 adds one at every filesystem
-    // sink.
+    // The ORIGIN comparison does not apply to GET: a cross-site GET from
+    // <script>/<img> carries no Origin, so comparing it would either break the
+    // app's own page loads or pass anyway. The loopback pin still applies — see
+    // the Host tests below. (#2000 is path containment, a different attack:
+    // it stops `../` traversal at the filesystem, not a cross-origin read.)
     const res = middleware(req('GET', { host: '127.0.0.1:3000' }))
     expect(res.status).toBe(200)
+  })
+
+  it('refuses a GET whose Host is not loopback', () => {
+    // The rebinding pin has to run before the method gate, not after it. A page
+    // on a rebound domain issues a plain GET: it carries no Origin, so the
+    // Origin reasoning genuinely does not apply — but `isLoopbackHost` needs no
+    // Origin, and the operator's own page loads always satisfy it, since they
+    // arrive as 127.0.0.1 or localhost. Refusing here cannot break the app and
+    // closes the read half of the same attack the POST path already refuses.
+    const res = middleware(req('GET', { host: 'evil.example:3000' }))
+    expect(res.status).toBe(403)
+  })
+
+  it('refuses a HEAD whose Host is not loopback', () => {
+    const res = middleware(req('HEAD', { host: 'evil.example:3000' }))
+    expect(res.status).toBe(403)
+  })
+
+  it('still lets a loopback GET through', () => {
+    // The pin must not cost the app its own reads.
+    expect(middleware(req('GET', { host: 'localhost:3000' })).status).toBe(200)
+    expect(middleware(req('GET', { host: '127.0.0.1:3000' })).status).toBe(200)
   })
 
   it('refuses a matched Origin/Host pair that is not loopback', () => {
