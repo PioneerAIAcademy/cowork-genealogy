@@ -132,8 +132,9 @@ updates:
   # ── JavaScript / TypeScript ─────────────────────────────────────────────────
   # Three separate trees by design (see CLAUDE.md): the root pnpm workspace for
   # the web/electron side, and two npm-managed trees — the engine, kept out of
-  # the workspace so the .mcpb release pipeline is untouched, and the Eval CRUD
-  # UI. Dependabot reads pnpm-lock.yaml and package-lock.json alike.
+  # the workspace because both its shipped artifacts install from its own npm
+  # lockfile, and the Eval CRUD UI. Dependabot reads pnpm-lock.yaml and
+  # package-lock.json alike.
   - package-ecosystem: npm
     directories:
       - "/"
