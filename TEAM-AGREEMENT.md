@@ -33,6 +33,8 @@ summary and the terms disagree, the terms win.
   it in an issue, delete it when you are done.
 - **Do not paste credentials or tester data into AI tools other than the
   ones the project already uses.**
+- **Researching your own family is expected.** Using the product on your
+  own lines is the point of the alpha test, not a misuse of it.
 - **Tell us fast if something leaks.** Reporting a mistake is not the
   problem. Hiding it is. Nobody gets in trouble for a fast report.
 - **This lasts after you leave.**
@@ -58,10 +60,11 @@ the locations the project documents for them — `~/.familysearch-mcp/`,
 `eval/.env`, or the platform's own secret store — all of which are
 excluded from version control.
 
-**(c) Use them only for project work.** Do not use a project credential
-for personal projects, for other employment, for testing unrelated to
-this project, or for any purpose GeneFun has not authorized. Usage is
-billed to GeneFun.
+**(c) Use them only for project work.** Testing the product on your own
+family research counts as project work — that is what the alpha test is
+for. What does not count is using a project credential for an unrelated
+personal project, for other employment or client work, or for any
+purpose GeneFun has not authorized. Usage is billed to GeneFun.
 
 **(d) Report suspected exposure immediately.** If you believe a
 credential has been exposed — committed by mistake, pasted into the wrong
@@ -107,17 +110,19 @@ The workflow that implements these rules is
 Records and images retrieved through the FamilySearch API are generally
 also available to anyone through the FamilySearch website, so they are
 not secret. They are still governed by FamilySearch's terms of use, and
-our partnership depends on respecting them. You agree to:
+our partnership depends on respecting them.
 
-**(a) Use FamilySearch access only for project work**, under your own
-FamilySearch account or a project account issued to you.
+**Researching your own family is expected.** Using the product on your
+own family lines is how the alpha test works, and nothing here restricts
+it.
 
-**(b) Not bulk-download, scrape, mirror, or redistribute** FamilySearch
-records or images beyond what a specific project task requires.
+Beyond that, you agree to:
 
-**(c) Not use project FamilySearch access for your own family research**
-or for anyone else's, and not share retrieved material outside the
-project.
+**(a) Not bulk-download, scrape, mirror, or redistribute** FamilySearch
+records or images beyond what a specific task requires.
+
+**(b) Not share retrieved material outside the project**, other than
+your own research results about your own family.
 
 ### 4. Confidential business information
 
@@ -205,10 +210,8 @@ agreement governs anything this one conflicts with.
 
 ### 10. Governing law
 
-This agreement is governed by the laws of
-<!-- TODO(GeneFun): confirm with counsel — state of incorporation -->
-**[STATE — to be filled in by GeneFun, Inc.]**, without regard to its
-conflict of law provisions.
+This agreement is governed by the laws of the State of Utah, without
+regard to its conflict of law provisions.
 
 ### 11. Changes
 
@@ -223,5 +226,3 @@ sign a newer one.
 
 Add your row to [SIGNERS.md](./SIGNERS.md) in a pull request opened from
 your own GitHub account. Signing instructions are in that file.
-
-*This document has not been reviewed by counsel.*

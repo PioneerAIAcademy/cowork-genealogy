@@ -153,10 +153,8 @@ does not cover that case.
 
 ### 11. Governing law
 
-This agreement is governed by the laws of
-<!-- TODO(GeneFun): confirm with counsel — state of incorporation -->
-**[STATE — to be filled in by GeneFun, Inc.]**, without regard to its
-conflict of law provisions.
+This agreement is governed by the laws of the State of Utah, without
+regard to its conflict of law provisions.
 
 ### 12. Entire agreement and changes
 
@@ -176,4 +174,4 @@ Add your row to [SIGNERS.md](./SIGNERS.md) in a pull request opened from
 your own GitHub account. Signing instructions are in that file.
 
 *This document is adapted from the Apache Software Foundation Individual
-Contributor License Agreement v2.0. It has not been reviewed by counsel.*
+Contributor License Agreement v2.0.*
