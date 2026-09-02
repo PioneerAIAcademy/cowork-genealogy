@@ -61,8 +61,8 @@ deleted, it is in the wrong file.
 > artifact and pre-states the answer.** Any behaviour that changes is a rule
 > that was in the wrong file.
 
-Apply it before claiming a conversion is done. It is the whole of section 0
-restated as something you can run.
+Apply it before claiming a conversion is done. It restates this whole opening
+rule as something you can run.
 
 ### What this cost, measured
 
@@ -80,8 +80,8 @@ the delegation with the forbidden phrasing:
 > achievable tier is Probable given the external site gap."
 
 That is the caller naming the artifact *and* pre-setting the tier — the two
-failures section 2 below describes, arriving together, from a caller that had
-never read the file forbidding them. Later in the same run the orchestrator
+failures the delegation-boundary section below describes, arriving together,
+from a caller that had never read the file forbidding them. Later in the same run the orchestrator
 used the agent as a dictated field editor ("the only change needed is to update
 ps_001's `resolved_conflict_ids` … do not change any other field"), reaching a
 hook-routed section by proxy.
@@ -242,7 +242,7 @@ still be wrong in the loop, and this is invisible from the suite.
 
 Two consequences for a conversion:
 
-- **A unit suite cannot confirm the acceptance check in section 0.** Applying
+- **A unit suite cannot confirm the delete-the-skill acceptance check.** Applying
   that check is a reading task on the agent body, done by hand, per conversion.
 - **The e2e corpus is the only instrument that sees the real route.** Its
   attribution reads the agent that made the write
@@ -259,11 +259,12 @@ Two consequences for a conversion:
 5. Give the routing skill only the tools it needs to route.
 6. Put everything load-bearing in the **agent**, including the resolution of its
    own arguments and its refusal to be steered by the delegation. The routing
-   skill keeps only the five items listed in section 0. The delegation message
+   skill keeps only the five items listed under "Everything load-bearing goes in
+   the agent". The delegation message
    now comes from the orchestrator, which the conversion does not own — so the
    agent must be correct under a delegation that names the artifact and
    pre-states the answer, not merely under a well-phrased one.
-7. Apply the acceptance check in section 0: delete the routing skill and read
+7. Apply the delete-the-skill acceptance check: delete the routing skill and read
    the agent as the orchestrator will reach it. Anything that changes goes into
    the agent before you run.
 8. Run once, unchanged. Compare against step 1.
@@ -278,7 +279,7 @@ Two consequences for a conversion:
 - **No conversion has been proven in Cowork.** The pair, the hook's caller
   check, and the matcher are all unverified against a live session; no CI job
   reaches that runtime.
-- **Nothing enforces the section 0 contents list.** A routing skill that grows a
+- **Nothing enforces the routing-skill contents list.** A routing skill that grows a
   gate back fails no test, and the acceptance check is applied by a reader. The
   two pairs that exist were both written before the rule and both violate it.
 - **The direct route is measured on two runs.** Whether the orchestrator reaches
