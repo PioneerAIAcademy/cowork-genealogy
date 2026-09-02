@@ -326,7 +326,7 @@ Courthouse, Reading.
 ```
 For Pennsylvania probate, match the authority to the document. A
 will is received, probated and recorded by the county **Register of
-Wills**, who holds the will books — that office is the creator of a
+Wills** — that office is the creator of a
 will, a probate record, or a letters-testamentary entry. The county
 **Orphans' Court** adjudicates estate distribution, accounts,
 partition and guardianship — name it for those records. Either way,
