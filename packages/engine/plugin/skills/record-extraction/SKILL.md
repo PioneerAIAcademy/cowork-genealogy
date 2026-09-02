@@ -110,9 +110,9 @@ Record data arrives in one of four ways:
    reading, and never try a browser, "Claude in Chrome", or `web_fetch`
    — unavailable here; they only waste turns.
 
-   To find images without a URL, use `volume_search` by `standardPlace`
-   + year range to discover digitized volumes, then invoke
-   `@plugin:image-reader` once per specific image you land on. Reserve
+   To find an image you do not already have, route to search-images —
+   landing on a specific page needs `image_search`, which this skill does
+   not hold. `volume_search` here only confirms a volume exists. Reserve
    image transcription for facts that exist *only* on the image; when
    even that is blocked, log the gap and continue via indexes.
 
@@ -121,10 +121,10 @@ Record data arrives in one of four ways:
    patronymic, a surname, a father's name on a baptism — looks like a
    likely mistranscription (an out-of-place patronymic, a spelling no
    other record corroborates), treat the indexed value as a lead: route
-   to the original register image (`volume_search` +
-   `@plugin:image-reader`) to confirm the spelling before it is recorded
-   as established (the original scan usually settles a suspect index
-   reading). If the image is unreachable, tell the extractor to
+   to search-images for the original register image to confirm the
+   spelling before it is recorded as established (the original scan
+   usually settles a suspect index reading). If the image is
+   unreachable, tell the extractor to
    record the name **tentative** — `[?]` in `value`, the doubt in the
    bias notes, original-image confirmation named as the outstanding
    step. (This is how an index OCR slip — "Aadnesen" read as "Nadnesen"
@@ -133,8 +133,9 @@ Record data arrives in one of four ways:
 ## Log entry — router-side, before delegating
 
 **Only when no search skill already logged this search.** If
-search-records or search-external-sites produced the record, reference
-their existing `logId` — never create a second entry.
+search-records, search-external-sites, search-full-text or search-images
+produced the record, reference their existing `logId` — never create a
+second entry.
 
 For a user-provided record (pasted text, PDF, image), call
 `research_log_append` with `tool: "user_provided"`. For a record you
