@@ -1058,3 +1058,39 @@ def test_extraction_makes_no_destructive_tree_ops(tool_calls):
         "resolution belongs to person-evidence/hypothesis-tracking/"
         "tree-edit, not extraction): " + "; ".join(offending)
     )
+
+
+def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
+    """A pre-adoption date must be resolved by invoking `convert-dates`
+    BEFORE the record-extractor is spawned — not narrated, and not
+    converted inline by the router.
+
+    Graded here rather than by the LLM judge because `skills_invoked` is
+    ground truth: the PreToolUse hook fires on the real `Skill` call, so a
+    response that only *mentions* the calendar problem ("this may be Old
+    Style — shall I convert it?") cannot satisfy it, and a response that
+    genuinely delegates cannot be marked down for it. This is the same
+    reason test_search_records asserts its escalation hand-off mechanically.
+
+    Why it matters more than a formatting nit: England and its colonies
+    began the legal year on 25 March until 1752, so an unresolved January-
+    to-March colonial date is wrong by a YEAR, not a day, and the error
+    propagates into every conclusion built on the fact.
+
+    Regression guard for #2107 — `convert-dates` had 0 invocations across
+    the 159 committed e2e runs, and 0 `convert_calendar` tool calls,
+    because nothing on a reachable path named it.
+
+    Tag-gated: only the pre-1752 test asserts this. Ordinary extraction
+    tests must NOT reach for convert-dates, and doing so on a modern date
+    is over-application, not a pass.
+    """
+    if "convert-dates-handoff" not in test.get("tags", []):
+        pytest.skip("only the pre-1752 Old Style routing test")
+    assert "convert-dates" in skills_invoked, (
+        "the record's date falls before its jurisdiction adopted the "
+        "Gregorian calendar, so the router had to invoke "
+        "Skill('convert-dates') before delegating. Narrating the problem "
+        "in prose is not resolving it. "
+        f"skills_invoked={skills_invoked}"
+    )
