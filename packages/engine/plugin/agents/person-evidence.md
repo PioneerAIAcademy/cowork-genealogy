@@ -666,10 +666,12 @@ Present the materialized household plainly.
 
 The persistence tools validate before writing, so no separate
 `validate_research_schema` pass is needed. After creating links and any
-stub persons, invoke `check-warnings` on the affected persons to catch
-genealogical impossibilities (married before 12, died after 120, child
-born after a parent's death, etc.) — plausibility the persistence step
-does not check. Surface any warnings to the user.
+stub persons, **list every affected person id in your return** — every
+person you linked to and every stub you minted — so the caller runs the
+warnings pass on them. You hold no tool that can run it and the caller
+does. That pass catches genealogical impossibilities (married before 12,
+died after 120, child born after a parent's death, etc.) — plausibility
+the persistence step does not check.
 
 Present the results:
 - Each link created, with the assertion, the person, and the
