@@ -295,8 +295,10 @@ Returns **text only**:
 
 ```typescript
 {
-  transcription: string      // faithful full-page OCR (the primary payload)
-  found?: "FOUND" | "NOT FOUND"  // present iff lookingFor was set
+  transcription: string      // faithful full-page OCR (the primary payload) — never doctored
+  truncated?: true           // present iff the OCR hit its output-token cap (finish_reason "length"); transcription is PARTIAL (§6.2)
+  truncationNotice?: string  // tool-voiced plain sentence companion to `truncated`; present iff `truncated`
+  found?: "FOUND" | "NOT FOUND"  // present iff lookingFor was set AND the read was not truncated (§6.2)
   imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"
   browseBudget?: {           // advisory, present only from the 21st distinct image in one group/project (§5.8)
     imageGroup: string       // the image-group prefix, e.g. "004261111"
@@ -460,11 +462,20 @@ Resolving an ARK to its group is deliberately out of scope.
     ]
   }],
   "temperature": 0,
+  "max_tokens": 16000,                         // OCR_MAX_TOKENS — see below
   "provider": { "data_collection": "deny" }   // privacy — see §11
 }
 ```
 
 - `temperature: 0` — OCR is not a creative task.
+- `max_tokens` (`OCR_MAX_TOKENS`, `image-transcribe.ts`) is set **explicitly**.
+  The provider's own default is per-model and can change under us with no
+  notice; setting it makes the cap ours and the truncation case (§6.2)
+  reproducible. `16000` is the measured basis — the §4 spike ran the whole
+  T13 oversize corpus at 16000 and dense pages finished on their own
+  (`finish_reason: "stop"`), re-confirmed for a 1880 census sheet by
+  `dev/probe-ocr-finish-reason.ts`. Scoped to the current default model;
+  re-measure if the default slug (§6.3) changes.
 - The OCR **prompt is baked into the tool**, not passed by the caller —
   reuse the `image-reader.md` protocol so behavior is identical to today's
   subagent. `lookingFor` is appended as the optional pointer directive.
@@ -474,6 +485,27 @@ Resolving an ARK to its group is deliberately out of scope.
 Parse `choices[0].message.content` → `transcription`. Derive `found` by
 looking for the FOUND/NOT FOUND marker the prompt asks the model to emit.
 Guard against empty content (→ error per §5.6).
+
+**Output-cap truncation.** Read `choices[0].finish_reason`. OpenRouter
+is OpenAI-compatible and returns it per choice (`"length"` on an output-token
+cap, `"stop"` on a complete read; evidence in `dev/probe-ocr-finish-reason.ts`).
+A capped read is **non-empty**, so without this it passes as an ordinary
+success and the caller cannot tell a half-read census page from a whole one.
+
+- `finish_reason === "length"` → set `truncated: true` and a tool-voiced
+  `truncationNotice` (§5.5). This is a **partial success, not an error** —
+  the tool still returns the lines it got; it does not throw.
+- The `transcription` stays **verbatim** — the signal rides the sibling
+  fields, never spliced into the OCR text (that would re-create the
+  prose/OCR blend a truncation notice must never introduce; the
+  `browseBudget.notice` precedent is the same shape).
+- **Suppress `found` on a truncated read.** The FOUND/NOT FOUND marker rides
+  a final line the model never reached, and a target may sit below the cut,
+  so a half-read page must never surface a clean `NOT FOUND` negative.
+- **Out of scope:** a model that stops early on its own
+  (`finish_reason: "stop"` on an unfinished page — no cheap signal, a
+  model-quality problem) and a transport cut mid-body (already thrown by
+  `fetchWithTimeout`, §5.7).
 
 ### 6.3 Model selection
 

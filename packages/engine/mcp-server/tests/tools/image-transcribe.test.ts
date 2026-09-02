@@ -30,12 +30,14 @@ vi.stubGlobal("fetch", mockFetch);
 
 const MODEL = "qwen/qwen3-vl-235b-a22b-instruct";
 
-function mockOpenRouterOk(content: string) {
+function mockOpenRouterOk(content: string, finishReason = "stop") {
   mockFetch.mockResolvedValueOnce({
     ok: true,
     status: 200,
     statusText: "OK",
-    json: async () => ({ choices: [{ message: { content } }] }),
+    json: async () => ({
+      choices: [{ message: { content }, finish_reason: finishReason }],
+    }),
     text: async () => "",
   });
 }
@@ -188,6 +190,44 @@ describe("imageTranscribeTool — lookingFor", () => {
       lookingFor: "Schreck",
     });
     expect(result.found).toBeUndefined();
+  });
+});
+
+describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", () => {
+  it("flags a finish_reason=length read as truncated with a tool-voiced notice", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: partway down the pag", "length");
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(result.truncated).toBe(true);
+    expect(result.truncationNotice).toMatch(/INCOMPLETE/i);
+    // The transcription stays verbatim — the notice is a sibling field, never
+    // spliced into the OCR text (would re-create the #1975 prose/OCR blend).
+    expect(result.transcription).toBe("Row 1: Anna\nRow 2: partway down the pag");
+    expect(result.transcription).not.toMatch(/INCOMPLETE/i);
+  });
+
+  it("does not flag a finish_reason=stop read as truncated", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family");
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(result.truncated).toBeUndefined();
+    expect(result.truncationNotice).toBeUndefined();
+  });
+
+  it("suppresses found on a truncated read — a half-read page is never a clean NOT FOUND", async () => {
+    mockOpenRouterOk("Row 1: Weber\nRow 2: Braun\nNOT FOUND", "length");
+    const result = await imageTranscribeTool({
+      imageId: "004884748_02613",
+      lookingFor: "Schreck",
+    });
+    expect(result.truncated).toBe(true);
+    expect(result.found).toBeUndefined();
+  });
+
+  it("sends an explicit max_tokens so the cap is ours and reproducible", async () => {
+    mockOpenRouterOk("Row 1: Anna");
+    await imageTranscribeTool({ imageId: "004884748_02613" });
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string);
+    expect(body.max_tokens).toBe(16000);
   });
 });
 

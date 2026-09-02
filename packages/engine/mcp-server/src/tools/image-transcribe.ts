@@ -76,6 +76,15 @@ function recordBrowseAndCheckBudget(
 // calls of the one run that hung. Sized in the spec, not guessed.
 const OCR_TIMEOUT_MS = 180_000;
 
+// Explicit output-token budget. The provider's own default is per-model and can
+// change under us with no notice; setting it makes the cap OURS and the
+// truncation case reproducible. 16000 is generous — the §4 spike ran the whole
+// T13 oversize corpus at 16000 and dense pages (incl. a 1880 census sheet, per
+// dev/probe-ocr-finish-reason.ts) finished on their own (finish_reason "stop").
+// Scoped to the current default model (qwen3-vl-235b-instruct); re-measure if it
+// changes. A cap hit now surfaces as `truncated` rather than passing silently.
+const OCR_MAX_TOKENS = 16000;
+
 // OpenRouter attribution headers (recommended, not required). Stable app id.
 const APP_REFERER = "https://github.com/PioneerAIAcademy/cowork-genealogy";
 const APP_TITLE = "cowork-genealogy";
@@ -158,6 +167,7 @@ export async function imageTranscribeTool(
         body: JSON.stringify({
           model,
           temperature: 0,
+          max_tokens: OCR_MAX_TOKENS,
           // Privacy: FamilySearch scans are PII — do not let the provider
           // retain prompts for training. See spec §11.
           provider: { data_collection: "deny" },
@@ -215,6 +225,20 @@ export async function imageTranscribeTool(
     );
   }
 
+  // Output-token-cap truncation: OpenRouter reports finish_reason "length" (vs
+  // "stop" for a complete read; probe: dev/probe-ocr-finish-reason.ts). A capped
+  // read is non-empty, so it would otherwise pass as an ordinary success. The
+  // transcription stays verbatim — the signal rides sibling fields (spec §6.2).
+  // Out of scope: a model that stops early on its own ("stop", page unfinished)
+  // and a transport cut (already thrown by fetchWithTimeout) — see #1974.
+  const truncated = data.choices?.[0]?.finish_reason === "length";
+  const truncationNotice = truncated
+    ? "This transcription is INCOMPLETE — the OCR hit its output-token limit and " +
+      "stopped partway down the page. The lines below are what was read; the rest " +
+      "of the page is UNREAD, not blank. Do not treat any target as absent from " +
+      "this partial read."
+    : undefined;
+
   // Persist the scan for a retained source (§8.5, design B) — best-effort: the
   // transcription is the primary payload, so a save failure (e.g. a bad
   // projectPath) omits imageRef rather than losing the text. A TTL sweep in
@@ -237,10 +261,14 @@ export async function imageTranscribeTool(
     input.projectPath
   );
 
+  // Suppress found on a truncated read: the FOUND/NOT FOUND marker rides a final
+  // line the model never reached, and a target may sit below the cut — a
+  // half-read page must never yield a clean NOT FOUND negative (#1974).
   const key = input.lookingFor?.trim();
   return {
     transcription,
-    ...(key ? { found: parseFound(transcription) } : {}),
+    ...(truncated ? { truncated: true as const, truncationNotice } : {}),
+    ...(key && !truncated ? { found: parseFound(transcription) } : {}),
     ...(imageRef ? { imageRef } : {}),
     ...(browseBudget ? { browseBudget } : {}),
     metadata: {

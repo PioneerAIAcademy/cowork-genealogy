@@ -14,9 +14,19 @@ export interface ImageTranscribeInput {
 }
 
 export interface ImageTranscribeResult {
-  /** Faithful full-page OCR — the primary payload. */
+  /** Faithful full-page OCR — the primary payload. Never doctored: a
+   *  truncation is signalled by the sibling `truncated`/`truncationNotice`
+   *  fields, not by splicing prose into this text. */
   transcription: string;
-  /** Present only when `lookingFor` was provided. */
+  /** True only when the OCR hit its output-token cap (finish_reason
+   *  === "length"): the transcription above is PARTIAL and the rest of the
+   *  page is unread, not empty. Absent on a complete read. See spec §6.2. */
+  truncated?: true;
+  /** Tool-voiced, human-readable companion to `truncated` — a plain sentence
+   *  the caller can surface without improvising. Present iff `truncated`. */
+  truncationNotice?: string;
+  /** Present only when `lookingFor` was provided. Suppressed on a truncated
+   *  read — a half-read page must never surface a clean NOT FOUND. */
   found?: "FOUND" | "NOT FOUND";
   /** Project-relative path of the saved scan (images/<key>.jpg), present only
    *  when projectPath was supplied and the save succeeded (§8.5). */
@@ -44,6 +54,11 @@ export interface ImageTranscribeResult {
 
 /** The subset of OpenRouter's chat-completions response we read. */
 export interface OpenRouterChatResponse {
-  choices?: Array<{ message?: { content?: string | null } }>;
+  choices?: Array<{
+    message?: { content?: string | null };
+    /** OpenAI-compatible stop reason. "length" marks an output-token-cap
+     *  truncation; "stop" a complete read. (Probe: dev/probe-ocr-finish-reason.ts.) */
+    finish_reason?: string | null;
+  }>;
   error?: { message?: string; code?: number };
 }
