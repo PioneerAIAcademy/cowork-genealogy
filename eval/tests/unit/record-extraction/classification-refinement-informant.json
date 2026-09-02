@@ -1,0 +1,47 @@
+{
+  "test": {
+    "id": "ut_record_extraction_g4k",
+    "skill": "record-extraction",
+    "name": "A classification-refinement request updates the named assertion's fields in place, without touching extraction fields or unrelated siblings",
+    "type": "positive",
+    "description": "A previously-extracted 1900 census assertion (Thomas Doyle's birthplace) was classified informant_proximity='self' on the assumption Thomas answered the enumerator himself. New evidence (a naturalization petition) shows he was away from home on census day, so that assumption no longer holds. The user asks for the birthplace assertion to be reclassified. The skill must find the record from research.json (record_id/source_id), delegate a refinement request, and update ONLY the named assertion's classification fields via an `update` op -- never re-extract the record from scratch, never touch the untargeted sibling assertion (the name), and never create a duplicate assertion for the same fact. Mined from a coverage gap found by the record-extraction deep dive (issue #2021, F12): no test in the corpus exercised the classification-refinement path at all.",
+    "tags": [
+      "record-extraction",
+      "classification-refinement",
+      "update-op",
+      "source-reuse"
+    ]
+  },
+  "input": {
+    "user_message": "I've been researching Thomas Doyle's family from the 1900 census I already extracted (src_001). I just found his 1903 naturalization petition, and it states he was working on a railroad section gang out of state on census day -- so he wasn't home when the enumerator came by. That means the birthplace info on the census, which I'd assumed came straight from him, must have come from someone else in the household or maybe a neighbor -- I can't tell who exactly. Can you reclassify that birthplace assertion? It shouldn't be marked as self-reported anymore.",
+    "scenario": "record-extraction-refine-informant"
+  },
+  "mcp_fixtures": [
+    "record-read-doyle-1900-census"
+  ],
+  "refinement_targets": ["a_002"],
+  "expected_classifications": [
+    {
+      "record_role": "head",
+      "fact_type": "birth",
+      "attribute": "place",
+      "informant_proximity": "unknown",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct"
+    }
+  ],
+  "judge_context": [
+    "This is a CLASSIFICATION-REFINEMENT request, not a fresh extraction -- SKILL.md's refinement branch applies: find the record from research.json (record_id/source_id), delegate per record with the refinement request, and update in place. Do NOT re-classify inline in the router's own context, and do NOT treat this as a new record to extract from scratch.",
+    "The correct persisted change is on assertion a_002 (Thomas Doyle's birthplace, currently informant_proximity='self', information_quality='primary'): informant_proximity should become 'unknown' and information_quality should become 'indeterminate' -- Thomas was demonstrably not present to answer the enumerator, but who DID supply the birthplace (a family member? a neighbor?) is now genuinely unclear, matching this corpus's own established doctrine for an uncertain census informant (compare mid-research-flynn's a_001: 'unknown informant... most likely a household member, possibly a neighbor', proximity 'unknown').",
+    "evidence_type should NOT change and must stay 'direct': the birthplace is still STATED content on the census (someone told the enumerator 'Ireland'), which is what evidence_type grades (stated vs. inferred). The new doubt is about WHO reported it and how reliably, which is informant_proximity/information_quality's job, not evidence_type's. Downgrading evidence_type to 'indirect' here is a doctrinal error -- grade it as such if it happens.",
+    "The name assertion (a_001, also originally self-reported) is a DISTRACTOR and must be left untouched -- the user asked specifically about the birthplace, not the name. Reclassifying a_001 as well, or changing anything about it, is scope creep the request never asked for and must be marked down.",
+    "The fix must land as an `update` op on the EXISTING a_002, by its `a_` id -- never as a new assertion appended alongside it. A second birthplace assertion for Thomas (a duplicate of the same fact) is a serious defect: it means the skill mishandled `sourceReuse` and treated a refinement as a fresh extraction.",
+    "Extraction fields on a_002 (value 'Ireland', place 'Ireland', record_role 'head', fact_type 'birth', source_id 'src_001', record_id) must be byte-identical before and after -- only the classification fields the refinement doctrine covers (information_quality, informant, informant_proximity, informant_bias_notes, evidence_type, extracted_for_question_ids) may change.",
+    "GRADING NOTE: the skill may legitimately re-read the original record (record_read on the census ark) to re-verify context before reclassifying -- this is fine and not required either way; grade the persisted result, not whether a re-read happened.",
+    "GRADING NOTE: informant_proximity 'unknown' is not the only textually-defensible word choice a model might reach for (e.g. 'family_not_present' if it reasons a family member specifically must have answered) -- but the fixture gives no basis to conclude WHO specifically answered beyond 'not Thomas', so 'unknown' is the doctrinally correct call here, matching the corpus's own precedent for this exact situation. Do not credit a confident non-'unknown' proximity value as equally correct."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600
+  }
+}

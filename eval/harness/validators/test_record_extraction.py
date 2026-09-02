@@ -201,10 +201,18 @@ def test_expected_classifications(before_state, after_state, test):
     pair plus expected values for any of `evidence_type`,
     `informant_proximity`, `information_quality`. Semantics:
 
-      1. At least one NEW assertion (created by this run) with the
-         matcher's record_role + fact_type must exist.
-      2. EVERY new assertion with that record_role + fact_type must carry
+      1. At least one NEW-OR-UPDATED assertion (created by this run, or an
+         existing assertion this run changed) with the matcher's
+         record_role + fact_type must exist.
+      2. EVERY such assertion with that record_role + fact_type must carry
          each classification value the matcher declares.
+
+    Widened from "new" to "new-or-updated" for issue #2021 (F12): every
+    prior fixture's relevant assertions were newly created within the run
+    being checked, so this is a backward-compatible superset — it changes
+    no existing test's result — and it is what makes the matcher usable for
+    a classification-REFINEMENT test, whose target assertion already
+    existed in before_state and is only ever `update`d, never re-appended.
 
     record_role / fact_type matching is normalized (see the helpers above)
     because both are open, model-chosen strings; the classification values
@@ -226,9 +234,12 @@ def test_expected_classifications(before_state, after_state, test):
     if before is None or after is None:
         pytest.skip("Missing research.json for diff")
 
-    before_ids = {a.get("id") for a in before.get("assertions", [])}
+    before_by_id = {a.get("id"): a for a in before.get("assertions", [])}
     new = [
-        a for a in after.get("assertions", []) if a.get("id") not in before_ids
+        a
+        for a in after.get("assertions", [])
+        if a.get("id") not in before_by_id
+        or a != before_by_id[a.get("id")]
     ]
 
     classification_fields = (
@@ -1058,3 +1069,125 @@ def test_extraction_makes_no_destructive_tree_ops(tool_calls):
         "resolution belongs to person-evidence/hypothesis-tracking/"
         "tree-edit, not extraction): " + "; ".join(offending)
     )
+
+
+# --- Tag-gated: classification-refinement updates in place, nothing else ---
+
+_EXTRACTION_FIELDS = (
+    "source_id",
+    "record_id",
+    "record_role",
+    "fact_type",
+    "value",
+    "structured_value",
+    "date",
+    "date_certainty",
+    "place",
+)
+
+
+def test_refinement_preserves_extraction_fields_and_avoids_duplication(
+    before_state, after_state, test
+):
+    """Tag-gated (issue #2021, F12): a classification-refinement request
+    must change ONLY the named assertion's classification fields, never its
+    extraction fields, never a sibling assertion nobody asked about, and
+    never by way of a duplicate append standing in for an `update`.
+
+    Deep-dive finding: `record-extractor.md:947-964` names the refinement
+    path's contract precisely -- "update only the classification fields
+    that should change ... immutable extraction fields left alone" -- but
+    no test in the corpus exercised it (every existing scenario's `update`
+    ops are same-run self-corrections, never a refinement of a
+    pre-existing assertion). `test_expected_classifications` (widened
+    above, same issue) confirms the classification VALUES land; this
+    validator confirms the update didn't ALSO smuggle in a side effect
+    `expected_classifications` has no way to see, because it only ever
+    looks at assertions that changed -- it cannot notice one that should
+    not have.
+
+    Gated on the test JSON's `refinement_targets` field: a list of the
+    `a_` ids the refinement request names. Requires each target assertion
+    to still exist under the SAME id (a delete-and-recreate would dodge
+    every other check here while still looking like a correct update), its
+    `_EXTRACTION_FIELDS` unchanged, and at least one classification field
+    (`information_quality`, `informant`, `informant_proximity`,
+    `informant_bias_notes`, `evidence_type`, `extracted_for_question_ids`)
+    actually different -- an `update` call that changed nothing is not a
+    completed refinement. Every OTHER pre-existing assertion (the
+    fixture's un-named siblings) must be byte-identical to before, and no
+    new assertion sharing a target's (source_id, record_role, fact_type)
+    may appear -- the append-instead-of-update failure mode this exists
+    to catch."""
+    targets = test.get("refinement_targets") or []
+    if not targets:
+        pytest.skip("test declares no refinement_targets")
+
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    before_by_id = {a.get("id"): a for a in before.get("assertions", [])}
+    after_by_id = {a.get("id"): a for a in after.get("assertions", [])}
+
+    errors: list[str] = []
+
+    for tid in targets:
+        prior = before_by_id.get(tid)
+        if prior is None:
+            errors.append(f"{tid}: not present in before-state — bad fixture, not a skill defect")
+            continue
+        current = after_by_id.get(tid)
+        if current is None:
+            errors.append(f"{tid}: no longer exists — refinement must update in place, never delete")
+            continue
+        for field in _EXTRACTION_FIELDS:
+            if prior.get(field) != current.get(field):
+                errors.append(
+                    f"{tid}: extraction field '{field}' changed "
+                    f"{prior.get(field)!r} -> {current.get(field)!r} "
+                    f"(only classification fields may change on refinement)"
+                )
+        if current == prior:
+            errors.append(f"{tid}: named as a refinement target but nothing about it changed")
+
+    # No sibling not named as a target may have moved.
+    for aid, prior in before_by_id.items():
+        if aid in targets:
+            continue
+        current = after_by_id.get(aid)
+        if current is not None and current != prior:
+            errors.append(
+                f"{aid}: not a named refinement target, but changed anyway "
+                f"(reclassification must be scoped to the assertions asked about)"
+            )
+
+    # No duplicate: a NEW assertion sharing a target's (source_id,
+    # record_role, fact_type) means the model appended a second assertion
+    # for the same fact instead of updating the original.
+    target_shapes = {
+        (
+            before_by_id[tid].get("source_id"),
+            before_by_id[tid].get("record_role"),
+            before_by_id[tid].get("fact_type"),
+        )
+        for tid in targets
+        if tid in before_by_id
+    }
+    for aid, current in after_by_id.items():
+        if aid in before_by_id:
+            continue  # not new
+        shape = (
+            current.get("source_id"),
+            current.get("record_role"),
+            current.get("fact_type"),
+        )
+        if shape in target_shapes:
+            errors.append(
+                f"{aid}: new assertion duplicates a refinement target's "
+                f"(source_id, record_role, fact_type) shape {shape} -- "
+                f"looks like an append where an update was required"
+            )
+
+    assert not errors, "classification-refinement violation:\n  - " + "\n  - ".join(errors)

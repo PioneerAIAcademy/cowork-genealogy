@@ -1,0 +1,262 @@
+{
+  "run_log": "v1_2026-09-02_05-41-11.json",
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "corrections": [
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_027",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. Concrete, correctly-identified error: source_classification persisted as 'original' when the per-test context requires 'derivative'. Unrelated to issue #2021."
+    },
+    {
+      "test_id": "ut_record_extraction_027",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_027",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. A real recovery-path inefficiency (missing staged sidecar forced a retry), correctly identified with the specific tool calls named. Unrelated to issue #2021."
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree, same root cause as Correctness above -- the first extraction_append failed validation due to an unstaged research_log_append call; the skill recovered cleanly on retry."
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirms issue #2021 F7 fix: volume_search now genuinely appears in tool_calls (mcp__genealogy__volume_search), the first time in 9 recorded runs of this test (8 prior + this one) the router actually attempted image confirmation rather than only narrating that the image should be read."
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    }
+  ]
+}
