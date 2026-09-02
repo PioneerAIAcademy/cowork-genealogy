@@ -10,12 +10,12 @@ import { config } from '../../middleware'
  * things that make that logic *run* was pinned by anything:
  *
  * - Remove `--hostname 127.0.0.1` from `dev` and `start` and the app binds every
- *   interface again. All 176 tests passed. The middleware still refuses LAN
- *   writes — the Host would not be loopback — but every read route is
- *   deliberately uncovered, so the whole annotation corpus becomes readable from
- *   the LAN with a green build.
+ *   interface again. All tests passed. The middleware does not compensate:
+ *   `Host` is chosen by the client, so a non-browser LAN client sends a loopback
+ *   `Host` and `Origin` and passes both checks. The binding is the only thing
+ *   keeping the app off the LAN.
  * - Point `config.matcher` at a path that does not exist and the middleware runs
- *   on nothing. All 176 tests passed.
+ *   on nothing. All tests passed.
  *
  * The module header calls the binding "the other half of this control … neither
  * is sufficient alone", and `Start.bat` carries "do not change the binding
@@ -44,7 +44,7 @@ describe('the control is actually wired', () => {
       for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = path.join(dir, e.name)
         if (e.isDirectory()) walk(full)
-        else if (/^route\.tsx?$/.test(e.name)) routes.push(full)
+        else if (/^route\.[jt]sx?$/.test(e.name)) routes.push(full)
       }
     }
     walk(appDir)
@@ -52,7 +52,16 @@ describe('the control is actually wired', () => {
 
     const offenders = routes.filter((f) => {
       const src = fs.readFileSync(f, 'utf8')
-      const stateChanging = /export\s+(?:async\s+)?function\s+(POST|PUT|PATCH|DELETE)\b/.test(src)
+      // Next accepts several spellings of a handler and only one was checked.
+      // A route outside /api written any of the other ways bypassed the
+      // middleware with this test green — demonstrated in review with a live
+      // 200 from an attacker Host. The brace form is deliberately loose: it
+      // also matches `export { POST as other }`, which is not a handler, but a
+      // false positive here fails loudly and a false negative does not.
+      const stateChanging =
+        /export\s+(?:async\s+)?function\s+(?:POST|PUT|PATCH|DELETE)\b/.test(src) ||
+        /export\s+(?:const|let|var)\s+(?:POST|PUT|PATCH|DELETE)\b/.test(src) ||
+        /export\s*\{[^}]*\b(?:POST|PUT|PATCH|DELETE)\b[^}]*\}/.test(src)
       const underApi = path
         .relative(appDir, f)
         .split(path.sep)
@@ -66,7 +75,10 @@ describe('the control is actually wired', () => {
   it('no Server Action smuggles a write past the matcher', () => {
     // A Server Action is a POST to a PAGE route, which `/api/:path*` never sees.
     // None exist today; this fails the moment one is added.
-    const roots = [path.resolve(__dirname, '../../app'), path.resolve(__dirname, '../../lib')]
+    // `components/` is 44 files and is where a Server Action would most
+    // plausibly live. Walking only app/ and lib/ left it dark: an action placed
+    // there and imported from a page ran on a POST from an attacker Host.
+    const roots = ['app', 'components', 'lib'].map((d) => path.resolve(__dirname, '../..', d))
     const found: string[] = []
     const walk = (dir: string): void => {
       for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -84,17 +96,19 @@ describe('the control is actually wired', () => {
     const pkg = JSON.parse(
       fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8')
     ) as { scripts: Record<string, string> }
-    // Anchored and counted, for the same reason as the Start.bat check below.
-    // `toContain('--hostname 127.0.0.1')` was a prefix match, so `127.0.0.10`
-    // (a different address) and `127.0.0.1.nip.io` (a DNS name an attacker
-    // controls) both satisfied it; and because a later `--hostname` wins,
-    // appending `--hostname 0.0.0.0` bound every interface while still
-    // containing the string. Each of those three passed. The anchor alone
-    // closes the first two — the count is what closes the third.
+    // Anchored and counted, over BOTH spellings of the flag. `toContain(...)`
+    // was a prefix match, so `127.0.0.10` (a different address) and
+    // `127.0.0.1.nip.io` (a DNS name an attacker controls) satisfied it; and
+    // because a later hostname flag wins, appending one bound every interface
+    // while the string was still present. The anchor closes the first two, the
+    // count closes the third — and matching `-H` as well as `--hostname` is what
+    // closes the fourth: `-H` is Next's own short form, so counting only the
+    // long spelling left `--hostname 127.0.0.1 -H 0.0.0.0` green while the
+    // server listened on every interface.
     for (const s of ['dev', 'start'] as const) {
       const cmd = pkg.scripts[s]
-      expect(cmd, `${s} must bind loopback`).toMatch(/--hostname 127\.0\.0\.1(\s|$)/)
-      expect(cmd.match(/--hostname/g) ?? [], `${s}: a later --hostname wins`).toHaveLength(1)
+      expect(cmd, `${s} must bind loopback`).toMatch(/(?:--hostname|-H) 127\.0\.0\.1(?:\s|$)/)
+      expect(cmd.match(/--hostname|-H\b/g) ?? [], `${s}: a later hostname flag wins`).toHaveLength(1)
     }
   })
 
