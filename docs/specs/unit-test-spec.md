@@ -975,7 +975,26 @@ The judge prompt template lives at `eval/harness/judge/prompt.md`. The system pr
 {text_response}                     — Claude's full output text (or sidecar ref)
 {file_changes_summary}              — pre-rendered diff summary, ~500 tokens max
 {tool_calls}                        — list of MCP calls with args + matched fixture
+{before_state}                      — sources and conflicts on file BEFORE the run
 ```
+
+`{before_state}` renders the project's `sources` and `conflicts` as they existed
+*before* the skill ran, so the judge can mechanically check "not on file" /
+"fabricated" claims against the record. Each block renders its complete
+`count` + `all_ids` first (never clipped — that is the existence-check ground
+truth), then a heavy `detail` sample trimmed under `_BEFORE_STATE_MAX_CHARS`;
+conflicts render first so their preferred/competing assertion **values**
+(resolved from `assertions[]`) win the budget over source-citation detail. A
+dropped entry is named in an omission note, and `(none)` means the project had
+no prior sources or conflicts. Added-this-run material appears under
+`{file_changes_summary}`, not here.
+
+Each call's `response_summary` renders **every** result, not a 3-item sample:
+a grounding rubric marks a correct citation of result 4+ as fabricated when the
+judge can only see results 1-3. Prompt size is bounded by the total-size
+guard (`_TOOL_CALLS_MAX_CHARS`), which drops whole oldest calls with a stated
+marker; per-string and depth caps still apply inside each result. A larger array
+cap was rejected — it only moves the cliff.
 
 `{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran.
 
@@ -1013,7 +1032,7 @@ The minimum rationale length (20 chars) blocks one-word rationales — those cor
 
 ### Layer 3: Human verification
 
-The team submitting the PR writes one `.ann.json` file per run log, containing corrected scores for **every dimension of the 5 tests named in the run log's `review_sample`** — not every test — plus a written comment on each cell that is not a confirmed pass. A run log with no `review_sample` (every one written before sampling shipped) still owes every dimension of every test. Sampling is `eval/harness/harness/review_sample.py`; CI rule 3 enforces it. Senior genealogists review the corrected grades via GitHub PR comments — there is no separate adjudication artifact. See `docs/per-pr-review-workflow.md` for the full workflow and `eval/CLAUDE.md` for filename conventions.
+The team submitting the PR writes one `.ann.json` file per run log, containing corrected scores for **every dimension of the tests named in the run log's `review_sample`** — not every test — plus a written comment on each cell that is not a confirmed pass. The sample is five chosen picks (3 rotation, 1 targeted, 1 random) **plus every test that failed or scored a 1 or 2 on any dimension**, so its size varies with the run: across the committed corpus it is a median of 6 tests and at most 11. A run log with no `review_sample` (every one written before sampling shipped) still owes every dimension of every test. Sampling is `eval/harness/harness/review_sample.py`; CI rule 3 enforces it. Senior genealogists review the corrected grades via GitHub PR comments — there is no separate adjudication artifact. See `docs/per-pr-review-workflow.md` for the full workflow and `eval/CLAUDE.md` for filename conventions.
 
 Per-dimension scores at every layer (judge tool_use, run log, `.ann` file, CRUD UI) use the same integer scale: **`3` = pass, `2` = partial, `1` = fail.** The semantic labels (pass/partial/fail) live in the judge prompt's instruction text and in each dimension's `**pass:** / **partial:** / **fail:**` bullets in `rubric.md`; the data field itself is just the integer. The monthly judge-prompt review (per the per-PR workflow plan §2.6) reads `.ann` files and computes `llm_score - corrected_score` deltas grouped by `(dimension_source, dimension_name)` to identify systematic LLM-judge drift.
 
