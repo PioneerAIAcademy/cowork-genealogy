@@ -238,6 +238,14 @@ The script:
   question from the project state and the Notes box, and say on the issue that
   you did.
 
+> **Security: always unpack with the setup script, not plain `unzip`.** The
+> script strips any `.claude/` directory from the zip before wiring the skills
+> in. A legitimate feedback zip never contains dotfiles (both walkers skip
+> them), so a `.claude/` in the zip would be injected configuration. If the
+> script prints "Warning: stripped .claude/ from the zip", note it on the
+> issue: it means the bundle was hand-crafted or came from an unexpected
+> source.
+
 > **Why the snapshot matters — it's the retry mechanism.** The case folder is a
 > *capture*: unlike an e2e fixture, there is no `make e2e-project` to re-seed it
 > from. Running the agent mutates it, so every attempt after the first starts

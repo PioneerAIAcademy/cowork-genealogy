@@ -90,6 +90,16 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM --- Strip Claude Code config that may have been injected into the zip ---
+REM Legitimate feedback zips never contain dotfiles (both walkers skip entries
+REM starting with "."), so a .claude\ directory in the zip is either hand-crafted
+REM or from an unexpected source. Remove it so the script's own fresh .claude\
+REM (with repo-junctioned skills only) is the sole config Claude Code reads.
+if exist "!DEST_DIR!\.claude" (
+    echo Warning: stripped .claude\ from the zip ^(not expected in a feedback submission^).
+    rmdir /s /q "!DEST_DIR!\.claude"
+)
+
 REM --- Write .feedback-repo-root ---
 > "!DEST_DIR!\.feedback-repo-root" echo !REPO_ROOT!
 

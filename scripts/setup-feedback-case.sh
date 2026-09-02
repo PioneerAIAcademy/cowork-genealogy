@@ -82,6 +82,16 @@ fi
 mkdir -p "$DEST_DIR"
 unzip -q "$ZIP_PATH" -d "$DEST_DIR"
 
+# --- Strip Claude Code config that may have been injected into the zip ---
+# Legitimate feedback zips never contain dotfiles (both walkers skip entries
+# starting with "."), so a .claude/ directory in the zip is either hand-crafted
+# or from an unexpected source. Remove it so the script's own fresh .claude/
+# (with repo-symlinked skills only) is the sole config Claude Code reads.
+if [[ -e "$DEST_DIR/.claude" ]]; then
+  echo "Warning: stripped .claude/ from the zip (not expected in a feedback submission)."
+  rm -rf "$DEST_DIR/.claude"
+fi
+
 # --- Write .feedback-repo-root ---
 echo "$REPO_ROOT" > "$DEST_DIR/.feedback-repo-root"
 

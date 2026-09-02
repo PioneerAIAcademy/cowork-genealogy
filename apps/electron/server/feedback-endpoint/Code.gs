@@ -59,6 +59,13 @@ function doPost(e) {
   try {
     var payload = JSON.parse(e.postData.contents);
 
+    var expectedToken = PropertiesService.getScriptProperties().getProperty('FEEDBACK_TOKEN');
+    if (expectedToken && payload.feedbackToken !== expectedToken) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: false, error: 'unauthorized' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (!payload.zipBase64 || !payload.filename) {
       throw new Error('Missing zipBase64 or filename');
     }
