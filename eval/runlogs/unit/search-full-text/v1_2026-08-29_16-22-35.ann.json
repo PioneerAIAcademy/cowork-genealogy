@@ -1,17 +1,9 @@
 {
-<<<<<<<< HEAD:eval/runlogs/unit/search-full-text/v1_2026-08-29_16-22-35.ann.json
   "run_log": "v1_2026-08-29_16-22-35.json",
   "annotator": "83524248+taiwo-stack@users.noreply.github.com",
   "corrections": [
     {
       "test_id": "ut_search_full_text_003",
-========
-  "run_log": "v1_2026-09-01_17-38-18.json",
-  "annotator": "dallan@quass.org",
-  "corrections": [
-    {
-      "test_id": "ut_research_plan_fbn",
->>>>>>>> origin/main:eval/runlogs/unit/research-plan/v1_2026-09-01_17-38-18.ann.json
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -19,11 +11,7 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/search-full-text/v1_2026-08-29_16-22-35.ann.json
       "test_id": "ut_search_full_text_003",
-========
-      "test_id": "ut_research_plan_fbn",
->>>>>>>> origin/main:eval/runlogs/unit/research-plan/v1_2026-09-01_17-38-18.ann.json
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -31,139 +19,7 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/search-full-text/v1_2026-08-29_16-22-35.ann.json
       "test_id": "ut_search_full_text_003",
-========
-      "test_id": "ut_research_plan_fbn",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_fbn",
-      "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_fbn",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_fbn",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_fbn",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_fbn",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Sequencing logic",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Plan mode and lifecycle",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Objective scope containment",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_008",
->>>>>>>> origin/main:eval/runlogs/unit/research-plan/v1_2026-09-01_17-38-18.ann.json
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -171,7 +27,6 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/search-full-text/v1_2026-08-29_16-22-35.ann.json
       "test_id": "ut_search_full_text_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -189,9 +44,6 @@
     },
     {
       "test_id": "ut_search_full_text_002",
-========
-      "test_id": "ut_research_plan_012",
->>>>>>>> origin/main:eval/runlogs/unit/research-plan/v1_2026-09-01_17-38-18.ann.json
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -199,7 +51,6 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/search-full-text/v1_2026-08-29_16-22-35.ann.json
       "test_id": "ut_search_full_text_002",
       "dimension_source": "rubric",
       "dimension_name": "Query construction",
@@ -233,9 +84,6 @@
     },
     {
       "test_id": "ut_search_full_text_001",
-========
-      "test_id": "ut_research_plan_012",
->>>>>>>> origin/main:eval/runlogs/unit/research-plan/v1_2026-09-01_17-38-18.ann.json
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -243,19 +91,7 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/search-full-text/v1_2026-08-29_16-22-35.ann.json
       "test_id": "ut_search_full_text_001",
-========
-      "test_id": "ut_research_plan_012",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_plan_009",
->>>>>>>> origin/main:eval/runlogs/unit/research-plan/v1_2026-09-01_17-38-18.ann.json
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -263,7 +99,6 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/search-full-text/v1_2026-08-29_16-22-35.ann.json
       "test_id": "ut_search_full_text_001",
       "dimension_source": "rubric",
       "dimension_name": "Query construction",
@@ -313,9 +148,6 @@
     },
     {
       "test_id": "ut_search_full_text_008",
-========
-      "test_id": "ut_research_plan_009",
->>>>>>>> origin/main:eval/runlogs/unit/research-plan/v1_2026-09-01_17-38-18.ann.json
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -323,7 +155,6 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/search-full-text/v1_2026-08-29_16-22-35.ann.json
       "test_id": "ut_search_full_text_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
@@ -465,13 +296,6 @@
       "dimension_name": "Result triage",
       "llm_score": 3,
       "corrected_score": 3,
-========
-      "test_id": "ut_research_plan_009",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
->>>>>>>> origin/main:eval/runlogs/unit/research-plan/v1_2026-09-01_17-38-18.ann.json
       "comment": null
     }
   ]
