@@ -23,7 +23,8 @@
     "place-search-schuylkill-county",
     "place-search-schuylkill-by-name",
     "place-search-schuylkill-by-place",
-    "external-links-search-schuylkill"
+    "external-links-search-schuylkill",
+    "collections-search-schuylkill"
   ],
   "judge_context": [
     "A free digitized-newspaper archive URL must be generated — Chronicling America on the loc.gov collections path (www.loc.gov/collections/chronicling-america/) carrying dl=page so the search targets digitised PAGES rather than the U.S. Newspaper Directory's title catalogue, with the name in qs, a start_date/end_date window in YYYY-MM-DD covering 1908, and location_state set to the state. The retired legacy form (chroniclingamerica.loc.gov/search/pages/results/ with andtext/date1/date2/state) is NOT acceptable: that API was retired 2025-08-04 and the redirect drops those parameters, producing an unscoped search.",

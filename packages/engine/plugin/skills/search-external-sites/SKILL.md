@@ -116,14 +116,11 @@ the same search would be captured normally.
 **Newspapers: try the free archive first.** For any `record_type: newspaper`
 item, generate the free-archive URL (Chronicling America, and the state/regional
 archive for the place) *before or alongside* a Newspapers.com URL — never
-instead of it if the user named Newspapers.com. Not because the paid link
-might be unusable — a researcher with no subscription may still reach it
-through `FamilySearch-Partner` or `LibraryAccess`, so do not assume otherwise
-— but because the archives hold *different papers*. A title digitised only by
-a state archive is absent from Newspapers.com no matter whose subscription is
-in play, so a paid-only search can return a confident nil on a paper that was
-never there to find. `locality-guide` output for the place often already names
-the right regional archive; read it before guessing.
+instead of it if the user named Newspapers.com. The archives hold *different
+papers*: a title digitised only by a state archive is absent from Newspapers.com
+whatever the subscription, so a paid-only search can return a confident nil on a
+paper that was never there to find. `locality-guide` output for the place often
+already names the right regional archive; read it before guessing.
 
 **Check access.** Read `researcher_profile.subscriptions` in
 `research.json` — the researcher's access, whether by paid subscription,
@@ -314,23 +311,24 @@ https://www.newspapers.com/search/?query={first}+{last}&dr_year={year}&dr_place=
 
 #### Chronicling America (free)
 ```
-https://www.loc.gov/collections/chronicling-america/?qs={first}+{last}&dl=page&start_date={yyyy}-01-01&end_date={yyyy}-12-31&location_state={state}
+https://www.loc.gov/collections/chronicling-america/?qs={first}+{last}&dl=page&start_date={start_yyyy}-01-01&end_date={end_yyyy}-12-31&location_state={state}
 ```
-- `dl=page` — **required.** Without it the search returns newspaper *titles* from
-  the U.S. Newspaper Directory, a catalogue of what was published, not digitised
-  pages. A title-level nil says nothing about whether the event was reported.
+- `dl=page` — **required.** Without it the search returns newspaper *titles*
+  from the U.S. Newspaper Directory, not digitised pages, and a title-level nil
+  says nothing about whether the event was reported.
 - `qs` — the search words
-- `start_date`/`end_date` — full `YYYY-MM-DD`, not bare years
+- `start_date`/`end_date` — full `YYYY-MM-DD`, spanning the plan item's whole
+  window. A `date_range` of `1870-1890` is `start_date=1870-01-01` and
+  `end_date=1890-12-31` — never collapse a multi-year window to one year.
 - `location_state` — lowercase state name (`utah`, `new york`)
 - Digitised page coverage runs **1798–1963**, title-by-title and complete for no
-  state — a nil result never means no newspaper covered the event. Do not run
-  page searches outside that window; 1690 is the Directory's catalogue range,
-  not the page corpus.
+  state — a nil result never means no newspaper covered the event.
+- Target date outside 1798–1963: do not build this URL. Say the page corpus does
+  not reach that period, and route to the state/regional archive for the place
+  (coverage differs) or to a paid site instead.
 - Do **not** use `chroniclingamerica.loc.gov/search/pages/results/` with
-  `andtext`/`date1`/`date2`/`state`. That API was retired on 2025-08-04; the
-  host 308-redirects and carries the query string across, but the new endpoint
-  ignores those parameters, so the user lands on an unscoped search and any nil
-  logged from it is meaningless.
+  `andtext`/`date1`/`date2`/`state` — those parameters are ignored, the search
+  runs unscoped, and any nil logged from it is meaningless.
 
 #### State/regional digital newspaper archives (free)
 Utah Digital Newspapers:

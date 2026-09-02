@@ -398,3 +398,60 @@ def test_windows_backslash_zip_completes_setup(tmp_path, monkeypatch):
     assert (dest / ".git").is_dir()
     assert (dest / ".claude" / "skills").is_dir()
     assert "Look for newspaper articles" in result.stdout
+
+
+def _build_incomplete_zip(zip_path: Path) -> None:
+    """A well-formed zip that is missing a file the bundle spec guarantees.
+
+    `apps/electron/docs/feedback-json-spec.md` guarantees `research.json`,
+    `tree.gedcomx.json` and `_feedback/feedback.json` in every submission. This
+    one omits `research.json`, so `unzip` succeeds and exits 0 while the case
+    directory is unusable — the exit code cannot tell you anything is wrong.
+    """
+    feedback = {
+        "schema_version": 1,
+        "submitted_at": "2026-08-26T21:23:06.618Z",
+        "viewer_version": "1.0.0-dev",
+        "platform": "win32",
+        "email": "user@example.com",
+        "project_folder_path": r"C:\dev\case",
+        "user_prompt": "Look for newspaper articles.",
+        "agent_did": "n/a",
+        "agent_should_have": "n/a",
+        "notes": "",
+    }
+    with zipfile.ZipFile(zip_path, "w") as z:
+        z.writestr("tree.gedcomx.json", json.dumps({"persons": []}))
+        z.writestr("FEEDBACK.md", "# Feedback\n")
+        z.writestr("_feedback/feedback.json", json.dumps(feedback))
+
+
+def test_incomplete_extraction_is_rejected_not_committed(tmp_path, monkeypatch):
+    """An incomplete case must fail loudly, not be imported as if it were whole.
+
+    The exit code alone cannot carry this. Info-ZIP documents exit 1 as covering
+    both the backslash-separator warning this script deliberately tolerates and
+    members skipped for an unsupported compression method or unknown password.
+    (Measured 2026-09-02 on Info-ZIP 6.00 here, an unsupported method actually
+    exits 81, which the `>= 2` branch already rejects — but the exit code is the
+    wrong thing to reason from either way, and a bundle can be short a file with
+    no nonzero exit at all, which is what this exercises.)
+
+    What must not happen is the script continuing on to write the marker, commit
+    a git baseline and wire up skill symlinks over a case that cannot be worked.
+    """
+    slug = "feedback-2026-08-26T21-23-06-618Z"
+    zip_path = tmp_path / f"{slug}.zip"
+    _build_incomplete_zip(zip_path)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+
+    result = _run_script(str(zip_path))
+
+    assert result.returncode != 0, (
+        "an incomplete bundle was accepted; stdout:\n" + result.stdout
+    )
+    assert "research.json" in result.stderr, result.stderr
+    dest = home / "feedback" / slug
+    assert not (dest / ".git").is_dir(), "git baseline committed over a partial case"
+    assert not (dest / ".feedback-repo-root").is_file(), "marker written for a partial case"
