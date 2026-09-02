@@ -739,6 +739,15 @@ describe("fulltextSearchTool given-name expansion (issue #607)", () => {
     expect(fullNameParam).not.toContain(" OR ");
     // m.queryRequireDefault=on stays on — it requires at least one phrase to match
     expect(url).toContain("m.queryRequireDefault=on");
+    // Name field is boosted when expansion is active
+    expect(url).toContain("q.fullName.boost=2");
+  });
+
+  it("38b. no boost when name expansion does not apply", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    await fulltextSearchTool({ name: "Patrick Flynn" });
+    const url = mockFetch.mock.calls[0][0] as string;
+    expect(url).not.toContain("q.fullName.boost");
   });
 
   it("39. nameExpansion is present when expansion happens", async () => {

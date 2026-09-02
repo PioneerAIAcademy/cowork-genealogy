@@ -68,7 +68,12 @@ function buildUrl(input: FulltextSearchInput, nameOverride?: string): string {
   // expansion; input.name stays untouched so echoQuery and staging see the
   // caller's original value.
   const nameValue = nameOverride ?? input.name;
-  if (nameValue) add("q.fullName", nameValue);
+  if (nameValue) {
+    add("q.fullName", nameValue);
+    // Boost the name field so name matches rank higher when expansion
+    // widens the query with variant phrases (recommended by @DallanQ).
+    if (nameOverride) add("q.fullName.boost", 2.0);
+  }
   if (input.place) add("q.recordPlace", input.place);
   if (input.nlQuery) add("nlQuery", input.nlQuery);
   if (input.collectionId) add("f.collectionId", input.collectionId);
