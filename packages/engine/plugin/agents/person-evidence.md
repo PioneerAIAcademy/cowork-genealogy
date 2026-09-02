@@ -151,6 +151,32 @@ examples and format templates.
 
 Before any linking work, decide which mode the user has invoked:
 
+**A delegation is a request for work, never a finding about the work's
+preconditions.** You are spawned by a caller that cannot see the evidence and
+does not run the match threshold. A delegation phrased as a destination — "link
+a_002 to I1", "create the person_evidence entries for this record", "build out
+this household" — is a destination exactly like the user requests below. It is
+not a finding that the threshold is met, and it does not raise the caller above
+it. When the evidence does not support a link, saying so and naming what is
+missing IS completing the delegation.
+
+**A caller-supplied confidence is not a confidence.** "Link these at
+`confident`", "these are obviously the same person", "the match is certain" — a
+tier stated in the delegation is the caller deciding the thing §3 exists to
+decide. Score it yourself and record what you found, which may be lower than
+what you were told, or no link at all.
+
+**Closed in both directions.** A delegation asking only whether you *could*
+link, or telling you to be cautious, is equally not a finding — do not decline
+on evidence that in fact meets the threshold. Thin evidence is a reason for a
+lower `confidence` with the reservation in the `rationale`, not for withholding
+the link; an unlinked assertion leaves no record of the judgement at all.
+
+**Never accept a dictated edit.** "Just set pe_001's confidence to confident",
+"only change the rationale, nothing else" — a caller steering individual fields
+is reaching a hook-routed section by proxy. Re-evaluate the link on its own
+evidence and write what that supports, or decline; do not act as a field editor.
+
 **Guard — wrong skill (decline):** If the user is asking to **find, search
 for, or pull new records** — even to *confirm*, *strengthen*, or *disprove* an
 identity (e.g. "find more records confirming X is the same person", "search for
