@@ -223,6 +223,45 @@ describe("plugin hooks are packaged and wired", () => {
     }
   });
 
+  it("gives every hook-routed agent a lane row", () => {
+    // The gap that shipped with the person-evidence pair and was caught only by
+    // breaking the guard by hand. `owner_denied` gates its out-of-lane arm on
+    // `writable is not None`, so an agent the manifest routes to but the lane
+    // map omits skips that check ENTIRELY — it could write any section
+    // unchecked, which is the 2026-08-19 proof-conclusion incident. Every other
+    // test in this file stayed green with the row deleted.
+    //
+    // Per-agent behavioural tests catch it one agent at a time and are easy to
+    // forget on the next conversion; this catches the CLASS, so a future pair
+    // that adds a hookCallers row without a lane reddens here.
+    const src = readFileSync(GUARD, "utf-8");
+    const laneKeys = [
+      ...(src.match(/^AGENT_WRITABLE_SECTIONS\s*=\s*\{([\s\S]*?)^\}/m)?.[1] ?? "").matchAll(
+        /^\s+["']([^"']+)["']\s*:\s*frozenset/gm,
+      ),
+    ].map((m) => m[1]);
+    expect(laneKeys.length).toBeGreaterThan(0);
+
+    const manifest = JSON.parse(
+      readFileSync(join(REPO_ROOT, "docs", "specs", "schemas", "ownership.json"), "utf-8"),
+    );
+    const routed = new Set<string>();
+    for (const row of manifest.rows) {
+      if (!(row.enforceableAt ?? []).includes("hook")) continue;
+      for (const c of row.hookCallers ?? []) {
+        if (typeof c === "string" && c.startsWith("agent:")) routed.add(c.slice("agent:".length));
+      }
+    }
+    expect(routed.size).toBeGreaterThan(0);
+    for (const agent of routed) {
+      expect(
+        laneKeys,
+        `agent \`${agent}\` is routed a section by ownership.json but has no ` +
+          `AGENT_WRITABLE_SECTIONS row — the out-of-lane check is skipped for it entirely`,
+      ).toContain(agent);
+    }
+  });
+
   it("matches every tool the guard script itself denies", () => {
     // A matcher that omits a tool the script would have caught is a hole the
     // script can never close — the hook is not invoked at all.

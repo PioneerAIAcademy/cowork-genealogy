@@ -34,8 +34,25 @@ each (measured against best-of-baseline per test).
 | arm | regressed | improved |
 |---|---:|---:|
 | A | 14 | 0 |
-| B | 12 | 0 |
+| B | 12 raw, **11 after human annotation** | 0 |
 | C | 10 | 0 |
+
+**One of arm B's regressions was a judge error, not a fold regression.** The
+annotator moved `ut_person_evidence_018` from 1 to 3 on all three base dimensions
+— the run did create the link and correctly redirected the merge to `tree-edit`
+— so the honest count for arm B is 11. Two further corrections raised `_001`
+(Correctness, Rationale quality: a wording slip, not a reasoning error) and
+`_021` (Correctness, Person minting: the fixture's synthetic ids meant the
+FamilySearch quality check could not apply and the warnings tool was
+unavailable), without changing either test's outcome tier. Seven score changes in
+all, across three tests; `_025`'s eight dimensions were reviewed and the judge
+agreed with.
+
+**A third of the suite is unannotated by design.** Seven tests produced no graded
+dimensions at all — `_012`, `_013`, `_015`, `_022`, `_023` among them — because
+validators gate before the judge runs. Their outcomes rest on validator results,
+not on human-checked judge scores, and the review sample could only draw from the
+graded remainder.
 
 Section 3b of `docs/skill-to-agent-pair-conversion.md` predicts that
 boundary/routing tests are the one place a conversion is likely to *help* — a
@@ -130,7 +147,8 @@ gap every future pair reproduces.
 On the question as posed — does pairing grade better or cost less when nothing is
 bypassing?
 
-- **Grade better: no.** Zero improvements across three arms, 10–14 regressions.
+- **Grade better: no.** Zero improvements across three arms, 10–14 regressions
+  (11 for the shipped configuration after human annotation).
 - **Cost less: only with the pin**, at −30.3%, and the pin costs two further
   `same_person` failures plus a calibration miss.
 
