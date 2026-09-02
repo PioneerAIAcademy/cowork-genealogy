@@ -655,9 +655,9 @@ function GradesPane({
         </Group>
         {/* Agree All is hidden on a sampled test. Sampling cut the pass ~3x
             precisely so the remaining cells get read; a one-click agree on the
-            five tests that matter reproduces the 91.4%-silent-confirm corpus at
-            a fifth the size. It stays available on unsampled tests, which are
-            optional and where a bulk agree costs nothing. */}
+            handful of tests that matter reproduces the 91.4%-silent-confirm
+            corpus at a fraction of the size. It stays available on unsampled
+            tests, which are optional and where a bulk agree costs nothing. */}
         {owesComments ? (
           <Tooltip
             label="Sampled tests are reviewed one dimension at a time — each needs a comment."
@@ -1067,7 +1067,7 @@ function TestsPane({
     );
     for (const t of tests) {
       // An unsampled test is not "0 reviewed" — nothing is asked of it. Giving
-      // it a denominator is what would render "5/90 reviewed" on a sample of 5
+      // it a denominator is what would render "6/90 reviewed" on a sample of 6
       // and paint an orange badge on every test the annotator must not open.
       const total = sampled && !sampled.has(t.test_id)
         ? 0
@@ -1366,8 +1366,8 @@ export default function RunLogDetailPage({
 
   const log = query.data.runLog;
   const ann = localAnn;
-  // Sampled tests only. Counting every dimension here would render "5/90
-  // reviewed" against a sample of 5 and leave Release permanently disabled
+  // Sampled tests only. Counting every dimension here would render "6/90
+  // reviewed" against a sample of 6 and leave Release permanently disabled
   // while CI is green — the annotator would have no way to finish.
   const sampled = sampledTestIds(log);
   const allDimensions = log.tests

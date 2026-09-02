@@ -17,7 +17,7 @@
     },
     "corrections": {
       "type": "array",
-      "description": "One entry per dimension of each test named in the run log's `review_sample`; a run log without one (every log written before sampling shipped) owes an entry for every dimension of every test. `agreed` is computed as `corrected_score == llm_score` (no separate field).",
+      "description": "One entry per dimension of each test named in the run log's `review_sample` (3 rotation + 1 targeted + 1 random, plus every test that failed or scored a 1 or 2 on any dimension, so the count varies by run); a run log without one (every log written before sampling shipped) owes an entry for every dimension of every test. `agreed` is computed as `corrected_score == llm_score` (no separate field).",
       "items": { "$ref": "#/$defs/correction" }
     }
   },
