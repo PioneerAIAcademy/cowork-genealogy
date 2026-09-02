@@ -71,8 +71,7 @@ has nothing to do with jurisdictions. Requiring the change verb to sit near a
 jurisdiction word is what the pattern in Reproduce does.
 
 **The first corrected pass then under-counted every category** — 23 / 81 / 48
-against the 29 / 93 / 53 above. It left the JSON `
-` escapes in the dumped
+against the 29 / 93 / 53 above. It left the JSON `\n` escapes in the dumped
 tool arguments unreplaced, so sentences ran together across what were really
 line breaks and the splitter produced fewer, longer sentences. The script in
 Reproduce replaces them, and reproduces the table twice over.
@@ -84,6 +83,14 @@ of the 12 dark skills declare no write tool, and 11 of the 15 invoked skills
 do. It fails on its counterexamples — `research-exhaustiveness` (**116**) and
 `proof-conclusion` (**97**) are read-only, while `citation`,
 `hypothesis-tracking`, `timeline` and `tree-edit` can all write and are dark.
+
+Two of that 8 are counted misleadingly, per @florencemashipei: `project-status`
+and `translation` declare **no `allowed-tools` block at all**, so at runtime
+they inherit every tool rather than holding none. "Declares no write tool" is
+literally true of them and materially backwards. It does not rescue the
+hypothesis — the counterexamples above kill it either way — but the 8 should be
+read as 6 skills that genuinely declare read-only tools plus 2 that declare
+nothing.
 
 **This does not explain #2106 either.** That card's root cause remains
 unidentified.
@@ -108,11 +115,31 @@ tools (`wiki_search`, `wiki_read`, `wikipedia_search`, `place_search`,
 - `SKILL.md:169` — "It does not modify project files."
 - `SKILL.md:224` — "Writes nothing; safe to call repeatedly."
 
-An autonomous e2e run has no user to narrate to, and the judge grades the tree
-and research artifacts. A narrate-only skill cannot affect a graded outcome, so
-routing an autonomous orchestrator to it would produce nothing the metric can
-see. Zero invocations may be correct behaviour for this skill class rather than
-a routing bug.
+**The general form of this argument is wrong, and the counterexamples are in
+this document.** "Read-only, therefore it cannot affect a graded outcome" is
+false: `research-exhaustiveness` declares only `project_context`, persists
+nothing, and runs **116** times, because `SKILL.md:48` sends the orchestrator
+onward — "declared exhaustive → proof-conclusion; not declared because a gap
+remains → research-plan" — which changes what gets written downstream.
+`proof-conclusion` declares only `project_context` and runs **97** times, moving
+outcomes through a delegate that does persist (`SKILL.md:52`: "**Writes:**
+nothing directly. Every write is made by the `proof-conclusion` agent this skill
+delegates to"). Raised by @florencemashipei and @EdmondOware, and correct: the
+limb reused a mechanism this write-up had just discarded two sections earlier.
+
+**The narrower claim is what holds.** `historical-context` has neither of those
+two routes. It declares no agent delegation, so nothing persists on its behalf;
+and unlike `research-exhaustiveness:48` it ends with no next-step
+recommendation, so it never advances the orchestrator's loop. Its one
+control-flow action is a hand-off that terminates its own turn — routing-check
+row 1 invokes `locality-guide` and stops. So in an autonomous run it produces
+neither a durable artifact nor a change in what runs next, and zero invocations
+may be correct for *this* skill rather than for read-only skills as a class.
+
+This is a supporting observation, not the load-bearing one. The recommendation
+rests on the premise refutation, on no failure in 159 runs tracing to missing
+historical context, and on the two passing tests that already draw the
+description boundary.
 
 ## Why the description was not narrowed either
 
@@ -164,11 +191,16 @@ patronymic variant equated with Cruz", "a minor spelling variant of Reuben" —
 which is `person-evidence` reasoning, not a naming-system explanation. Nothing
 in the corpus shows either gap costing a conclusion.
 
-## Genealogist review
+## Judgement calls this audit could not settle by counting
 
-@Ikennaya1 reviewed the three judgement calls this audit could not settle by
-counting. Recorded here because the conclusion rests on them, and because the
-first answer produced a further measurement.
+Three questions the measurement cannot answer. What follows is **the author's
+own genealogical reasoning**, not a review of it — @Ikennaya1 wrote this PR, so
+this section is not independent sign-off, and the 2-of-2 boundary check below
+was designed, run and scored by the same person at n=2. @florencemashipei
+independently signed off on all three calls in the PR review as a member of
+@PioneerAIAcademy/senior-genealogists; that review, not this section, is the
+independent confirmation. Recorded here because the conclusion rests on these
+calls, and because the first answer produced a further measurement.
 
 **Boundary changes — conditional, and the condition is testable.** "Formed 1853
 from Navarro County; stable during the target period" is usually *not* enough
@@ -186,7 +218,7 @@ and in both, the run already wrote the strong form:
 
 > "born April 1792 in the area that became Garrard County (formed 1796 from
 > Madison and Lincoln counties), so his marriage likely occurred 1789-1792 in
-> Madison or Lincoln Co[unties]" — `mccarley-spouse`
+> Madison or Lincoln County" — `mccarley-spouse`
 
 **2 of 2**, so the corpus passes the reviewer's own test. The sample is two
 cases and should not be read as more than it is, but it points the same way as
@@ -345,4 +377,125 @@ print(f'run logs scanned: {files}')
 print(f'locality-guide runs: {n_lg}   other runs: {n_no}')
 for category, n in counts.items():
     print(f'  {category:14} sentences={n:>4}  LG runs={len(lg_runs[category]):>3}  non-LG runs={len(no_runs[category]):>3}')
+```
+
+The remaining figures — migration matches, the `guide_markdown` ratio, the
+formation statements and which of them cross the formation date, and the
+write-tool split including the two skills that declare no `allowed-tools` at
+all. Added at @florencemashipei's request: these were load-bearing and shipped
+without a reproduce path in a document that asks for one everywhere else.
+
+```python
+"""The remaining figures: migration matches, formation statements and the
+crossing cases, the guide_markdown ratio, and the write-tool split.
+Run from the repo root."""
+import json
+import glob
+import os
+import pathlib
+import re
+
+TEXT_TOOLS = ('mcp__genealogy__research_append', 'mcp__genealogy__research_log_append',
+              'mcp__genealogy__extraction_append')
+PLACE = (r'(?:count(?:y|ies)|parish|province|district|township|jurisdiction'
+         r'|kingdom|duchy|state|borough|municipalit|deanery|diocese|amt|fylke|shire)')
+BOUNDARY = re.compile(
+    r'(?:boundary chang\w*|jurisdiction chang\w*'
+    rf'|(?:formed|created|split|carved|separated)\s+(?:out\s+)?from\s+(?:\w+\s+){{0,4}}{PLACE}'
+    rf'|{PLACE}\w*\s+(?:was|were)\s+(?:then\s+)?(?:part of|renamed|annexed)'
+    rf'|(?:part of|renamed|annexed)\s+(?:\w+\s+){{0,3}}{PLACE}'
+    rf'|prior to \d{{4}}[^.]{{0,60}}{PLACE}'
+    rf'|{PLACE}[^.]{{0,60}}(?:established|erected|organized) in \d{{4}})', re.I)
+MIGRATION = re.compile(r'\b(?:migration (?:pattern|route|chain)|chain migration'
+                       r'|settlement pattern|onward migration)\b', re.I)
+FORMATION = re.compile(r'(?:formed|organized|established|erected|created)[:\s]+(?:in\s+)?'
+                       r'(1[6-9]\d\d)\s+from\s+([A-Z][A-Za-z\' ]{2,30}?)\s*(?:Count|,|\.|\n|\\n)', re.I)
+WRITE_TOOLS = re.compile(r'\b(research_append|research_log_append|tree_edit|tree_correct'
+                         r'|extraction_append|person_evidence|merge_|project_memory_write'
+                         r'|Write|Edit)\b')
+
+
+def run_logs():
+    for path in sorted(glob.glob('eval/runlogs/e2e/*/run-*.json')):
+        if path.endswith('.ann.json') or '.final-' in path:
+            continue
+        yield path
+
+
+migration = 0
+in_guide = out_guide = 0
+formations = set()
+crossing = []
+
+for path in run_logs():
+    log = json.loads(pathlib.Path(path).read_text(encoding='utf-8'))
+    era = str((log.get('tags') or {}).get('era') or '')
+    decade = re.match(r'(\d{4})s', era)
+    start = int(decade.group(1)) if decade else None
+    fixture = pathlib.Path(path).parent.name
+
+    for call in log.get('tool_calls') or []:
+        if call.get('tool') not in TEXT_TOOLS:
+            continue
+        text = json.dumps(call.get('args') or {}, ensure_ascii=False).replace('\\n', ' ')
+        migration += len(MIGRATION.findall(text))
+        guide = 'guide_markdown' in text
+        for sentence in re.split(r'(?<=[.!?])\s+', text):
+            if BOUNDARY.search(sentence):
+                if guide:
+                    in_guide += 1
+                else:
+                    out_guide += 1
+        for m in FORMATION.finditer(text):
+            year, parent = int(m.group(1)), m.group(2).strip()
+            key = (fixture, year, parent)
+            if key in formations:
+                continue
+            formations.add(key)
+            if start is not None and year > start:
+                crossing.append((fixture, era, year, parent))
+
+print(f'migration-pattern matches, whole corpus: {migration}')
+print(f'boundary sentences inside a guide_markdown call: {in_guide}')
+print(f'boundary sentences in other writes            : {out_guide}')
+print(f'distinct formation statements: {len(formations)}')
+print(f'  of which the research period crosses the formation date: {len(crossing)}')
+for fixture, era, year, parent in crossing:
+    print(f'    {fixture} (era {era}) formed {year} from {parent}')
+
+# The write-tool split, and the two skills that declare no allowed-tools at all.
+skills = collections_counter = {}
+counts = {}
+for path in run_logs():
+    log = json.loads(pathlib.Path(path).read_text(encoding='utf-8'))
+    for call in log.get('tool_calls') or []:
+        if call.get('tool') in ('Skill', 'SlashCommand'):
+            args = call.get('args') or {}
+            name = args.get('skill') or args.get('command') or args.get('name') or ''
+            if name:
+                counts[str(name).lstrip('/')] = counts.get(str(name).lstrip('/'), 0) + 1
+
+declares_none, read_only, can_write = [], [], []
+root = pathlib.Path('packages/engine/plugin/skills')
+for skill_dir in sorted(root.iterdir()):
+    body = skill_dir / 'SKILL.md'
+    if not body.exists():
+        continue
+    text = body.read_text(encoding='utf-8')
+    front = text.split('---')[1] if text.startswith('---') else ''
+    block = re.search(r'allowed-tools:(.*?)(?=\n[a-z-]+:|\Z)', front, re.S)
+    dark = counts.get(skill_dir.name, 0) == 0
+    if block is None:
+        declares_none.append((skill_dir.name, dark))
+    elif WRITE_TOOLS.search(block.group(1)):
+        can_write.append((skill_dir.name, dark))
+    else:
+        read_only.append((skill_dir.name, dark))
+
+print(f'\ndark skills that declare read-only tools : {sum(1 for _, d in read_only if d)}')
+print(f'dark skills that declare no allowed-tools: {sum(1 for _, d in declares_none if d)}'
+      f'  {[n for n, d in declares_none if d]}')
+print(f'invoked skills that can write            : {sum(1 for _, d in can_write if not d)}')
+print(f'invoked skills that are read-only        : {sum(1 for _, d in read_only if not d)}'
+      f'  {[n for n, d in read_only if not d]}')
 ```
