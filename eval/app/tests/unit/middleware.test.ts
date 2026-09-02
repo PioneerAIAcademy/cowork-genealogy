@@ -103,6 +103,14 @@ describe('middleware — cross-origin state-changing requests', () => {
     expect(middleware(req('GET', { host: '127.0.0.1:3000' })).status).toBe(200)
   })
 
+  it('refuses a Host carrying userinfo', () => {
+    // `evil.com@127.0.0.1:3000` parsed as a URL authority is userinfo plus a
+    // loopback host, so it was allowed on the read path. A Host header has no
+    // userinfo under RFC 7230 and no browser sends one, so this is not a
+    // reachable attack — it is the parse accepting a shape the grammar forbids.
+    expect(middleware(req('GET', { host: 'evil.com@127.0.0.1:3000' })).status).toBe(403)
+  })
+
   it('refuses a matched Origin/Host pair that is not loopback', () => {
     // DNS rebinding: a page at evil.example:3000 rebound to 127.0.0.1 sends
     // BOTH headers as evil.example:3000, so `Origin === Host` holds and the

@@ -41,6 +41,13 @@ import type { NextRequest } from 'next/server'
 // makes the comparison mean something, and it is why the dev-server ecosystem
 // ships host allowlists rather than an origin-equals-host test.
 function isLoopbackHost(hostHeader: string): boolean {
+  // A Host header is `uri-host [":" port]` (RFC 7230) — it has no userinfo. But
+  // this parses it as a URL authority, so `evil.com@127.0.0.1:3000` would be
+  // read as userinfo plus a loopback host and allowed. No browser can produce
+  // that (userinfo is stripped before the Host is sent), so this is closing an
+  // ambiguity in the parse rather than a reachable attack — but the parse should
+  // not accept a shape the grammar forbids.
+  if (hostHeader.includes('@')) return false
   let hostname: string
   try {
     hostname = new URL(`http://${hostHeader}`).hostname

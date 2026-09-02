@@ -84,7 +84,7 @@ describe('the control is actually wired', () => {
       for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = path.join(dir, e.name)
         if (e.isDirectory()) walk(full)
-        else if (/\.tsx?$/.test(e.name) && /^\s*['"]use server['"]/m.test(fs.readFileSync(full, 'utf8')))
+        else if (/\.[jt]sx?$/.test(e.name) && /^\s*['"]use server['"]/m.test(fs.readFileSync(full, 'utf8')))
           found.push(full)
       }
     }
@@ -117,11 +117,23 @@ describe('the control is actually wired', () => {
     // only — nothing listens on ::1. `localhost` may resolve to ::1 first, which
     // is untested on Windows, so the launcher uses the address that cannot depend
     // on the resolver. Nothing enforced the pairing either.
-    const bat = fs.readFileSync(path.resolve(__dirname, '../../../Start.bat'), 'utf8')
     // Anchored to the launch line itself. `toContain` was satisfied by any
     // occurrence anywhere in the file — including the comment above — and the
     // negative ruled out only one wrong spelling, so a comment mentioning the
     // address plus a launcher on 0.0.0.0 passed both.
-    expect(bat).toMatch(/^start http:\/\/127\.0\.0\.1:3000\s*$/m)
+    //
+    // The PORT is the other half of the address, and it was a literal 3000 with
+    // nothing tying it to the script. `Start.bat` runs `npm run dev`, so adding
+    // `--port 4000` there left this green while the launcher opened a dead port
+    // — the same pairing failure the host half exists to prevent. Derived from
+    // the script now, over both spellings of the flag.
+    const pkg = JSON.parse(
+      fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8')
+    ) as { scripts: Record<string, string> }
+    const port = pkg.scripts.dev.match(/(?:--port|-p)\s+(\d+)/)?.[1] ?? '3000'
+    const bat = fs.readFileSync(path.resolve(__dirname, '../../../Start.bat'), 'utf8')
+    expect(bat, `Start.bat must open the port \`npm run dev\` serves (${port})`).toMatch(
+      new RegExp(String.raw`^start http://127\.0\.0\.1:${port}\s*$`, 'm'),
+    )
   })
 })
