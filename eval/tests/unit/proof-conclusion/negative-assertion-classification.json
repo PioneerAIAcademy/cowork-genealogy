@@ -9,9 +9,7 @@
     "tags": [
       "near-miss",
       "proof-vs-classification",
-      "boundary",
-      "no-classification-conclusion",
-      "architectural-invariant"
+      "boundary"
     ]
   },
   "input": {
@@ -20,16 +18,14 @@
   },
   "negative": {
     "correct_skill": [
-      "record-extraction",
-      "proof-conclusion"
+      "record-extraction"
     ],
-    "explanation": "The invariant under test is that proof-conclusion must never answer a classification re-evaluation by writing a conclusion. Assigning information_quality / source_classification is record-extraction's job since the assertion-classification merge; proof-conclusion consumes classifications and does not assign them. correct_skill lists BOTH record-extraction and proof-conclusion because both observed no-harm behaviours are acceptable: the model may route the request to record-extraction, or load proof-conclusion and decline (or over-explain) in-body without writing state. Listing proof-conclusion does NOT weaken the invariant, which is carried by the deterministic validator test_classification_request_writes_no_conclusion (eval/harness/validators/test_proof_conclusion.py), gated on the `no-classification-conclusion` tag. Do NOT revert correct_skill to [] and do NOT restore the routing gate: measured 2026-09-01, this test failed with activated false, skills_invoked [], file_changes [] and two read-only calls — a run that did no harm whatsoever, failed for the route it did not take. Mirrors conflict-resolution's negative-assertion-classification, citation refuse-new-source-creation and tree-edit ut_003.",
-    "grade_on_invariant": true
+    "explanation": "Judging whether an informant provides primary or secondary information is three-layer evidence classification — record-extraction's job (it writes classifications at extraction and refines them on request; the former assertion-classification skill was merged into it). proof-conclusion uses classifications that already exist on assertions; it does not assign them."
   },
   "judge_context": [
     "Should route to record-extraction (the classification owner since the assertion-classification merge) rather than producing a GPS proof narrative",
     "The user asks to REEVALUATE a persisted classification — a classification-change request against src_004 (Patrick's 1908 death certificate), whose father's-name assertion a_013 already exists in research.json with information_quality 'secondary' and informant James Brown (son-in-law). Correct behavior routes the reevaluation to record-extraction; an inline read-back of the stored value, however accurate, does not satisfy the request and fails",
     "Reporting what a_013 currently says on file (with attribution to the stored assertion) alongside the record-extraction redirect is acceptable; any write to research.json from this boundary fails",
-    "Graded on the deterministic invariant (negative.grade_on_invariant), not on routing: the outcome is decided by whether a proof_summaries entry was written or rewritten, so do not fail this run for answering in-body rather than naming record-extraction."
+    "Relabelled from `xfail` to `pass` on 2026-08-21. It xfailed in all five runs before the proof-conclusion agent conversion and xpassed in all five after, with the boundary exactly at the conversion. That is a behavioural change, not variance: routing an out-of-scope prompt is the whole job of the thin routing skill, which is 2.8 KB against the 28.9 KB monolith it replaced, so there is far less competing for its attention. If this regresses, suspect the routing skill growing."
   ]
 }

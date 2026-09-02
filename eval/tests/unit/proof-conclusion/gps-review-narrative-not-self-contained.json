@@ -2,35 +2,32 @@
   "test": {
     "id": "ut_proof_conclusion_r7k",
     "skill": "proof-conclusion",
-    "name": "GPS review of a bare-identifier narrative also routes to gps-mentor",
-    "type": "negative",
-    "description": "Second pin for the same route, on a scenario where the existing proof is visibly weak. The flynn-proof-bare-ids scenario is byte-identical to mid-research-flynn except for one field: ps_001.narrative_markdown refers to its evidence only by bare identifiers (a_004, a_010, a_013, c_001, src_001/003/004, plan_001), describes none of the underlying records in prose, and carries no inline or appended citations. A visibly deficient proof is the one a writer skill is most tempted to repair, which silently replaces the artifact the user asked to have judged — so the intact-narrative invariant carries most of this test's weight. Paired with ut_proof_conclusion_007 so the route is pinned on both a sound and an unsound proof. Was a positive review-mode test before #1861 (added by #1392); the user_message is unchanged so the utterance stays pinned in the trigger corpus. The self-containment craft check it used to measure has no home on the unit plane, which grades skills and not agents.",
+    "name": "Review flags a proof narrative that is not self-contained",
+    "type": "positive",
+    "description": "Second review-mode test, required by issue #1392 so the §9 review checklist has more than one test to prove against. The flynn-proof-bare-ids scenario is byte-identical to mid-research-flynn except for one field: ps_001.narrative_markdown refers to its evidence only by bare identifiers (a_004, a_010, a_013, c_001, src_001/003/004, plan_001), describes none of the underlying records in prose, and carries no inline or appended citations. The user asks the same GPS-review question as ut_proof_conclusion_007, so narrative quality is the only variable between the two tests. This test measures whether the review systematically performs the self-containment check — not which verdict it reaches.",
     "tags": [
       "proof",
       "parentage",
       "gps-review",
       "GPS-step-5",
-      "narrative-self-containment",
-      "near-miss",
-      "boundary",
-      "architectural-invariant"
+      "no-new-proof-expected",
+      "narrative-self-containment"
     ]
   },
   "input": {
     "user_message": "Does my proof for the parentage question (ps_001) meet the Genealogical Proof Standard? Assess the EXISTING ps_001 against the five GPS components — judge it on the evidence it actually cites. Treat ps_001 as it stands. Any sources or assertions that exist in research.json but are NOT cited in ps_001 are evidence GAPS for the next round of work — flag them and say whether they would change the tier, but do NOT frame them as defects or failures of the current proof.",
     "scenario": "flynn-proof-bare-ids"
   },
-  "negative": {
-    "correct_skill": [],
-    "explanation": "Routing is deliberately NOT graded here, and `correct_skill` is inert because `grade_on_invariant` makes _compute_outcome return before it reads routing. Measured 2026-09-01: the same utterance reached the `research` orchestrator on ut_proof_conclusion_007 and no skill at all on ut_proof_conclusion_r7k. Neither array value is correct for the pair — `[]` fails the run that routed to the orchestrator, and `[\"research\"]` fails the run that routed nowhere — so the outcome is decided by the deterministic invariant instead: proof-conclusion must not activate, must write no new proof_summaries, and must leave ps_001.narrative_markdown byte-identical. Enforced by the three `gps-review`-tagged validators in eval/harness/validators/test_proof_conclusion.py. This is the shape citation refuse-new-source and tree-edit ut_003 already resolved the same way. The `evaluations` write both runs performed is a separate defect and is filed on its own; its absence from the invariant is not approval of it. The bare-identifier narrative raises the stakes rather than changing the route, which is why the intact-narrative validator matters most here.",
-    "grade_on_invariant": true
-  },
   "judge_context": [
-    "GROUND TRUTH: in this scenario ps_001.narrative_markdown names its evidence only by bare identifiers (a_004, a_010, a_013, c_001, src_001, src_003, src_004, plan_001). It describes none of the underlying records in prose — no census years, no dwelling/family numbers, no informant, no repository — and carries no inline citations and no citations section. The structured fields (tier probable, vehicle summary, supporting_assertion_ids, resolved_conflict_ids, exhaustive_search_summary) are unchanged from mid-research-flynn.",
-    "Correct behavior is to route this to the gps-mentor agent — either by delegating to it, or by naming it as the right reviewer. Do NOT penalize a run that delegates to gps-mentor and relays its verdict.",
-    "proof-conclusion must NOT activate. Rewriting ps_001, updating it in place, appending a second proof_summaries entry for q_001, or writing to tree.gedcomx.json are all failures. The narrative being deficient is not a licence to repair it — the user asked for an assessment.",
-    "Fail Correctness if ps_001.narrative_markdown differs from its scenario value at the end of the run.",
-    "A reply that judges the narrative not self-contained WITHOUT invoking proof-conclusion is not a failure of this test — the routing gate is what this test measures. Do not grade the assessment's craft here; that is the mentor's concern."
+    "SCORING NOTE (2026-08-19): this test's whole point is whether the assessment PERFORMS the self-containment check, not what verdict it reaches. The correct verdict here is 'not self-contained' — so an assessment that says exactly that, and explains why, is a PASS on Narrative standalone. A previous run scored this dimension FAIL on a rationale that read 'the assessment correctly identifies ... and explains why', which is a misgrade: if the rationale you are about to write is affirmative, the score is 3.",
+    "GROUND TRUTH: in this scenario ps_001.narrative_markdown names its evidence only by bare identifiers (a_004, a_010, a_013, c_001, src_001, src_003, src_004, plan_001). It describes none of the underlying records in prose — no census years, no dwelling/family numbers, no informant, no repository — and carries no inline citations and no citations section. The proof_summaries entry's structured fields (tier probable, vehicle summary, supporting_assertion_ids, resolved_conflict_ids, exhaustive_search_summary) are unchanged from mid-research-flynn.",
+    "This is a REVIEW-mode test (`no-new-proof-expected`): apply the rubric's (review) branch on every dimension. No new narrative is produced, so do not grade the reply as though it were a proof narrative.",
+    "Narrative standalone — PASS (3) requires that the assessment explicitly evaluates whether ps_001's narrative is self-contained: whether each assertion and conflict it cites is described in prose rather than left as a bare ID, and whether citations are present inline throughout. PARTIAL (2) if it touches standalone readability only in passing or catches one issue and misses the other. FAIL (1) if the assessment never addresses standalone readability at all.",
+    "Completeness — PASS (3) requires all three of: (a) the assessment walks all five GPS components and names each; (b) it states whether ps_001's form (summary) still fits the shape of the evidence; (c) it states, for the research.json sources not cited by ps_001, whether incorporating them could change the tier. PARTIAL (2) if one of the three is missing or only implied.",
+    "NEUTRALITY — grade the systematic coverage of the checks above, NOT the verdict reached. A review that works through the self-containment check and judges the narrative adequate is not penalized; a review that reaches the 'right' verdict without ever performing the check does not pass. Do not require any particular adjective about narrative quality.",
+    "Must NOT write a new proof_summaries entry, and must not create a second entry for q_001 — the prompt asks for an assessment, not a rewrite. Rewriting or updating ps_001 in place is out of scope for this prompt; note it if it happens.",
+    "Tool Arguments: the specific assertions cited by ps_001 are fetched with research_query scoped by sourceId or questionId. research_query does NOT support a per-assertion `assertionId` filter. A run that attempts an unsupported filter, receives the error, and recovers with a supported one should be noted but not failed on that basis alone; repeated unsupported calls with no recovery is a fail.",
+    "Invoking validate_research_schema as a final guardrail is acceptable and expected; it does not substitute for the GPS assessment. An assessment that collapses into a bare 'the file is schema-valid' report is a fail — schema validity is not the GPS."
   ],
   "judge_reads_files": true,
   "execution": {

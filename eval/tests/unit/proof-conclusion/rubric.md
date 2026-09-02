@@ -2,9 +2,7 @@
 
 Grading dimensions for proof-conclusion unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
-**Two modes — write vs. no-new-write.** Most tests are *write-mode*: the skill produces a new `proof_summaries` entry. A subset is tagged `no-new-proof-expected`, where the correct behavior writes no NEW narrative — a re-invocation that updates an existing summary in place, or a precondition block that defers to another skill. Each dimension's pass criterion below covers both modes — the (write) branch applies when a new narrative is being produced; the (review) branch applies when the test carries the `no-new-proof-expected` tag. Judges MUST apply the review branch on tagged tests; applying the write criteria to one is incorrect because no new narrative exists to grade.
-
-**GPS review of an existing proof is no longer this skill's job.** Per the ruling on issue #1861 it routes to the read-only `gps-mentor` agent, and the two `gps-review` tests in this directory are now negative routing tests, which carry no rubric dimensions. The (review) branch wording below therefore outlives the tests that motivated it and is retained unchanged only because `reinvocation-update-in-place` and `precondition-unresolved-conflict` still select it via the tag — neither is a GPS review. Rewording it is a grading change and is tracked separately.
+**Two modes — write vs. review.** Most tests are *write-mode*: the skill produces a new `proof_summaries` entry. A subset is *review-mode* (tagged `no-new-proof-expected`): the skill assesses an EXISTING proof against the GPS without writing a new narrative. Each dimension's pass criterion below covers both modes — the (write) branch applies when a new narrative is being produced; the (review) branch applies when the test carries the `no-new-proof-expected` tag. Judges MUST apply the review branch on tagged tests; applying the write criteria to a review-mode test is incorrect because no new narrative exists to grade.
 
 ## Tier justification
 
