@@ -399,8 +399,10 @@ a malformed-merge / unpersistable-merge failure is surfaced rather than thrown:
 { ok: false, errors: string[] }
 ```
 
-The `warnings` entry mirrors `PersonWarningsResult` (`person-warnings-tool-spec.md`)
-plus `mobRole` so the coherence gate can phrase "merging would introduce …".
+The `warnings` entry mirrors `PersonWarningsResult` (`person-warnings-tool-spec.md`),
+whose `PersonWarning` shape already carries the optional `mobRole` field the
+coherence gate uses to phrase "merging would introduce …". Merge mode is what
+populates `mobRole`; single-anchor `person_warnings` leaves it unset.
 The `ok` discriminant + `{ ok: false, errors }` branch keep the gate a complete
 dry-run preview: a merge the writer would reject returns `{ ok: false }` here,
 not a clean result.
