@@ -1,7 +1,7 @@
 # Deep dive: search-records — findings and validator requests
 
-Issue #1642. Base `25b0f434`. Release candidate: `v1_2026-08-31_11-03-19` (30
-tests, 28 pass / 1 fail / 1 xfail, annotated).
+Issue #1642. Base `25b0f434`. Release candidate: `v1_2026-09-02_10-04-24` (30
+tests, 27 pass / 1 partial / 1 fail / 1 xpass, annotated).
 
 Step 1's output is
 [`search-records-prohibition-list.md`](./search-records-prohibition-list.md) —
