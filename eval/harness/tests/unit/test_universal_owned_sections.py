@@ -31,7 +31,10 @@ Two things are covered, and they fail for different reasons:
    already bare (`proof-conclusion`, not
    `genealogy-research:proof-conclusion`). Nothing in CI reaches the SDK's
    payload shape — see docs/architecture.md §9.4 — so this test is the record
-   of that measurement, and it goes red if the shape moves.
+   of that measurement. It does NOT detect the shape moving: the payload here is
+   a literal. What catches drift is the gating validator, because every drift
+   scenario stops the caller resolving to `proof-conclusion` and the routed arm
+   then denies the owner's own writes.
 """
 
 import pathlib
@@ -85,8 +88,14 @@ def _append(section, **entry):
 # --- the payload-shape guard -------------------------------------------------
 
 def test_the_observed_payload_resolves_a_bare_caller():
-    """The Step-1 measurement, encoded. If either key stops arriving, or
-    `agent_type` starts arriving namespaced, this is what says so."""
+    """The Step-1 measurement, encoded: the predicate's behaviour against the
+    payload shape observed 2026-09-02.
+
+    It pins the predicate, not the live payload — this payload is a literal, so
+    no change in what the SDK sends can fail it. What catches that is the
+    validator itself: every drift scenario resolves a caller that is not
+    `proof-conclusion`, so the routed arm denies the owner's OWN
+    `proof_summaries` writes and the gating validator fails the run."""
     payload = _payload()
     assert _OBSERVED_KEYS >= set(payload), "test payload drifted from the observed keys"
     # An out-of-lane section for this caller: proof-conclusion's lane is

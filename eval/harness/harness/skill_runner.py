@@ -496,7 +496,15 @@ async def run_skill(
         # `owned_section_denial`, which branches on `rule` rather than on the
         # shape of the section string — a `declaration` denial carries a dotted
         # `section.field` that keys neither owner map.
-        denied = owner_denied(tool_name, input_data.get("tool_input"), input_data)
+        # isinstance-guarded for consistency with the two neighbours: the shipped
+        # hook checks this before calling owner_denied, and protected_file_denial
+        # above guards it internally. A truthy non-dict raises inside the
+        # predicate. Not shown to be reachable — the SDK catches the exception
+        # rather than killing the run — so this is consistency, not a bug fix.
+        raw_input = input_data.get("tool_input")
+        denied = owner_denied(
+            tool_name, raw_input if isinstance(raw_input, dict) else {}, input_data
+        )
         if denied is not None:
             section, rule, caller = denied
             blocked_owned_section_writes.append(

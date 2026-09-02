@@ -100,6 +100,16 @@ def blocked_protected_writes() -> list:
 
 
 @pytest.fixture
+def blocked_owned_section_writes() -> list:
+    """`research_append` ops the shipped ownership rule refused, denied by the
+    PreToolUse hook (issue #2022).
+
+    Empty is the healthy case, so it is also the right standalone default.
+    """
+    return []
+
+
+@pytest.fixture
 def skill_frontmatter() -> dict:
     return {}
 
