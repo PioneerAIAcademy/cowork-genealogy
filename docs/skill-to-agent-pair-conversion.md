@@ -91,17 +91,23 @@ orchestrator or in the agent.
 
 Two runs in the committed corpus postdate the `proof-conclusion` pair. **Both
 spawned the agent directly and called the skill zero times**, and both opened
-the delegation with the forbidden phrasing:
+with the forbidden phrasing — *"Write a GPS-conformant proof conclusion for
+question q_001"* — then pre-stated the tier the agent was there to select:
 
-> "Write a GPS-conformant proof conclusion for question q_001 … the best
-> achievable tier is Probable given the external site gap."
+> "The exhaustiveness declaration is `declared: false` … the best achievable
+> tier is Probable given the external site gap. **Appropriate proof tier:**
+> Probable"  — `hannah-earnest-children`
+>
+> "**\"Probable\" tier is appropriate:** multiple independent sources confirm
+> the same five children"  — `mary-mcandrew-son`
 
-That is the caller naming the artifact *and* pre-setting the tier — the two
+That is the caller naming the artifact *and* deciding the tier — the two
 failures the delegation-boundary section below describes, arriving together,
-from a caller that had never read the file forbidding them. Later in the same run the orchestrator
-used the agent as a dictated field editor ("the only change needed is to update
-ps_001's `resolved_conflict_ids` … do not change any other field"), reaching a
-hook-routed section by proxy.
+from a caller that had never read the file forbidding them. Later in **each**
+run the orchestrator went further and used the agent as a dictated field editor
+("the only change needed is to update ps_001's `resolved_conflict_ids` … do not
+change any other field"; "do not re-run or re-write the proof conclusion"),
+reaching a hook-routed section by proxy.
 
 The runs are
 `eval/runlogs/e2e/hannah-earnest-children/run-2026-08-23_03-37-12.json` and

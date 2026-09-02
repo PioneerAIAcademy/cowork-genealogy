@@ -121,10 +121,10 @@ Record data arrives in one of four ways:
    patronymic, a surname, a father's name on a baptism — looks like a
    likely mistranscription (an out-of-place patronymic, a spelling no
    other record corroborates), treat the indexed value as a lead: route
-   to the original register image (`volume_search` +
-   `@plugin:image-reader`) to confirm the spelling before it is recorded
-   as established (the original scan usually settles a suspect index
-   reading). If the image is unreachable, tell the extractor to
+   to search-images for the original register image to confirm the
+   spelling before it is recorded as established (the original scan
+   usually settles a suspect index reading). If the image is
+   unreachable, tell the extractor to
    record the name **tentative** — `[?]` in `value`, the doubt in the
    bias notes, original-image confirmation named as the outstanding
    step. (This is how an index OCR slip — "Aadnesen" read as "Nadnesen"
