@@ -11,7 +11,7 @@ import path from 'node:path';
 import { testsUnitDir, scenariosDir, fixturesDir } from '../paths';
 import type { BlockedReason, UnitTestFile, UnitTestListEntry } from '../types';
 import { atomicWriteJson } from './atomic';
-import { resolveWithin } from './safe-path';
+import { resolveWithin, PathEscapeError } from './safe-path';
 
 /** Result of a `listTests` call — separates clean rows from corrupt ones. */
 export interface ListTestsResult {
@@ -47,8 +47,12 @@ async function computeBlockedReason(
     let scenarioPath: string;
     try {
       scenarioPath = resolveWithin(scenariosDir(), scenario);
-    } catch {
-      return { kind: 'missing-scenario', scenario };
+    } catch (e) {
+      // Only a containment refusal is "missing" — reporting a broken `evalDir()`
+      // as a missing scenario hides a misconfiguration behind a content error.
+      // Matches the four other sinks (#2000 review).
+      if (e instanceof PathEscapeError) return { kind: 'missing-scenario', scenario };
+      throw e;
     }
     if (!(await exists(scenarioPath))) {
       return { kind: 'missing-scenario', scenario };
@@ -58,8 +62,9 @@ async function computeBlockedReason(
     let fixPath: string;
     try {
       fixPath = resolveWithin(fixturesDir(), `${fix}.json`);
-    } catch {
-      return { kind: 'missing-fixture', fixture: fix };
+    } catch (e) {
+      if (e instanceof PathEscapeError) return { kind: 'missing-fixture', fixture: fix };
+      throw e;
     }
     if (!(await exists(fixPath))) {
       return { kind: 'missing-fixture', fixture: fix };
