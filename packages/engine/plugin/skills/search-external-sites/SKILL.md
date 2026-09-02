@@ -96,8 +96,13 @@ Instead, for each capture-required external-site plan item:
    and `notes` stating the search was **deferred — requires an interactive
    user capture and is not obtainable in an autonomous run**, with the
    generated URL recorded so a later interactive session can capture it.
-4. Mark the plan item `skipped` (step 7) — terminal, and honest that
-   nothing was searched.
+4. **If — and only if — the search came from an existing plan item**, mark
+   that item `skipped` (step 7): terminal, and honest that nothing was
+   searched. For an ad-hoc search with no plan item, stop at the log entry.
+   **Never create a plan item in order to have one to mark.** `research-plan`
+   owns item structure; an executing skill may only update the `status` of an
+   item that already exists, and inventing one to close puts a search in the
+   plan that was never planned.
 5. **Return to the orchestrator and keep going** — do not wait.
 
 This keeps the audit trail honest — the external avenue is logged as a
