@@ -780,7 +780,8 @@ Optional array of `a_` assertion ids — deterministic ground truth for a
 that already exists and the run is expected to correct its classification
 in place rather than create a new one. Checked mechanically by
 `test_refinement_preserves_extraction_fields_and_avoids_duplication`
-(`eval/harness/validators/test_record_extraction.py`, issue #2021 F12).
+(`eval/harness/validators/test_record_extraction.py`) — added because no
+test in the corpus exercised the classification-refinement path at all.
 For each id: the assertion must still exist under the same id in the
 after-state; its extraction fields (`source_id`, `record_id`,
 `record_role`, `fact_type`, `value`, `structured_value`, `date`,
