@@ -1,216 +1,222 @@
 {
-  "run_log": "v1_2026-08-18_13-28-10.json",
-  "annotator": "ikeboateng2018@gmail.com",
+  "run_log": "v1_2026-09-01_18-38-25.json",
+  "annotator": "solomonbaidoo54@gmail.com",
   "corrections": [
     {
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_001",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_005",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_005",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_005",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Source independence analysis",
-      "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence weighing",
-      "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Resolution completeness",
-      "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_007",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_007",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_007",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Confirmed partial. The skill queried assertions by assertionId (an unsupported filter for that section), got a single validation rejection, then recovered with an unfiltered research_query; the final persisted state is correct. One rejection plus a clean recovery is a defensible partial under the retry policy. Unrelated to this PR's surname-order/OCR edits — it is a research_query filter-usage nuance, not conflict-resolution doctrine."
     },
     {
       "test_id": "ut_conflict_resolution_008",
       "dimension_source": "rubric",
       "dimension_name": "Source independence analysis",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_008",
       "dimension_source": "rubric",
       "dimension_name": "Evidence weighing",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     },
     {
       "test_id": "ut_conflict_resolution_008",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Score of 3 confirmed; judge rationale supports the skill output as accurate."
+      "comment": null
     }
   ]
 }
