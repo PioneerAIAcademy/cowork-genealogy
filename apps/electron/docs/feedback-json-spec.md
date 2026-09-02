@@ -102,6 +102,7 @@ identical.
 | `project_folder_path` | string | yes | Absolute path of the project folder the user was working in when they submitted. Lets devs disambiguate when one user has multiple projects open and helps correlate with the user's filesystem layout. Mild PII; included because the diagnostic value outweighs the leak (the same path is already in `FEEDBACK.md` today). Empty string if the viewer cannot determine it. |
 | `correct_answer` | string | yes | The user's free-text description of the right answer *and the evidence for it*, for when the agent reached a **wrong conclusion** rather than an unproven one. Read by `/mine-unit-test` as attested ground truth when non-empty. Always present; empty string when the user left the field blank — and blank is the correct answer when the defect is the reasoning rather than the result, so consumers must not treat empty as a malformed submission. |
 | `platform` | string | yes | Which runtime produced the bundle. Electron sends `process.platform` (e.g. `"darwin"`, `"linux"`, `"win32"`); the hosted web workbench sends the literal `"web"`. Empty string if unknown. This is the field that tells a triager which product the report came from. |
+| `dropped_transcripts` | array of strings | yes | Transcripts the producer could not include, each a zip-relative path with the reason in parentheses (over the transcript size budget; no conversation entries; its session's parent transcript is missing). Written by **both** producers, `[]` when nothing was left out, so a consumer can tell "nothing was dropped" from "we could not see". `FEEDBACK.md` names the same drops in prose, but this is the field a program reads: the guardrail report holds every agent-owned arm at `unknown` while it is non-empty (`docs/specs/guardrail-enforcement-spec.md`). **Absent from bundles produced before 2026-09-01**, which consumers must go on tolerating. Added in schema_version 1 without a bump (§5: new fields old consumers ignore don't bump). |
 | `build_date` | string | web only | Build date of the hosted server that produced the bundle. Absent from Electron submissions — the viewer's `viewer_version` is its whole build identity. |
 | `git_sha` | string | web only | Commit sha of the hosted server that produced the bundle, so a triager can pin the exact checkout. Absent from Electron submissions. |
 
@@ -275,8 +276,15 @@ wrong:
 
 A transcript the viewer leaves out (size budget, or it filtered to no
 conversation entries) is named in `FEEDBACK.md` **and** in `feedback.json`'s
-optional `dropped_transcripts` array, so a consumer counting findings can tell
-"nothing happened" from "we could not see".
+`dropped_transcripts` array, so a consumer counting findings can tell
+"nothing happened" from "we could not see". Both producers write that array
+on every bundle, `[]` when nothing was left out — a field only written when
+non-empty cannot be told from a producer that never writes it at all.
+
+`_feedback/session-log.jsonl` itself is not guaranteed even when the bundle
+carries transcripts: the active session can filter to nothing while an older
+session's group ships. `FEEDBACK.md` says which case it is rather than naming
+a file that is not there.
 
 ### Omission policy
 

@@ -25,6 +25,37 @@ class _FakeResp:
         return self._body
 
 
+def _capture_upload(monkeypatch) -> dict:
+    """Swallow the Drive POST and hand back the dict it lands in.
+
+    `captured["envelope"]` is the {timestamp, email, filename, zipBase64} body
+    the route would have uploaded.
+    """
+    captured: dict = {}
+
+    class _FakeClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+        async def post(self, url, json):
+            captured["url"] = url
+            captured["envelope"] = json
+            return _FakeResp()
+
+    monkeypatch.setattr(fb.httpx, "AsyncClient", _FakeClient)
+    return captured
+
+
+def _zip_of(captured: dict) -> zipfile.ZipFile:
+    return zipfile.ZipFile(io.BytesIO(base64.b64decode(captured["envelope"]["zipBase64"])))
+
+
 def test_feedback_context_and_drive_upload(monkeypatch):
     captured: dict = {}
 
@@ -395,23 +426,7 @@ def test_submitted_zip_carries_subagent_transcripts_and_discloses_their_bytes(mo
     transcript and its meta, and the size the dialog showed the reporter equals
     the bytes actually written. A number that undercounts means they consented
     to one figure and a larger bundle left their machine."""
-    captured: dict = {}
-
-    class _FakeClient:
-        def __init__(self, **kwargs):
-            pass
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *exc):
-            return False
-
-        async def post(self, url, json):
-            captured["envelope"] = json
-            return _FakeResp()
-
-    monkeypatch.setattr(fb.httpx, "AsyncClient", _FakeClient)
+    captured = _capture_upload(monkeypatch)
 
     with TestClient(app) as client:
         client.post("/auth/dev-login", json={"email": "tester@example.com"})
@@ -454,6 +469,103 @@ def test_submitted_zip_carries_subagent_transcripts_and_discloses_their_bytes(mo
         )
         assert disclosed["hasSessionLog"] is True
         assert disclosed["sessionLogSize"] == shipped
+
+        # Present and empty on a healthy bundle. A consumer must be able to tell
+        # "nothing was dropped" from "this producer never writes the field".
+        payload = json.loads(zf.read("_feedback/feedback.json"))
+        assert payload["dropped_transcripts"] == []
+
+        client.delete(f"/api/sessions/{sid}")
+
+
+def test_a_dropped_transcript_is_named_in_feedback_json_not_only_in_the_markdown(monkeypatch):
+    """`dropped_transcripts` is the field a PROGRAM reads. FEEDBACK.md names the
+    drops too, but that is prose no consumer opens; the guardrail report reads
+    this field and holds every owner arm at "unknown" rather than reporting a 0
+    that actually means "we could not see" (issue #1880)."""
+    captured = _capture_upload(monkeypatch)
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        proj = client.post("/api/sessions", json={"sample": True}).json()
+        sid = proj["id"]
+
+        root = app.state.provider._root(proj["sandbox_id"])  # LocalProvider
+        projects = root / HOME_DIR.lstrip("/") / ".claude" / "projects" / fb._CLAUDE_PROJECT_SLUG
+        subagents = projects / "cc-session" / "subagents"
+        subagents.mkdir(parents=True, exist_ok=True)
+        (root / PROJECT_DIR.lstrip("/") / ".agent_session").write_text(
+            "cc-session", encoding="utf-8"
+        )
+        (projects / "cc-session.jsonl").write_bytes(_jsonl(_turn(text="PARENT")))
+        # Conversation-free, so the producer cannot ship it.
+        (subagents / "agent-empty.jsonl").write_bytes(
+            _jsonl({"type": "summary", "summary": "no turns"})
+        )
+        (subagents / "agent-empty.meta.json").write_bytes(_meta())
+
+        r = client.post(
+            "/api/feedback",
+            json={"sessionId": sid, "email": "t@example.com", "userPrompt": "x",
+                  "agentDid": "y", "agentShouldHave": "z", "workedAsExpected": False},
+        )
+        assert r.status_code == 200
+
+        zf = _zip_of(captured)
+        assert "_feedback/subagents/agent-empty.jsonl" not in set(zf.namelist())
+        dropped = json.loads(zf.read("_feedback/feedback.json"))["dropped_transcripts"]
+        assert len(dropped) == 1 and "agent-empty" in dropped[0]
+        # And in the prose list a triager reads, so the two never disagree.
+        assert "agent-empty" in zf.read("FEEDBACK.md").decode("utf-8")
+
+        client.delete(f"/api/sessions/{sid}")
+
+
+def test_the_route_does_not_point_a_grouped_only_bundle_at_a_missing_parent_log(monkeypatch):
+    """Through the real route, because the bug this guards is at the CALL SITE:
+    `_feedback_markdown`'s `session_log` flag means "the set is non-empty", and
+    passing that to the sentence that names one specific file sends the triager
+    hunting for `_feedback/session-log.jsonl` when the active session filtered to
+    nothing and only an older session's group shipped (#1481, #1880)."""
+    captured = _capture_upload(monkeypatch)
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        proj = client.post("/api/sessions", json={"sample": True}).json()
+        sid = proj["id"]
+
+        root = app.state.provider._root(proj["sandbox_id"])  # LocalProvider
+        projects = root / HOME_DIR.lstrip("/") / ".claude" / "projects" / fb._CLAUDE_PROJECT_SLUG
+        old_subagents = projects / "old-session" / "subagents"
+        old_subagents.mkdir(parents=True, exist_ok=True)
+        (root / PROJECT_DIR.lstrip("/") / ".agent_session").write_text(
+            "new-session", encoding="utf-8"
+        )
+        # The active session exists but carries nothing this project's filter
+        # keeps, so no `_feedback/session-log.jsonl` is written.
+        (projects / "new-session.jsonl").write_bytes(
+            _jsonl({"type": "summary", "summary": "no turns"})
+        )
+        (projects / "old-session.jsonl").write_bytes(_jsonl(_turn(text="OLD-PARENT")))
+        (old_subagents / "agent-x.jsonl").write_bytes(_jsonl(_turn(text="CHILD")))
+        (old_subagents / "agent-x.meta.json").write_bytes(_meta())
+
+        r = client.post(
+            "/api/feedback",
+            json={"sessionId": sid, "email": "t@example.com", "userPrompt": "x",
+                  "agentDid": "y", "agentShouldHave": "z", "workedAsExpected": False},
+        )
+        assert r.status_code == 200
+
+        zf = _zip_of(captured)
+        names = set(zf.namelist())
+        assert "_feedback/session-log.jsonl" not in names, "the state under test"
+        assert "_feedback/sessions/old-session/session-log.jsonl" in names
+
+        md = zf.read("FEEDBACK.md").decode("utf-8")
+        assert "## Session log" in md
+        assert "See `_feedback/session-log.jsonl`" not in md
+        assert "`_feedback/sessions/<session-id>/`" in md
 
         client.delete(f"/api/sessions/{sid}")
 
@@ -656,6 +768,41 @@ def test_supplied_prompt_and_did_are_untouched():
     assert fb.NOT_PROVIDED not in md
     assert "## What I asked\n\nFind John Smith." in md
     assert "## What the agent did\n\nIt searched 1860 and stopped." in md
+
+
+def _session_log_markdown(*, has_parent_log: bool, has_subagents: bool = True) -> str:
+    return fb._feedback_markdown(
+        {"email": "t@example.com", "userPrompt": "q", "agentDid": "d",
+         "agentShouldHave": "", "correctAnswer": "", "notes": ""},
+        "2026-09-01T00:00:00Z",
+        "A project",
+        True,  # the SET is non-empty
+        "web 2026-09-01 (abc123)",
+        False,
+        None,
+        0,
+        has_subagents,
+        has_parent_log,
+    )
+
+
+def test_the_markdown_names_session_log_jsonl_when_the_bundle_has_one():
+    md = _session_log_markdown(has_parent_log=True)
+    assert "See `_feedback/session-log.jsonl`" in md
+
+
+def test_a_grouped_only_bundle_is_not_pointed_at_a_file_it_does_not_contain():
+    """`session_log` means "the set is non-empty", which does NOT imply the
+    active session's parent is in it — `test_transcripts_can_ship_when_the_active
+    _parent_yields_nothing` proves that state is reachable. Naming the file
+    anyway sends the triager hunting for a missing file, which is the #1481
+    confusion the section exists to prevent."""
+    md = _session_log_markdown(has_parent_log=False)
+    assert "## Session log" in md
+    assert "See `_feedback/session-log.jsonl`" not in md
+    assert "`_feedback/sessions/<session-id>/`" in md
+    # Still a log-bearing bundle: the subagent pointer must survive the branch.
+    assert "`_feedback/subagents/`" in md
 
 
 def test_rejected_upload_surfaces_as_502(monkeypatch):

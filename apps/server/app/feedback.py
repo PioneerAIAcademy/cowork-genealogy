@@ -513,6 +513,7 @@ def _feedback_markdown(
     dropped: list[str] | None = None,
     redacted_living: int = 0,
     has_subagents: bool = False,
+    has_parent_log: bool = True,
 ) -> str:
     parts = [
         "# Feedback",
@@ -540,13 +541,26 @@ def _feedback_markdown(
     if f["notes"]:
         parts += ["", "## Notes", "", f["notes"]]
     if session_log:
-        parts += [
-            "",
-            "## Session log",
-            "",
-            "See `_feedback/session-log.jsonl` — the full Claude Code conversation "
-            "transcript (user turns, tool calls, results, and the agent's reasoning).",
-        ]
+        parts += ["", "## Session log", ""]
+        if has_parent_log:
+            parts += [
+                "See `_feedback/session-log.jsonl` — the full Claude Code conversation "
+                "transcript (user turns, tool calls, results, and the agent's reasoning).",
+            ]
+        else:
+            # `session_log` is "the set is non-empty", which does NOT imply the
+            # active session's parent is in it: that transcript can filter to
+            # nothing while another session's group ships. Naming the file
+            # anyway sends the triager hunting for a missing file, which is the
+            # confusion this section exists to prevent (#1481).
+            parts += [
+                "There is no `_feedback/session-log.jsonl` in this bundle: the most "
+                "recent session's transcript either had no conversation entries for "
+                "this project or did not fit the transcript size budget — the \"Files "
+                "not included\" list below says which. The transcripts that did ship "
+                "are grouped by session under `_feedback/sessions/<session-id>/`, each "
+                "with its own `session-log.jsonl`.",
+            ]
         # Only when the bundle actually carries one: describing a directory that
         # is not there sends a triager hunting for a missing file, which is the
         # confusion the session-log status line exists to prevent (#1481).
@@ -666,6 +680,7 @@ async def submit_feedback(
                 redacted_living,
                 any(rel.startswith("_feedback/") and "/subagents/" in rel
                     for rel, _data in session_log),
+                any(rel == PARENT_LOG_ENTRY for rel, _data in session_log),
             ),
         )
         zf.writestr("_feedback/feedback.json", json.dumps(feedback_json, indent=2) + "\n")

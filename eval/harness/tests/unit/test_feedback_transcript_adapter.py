@@ -804,6 +804,47 @@ def test_the_arm_goes_live_per_agent_not_per_bundle(tmp_path):
     assert result["arms"]["research-exhaustiveness"] == "unknown"
 
 
+def test_an_anchored_transcript_that_made_no_tool_calls_still_reads_live(tmp_path):
+    """Deliberate, and the opposite of the case above.
+
+    `unknown` exists for "the write may have happened somewhere we cannot see"
+    — the arm the per-agent rule and `has_dropped` both protect is one whose
+    transcript is NOT in the bundle. Here it is: this agent's whole session
+    shipped and it made no tool calls, so it made no protected write and the 0
+    is a real measurement, not an absence. Labelling it `unknown` would discard
+    an honest zero, which is the failure `_bundle`'s date test guards in the
+    other direction.
+
+    Raised in review on PR #2134 and kept on purpose; pinned here so the choice
+    is checkable rather than remembered."""
+    bundle = tmp_path / "silent-child"
+    (bundle / "_feedback" / "subagents").mkdir(parents=True)
+    _write_jsonl(bundle / "_feedback" / "session-log.jsonl", [
+        _assistant([{"type": "tool_use", "id": "s", "name": "Skill",
+                     "input": {"skill": "proof-conclusion"}}]),
+        _assistant([{"type": "tool_use", "id": "spawn-1", "name": "Agent",
+                     "input": {"subagent_type": "proof-conclusion"}}]),
+    ])
+    # Conversation entries, but not one tool_use block.
+    _write_jsonl(bundle / "_feedback" / "subagents" / "agent-a1.jsonl", [
+        _assistant([{"type": "text", "text": "nothing to conclude yet"}]),
+    ])
+    (bundle / "_feedback" / "subagents" / "agent-a1.meta.json").write_text(
+        json.dumps({"agentType": "proof-conclusion", "description": "conclude q_001",
+                    "toolUseId": "spawn-1", "spawnDepth": 1}), encoding="utf-8")
+    (bundle / "research.json").write_text("{}", encoding="utf-8")
+    (bundle / "_feedback" / "feedback.json").write_text(
+        json.dumps({"submitted_at": "2026-09-01T10:00:00Z", "platform": "web",
+                    "dropped_transcripts": []}), encoding="utf-8")
+
+    adapted = adapt_bundle(bundle)
+    assert adapted["unanchored_subagents"] == [], "it anchored — the file is here"
+    assert adapted["anchored_agents"] == ["proof-conclusion"]
+    result = scan_feedback_bundle(bundle)
+    assert result["arms"]["proof-conclusion"] == "live"
+    assert result["unguarded_writes"] == [], "and the honest count over it is 0"
+
+
 def test_a_dropped_transcript_holds_every_arm_at_unknown(tmp_path):
     """The producer names what it could not include. A count read from what IS
     here cannot account for those, so no arm may read as visible."""

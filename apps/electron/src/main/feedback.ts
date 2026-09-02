@@ -191,6 +191,11 @@ export async function walkProject(folder: string): Promise<ProjectFile[]> {
 /** One transcript as it will be written into the zip. */
 export type TranscriptFile = { path: string; text: string }
 
+// The active session's parent transcript keeps its historical name so every
+// existing consumer reads it unchanged. Mirrors `PARENT_LOG_ENTRY` in
+// apps/server/app/feedback.py.
+const PARENT_LOG_ENTRY = '_feedback/session-log.jsonl'
+
 export type SessionLog = {
   /** The active session's conversation entries. Kept for the renderer, which
    *  only asks "is there anything at all". */
@@ -208,7 +213,14 @@ export type SessionLog = {
 // FEEDBACK.md (issue #1481) so triage isn't left hunting for a file that was
 // never written: a Cowork session has no Claude Code transcript on this machine
 // (the agent runs in Cowork's VM), which is expected, not missing.
-type SessionLogStatus = 'included' | 'not-requested' | 'requested-but-empty'
+//
+// `included-grouped-only` is the same rule applied one level down. The set can
+// be non-empty while `_feedback/session-log.jsonl` itself is absent — the active
+// session's parent filtered to nothing and another session's group shipped —
+// and naming that file anyway sends the triager hunting for exactly the missing
+// file this status line exists to prevent.
+type SessionLogStatus =
+  'included' | 'included-grouped-only' | 'not-requested' | 'requested-but-empty'
 
 /** Conversation entries from one raw transcript.
  *
@@ -352,10 +364,10 @@ export async function readSessionLog(folderPath: string): Promise<SessionLog> {
     if (activeEntries.length > 0) {
       // Parent first: it is the routing narrative, and nothing else is
       // interpretable without it.
-      if (admit('_feedback/session-log.jsonl', capSessionLog(activeEntries))) {
+      if (admit(PARENT_LOG_ENTRY, capSessionLog(activeEntries))) {
         admittedParents.add(activeSid)
       } else {
-        dropped.push('_feedback/session-log.jsonl (over the transcript size budget)')
+        dropped.push(`${PARENT_LOG_ENTRY} (over the transcript size budget)`)
       }
     }
 
@@ -546,6 +558,13 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
 
   const timestamp = new Date().toISOString()
   let sessionLogStatus: SessionLogStatus = 'not-requested'
+  let hasSubagentTranscripts = false
+  // Named in FEEDBACK.md for the human AND in feedback.json for the program.
+  // The prose list is the one a triager reads; this is the one the guardrail
+  // report reads (`_dropped_transcripts` in
+  // eval/harness/e2e/guardrail_shadow_report.py), and it is what holds every
+  // owner arm at "unknown" instead of reporting a 0 nobody can trust.
+  const droppedTranscripts: string[] = []
   if (includeSessionLog) {
     const sessionLog = await readSessionLog(folderResolved)
     for (const f of sessionLog.files) zip.file(f.path, f.text)
@@ -553,10 +572,19 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
     // disables its toggle off this and prints "(none found)", but the value it
     // submits stays true (a disabled input fires no onChange), so a parent-only
     // answer would tell the reporter the opposite of what the bundle carries.
-    sessionLogStatus = sessionLog.files.length > 0 ? 'included' : 'requested-but-empty'
+    // The wording still turns on the file itself — see SessionLogStatus.
+    sessionLogStatus = sessionLog.files.some((f) => f.path === PARENT_LOG_ENTRY)
+      ? 'included'
+      : sessionLog.files.length > 0
+        ? 'included-grouped-only'
+        : 'requested-but-empty'
+    hasSubagentTranscripts = sessionLog.files.some((f) => f.path.includes('/subagents/'))
     // A dropped transcript that goes unnamed reads downstream as "we looked and
     // found nothing" — the same invisible zero this change exists to remove.
-    for (const name of sessionLog.dropped) skipped.push(`${name}`)
+    for (const name of sessionLog.dropped) {
+      skipped.push(`${name}`)
+      droppedTranscripts.push(name)
+    }
   }
 
   zip.file(
@@ -568,6 +596,7 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
       projectFolder: folderResolved,
       viewerVersion,
       sessionLogStatus,
+      hasSubagentTranscripts,
       skipped,
       redactedLiving
     })
@@ -580,7 +609,8 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
       workedAsExpected: report.workedAsExpected,
       submittedAt: timestamp,
       viewerVersion,
-      projectFolderPath: folderResolved
+      projectFolderPath: folderResolved,
+      droppedTranscripts
     })
   )
 
@@ -608,6 +638,7 @@ function renderFeedbackJson(args: {
   submittedAt: string
   viewerVersion: string
   projectFolderPath: string
+  droppedTranscripts: string[]
 }): string {
   const payload = {
     schema_version: FEEDBACK_SCHEMA_VERSION,
@@ -621,7 +652,17 @@ function renderFeedbackJson(args: {
     worked_as_expected: args.workedAsExpected,
     agent_should_have: args.fields.agentShouldHave,
     correct_answer: args.fields.correctAnswer,
-    notes: args.fields.notes
+    notes: args.fields.notes,
+    // Transcripts the producer could not include, in a field a PROGRAM can
+    // read. FEEDBACK.md's "Skipped files" names them too, but that is prose no
+    // consumer opens, and a dropped transcript that reads downstream as "we
+    // looked and found nothing" is the invisible zero #1880 exists to remove:
+    // the guardrail report holds its owner arms at "unknown" when this is
+    // non-empty. Always written, `[]` when nothing was dropped. An ADDED
+    // optional field bumps no schema_version (apps/electron/docs/
+    // feedback-json-spec.md §5 — removals, renames and re-meanings only).
+    // Mirrors apps/server/app/feedback.py.
+    dropped_transcripts: args.droppedTranscripts
   }
   return JSON.stringify(payload, null, 2) + '\n'
 }
@@ -633,6 +674,7 @@ function renderFeedbackMarkdown(args: {
   projectFolder: string
   viewerVersion: string
   sessionLogStatus: SessionLogStatus
+  hasSubagentTranscripts?: boolean
   skipped: string[]
   redactedLiving?: number
 }): string {
@@ -643,6 +685,7 @@ function renderFeedbackMarkdown(args: {
     projectFolder,
     viewerVersion,
     sessionLogStatus,
+    hasSubagentTranscripts = false,
     skipped,
     redactedLiving = 0
   } = args
@@ -690,6 +733,17 @@ function renderFeedbackMarkdown(args: {
     sections.push(
       "See `_feedback/session-log.jsonl` for the Claude Code conversation transcript (tool calls, results, and the agent's reasoning)."
     )
+  } else if (sessionLogStatus === 'included-grouped-only') {
+    // The most recent session's transcript filtered to nothing, so the file the
+    // 'included' branch names is not in this bundle. Naming it anyway is the
+    // #1481 confusion by another door.
+    sections.push(
+      "There is no `_feedback/session-log.jsonl` in this bundle: the most recent session's " +
+        'transcript either had no conversation entries for this project or did not fit the ' +
+        'transcript size budget — the "Skipped files" list below says which. The transcripts ' +
+        'that did ship are grouped by session under `_feedback/sessions/<session-id>/`, each ' +
+        'with its own `session-log.jsonl`.'
+    )
   } else if (sessionLogStatus === 'not-requested') {
     sections.push(
       'No Claude Code session log was included — the submitter unticked "Include Claude ' +
@@ -704,6 +758,19 @@ function renderFeedbackMarkdown(args: {
         'is no Claude Code transcript on this machine to attach (see ' +
         '`docs/alpha-user-guide-cowork.md`); the `results/` sidecars carry the search/step ' +
         'record instead. For a Claude Code session, the transcript that should be here is missing.'
+    )
+  }
+
+  // Only when the bundle actually carries one: describing a directory that is
+  // not there is the same #1481 confusion the status line above prevents.
+  // Mirrors `_feedback_markdown` in apps/server/app/feedback.py.
+  if (hasSubagentTranscripts) {
+    sections.push(
+      '',
+      'Work the agent delegated to a subagent has its own transcript under ' +
+        '`_feedback/subagents/`, one `.jsonl` per subagent with a small `.meta.json` beside ' +
+        'it naming the parent `Agent` call that spawned it. A session other than the most ' +
+        'recent one ships the same pair under `_feedback/sessions/<session-id>/`.'
     )
   }
 
