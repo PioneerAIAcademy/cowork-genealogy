@@ -168,7 +168,7 @@ is the half a developer cannot invent.
 | A field must hold one of a fixed set of values | a first-question-from-objective must record `selection_basis: objective_decomposition` |
 | A count — exactly one, at most one, none | at most one new `q_` per invocation; **zero** writes when the skill should have declined |
 | A field pinned at creation | a new hypothesis starts `active`; a new question's `exhaustive_declaration` is unstarted |
-| A cross-field rule that must always hold | `status: supported` requires at least one supporting assertion whose `evidence_type` is `direct` |
+| A cross-field rule that must always hold | `status: supported` requires either one supporting assertion with `evidence_type: direct`, or two with `evidence_type: indirect` citing two distinct `source_id`s |
 | An identifier that must trace to something real | a collection id in a plan rationale must appear in a tool response from that same run |
 | A literal phrase that must never appear | a disqualified namesake must not be offered extraction "not even as a question" |
 | Content that must land in a persisted field, not just the chat | a locality fact cited in narration but absent from `plan_items[].rationale` never reaches the next skill |
