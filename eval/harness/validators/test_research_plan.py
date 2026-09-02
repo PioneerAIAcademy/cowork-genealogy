@@ -370,12 +370,16 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
 # and not a precondition for reaching it.
 #
 # Deliberately mechanical and judge-independent. The rubric's `Sequencing
-# logic` dimension does not discriminate -- re-derived across the five committed
-# logs, 73 of 74 graded occurrences are 3, and the single 2 was corrected up to 3
-# by the annotator
-# ("worse than no" — it once cited a fabricated collection id as evidence),
-# and `rubric.md` is fenced by #1404/#1668, so the ordering this guards
-# cannot be enforced there. Origin: alpha feedback #1945.
+# logic` dimension does not discriminate: across every committed run log it
+# scores 3 on all but one graded occurrence. No exact count is quoted here on
+# purpose -- it has needed re-deriving twice (73 of 74, then 93 of 94) as new
+# logs landed and old ones were pruned, and nothing guards the figure, so a
+# number in this comment is stale the moment the corpus moves. Re-derive it
+# from `eval/runlogs/unit/research-plan/v*.json` if you need it. The 2026-08-24
+# dive called the dimension "worse than no" -- it once cited a fabricated
+# collection id as its evidence -- and `rubric.md` is fenced by #1404/#1668, so
+# the ordering this guards cannot be enforced there. Origin: alpha feedback
+# #1945.
 _TARGET_JURISDICTION = "kongsberg"
 # `record_type` is an open string with only *recommended* values
 # (`enums.schema.json` -> record_type_recommended), and a baptism register is
