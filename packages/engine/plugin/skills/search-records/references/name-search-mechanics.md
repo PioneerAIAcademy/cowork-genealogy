@@ -158,6 +158,17 @@ Use wildcards to compensate.
   preserve maiden; Quaker/Scandinavian use patronymics
 - "Willm" / "Will'm" may not standardize to William — search both
 
+**Watch the results for a misindexed value, not just the query.** Some
+indexing errors are not reachable by a one-character wildcard — a name read
+"Alonzo" has been indexed "Alenae," "Alorysw," "Alorze," and "Hanzo," none of
+them a single-letter substitution the table above models. When an
+anchor-only search returns a pool small enough to read, scan the returned
+names themselves for a plausible corrupted match — one sharing length,
+syllable count, or a few consonants with the target — rather than relying on
+constructing the right query alone. This is a read-the-results technique;
+the table above only prescribes how to build the next query, and is silent
+on reading the one you already have.
+
 ## Common nickname equivalences
 
 **Fuzzy reaches the diminutives it was tested on; rank, not coverage,
