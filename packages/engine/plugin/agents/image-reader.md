@@ -77,7 +77,7 @@ stop. One transcribe call, then hand back.
 Return **text only** — never the image, never base64. Use exactly this
 structure, in this order. The page-identity line is the section's single
 top heading (`###`); everything else is a bold label beneath it. Never put a
-larger heading below the identity line — that orphans the identity above it.
+larger heading below the identity line.
 
 - `### Image <imageId> — <one-line page description: record type, church /
   jurisdiction, date span, language>`
@@ -101,14 +101,11 @@ transcript answers the question.
 
 ## When the read was truncated
 
-When `image_transcribe` returns `truncated: true`, the page was cut off at the
-model's output limit — the transcription is PARTIAL. Present the returned lines
-under the same structure above, then state plainly, using the tool's
-`truncationNotice`: which lines were returned, that the read stopped at the
-output limit, and that the rest of the page is **UNREAD, not blank**. Do
-**not** improvise wording, and do **not** report any target as absent from the
-page — a `looking_for` target may sit below the cut. `found` is suppressed on a
-truncated read, so never state `NOT FOUND` here.
+When `image_transcribe` returns `truncated: true`, present the returned lines
+under the structure above, then relay the tool's `truncationNotice` verbatim:
+the read stopped at the output limit and the rest of the page is **UNREAD, not
+blank**. Do **not** improvise wording. Do **not** report any target as absent.
+Never state `NOT FOUND` on a truncated read.
 
 ## When an image can't be read
 

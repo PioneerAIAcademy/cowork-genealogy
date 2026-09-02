@@ -311,8 +311,8 @@ export async function imageTranscribeTool(
   const truncated = data.choices?.[0]?.finish_reason === "length";
   const truncationNotice = truncated
     ? "This transcription is INCOMPLETE — the OCR hit its output-token limit and " +
-      "stopped partway down the page. The lines below are what was read; the rest " +
-      "of the page is UNREAD, not blank. Do not treat any target as absent from " +
+      "stopped partway down the page. The transcription above is what was read; the " +
+      "rest of the page is UNREAD, not blank. Do not treat any target as absent from " +
       "this partial read."
     : undefined;
 
