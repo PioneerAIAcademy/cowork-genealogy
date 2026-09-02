@@ -43,6 +43,8 @@ Do NOT read any files. Do NOT collect record details. Do NOT offer to "do it in 
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
+**If you write to `research.json`, call `validate_research_schema` before you present. Mandatory, every time.** `research_append` returning `ok` is not a substitute and does not discharge this. Never report a citation as validated, saved clean, or schema-checked without that call in the ledger.
+
 Refines source citations in `research.json` to meet Evidence Explained
 standards. record-extraction creates source entries with best-effort
 working citations; this skill upgrades them to GPS-compliant citations
@@ -528,10 +530,13 @@ provenance concerns not previously noted.
 
 If you wrote any changes to `research.json`, call
 `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting. If the review concluded with
-no changes (citation already compliant, or refinement blocked pending
-user input), skip validation — there is nothing to validate. See
+to verify both research.json and tree.gedcomx.json are valid. This is
+mandatory whenever anything was written — a successful `research_append`
+does not discharge it, and Step 7's output economy does not apply here.
+If validation fails, fix the errors before presenting. The only case
+that skips this step is one where `research.json` was never written
+(the citation was already compliant, refinement is blocked pending user
+input, or the request was routed elsewhere). See
 `references/validation-protocol.md` for the full protocol, including
 the genealogical-impossibility warnings the tool also returns.
 
