@@ -76,11 +76,17 @@ behaviour and is not itself a violation of this agreement.
 
 ### 2. Personal information about living people
 
-Alpha testers submit feedback containing their own genealogical research.
-That research routinely contains names, birth dates, places, addresses,
-and family relationships of **living people** who have not agreed to
-anything and who are not our users. The same is true of any project file
-a user shares with us.
+Alpha testers submit feedback containing their own genealogical research,
+which concerns **living people** who have not agreed to anything and who
+are not our users.
+
+The feedback tooling removes living people from the tree files
+automatically before a bundle is sent, and treats a person as living
+unless the record says otherwise. Do not rely on it. It deliberately
+passes a malformed tree through untouched rather than block a report, and
+it does not reach the parts of a bundle where living people are most
+often named: the session transcript, the free-text feedback fields, and
+`research.json`. Assume any bundle you open may contain them.
 
 This is the most sensitive information on the project. You agree to:
 
