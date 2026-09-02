@@ -124,3 +124,30 @@ describe('middleware — cross-origin state-changing requests', () => {
     expect(res.status).toBe(403)
   })
 })
+
+/**
+ * The loopback allow-list is an EQUALITY check, and nothing held it to that
+ * (#1999 review). Relaxing `hostname === '127.0.0.1'` to `.startsWith(...)`
+ * left all 185 tests green, while accepting `127.0.0.1.nip.io` — a DNS name an
+ * attacker registers and points wherever they like, which is precisely the
+ * rebinding case the pin exists to refuse.
+ *
+ * It is the same prefix bug `wiring.test.ts` already guards for the bind flag
+ * (`--hostname 127.0.0.10`); the middleware's own check was the copy nobody
+ * pinned.
+ */
+describe('middleware — the loopback check is equality, not a prefix', () => {
+  for (const host of ['127.0.0.1.nip.io:3000', '127.0.0.10:3000', '127.0.0.1x:3000']) {
+    it(`refuses a host that merely begins with 127.0.0.1: ${host}`, () => {
+      expect(middleware(req('GET', { host })).status).toBe(403)
+      expect(
+        middleware(req('POST', { origin: `http://${host}`, host })).status,
+      ).toBe(403)
+    })
+  }
+
+  it('still allows the two real loopback spellings', () => {
+    expect(middleware(req('GET', { host: '127.0.0.1:3000' })).status).toBe(200)
+    expect(middleware(req('GET', { host: 'localhost:3000' })).status).toBe(200)
+  })
+})
