@@ -142,7 +142,7 @@ routing surface — find your task, then open that ADR.
 | [0008](adrs/ADR-0008-sync-schema-copies-eliminate-generate-or-lint.md) | Sync the schema copies by elimination, automatic generation, or lint — never by hand | see four copies of one enum and reach for codegen · add a generate step to a build · wonder why `packages/schema` generates its enums but the engine doesn't · propose defining the schema in Zod · add a fifth copy |
 | [0009](adrs/ADR-0009-refuted-agent-design-claims.md) | Keep a standing ledger of refuted agent-design claims | propose a `same_person` write-boundary discriminator · propose "routing as a tool" as the fix for a routing failure · quote a compliance rate, violation count or cost figure from an older write-up · vet an issue whose premise is one of those rows |
 | [0010](adrs/ADR-0010-record-structural-bets-in-a-ledger.md) | Record every structural bet in one ledger, and treat only a researched rejection as a bar | run `/find-big-wins` · wonder what happened to a structural idea that was proposed and never filed · want a `docs/ideas/` folder or anywhere else to park ideas · cite a ledger row against a new proposal · re-propose an idea the ledger says was rejected |
-| [0011](adrs/ADR-0011-put-guardrails-at-the-write-boundary.md) | Put a guardrail that must hold at the write boundary, not in skill prose | answer a compliance failure by strengthening a `SKILL.md` sentence · decide where a new "this must always hold" rule lives · design a completion gate, a write invariant, or a lockdown · argue a boundary check would be too strict to ship |
+| [0011](adrs/ADR-0011-put-guardrails-at-the-write-boundary.md) | Put a guardrail that must hold at the write boundary, not in skill prose | answer a compliance failure by strengthening a `SKILL.md` sentence · decide where a new "this must always hold" rule lives · design a completion gate, a write invariant, or a lockdown · argue a boundary check would be too strict to ship · convert a skill into a skill-agent pair · route the orchestrator to a paired agent |
 
 Conventions, and how to add one: [`docs/adrs/README.md`](adrs/README.md).
 Not yet written: state and the writer/projection tools, self-contained agent
@@ -686,8 +686,10 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 > `references/` file or a comment — arms `.github/workflows/check-runlogs.yml`,
 > which **blocks the PR** unless the newest full-skill run log's snapshot matches
 > your branch and its `.ann.json` carries a correction for every dimension of
-> each **sampled** test — the tests named in the run log's `review_sample` (5
-> per run). A run log without that field, which is every one written before
+> each **sampled** test — the tests named in the run log's `review_sample`
+> (3 rotation + 1 targeted + 1 random, plus every test that failed or scored a 1 or 2 on any dimension, so the
+> count varies by run).
+> A run log without that field, which is every one written before
 > sampling shipped, still owes every dimension of every test.
 > Annotations are written **only** through the CRUD UI (`make
 > eval-ui`); hand-writing them is forbidden. A behavior-neutral edit can instead
@@ -1805,16 +1807,18 @@ the ask and take the action. Production behaviour is preserved; only the prompt 
 gone.
 
 Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
-both green in CI for months:
+both green in CI for months. The first is fixed; the second stands:
 
-- **The plan freeze.** `search-records` tells an autonomous run it has no ad-hoc
-  searches, which closes the skill's self-initiated route back to `research-plan`. An
-  interactive researcher who notices the plan is wrong can get it revised; an
-  autonomous one cannot. `research-plan` compounds it by superseding a plan
-  "only when the user is explicitly re-planning" — never true with no user — so even
-  reaching the skill changes nothing. Measured consequence: across the
-  committed e2e corpus, 93% of question-plan pairs carry exactly one plan, and only
-  seven plans in the whole corpus were ever superseded.
+- **The plan freeze — fixed 2026-09-01.** `search-records` told an autonomous run it
+  had no ad-hoc searches, which closed the skill's self-initiated route back to
+  `research-plan`, and `research-plan` compounded it by superseding a plan "only when
+  the user is explicitly re-planning" — never true with no user — so even reaching the
+  skill changed nothing. Both sentences are gone: the routed row and the supersede
+  condition now read the same in either mode. Measured consequence while it stood:
+  across the committed e2e corpus, 93% of question-plan pairs carried exactly one
+  plan, and only seven plans in the whole corpus were ever superseded. The fix carries
+  a second half — the orchestrator's dispatch row is now scoped to the **active** plan,
+  because a revision leaves unexecuted items behind on the plan it retired.
 - **External-site captures.** `search-external-sites` marks a plan item `skipped`
   under `--autonomous` because no user can click a paywalled link. Controlling for
   fallback items, that produces a 76% skip rate on primary Ancestry items against
