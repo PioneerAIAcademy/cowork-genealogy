@@ -99,10 +99,6 @@ descriptions distinct so Claude picks the right one.
       "type": "boolean",
       "description": "When true, include facet counts for collection, place, year, and record type. Default false."
     },
-    "nlQuery": {
-      "type": "string",
-      "description": "A natural-language query, or a FamilySearch tree person ID (e.g. \"Search for John Doe born in Austria\" or \"KD96-TV2\"). Mapped to the upstream `nlQuery` parameter; an alternative to the Lucene-style `keywords`. Supplying it also sends the feature header (see Query parameter mapping)."
-    },
     "projectPath": {
       "type": "string",
       "description": "Absolute path to the active project. When supplied, the tool stages its verbatim response host-side and returns a `staged` handle (see Result staging below); pass `staged.resultsRef` to `research_log_append`. Omit only for a throwaway exploratory search that will not be logged."
@@ -121,7 +117,6 @@ The tool maps its input to the upstream API query parameters:
 | Tool input | API parameter |
 |-----------|--------------|
 | `keywords` | `q.text` |
-| `nlQuery` | `nlQuery` |
 | `name` | `q.fullName` |
 | `place` | `q.recordPlace` |
 | `nlQuery` | `nlQuery` |
