@@ -1,3 +1,7 @@
+- [ ] I have signed the [CLA](../CLA.md) — my name is in
+      [SIGNERS.md](../SIGNERS.md). One row, one time; skip this box on
+      later PRs.
+
 ## Summary
 
 <!-- 1-3 bullets describing what changed and why. Name the tier

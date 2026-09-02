@@ -2,6 +2,24 @@
 
 Two kinds of contributions are welcome.
 
+## First, sign the CLA
+
+Everyone who contributes signs the
+[Individual Contributor License Agreement](./CLA.md) — outside
+contributors and maintainers alike. You keep the copyright in what you
+write; the agreement gives the project permission to use it.
+
+Signing takes one pull request that adds a row to
+[SIGNERS.md](./SIGNERS.md). Instructions are in that file. Do it once,
+before or alongside your first contribution.
+
+If you are on the team — organization membership, repository write
+access, or access to project credentials or alpha-tester data — you also
+sign the [Team Agreement](./TEAM-AGREEMENT.md), which covers
+confidentiality, API keys, and handling the personal data of living
+people that alpha testers send us. Outside contributors do not sign that
+one.
+
 ## Skill contributions (the common case)
 
 Most contributions will be skills, not MCP servers. Locality guides for
