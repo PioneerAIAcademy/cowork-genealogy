@@ -41,8 +41,8 @@ developer machines.
 
 ## Coverage is still sparse
 
-`narration` is not retained for most runs. `usage.continue_nudges` records **224
-nudges in 98 of 145 committed runs**; only a handful of those carry a narration
+`narration` is not retained for most runs. `usage.continue_nudges` records **264
+nudges in 110 of the committed runs**; only **12** of those carry a narration
 nudge entry, because `narration` started recently. So the seam histogram is a
 sample and never a census.
 

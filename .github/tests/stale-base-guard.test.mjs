@@ -169,6 +169,22 @@ check(
 // `codeowners-routing.test.mjs` lifts the real parser — rather than testing a
 // copy (#2204 review).
 // ---------------------------------------------------------------------------
+// Two preconditions the extracted shell cannot observe, because they live in
+// the checkout step rather than in a `run:` block. `fetch-depth: 0` is what
+// makes merge-base resolvable at all, and a `--depth` on the base fetch
+// re-shallows it — the round-1 bug. Part 3 clones its own repo, so only a
+// static assertion can hold these.
+check(
+  /fetch-depth:\s*0/.test(text),
+  true,
+  'checkout uses fetch-depth: 0 (merge-base needs full history)',
+);
+check(
+  /git fetch origin[^\n]*--depth/.test(text),
+  false,
+  'the base fetch has no --depth (it would re-shallow the checkout)',
+);
+
 console.log('\n--- workflow shell, executed ---');
 
 import { execFileSync } from 'node:child_process';
