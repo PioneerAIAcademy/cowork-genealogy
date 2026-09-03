@@ -20,6 +20,8 @@ signature.
 
 import pytest
 
+from harness.skill_invocation import CONFLICT_ANALYSIS_FIELDS
+
 from validators_lib import assert_foreign_keys_valid
 
 
@@ -254,13 +256,13 @@ def test_resolved_flynn_birthplace(after_state, test):
 # The five fields that make a conflict *resolved* rather than merely
 # *identified*. Creating an entry is identification and is unrestricted; writing
 # any of these is resolution.
-_ANALYSIS_FIELDS = (
-    "independence_analysis",
-    "weighing_analysis",
-    "preferred_assertion_id",
-    "resolution_rationale",
-    "status",
-)
+# Reuses harness.skill_invocation's constant rather than restating it. NOTE the
+# `"status"` extension: CONFLICT_ANALYSIS_FIELDS carries only the four prose/id
+# fields, and #1972's V6 rule names `status` explicitly — swapping in the bare
+# constant makes two status-only resolutions pass (@clack391, measured). The
+# per-field tests in tests/unit/test_conflict_resolution_validator.py are what
+# make the unsafe form fail rather than pass silently.
+_ANALYSIS_FIELDS = (*CONFLICT_ANALYSIS_FIELDS, "status")
 
 
 def _conflicts_by_id(state: dict) -> dict:
@@ -270,7 +272,7 @@ def _conflicts_by_id(state: dict) -> dict:
 def _analysis_written(conflict: dict) -> bool:
     """True when a conflict entry carries resolution work, not just identity.
 
-    The skill's own creation template (conflict-resolution/SKILL.md:145-152)
+    The skill's own creation template (conflict-resolution/SKILL.md:148-152)
     sets all five to null / "unresolved", so a freshly identified conflict is
     False here and a created-already-resolved one is True.
     """
@@ -335,7 +337,7 @@ def test_at_most_one_conflict_analysis_modified(before_state, after_state):
     """At most one conflict may be resolved per invocation (V6).
 
     SKILL.md works one conflict at a time, and ut_conflict_resolution_002's own
-    judge_context states the rule -- yet 2 of 5 committed runs of that test write
+    judge_context states the rule -- yet 1 of the 51 committed runs writes
     both c_001 and c_002 to resolved with full analysis in one turn, and both
     graded pass with all six dimensions 3.
     """
@@ -354,18 +356,24 @@ def test_at_most_one_conflict_analysis_modified(before_state, after_state):
     )
 
 
-# Bands, set from each field's own distribution across the five committed
-# conflict-resolution run logs (37 writes), NOT from a single worst case.
+# Bands, set from each field's own distribution across the committed
+# conflict-resolution run logs, NOT from a single worst case.
 #
-#   weighing_analysis  cap 200, corpus MAXIMUM 251.
-#       >200: 13 writes   >210: 7   >220: 4   >240: 2
-#     210 reports 7 of the 13. 240 -- the figure the issue floats -- is the 95th
-#     percentile of what the corpus actually produces, so it would report 2 of 13
-#     and a green arm would read as "weighing lengths are fine".
+# Figures re-derived 2026-09-03 against the four-log / 29-write corpus that
+# #2149 left behind; the originals were taken on a five-log / 37-write corpus
+# and #2149 rotated two logs out from under them. DEFAULT_KEEP_CANDIDATES = 5
+# rotates this corpus on every paid run, so re-derive rather than quote --
+# `_independently_over_cap_counts` in the test file is the recipe.
+#
+#   weighing_analysis  cap 200, corpus MAXIMUM 251 (unchanged by the rotation).
+#       >200: 14 writes   >210: 7   >220: 3   >240: 1
+#     210 reports 7 of the 14. 240 -- the figure the issue floats -- would report
+#     1 of 14, so a green arm would read as "weighing lengths are fine". The
+#     rotation strengthened that argument rather than weakening it.
 #
 #   resolution_rationale  cap 250, on conflicts with <3 competing assertions.
-#       >250: 17 writes   >300: 12
-#     300 keeps a 20% grace band and still reports 12 of 17.
+#       17 such writes: >250: 14   >300: 10
+#     300 keeps a 20% grace band and still reports 10 of 17.
 #
 # Re-derive against the committed corpus before changing either.
 _WEIGHING_CAP, _WEIGHING_BAND = 200, 210
@@ -377,11 +385,12 @@ def report_resolution_word_caps(before_state, after_state):
 
     SKILL.md:193 asks for ~200 words on weighing_analysis, :258-262 for ~250 on
     resolution_rationale unless the conflict is three-or-more-way, where
-    completeness outranks the cap. 32 of 37 committed writes exceed the
-    rationale cap.
+    completeness outranks the cap. 14 of the 17 committed writes that the
+    escape cannot exempt exceed the rationale cap (re-derived 2026-09-03; the
+    corpus rotates, so do not quote this).
 
     Reporting, not gating, and that is not a style choice: a failing tier-1
-    validator suppresses the LLM judge for that run (orchestrator.py:594), so a
+    validator suppresses the LLM judge for that run (orchestrator.py:600), so a
     gating version would silence the Evidence weighing and Resolution
     completeness grading on the runs it fires -- the craft grading this dive
     exists to protect.
@@ -408,9 +417,9 @@ def report_resolution_word_caps(before_state, after_state):
         if rationale:
             # competing_assertion_ids comes from the AFTER STATE, never from a
             # diff of changed fields. A run almost never writes that field --
-            # it appears in changed_fields on 0 of the 32 over-cap writes in the
-            # corpus -- so reading it from a diff makes the three-or-more-way
-            # escape never apply and roughly doubles the finding, 17 -> 32.
+            # it appears in changed_fields on 0 of the 26 over-cap
+            # writes in the corpus -- so reading it from a diff makes the
+            # three-or-more-way escape never apply and inflates the finding.
             competing = c.get("competing_assertion_ids") or []
             n = len(rationale.split())
             if len(competing) < 3 and n > _RATIONALE_BAND:
@@ -421,6 +430,6 @@ def report_resolution_word_caps(before_state, after_state):
                 )
 
     # The message is the whole observation the judge sees -- split_observations
-    # (validator_runner.py:264-274) passes r.error and deliberately never
+    # (validator_runner.py:264-276) passes r.error and deliberately never
     # r.name. State counts as fact; a verdict here would anchor the grade.
     assert not observations, "\n".join(observations)

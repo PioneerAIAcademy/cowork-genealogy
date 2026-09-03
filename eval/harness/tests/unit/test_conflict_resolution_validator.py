@@ -22,13 +22,39 @@ import pytest
 _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
+# Loaded the way `harness/validator_runner.py` loads it — via
+# `spec_from_file_location` rather than a plain import — for a reason that is
+# not stylistic. pytest collects `validators/test_conflict_resolution.py` under
+# `python_files = ["test_*.py"]`, so a plain import gets the ASSERTION-REWRITTEN
+# module: its AssertionError carries pytest's generated explanation appended to
+# the message, and `"c_001" in str(e.value)` is then satisfied by a repr of
+# `touched` that the rewrite embedded — not by the validator naming the id at
+# all. Both naming tests below stayed green when the message was changed to name
+# nothing (@clack391). Asserting on `e.value.args[0]` does NOT fix it; the
+# explanation is concatenated there too.
+#
+# Loading it unrewritten means these tests grade the exact string the harness
+# emits, which is also the string a genealogist reads on a failed run.
+#
 # Aliased away from the test_*/report_* prefixes on purpose: pyproject sets
 # `python_functions = ["test_*", "report_*"]`, so an imported validator keeps
 # being collected as a test here and errors on its missing harness fixtures.
-from test_conflict_resolution import (  # noqa: E402
-    report_resolution_word_caps as check_word_caps,
-    test_at_most_one_conflict_analysis_modified as check_one_per_turn,
-)
+def _load_validator_unrewritten():
+    import importlib.util
+
+    path = _VALIDATORS_DIR / "test_conflict_resolution.py"
+    spec = importlib.util.spec_from_file_location(
+        "_cr_validator_unrewritten", path
+    )
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_VALIDATOR = _load_validator_unrewritten()
+check_word_caps = _VALIDATOR.report_resolution_word_caps
+check_one_per_turn = _VALIDATOR.test_at_most_one_conflict_analysis_modified
 
 _REPO = Path(__file__).resolve().parents[4]  # eval/harness/tests/unit -> repo root
 _CORPUS = sorted(
@@ -210,7 +236,7 @@ def _replay(validator):
     prescribes: the scenario fixture's conflicts overlaid with changed_fields.
 
     Both `modified` AND `added` are replayed. `added` matters more than its corpus
-    count suggests: it is 0 of 37 conflict diff entries across the 5 committed run
+    count suggests: it is 0 of the 29 conflict diff entries across the committed run
     logs today, but a created-then-resolved conflict is exactly the V6 bypass
     `test_v6_creating_an_already_resolved_conflict_counts` pins, so a corpus that
     grows one would otherwise be replayed blind at the one path the validator was
@@ -261,31 +287,153 @@ def _replay(validator):
     return fired
 
 
+# --- second derivations, deliberately not sharing the validator's code -------
+#
+# These read each run's raw `changed_fields` and know nothing about
+# `_conflicts_written` / `_analysis_written` / `_ANALYSIS_FIELDS`. That is the
+# whole point: if the validator's dict access drifts from the run logs' actual
+# structure, the two derivations disagree and the corpus tests go red — which is
+# what the pinned literals used to buy, minus the rotation fragility.
+#
+# Field names are restated here on purpose rather than imported. Importing
+# _ANALYSIS_FIELDS would make both sides share the one thing most likely to be
+# wrong, and the per-field tests above are what keep this list honest.
+_SECOND_DERIVATION_ANALYSIS_FIELDS = (
+    "independence_analysis",
+    "weighing_analysis",
+    "preferred_assertion_id",
+    "resolution_rationale",
+    "status",
+)
+
+
+def _corpus_runs():
+    """(log filename, test_id, conflicts-diff) for every run in the corpus."""
+    for path in _CORPUS:
+        log = json.loads(Path(path).read_text(encoding="utf-8"))
+        for t in log.get("tests", []):
+            for r in t.get("runs", []):
+                diff = (((r.get("output") or {}).get("file_changes") or {})
+                        .get("research.json") or {}).get("diff") or {}
+                yield Path(path).name, t["test_id"], (diff.get("conflicts") or {})
+
+
+def _independently_multi_conflict_runs():
+    """Runs whose diff writes an analysis field on MORE THAN ONE conflict.
+
+    A created conflict counts when it arrives carrying analysis, matching V6's
+    create-and-resolve arm.
+    """
+    out = set()
+    for name, test_id, cdiff in _corpus_runs():
+        touched = set()
+        for m in cdiff.get("modified") or []:
+            if any(
+                f in (m.get("changed_fields") or {})
+                for f in _SECOND_DERIVATION_ANALYSIS_FIELDS
+            ):
+                touched.add(m.get("id"))
+        for a in cdiff.get("added") or []:
+            if isinstance(a, dict) and any(
+                a.get(f) for f in _SECOND_DERIVATION_ANALYSIS_FIELDS
+            ):
+                touched.add(a.get("id"))
+        if len(touched) > 1:
+            out.add((name, test_id))
+    return out
+
+
+def _independently_over_cap_counts():
+    """(weighing, rationale) writes above their bands, derived from the diff.
+
+    Mirrors V2's escape: a rationale on a conflict with three or more competing
+    assertions is exempt, and `competing_assertion_ids` is read from the AFTER
+    state — the scenario fixture overlaid with this run's changes — never from
+    the diff, which is the 17-vs-32 regression the escape test pins.
+    """
+    weighing = rationale = 0
+    for path in _CORPUS:
+        log = json.loads(Path(path).read_text(encoding="utf-8"))
+        for t in log.get("tests", []):
+            fixture = (
+                _REPO / "eval/fixtures/scenarios" / str(t.get("scenario")) / "research.json"
+            )
+            base = (
+                json.loads(fixture.read_text(encoding="utf-8")).get("conflicts", [])
+                if fixture.exists()
+                else []
+            )
+            by_id = {c["id"]: c for c in base if isinstance(c, dict) and "id" in c}
+            for r in t.get("runs", []):
+                cdiff = ((((r.get("output") or {}).get("file_changes") or {})
+                          .get("research.json") or {}).get("diff") or {}
+                         ).get("conflicts") or {}
+                for m in (cdiff.get("modified") or []):
+                    changed = m.get("changed_fields") or {}
+                    entry = by_id.get(m.get("id")) or {}
+                    if "weighing_analysis" in changed:
+                        text = changed["weighing_analysis"].get("after") or ""
+                        if len(str(text).split()) > 210:
+                            weighing += 1
+                    if "resolution_rationale" in changed:
+                        text = changed["resolution_rationale"].get("after") or ""
+                        competing = (
+                            changed.get("competing_assertion_ids", {}).get("after")
+                            if "competing_assertion_ids" in changed
+                            else entry.get("competing_assertion_ids")
+                        ) or []
+                        if len(competing) < 3 and len(str(text).split()) > 300:
+                            rationale += 1
+    return weighing, rationale
+
+
 @pytest.mark.skipif(not _CORPUS, reason="no committed conflict-resolution run logs")
-def test_v6_fires_on_the_known_corpus_violations_and_nothing_else():
-    fired = _replay(check_one_per_turn)
-    assert {(f, t) for f, t, _ in fired} == {
-        ("v1_2026-08-18_15-37-43.json", "ut_conflict_resolution_002"),
-        ("v1_2026-08-18_19-42-11.json", "ut_conflict_resolution_002"),
-    }, f"unexpected V6 firing set: {[(f, t) for f, t, _ in fired]}"
+def test_v6_agrees_with_a_second_derivation_over_the_corpus():
+    """The validator's firing set must equal an INDEPENDENT derivation of the
+    same property, read straight from each run's raw `changed_fields`.
+
+    This used to pin two literal filenames, and #2149 deleted one of them —
+    turning this PR's own acceptance check red for a corpus rotation nobody
+    could have avoided. `versioning.DEFAULT_KEEP_CANDIDATES = 5` rotates this
+    corpus on every paid run, so the next person to land a conflict-resolution
+    run log would have inherited the same red in a file they never touched
+    (@clack391).
+
+    Agreement, not a count, is what survives rotation while still catching what
+    the pinned version caught: the second derivation reads `changed_fields`
+    directly and never calls the validator's own helpers, so a shape slip in
+    `_conflicts_written` / `_analysis_written` — reading `conflict_entries`
+    instead of `conflicts`, say — makes the two disagree.
+    """
+    fired = {(f, t) for f, t, _ in _replay(check_one_per_turn)}
+    expected = _independently_multi_conflict_runs()
+    assert fired == expected, (
+        f"validator fired on {sorted(fired)} but a second derivation from raw "
+        f"changed_fields says {sorted(expected)}"
+    )
 
 
 @pytest.mark.skipif(not _CORPUS, reason="no committed conflict-resolution run logs")
 def test_v2_reports_the_measured_counts_on_the_corpus():
-    """Pins the bands to what they actually report: 7 of 13 weighing writes over
-    the 200 cap, and 12 of 17 rationale writes over the 250 cap on conflicts
-    where the three-or-more-way escape cannot apply.
+    """The validator's over-cap tallies must equal an independent derivation.
+
+    Counts rather than filenames, but the same rotation problem and the same
+    fix: derived here instead of pinned, so a paid run that adds a log does not
+    redden a file nobody touched. The `splitlines` filter keeps only the
+    validator's own `conflicts[...]` observation lines.
     """
     fired = _replay(check_word_caps)
-    # Only the validator's own observation lines. pytest's assertion rewriting
-    # appends an "assert not [...]" repr that repeats every message, so a naive
-    # splitlines() double-counts each observation.
     lines = [ln.strip() for _, _, msg in fired for ln in msg.splitlines()
              if ln.strip().startswith("conflicts[")]
-    weighing = [ln for ln in lines if "weighing_analysis" in ln]
-    rationale = [ln for ln in lines if "resolution_rationale" in ln]
-    assert len(weighing) == 7, f"expected 7 weighing observations, got {len(weighing)}"
-    assert len(rationale) == 12, f"expected 12 rationale observations, got {len(rationale)}"
+    weighing = len([ln for ln in lines if "weighing_analysis" in ln])
+    rationale = len([ln for ln in lines if "resolution_rationale" in ln])
+
+    exp_weighing, exp_rationale = _independently_over_cap_counts()
+    assert (weighing, rationale) == (exp_weighing, exp_rationale), (
+        f"validator observed {weighing} weighing / {rationale} rationale "
+        f"over-cap writes; a second derivation from raw changed_fields says "
+        f"{exp_weighing} / {exp_rationale}"
+    )
 
 
 def test_v2_weighing_at_exactly_the_band_is_not_observed():
@@ -340,3 +488,90 @@ def test_v2_both_fields_over_cap_are_both_observed():
     msg = str(e.value)
     assert "weighing_analysis" in msg, msg
     assert "resolution_rationale" in msg, msg
+
+
+# --- _ANALYSIS_FIELDS: one test per field ------------------------------------
+#
+# Every synthetic V6 test above writes `status` and `resolution_rationale`
+# together, and none writes the other three at all, so four of the five fields
+# were asserted by nothing: dropping any of them left the suite at baseline
+# (@clack391). A repaired corpus replay would not catch it either — the single
+# corpus violation writes all five together. These are what make the field set
+# the rule actually consists of, rather than a list nothing reads.
+
+
+@pytest.mark.parametrize(
+    "field, value",
+    [
+        ("independence_analysis", "the two records are independent"),
+        ("weighing_analysis", "the parish register outweighs the index"),
+        ("preferred_assertion_id", "a_009"),
+        ("resolution_rationale", "preferred on originality"),
+        ("status", "resolved"),
+    ],
+)
+def test_each_analysis_field_alone_counts_as_a_resolution(field, value):
+    """A conflict whose ONLY change is this field must count as touched, so two
+    such conflicts in one turn must fail V6. Dropping the field from
+    `_ANALYSIS_FIELDS` makes this parametrisation red."""
+    before, after = _states(
+        [_conflict("c_001"), _conflict("c_002")],
+        [_conflict("c_001", **{field: value}), _conflict("c_002", **{field: value})],
+    )
+    with pytest.raises(AssertionError, match="more than one conflict"):
+        check_one_per_turn(before, after)
+
+
+@pytest.mark.parametrize(
+    "field, value",
+    [
+        ("independence_analysis", "the two records are independent"),
+        ("weighing_analysis", "the parish register outweighs the index"),
+        ("preferred_assertion_id", "a_009"),
+        ("resolution_rationale", "preferred on originality"),
+        ("status", "resolved"),
+    ],
+)
+def test_one_conflict_touched_by_this_field_alone_passes(field, value):
+    """The positive control for the parametrisation above: one conflict changed
+    by this field alone must NOT fail, so the test pair cannot pass by the
+    validator simply firing on everything."""
+    before, after = _states(
+        [_conflict("c_001"), _conflict("c_002")],
+        [_conflict("c_001", **{field: value}), _conflict("c_002")],
+    )
+    check_one_per_turn(before, after)
+
+
+def test_v6_a_moot_status_counts_as_touching_the_conflict():
+    """Pins the `moot` shape so the behaviour is CHOSEN, not inherited.
+
+    SKILL.md tells the skill to set `status: "moot"` when other evidence makes a
+    conflict irrelevant, and separately to leave the other conflicts' fields
+    untouched that turn. In one turn those two can conflict, and there are zero
+    `moot` writes in the corpus to have surfaced it (@clack391).
+
+    V6 sides with one-conflict-per-turn: `status` is in `_ANALYSIS_FIELDS`, so
+    mooting a second conflict counts as touching it. This test states that rather
+    than leaving it to be discovered. Whether the DOCTRINE should change is a
+    genealogist's call and belongs on #1972, not here.
+    """
+    before, after = _states(
+        [_conflict("c_001"), _conflict("c_002")],
+        [
+            _conflict("c_001", status="resolved", resolution_rationale="preferred"),
+            _conflict("c_002", status="moot"),
+        ],
+    )
+    with pytest.raises(AssertionError, match="more than one conflict"):
+        check_one_per_turn(before, after)
+
+
+def test_v6_mooting_one_conflict_alone_passes():
+    """The control: a turn that only moots is one conflict touched, so it passes.
+    Without this the test above could pass on the validator firing at all."""
+    before, after = _states(
+        [_conflict("c_001"), _conflict("c_002")],
+        [_conflict("c_001", status="moot"), _conflict("c_002")],
+    )
+    check_one_per_turn(before, after)
