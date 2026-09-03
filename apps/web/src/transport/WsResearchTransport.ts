@@ -1,3 +1,4 @@
+import { resolveFamilySearchTarget } from '@genealogy/viewer-ui'
 import type {
   ResearchTransport,
   SubscriptionHandlers,
@@ -71,6 +72,14 @@ export class WsResearchTransport implements ResearchTransport {
 
   openExternal(url: string): void {
     window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  openFamilySearch(value: string): void {
+    // Renderer-side, so weaker than the Electron main-process check — see the
+    // header of `familysearch-url.ts`. A value that resolves to nothing opens
+    // nothing, rather than falling through to `openExternal`.
+    const target = resolveFamilySearchTarget(value)
+    if (target) window.open(target, '_blank', 'noopener,noreferrer')
   }
 
   async submitFeedback(payload: FeedbackPayload): Promise<FeedbackResult> {
