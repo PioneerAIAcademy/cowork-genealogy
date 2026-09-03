@@ -87,12 +87,17 @@ interface Derived {
   planAppendOps: number;
   omitItems: number;
   misrouteFloor: number;
+  /** Scopes whose scenario fixture yielded at least one seeded plan id. The
+   *  misroute arm returns early on a zero floor, so without this a renamed
+   *  fixture directory zeroes the floor and retires that arm silently. */
+  seededScopes: number;
 }
 
 function derive(): Derived {
   let planAppendOps = 0;
   let omitItems = 0;
   let misrouteFloor = 0;
+  let seededScopes = 0;
   for (const rel of trackedRunLogs()) {
     let doc: any;
     try {
@@ -114,6 +119,7 @@ function derive(): Derived {
             readFileSync(join(projectRoot, "eval/fixtures/scenarios", scen, "research.json"), "utf8"),
           );
           seeded = (fixture.plans ?? []).map((p: any) => p?.id).filter(Boolean);
+          if (seeded.length > 0) seededScopes += 1;
         } catch {
           seeded = [];
         }
@@ -138,7 +144,7 @@ function derive(): Derived {
       }
     }
   }
-  return { planAppendOps, omitItems, misrouteFloor };
+  return { planAppendOps, omitItems, misrouteFloor, seededScopes };
 }
 
 const specText = Object.fromEntries(
@@ -155,6 +161,16 @@ describe("the specs' corpus claims survive main moving", () => {
       d.planAppendOps,
       "derived 0 `plans` append ops — the traversal is broken, not the corpus empty",
     ).toBeGreaterThan(50);
+    // And the SEED lookup specifically. The misroute arm below returns early on a
+    // zero floor, which is correct when the corpus holds no instances and
+    // indistinguishable from a broken fixture path, since the lookup sits inside
+    // a `catch { seeded = [] }`. Renaming one path segment took the floor from 6
+    // to 0 with the file still green. 1322 of 2545 scopes resolve today.
+    expect(
+      d.seededScopes,
+      "no run-log scope resolved its scenario's seeded plan ids — the fixture " +
+        "lookup is broken, so misrouteFloor is 0 for the wrong reason",
+    ).toBeGreaterThan(100);
   });
 
   it("the documented call shape is still the norm the rule rests on", () => {
@@ -207,7 +223,16 @@ describe("the specs' corpus claims survive main moving", () => {
     // fabricated `of 999 corpus plans append ops` row with no stamp near it and
     // the suite stayed green — which is the case that will actually happen,
     // when someone adds a figure next to an already-stamped one.
-    const FIGURE = /\b(?:of|fires on) \d{1,4} (?:corpus )?plans append ops|corpus sources appends/gi;
+    // Two alternatives: the `plans append ops` phrasing, and any `N of M (P%)`
+    // headline. Digit classes allow commas and more than four digits: the
+    // reviewer's form was `\d{1,4}`, and this file's own neighbours already
+    // include `3,466 of 7,238`, so the next comma-grouped figure would have
+    // slipped through unstamped. Widening costs nothing measured: both specs
+    // still yield the same four matches and no false positive, and the
+    // interposed-words case (`3,466 of 7,238 write units (47%)`) stays out
+    // because the paren must follow the second number directly.
+    const FIGURE =
+      /\b(?:of|fires on) [\d,]{1,7} (?:corpus )?plans append ops|\b[\d,]{1,7} of [\d,]{1,7} \(\d+(?:\.\d+)?%\)/gi;
     const STAMP = /measured at [0-9a-f]{7,40}\b/i;
     const missing: string[] = [];
     for (const [rel, text] of Object.entries(specText)) {
