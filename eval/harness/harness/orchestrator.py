@@ -554,6 +554,12 @@ async def _execute_single_run(
             "expected_classifications": spec.raw.get(
                 "expected_classifications", []
             ),
+            # Also threaded in: `refinement_targets`, the assertion ids a
+            # classification-refinement test expects updated in place —
+            # deterministic ground truth for
+            # test_refinement_preserves_extraction_fields_and_avoids_duplication
+            # (issue #2021, F12; unit-test-spec.md's `refinement_targets`).
+            "refinement_targets": spec.raw.get("refinement_targets", []),
             # Also threaded in: `execution`, so test_tool_allowlist can widen
             # by the same `run_skills` rule the session allowlist used. A
             # callee's calls land in this run's tool_calls log, and without
