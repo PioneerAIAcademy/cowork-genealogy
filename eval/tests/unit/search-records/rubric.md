@@ -71,6 +71,32 @@ hit its turn cap. A catch-all is defensible only on a test whose subject is nil
 exhaustion **and** whose turn budget has room for it — ut_search_records_018 has
 both.
 
+**A second, narrower override: `record_read` on a batch-enumeration sibling
+the search already returned.** A batch/collection search can return dozens of
+same-surname candidates (`ut_search_records_028`'s Ashton parish register
+batch runs to ~30 Richardson entries in one narrowed-search stub); reading
+one of them while enumerating the batch is ordinary FAN/cluster research
+(issue #1642), and stocking a `record_read` fixture for every candidate a
+large batch could return is not tractable the way stocking one name-variant
+nil is — the recordId the skill reaches for varies by run (`NGYP-KXD` in one
+run, `NGYP-MB6` in another, both genuinely present in the narrowed-search
+fixture's own results). When the recordId came from a `record_search` /
+`rank_search_matches` result already in this run's tool_calls, a
+`fixture_not_found` on it is a fixture gap, not a Tool Arguments defect —
+score Tool Arguments on the calls that DID match, same as the name-variant
+rule above. **Do not split the difference by moving the deduction to
+Correctness, Completeness, or Result triage instead** — on the run that
+surfaced this (2026-08-28), the judge scored Tool Arguments down for the
+`fixture_not_found` AND separately cited the same call under Correctness
+("made a critical error in the batch enumeration") and Completeness ("fell
+short on the enumeration itself"), penalizing the identical fixture gap
+three times under three names. If the calls that DID match a fixture were
+correct and the batch enumeration itself was otherwise sound, all four
+dimensions clear it. **This does not widen the exclusion in "Scope this
+narrowly" above** — a `record_read` aimed at a recordId that never appeared
+in any search result this run is still a real defect (a fabricated id), and
+that exclusion stands for it unchanged.
+
 ## Search strategy
 
 Did the skill construct appropriate search parameters from the plan item? Name variants, date ranges, and jurisdictions should match the research context, and the broad-to-narrow default should be followed unless the plan item justifies a narrow start.

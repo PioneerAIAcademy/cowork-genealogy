@@ -24,7 +24,8 @@
     "place-search-schuylkill-by-name",
     "place-search-schuylkill-by-place",
     "external-links-search-schuylkill-1870-census",
-    "collections-search-schuylkill"
+    "collections-search-schuylkill",
+    "place-search-pennsylvania"
   ],
   "judge_context": [
     "Generated URL should target Ancestry.com (or the appropriate ancestry.{tld}) and include search parameters derived from the subject: name 'Patrick Flynn', birth year ~1845, and a birthplace. Grade the birthplace VALUE against the rubric's URL generation rule on conflicts[] — do not decide it from this note. Test-specific trap worth knowing: this scenario's research objective text still echoes a birthplace the project's own conflict resolution rejected, so the objective is not the authority on that field and matching it is not a defence.",
