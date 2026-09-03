@@ -141,7 +141,7 @@ time, regardless of how directly the request named the destination.
    | Objective but no questions | `question-selection` (derive first question) |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `research-plan` |
-   | Plan items not yet executed, and no analyzed evidence yet plausibly answers the active question | `search-records` (or `search-external-sites` for non-FS sources) |
+   | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `exhausted` plan, which a revision leaves behind still `planned` | `search-records` (or `search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_read`) |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | `record-extraction` (see the enforced contract below) |
    | Assertions not yet linked to persons | `person-evidence` — **always the skill, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). The record-extractor agent deliberately cannot and does not link; its output ALWAYS flows through person-evidence next |
@@ -248,8 +248,8 @@ time, regardless of how directly the request named the destination.
    re-assess sufficiency — route to `research-exhaustiveness` once the
    evidence plausibly answers the active question — before reflexively
    executing the next `planned` item. **Before that route to
-   `research-exhaustiveness` (or to the pre-exhaustiveness mentor gate),
-   re-run the log-vs-assertion cross-check from Step 1 across the
+   `research-exhaustiveness`, re-run the log-vs-assertion cross-check
+   from Step 1 across the
    *whole* log, not just the entries from the most recent search.** A
    run naturally accumulates entries from earlier in the same session —
    an early re-examination of an already-attached source, a FAN pull —
@@ -359,6 +359,12 @@ re-invocation and act on the existing verdict. Otherwise, invoke
 `@plugin:gps-mentor` with a delegation message naming the focus
 and target_id.
 
+| Verdict | Action |
+|---------|--------|
+| `looks_solid` / `consider_addressing` | Surface `narrative_for_user`; continue. |
+| `address_first` | Surface `narrative_for_user` and record each `must_address` item to the audit trail. **Do not block, re-open the resolved question, or force a remediation skill.** In interactive mode the watching researcher may choose to act on it; under `--autonomous`, log and continue. The mentor is a support, not a gatekeeper. |
+| `refused` | Surface the refusal message; it names the correct target. |
+
 ### On-demand invocation
 
 When the user says "review my work", "is this defensible?", "what
@@ -366,39 +372,6 @@ would a senior genealogist say?", "mentor", "second opinion", or
 any equivalent, invoke `@plugin:gps-mentor` with `focus: on-demand`
 and `target_id` set to the most recent question, proof summary, or
 the literal string `"project"` if no specific target is implied.
-
-### Verdict handling protocol
-
-| Verdict | Interactive mode | `--autonomous` mode |
-|---------|------------------|---------------------|
-| `looks_solid` | Print `narrative_for_user`. Proceed to the gated routing step. | Same. |
-| `consider_addressing` | Print `narrative_for_user`. Proceed to the gated routing step. | Same. |
-| `address_first` | Print `narrative_for_user`. Ask the user: "The mentor flagged N item(s) to address before `<gated step>`. Want me to invoke `<suggested_skill of first must_address>` on the first one, or proceed anyway?" **Then end your turn — no further tool calls, no invoking the gated step, no applying the fix yourself.** | Invoke `suggested_skill` on the first `must_address` item. Log the decision and the must_address text in the appropriate `research.json` field (new plan item rationale, log entry note, or conflict analysis) so the audit trail captures it. |
-| `refused` | Print the refusal message. Route to the action it names. | Same. |
-
-**This is the one place in this entire skill where the instruction
-is to stop, not to keep going.** Every other section here —
-"Autonomous mode," "Iterate — without yielding," the repeated
-warnings against ending your turn to announce a next step — tells
-you the opposite: keep working, don't yield, don't stop to ask.
-That instinct is correct everywhere else and wrong here. An
-`address_first` verdict in interactive mode is a deliberate, narrow
-exception: print the question above and then actually yield the
-turn, even mid-run, even if you were several tool calls deep in an
-uninterrupted loop a moment ago. Do not quietly apply the mentor's
-suggested fix yourself and then present the finished result as if
-nothing needed the researcher's input — that is auto-routing past
-the gate in substance even when you never literally invoked the
-named `suggested_skill`. Never auto-route past an `address_first`
-verdict in interactive mode. The mentor's role is to inform the
-researcher's decision, not to make it for them — this is the
-"support, don't replace" contract that distinguishes the mentor
-from a gatekeeper.
-| Verdict | Action |
-|---------|--------|
-| `looks_solid` / `consider_addressing` | Surface `narrative_for_user`; continue. |
-| `address_first` | Surface `narrative_for_user` and record each `must_address` item to the audit trail. **Do not block, re-open the resolved question, or force a remediation skill.** In interactive mode the watching researcher may choose to act on it; under `--autonomous`, log and continue. The mentor is a support, not a gatekeeper. |
-| `refused` | Surface the refusal message; it names the correct target. |
 
 ## When to stop
 

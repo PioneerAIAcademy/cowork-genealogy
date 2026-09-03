@@ -28,17 +28,26 @@ round-trips for content it already has staged on disk.
 
 ## What the staged data has vs. what `record_read` adds
 
-- `record_search` stages the **`toSimplified`** tool output: persons, relationships,
-  facts, and `sources` **if** the FS search response carried `sourceDescriptions`.
-- `record_read` uses **`toSimplifiedStandardized`** = `toSimplified` **+ `standardizePlaces`**
-  (resolves free-text places to `standard_place`). Its output also carries the
-  source `citation`.
+- `record_search` stages its **`toSimplified`** output **after running
+  `standardizePlaces`** (inside `record_search`, before it stages the results): persons,
+  relationships, facts most of which carry a `standard_place` (FS-normalized where
+  the search response supplied a `normalized` value, resolver-derived otherwise —
+  a null resolve or soft-cap overflow leaves some empty), and `sources` **if** the
+  FS search response carried `sourceDescriptions`.
+- `record_read`'s live path uses pure **`toSimplified`** (it does **not** run
+  `standardizePlaces` — see Findings), so it keeps only the record's own
+  `normalized` places and never adds resolver-derived `standard_place`. Its
+  output also carries the source `citation`.
 
-Two deltas, one closable, one **unverified**:
+Two deltas were identified; delta 1 is now **settled** (see Findings), delta 2
+remains **unverified**:
 
-1. **Place standardization** — `record_read` adds `standard_place`; the staged data
-   doesn't. **Closable host-side** by re-applying `standardizePlaces` (needs the
-   network the VM lacks — so this must live in the host tool, not a skill script).
+1. **Place standardization** — the staged data already carries the search stage's
+   `standard_place` for the facts the search-time resolve reached. This was
+   originally scoped as a delta "closable host-side by
+   re-applying `standardizePlaces`", but the Findings settled it the other way:
+   the staged place is more reliable, so the sidecar returns it **as-is** and the
+   live path does not add resolver-derived standardization.
 2. **Source citations** — `record_read`'s output carries the full `citation`;
    whether the FS *search* response carries `sourceDescriptions` per result is
    **unverified** (token expired mid-analysis; test fixtures are trimmed). This is
@@ -55,8 +64,9 @@ backward-compatible):
 - `record_read({ recordId })` — unchanged: a live FS read.
 - `record_read({ recordId, resultsRef, projectPath })` — reads the record's gedcomx
   from the staged sidecar (`results/.staging/<uuid>.json` **or** finalized
-  `results/<log_id>.json`) **host-side, no FS round-trip**, re-applies
-  `standardizePlaces`, and returns it. Reuses the exact guard+read path
+  `results/<log_id>.json`) **host-side, no FS round-trip**, and returns it
+  **as-is** (earlier drafts re-applied `standardizePlaces` here; the Findings
+  settled that the staged place is more reliable than a re-resolved one). Reuses the exact guard+read path
   `rank_search_matches` uses (`assertInsideProject`/`isInsideProject` +
   `readFile` + `envelope.payload.results`), matching the result by `recordId`.
   Returns a `source: "sidecar"` marker so the skill/tests can tell them apart.
@@ -76,9 +86,10 @@ backward-compatible):
 
 - Content (persons/facts/relationships) is **verified identical** → extraction
   loses nothing by sourcing it from the sidecar.
-- Place standardization: the staged result already has the **correct** standardized
-  place; the tool returns it as-is (a live read's own standardization is *less*
-  reliable — see Findings).
+- Place standardization: the staged result carries the search stage's standardized
+  place (for the facts the resolve reached); the tool returns it as-is. A live read
+  performs **no** resolver standardization at all (pure `toSimplified` since #614),
+  so there is nothing to be less reliable — see Findings.
 - If the sidecar carries citations → the win is large (sidecar for nearly
   everything). If it doesn't → the skill still triages from the sidecar and only
   reads live for records it **keeps**, killing the duplicate re-reads regardless.
@@ -106,16 +117,18 @@ England death/burial). For **the person you searched** (the matched persona):
   question that earlier looked like the blocker is **resolved** — no live read
   needed for it.
 - **Standardized place: the search result's is correct; a live `record_read`
-  re-standardizes it WRONGLY** (observed `Southampton, NY → Southampton, England`;
-  `Rochdale, England → Rochdale, South Africa`). The sidecar is therefore *more*
-  reliable, and the sidecar tool returns the staged place **as-is** (no
-  `standardizePlaces` re-run). **The live `record_read` path is also fixed:** the
-  recapi record response carries **no** FS-normalized place (only `original` +
-  parsed County/City/State fields — verified), so `record_read` now uses
-  `toSimplified` (FS's provided data) instead of `toSimplifiedStandardized` and
-  leaves `standard_place` **unset** rather than resolving the ambiguous name to a
-  wrong place. Staged records still carry FS's correct normalized place from the
-  search endpoint.
+  used to re-standardize it WRONGLY** (observed 2026-07-08; re-probe pending — issue
+  #1908 Phase 1: `Southampton, NY → Southampton, England`;
+  `Rochdale, England → Rochdale, South Africa`). The sidecar is therefore more
+  reliable only for its FS-normalized share — its resolver-derived share came from
+  the same resolver — and the sidecar tool returns the staged place **as-is** (no
+  `standardizePlaces` re-run). **The live `record_read` path is also fixed:** it
+  now uses `toSimplified` instead of `toSimplifiedStandardized`, so it keeps
+  whatever `standard_place` the record's own `normalized` value supplies and never
+  falls back to the resolver, rather than resolving an un-normalized name to a
+  wrong place. (How often a recapi record response carries a `normalized` place is
+  what `dev/probe-record-read-places.ts` re-measures — Phase 1's open question.)
+  Staged records carry the search stage's standardized place regardless.
 
 The one genuine "read has more" is **co-residents**: a census search returns other
 household members with **reduced facts** (name + a fact or two); a live read fills

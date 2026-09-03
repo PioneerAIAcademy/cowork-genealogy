@@ -108,10 +108,16 @@ export function compactStagedRecordSearch(
 /**
  * Drop `fulltext_search`'s heavy inline `textDocument` (the full AI-transcribed
  * page, 79–136 KB across a result set — the overflow driver). The full text
- * lives in the staged sidecar. It is **NOT retrievable via a tool**: record_read
+ * lives in the staged sidecar, and **no MCP tool** reads it back: record_read
  * reads a staged sidecar back only for record_search results (it matches on
  * recordId + gedcomx — `readFromSidecar` in record-read.ts — which a fulltext
- * result has neither of), so a caller cannot re-read this transcript. The
+ * result has neither of). It is NOT unreachable, though: staging serializes the
+ * response before this strip runs, so the transcript is on disk at
+ * `staged.resultsRef`, and `Read` is not gated by the plugin hook (its matcher
+ * is Write|Edit|NotebookEdit|.*device_commit_files|.*research_append). Reading
+ * it pulls the whole page back into context, which is the reason to triage from
+ * the stubs — not an inability to reach it. Say the cost, not "impossible", or
+ * the next reader plans around a wall that is not there. The
  * remaining flat fields (names/places/dates/highlightTerms/title/recordType) are
  * the triage stubs the agent works from. Mirrors record_search's inline-gedcomx
  * strip: unconditional once staged so the overflow protection can't be

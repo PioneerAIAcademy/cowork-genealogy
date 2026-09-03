@@ -1,0 +1,55 @@
+{
+  "tool": "record_read",
+  "description": "The C00558-7 (St. Michael and All Angels) entry for Rachel Richardson, born 1836 in the same register the batch enumeration works. Stocked so the skill's genealogically reasonable sibling/cluster read of a same-surname entry within the batch it is already enumerating does not hit fixture_not_found (issue #1642, chesworthrm's ut_search_records_028 finding). Restates exactly what record-search-batch-c00558-7-narrowed-richardson.json already returned for this recordId in the search stub -- no additional relatives are invented beyond what that stub carries.",
+  "args": {
+    "recordId": "~NGYP-RT5"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_12221114304",
+        "ark": "ark:/61903/1:1:NGYP-RT5",
+        "gender": "Female",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "Rachel",
+            "surname": "Richardson"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Christening",
+            "primary": true,
+            "date": "3 Jun 1836",
+            "standard_date": "3 Jun 1836",
+            "place": "Church of St. Michael and All Angels, Ashton-under-Lyne, Lancashire, England, United Kingdom"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "sd_c_1473014",
+        "title": "England, Births and Christenings, 1538-1975",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1473014"
+      },
+      {
+        "id": "src_r_12221114304",
+        "title": "Entry for Rachel Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "citation": "\"England, Births and Christenings, 1538-1975\", database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9H12-SLC), Entry for Rachel Richardson, 1836.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9H12-SLC"
+      },
+      {
+        "id": "sd_p_12221114304",
+        "title": "Rachel Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "citation": "\"England, Births and Christenings, 1538-1975\", database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NGYP-RT5), Rachel Richardson, 1836.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:NGYP-RT5"
+      }
+    ],
+    "places": [
+      {}
+    ]
+  }
+}

@@ -6,7 +6,7 @@
     "givenName": "~Sarah"
   },
   "response": {
-    "query": { "surname": "Price", "givenName": "Sarah" },
+    "query": { "surname": "Price", "givenName": "Sarah", "birthYearFrom": 1870, "birthYearTo": 1880, "residencePlace": "Dodge County, Wisconsin", "residenceYearFrom": 1880, "residenceYearTo": 1880 },
     "totalMatches": 2,
     "paginationCappedAt": 100,
     "returned": 2,
