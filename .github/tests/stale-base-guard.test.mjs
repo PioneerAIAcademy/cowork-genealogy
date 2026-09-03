@@ -149,5 +149,123 @@ check(
   'Empty PR file list                                -> PASS (skip early)');
 
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Part 3: the workflow's ACTUAL shell, driven against a real git repo
+// ---------------------------------------------------------------------------
+//
+// Part 2 above runs a truth table over a JS re-implementation. That documents
+// the intent but cannot fail on a change to the workflow, because the workflow
+// is not its subject: inverting `git diff --quiet`, breaking the merge-base
+// line, or re-adding `--depth=1` all leave Part 2 green (measured). The
+// `--depth=1` bug that shipped in this file's first revision is exactly that
+// shape — it made `git merge-base` exit 1 with empty output, so `set -e` killed
+// the step before any check ran, and every PR touching a watched file went red
+// with no message.
+//
+// So this part extracts the two `run:` blocks from the YAML and executes them
+// against a throwaway repo, in both directions. The sibling tests do the same
+// thing — `check-runlogs-post-gate-lints.test.mjs` parses the workflow text,
+// `codeowners-routing.test.mjs` lifts the real parser — rather than testing a
+// copy (#2204 review).
+// ---------------------------------------------------------------------------
+console.log('\n--- workflow shell, executed ---');
+
+import { execFileSync } from 'node:child_process';
+import os from 'node:os';
+import path from 'node:path';
+
+/** Pull one step's `run: |` body out of the workflow by its `name:`. */
+function stepScript(stepName) {
+  const lines = text.split('\n');
+  const start = lines.findIndex(l => l.includes(`- name: ${stepName}`));
+  if (start === -1) {
+    fail(`step "${stepName}" not found in the workflow — renamed?`);
+    return null;
+  }
+  const runAt = lines.findIndex((l, i) => i > start && /^\s*run: \|/.test(l));
+  if (runAt === -1) {
+    fail(`step "${stepName}" has no \`run: |\` block`);
+    return null;
+  }
+  const indent = lines[runAt].match(/^\s*/)[0].length + 2;
+  const body = [];
+  for (let i = runAt + 1; i < lines.length; i++) {
+    const l = lines[i];
+    if (l.trim() === '') { body.push(''); continue; }
+    if (l.match(/^\s*/)[0].length < indent) break;
+    body.push(l.slice(indent));
+  }
+  return body.join('\n');
+}
+
+const fetchStep = stepScript('Fetch base branch ref');
+const checkStep = stepScript('Check for stale-base contention');
+
+if (fetchStep && checkStep) {
+  const sh = (cwd, script, env = {}) =>
+    execFileSync('bash', ['-c', script], {
+      cwd,
+      encoding: 'utf8',
+      env: { ...process.env, ...env },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sbg-'));
+  const origin = path.join(tmp, 'origin');
+  const work = path.join(tmp, 'work');
+
+  // A base with one watched file, and a PR branch that edits it.
+  sh(tmp, `
+    set -e
+    git init -q -b main "${origin}"
+    cd "${origin}"
+    git config user.email t@t && git config user.name t
+    printf 'v1\\n' > CLAUDE.md && printf 'x\\n' > other.md
+    git add -A && git commit -qm base
+    git checkout -qb feature && printf 'pr\\n' >> CLAUDE.md && git commit -qam pr
+    git checkout -q main
+    git clone -q --no-local "${origin}" "${work}"
+    cd "${work}"
+    git fetch -q origin '+refs/heads/feature:refs/remotes/origin/feature'
+    git checkout -q -B feature origin/feature
+  `);
+
+  // GITHUB_OUTPUT is written by the fetch step; give it somewhere to go.
+  const ghOut = path.join(tmp, 'gh-output');
+  fs.writeFileSync(ghOut, '');
+  const env = { BASE_REF: 'main', TOUCHED: 'CLAUDE.md', GITHUB_OUTPUT: ghOut };
+
+  const runGuard = () => {
+    try {
+      sh(work, fetchStep, env);
+      sh(work, checkStep, env);
+      return { exit: 0 };
+    } catch (e) {
+      return { exit: e.status ?? 1, out: `${e.stdout ?? ''}${e.stderr ?? ''}` };
+    }
+  };
+
+  // A) main has NOT touched the watched file → the guard must pass.
+  const clean = runGuard();
+  check(clean.exit, 0, 'clean base: guard exits 0 (a full-history fetch, merge-base resolves)');
+
+  // B) main HAS touched it since the merge-base → the guard must fire.
+  sh(origin, `
+    set -e
+    git config user.email t@t && git config user.name t
+    printf 'main\\n' >> CLAUDE.md && git commit -qam 'main edits CLAUDE.md'
+  `);
+  const stale = runGuard();
+  check(stale.exit !== 0, true, 'stale base: guard exits non-zero');
+  check(
+    /CLAUDE\.md/.test(stale.out ?? ''),
+    true,
+    'stale base: the failure names the contended file',
+  );
+
+  fs.rmSync(tmp, { recursive: true, force: true });
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall checks passed');
 process.exit(failures ? 1 : 0);
