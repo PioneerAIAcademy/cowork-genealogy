@@ -115,3 +115,24 @@ def test_volunteered_subscriptions_do_not_fail():
         _research({"experience_level": "intermediate", "subscriptions": ["Ancestry"]}),
         PROFILE_TAGGED,
     )
+
+
+def test_defaulted_none_subscriptions_fails():
+    """The regression guard. `["none"]` is the pre-2026-08-31 default: it asserts
+    the researcher told us they have nothing, the opposite of what the ruling now
+    assumes. Nothing else catches a reintroduction — the value is schema-valid,
+    so `validate_research_schema` passes it happily."""
+    with pytest.raises(AssertionError, match="subscriptions"):
+        check_profile(
+            _research({"experience_level": "intermediate", "subscriptions": ["none"]}),
+            PROFILE_TAGGED,
+        )
+
+
+def test_defaulted_empty_subscriptions_fails():
+    """The same defect wearing a different shape, and equally schema-valid."""
+    with pytest.raises(AssertionError, match="subscriptions"):
+        check_profile(
+            _research({"experience_level": "intermediate", "subscriptions": []}),
+            PROFILE_TAGGED,
+        )

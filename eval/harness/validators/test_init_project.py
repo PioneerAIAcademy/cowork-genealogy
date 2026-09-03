@@ -78,10 +78,22 @@ def test_profile_defaults_when_all_default(after_state, test):
     exactly -- `intermediate` -- not be left absent (the pre-#1510
     dead-edge-case behavior) and not hold anything else.
 
-    `subscriptions` is deliberately NOT checked. The site-access question was
-    dropped from the interview on 2026-08-31 and the field is now left absent
-    rather than defaulted: `["none"]` asserts the researcher told us they have
-    nothing, which is the opposite of the assumption that ruling makes."""
+    `subscriptions` is checked in the OPPOSITE direction to the deleted
+    `== ["none"]` assertion: it must be absent, OR carry values the researcher
+    volunteered. The site-access question was dropped from the interview on
+    2026-08-31 and the field is no longer defaulted.
+
+    Deleting the old check outright would have left the behaviour this change
+    exists to produce with no durable guard, so a later edit could reintroduce
+    the default and nothing would fail. Schema validity cannot carry it: absent,
+    `[]` and `["none"]` are all schema-valid.
+
+    Deliberately NOT a blanket "must be absent". That would contradict the
+    ruling, which dropped the question and kept the field -- a researcher who
+    volunteers access unprompted still gets it recorded, and
+    `test_volunteered_subscriptions_do_not_fail` pins that. The regression being
+    guarded is the DEFAULT coming back, so `["none"]` and a defaulted `[]` fail
+    while a volunteered `["Ancestry"]` passes."""
     if "opening-turn-all-defaults" not in test.get("tags", []):
         pytest.skip("not an all-defaults scenario")
     research = after_state.get("research_json")
@@ -96,6 +108,15 @@ def test_profile_defaults_when_all_default(after_state, test):
     assert profile.get("experience_level") == "intermediate", (
         f"experience_level should default to 'intermediate', got: "
         f"{profile.get('experience_level')!r}"
+    )
+    subs = profile.get("subscriptions")
+    assert subs is None or (isinstance(subs, list) and subs and subs != ["none"]), (
+        "researcher_profile.subscriptions must be ABSENT unless the researcher "
+        "volunteered access unprompted -- site access is no longer asked, so "
+        'nothing may default it. `["none"]` is the specific pre-2026-08-31 '
+        "default this guards against: it asserts the researcher told us they "
+        "have nothing, the opposite of what is now assumed. `[]` is a defaulted "
+        f"empty and is equally wrong. got: {subs!r}"
     )
 
 

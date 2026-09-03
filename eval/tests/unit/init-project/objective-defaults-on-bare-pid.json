@@ -4,7 +4,7 @@
     "skill": "init-project",
     "name": "A fully-silent user still gets both files written with both opening-turn defaults",
     "type": "positive",
-    "description": "The user supplies only a bare FamilySearch person ID -- no objective, no experience level, no access. Per the unified opening-turn rule, init-project asks all three alongside the person ID request, but does not stop and wait -- it proceeds in the same pass, storing all three verbatim defaults (generic objective, intermediate, none) rather than inventing anything, and completes initialization (both project files written). The exact stored values are validator-checked, not left to judge interpretation.",
+    "description": "The user supplies only a bare FamilySearch person ID -- no objective, no experience level. Per the unified opening-turn rule, init-project asks both alongside the person ID request, but does not stop and wait -- it proceeds in the same pass, storing both verbatim defaults (generic objective, intermediate) rather than inventing anything, and completes initialization (both project files written). Site access is not asked at all, so `subscriptions` is left absent rather than defaulted to `[\"none\"]`. The exact stored values are validator-checked, not left to judge interpretation.",
     "tags": [
       "initialization",
       "objective-default",
