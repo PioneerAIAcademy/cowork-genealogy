@@ -19,6 +19,7 @@ afterEach(() => {
 // referenced nowhere.
 const apiStub: AppAPI = {
   openExternal: () => Promise.resolve(),
+  openFamilySearch: () => Promise.resolve(),
   openFile: () => Promise.resolve(null),
   getVersion: () => Promise.resolve('test'),
   submitFeedback: () => Promise.resolve({ ok: true }),

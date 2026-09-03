@@ -54,6 +54,14 @@ function TrendInner() {
     enabled: !!skill,
     queryFn: async () => {
       const res = await fetch(`/api/runlogs/trend?skill=${encodeURIComponent(skill)}`);
+      if (res.status === 422) {
+        // A corrupt .ann.json comes back as a structured 422 — surface the
+        // route's message, which names the offending file, instead of a bare
+        // status the annotator can do nothing with.
+        const body = await res.json().catch(() => ({}));
+        const msg: string = body.message ?? 'Annotation file is corrupt.';
+        throw new Error(msg);
+      }
       if (!res.ok) throw new Error(`trend → ${res.status}`);
       return res.json();
     },
