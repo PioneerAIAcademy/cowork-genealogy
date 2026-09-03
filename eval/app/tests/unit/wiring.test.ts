@@ -91,6 +91,88 @@ describe('the control is actually wired', () => {
     expect(found, 'Server Actions are POSTs to page routes, outside the matcher').toEqual([])
   })
 
+  it('no page route reaches the data layer server-side', () => {
+    // The matcher covers `/api` and nothing else, so a page route is reachable
+    // with any `Host` — `GET /results` with `Host: evil.example` returns 200.
+    // What keeps that safe is that no page renders project data on the server.
+    // Unlike the two walks above, nothing pinned it: a server component
+    // reading the corpus hands the run-log list and the operator's git email
+    // to a rebound `Host` with this suite green.
+    //
+    // Follows imports rather than reading each page in isolation. A direct
+    // `@/lib` import in a page is the easy case; the reachable one is a page
+    // rendering a server component that reads it, which no single-file check
+    // sees. Descent stops at a `'use client'` boundary — past it the code runs
+    // in the browser and cannot touch the filesystem.
+    const appRoot = path.resolve(__dirname, '../..')
+    const appDir = path.join(appRoot, 'app')
+    const SERVER_ONLY =
+      /from\s+['"](?:@\/lib\/fs|@\/lib\/identity|@\/lib\/paths|node:|fs(?:['"]|\/)|child_process)/
+
+    const resolve = (spec: string, fromFile: string): string | null => {
+      const base = spec.startsWith('@/')
+        ? path.join(appRoot, spec.slice(2))
+        : spec.startsWith('.')
+          ? path.resolve(path.dirname(fromFile), spec)
+          : null
+      if (base === null) return null
+      for (const c of [
+        base,
+        `${base}.ts`,
+        `${base}.tsx`,
+        `${base}.js`,
+        `${base}.jsx`,
+        path.join(base, 'index.ts'),
+        path.join(base, 'index.tsx'),
+      ]) {
+        if (fs.existsSync(c) && fs.statSync(c).isFile()) return c
+      }
+      return null
+    }
+
+    // Every module a page pulls in on the server, transitively.
+    const reaches = (entry: string): string | null => {
+      const seen = new Set<string>()
+      const stack = [entry]
+      while (stack.length > 0) {
+        const file = stack.pop() as string
+        if (seen.has(file)) continue
+        seen.add(file)
+        const src = fs.readFileSync(file, 'utf8')
+        if (file !== entry && /^\s*['"]use client['"]/m.test(src)) continue
+        if (SERVER_ONLY.test(src)) return path.relative(appRoot, file).split(path.sep).join('/')
+        for (const m of src.matchAll(/(?:from|import)\s*\(?\s*['"]([^'"]+)['"]/g)) {
+          const next = resolve(m[1], file)
+          if (next !== null) stack.push(next)
+        }
+      }
+      return null
+    }
+
+    const pages: string[] = []
+    const walk = (dir: string): void => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, e.name)
+        if (e.isDirectory()) walk(full)
+        else if (/^(page|layout|template|default)\.[jt]sx?$/.test(e.name)) pages.push(full)
+      }
+    }
+    walk(appDir)
+    expect(pages.length).toBeGreaterThan(0)
+
+    const offenders = pages
+      .filter((f) => !path.relative(appDir, f).split(path.sep).join('/').startsWith('api/'))
+      .filter((f) => !/^\s*['"]use client['"]/m.test(fs.readFileSync(f, 'utf8')))
+      .map((f) => ({ page: path.relative(appDir, f).split(path.sep).join('/'), via: reaches(f) }))
+      .filter(({ via }) => via !== null)
+      .map(({ page, via }) => `${page} -> ${via}`)
+
+    expect(
+      offenders,
+      'a page route reaches the data layer server-side; the /api-only matcher does not cover it',
+    ).toEqual([])
+  })
+
   it('dev and start still bind loopback only', () => {
     const pkg = JSON.parse(
       fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8')

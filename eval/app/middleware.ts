@@ -114,7 +114,7 @@ export const config = {
   // all, so nothing here covers them. Verified: POST /results with
   // Host: evil.example returns 200. That is safe only because every page is a
   // client component that fetches its data from /api, and no Server Action or
-  // page-route handler exists. Both are pinned by wiring.test.ts, not by this
-  // matcher.
+  // page-route handler exists. All three are pinned by wiring.test.ts, not by
+  // this matcher.
   matcher: '/api/:path*',
 }
