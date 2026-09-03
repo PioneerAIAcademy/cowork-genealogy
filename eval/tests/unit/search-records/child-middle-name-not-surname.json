@@ -37,5 +37,6 @@
     "IMPORTANT: It is acceptable for the skill to note that 'Mullen' as a middle name may offer a clue to maternal relatives (FAN club) and suggest a future plan item to search Mullen families in Dodge County. This is good genealogical reasoning and should NOT reduce any score.",
     "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. Only score 2 if those arguments are clearly wrong, or subjectId was omitted when the research subject is known. Do NOT expect a separate rank_search_matches call. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if a required tool had clearly wrong arguments (e.g., surname 'Mullen') or rank_search_matches was skipped in favor of per-result same_person / a separate source_attachments call.",
     "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
-  ]
+  ],
+  "judge_reads_files": true
 }

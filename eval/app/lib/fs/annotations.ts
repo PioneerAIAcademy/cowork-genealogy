@@ -66,7 +66,7 @@ export function validateAnnotation(value: unknown): AnnotationFile {
   return result.data as AnnotationFile;
 }
 
-function annPathForRunLog(runLogId: string): string {
+export function annPathForRunLog(runLogId: string): string {
   return path.join(runlogsUnitDir(), `${runLogId}.ann.json`);
 }
 
