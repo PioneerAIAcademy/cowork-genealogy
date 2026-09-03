@@ -185,8 +185,9 @@ The corrected_score is the *final* human verdict after senior PR review. If a ju
 > earlier `--diff-filter=A`-only check missed it). Two new blocking
 > rules join Rule 1: the latest full-skill run log must be active on
 > skill-side files (snapshot matches working tree) and its `.ann.json`
-> must have an entry for every dimension **of the sampled tests** — see
-> `eval/harness/harness/review_sample.py`; a run log with no
+> must have an entry for every dimension **of the sampled tests** — five
+> chosen picks plus every test that failed or scored a 1 or 2 on any dimension, so the count varies by run; see
+> `eval/harness/harness/review_sample.py`. A run log with no
 > `review_sample` (every one committed before sampling shipped) still
 > owes every dimension of every test. Plus one warn-only check on
 > `judge_prompt_hash` drift.

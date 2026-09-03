@@ -686,9 +686,15 @@ print('open but in a terminal column:',
       [(n,s) for n,s in onboard.items() if s in ('Done','Not planned') and n in issues])
 print('unlabeled:', [n for n,s in onboard.items() if s in cols and n in issues
                      and not issues[n]['labels']])
+# `senior` cards in Ready are unassigned by design — seniors self-serve from
+# their own pool — so they are counted separately, not reported as anomalies.
+def _senior(n): return any(l['name']=='senior' for l in issues[n]['labels'])
+_unass=[n for n,s in onboard.items() if s in cols[1:] and n in issues
+        and not issues[n]['assignees']]
 print('unassigned in Ready/In Progress/Review:',
-      [n for n,s in onboard.items() if s in cols[1:] and n in issues
-       and not issues[n]['assignees']])
+      [n for n in _unass if not (onboard[n]=='Ready' and _senior(n))])
+print('  of which senior-pool cards in Ready (expected, not a finding):',
+      [n for n in _unass if onboard[n]=='Ready' and _senior(n)])
 PY
 ```
 

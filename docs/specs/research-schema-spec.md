@@ -611,7 +611,21 @@ Array of hypothesis objects.
 
 FAN findings are regular assertions about the subject's associates. There is no separate `fan_evidence_ids` field — hypothesis support links to FAN assertions via `supporting_assertion_ids`.
 
-**Status transitions:** A hypothesis moves to `supported` when at least one line of direct evidence supports the claim and no unresolved contradictions remain. It moves to `ruled_out` when evidence affirmatively refutes the claim, exhaustive elimination logic excludes the candidate, or a chronological impossibility makes the hypothesis untenable. A hypothesis at `active` has supporting or contradicting evidence accumulating but has not yet crossed either threshold.
+**Status transitions:** A hypothesis moves to `supported` when every `conflicts[]` entry whose `competing_assertion_ids` overlap its `supporting_assertion_ids` or `contradicting_assertion_ids` is `resolved` or `moot`, and either at least one supporting assertion carries `evidence_type: "direct"` or at least two carry `evidence_type: "indirect"` and cite at least two distinct `source_id` values. It moves to `ruled_out` when evidence affirmatively refutes the claim, exhaustive elimination logic excludes the candidate, or a chronological impossibility makes the hypothesis untenable. A hypothesis at `active` has supporting or contradicting evidence accumulating but has not yet crossed either threshold.
+
+**Why the indirect route exists.** Until 2026-08-31 `supported` required direct
+evidence, so a proof argument resting entirely on correlated indirect
+evidence — the standard form for a relationship no record states — could
+never be promoted; observed live in the `stribling-father-1821` debug run,
+where the agent assembled a guardianship bond, the mother's remarriage, a
+prior marriage and four equal co-heir shares, reasoned about them correctly,
+and held the hypothesis at `active`. Merely
+documenting `proof-conclusion`'s assertions-only route was rejected as
+insufficient; relaxing the gate to "a correlated set that survived
+conflict-resolution" was rejected as unassertable. The rule above reads only
+schema-required fields, which is what makes it checkable. An indirect
+argument resting on one rich source still fails the two-source floor and
+concludes through the assertions route rather than by promotion.
 
 ### 5.10 `timelines`
 
