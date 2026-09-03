@@ -300,13 +300,20 @@ class SkillRunResult:
     # case, and the universal validator asserts that.
     #
     # Until issue #2022 this plane called the predicate NOWHERE, while the e2e
-    # orchestrator, Cowork and the hosted path all bound it. That is how
-    # ut_proof_conclusion_011 recorded a clean pass in 4 of 5 runs while the
-    # skill wrote `conflicts`, a section it does not own: the write cleared the
-    # blocker, after which the writer tool's own preconditions correctly saw no
-    # unresolved conflict and correctly allowed the tier. A recovered-after-deny
-    # run must not grade clean, or the gap goes invisible on the one plane that
-    # grades it.
+    # orchestrator, Cowork and the hosted path all bound it.
+    #
+    # What that absence cost is PREVENTION, not detection -- the earlier claim
+    # here, that runs graded clean while writing `conflicts`, is refuted by the
+    # run logs: the passing runs never wrote the section, and both runs that did
+    # failed on the existing universal `test_ownership_table` (@chesworthrm).
+    # What that check cannot do is stop the write landing. Once `conflicts` is
+    # cleared, `research_append`'s own `conflictedSourceInvariants` correctly
+    # sees nothing unresolved and correctly allows a tier, so the chain completes
+    # before any validator runs.
+    #
+    # It also reaches two cases the manifest check cannot: it keys on the calling
+    # AGENT rather than the skill's frontmatter name (test_universal.py:475), and
+    # it runs on negative tests, which test_universal.py:464 skips.
     blocked_owned_section_writes: list[dict[str, Any]] = field(default_factory=list)
     # One entry per Skill call whose input carried the skill name under no key
     # this harness reads, holding that input's actual keys. Non-empty means the

@@ -5,9 +5,11 @@ Why this file exists at all. The ownership predicate ships in
 `packages/engine/plugin/hooks/guard_project_files.py` and binds in Cowork, on
 the hosted path and in the e2e harness. The UNIT plane — the only one that
 grades — called it nowhere, and `docs/specs/guardrail-enforcement-spec.md` §4
-said so outright. That absence is how `ut_proof_conclusion_011` recorded a clean
-pass in 4 of 5 committed runs while `proof-conclusion` wrote `conflicts`, a
-section it does not own.
+said so outright. What that absence cost is PREVENTION rather than detection:
+the universal `test_ownership_table` already fails a run that wrote `conflicts`
+after the fact — both committed runs that did so failed on it — but it cannot
+stop the write landing, and once the conflict is cleared the writer tool's own
+preconditions correctly allow a tier.
 
 Two things are covered, and they fail for different reasons:
 
@@ -19,7 +21,8 @@ Two things are covered, and they fail for different reasons:
    for by name, because `owner_denied` reads the caller from the PreToolUse
    payload and a payload without `agent_type` resolves `caller == ""` — under
    which the routed arm denies EVERY `proof_summaries` write in
-   proof-conclusion's own suite (82 ops across 17 tests in the committed logs).
+   proof-conclusion's own suite (81 ops across 17 tests, measured 2026-09-03 --
+   the corpus rotates, so re-derive rather than quote).
    That is ADR-0011's "the identifier is not what you expect" trap, and a
    silently-never-firing shape guard is exactly how this plane came to have no
    arm.
@@ -114,7 +117,8 @@ def test_the_observed_payload_resolves_a_bare_caller():
 
 def test_the_owner_is_not_denied_its_own_section():
     """The polarity half. With `caller == ''` the routed arm denies every
-    `proof_summaries` write in this skill's own suite — 82 ops across 17 tests —
+    `proof_summaries` write in this skill's own suite — 81 ops across 17 tests as
+    of 2026-09-03 —
     which reads as a skill collapse rather than a guard. The owner must pass."""
     assert (
         owner_denied(
@@ -210,7 +214,8 @@ def test_pretool_hook_calls_the_predicate_before_the_call_counter():
     Nothing under `tests/` exercises `pretool_hook` — it is a closure inside
     `run_skill` — so deleting the deny arm leaves the whole harness suite green.
     That is precisely how this plane came to have no arm at all, and the same
-    shape as the billing guard in `test_agent_tool_binding.py`: the property is
+    shape as `test_orchestrator.py:1172`, which parses rather than indexes: the
+    property is
     pinned on the SOURCE because no test reaches the runtime path.
 
     Ordering is asserted, not just presence. A denied call never executes, so it

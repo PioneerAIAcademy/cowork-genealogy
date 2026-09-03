@@ -1011,12 +1011,18 @@ def test_no_out_of_lane_section_writes(blocked_owned_section_writes):
     This is the unit tier's half of a rule that already binds in Cowork, the
     hosted path and the e2e harness. Until issue #2022 this plane called the
     predicate NOWHERE, and `docs/specs/guardrail-enforcement-spec.md` said so
-    outright. That is how ut_proof_conclusion_011 graded a clean pass in 4 of 5
-    runs while proof-conclusion wrote `conflicts`, which it does not own: the
-    out-of-lane write cleared the conflict, after which `research_append`'s own
-    preconditions correctly saw nothing unresolved and correctly allowed a tier.
-    Neither writer-tool gate was bypassed — the ownership deny was simply absent
-    on the only plane that grades.
+    outright.
+
+    What that absence cost is PREVENTION, not detection. The universal
+    `test_ownership_table` already catches an out-of-lane write after the fact —
+    both committed runs that wrote `conflicts` failed on it. What it cannot do is
+    stop the write landing: once the conflict is cleared, `research_append`'s own
+    preconditions correctly see nothing unresolved and correctly allow a tier, so
+    the chain completes before any validator runs.
+
+    This check also reaches two cases the manifest one cannot: it keys on the
+    calling AGENT rather than the skill's frontmatter name, and it runs on
+    negative tests, which the manifest check skips.
 
     Deterministic, like `test_no_main_thread_subagent_only_calls` and
     `test_no_raw_writes_to_protected_files`, and failing for the same reason:
