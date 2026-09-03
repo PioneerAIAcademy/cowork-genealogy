@@ -28,6 +28,7 @@
     "record-read-urna-anders-1786-marriage"
   ],
   "execution": {
+    "max_turns": 35,
     "max_wall_clock_seconds": 600
   },
   "judge_context": [
@@ -39,5 +40,6 @@
     "This test isolates the surname half of the same collection-quirks.md 'vary both together' instruction that ut_search_records_022 isolates for the given-name half. Passing 022 does not imply passing this test -- a skill that only ever varies the given name will fail here even though it now passes 022. Do not treat a call that varies ONLY the given name as satisfying this test's ground truth, however many such calls are made.",
     "Log quality: the negative surname-unvaried attempts and the eventual surname-abbreviated attempt should each produce their own research_log_append entry, not be collapsed into one.",
     "record_read is stocked but OPTIONAL. The marriage record's full content is already in the search response's gedcomx, so the skill may report from the search hit or may read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
-  ]
+  ],
+  "judge_reads_files": true
 }

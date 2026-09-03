@@ -35,5 +35,6 @@
     "Do not penalize the absence of a denomination filter; assuming 'Roman Catholic' for a Slovak Lutheran parish would be a mistake, so a denomination-agnostic search is correct.",
     "Tool Arguments: score 3 if the primary searches keep givenName (Jan) with surname (Gallo) and the winning search targets Slovakia. Score 1 if it drops givenName to a surname-only search or never targets Slovakia.",
     "record_read is stocked but OPTIONAL. The father's name (Andrej Gallo) is already in the search response's gedcomx, so the skill may report parentage straight from the search hit, or may read the full record first — reading the record before reporting on parentage is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
-  ]
+  ],
+  "judge_reads_files": true
 }
