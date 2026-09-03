@@ -35,5 +35,6 @@
     "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. Only score 2 if those arguments are clearly wrong, or subjectId was omitted when the research subject is known. Do NOT expect a separate rank_search_matches call. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Per-result same_person and a separate source_attachments call are NOT expected (rank_search_matches folds both in). Score Result triage 3 if the skill identifies the top-ranked record as a strong match and notes the key supporting attributes — tool calls beyond record_search and rank_search_matches are not required.",
     "Completeness: Score 3 if the search was executed, the staged results were ranked inline by record_search, the sidecar was written, and the log entry was appended. All required outputs (sidecar + log entry) are complete.",
     "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
-  ]
+  ],
+  "judge_reads_files": true
 }
