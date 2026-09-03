@@ -361,7 +361,8 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
 # staged, per tool. Both are exported from the compiled build so this harness
 # runs the production function rather than a Python restatement of it: a mock
 # that hands the agent a field production strips grades tool-usage and triage
-# against a shape production never sends (#1826, #2009). `external_links_search`
+# against a shape production never sends (#1826, #2009 — both now covered by
+# the compactors below, not by a Python mirror). `external_links_search`
 # stages but compacts nothing, so it is absent here by design.
 _STAGED_COMPACTORS: dict[str, str] = {
     "record_search": "compactStagedRecordSearch",
@@ -602,29 +603,6 @@ def create_mock_server(
                 _unlogged_staged = _unlogged_staged_handles(_workspace)
             else:
                 _unlogged_staged = []
-
-            # Mirrors fulltext_search.ts's own strip: once staged, the inline
-            # textDocument is gone from the agent's view — the fixture's
-            # canned response still has it (it represents pre-strip upstream
-            # data), so this must run every time staging succeeded here, not
-            # be baked into the fixture file (which can't express "only when
-            # this call happened to stage" — the same fixture also serves
-            # un-staged call shapes). Scoped to fulltext_search only;
-            # record_search's equivalent staged slim (record-search.ts:1100-1133 —
-            # gedcomx, collectionUrl, collectionTitle hoist, treeMatches, events)
-            # is a separate gap, not fixed here (issue #2009).
-            if (
-                _name == "fulltext_search"
-                and "error" not in response
-                and response.get("staged")
-            ):
-                response = {
-                    **response,
-                    "results": [
-                        {k: v for k, v in r.items() if k != "textDocument"}
-                        for r in response["results"]
-                    ],
-                }
 
             # Fold in the ranking the real record_search performs when the
             # caller names a subject. Matched against the test's own
