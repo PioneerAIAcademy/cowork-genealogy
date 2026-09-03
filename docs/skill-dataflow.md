@@ -258,11 +258,11 @@ touch either side.
    `research_append`. The manifest is right — the section holds a pointer record and the
    file holds the verdict. — issue #1335, where this one needs no ruling
 4. **`proof-conclusion` credited its proof review to a mentor call it does not make.**
-   Its `description` claimed the review "invokes the gps-mentor critique", and
-   `gps-mentor`'s own description agreed, while the only file that delegates to the
-   mentor is the orchestrator. The review itself is real: the `proof-conclusion` agent
-   performs it in review mode and two tests grade it, so only the attribution was
-   wrong. Both descriptions now name no delegation. — issue #1861
+   — **RESOLVED in PR #2162 (closing #1861):** its `description` claimed the review
+   "invokes the gps-mentor critique", and `gps-mentor`'s own description agreed, while
+   the only file that delegates to the mentor is the orchestrator. The review itself is
+   real: the `proof-conclusion` agent performs it in review mode and two tests grade it,
+   so only the attribution was wrong. Both descriptions now name no delegation.
 5. **Who closes a plan item.** `search-records` refuses to set `completed`, deferring to
    `record-extraction`. `record-extraction` never mentions plan items and holds no
    `research_append`. `search-external-sites` sets `completed` itself. The manifest lists
