@@ -84,12 +84,14 @@ const OCR_TIMEOUT_MS = 180_000;
 // Explicit output-token budget. The provider's own default is per-model and can
 // change under us with no notice; setting it makes the cap OURS and the
 // truncation case reproducible. 16000 is generous — the §4 spike ran the whole
-// T13 oversize corpus at 16000 and dense pages (incl. a 1880 census sheet, per
-// dev/probe-ocr-finish-reason.ts) finished on their own (finish_reason "stop").
-// Those runs were on the prior Qwen3-VL default; the current default is
-// google/gemini-3.7-flash (config.ts), whose own cap is higher, so 16000 stays a
-// safe explicit budget — and finish_reason detection is OpenRouter-level, so it
-// holds across models. A cap hit now surfaces as `truncated` not silently.
+// T13 oversize corpus at 16000 and dense pages (incl. a 1880 census sheet)
+// finished on their own (finish_reason "stop"). CAVEAT: that spike and the
+// dev/probe-ocr-finish-reason.ts run were on the prior Qwen3-VL default; the
+// current default is google/gemini-3.7-flash (config.ts) and 16000 has NOT been
+// re-measured against it — re-run the probe/corpus on Gemini before treating
+// this bound as safe for it. A cap hit surfaces as `truncated` regardless (the
+// detection reads native_finish_reason too), so an unexpected cap is visible,
+// not silent.
 const OCR_MAX_TOKENS = 16000;
 
 // One retry, transport failures only. Measured over the committed e2e corpus,
@@ -302,13 +304,20 @@ export async function imageTranscribeTool(
     );
   }
 
-  // Output-token-cap truncation: OpenRouter reports finish_reason "length" (vs
-  // "stop" for a complete read; probe: dev/probe-ocr-finish-reason.ts). A capped
-  // read is non-empty, so it would otherwise pass as an ordinary success. The
-  // transcription stays verbatim — the signal rides sibling fields (spec §6.2).
-  // Out of scope: a model that stops early on its own ("stop", page unfinished)
-  // and a transport cut (already thrown by fetchWithTimeout) — see #1974.
-  const truncated = data.choices?.[0]?.finish_reason === "length";
+  // Output-token-cap truncation: OpenRouter maps a cap to finish_reason "length"
+  // (vs "stop" for a complete read; probe: dev/probe-ocr-finish-reason.ts). A
+  // capped read is non-empty, so it would otherwise pass as an ordinary success.
+  // The transcription stays verbatim — the signal rides sibling fields (spec
+  // §6.2). We also check `native_finish_reason` because not every provider
+  // normalizes cleanly onto the top-level field (Gemini emits "MAX_TOKENS"), so
+  // a cap that reaches us only under the native field is still caught. Out of
+  // scope: a model that stops early on its own ("stop", page unfinished) and a
+  // transport cut (already thrown by fetchWithTimeout) — see #1974.
+  const choice = data.choices?.[0];
+  const truncated =
+    choice?.finish_reason === "length" ||
+    choice?.native_finish_reason === "length" ||
+    choice?.native_finish_reason === "MAX_TOKENS";
   const truncationNotice = truncated
     ? "This transcription is INCOMPLETE — the OCR hit its output-token limit and " +
       "stopped partway down the page. The transcription above is what was read; the " +

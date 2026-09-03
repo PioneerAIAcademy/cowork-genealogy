@@ -42,6 +42,30 @@ function mockOpenRouterOk(content: string, finishReason = "stop") {
   });
 }
 
+// A provider (e.g. Gemini) that does NOT normalize its cap onto the top-level
+// finish_reason — the cap reaches us only under native_finish_reason.
+function mockOpenRouterNative(
+  content: string,
+  finishReason: string,
+  nativeFinishReason: string
+) {
+  mockFetch.mockResolvedValueOnce({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    json: async () => ({
+      choices: [
+        {
+          message: { content },
+          finish_reason: finishReason,
+          native_finish_reason: nativeFinishReason,
+        },
+      ],
+    }),
+    text: async () => "",
+  });
+}
+
 function mockOpenRouterStatus(status: number, body = "") {
   mockFetch.mockResolvedValueOnce({
     ok: status >= 200 && status < 300,
@@ -228,6 +252,27 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(init.body as string);
     expect(body.max_tokens).toBe(16000);
+  });
+
+  it("catches a cap that a provider surfaces only under native_finish_reason (Gemini MAX_TOKENS)", async () => {
+    // Top-level finish_reason is "stop" (not normalized); the cap shows up as
+    // the provider's native "MAX_TOKENS". Detection must still flag it.
+    mockOpenRouterNative("Row 1: Anna\nRow 2: cut off", "stop", "MAX_TOKENS");
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(result.truncated).toBe(true);
+    expect(result.truncationNotice).toMatch(/INCOMPLETE/i);
+  });
+
+  it("catches a native_finish_reason=length even when top-level is absent/stop", async () => {
+    mockOpenRouterNative("Row 1: Anna\nRow 2: cut off", "stop", "length");
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(result.truncated).toBe(true);
+  });
+
+  it("does not flag when neither field marks a cap, even with a native stop reason present", async () => {
+    mockOpenRouterNative("Row 1: Anna\nRow 2: Schreck family", "stop", "STOP");
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(result.truncated).toBeUndefined();
   });
 });
 

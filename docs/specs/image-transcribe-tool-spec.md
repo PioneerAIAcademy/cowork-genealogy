@@ -398,7 +398,7 @@ Returns **text only**:
   transcription: string      // faithful full-page OCR (the primary payload) — never doctored
   truncated?: true           // present iff the OCR hit its output-token cap (finish_reason "length"); transcription is PARTIAL (§6.2)
   truncationNotice?: string  // tool-voiced plain sentence companion to `truncated`; present iff `truncated`
-  found?: "FOUND" | "NOT FOUND"  // present iff lookingFor was set AND the read was not truncated (§6.2)
+  found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2), AND the model emitted the marker on the final line
   imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"
   browseBudget?: {           // advisory, present only from the 21st distinct image in one group/project (§5.8)
     imageGroup: string       // the image-group prefix, e.g. "004261111"
@@ -678,15 +678,20 @@ Parse `choices[0].message.content` → `transcription`. Derive `found` by
 looking for the FOUND/NOT FOUND marker the prompt asks the model to emit.
 Guard against empty content (→ error per §5.6).
 
-**Output-cap truncation.** Read `choices[0].finish_reason`. OpenRouter
-is OpenAI-compatible and returns it per choice (`"length"` on an output-token
-cap, `"stop"` on a complete read; evidence in `dev/probe-ocr-finish-reason.ts`).
-A capped read is **non-empty**, so without this it passes as an ordinary
-success and the caller cannot tell a half-read census page from a whole one.
+**Output-cap truncation.** Read `choices[0].finish_reason` **and**
+`choices[0].native_finish_reason`. OpenRouter is OpenAI-compatible and returns
+them per choice (`"length"` on an output-token cap, `"stop"` on a complete read;
+evidence in `dev/probe-ocr-finish-reason.ts`). A capped read is **non-empty**, so
+without this it passes as an ordinary success and the caller cannot tell a
+half-read census page from a whole one.
 
-- `finish_reason === "length"` → set `truncated: true` and a tool-voiced
+- Truncated when `finish_reason === "length"` **or** `native_finish_reason` is
+  `"length"` / `"MAX_TOKENS"` → set `truncated: true` and a tool-voiced
   `truncationNotice` (§5.5). This is a **partial success, not an error** —
-  the tool still returns the lines it got; it does not throw.
+  the tool still returns the lines it got; it does not throw. The native field
+  is read as a fallback because not every provider normalizes its cap onto the
+  top-level `finish_reason` (Gemini emits `"MAX_TOKENS"`), and the probe evidence
+  was recorded on the prior Qwen3-VL default, not the current Gemini one.
 - The `transcription` stays **verbatim** — the signal rides the sibling
   fields, never spliced into the OCR text (that would re-create the
   prose/OCR blend a truncation notice must never introduce; the
