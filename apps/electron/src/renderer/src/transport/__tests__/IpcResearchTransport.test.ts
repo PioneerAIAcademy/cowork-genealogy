@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { assertTransportContract } from '@genealogy/viewer-ui/contract'
 import { IpcResearchTransport, unwrapIpcError } from '../IpcResearchTransport'
+import type { AppAPI } from '../../../../preload/index.d'
 
 let folderNoticeCb: ((m: string) => void) | null = null
 
@@ -8,7 +9,12 @@ let folderNoticeCb: ((m: string) => void) | null = null
 // does (shared harness from @genealogy/viewer-ui/contract).
 function installApiStub(): void {
   folderNoticeCb = null
-  ;(window as unknown as { api: unknown }).api = {
+  // Annotated, NOT cast. The previous `as unknown` threw the type away, so a
+  // channel missing from this stub was invisible to typecheck — it was missing
+  // both `openFamilySearch` (added here) and `readImage` (drifted earlier and
+  // nobody saw). Typecheck is the only net that catches a stub falling behind
+  // the real API, and a cast blinds it.
+  const stub: AppAPI = {
     getState: async () => ({ folderPath: null, research: null, gedcomx: null, notice: null }),
     onResearchUpdated: () => {},
     onGedcomxUpdated: () => {},
@@ -25,8 +31,14 @@ function installApiStub(): void {
     listProjectFiles: async () => [],
     getSessionLog: async () => ({ entries: [], sizeBytes: 0 }),
     openFile: async () => null,
-    getVersion: async () => 'test'
+    getVersion: async () => 'test',
+    // The channel this PR adds. Present because the annotation above forces it.
+    openFamilySearch: async () => {},
+    // Pre-existing drift the cast had been hiding: the real API has had this
+    // since source-image reading landed, and the stub never gained it.
+    readImage: async () => null
   }
+  ;(window as unknown as { api: unknown }).api = stub
 }
 
 describe('IpcResearchTransport', () => {
@@ -86,5 +98,26 @@ describe('IpcResearchTransport', () => {
 
   it('leaves a message that carries no IPC wrapper untouched', () => {
     expect(unwrapIpcError(new Error('plain failure'))).toBe('plain failure')
+  })
+})
+
+describe('IpcResearchTransport — constrained FamilySearch channel', () => {
+  // The MIRROR of the gap review found on the web transport. `openFamilySearch`
+  // appeared in this file only as a stub property, so nothing asserted the
+  // method forwards to the constrained channel — routing it back to
+  // `open-external` would have left every test green on this platform while the
+  // web side was covered.
+  it('forwards to the constrained channel, not the generic one', () => {
+    installApiStub()
+    const fs = vi.fn()
+    const generic = vi.fn()
+    const api = (window as unknown as { api: Record<string, unknown> }).api
+    api.openFamilySearch = fs
+    api.openExternal = generic
+
+    new IpcResearchTransport().openFamilySearch('1:1:QPRC-WPBZ')
+
+    expect(fs).toHaveBeenCalledWith('1:1:QPRC-WPBZ')
+    expect(generic).not.toHaveBeenCalled()
   })
 })

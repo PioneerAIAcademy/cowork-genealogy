@@ -36,6 +36,7 @@
     "FOCUS GRADING NOTE for the judge: this test verifies the NICKNAME-FALLBACK behavior when the record-side carries the nickname. The general search-records hygiene dimension (Log quality) is covered by the existing positive tests and should NOT drag this test below pass purely on description-vs-actual-write or shape concerns — score those dimensions `pass` if the skill correctly executed the two queries, recovered the record via the nickname retry, and triaged it through the inline ranking. The differentiator for THIS test is the retry-on-empty-formal-search behavior driven by the tree's Nickname alias",
     "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600
   }
