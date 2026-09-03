@@ -38,5 +38,6 @@
     "Tool Arguments: score 3 if record_search was called with surname and givenName plus projectPath. subjectId is optional here and its absence must NOT be penalized — Mary (I3) is a name-only stub with no dated or placed facts, so the host-side ranker has nothing to score her against; the skill may reasonably omit it.",
     "IMPORTANT — How file writes work: research_log_append writes the log entry AND the results/ sidecar host-side from the staged handle; the skill does not hand-write either. Sidecars are newly created files, so they never appear in the file-change diff — their absence from it is not evidence of anything.",
     "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
-  ]
+  ],
+  "judge_reads_files": true
 }
