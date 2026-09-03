@@ -734,15 +734,28 @@ function renderFeedbackMarkdown(args: {
       "See `_feedback/session-log.jsonl` for the Claude Code conversation transcript (tool calls, results, and the agent's reasoning)."
     )
   } else if (sessionLogStatus === 'included-grouped-only') {
-    // The most recent session's transcript filtered to nothing, so the file the
-    // 'included' branch names is not in this bundle. Naming it anyway is the
-    // #1481 confusion by another door.
+    // The active session's parent is not in the bundle, so the file the
+    // 'included' branch names is absent. Naming it anyway is the #1481
+    // confusion by another door.
+    //
+    // WHICH of the two causes applies is knowable here, so say it rather than
+    // offering both and pointing at a list. A parent lost to the budget records
+    // a drop (`readSessionLog`); a parent that filtered to nothing records none
+    // — so in the commoner branch the "Skipped files" section is not rendered at
+    // all (`skipped.length > 0` below), and sending the triager to it is the
+    // same missing-file hunt this message exists to prevent.
+    // Mirrors `_feedback_markdown` in apps/server/app/feedback.py.
     sections.push(
-      "There is no `_feedback/session-log.jsonl` in this bundle: the most recent session's " +
-        'transcript either had no conversation entries for this project or did not fit the ' +
-        'transcript size budget — the "Skipped files" list below says which. The transcripts ' +
-        'that did ship are grouped by session under `_feedback/sessions/<session-id>/`, each ' +
-        'with its own `session-log.jsonl`.'
+      skipped.some((s) => s.startsWith(PARENT_LOG_ENTRY))
+        ? 'There is no `_feedback/session-log.jsonl` in this bundle: the most recent ' +
+            "session's transcript did not fit the transcript size budget, and is named in " +
+            'the "Skipped files" list below. The transcripts that did ship are grouped by ' +
+            'session under `_feedback/sessions/<session-id>/`, each with its own ' +
+            '`session-log.jsonl`.'
+        : 'There is no `_feedback/session-log.jsonl` in this bundle: the most recent ' +
+            'session had no conversation entries for this project. The transcripts that ' +
+            'did ship are grouped by session under `_feedback/sessions/<session-id>/`, ' +
+            'each with its own `session-log.jsonl`.'
     )
   } else if (sessionLogStatus === 'not-requested') {
     sections.push(

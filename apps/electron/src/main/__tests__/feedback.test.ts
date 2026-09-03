@@ -696,6 +696,15 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
       expect(md).toContain('`_feedback/sessions/<session-id>/`')
       // Still a log-bearing bundle: the "we found nothing" wording would be wrong.
       expect(md).not.toContain('requested but none was found')
+
+      // This cause records NO drop, so "## Skipped files" is not rendered
+      // (`skipped.length > 0` guards it). Pointing the triager at it to learn
+      // which cause applied is the same missing-file hunt this branch prevents,
+      // so the message must state the cause outright. Both halves asserted: the
+      // failure mode is a message and a section disagreeing.
+      expect(md).toContain('had no conversation entries for this project')
+      expect(md).not.toContain('Skipped files')
+      expect(md).not.toContain('transcript size budget')
     })
   })
 

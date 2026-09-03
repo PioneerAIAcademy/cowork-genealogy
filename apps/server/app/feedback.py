@@ -513,7 +513,13 @@ def _feedback_markdown(
     dropped: list[str] | None = None,
     redacted_living: int = 0,
     has_subagents: bool = False,
-    has_parent_log: bool = True,
+    *,
+    # Keyword-only and REQUIRED on purpose. A default here would have to be
+    # `True`, which is the pre-fix behaviour — so a future caller that forgot it
+    # would silently reintroduce the bug this argument exists to fix, and the
+    # bug is invisible (a sentence naming a file that is not there). The
+    # neighbouring flags can default safely; this one cannot.
+    has_parent_log: bool,
 ) -> str:
     parts = [
         "# Feedback",
@@ -553,14 +559,30 @@ def _feedback_markdown(
             # nothing while another session's group ships. Naming the file
             # anyway sends the triager hunting for a missing file, which is the
             # confusion this section exists to prevent (#1481).
-            parts += [
-                "There is no `_feedback/session-log.jsonl` in this bundle: the most "
-                "recent session's transcript either had no conversation entries for "
-                "this project or did not fit the transcript size budget — the \"Files "
-                "not included\" list below says which. The transcripts that did ship "
-                "are grouped by session under `_feedback/sessions/<session-id>/`, each "
-                "with its own `session-log.jsonl`.",
-            ]
+            # WHICH of the two causes applies is knowable here, so say it
+            # rather than offering both and pointing at a list. A parent lost to
+            # the budget records a drop (`_session_log`); a parent that filtered
+            # to nothing records none — so in the commoner branch the "Files not
+            # included" section is not rendered at all (`if dropped:` below), and
+            # sending the triager to it is the same missing-file hunt this
+            # message exists to prevent.
+            if any(d.startswith(PARENT_LOG_ENTRY) for d in (dropped or [])):
+                parts += [
+                    "There is no `_feedback/session-log.jsonl` in this bundle: the "
+                    "most recent session's transcript did not fit the transcript "
+                    "size budget, and is named in the \"Files not included\" list "
+                    "below. The transcripts that did ship are grouped by session "
+                    "under `_feedback/sessions/<session-id>/`, each with its own "
+                    "`session-log.jsonl`.",
+                ]
+            else:
+                parts += [
+                    "There is no `_feedback/session-log.jsonl` in this bundle: the "
+                    "most recent session had no conversation entries for this "
+                    "project. The transcripts that did ship are grouped by session "
+                    "under `_feedback/sessions/<session-id>/`, each with its own "
+                    "`session-log.jsonl`.",
+                ]
         # Only when the bundle actually carries one: describing a directory that
         # is not there sends a triager hunting for a missing file, which is the
         # confusion the session-log status line exists to prevent (#1481).
@@ -680,7 +702,7 @@ async def submit_feedback(
                 redacted_living,
                 any(rel.startswith("_feedback/") and "/subagents/" in rel
                     for rel, _data in session_log),
-                any(rel == PARENT_LOG_ENTRY for rel, _data in session_log),
+                has_parent_log=any(rel == PARENT_LOG_ENTRY for rel, _data in session_log),
             ),
         )
         zf.writestr("_feedback/feedback.json", json.dumps(feedback_json, indent=2) + "\n")

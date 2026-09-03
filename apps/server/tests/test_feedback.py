@@ -745,6 +745,7 @@ def _markdown_for(user_prompt: str, agent_did: str, email: str = "t@example.com"
         False,
         "web 2026-08-26 (abc123)",
         True,
+        has_parent_log=True,
     )
 
 
@@ -770,7 +771,9 @@ def test_supplied_prompt_and_did_are_untouched():
     assert "## What the agent did\n\nIt searched 1860 and stopped." in md
 
 
-def _session_log_markdown(*, has_parent_log: bool, has_subagents: bool = True) -> str:
+def _session_log_markdown(
+    *, has_parent_log: bool, has_subagents: bool = True, dropped: list[str] | None = None
+) -> str:
     return fb._feedback_markdown(
         {"email": "t@example.com", "userPrompt": "q", "agentDid": "d",
          "agentShouldHave": "", "correctAnswer": "", "notes": ""},
@@ -779,10 +782,10 @@ def _session_log_markdown(*, has_parent_log: bool, has_subagents: bool = True) -
         True,  # the SET is non-empty
         "web 2026-09-01 (abc123)",
         False,
-        None,
+        dropped,
         0,
         has_subagents,
-        has_parent_log,
+        has_parent_log=has_parent_log,
     )
 
 
@@ -803,6 +806,30 @@ def test_a_grouped_only_bundle_is_not_pointed_at_a_file_it_does_not_contain():
     assert "`_feedback/sessions/<session-id>/`" in md
     # Still a log-bearing bundle: the subagent pointer must survive the branch.
     assert "`_feedback/subagents/`" in md
+
+
+def test_a_grouped_only_bundle_names_its_cause_instead_of_an_unrendered_list():
+    """The commoner grouped-only cause records NO drop, so the "Files not
+    included" section is not rendered — `if dropped:` guards it. A message that
+    sends the triager there to learn which cause applied is the same missing-file
+    hunt the branch exists to prevent, so the message must state the cause."""
+    md = _session_log_markdown(has_parent_log=False, dropped=None)
+    assert "had no conversation entries for this project" in md
+    assert "Files not included" not in md, "pointed at a section that is not rendered"
+    assert "transcript size budget" not in md, "named a cause that did not apply"
+
+
+def test_a_parent_lost_to_the_budget_says_so_and_the_list_it_names_exists():
+    """The other grouped-only cause DOES record a drop, so naming the list is
+    correct here — and the list really is rendered. Both halves asserted, because
+    the failure mode is a message and a section disagreeing."""
+    md = _session_log_markdown(
+        has_parent_log=False,
+        dropped=[f"{fb.PARENT_LOG_ENTRY} (over the transcript size budget)"],
+    )
+    assert "did not fit the transcript size budget" in md
+    assert "## Files not included" in md, "named a list that is not rendered"
+    assert "had no conversation entries" not in md, "named a cause that did not apply"
 
 
 def test_rejected_upload_surfaces_as_502(monkeypatch):
