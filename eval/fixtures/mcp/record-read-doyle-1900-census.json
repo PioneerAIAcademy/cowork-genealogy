@@ -1,0 +1,49 @@
+{
+  "tool": "record_read",
+  "description": "FamilySearch record_read for the 1900 U.S. Census, Carbon County, Pennsylvania, Thomas Doyle household. Used by the record-extraction classification-refinement test (issue #2021, F12) in case the extractor re-reads the original record while reclassifying an already-persisted assertion.",
+  "args": {
+    "recordId": "~M6QK-HRD"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "M6QK-HRD",
+        "ark": "ark:/61903/1:1:M6QK-HRD",
+        "gender": "Male",
+        "names": [
+          { "id": "N1", "type": "BirthName", "given": "Thomas", "surname": "Doyle" }
+        ],
+        "facts": [
+          { "type": "Residence", "date": "1900", "place": "Carbon County, Pennsylvania, United States" },
+          { "type": "BirthPlace", "place": "Ireland" }
+        ],
+        "sources": [{ "id": "S1", "title": "1900 United States Federal Census" }]
+      },
+      {
+        "id": "M6QK-HRF",
+        "ark": "ark:/61903/1:1:M6QK-HRF",
+        "gender": "Female",
+        "names": [
+          { "id": "N2", "type": "BirthName", "given": "Margaret", "surname": "Doyle" }
+        ],
+        "facts": [
+          { "type": "Residence", "date": "1900", "place": "Carbon County, Pennsylvania, United States" }
+        ],
+        "sources": [{ "id": "S1", "title": "1900 United States Federal Census" }]
+      }
+    ],
+    "relationships": [
+      { "id": "R1", "type": "Couple", "person1": "M6QK-HRD", "person2": "M6QK-HRF" }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "1900 United States Federal Census",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M6QK-HRD",
+        "source_classification": "original",
+        "note": "Population schedule, Carbon County, Pennsylvania. No column names a specific informant; census convention assumes whoever answered the door."
+      }
+    ],
+    "places": []
+  }
+}
