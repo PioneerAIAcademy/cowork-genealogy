@@ -45,6 +45,7 @@
     "wikipedia-search-any"
   ],
   "judge_context": [
-    "Must mention the Land Run of 1889. Must highlight homestead applications, land allotments, and territorial court records. Must not suggest statewide vital registration for this period."
+    "Must mention the Land Run of 1889. Must highlight homestead applications, land allotments, and territorial court records. Must not suggest statewide vital registration for this period.",
+    "collection_read is served by a single generic mock fixture (collection-read-by-id) that always returns the same synthetic Pennsylvania Schuylkill County Church Records collection, regardless of the id argument passed — there is no Oklahoma-specific collection_read fixture. A collection_read call with a correct, plausible Oklahoma collection id (e.g. matching a collections_search/expected_args predicate) that gets back this unrelated Pennsylvania content is the fixture's known limitation, not a Tool Arguments error — do not penalize Tool Arguments for the mismatch between the requested id and the returned collection."
   ]
 }
