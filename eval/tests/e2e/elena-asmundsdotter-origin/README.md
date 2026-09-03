@@ -72,25 +72,42 @@ reports `recordSearchablePercent: 0` and `fulltextSearchable: false`, so nothing
 the tax lists or the catechism lists is name-indexed. But most findings also rest on
 a **parish register**, and those are a different matter — grade them separately:
 
-- **f1 — reachable.** Elena's own 1745 Barsebäck death entry, recorded *"barnfödd i
-  Henckelstorp"*, plus the gazetteer placing Henckelstorp in Västra Karaby.
-- **f2 — the father's identity is reachable.** The 11 June 1712 Västra Karaby
-  christening of Boel names *"Asmun Tors(son's) dotter Elena from Henckelstorp"*.
-  Only the household *placement* across 1680–1709 depends on the browse-only tax and
-  catechism lists.
-- **f3 — partly reachable, and the split matters.** Pernilla's 1719 death entry
-  ("widow of Asmun Torson") reaches her as Asmund's wife. But the 1696 catechism list
-  is, in this fixture's own words, the *only record listing her maiden name* — so
-  **Jönsdotter**, which is what f3 actually asserts, is not reachable. A run that
-  recovers "Pernilla, wife of Asmund" has got as far as the tools allow.
-- **f4 — reachable.** The 29 December 1712 Västra Karaby marriage entry.
+- **f1 — reachable, on image `004514823_00347`.** Elena's own 1745 Barsebäck death entry,
+  in the `Döde` column of the "Anno 1745" opening: *"d. 23. april: dödde Jöns Jönsons
+  hustru Elena Asmunds dotter, född i Henckelstorp, och begrofs d. 1. Maj, ungefär 64
+  åhr."* Two corrections to the ground truth as this fixture states it, both read off the
+  page 2026-08-25: the register says **"född i Henckelstorp"**, not *"barnfödd i
+  Henckelstorp"*, and Barsebäck spells the farm **Henckelstorp** where Västra Karaby's own
+  register spells it *Henckestorp*. The gazetteer step placing Henckelstorp in Västra
+  Karaby is still needed on top of this entry.
+- **f2 — the father's identity is reachable, on image `004523018_00033`.** The
+  11 June 1712 Västra Karaby christening of Boel reads *"blef döpat ett oäckta pigebarn,
+  kallat Boel, hwars Moder är Asmund Tors dotter af Henckestorp"*, and names her later in
+  the same entry as *"Qwinfolket Elena Asmunds dotter"*. Only the household *placement*
+  across 1680–1709 depends on the browse-only tax and catechism lists — and note that the
+  register itself already places an Åsmund Torsson in the parish from its opening year
+  (*"Åsmund Torsons son Lars benembd döpt"*, 1688, image `004523018_00010`).
+- **f3 — partly reachable, and the split matters.** Pernilla's 1719 burial entry is on
+  image `004523018_00076`: *"Dom: Cantate … d. 24 Aprilis kastades mull på Pernilla Asmun
+  Tors som dödd d. 18 hujus … 68 åhr"*. Read directly (2026-08-25) it carries **no maiden
+  name** — confirming that **Jönsdotter**, which is what f3 actually asserts, is not
+  reachable, while "Pernilla, wife of Asmund" is. A run that recovers the latter has got
+  as far as the tools allow.
+- **f4 — reachable, on image `004523018_00053`.** The 29 December 1712 Västra Karaby
+  marriage entry, last of the 1712 section: *"December: Fer: 4:ta Nativ: copulerades
+  drängen Jöns Jönson af Henckestorp och Qwindfolcket Elna Asmuns dotter."*
 - **f5 — not reachable.** Its only source is the 1658–1663 tax lists, and the
   earliest Harjager list on FamilySearch is 1670.
+- **f6 — reachable, on image `004523018_00072`.** *"In nomine Jesu. De som döö och jordas
+  uti wästra Carleby församling pro 1711. Januarius. Dom: 1 p. Epiph: kastades mull på
+  Asmun Torson i Henckestorp, som dödde emellan d. 4 och 5 hujus … 67 åhr."*
 
-So treat f1, f4, and f2's father-identity as reachable; treat the tax/catechism
-household placement, f3's maiden surname, and f5 as beyond the agent's tool reach. A
-low score is still an expected signal about tool reach rather than agent failure —
-but grade it per finding, against what is *searchable*, not what is merely *held*.
+So treat f1, f4, f6, f2's father-identity and f3's "wife of Asmund" half as reachable;
+treat the tax/catechism household placement, f3's maiden surname, and f5 as beyond the
+agent's tool reach. A low score is still an expected signal about tool reach rather than
+agent failure — but grade it per finding, against what is *searchable*, not what is merely
+*held*, and read the 2026-08-25 reading-layer note below before grading any of the
+register-based findings.
 
 **Unexamined routes (2026-08-19).** Neither has been opened, so neither appears in
 `expected-findings.json`. Probate `007118856` (1688–1816, 439 + 113 images) covers
@@ -100,36 +117,15 @@ premise. Häradsrätt `008355612` (1710–1712) covers both that death and Elena
 December 1712 marriage. Anyone who reads either volume should update f2's
 supporting sources and revisit the difficulty rating.
 
-**Register start date — noted, not investigated (2026-08-19).** Parish group
-`004523021` reports "Church records | 1662-1850 | Vestra Karaby", while this
-fixture's premise is that the registers begin in 1688 and Elena (b. c. 1681)
-predates them. Deliberately out of scope for #1596, which concerns the
-availability and discoverability of the tax and catechism records.
-
-**Read this before acting on it: almost certainly a catalogue-level span, not a
-register.** `004523021` is returned four times, with different image counts (221,
-143, 198, 25) and the *identical* three coverages each time — coverage repeated
-verbatim across separate film items is description attached at the catalogue/DGS
-level, not per volume, and 188 years is the span of a holding rather than of a
-register. The same group's `1687-1729` coverage is far more likely to be the real
-early register, and it agrees with the documented 1688 start to within a year.
-The case study this fixture was built from is itself titled "Beyond Parish
-Registers", which is only a case study worth writing if the registers genuinely
-do not reach 1681.
-
-**But if it is ever shown to be real, the consequence is larger than this
-caveat.** Elena was born about 1681, so a register actually running from 1662
-would likely contain *her own baptism* — direct evidence for f1, and for f2 and
-f3 if the entry names her parents. That would move this fixture out of the
-indirect-evidence genre altogether and require rewriting its premise, its
-difficulty rating and its findings, not just correcting a note.
-
-Cheapest order to settle it, if someone takes it on: read what the case study says
-about the register start date and where it got it; then check SVAR/ArkivDigital's
-per-series holdings list for Västra Karaby, which publishes start dates. Open
-images only after both. Note also that *adding* a finding would leave the
-committed `run-2026-08-13_01-40-40` annotation without a label for it — amending
-the existing f1–f6 is safe, adding an f7 is not.
+**Register start date — settled by reading the volume, 2026-08-25.** The register
+begins in **1688**, so the fixture's premise holds and Elena (b. c. 1681) predates it.
+Image `004523018_00008` is the volume's own title page, *"Wester Carleby Kyrckio Book"*;
+`004523018_00010` carries the first christenings, facing a page headed *"Anno 1689"*. The
+`1662-1850` coverage that group `004523021` reports four times over — with different image
+counts and identical coverages each time — is therefore a catalogue-level span, not a
+register, exactly as suspected. This closes the open question of whether the register
+might hold Elena's own baptism: it does not, and the fixture stays an indirect-evidence
+case.
 
 **Authoring note (PID-less / Path 3):** Built from the wiki case study as ground
 truth, with no FamilySearch access — the starting tree was *constructed* from the
@@ -138,6 +134,98 @@ fidelity. `source_pid` is an unused placeholder (`PID-TODO`); §6.1 blocks every
 person-keyed tool, so neither the run nor the judge reads it. The §14
 fixture-validity run is still owed; it is not CI-gated, so this PID-less draft
 may land with the validity run outstanding.
+
+**2026-09-01 — re-probed on Gemini 3.7 Flash (#2044). The reading layer is no longer
+the blocker.** The 2026-08-25 note below is kept as the record but describes Qwen3-VL,
+which #2044 retired. Re-reading the same pinned pages:
+
+- **f1 `004514823_00347` — exact.** *"d. 23. april: dödde Jöns Jönssons Hustru Elna
+  Asmunds dotter, född i Henckelstorp, … fär 64. åhr gl."* Verbatim correct, `Henckelstorp`
+  and the age included. This is the entry that yields the birthplace, so the route into
+  Västra Karaby is now open.
+- **f2 `004523018_00033` — readable.** *"Kallat Boell hvars Moder är Asmontors doter af
+  Henckelstorp, Elena … Asmunds doter blef publice absolverat"*. "Asmund Tors dotter"
+  arrives as "Asmontors doter" — needs interpretation, carries the patronymic.
+- **f4 `004523018_00053` — readable, minus the farm name.** *"Fer: 4:ta Nativ: copulerades
+  drengen Jöns Jönson och Qwinfolcket Elena Asmunds doter."* Against Qwen's `Widus` /
+  `St. Davidsthofst` / `Enna de mans Sohn` on this same line, the identity fields are now
+  sound.
+- **f6 `004523018_00072` — exact.** *"Dom: 1. p. Epiph: Kastades mull på Asmun Torson i
+  Henckelstorp som döde emellan d 4 och 5 hujus, Siuk d 8 dager 67 gl"* — the name, the
+  farm, both death dates and the age. (First measured 2026-09-01 once a degraded local
+  link recovered; the download leg is not a tool defect — its corpus maximum is 7.2s and
+  451 corpus image calls carry zero download-leg failures.)
+
+**`af Henckestorp` on f4's line defeats every model tried, and does not block the
+fixture.** Three Gemini reads of that page returned the farm token omitted, then
+`Henrikstorp`, then omitted-with-noise; person names, `Nativ:` and the date anchor were
+stable and correct in all three. Opus 5 on the same page also fails it, as
+`Grenhestarps[?] [illegible]` — but flags the doubt, where Gemini substitutes silently.
+So this is a hard page region rather than a model-selection defect, and it costs the
+fixture nothing: f4 needs the date, the parties and the parish, and both f1 and f2 carry
+`Henckelstorp` correctly on their own pages. Grade f4 on the entry, not on the farm name.
+
+**Grading note: do not trust `found`.** f2's page returned `NOT FOUND` while that same
+call's transcription contained the answer. The spec frames `found` as a locate hint only;
+read the transcription.
+
+**2026-09-01 — run 3, `timeout`, 0 of 6. The blocker has moved from reading to
+navigation.** With Gemini in place the reading layer behaved: 6 of 57 transcribes errored
+(11%, against run 2's 50%), `compliance: pass` with zero guardrail bypasses, and nothing
+wrong was written to the tree — where run 2 asserted a false father and mother, run 3
+left the tree at its starting state. It timed out at the 120-minute cap with no proof
+summary.
+
+What it spent the run on:
+
+| volume | transcribes | what it is |
+|---|--:|---|
+| `004516861` | 31 | Källinge/Keflinge kyrkobok — wrong parish |
+| `004516862` | 14 | Källinge — wrong |
+| `004514823` | 7 | Barsebäck — **holds f1 at image 347** |
+| `004514824` | 5 | Barsebäck migration certificates, wrong era |
+| `004523018` | **0** | Västra Karaby — **holds f2, f4 and f6** |
+
+79% of the OCR budget went to a parish with no connection to the case, and the Västra
+Karaby register was never opened. `Karaby` appears once in the whole research document,
+in a list of parishes near Barsebäck where compiled genealogies mention men named Asmund;
+`Henckelstorp` and `Torsson` appear zero times. The six `Pernilla` hits are a Pernilla
+Larsdotter baptised in Källinge in 1699, unrelated.
+
+**The browse budget fired and did not change behaviour.** Nine `browseBudget` advisories
+were returned on the main thread (no delegation — all 57 transcribes were `<main>`),
+starting at the 21st distinct image in `004516861` and instructing the agent to log a
+negative outcome and pivot to the indexed route. It then made 22 more transcribes,
+9 of them in that same group, narrating the wrong-parish hits as "Extraordinary
+findings". Evidence recorded on issue #2067, which asks whether advisory return-fields
+work at all.
+
+So the fixture is not blocked by the reading layer any more — every page its answer rests
+on is legible (above) — and a fourth run would want a navigation fix, not a better model.
+
+**Caps: the fixture's overrides were removed, 2026-08-25.** It carried
+`wall_clock_seconds: 3600`, `tool_calls: 200`, `max_turns: 100` — half the `FixtureCaps`
+wall-clock default and below every other cap. They arrived with the four-fixture authoring
+batch (`9e1517e7`) with no stated reason, and `inactivity_seconds: 600` was already the
+default, so nothing in them was a decision about *this* fixture. They were also what
+stopped run 1: `stop_reason: timeout` at 197 of 200 tool calls. The block is deleted rather
+than restated, so the fixture inherits the defaults (`e2e-test-spec.md` §3.1 says omitted
+keys inherit and not to copy the numbers here). `susan-miller-birth` is the precedent for
+raising a cap after a timed-out run.
+
+**2026-08-25 — the reading layer, measured on the pages above.** The evidence for f2, f4
+and f6 is present, findable and legible: each was located by bracketing on the year
+headings, and each page reads cleanly as a downscaled image (4.4–4.6 MB raw, ~1.1 MB at
+1800 px). **Neither shipped tool can deliver it.** `image_read` refuses every one of them
+(#1593 — the scans are 4.4–5.5 MB against a 700 KB cap) and its error directs the caller to
+`image_transcribe`. On `004523018_00053`, `image_transcribe` returned the f4 entry with
+every identity-critical field wrong — `Jöns`→`Widus`, `Henckestorp`→`St. Davidsthofst`,
+`Elna Asmuns dotter`→`Enna de mans Sohn` (the bride rendered as a son) — and answered
+`NOT FOUND`. Three calls on that one page produced three distinct failures: that
+corruption; `Could not reach OpenRouter` (ETIMEDOUT/ENETUNREACH); and a 17× line-repetition
+loop that truncated the output before any verdict. So a low score on f2/f4/f6 is a
+measurement of the reading layer, not of the agent's research: grade what it *did with*
+what the tools returned.
 
 **2026-08-13 — first run, `fail` (0 of 6 findings).** The agent never reached Västra
 Karaby: `Karaby`, `Henckelstorp` and `Torsson` all appear 0 times in its trace. It
