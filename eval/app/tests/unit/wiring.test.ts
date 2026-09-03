@@ -50,45 +50,44 @@ describe('the control is actually wired', () => {
     walk(appDir)
     expect(routes.length).toBeGreaterThan(0)
 
-    const offenders = routes.filter((f) => {
-      const src = fs.readFileSync(f, 'utf8')
-      // Next accepts several spellings of a handler and only one was checked.
-      // A route outside /api written any of the other ways bypassed the
-      // middleware with this test green — demonstrated in review with a live
-      // 200 from an attacker Host. The brace form is deliberately loose: it
-      // also matches `export { POST as other }`, which is not a handler, but a
-      // false positive here fails loudly and a false negative does not.
-      const stateChanging =
-        /export\s+(?:async\s+)?function\s+(?:POST|PUT|PATCH|DELETE)\b/.test(src) ||
-        /export\s+(?:const|let|var)\s+(?:POST|PUT|PATCH|DELETE)\b/.test(src) ||
-        /export\s*\{[^}]*\b(?:POST|PUT|PATCH|DELETE)\b[^}]*\}/.test(src)
-      const underApi = path
-        .relative(appDir, f)
-        .split(path.sep)
-        .join('/')
-        .startsWith('api/')
-      return stateChanging && !underApi
-    })
-    expect(offenders, 'state-changing routes outside /api are not covered by the matcher').toEqual([])
+    // No regex. Three rounds of this test matched handler SPELLINGS and three
+    // times a spelling was missed — `export const POST`, `export { h as POST }`,
+    // `export * from`, `export const { POST } =`. The property needs none of
+    // them: every route file belongs under `api/`, so a `route.*` anywhere else
+    // is the finding, whatever it exports.
+    //
+    // Deliberately stricter than "state-changing routes outside /api". This PR
+    // moved the loopback pin ABOVE the method gate because reads need it too,
+    // so a read-only route outside `/api` is equally unreachable by it — and a
+    // filter that only looked for write handlers kept the old scoping the PR
+    // exists to correct.
+    const offenders = routes
+      .map((f) => path.relative(appDir, f).split(path.sep).join('/'))
+      .filter((r) => !r.startsWith('api/'))
+    expect(offenders, 'route handlers outside /api are not covered by the matcher').toEqual([])
   })
 
   it('no Server Action smuggles a write past the matcher', () => {
     // A Server Action is a POST to a PAGE route, which `/api/:path*` never sees.
     // None exist today; this fails the moment one is added.
-    // `components/` is 44 files and is where a Server Action would most
-    // plausibly live. Walking only app/ and lib/ left it dark: an action placed
-    // there and imported from a page ran on a POST from an attacker Host.
-    const roots = ['app', 'components', 'lib'].map((d) => path.resolve(__dirname, '../..', d))
+    // Walk the project, don't allow-list directories. This started as app/+lib/,
+    // gained components/ when an action there was shown to run, and was still a
+    // three-name list — so `hooks/` and `actions/` walked straight past it, and
+    // `next build` registers an action in either. A new top-level directory is
+    // not a new bypass to discover; the exclude set is what has to be wrong for
+    // this to miss now.
+    const skip = new Set(['node_modules', '.next', '.git', 'tests', 'scripts'])
     const found: string[] = []
     const walk = (dir: string): void => {
       for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (skip.has(e.name)) continue
         const full = path.join(dir, e.name)
         if (e.isDirectory()) walk(full)
         else if (/\.[jt]sx?$/.test(e.name) && /^\s*['"]use server['"]/m.test(fs.readFileSync(full, 'utf8')))
           found.push(full)
       }
     }
-    for (const r of roots) walk(r)
+    walk(path.resolve(__dirname, '../..'))
     expect(found, 'Server Actions are POSTs to page routes, outside the matcher').toEqual([])
   })
 
