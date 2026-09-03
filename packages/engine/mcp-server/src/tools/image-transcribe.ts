@@ -296,7 +296,8 @@ export async function imageTranscribeTool(
   }
 
   const data = (await response.json()) as OpenRouterChatResponse;
-  const transcription = data.choices?.[0]?.message?.content?.trim() ?? "";
+  const choice = data.choices?.[0];
+  const transcription = choice?.message?.content?.trim() ?? "";
   if (transcription.length === 0) {
     throw new Error(
       "OpenRouter returned an empty transcription. Do not fabricate a read — " +
@@ -313,7 +314,6 @@ export async function imageTranscribeTool(
   // a cap that reaches us only under the native field is still caught. Out of
   // scope: a model that stops early on its own ("stop", page unfinished) and a
   // transport cut (already thrown by fetchWithTimeout) — see #1974.
-  const choice = data.choices?.[0];
   const truncated =
     choice?.finish_reason === "length" ||
     choice?.native_finish_reason === "length" ||

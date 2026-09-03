@@ -396,7 +396,7 @@ Returns **text only**:
 ```typescript
 {
   transcription: string      // faithful full-page OCR (the primary payload) — never doctored
-  truncated?: true           // present iff the OCR hit its output-token cap (finish_reason "length"); transcription is PARTIAL (§6.2)
+  truncated?: true           // present when the OCR hit its output-token cap (finish_reason or native_finish_reason marks it — §6.2); transcription is PARTIAL
   truncationNotice?: string  // tool-voiced plain sentence companion to `truncated`; present iff `truncated`
   found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2), AND the model emitted the marker on the final line
   imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"
