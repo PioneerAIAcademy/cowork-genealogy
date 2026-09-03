@@ -201,22 +201,32 @@ describe("the specs' corpus claims survive main moving", () => {
 
   it("every quoted corpus figure names the commit it was measured at", () => {
     // A stamped figure stays true of something; an unstamped one silently rots.
+    // PER FIGURE, not per file. The first draft asked whether the file
+    // contained a stamp anywhere; by that point the whole file is one string,
+    // so a single stamp covered every figure in it. A reviewer inserted a
+    // fabricated `of 999 corpus plans append ops` row with no stamp near it and
+    // the suite stayed green — which is the case that will actually happen,
+    // when someone adds a figure next to an already-stamped one.
+    const FIGURE = /\b(?:of|fires on) \d{1,4} (?:corpus )?plans append ops|corpus sources appends/gi;
+    const STAMP = /measured at [0-9a-f]{7,40}\b/i;
     const missing: string[] = [];
     for (const [rel, text] of Object.entries(specText)) {
       const flat = text.replace(/[*`_]/g, "").replace(/\s+/g, " ");
-      const quotesCorpus = /\bof \d{2,4} (corpus )?`?plans`? append ops|corpus `?sources`? appends/i.test(flat);
-      // Presence of a SHA-SHAPED stamp beside a corpus figure, and nothing
-      // more. An earlier arm also asserted the sha was an ANCESTOR of HEAD; it
-      // passed locally and failed in CI on all four stamps, because the
-      // workflow checks out shallow and a real commit is simply unreachable
-      // there. Raising fetch-depth on every run for one check is the wrong
-      // trade, and skipping when the history is shallow would stand the check
-      // down exactly where it runs. A second draft validated the shape of
-      // every "measured at X" in the file and false-flagged a pre-existing
-      // sentence about a measured VALUE (`measured at 0.9999484`). So:
-      // reachability is a human's job when they chase the stamp.
-      if (quotesCorpus && !/measured at [0-9a-f]{7,40}\b/i.test(flat)) {
-        missing.push(`${rel} quotes a corpus figure with no sha-shaped "measured at" stamp`);
+      // Shape and proximity only. An earlier arm also asserted the sha was an
+      // ANCESTOR of HEAD; it passed locally and failed CI on all four stamps,
+      // because the workflow checks out shallow and a real commit is simply
+      // unreachable there. Raising fetch-depth on every run for one check is
+      // the wrong trade, and skipping when the history is shallow would stand
+      // the check down exactly where it runs. A further draft validated every
+      // "measured at X" in the file and false-flagged a pre-existing sentence
+      // about a measured VALUE (`measured at 0.9999484`); the 300-character
+      // window below does not re-trip it, because that sentence sits nowhere
+      // near a figure. Reachability is a human's job when they chase a stamp.
+      for (const m of flat.matchAll(FIGURE)) {
+        const near = flat.slice(Math.max(0, m.index! - 300), m.index! + m[0].length + 300);
+        if (!STAMP.test(near)) {
+          missing.push(`${rel}: "${m[0]}" carries no "measured at <sha>" stamp within 300 characters`);
+        }
       }
     }
     expect(missing).toEqual([]);
