@@ -29,14 +29,6 @@
     {
       "test_id": "ut_research_plan_h4k",
       "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "pli_006 is typed `immigration`, but it is a naturalization record. Its own\nrationale says so: \"Schuylkill County naturalization declarations and\ncertificates (image group 007936750...) often record the immigrant's county of\norigin in Ireland, US arrival date, and county of residence\". `naturalization`\nis a recommended value in enums.schema.json, so a more precise type existed and\nwas not used. This is not cosmetic: search-records reads record_type to choose\ncollections, and an immigration-typed item points at passenger lists rather than\ncounty naturalization dockets.\n\nThe judge scored this 3 and described the item as \"Naturalization (pli_006)\" --\nreading the rationale rather than the record_type field, so it never compared the\ntwo.\n\npli_009 (directories) and pli_010 (mining reports) are typed `other`, which I\nchecked and is correct -- neither has a recommended value in the enum. Only\npli_006 is mis-typed.\n"
-    },
-    {
-      "test_id": "ut_research_plan_h4k",
-      "dimension_source": "rubric",
       "dimension_name": "Objective scope containment",
       "llm_score": 3,
       "corrected_score": 3,
@@ -321,6 +313,14 @@
       "llm_score": 1,
       "corrected_score": 3,
       "comment": "The arguments were correct; the fixture is missing. contextName is a declared\nparameter (place-search.ts:41), and the second call used the exact shape that\nsucceeded twice in this run (\"Blount County, Alabama\", \"Smith County, Texas\").\nNo place-search Georgia fixture exists, though the test declares\ncollections-search-georgia. That is a corpus gap being charged to the model.\n"
+    },
+    {
+      "test_id": "ut_research_plan_h4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Retracting this. I claimed `naturalization` was a recommended record_type — it\nis not. The recommended list is census, vital_record, probate, land, church,\nmilitary, newspaper, cemetery, tax, immigration, court, other. \"Naturalization\"\nis in the fact-type enum; my check was a substring match over the whole file and\nhit an unrelated key. @T-FEH caught it.\n\nSo pli_006 used a recommended value. `court` is arguable, but that is a choice\nbetween two recommended values, not a partial failure. Agreeing at 3.\n\nThe judge did describe the item as \"Naturalization (pli_006)\" while the field\nreads `immigration` — grading the rationale, not the field, same as 007 last\nround. Worth watching, not a score cut.\n"
     }
   ]
 }
