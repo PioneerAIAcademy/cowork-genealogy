@@ -48,25 +48,40 @@ describe("configureOpenRouterTool", () => {
   });
 });
 
+/**
+ * Strip explicitly-negated sentences ("Do not ask…") so a prohibition cannot
+ * mask a live instruction to collect the key.
+ */
+function withoutProhibitions(text: string): string {
+  return text.replace(/\b(?:do not|don't|never)\b[^.]*\./gi, "");
+}
+
 describe("configureOpenRouterSchema", () => {
-  it("does not accept an apiKey parameter", () => {
-    expect(configureOpenRouterSchema.inputSchema.properties).not.toHaveProperty(
-      "apiKey"
-    );
+  it("takes the model slug and nothing else", () => {
+    expect(Object.keys(configureOpenRouterSchema.inputSchema.properties)).toEqual([
+      "model",
+    ]);
   });
 
   it("does not require any parameter", () => {
-    expect(configureOpenRouterSchema.inputSchema).not.toHaveProperty(
-      "required"
+    expect(configureOpenRouterSchema.inputSchema).not.toHaveProperty("required");
+  });
+
+  it("description disclaims the key parameter", () => {
+    expect(configureOpenRouterSchema.description).toMatch(
+      /does not accept an api key/i
     );
   });
 
-  it("description tells the user to set the key in config.json, not in chat", () => {
-    expect(configureOpenRouterSchema.description).toContain(
-      "config.json"
-    );
+  it("description forbids collecting the key in chat", () => {
     expect(configureOpenRouterSchema.description).toMatch(
-      /never ask.*paste.*key|does NOT accept an API key/i
+      /\b(?:never|do not|don't)\b[^.]*paste[^.]*chat/i
+    );
+  });
+
+  it("description points at the config file", () => {
+    expect(configureOpenRouterSchema.description).toContain(
+      "~/.familysearch-mcp/config.json"
     );
   });
 });
@@ -82,9 +97,21 @@ describe("OPENROUTER_API_KEY_MISSING_MESSAGE", () => {
     expect(OPENROUTER_API_KEY_MISSING_MESSAGE).toContain("openRouterApiKey");
   });
 
-  it("does not instruct Claude to receive the key via configure_openrouter", () => {
+  it("forbids collecting the key in chat", () => {
+    expect(OPENROUTER_API_KEY_MISSING_MESSAGE).toMatch(
+      /\b(?:do not|don't|never)\b[^.]*paste[^.]*chat/i
+    );
+  });
+
+  it("never offers configure_openrouter as the key channel", () => {
     expect(OPENROUTER_API_KEY_MISSING_MESSAGE).not.toMatch(
-      /call configure_openrouter/i
+      /configure_openrouter/i
+    );
+  });
+
+  it("carries no surviving instruction to collect the key from the user", () => {
+    expect(withoutProhibitions(OPENROUTER_API_KEY_MISSING_MESSAGE)).not.toMatch(
+      /\b(?:ask|paste|send|provide|share|enter)\b/i
     );
   });
 });
