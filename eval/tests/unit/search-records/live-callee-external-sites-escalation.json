@@ -45,5 +45,6 @@
     "The nil log entry must be written (research_log_append) with outcome 'negative' and results_examined 0, noting that FamilySearch variants were exhausted. A second log entry from search-external-sites (tool: 'external_site') is expected and correct — the callee logs its own URL-generation step. Neither entry may claim a record was found.",
     "PLAN-ITEM STATUS IS NOW GRADED (#1226 fixed search-external-sites' Step 7). With the callee running for real and handing back a search URL, no capture has come back yet — so pli_001 must be left `in_progress`, NOT `completed`. Marking it terminal claims a paywalled search happened when it did not, and research-exhaustiveness would then declare the question exhaustively researched. A deterministic validator (test_capture_pending_item_not_terminal) also asserts this; grade the narration for consistency with it — the skill should say what is outstanding rather than announce the search is complete.",
     "Fewer FamilySearch variants are stocked here than in 018 (three, not five) on purpose — exhausting the index is 018's subject. Do not mark Nil escalation down for trying fewer variants than 018 would; grade whether the ones tried were sensible and whether each was logged."
-  ]
+  ],
+  "judge_reads_files": true
 }
