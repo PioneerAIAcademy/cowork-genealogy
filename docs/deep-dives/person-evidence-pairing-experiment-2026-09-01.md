@@ -19,6 +19,13 @@ quoting these** — the corpus and the fixtures both move.
 | **A** | paired, sonnet-4-6, **warnings pass missing** | 5.4861 | **−20.0%** | 118,480 | 114 | 1,104s | 7 / 4 / 11 |
 | **B** | paired, sonnet-4-6, corrected | 7.9442 | **+15.9%** | 152,049 | 263 | 1,555s | 9 / 4 / 8 (+1 abort) |
 | **C** | paired, **haiku-4-5** pin, corrected | 4.7757 | **−30.3%** | 128,536 | 217 | 1,258s | 10 / 5 / 7 |
+| **D** | paired, sonnet, §0 router, **warnings tool dead** | 5.4137 | **−21.0%** | 121,162 | 139 | 1,065s | 6 / 4 / 12 |
+| **E** | paired, sonnet, **warnings tool live — the shipped config** | 5.5018 | **−19.7%** | 122,655 | 129 | 1,151s | **8 / 5 / 9** |
+
+**Arms D and E are the only ones under judge prompt `9451d105`; A–C were
+`03f306ff`.** So D-versus-E is the one clean single-variable comparison in this
+table, and A/B/C outcome counts are not comparable to either. Arm E is the
+configuration that ships.
 
 Baseline mean skill cost: $6.8547. Arms A and B are committed as candidate run
 logs. **Arm C is not committed** — its snapshot pins a model the shipped agent
@@ -85,6 +92,14 @@ The residual failures are almost entirely one rule: the agent stops calling
 | A (sonnet) | 9 (5 + 4) |
 | B (sonnet) | 9 (5 + 4) |
 | C (haiku) | **11 (6 + 5)** |
+| D (sonnet) | 8 (4 + 4) |
+| E (sonnet, shipped) | 9 (5 + 4) |
+
+**This one is not a harness artifact, unlike the warnings pass.** `same_person`
+is a live tool in the mock and was called in every arm — 5 times in arm D, and
+the agent reaches for it — so the failures are genuine skipped calls before an
+identity assertion, not a tool that could not answer. Stable at 9 across three
+independent sonnet arms and worse at haiku.
 
 Identical to the count across two independent sonnet runs, and **worse on the
 cheaper model**. Arm C also introduced a failure the sonnet arms never showed —
@@ -107,53 +122,51 @@ Folded into an agent, that instruction became unexecutable: **no shipped plugin
 agent grants a `Skill` tool**, and the routing skill did not mention the step
 either. It existed nowhere and ran zero times in arm A.
 
-Measured across all four arms — and the third row is the one that matters:
+**The check had never actually run — on any route, in any committed run log
+since August.** That is not what this section said until 2026-09-03, and the
+error was mine: `person_warnings` was registered in the unit mock as a
+*fixture-backed* tool only, and no person-evidence test declares a
+`person-warnings-*` fixture. Every call found no fixture and reported the tool
+missing. The validator asserts that the check was ATTEMPTED, not that it
+resolved — its own docstring says so — so 17 skill launches read as 17 successful
+checks and did not question it.
 
-| arm | where the step lived | ran the check | validator failures |
+| arm | where the step lived | `person_warnings` calls | validator fails |
 |---|---|---:|---:|
-| A | nowhere (fold dropped it) | **0 of 22** | 4 |
-| B, C | the routing skill | **17 of 22** | **0** |
-| **D** | **the agent body** | **0 of 22** | **4** |
+| A | nowhere (fold dropped it) | 0 | 4 |
+| B, C | the routing skill | **0** (17 launches, tool missing) | 0 |
+| D | the agent body | **0** (tool still fixture-only) | 4 |
+| **E** | the agent body, **tool live** | **28** | **0** |
 
-**Arm D is the refutation.** The agent was granted `person_warnings` under all
-three spellings, told in §8 to call it on every person it linked or minted, and
-called it **zero times in 22 tests** — while spawning 15 times, so the agent
-itself ran. The router, when the step was its job, did it 17 of 22. `same_person`
-calls halved over the same move (10 in arm B, 5 in arm D).
+**Arm E is the measurement.** Per the lead's ruling on PR #2151,
+`person_warnings` joined the mock's `LIVE_TOOLS` — it holds zero `getValidToken`
+calls and computes every tag from the workspace tree — and the live-registration
+loop now yields to any fixture the test declared, so the check-warnings suite
+keeps its tuned responses. `person_quality` stays fixture-backed; it calls
+FamilySearch.
 
-So the step now runs by **neither** route, and arm D is the worst arm of the four
-(6 pass / 4 partial / 12 fail). Arm D is under judge prompt `9451d105` where A-C
-were `03f306ff`, so part of the outcome delta may be the judge — but the tool-call
-counts are mechanical and unaffected by grading.
+With the tool able to resolve and **the instruction unchanged and in the same
+place**, the agent called it 28 times across 22 tests. Against arm D, same judge
+prompt and one variable: fails 12 -> 9, and three validator classes cleared
+(`check_warnings_runs_after_a_write` 4 -> 0, plus `tree_ownership_table` and
+`high_score_conflict_not_confident`), at +1.6% cost.
 
-Two further failures cleared with it incidentally (a tree `sources` write outside
-the agent's ownership, and a null `match_score`).
+**What this retracts.** An earlier revision concluded that "the doctrinally
+correct location is the empirically least effective one" — that prose in a
+1,072-line agent body loses to the same sentence in a 51-line router. That
+conclusion was drawn from the 0/22-versus-17/22 contrast and is **withdrawn**:
+the 17 were launches against a tool that could not answer, and the agent was
+always willing to make the call. A harness gap was attributed to model
+behaviour. The generalisation built on it — that moving a step into an agent
+body is not the same as the step continuing to happen — is withdrawn with it.
 
-**This generalises to every remaining conversion.** Any skill body that delegates
-to another skill loses that delegation when folded, and nothing in CI catches it —
-it cost one paid run to find here.
-
-**And the router cannot cover for it — the first fix was wrong (lead review,
-2026-09-02).** Moving the step into the routing skill looked like the answer and
-is not one: ADR-0011 now sanctions `/research` spawning a paired agent directly,
-so a step parked in the router is guaranteed by nothing. That is the ADR's own
-cost item — *anything a routing skill guaranteed must move into the agent body or
-a writer-tool precondition, because no plane sees the route* — violated by the
-PR that cited it. The step is now in the agent, which calls `person_warnings`
-itself; the agent's `tools:` gained `person_warnings` and `person_quality`, a
-deliberate widening past what the monolith held, because the monolith reached
-them by invoking a SKILL and an agent cannot.
-
-**The doctrinally-correct location is the empirically least effective one, and
-that is the finding this arm buys.** §0 of the conversion guide forbids the step
-living in the router, because no plane guarantees the router runs. The
-measurement says the agent will not honour it: prose at line ~665 of a
-1,072-line body loses to the same sentence in a 51-line router, which is Result
-3's mechanism seen from a second direction. Both statements are true, which
-leaves the step with no home in prose at all. The only remaining mechanism is a
-**plane** — a writer-tool precondition on `research_append` refusing a
-`person_evidence` write with no warnings pass behind it — or an explicit,
-recorded accepted loss. That decision is the lead's and is open.
+**What survives, and it is the more useful lesson.** A step that crosses the
+fold can stop working for reasons that have nothing to do with the fold, and
+**the instrument that was supposed to catch it asserted the launch rather than
+the outcome.** A validator naming a mechanism instead of an outcome cannot tell
+"ran and passed" from "never ran", which is how this stayed invisible from
+August to September across five paid runs. Two tests now pin both directions of
+the mock's behaviour, each proven to fail.
 
 **The eval keyed on the wrong thing too.** `test_check_warnings_runs_after_a_write`
 asserted `"check-warnings" in skills_invoked`, so the correct fix would have
