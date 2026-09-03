@@ -1,11 +1,13 @@
 name: Stale-base guard
 
 # Guards hand-maintained files against clean-but-wrong merges from a stale
-# base (issue #977). When a PR and main both edit the same prose file, git's
-# line-level merge happily interleaves both edits — producing a result neither
-# author wrote and neither reviewer saw. This already happened: PR #1238
-# deleted 134 .transcript.md files, but 11 re-landed on main via PRs whose
-# branches were cut before that deletion (issue #1342).
+# base (issue #977). When a PR and main both edit the same curated-whole
+# file, git's line-level merge happily interleaves both edits — producing a
+# result neither author wrote and neither reviewer saw.
+#
+# Transcript resurrection (issue #1342) is a different shape — files still
+# existing on old branches, not both sides modifying — and is handled by
+# no-transcript-files.test.ts, not this guard.
 #
 # Fires only when BOTH conditions are true:
 #   1. The PR modifies a file on the watched list.
@@ -37,6 +39,13 @@ jobs:
           # Keep short — add only files that meet BOTH criteria above.
           # Tested by .github/tests/stale-base-guard.test.mjs (every
           # entry must exist on disk).
+          #
+          # Derived 2026-09-03 via the command in issue #977:
+          #   gh pr list --state open --limit 200 --json number,files \
+          #     -q '.[] | .files[].path' | sort | uniq -c | sort -rn
+          # Top hit: docs/architecture.md (5 open PRs). The rest are
+          # from #977's proposal — curated-whole files by nature even
+          # when not currently hot. Re-run to verify before adding.
           WATCHED=(
             "docs/architecture.md"
             "CLAUDE.md"
@@ -85,7 +94,7 @@ jobs:
           # May already be available from the full-history checkout; fetch to
           # ensure the tracking ref exists. Errors are swallowed because the
           # existence check below catches a genuinely missing ref.
-          git fetch origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}" --depth=1 2>/dev/null || true
+          git fetch origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}" 2>/dev/null || true
           if ! git rev-parse --verify "origin/${BASE_REF}" >/dev/null 2>&1; then
             echo "::warning::Could not resolve origin/${BASE_REF} — skipping stale-base check."
             echo "skip=true" >> "$GITHUB_OUTPUT"
