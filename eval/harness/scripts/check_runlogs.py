@@ -15,7 +15,9 @@ docs/plan/eval-runlog-versioning.md §C6:
              (#1094 — see rule2_fixture_touched for why it only warns).
     Rule 3   the same run log's .ann.json has corrections for every
              (test_id, dimension_source, dimension_name) triple of the tests
-             named in its `review_sample` (5 per run), each carrying a
+             named in its `review_sample` (3 rotation + 1 targeted + 1
+             random, plus every test that failed or scored a 1 or 2 on any dimension, so the count varies by
+             run), each carrying a
              comment unless it is a confirmed pass. A run log with no
              `review_sample` owes every dimension of every test. An edited
              annotation gates; a pruned (deleted) one does not.
@@ -557,8 +559,8 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
             gh_error(
                 f"skill `{skill}`: annotation `{ann_filename}` has "
                 f"{len(uncommented)} sampled correction(s) with no comment "
-                f"(e.g., {shown}). Five tests are sampled per run so each one "
-                f"gets read — write a sentence on any dimension that is not a "
+                f"(e.g., {shown}). The sample is small so each test in it gets "
+                f"read — write a sentence on any dimension that is not a "
                 f"confirmed pass (judge 3, you agree 3).",
             )
             # Fall through rather than returning: an annotation can be missing

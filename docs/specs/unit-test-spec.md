@@ -310,6 +310,7 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `mcp_fixtures` | optional (omit if skill uses no MCP tools) | optional (omit if not needed) |
 | `judge_context` | required, may be empty array | required, may be empty array |
 | `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
+| `refinement_targets` | optional (see Section 5.11) | omit (a declined skill updates no assertions) |
 | `negative` | omit | required |
 
 ### How a negative test is graded
@@ -440,6 +441,11 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         },
         "additionalProperties": false
       }
+    },
+    "refinement_targets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional list of a_ assertion ids a classification-refinement test expects the run to update in place. Checked mechanically by test_refinement_preserves_extraction_fields_and_avoids_duplication. See Section 5.11."
     },
     "negative": {
       "type": "object",
@@ -767,6 +773,43 @@ A floor that rewrote such a `1` to `2` shipped briefly and was **removed** in 20
 
 Read a `routing_negative_judge_fail` warning before overriding the `1`. Either the skill carried out its own task inline — a real defect the routing pass hides — or the judge misread a clean decline.
 
+### 5.11 `refinement_targets`
+
+Optional array of `a_` assertion ids — deterministic ground truth for a
+**classification-refinement** test, where the scenario seeds an assertion
+that already exists and the run is expected to correct its classification
+in place rather than create a new one. Checked mechanically by
+`test_refinement_preserves_extraction_fields_and_avoids_duplication`
+(`eval/harness/validators/test_record_extraction.py`) — added because no
+test in the corpus exercised the classification-refinement path at all.
+For each id: the assertion must still exist under the same id in the
+after-state; its extraction fields (`source_id`, `record_id`,
+`record_role`, `fact_type`, `value`, `structured_value`, `date`,
+`date_certainty`, `place`) must be byte-identical to before (a refinement
+corrects classification, not the extracted fact); at least one field must
+actually differ from before (a no-op "update" that changes nothing is not
+a refinement); every other pre-existing assertion must be untouched
+(scope enforcement); and no new assertion may share a target's
+`(source_id, record_role, fact_type)` shape (catches "fixed" via a
+duplicate append rather than an `update` op on the original).
+
+`expected_classifications` (5.10) alone cannot check any of this — its
+matcher looks for *new* assertions (as of the widening below, new-or-
+updated) matching a role/fact pair; it has no notion of "this specific
+existing assertion, and nothing else, changed." `refinement_targets` is
+the complementary check when the scenario's starting state already
+contains the assertion under test, which `expected_classifications`
+alone was never able to express.
+
+**Widened matching in `expected_classifications`.** To let a matcher find
+the refinement target at all, `test_expected_classifications`'s notion of
+"new" was widened from *created this run* to *created-or-updated this
+run* (an id absent from the before-state, or present with a changed
+value). This is additive only: the candidate pool for every existing
+test's matchers can only grow, never shrink, so a matcher that passed
+under the old "new-only" definition still passes — it cannot introduce a
+new failure on a test that declares no `refinement_targets`.
+
 ---
 
 ## 6. Negative Tests
@@ -1032,7 +1075,7 @@ The minimum rationale length (20 chars) blocks one-word rationales — those cor
 
 ### Layer 3: Human verification
 
-The team submitting the PR writes one `.ann.json` file per run log, containing corrected scores for **every dimension of the 5 tests named in the run log's `review_sample`** — not every test — plus a written comment on each cell that is not a confirmed pass. A run log with no `review_sample` (every one written before sampling shipped) still owes every dimension of every test. Sampling is `eval/harness/harness/review_sample.py`; CI rule 3 enforces it. Senior genealogists review the corrected grades via GitHub PR comments — there is no separate adjudication artifact. See `docs/per-pr-review-workflow.md` for the full workflow and `eval/CLAUDE.md` for filename conventions.
+The team submitting the PR writes one `.ann.json` file per run log, containing corrected scores for **every dimension of the tests named in the run log's `review_sample`** — not every test — plus a written comment on each cell that is not a confirmed pass. The sample is five chosen picks (3 rotation, 1 targeted, 1 random) **plus every test that failed or scored a 1 or 2 on any dimension**, so its size varies with the run: across the committed corpus it is a median of 6 tests and at most 11. A run log with no `review_sample` (every one written before sampling shipped) still owes every dimension of every test. Sampling is `eval/harness/harness/review_sample.py`; CI rule 3 enforces it. Senior genealogists review the corrected grades via GitHub PR comments — there is no separate adjudication artifact. See `docs/per-pr-review-workflow.md` for the full workflow and `eval/CLAUDE.md` for filename conventions.
 
 Per-dimension scores at every layer (judge tool_use, run log, `.ann` file, CRUD UI) use the same integer scale: **`3` = pass, `2` = partial, `1` = fail.** The semantic labels (pass/partial/fail) live in the judge prompt's instruction text and in each dimension's `**pass:** / **partial:** / **fail:**` bullets in `rubric.md`; the data field itself is just the integer. The monthly judge-prompt review (per the per-PR workflow plan §2.6) reads `.ann` files and computes `llm_score - corrected_score` deltas grouped by `(dimension_source, dimension_name)` to identify systematic LLM-judge drift.
 
