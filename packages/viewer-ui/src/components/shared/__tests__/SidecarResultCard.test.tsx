@@ -70,7 +70,8 @@ describe('SidecarResultCard — fulltext_search', () => {
   // Production-shaped: mapEntry emits a bare ARK `id` plus a separate
   // `sourceUrl`, and a `title` when the upstream record has one (#1996) —
   // the old fixture gave `id` a full URL and no `title`, a shape the tool
-  // never actually emits, which is why the title/link bugs passed CI.
+  // never emits today. Sidecars staged before #272 do carry that shape and
+  // are still on disk, so it is covered separately below.
   const fulltextResult: FulltextSearchResult = {
     id: 'ark:/61903/3:1:S3HT-XYZ',
     sourceUrl: 'https://www.familysearch.org/ark:/61903/3:1:S3HT-XYZ',
@@ -158,6 +159,21 @@ describe('SidecarResultCard — fulltext_search', () => {
     )
     await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
     expect(spy).toHaveBeenCalledWith('https://www.familysearch.org/ark:/61903/3:1:S3HT-XYZ')
+  })
+
+  it('opens a legacy full-URL id as-is, without prefixing the host again', async () => {
+    const { sourceUrl: _sourceUrl, ...legacy } = fulltextResult
+    const spy = vi.fn()
+    setOpenExternal(spy)
+    render(
+      <SidecarResultCard
+        result={{ ...legacy, id: 'https://familysearch.org/ark:/61903/1:1:K5M9-P3WT' }}
+        tool="fulltext_search"
+        defaultExpanded={true}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    expect(spy).toHaveBeenCalledWith('https://familysearch.org/ark:/61903/1:1:K5M9-P3WT')
   })
 
   it('falls back past an empty-string title to recordType', () => {

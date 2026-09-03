@@ -1,6 +1,7 @@
 import type { GedcomxPerson } from '../../lib/schema'
 import { getPreferredName, getPrimaryFact } from '../../lib/schema'
 import { openExternal } from '../../lib/external'
+import { familySearchUrl } from '../../lib/ark'
 import styles from './PersonCard.module.css'
 
 interface PersonCardProps {
@@ -12,10 +13,11 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
   const name = getPreferredName(person)
   const birth = getPrimaryFact(person, 'Birth')
   const death = getPrimaryFact(person, 'Death')
+  const arkUrl = person.ark ? familySearchUrl(person.ark) : undefined
 
   const handleArkClick = (e: React.MouseEvent<HTMLAnchorElement>): void => {
     e.preventDefault()
-    openExternal(person.ark)
+    openExternal(arkUrl)
   }
 
   return (
@@ -39,10 +41,10 @@ export default function PersonCard({ person, relationship }: PersonCardProps): R
       </div>
       <div className={styles.meta}>
         {person.gender} · {person.facts?.length ?? 0} facts
-        {person.ark && (
+        {arkUrl && (
           <>
             {' · '}
-            <a href={person.ark} onClick={handleArkClick} className={styles.ark} title={person.ark}>
+            <a href={arkUrl} onClick={handleArkClick} className={styles.ark} title={arkUrl}>
               View on FamilySearch
             </a>
           </>
