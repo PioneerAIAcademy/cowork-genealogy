@@ -63,6 +63,7 @@ from harness.since_window import (
     run_date,
     staleness_cutoff,
 )
+from harness.review_sample import is_gradeable, is_mandatory
 from harness.versioning import ann_filename_for
 from skill_latency_report import (
     UNIT_RUNLOGS,
@@ -116,6 +117,23 @@ class DimensionStats:
     #: has no direction — and because `None > 3` raises, so these must never reach
     #: the comparison at all.
     n_a_disagreement: int = 0
+
+    # -- selection split (additive; changes no flag above) -------------------
+    #: Of `reviewed`, how many sat on a test the mandatory slot forced into the
+    #: sample, and how many of those disagreed.
+    #:
+    #: The counters above stay exactly as they were, on purpose: the two
+    #: dimensions currently meeting `systematic_divergence` must keep meeting it,
+    #: and reclassifying them into a new bucket would hide a live finding behind
+    #: a refactor. This pair exists so the reader can SEE the selection effect
+    #: rather than have it silently move the headline.
+    #:
+    #: Why it is needed: the mandatory slot over-samples low-scored cells, and
+    #: direction is one-way per score — a judge-1 cell can only ever produce
+    #: `judge_harsher`, a judge-3 cell only `judge_softer`. So the harsher/softer
+    #: split shifts from *selection*, not from the judge changing.
+    reviewed_on_failing: int = 0
+    disagreements_on_failing: int = 0
 
     @property
     def graded(self) -> int:
@@ -172,13 +190,17 @@ class DimensionStats:
         **Deliberately no corpus count here.** This was written as a specific
         number and reviewed against a different one, and both were stale inside a
         day — in opposite directions — because a single landing run log moves it.
-        What holds without a snapshot: no dimension has yet reached two
-        same-direction corrections, so **this flag reports nothing on live data
-        today**, and the disagreements that do exist are lone judgement calls.
-        That is worth saying out loud in a report whose whole point is not
-        overclaiming — the judge-vs-human direction half is built and correct,
-        and currently silent. Measure it with `make judge-report`; do not trust a
-        number in this docstring.
+
+        It previously said no dimension had reached two same-direction
+        corrections, so the flag "reports nothing on live data today". That is
+        no longer true — it fires — which is exactly why the count does not
+        belong here. Measure it with `make judge-report`; do not trust a number
+        in this docstring.
+
+        Read a firing dimension against the `of which on a failing test` line.
+        The mandatory slot forces every failing test into the sample, and a
+        low-scored cell can only disagree upward, so a same-direction run can
+        come from selection rather than from miscalibration.
 
         N/A-vs-numeric is excluded: it has no direction to be consistent in.
         """
@@ -244,7 +266,9 @@ def collect_dimensions(runlog: dict[str, Any], skill: str) -> list[DimensionStat
 
 
 def apply_annotation(
-    dimensions: list[DimensionStats], annotation: dict[str, Any]
+    dimensions: list[DimensionStats],
+    annotation: dict[str, Any],
+    mandatory_test_ids: frozenset[str] = frozenset(),
 ) -> None:
     """Fold `.ann.json` corrections into the matching dimensions, in place.
 
@@ -265,9 +289,15 @@ def apply_annotation(
             continue
         llm, corrected = entry.get("llm_score"), entry.get("corrected_score")
         stats.reviewed += 1
+        on_failing = entry.get("test_id") in mandatory_test_ids
+        if on_failing:
+            stats.reviewed_on_failing += 1
         if llm == corrected:
             stats.agreements += 1
-        elif not isinstance(llm, int) or not isinstance(corrected, int):
+            continue
+        if on_failing:
+            stats.disagreements_on_failing += 1
+        if not isinstance(llm, int) or not isinstance(corrected, int):
             stats.n_a_disagreement += 1
         elif corrected > llm:
             stats.judge_harsher += 1
@@ -281,7 +311,12 @@ def build_skill_report(skill: str, path: Path) -> SkillReport:
     ann_path = path.parent / ann_filename_for(path.name)
     annotation_missing = not ann_path.exists()
     if not annotation_missing:
-        apply_annotation(dimensions, _load(ann_path))
+        mandatory = frozenset(
+            t["test_id"]
+            for t in (runlog.get("tests") or [])
+            if is_gradeable(t) and is_mandatory(t)
+        )
+        apply_annotation(dimensions, _load(ann_path), mandatory)
     return SkillReport(
         skill=skill,
         runlog=path.name,
@@ -334,6 +369,16 @@ def format_skill(report: SkillReport) -> str:
                 f"      human review: {', '.join(parts)} of {d.reviewed} reviewed, "
                 f"{d.unreviewed} unreviewed{flag}"
             )
+            # The selection split, printed only when it is non-zero so a clean
+            # suite's report is unchanged. Read the harsher/softer numbers above
+            # against this line: the mandatory slot forces every failing test
+            # into the sample, and a low-scored cell can only disagree upward.
+            if d.reviewed_on_failing:
+                human += (
+                    f"\n        of which on a failing test: "
+                    f"{d.reviewed_on_failing} reviewed, "
+                    f"{d.disagreements_on_failing} disagreed"
+                )
         lines.append(human)
     return "\n".join(lines)
 
