@@ -48,7 +48,7 @@ FTS and indexed search are completely different systems:
 - **What's searched:** Raw transcript text, not structured name/date/place fields.
 - **No fuzzy matching** in `keywords` and `place` fields. Exact text only — no nicknames, phonetic variants, or Soundex. The `name` field auto-expands recognized English given names with historical diminutives.
 - **No abbreviation expansion** in `keywords` and `place` fields. The `name` field auto-expands (e.g. Elizabeth also matches Betty, Bess, Eliza).
-- **Default is OR** — at least one term must appear. Always use `+` to require terms.
+- **Default is OR** — at least one term must appear. Always use `+` to require terms in `keywords`.
 - **Unique strength:** Finding non-principal mentions (witnesses, neighbors, heirs).
 
 FTS results are derivative sources (original → image → AI transcript →
@@ -82,7 +82,7 @@ Read `references/search-strategies.md` for the full strategy catalog.
 
 | Research goal | Query approach |
 |---|---|
-| Find person as witness/appraiser/heir | `+Surname` in Name field, place filter after |
+| Find person as witness/appraiser/heir | `Surname` in Name field (no `+` — it disables auto-expansion), place filter after |
 | Find person in narrative records | `+GivenName +Surname` in Keywords, place filter after |
 | FAN cluster search | `+TargetSurname +AssociateSurname` in Keywords |
 | Compound surname parentage (Iberian `Paterno Materno`) | `+PaternalSurname +MaternalSurname` co-occurrence — **never** as one phrase (see step 4 rules) |
@@ -93,8 +93,10 @@ Read `references/search-strategies.md` for the full strategy catalog.
 Read `references/query-syntax.md` for operator details and wildcards.
 
 **Critical rules:**
-- **Always use `+` to require terms.** Default is OR, which returns
-  millions of irrelevant results.
+- **Always use `+` to require terms in `keywords`.** Default is OR,
+  which returns millions of irrelevant results. Do NOT use `+` in the
+  `name` field — it disables auto-expansion of diminutives, and terms
+  are already required by `m.queryRequireDefault`.
 - **Search by name only first.** Do NOT send `recordPlace0/1/2/3`,
   `yearFrom`/`yearTo`, or `recordType` on the first `fulltext_search`
   call for a query — whether as `keywords` text or a structured
@@ -116,9 +118,9 @@ Read `references/query-syntax.md` for operator details and wildcards.
   paternal surname and the mother with the maternal, so the words are
   on **different people and not adjacent**. See `references/query-syntax.md`
   for escalation once the mother's fuller form is known.
-- **Abbreviations must be searched explicitly** in `keywords` and `place` fields.
-  FTS does not auto-expand (Wm/William, Thos/Thomas) there. The `name` field
-  auto-expands recognized English given names with historical diminutives.
+- **Abbreviations must be searched explicitly** in `keywords` and
+  `place` fields. FTS does not auto-expand (Wm/William, Thos/Thomas)
+  there. The `name` field auto-expands recognized English given names.
 - **Mine prior records for known surname variants before querying.**
   Scan existing `research.json` assertions and log entries for the
   target surname. If prior records show a transcription variant,
