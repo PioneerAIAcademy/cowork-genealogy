@@ -1,0 +1,33 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized Stavanger, Rogaland, Norway parish-register (church book) volumes covering the 1817 baptism period. Wired into ut_record_extraction_016 (issue #2021, F7) so the router's attempt to locate the original register image before finalizing a suspect indexed father-name has something to actually receive.",
+  "args": {
+    "standardPlace": "~Stavanger"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Stavanger, Rogaland, Norway",
+      "startYear": 1810,
+      "endYear": 1820
+    },
+    "totalResults": 1,
+    "results": [
+      {
+        "imageGroupNumber": "013729012",
+        "imageGroupPrefix": "013729012",
+        "imageCount": 340,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["no"],
+        "title": "Norway, Church Books, 1797-1958 — Stavanger, Rogaland (ministerialbok)",
+        "coverages": [
+          {
+            "place": "Stavanger, Rogaland, Norway",
+            "dateRange": "1797-1830",
+            "recordType": "Church Records (Lutheran)"
+          }
+        ]
+      }
+    ]
+  }
+}
