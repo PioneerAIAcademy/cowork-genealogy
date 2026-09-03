@@ -661,13 +661,17 @@ the condition to re-check on.
 
 - `temperature: 0` — OCR is not a creative task.
 - `max_tokens` (`OCR_MAX_TOKENS`, `image-transcribe.ts`) is set **explicitly**.
-  The provider's own default is per-model and can change under us with no
-  notice; setting it makes the cap ours and the truncation case (§6.2)
-  reproducible. `16000` is the measured basis — the §4 spike ran the whole
-  T13 oversize corpus at 16000 and dense pages finished on their own
-  (`finish_reason: "stop"`), re-confirmed for a 1880 census sheet by
-  `dev/probe-ocr-finish-reason.ts`. Scoped to the current default model;
-  re-measure if the default slug (§6.3) changes.
+  Setting it makes the cap ours and the truncation case (§6.2) reproducible.
+  Mind the **direction**: for the current default `google/gemini-3.7-flash`
+  OpenRouter reports a 65536 max-completion ceiling and the tool previously sent
+  no `max_tokens`, so `16000` **lowers** the effective cap, it does not raise it.
+  It is still well above a page's content — the largest full transcription in the
+  committed corpus is ~6.4k chars (~1.6k output tokens), and both Gemini and the
+  prior Qwen default have run at 16000 in `dev/try-ocr-compare.ts` without a
+  content-driven cap. Two caveats keep it a bound, not a proof: that figure is
+  content only, and reasoning tokens draw on the same budget (this model is
+  reasoning-capable), so a reasoning-heavy read could reach 16000 before the page
+  is done. A cap that binds is **visible** (`truncated`, §6.2), never silent.
 - The OCR **prompt is baked into the tool**, not passed by the caller —
   reuse the `image-reader.md` protocol so behavior is identical to today's
   subagent. `lookingFor` is appended as the optional pointer directive.
@@ -681,17 +685,25 @@ Guard against empty content (→ error per §5.6).
 **Output-cap truncation.** Read `choices[0].finish_reason` **and**
 `choices[0].native_finish_reason`. OpenRouter is OpenAI-compatible and returns
 them per choice (`"length"` on an output-token cap, `"stop"` on a complete read;
-evidence in `dev/probe-ocr-finish-reason.ts`). A capped read is **non-empty**, so
-without this it passes as an ordinary success and the caller cannot tell a
-half-read census page from a whole one.
+evidence in `dev/probe-ocr-finish-reason.ts`). A capped read usually carries the
+partial content it got before the cut, so without this it passes as an ordinary
+success and the caller cannot tell a half-read census page from a whole one.
 
-- Truncated when `finish_reason === "length"` **or** `native_finish_reason` is
-  `"length"` / `"MAX_TOKENS"` → set `truncated: true` and a tool-voiced
-  `truncationNotice` (§5.5). This is a **partial success, not an error** —
-  the tool still returns the lines it got; it does not throw. The native field
-  is read as a fallback because not every provider normalizes its cap onto the
-  top-level `finish_reason` (Gemini emits `"MAX_TOKENS"`), and the probe evidence
-  was recorded on the prior Qwen3-VL default, not the current Gemini one.
+- Truncated when `finish_reason` **or** `native_finish_reason` matches a cap
+  marker — `"length"` or `"MAX_TOKENS"`, matched **case-insensitively** — → set
+  `truncated: true` and a tool-voiced `truncationNotice` (§5.5). The measured
+  default (`google/gemini-3.7-flash`) normalizes its cap onto the top-level
+  `finish_reason: "length"` and *also* reports `native_finish_reason:
+  "MAX_TOKENS"`; the second field and the loose casing are **insurance** for a
+  model (reachable via the `openRouterModel` override) that does not normalize
+  or spells the marker differently — not a description of the default.
+- **Content present → partial success, not an error:** the tool returns the
+  lines it got and does **not** throw. **Content empty → still throws** (a
+  zero-content read has nothing to return), but the error text names the cap so
+  the caller learns a budget bound rather than an unreadable scan. This keeps the
+  invariant that `truncated: true` never ships beside an empty `transcription`,
+  and it is the case the §5.6 "empty → throw" row governs — the two are
+  consistent, not contradictory.
 - The `transcription` stays **verbatim** — the signal rides the sibling
   fields, never spliced into the OCR text (that would re-create the
   prose/OCR blend a truncation notice must never introduce; the

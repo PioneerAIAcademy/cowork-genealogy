@@ -8,9 +8,12 @@
  * claim about an external API. This records the live evidence.
  *
  * It fetches one dense 1880 U.S. census page (the record type in the report)
- * and calls OpenRouter TWICE with the shipped OCR request shape:
- *   1. max_tokens: 64   — far below what the page needs, to FORCE the cap.
- *   2. max_tokens: 16000 — generous, so a complete read finishes on its own.
+ * and makes THREE OpenRouter calls:
+ *   1. OCR at max_tokens: 64    — a tiny cap on the OCR request shape.
+ *   2. OCR at max_tokens: 16000 — the shipped budget.
+ *   3. a text-only request at max_tokens: 16 — deterministically forces the cap
+ *      (the OCR path may stop early on this image, so it is not a reliable
+ *      cap-forcer on its own).
  * For each it prints the raw top-level keys, choices[0].finish_reason,
  * choices[0].native_finish_reason, the content length, and usage.
  *
@@ -20,23 +23,32 @@
  *
  * Usage:  npx tsx dev/probe-ocr-finish-reason.ts
  *
- * FINDINGS (live, 2026-09-02, qwen/qwen3-vl-235b-a22b-instruct):
+ * FINDINGS (live, 2026-09-04, google/gemini-3.7-flash — the SHIPPED default;
+ * an earlier 2026-09-02 run on the prior qwen/qwen3-vl-235b-a22b-instruct agreed
+ * on the field shape):
  *   - `finish_reason` AND `native_finish_reason` ARE returned per choice
  *     (choice keys: index, logprobs, finish_reason, native_finish_reason,
- *     message). The #1974 premise holds.
- *   - Output-cap truncation → finish_reason === "length" (native too), with
- *     completion_tokens sitting exactly at max_tokens. Confirmed by a forced
- *     text-only "list 1..500" request capped at 16 tokens.
- *   - A complete read → finish_reason === "stop".
- *   - Side note (out of scope, the "model stops early" mode): on the 1880
- *     census scan this default model returned a degenerate 7-token output
- *     ("565714") with finish_reason "stop" — a stop, not a cap. That is the
- *     mode #1974 explicitly does not try to catch.
- *   => Build steps 1-5: gate the `truncated` flag on finish_reason === "length".
+ *     message). The #1974 premise holds on the shipped model.
+ *   - Output-cap truncation → finish_reason === "length" AND
+ *     native_finish_reason === "MAX_TOKENS" (Gemini normalizes onto the
+ *     top-level field and also reports its native value). Confirmed twice: the
+ *     max_tokens:64 OCR call and the text-only max_tokens:16 call.
+ *   - A complete read → finish_reason === "stop", native_finish_reason "STOP".
+ *   - Gemini is REASONING-capable and reasoning tokens draw on the SAME output
+ *     budget: at max_tokens:64, completion_tokens_details.reasoning_tokens was
+ *     58 of 60, leaving content 2 chars WITH finish_reason "length". So an
+ *     output cap can bind with (near-)empty content — this is why the tool must
+ *     compute `truncated` BEFORE its empty-content guard (spec §6.2, item 1).
+ *   - Side note (out of scope, the "model stops early" mode): at max_tokens:16000
+ *     this model returned a degenerate 6-char output ("565714") with
+ *     finish_reason "stop" — a stop, not a cap; the mode #1974 does not catch.
+ *   => Detection: flag `truncated` when finish_reason OR native_finish_reason
+ *      matches a cap marker ("length"/"MAX_TOKENS"), case-insensitively.
  */
 
 import { getValidToken } from "../src/auth/refresh.js";
 import { getOpenRouterApiKey, getOpenRouterModel } from "../src/auth/config.js";
+import { OCR_MAX_TOKENS } from "../src/tools/image-transcribe.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
@@ -126,7 +138,7 @@ async function main() {
   console.log(`Fetched scan: ${((b64.length * 3) / 4 / 1e6).toFixed(2)} MB (${mime})`);
 
   await callOnce(apiKey, model, b64, mime, 64); // small cap on the OCR path
-  await callOnce(apiKey, model, b64, mime, 16000); // let it finish
+  await callOnce(apiKey, model, b64, mime, OCR_MAX_TOKENS); // the shipped budget
 
   // The VLM may stop early on its own for a given scan (finish_reason "stop"),
   // which never exercises the cap. Force the cap deterministically with a

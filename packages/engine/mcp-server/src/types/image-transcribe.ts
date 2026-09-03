@@ -18,9 +18,10 @@ export interface ImageTranscribeResult {
    *  truncation is signalled by the sibling `truncated`/`truncationNotice`
    *  fields, not by splicing prose into this text. */
   transcription: string;
-  /** True only when the OCR hit its output-token cap (finish_reason
-   *  === "length"): the transcription above is PARTIAL and the rest of the
-   *  page is unread, not empty. Absent on a complete read. See spec §6.2. */
+  /** True only when the OCR hit its output-token cap (finish_reason or
+   *  native_finish_reason marks it — see §6.2 for the exact match): the
+   *  transcription above is PARTIAL and the rest of the page is unread, not
+   *  empty. Absent on a complete read. */
   truncated?: true;
   /** Tool-voiced, human-readable companion to `truncated` — a plain sentence
    *  the caller can surface without improvising. Present iff `truncated`. */
@@ -32,8 +33,9 @@ export interface ImageTranscribeResult {
    *  when projectPath was supplied and the save succeeded (§8.5). */
   imageRef?: string;
   /** Present only from the (N+1)th distinct image in one image group in one
-   *  project onward. Advisory only — the transcription above is complete and
-   *  unaffected. See spec §5.8. */
+   *  project onward. Advisory only, and independent of `truncated` — the two can
+   *  co-occur (a browse-budget read can also be output-cap truncated). See spec
+   *  §5.8. */
   browseBudget?: {
     /** The image-group prefix, e.g. "004261111". */
     imageGroup: string;
@@ -59,10 +61,12 @@ export interface OpenRouterChatResponse {
     /** OpenAI-compatible stop reason. "length" marks an output-token-cap
      *  truncation; "stop" a complete read. (Probe: dev/probe-ocr-finish-reason.ts.) */
     finish_reason?: string | null;
-    /** The provider's own un-normalized stop reason. OpenRouter usually maps a
-     *  cap to `finish_reason: "length"`, but not every provider normalizes
-     *  cleanly (e.g. Gemini emits "MAX_TOKENS"), so we read this as a fallback
-     *  signal. Both were captured by the probe. */
+    /** The provider's own un-normalized stop reason. The shipped default
+     *  (Gemini) DOES normalize — it reports `finish_reason: "length"` and
+     *  `native_finish_reason: "MAX_TOKENS"` together (probe:
+     *  dev/probe-ocr-finish-reason.ts). We read this field as insurance for a
+     *  model (reachable via the openRouterModel override) that does not
+     *  normalize, or spells the cap differently. */
     native_finish_reason?: string | null;
   }>;
   error?: { message?: string; code?: number };
