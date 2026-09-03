@@ -47,5 +47,9 @@ export async function assertTransportContract(transport: ResearchTransport): Pro
 
   // Required action methods are present.
   assert(typeof transport.openExternal === 'function', 'openExternal must be a function')
+  assert(
+    typeof transport.openFamilySearch === 'function',
+    'openFamilySearch must be a function',
+  )
   assert(typeof transport.submitFeedback === 'function', 'submitFeedback must be a function')
 }
