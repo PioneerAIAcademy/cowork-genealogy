@@ -151,3 +151,18 @@ describe('middleware — the loopback check is equality, not a prefix', () => {
     expect(middleware(req('GET', { host: 'localhost:3000' })).status).toBe(200)
   })
 })
+
+/**
+ * `isLoopbackHost`'s URL-parse catch (#1999 review). Flipping it to
+ * `return true` left all 17 guards green, and it is reachable: these Host values
+ * arrive at the middleware from a real client and are refused only by that
+ * branch.
+ */
+describe('middleware — an unparseable Host is refused', () => {
+  for (const host of ['127.0.0.1:abc', '[::1', 'a[b]c:3000']) {
+    it(`refuses a Host that does not parse: ${host}`, () => {
+      expect(middleware(req('GET', { host })).status).toBe(403)
+    })
+  }
+})
+

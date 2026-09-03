@@ -107,8 +107,8 @@ describe('the control is actually wired', () => {
     // server listened on every interface.
     for (const s of ['dev', 'start'] as const) {
       const cmd = pkg.scripts[s]
-      expect(cmd, `${s} must bind loopback`).toMatch(/(?:--hostname|-H) 127\.0\.0\.1(?:\s|$)/)
-      expect(cmd.match(/--hostname|-H\b/g) ?? [], `${s}: a later hostname flag wins`).toHaveLength(1)
+      expect(cmd, `${s} must bind loopback`).toMatch(/(?:--hostname|-H)[=\s]*127\.0\.0\.1(?:\s|$)/)
+      expect(cmd.match(/--hostname|-H/g) ?? [], `${s}: a later hostname flag wins`).toHaveLength(1)
     }
   })
 
@@ -130,7 +130,7 @@ describe('the control is actually wired', () => {
     const pkg = JSON.parse(
       fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8')
     ) as { scripts: Record<string, string> }
-    const port = pkg.scripts.dev.match(/(?:--port|-p)\s+(\d+)/)?.[1] ?? '3000'
+    const port = pkg.scripts.dev.match(/(?:--port|-p)[=\s]*(\d+)/)?.[1] ?? '3000'
     const bat = fs.readFileSync(path.resolve(__dirname, '../../../Start.bat'), 'utf8')
     expect(bat, `Start.bat must open the port \`npm run dev\` serves (${port})`).toMatch(
       new RegExp(String.raw`^start http://127\.0\.0\.1:${port}\s*$`, 'm'),
