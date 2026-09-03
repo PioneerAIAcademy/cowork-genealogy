@@ -2,6 +2,7 @@ import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "../utils/http.js";
 import { toArk } from "../utils/ark.js";
+import { expandNameForFulltext } from "../utils/name-variants.js";
 import type {
   FulltextSearchInput,
   FulltextSearchResponse,
@@ -56,14 +57,23 @@ function validateInput(input: FulltextSearchInput): void {
   }
 }
 
-function buildUrl(input: FulltextSearchInput): string {
+function buildUrl(input: FulltextSearchInput, nameOverride?: string): string {
   const params: string[] = [];
   const add = (key: string, value: string | number): void => {
     params.push(`${key}=${encodeURIComponent(String(value))}`);
   };
 
   if (input.keywords) add("q.text", input.keywords);
-  if (input.name) add("q.fullName", input.name);
+  // When a name expansion is active, nameOverride carries the quoted-phrase
+  // expansion; input.name stays untouched so echoQuery and staging see the
+  // caller's original value.
+  const nameValue = nameOverride ?? input.name;
+  if (nameValue) {
+    add("q.fullName", nameValue);
+    // Boost the name field so name matches rank higher when expansion
+    // widens the query with variant phrases (recommended by @DallanQ).
+    if (nameOverride) add("q.fullName.boost", 2.0);
+  }
   if (input.place) add("q.recordPlace", input.place);
   if (input.nlQuery) add("nlQuery", input.nlQuery);
   if (input.collectionId) add("f.collectionId", input.collectionId);
@@ -78,6 +88,10 @@ function buildUrl(input: FulltextSearchInput): string {
 
   add("count", input.count ?? 5);
   add("offset", input.offset ?? 0);
+
+  // m.queryRequireDefault=on requires at least one of the listed terms/phrases
+  // to appear in the document. With quoted-phrase expansion this gives the
+  // desired OR behaviour: any variant matching satisfies the name field.
   add("m.queryRequireDefault", "on");
 
   if (input.includeFacets) {
@@ -164,8 +178,13 @@ export async function fulltextSearchTool(
 ): Promise<FulltextSearchResponse> {
   validateInput(input);
 
+  // Expand recognized given names with historical diminutives (issue #607).
+  // The expansion rewrites the Lucene query but never mutates input — echoQuery
+  // and stageSearchResults must both see the caller's original input.name.
+  const expansion = input.name ? expandNameForFulltext(input.name) : null;
+
   const token = await getValidToken();
-  const url = buildUrl(input);
+  const url = buildUrl(input, expansion?.expanded);
 
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
@@ -220,6 +239,45 @@ export async function fulltextSearchTool(
       ? await unloggedStagedSearches(input.projectPath)
       : [];
 
+  // Detect which expanded variants appear in results — must run before
+  // compaction strips textDocument. Scans names, highlights, and the full
+  // transcript (the tool's "mentioned anywhere in the document" case).
+  function detectVariantsInResults(): string[] {
+    if (!expansion) return [];
+    const allVariants = new Set<string>();
+    for (const variants of Object.values(expansion.expansions)) {
+      for (const v of variants) {
+        allVariants.add(v.toLowerCase());
+      }
+    }
+    const matched = new Set<string>();
+    for (const r of results) {
+      for (const name of r.names ?? []) {
+        for (const word of name.split(/\s+/)) {
+          if (allVariants.has(word.toLowerCase())) {
+            matched.add(word);
+          }
+        }
+      }
+      for (const hl of r.highlightTerms ?? []) {
+        for (const word of hl.split(/\s+/)) {
+          if (allVariants.has(word.toLowerCase())) {
+            matched.add(word);
+          }
+        }
+      }
+      if (r.textDocument) {
+        for (const word of r.textDocument.split(/\s+/)) {
+          const clean = word.replace(/[^a-zA-Z]/g, "").toLowerCase();
+          if (clean && allVariants.has(clean)) {
+            matched.add(clean);
+          }
+        }
+      }
+    }
+    return [...matched];
+  }
+
   const out: FulltextSearchResponse = {
     query: echoQuery(input),
     totalResults: data.results ?? 0,
@@ -244,6 +302,18 @@ export async function fulltextSearchTool(
     // gate on it: a `negative` entry for a query with matches is the worse error.
     ...(input.projectPath !== undefined && results.length === 0 && (data.results ?? 0) === 0
       ? { nilSearchNeedsLog: NIL_SEARCH_NEEDS_LOG_NOTE }
+      : {}),
+    // nameExpansion precedes results so it survives a size-bound trim —
+    // the field after the largest payload is the first thing dropped.
+    ...(expansion && input.name
+      ? {
+          nameExpansion: {
+            original: input.name,
+            expanded: expansion.expanded,
+            expansions: expansion.expansions,
+            variantsInResults: detectVariantsInResults(),
+          },
+        }
       : {}),
     results,
   };
@@ -309,7 +379,10 @@ export const fulltextSearchToolSchema = {
       name: {
         type: "string",
         description:
-          "Search within name fields only. Same operator syntax as keywords.",
+          "Search within name fields only. Same operator syntax as keywords. " +
+          "Recognized English given names are automatically expanded with historical " +
+          "diminutives (e.g. Elizabeth also matches Betty, Bess, Eliza). The response " +
+          "includes a nameExpansion field showing what was expanded and which variants matched.",
       },
       place: {
         type: "string",

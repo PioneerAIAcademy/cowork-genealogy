@@ -46,8 +46,8 @@ This skill uses one search tool:
 FTS and indexed search are completely different systems:
 
 - **What's searched:** Raw transcript text, not structured name/date/place fields.
-- **No fuzzy matching.** Exact text only — no nicknames, phonetic variants, or Soundex.
-- **No abbreviation expansion.** Must search Wm and William separately.
+- **No fuzzy matching** in `keywords` and `place` fields. Exact text only — no nicknames, phonetic variants, or Soundex. The `name` field auto-expands recognized English given names with historical diminutives.
+- **No abbreviation expansion** in `keywords` and `place` fields. The `name` field auto-expands (e.g. Elizabeth also matches Betty, Bess, Eliza).
 - **Default is OR** — at least one term must appear. Always use `+` to require terms.
 - **Unique strength:** Finding non-principal mentions (witnesses, neighbors, heirs).
 
