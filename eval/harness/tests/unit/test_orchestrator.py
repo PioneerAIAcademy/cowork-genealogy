@@ -1571,3 +1571,61 @@ def test_orchestrator_passes_text_response_to_validators(tmp_path, monkeypatch):
         "validator that reads the reply is now inert"
     )
     assert captured["text_response"] == reply
+
+
+def test_orchestrator_threads_refinement_targets_into_validators(tmp_path, monkeypatch):
+    """A test JSON's top-level `refinement_targets` must reach the `test`
+    dict run_validators receives (issue #2021, F12).
+
+    Adding a field to the unit-test JSON schema and reading it in a
+    validator is NOT sufficient — `_run_one_test_async` builds the
+    validator-facing `test` dict as an explicit whitelist
+    (`{**spec.raw.get("test", {}), "expected_classifications": ...,
+    "refinement_targets": ..., "execution": ...}`), so a field left off
+    that literal never arrives even though `spec.raw` has it. This bug
+    shipped once already: `refinement_targets` was declared in the schema
+    and read by `test_refinement_preserves_extraction_fields_and_avoids_duplication`
+    but never added to this dict, so the validator silently reported
+    "skipped: test declares no refinement_targets" on every run instead of
+    actually checking anything. Pinned behaviourally (via a patched
+    `run_validators`, not a source grep) so it fails the same way if the
+    threading line is ever removed again.
+    """
+    spec = load_test(WIKI_TEST_PATH)
+    spec.raw["refinement_targets"] = ["a_002"]
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="done",
+            skills_invoked=["search-wikipedia"],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    captured = {}
+
+    def fake_run_validators(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", fake_run_validators)
+    monkeypatch.setattr(orchestrator, "grade", lambda **kw: (_ for _ in ()).throw(
+        JudgeError("not under test")
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-08-22_00-00-00",
+    ))
+
+    assert captured["test"].get("refinement_targets") == ["a_002"], (
+        "orchestrator did not thread spec.raw['refinement_targets'] into "
+        "run_validators' test dict; test_refinement_preserves_extraction_"
+        "fields_and_avoids_duplication silently skips on every run"
+    )
