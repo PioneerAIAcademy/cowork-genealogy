@@ -1,11 +1,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const saveConfigMock = vi.hoisted(() => vi.fn());
-vi.mock("../../src/auth/config.js", () => ({
-  saveConfig: saveConfigMock,
-}));
+vi.mock("../../src/auth/config.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/auth/config.js")>();
+  return {
+    ...actual,
+    saveConfig: saveConfigMock,
+  };
+});
 
-import { configureOpenRouterTool } from "../../src/tools/configure-openrouter.js";
+import {
+  configureOpenRouterTool,
+  configureOpenRouterSchema,
+} from "../../src/tools/configure-openrouter.js";
+import { OPENROUTER_API_KEY_MISSING_MESSAGE } from "../../src/auth/config.js";
 
 beforeEach(() => {
   saveConfigMock.mockReset();
@@ -17,52 +25,66 @@ afterEach(() => {
 });
 
 describe("configureOpenRouterTool", () => {
-  it("saves the key via saveConfig and returns a masked preview (never the full key)", async () => {
-    const result = await configureOpenRouterTool({
-      apiKey: "sk-or-v1-abcd1234ef",
-    });
-
+  it("saves a model via saveConfig", async () => {
+    const result = await configureOpenRouterTool({ model: "qwen/other-vl" });
     expect(saveConfigMock).toHaveBeenCalledWith(
-      expect.objectContaining({ openRouterApiKey: "sk-or-v1-abcd1234ef" })
+      expect.objectContaining({ openRouterModel: "qwen/other-vl" })
     );
     expect(result.saved).toBe(true);
-    expect(result.keyPreview).not.toContain("abcd1234");
-    expect(result.keyPreview).toMatch(/^sk-or…/);
+    expect(result.model).toBe("qwen/other-vl");
   });
 
-  it("trims surrounding whitespace before saving", async () => {
-    await configureOpenRouterTool({ apiKey: "  sk-or-trimmed123  " });
+  it("trims surrounding whitespace on model", async () => {
+    await configureOpenRouterTool({ model: "  qwen/trimmed  " });
     expect(saveConfigMock).toHaveBeenCalledWith(
-      expect.objectContaining({ openRouterApiKey: "sk-or-trimmed123" })
+      expect.objectContaining({ openRouterModel: "qwen/trimmed" })
     );
   });
 
-  it("passes an optional model through", async () => {
-    await configureOpenRouterTool({
-      apiKey: "sk-or-xyz12345",
-      model: "qwen/other-vl",
-    });
-    expect(saveConfigMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        openRouterApiKey: "sk-or-xyz12345",
-        openRouterModel: "qwen/other-vl",
-      })
+  it("accepts an empty call (no model)", async () => {
+    const result = await configureOpenRouterTool({});
+    expect(saveConfigMock).toHaveBeenCalled();
+    expect(result.model).toBeNull();
+  });
+});
+
+describe("configureOpenRouterSchema", () => {
+  it("does not accept an apiKey parameter", () => {
+    expect(configureOpenRouterSchema.inputSchema.properties).not.toHaveProperty(
+      "apiKey"
     );
   });
 
-  it("does not set openRouterModel when the model is omitted", async () => {
-    await configureOpenRouterTool({ apiKey: "sk-or-xyz12345" });
-    const arg = saveConfigMock.mock.calls[0][0] as Record<string, unknown>;
-    expect(arg).not.toHaveProperty("openRouterModel");
+  it("does not require any parameter", () => {
+    expect(configureOpenRouterSchema.inputSchema).not.toHaveProperty(
+      "required"
+    );
   });
 
-  it("rejects an empty/whitespace or missing key without saving", async () => {
-    await expect(configureOpenRouterTool({ apiKey: "   " })).rejects.toThrow(
-      /non-empty OpenRouter API key/
+  it("description tells the user to set the key in config.json, not in chat", () => {
+    expect(configureOpenRouterSchema.description).toContain(
+      "config.json"
     );
-    await expect(configureOpenRouterTool({})).rejects.toThrow(
-      /non-empty OpenRouter API key/
+    expect(configureOpenRouterSchema.description).toMatch(
+      /never ask.*paste.*key|does NOT accept an API key/i
     );
-    expect(saveConfigMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("OPENROUTER_API_KEY_MISSING_MESSAGE", () => {
+  it("names the config file path", () => {
+    expect(OPENROUTER_API_KEY_MISSING_MESSAGE).toContain(
+      "~/.familysearch-mcp/config.json"
+    );
+  });
+
+  it("names the JSON field", () => {
+    expect(OPENROUTER_API_KEY_MISSING_MESSAGE).toContain("openRouterApiKey");
+  });
+
+  it("does not instruct Claude to receive the key via configure_openrouter", () => {
+    expect(OPENROUTER_API_KEY_MISSING_MESSAGE).not.toMatch(
+      /call configure_openrouter/i
+    );
   });
 });

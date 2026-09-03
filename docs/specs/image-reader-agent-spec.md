@@ -154,7 +154,8 @@ It returns:
 - the pivot recommendation: read the **indexed** record for this image
   (`record_read` / `record_search` / `search-full-text`, or a related
   person's indexed record). If the failure was a missing/rejected OpenRouter
-  key, note the caller can fix it via `configure_openrouter`.
+  key, note the caller should set `openRouterApiKey` in
+  `~/.familysearch-mcp/config.json` directly.
 
 It does **not** retry via browser / `web_fetch` / "Claude in Chrome"
 (unavailable), and it never invents, infers, or guesses page contents when
