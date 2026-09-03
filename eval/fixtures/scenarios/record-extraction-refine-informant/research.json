@@ -1,0 +1,118 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Confirm Thomas Doyle's birthplace and origins before the family's emigration to Pennsylvania",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-05-01",
+    "updated": "2026-05-10"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where was Thomas Doyle born?",
+      "rationale": "This is the primary research objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-05-01T09:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Doyle",
+        "given": "Thomas",
+        "collection": "1900 United States Federal Census",
+        "place": "Carbon County, Pennsylvania"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "Found Thomas Doyle, head of household, Carbon County, PA, 1900 census. Extracted 2026-05-01.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1900 U.S. Census, Carbon County, Pennsylvania, population schedule, Thomas Doyle household; NARA microfilm publication T623; digital image, FamilySearch.org, accessed 1 May 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1900 U.S. Federal Census, population schedule",
+        "when_created": "1900",
+        "when_accessed": "2026-05-01",
+        "where": "FamilySearch.org (NARA microfilm T623)",
+        "where_within": "Carbon County, Pennsylvania"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-01",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M6QK-HRD",
+      "url_archived": null,
+      "notes": "Extracted 2026-05-01. No informant named on the schedule; initial extraction assumed Thomas answered for himself.",
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M6QK-HRD",
+      "record_role": "head",
+      "fact_type": "name",
+      "value": "Thomas Doyle",
+      "structured_value": { "given": "Thomas", "surname": "Doyle" },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "primary",
+      "informant": "household head (self)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Initial extraction assumed Thomas answered the enumerator himself; the census names no informant.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M6QK-HRD",
+      "record_role": "head",
+      "fact_type": "birth",
+      "value": "Ireland",
+      "structured_value": null,
+      "date": null,
+      "date_certainty": null,
+      "place": "Ireland",
+      "information_quality": "primary",
+      "informant": "household head (self)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Initial extraction assumed Thomas answered the enumerator himself; the census names no informant.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

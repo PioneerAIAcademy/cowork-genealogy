@@ -32,6 +32,19 @@ export const STAGING_CAPABLE_TOOLS = new Set([
   "external_links_search",
 ]);
 
+/**
+ * The subset of STAGING_CAPABLE_TOOLS whose sidecar results carry a GedcomX
+ * persona document, so `research_append`'s D2 / the validator's D5 can resolve
+ * or auto-fill `record_persona_id`. A whitelist, not a blacklist: the next
+ * staging producer added is treated as persona-less until it is listed here,
+ * which fails safe rather than silently matching nothing on a `recordId` field
+ * it does not carry (#2038). `record_search` results key on `recordId`; the
+ * persona-less producers (`fulltext_search`, `external_links_search`) key on
+ * `id`. Mirrors `personaReachable` in research-append.ts and `_persona_reachable`
+ * in the eval harness.
+ */
+export const PERSONA_BEARING_PRODUCERS = new Set(["record_search"]);
+
 export interface StagedHandle {
   resultsRef: string;
   returnedCount: number;
