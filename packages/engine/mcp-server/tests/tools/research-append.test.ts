@@ -2505,6 +2505,54 @@ describe("research_append (batch ops)", () => {
     expect(msg).not.toMatch(/None of them belongs to this question/);
   });
 
+  it("(d2-misroute) reports the cause AND every other document error in the batch", async () => {
+    // The limitation a reviewer asked me to file: the early return meant a
+    // batch carrying a misroute plus an unrelated document error reported only
+    // the misroute, so the caller needed a second round trip to see the rest.
+    // Fixed rather than filed, because the misroute set is a strict subset of
+    // the validation-failing set, so merging the lists needs no reordering.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+    ] as any;
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_002, left empty
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" },  // misroute
+        // An unrelated document-level error, in the same batch.
+        {
+          section: "hypotheses",
+          op: "append",
+          entry: {
+            claim: "Same man",
+            status: "NOT_A_STATUS",
+            supporting_assertion_ids: [],
+            contradicting_assertion_ids: [],
+            ruled_out: false,
+            ruled_out_reason: null,
+            notes: null,
+            related_question_ids: [],
+          },
+        } as any,
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const joined = r.errors.join(" ");
+    // BOTH, not one: the cause first, the document error still present.
+    expect(joined).toMatch(/ends this call with no items/);
+    expect(joined).toMatch(/hypothesis_status|NOT_A_STATUS/);
+    // And the cause still leads, because it names what to change.
+    expect(r.errors[0]).toMatch(/ends this call with no items/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
   it("(d2-misroute) leaves a NON-ARRAY items to its own type error", async () => {
     // The misroute diagnosis says the plan "ends this call with no items". For
     // `items: "none"` that describes the document wrongly — it ends the call

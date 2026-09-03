@@ -2534,13 +2534,17 @@ export async function researchAppend(
     // plan_items ops wrote elsewhere. Checked on POST-APPLY state (that is what
     // "ends the call with no items" means) and before any write, so nothing is
     // persisted. The `plans` hint teaches the batched shape that satisfies it.
+    // Computed here, on post-apply state, but NOT returned on: an early return
+    // suppressed every other document-level error in the same batch, so a
+    // caller with a misroute AND a bad enum elsewhere was told about one of
+    // them and had to make a second call to discover the other. Reordering is
+    // not needed to fix that: a created plan ending with no items always
+    // produces a validation error (`items` absent fails the required check,
+    // `[]` fails the non-empty check, and the non-array case is excluded from
+    // the misroute set), so the misroute set is a strict SUBSET of the
+    // validation-failing set. Carrying the messages down to the validation
+    // failure and merging them there loses nothing and reports everything.
     const misrouted = emptyCreatedPlanErrors(ops, research, applied);
-    if (misrouted.length > 0) {
-      return fail(
-        misrouted.map((m) => fmt(m.index, m.message)),
-        [{ section: "plans", op: "append" }],
-      );
-    }
 
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
     const anyMutation = applied.some((a) => !a.noop) || prep.treeMutated;
@@ -2568,16 +2572,21 @@ export async function researchAppend(
         // Shape errors surface here (the document validator, not applyOne), so
         // this is the site the evaluations/known_holdings rejections land on.
         const mapped = mapValidationErrors(formatIssues(validation.errors), applied, isBatch);
+        // The cause-naming messages lead, because they name what to change;
+        // the document errors follow so nothing in the batch is hidden.
+        const misrouteMsgs = misrouted.map((m) => fmt(m.index, m.message));
         // Only hint the sections the errors actually name — in a wide batch,
         // examples for ops that validated fine would be noise pointing away
         // from the real problem.
         const blamed = ops.filter((o) => mapped.some((m) => m.includes(String(o.section))));
         return fail(
-          mapped,
-          (blamed.length > 0 ? blamed : ops).map((o) => ({
-            section: String(o.section),
-            op: o.op === "update" ? "update" : "append",
-          })),
+          [...misrouteMsgs, ...mapped],
+          misrouteMsgs.length > 0
+            ? [{ section: "plans", op: "append" as const }]
+            : (blamed.length > 0 ? blamed : ops).map((o) => ({
+                section: String(o.section),
+                op: o.op === "update" ? ("update" as const) : ("append" as const),
+              })),
         );
       }
       validationWarnings = formatIssues(validation.warnings);
