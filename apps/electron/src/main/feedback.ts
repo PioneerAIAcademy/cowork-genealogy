@@ -194,7 +194,7 @@ export type TranscriptFile = { path: string; text: string }
 // The active session's parent transcript keeps its historical name so every
 // existing consumer reads it unchanged. Mirrors `PARENT_LOG_ENTRY` in
 // apps/server/app/feedback.py.
-const PARENT_LOG_ENTRY = '_feedback/session-log.jsonl'
+export const PARENT_LOG_ENTRY = '_feedback/session-log.jsonl'
 
 export type SessionLog = {
   /** The active session's conversation entries. Kept for the renderer, which
@@ -667,7 +667,16 @@ function renderFeedbackJson(args: {
   return JSON.stringify(payload, null, 2) + '\n'
 }
 
-function renderFeedbackMarkdown(args: {
+/** Exported for direct unit tests of its branch wording.
+ *
+ * The server's counterpart (`_feedback_markdown` in apps/server/app/feedback.py)
+ * is module-private but reachable from its tests, so every branch of its
+ * session-log message is asserted directly. Reaching this one only through
+ * `buildFeedbackZip` would mean a >20 MB transcript to exercise the
+ * over-budget branch, and such a test stops exercising it the moment anyone
+ * raises `SESSION_LOG_CAP_BYTES` — silently. Hence the export.
+ */
+export function renderFeedbackMarkdown(args: {
   fields: NormalizedFields
   workedAsExpected: boolean
   timestamp: string

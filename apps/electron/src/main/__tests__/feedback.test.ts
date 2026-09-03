@@ -10,7 +10,9 @@ import {
   FEEDBACK_SCHEMA_VERSION,
   MAX_FIELD_CHARS,
   NOT_PROVIDED,
+  PARENT_LOG_ENTRY,
   readSessionLog,
+  renderFeedbackMarkdown,
   type FeedbackOptions
 } from '../feedback'
 
@@ -737,5 +739,55 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
       const md = await zip.file('FEEDBACK.md')!.async('string')
       expect(md).toContain('agent-empty')
     })
+  })
+})
+
+// The grouped-only branch has TWO causes and names whichever applied. The
+// empty-parent cause is covered end-to-end above ('names the grouped path,
+// not a missing session-log.jsonl…'); the over-budget cause cannot be reached
+// that way without a >20 MB transcript, and a test sized against
+// SESSION_LOG_CAP_BYTES silently stops exercising the branch the moment anyone
+// raises the cap. So this pair drives the renderer directly, mirroring
+// `_session_log_markdown` in apps/server/tests/test_feedback.py.
+describe('renderFeedbackMarkdown — the grouped-only branch names its cause', () => {
+  const groupedOnlyMarkdown = (skipped: string[]): string =>
+    renderFeedbackMarkdown({
+      fields: {
+        email: 't@example.com',
+        userPrompt: 'q',
+        agentDid: 'd',
+        agentShouldHave: '',
+        correctAnswer: '',
+        notes: ''
+      },
+      workedAsExpected: false,
+      timestamp: '2026-09-01T00:00:00Z',
+      projectFolder: '/tmp/a-project',
+      viewerVersion: 'test 2026-09-01 (abc123)',
+      sessionLogStatus: 'included-grouped-only',
+      hasSubagentTranscripts: true,
+      skipped
+    })
+
+  it('names the size budget, and the list it points at is rendered', () => {
+    // This cause DOES record a drop, so naming the "Skipped files" list is
+    // correct here — and the list really is there. Both halves asserted,
+    // because the failure mode is a message and a section disagreeing.
+    const md = groupedOnlyMarkdown([`${PARENT_LOG_ENTRY} (over the transcript size budget)`])
+
+    expect(md).toContain('did not fit the transcript size budget')
+    expect(md).toContain('## Skipped files')
+    expect(md).not.toContain('had no conversation entries')
+  })
+
+  it('names the empty parent, and points at no list, when no drop was recorded', () => {
+    // The commoner cause records nothing, so `skipped.length > 0` leaves the
+    // section unrendered. Sending the triager there to learn which cause
+    // applied is the #1481 missing-file hunt this message exists to prevent.
+    const md = groupedOnlyMarkdown([])
+
+    expect(md).toContain('had no conversation entries for this project')
+    expect(md).not.toContain('Skipped files')
+    expect(md).not.toContain('transcript size budget')
   })
 })
