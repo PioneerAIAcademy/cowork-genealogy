@@ -66,10 +66,15 @@ export function validateAnnotation(value: unknown): AnnotationFile {
   return result.data as AnnotationFile;
 }
 
-function annPathForRunLog(runLogId: string): string {
+export function annPathForRunLog(runLogId: string): string {
   // `runLogId` is built from catch-all URL segments and reaches both a write and
-  // an `fs.rm`. Contained here, at the one place both callers share, rather than
+  // an `fs.rm`. Contained here, at the one place every caller shares, rather than
   // at each call site.
+  //
+  // Exported by main for the 422 body of `GET /api/runlogs/<...id>`, which calls
+  // it from a catch block. That cannot throw a second time: `readRunLogById`
+  // runs first and answers 404 on a refused path, so the catch is only reached
+  // for an id already known contained.
   return resolveWithin(runlogsUnitDir(), `${runLogId}.ann.json`);
 }
 
