@@ -8,8 +8,8 @@ import type {
 } from '../../lib/schema'
 import { getPreferredName, getPrimaryFact } from '../../lib/schema'
 import { orderPersons, relationshipFromPerspective } from '../../lib/relationship-label'
-import { openExternal } from '../../lib/external'
-import { familySearchUrl } from '../../lib/ark'
+import { openFamilySearch } from '../../lib/external'
+import { resolveFamilySearchTarget } from '../../lib/familysearch-url'
 import Pill from './Pill'
 import styles from './SidecarResultCard.module.css'
 
@@ -117,13 +117,16 @@ function RecordSearchBody({
                     <code className={styles.treeId}>{tm.treeId}</code>
                   </>
                 )}
-                {tm.ark && (
+                {/* Gated on RESOLVABILITY, not truthiness — matching PersonCard. A value
+                    the policy refuses renders a button that opens nothing, which
+                    PersonCard's own test calls worse than no button (#2049 review). */}
+                {tm.ark && resolveFamilySearchTarget(tm.ark) && (
                   <>
                     {' · '}
                     <button
                       type="button"
                       className={styles.externalLink}
-                      onClick={() => openExternal(familySearchUrl(tm.ark as string))}
+                      onClick={() => openFamilySearch(tm.ark)}
                     >
                       View →
                     </button>
@@ -135,12 +138,12 @@ function RecordSearchBody({
         </div>
       )}
 
-      {result.arkUrl && (
+      {result.arkUrl && resolveFamilySearchTarget(result.arkUrl) && (
         <div className={styles.footerLink}>
           <button
             type="button"
             className={styles.externalLink}
-            onClick={() => openExternal(result.arkUrl)}
+            onClick={() => openFamilySearch(result.arkUrl)}
           >
             Open in FamilySearch →
           </button>
@@ -163,6 +166,13 @@ function FulltextSearchBody({ result }: { result: FulltextSearchResult }): React
   const allDates = Array.from(
     new Set([result.recordDate, ...(result.dates ?? [])].filter(Boolean))
   )
+  // Prefer sourceUrl (the upstream-supplied resolver URL) when it resolves;
+  // fall back to id, which can itself be a legacy full-URL shape for sidecars
+  // staged before #272. Gated on RESOLVABILITY, not truthiness — matching
+  // PersonCard and the tree-match sink above (#2049 review).
+  const fulltextLinkTarget =
+    (result.sourceUrl && resolveFamilySearchTarget(result.sourceUrl)) ||
+    (result.id && resolveFamilySearchTarget(result.id))
   if (terms.length > 0 && text) {
     const escaped = terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).filter(Boolean)
     if (escaped.length > 0) {
@@ -200,14 +210,12 @@ function FulltextSearchBody({ result }: { result: FulltextSearchResult }): React
           <span>{allDates.join(', ')}</span>
         </div>
       )}
-      {result.id && (
+      {fulltextLinkTarget && (
         <div className={styles.footerLink}>
           <button
             type="button"
             className={styles.externalLink}
-            onClick={() =>
-              openExternal(result.sourceUrl || familySearchUrl(result.id as string))
-            }
+            onClick={() => openFamilySearch(result.sourceUrl || result.id)}
           >
             Open in FamilySearch →
           </button>
