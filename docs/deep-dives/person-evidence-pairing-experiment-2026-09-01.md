@@ -107,12 +107,24 @@ Folded into an agent, that instruction became unexecutable: **no shipped plugin
 agent grants a `Skill` tool**, and the routing skill did not mention the step
 either. It existed nowhere and ran zero times in arm A.
 
-Measured, before and after moving the pass to the router:
+Measured across all four arms — and the third row is the one that matters:
 
-| | arm A | arms B and C |
-|---|---:|---:|
-| `check-warnings` invoked | **0 of 22** | **17 of 22** |
-| `test_check_warnings_runs_after_a_write` failures | 4 | **0** |
+| arm | where the step lived | ran the check | validator failures |
+|---|---|---:|---:|
+| A | nowhere (fold dropped it) | **0 of 22** | 4 |
+| B, C | the routing skill | **17 of 22** | **0** |
+| **D** | **the agent body** | **0 of 22** | **4** |
+
+**Arm D is the refutation.** The agent was granted `person_warnings` under all
+three spellings, told in §8 to call it on every person it linked or minted, and
+called it **zero times in 22 tests** — while spawning 15 times, so the agent
+itself ran. The router, when the step was its job, did it 17 of 22. `same_person`
+calls halved over the same move (10 in arm B, 5 in arm D).
+
+So the step now runs by **neither** route, and arm D is the worst arm of the four
+(6 pass / 4 partial / 12 fail). Arm D is under judge prompt `9451d105` where A-C
+were `03f306ff`, so part of the outcome delta may be the judge — but the tool-call
+counts are mechanical and unaffected by grading.
 
 Two further failures cleared with it incidentally (a tree `sources` write outside
 the agent's ownership, and a null `match_score`).
@@ -131,6 +143,17 @@ PR that cited it. The step is now in the agent, which calls `person_warnings`
 itself; the agent's `tools:` gained `person_warnings` and `person_quality`, a
 deliberate widening past what the monolith held, because the monolith reached
 them by invoking a SKILL and an agent cannot.
+
+**The doctrinally-correct location is the empirically least effective one, and
+that is the finding this arm buys.** §0 of the conversion guide forbids the step
+living in the router, because no plane guarantees the router runs. The
+measurement says the agent will not honour it: prose at line ~665 of a
+1,072-line body loses to the same sentence in a 51-line router, which is Result
+3's mechanism seen from a second direction. Both statements are true, which
+leaves the step with no home in prose at all. The only remaining mechanism is a
+**plane** — a writer-tool precondition on `research_append` refusing a
+`person_evidence` write with no warnings pass behind it — or an explicit,
+recorded accepted loss. That decision is the lead's and is open.
 
 **The eval keyed on the wrong thing too.** `test_check_warnings_runs_after_a_write`
 asserted `"check-warnings" in skills_invoked`, so the correct fix would have
