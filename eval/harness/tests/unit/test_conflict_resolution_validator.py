@@ -318,11 +318,37 @@ def _corpus_runs():
                 yield Path(path).name, t["test_id"], (diff.get("conflicts") or {})
 
 
+def _second_derivation_carries_analysis(entry: dict) -> bool:
+    """Whether a conflict entry carries resolution work, stated as the RULE.
+
+    Restated rather than imported, for the same reason as the field tuple above.
+    The rule (SKILL.md's creation template) is that a freshly identified conflict
+    has all five fields at null / "unresolved", so:
+
+    - `status` counts only when it is something OTHER than null or "unresolved"
+    - the four prose/id fields count when populated
+
+    Bare truthiness is NOT the rule, and getting that wrong is what made this
+    derivation disagree with the validator on a permitted turn: the creation
+    template writes `"status": "unresolved"`, which is truthy, so every created
+    conflict looked like a resolution and a run that resolved one conflict while
+    identifying a new one reddened the corpus test (@clack391).
+    """
+    for f in _SECOND_DERIVATION_ANALYSIS_FIELDS:
+        v = entry.get(f)
+        if f == "status":
+            if v not in (None, "unresolved"):
+                return True
+        elif v not in (None, "", [], {}):
+            return True
+    return False
+
+
 def _independently_multi_conflict_runs():
     """Runs whose diff writes an analysis field on MORE THAN ONE conflict.
 
-    A created conflict counts when it arrives carrying analysis, matching V6's
-    create-and-resolve arm.
+    A created conflict counts only when it ARRIVES carrying analysis — creating
+    an empty conflict is identification, which V6 leaves unrestricted.
     """
     out = set()
     for name, test_id, cdiff in _corpus_runs():
@@ -334,9 +360,7 @@ def _independently_multi_conflict_runs():
             ):
                 touched.add(m.get("id"))
         for a in cdiff.get("added") or []:
-            if isinstance(a, dict) and any(
-                a.get(f) for f in _SECOND_DERIVATION_ANALYSIS_FIELDS
-            ):
+            if isinstance(a, dict) and _second_derivation_carries_analysis(a):
                 touched.add(a.get("id"))
         if len(touched) > 1:
             out.add((name, test_id))
@@ -346,7 +370,8 @@ def _independently_multi_conflict_runs():
 def _independently_over_cap_counts():
     """(weighing, rationale) writes above their bands, derived from the diff.
 
-    Mirrors V2's escape: a rationale on a conflict with three or more competing
+    Mirrors V2's population AND its escape: created conflicts count (V2 is wider
+    than V6 by design), a rationale on a conflict with three or more competing
     assertions is exempt, and `competing_assertion_ids` is read from the AFTER
     state — the scenario fixture overlaid with this run's changes — never from
     the diff, which is the 17-vs-32 regression the escape test pins.
@@ -384,6 +409,25 @@ def _independently_over_cap_counts():
                         ) or []
                         if len(competing) < 3 and len(str(text).split()) > 300:
                             rationale += 1
+                # CREATED conflicts count too. V2's population
+                # (`_conflicts_written`) is deliberately WIDER than V6's: a
+                # conflict the run created carrying a 460-word rationale is
+                # exactly what a word cap is for, and `_replay` appends `added`
+                # entries to the after state, so the validator sees them. Reading
+                # only `modified` here made the derivation blind to a population
+                # the validator observes, which disagreed the moment a run
+                # created a conflict with over-cap prose (@clack391).
+                for a in (cdiff.get("added") or []):
+                    if not isinstance(a, dict):
+                        continue
+                    if len(str(a.get("weighing_analysis") or "").split()) > 210:
+                        weighing += 1
+                    competing = a.get("competing_assertion_ids") or []
+                    if (
+                        len(competing) < 3
+                        and len(str(a.get("resolution_rationale") or "").split()) > 300
+                    ):
+                        rationale += 1
     return weighing, rationale
 
 
@@ -575,3 +619,67 @@ def test_v6_mooting_one_conflict_alone_passes():
         [_conflict("c_001", status="moot"), _conflict("c_002")],
     )
     check_one_per_turn(before, after)
+
+
+# --- the BEFORE state read ---------------------------------------------------
+#
+# `_conflicts_by_id(before)` had no coverage at all: making it return `{}`
+# unconditionally, or breaking only the before-side of the
+# `conflicts`/`conflict_entries` slip, left the suite at baseline (@clack391).
+# The after-side half fails 14 tests; the before-side half failed nothing.
+#
+# It is not theoretical, and it is worse on a GATING validator. Re-derived:
+# **32 of the 41 committed scenario conflicts ship `status: "resolved"` with all
+# four analysis fields populated**, and one of those scenarios,
+# `flynn-competing-fathers`, is in this skill's own corpus. With a broken
+# before-reader every one of them looks new, `_analysis_written` returns True,
+# and V6 fires on a run that touched exactly one conflict — failing the run and
+# suppressing the judge at orchestrator.py:600.
+#
+# The corpus replay structurally cannot cover this: `_replay` skips runs with no
+# conflicts diff, and every scenario it reaches starts with zero analysed
+# conflicts. Nor could the synthetic tests above, since every `_states(...)` call
+# used template defaults for the before side.
+
+
+def _resolved(cid):
+    """A conflict already carrying full analysis — the shape 32 of the 41
+    committed scenario conflicts actually ship."""
+    return _conflict(
+        cid,
+        status="resolved",
+        independence_analysis="independent sources",
+        weighing_analysis="the register outweighs the index",
+        preferred_assertion_id="a_002",
+        resolution_rationale="preferred on originality",
+    )
+
+
+def test_v6_ignores_a_conflict_that_was_already_resolved_before_the_run():
+    """The before state is read, not assumed empty.
+
+    One conflict arrives already resolved and is left alone; the run resolves a
+    different one. That is exactly one conflict touched, so V6 must pass. A
+    before-reader that returns nothing makes the pre-resolved conflict look
+    newly created-and-resolved, counts two, and fails a permitted run.
+    """
+    before, after = _states(
+        [_resolved("c_001"), _conflict("c_002")],
+        [_resolved("c_001"), _conflict("c_002", status="resolved",
+                                       resolution_rationale="preferred")],
+    )
+    check_one_per_turn(before, after)
+
+
+def test_v6_still_fires_when_both_were_already_resolved_and_both_change():
+    """The control, so the test above cannot pass by V6 never firing on a
+    before state that carries analysis."""
+    before, after = _states(
+        [_resolved("c_001"), _resolved("c_002")],
+        [
+            _resolved("c_001") | {"resolution_rationale": "rewritten one"},
+            _resolved("c_002") | {"resolution_rationale": "rewritten two"},
+        ],
+    )
+    with pytest.raises(AssertionError, match="more than one conflict"):
+        check_one_per_turn(before, after)
