@@ -1000,6 +1000,48 @@ describe("tree_forget", () => {
     expect((await readTree()).persons[0].facts.map((f: any) => f.id)).toEqual(["F3"]);
   });
 
+  // ─── #1490: the completion-gate baseline ─────────────────────────────────────
+
+  it("rewinds an existing starting-tree.gedcomx.json baseline to the forgotten tree", async () => {
+    await writeProject(family());
+    // A project that has passed init carries the write-once baseline.
+    await writeFile(
+      join(dir, "starting-tree.gedcomx.json"),
+      JSON.stringify(family(), null, 2),
+      "utf-8",
+    );
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    // Reported and rewound to match the forgotten live tree, so a later
+    // re-derivation registers as new structure against the baseline.
+    expect(r.filesWritten).toEqual(["tree.gedcomx.json", "starting-tree.gedcomx.json"]);
+    const baseline = JSON.parse(
+      await readFile(join(dir, "starting-tree.gedcomx.json"), "utf-8"),
+    );
+    expect(baseline).toEqual(await readTree());
+    expect(baseline.persons.map((p: any) => p.id)).toEqual(["I1", "I4", "I5", "I6"]);
+  });
+
+  it("never creates a baseline where none exists", async () => {
+    await writeProject(family());
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    expect(r.filesWritten).toEqual(["tree.gedcomx.json"]);
+    expect(await exists("starting-tree.gedcomx.json")).toBe(false);
+  });
+
   // ─── redaction ─────────────────────────────────────────────────────────────
 
   it("leaks no name, date, or place into the result", async () => {

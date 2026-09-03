@@ -16,8 +16,12 @@ import pytest
 from harness.fixtures import InvalidFixtureError
 from harness.mock_mcp import (
     LIVE_TOOLS,
+    UNLOGGED_REFS_SHOWN,
+    NIL_SEARCH_NEEDS_LOG_NOTE,
     OK_FALSE_IS_FAILURE_LIVE,
     RANKING_SKIPPED_NOTE,
+    UNLOGGED_SEARCHES_NOTE,
+    _fixture_is_nil,
     _tool_envelope,
     create_mock_server,
 )
@@ -289,6 +293,109 @@ def test_ranking_skipped_note_has_not_drifted_from_the_typescript_source():
     assert ts_note == RANKING_SKIPPED_NOTE
 
 
+def test_unlogged_search_notes_have_not_drifted_from_the_typescript_source():
+    """Both #2056 notes must stay byte-identical to the compiled source.
+
+    Same rule as the ranking note above, and the same silent failure mode: a stale
+    copy grades the skill against wording production no longer sends. These two live
+    in the staging util rather than the tool, because both search tools emit them.
+    """
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/utils/results-staging.ts"
+    ).read_text(encoding="utf-8")
+    for name, expected in (
+        ("UNLOGGED_SEARCHES_NOTE", UNLOGGED_SEARCHES_NOTE),
+        ("NIL_SEARCH_NEEDS_LOG_NOTE", NIL_SEARCH_NEEDS_LOG_NOTE),
+    ):
+        decl = re.search(rf"const {name} =(.*?);\n", src, re.DOTALL)
+        assert decl, f"{name} is gone from results-staging.ts"
+        ts_note = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', decl.group(1)))
+        assert ts_note, f"parsed an empty note for {name} — the declaration shape changed"
+        # The TS source escapes the inner quotes of `outcome: "negative"`; Python's
+        # own literal does not, so unescape before comparing.
+        assert ts_note.replace('\\"', '"') == expected
+
+
+def test_fixture_with_matches_but_no_mapped_results_is_not_nil():
+    """The mock's nil gate must match production's, which requires a zero total.
+
+    `results` is the post-`mapEntry` set in production, so a page that fails mapping
+    empties it while the upstream total stays non-zero. A mock that emitted the note
+    there would fire where production does not, and then a zero firing count could
+    not be read as "the condition never held".
+    """
+    assert _fixture_is_nil({"totalMatches": 0, "results": []})
+    assert _fixture_is_nil({"results": []})  # no total declared → claims no matches
+    assert not _fixture_is_nil({"totalMatches": 812, "results": []})
+    assert not _fixture_is_nil({"totalResults": 812, "results": []})
+    assert not _fixture_is_nil({"totalForPlace": 3, "results": []})
+    assert not _fixture_is_nil({"totalMatches": 0, "results": [{"id": "x"}]})
+
+
+def test_unlogged_refs_shown_has_not_drifted_from_the_typescript_source():
+    """The refs formatter is restated in Python; nothing else guards the two copies.
+
+    The pairing rule is called out of the compiled build precisely so it cannot
+    drift. This constant could, and the note's text would then differ from
+    production's at the boundary rather than obviously.
+    """
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/utils/results-staging.ts"
+    ).read_text(encoding="utf-8")
+    decl = re.search(r"const UNLOGGED_REFS_SHOWN = (\d+);", src)
+    assert decl, "UNLOGGED_REFS_SHOWN is gone from results-staging.ts"
+    assert int(decl.group(1)) == UNLOGGED_REFS_SHOWN
+
+
+def test_staging_tool_sets_agree_across_the_two_copies():
+    """`STAGING_SEARCH_TOOLS` here vs `STAGING_CAPABLE_TOOLS` in the engine.
+
+    The engine consolidated its own two copies for exactly this reason ("a second
+    copy would drift"); this is the third, and it lives in another language.
+    """
+    from harness.mock_mcp import STAGING_SEARCH_TOOLS
+
+    src = (
+        REPO_ROOT / "packages/engine/mcp-server/src/utils/results-staging.ts"
+    ).read_text(encoding="utf-8")
+    decl = re.search(
+        r"export const STAGING_CAPABLE_TOOLS = new Set\(\[(.*?)\]\)", src, re.DOTALL
+    )
+    assert decl, "STAGING_CAPABLE_TOOLS is gone from results-staging.ts"
+    ts_tools = set(re.findall(r'"([a-z_]+)"', decl.group(1)))
+    assert ts_tools == STAGING_SEARCH_TOOLS
+
+
+def test_nil_search_carries_the_negative_log_note(tmp_path):
+    """The emission CONDITION, not the text — a text-only test passes on a wrong gate."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-patrick-flynn-no-results"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+        )
+    )
+    assert body["nilSearchNeedsLog"] == NIL_SEARCH_NEEDS_LOG_NOTE
+    # Ordered ahead of `results`, like every other model-facing note.
+    keys = list(body)
+    assert keys.index("nilSearchNeedsLog") < keys.index("results")
+
+
+def test_no_log_note_without_a_project_path(tmp_path):
+    """Neither note fires when the caller passed no projectPath — nothing is owed."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-patrick-flynn-no-results"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_search", {"surname": "Flynn", "givenName": "Patrick"})
+    )
+    assert "nilSearchNeedsLog" not in body
+    assert "unloggedSearches" not in body
+
+
 def test_record_search_omits_ranked_when_test_declares_no_rank_fixture(tmp_path):
     """A fabricated ranking would be worse than none — the absence is honest."""
     server, call_log, tools_by_name = create_mock_server(
@@ -478,3 +585,42 @@ def test_unstaged_record_search_is_not_compacted(tmp_path):
     assert any("gedcomx" in row for row in body["results"]), (
         "an un-staged search keeps full fidelity inline"
     )
+
+
+def test_mapping_failure_response_does_not_get_the_negative_log_note(tmp_path):
+    """The WIRING, not the predicate.
+
+    `_fixture_is_nil`'s own unit tests prove the predicate; nothing proved the
+    call site uses it. Reverting that call site to `not response.get("results")`
+    leaves the whole suite green, because the only committed fixture routed
+    through dispatch has `totalMatches: 0`, where both conditions agree. The
+    discriminating shape is built here rather than committed: it exists to
+    exercise this branch, not to describe a real search.
+    """
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    (fixtures / "unmappable-page.json").write_text(
+        json.dumps(
+            {
+                "tool": "record_search",
+                "args": {"surname": "Flynn"},
+                "response": {"query": {"surname": "Flynn"}, "totalMatches": 812, "results": []},
+            }
+        ),
+        encoding="utf-8",
+    )
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    server, call_log, tools_by_name = create_mock_server(
+        ["unmappable-page"], fixtures, workspace=workspace
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "projectPath": str(workspace)},
+        )
+    )
+    assert body["totalMatches"] == 812
+    assert body["results"] == []
+    assert "nilSearchNeedsLog" not in body

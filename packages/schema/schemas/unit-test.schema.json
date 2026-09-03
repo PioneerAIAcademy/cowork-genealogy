@@ -96,7 +96,7 @@
     },
     "expected_classifications": {
       "type": "array",
-      "description": "Optional deterministic classification ground truth, checked mechanically by the skill's validator (test_expected_classifications in eval/harness/validators/). Semantics per matcher: at least one NEW assertion (created by the run) with the matcher's record_role + fact_type must exist, and EVERY new assertion with that record_role + fact_type must carry each classification value the matcher declares. The LLM judge still grades the classification dimensions; validator results are the mechanical reference during annotation. Only declare pairs and values the doctrine fixes deterministically.",
+      "description": "Optional deterministic classification ground truth, checked mechanically by the skill's validator (test_expected_classifications in eval/harness/validators/). Semantics per matcher: at least one NEW-OR-UPDATED assertion (created by the run, or an existing assertion the run changed) with the matcher's record_role + fact_type must exist, and EVERY such assertion with that record_role + fact_type must carry each classification value the matcher declares. Widened from \"new\" to \"new-or-updated\" for issue #2021 (F12) so the same matcher can grade a classification-refinement test, whose target assertion pre-exists and is only ever updated in place. The LLM judge still grades the classification dimensions; validator results are the mechanical reference during annotation. Only declare pairs and values the doctrine fixes deterministically.",
       "items": {
         "type": "object",
         "required": ["record_role", "fact_type"],
@@ -148,6 +148,12 @@
         }
       }
     },
+    "refinement_targets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional list of `a_` assertion ids a classification-refinement test expects the run to update in place. Checked mechanically by test_refinement_preserves_extraction_fields_and_avoids_duplication in eval/harness/validators/test_record_extraction.py (issue #2021, F12): each named id must still exist under the same id, its extraction fields (source_id, record_id, record_role, fact_type, value, structured_value, date, date_certainty, place) must be unchanged, at least one classification field must actually differ, every other pre-existing assertion must be untouched, and no new assertion may share a target's (source_id, record_role, fact_type) shape (an append standing in for an update). Record-extraction only; other skills leave this unset.",
+      "minItems": 1
+    },
     "negative": {
       "type": "object",
       "required": ["correct_skill", "explanation"],
@@ -173,7 +179,7 @@
       "type": "integer",
       "minimum": 1,
       "maximum": 1,
-      "description": "POLICY (current stage): ALWAYS 1. Do not set this above 1 when creating or updating a test. We are not addressing single-run variance yet, and multi-run tests make the suite painfully slow (each run is a full skill execution + judge call). The multi-run aggregation machinery (unit-test-spec.md Section 7) exists for future description-optimizer / golden-set work only; until that stage, omit this field (it defaults to 1) or set it to 1."
+      "description": "POLICY: ALWAYS 1. Do not set this above 1 when creating or updating a test — omit the field (it defaults to 1) or set it to 1. Multi-run tests make the suite painfully slow (each run is a full skill execution + judge call). The pin is standing policy, not a stage: it means single-run variance is not DETECTED, never that a flapping test is tolerated. A test that passes on one run and fails on the next is a defect to fix; re-run a suspect test manually (run_tests.py --test <id> --runlogs-root <tmp>) and fix whatever differs. See unit-test-spec.md, 'runs_per_test' and 'Variance: runs per test'."
     },
     "intentionally_invalid": {
       "type": "boolean",

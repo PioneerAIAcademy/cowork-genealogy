@@ -50,6 +50,15 @@
 .ark {
   color: var(--accent-gold-strong);
   text-decoration: none;
+  /* Button reset. This was an <a> until the middle-click bypass was closed
+     (#1018); without the reset a <button> renders with default browser chrome
+     in a 0.72rem meta row. Same reset `.externalLink` carries in
+     SidecarResultCard.module.css. */
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
 }
 
 .ark:hover {
