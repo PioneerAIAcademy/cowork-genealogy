@@ -1,0 +1,503 @@
+{
+  "run_log": "v1_2026-09-02_20-05-24.json",
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "corrections": [
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree, same shape as the prior run: genuinely empty response, no tool calls. Unrelated to issue #2021."
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree, same root cause."
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "N/A confirmed correct -- zero MCP tool calls."
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. Concrete, well-argued defect: the skill persisted a negative-evidence assertion inferring an immigration-timing conclusion, which the per-test context explicitly forbids ('Emitting the household links in any form is the error this test guards against'). Unrelated to issue #2021."
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree, real gap: informant_bias_notes reasoning is inconsistently present across the household-member-attributed assertions."
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree, same root cause as Correctness -- the forbidden negative-evidence assertion also carries evidence_type 'negative', compounding the same violation."
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree -- genuinely unclean this time (distinguishing from the policy-violation corrections made in the prior run log on this same test id): the rationale describes a workaround (dropping the log_entry_id field entirely) rather than a single clean retry with the same shape corrected, and traces it to the skill's own upstream error (missing projectPath on record_search). Matches the 'workaround/thrashing' unclean-recovery bucket in judge/prompt.md, not the single-clean-recovery bucket."
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Not overriding, but flagging as borderline: the rationale explicitly concedes the extraction_append recovery itself was 'a single clean correction... which per the Tool Arguments policy scores full credit', then still scores 2 for a separate, earlier defect (missing projectPath on record_search, fixed by re-logging). Two independently-recovered issues in one run is a defensible read of 'not clean' even though each one alone would score 3 -- different from the ut_record_extraction_007/_014 corrections made on the prior run log, which were a single incident wrongly scored. Leaving as scored."
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree. Clear, verified violation: the test explicitly forbids any relationship assertion (pre-1880 census, no relationship column) and the skill fabricated parent-child and spousal relationship assertions anyway. Unrelated to issue #2021."
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree, specific and defensible: a household member reporting on ordinary biographical facts (name/age/birthplace/occupation) is a known-if-unnamed reporter -- 'secondary', not 'indeterminate'. Distinct from issue #2173's pattern (there the informant's very existence/identity was in doubt due to census-day absence, which is what makes indeterminate correct there); this is routine household reporting, so secondary is the right call and the skill's indeterminate is an under-commitment."
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. Real, verified transient error: a_003's death date was initially persisted as the birth year (1930) before being corrected to the actual death date (2021) in a follow-up update call. Final state is correct but the initial factual error is a genuine defect distinct from the Tool-Arguments recovery policy (this is a factual-value mistake, not a validation-rejected call). Unrelated to issue #2021."
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Disagree with the judge's own conclusion. The rationale is a self-refuting walkthrough: it opens claiming the skill got direct/indirect backwards, then investigates the actual persisted assertions three times over and ends with 'Upon review... this is correct... Re-examining... This is correct. The skill did not invent child->spouse relationships. The extraction is factually accurate and properly classified.' -- and then still scores it 1. Verified independently against this run's persisted assertions (a_009/a_018/a_027/a_035): all relationship assertions to the head of household are evidence_type 'direct', matching the 1900 census's explicit relationship column, exactly as the per-test doctrine requires. This test flipped from 3-for-3 pass to 2-for-2 fail exactly at the point main's #2200 landed (delegate-to-convert-dates change to record-extraction/SKILL.md) -- worth knowing that at least this occurrence is a judge-scoring artifact, not evidence #2200 broke relationship-classification behavior. Unrelated to issue #2021, but flagging since it bears on whether #2200 needs a look."
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. Real, well-argued defect: a stated approximate birth year ('about 1887') was marked indirect/indeterminate on the theory that a person can't self-report their own birth primarily -- but per doctrine, evidence_type tracks stated-vs-inferred (this is stated, so direct) while information_quality/informant_proximity carry the distance-from-event nuance. The skill conflated the two layers. Unrelated to issue #2021."
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree, same root cause as Correctness -- the birth-year evidence_type/information_quality conflation."
+    }
+  ]
+}
