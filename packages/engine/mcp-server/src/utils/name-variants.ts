@@ -229,6 +229,24 @@ export function expandNameForFulltext(name: string): NameExpansionResult | null 
   return { expanded, expansions };
 }
 
+// Words that are both given-name variants and common English words.
+// For these, expandLookingFor requires an adjacent capitalized token
+// (another proper name) before expanding — "29 MAY 1774" does not
+// expand, but "May Thornton" does.  Validated against the 180 real
+// lookingFor values in eval/ (clack391 round-2 B3).
+const AMBIGUOUS_WORDS = new Set([
+  "may", "will", "bill", "jack", "beth", "frank", "chuck",
+  "rick", "dick", "bob", "ed", "ted", "ned", "hank", "harry",
+  "art", "pat", "gene", "ray", "rod", "grant", "rich",
+]);
+
+function hasAdjacentCapital(tokens: string[], index: number): boolean {
+  const prev = index > 0 ? tokens[index - 1] : undefined;
+  const next = index < tokens.length - 1 ? tokens[index + 1] : undefined;
+  return (prev !== undefined && /^[A-Z]/.test(prev)) ||
+         (next !== undefined && /^[A-Z]/.test(next));
+}
+
 /**
  * Given a lookingFor string, expand recognized given names and return
  * an expanded string listing all variant forms for image_transcribe's VLM
@@ -244,11 +262,18 @@ export function expandLookingFor(lookingFor: string): NameExpansionResult | null
   const alsoKnownAs: string[] = [];
   const expansions: Record<string, string[]> = {};
 
-  for (const token of tokens) {
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
     // Only expand tokens that look like proper names (start with uppercase).
     // Lowercase words like "will", "may" match the table but are ordinary
     // English — expanding them corrupts the VLM prompt.
     if (token.length > 0 && token.charAt(0) === token.charAt(0).toLowerCase()) continue;
+
+    // Ambiguous words (names that double as common English) need an
+    // adjacent capitalized token to confirm they are used as a name.
+    // "29 MAY 1774" → no adjacent capital → skip.
+    // "May Thornton" → "Thornton" starts with T → expand.
+    if (AMBIGUOUS_WORDS.has(token.toLowerCase()) && !hasAdjacentCapital(tokens, i)) continue;
 
     const family = lookupNameFamily(token);
     if (!family) continue;

@@ -133,7 +133,9 @@ The tool maps its input to the upstream API query parameters:
 | `offset` | `offset` |
 | `includeFacets` | `m.defaultFacets` (set to `on` when true) |
 
-Additionally, `m.queryRequireDefault=on` is always sent.
+Additionally, `m.queryRequireDefault=on` is always sent. When name
+expansion is active, `q.fullName.boost=2` is also sent to rank name
+matches higher.
 
 When — and only when — `nlQuery` is supplied, the request also carries the
 header `X-FS-Feature-Tag: search_naturalLanguageSupport`. Every other search
@@ -224,9 +226,12 @@ interface FulltextSearchResponse {
 When the `name` parameter contains a recognized English given name (formal
 or variant), the tool automatically expands it with historical diminutives
 from the bundled variant table (`config/given-name-variants.json`). This
-addresses the hard exclusion caused by `m.queryRequireDefault=on`: without
-expansion, a search for "Elizabeth Martin" cannot match a page transcribed
-as "Betty Martin" because every term is required.
+improves precision and recall. Without expansion, an unquoted search for
+"Elizabeth Martin" returns millions of results (term-level OR across ~89M
+documents). Quoted-phrase expansion narrows that to ~205K exact-phrase
+matches while adding ~46% more documents than a single-phrase search
+would find — documents transcribed as "Betty Martin" that a bare
+`"Elizabeth Martin"` phrase misses.
 
 ### Mechanism
 

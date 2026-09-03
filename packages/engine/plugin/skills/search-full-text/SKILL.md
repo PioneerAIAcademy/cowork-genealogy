@@ -116,8 +116,9 @@ Read `references/query-syntax.md` for operator details and wildcards.
   paternal surname and the mother with the maternal, so the words are
   on **different people and not adjacent**. See `references/query-syntax.md`
   for escalation once the mother's fuller form is known.
-- **Abbreviations must be searched explicitly.** FTS does not
-  auto-expand (Wm/William, Thos/Thomas). Run separate queries.
+- **Abbreviations must be searched explicitly** in `keywords` and `place` fields.
+  FTS does not auto-expand (Wm/William, Thos/Thomas) there. The `name` field
+  auto-expands recognized English given names with historical diminutives.
 - **Mine prior records for known surname variants before querying.**
   Scan existing `research.json` assertions and log entries for the
   target surname. If prior records show a transcription variant,
