@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-08-28_18-23-42.json",
-  "annotator": "ikeboateng2018@gmail.com",
+  "run_log": "v1_2026-09-01_10-57-39.json",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_record_extraction_023",
+      "test_id": "ut_search_records_028",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_023",
+      "test_id": "ut_search_records_028",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_023",
+      "test_id": "ut_search_records_028",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,47 +27,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_023",
+      "test_id": "ut_search_records_028",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "Search strategy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_023",
+      "test_id": "ut_search_records_028",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
+      "dimension_name": "Result triage",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_023",
+      "test_id": "ut_search_records_028",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
+      "dimension_name": "Nil escalation",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_001",
+      "test_id": "ut_search_records_028",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
+      "dimension_name": "Log quality",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_001",
+      "test_id": "ut_search_records_t9p",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -75,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_001",
+      "test_id": "ut_search_records_t9p",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -83,47 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_018",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_018",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_018",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_018",
+      "test_id": "ut_search_records_t9p",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -131,7 +83,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_018",
+      "test_id": "ut_search_records_t9p",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_t9p",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_t9p",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_t9p",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_h4k",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -139,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_018",
+      "test_id": "ut_search_records_h4k",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -147,55 +131,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_021",
+      "test_id": "ut_search_records_h4k",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
+      "dimension_name": "Search strategy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_021",
+      "test_id": "ut_search_records_h4k",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
+      "dimension_name": "Result triage",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_021",
+      "test_id": "ut_search_records_h4k",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
+      "dimension_name": "Log quality",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_021",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_021",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Skill wrote a_009/a_010 as negative evidence for unrecorded parent name fields on present persons. Per record-extractor.md:896-905, negative evidence applies to expected-but-absent persons, not blank fields."
-    },
-    {
-      "test_id": "ut_record_extraction_025",
+      "test_id": "ut_search_records_h4k",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "dimension_name": "Nil escalation",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_021",
+      "test_id": "ut_search_records_h4k",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -203,39 +171,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_017",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_017",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_017",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_017",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_017",
+      "test_id": "ut_search_records_010",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -243,7 +179,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_017",
+      "test_id": "ut_search_records_010",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -251,39 +187,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_015",
+      "test_id": "ut_search_records_010",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -291,7 +195,87 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_015",
+      "test_id": "ut_search_records_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_records_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,

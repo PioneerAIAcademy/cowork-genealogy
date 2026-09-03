@@ -95,6 +95,20 @@ export interface ResearchTransport {
   /** Open a URL outside the app (Electron: shell.openExternal; web: window.open). */
   openExternal(url: string): void
 
+  /**
+   * Open a link the UI advertises as going to FamilySearch (#1018).
+   *
+   * Separate from `openExternal` because the value is agent-authored project
+   * data shown behind a fixed "Open in FamilySearch" label — the reader cannot
+   * see the destination, so the destination has to be constrained. The
+   * implementation resolves the identifier and builds the URL itself; a value it
+   * cannot resolve opens nothing.
+   *
+   * Required, not optional: a `?` here would let a transport omit it and every
+   * constrained link would silently fall back to the unconstrained default.
+   */
+  openFamilySearch(value: string): void
+
   /** Submit a feedback bundle. */
   submitFeedback(payload: FeedbackPayload): Promise<FeedbackResult>
 
