@@ -41,10 +41,18 @@ describe("configureOpenRouterTool", () => {
     );
   });
 
-  it("accepts an empty call (no model)", async () => {
+  it("writes nothing when there is no model to save", async () => {
+    // saveConfig() rewrites the whole file from loadConfig(), which yields {}
+    // for a config.json it cannot parse — so an empty patch would clobber it.
     const result = await configureOpenRouterTool({});
-    expect(saveConfigMock).toHaveBeenCalled();
-    expect(result.model).toBeNull();
+    expect(saveConfigMock).not.toHaveBeenCalled();
+    expect(result).toEqual({ saved: false, model: null });
+  });
+
+  it("writes nothing when the model is only whitespace", async () => {
+    const result = await configureOpenRouterTool({ model: "   " });
+    expect(saveConfigMock).not.toHaveBeenCalled();
+    expect(result.saved).toBe(false);
   });
 });
 

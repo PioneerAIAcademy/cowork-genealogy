@@ -5,7 +5,7 @@ export interface ConfigureOpenRouterInput {
 }
 
 export interface ConfigureOpenRouterResult {
-  saved: true;
+  saved: boolean;
   model: string | null;
 }
 
@@ -19,9 +19,11 @@ export async function configureOpenRouterTool(
   input: ConfigureOpenRouterInput
 ): Promise<ConfigureOpenRouterResult> {
   const model = input.model?.trim() || null;
-  await saveConfig({
-    ...(model ? { openRouterModel: model } : {}),
-  });
+  // Nothing to write. saveConfig() round-trips the whole file and loadConfig()
+  // returns {} for one it cannot parse, so an empty patch rewrites a corrupt
+  // config.json as {} and discards content the user could still recover.
+  if (!model) return { saved: false, model: null };
+  await saveConfig({ openRouterModel: model });
   return { saved: true, model };
 }
 
