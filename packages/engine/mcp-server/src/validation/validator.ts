@@ -30,6 +30,7 @@ import {
 } from "./tree-shape.js";
 import { iteratePersonIdRefs } from "./person-id-refs.js";
 import { arkToBareId } from "../utils/ark.js";
+import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
 
 // Enum definitions (single source of truth, matching Python validator)
 const CLOSED_ENUMS = {
@@ -1609,6 +1610,21 @@ async function validateSidecars(
 
     if (!entry.results_ref) {
       addError(report, ap, `has record_persona_id but its log entry '${logId}' has no sidecar (results_ref is null)`);
+      continue;
+    }
+
+    // A non-persona producer (fulltext_search, external_links_search) stages a
+    // sidecar but no GedcomX personas, so a record_persona_id on such an
+    // assertion is invalid regardless of record_id. Say why, rather than the
+    // misleading "does not match any result's recordId" the recordId-only match
+    // produced for these sidecars — they key on `id`, never `recordId` (#2038).
+    if (!PERSONA_BEARING_PRODUCERS.has(entry.tool)) {
+      addError(
+        report,
+        ap,
+        `record_persona_id must be null — log entry '${logId}' is ${entry.tool}-sourced, ` +
+          "and full-text / external-link results carry transcript text, names and places but no GedcomX personas",
+      );
       continue;
     }
 

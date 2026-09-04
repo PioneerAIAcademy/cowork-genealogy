@@ -1,0 +1,234 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Find the birth or baptism record of Hoval Hansen, also known as Haaval Hansen or Håval Ziener, born approximately 1780 in Kongsberg, Norway, and died in Trysil, Norway 18 August 1860.",
+    "title": "Hoval Hansen's baptism",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-08-26",
+    "updated": "2026-08-26"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where and when was Hoval Hansen (also known as Haaval Hansen and Håval Ziener, died 18 August 1860 in Trysil, Hedmark, Norway) baptized, and who were his parents?",
+      "rationale": "This question directly restates the research objective. A baptism is a single event whose register entry typically yields date, place, and parents' names together. The specific death date and place (18 Aug 1860, Trysil) is the firmest anchor: Norwegian burial registers of this era routinely record age and birthplace (fødested), providing the bridge back to the Kongsberg parish baptism registers. For a birth circa 1780, civil registration postdates the event by ~34 years; the Lutheran ministerialbok (parish registers) for Kongsberg prestegjeld are the primary record class and are substantially digitized on Digitalarkivet.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-08-26"
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "researcher_profile": {
+    "experience_level": "professional",
+    "subscriptions": [
+      "Ancestry",
+      "MyHeritage",
+      "other"
+    ],
+    "narration_guidance": "No preambles. Do the work and report results concisely. Assume fluency with GPS, BCG standards, and standard genealogy terminology."
+  },
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Trysil, Hedmark, Norway",
+      "for_place": "Trysil, Hedmark, Norway",
+      "time_period": "1780-1880",
+      "jurisdictions": [
+        {
+          "name": "Trysil, Hedmark, Norway",
+          "date_range": "1781-2019"
+        },
+        {
+          "name": "Trysil, Innlandet, Norway",
+          "date_range": "2020-"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1467014",
+          "title": "Norway, Baptisms, 1634-1927",
+          "date_range": "1634-1927"
+        },
+        {
+          "id": "1468081",
+          "title": "Norway, Burials, 1666-1927",
+          "date_range": "1666-1927"
+        },
+        {
+          "id": "1468080",
+          "title": "Norway, Marriages, 1660-1926",
+          "date_range": "1660-1926"
+        },
+        {
+          "id": "4237104",
+          "title": "Norway, Church Books, 1797-1958",
+          "date_range": "1797-1958"
+        },
+        {
+          "id": "3733603",
+          "title": "Norway, Census, 1801",
+          "date_range": "1801-1801"
+        },
+        {
+          "id": "3756102",
+          "title": "Norway, Census, 1865",
+          "date_range": "1865-1865"
+        },
+        {
+          "id": "4135961",
+          "title": "Norway, Census, 1870",
+          "date_range": "1870-1870"
+        },
+        {
+          "id": "1529106",
+          "title": "Norway, Census, 1875",
+          "date_range": "1875-1875"
+        },
+        {
+          "id": "1661306",
+          "title": "Norway, Probate Index Cards, 1640-1903",
+          "date_range": "1640-1903"
+        }
+      ],
+      "quirks": [
+        "Records before 1780 are in Elverum prestegjeld — Trysil became its own clerical district in 1780; search Elverum for anything predating that split.",
+        "All Trysil church record volumes at FamilySearch are browse-only (0% name-indexed, not full-text searchable) — use the indexed national extracts first: Norway Burials 1666–1927 (col 1468081), Norway Baptisms 1634–1927 (col 1467014), Norway Marriages 1660–1926 (col 1468080).",
+        "For the 1860 burial, the primary browse volume is 008679203_003 (Trysil church records 1814–1877, 325 images) — must be browsed image by image.",
+        "The Trysilboka farm book (Lillevold et al., FS Library 948.23/T2 D2l, multiple volumes) provides farm-level genealogical data for Trysil with personal name indexes in vols 1–3, 7–8 — check for Ziener/Hansen households.",
+        "Norwegian conscription/levy rolls (lægdsruller) began 1789 — a male born ~1780 would be enrolled under his father's name from approximately age 9, providing direct parentage evidence; access via Riksarkivet and Digitalarkivet.",
+        "Probate volumes at FS Catalog cover Sør-Østerdal only to 1853; for an 1860 estate use the Norway Probate Index Cards (FS col 1661306) to locate the reference, then retrieve the actual volume from Riksarkivet or Digitalarkivet.",
+        "Trysil Frimenighet (dissenter congregation) kept separate registers 1858–1920 at Digitalarkivet — check if subject had dissenter affiliation."
+      ],
+      "guide_markdown": "## Locality Guide: Trysil, Hedmark, Norway (1780–1880)\n\n### Jurisdictional Context\n\nTrysil became its own *prestegjeld* in 1780, separated from Elverum. The 1860 death falls squarely within Trysil's own records. Administratively: Amt of Hedmark from 1781; Sorenskriveri of Søndre Østerdalen; Diocese of Oslo/Christiania 1537–1864, then Hamar.\n\n### Church Records — Primary Source\n\n- **Digitized images** (browse-only, 0% name-indexed): Kirkebøker 1588–1928 (Trysil prestegjeld) at FamilySearch Catalog (cat. 737) and Digitalarkivet. The 1860 burial will be in volume 008679203_003 (1814–1877, 325 images).\n- **Indexed national extracts** (name-searchable): Norway Burials 1666–1927 (FS col 1468081; also Ancestry, MyHeritage); Norway Baptisms 1634–1927 (FS col 1467014); Norway Marriages 1660–1926 (FS col 1468080).\n- **Dissenter church**: Trysil Frimenighet 1858–1920 at Digitalarkivet (images).\n\n### Census\n\n| Year | FS Collection | Access | Notes |\n|------|--------------|--------|-------|\n| 1801 | 3733603 | indexed & images | Subject ~21; also Ancestry, MyHeritage |\n| 1865 | 3756102 | indexed & images | Postdates death; shows widow/children |\n| 1870 | 4135961 | indexed & images | Postdates death |\n| 1875 | 1529106 | indexed & images | Postdates death; also Ancestry, MyHeritage |\n\n### Probate\n\n- Norway Probate Index Cards 1640–1903 (FS col 1661306): indexed — locate the 1860 estate filing here.\n- Skifteprotokoller image volumes at FS Catalog cover through 1853; post-1853 volumes held at Riksarkivet/Digitalarkivet.\n\n### Land Records\n\n- Pantebøker (mortgage/property) 1712–1860 (FS Catalog 489152) — images.\n\n### Military / Levy Rolls\n\nNorway's conscription/levy rolls (*lægdsruller*) began 1789. Each enrolled boy is listed under his father's name — direct parentage evidence. A male born ~1780 would appear from approximately 1789. Access via Riksarkivet and Digitalarkivet.\n\n### Farm Books (*Bygdebøker*)\n\nTrysilboka (Lillevold, Larsen, Bryn; FS Library 948.23/T2 D2l) — multiple volumes covering farm histories and resident genealogies for Trysil with personal name indexes in volumes 1–3, 7–8. High-value source for locating a household at the farm level.\n\n### Key Access Points\n\n- **FamilySearch** (free): indexed burials/baptisms/marriages/census, browse church record images\n- **Digitalarkivet** (free): church books at media.digitalarkivet.no/en/kb/browse\n- **Ancestry** (subscription): Norway Burials/Baptisms/Marriages extracts, 1865 census\n- **MyHeritage** (subscription): Norway Burials/Marriages, 1865/1875 census\n- **FamilySearch Library** (on-site or center): Trysilboka farm book, catalog microfilm",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-26"
+    },
+    {
+      "id": "loc_002",
+      "place": "Kongsberg, Buskerud, Norway",
+      "for_place": "Kongsberg, Buskerud, Norway",
+      "time_period": "1760-1810",
+      "jurisdictions": [
+        {
+          "name": "Kongsberg, Buskerud, Norway",
+          "date_range": "+1760/+2019"
+        },
+        {
+          "name": "Kongsberg, Akershus, Norway",
+          "date_range": "+1624/+1759"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1467014",
+          "title": "Norway, Baptisms, 1634-1927",
+          "date_range": "1634-1927"
+        },
+        {
+          "id": "1468081",
+          "title": "Norway, Burials, 1666-1927",
+          "date_range": "1666-1927"
+        },
+        {
+          "id": "3733603",
+          "title": "Norway, Census, 1801",
+          "date_range": "1801-1801"
+        },
+        {
+          "id": "4237104",
+          "title": "Norway, Church Books, 1797-1958",
+          "date_range": "1797-1958"
+        },
+        {
+          "id": "1468080",
+          "title": "Norway, Marriages, 1660-1926",
+          "date_range": "1660-1926"
+        },
+        {
+          "id": "1661306",
+          "title": "Norway, Probate Index Cards, 1640-1903",
+          "date_range": "1640-1903"
+        }
+      ],
+      "quirks": [
+        "All Kongsberg church record volumes at FamilySearch are browse-only (0% name-indexed, not full-text searchable); browse image by image for pre-1800 baptisms.",
+        "The national indexed extract (Norway Baptisms, col 1467014) has 28,370 Kongsberg records searchable but coverage of the 1780s period may be incomplete; a nil result is a reason to browse, not a conclusion.",
+        "Prime FamilySearch volume for a ~1780 baptism is 008680156_003 (church records 1769–1782, 382 images, browse-only); the same register is available at Digitalarkivet under Kongsberg/Kongsberg Parish Church Records 1696–1969.",
+        "Kongsberg was an industrial mining town dominated by the Kongsberg Sølvverk (royal silver mine, founded 1624); many residents were miners, and Low German occupational terms pervaded local naming — the alias 'Ziener' may derive from mining terminology.",
+        "Lægdsruller (military levy rolls) for this jurisdiction began 1789; a male born ~1780 would be enrolled ~1789–1796 directly under his father's name — direct parentage evidence alongside the baptism register.",
+        "Before 1760, Kongsberg was within Akershus amt; records from 1624–1759 are filed under Kongsberg, Akershus, Norway — relevant if the birth search must be widened beyond a strict ~1780 window.",
+        "Probate jurisdiction was the Kongsberg Byfogderi (Skifterett Kongsberg by); skifteprotokoller 1739–1851 are browse-only at FamilySearch Catalog (no. 437559) and at Digitalarkivet."
+      ],
+      "guide_markdown": "## Kongsberg Parish, Buskerud, Norway — Locality Guide (1760–1810)\n\n**Ecclesiastical jurisdiction:** Kongsberg prestegjeld, Kongsberg prosti, Oslo bispedømme (until 1948). Civil jurisdiction in 1780: Buskerud amt (from 1680), Numedal og Sandsvær sorenskriveri, Kongsberg Byfogderi (probate/skifterett).\n\n### Church Records\n\nAll Kongsberg church record volumes at FamilySearch are **browse-only** (0% name-indexed, not full-text searchable). Browse image by image.\n\n**Key FamilySearch volumes for a ~1780 baptism:**\n- **008680156_003** (1769–1782, 382 images) — prime target for a ~1780 birth\n- **008680157_002** (1783–1797, 249 images) — wider date window fallback\n- **008680157_003** (1795–1816, 380 images)\n- **009061212** (Kongsberg + Jondalen combined, 1696–1915, 691 images)\n\n**National indexed extracts (searchable):**\n- Norway Baptisms 1634–1927 (FS col 1467014): 28,370 Kongsberg records — search first; coverage of 1780s may be incomplete\n- Norway Marriages 1660–1926 (FS col 1468080)\n- Norway Burials 1666–1927 (FS col 1468081)\n- Same extracts also at Ancestry (Norway Select Baptisms col 60092) and MyHeritage\n\n**Digitalarkivet:** Complete parish register scans 1696–1969 at media.digitalarkivet.no (Buskerud county, Kongsberg prestegjeld). Both Kongsberg proper and Jondalen sub-parish registers are available. Same material as FS volumes; browse by year range.\n\n### Census Records\n- 1801 census (FS col 3733603, indexed + images; also Digitalarkivet, Ancestry, MyHeritage)\n- No pre-1801 national census; the mine rolls below partially fill this gap\n\n### Kongsberg Sølvverk (Silver Mine) Records\nSpecial census-type rolls at Digitalarkivet for mine employees:\n- Pensjonister (pensioners) 1711; Borgere (citizens/residents) 1723; Funksjonærer (officials) 1765\nThese predate the ~1780 birth but may document a father employed at the mine.\n\n### Military / Conscription (Lægdsruller)\nNorwegian levy rolls began 1789. A male born ~1780 enrolled ~age 7–9, listed directly **under his father's name** — direct parentage evidence. Access: Digitalarkivet (browse and search) and Riksarkivet physical holdings for Numedal og Sandsvær lægd.\n\n### Probate Records\n- Kongsberg Byfogderi Skifteprotokoller 1739–1851 (FS Catalog 437559, browse-only; also Digitalarkivet)\n- Norway Probate Index Cards 1640–1903 (FS col 1661306, indexed)\n- Kongsberg deanery probate 1741–1816 at Digitalarkivet\n\n### Land and Property\n- Pantebøker (mortgage books) 1721–1864 at FamilySearch Catalog (no. 485469, Kongsberg Byfogderi)",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-08-26"
+    }
+  ]
+}
