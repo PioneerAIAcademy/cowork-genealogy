@@ -56,8 +56,8 @@ This skill produces two outputs, presented user-friendly first:
    plain language: who we're researching and why, what we've found,
    what the evidence says, what we're unsure about, and the next step.
 
-The literal output shapes for both are in
-`references/output-formats.md` — read it before presenting (step 5).
+The two lists above are the contract for what each summary must carry.
+Shape each one as the project's state warrants.
 
 ## Steps
 
@@ -195,10 +195,9 @@ Apply this decision tree:
 
 ### 5. Present both summaries
 
-Render both using the literal skeletons in
-`references/output-formats.md` — the detailed GPS-state block and the
-plain-language story. Present the user-friendly summary first, then the
-detailed one. In the user-friendly summary, match confidence phrasing
+Render both — the detailed GPS-state block and the plain-language story —
+carrying the content listed for each at the top of this file. Present the
+user-friendly summary first, then the detailed one. In the user-friendly summary, match confidence phrasing
 to evidence strength (see `references/conclusion-readiness.md`) and
 avoid GPS jargon — explain reliability plainly ("the census taker
 recorded this at the time," not "this is primary information").
