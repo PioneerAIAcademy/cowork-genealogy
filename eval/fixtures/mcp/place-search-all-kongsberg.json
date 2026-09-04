@@ -1,0 +1,45 @@
+{
+  "tool": "place_search_all",
+  "description": "place_search_all -- every Kongsberg candidate, for jurisdiction disambiguation.",
+  "args": {
+    "placeName": "~Kongsberg"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Kongsberg, Viken, Norway",
+        "type": "Municipality",
+        "dateRange": "+2020/",
+        "latitude": 59.65,
+        "longitude": 9.65,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Kongsberg&focusedId=11030389",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Kongsberg"
+      },
+      {
+        "standardPlace": "Kongsberg, Buskerud, Norway",
+        "type": "Municipality",
+        "dateRange": "+1760/+2019",
+        "latitude": 59.65,
+        "longitude": 9.65,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Kongsberg&focusedId=2036866",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Kongsberg,_Norway"
+      },
+      {
+        "standardPlace": "Kongsberg, Akershus, Norway",
+        "type": "Municipality",
+        "dateRange": "+1624/+1759",
+        "latitude": 59.65,
+        "longitude": 9.65,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Kongsberg&focusedId=10935426",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Kongsberg"
+      },
+      {
+        "standardPlace": "Kongsberg, Troms, Norway",
+        "type": "Farm",
+        "latitude": 69.133333,
+        "longitude": 19.066666,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Kongsberg&focusedId=619655"
+      }
+    ]
+  }
+}

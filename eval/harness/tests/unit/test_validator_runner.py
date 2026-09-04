@@ -1677,11 +1677,16 @@ def _v6_states(marker_text, field):
     return before, after
 
 
-def test_v6_fires_on_custody_marker_in_where():
-    """V6: [PHYSICAL REPOSITORY NOT RECORDED] in citation_detail.where fails
-    — no marker is sanctioned in `where`."""
+def test_v6_fires_on_any_marker_in_where():
+    """V6: a marker in citation_detail.where fails on position alone.
+
+    The marker text must NOT contain a custody keyword, or the content rule
+    catches it and the position rule is never exercised: with
+    "[PHYSICAL REPOSITORY NOT RECORDED]" the whole `where` branch can be
+    deleted and this test still passes.
+    """
     before, after = _v6_states(
-        "FamilySearch.org ([PHYSICAL REPOSITORY NOT RECORDED])", "where"
+        "FamilySearch.org ([CREATOR NOT RECORDED])", "where"
     )
     results = run_validators(
         skill="citation",
@@ -1697,7 +1702,9 @@ def test_v6_fires_on_custody_marker_in_where():
     )
     assert result is not None, "test_unknown_markers_framework_only did not run"
     assert result.passed is False
-    assert "where" in (result.error or "").lower()
+    # "sanctioned" appears only in the position-rule message; the custody
+    # message would also contain "where", since it embeds the field name.
+    assert "sanctioned" in (result.error or "").lower()
 
 
 def test_v6_fires_on_custody_marker_in_other_field():
