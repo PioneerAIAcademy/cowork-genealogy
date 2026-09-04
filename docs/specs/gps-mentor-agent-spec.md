@@ -160,8 +160,7 @@ description: >-
   search-records or search-external-sites), or to write proof conclusions
   (use proof-conclusion). A user-driven GPS review of an existing proof
   summary ("does my proof meet the GPS", "assess ps_NNN against the GPS
-  components") goes through the proof-conclusion skill, which invokes this
-  mentor.
+  components") goes through the proof-conclusion skill.
 model: claude-sonnet-5
 tools:
   - Read
