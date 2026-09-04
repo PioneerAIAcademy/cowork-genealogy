@@ -92,12 +92,27 @@ if errorlevel 1 (
 
 REM --- Strip Claude Code config that may have been injected into the zip ---
 REM Legitimate feedback zips never contain dotfiles (both walkers skip entries
-REM starting with "."), so a .claude\ directory in the zip is either hand-crafted
-REM or from an unexpected source. Remove it so the script's own fresh .claude\
-REM (with repo-junctioned skills only) is the sole config Claude Code reads.
-if exist "!DEST_DIR!\.claude" (
-    echo Warning: stripped .claude\ from the zip ^(not expected in a feedback submission^).
-    rmdir /s /q "!DEST_DIR!\.claude"
+REM starting with "."), so .claude\, .claude.json, and .mcp.json in the zip are
+REM either hand-crafted or from an unexpected source. Remove them so the script's
+REM own fresh .claude\ (with repo-junctioned skills only) is the sole config
+REM Claude Code reads.
+for %%F in (.claude .claude.json .mcp.json) do (
+    if exist "!DEST_DIR!\%%F" (
+        echo Warning: stripped %%F from the zip ^(not expected in a feedback submission^).
+        if exist "!DEST_DIR!\%%F\." (
+            rmdir /s /q "!DEST_DIR!\%%F"
+        ) else (
+            del /q "!DEST_DIR!\%%F"
+        )
+    )
+)
+REM CLAUDE.md is NOT a dotfile, so the walkers ship it deliberately and it
+REM arrives in ordinary submissions. Claude Code would load it as project
+REM instructions, so rename rather than delete -- the triager keeps the content
+REM for reproduction, but it no longer executes as config.
+if exist "!DEST_DIR!\CLAUDE.md" (
+    echo Note: renamed CLAUDE.md to CLAUDE.md.submitted so it is not loaded as instructions.
+    ren "!DEST_DIR!\CLAUDE.md" "CLAUDE.md.submitted"
 )
 
 REM --- Write .feedback-repo-root ---

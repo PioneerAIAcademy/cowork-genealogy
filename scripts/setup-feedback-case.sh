@@ -118,12 +118,23 @@ fi
 
 # --- Strip Claude Code config that may have been injected into the zip ---
 # Legitimate feedback zips never contain dotfiles (both walkers skip entries
-# starting with "."), so a .claude/ directory in the zip is either hand-crafted
-# or from an unexpected source. Remove it so the script's own fresh .claude/
-# (with repo-symlinked skills only) is the sole config Claude Code reads.
-if [[ -e "$DEST_DIR/.claude" ]]; then
-  echo "Warning: stripped .claude/ from the zip (not expected in a feedback submission)."
-  rm -rf "$DEST_DIR/.claude"
+# starting with "."), so .claude/, .claude.json, and .mcp.json in the zip are
+# either hand-crafted or from an unexpected source. Remove them so the script's
+# own fresh .claude/ (with repo-symlinked skills only) is the sole config
+# Claude Code reads.
+for injected in .claude .claude.json .mcp.json; do
+  if [[ -e "$DEST_DIR/$injected" ]]; then
+    echo "Warning: stripped $injected from the zip (not expected in a feedback submission)."
+    rm -rf "$DEST_DIR/$injected"
+  fi
+done
+# CLAUDE.md is NOT a dotfile, so the walkers ship it deliberately and it
+# arrives in ordinary submissions. Claude Code would load it as project
+# instructions, so rename rather than delete — the triager keeps the content
+# for reproduction, but it no longer executes as config.
+if [[ -e "$DEST_DIR/CLAUDE.md" ]]; then
+  echo "Note: renamed CLAUDE.md to CLAUDE.md.submitted so it is not loaded as instructions."
+  mv "$DEST_DIR/CLAUDE.md" "$DEST_DIR/CLAUDE.md.submitted"
 fi
 
 # --- Write .feedback-repo-root ---
