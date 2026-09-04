@@ -2,12 +2,14 @@
 
 Grading dimensions for research-exhaustiveness unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
-## Threshold reasoning
+## Gate reasoning
 
-Did the skill honestly apply the five threshold questions and the 7-point stop criteria? An exhaustive declaration must be defensible against the criteria, not asserted unilaterally.
+Did the skill work the 7-point stop criteria as a gate — in order, stopping at the first that fails, and naming it? An exhaustive declaration must be defensible against the criteria, not asserted unilaterally.
 
-- **pass:** The skill explicitly evaluates each criterion against the project's log/assertions and either declares only when all criteria are met, or declines with a specific named gap (e.g., "probate records not yet searched"). The reasoning is grounded in actual log entries, not generic claims.
-- **partial:** The skill applies most criteria but glosses over one or two (e.g., asserts "all record types searched" without naming them), or names a gap but only vaguely.
+This dimension grades the **decision**; `Stop criteria coverage` grades the **content** of each assessment. A run can name the blocking criterion correctly here and still score partial there for saying nothing substantive about it.
+
+- **pass:** The skill evaluates the criteria against the project's log/assertions and either declares only when all seven are met, or declines naming the specific criterion that blocks and the gap under it (e.g., "probate records not yet searched" under `repository_breadth`). The reasoning is grounded in actual log entries, not generic claims.
+- **partial:** The skill applies most criteria but glosses over one or two (e.g., asserts "all record types searched" without naming them), or declines naming a gap without tying it to a criterion.
 - **fail:** The skill declares exhaustive without applying the criteria, declares without grounding in log entries, or declines without naming what's missing.
 
 ## Declaration honesty
@@ -24,6 +26,8 @@ Are the 7 stop criteria assessed with **substance** — each tied to specific pr
 
 **Grade the content, not the presence.** That the seven keys exist at all on a declaring run is asserted deterministically by `test_declared_has_full_stop_criteria` in the skill's validator, so do not spend this dimension on it — a validator names a missing key in one line, where a judge gives an opinion that moves between runs. What only a reader can judge is whether each assessment says anything: "Census, vital records and probate all searched" is an assessment, "Yes" is not. That distinction applies on both paths — as object values when the run declares, as named prose when it declines. An earlier revision narrowed this dimension to the declining path and so left a declaration with seven one-word criteria graded by nothing at all.
 
-- **pass:** All seven criteria (`goal_alignment`, `repository_breadth`, `original_substitution`, `independent_verification`, `evidence_class`, `conflict_resolution`, `overturn_risk`) carry a 1–2 sentence assessment tied to a specific log entry or assertion — as object values when declaring, as named prose when declining.
-- **partial:** All seven addressed but at least one is generic boilerplate ("yes" with no specifics), or one is missing but the surrounding justification covers it.
-- **fail:** Two or more of the seven unaddressed, or the assessments are all generic without reference to project state.
+**A decline owes the blocking entry, not all seven.** The stop criteria are a gate assessed in order, stopping at the first that fails, so a correct decline names one criterion and is not thin for leaving the other six unassessed. Grade a declaration on all seven and a decline on the one that blocks.
+
+- **pass:** When declaring, all seven criteria (`goal_alignment`, `repository_breadth`, `original_substitution`, `independent_verification`, `evidence_class`, `conflict_resolution`, `overturn_risk`) carry a 1–2 sentence assessment tied to a specific log entry or assertion, as object values. When declining, the blocking criterion is named and carries that same substance; the remaining six are not owed.
+- **partial:** When declaring, all seven are present but at least one is generic boilerplate ("yes" with no specifics). When declining, the blocking criterion is named but its assessment is generic.
+- **fail:** When declaring, any of the seven is missing, or the assessments are all generic without reference to project state. When declining, no blocking criterion is named, or one is named with no assessment at all.
