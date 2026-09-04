@@ -390,8 +390,11 @@ describe("resolveStandardPlace date qualifier and its guards", () => {
 
   it("falls back to an undated query when the dated one returns nothing", async () => {
     // `+date:` is a hard filter: where no representation records coverage for
-    // the year FamilySearch returns nothing at all, and 13/150 corpus places
-    // went blank before this guard existed.
+    // the year FamilySearch returns nothing at all, and a measured share of
+    // corpus places went blank before this guard existed. The rate is quoted
+    // once, in `getSearchEntries` (src/utils/place-resolver.ts) beside the
+    // probe that emits it — restating it here is how the two drifted apart,
+    // and nothing checks either copy.
     mockSearchPlace
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([entry({ placeRepId: "m", fullName: "Manger, Hordaland, Norway", score: 90 })]);
@@ -466,6 +469,57 @@ describe("countryConsistency — diacritics and endonyms", () => {
     // English county names no country, so there is nothing to compare.
     expect(countryConsistency("Schuylkill County, Pennsylvania", "Schuylkill, Pennsylvania, United States")).toBe("unverifiable");
     expect(countryConsistency("Sheffield, Staffordshire", "Sheffield, Staffordshire, England")).toBe("unverifiable");
+  });
+
+  it("declines to judge when the STANDARD place names no country it recognises", () => {
+    // The endonyms lit up the recorded side and exposed an asymmetry on the
+    // standard side: "…, Rakousko" (Czech for Austria) is now readable, and a
+    // Bohemian or Moravian place standardises to "…, Bohemia" / "…, Moravia",
+    // which the alias table does not carry. Falling through to "contradiction"
+    // reported "plainly lacks" when it meant "cannot read", and research_append
+    // rejects the ENTIRE append on a contradiction. These four resolutions are
+    // correct — "Křičeň, Bezirk Pardubitz, Bohemia" scores 100 live.
+    expect(countryConsistency("Křičeň, Pardubice, Čechy, Rakousko", "Křičeň, Bezirk Pardubitz, Bohemia")).toBe("unverifiable");
+    expect(countryConsistency("Bystré 30, Polička, Čechy, Rakousko", "Bistrau, Polička, Bohemia")).toBe("unverifiable");
+    expect(countryConsistency("Stašov, Polička, Čechy, Rakousko", "Dittersbach, Polička, Bohemia")).toBe("unverifiable");
+    expect(countryConsistency("Svitavy, Moravská Třebová, Morava, Rakousko", "Svitavy, Moravská Třebová, Moravia, Czechoslovakia")).toBe("unverifiable");
+  });
+
+  it("keeps catching garbage that hides BEHIND a historical polity", () => {
+    // The rail on the fix above. An earlier attempt returned early whenever any
+    // standard segment named a polity, which reads these as unjudgeable too —
+    // and they are exactly what the guard exists for. Both strings are real, in
+    // eval/tests/e2e/anna-findejsova-daughter/starting-tree.gedcomx.json: the
+    // polity is genuine and the garbage is appended AFTER it.
+    expect(countryConsistency(
+      "Svitavy, Moravská Třebová, Morava, Rakousko",
+      "Zwittau, Mährisch Trübau, Moravia, Changgŭm-ni, SHIN-WON-GUN, South Hwanghae, North Korea",
+    )).toBe("contradiction");
+    expect(countryConsistency(
+      "Křičeň, Pardubice, Čechy, Rakousko",
+      "Křičeň, Bezirk Pardubitz, Bohemia, Manchester, Lancashire, England, United Kingdom",
+    )).toBe("contradiction");
+  });
+
+  it("keeps the ok verdicts a polity-blind fix would have inverted", () => {
+    // Six corpus pairs the guard already gets right, because the standard side
+    // names BOTH the polity and a country the table carries. Nothing else
+    // covers them, so a regression here would ship green.
+    expect(countryConsistency("Bystré 41, Polička, Čechy, Rakousko", "Bistrau, Polička, Bohemia, Austria")).toBe("ok");
+    expect(countryConsistency("Svitavy, Moravská Třebová, Morava, Rakousko", "Zwittau, Mährisch Trübau, Moravia, Austria")).toBe("ok");
+    expect(countryConsistency(", Pommerania, Preussen, Germany", "Pomerania, Prussia, Germany")).toBe("ok");
+    expect(countryConsistency("Höchst, Hessen-Nassau, Preußen, Deutschland", "Höchst, Hesse-Nassau, Prussia, Germany")).toBe("ok");
+    expect(countryConsistency("Sindlingen, Kreis Höchst, Hessen-Nassau, Preußen, Deutschland", "Sindlingen, Höchst, Hesse-Nassau, Prussia, Germany")).toBe("ok");
+    expect(countryConsistency("Prussia, Germany", "Prussia, Germany")).toBe("ok");
+  });
+
+  it("declares a contradiction against a country carried only for that purpose", () => {
+    // cameroon / north korea / south korea are in COUNTRY_ALIASES for no other
+    // reason than this: the guard cannot contradict a country it cannot read,
+    // and these are where the corpus's mis-resolutions actually land. Deleting
+    // any of the three silently disarms the catch.
+    expect(countryConsistency("West Bromwich, England", "Bamenda, Mezam, Northwest Region, Cameroon")).toBe("contradiction");
+    expect(countryConsistency("Bayern, Deutschland", "Changgŭm-ni, South Hwanghae, North Korea")).toBe("contradiction");
   });
 });
 

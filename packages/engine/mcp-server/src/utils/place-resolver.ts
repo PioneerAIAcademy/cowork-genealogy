@@ -259,8 +259,10 @@ async function getSearchEntries(
 
   // `+date:` is a hard filter, not a preference: when no place representation
   // records coverage for that year FamilySearch returns nothing at all, even
-  // for a place that resolves fine undated (measured: 13/150 of the eval
-  // corpus, e.g. "Manger, Hordaland, Norge" 1801). Falling back to the undated
+  // for a place that resolves fine undated (measured: 11/150 of the eval
+  // corpus, e.g. "Manger, Hordaland, Norge" 1801 — the SOLE copy of this rate;
+  // it is emitted by dev/probe-place-date-disagreement.ts and no test checks
+  // it, so do not restate it elsewhere). Falling back to the undated
   // query makes the qualifier strictly additive — it can sharpen an answer but
   // never turns one into a blank. See dev/probe-place-date-disagreement.ts.
   if (year !== undefined && entries.length === 0) {
@@ -340,6 +342,13 @@ const COUNTRY_ALIASES: Record<string, string> = {
   hungary: "hungary",
   switzerland: "switzerland",
   mexico: "mexico",
+  // Not genealogy countries — carried because they are where a mis-resolution
+  // lands, and the guard can only declare a contradiction against a country it
+  // recognises. Dropping these re-opens the catches in
+  // eval/tests/e2e/anna-findejsova-daughter/starting-tree.gedcomx.json.
+  cameroon: "cameroon",
+  "north korea": "north korea",
+  "south korea": "south korea",
 
   // Endonyms and other-language forms for the countries above.
   deutschland: "germany",
@@ -405,6 +414,15 @@ export function countryConsistency(place: string, standardPlace: string): "ok" |
   const stdCountries = placeSegments(standardPlace)
     .map(canonicalCountry)
     .filter((c): c is string => c !== null);
+  // The standard place names no country this map recognises — a historical
+  // polity ("…, Bohemia", "…, Moravia", "…, Czechoslovakia") or a country the
+  // table does not carry. That is "cannot compare", not "plainly lacks", and
+  // the difference matters: a Bohemian place recorded as "…, Rakousko"
+  // (Czech for Austria) standardises to "…, Bohemia" — the same territory,
+  // not a different country — and reporting a contradiction there rejects the
+  // whole research_append. Same reason an input naming no country returns
+  // unverifiable above.
+  if (stdCountries.length === 0) return "unverifiable";
   if (stdCountries.includes(inputCountry)) return "ok";
   // UK constituents: "England" is consistent with a standard place that ends in
   // "United Kingdom" — unless a DIFFERENT constituent is present.
@@ -480,24 +498,30 @@ export async function resolveStandardPlace(
   // A date-qualified answer describes the place as it WAS, so it can legitimately
   // name a different sovereign than the record's own text — "Bavaria, Germany"
   // at 1843 resolves to "Bavaria" (the Kingdom predates the German Empire), and
-  // "Quebec, Canada" at 1819 to "British North America". `countryConsistency`
-  // reads both as contradictions, and research_append turns a contradiction into
-  // a hard error that rejects the entire append.
+  // "Quebec, Canada" at 1819 to "British North America".
   //
-  // Rather than weaken the guard for every caller — it is the only thing
-  // standing between a wrong resolution and the file — fall back to the undated
-  // answer whenever the dated one would trip it. The qualifier keeps every win
-  // it earns and can never turn a writable value into a rejected write. Same
-  // principle as the empty-result fallback in getSearchEntries: `+date:` may
-  // sharpen an answer, never break one.
+  // `countryConsistency` cannot confirm either: the historical rendering names
+  // no country the alias table recognises, so the verdict is `unverifiable`
+  // (`contradiction` where it names a modern one, as "British North America"
+  // does not but a mis-resolution to "…, Cameroon" would). Rather than weaken
+  // the guard for every caller — it is the only thing standing between a wrong
+  // resolution and the file — fall back to the undated answer whenever the
+  // dated one is anything but `ok`. Same principle as the empty-result
+  // fallback in getSearchEntries: `+date:` may sharpen an answer, never break
+  // one.
   //
-  // The cost is explicit: where the guard objects we keep the modern rendering
-  // and lose the historical one. That is the conservative side to err on, since
-  // the guard cannot tell a sovereignty change from a mis-resolution.
+  // The trigger is `!== "ok"` rather than `=== "contradiction"` deliberately.
+  // A historical rendering is far more often unconfirmable than contradictory,
+  // so keying on `contradiction` alone would persist the very anachronism-free
+  // values the guard cannot vouch for, while looking like it had checked them.
+  //
+  // The cost is explicit: where the guard cannot confirm, we keep the modern
+  // rendering and lose the historical one. That is the conservative side to err
+  // on, since the guard cannot tell a sovereignty change from a mis-resolution.
   if (
     year !== undefined &&
     standardPlace &&
-    countryConsistency(originalText, standardPlace) === "contradiction"
+    countryConsistency(originalText, standardPlace) !== "ok"
   ) {
     try {
       const undated = pickBest(

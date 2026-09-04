@@ -93,6 +93,18 @@ export function extractPrimaryId(
 // `&` is dropped. Mapping wins or ties on all four, and on Ogden it recovers
 // the city rather than only the county.
 //
+// Measured on four CONJUNCTION strings, which is the whole corpus population —
+// not on `&` in general. A "X & District" registration district is the known
+// counter-shape: live, "Todmorden & District, Yorkshire, England" persists the
+// county under this rule where dropping the `&` returns the town at 95, and the
+// same holds for "Keighley & District". That form is common in English and
+// Commonwealth civil registration and is absent from this corpus, so nothing
+// here measures it. `&` is genuinely ambiguous — a conjunction wants the word,
+// a "& District" suffix wants the leaf — and no single rule serves both. The
+// fix that would is a dual query (issue both, keep the better result); it is
+// not built, because choosing between two live results needs a ranking rule
+// nobody has specified.
+//
 // Dropping is right for `#`: the index normalises it, so "Alverson Cemetery #1"
 // still matches FamilySearch's own place of that exact name at 95. Do not
 // generalise that to the other characters — it is a fact about `#`.

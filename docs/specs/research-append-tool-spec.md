@@ -458,10 +458,25 @@ append op (deliberately simple):
   `standard_place: null`) — e.g. "West Bromwich, England" resolving to a
   standard_place ending in "Cameroon". UK constituents are consistent with
   "United Kingdom" (but not with a *different* constituent), and "Ireland" with
-  "Northern Ireland" (historic records). When the place text names no country the
-  guard cannot compare, so a **geocoded** value instead gets a
-  verify-this warning (supplied and sidecar-copied values stay silent — the echo
-  is their audit surface).
+  "Northern Ireland" (historic records).
+
+  The guard **declines to judge** — no rejection, and a **geocoded** value
+  instead gets a verify-this warning (supplied and sidecar-copied values stay
+  silent, since the echo is their audit surface) — in either of two cases:
+
+  1. the place text names no country (a trailing US state or English county);
+  2. the *standard place* names no country the alias table recognizes. A
+     historical polity is the live instance: a Bohemian place recorded as
+     "…, Rakousko" (Czech for Austria) standardizes to "…, Bohemia", which is
+     the same territory rather than a different country. Falling through to a
+     rejection there reported "plainly lacks" when it meant "cannot read", and
+     a rejection fails the **entire** append, not the one entry.
+
+  Case 2 is why the table carries `cameroon` and the two Koreas, which are not
+  genealogy countries: the guard can only declare a contradiction against a
+  country it recognizes, and those are where the corpus's mis-resolutions
+  actually land. A contradiction still fires when the garbage sits *behind* a
+  genuine polity ("Moravia, …, South Hwanghae, North Korea").
 
 ### 3.7 Boundary shape normalization (dates + labels)
 
