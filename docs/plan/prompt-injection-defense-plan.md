@@ -1,7 +1,11 @@
 # Prompt-injection defense for ingested record text — plan
 
-> **Status:** Partially implemented. Data-boundary fencing for record-extraction
-> delegation (#1018 Task 4) landed; the broader defense plan is still pending.
+> **Status:** First-order doctrine landed (#1018 Task 4) — the prompt-side half of
+> the Goal below, with no regression test yet, so the rule is stated but not
+> enforced. The 2026-08-16 note below still stands: this paragraph does not
+> address the second-order path (directive text captured verbatim into
+> `assertions[].value` and re-served later). That needs the assertion trust
+> level, which remains unscoped.
 > **Goal:** make it explicit, in the prompts that touch raw record text, that
 > directive-shaped language inside a source is data to capture and flag —
 > never an instruction to obey — and back that with a regression test that
