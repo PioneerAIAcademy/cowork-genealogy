@@ -349,10 +349,18 @@ descriptions because a user may still invoke any of them directly.
 19 of the 27 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
-**A reference is loaded only if its own `SKILL.md` names it** — or if a
-reference the body names links on to it. Nothing lists a `references/` folder at
-runtime, so a file neither route reaches is unreachable: it costs no prompt
-tokens and carries every byte of the drift risk.
+**A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
+a reference the body names links on to it. Nothing lists a `references/` folder at
+runtime, so a file neither route reaches is never loaded on purpose: in the normal
+path it costs no prompt tokens, while carrying every byte of the drift risk.
+
+Both halves of that are claims about the normal path, not about reach. **An
+unnamed file is not out of reach.** Both environments put every skill's
+`references/` folder in front of a session — the harness copies each skill
+directory into the workspace's `.claude/skills/`, and the Cowork `.zip` ships the
+whole plugin — so a model that globs can read any of them, unreviewed. Measured,
+not theorised: `ut_convert_dates_012` globbed `**/*`, read three files on that
+test's exemption list, and one of them changed its answer.
 
 `tests/packaging/skill-reference-reachability.test.ts` enforces that, and is
 where the still-unreached files are listed. Its exemption list **only shrinks** —
@@ -461,9 +469,9 @@ Three families are duplicated today, and only one is lint-guarded:
 | `validation-protocol.md` | 2 | **2** | **none** |
 | `research-log-protocol.md` | 1 | 1 | **none** |
 
-The last two were 11 and 3 until the unreachable copies were deleted. Nine
+The last two were 11 and 3 until the unnamed copies were deleted. Nine
 `validation-protocol.md` copies and two `research-log-protocol.md` copies were
-named by no `SKILL.md`, so no session could load them; three of the nine also
+named by no `SKILL.md`, so nothing loaded them deliberately; three of the nine also
 carried the retired "run `validate_research_schema` after writing" doctrine, and
 four named a `check-warnings` trigger their skill cannot reach — it writes
 `questions` or `plans`, never `assertions` or `person_evidence`. The two
@@ -492,7 +500,8 @@ lists, and the test asserts that too.
 > `validation-protocol.md` largely restates rules `research_append`'s error
 > contract already enforces at write time, and a rule the tool rejects can be one
 > sentence. **Before adding a copy, say why in the PR — and name it in the
-> `SKILL.md`, or you are shipping a file nothing can read.**
+> `SKILL.md`, or you are shipping a file nothing loads on purpose — and that a
+> globbing model can still read, unreviewed.**
 
 ### 3.4 Agent bodies are self-contained — do not split them
 

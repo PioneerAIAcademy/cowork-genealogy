@@ -117,22 +117,6 @@
     {
       "test_id": "ut_project_status_006",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_project_status_006",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_project_status_006",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
@@ -169,22 +153,6 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
-    },
-    {
-      "test_id": "ut_project_status_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "**`ut_project_status_004`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> This is a negative test where the skill should have declined and routed to proof-conclusion. Instead, the skill produced no output at all—not even a decline message or routing instruction. The correct behavior is to explicitly decline the project-status task and route the user to proof-conclusion. An empty response fails to communicate the routing decision.\n\nJunior: (Fail -  because it did not perform the required routing. An empty response leaves the user without guidance and fails the test requirement to surface the routing decision clearly. The fix is to provide a clear decline + routing message instead of silence. That way, the user knows the request is outside project‑status and is directed to the correct proof‑conclusion skill.)"
-    },
-    {
-      "test_id": "ut_project_status_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "**`ut_project_status_004`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> The skill did not complete the required action for this negative test: it should have declined project-status and routed to proof-conclusion. An empty response omits the necessary decline/routing communication entirely. The user receives no guidance on what skill should handle their request.\n\nJunior: (Fail - because it omits the necessary decline/routing communication. To pass, the skill must clearly state that proof statements are handled by proof‑conclusion and route the user there, instead of remaining silent.)"
     },
     {
       "test_id": "ut_project_status_004",
@@ -249,6 +217,38 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_project_status_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "**`ut_project_status_004`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> This is a negative test where the skill should have declined and routed to proof-conclusion. Instead, the skill produced no output at all—not even a decline message or routing instruction. The correct behavior is to explicitly decline the project-status task and route the user to proof-conclusion. An empty response fails to communicate the routing decision.\n\nJunior: (Pass - **`ut_project_status_004`** — `base` / `Correctness`\nLLM: 1 → Junior: 3\n\n> This is a negative test where the skill should have declined and routed to proof-conclusion. Instead, the skill produced no output at all—not even a decline message or routing instruction. The correct behavior is to explicitly decline the project-status task and route the user to proof-conclusion. An empty response fails to communicate the routing decision.\n\nJunior: **`ut_project_status_004`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> This is a negative test where the skill should have declined and routed to proof-conclusion. Instead, the skill produced no output at all—not even a decline message or routing instruction. The correct behavior is to explicitly decline the project-status task and route the user to proof-conclusion. An empty response fails to communicate the routing decision.\n\nJunior: (Pass - Override. The routing did happen — the run shows `skills_invoked: [\"proof-conclusion\"]`, `activated: false`, zero tool calls and zero files created. The judge graded the empty output of a skill that correctly never ran. The harness advisory says the 1 is right only if the skill under test carried out the task inline; it did not. project-status cannot print a decline on a run it never enters.)"
+    },
+    {
+      "test_id": "ut_project_status_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "**`ut_project_status_004`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> The skill did not complete the required action for this negative test: it should have declined project-status and routed to proof-conclusion. An empty response omits the necessary decline/routing communication entirely. The user receives no guidance on what skill should handle their request.\n\nJunior: (Pass - Override. The routing did happen — the run shows `skills_invoked: [\"proof-conclusion\"]`, `activated: false`, zero tool calls and zero files created. The judge graded the empty output of a skill that correctly never ran. The harness advisory says the 1 is right only if the skill under test carried out the task inline; it did not. project-status cannot print a decline on a run it never enters.)"
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_project_status_006`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The response accurately reflects the research.json state. All counts match: 9 sources (8 original, 1 derivative), 13 assertions from src_001–src_004, 5 sources without assertions, 5 log entries, 1 conflict resolved, 1 hypothesis, 1 proof conclusion at Probable tier. The narrative correctly identifies the three evidence lines (1850 census, 1860 census, death certificate), accurately characterizes the informant (son-in-law James Brown as secondary for birth facts), and correctly resolves the birthplace conflict in favor of Ireland. The broken foreign-key warnings are factually correct: I9 does not exist in tree.gedcomx.json, and both project.subject_person_ids and timelines[t_001].person_ids contain this dangling reference. No fabricated material or unsupported claims.\n\nJunior: (Pass - the response is factually accurate, complete, and aligned with genealogical standards.)"
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_project_status_006`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The response addresses all required elements. The user asked for project status; the skill delivered both a plain-language narrative and a detailed GPS-state summary covering all GPS elements: questions (q_001, q_002 with status and GPS element detail), plans (pl_002 with three items and progress), search log (5 entries with metrics), evidence (9 sources, 13 assertions, person-evidence links), conflicts (c_001 resolved), hypotheses (h_001 with supporting logic), conclusions (ps_001 at Probable tier), and timeline (t_001 with gap noted). Empty sections are explicitly named (e.g., 'no formal proof summary' for q_002). The critical broken-foreign-key warnings are surfaced at the top as required by the per-test context.\n\nJunior: (Pass - the response delivers both a plain‑language narrative and a detailed GPS‑state summary, touches every required element, and surfaces integrity warnings upfront.)"
     }
   ]
 }

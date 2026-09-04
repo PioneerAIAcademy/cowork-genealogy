@@ -7,11 +7,23 @@ import { fileURLToPath } from "node:url";
 // every file present is named by something the skill reads, and every file the
 // body names is present.
 //
-// Nothing lists a references/ folder at runtime — a reference is loaded because
-// the SKILL.md names it (or because a reference the body names links on to it).
-// A file nothing names is therefore unreachable in every environment: it costs
-// no prompt tokens and carries the full maintenance and drift cost of a live
-// file. Eleven such files shipped for months, nine of them copies of one
+// Nothing lists a references/ folder at runtime — a reference is loaded
+// DELIBERATELY because the SKILL.md names it (or because a reference the body
+// names links on to it). An unnamed file is therefore never loaded on purpose,
+// costs no prompt tokens in the normal path, and carries the full maintenance
+// and drift cost of a live file.
+//
+// It is NOT out of reach, and this comment used to claim it was. Both
+// environments put every skill's references/ folder in front of a session:
+// `eval/harness/harness/workspace.py` copies each skill directory into the
+// workspace's `.claude/skills/`, and the Cowork .zip ships the whole plugin. So
+// a model that globs can read any of them. Measured, not theorised —
+// `eval/runlogs/unit/convert-dates/v1_2026-09-01_11-26-50.json`
+// (`ut_convert_dates_012`) globbed `**/*` and read three files that are on the
+// exemption list below, and one of them changed its answer (#1112).
+//
+// Separately, and the reason this test exists at all: eleven files named by no
+// `SKILL.md` shipped for months, nine of them copies of one
 // `validation-protocol.md`, three of those carrying a doctrine the writer tools
 // had already retired and one contradicting its own skill body.
 //
@@ -42,8 +54,9 @@ const skillsDir = join(repoRoot, "plugin", "skills");
 // change owing a paid eval run. That is why they are pending rather than fixed.
 //
 // This list may only SHRINK. Removing an entry means the file was deleted or
-// wired into its SKILL.md; adding one means shipping a file nothing can read,
-// which is the thing this test exists to prevent.
+// wired into its SKILL.md; adding one means shipping a file no SKILL.md names —
+// which a globbing model can still read, unreviewed, which is the thing this
+// test exists to prevent.
 const UNREACHED_PENDING_ADJUDICATION: Array<{ path: string; why: string }> = [
   {
     path: "convert-dates/references/calendar-conflicts.md",
@@ -161,7 +174,8 @@ describe("skill references are reachable", () => {
       expect(
         unreached,
         `These files are named by no SKILL.md and by no reference it reads, so ` +
-          `no session can load them. Name the file in ${skill}/SKILL.md, or ` +
+          `nothing loads them deliberately — though a globbing model can still ` +
+          `read them. Name the file in ${skill}/SKILL.md, or ` +
           `delete it. Do NOT add it to UNREACHED_PENDING_ADJUDICATION — that ` +
           `list only shrinks.`
       ).toEqual([]);
@@ -182,17 +196,22 @@ describe("skill references are reachable", () => {
     ).toEqual([]);
   });
 
-  it("every missing-reference exemption is still named and still missing", () => {
-    const stale: string[] = [];
-    for (const { path: rel } of MISSING_PENDING_ADJUDICATION) {
-      const [skill, , file] = rel.split("/");
-      if (existsSync(join(skillsDir, skill, "references", file))) {
-        stale.push(`${rel}: file now exists — drop this entry`);
-      } else if (!namedButMissing(skill).includes(rel)) {
-        stale.push(`${rel}: no longer named by ${skill}/SKILL.md — drop this entry`);
-      }
-    }
-    expect(stale, "MISSING_PENDING_ADJUDICATION has stale entries").toEqual([]);
+  // This replaces a staleness loop that iterated MISSING_PENDING_ADJUDICATION
+  // looking for entries whose file had reappeared or whose pointer had gone. Once
+  // the list was emptied that loop had no reachable failure path — it walked an
+  // array the shrink-only rule keeps empty, which reads as coverage while checking
+  // nothing, the exact thing CLAUDE.md says is worse than no check at all.
+  //
+  // Asserting the emptiness directly does have one: it fails the moment an entry
+  // is re-added, which is the regression the shrink-only rule forbids. If a
+  // genuinely un-fixable dangling pointer ever has to be exempted, restore the
+  // staleness loop in the same commit as the entry.
+  it("the missing-reference exemption list stays empty", () => {
+    expect(
+      MISSING_PENDING_ADJUDICATION,
+      "MISSING_PENDING_ADJUDICATION only shrinks and is already empty — a new " +
+        "dangling pointer must be fixed or the file written, not exempted.",
+    ).toEqual([]);
   });
 
   it("every pending-adjudication entry still exists and is still unreached", () => {
