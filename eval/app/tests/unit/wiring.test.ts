@@ -106,8 +106,12 @@ describe('the control is actually wired', () => {
     // in the browser and cannot touch the filesystem.
     const appRoot = path.resolve(__dirname, '../..')
     const appDir = path.join(appRoot, 'app')
+    // Matches the same three shapes the import-extraction regex below does.
+    // Requiring `from` missed `await import('node:fs')` entirely: the static
+    // form red, the dynamic form walked straight past, and the two reach the
+    // filesystem identically.
     const SERVER_ONLY =
-      /from\s+['"](?:@\/lib\/fs|@\/lib\/identity|@\/lib\/paths|node:|fs(?:['"]|\/)|child_process)/
+      /(?:from|import|require)\s*\(?\s*['"](?:@\/lib\/fs|@\/lib\/identity|@\/lib\/paths|node:|fs(?:['"]|\/)|child_process)/
 
     const resolve = (spec: string, fromFile: string): string | null => {
       const base = spec.startsWith('@/')
