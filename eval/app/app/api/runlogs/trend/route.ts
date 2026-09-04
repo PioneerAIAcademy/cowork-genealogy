@@ -72,9 +72,20 @@ export async function GET(req: NextRequest) {
   const points: TrendPoint[] = [];
   for (let i = 0; i < released.length; i++) {
     const r = released[i];
-    const ann = (await readAnnotation(r.id)) as
-      | { corrections: Array<{ test_id: string; dimension_source: string; dimension_name: string; corrected_score: ScoreOrNull }> }
-      | null;
+    let ann;
+    try {
+      ann = (await readAnnotation(r.id)) as
+        | { corrections: Array<{ test_id: string; dimension_source: string; dimension_name: string; corrected_score: ScoreOrNull }> }
+        | null;
+    } catch (err) {
+      // A corrupt .ann.json throws in readAnnotation — return a structured 422
+      // (the thrown message carries the offending file's path) instead of a bare
+      // 500, mirroring the run-log route.
+      return NextResponse.json(
+        { error: 'invalid_annotation', message: (err as Error).message },
+        { status: 422 },
+      );
+    }
     points.push({
       version: r.log.version!,
       released: true,
