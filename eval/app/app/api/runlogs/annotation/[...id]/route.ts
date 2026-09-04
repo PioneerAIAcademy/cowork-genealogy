@@ -6,7 +6,10 @@ import type { AnnotationFile } from '@/lib/types';
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string[] }> }) {
   const { id } = await params;
-  const runLogId = id.map(decodeURIComponent).join('/');
+  // Next has ALREADY decoded these catch-all segments. Decoding again turned a
+  // double-encoded separator into a real one AFTER normalisation had run, so a
+  // traversal reached the path sinks looking clean. Join what Next gave us.
+  const runLogId = id.join('/');
   try {
     const annotation = await readAnnotation(runLogId);
     return NextResponse.json({ annotation });
@@ -22,7 +25,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string[] }> }) {
   const { id } = await params;
-  const runLogId = id.map(decodeURIComponent).join('/');
+  // Next has ALREADY decoded these catch-all segments. Decoding again turned a
+  // double-encoded separator into a real one AFTER normalisation had run, so a
+  // traversal reached the path sinks looking clean. Join what Next gave us.
+  const runLogId = id.join('/');
   const body = (await req.json()) as Partial<AnnotationFile>;
 
   const identity = await getIdentity();

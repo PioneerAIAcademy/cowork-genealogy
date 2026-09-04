@@ -1,0 +1,1537 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search -- browse-only Trysil parish register volumes, incl. the 1814-1877 burial register.",
+  "args": {
+    "standardPlace": "~Trysil"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Trysil, Hedmark, Norway",
+      "startYear": 1780,
+      "endYear": 1880
+    },
+    "totalResults": 34,
+    "results": [
+      {
+        "imageGroupNumber": "008627093_003_M985-HWB",
+        "imageGroupPrefix": "008627093",
+        "imageCount": 10,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1825,
+            "endYear": 1825,
+            "dateRange": "1825",
+            "recordType": "folketelling",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "009062329_002_M9D9-W11",
+        "imageGroupPrefix": "009062329",
+        "imageCount": 104,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Ljørdal, Trysil, Hedmark, Norway",
+            "startYear": 1872,
+            "endYear": 1895,
+            "dateRange": "1872–1895",
+            "recordType": "Baptism Records",
+            "recordTypeConceptId": 103612
+          },
+          {
+            "place": "Ljørdal, Trysil, Hedmark, Norway",
+            "startYear": 1873,
+            "endYear": 1873,
+            "dateRange": "1873",
+            "recordType": "Religious Records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Ljørdal, Trysil, Hedmark, Norway",
+            "startYear": 1875,
+            "endYear": 1894,
+            "dateRange": "1875–1894",
+            "recordType": "Confirmation Records",
+            "recordTypeConceptId": 101655
+          },
+          {
+            "place": "Ljørdal, Trysil, Hedmark, Norway",
+            "startYear": 1872,
+            "endYear": 1895,
+            "dateRange": "1872–1895",
+            "recordType": "Burial Records",
+            "recordTypeConceptId": 104497
+          },
+          {
+            "place": "Ljørdal, Trysil, Hedmark, Norway",
+            "startYear": 1872,
+            "endYear": 1895,
+            "dateRange": "1872-1895",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "009062347_004_M9DM-15V",
+        "imageGroupPrefix": "009062347",
+        "imageCount": 36,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1858,
+            "endYear": 1873,
+            "dateRange": "1858-1873",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1881,
+            "dateRange": "1865-1881",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1859,
+            "endYear": 1881,
+            "dateRange": "1859-1881",
+            "recordType": "Religious Birth Records",
+            "recordTypeConceptId": 127575
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1867,
+            "endYear": 1880,
+            "dateRange": "1867-1880",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1862,
+            "endYear": 1874,
+            "dateRange": "1862-1874",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679246_001_M9F3-JFJ",
+        "imageGroupPrefix": "008679246",
+        "imageCount": 156,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Røros Prestegjeld, Sør-Trøndelag, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Hamar, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Hamar, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kvikne, Søndre Trondhjem, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Tolga, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kongsvinger, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Røros Prestegjeld, Gauldal prosti, Nidaros diocese, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kongsvinger, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Vingelen, Tolga, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679246_003_M9F3-JFK",
+        "imageGroupPrefix": "008679246",
+        "imageCount": 233,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Røros Prestegjeld, Sør-Trøndelag, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Hamar, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Hamar, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kvikne, Søndre Trondhjem, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Tolga, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kongsvinger, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Røros Prestegjeld, Gauldal prosti, Nidaros diocese, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kongsvinger, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Vingelen, Tolga, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679246_004_M9F3-JFN",
+        "imageGroupPrefix": "008679246",
+        "imageCount": 185,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Røros Prestegjeld, Sør-Trøndelag, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Hamar, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Hamar, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kvikne, Søndre Trondhjem, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Tolga, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kongsvinger, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Røros Prestegjeld, Gauldal prosti, Nidaros diocese, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kongsvinger, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Vingelen, Tolga, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679246_002_M9F3-JFV",
+        "imageGroupPrefix": "008679246",
+        "imageCount": 68,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Røros Prestegjeld, Sør-Trøndelag, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Hamar, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Hamar, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kvikne, Søndre Trondhjem, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Tolga, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kongsvinger, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Røros Prestegjeld, Gauldal prosti, Nidaros diocese, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kongsvinger, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Vingelen, Tolga, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679203_002_M9F3-NCR",
+        "imageGroupPrefix": "008679203",
+        "imageCount": 16,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1802,
+            "endYear": 1813,
+            "dateRange": "1802-1813",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679203_001_M9F3-NCT",
+        "imageGroupPrefix": "008679203",
+        "imageCount": 16,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1788,
+            "endYear": 1790,
+            "dateRange": "1788-1790",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679203_003_M9F3-NCY",
+        "imageGroupPrefix": "008679203",
+        "imageCount": 325,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1814,
+            "endYear": 1877,
+            "dateRange": "1814-1877",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679202_005_M9F3-NG9",
+        "imageGroupPrefix": "008679202",
+        "imageCount": 58,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1800,
+            "endYear": 1814,
+            "dateRange": "1800-1814",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679202_002_M9F3-NGM",
+        "imageGroupPrefix": "008679202",
+        "imageCount": 72,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1761,
+            "endYear": 1780,
+            "dateRange": "1761-1780",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679202_006_M9F3-NGS",
+        "imageGroupPrefix": "008679202",
+        "imageCount": 293,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1814,
+            "endYear": 1841,
+            "dateRange": "1814-1841",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679202_003_M9F3-NL1",
+        "imageGroupPrefix": "008679202",
+        "imageCount": 77,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1781,
+            "endYear": 1800,
+            "dateRange": "1781-1800",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679244_004_M9F3-V3M",
+        "imageGroupPrefix": "008679244",
+        "imageCount": 110,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Elverum, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Elverum, Melsbø, Lødingen, Nordland, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Våler, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Stor-Elvdal, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Våler, Nes, Akershus, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679244_003_M9F3-VS1",
+        "imageGroupPrefix": "008679244",
+        "imageCount": 179,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Elverum, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Elverum, Melsbø, Lødingen, Nordland, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Våler, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Stor-Elvdal, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Våler, Nes, Akershus, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679244_002_M9F3-VSB",
+        "imageGroupPrefix": "008679244",
+        "imageCount": 263,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Elverum, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Elverum, Melsbø, Lødingen, Nordland, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Våler, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Stor-Elvdal, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Våler, Nes, Akershus, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679244_005_M9F3-VST",
+        "imageGroupPrefix": "008679244",
+        "imageCount": 121,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Elverum, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Elverum, Melsbø, Lødingen, Nordland, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Våler, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Stor-Elvdal, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Våler, Nes, Akershus, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008679244_001_M9F3-VSY",
+        "imageGroupPrefix": "008679244",
+        "imageCount": 172,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Elverum, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "31 December 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Elverum, Melsbø, Lødingen, Nordland, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Våler, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Stor-Elvdal, Hedmark, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Våler, Nes, Akershus, Norway",
+            "startYear": 1865,
+            "endYear": 1865,
+            "dateRange": "desember 1865",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008680328_002_M9XJ-TJ3",
+        "imageGroupPrefix": "008680328",
+        "imageCount": 185,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1835,
+            "endYear": 1849,
+            "dateRange": "1835–1849",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008680328_001_M9XJ-TJ9",
+        "imageGroupPrefix": "008680328",
+        "imageCount": 116,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1815,
+            "endYear": 1878,
+            "dateRange": "1815–1878",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008680328_003_M9XJ-TJQ",
+        "imageGroupPrefix": "008680328",
+        "imageCount": 222,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1819,
+            "endYear": 1840,
+            "dateRange": "1819–1840",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008680328_004_M9XJ-TJS",
+        "imageGroupPrefix": "008680328",
+        "imageCount": 108,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1859,
+            "endYear": 1907,
+            "dateRange": "1859–1907",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008680327_002_M9XJ-TNY",
+        "imageGroupPrefix": "008680327",
+        "imageCount": 159,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1785,
+            "endYear": 1815,
+            "dateRange": "1785–1815",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004296405",
+        "imageGroupPrefix": "004296405",
+        "imageCount": 1089,
+        "recordSearchablePercent": 91,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Vestby, Trysil, Hedmark, Norway",
+            "startYear": 1875,
+            "endYear": 1875,
+            "dateRange": "desember 1875",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Vestby, Akershus, Norway",
+            "startYear": 1875,
+            "endYear": 1875,
+            "dateRange": "December 1875",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004376769",
+        "imageGroupPrefix": "004376769",
+        "imageCount": 488,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Innset, Sør-Trøndelag, Norway",
+            "startYear": 1875,
+            "endYear": 1875,
+            "dateRange": "desember 1875",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          },
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1875,
+            "endYear": 1875,
+            "dateRange": "desember 1875",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "009060952",
+        "imageGroupPrefix": "009060952",
+        "imageCount": 597,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1842,
+            "endYear": 1851,
+            "dateRange": "1842–1851",
+            "recordType": "Religious Marriage Records",
+            "recordTypeConceptId": 127577
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1814,
+            "endYear": 1828,
+            "dateRange": "1814–1828",
+            "recordType": "Religious Death Records",
+            "recordTypeConceptId": 127576
+          },
+          {
+            "place": "Søndre Osen, Hedmark, Norway",
+            "startYear": 1814,
+            "endYear": 1827,
+            "dateRange": "1814–1827",
+            "recordType": "Religious Death Records",
+            "recordTypeConceptId": 127576
+          },
+          {
+            "place": "Søndre Osen, Hedmark, Norway",
+            "startYear": 1842,
+            "endYear": 1850,
+            "dateRange": "1842–1850",
+            "recordType": "Religious Marriage Records",
+            "recordTypeConceptId": 127577
+          },
+          {
+            "place": "Søndre Osen, Hedmark, Norway",
+            "startYear": 1842,
+            "endYear": 1850,
+            "dateRange": "1842–1850",
+            "recordType": "Religious Death Records",
+            "recordTypeConceptId": 127576
+          },
+          {
+            "place": "Hedmark, Norway",
+            "startYear": 1814,
+            "endYear": 1841,
+            "dateRange": "1814–1841",
+            "recordType": "Religious Records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Åsen, Hedmark, Norway",
+            "startYear": 1844,
+            "endYear": 1850,
+            "dateRange": "1844-1850",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1814,
+            "endYear": 1841,
+            "dateRange": "1814–1841",
+            "recordType": "Religious Burial Records",
+            "recordTypeConceptId": 127739
+          },
+          {
+            "place": "Søndre Osen, Hedmark, Norway",
+            "startYear": 1842,
+            "endYear": 1850,
+            "dateRange": "1842–1850",
+            "recordType": "Religious Burial Records",
+            "recordTypeConceptId": 127739
+          },
+          {
+            "place": "Søndre Osen, Hedmark, Norway",
+            "startYear": 1814,
+            "endYear": 1842,
+            "dateRange": "1814–1842",
+            "recordType": "Religious Burial Records",
+            "recordTypeConceptId": 127739
+          },
+          {
+            "place": "Søndre Osen, Hedmark, Norway",
+            "startYear": 1843,
+            "endYear": 1849,
+            "dateRange": "1843–1849",
+            "recordType": "Vaccination Records",
+            "recordTypeConceptId": 127119
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1844,
+            "endYear": 1850,
+            "dateRange": "1844–1850",
+            "recordType": "Vaccination Records",
+            "recordTypeConceptId": 127119
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1842,
+            "endYear": 1850,
+            "dateRange": "1842–1850",
+            "recordType": "Religious Death Records",
+            "recordTypeConceptId": 127576
+          },
+          {
+            "place": "Søndre Osen, Hedmark, Norway",
+            "startYear": 1814,
+            "endYear": 1841,
+            "dateRange": "1814–1841",
+            "recordType": "Vaccination Records",
+            "recordTypeConceptId": 127119
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1842,
+            "endYear": 1850,
+            "dateRange": "1842–1850",
+            "recordType": "Religious Marriage Records",
+            "recordTypeConceptId": 127577
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1814,
+            "endYear": 1841,
+            "dateRange": "1814–1841",
+            "recordType": "Religious Marriage Records",
+            "recordTypeConceptId": 127577
+          },
+          {
+            "place": "Hedmark, Norway",
+            "startYear": 1828,
+            "endYear": 1841,
+            "dateRange": "1828–1841",
+            "recordType": "Religious Death Records",
+            "recordTypeConceptId": 127576
+          },
+          {
+            "place": "Hedmark, Norway",
+            "startYear": 1844,
+            "endYear": 1850,
+            "dateRange": "1844–1850",
+            "recordType": "Vaccination Records",
+            "recordTypeConceptId": 127119
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1814,
+            "endYear": 1830,
+            "dateRange": "1814–1830",
+            "recordType": "Vaccination Records",
+            "recordTypeConceptId": 127119
+          },
+          {
+            "place": "Hedmark, Norway",
+            "startYear": 1843,
+            "endYear": 1850,
+            "dateRange": "1843–1850",
+            "recordType": "Vaccination Records",
+            "recordTypeConceptId": 127119
+          },
+          {
+            "place": "Søndre Osen, Hedmark, Norway",
+            "startYear": 1814,
+            "endYear": 1840,
+            "dateRange": "1814–1840",
+            "recordType": "Religious Marriage Records",
+            "recordTypeConceptId": 127577
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "009059685",
+        "imageGroupPrefix": "009059685",
+        "imageCount": 273,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1840,
+            "endYear": 1861,
+            "dateRange": "1840–1861",
+            "recordType": "Religious Records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1841,
+            "endYear": 1861,
+            "dateRange": "1841–1861",
+            "recordType": "Religious Burial Records",
+            "recordTypeConceptId": 127739
+          },
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1841,
+            "endYear": 1862,
+            "dateRange": "1841-1862",
+            "recordType": "Baptism Records",
+            "recordTypeConceptId": 103612
+          },
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1841,
+            "endYear": 1862,
+            "dateRange": "1841–1862",
+            "recordType": "Confirmation Records",
+            "recordTypeConceptId": 101655
+          },
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1841,
+            "endYear": 1862,
+            "dateRange": "1841–1862",
+            "recordType": "Vaccination Records",
+            "recordTypeConceptId": 127119
+          },
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1841,
+            "endYear": 1862,
+            "dateRange": "1841–1862",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "009060532",
+        "imageGroupPrefix": "009060532",
+        "imageCount": 862,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Stor-Elvdal, Hedmark, Norway",
+            "startYear": 1871,
+            "endYear": 1882,
+            "dateRange": "1871-1882",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Stor-Elvdal, Hedmark, Norway",
+            "startYear": 1882,
+            "endYear": 1907,
+            "dateRange": "1882-1907",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1874,
+            "endYear": 1880,
+            "dateRange": "1874-1880",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1881,
+            "endYear": 1897,
+            "dateRange": "1881–1897",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "009060537",
+        "imageGroupPrefix": "009060537",
+        "imageCount": 811,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Dovre, Oppland, Norway",
+            "startYear": 1881,
+            "endYear": 1907,
+            "dateRange": "1881-1907",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Lesja, Oppland, Norway",
+            "startYear": 1854,
+            "endYear": 1880,
+            "dateRange": "1854–1880",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1863,
+            "endYear": 1886,
+            "dateRange": "1863–1886",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Dovre, Oppland, Norway",
+            "startYear": 1879,
+            "endYear": 1890,
+            "dateRange": "1879-1890",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "009060536",
+        "imageGroupPrefix": "009060536",
+        "imageCount": 848,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Os, Hedmark, Norway",
+            "startYear": 1887,
+            "endYear": 1912,
+            "dateRange": "1887-1912",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Tynset, Hedmark, Norway",
+            "startYear": 1900,
+            "endYear": 1914,
+            "dateRange": "1900-1914",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Kvikne, Trysil, Hedmark, Norway",
+            "startYear": 1863,
+            "endYear": 1886,
+            "dateRange": "1863-1886",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Tyldal, Hedmark, Norway",
+            "startYear": 1880,
+            "endYear": 1901,
+            "dateRange": "1880-1901",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008623782",
+        "imageGroupPrefix": "008623782",
+        "imageCount": 559,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1875,
+            "endYear": 1875,
+            "dateRange": "1875",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008624776",
+        "imageGroupPrefix": "008624776",
+        "imageCount": 410,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1875,
+            "endYear": 1875,
+            "dateRange": "1875",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008624777",
+        "imageGroupPrefix": "008624777",
+        "imageCount": 369,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "no"
+        ],
+        "coverages": [
+          {
+            "place": "Trysil, Hedmark, Norway",
+            "startYear": 1875,
+            "endYear": 1875,
+            "dateRange": "1875",
+            "recordType": "Census",
+            "recordTypeConceptId": 123363
+          }
+        ]
+      }
+    ]
+  }
+}
