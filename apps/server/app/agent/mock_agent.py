@@ -2,7 +2,8 @@
 skills. It needs no Anthropic key, so the whole POC runs offline. It:
 
   * conducts the init-project researcher-profile interview (experience +
-    subscriptions + objective) conversationally,
+    objective) conversationally — site access is deliberately NOT asked, which
+    is what the real skill does since the access question was dropped,
   * writes a schema-shaped research.json + tree.gedcomx.json on completion,
   * on later "search records" turns, appends a source/assertion/log entry and a
     results sidecar (which the control-plane watch turns into live viewer
@@ -21,16 +22,12 @@ from pathlib import Path
 STATE_FILE = ".agent_state.json"
 
 _EXPERIENCE = ["novice", "intermediate", "experienced", "professional"]
-_SUBSCRIPTIONS = [
-    "Ancestry", "MyHeritage", "FindMyPast", "Newspapers.com",
-    "GenealogyBank", "FindAGrave-Plus",
-]
-# The two access routes are never typed verbatim, so they match on the
-# phrasing a researcher actually uses rather than on the enum value.
-_ACCESS_ROUTES = {
-    "FamilySearch-Partner": ("familysearch partner", "partner subscription"),
-    "LibraryAccess": ("library", "family history cent", "affiliate"),
-}
+# There is deliberately no subscription/access vocabulary here any more. The
+# real interview stopped asking about site access, and `researcher_profile`
+# now leaves `subscriptions` ABSENT rather than defaulting it — `["none"]`
+# would assert the researcher told us they have nothing, which is the opposite
+# of the current assumption. A mock that still asked would keep producing a
+# schema-valid document while no longer standing in for what production does.
 _NARRATION = {
     "novice": "Narrate why each step matters; define genealogy terms on first use.",
     "intermediate": "One-line preamble per step; assume standard record-type familiarity.",
@@ -67,8 +64,8 @@ class MockAgent:
         # Pre-seeded (sample) project: skip onboarding.
         if (self.dir / "research.json").is_file():
             return {"phase": "active", "experience_level": "intermediate",
-                    "subscriptions": [], "objective": None, "log_seq": 1}
-        return {"phase": "greet", "experience_level": None, "subscriptions": [],
+                    "objective": None, "log_seq": 1}
+        return {"phase": "greet", "experience_level": None,
                 "objective": None, "log_seq": 0}
 
     def _save_state(self) -> None:
@@ -97,7 +94,6 @@ class MockAgent:
         handler = {
             "greet": self._greet,
             "await_experience": self._await_experience,
-            "await_subscriptions": self._await_subscriptions,
             "await_objective": self._await_objective,
             "active": self._active,
         }.get(phase, self._active)
@@ -133,25 +129,7 @@ class MockAgent:
         lvl = next((w for w in _EXPERIENCE if w in text.lower()), "intermediate")
         self.state["experience_level"] = lvl
         yield _event("text", text=(
-            f"Got it — **{lvl}**. "
-            "Which paid record subscriptions do you have? (e.g. Ancestry, "
-            "MyHeritage, Newspapers.com — or say \"none\")"
-        ))
-        self.state["phase"] = "await_subscriptions"
-        self._save_state()
-
-    async def _await_subscriptions(self, text: str) -> AsyncIterator[dict]:
-        low = text.lower()
-        subs = [s for s in _SUBSCRIPTIONS if s.lower() in low]
-        subs += [
-            value
-            for value, phrases in _ACCESS_ROUTES.items()
-            if any(phrase in low for phrase in phrases)
-        ]
-        self.state["subscriptions"] = subs
-        shown = ", ".join(subs) if subs else "none"
-        yield _event("text", text=(
-            f"Noted — **{shown}**.\n\n"
+            f"Got it — **{lvl}**.\n\n"
             "Last thing: **what's your research objective?** Describe the person "
             "and question, e.g. \"Identify the parents of Mary Sullivan, born "
             "ca. 1860 in County Cork.\""
@@ -176,9 +154,10 @@ class MockAgent:
                 "updated": "2026-06-06",
                 "title": _title_from_objective(objective),
             },
+            # `subscriptions` is deliberately absent, not []: access is no
+            # longer asked and is assumed available.
             "researcher_profile": {
                 "experience_level": lvl,
-                "subscriptions": self.state["subscriptions"],
                 "narration_guidance": _NARRATION[lvl],
             },
             "questions": [{
