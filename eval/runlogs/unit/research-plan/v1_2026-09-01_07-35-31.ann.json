@@ -1,0 +1,206 @@
+{
+  "run_log": "v1_2026-09-01_07-35-31.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nine items, all Schuylkill County, all date ranges plausible for 1843-1910. Add-new mode was\nright: pl_002 is completed, q_001 still in_progress, and pl_002 was left untouched. The\nDiocese of Philadelphia note at seq 1 is correct for pre-1868 Catholic parishes. Nothing\ninvented.\n"
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nine items covering direct sources, FAN pivots on the father and siblings, newspaper, land\nand naturalization. The user asked for a FAN approach and got one.\n\nWorth noting as a contrast rather than a defect here: this plan DOES include the 1870 and\n1880 censuses at seq 3-4. That is exactly what 005 has now missed in two of five runs\n(#2023 Rule B). Same skill, same corpus, one plan gets it and another doesn't.\n"
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Seven calls, all matching their predicates, no fixture_not_found. collections_search and\nexternal_links_search both used \"Schuylkill, Pennsylvania, United States\".\n\n11 of the 13 declared fixtures were never touched -- the wiki, place-search and\nvolume-search ones. Not a defect, but this scenario is pre-surveyed so most of its fixture\nlist is dead weight. Same pattern as 006 and as my own test's twelve.\n"
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every type earns its place: baptism names parents directly, the parents' marriage supplies\nthe maiden name, siblings' death certificates give a better informant than the son-in-law\nwho signed Patrick's, land and naturalization can name children. Rationales are specific,\nnot generic.\n"
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every FAN item is justified by what it reveals about Patrick, not pursued for the relative's\nown sake -- the deed rationale says \"a deed listing Patrick Flynn as a son of Thomas would\nprovide independent indirect evidence of parentage\". That is the distinction this dimension\nexists for.\n"
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The order itself is defensible -- direct sources first, free FamilySearch ahead of the paid\nAncestry item at seq 8, siblings after the censuses that identify them. That part is right.\n\nBut NINE items and not one fallback_for. Checked every entry: fallback_for is null on all\nnine, and no rationale uses the word \"fallback\" either. SKILL.md step 4 item 5 requires\n\"Include contingencies -- use fallback_for to link alternate sources when a primary may\nfail\", and Schuylkill church records are browse-only in this corpus, which is exactly the\ncase a contingency is for. 005 chained pli_006 to pli_005; 011 has explicit chains. This\nplan has none.\n\nThe judge scored 3 while describing a chain that is not in the data: \"Item 9 (naturalization)\nis a fallback for Irish records if Thomas's identity needs confirmation.\" Item 9's\nfallback_for is null and its rationale never says fallback. The judge inferred the\nrelationship and then credited the plan for encoding it.\n\nMarking partial rather than fail: six of the seven sequencing rules are satisfied and the\norder is genuinely sound. Only the contingency rule is unmet.\n"
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Schuylkill County correct throughout, date ranges align with when each record type was kept\nthere, and the pre-1868 diocese note shows awareness of the boundary change.\n"
+    },
+    {
+      "test_id": "ut_research_plan_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Add-new correct, pl_003 active, pl_002 left completed and unmodified, exactly one active plan\nfor q_001, item ids continuing cleanly.\n"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Add-new correct: pl_002 completed, q_001 still in_progress, pl_002 untouched. All eight items\ncensus, Schuylkill County, years 1870/1880/1900. The 1880 rationale correctly identifies it as\nthe critical year -- first census recording each person's father's and mother's birthplace.\nNothing invented.\n"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three requested years covered, each with a primary and a paid fallback. Verified two things\nthe judge claims: the 1890 census destruction is noted, and the Flynn/Flinn/Flyn variants are\npresent. Nothing silently dropped.\n"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Seven calls, all matched, no fixture_not_found. Only 5 of 6 declared fixtures were consumed --\ncollections-search-us-national and validate-research-schema went untouched; the latter is a\ntool this skill does not hold, which the drift lint already flags corpus-wide.\n"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every item is census, and here that is right rather than narrow: the user asked specifically\nfor \"the post-1860 federal censuses -- 1870, 1880, and 1900\". Each year's rationale says what\nit uniquely provides.\n\nWorth recording as an observation, not a deduction: SKILL.md warns that \"a 5-item plan that is\nall one record type (all-census...) can sit inside this range while still failing the\nself-check\", and ut_research_plan_016 exists to check that a question's presupposed record type\ndoes NOT narrow a plan. The distinction that saves this one is that the user asked for a\nspecific search, not a research question. That line is the territory #1917 covers.\n"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The two Thomas items are justified by what they reveal about Patrick -- his household may still\nlist other children corroborating the sibling group, and his enumerated age tests whether one\nindividual is traced across four censuses. Neither pursues Thomas for his own sake.\n"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked free-before-paid per year rather than overall, since that is what the rule requires:\n1870 FamilySearch(1) before Ancestry(2); 1880 FamilySearch(3,4) before Ancestry(5) and\nMyHeritage(6); 1900 FamilySearch(7) before Ancestry(8). Holds in all three.\n\nFour explicit fallback_for chains, and main's test_research_plan_fallback_for_in_same_plan\npassed, so they resolve inside the plan. This is the direct contrast with 007 in the same run,\nwhich wrote nine items and zero contingencies -- so the rule is satisfiable and this plan\nsatisfies it.\n"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Schuylkill County correct for 1870-1900, county level right for federal censuses in that era,\nand no boundary changes apply. The note that a Pennsylvania localities entry is not required\nfor federal census work is correct.\n"
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Add-new right, pl_003 active, pl_002 left completed and unmodified, exactly one active plan for\nq_001, no existing items edited.\n"
+    },
+    {
+      "test_id": "ut_research_plan_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Zero tool calls, empty response, skills_invoked = ['research-exhaustiveness'] -- one of the\nthree skills this test's negative.correct_skill accepts, alongside question-selection and\nproject-status. The scenario is flynn-resolved with exhaustive_declaration already set, so\nadding plan items would have been the defect.\n\nWhat makes this a real pass rather than an inferred one: all four routing-independent guards\npassed. test_no_plan_writes_when_resolved, test_resolved_question_not_reopened and\ntest_plans_no_deletions each confirm nothing was written, nothing reopened and nothing\ndeleted -- so the plans array and the question's own state are provably untouched, not just\napparently so. That matters here because the outcome is decided on routing alone; without\nthose guards a run could route correctly and still damage the audit trail.\n\nMy own objective-target validator correctly skipped: not this scenario's tag.\n\n"
+    },
+    {
+      "test_id": "ut_research_plan_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing owed, nothing missing. The right output on a declared-exhaustive project is no\noutput, and no internal skill name leaked into user-facing text -- there was none.\n"
+    },
+    {
+      "test_id": "ut_research_plan_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero MCP calls, which is exactly the condition under which this dimension may be null.\n"
+    },
+    {
+      "test_id": "ut_research_plan_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "\"Go search the 1880 census for Patrick Flynn now\" is an execution request, not a planning one.\nZero tool calls, empty response, skills_invoked = ['search-records'] -- the single skill this\ntest's correct_skill names. No validator failed, so nothing was written to research.json.\n\njudge_context[2] sets the fail condition explicitly: \"If the skill writes any new plan items\nto research.json, that is a routing error -- score Correctness=1.\" It wrote none, and\ntest_plans_no_deletions plus the no-new-plan guards confirm it rather than leaving it inferred.\n"
+    },
+    {
+      "test_id": "ut_research_plan_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing owed. judge_context[3] accepts either a bare route or a one-line explanation; a silent\nroute is the cleaner of the two permitted forms, and no internal skill name leaked into\nuser-facing text because there was none.\n"
+    },
+    {
+      "test_id": "ut_research_plan_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero MCP calls -- exactly when this dimension may be null.\n"
+    },
+    {
+      "test_id": "ut_research_plan_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The request is for historical background on Irish immigration to the anthracite region, not\nfor a plan. Zero tool calls, empty response, skills_invoked = ['historical-context'] -- the\nsingle skill this test's correct_skill names. No validator failed, so nothing was written.\n\nThe judge's point about not calling collections_search or place_search is worth confirming\nrather than assuming: those are exactly the calls research-plan makes when it decides to plan,\nand it made neither. Zero calls means it declined before starting, not partway through.\n"
+    },
+    {
+      "test_id": "ut_research_plan_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Nothing owed on a correct decline, and no internal skill name reached user-facing text because\nthere was none.\n"
+    },
+    {
+      "test_id": "ut_research_plan_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Zero MCP calls -- the condition for null.\n"
+    }
+  ]
+}
