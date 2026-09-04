@@ -38,6 +38,7 @@
     "wikipedia-search-any"
   ],
   "judge_context": [
-    "Recognize Virginia\u2019s role in the Revolutionary War and mention military service records, pension applications, bounty land warrants, and county court records. Highlight repositories like the Library of Virginia, National Archives, and county courthouses while avoiding statewide vital registration (it didn't exist yet)."
+    "Recognize Virginia\u2019s role in the Revolutionary War and mention military service records, pension applications, bounty land warrants, and county court records. Highlight repositories like the Library of Virginia, National Archives, and county courthouses while avoiding statewide vital registration (it didn't exist yet).",
+    "collection_read is served by a single generic mock fixture (collection-read-by-id) that always returns the same synthetic Pennsylvania Schuylkill County Church Records collection, regardless of the id argument passed \u2014 there is no Virginia-specific collection_read fixture. Citing collection ids that came from a correctly-matched collections_search call, without independently re-verifying them through collection_read, is not a fabrication given this fixture's known limitation \u2014 do not penalize Correctness for it. Recognizing the collection_read mismatch and declining to use its content (rather than presenting the synthetic Pennsylvania content as Virginia data) is the correct, careful behavior and should be credited, not penalized."
   ]
 }

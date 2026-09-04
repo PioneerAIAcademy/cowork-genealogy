@@ -676,12 +676,12 @@ e2e-skill-episodes: ## Per-skill episode fingerprint over committed runs (issue 
 
 .PHONY: e2e-nudges
 e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #1104): make e2e-nudges | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
-	# Pure analysis, no API: reads committed run JSONs and their .transcript.md
-	# siblings. Reports each continue-nudge with the seam it sits on and whether
-	# the agent named its next step before yielding -- the move research/SKILL.md
-	# forbids. Unions both sources on purpose: `narration` replaced the
-	# transcript in #1238, so today it covers 2 of 145 runs while the transcripts
-	# hold 20 of the 23 events. Reading only one silently reports a fraction.
+	# Pure analysis, no API: reads committed run JSONs. Reports each
+	# continue-nudge with the seam it sits on and whether the agent named its
+	# next step before yielding -- the move research/SKILL.md forbids.
+	# `narration` replaced transcripts in #1238; committed .transcript.md files
+	# were removed in PR #2204 (zombie re-lands from stale-base merges).
+	# The transcript fallback code path is retained for local copies only.
 	cd eval/harness && uv run python -m e2e.nudge_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
