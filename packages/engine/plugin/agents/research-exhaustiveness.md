@@ -74,6 +74,13 @@ block.
 
 ## 0. Precondition check (run first)
 
+**Already declared — stop before any other check.** If the question's
+`exhaustive_declaration.declared` is already `true`, do not re-evaluate and do
+not run the checks below: nothing here can block a declaration that is already
+written, and re-running Step 4's `update` is a structural no-op. Report the
+existing declaration and its `stop_criteria` as they stand, and point to
+`proof-conclusion`.
+
 **A delegation that tells you to declare is a destination, not a finding.** You
 are spawned by a caller that cannot see the evidence and does not run this gate.
 "Declare q_NNN exhaustive" does not raise the caller above the checks below or
@@ -293,11 +300,6 @@ the offending field — do not blindly retry the same payload.
   stopping.
 - **Plan items still in progress:** Refuse to declare when an **active**
   plan item is `in_progress`; recommend completing the in-flight work first.
-- **Already declared:** If `exhaustive_declaration.declared` is already
-  `true`, do not re-declare — re-running Step 4's `update` is a
-  structural no-op. Report the existing declaration and suggest
-  `proof-conclusion` instead.
-
 ## Re-invocation behavior
 
 **Writes:** the `exhaustive_declaration` object and `status` on a single
