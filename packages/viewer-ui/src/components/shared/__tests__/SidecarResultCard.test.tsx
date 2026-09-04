@@ -189,6 +189,27 @@ describe('SidecarResultCard — fulltext_search', () => {
     expect(spy).toHaveBeenCalledWith('ark:/61903/3:1:S3HT-XYZ')
   })
 
+  it('falls back to id when sourceUrl is a real FamilySearch URL the policy still refuses', async () => {
+    // A realistic instance of the same gap: resolveFamilySearchTarget's ARK_RE
+    // is `$`-anchored, so a page-parameter suffix (a shape Linkify.test.tsx
+    // already pins as occurring in project data) fails to resolve even though
+    // the host is genuinely familysearch.org.
+    const spy = vi.fn()
+    setOpenFamilySearch(spy)
+    render(
+      <SidecarResultCard
+        result={{
+          ...fulltextResult,
+          sourceUrl: 'https://www.familysearch.org/ark:/61903/3:1:S3HT-XKR9-NXF?i=353'
+        }}
+        tool="fulltext_search"
+        defaultExpanded={true}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    expect(spy).toHaveBeenCalledWith('ark:/61903/3:1:S3HT-XYZ')
+  })
+
   it('opens a legacy full-URL id as-is, without prefixing the host again', async () => {
     const { sourceUrl: _sourceUrl, ...legacy } = fulltextResult
     const spy = vi.fn()
