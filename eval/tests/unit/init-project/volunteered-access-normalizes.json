@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_init_project_j4n",
+    "skill": "init-project",
+    "name": "Access volunteered unprompted is normalized onto the closed enum, and a bare FamilySearch account is not stored",
+    "type": "positive",
+    "description": "The access question was dropped, but the field was kept: a researcher who mentions access unprompted still gets it recorded. That leaves the only path into `subscriptions` un-exercised unless a test volunteers one. The enum is closed and validated, so an un-normalized value fails the write outright -- this is the boundary where a plausible answer becomes a rejected one. Covers the two answers that are not site names (a family history centre is `LibraryAccess`, not `other`) and the one that must be dropped (a plain FamilySearch account, which every researcher on this product has).",
+    "tags": [
+      "initialization",
+      "researcher-profile",
+      "volunteered-access",
+      "normalization",
+      "enum-boundary"
+    ]
+  },
+  "input": {
+    "user_message": "init-project: Start a new project to find the parents of Patrick Flynn, FamilySearch ID LZNY-BRF. I have some research under my belt. I won't be short of records either -- I've got Ancestry, I use my local family history centre, and FamilySearch of course.",
+    "scenario": null
+  },
+  "mcp_fixtures": ["person-read-flynn"],
+  "judge_context": [
+    "`researcher_profile.subscriptions` should contain `Ancestry` and `LibraryAccess`. The family history centre is an access route with its own enum value -- it must not be dropped and must not be flattened to `other`",
+    "`researcher_profile.subscriptions` must NOT contain `FamilySearch`. That is not a value on the closed enum; a plain FamilySearch account is the baseline every researcher here has, so it is not recorded at all. Storing it verbatim would fail schema validation",
+    "Every value written must be one of the canonical spellings: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner`, `LibraryAccess`, `other`, `none`",
+    "The skill must NOT ask the user about site access -- the question was dropped. Recording what the user volunteered is correct; prompting for it, or asking a follow-up to confirm it, is not",
+    "Dropping the bare FamilySearch mention must not collapse the whole list to `[\"none\"]` or `[]` here, because Ancestry and the family history centre remain",
+    "`researcher_profile.experience_level` should be `intermediate` from 'some research under my belt', with the verbatim intermediate narration_guidance",
+    "Should still create both research.json and tree.gedcomx.json in a single pass and seed the Patrick Flynn stub from person-read-flynn -- volunteered access must not stop or delay the initialization"
+  ]
+}

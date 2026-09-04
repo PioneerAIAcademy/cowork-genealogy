@@ -320,35 +320,32 @@ Specs: `docs/specs/research-schema-spec.md` and
 
 ## Researcher profile
 
-When you start a new project with `init-project`, the skill asks three
+When you start a new project with `init-project`, the skill asks two
 short questions in one opening turn:
 
 1. **Research objective** — what you are trying to find out.
 2. **Experience level** — *just starting out / some research under my
    belt / experienced / professional or certified*.
-3. **Access** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
-   GenealogyBank, FindAGrave-Plus, other, or none. Free access counts,
-   and is now recorded as such rather than collapsing to "other": a
-   partner subscription through your FamilySearch account stores as
-   `FamilySearch-Partner`, and a public library, family history centre
-   or affiliate library as `LibraryAccess`. A plain FamilySearch
-   account is the baseline everyone here has, so it isn't recorded —
-   that alone is "none".
 
-None of the three blocks. Answer what you like; anything you skip takes
+You are no longer asked which subscription sites you have. Access is
+assumed available, so nothing is recorded unless you mention it
+yourself — a project that says nothing about access is not a project
+that said it has none.
+
+Neither question blocks. Answer what you like; anything you skip takes
 a documented default, and the summary at the end names what was
 defaulted so you can correct it.
 
 The answers are written to a `researcher_profile` section of
 `research.json` alongside the rest of your project state. Every skill
-reads from it:
+but one reads from it:
 
 - **Experience level** drives narration density. A novice gets
   step-by-step "why I'm doing this" narration; an experienced
   researcher gets concise reporting. Internally the level maps to a
   `narration_guidance` string that the skill reads and follows
   verbatim — one place defines the mapping (`init-project`), one place
-  stores it (`research.json`), every skill reads it.
+  stores it (`research.json`), every skill but one reads it.
 - **Access** guides `search-external-sites` URL prioritization. Sites
   you can reach land first; the rest are still searchable but flagged.
 
@@ -513,9 +510,9 @@ What's shipped:
   for one question, and the only writer of `proof_summaries`),
   `research-exhaustiveness` (the exhaustiveness judgment for one question, and
   the only caller that may declare one exhaustive) and `image-reader` (page OCR).
-- **Researcher profile.** `init-project` asks the research objective,
-  experience level, and site access together in one non-blocking opening
-  turn; every skill adapts narration density to the answer.
+- **Researcher profile.** `init-project` asks the research objective and
+  experience level together in one non-blocking opening turn; every skill
+  adapts narration density to the answer. Site access is not asked.
 - **Eval harness** under `eval/` for skill regression testing.
 
 ## Developer and contributor docs

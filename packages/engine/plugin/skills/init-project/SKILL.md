@@ -32,39 +32,23 @@ If `research.json` already exists, do not initialize: make no MCP tool call and 
 
 ## Opening-turn questions
 
-Ask three things in the opening turn, alongside the person ID/name request: the research objective, experience level, and access (`researcher_profile` stores the latter two). **Never stop and wait for any of them. Complete the full initialization in a single pass:**
+Ask two things in the opening turn, alongside the person ID/name request: the research objective and experience level (`researcher_profile` stores the latter). **Never stop and wait for either of them. Complete the full initialization in a single pass:**
 
-1. **If the user's message already states an answer** to one or more of the three — map and normalize it and keep going.
+1. **If the user's message already states an answer** to one or both — map and normalize it and keep going.
 2. **For anything left unanswered, ask it in this same opening-turn message, but do not wait for a reply before proceeding:**
    - No stated objective → store this exact text, verbatim, as `objective`: "General research: build out the tree and identify gaps and next steps." Never invent, infer, or default a *specific* research direction (a migration story, a disputed relationship, a name-origin theory) from the person's data alone — this verbatim generic default is the only fallback, the same way a defaulted `narration_guidance` is stored verbatim, not paraphrased.
    - No stated experience level → default to `intermediate`.
-   - No stated access → default to `["none"]`.
    Write the files now with whatever mix of stated answers and defaults applies, and tell the user in the final summary exactly which fields were defaulted. Optionally repeat the questions *after* both files are written — never as a turn-ending prompt.
 
 Asking a question and then stopping to wait is a failure: the project never gets created.
 
-### Question 1 — Experience level
+### Question — Experience level
 
 > How would you describe your genealogy experience?
 > (a) just starting out → `novice`
 > (b) some research under my belt → `intermediate`
 > (c) experienced → `experienced`
 > (d) professional/certified → `professional`
-
-### Question 2 — Access
-
-> What access do you have to genealogy sites? (or "none") — a paid subscription
-> (Ancestry, MyHeritage, FindMyPast, Newspapers.com, GenealogyBank, FindAGrave-Plus, other),
-> free access through a FamilySearch partnership, or access via a library or
-> family history centre.
-
-**Normalize before storing** (downstream skills do exact-equality lookups):
-- Canonical enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner`, `LibraryAccess`, `other`, `none`.
-- Case-fold, trim, dedupe.
-- Aliases: `ancestry.com` → `Ancestry`; `findmypast.com`/`find my past` → `FindMyPast`; `myheritage.com` → `MyHeritage`; `newspapers` → `Newspapers.com`; `genealogybank.com` → `GenealogyBank`; `findagrave`/`findagrave+` → `FindAGrave-Plus`; `FamilySearch partnership`/`FamilySearch partner`/`partner subscription` → `FamilySearch-Partner`; `library`/`library card`/`family history centre`/`family history center`/`FHC`/`affiliate library` → `LibraryAccess`.
-- **A plain FamilySearch account is the baseline every researcher has — never store it.** Bare `FamilySearch`/`familysearch.org`, with no partnership or library mentioned, drops from the list; if nothing else remains, store `["none"]`.
-- Unrecognized → `other`. Show normalized result and confirm.
-- Empty → `["none"]`.
 
 ### Derive `narration_guidance`
 
@@ -77,7 +61,7 @@ Store the matching text verbatim into `researcher_profile.narration_guidance`:
 | experienced | "No preambles. Do the work and report results concisely. Assume fluency with GPS and standard genealogy terminology." |
 | professional | "No preambles. Do the work and report results concisely. Assume fluency with GPS, BCG standards, and standard genealogy terminology." |
 
-Store `experience_level`, `subscriptions`, `narration_guidance` in `research.json` `researcher_profile` (Step 4). The user can edit the profile directly later.
+Store `experience_level` and `narration_guidance` in `research.json` `researcher_profile` (Step 4). The user can edit the profile directly later.
 
 ## Known-holdings survey
 
@@ -222,7 +206,11 @@ Then relay to the user that the project was created, naming the folder.
 
 `research_append` runs after `project_create` — never before, and never bundled into it. Two sections to write; one call each or one call carrying both in an `ops` array, either is fine.
 
-**`researcher_profile`** — `research_append({ section: "researcher_profile", op: "update", fields: {...} })`. Scan the opening message for a stated experience level and access first. Map `experience_level`; normalize `subscriptions` to the canonical enum (alias table above); store the verbatim `narration_guidance` for that level (table above). When the message supplied answers, never persist the `intermediate` / `["none"]` default in their place. Since the opening-turn rule above always asks and always proceeds, this call always writes — with whichever mix of stated answers and defaults applies, matching what the final summary told the user was defaulted.
+**`researcher_profile`** — `research_append({ section: "researcher_profile", op: "update", fields: {...} })`. Scan the opening message for a stated experience level first. Map `experience_level` and store the verbatim `narration_guidance` for that level (table above). When the message supplied an answer, never persist the `intermediate` default in its place. Since the opening-turn rule above always asks and always proceeds, this call always writes.
+
+**Do not ask about site access, and do not write `subscriptions`.** Access is assumed available; leave the field absent rather than defaulting it. `["none"]` asserts the researcher told us they have nothing, which is the opposite of what we now assume.
+
+Record it **only** when the researcher volunteers access unprompted — the question was dropped, not the field. The enum is closed, so normalize before writing: case-fold and map to `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner` (a partner subscription held through FamilySearch), `LibraryAccess` (public library, family history centre, or affiliate library), or `other` for anything unrecognized. A plain FamilySearch account is the baseline everyone has — never store it. If nothing survives normalization, omit the field; never write `["none"]` or `[]`.
 
 **`known_holdings`** — one `{ section: "known_holdings", op: "append", entry: {...} }` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in the tree; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
 
@@ -291,7 +279,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 - **Handle isolated persons.** If `person_read` returns no relatives, still create the project. Note isolation in summary.
 - **No FamilySearch ID → search first.** Call `person_search` before falling back to stubs.
 - **Do not skip the preliminary survey.** The tree fetch + known-holdings survey together ARE the preliminary survey (GPS Step 2).
-- **Never persist a default `researcher_profile` when the opening message stated experience or subscriptions.** Normalize per the interview tables before writing `research.json`.
+- **Never persist a default `researcher_profile` when the opening message stated an experience level.** Map it per the interview table before writing `research.json`.
 
 ## Re-invocation behavior
 
