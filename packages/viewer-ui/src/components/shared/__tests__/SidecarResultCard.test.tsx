@@ -164,6 +164,31 @@ describe('SidecarResultCard — fulltext_search', () => {
     expect(spy).toHaveBeenCalledWith('ark:/61903/3:1:S3HT-XYZ')
   })
 
+  it('falls back to id when sourceUrl is present but the policy refuses it', async () => {
+    // The gap the other two fallback tests don't cover: sourceUrl absent, and
+    // sourceUrl === '' are both falsy, so `sourceUrl || id` and
+    // `resolveFamilySearchTarget(sourceUrl) || resolveFamilySearchTarget(id)`
+    // agree by construction. A TRUTHY sourceUrl the policy refuses is the case
+    // where they can diverge: the gate falls through to id and renders the
+    // button, but a naive `onClick={() => openFamilySearch(sourceUrl || id)}`
+    // still passes the bad sourceUrl, since it is non-empty. That renders a
+    // button which opens nothing.
+    const spy = vi.fn()
+    setOpenFamilySearch(spy)
+    render(
+      <SidecarResultCard
+        result={{ ...fulltextResult, sourceUrl: 'https://evil.example/whatever' }}
+        tool="fulltext_search"
+        defaultExpanded={true}
+      />
+    )
+    const button = screen.getByRole('button', { name: /Open in FamilySearch/ })
+    await userEvent.click(button)
+    // Raw id, matching the other fallback tests: openFamilySearch forwards the
+    // raw identifier and resolution happens downstream, not in this component.
+    expect(spy).toHaveBeenCalledWith('ark:/61903/3:1:S3HT-XYZ')
+  })
+
   it('opens a legacy full-URL id as-is, without prefixing the host again', async () => {
     const { sourceUrl: _sourceUrl, ...legacy } = fulltextResult
     const spy = vi.fn()

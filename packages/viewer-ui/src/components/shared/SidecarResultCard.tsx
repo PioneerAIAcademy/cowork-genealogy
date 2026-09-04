@@ -169,10 +169,15 @@ function FulltextSearchBody({ result }: { result: FulltextSearchResult }): React
   // Prefer sourceUrl (the upstream-supplied resolver URL) when it resolves;
   // fall back to id, which can itself be a legacy full-URL shape for sidecars
   // staged before #272. Gated on RESOLVABILITY, not truthiness — matching
-  // PersonCard and the tree-match sink above (#2049 review).
-  const fulltextLinkTarget =
-    (result.sourceUrl && resolveFamilySearchTarget(result.sourceUrl)) ||
-    (result.id && resolveFamilySearchTarget(result.id))
+  // PersonCard and the tree-match sink above (#2049 review). Keeps the RAW
+  // identifier (not the resolved URL) as the winner, matching this component's
+  // other two sinks: openFamilySearch forwards the raw value and resolves it
+  // again downstream, so the gate and the click handler must pick the same
+  // field or the button can render for one and open the other.
+  const fulltextLinkSource =
+    (result.sourceUrl && resolveFamilySearchTarget(result.sourceUrl) && result.sourceUrl) ||
+    (result.id && resolveFamilySearchTarget(result.id) && result.id) ||
+    undefined
   if (terms.length > 0 && text) {
     const escaped = terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).filter(Boolean)
     if (escaped.length > 0) {
@@ -210,12 +215,12 @@ function FulltextSearchBody({ result }: { result: FulltextSearchResult }): React
           <span>{allDates.join(', ')}</span>
         </div>
       )}
-      {fulltextLinkTarget && (
+      {fulltextLinkSource && (
         <div className={styles.footerLink}>
           <button
             type="button"
             className={styles.externalLink}
-            onClick={() => openFamilySearch(result.sourceUrl || result.id)}
+            onClick={() => openFamilySearch(fulltextLinkSource)}
           >
             Open in FamilySearch →
           </button>
