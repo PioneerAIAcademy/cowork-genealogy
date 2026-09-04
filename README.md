@@ -340,7 +340,7 @@ defaulted so you can correct it.
 
 The answers are written to a `researcher_profile` section of
 `research.json` alongside the rest of your project state. Every skill
-reads from it:
+but one reads from it:
 
 - **Experience level** drives narration density. A novice gets
   step-by-step "why I'm doing this" narration; an experienced
