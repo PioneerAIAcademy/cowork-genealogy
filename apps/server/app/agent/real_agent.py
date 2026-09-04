@@ -234,7 +234,12 @@ def direct_project_file_write(tool_name: str, tool_input: dict | None) -> str | 
     return name if name in PROTECTED_PROJECT_FILES else None
 
 
-_SECRETS_MARKERS = ("session.json", "ANTHROPIC_API_KEY", "sk-ant-")
+_SECRETS_MARKERS = (
+    "session.json",
+    ".familysearch-mcp",
+    "ANTHROPIC_API_KEY",
+    "sk-ant-",
+)
 _NETWORK_TOOLS = ("curl", "wget", "nc ", "ncat ", "socat ", "python3 -c", "python -c")
 
 
